@@ -5,11 +5,16 @@ from corehq.apps.export.det.base import DETRow, DETTable, DETConfig
 from corehq.apps.export.det.exceptions import DETConfigError
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance, CaseIndexExportColumn
 from corehq.apps.userreports import datatypes
+from corehq.apps.userreports.models import DataSourceConfiguration
 
 PROPERTIES_PREFIX = 'properties.'
 ID_FIELD = 'id'
 FORM_ID_SOURCE = 'id'
 CASE_ID_SOURCE = 'case_id'
+
+CASE_SOURCE = 'case'
+FORM_SOURCE = 'form'
+UCR_SOURCE = 'ucr'
 
 # maps Case fields to the API field names used in CommCareCaseResource
 CASE_API_PATH_MAP = {
@@ -92,6 +97,12 @@ class FormDETSchemaHelper(DefaultDETSchemaHelper):
         return FORM_API_PATH_MAP.get(input_path, input_path)
 
 
+class DatasourceDETSchemaHelper(DefaultDETSchemaHelper):
+    """
+    Schema helper for datasources
+    """
+
+
 class RepeatDETSchemaHelper(DefaultDETSchemaHelper):
     """
     Schema helper for form repeats
@@ -122,7 +133,7 @@ def generate_from_case_export_instance(export_instance, output_file):
     main_input_table = export_instance.selected_tables[0]
     main_output_table = DETTable(
         name=main_input_table.label,
-        source='case',
+        source=CASE_SOURCE,
         filter_name='type',
         filter_value=export_instance.case_type,
         rows=[],
@@ -135,6 +146,24 @@ def generate_from_case_export_instance(export_instance, output_file):
     _add_rows_for_table(main_input_table, main_output_table, helper=helper)
     _add_id_row_if_necessary(main_output_table, CASE_ID_SOURCE)
     # todo: add rows for other tables
+    output.export_to_file(output_file)
+
+
+def generate_from_datasource_configuration(config, output_file):
+    assert isinstance(config, DataSourceConfiguration)
+    from corehq.apps.export.models.new import get_datasource_export_from_config
+
+    input_table = get_datasource_export_from_config(config)
+    output_table = DETTable(
+        name=input_table.label,
+        source=UCR_SOURCE,
+        filter_name='data_source_id',
+        filter_value=config.data_source_id,
+        rows=[],
+    )
+    _add_rows_for_table(input_table, output_table, helper=DatasourceDETSchemaHelper())
+
+    output = DETConfig(name=config.display_name, tables=[output_table])
     output.export_to_file(output_file)
 
 
@@ -173,7 +202,7 @@ def generate_from_form_export_instance(export_instance, output_file):
         if _is_main_form_table(input_table):
             output_table = DETTable(
                 name=input_table.label,
-                source='form',
+                source=FORM_SOURCE,
                 filter_name='xmlns',
                 filter_value=export_instance.xmlns,
                 rows=[],
