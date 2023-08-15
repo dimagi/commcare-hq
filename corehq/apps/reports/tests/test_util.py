@@ -187,7 +187,7 @@ class TestDomainCopiedCasesByOwner(TestCase):
     ):
         case_json = {}
         if is_copy:
-            case_json[CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAMfE] = 'True'
+            case_json[CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME] = 'case_id'
 
         case = CommCareCase(
             case_id=uuid.uuid4().hex,
