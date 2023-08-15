@@ -276,6 +276,7 @@ greenlet==1.1.2
     #   -r base-requirements.in
     #   django-websocket-redis
     #   gevent
+    #   sqlalchemy
 grpcio==1.54.2
     # via
     #   google-api-core
