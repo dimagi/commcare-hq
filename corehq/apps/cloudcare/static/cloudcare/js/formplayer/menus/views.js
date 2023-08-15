@@ -571,6 +571,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     position: 'bottomright',
                 }).addTo(addressMap);
 
+                L.control.fullscreen({
+                    pseudoFullscreen: true,
+                    position: 'bottomright',
+                }).addTo(addressMap);
+
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
                     id: 'mapbox/streets-v11',
                     attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
