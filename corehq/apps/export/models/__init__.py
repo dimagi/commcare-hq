@@ -41,6 +41,7 @@ from .new import (
     StockItem,
     TableConfiguration,
     UserDefinedExportColumn,
+    DataSourceExportInstance,
 )
 
 from .export_settings import (

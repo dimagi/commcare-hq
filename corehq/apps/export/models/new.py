@@ -118,6 +118,8 @@ from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.data_dictionary.util import get_deprecated_fields
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
+from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.util import get_indicator_adapter
 
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
@@ -1368,6 +1370,11 @@ class SMSExportInstance(ExportInstance):
                 query = query.filter(filter.to_es_filter())
 
         return query
+
+
+class DataSourceExportInstance(ExportInstance):
+    type = 'datasource'
+    config = SchemaProperty(DataSourceConfiguration)
 
 
 class ExportInstanceDefaults(object):
@@ -3110,8 +3117,7 @@ PARENT_CASE_TABLE = [PathNode(name='indices', is_repeat=True)]
 ALL_CASE_TYPE_TABLE = PathNode(name=ALL_CASE_TYPE_EXPORT)
 
 
-def get_datasource_export_from_config(config):
-    from corehq.apps.userreports.util import get_indicator_adapter
+def datasource_export_instance(config):
     adapter = get_indicator_adapter(config)
     table = adapter.get_table()
 
@@ -3126,10 +3132,17 @@ def get_datasource_export_from_config(config):
             selected=True,
         )
 
-    return TableConfiguration(
-        label=table.name,
-        columns=[
-            get_export_column(col)
-            for _, col in config.columns_by_id.items()
+    return DataSourceExportInstance(
+        name=config.display_name,
+        domain=config.domain,
+        tables=[
+            TableConfiguration(
+                label=table.name,
+                columns=[
+                    get_export_column(col)
+                    for _, col in config.columns_by_id.items()
+                ],
+            )
         ],
+        config=config,
     )
