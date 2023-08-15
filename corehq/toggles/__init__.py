@@ -2395,6 +2395,15 @@ GEOSPATIAL = StaticToggle(
 
 )
 
+COMMCARE_CONNECT = StaticToggle(
+    'commcare_connect',
+    'Enable CommCare Connect features',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='More details to come',
+
+)
+
 FCM_NOTIFICATION = StaticToggle(
     'fcm_notification',
     'Allows access to FCM Push Notifications',
