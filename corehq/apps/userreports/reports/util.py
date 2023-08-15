@@ -106,9 +106,7 @@ class ReportExport(object):
             if column.visible:
                 column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
-        data = self.get_data()
-
-        return [[raw_row[column_id] for column_id in column_ids] for raw_row in data]
+        return [[raw_row[column_id] for column_id in column_ids] for raw_row in self.get_data()]
 
     def get_table_data(self):
         return self.header_rows + self.data_rows + self.total_rows
