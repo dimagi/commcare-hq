@@ -60,7 +60,7 @@ class BaseCaseManagerTest(TestCase):
         case.save(with_tracked_models=True)
         try:
             yield case, mother_index, task_index
-        except:
+        except Exception:
             pass
 
 
