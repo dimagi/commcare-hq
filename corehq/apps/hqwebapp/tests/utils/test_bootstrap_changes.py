@@ -7,6 +7,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_changed_css_classes,
     flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
+    flag_path_references_to_migrated_javascript_files,
 )
 
 
@@ -67,3 +68,11 @@ def test_flag_changed_javascript_plugins_bootstrap5():
                'you find common replacements/restructuring\nfor our usage of this plugin. '
                'Thanks!\n\nOld docs: https://getbootstrap.com/docs/3.4/javascript/#modals\n'
                'New docs: https://getbootstrap.com/docs/5.3/components/modal/#via-javascript\n'])
+
+
+def test_flag_path_references_to_migrated_javascript_files_bootstrap5():
+    line = """    'hqwebapp/js/bootstrap3/crud_paginated_list',\n"""
+    flags = flag_path_references_to_migrated_javascript_files(
+        line, "bootstrap3"
+    )
+    eq(flags, ['Found reference to a migrated file (bootstrap3)'])

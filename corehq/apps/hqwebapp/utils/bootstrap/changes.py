@@ -106,6 +106,13 @@ def flag_changed_javascript_plugins(line, spec):
     return flags
 
 
+def flag_path_references_to_migrated_javascript_files(line, reference):
+    flags = []
+    if "/" + reference + "/" in line:
+        flags.append(f"Found reference to a migrated file ({reference})")
+    return flags
+
+
 def flag_stateful_button_changes_bootstrap5(line):
     flags = []
     regex = r"([\n }])(data-\w*-text)(=[\"\'])"

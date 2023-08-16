@@ -13,6 +13,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_changed_css_classes,
     flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
+    flag_path_references_to_migrated_javascript_files,
 )
 
 COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
@@ -263,7 +264,10 @@ class Command(BaseCommand):
 
     @staticmethod
     def get_flags_in_javascript_line(javascript_line, spec):
-        return flag_changed_javascript_plugins(javascript_line, spec)
+        flags = flag_changed_javascript_plugins(javascript_line, spec)
+        reference_flags = flag_path_references_to_migrated_javascript_files(javascript_line, "bootstrap3")
+        flags.append(reference_flags)
+        return flags
 
     @staticmethod
     def get_split_file_paths(file_path):
