@@ -165,7 +165,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             curr = curr.parent;
         }
         return curr;
-    }
+    };
 
     /**
      * Base abstract prototype for Repeat, Group, GroupedQuestionTileRow, and Form. Adds methods to
@@ -190,7 +190,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 return child.hasError();
             });
         });
-    }
+    };
 
     /**
      * Reconciles the JSON representation of a Container (Group, Repeat, Form) and renders it into
@@ -298,7 +298,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 newChildren.push(currentGroup);
             }
             currentGroup.children.push(child);
-        }
+        };
 
         function resetCurrentGroup() {
             if (currentGroup) {
@@ -307,7 +307,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             }
             currentGroup = null;
             usedWidth = 0;
-        }
+        };
 
         for (let child of json.children) {
             if (child.type === constants.QUESTION_TYPE) {

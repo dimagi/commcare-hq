@@ -76,32 +76,33 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             assert.equal(form.children()[0].children()[0].type(), constants.GROUP_TYPE);
             assert.isTrue(form.children()[0].children()[0].isRepetition);
             assert.equal(form.children()[0].children()[0].children()[0].type(), constants.GROUPED_QUESTION_TILE_ROW_TYPE);
-            assert.equal(form.children()[0].children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);        });
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);
+        });
 
         it('Should render questions grouped by row', function () {
-            styleObj = {raw:'2-per-row'}
-            q0 = fixtures.textJSON({
+            styleObj = {raw:'2-per-row'};
+            let q0 = fixtures.textJSON({
                 style: styleObj,
-                ix: "0"
-            })
-            g0 = fixtures.groupJSON({
-                ix: "1"
-            })
+                ix: "0",
+            });
+            let g0 = fixtures.groupJSON({
+                ix: "1",
+            });
             g0.children[0].children[0].style = styleObj
             g0.children[0].children[0].style = styleObj
-            q1 = fixtures.selectJSON({
+            let q1 = fixtures.selectJSON({
                 style: styleObj,
-                ix: "2"
-            })
-            q2 = fixtures.labelJSON({
+                ix: "2",
+            });
+            let q2 = fixtures.labelJSON({
                 style: styleObj,
-                ix: "3"
-            })
-            q3 = fixtures.labelJSON({
+                ix: "3",
+            });
+            let q3 = fixtures.labelJSON({
                 style: styleObj,
-                ix: "4"
-            })
-            formJSON.tree = [q0, g0, q1, q2, q3]
+                ix: "4",
+            });
+            formJSON.tree = [q0, g0, q1, q2, q3];
             let form = formUI.Form(formJSON);
 
             // Expected structure (where gq signifies type "grouped-question-tile-row")
