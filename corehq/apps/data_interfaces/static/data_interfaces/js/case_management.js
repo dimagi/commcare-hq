@@ -7,7 +7,7 @@ hqDefine("data_interfaces/js/case_management",[
     'hqwebapp/js/initial_page_data',
     'reports/js/standard_hq_report',
     'hqwebapp/js/alert_user',
-], function ($, _, ko, casexmlModule, initialPageData, standardHqReport, alert_user) {  // eslint-disable-line
+], function ($, _, ko, casexmlModule, initialPageData, standardHqReport, alertUser) {
     var caseManagement = function (o) {
         'use strict';
         var self = {};
@@ -175,11 +175,11 @@ hqDefine("data_interfaces/js/case_management",[
                     success: function (response) {
                         updateCaseRowCopy(self.selectedCases())();
                         var message = gettext("Successfully copied " + response.copied_cases + " case(s).");
-                        alert_user.alert_user(message, "success");  // eslint-disable-line
+                        alertUser.alert_user(message, "success");
                     },
                     error: function (response) {
                         self.clearCaseSelection();
-                        alert_user.alert_user(response.responseJSON.error, "danger");  // eslint-disable-line
+                        alertUser.alert_user(response.responseJSON.error, "danger");
                     },
                 });
             }
