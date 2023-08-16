@@ -98,6 +98,11 @@ accounting
  0076_location_owner_in_report_builder_priv
  0077_case_list_explorer_priv
  0078_revert_location_owner_in_report_builder_priv
+ 0079_data_dictionary_priv
+ 0080_add_web_user_feature
+ 0081_add_web_user_feature_in_other_models
+ 0082_billingaccount_bill_web_user
+ 0083_copy_cases_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -606,6 +611,8 @@ linked_domain
  0020_auto_20211102_1501
  0021_alter_domainlinkhistory_model
  0022_alter_domainlinkhistory_model
+ 0023_alter_domainlinkhistory_model
+ 0024_alter_domainlinkhistory_model
 locations
  0001_initial
  0002_auto_20160420_2105
