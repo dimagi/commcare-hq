@@ -14,7 +14,7 @@ from corehq.apps.users.tasks import (
 )
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es import case_search_adapter
-from corehq.form_processor.models import CaseTransaction, CommCareCase
+from corehq.form_processor.models import CommCareCase
 from corehq.apps.users.tasks import remove_users_test_cases
 from corehq.apps.reports.util import domain_copied_cases_by_owner
 from corehq.apps.reports.filters.api import CaseCopier

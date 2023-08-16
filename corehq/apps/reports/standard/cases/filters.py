@@ -139,7 +139,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         value = super(CaseListExplorerColumns, cls).get_value(request, domain)
         ret = json.loads(value or "[]")
         # convert legacy list of strings to list of dicts
-        if ret and type(ret[0]) == str:
+        if ret and isinstance(ret[0], str):
             ret = [{
                 'name': prop_name,
                 'label': prop_name

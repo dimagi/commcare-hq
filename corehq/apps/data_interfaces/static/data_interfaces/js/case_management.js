@@ -1,3 +1,4 @@
+
 hqDefine("data_interfaces/js/case_management",[
     'jquery',
     'underscore',
@@ -6,7 +7,7 @@ hqDefine("data_interfaces/js/case_management",[
     'hqwebapp/js/initial_page_data',
     'reports/js/standard_hq_report',
     'hqwebapp/js/alert_user',
-], function ($, _, ko, casexmlModule, initialPageData, standardHqReport, alert_user) {
+], function ($, _, ko, casexmlModule, initialPageData, standardHqReport, alert_user) {  // eslint-disable-line
     var caseManagement = function (o) {
         'use strict';
         var self = {};
@@ -82,7 +83,7 @@ hqDefine("data_interfaces/js/case_management",[
                     var $row = $checkbox.closest("tr");
                     var labelMessage = gettext("Case copied");
                     var dateMessage = (self.onToday) ? '<span title="0"></span>' :
-                        '<span class="label label-info" title="0">' + labelMessage +'</span>';
+                        '<span class="label label-info" title="0">' + labelMessage + '</span>';
                     $row.find('td:nth-child(5)').html('Today ' + dateMessage);
                     $checkbox.prop("checked", false).change();
                 }
@@ -174,11 +175,11 @@ hqDefine("data_interfaces/js/case_management",[
                     success: function (response) {
                         updateCaseRowCopy(self.selectedCases())();
                         var message = gettext("Successfully copied " + response.copied_cases + " case(s).");
-                        alert_user.alert_user(message, "success");
+                        alert_user.alert_user(message, "success");  // eslint-disable-line
                     },
                     error: function (response) {
                         self.clearCaseSelection();
-                        alert_user.alert_user(response.responseJSON.error, "danger");
+                        alert_user.alert_user(response.responseJSON.error, "danger");  // eslint-disable-line
                     },
                 });
             }
@@ -273,11 +274,13 @@ hqDefine("data_interfaces/js/case_management",[
             }
 
             var caseAction = initialPageData.get('action');
-            if (caseAction == 'copy') {
-                var placeholderText = gettext("Search for users");
+            var placeholderText = "";
+
+            if (caseAction === 'copy') {
+                placeholderText = gettext("Search for users");
             } else {
-                var placeholderText = gettext("Search for users or groups");
-            };
+                placeholderText = gettext("Search for users or groups");
+            }
 
             var $select = $('#reassign_owner_select');
             if ($select.length) {

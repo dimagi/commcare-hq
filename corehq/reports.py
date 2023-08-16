@@ -276,8 +276,8 @@ def EDIT_DATA_INTERFACES(domain_obj):
     reports = [CaseReassignmentInterface]
 
     if (
-        toggles.COPY_CASES.enabled(domain_obj.name) and
-        domain_has_privilege(domain_obj.name, privileges.CASE_COPY)
+        toggles.COPY_CASES.enabled(domain_obj.name)
+        and domain_has_privilege(domain_obj.name, privileges.CASE_COPY)
     ):
         reports.append(CaseCopyInterface)
 
