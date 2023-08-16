@@ -1,4 +1,4 @@
-/* eslint-env mocha sinon */
+/* eslint-env mocha */
 /* global Backbone, Marionette */
 hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function () {
     describe('Split Screen Case Search', function () {

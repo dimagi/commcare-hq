@@ -1,4 +1,4 @@
-/*globals Marionette */
+/*globals DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const kissmetrics = hqImport("analytix/js/kissmetrix"),
@@ -7,9 +7,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         toggles = hqImport("hqwebapp/js/toggles"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        cloudcareUtils = hqImport("cloudcare/js/utils");
-
-
+        cloudcareUtils = hqImport("cloudcare/js/utils"),
+        markdown = hqImport("cloudcare/js/markdown");
 
     const MenuView = Marionette.View.extend({
         tagName: function () {
@@ -286,9 +285,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 isMultiSelect: this.options.isMultiSelect,
-                renderMarkdown: function (datum) {
-                    return cloudcareUtils.renderMarkdown(datum);
-                },
+                renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
@@ -604,7 +601,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                             let markerCoordinates = addressCoordinates.split(" ").slice(0,2);
                             if (markerCoordinates.length > 1) {
                                 const rowId = `row-${model.id}`;
-                                const popupText = cloudcareUtils.renderMarkdown(model.attributes.data[popupIndex]);
+                                const popupText = markdown.render(model.attributes.data[popupIndex]);
                                 let marker = L.marker(markerCoordinates, {icon: locationIcon});
                                 markers.push(marker);
                                 marker = marker.addTo(addressMap);
@@ -667,9 +664,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     ? `${headerWords.join(' ')} <b>${lastChar}</b>`
                     : header;
             };
+            let description = this.options.description;
+            let title = this.options.title;
+            if (this.options.sidebarEnabled && this.options.collection.queryResponse) {
+                description = this.options.collection.queryResponse.description;
+                title = this.options.collection.queryResponse.title;
+            }
             return {
                 startPage: paginateItems.startPage,
-                title: this.options.title,
+                title: title.trim(),
+                description: description === undefined ? "" : DOMPurify.sanitize(markdown.render(description.trim())),
                 headers: this.headers.map(boldSortedCharIcon),
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,

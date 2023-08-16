@@ -197,7 +197,7 @@ class ExportItem(DocumentSchema, ReadablePathMixin):
     inferred_from = SetProperty(default=set)
 
     def __key(self):
-        return'{}:{}:{}'.format(
+        return '{}:{}:{}'.format(
             _path_nodes_to_string(self.path),
             self.doc_type,
             self.transform,
@@ -692,7 +692,7 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
             else:
                 next_doc = {}
             if path[0].is_repeat:
-                if type(next_doc) != list:
+                if not isinstance(next_doc, list):
                     # This happens when a repeat group has a single repeat iteration
                     next_doc = [next_doc]
                 new_docs.extend([
@@ -2190,7 +2190,9 @@ class FormExportDataSchema(ExportDataSchema):
         questions = xform.get_questions(langs, include_triggers=True)
         repeats = cls._get_repeat_paths(xform, langs)
         schema = cls()
-        question_keyfn = (lambda q: q['repeat'])
+
+        def question_keyfn(q):
+            return q['repeat']
 
         question_groups = [
             (None, [q for q in questions if question_keyfn(q) is None])
@@ -2743,7 +2745,7 @@ class SplitGPSExportColumn(ExportColumn):
         return [header_template.format(header) for header_template in header_templates]
 
     def get_value(self, domain, doc_id, doc, base_path, split_column=False, **kwargs):
-        value = super(SplitGPSExportColumn, self).get_value(
+        coord_string = super().get_value(
             domain,
             doc_id,
             doc,
@@ -2751,18 +2753,30 @@ class SplitGPSExportColumn(ExportColumn):
             **kwargs
         )
         if not split_column:
-            return value
+            return coord_string
 
-        if value == MISSING_VALUE:
-            return [MISSING_VALUE] * 4
+        return self.extract_coordinate_array(coord_string)
 
-        values = [EMPTY_VALUE] * 4
+    @classmethod
+    def extract_coordinate_array(cls, coord_string):
+        NUM_VALUES = 4
 
-        if not isinstance(value, str):
+        if coord_string == MISSING_VALUE:
+            return [MISSING_VALUE] * NUM_VALUES
+
+        values = [EMPTY_VALUE] * NUM_VALUES
+        if not isinstance(coord_string, str):
             return values
 
-        for index, coordinate in enumerate(value.split(' ')):
+        for index, coordinate in enumerate(coord_string.split()):
+            # NOTE: Unclear if the intention here is to support situations where only the lat/lng are supplied,
+            # or if we really want to allow just specifying just lat, or lat/lng/alt as valid.
+            # I think it's likely we only want to support the lat/lng situation, but leaving as is
+            # in the event that this behavior is relied upon somewhere
+            if index >= NUM_VALUES:
+                break
             values[index] = coordinate
+
         return values
 
 

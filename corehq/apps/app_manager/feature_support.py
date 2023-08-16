@@ -234,10 +234,3 @@ class CommCareFeatureSupportMixin(object):
             toggles.CASE_LIST_TILE.enabled(self.domain)
             and self._require_minimum_version('2.54')
         )
-
-    @property
-    def supports_split_screen_case_search(self):
-        return (
-            toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.domain)
-            and self._require_minimum_version('2.54')
-        )
