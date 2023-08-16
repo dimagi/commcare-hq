@@ -79,14 +79,14 @@ class EndpointsHelper(PostProcessor):
             elif child.id in argument_ids:
                 self._add_datum_for_arg(frame, child)
 
-        def get_child(child_id, children):
+        def get_child(child_id):
             for child in children:
                 if child.id == child_id:
                     return child
 
         arguments = []
         for arg_id in argument_ids:
-            child = get_child(arg_id, children)
+            child = get_child(arg_id)
             if child.is_instance:
                 arguments.append(Argument(
                     id=arg_id,
