@@ -79,22 +79,22 @@ class EndpointsHelper(PostProcessor):
             elif child.id in argument_ids:
                 self._add_datum_for_arg(frame, child)
 
-        def get_child(id, children):
+        def get_child(child_id, children):
             for child in children:
-                if child.id == id:
+                if child.id == child_id:
                     return child
 
         arguments = []
-        for id in argument_ids:
-            child = get_child(id, children)
+        for arg_id in argument_ids:
+            child = get_child(arg_id, children)
             if child.is_instance:
                 arguments.append(Argument(
-                    id=id,
-                    instance_id=id,
+                    id=arg_id,
+                    instance_id=arg_id,
                     instance_src="jr://instance/selected-entities",
                 ))
             else:
-                arguments.append(Argument(id=id))
+                arguments.append(Argument(id=arg_id))
 
         return SessionEndpoint(
             id=endpoint_id,
