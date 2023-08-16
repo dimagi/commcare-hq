@@ -78,7 +78,6 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.case_search.const import COMMCARE_PROJECT, EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
-    case_search_sync_cases_on_form_entry_enabled_for_domain,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY
@@ -185,11 +184,6 @@ class RemoteRequestFactory(object):
             text=Text(locale_id=id_strings.case_search_title_translation(self.module))
         )
 
-    def build_results_title(self):
-        return Display(
-            text=Text(locale_id=id_strings.case_search_locale(self.module))
-        )
-
     def build_description(self):
         return Display(
             text=Text(locale_id=id_strings.case_search_description_locale(self.module))
@@ -216,7 +210,6 @@ class RemoteRequestFactory(object):
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
                 default_search=self.module.search_config.default_search,
-                results_title=self.build_results_title() if self.app.supports_split_screen_case_search else None,
             )
         ]
 

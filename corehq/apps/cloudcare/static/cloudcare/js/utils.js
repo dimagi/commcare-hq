@@ -1,4 +1,4 @@
-/* global DOMPurify, moment, NProgress, Sentry */
+/* global moment, NProgress, Sentry */
 hqDefine('cloudcare/js/utils', [
     'jquery',
     'hqwebapp/js/initial_page_data',

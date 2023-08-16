@@ -1,4 +1,4 @@
-/*global DOMPurify, Marionette, moment */
+/*global DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
@@ -50,9 +50,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (!_.isString(value)) {
                 return [false, undefined];
             }
-            var values = value.split(selectDelimiter),
+            var allValues = value.split(selectDelimiter),
                 searchForBlank = _.contains(values, ""),
-                values = _.without(values, "");
+                values = _.without(allValues, "");
 
             if (model.get('input') === 'select' || model.get('input') === 'checkbox') {
                 value = values;
@@ -116,14 +116,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 if (domElement.is('input')) {
                     domElement.val(value);
                     domElement.change();
-                }
-                else {
+                } else {
                     // Set lookup table option by label
                     var matchingOption = function (el) {
-                        return el.find("option").filter(function (_) {
+                        return el.find("option").filter(function () {
                             return $(this).text().trim() === value;
                         });
-                    }
+                    };
                     var option = matchingOption(domElement);
                     if (domElement[0].multiple === true) {
                         var val = option.val();
@@ -132,8 +131,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                                 domElement.val().concat(val)
                             ).trigger("change");
                         }
-                    }
-                    else {
+                    } else {
                         if (option.length === 1) {
                             domElement.val(String(option.index() - 1)).trigger("change");
                         } else {
@@ -205,8 +203,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             // initialize with default values or with sticky values if either is present
             var value = decodeValue(this.model, this.model.get('value'))[1],
                 allStickyValues = formplayerUtils.getStickyQueryInputs(),
-                stickyValue = allStickyValues[this.model.get('id')],
-                [searchForBlank, stickyValue] = decodeValue(this.model, stickyValue);
+                stickyValueEncoded = allStickyValues[this.model.get('id')],
+                [searchForBlank, stickyValue] = decodeValue(this.model, stickyValueEncoded);
             this.model.set('searchForBlank', searchForBlank);
             if (stickyValue && !value) {  // Sticky values don't override default values
                 value = stickyValue;
@@ -318,8 +316,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (this.model.get('input') === 'address') {
                 return;  // skip geocoder address
             }
-            var queryValue = $(this.ui.queryField).val(),
-                searchForBlank = $(this.ui.searchForBlank).prop('checked');
+            var searchForBlank = $(this.ui.searchForBlank).prop('checked');
             return encodeValue(this.model, searchForBlank);
         },
 
@@ -397,7 +394,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.ui.dateRange.on('cancel.daterangepicker', function () {
                 $(this).val('').trigger('change');
             });
-            this.ui.dateRange.on('apply.daterangepicker', function(ev, picker) {
+            this.ui.dateRange.on('apply.daterangepicker', function (ev, picker) {
                 $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
             });
             this.ui.dateRange.on('change', function () {
@@ -605,14 +602,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
                 // Update models based on response
-                if (response.queryResponse != null) {
+                if (response.queryResponse) {
                     _.each(response.queryResponse.displays, function (responseModel, i) {
                         self.collection.models[i].set({
                             error: responseModel.error,
                             required: responseModel.required,
                             required_msg: responseModel.required_msg,
                         });
-                });
+                    });
                 } else {
                     _.each(response.models, function (responseModel, i) {
                         self.collection.models[i].set({

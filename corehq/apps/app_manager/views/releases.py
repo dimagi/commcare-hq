@@ -87,7 +87,6 @@ from corehq.apps.es import queries
 from corehq.apps.es.apps import AppES, build_comment, version
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.standard.deployments import ApplicationErrorReport
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser, CouchUser

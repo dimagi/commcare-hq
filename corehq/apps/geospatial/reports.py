@@ -1,18 +1,18 @@
 from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext_noop
+from django.utils.translation import gettext as _
 from jsonobject.exceptions import BadValueError
+
 
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
-from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
 from couchforms.geopoint import GeoPoint
 from .const import GEO_POINT_CASE_PROPERTY
 from .models import GeoPolygon
-
-
+from .utils import get_geo_case_property
 
 class CaseManagementMap(ProjectReport, CaseListMixin):
     name = gettext_noop("Case Management Map")
@@ -38,13 +38,25 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
 
         return context
 
+    def default_report_url(self):
+        return reverse('geospatial_default', args=[self.request.project.name])
+
     @property
-    def report_context(self):
-        cases = []
-        invalid_geo_cases_count = 0
+    def headers(self):
+        from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+        headers = DataTablesHeader(
+            DataTablesColumn(_("case_id"), prop_name="type.exact"),
+            DataTablesColumn(_("GPS"), prop_name="type.exact"),
+            DataTablesColumn(_("Name"), prop_name="name.exact", css_class="case-name-link"),
+        )
+        headers.custom_sort = [[2, 'desc']]
+        return headers
+
+    @property
+    def rows(self):
 
         def _get_geo_location(case):
-            geo_point = case.get(GEO_POINT_CASE_PROPERTY)
+            geo_point = case.get(get_geo_case_property(case.get('domain')))
             if not geo_point:
                 return
 
@@ -54,48 +66,15 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
             except BadValueError:
                 return None
 
+        cases = []
         for row in self.es_results['hits'].get('hits', []):
-            es_case = self.get_case(row)
-            display = CaseDisplayES(es_case, self.timezone, self.individual)
-
-            coordinates = _get_geo_location(es_case)
-            if coordinates is None:
-                invalid_geo_cases_count += 1
-                continue
-            # We should consider passing in a "center_coordinates" fields to center the map
-            # to the relavent
-            case = {
-                "case_id": display.case_id,
-                "case_type": display.case_type,
-                "name": display.case_name,
-                "coordinates": coordinates
-            }
-            cases.append(case)
-
-        invalid_cases_link = self._invalid_geo_cases_report_link if invalid_geo_cases_count else ''
-
-        return dict(
-            context={
-                "cases": cases,
-                "invalid_geo_cases_report_link": invalid_cases_link,
-            },
-        )
-
-    @property
-    def default_report_url(self):
-        return reverse('geospatial_default', args=[self.request.project.name])
-
-    @property
-    def _invalid_geo_cases_report_link(self):
-        # Copy the set of filters to pre-populate the Case List Explorer page's filters
-        query = self.request.GET.copy()
-        if 'search_query' in query:
-            query.pop('search_query')
-
-        query['search_xpath'] = f"{GEO_POINT_CASE_PROPERTY} = ''"
-        cle = CaseListExplorer(self.request, domain=self.domain)
-
-        return "{resource}?{query_params}".format(
-            resource=cle.get_url(self.domain),
-            query_params=query.urlencode(),
-        )
+            display = CaseDisplayES(
+                self.get_case(row), self.timezone, self.individual
+            )
+            coordinates = _get_geo_location(self.get_case(row))
+            cases.append([
+                display.case_id,
+                coordinates,
+                display.case_link
+            ])
+        return cases
