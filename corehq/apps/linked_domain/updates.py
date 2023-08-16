@@ -567,6 +567,7 @@ def update_data_dictionary(domain_link, is_pull=False, overwrite=False):
         case_type_obj = CaseType.get_or_create(domain_link.linked_domain, case_type_name)
         case_type_obj.description = case_type_desc['description']
         case_type_obj.fully_generated = case_type_desc['fully_generated']
+        case_type_obj.is_deprecated = case_type_desc['is_deprecated']
         case_type_obj.save()
 
         for group_name, group_desc in case_type_desc['groups'].items():
