@@ -20,7 +20,7 @@ from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es import case_search_adapter
-from corehq.form_processor.models import CaseTransaction, CommCareCase
+from corehq.form_processor.models import CommCareCase
 from corehq.apps.reports.util import domain_copied_cases_by_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.filters.api import CaseCopier

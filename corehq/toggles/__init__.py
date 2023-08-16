@@ -551,10 +551,10 @@ def all_toggles_by_name_in_scope(scope_dict, toggle_class=StaticToggle):
         if not toggle_name.startswith('__'):
             if toggle_class == FrozenPrivilegeToggle:
                 # Include only FrozenPrivilegeToggle types
-                include = type(toggle) == FrozenPrivilegeToggle
+                include = isinstance(toggle, FrozenPrivilegeToggle)
             else:
                 # Exclude FrozenPrivilegeToggle but include other subclasses such as FeatureRelease
-                include = isinstance(toggle, toggle_class) and type(toggle) != FrozenPrivilegeToggle
+                include = isinstance(toggle, toggle_class) and not isinstance(toggle, FrozenPrivilegeToggle)
             if include:
                 result[toggle_name] = toggle
     return result
