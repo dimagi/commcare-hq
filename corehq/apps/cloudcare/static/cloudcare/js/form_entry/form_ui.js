@@ -313,9 +313,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             if (child.type === constants.QUESTION_TYPE) {
                 const questionTileWidth = Question.calculateColumnWidthForPerRowStyle(child.style);
                 usedWidth += questionTileWidth;
-
                 if (usedWidth > constants.GRID_COLUMNS) {
                     resetCurrentGroup();
+                    usedWidth += questionTileWidth;
                 }
                 addToCurrentGroup(child)
             } else if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
