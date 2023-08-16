@@ -1079,7 +1079,7 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
 class DatasourceExportDownloadForm(forms.Form):
 
     data_source = forms.ChoiceField(
-        label=gettext_lazy("Select project datasource"),
+        label=gettext_lazy("Select project data source"),
         required=True,
     )
 
