@@ -19,7 +19,7 @@
 abdm
  0001_initial
  0002_hiuconsentartefact_hiuconsentrequest
- 0003_hiuconsentartefact_remove_status_error
+ 0003_hiuconsentartefact_error
 accounting
  0001_squashed_0052_ensure_report_builder_plans
  0002_auto_20170222_2008

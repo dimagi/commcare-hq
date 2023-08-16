@@ -128,8 +128,7 @@ class GatewayConsentRequestNotify(HIUGatewayBaseView):
 
     def handle_granted(self, request_data, consent_request):
         for artefact in request_data['notification']['consentArtefacts']:
-            hiu_consent_artefact = HIUConsentArtefact(artefact_id=artefact['id'], consent_request=consent_request,
-                                                      status=STATUS_GRANTED)
+            hiu_consent_artefact = HIUConsentArtefact(artefact_id=artefact['id'], consent_request=consent_request)
             hiu_consent_artefact.save()
             gateway_request_id = self.gateway_fetch_artefact_details(artefact['id'])
             hiu_consent_artefact.gateway_request_id = gateway_request_id
@@ -180,7 +179,6 @@ class GatewayConsentRequestOnFetch(HIUGatewayBaseView):
                 if consent_artefact.consent_request.artefacts.filter(details__isnull=False).count() == 0:
                     self.update_consent_request_from_artefact(consent_artefact)
             elif request_data.get('error'):
-                consent_artefact.status = STATUS_ERROR
                 consent_artefact.error = request_data['error']
             consent_artefact.save()
 

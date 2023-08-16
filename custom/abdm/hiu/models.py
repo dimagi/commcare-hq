@@ -59,3 +59,4 @@ class HIUConsentArtefact(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     details = models.JSONField(null=True)
+    error = models.JSONField(null=True)
