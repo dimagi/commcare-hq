@@ -234,22 +234,60 @@ class ScheduledReportForm(forms.Form):
 
 
 class EmailReportForm(forms.Form):
-    subject = forms.CharField(required=False)
-    send_to_owner = forms.BooleanField(required=False)
-    attach_excel = forms.BooleanField(required=False)
-    recipient_emails = MultiEmailField(required=False)
-    notes = forms.CharField(required=False)
+    subject = forms.CharField(required=False, label=_('Subject'))
+    send_to_owner = forms.BooleanField(required=False, label=_('Send to me'))
+    recipient_emails = MultiEmailField(required=False, label=_('Additional Recipients'))
+    notes = forms.CharField(required=False, label=_('Report notes'), widget=forms.Textarea(attrs={"rows": 3}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = HQFormHelper()
+        self.helper.field_class = "col-xs-10"
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('subject', data_bind="value: subject"),
+                crispy.Field('send_to_owner', data_bind="checked: send_to_owner"),
+                crispy.Field('recipient_emails', css_id='email-report-recipient_emails',
+                    data_bind="selectedOptions: recipient_emails"),
+                crispy.Field('notes', data_bind="value: notes"),
+                css_class='modal-body'
+            ),
+            FormActions(
+                crispy.Div(
+                    crispy.Button('close', _('Close'), css_class='btn btn-default cancel-button',
+                        data_bind='click: resetModal', data_dismiss='modal'),
+                    crispy.Submit('submit_btn', _('Send Email'), css_class="btn btn-primary send-button",
+                        data_bind='click: sendEmail', data_loading_text=_('Sending...')),
+                    css_class='pull-right',
+                )
+            )
+        )
 
     def clean(self):
-        cleaned_data = super(EmailReportForm, self).clean()
+        cleaned_data = super().clean()
         _verify_email(cleaned_data)
         return cleaned_data
+
+    def get_readable_errors(self):
+        errors = []
+
+        if not self.errors:
+            return errors
+
+        for field in self.errors:
+            field_name = self.fields[field].label if field in self.fields else ''
+            for error in self.errors.get_json_data(escape_html=True)[field]:
+                prefix = f'{field_name}: ' if field_name else ''
+                errors.append(f'{prefix}{error["message"]}')
+
+        return errors
 
 
 def _verify_email(cleaned_data):
     if ('recipient_emails' in cleaned_data
-        and not (cleaned_data['recipient_emails'] or
-                     cleaned_data['send_to_owner'])):
+        and not (cleaned_data['recipient_emails']
+            or cleaned_data['send_to_owner'])):
         raise forms.ValidationError("You must specify at least one "
                                     "valid recipient")
 
