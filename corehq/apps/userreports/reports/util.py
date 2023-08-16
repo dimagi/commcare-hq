@@ -1,5 +1,6 @@
 from memoized import memoized
 
+from corehq import toggles
 from couchexport.export import export_from_tables
 
 from corehq.apps.userreports.columns import get_expanded_column_config
@@ -36,12 +37,13 @@ class ReportExport(object):
     """Export all the rows of a UCR report
     """
 
-    def __init__(self, domain, title, report_config, lang, filter_values):
+    def __init__(self, domain, title, report_config, lang, filter_values, request_user=None):
         self.domain = domain
         self.title = title
         self.report_config = report_config
         self.lang = lang
         self.filter_values = filter_values
+        self.request_user = request_user
 
     @property
     def data_source(self):
@@ -59,14 +61,16 @@ class ReportExport(object):
 
         In this scenario valid location filters for the user are Agra [City] and Noida [City], which can be identified by their display and value content.
         '''
-        location_key = None
-        user_filtered_locations = []
-        for k, v in self.filter_values.items():
-            if 'computed_owner_location' in k:
-                location_key = k
-                user_filtered_locations = [choice for choice in v if choice.value != choice.display]
-        if location_key:
-            self.filter_values[location_key] = user_filtered_locations
+        if toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(self.domain):
+            location_key = None
+            user_location_ids = self.request_user.get_location_ids(self.domain)
+            user_filtered_locations = []
+            for k, v in self.filter_values.items():
+                if 'computed_owner_location' in k:
+                    location_key = k
+                    user_filtered_locations = [choice for choice in v if choice.value in user_location_ids]
+            if location_key:
+                self.filter_values[location_key] = user_filtered_locations
 
         data_source.set_filter_values(self.filter_values)
         data_source.set_order_by([(o['field'], o['order']) for o in self.report_config.sort_expression])
