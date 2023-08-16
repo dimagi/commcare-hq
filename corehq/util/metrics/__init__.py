@@ -121,6 +121,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 
 from corehq.apps.celery import periodic_task
+from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 
 from .const import ALERT_INFO, COMMON_TAGS, MPM_ALL
@@ -224,10 +225,10 @@ def create_metrics_event(title: str, text: str, alert_type: str = ALERT_INFO,
         metrics_logger.exception('Error creating metrics event', e)
 
 
-def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Dict[str, str] = None,
-                            bucket_tag: str = 'duration', callback: Callable = None):
+class metrics_histogram_timer(TimingContext):
     """
-    Create a context manager that times and reports to the metric providers as a histogram
+    Create a context manager that times and reports to the metric providers as a histogram.
+    If the block raises an exception, that will be logged as well.
 
     Example Usage:
 
@@ -235,7 +236,7 @@ def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Di
 
         timer = metrics_histogram_timer('commcare.some.special.metric', tags={
             'type': type,
-        ], timing_buckets=(.001, .01, .1, 1, 10, 100))
+        }, timing_buckets=(.001, .01, .1, 1, 10, 100))
         with timer:
             some_special_thing()
 
@@ -246,36 +247,43 @@ def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Di
     :param metric: Name of the metric (must start with 'commcare.')
     :param tags: metric tags to include
     :param timing_buckets: sequence of numbers representing time thresholds, in seconds
-    :param bucket_tag: The name of the bucket tag to use (if used by the underlying provider)
     :param callback: a callable which will be called when exiting the context manager with a single argument
-                     of the timer duratio
+                     of the timer duration
     :return: A context manager that will perform the specified timing
              and send the specified metric
-
     """
-    timer = TimingContext()
-    original_stop = timer.stop
 
-    def new_stop(name=None):
-        original_stop(name)
-        if callback:
-            callback(timer.duration)
+    def __init__(self, metric: str, timing_buckets: Iterable[int], tags: Dict[str, str] = None,
+                 callback: Callable = None):
+        super().__init__()
+        self._metric = metric
+        self._timing_buckets = timing_buckets
+        self._tags = tags
+        self._callback = callback
+        self._errored = False
+
+    def stop(self, name=None):
+        super().stop(name)
+        if self._callback:
+            self._callback(self.duration)
         metrics_histogram(
-            metric, timer.duration,
-            bucket_tag=bucket_tag, buckets=timing_buckets, bucket_unit='s',
-            tags=tags
+            self._metric, self.duration, bucket_tag='duration',
+            buckets=self._timing_buckets, bucket_unit='s', tags=self._tags
         )
-        timer_name = metric
-        if metric.startswith('commcare.'):
-            timer_name = ".".join(metric.split('.')[1:])  # remove the 'commcare.' prefix
+        if self._errored:
+            metrics_counter(f'{self._metric}.error', tags=self._tags)
+        timer_name = self._metric
+        if self._metric.startswith('commcare.'):
+            timer_name = ".".join(self._metric.split('.')[1:])  # remove the 'commcare.' prefix
         add_breadcrumb(
             category="timing",
-            message=f"{timer_name}: {timer.duration:0.3f}",
+            message=f"{timer_name}: {self.duration:0.3f}",
             level="info",
         )
 
-    timer.stop = new_stop
-    return timer
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._errored = exc_type is not None
+        super().__exit__(exc_type, exc_val, exc_tb)  # this calls self.stop
 
 
 class metrics_track_errors(ContextDecorator):
@@ -304,6 +312,33 @@ class metrics_track_errors(ContextDecorator):
             metrics_counter(self.succeeded_name)
         else:
             metrics_counter(self.failed_name)
+
+
+def limit_domains(domain_name):
+    """Return the domain name if it's among a privileged set that get tagged individually
+
+    Else return __other__.  This is used to limit the number of tag combinations sent to datadog.
+    """
+    if not settings.IS_SAAS_ENVIRONMENT:
+        return domain_name
+    if domain_name and domain_name in _domains_to_tag():
+        return domain_name
+    return '__other__'
+
+
+@quickcache([], timeout=24 * 60 * 60)
+def _domains_to_tag():
+    # Only tag big projects individually
+    # I expect this implementation may need to evolve
+    from corehq.apps.accounting import models
+    return set(models.Subscription.visible_objects.filter(
+        is_active=True,
+        plan_version__plan__edition=models.SoftwarePlanEdition.ENTERPRISE,
+        service_type__in=[models.SubscriptionType.IMPLEMENTATION, models.SubscriptionType.SANDBOX],
+    ).values_list(
+        'subscriber__domain',
+        flat=True
+    ))
 
 
 def push_metrics():
@@ -336,10 +371,9 @@ def _get_metrics_provider():
 
 
 def _global_setup():
-    if settings.UNIT_TESTING or settings.DEBUG or 'ddtrace.contrib.django' not in settings.INSTALLED_APPS:
+    if settings.UNIT_TESTING or settings.SERVER_ENVIRONMENT != 'staging':
         try:
             from ddtrace import tracer
             tracer.enabled = False
-            tracer.log.disabled = True
         except ImportError:
             pass

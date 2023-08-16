@@ -32,7 +32,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     parentModules: initial_page_data('parent_case_modules'),
                     allCaseModules: initial_page_data('all_case_modules'),
                     caseTileTemplateOptions: options.case_tile_template_options,
-                    caseTileFields: options.case_tile_fields,
+                    caseTileTemplateConfigs: options.case_tile_template_configs,
                     childCaseTypes: detail.subcase_types,
                     fixture_columns_by_type: options.fixture_columns_by_type || {},
                     parentSelect: detail.parent_select,
@@ -219,6 +219,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                 shadowOptions.modules,
                 shadowOptions.source_module_id,
                 shadowOptions.excluded_form_ids,
+                shadowOptions.form_session_endpoints,
                 shadowOptions.shadow_module_version
             ));
         } else if (moduleType === 'advanced') {

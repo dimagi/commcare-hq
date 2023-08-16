@@ -1,6 +1,9 @@
 import json
 import jsonschema
+
 from requests.exceptions import HTTPError
+
+from django.forms.models import model_to_dict
 from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
@@ -10,15 +13,16 @@ from dimagi.utils.web import json_response
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.geospatial.reports import CaseManagementMap
+from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.util.view_utils import json_error
 from .routing_solvers.mapbox_optimize import (
     submit_routing_request,
     routing_status
 )
 
-
 from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA
-from .models import GeoPolygon
+from .models import GeoPolygon, GeoConfig
+
 
 
 def geospatial_default(request, *args, **kwargs):
@@ -103,3 +107,60 @@ class GeoPolygonView(BaseDomainView):
         return json_response({
             'id': geo_polygon.id,
         })
+
+
+class GeospatialConfigPage(BaseDomainView):
+    urlname = "geospatial_settings"
+    template_name = "geospatial/settings.html"
+
+    page_name = _("Configuration Settings")
+    section_name = _("Geospatial")
+
+    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(GeospatialConfigPage, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.settings_form,
+            'config': model_to_dict(
+                self.config,
+                fields=GeospatialConfigForm.Meta.fields
+            )
+        }
+
+    @property
+    def settings_form(self):
+        if self.request.method == 'POST':
+            return GeospatialConfigForm(self.request.POST, instance=self.config)
+        return GeospatialConfigForm(instance=self.config)
+
+    @property
+    def config(self):
+        try:
+            obj = GeoConfig.objects.get(domain=self.domain)
+        except GeoConfig.DoesNotExist:
+            obj = GeoConfig()
+            obj.domain = self.domain
+        return obj
+
+    def post(self, request, *args, **kwargs):
+        form = self.settings_form
+
+        if not form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        instance = form.save(commit=False)
+        instance.domain = self.domain
+        instance.save()
+
+        return self.get(request, *args, **kwargs)

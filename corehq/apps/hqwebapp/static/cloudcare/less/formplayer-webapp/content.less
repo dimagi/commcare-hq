@@ -37,6 +37,10 @@ body {
   padding-left: 0;
 }
 
+#content-container {
+  background: transparent;
+}
+
 .case-tile-container {
   background: transparent !important;
   > div {
@@ -45,6 +49,16 @@ body {
     display: grid;
     container-type: inline-size;
   }
+}
+
+#case-list-search-controls {
+  background-color: @cc-bg;
+  border: 1px solid white;
+  display: flex;
+  justify-content: space-between;
+    #case-list-sort-by-btn {
+      background-color: transparent;
+    }
 }
 
 #select-all-tile-checkbox {

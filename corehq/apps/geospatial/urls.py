@@ -6,7 +6,9 @@ from .views import (
     GeoPolygonView,
     MapboxOptimizationV2,
     mapbox_routing_status,
+    GeospatialConfigPage
 )
+
 
 urlpatterns = [
     url(r'^edit_geo_polygon/$', GeoPolygonView.as_view(),
@@ -17,6 +19,7 @@ urlpatterns = [
     url(r'^mapbox_routing_status/(?P<poll_id>[\w-]+)/',
         mapbox_routing_status,
         name="mapbox_routing_status"),
+    url(r'^settings/$', GeospatialConfigPage.as_view(), name=GeospatialConfigPage.urlname),
     url(r'^$', geospatial_default, name='geospatial_default'),
     CaseManagementMapDispatcher.url_pattern(),
 ]

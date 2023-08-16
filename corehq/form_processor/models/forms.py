@@ -370,7 +370,12 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(self, domain, form_ids, delete_attachments=True):
+    def hard_delete_forms(self, domain, form_ids, delete_attachments=True, *, publish_changes=True):
+        """Delete forms permanently
+
+        :param publish_changes: Flag for change feed publication.
+            Documents in Elasticsearch will not be deleted if this is false.
+        """
         assert isinstance(form_ids, list)
 
         deleted_count = 0
@@ -394,7 +399,8 @@ class XFormInstanceManager(RequireDBManager):
             metas = get_blob_db().metadb.get_for_parents(deleted_forms)
             get_blob_db().bulk_delete(metas=metas)
 
-        self.publish_deleted_forms(domain, form_ids)
+        if publish_changes:
+            self.publish_deleted_forms(domain, form_ids)
 
         return deleted_count
 

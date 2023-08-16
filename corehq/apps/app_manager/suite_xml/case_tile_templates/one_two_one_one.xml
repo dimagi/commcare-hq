@@ -6,7 +6,7 @@
   </title>
 
   <field>
-    <style horz-align="left" vert-align="center" font-size="medium">
+    <style horz-align="left" vert-align="center" font-size="small">
       <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
     </style>
     <header>
@@ -24,14 +24,12 @@
   </field>
 
   <field>
-    <style horz-align="left" vert-align="center" font-size="medium">
-      <grid grid-height="1" grid-width="6" grid-x="6" grid-y="0"/>
-    </style>
     <header>
       <text>
+        <locale id="{map[locale_id]}"/>
       </text>
     </header>
-    <template form="address" width="0">
+    <template form="{map[format]}" width="0">
       <text>
         <xpath function="concat({map[xpath_function]}, if(here(), '', ''))"> <!-- Without the here() call sessionStorage.locationLat will not be populated -->
           {map[variables]}
@@ -41,7 +39,22 @@
   </field>
 
   <field>
-    <style horz-align="left" vert-align="center" font-size="medium">
+    <header>
+      <text>
+        <locale id="{map_popup[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{map_popup[format]}" width="0">
+      <text>
+        <xpath function="{map_popup[xpath_function]}">
+          {map_popup[variables]}
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="small">
       <grid grid-height="1" grid-width="7" grid-x="0" grid-y="1"/>
     </style>
     <header>
@@ -59,7 +72,7 @@
   </field>
 
   <field>
-    <style horz-align="left" vert-align="center" font-size="medium">
+    <style horz-align="left" vert-align="center" font-size="small">
       <grid grid-height="1" grid-width="4" grid-x="8" grid-y="1"/>
     </style>
     <header>
@@ -78,7 +91,7 @@
 
 
   <field>
-    <style horz-align="left" vert-align="center" font-size="medium">
+    <style horz-align="left" vert-align="center" font-size="small">
       <grid grid-height="1" grid-width="12" grid-x="0" grid-y="2"/>
     </style>
     <header>
@@ -96,7 +109,7 @@
   </field>
 
   <field>
-    <style horz-align="center" vert-align="center" font-size="medium">
+    <style horz-align="center" vert-align="center" font-size="small">
       <grid grid-height="1" grid-width="12" grid-x="0" grid-y="3"/>
     </style>
     <header>

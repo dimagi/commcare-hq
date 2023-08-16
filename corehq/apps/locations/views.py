@@ -7,6 +7,7 @@ from django.http import Http404, HttpResponseRedirect
 from django.http.response import HttpResponseServerError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
@@ -305,11 +306,24 @@ class LocationTypesView(BaseDomainView):
     @property
     def page_context(self):
         return {
-            'location_types': self._get_loc_types(),
+            'location_types': self._location_types,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
+            'suggest_orphan_case_alerts_setting': self._suggest_orphan_case_alerts_setting,
+            'project_settings_url': reverse('domain_settings_default', args=[self.domain])
         }
 
-    def _get_loc_types(self):
+    @property
+    def _suggest_orphan_case_alerts_setting(self):
+        """Determine if the `orphan_case_alerts_warning` info banner should be shown. It should be shown when
+        the setting is disabled and any organization level can own cases
+        """
+        if self.domain_object.orphan_case_alerts_warning:
+            return False
+
+        return any(filter(lambda location_type: location_type['shares_cases'], self._location_types))
+
+    @cached_property
+    def _location_types(self):
         return [{
             'pk': loc_type.pk,
             'name': loc_type.name,

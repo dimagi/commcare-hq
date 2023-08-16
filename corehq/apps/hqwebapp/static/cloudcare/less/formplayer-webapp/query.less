@@ -3,6 +3,10 @@
   align-items: stretch;
 }
 
+.full-width {
+  width: 100%;
+}
+
 .flex-child {
   flex: 1;
   min-width: 200px;
@@ -12,6 +16,7 @@
 }
 
 .flex-child-sidebar {
+  max-width: 400px;
   table {
     table-layout: fixed;
   }
@@ -34,6 +39,13 @@
   }
   .select2-container .select2-selection--multiple {
     min-height: inherit;
+  }
+}
+
+#sidebar-region {
+  background: transparent;
+  table {
+    background: white;
   }
 }
 

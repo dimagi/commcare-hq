@@ -4,6 +4,7 @@ import json
 from datetime import datetime, timedelta, date
 import pytz
 from urllib.parse import urlencode
+from functools import partial
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.users.models import WebUser
@@ -37,6 +38,10 @@ class DomainNavigationEventAudits:
 @flag_enabled('ACTION_TIMES_API')
 class TestNavigationEventAuditResource(APIResourceTest):
     resource = v0_5.NavigationEventAuditResource
+    default_limit = resource._meta.limit
+    max_limit = resource._meta.max_limit
+    base_params = partial(v0_5.NavigationEventAuditResourceParams,
+                          default_limit=default_limit, max_limit=max_limit)
     api_name = 'v0.5'
 
     @classmethod
@@ -196,10 +201,51 @@ class TestNavigationEventAuditResource(APIResourceTest):
 
         self.assertEqual(result_objects, expected_result_objects)
 
-    def test_request_with_cursor_param(self):
+    def test_request_with_UTC_start_time_start_param(self):
+        start_datetime = datetime(2023, 5, 2, 1, tzinfo=pytz.timezone('UTC')).isoformat()
+
         params = {
+            'UTC_start_time_start': start_datetime,
+        }
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result_objects = json.loads(response.content)['objects']
+        expected_result_objects = [
+            item for item in self.domain1_audits.expected_response_objects if
+            (item['UTC_start_time'] >= start_datetime)
+        ]
+
+        self.assertEqual(result_objects, expected_result_objects)
+
+    def test_request_with_UTC_start_time_end_param(self):
+        end_datetime = datetime(2023, 5, 2, 1, tzinfo=pytz.timezone('UTC')).isoformat()
+
+        params = {
+            'UTC_start_time_end': end_datetime,
+        }
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result_objects = json.loads(response.content)['objects']
+        expected_result_objects = [
+            item for item in self.domain1_audits.expected_response_objects if
+            (item['UTC_start_time'] <= end_datetime)
+        ]
+
+        self.assertEqual(result_objects, expected_result_objects)
+
+    def test_request_with_cursor_param(self):
+        cursor = {
             'cursor_user': self.username1,
-            'cursor_local_date': date(2023, 5, 1).isoformat()
+            'cursor_local_date': date(2023, 5, 1).isoformat(),
+            'local_date.lt': date(2023, 5, 2).isoformat()
+        }
+        encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
+        params = {
+            'cursor': encoded_cursor,
         }
         list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
         response = self._assert_auth_get_resource(list_endpoint)
@@ -214,30 +260,38 @@ class TestNavigationEventAuditResource(APIResourceTest):
                 'UTC_start_time': datetime(2023, 5, 2, 0, tzinfo=pytz.timezone('UTC')).isoformat(),
                 'UTC_end_time': datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC')).isoformat()
             },
-            {
-                'user': self.username1,
-                'user_id': self.user1._id,
-                'local_date': date(2023, 5, 2).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone('UTC')).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC')).isoformat()
-            },
-            {
-                'user': self.username2,
-                'user_id': self.user2._id,
-                'local_date': date(2023, 5, 2).isoformat(),
-                'UTC_start_time': datetime(2023, 5, 2, 7, tzinfo=pytz.timezone('UTC')).isoformat(),
-                'UTC_end_time': datetime(2023, 5, 2, 23, tzinfo=pytz.timezone('UTC')).isoformat()
-            }
         ]
 
         self.assertEqual(result_objects, expected_result_objects)
 
     def test_response_provides_next(self):
-        cursor = {
-            'cursor_user': self.username1,
-            'cursor_local_date': date(2023, 5, 1).isoformat()
+        local_date_filter = date(2023, 5, 2).isoformat()
+
+        # Tests initial request without a cursor
+        params = {
+            'limit': 1,
+            'local_date.lte': local_date_filter
         }
-        encoded_cursor = b64encode(urlencode(cursor).encode('utf-8'))
+        list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
+        response = self._assert_auth_get_resource(list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        response_next_url = json.loads(response.content)['meta']['next']
+
+        expected_page_zero_cursor = {
+            'limit': 1,
+            'local_date.lte': local_date_filter,
+            'cursor_local_date': date(2023, 5, 1).isoformat(),
+            'cursor_user': self.username1
+        }
+        encoded_expected_cursor = b64encode(urlencode(expected_page_zero_cursor).encode('utf-8'))
+        expected_next_params = {
+            'cursor': encoded_expected_cursor,
+        }
+        expected_next_url = f'?{urlencode(expected_next_params)}'
+        self.assertEqual(expected_next_url, response_next_url)
+
+        # Tests follow-up request using previously returned cursor
+        encoded_cursor = b64encode(urlencode(expected_page_zero_cursor).encode('utf-8'))
         params = {
             'limit': 1,
             'cursor': encoded_cursor,
@@ -245,20 +299,19 @@ class TestNavigationEventAuditResource(APIResourceTest):
         list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
         response = self._assert_auth_get_resource(list_endpoint)
         self.assertEqual(response.status_code, 200)
-
         response_next_url = json.loads(response.content)['meta']['next']
 
-        expected_cursor = {
-            'cursor_local_date': date(2023, 5, 1).isoformat(),
-            'cursor_user': self.username2,
-        }
-        encoded_expected_cursor = b64encode(urlencode(expected_cursor).encode('utf-8'))
-        expected_next_params = {
+        expected_page_one_cursor = {
             'limit': 1,
-            'cursor': encoded_expected_cursor
+            'local_date.lte': local_date_filter,
+            'cursor_local_date': date(2023, 5, 1).isoformat(),
+            'cursor_user': self.username2
         }
-        expected_next_url = f'{self.list_endpoint}?{urlencode(expected_next_params)}'
-
+        encoded_expected_cursor = b64encode(urlencode(expected_page_one_cursor).encode('utf-8'))
+        expected_next_params = {
+            'cursor': encoded_expected_cursor,
+        }
+        expected_next_url = f'?{urlencode(expected_next_params)}'
         self.assertEqual(expected_next_url, response_next_url)
 
     def test_response_provides_total_count(self):
@@ -280,20 +333,27 @@ class TestNavigationEventAuditResource(APIResourceTest):
         self.assertEqual(2, response_total_count)
 
     def test_query_includes_users_in_only_specified_domain(self):
-        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        params = self.base_params(domain=self.domain1_audits.domain)
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(self.domain1_audits.domain, params)
         for result in results:
             self.assertTrue(result['user'] in self.domain1_audits.users)
 
-        results = self.resource.cursor_query(self.domain2_audits.domain, self.domain2_audits.timezone)
+        params.local_timezone = self.domain2_audits.timezone
+        results = self.resource.cursor_query(self.domain2_audits.domain, params)
         for result in results:
             self.assertTrue(result['user'] in self.domain2_audits.users)
 
     def test_query_first_last_action_time_for_each_user(self):
-        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        params = self.base_params(domain=self.domain1_audits.domain)
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(self.domain1_audits.domain, params)
         self.assertListEqual(results, self.domain1_audits.expected_query_result)
 
     def test_query_ordered_by_local_date_and_user(self):
-        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        params = self.base_params(domain=self.domain1_audits.domain)
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(self.domain1_audits.domain, params)
         filtered_results = [(result['local_date'], result['user']) for result in results]
 
         self.assertListEqual(filtered_results, sorted(filtered_results))
@@ -301,7 +361,9 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def test_query_unique_local_date_and_user_pairs(self):
         #Query results should not have two entries with the same local date and user
 
-        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone)
+        params = self.base_params(domain=self.domain1_audits.domain)
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(self.domain1_audits.domain, params)
         seen_user_local_dates = {}
         for result in results:
             user = result['user']
@@ -314,16 +376,17 @@ class TestNavigationEventAuditResource(APIResourceTest):
             seen_user_local_dates[user].add(local_date)
 
     def test_query_filter_by_user(self):
-        params = {'users': [self.username1]}
+        params = self.base_params(domain=self.domain1_audits.domain)
+        params.users = [self.username1]
+        params.local_timezone = self.domain1_audits.timezone
 
         results = self.resource.cursor_query(
             self.domain1_audits.domain,
-            self.domain1_audits.timezone,
             params=params,
         )
         expected_results = [
             item for item in self.domain1_audits.expected_query_result
-            if item['user'] in params['users']
+            if item['user'] in params.users
         ]
 
         self.assertListEqual(expected_results, results)
@@ -331,14 +394,17 @@ class TestNavigationEventAuditResource(APIResourceTest):
     def test_query_filter_by_local_date(self):
         date1 = date(2023, 5, 1)
         date2 = date(2023, 5, 2)
-        params = {
-            'local_date.gte': date(2023, 5, 1).isoformat(),
-            'local_date.lt': date(2023, 5, 2).isoformat()
+
+        params = self.base_params(domain=self.domain1_audits.domain)
+        local_date_params = {
+            'gte': date(2023, 5, 1).isoformat(),
+            'lt': date(2023, 5, 2).isoformat()
         }
 
+        params.local_date = local_date_params
+        params.local_timezone = self.domain1_audits.timezone
         results = self.resource.cursor_query(
             self.domain1_audits.domain,
-            self.domain1_audits.timezone,
             params=params
         )
         expected_results = [
@@ -348,13 +414,45 @@ class TestNavigationEventAuditResource(APIResourceTest):
 
         self.assertListEqual(expected_results, results)
 
-    def test_query_cursor_pagination_returns_items_after_cursor(self):
-        params = {
-            'cursor_local_date': date(2023, 5, 1),
-            'cursor_user': self.username1
-        }
+    def test_query_filter_by_UTC_start_time_start(self):
+        start_datetime = datetime(2023, 5, 2, 1, tzinfo=pytz.timezone('UTC'))
+        params = self.base_params(domain=self.domain1_audits.domain)
+        params.UTC_start_time_start = start_datetime
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(
+            self.domain1_audits.domain,
+            params=params
+        )
+        expected_results = [
+            item for item in self.domain1_audits.expected_query_result if
+            (item['UTC_start_time'] >= start_datetime)
+        ]
 
-        results = self.resource.cursor_query(self.domain1_audits.domain, self.domain1_audits.timezone, params)
+        self.assertListEqual(expected_results, results)
+
+    def test_query_filter_by_UTC_start_time_end(self):
+        end_datetime = datetime(2023, 5, 2, 6, tzinfo=pytz.timezone('UTC'))
+        params = self.base_params(domain=self.domain1_audits.domain)
+        params.UTC_start_time_end = end_datetime
+        params.local_timezone = self.domain1_audits.timezone
+        results = self.resource.cursor_query(
+            self.domain1_audits.domain,
+            params=params
+        )
+        expected_results = [
+            item for item in self.domain1_audits.expected_query_result if
+            (item['UTC_end_time'] <= end_datetime)
+        ]
+
+        self.assertListEqual(expected_results, results)
+
+    def test_query_cursor_pagination_returns_items_after_cursor(self):
+        params = self.base_params(domain=self.domain1_audits.domain)
+        params.cursor_local_date = date(2023, 5, 1)
+        params.cursor_user = self.username1
+        params.local_timezone = self.domain1_audits.timezone
+
+        results = self.resource.cursor_query(self.domain1_audits.domain, params)
         expected_results = [
             {
                 'user': self.username2,
@@ -379,26 +477,24 @@ class TestNavigationEventAuditResource(APIResourceTest):
         self.assertListEqual(expected_results, results)
 
     def test_query_cursor_pagination_page_size(self):
-        params = {
-            'cursor_local_date': date(2023, 5, 1),
-            'cursor_user': self.username1
-        }
+        params = self.base_params(domain=self.domain1_audits.domain)
+        params.cursor_local_date = date(2023, 5, 1)
+        params.cursor_user = self.username1
+        params.local_timezone = self.domain1_audits.timezone
 
-        params['limit'] = 2
+        params.limit = 2
         results = self.resource.cursor_query(
             self.domain1_audits.domain,
-            self.domain1_audits.timezone,
             params=params,
         )
-        self.assertEqual(len(results), params['limit'])
+        self.assertEqual(len(results), params.limit)
 
-        params['limit'] = 3
+        params.limit = 3
         results = self.resource.cursor_query(
             self.domain1_audits.domain,
-            self.domain1_audits.timezone,
             params=params,
         )
-        self.assertEqual(len(results), params['limit'])
+        self.assertEqual(len(results), params.limit)
 
     def _daterange(start_datetime, end_datetime):
         for n in range(int((end_datetime - start_datetime).total_seconds() // 3600) + 1):

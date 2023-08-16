@@ -394,7 +394,7 @@ class RestoreState:
 
                 if self.params.is_webapps:
                     # ignore this from webapps for now and just report
-                    notify_error("State hash mistmatch from webapps", details={
+                    notify_error("State hash mismatch from webapps", details={
                         'synclog_id': self.params.sync_log_id,
                         'device_id': self.params.device_id,
                         'app_id': self.params.app_id,
