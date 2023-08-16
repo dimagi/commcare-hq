@@ -289,6 +289,18 @@ class CaseCopier:
         self.original_cases = {}  # {case_id: commcare_case}
         self.processed_cases = {}  # {orig_case_id: new_caseblock}
 
+        system_user = UserDuck(user_id=SYSTEM_USER_ID, username='system')
+        self.submission_handler = SubmitCaseBlockHandler(
+            self.domain,
+            import_results=None,
+            case_type=None,
+            user=system_user,
+            record_form_callback=None,
+            throttle=True,
+            add_inferred_props_to_schema=False,
+        )
+        self.row_count = 0
+
     def copy_cases(self, case_ids):
         """
         Copies the cases specified by ``case_ids`` to ``self.to_owner``.
@@ -309,18 +321,8 @@ class CaseCopier:
         self.original_cases = {c.case_id: c for c in original_cases}
         self.processed_cases = {}
 
-        system_user = UserDuck(user_id=SYSTEM_USER_ID, username='system')
-        submission_handler = SubmitCaseBlockHandler(
-            self.domain,
-            import_results=None,
-            case_type=None,
-            user=system_user,
-            record_form_callback=None,
-            throttle=True,
-            add_inferred_props_to_schema=False,
-        )
         errors = []
-        for i, orig_case in enumerate(original_cases):
+        for orig_case in original_cases:
             if orig_case.owner_id == self.to_owner:
                 errors.append(_(
                     'Original case owner {owner_id} cannot copy '
@@ -333,10 +335,9 @@ class CaseCopier:
             if orig_case.case_id not in self.processed_cases:
                 caseblock = self._create_caseblock(orig_case)
                 self.processed_cases[orig_case.case_id] = caseblock
-                submission_handler.add_caseblock(
-                    RowAndCase(row=i, case=caseblock)
-                )
-        submission_handler.commit_caseblocks()
+                self._add_to_submission_handler(caseblock)
+
+        self._commit_cases()
 
         orig_new_case_id_pairs = [
             (orig_case_id, caseblock.case_id)
@@ -388,13 +389,28 @@ class CaseCopier:
             # case_id of the copied case
             if orig_parent_case_id not in self.original_cases:
                 return None
-            if orig_parent_case_id not in self.processed_cases:
-                orig_parent_case = self.original_cases[orig_parent_case_id]
-                new_parent_caseblock = self._create_caseblock(orig_parent_case)
-                self.processed_cases[orig_parent_case_id] = new_parent_caseblock
-                index_dict['case_id'] = new_parent_caseblock.case_id
+
+            orig_parent_case = self.original_cases[orig_parent_case_id]
+            new_parent_caseblock = self._create_caseblock(orig_parent_case)
+            self._add_to_submission_handler(new_parent_caseblock)
+            self.processed_cases[orig_parent_case_id] = new_parent_caseblock
+
+            index_dict['case_id'] = new_parent_caseblock.case_id
+
         return IndexAttrs(
             index_dict['case_type'],
             index_dict['case_id'],
             index_dict['relationship'],
         )
+
+    def _add_to_submission_handler(self, caseblock):
+        self.submission_handler.add_caseblock(
+            RowAndCase(row=self.row_count, case=caseblock)
+        )
+        self._increment_submission_row_count()
+
+    def _commit_cases(self):
+        self.submission_handler.commit_caseblocks()
+
+    def _increment_submission_row_count(self):
+        self.row_count += 1
