@@ -32,6 +32,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.standard import DatespanMixin
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.motech.utils import pformat_json
@@ -52,7 +53,7 @@ from ..models import RepeatRecord, are_repeat_records_migrated, is_queued
 from .repeat_record_display import RepeatRecordDisplay
 
 
-class BaseRepeatRecordReport(GenericTabularReport):
+class BaseRepeatRecordReport(GenericTabularReport, DatespanMixin):
     name = 'Repeat Records'
     base_template = 'repeaters/repeat_record_report.html'
     section_name = 'Project Settings'
@@ -66,6 +67,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
         'corehq.apps.reports.filters.select.RepeaterFilter',
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
         'corehq.apps.reports.filters.simple.RepeaterPayloadIdFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
 
     def _make_cancel_payload_button(self, record_id):
@@ -125,7 +127,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
         if self.payload_id:
             return len(self._get_all_records_by_payload())
         else:
-            return get_repeat_record_count(self.domain, self.repeater_id, self.state)
+            return get_repeat_record_count(self.domain, self.repeater_id, self.state, datespan=self.datespan)
 
     @property
     def shared_pagination_GET_params(self):
@@ -165,7 +167,8 @@ class BaseRepeatRecordReport(GenericTabularReport):
                 self.pagination.start,
                 self.pagination.count,
                 repeater_id=self.repeater_id,
-                state=self.state
+                state=self.state,
+                datespan=self.datespan
             )
         rows = [self._make_row(record) for record in records]
         return rows

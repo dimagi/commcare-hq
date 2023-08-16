@@ -97,6 +97,8 @@ ae04d8c82218a9543491 corehq/couchapps/registry_data_sources/views/view/reduce.js
 dc481a24b6799cc81f9d corehq/couchapps/registry_data_sources_by_last_modified/views/view/map.js
 b30cf4ab3c1f92248da7 corehq/couchapps/registry_report_configs/views/view/map.js
 ae04d8c82218a9543491 corehq/couchapps/registry_report_configs/views/view/reduce.js
+bd020a70a1ba1fe7432c corehq/couchapps/repeat_records_by_last_checked/views/view/map.js
+ae04d8c82218a9543491 corehq/couchapps/repeat_records_by_last_checked/views/view/reduce.js
 42f2ff676c44c1b2a59c corehq/couchapps/reportconfig/views/all_notifications/map.js
 ae04d8c82218a9543491 corehq/couchapps/reportconfig/views/all_notifications/reduce.js
 f5029066b91220ce7ee7 corehq/couchapps/reportconfig/views/configs_by_domain/map.js

@@ -56,7 +56,7 @@ DOC_TYPES_BY_NAME = {
     "receiver_wrapper_repeat_records": {
         "type": RepeatRecord,
         "use_domain": True,
-        "view": "repeaters/repeat_records",
+        "view": "repeat_records_by_last_checked/view",
     },
     "meta": {
         "type": ReportConfiguration,
