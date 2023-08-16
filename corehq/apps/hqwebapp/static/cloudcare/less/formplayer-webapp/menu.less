@@ -15,7 +15,12 @@
   #module-case-list-map {
     height: calc(~"100vh - 65px");
     position: sticky !important; // Has to be important so the leaflet code does not set it to relative
-    top: 50px; // based on the height of the crumbs bar
+    top: 46px; // based on the height of the crumbs bar
+    z-index: 1; // keep map on top of case list
+
+    @media (max-width: @screen-xs-max) {
+      height: 250px;
+    }
 
     .marker-pin {
       text-align: center;
@@ -25,11 +30,6 @@
       color: @call-to-action-hi;
       text-shadow: -1px 0 @call-to-action-low, 0 1px @call-to-action-low, 1px 0 @call-to-action-low, 0 -1px @call-to-action-low;
     }
-  }
-
-  #module-case-list-column-next-to-map {
-    // Horizontal scroll bar on table will disappear without this.
-    overflow-x: scroll;
   }
 
   .list-cell-wrapper-style {
@@ -70,5 +70,3 @@
 #menu-region .module-menu-container {
   padding-bottom: 6px;
 }
-
-
