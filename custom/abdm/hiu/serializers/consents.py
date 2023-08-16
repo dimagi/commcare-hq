@@ -88,8 +88,9 @@ class GatewayConsentRequestOnFetchSerializer(GatewayRequestBaseSerializer):
             permission = GatewayPermissionSerializer()
 
         status = serializers.ChoiceField(choices=GATEWAY_CONSENT_STATUS_CHOICES)
-        consentDetail = ConsentDetailSerializer()
-        signature = serializers.CharField()
+        consentDetail = ConsentDetailSerializer(required=False, allow_null=True)
+        signature = serializers.CharField(allow_null=True, allow_blank=True)
+
 
     consent = ConsentSerializer(required=False)
     error = GatewayErrorSerializer(required=False, allow_null=True)
