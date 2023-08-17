@@ -73,7 +73,7 @@ from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     get_display_data,
 )
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, no_permissions
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.locations.permissions import (
     can_edit_form_location,
     conditionally_location_safe,

@@ -2,7 +2,6 @@ import numbers
 
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext
-from memoized import memoized
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import SqlData
