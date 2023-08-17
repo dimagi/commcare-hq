@@ -3140,7 +3140,7 @@ def datasource_export_instance(config):
                 label=table.name,
                 columns=[
                     get_export_column(col)
-                    for _, col in config.columns_by_id.items()
+                    for col in config.columns_by_id.values()
                 ],
             )
         ],
