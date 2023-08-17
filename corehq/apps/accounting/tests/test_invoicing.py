@@ -14,16 +14,11 @@ from corehq.apps.accounting.models import (
     SMALL_INVOICE_THRESHOLD,
     BillingAccount,
     BillingRecord,
-    CreditAdjustment,
-    CreditLine,
     DefaultProductPlan,
     FeatureType,
     Invoice,
-    LineItem,
     SoftwarePlanEdition,
     Subscriber,
-    Subscription,
-    SubscriptionAdjustment,
     SubscriptionType,
 )
 from corehq.apps.accounting.tasks import calculate_users_in_all_domains
@@ -47,6 +42,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
 
     is_using_test_plans = False
     min_subscription_length = 3
+    is_testing_web_user_feature = False
 
     @classmethod
     def setUpClass(cls):
@@ -64,12 +60,17 @@ class BaseInvoiceTestCase(BaseAccountingTest):
 
         cls.subscription_length = 15  # months
         subscription_start_date = datetime.date(2016, 2, 23)
+        cls.subscription_is_active = False
+        if cls.is_testing_web_user_feature:
+            # make sure the subscription is still active when we count web users
+            cls.subscription_is_active = True
         subscription_end_date = add_months_to_date(subscription_start_date, cls.subscription_length)
         cls.subscription = generator.generate_domain_subscription(
             cls.account,
             cls.domain,
             date_start=subscription_start_date,
             date_end=subscription_end_date,
+            is_active=cls.subscription_is_active
         )
 
     def tearDown(self):
@@ -445,6 +446,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
 class TestWebUserLineItem(BaseInvoiceTestCase):
 
     is_using_test_plans = True
+    is_testing_web_user_feature = True
 
     def setUp(self):
         super(TestWebUserLineItem, self).setUp()
