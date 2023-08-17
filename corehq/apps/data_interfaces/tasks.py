@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional  # noqa: F401
 
 from django.conf import settings
 from django.core.cache import cache

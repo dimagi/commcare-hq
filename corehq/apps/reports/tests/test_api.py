@@ -52,6 +52,7 @@ class TestCaseCopier(TestCase):
             self.assertEqual(new_case.owner_id, 'new_owner_id')
             self.assertEqual(new_case.case_json['family_name'], 'Nature')
             self.assertEqual(new_case.opened_by, SYSTEM_USER_ID)
+            self.assertTrue(new_case.case_json[CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME])
 
     def test_copy_case_with_sensitive_properties(self):
         properties = {
