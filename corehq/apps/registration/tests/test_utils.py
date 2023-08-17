@@ -1,10 +1,21 @@
+from unittest import mock
+
 from django.contrib.auth.models import User
 from django.test import TestCase, RequestFactory
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
 from corehq.apps.registration.utils import request_new_domain
 from corehq.apps.users.models import WebUser
+
+
+def _issue_initializing_domain(*args, **kwargs):
+    raise Exception()
+
+
+def _noop(*args, **kwargs):
+    pass
 
 
 class TestRequestNewDomain(TestCase):
@@ -27,6 +38,12 @@ class TestRequestNewDomain(TestCase):
                 Subscription,
                 domain
             )
+
+        for test_domain in ['subscription-failed', 'init-default-roles-failed']:
+            domain = Domain.get_by_name(test_domain)
+            if domain is not None:
+                domain.delete()
+
         super().tearDown()
 
     @classmethod
@@ -58,3 +75,29 @@ class TestRequestNewDomain(TestCase):
         )
         domain = Domain.get_by_name(domain_name)
         self.assertFalse(domain.is_active)
+
+    @mock.patch('corehq.apps.registration.utils._setup_subscription', _issue_initializing_domain)
+    @mock.patch('corehq.apps.registration.utils.notify_exception', _noop)
+    def test_subscription_exception_raises_error(self):
+        with self.assertRaisesMessage(ErrorInitializingDomain,
+                                      "Subscription setup failed for 'subscription-failed'"):
+            request_new_domain(
+                self.request,
+                'subscription-failed',
+                is_new_user=True,
+            )
+        domain = Domain.get_by_name('subscription-failed')
+        self.assertIsNone(domain)
+
+    @mock.patch('corehq.apps.registration.utils.initialize_domain_with_default_roles', _issue_initializing_domain)
+    @mock.patch('corehq.apps.registration.utils.notify_exception', _noop)
+    def test_default_roles_exception_raises_error(self):
+        with self.assertRaisesMessage(ErrorInitializingDomain,
+                                      "Subscription setup failed for 'init-default-roles-failed'"):
+            request_new_domain(
+                self.request,
+                'init-default-roles-failed',
+                is_new_user=True,
+            )
+        domain = Domain.get_by_name('init-default-roles-failed')
+        self.assertIsNone(domain)
