@@ -12,6 +12,6 @@ sniffer
 wheel
 
 # linting/formatting
-flake8
+flake8>=6.0
 isort
 yapf

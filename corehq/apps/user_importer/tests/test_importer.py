@@ -147,6 +147,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def tearDown(self):
         Invitation.objects.all().delete()
         delete_all_users()
+        for group in Group.by_domain(self.domain.name):
+            group.delete()
 
     @property
     def user(self):
@@ -241,7 +243,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.location_id, self.loc1._id)
         self.assertEqual(self.user.location_id, self.user.metadata.get('commcare_location_id'))
         # multiple locations
-        self.assertListEqual([l._id for l in [self.loc1, self.loc2]], self.user.assigned_location_ids)
+        self.assertListEqual([loc._id for loc in [self.loc1, self.loc2]], self.user.assigned_location_ids)
         # non-primary location
         self.assertTrue(self.loc2._id in self.user.metadata.get('commcare_location_ids'))
 
@@ -1429,6 +1431,63 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         self.assertEqual(user_history.change_messages['groups'],
             UserChangeMessage.groups_info([])['groups'])
+
+    def test_upload_new_group(self):
+        import_users_and_groups(
+            self.domain.name,
+            [],
+            [{'id': '', 'name': 'test_group', 'case-sharing': False, 'reporting': False}],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        groups = Group.by_domain(self.domain.name)
+        self.assertEqual(len(groups), 1)
+
+    def test_upload_group_changes(self):
+        group = Group(domain=self.domain.name, name="test_group")
+        group.save()
+
+        import_users_and_groups(
+            self.domain.name,
+            [],
+            [{'id': group._id, 'name': 'another_group', 'case-sharing': False, 'reporting': False}],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        updated_group = Group.get(group._id)
+        self.assertEqual(updated_group.name, 'another_group')
+
+    def test_upload_new_group_and_assign_to_user(self):
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None)
+        user_specs = self._get_spec(user_id=user._id, group=['test_group'])
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [{'id': '', 'name': 'test_group', 'case-sharing': False, 'reporting': False}],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        groups = user.get_group_ids()
+        self.assertEqual(len(groups), 1)
+
+    def test_upload_new_group_and_assign_to_new_user(self):
+        user_specs = self._get_spec(group=['test_group'])
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [{'id': '', 'name': 'test_group', 'case-sharing': False, 'reporting': False}],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        groups = self.user.get_group_ids()
+        self.assertEqual(len(groups), 1)
 
     def test_create_or_update_commcare_users_and_groups_with_bad_username(self):
         result = create_or_update_commcare_users_and_groups(

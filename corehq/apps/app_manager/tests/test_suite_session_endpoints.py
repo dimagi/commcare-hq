@@ -42,6 +42,43 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             "./endpoint",
         )
 
+    def test_multi_case_list_module_session_endpoint_id(self):
+        self.module.session_endpoint_id = 'case_list'
+        self.factory.form_requires_case(self.form, case_type=self.parent_case_type)
+        self.module.case_details.short.multi_select = True
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+           <partial>
+                <endpoint id="case_list">
+                    <argument id="selected_cases" instance-id="selected_cases" instance-src="jr://instance/selected-entities"/>
+                    <stack>
+                        <push>
+                            <instance-datum id="selected_cases" value="$selected_cases"/>
+                            <command value="'claim_command.case_list.selected_cases'"/>
+                        </push>
+                        <push>
+                            <command value="'m0'"/>
+                            <instance-datum id="selected_cases" value="$selected_cases"/>
+                        </push>
+                    </stack>
+                </endpoint>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./endpoint",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request_multi_select").decode('utf-8').format(
+                datum_id="selected_cases",
+                endpoint_id="case_list",
+            ),
+            suite,
+            "./remote-request",
+        )
+
     def test_case_list_module_session_endpoint_id(self):
         self.module.session_endpoint_id = 'case_list'
         self.factory.form_requires_case(self.form, case_type=self.parent_case_type)
