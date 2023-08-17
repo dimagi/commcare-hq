@@ -56,41 +56,45 @@ class Command(BaseCommand):
 
     def revert_invoice_payment(self, invoice, note, dry_run=False):
         dry_run_tag = '[DRY_RUN] ' if dry_run else ''
-
         print(f'{dry_run_tag}Reverting payment for Invoice Id: {invoice.id}, '
               f'Domain: {invoice.subscription.subscriber.domain}')
-        # Total Credit
-        payment_by_credit = -invoice.applied_credit
+        payment_by_other = invoice.subtotal
 
+        # Plan Credit
         plan_subtotal, plan_deduction = get_subtotal_and_deduction(
             invoice.lineitem_set.get_products().all()
         )
-        if plan_deduction:
-            print(f'{dry_run_tag}Adding plan credit: {plan_deduction}')
+        plan_credit = -plan_deduction
+        if plan_credit:
+            print(f'{dry_run_tag}Adding plan credit: {plan_credit}')
+            payment_by_other -= plan_credit
             if not dry_run:
-                CreditLine.add_credit(amount=plan_deduction, subscription=invoice.subscription,
+                CreditLine.add_credit(amount=plan_credit, subscription=invoice.subscription,
                                     is_product=True, note=note)
-            payment_by_credit -= plan_deduction
 
+        # Feature Credit
         for feature in FeatureType.CHOICES:
             feature_subtotal, feature_deduction = get_subtotal_and_deduction(
                 invoice.lineitem_set.get_feature_by_type(feature).all()
             )
-            if feature_deduction:
-                print(f"{dry_run_tag}Adding {feature[0]} credit: {feature_deduction}")
+            feature_credit = -feature_deduction
+            if feature_credit:
+                payment_by_other -= feature_credit
+                print(f"{dry_run_tag}Adding {feature[0]} credit: {feature_credit}")
                 if not dry_run:
-                    CreditLine.add_credit(amount=feature_deduction, subscription=invoice.subscription,
+                    CreditLine.add_credit(amount=feature_credit, subscription=invoice.subscription,
                                         feature_type=feature[0], note=note)
-                payment_by_credit -= feature_deduction
 
-        # After deducting plan credit and feature credit, the remained credit should be type Any
-        if payment_by_credit:
-            print(f"{dry_run_tag}Adding remaining credit (type Any): {payment_by_credit}")
+        # Any Credit
+        any_credit = -invoice.applied_credit
+        if any_credit:
+            payment_by_other -= any_credit
+            print(f"{dry_run_tag}Adding remaining credit (type Any): {any_credit}")
             if not dry_run:
-                CreditLine.add_credit(amount=payment_by_credit, subscription=invoice.subscription, note=note)
+                CreditLine.add_credit(amount=any_credit, subscription=invoice.subscription, note=note)
 
         # Calculate the amount paid not by credit
-        payment_by_other = invoice.subtotal + invoice.applied_credit - invoice.balance
+        payment_by_other -= invoice.balance
         if payment_by_other:
             print(f"{dry_run_tag}Adding credit for other payments: {payment_by_other}")
             if not dry_run:
