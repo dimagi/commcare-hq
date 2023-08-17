@@ -1,5 +1,6 @@
 import json
 import uuid
+from unittest.mock import patch
 
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -351,7 +352,8 @@ class DataDictionaryJsonTest(TestCase):
         response = self.client.get(self.endpoint)
         self.assertEqual(response.status_code, 302)
 
-    def test_get_json_success(self):
+    @patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
+    def test_get_json_success(self, *args):
         self.client.login(username='test', password='foobar')
         response = self.client.get(self.endpoint)
         self.assertEqual(response.status_code, 200)
