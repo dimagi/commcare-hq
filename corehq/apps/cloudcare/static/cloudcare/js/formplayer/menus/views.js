@@ -667,7 +667,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 currentPage: this.options.currentPage,
                 endPage: paginateItems.endPage,
                 pageCount: paginateItems.pageCount,
-                rowRange: [10, 25, 50, 100],
+                rowRange: [5, 10, 25, 50, 100],
                 limit: casesPerPage,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
@@ -803,8 +803,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         templateContext: function () {
             const dict = CaseTileListView.__super__.templateContext.apply(this, arguments);
+            const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
             dict.useTiles = true;
             dict.isMultiSelect = this.options.isMultiSelect;
+            dict.limit = casesPerPage;
             return dict;
         },
 
