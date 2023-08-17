@@ -14,6 +14,8 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
     flag_path_references_to_migrated_javascript_files,
+    file_contains_reference_to_path,
+    replace_path_references,
 )
 
 COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
@@ -197,14 +199,20 @@ class Command(BaseCommand):
                 self.save_split_templates(
                     file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
                 )
-                self.refactor_references(short_path, bootstrap3_short_path, is_template)
+                self.stdout.write("updating references...")
+                references = self.update_and_get_references(short_path, bootstrap3_short_path, is_template)
                 if not is_template:
                     # also check extension-less references for javascript files
-                    self.refactor_references(
+                    references.extend(self.update_and_get_references(
                         short_path.replace('.js', ''),
                         bootstrap3_short_path.replace('.js', ''),
                         is_template=False
-                    )
+                    ))
+                if references:
+                    self.stdout.write(f"Updated references to {short_path} in these files:")
+                    self.stdout.write("\n".join(references))
+                else:
+                    self.stdout.write(f"No references were found for {short_path}...")
             self.stdout.write("\nNow would be a good time to review changes with git and "
                               "commit before moving on to the next template.")
             self.stdout.write("\nSuggested commit message:")
@@ -221,9 +229,9 @@ class Command(BaseCommand):
         with open(bootstrap5_path, 'w') as file:
             file.writelines(bootstrap5_lines)
 
-    def refactor_references(self, old_reference, new_reference, is_template):
-        self.stdout.write("updating references...")
-        found_references = False
+    @staticmethod
+    def update_and_get_references(old_reference, new_reference, is_template):
+        references = []
         bootstrap5_reference = new_reference.replace("/bootstrap3/", "/bootstrap5/")
         file_types = ["**/*.py", "**/*.html", "**/*.md"]
         if not is_template:
@@ -235,16 +243,15 @@ class Command(BaseCommand):
                 with open(file_path, 'r') as file:
                     filedata = file.read()
                 use_bootstrap5_reference = "/bootstrap5/" in str(file_path)
-                if old_reference in filedata:
-                    found_references = True
-                    self.stdout.write(f"- replaced reference in {str(file_path)}")
+                if file_contains_reference_to_path(filedata, old_reference):
+                    references.append(str(file_path))
                     with open(file_path, 'w') as file:
-                        file.write(filedata.replace(
+                        file.write(replace_path_references(
+                            filedata,
                             old_reference,
                             bootstrap5_reference if use_bootstrap5_reference else new_reference
                         ))
-        if not found_references:
-            self.stdout.write(f"No references were found for {old_reference}...")
+        return references
 
     @staticmethod
     def make_template_line_changes(old_line, spec):
