@@ -1400,8 +1400,7 @@ EXPORT_DATA_SOURCE_DATA = StaticToggle(
     'Add Export Data Source Data page',
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
-    description=("This flag makes failed messages appear in the Message Log "
-                 "Report, and adds Status and Event columns"),
+    description="Add the Export Data Source Data page to the Data tab",
 )
 
 
