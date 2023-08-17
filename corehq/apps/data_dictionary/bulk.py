@@ -115,7 +115,7 @@ def _process_sheets(domain, workbook, allowed_value_info):
     missing_valid_values = set()
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
     if data_validation_enabled:
-        column_mapping = COLUMN_MAPPING + DATA_TYPE_MAPPING
+        column_mapping = COLUMN_MAPPING | DATA_TYPE_MAPPING
     else:
         column_mapping = COLUMN_MAPPING
 
