@@ -179,7 +179,9 @@
           <div class="table-row table-header">
           <div class="row-item-small"></div>
           <div class="row-item">{% trans "Case Property" %}</div>
-          <div class="row-item">{% trans "Data Type" %}</div>
+          {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+            <div class="row-item">{% trans "Data Type" %}</div>
+          {% endif %}
           <div class="row-item">{% trans "Description" %}</div>
           {% if fhir_integration_enabled %}
             <div class="row-item">{% trans "FHIR Resource Property Path" %}</div>
@@ -213,7 +215,9 @@
                             attr: {'placeholder': name}" id="group-name" />
               <!-- /ko -->
             </div>
-            <div class="row-item">{% trans "Case Property Group" %}</div>
+            {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+              <div class="row-item">{% trans "Case Property Group" %}</div>
+            {% endif %}
             <div class="row-item">
               <!-- ko if: name() !== ''-->
               <textarea class="form-control vertical-resize" data-bind="
@@ -258,16 +262,18 @@
                 </div>
                 </div>
               </div>
-              <div class="row-item main-form">
-              <select class="form-control"
-                      data-bind="
-                                  options: $root.availableDataTypes,
-                                  optionsCaption: 'Select a data type',
-                                  optionsText: 'display',
-                                  optionsValue: 'value',
-                                  value: dataType,
-                              "></select>
-              </div>
+              {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+                <div class="row-item main-form">
+                <select class="form-control"
+                        data-bind="
+                                    options: $root.availableDataTypes,
+                                    optionsCaption: 'Select a data type',
+                                    optionsText: 'display',
+                                    optionsValue: 'value',
+                                    value: dataType,
+                                "></select>
+                </div>
+              {% endif %}
               <div class="row-item main-form">
                               <textarea class="form-control vertical-resize" data-bind="
                                 value: $data.description,
