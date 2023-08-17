@@ -48,60 +48,71 @@ class TestLocationRestrictedScheduledReportViews(TestCase):
         cls.domain_obj.delete()
         delete_all_users()
 
+    def setUp(self):
+        permissions = {
+            'download_reports': True,
+            'view_reports': True,
+            'access_all_locations': False,
+        }
+        self.web_user, self.role = get_web_user(
+            self.domain,
+            self.user_location,
+            permissions,
+            self.client,
+        )
+
+    def tearDown(self):
+        self.web_user.delete(self.domain, deleted_by=None)
+        self.role.delete()
+
     @flag_enabled('LOCATION_RESTRICTED_SCHEDULED_REPORTS')
     def test_location_restricted_user_can_access_reports_home_view(self):
-        with self._get_web_user_with_permissions_added():
-            url = reverse('reports_home', args=(self.domain,))
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, 302)
+        url = reverse('reports_home', args=(self.domain,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
 
     def test_location_restricted_user_cannot_access_reports_home_view_when_ff_not_enabled(self):
-        with self._get_web_user_with_permissions_added():
-            url = reverse('reports_home', args=(self.domain,))
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, 403)
+        url = reverse('reports_home', args=(self.domain,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
 
     @flag_enabled('LOCATION_RESTRICTED_SCHEDULED_REPORTS')
     def test_location_restricted_user_can_access_scheduled_report_view(self):
-        with self._get_web_user_with_permissions_added():
-            url = reverse(ScheduledReportsView.urlname, args=(self.domain,))
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, 200)
+        url = reverse(ScheduledReportsView.urlname, args=(self.domain,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
     @flag_enabled('LOCATION_RESTRICTED_SCHEDULED_REPORTS')
     def test_location_restricted_user_can_delete_scheduled_report(self):
-        with self._get_web_user_with_permissions_added() as user:
-            config = self.create_report_config(self.domain, user._id)
-            rn = self.create_report_notification([config], owner_id=user._id)
-            url = reverse('delete_scheduled_report', args=(self.domain, rn._id))
-            response = self.client.post(url)
-            # Assert that forbidden error code is not received
-            self.assertNotEqual(response.status_code, 403)
-            # Assert status code when non-error response is received
-            self.assertEqual(response.status_code, 302)
+        config = self.create_report_config(self.domain, self.web_user._id)
+        rn = self.create_report_notification([config], owner_id=self.web_user._id)
+        url = reverse('delete_scheduled_report', args=(self.domain, rn._id))
+        response = self.client.post(url)
+        # Assert that forbidden error code is not received
+        self.assertNotEqual(response.status_code, 403)
+        # Assert status code when non-error response is received
+        self.assertEqual(response.status_code, 302)
 
     @flag_enabled('LOCATION_RESTRICTED_SCHEDULED_REPORTS')
     def test_location_restricted_user_can_send_scheduled_report(self):
-        with self._get_web_user_with_permissions_added() as user:
-            config = self.create_report_config(self.domain, user._id)
-            rn = self.create_report_notification([config], owner_id=user._id)
-            url = reverse('send_test_scheduled_report', args=(self.domain, rn._id))
-            response = self.client.post(url)
-            # Assert status code when forbidden error is not received
-            self.assertNotEqual(response.status_code, 403)
-            # Assert status code when forbidden error is not received
-            self.assertEqual(response.status_code, 302)
+        config = self.create_report_config(self.domain, self.web_user._id)
+        rn = self.create_report_notification([config], owner_id=self.web_user._id)
+        url = reverse('send_test_scheduled_report', args=(self.domain, rn._id))
+        response = self.client.post(url)
+        # Assert status code when forbidden error is not received
+        self.assertNotEqual(response.status_code, 403)
+        # Assert status code when forbidden error is not received
+        self.assertEqual(response.status_code, 302)
 
     @flag_enabled('LOCATION_RESTRICTED_SCHEDULED_REPORTS')
     def test_location_restricted_user_can_delete_saved_report(self):
-        with self._get_web_user_with_permissions_added() as user:
-            config = self.create_report_config(self.domain, user._id)
-            url = reverse('delete_report_config', args=(self.domain, config._id))
-            response = self.client.delete(url)
-            # Assert status code when forbidden error is not received
-            self.assertNotEqual(response.status_code, 403)
-            # Assert status code when forbidden error is not received
-            self.assertEqual(response.status_code, 200)
+        config = self.create_report_config(self.domain, self.web_user._id)
+        url = reverse('delete_report_config', args=(self.domain, config._id))
+        response = self.client.delete(url)
+        # Assert status code when forbidden error is not received
+        self.assertNotEqual(response.status_code, 403)
+        # Assert status code when forbidden error is not received
+        self.assertEqual(response.status_code, 200)
 
     def _get_web_user_with_permissions_added(self):
         permissions = {
@@ -137,7 +148,6 @@ class TestLocationRestrictedScheduledReportViews(TestCase):
         return rn
 
 
-@contextmanager
 def get_web_user(domain, location, permissions, client):
     username = 'admin@example.com'
     password = '************'
@@ -158,8 +168,4 @@ def get_web_user(domain, location, permissions, client):
     web_user.set_location(domain, location)
     manager.index_refresh(user_adapter.index_name)
     client.login(username=username, password=password)
-    try:
-        yield web_user
-    finally:
-        web_user.delete(domain, deleted_by=None)
-        role.delete()
+    return web_user, role
