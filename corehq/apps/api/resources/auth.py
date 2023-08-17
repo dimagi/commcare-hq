@@ -167,15 +167,6 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
 
-class ClientOrRequiredPermissionAuthentication(OAuthLibMixin, RequirePermissionAuthentication):
-
-    def is_authenticated(self, request, **kwargs):
-        valid = self.authenticate_client(request)
-        if not valid:
-            return super(ClientOrRequiredPermissionAuthentication, self).is_authenticated(request, **kwargs)
-        return self._auth_test(request, wrappers=[wrap_4xx_errors_for_apis], **kwargs)
-
-
 class ODataAuthentication(LoginAndDomainAuthentication):
 
     def __init__(self, *args, **kwargs):

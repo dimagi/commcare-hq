@@ -44,7 +44,6 @@ from corehq.apps.api.odata.views import (
     raise_odata_permissions_issues,
 )
 from corehq.apps.api.resources.auth import (
-    ClientOrRequiredPermissionAuthentication,
     LoginAuthentication,
     ODataAuthentication,
     RequirePermissionAuthentication,
@@ -209,7 +208,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
         always_return_data = True
-        authentication = ClientOrRequiredPermissionAuthentication(HqPermissions.edit_commcare_users)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)
 
     def serialize(self, request, data, format, options=None):
         if not isinstance(data, dict) and request.method == 'POST':
