@@ -42,6 +42,12 @@ class Command(BaseCommand):
             default=False,
             help="Run migration against already split bootstrap 5 files"
         )
+        parser.add_argument(
+            '--references',
+            action='store_true',
+            default=False,
+            help="Verify that all references to migrated files have been updated"
+        )
 
     def handle(self, app_name, **options):
         if not settings.BOOTSTRAP_MIGRATION_LOGS_DIR:
@@ -53,6 +59,13 @@ class Command(BaseCommand):
         template_name = options.get('template_name')
         js_name = options.get('js_name')
         do_re_check = options.get('re_check')
+        verify_references = options.get('references')
+
+        if verify_references:
+            self.stdout.write(f"\n\nVerifying that references to migrated files "
+                              f"in {app_name} have been updated...")
+            self.verify_migrated_references(app_name)
+            return
 
         if not js_name:
             self.stdout.write(f"\n\nMigrating {app_name} templates...")
@@ -63,6 +76,14 @@ class Command(BaseCommand):
             self.stdout.write(f"\n\nMigrating {app_name} javascript...")
             app_javascript = self.get_js_files_for_migration(app_name, js_name, do_re_check)
             self.migrate_files(app_javascript, app_name, spec, is_template=False)
+
+    @staticmethod
+    def _get_app_template_folder(app_name):
+        return COREHQ_BASE_DIR / "apps" / app_name / "templates" / app_name
+
+    @staticmethod
+    def _get_app_static_folder(app_name):
+        return COREHQ_BASE_DIR / "apps" / app_name / "static" / app_name
 
     def _get_files_for_migration(self, files, file_name, do_re_check):
         if file_name is not None:
@@ -79,12 +100,12 @@ class Command(BaseCommand):
         return files
 
     def get_templates_for_migration(self, app_name, template_name, do_re_check):
-        app_template_folder = COREHQ_BASE_DIR / "apps" / app_name / "templates" / app_name
+        app_template_folder = self._get_app_template_folder(app_name)
         app_templates = [f for f in app_template_folder.glob('**/*') if f.is_file()]
         return self._get_files_for_migration(app_templates, template_name, do_re_check)
 
     def get_js_files_for_migration(self, app_name, js_name, do_re_check):
-        app_static_folder = COREHQ_BASE_DIR / "apps" / app_name / "static" / app_name
+        app_static_folder = self._get_app_static_folder(app_name)
         app_js_files = [f for f in app_static_folder.glob('**/*.js') if f.is_file()]
         return self._get_files_for_migration(app_js_files, js_name, do_re_check)
 
@@ -228,6 +249,45 @@ class Command(BaseCommand):
             file.writelines(bootstrap3_lines)
         with open(bootstrap5_path, 'w') as file:
             file.writelines(bootstrap5_lines)
+
+    def _get_migrated_files(self, app_name):
+        app_template_folder = self._get_app_template_folder(app_name)
+        migrated_files = [f for f in app_template_folder.glob('**/*')
+                          if f.is_file() and '/bootstrap3/' in str(f) and '/crispy/' not in str(f)]
+        app_static_folder = self._get_app_static_folder(app_name)
+        migrated_files.extend(
+            [f for f in app_static_folder.glob('**/*.js')
+             if f.is_file() and '/bootstrap3/' in str(f)]
+        )
+        return migrated_files
+
+    def verify_migrated_references(self, app_name):
+        migrated_files = self._get_migrated_files(app_name)
+        template_path = str(self._get_app_template_folder(app_name))
+        for file_path in migrated_files:
+            is_template = template_path in str(file_path)
+            new_reference = self.get_short_path(app_name, file_path, is_template)
+            old_reference = new_reference.replace("/bootstrap3/", "/")
+            references = self.update_and_get_references(
+                old_reference,
+                new_reference,
+                is_template
+            )
+            if not is_template:
+                references.extend(self.update_and_get_references(
+                    old_reference.replace(".js", ""),
+                    new_reference.replace(".js", ""),
+                    is_template=False
+                ))
+            if references:
+                self.stdout.write(f"\n\nUpdated references to {old_reference} in these files:")
+                self.stdout.write("\n".join(references))
+                self.stdout.write("\nNow would be a good time to review changes with git and "
+                                  "commit before moving on to the next template.")
+                self.stdout.write(f"\nSuggested commit message:\n"
+                                  f"Bootstrap 5 - Updated references to '{old_reference}'\n")
+                input("\nENTER to continue...")
+                self.stdout.write("\n\n")
 
     @staticmethod
     def update_and_get_references(old_reference, new_reference, is_template):
