@@ -17,6 +17,7 @@ from corehq.util.test_utils import flag_enabled, TestFileMixin
 
 
 @flag_enabled('DATA_DICTIONARY')
+@flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 class DataDictionaryImportTest(TestCase, TestFileMixin):
     domain_name = uuid.uuid4().hex
     file_path = ('data',)
@@ -88,6 +89,7 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
 
 
 @flag_enabled('DATA_DICTIONARY')
+@flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 class DataDictionaryExportTest(TestCase):
     domain_name = uuid.uuid4().hex
 
