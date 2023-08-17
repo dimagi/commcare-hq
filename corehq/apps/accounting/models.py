@@ -122,10 +122,12 @@ class InvoicingPlan(object):
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
+    WEB_USER = "Web User"
 
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
+        (WEB_USER, WEB_USER)
     )
 
 
@@ -424,6 +426,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
         default=list
     )
 
+    bill_web_user = models.BooleanField(default=False)
+
+
     class Meta(object):
         app_label = 'accounting'
 
@@ -509,9 +514,13 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         return StripePaymentMethod.objects.get(web_user=self.auto_pay_user).get_autopay_card(self)
 
-    def get_domains(self):
-        return list(Subscription.visible_objects.filter(account_id=self.id, is_active=True).values_list(
-                    'subscriber__domain', flat=True))
+    def get_domains(self, active_only=True):
+        if active_only:
+            return list(Subscription.visible_objects.filter(account_id=self.id, is_active=True).values_list(
+                        'subscriber__domain', flat=True))
+        else:
+            return list(Subscription.visible_objects.filter(account_id=self.id).values_list(
+                        'subscriber__domain', flat=True))
 
     def has_enterprise_admin(self, email):
         return self.is_customer_billing_account and email in self.enterprise_admin_emails
