@@ -238,10 +238,12 @@ def _export_data_dictionary(domain):
         _('Case Property'),
         _('Label'),
         _('Group'),
-        _('Data Type'),
         _('Description'),
         _('Deprecated')
     ]
+    if toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain):
+        case_prop_headers.append(_('Data Type'))
+
     allowed_value_headers = [_('Case Property'), _('Valid Value'), _('Valid Value Description')]
 
     case_type_data, case_prop_data = _generate_data_for_export(domain, export_fhir_data)
@@ -264,18 +266,19 @@ def _generate_data_for_export(domain, export_fhir_data):
             _('Case Property'): case_prop.name,
             _('Label'): case_prop.label,
             _('Group'): case_prop.group_name,
-            _('Data Type'): case_prop.get_data_type_display() if case_prop.data_type else '',
             _('Description'): case_prop.description,
             _('Deprecated'): case_prop.deprecated
         }
-        if case_prop.data_type == 'select':
-            prop_dict['allowed_values'] = [
-                {
-                    _('Case Property'): case_prop.name,
-                    _('Valid Value'): av.allowed_value,
-                    _('Valid Value Description'): av.description,
-                } for av in case_prop.allowed_values.all()
-            ]
+        if toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain):
+            prop_dict[_('Data Type')] = case_prop.get_data_type_display() if case_prop.data_type else ''
+            if case_prop.data_type == 'select':
+                prop_dict['allowed_values'] = [
+                    {
+                        _('Case Property'): case_prop.name,
+                        _('Valid Value'): av.allowed_value,
+                        _('Valid Value Description'): av.description,
+                    } for av in case_prop.allowed_values.all()
+                ]
         if export_fhir_data:
             prop_dict[_('FHIR Resource Property')] = fhir_resource_prop
         return prop_dict

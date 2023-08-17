@@ -29,9 +29,11 @@ COLUMN_MAPPING = {
     'case property': 'name',
     'label': 'label',
     'group': 'group',
-    'data type': 'data_type_display',
     'description': 'description',
     'deprecated': 'deprecated',
+}
+DATA_TYPE_MAPPING = {
+    'data type': 'data_type_display'
 }
 COLUMN_MAPPING_VL = {
     'case property': 'prop_name',
@@ -111,6 +113,11 @@ def _process_sheets(domain, workbook, allowed_value_info):
     data_type_map = {t.label: t.value for t in CaseProperty.DataType}
     seen_props = defaultdict(set)
     missing_valid_values = set()
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    if data_validation_enabled:
+        column_mapping = COLUMN_MAPPING + DATA_TYPE_MAPPING
+    else:
+        column_mapping = COLUMN_MAPPING
 
     for worksheet in workbook.worksheets:
         if worksheet.title.endswith(ALLOWED_VALUES_SHEET_SUFFIX):
@@ -128,7 +135,7 @@ def _process_sheets(domain, workbook, allowed_value_info):
         for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 0, None), start=1):
             if i == HEADER_ROW_INDEX:
                 column_headings, heading_errors = get_column_headings(
-                    row, valid_values=COLUMN_MAPPING, sheet_name=case_type, case_prop_name='name')
+                    row, valid_values=column_mapping, sheet_name=case_type, case_prop_name='name')
                 if len(heading_errors):
                     errors.extend(heading_errors)
                     break
@@ -140,9 +147,10 @@ def _process_sheets(domain, workbook, allowed_value_info):
 
             row_vals = map_row_values_to_column_names(row, column_headings)
             error, fhir_resource_prop_path, fhir_resource_type, remove_path = None, None, None, None
-            (name, description, label, group, deprecated, data_type_display) = (
+            (name, description, label, group, deprecated) = (
                 row_vals['name'], row_vals['description'], row_vals['label'], row_vals['group'],
-                row_vals['deprecated'], row_vals['data_type_display'])
+                row_vals['deprecated'])
+            data_type_display = row_vals['data_type_display'] if data_validation_enabled else None
 
             # Fall back to value from file if data_type_display is not found in the map.
             # This allows existing error path to report accurately the value that isn't found,
