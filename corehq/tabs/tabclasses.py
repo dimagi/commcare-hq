@@ -507,6 +507,15 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_export_data_source(self):
+        return (
+            toggles.EXPORT_DATA_SOURCE_DATA.enabled(self.domain)
+            and self.can_view_case_exports
+            and self.can_view_form_exports
+        )
+
+    @property
+    @memoized
     def should_see_daily_saved_export_list_view(self):
         return (
             self.can_view_form_or_case_exports
@@ -756,7 +765,7 @@ class ProjectDataTab(UITab):
                         ] if _f]
                     })
 
-            if toggles.EXPORT_DATA_SOURCE_DATA and self.can_view_case_exports and self.can_view_form_exports:
+            if self.can_export_data_source:
                 export_data_views.append(
                     {
                         'title': _(DownloadNewDatasourceExportView.page_title),
