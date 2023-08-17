@@ -67,6 +67,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
         queryset = queryset.filter(name=case_type_name)
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
     for case_type in queryset:
         module_count = case_type_app_module_count.get(case_type.name, 0)
         p = {
@@ -83,10 +84,10 @@ def data_dictionary_json(request, domain, case_type_name=None):
                 "label": prop.label,
                 "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
                 "name": prop.name,
-                "data_type": prop.data_type,
                 "deprecated": prop.deprecated,
                 "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
-            } for prop in props] for group, props in itertools.groupby(
+            } | ({"data_type": prop.data_type} if data_validation_enabled else {}) for prop in props]
+            for group, props in itertools.groupby(
                 case_type.properties.all(),
                 key=attrgetter('group_obj_id')
             )
@@ -154,6 +155,7 @@ def update_case_property(request, domain):
     update_fhir_resources = toggles.FHIR_INTEGRATION.enabled(domain)
     property_list = json.loads(request.POST.get('properties'))
     group_list = json.loads(request.POST.get('groups'))
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
 
     if update_fhir_resources:
         errors, fhir_resource_type_obj = _update_fhir_resource_type(request, domain)
@@ -178,7 +180,7 @@ def update_case_property(request, domain):
             label = property.get('label')
             index = property.get('index')
             description = property.get('description')
-            data_type = property.get('data_type')
+            data_type = property.get('data_type') if data_validation_enabled else None
             group = property.get('group')
             deprecated = property.get('deprecated')
             allowed_values = property.get('allowed_values')
