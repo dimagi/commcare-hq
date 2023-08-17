@@ -51,6 +51,9 @@ class TestRequestNewDomain(TestCase):
         cls.new_user.delete(cls.domain_test, deleted_by=None)
         super().tearDownClass()
 
+    # if we don't patch the following, NoBrokersAvailable is thrown due to publish_domain_saved
+    @mock.patch('corehq.apps.registration.utils._setup_subscription', _noop)
+    @mock.patch('corehq.apps.registration.utils.notify_exception', _noop)
     def test_domain_is_active_for_new_sso_user(self):
         """
         Ensure that the first domain created by a new SSO user is active.
@@ -64,6 +67,9 @@ class TestRequestNewDomain(TestCase):
         domain = Domain.get_by_name(domain_name)
         self.assertTrue(domain.is_active)
 
+    # if we don't patch the following, NoBrokersAvailable is thrown due to publish_domain_saved
+    @mock.patch('corehq.apps.registration.utils._setup_subscription', _noop)
+    @mock.patch('corehq.apps.registration.utils.notify_exception', _noop)
     def test_domain_is_not_active_for_new_user(self):
         """
         Ensure that the first domain created by a new user is not active.
