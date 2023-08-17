@@ -23,8 +23,7 @@ def process_async_signup_requests(request, user):
             messages.error(
                 request,
                 _("We were unable to create your requested project "
-                  "because the name was already taken."
-                  "Please contact support.")
+                  "because the name was already taken.")
             )
         except ErrorInitializingDomain:
             messages.error(
