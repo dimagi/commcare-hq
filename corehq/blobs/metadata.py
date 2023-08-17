@@ -70,7 +70,7 @@ class MetaDB(object):
         :returns: The number of metadata rows deleted.
         """
         with BlobMeta.get_plproxy_cursor() as cursor:
-            cursor.execute('SELECT 1 FROM delete_blob_meta(%s)', [key])
+            cursor.execute('SELECT key FROM blobs_deletedblobmeta where key = %s', [key])
         metrics_counter('commcare.blobs.deleted.count')
         metrics_counter('commcare.blobs.deleted.bytes', value=content_length)
 
