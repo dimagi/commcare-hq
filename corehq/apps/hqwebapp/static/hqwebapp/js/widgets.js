@@ -33,6 +33,7 @@ hqDefine("hqwebapp/js/widgets",[
                     multiple: true,
                     placeholder: ' ',
                     tags: true,
+                    tokenSeparators: [',', ' '],
                     width: '100%',
                     createTag: function (params) {
                         // Support pasting in comma-separated values
