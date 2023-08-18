@@ -965,12 +965,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    const FormMenuView = Marionette.CollectionView.extend({
-        template: _.template($("#form-menu-template").html() || ""),
+    const MenuDropdownView = Marionette.CollectionView.extend({
+        template: _.template($("#menu-dropdown-template").html() || ""),
         childView: LanguageOptionView,
         childViewContainer: 'ul',
         ui: {
-            dropdownMenu: "#form-menu-dropdown",
+            dropdownMenu: "#menu-dropdown",
         },
         behaviors: {
             print: printBehavior,
@@ -1089,8 +1089,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         BreadcrumbListView: function (options) {
             return new BreadcrumbListView(options);
         },
-        FormMenuView: function (options) {
-            return new FormMenuView(options);
+        MenuDropdownView: function (options) {
+            return new MenuDropdownView(options);
         },
         CaseDetailFooterView: function (options) {
             return new CaseDetailFooterView(options);

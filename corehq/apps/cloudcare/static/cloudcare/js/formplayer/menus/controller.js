@@ -155,10 +155,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
             if (!appPreview) {
                 if ((menuResponse.langs && menuResponse.langs.length > 1) || enablePrintOption) {
-                    menusUtils.showFormMenu(menuResponse.langs, initialPageData('lang_code_name_mapping'));
+                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData('lang_code_name_mapping'));
                 }
                 if (menuResponse.type === "entities"){
-                    menusUtils.showFormMenu()
+                    menusUtils.showMenuDropdown()
                 }
             }
         } else {
