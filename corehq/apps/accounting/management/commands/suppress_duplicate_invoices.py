@@ -64,7 +64,8 @@ class Command(BaseCommand):
         plan_credit = -plan_deduction
         if plan_credit:
             reverted = True
-            print(f'{dry_run_tag}Adding plan credit: {plan_credit}')
+            print(f'{dry_run_tag}Adding plan credit: {plan_credit} to '
+                  f'domain {invoice.subscription.subscriber.domain}')
             if not dry_run:
                 CreditLine.add_credit(amount=plan_credit, subscription=invoice.subscription,
                                     is_product=True, note=note)
@@ -77,7 +78,8 @@ class Command(BaseCommand):
             feature_credit = -feature_deduction
             if feature_credit:
                 reverted = True
-                print(f"{dry_run_tag}Adding {feature[0]} credit: {feature_credit}")
+                print(f"{dry_run_tag}Adding {feature[0]} credit: {feature_credit} to "
+                      f"domain {invoice.subscription.subscriber.domain}")
                 if not dry_run:
                     CreditLine.add_credit(amount=feature_credit, subscription=invoice.subscription,
                                         feature_type=feature[0], note=note)
@@ -87,7 +89,8 @@ class Command(BaseCommand):
         if any_credit:
             reverted = True
             payment_by_other -= any_credit
-            print(f"{dry_run_tag}Adding type Any credit: {any_credit}")
+            print(f"{dry_run_tag}Adding type Any credit: {any_credit} to "
+                  f"domain {invoice.subscription.subscriber.domain}")
             if not dry_run:
                 CreditLine.add_credit(amount=any_credit, subscription=invoice.subscription, note=note)
 
@@ -95,7 +98,8 @@ class Command(BaseCommand):
         payment_by_other -= invoice.balance
         if payment_by_other:
             reverted = True
-            print(f"{dry_run_tag}Adding credit for other payments: {payment_by_other}")
+            print(f"{dry_run_tag}Adding credit for other payments: {payment_by_other} "
+                  f"to domain {invoice.subscription.subscriber.domain}")
             if not dry_run:
                 CreditLine.add_credit(amount=payment_by_other, subscription=invoice.subscription, note=note)
 
