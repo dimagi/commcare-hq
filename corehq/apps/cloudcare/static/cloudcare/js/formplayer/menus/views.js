@@ -571,6 +571,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     position: 'bottomright',
                 }).addTo(addressMap);
 
+                L.control.fullscreen({
+                    pseudoFullscreen: true,
+                    position: 'bottomright',
+                }).addTo(addressMap);
+
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
                     id: 'mapbox/streets-v11',
                     attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
@@ -613,7 +618,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     marker.setIcon(selectedLocationIcon);
 
                                     let scrollTopOffset = 47.125; // standard height of breadcrumbs with shadow
-                                    if (this.smallScreenEnabled) {
+                                    if (this.smallScreenEnabled && !addressMap.isFullscreen()) {
                                         scrollTopOffset += addressMap.getSize().y;
                                     }
                                     $([document.documentElement, document.body]).animate({
