@@ -67,7 +67,6 @@ class Command(BaseCommand):
         plan_credit = -plan_deduction
         if plan_credit:
             print(f'{dry_run_tag}Adding plan credit: {plan_credit}')
-            payment_by_other -= plan_credit
             if not dry_run:
                 CreditLine.add_credit(amount=plan_credit, subscription=invoice.subscription,
                                     is_product=True, note=note)
@@ -75,11 +74,10 @@ class Command(BaseCommand):
         # Feature Credit
         for feature in FeatureType.CHOICES:
             feature_subtotal, feature_deduction = get_subtotal_and_deduction(
-                invoice.lineitem_set.get_feature_by_type(feature).all()
+                invoice.lineitem_set.get_feature_by_type(feature[0]).all()
             )
             feature_credit = -feature_deduction
             if feature_credit:
-                payment_by_other -= feature_credit
                 print(f"{dry_run_tag}Adding {feature[0]} credit: {feature_credit}")
                 if not dry_run:
                     CreditLine.add_credit(amount=feature_credit, subscription=invoice.subscription,
