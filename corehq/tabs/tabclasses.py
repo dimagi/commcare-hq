@@ -33,6 +33,7 @@ from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
+from corehq.apps.email.views import DomainEmailGatewayListView
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
 from corehq.apps.events.models import AttendeeModel
@@ -1259,6 +1260,21 @@ class MessagingTab(UITab):
             settings_urls.append({
                 'title': _('SMS Connectivity'),
                 'url': reverse(DomainSmsGatewayListView.urlname, args=[self.domain]),
+                'subpages': [
+                    {
+                        'title': _("Add Gateway"),
+                        'urlname': AddDomainGatewayView.urlname,
+                    },
+                    {
+                        'title': _("Edit Gateway"),
+                        'urlname': EditDomainGatewayView.urlname,
+                    },
+                ],
+            })
+
+            settings_urls.append({
+                'title': _('Email Connectivity'),
+                'url': reverse(DomainEmailGatewayListView.urlname, args=[self.domain]),
                 'subpages': [
                     {
                         'title': _("Add Gateway"),
