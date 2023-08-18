@@ -21,6 +21,7 @@ def _remove_web_user_feature(apps, schema_editor):
     FeatureRate.objects.filter(feature__name=FeatureType.WEB_USER).delete()
     Feature.objects.filter(name=FeatureType.WEB_USER).delete()
 
+
 class Migration(migrations.Migration):
     dependencies = [
         ('accounting', '0078_revert_location_owner_in_report_builder_priv'),

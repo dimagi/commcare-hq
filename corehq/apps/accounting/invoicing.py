@@ -210,9 +210,9 @@ class DomainInvoiceFactory(object):
                 prev_sub_end = sub.date_end
 
                 if (
-                    ind == len(subscriptions) - 1 and
-                    sub.date_end is not None and
-                    sub.date_end <= self.date_end
+                    ind == len(subscriptions) - 1
+                    and sub.date_end is not None
+                    and sub.date_end <= self.date_end
                 ):
                     # the last subscription ended BEFORE the end of
                     # the invoicing period
@@ -251,8 +251,8 @@ class DomainInvoiceFactory(object):
         total_balance = sum(invoice.balance for invoice in visible_domain_invoices)
 
         should_set_date_due = (
-            total_balance > SMALL_INVOICE_THRESHOLD or
-            (invoice.account.auto_pay_enabled and total_balance > Decimal(0))
+            total_balance > SMALL_INVOICE_THRESHOLD
+            or (invoice.account.auto_pay_enabled and total_balance > Decimal(0))
         )
         if should_set_date_due:
             days_until_due = DEFAULT_DAYS_UNTIL_DUE
@@ -411,8 +411,8 @@ class CustomerAccountInvoiceFactory(object):
 
     def _update_invoice_due_date(self, invoice, factory_date_end):
         should_set_date_due = (
-            invoice.balance > SMALL_INVOICE_THRESHOLD or
-            (invoice.account.auto_pay_enabled and invoice.balance > Decimal(0))
+            invoice.balance > SMALL_INVOICE_THRESHOLD
+            or (invoice.account.auto_pay_enabled and invoice.balance > Decimal(0))
         )
         if should_set_date_due:
             invoice.date_due = factory_date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
@@ -801,6 +801,7 @@ class WebUserLineItemFactory(UserLineItemFactory):
     @property
     def unit_description(self):
         return super()._unit_description_by_user_type("web user")
+
 
 class SmsLineItemFactory(FeatureLineItemFactory):
 
