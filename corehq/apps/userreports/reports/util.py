@@ -51,7 +51,8 @@ class ReportExport(object):
         data_source = ConfigurableReportDataSource.from_spec(self.report_config, include_prefilters=True)
         data_source.lang = self.lang
         # Removing location from the filters for the locations that are not applicable for the current user.
-        if toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(self.domain):
+        if (toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(self.domain)
+                and not self.request_user.has_permission(self.domain, 'access_all_locations')):
             location_key = None
             user_location_ids = self.request_user.get_location_ids(self.domain)
             user_filtered_locations = []
