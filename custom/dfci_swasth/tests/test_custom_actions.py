@@ -13,6 +13,7 @@ from custom.dfci_swasth.constants import (
     PROP_CCUSER_CASELOAD_CASE_ID,
     PROP_COUNSELLOR_LOAD,
     PROP_SCREENING_EXP_DATE,
+    PROP_COUNSELLING_EXP_DATE,
 )
 from custom.dfci_swasth.rules.custom_actions import update_counsellor_load
 from dimagi.utils.parsing import ISO_DATE_FORMAT
@@ -76,7 +77,7 @@ class UpdateCounsellorLoadTest(BaseCaseRuleTest):
         case1 = CommCareCase.objects.get_case(ccuser_caseload_case.case_id)
         self.assertEqual(9, int(case1.get_case_property(PROP_COUNSELLOR_LOAD)))
 
-    def test_case_update_not_successful(self):
+    def test_case_update_not_successful_expiry_time_diff(self):
         patient_rule = create_empty_rule(
             self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type=CASE_TYPE_PATIENT,
         )
@@ -95,7 +96,40 @@ class UpdateCounsellorLoadTest(BaseCaseRuleTest):
         self.assertEqual(10, int(case1.get_case_property(PROP_COUNSELLOR_LOAD)))
         self.assertFalse(case1.closed)
 
-    def _create_cases(self, counsellor_load, screening_expiry_date, counselling_expiry_date=None):
+    def test_case_update_not_successful_screening_expiry_date_missing(self):
+        patient_rule = create_empty_rule(
+            self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type=CASE_TYPE_PATIENT,
+        )
+
+        ccuser_caseload_case, patient_case = self._create_cases(
+            counsellor_load=10,
+            counselling_expiry_date=(datetime.now() + timedelta(days=2)).strftime(ISO_DATE_FORMAT),
+        )
+
+        result = update_counsellor_load(patient_case, patient_rule)
+
+        self.assertEqual(0, result.num_updates)
+
+        case1 = CommCareCase.objects.get_case(ccuser_caseload_case.case_id)
+        self.assertEqual(10, int(case1.get_case_property(PROP_COUNSELLOR_LOAD)))
+        self.assertFalse(case1.closed)
+
+    def test_case_update_not_successful_ccuser_caseload_case_missing(self):
+        patient_rule = create_empty_rule(
+            self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type=CASE_TYPE_PATIENT,
+        )
+
+        patient_case = CaseFactory(self.domain).create_case(
+            case_type=CASE_TYPE_PATIENT,
+            update={PROP_SCREENING_EXP_DATE: "2000-11-11",
+                    PROP_CCUSER_CASELOAD_CASE_ID: "random_id"},
+        )
+
+        result = update_counsellor_load(patient_case, patient_rule)
+
+        self.assertEqual(0, result.num_updates)
+
+    def _create_cases(self, counsellor_load, screening_expiry_date=None, counselling_expiry_date=None):
         ccuser_caseload_case = CaseFactory(self.domain).create_case(
             case_type=CASE_TYPE_CASELOAD,
             update={
@@ -103,12 +137,17 @@ class UpdateCounsellorLoadTest(BaseCaseRuleTest):
             },
         )
 
+        case_data = {PROP_CCUSER_CASELOAD_CASE_ID: ccuser_caseload_case.case_id}
+
+        if screening_expiry_date:
+            case_data.update({PROP_SCREENING_EXP_DATE: screening_expiry_date})
+
+        if counselling_expiry_date:
+            case_data.update({PROP_COUNSELLING_EXP_DATE: counselling_expiry_date})
+
         patient_case = CaseFactory(self.domain).create_case(
             case_type=CASE_TYPE_PATIENT,
-            update={
-                PROP_SCREENING_EXP_DATE: screening_expiry_date,
-                PROP_CCUSER_CASELOAD_CASE_ID: ccuser_caseload_case.case_id,
-            },
+            update=case_data,
         )
 
         return ccuser_caseload_case, patient_case
