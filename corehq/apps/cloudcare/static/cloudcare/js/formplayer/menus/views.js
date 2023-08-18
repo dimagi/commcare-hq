@@ -947,13 +947,33 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const printBehavior = Marionette.Behavior.extend({
+        ui: {
+            selectPrint: ".print-button",
+        },
+        events: {
+            "keydown @ui.selectPrint": "printKeyAction",
+            "click @ui.selectPrint": "print",
+        },
+        printKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.print();
+            }
+        },
+        print: function () {
+            window.print();
+        },
+    });
+
     const FormMenuView = Marionette.CollectionView.extend({
         template: _.template($("#form-menu-template").html() || ""),
         childView: LanguageOptionView,
         childViewContainer: 'ul',
         ui: {
             dropdownMenu: "#form-menu-dropdown",
-            selectPrint: "#print-header.dropdown-header",
+        },
+        behaviors: {
+            print: printBehavior,
         },
         childViewOptions: function () {
             return {
@@ -968,22 +988,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         events: {
             "keydown": "expandDropdown",
-            "keydown @ui.selectPrint": "printKeyAction",
-            "click @ui.selectPrint": "print",
         },
         expandDropdown: function (e) {
             if (e.keyCode === 13 || e.keyCode === 32) {
                 e.preventDefault();
                 $(this.ui.dropdownMenu).toggleClass("open");
             }
-        },
-        printKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.print();
-            }
-        },
-        print: function () {
-            window.print();
         },
     });
 
