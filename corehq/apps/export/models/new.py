@@ -57,7 +57,6 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
     RemoteApp,
 )
-from corehq.apps.data_dictionary.util import get_deprecated_fields
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
     ALL_CASE_TYPE_EXPORT,
@@ -117,6 +116,7 @@ from corehq.util.global_request import get_request_domain
 from corehq.util.html_utils import strip_tags
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.data_dictionary.util import get_deprecated_fields
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 
 
@@ -2738,7 +2738,7 @@ class SplitGPSExportColumn(ExportColumn):
         return [header_template.format(header) for header_template in header_templates]
 
     def get_value(self, domain, doc_id, doc, base_path, split_column=False, **kwargs):
-        value = super(SplitGPSExportColumn, self).get_value(
+        coord_string = super().get_value(
             domain,
             doc_id,
             doc,
@@ -2746,18 +2746,30 @@ class SplitGPSExportColumn(ExportColumn):
             **kwargs
         )
         if not split_column:
-            return value
+            return coord_string
 
-        if value == MISSING_VALUE:
-            return [MISSING_VALUE] * 4
+        return self.extract_coordinate_array(coord_string)
 
-        values = [EMPTY_VALUE] * 4
+    @classmethod
+    def extract_coordinate_array(cls, coord_string):
+        NUM_VALUES = 4
 
-        if not isinstance(value, str):
+        if coord_string == MISSING_VALUE:
+            return [MISSING_VALUE] * NUM_VALUES
+
+        values = [EMPTY_VALUE] * NUM_VALUES
+        if not isinstance(coord_string, str):
             return values
 
-        for index, coordinate in enumerate(value.split(' ')):
+        for index, coordinate in enumerate(coord_string.split()):
+            # NOTE: Unclear if the intention here is to support situations where only the lat/lng are supplied,
+            # or if we really want to allow just specifying just lat, or lat/lng/alt as valid.
+            # I think it's likely we only want to support the lat/lng situation, but leaving as is
+            # in the event that this behavior is relied upon somewhere
+            if index >= NUM_VALUES:
+                break
             values[index] = coordinate
+
         return values
 
 

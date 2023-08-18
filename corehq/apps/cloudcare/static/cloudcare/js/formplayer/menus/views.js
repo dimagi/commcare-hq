@@ -1,4 +1,4 @@
-/*globals Marionette */
+/*globals DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const kissmetrics = hqImport("analytix/js/kissmetrix"),
@@ -663,9 +663,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     ? `${headerWords.join(' ')} <b>${lastChar}</b>`
                     : header;
             };
+            let description = this.options.description;
+            let title = this.options.title;
+            if (this.options.sidebarEnabled && this.options.collection.queryResponse) {
+                description = this.options.collection.queryResponse.description;
+                title = this.options.collection.queryResponse.title;
+            }
             return {
                 startPage: paginateItems.startPage,
-                title: this.options.title,
+                title: title.trim(),
+                description: description === undefined ? "" : DOMPurify.sanitize(markdown.render(description.trim())),
                 headers: this.headers.map(boldSortedCharIcon),
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,

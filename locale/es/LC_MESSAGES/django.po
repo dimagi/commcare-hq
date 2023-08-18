@@ -4258,10 +4258,8 @@ msgstr ""
 "bien su archivo de perfil?"
 
 #: corehq/apps/app_manager/models.py
-#, fuzzy
-#| msgid "Delete Application"
 msgid "Remote Application"
-msgstr "Borrar Aplicación"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py
 msgid ""
@@ -9951,11 +9949,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#, fuzzy
-#| msgid ""
-#| "The form will not appear in the menu unless this condition is met. Read "
-#| "more on the <a target='_blank' href='https://confluence.dimagi.com/"
-#| "display/commcarepublic/Form+Display+Conditions'>Help Site</a>."
 msgid ""
 "\n"
 "        For more information on deprecated case types, see the following\n"
@@ -9963,9 +9956,6 @@ msgid ""
 "commcarepublic/Data+Dictionary\">documentation</a>.\n"
 "      "
 msgstr ""
-"El formulario no aparecerá en el menú a menos que se cumpla esta condición. "
-"Lea más sobre esto en el <a target='_blank' href='https://confluence.dimagi."
-"com/display/commcarepublic/Form+Display+Conditions'>Sitio de Ayuda</a>."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/users/decorators.py
@@ -12364,10 +12354,8 @@ msgid "Clear"
 msgstr "Borrar"
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
-#, fuzzy
-#| msgid "Sort Property"
 msgid "Sort By"
-msgstr "Clasificar Propiedad"
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
 #: corehq/apps/cloudcare/templates/formplayer/no_items_text.html
@@ -12478,10 +12466,8 @@ msgid "Break"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html
-#, fuzzy
-#| msgid "Inspect Data"
 msgid "Sync User Data"
-msgstr "Inspeccionar Datos"
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/users.html
 msgid "Organization Type"
@@ -12845,10 +12831,8 @@ msgstr ""
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-#, fuzzy
-#| msgid "Configuration"
 msgid "Linked Configurations"
-msgstr "Configuración"
+msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
@@ -13152,6 +13136,39 @@ msgstr "Sitio de Ayuda"
 msgid "Visit CommCare's knowledge base"
 msgstr "Visite la base de conocimientos de CommCare"
 
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Row {} in \"{}-vl\" sheet is missing a case property field"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Could not find resource type for {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+#, fuzzy
+#| msgid "Error with location in sheet '{}', at row {}. {}: {}"
+msgid "Error in \"{}\" sheet, row {}: {}"
+msgstr "Error con la ubicación en la hoja '{}', en la fila  {}. {}: {}"
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid ""
+"Missing required valid \"{}-vl\" multi-choice sheet for case type \"{}\""
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Not enough columns in \"{}\" sheet"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py corehq/apps/data_dictionary/views.py
+msgid "FHIR Resource {} {}: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid ""
+"Case property \"{}\" referenced in \"{}-vl\" sheet that does not exist in "
+"\"{}\" sheet. Row(s) affected: {}"
+msgstr ""
+
 #: corehq/apps/data_dictionary/models.py
 msgid "Group \"{}\" already exists for case type \"{}\""
 msgstr ""
@@ -13187,10 +13204,8 @@ msgstr "Diccionario de Datos"
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/export/templates/export/partials/table.html
-#, fuzzy
-#| msgid "Report created!"
 msgid "deprecated"
-msgstr "¡Reporte creado! "
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add Case Type"
@@ -13209,13 +13224,11 @@ msgid "Create Case Type"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "There was an error saving, please try again!"
 msgid ""
 "\n"
 "        There was an error deprecating the case type. Please try again.\n"
 "      "
-msgstr "Hubo un error al guardar, por favor intente nuevamente."
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
@@ -13227,16 +13240,12 @@ msgid "Import from Excel"
 msgstr "Importar desde Excel"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Expected Case Type"
 msgid "Deprecate Case Type"
-msgstr "Tipo de Caso Esperado"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Expected Case Type"
 msgid "Restore Case Type"
-msgstr "Tipo de Caso Esperado"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Show Deprecated"
@@ -13297,11 +13306,6 @@ msgid "Add a new Case Type"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Change my project's plan\n"
-#| "                                "
 msgid ""
 "\n"
 "              Deprecate\n"
@@ -13309,8 +13313,6 @@ msgid ""
 "              Case Type\n"
 "            "
 msgstr ""
-"\n"
-"Cambiar el plan de mi proyecto"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
@@ -13368,12 +13370,37 @@ msgstr ""
 msgid "Unable to save valid values longer than {} characters"
 msgstr ""
 
-#: corehq/apps/data_dictionary/views.py
-msgid "Case Type 'name' is required"
+#: corehq/apps/data_dictionary/util.py
+msgid "Column {} in \"{}\" sheet has an empty header"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+#, fuzzy
+#| msgid "You can't send an empty message"
+msgid "Column {} has an empty header"
+msgstr "No puede enviar un mensaje vacío"
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Invalid column \"{}\" in \"{}\" sheet. Valid column names are: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+#, fuzzy
+#| msgid "Invalid or missing transform type: {}. Valid options are: {}"
+msgid "Invalid column \"{}\". Valid column names are: {}"
+msgstr ""
+"Tipo de transfomación inválida o faltante: {}. Las opciones válidas son: {}"
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Missing \"Case Property\" column header in \"{}\" sheet"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Missing \"Case Property\" column header"
 msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
-msgid "FHIR Resource {} {}: {}"
+msgid "Case Type 'name' is required"
 msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
@@ -13420,36 +13447,6 @@ msgstr ""
 #: corehq/apps/data_dictionary/views.py
 msgid "Data dictionary import complete"
 msgstr "No se completó la importación del diccionario de datos"
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Error in valid values for case type {}, row {}: missing case property"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Not enough columns"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Could not find resource type for {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Error in case type {}, row {}: {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Missing valid values sheet for case type {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid ""
-"Error in valid values for case type {}, nonexistent property listed ({}), "
-"row(s): {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Not enough columns in {} sheet"
-msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py
 msgid ""
@@ -14713,10 +14710,8 @@ msgid "Edit Case Rule"
 msgstr "Regla de Editar Caso"
 
 #: corehq/apps/data_interfaces/views.py
-#, fuzzy
-#| msgid "Edit Case Rule"
 msgid "View Case Rule"
-msgstr "Regla de Editar Caso"
+msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Deduplicate Cases"
@@ -21158,10 +21153,8 @@ msgid "Unlock Linked Tables For Me"
 msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-#, fuzzy
-#| msgid "Lookup Tables File"
 msgid "Lock Linked Tables For Me"
-msgstr "Archivo de Tablas de Búsqueda"
+msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
@@ -21274,47 +21267,26 @@ msgid "Delete?"
 msgstr "¿Eliminar?"
 
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
 msgid ""
 "\n"
 "                      \"<span data-bind=\"text: tag\"></span>\" is a "
 "duplicate field name.\n"
 "                    "
 msgstr ""
-"\n"
-"Captura Instantánea de  %(snap_name)s"
 
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
 msgid ""
 "\n"
 "                      Field name cannot contain \\, /, <, >, or spaces.\n"
 "                    "
 msgstr ""
-"\n"
-"Captura Instantánea de  %(snap_name)s"
 
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
 msgid ""
 "\n"
 "                      Field name cannot start with xml.\n"
 "                    "
 msgstr ""
-"\n"
-"Captura Instantánea de  %(snap_name)s"
 
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 msgid "(Not editable)"
@@ -25082,10 +25054,8 @@ msgid "Data Expressions and Filters"
 msgstr ""
 
 #: corehq/apps/linked_domain/const.py
-#, fuzzy
-#| msgid "Auto Update Frequency"
 msgid "Automatic Update Rule"
-msgstr "Frecuencia de Actualización Automática"
+msgstr ""
 
 #: corehq/apps/linked_domain/const.py
 msgid "Custom User Data Fields"
@@ -25406,10 +25376,8 @@ msgid "Linked Content"
 msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-#, fuzzy
-#| msgid "Overwrite Case List"
 msgid "Sync & Overwrite Matches"
-msgstr "Sustituir Lista de Caso"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 msgid "Sync & Overwrite Matches?"
@@ -25478,10 +25446,8 @@ msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/partials/push_content.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/push_warning_dialog.html
-#, fuzzy
-#| msgid "Overwrite Case List"
 msgid "Push & Overwrite Matches"
-msgstr "Sustituir Lista de Caso"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/partials/push_content.html
 msgid ""
@@ -25565,10 +25531,8 @@ msgid "push"
 msgstr ""
 
 #: corehq/apps/linked_domain/updates.py
-#, fuzzy
-#| msgid "Case Detail Overwrite"
 msgid "Push & Overwrite"
-msgstr "Sustituir Detalle de Caso"
+msgstr ""
 
 #: corehq/apps/linked_domain/updates.py
 #, python-brace-format
@@ -39087,10 +39051,8 @@ msgid "Edit Role"
 msgstr "Editar Rol"
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-#, fuzzy
-#| msgid "View Table"
 msgid "View Role"
-msgstr "Ver Tabla"
+msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "Add Role"
@@ -41233,10 +41195,8 @@ msgid "Rule name must be the same in all rows"
 msgstr ""
 
 #: corehq/messaging/scheduling/view_helpers.py
-#, fuzzy
-#| msgid "Message"
 msgid "Missing message"
-msgstr "Mensaje"
+msgstr ""
 
 #: corehq/messaging/scheduling/views.py
 msgid "New Broadcast"
@@ -43533,10 +43493,8 @@ msgid "Data Manipulation"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Remove"
 msgid "Remote"
-msgstr "Eliminar"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "(Untitled)"
@@ -44666,6 +44624,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Delete Role"
-#~ msgstr "Eliminar Rol"

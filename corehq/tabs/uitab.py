@@ -11,7 +11,7 @@ from corehq.tabs import extension_points
 from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggestion
 from corehq.tabs.utils import sidebar_to_dropdown, dropdown_dict
 from memoized import memoized
-from dimagi.utils.django.cache import make_template_fragment_key
+from django.core.cache.utils import make_template_fragment_key
 from dimagi.utils.web import get_url_base
 
 
@@ -29,6 +29,7 @@ def url_is_location_safe(url):
 class UITab(object):
     title = None
     view = None
+    fragment_prefix_name = 'header_tab'  # NOTE: This must match the string value used in the menu_main template
 
     # Tuple of prefixes that this UITab claims e.g.
     #   ('/a/{domain}/reports/', '/a/{domain}/otherthing/')
@@ -231,23 +232,40 @@ class UITab(object):
         return urls
 
     @classmethod
+    def create_compound_cache_param(cls, tab_name, domain, user_id, role_version, is_active,
+            language, use_bootstrap5):
+        params = [tab_name, str(domain), str(user_id), str(role_version), str(is_active),
+                  str(language), str(use_bootstrap5)]
+        return '|'.join(params)
+
+    @classmethod
     def clear_dropdown_cache(cls, domain, user):
-        user_id = user.get_id
         try:
             user_role = user.get_role(domain, allow_enterprise=True)
             role_version = user_role.cache_version if user_role else None
         except DomainMembershipError:
             role_version = None
-        for is_active in True, False:
-            key = make_template_fragment_key('header_tab', [
-                cls.class_name(),
-                domain,
-                is_active,
-                user_id,
-                role_version,
-                get_language(),
-            ])
-            cache.delete(key)
+
+        language = get_language()
+
+        cls.clear_dropdown_cache_impl(domain, user._id, role_version, language)
+
+    @classmethod
+    def clear_dropdown_cache_impl(cls, domain, user_id, role_version, language):
+        keys = []
+        for use_bootstrap5 in True, False:
+            for is_active in True, False:
+                fragment_param = cls.create_compound_cache_param(
+                    cls.class_name(),
+                    domain,
+                    user_id,
+                    role_version,
+                    is_active,
+                    language,
+                    use_bootstrap5)
+                keys.append(make_template_fragment_key(cls.fragment_prefix_name, [fragment_param]))
+
+        cache.delete_many(keys)
 
     @classmethod
     def clear_dropdown_cache_for_all_domain_users(cls, domain):

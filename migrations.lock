@@ -98,6 +98,9 @@ accounting
  0076_location_owner_in_report_builder_priv
  0077_case_list_explorer_priv
  0078_revert_location_owner_in_report_builder_priv
+ 0079_add_web_user_feature
+ 0080_add_web_user_feature_in_other_models
+ 0081_billingaccount_bill_web_user
 admin
  0001_initial
  0002_logentry_remove_auto_add

@@ -1118,6 +1118,21 @@ For example:
 http://localhost:8000/mocha/app_manager/b3
 ```
 
+### Measuring test coverage
+
+To generate a JavaScript test coverage report, ensure the development server is
+active on port 8000 and run:
+
+```sh
+./scripts/coverage-js.sh
+```
+
+This script goes through the steps to prepare a report for test coverage of
+JavaScript files _that are touched by tests_, i.e., apps and files with 0% test
+coverage will not be shown. A coverage summary is output to the terminal and a
+detailed html report is generated at ``coverage-js/index.html``.
+
+
 ## Sniffer
 
 You can also use sniffer to auto run the Python tests.
