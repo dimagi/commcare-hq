@@ -19,7 +19,8 @@ def update_counsellor_load(patient_case, rule):
     if patient_case.type != CASE_TYPE_PATIENT:
         return CaseRuleActionResult(num_updates=num_updates)
 
-    screening_expiry_date = datetime.strptime(patient_case.get_case_property(PROP_SCREENING_EXP_DATE), ISO_DATE_FORMAT)
+    screening_expiry_date = datetime.strptime(patient_case.get_case_property(PROP_SCREENING_EXP_DATE),
+                                              ISO_DATE_FORMAT)
     counselling_expiry_date = patient_case.get_case_property(PROP_COUNSELLING_EXP_DATE)
 
     if counselling_expiry_date:
