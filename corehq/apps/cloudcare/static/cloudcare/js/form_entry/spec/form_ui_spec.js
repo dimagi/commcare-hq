@@ -80,7 +80,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
         });
 
         it('Should render questions grouped by row', function () {
-            styleObj = {raw:'2-per-row'};
+            let styleObj = {raw: '2-per-row'};
             let q0 = fixtures.textJSON({
                 style: styleObj,
                 ix: "0",
@@ -88,8 +88,8 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             let g0 = fixtures.groupJSON({
                 ix: "1",
             });
-            g0.children[0].children[0].style = styleObj
-            g0.children[0].children[0].style = styleObj
+            g0.children[0].children[0].style = styleObj;
+            g0.children[0].children[0].style = styleObj;
             let q1 = fixtures.selectJSON({
                 style: styleObj,
                 ix: "2",
