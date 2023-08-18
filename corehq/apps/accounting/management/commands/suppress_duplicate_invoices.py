@@ -41,7 +41,7 @@ class Command(BaseCommand):
                 custom_note = f"{note}. Referenced to invoice {first_created_invoice_id}."
                 self.revert_invoice_payment(invoice, custom_note, dry_run)
                 # suppress invoice
-                print(f'{dry_run_tag}Suppressing invoice {invoice.id} for domain'
+                print(f'{dry_run_tag}Suppressing invoice {invoice.id} for domain '
                       f'{invoice.subscription.subscriber.domain} ', end='')
                 if not dry_run:
                     invoice.is_hidden_to_ops = True
@@ -87,7 +87,7 @@ class Command(BaseCommand):
         if any_credit:
             reverted = True
             payment_by_other -= any_credit
-            print(f"{dry_run_tag}Adding remaining credit (type Any): {any_credit}")
+            print(f"{dry_run_tag}Adding type Any credit: {any_credit}")
             if not dry_run:
                 CreditLine.add_credit(amount=any_credit, subscription=invoice.subscription, note=note)
 
@@ -100,5 +100,5 @@ class Command(BaseCommand):
                 CreditLine.add_credit(amount=payment_by_other, subscription=invoice.subscription, note=note)
 
         if reverted:
-            print(f'{dry_run_tag} Successfully reverted payment for Invoice Id: {invoice.id}, '
+            print(f'{dry_run_tag}Successfully reverted payment for Invoice Id: {invoice.id}, '
               f'Domain: {invoice.subscription.subscriber.domain}')
