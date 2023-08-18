@@ -50,9 +50,9 @@ fi
 status=0
 git diff-index --check --cached $against --
 if [ $? != 0 ]; then status=1; fi
-pyfiles=$(git diff --staged --name-only | grep "\.py$")
+pyfiles=($(git diff --staged --name-only | grep "\.py$"))
 if [ -n "$pyfiles" ]; then
-    flake8 --show-source --config=.flake8 "$pyfiles"
+    flake8 --show-source --config=.flake8 "${pyfiles[@]}"
 	if [ $? != 0 ]; then status=1; fi
 fi
 
