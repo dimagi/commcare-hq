@@ -1,6 +1,8 @@
+import uuid
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.reports_core.filters import Choice
 from couchexport.export import export_from_tables
 
 from corehq.apps.userreports.columns import get_expanded_column_config
@@ -51,7 +53,8 @@ class ReportExport(object):
         data_source = ConfigurableReportDataSource.from_spec(self.report_config, include_prefilters=True)
         data_source.lang = self.lang
         # Removing location from the filters for the locations that are not applicable for the current user.
-        if toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(self.domain):
+        if (toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(self.domain)
+                and not self.request_user.has_permission(self.domain, 'access_all_locations')):
             location_key = None
             user_location_ids = self.request_user.get_location_ids(self.domain)
             user_filtered_locations = []
@@ -60,7 +63,13 @@ class ReportExport(object):
                     location_key = k
                     user_filtered_locations = [choice for choice in v if choice.value in user_location_ids]
             if location_key:
-                self.filter_values[location_key] = user_filtered_locations
+                if user_filtered_locations:
+                    self.filter_values[location_key] = user_filtered_locations
+                else:
+                    # Case where user is assigned a new dynamic location that is not present in report filters
+                    # In this case, user should not see any data
+                    empty_location = Choice(value=uuid.uuid4().hex, display=None)
+                    self.filter_values[location_key] = [empty_location]
 
         data_source.set_filter_values(self.filter_values)
         data_source.set_order_by([(o['field'], o['order']) for o in self.report_config.sort_expression])
@@ -84,7 +93,6 @@ class ReportExport(object):
         return list(self.data_source.get_data())
 
     @property
-    @memoized
     def total_rows(self):
         return [self.data_source.get_total_row()] if self.data_source.has_total_row else []
 
