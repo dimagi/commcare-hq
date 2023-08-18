@@ -39,9 +39,7 @@ class Command(BaseCommand):
             first_created_invoice_id = related_invoices[0].id
             for invoice in related_invoices[:-1]:
                 custom_note = f"{note}. Referenced to invoice {first_created_invoice_id}."
-                if invoice.balance != invoice.subtotal:
-                    # credit them back
-                    self.revert_invoice_payment(invoice, custom_note, dry_run)
+                self.revert_invoice_payment(invoice, custom_note, dry_run)
                 # suppress invoice
                 print(f'{dry_run_tag}Suppressing invoice {invoice.id} for domain'
                       f'{invoice.subscription.subscriber.domain} ', end='')
@@ -56,9 +54,8 @@ class Command(BaseCommand):
 
     def revert_invoice_payment(self, invoice, note, dry_run=False):
         dry_run_tag = '[DRY_RUN] ' if dry_run else ''
-        print(f'{dry_run_tag}Reverting payment for Invoice Id: {invoice.id}, '
-              f'Domain: {invoice.subscription.subscriber.domain}')
         payment_by_other = invoice.subtotal
+        reverted = False
 
         # Plan Credit
         plan_subtotal, plan_deduction = get_subtotal_and_deduction(
@@ -66,6 +63,7 @@ class Command(BaseCommand):
         )
         plan_credit = -plan_deduction
         if plan_credit:
+            reverted = True
             print(f'{dry_run_tag}Adding plan credit: {plan_credit}')
             if not dry_run:
                 CreditLine.add_credit(amount=plan_credit, subscription=invoice.subscription,
@@ -78,6 +76,7 @@ class Command(BaseCommand):
             )
             feature_credit = -feature_deduction
             if feature_credit:
+                reverted = True
                 print(f"{dry_run_tag}Adding {feature[0]} credit: {feature_credit}")
                 if not dry_run:
                     CreditLine.add_credit(amount=feature_credit, subscription=invoice.subscription,
@@ -86,6 +85,7 @@ class Command(BaseCommand):
         # Any Credit
         any_credit = -invoice.applied_credit
         if any_credit:
+            reverted = True
             payment_by_other -= any_credit
             print(f"{dry_run_tag}Adding remaining credit (type Any): {any_credit}")
             if not dry_run:
@@ -94,6 +94,11 @@ class Command(BaseCommand):
         # Calculate the amount paid not by credit
         payment_by_other -= invoice.balance
         if payment_by_other:
+            reverted = True
             print(f"{dry_run_tag}Adding credit for other payments: {payment_by_other}")
             if not dry_run:
                 CreditLine.add_credit(amount=payment_by_other, subscription=invoice.subscription, note=note)
+
+        if reverted:
+            print(f'{dry_run_tag} Successfully reverted payment for Invoice Id: {invoice.id}, '
+              f'Domain: {invoice.subscription.subscriber.domain}')
