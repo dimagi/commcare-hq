@@ -7,6 +7,7 @@ hqDefine("cloudcare/js/formplayer/spec/main", [
     hqRequire([
         "cloudcare/js/formplayer/spec/hq_events_spec",
         "cloudcare/js/formplayer/spec/integration_spec",
+        "cloudcare/js/spec/markdown_spec",
         "cloudcare/js/formplayer/spec/menu_list_spec",
         "cloudcare/js/formplayer/spec/query_spec",
         "cloudcare/js/formplayer/spec/session_middleware_spec",
