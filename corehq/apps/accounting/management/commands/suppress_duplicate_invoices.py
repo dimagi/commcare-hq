@@ -1,3 +1,5 @@
+import datetime
+from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.db.models import Count
 from corehq.apps.accounting.interface import get_subtotal_and_deduction
@@ -72,14 +74,18 @@ class Command(BaseCommand):
                                         is_product=True, note=note)
         else:
             # Check if we generate duplicate product credit line
+            date_start = datetime.datetime(2023, 8, 1)
+            date_end = date_start + timedelta(days=1) - timedelta(seconds=1)
             try:
                 CreditLine.objects.get(account=invoice.subscription.account,
-                                       subscription=invoice.subscription, isProduct=True, isActive=True)
+                                       subscription=invoice.subscription, isProduct=True, isActive=True,
+                                       date_created__range=(date_start, date_end))
             except CreditLine.MultipleObjectsReturned:
                 print(f"Multiple plan credit lines found for subscription {invoice.subscription.id}.")
                 duplicate_cl = CreditLine.objects.filter(account=invoice.subscription.account,
                                                          subscription=invoice.subscription, isProduct=True,
-                                                         isActive=True).first()
+                                                         isActive=True,
+                                                         date_created__range=(date_start, date_end)).first()
                 if not dry_run:
                     CreditAdjustment.objects.filter(credit_line=duplicate_cl).delete()
                     duplicate_cl.delete()
