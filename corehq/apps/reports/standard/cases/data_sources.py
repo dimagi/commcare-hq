@@ -23,6 +23,9 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import parse_date
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.reports.filters.api import CaseCopier
+from corehq.form_processor.models import CommCareCase
+
+CASE_COPY_PROPERTY = CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME
 
 
 class CaseDisplayBase:
@@ -116,18 +119,11 @@ class CaseDisplayBase:
     def case_link(self):
         url = self.case_detail_url
         if url:
-            label = ''
-            if self.case.get(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME):
-                label = format_html(
-                    '&nbsp;<span class="label label-info" title="0">{}</span>',
-                    _("Copied case"),
-                )
-
             return format_html(
                 "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>{}",
                 self.case_detail_url,
                 self.case_name_display,
-                label,
+                additional_case_label(self.case),
             )
         else:
             return "%s (bad ID format)" % self.case_name
@@ -408,7 +404,22 @@ class SafeCaseDisplay(object):
             link = absolute_reverse('case_data', args=[self.case.domain, self.case.case_id])
         except NoReverseMatch:
             return _("No link found")
+
         return format_html(
-            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>",
+            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>{}",
             link,
-            _("View Case"))
+            _("View Case"),
+            additional_case_label(self.case),
+        )
+
+
+def additional_case_label(case):
+    copy_label = format_html(
+        '&nbsp;<span class="label label-info" title="0">{}</span>',
+        _("Copied case"),
+    )
+    if isinstance(case, CommCareCase) and case.get_case_property(CASE_COPY_PROPERTY):
+        return copy_label
+    if not isinstance(case, CommCareCase) and case.get(CASE_COPY_PROPERTY):
+        return copy_label
+    return ''
