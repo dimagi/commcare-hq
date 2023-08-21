@@ -80,7 +80,7 @@ class Command(BaseCommand):
                 CreditLine.objects.get(account=invoice.subscription.account,
                                        subscription=invoice.subscription, is_product=True, is_active=True)
             except CreditLine.MultipleObjectsReturned:
-                print(f"Multiple plan credit lines found for subscription"
+                print(f"{dry_run_tag}Multiple plan credit lines found for subscription"
                       f" {invoice.subscription.plan_version.plan.name}.")
                 duplicate_cl = CreditLine.objects.filter(account=invoice.subscription.account,
                                                          subscription=invoice.subscription, is_product=True,
