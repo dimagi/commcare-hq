@@ -10,7 +10,6 @@ from django.utils.translation import gettext_lazy as _
 from django_prbac.models import Grant, Role, UserRole
 
 from corehq.const import USER_DATE_FORMAT
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 
 from corehq import privileges

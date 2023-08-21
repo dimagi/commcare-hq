@@ -40,9 +40,6 @@ from corehq.motech.fhir.utils import (
     remove_fhir_resource_type,
     update_fhir_resource_type,
 )
-from corehq.util.files import file_extention_from_filename
-from corehq.util.workbook_reading import open_any_workbook
-from corehq.util.workbook_reading.datamodels import Cell
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege
 from corehq import privileges
 from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count

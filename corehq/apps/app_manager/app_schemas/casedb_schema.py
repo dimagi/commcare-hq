@@ -31,7 +31,6 @@ def get_casedb_schema(form):
         source = clean_trans(parent_module.name, app.langs)
         subsets.extend(_get_case_schema_subsets(app, parent_module.case_type, source=source))
 
-
     if is_usercase_in_use(app.domain):
         subsets.append({
             "id": USERCASE_TYPE,

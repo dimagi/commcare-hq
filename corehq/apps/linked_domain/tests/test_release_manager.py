@@ -6,7 +6,6 @@ from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
     MODEL_APP,
     MODEL_CASE_SEARCH,
-    MODEL_DATA_DICTIONARY,
     MODEL_DIALER_SETTINGS,
     MODEL_FLAGS,
     MODEL_HMAC_CALLOUT_SETTINGS,
@@ -37,6 +36,7 @@ from corehq.apps.userreports.tests.utils import (
 )
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
+
 
 class BaseReleaseManagerTest(BaseLinkedAppsTest):
 

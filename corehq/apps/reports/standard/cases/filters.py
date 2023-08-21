@@ -20,7 +20,6 @@ from corehq.apps.reports.filters.base import (
     BaseSimpleFilter,
     BaseSingleOptionFilter,
 )
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 
 # TODO: Replace with library method
@@ -141,7 +140,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         ret = json.loads(value or "[]")
 
         # convert legacy list of strings to list of dicts
-        if ret and type(ret[0]) == str:
+        if ret and isinstance(ret[0], str):
             ret = [{
                 'name': prop_name,
                 'label': prop_name
