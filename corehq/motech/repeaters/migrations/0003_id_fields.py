@@ -3,6 +3,8 @@
 from django.db import migrations, models
 from django.db.models.deletion import DO_NOTHING
 
+import corehq.sql_db.fields
+
 
 class Migration(migrations.Migration):
 
@@ -11,6 +13,18 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunSQL(
+            sql="DROP INDEX IF EXISTS repeaters_repeater_domain_b537389f_like",
+            reverse_sql="""
+            CREATE INDEX IF NOT EXISTS repeaters_repeater_domain_b537389f_like
+                ON repeaters_repeater (domain varchar_pattern_ops)
+            """,
+            state_operations=[migrations.AlterField(
+                model_name='repeater',
+                name='domain',
+                field=corehq.sql_db.fields.CharIdField(db_index=True, max_length=126),
+            )],
+        ),
         migrations.AlterField(
             model_name='sqlrepeatrecord',
             name='id',

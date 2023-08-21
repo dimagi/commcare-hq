@@ -114,6 +114,7 @@ from corehq.motech.repeaters.apps import REPEATER_CLASS_MAP
 from corehq.motech.repeaters.optionvalue import OptionValue
 from corehq.motech.requests import simple_request
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
+from corehq.sql_db.fields import CharIdField
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import ForeignObject, foreign_init
 from corehq.util.quickcache import quickcache
@@ -255,7 +256,7 @@ class RepeaterManager(models.Manager):
 @foreign_init
 class Repeater(RepeaterSuperProxy):
     id = models.UUIDField(primary_key=True, db_column="id_")
-    domain = models.CharField(max_length=126, db_index=True)
+    domain = CharIdField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
     name = models.CharField(max_length=255, null=True)
     format = models.CharField(max_length=64, null=True)
