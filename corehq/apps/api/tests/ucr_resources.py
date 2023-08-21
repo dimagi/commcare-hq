@@ -1,15 +1,25 @@
 import base64
 import json
 import uuid
-from urllib.parse import parse_qs, urlparse
+from base64 import b64decode
+from unittest.mock import patch
+from urllib.parse import parse_qs, unquote, urlparse
 
 from django.http import QueryDict
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
 
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+)
 from corehq.apps.api.resources import v0_5
+from corehq.apps.api.resources.messaging_event.utils import CursorParams
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.models import (
@@ -17,8 +27,9 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import Document, WebUser
 from corehq.form_processor.models import CommCareCase
+from corehq.util.test_utils import flag_enabled
 
 from ...userreports.util import get_indicator_adapter
 from .utils import APIResourceTest
@@ -70,7 +81,6 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
             }
         ]
         cls.report_title = "test report"
-
         cls.data_source = DataSourceConfiguration(
             domain=cls.domain.name,
             referenced_doc_type="XFormInstance",
@@ -126,7 +136,6 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
         response_dict = json.loads(response.content)
-
         self.assertEqual(set(response_dict.keys()), {'meta', 'objects'})
         self.assertEqual(set(response_dict['meta'].keys()), {'total_count'})
 
@@ -401,3 +410,93 @@ class TestConfigurableReportDataResource(APIResourceTest):
                 username, password
             ).encode('utf-8')
         ).decode('utf-8')
+
+
+class TestUCRPaginated(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        cls.addClassCleanup(Subscription._get_active_subscription_by_domain.clear, Subscription, cls.domain.name)
+        cls.addClassCleanup(cls.domain.delete)
+        cls.username = 'rudolph@qwerty.commcarehq.org'
+        cls.password = '***'
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None,
+                                  email='rudoph@example.com', first_name='rudolph', last_name='commcare')
+        cls.user.set_role(cls.domain.name, 'admin')
+        cls.user.save()
+        cls.addClassCleanup(Document.delete, cls.user)
+
+        cls.account = BillingAccount.get_or_create_account_by_domain(
+            cls.domain.name, created_by="automated-test")[0]
+        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan)
+        cls.subscription.is_active = True
+        cls.subscription.save()
+        cls.data_source = DataSourceConfiguration(
+            domain=cls.domain.name,
+            referenced_doc_type="XFormInstance",
+            table_id=uuid.uuid4().hex,
+        )
+        cls.data_source.save()
+        cls.addClassCleanup(cls.data_source.delete)
+        rebuild_indicators(cls.data_source._id)
+        cls.client = Client()
+
+    def test_forbidden_when_feature_flag_not_enabled(self):
+        url = reverse("api_get_ucr_data", args=[self.domain.name, self.data_source._id])
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+    @flag_enabled("EXPORT_DATA_SOURCE_DATA")
+    def test_formatted_response(self):
+        url = reverse("api_get_ucr_data", args=[self.domain.name, self.data_source._id])
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        response_dict = json.loads(response.content)
+        self.assertIn("objects", response_dict)
+        self.assertIn("meta", response_dict)
+        self.assertIn("limit", response_dict["meta"])
+        self.assertIn("next", response_dict["meta"])
+
+    @flag_enabled("EXPORT_DATA_SOURCE_DATA")
+    @patch("corehq.apps.api.resources.v0_5._get_objects")
+    def test_next_cursor_created(self, mock_get_objects):
+        """The cursor in the `next` parameter should point to the last record that was returned"""
+        last_doc_id = "1aa9b660-dfb9-409a-a939-873ce608db2e"
+        last_inserted_at = "2023-08-17T11:08:01.927384Z"
+        mock_get_objects.return_value = {
+            "rows": [
+                [
+                    "dd00fe32-325f-4246-ac22-1261126dffe7",
+                    "2023-08-17T11:08:01.915246Z",
+                    "Ola",
+                    "ba7f99d16c494aa384e12d3c6b2b6156",
+                    None,
+                    "False"
+                ],
+                [
+                    last_doc_id,
+                    last_inserted_at,
+                    "Hello",
+                    "c18dfbefb65c4ed5b9524d69f245160b",
+                    None,
+                    "False"
+                ]
+            ]
+        }
+        url = reverse("api_get_ucr_data", args=[self.domain.name, self.data_source._id])
+        limit = 2
+        url = f"{url}?limit={limit}"
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        response_dict = json.loads(response.content)
+        self.assertEqual(int(response_dict["meta"]["limit"]), limit)
+        cursor = response_dict["meta"]["next"].split("?cursor=")[1]
+        cursor_params_string = b64decode(unquote(cursor)).decode('utf-8')
+        cursor_params = CursorParams(QueryDict(cursor_params_string).dict(), self.domain, True)
+        self.assertEqual(cursor_params.params['last_doc_id'], last_doc_id)
+        self.assertEqual(cursor_params.params['last_inserted_at'], last_inserted_at)

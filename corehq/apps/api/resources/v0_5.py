@@ -1,11 +1,12 @@
+import dataclasses
+import functools
 import json
 from base64 import b64decode, b64encode
 from collections import namedtuple
-import dataclasses
-from dataclasses import dataclass, InitVar
+from contextlib import closing
+from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
-import functools
-import pytz
+from io import BytesIO
 from urllib.parse import urlencode
 
 from django.conf.urls import re_path as url
@@ -13,14 +14,23 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
 from django.db.models.functions import TruncDate
-
-from django.http import Http404, HttpResponse, HttpResponseNotFound, JsonResponse, QueryDict
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    JsonResponse,
+    QueryDict,
+)
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
+from django.views.decorators.csrf import csrf_exempt
 
+import pytz
 from memoized import memoized_property
+from sqlalchemy import and_, asc, or_, select
 from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
@@ -29,11 +39,15 @@ from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
+from couchexport.export import export_from_tables
+from couchexport.models import Format
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.cors import add_cors_headers_to_response
+from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.api.odata.serializers import (
     ODataCaseSerializer,
     ODataFormSerializer,
@@ -48,16 +62,22 @@ from corehq.apps.api.resources.auth import (
     ODataAuthentication,
     RequirePermissionAuthentication,
 )
-from corehq.apps.auditcare.models import NavigationEventAudit
-from corehq.apps.api.resources.meta import AdminResourceMeta, CustomResourceMeta
+from corehq.apps.api.resources.messaging_event.utils import get_request_params
+from corehq.apps.api.resources.meta import (
+    AdminResourceMeta,
+    CustomResourceMeta,
+)
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import (
-    get_obj,
     django_date_filter,
+    get_obj,
     make_date_filter,
     parse_str_to_date,
 )
 from corehq.apps.app_manager.models import Application
+from corehq.apps.auditcare.models import NavigationEventAudit
+from corehq.apps.case_importer.views import require_can_edit_data
+from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
@@ -77,6 +97,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
+    get_datasource_config,
     report_config_id_is_static,
 )
 from corehq.apps.userreports.reports.data_source import (
@@ -88,6 +109,7 @@ from corehq.apps.userreports.reports.view import (
 )
 from corehq.apps.userreports.util import (
     get_configurable_and_static_reports,
+    get_indicator_adapter,
     get_report_config_or_not_found,
 )
 from corehq.apps.users.dbaccessors import (
@@ -100,12 +122,14 @@ from corehq.apps.users.models import (
     HqPermissions,
     WebUser,
 )
-from corehq.apps.users.util import raw_username, generate_mobile_username
+from corehq.apps.users.util import generate_mobile_username, raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
 from corehq.util.timer import TimingContext
 
+from ..exceptions import UpdateUserException
+from ..user_updates import update
 from . import (
     CorsResourceMixin,
     CouchResourceMixin,
@@ -115,10 +139,9 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
-from ..exceptions import UpdateUserException
-from ..user_updates import update
 
 MOCK_BULK_USER_ES = None
+EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 20
 
 
 def user_es_call(domain, q, fields, size, start_at):
@@ -1295,3 +1318,93 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
                 filter_obj = cls.COMPOUND_FILTERS[param_field_name](qualifier, val)
                 compound_filter &= Q(**filter_obj)
         return compound_filter
+
+
+@csrf_exempt
+@allow_cors(['GET'])
+@api_auth()
+@require_can_edit_data
+@requires_privilege_with_fallback(privileges.API_ACCESS)
+@api_throttle
+def get_ucr_data(request, domain, config_id):
+    if not toggles.EXPORT_DATA_SOURCE_DATA.enabled(domain):
+        return HttpResponseForbidden()
+    try:
+        if request.method == 'GET':
+            return get_datasource_data(request, config_id, domain)
+        return JsonResponse({'error': "Request method not allowed"}, status=405)
+    except BadRequest as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+def get_datasource_data(request, config_id, domain):
+    config, _ = get_datasource_config(config_id, domain)
+    datasource_adapter = get_indicator_adapter(config, load_source='export_data_source')
+    cursor_params = get_request_params(request).params
+    params = request.GET.dict()
+    params["limit"] = params.get("limit", EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT)
+    request_params = {**params, **cursor_params}
+    query = _get_pagination_query(request_params, datasource_adapter)
+    data = _get_paginated_data(query, request_params, datasource_adapter)
+    return JsonResponse(data)
+
+
+def _get_pagination_query(request_params, datasource_adapter):
+    # cursor params will be in CursorParams
+    table = datasource_adapter.get_table()
+    last_inserted_at = request_params.get("last_inserted_at", None)
+    last_doc_id = request_params.get("last_doc_id", None)
+    limit = request_params["limit"]
+
+    query = select([table]).order_by(asc(table.c.inserted_at), asc(table.c.doc_id))
+    if last_inserted_at and last_doc_id:
+        # If these are not specified, the limit parameter will pluck the first few records from the table
+        query = query.where(
+            or_(
+                and_(table.c.inserted_at == last_inserted_at, table.c.doc_id > last_doc_id),
+                table.c.inserted_at > last_inserted_at
+            )
+        )
+    pagination_query = query.limit(limit)
+    query = datasource_adapter.get_query_object()
+    return query.from_statement(pagination_query)
+
+
+def _get_paginated_data(query, request_params, datasource_adapter):
+    objects = _get_objects(query, datasource_adapter)
+    return {
+        "objects": objects,
+        "meta": {
+            "next": _get_next_url_params(objects),
+            "limit": request_params["limit"]
+        }
+    }
+
+
+def _get_objects(query, adapter):
+    """Get paginated datasource data"""
+    table = adapter.get_table()
+
+    def get_table(query):
+        yield list(table.columns.keys())
+        for row in query:
+            adapter.track_load()
+            yield row
+
+    with closing(BytesIO()) as temp:
+        config_id = adapter.table_id
+        tables = [[config_id, get_table(query)]]
+        export_from_tables(tables, temp, Format.JSON)
+        exported_data = json.loads(temp.getvalue().decode('utf-8'))
+        return exported_data[config_id]
+
+
+def _get_next_url_params(objects):
+    """Construct the next cursor"""
+    if not objects["rows"]:
+        return None
+    last_object = objects["rows"][-1]
+    cursor_params = {"last_doc_id": last_object[0], "last_inserted_at": last_object[1]}
+    encoded_cursor = b64encode(urlencode(cursor_params).encode('utf-8'))
+    next_params = {'cursor': encoded_cursor}
+    return f'?{urlencode(next_params)}'
