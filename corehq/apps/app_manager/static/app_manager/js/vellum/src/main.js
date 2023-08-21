@@ -36,7 +36,8 @@ requirejs.config({
             "vellum/window",
             "vellum/polyfills",
             "vellum/copy-paste",
-            "vellum/commander"
+            "vellum/commander",
+            "vellum/commcareConnect"
         ]
     }
 });
@@ -69,6 +70,7 @@ define([
     'vellum/window',
     'vellum/polyfills',
     'vellum/copy-paste',
-    'vellum/commander'
+    'vellum/commander',
+    'vellum/commcareConnect'
 ], function () {});
 

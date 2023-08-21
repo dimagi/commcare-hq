@@ -4032,10 +4032,8 @@ msgstr ""
 "ficheiro do perfil está correto?"
 
 #: corehq/apps/app_manager/models.py
-#, fuzzy
-#| msgid "Delete Application"
 msgid "Remote Application"
-msgstr "Apagar aplicação"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py
 msgid ""
@@ -11942,10 +11940,8 @@ msgid "Break"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html
-#, fuzzy
-#| msgid "Inspect Data"
 msgid "Sync User Data"
-msgstr "Examinar Dados"
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/users.html
 msgid "Organization Type"
@@ -12305,17 +12301,6 @@ msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "            Their activity and form submissions can be monitored in the "
-#| "Reports section of this %(hq_name)s project space.\n"
-#| "            <br />\n"
-#| "            Read more about managing mobile workers on our\n"
-#| "            <a href=\"https://confluence.dimagi.com/display/"
-#| "commcarepublic/Create+and+Manage+CommCare+Mobile+Workers\" "
-#| "target=\"_blank\">Help Site</a>.\n"
-#| "          "
 msgid ""
 "\n"
 "              Linked configurations are controlled from a separate, linked "
@@ -12325,14 +12310,6 @@ msgid ""
 "a>.\n"
 "            "
 msgstr ""
-"\n"
-"A atividade e envio de formulários podem ser monitorados na seção de "
-"Relatórios desta área de projeto %(hq_name)s.\n"
-"<br />\n"
-"Leia mais sobre gestão de trabalhadores móveis no nosso\n"
-"<a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Create+and+Manage+CommCare+Mobile+Workers\" target=\"_blank\">Site de Ajuda</"
-"a>."
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -12628,6 +12605,37 @@ msgstr "Site de ajuda"
 msgid "Visit CommCare's knowledge base"
 msgstr ""
 
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Row {} in \"{}-vl\" sheet is missing a case property field"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Could not find resource type for {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Error in \"{}\" sheet, row {}: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid ""
+"Missing required valid \"{}-vl\" multi-choice sheet for case type \"{}\""
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Not enough columns in \"{}\" sheet"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py corehq/apps/data_dictionary/views.py
+msgid "FHIR Resource {} {}: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid ""
+"Case property \"{}\" referenced in \"{}-vl\" sheet that does not exist in "
+"\"{}\" sheet. Row(s) affected: {}"
+msgstr ""
+
 #: corehq/apps/data_dictionary/models.py
 msgid "Group \"{}\" already exists for case type \"{}\""
 msgstr ""
@@ -12663,10 +12671,8 @@ msgstr "Dicionário de Dados"
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/export/templates/export/partials/table.html
-#, fuzzy
-#| msgid "Date Created"
 msgid "deprecated"
-msgstr "Dado criado"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add Case Type"
@@ -12701,16 +12707,12 @@ msgid "Import from Excel"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Case Type"
 msgid "Deprecate Case Type"
-msgstr "Tipo de Caso"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Case Type"
 msgid "Restore Case Type"
-msgstr "Tipo de Caso"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Show Deprecated"
@@ -12835,12 +12837,32 @@ msgstr ""
 msgid "Unable to save valid values longer than {} characters"
 msgstr ""
 
-#: corehq/apps/data_dictionary/views.py
-msgid "Case Type 'name' is required"
+#: corehq/apps/data_dictionary/util.py
+msgid "Column {} in \"{}\" sheet has an empty header"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Column {} has an empty header"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Invalid column \"{}\" in \"{}\" sheet. Valid column names are: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Invalid column \"{}\". Valid column names are: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Missing \"Case Property\" column header in \"{}\" sheet"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Missing \"Case Property\" column header"
 msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
-msgid "FHIR Resource {} {}: {}"
+msgid "Case Type 'name' is required"
 msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
@@ -12886,36 +12908,6 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
 msgid "Data dictionary import complete"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Error in valid values for case type {}, row {}: missing case property"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Not enough columns"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Could not find resource type for {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Error in case type {}, row {}: {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Missing valid values sheet for case type {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid ""
-"Error in valid values for case type {}, nonexistent property listed ({}), "
-"row(s): {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Not enough columns in {} sheet"
 msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py
@@ -13662,17 +13654,6 @@ msgid "Lock Linked Rules For Me"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "            Their activity and form submissions can be monitored in the "
-#| "Reports section of this %(hq_name)s project space.\n"
-#| "            <br />\n"
-#| "            Read more about managing mobile workers on our\n"
-#| "            <a href=\"https://confluence.dimagi.com/display/"
-#| "commcarepublic/Create+and+Manage+CommCare+Mobile+Workers\" "
-#| "target=\"_blank\">Help Site</a>.\n"
-#| "          "
 msgid ""
 "\n"
 "            Linked configurations are controlled from a separate, linked "
@@ -13681,14 +13662,6 @@ msgid ""
 "Enterprise+Release+Management' target='_blank'>Learn more</a>.\n"
 "          "
 msgstr ""
-"\n"
-"A atividade e envio de formulários podem ser monitorados na seção de "
-"Relatórios desta área de projeto %(hq_name)s.\n"
-"<br />\n"
-"Leia mais sobre gestão de trabalhadores móveis no nosso\n"
-"<a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Create+and+Manage+CommCare+Mobile+Workers\" target=\"_blank\">Site de Ajuda</"
-"a>."
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 msgid "Last Run"
@@ -14185,10 +14158,8 @@ msgid "Edit Case Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-#, fuzzy
-#| msgid "View Case"
 msgid "View Case Rule"
-msgstr "Ver Caso"
+msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Deduplicate Cases"
@@ -20500,24 +20471,11 @@ msgid "Unlock Linked Tables For Me"
 msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-#, fuzzy
-#| msgid "Lookup Tables File"
 msgid "Lock Linked Tables For Me"
-msgstr "Ficheiro de Tabelas de Pesquisa"
+msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "            Their activity and form submissions can be monitored in the "
-#| "Reports section of this %(hq_name)s project space.\n"
-#| "            <br />\n"
-#| "            Read more about managing mobile workers on our\n"
-#| "            <a href=\"https://confluence.dimagi.com/display/"
-#| "commcarepublic/Create+and+Manage+CommCare+Mobile+Workers\" "
-#| "target=\"_blank\">Help Site</a>.\n"
-#| "          "
 msgid ""
 "\n"
 "                Linked configurations are controlled from a separate, linked "
@@ -20527,14 +20485,6 @@ msgid ""
 "a>.\n"
 "              "
 msgstr ""
-"\n"
-"A atividade e envio de formulários podem ser monitorados na seção de "
-"Relatórios desta área de projeto %(hq_name)s.\n"
-"<br />\n"
-"Leia mais sobre gestão de trabalhadores móveis no nosso\n"
-"<a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Create+and+Manage+CommCare+Mobile+Workers\" target=\"_blank\">Site de Ajuda</"
-"a>."
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
@@ -24330,10 +24280,8 @@ msgid "Data Expressions and Filters"
 msgstr ""
 
 #: corehq/apps/linked_domain/const.py
-#, fuzzy
-#| msgid "Automatically Update Cases"
 msgid "Automatic Update Rule"
-msgstr "Atualizar Casos Automaticamente"
+msgstr ""
 
 #: corehq/apps/linked_domain/const.py
 msgid "Custom User Data Fields"
@@ -37922,10 +37870,8 @@ msgid "Edit Role"
 msgstr "Editar Função"
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-#, fuzzy
-#| msgid "View Table"
 msgid "View Role"
-msgstr "Ver Tabela"
+msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "Add Role"
@@ -40019,10 +39965,8 @@ msgid "Rule name must be the same in all rows"
 msgstr ""
 
 #: corehq/messaging/scheduling/view_helpers.py
-#, fuzzy
-#| msgid "Missing Report Date"
 msgid "Missing message"
-msgstr "Data do relatório ausente"
+msgstr ""
 
 #: corehq/messaging/scheduling/views.py
 msgid "New Broadcast"
@@ -42307,10 +42251,8 @@ msgid "Data Manipulation"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Remove"
 msgid "Remote"
-msgstr "Remover"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "(Untitled)"
@@ -43470,6 +43412,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Delete Role"
-#~ msgstr "Apagar Função"

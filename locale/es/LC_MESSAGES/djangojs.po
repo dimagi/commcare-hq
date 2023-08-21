@@ -861,6 +861,7 @@ msgid "Question"
 msgstr "Pregunta"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Name"
 msgstr "Nombre"
 
@@ -2714,6 +2715,32 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Command Bar"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#, fuzzy
+#| msgid "Module"
+msgid "Module ID"
+msgstr "Módulo"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#, fuzzy
+#| msgid "Question"
+msgid "Description"
+msgstr "Pregunta"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Time Estimate"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#, fuzzy
+#| msgid "Must be valid path"
+msgid "Must be an integer"
+msgstr "Debe ser una ruta válida"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Estimated time to complete the module in hours."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js

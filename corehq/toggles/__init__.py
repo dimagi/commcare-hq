@@ -1395,6 +1395,15 @@ SMS_LOG_CHANGES = StaticToggle(
                  "Report, and adds Status and Event columns"),
 )
 
+EXPORT_DATA_SOURCE_DATA = StaticToggle(
+    'export_data_source_data',
+    'Add Export Data Source Data page',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+    description="Add the Export Data Source Data page to the Data tab",
+)
+
+
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'enable_include_sms_gateway_charging',
     'Enable include SMS gateway charging',
@@ -2027,17 +2036,6 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     parent_toggles=[INBOUND_SMS_LENIENCY]
 )
 
-CHANGE_FORM_LANGUAGE = StaticToggle(
-    'change_form_language',
-    'USH: Allow user to change form language in web apps',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Allows the user to change the language of the form content while in the form itself in Web Apps
-    """,
-    help_link="https://confluence.dimagi.com/display/saas/Change+Form+Language"
-)
-
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
     'blocked_email_domain_recipients',
     'Block any outgoing email addresses that have an email domain which '
@@ -2399,6 +2397,15 @@ GEOSPATIAL = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Additional views will be added allowing for visually viewing '
                 'and assigning cases on a map.'
+
+)
+
+COMMCARE_CONNECT = StaticToggle(
+    'commcare_connect',
+    'Enable CommCare Connect features',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='More details to come',
 
 )
 

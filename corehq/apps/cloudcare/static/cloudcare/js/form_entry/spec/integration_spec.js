@@ -74,8 +74,8 @@ hqDefine("cloudcare/js/form_entry/spec/integration_spec", function () {
             formJSON.tree = [questionJSONString, questionJSONString2];
             var form = formUI.Form(_.clone(formJSON));
 
-            var stringQ1 = form.children()[0];
-            var stringQ2 = form.children()[1];
+            var stringQ1 = form.children()[0].children()[0];
+            var stringQ2 = form.children()[1].children()[0];
 
             var response1 = {};
             $.extend(response1, formJSON);
@@ -119,8 +119,8 @@ hqDefine("cloudcare/js/form_entry/spec/integration_spec", function () {
 
         it('Should reconcile questions answered at the same time for multi', function () {
             var form = formUI.Form(_.clone(formJSON));
-            var multiQ = form.children()[0];
-            var stringQ = form.children()[1];
+            var multiQ = form.children()[0].children()[0];
+            var stringQ = form.children()[1].children()[0];
 
             var response1 = {};
             $.extend(response1, formJSON);
@@ -217,7 +217,7 @@ hqDefine("cloudcare/js/form_entry/spec/integration_spec", function () {
             };
 
             var f = formUI.Form(json1);
-            var child = f.children()[0];
+            var child = f.children()[0].children()[0];
             $.publish('session.reconcile', [json2, child]);
             assert.equal(child.answer()[0], 30.000000000000018);
 

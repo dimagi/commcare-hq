@@ -32,7 +32,6 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'title',
             'type',
             'noItemsText',
-            'resultsTitle',
         ],
 
         entityProperties: [
@@ -69,7 +68,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
 
         formProperties: [
             'langs',
-            'session_id'
+            'session_id',
         ],
 
         parse: function (response) {
