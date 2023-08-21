@@ -84,7 +84,9 @@ class TestRequestNewDomain(TestCase):
 
     @mock.patch('corehq.apps.registration.utils._setup_subscription', _issue_initializing_domain)
     @mock.patch('corehq.apps.registration.utils.notify_exception', _noop)
-    def test_subscription_exception_raises_error(self):
+    def test_subscription_exception_raises_error_and_domain_is_deleted(self):
+        # We want to ensure that errors during the Subscription initialization process
+        # do not result in incomplete domains (a domain without a Subscription)
         with self.assertRaisesMessage(ErrorInitializingDomain,
                                       "Subscription setup failed for 'subscription-failed'"):
             request_new_domain(
