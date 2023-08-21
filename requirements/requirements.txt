@@ -152,7 +152,7 @@ django-compressor==4.1
     # via -r base-requirements.in
 django-countries==7.3.2
     # via -r base-requirements.in
-django-crispy-forms==2.0.0
+django-crispy-forms==2.0
     # via
     #   -r base-requirements.in
     #   crispy-bootstrap3to5
