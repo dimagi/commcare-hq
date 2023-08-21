@@ -95,6 +95,7 @@ class TestRequestNewDomain(TestCase):
         domain = Domain.get_by_name('subscription-failed')
         self.assertIsNone(domain)
 
+    @mock.patch('corehq.apps.registration.utils._setup_subscription', _noop)
     @mock.patch('corehq.apps.registration.utils.initialize_domain_with_default_roles', _issue_initializing_domain)
     @mock.patch('corehq.apps.registration.utils.notify_exception', _noop)
     def test_default_roles_exception_raises_error(self):
