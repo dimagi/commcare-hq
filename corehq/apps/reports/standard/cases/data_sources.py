@@ -22,6 +22,7 @@ from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import parse_date
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.reports.filters.api import CaseCopier
 
 
 class CaseDisplayBase:
@@ -115,10 +116,19 @@ class CaseDisplayBase:
     def case_link(self):
         url = self.case_detail_url
         if url:
+            label = ''
+            if self.case.get(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME):
+                label = format_html(
+                    '&nbsp;<span class="label label-info" title="0">{}</span>',
+                    _("Copied case"),
+                )
+
             return format_html(
-                "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>",
+                "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>{}",
                 self.case_detail_url,
-                self.case_name_display)
+                self.case_name_display,
+                label,
+            )
         else:
             return "%s (bad ID format)" % self.case_name
 
@@ -374,8 +384,10 @@ class CaseDisplaySQL(CaseDisplayBase):
 class SafeCaseDisplay(object):
     """Show formatted properties if they are used in XML, otherwise show the property directly from the case
     """
-    def __init__(self, case, timezone, override_user_id=None):
+    def __init__(self, case, timezone=None, override_user_id=None):
         self.case = case
+        if timezone is None:
+            timezone = pytz.UTC
         self.display = CaseDisplaySQL(self.case, timezone, override_user_id)
 
     def get(self, name):
