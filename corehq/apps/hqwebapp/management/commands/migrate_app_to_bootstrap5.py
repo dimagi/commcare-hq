@@ -256,8 +256,8 @@ class Command(BaseCommand):
                           if f.is_file() and '/bootstrap3/' in str(f) and '/crispy/' not in str(f)]
         app_static_folder = self._get_app_static_folder(app_name)
         migrated_files.extend(
-            [f for f in app_static_folder.glob('**/*.js')
-             if f.is_file() and '/bootstrap3/' in str(f)]
+            f for f in app_static_folder.glob('**/*.js')
+            if f.is_file() and '/bootstrap3/' in str(f)
         )
         return migrated_files
 
