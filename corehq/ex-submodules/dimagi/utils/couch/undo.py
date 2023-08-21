@@ -1,5 +1,10 @@
 from datetime import datetime
-from dimagi.ext.couchdbkit import *
+
+from django.db import IntegrityError
+
+from dimagi.ext.couchdbkit import DateTimeProperty, Document, StringProperty
+
+from corehq.apps.cleanup.models import DeletedCouchDoc
 
 DELETED_SUFFIX = '-Deleted'
 
@@ -9,13 +14,34 @@ class DeleteRecord(Document):
     domain = StringProperty()
     datetime = DateTimeProperty()
 
+    def save(self):
+        """Save the doc
+
+        A `DeletedCouchDoc` record is created for this `DeleteRecord`
+        (if one does not already exist), which means it will be deleted
+        automatically sometime later. Automatic `DeleteRecord` cleanup
+        will happen around the same time that the deleted document that
+        it references is also permanently deleted.
+        """
+        result = super().save()
+        try:
+            DeletedCouchDoc.objects.create(
+                doc_id=self._id,
+                doc_type=self.doc_type,
+                deleted_on=datetime.utcnow(),
+            )
+        except IntegrityError as err:
+            if "duplicate key" not in str(err):
+                raise
+        return result
+
 
 class DeleteDocRecord(DeleteRecord):
     doc_id = StringProperty()
 
     def undo(self):
         doc = self.get_doc()
-        undo_delete(doc)
+        undo_delete(doc, delete_record=self)
 
 
 class UndoableDocument(Document):
@@ -65,7 +91,12 @@ def get_deleted_doc_type(document_class_or_instance):
     return '{}{}'.format(base_name, DELETED_SUFFIX)
 
 
-def undo_delete(document, save=True):
+def undo_delete(document, delete_record=None, save=True):
+    if delete_record is not None:
+        DeletedCouchDoc.objects.filter(
+            doc_id=delete_record._id,
+            doc_type=delete_record.doc_type,
+        ).delete()
     document.doc_type = remove_deleted_doc_type_suffix(document['doc_type'])
     if save:
         document.save()

@@ -358,6 +358,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
         # m1 is a child of m0 and uses the same case type, this is where the tests focus
         # m2 is a standalone module of the same case type
         # m3 is a standalone module of another case type
+        # m4 is a child of m2 and uses multi-select
 
         self.factory = AppFactory(domain="multiple-referrals-child-test")
 
@@ -374,6 +375,11 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
 
         self.m3, m3f0 = self.factory.new_basic_module('m3', self.OTHER_CASE_TYPE)
         m3f0.requires = 'case'
+
+        self.m4, self.m4f0 = self.factory.new_basic_module(
+            'child-multi', self.MAIN_CASE_TYPE, parent_module=self.m2)
+        self.m4f0.requires = 'case'
+        self.m4.case_details.short.multi_select = True
 
         self._render_suite.reset_cache(self)
 
@@ -494,6 +500,39 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
             ('datum', 'case_id')
         ])
         self.assert_form_datums(self.m1f0, 'case_id')
+
+    def test_multi_select_as_child_with_parent_select(self):
+        # parent select from parent module to child (seems weird)
+        self.set_parent_select(self.m2, self.m4)
+
+        self.assert_module_datums(self.m2.id, [
+            ('instance-datum', 'parent_selected_cases'),
+            ('datum', 'case_id'),
+        ])
+
+        self.assert_module_datums(self.m4.id, [
+            ('instance-datum', 'parent_selected_cases'),
+        ])
+
+    @patch(
+        "corehq.apps.app_manager.suite_xml.sections.entries."
+        "case_search_sync_cases_on_form_entry_enabled_for_domain")
+    def test_multi_select_as_child_with_parent_select_case_search(self, mock1):
+        # parent select from parent module to child (seems weird)
+        self.set_parent_select(self.m2, self.m4)
+
+        self.m4.search_config.properties = [CaseSearchProperty(
+            name='name',
+            label={'en': 'Name'}
+        )]
+        self.assert_module_datums(self.m2.id, [
+            ('instance-datum', 'parent_selected_cases'),
+            ('datum', 'case_id'),
+        ])
+
+        self.assert_module_datums(self.m4.id, [
+            ('instance-datum', 'parent_selected_cases'),
+        ])
 
 
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)

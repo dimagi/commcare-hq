@@ -483,9 +483,7 @@ msgstr ""
 msgid "Request Quote"
 msgstr ""
 
-#: corehq/apps/accounting/forms.py
-#: corehq/apps/cloudcare/templates/formplayer/query_view.html
-#: corehq/apps/commtrack/forms.py
+#: corehq/apps/accounting/forms.py corehq/apps/commtrack/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/form_list_form.html
 #: corehq/apps/translations/forms.py
 msgid "Submit"
@@ -967,6 +965,7 @@ msgstr ""
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/push_warning_dialog.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/products/templates/products/manage/products.html
@@ -976,6 +975,7 @@ msgstr ""
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/async/default.html
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
 #: corehq/apps/reports/templates/reports/notification_unsubscribe.html
 #: corehq/apps/reports/templates/reports/partials/bulk_modal.html
 #: corehq/apps/reports/templates/reports/partials/data_corrections_modal.html
@@ -2754,6 +2754,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/geospatial/forms.py
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/oauth_application_registration_form.html
 #: corehq/apps/locations/templates/locations/location_types.html
@@ -3268,6 +3269,14 @@ msgstr ""
 msgid "You do not have permission to view this feed."
 msgstr ""
 
+#: corehq/apps/api/resources/v0_5.py
+msgid "limit must be a positive integer."
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Limit may not exceed {}."
+msgstr ""
+
 #: corehq/apps/api/user_updates.py
 msgid "Attempted to update unknown or non-editable field '{}'"
 msgstr ""
@@ -3399,6 +3408,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/add_ons.py
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/reports.py
 msgid "Case Management"
 msgstr ""
 
@@ -3746,6 +3756,19 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
+msgid "It must reference a lookup table or mobile report."
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
+msgid "This feature is compatible with only version 2 of Mobile UCR"
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
+msgid ""
+"Format \"{}\" can only be used once but is used by multiple properties: {}"
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
 msgid "Case tiles may only be used for the case list (not the case details)."
 msgstr ""
 
@@ -3954,6 +3977,10 @@ msgstr ""
 #: corehq/apps/app_manager/models.py
 msgid ""
 "Problem loading suite file from profile file. Is your profile file correct?"
+msgstr ""
+
+#: corehq/apps/app_manager/models.py
+msgid "Remote Application"
 msgstr ""
 
 #: corehq/apps/app_manager/models.py
@@ -5041,6 +5068,26 @@ msgid ""
 "only works in mobile."
 msgstr ""
 
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Person Simple"
+msgstr ""
+
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Title row, subtitle row, third row with two cells, and map"
+msgstr ""
+
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Title row, second row with two cells, third row, and map"
+msgstr ""
+
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Title row, second row with two cells, third and fourth rows, and map"
+msgstr ""
+
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Three upper rows, four rows with two cells, two lower rows and map"
+msgstr ""
+
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
 #, python-brace-format
 msgid "There is no schedule for form {form_id}"
@@ -5061,7 +5108,10 @@ msgid "Your app has multiple forms with the same schedule abbreviation"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/post_process/instances.py
-msgid "Duplicate custom instance in {}: {}"
+#, python-brace-format
+msgid ""
+"Conflicting instance declarations in {entry_id} for {instance_id}: {src_1} !"
+"= {src_2}"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/sections/entries.py
@@ -5207,6 +5257,7 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
+#: corehq/apps/reports/templates/reports/partials/description.html
 msgid "Learn More"
 msgstr ""
 
@@ -5724,6 +5775,10 @@ msgid "Menu Settings"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view.html
+msgid "Session Endpoint Id"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_filtering.html
 msgid "Add filter"
 msgstr ""
@@ -5792,6 +5847,7 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/feed_filter_modal.html
 #: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
 #: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
@@ -5816,6 +5872,14 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/appnav_menu_header.html
 msgid "Updates Available to Publish"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/appnav_menu_header.html
+#, python-format
+msgid ""
+"\n"
+"    Linked from %(name)s | V%(version)s\n"
+"    "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/appnav_menu_langs.html
@@ -6512,6 +6576,17 @@ msgid ""
 "              "
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
+"search property\n"
+"                <code>%(property)s</code> that references an invalid "
+"instance.\n"
+"              "
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/build_profiles_select.html
 #: corehq/apps/domain/forms.py corehq/apps/reports/standard/deployments.py
 msgid "Build Profile"
@@ -6548,6 +6623,17 @@ msgid ""
 "      "
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list_session_endpoint.html
+msgid "Case List Session Endpoint ID"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list_session_endpoint.html
+msgid ""
+"A session endpoint ID to navigate to this\n"
+"                                    case list without doing selection on the "
+"case list."
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/confirm_delete_app.html
 msgid ""
 "\n"
@@ -6580,6 +6666,7 @@ msgstr ""
 #: corehq/apps/programs/templates/programs/manage/programs.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
 #: corehq/apps/reports/filters/users.py
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/reports/templates/reports/tableau_visualization.html
@@ -7702,11 +7789,7 @@ msgid "Custom Case List XML"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Don't Use Case Tiles"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Use Case Tiles"
+msgid "Case Tile Template"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
@@ -7717,6 +7800,18 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Case property to show"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Show case tiles grouped by parent case"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Parent case index name"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Case tile header rows"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
@@ -8447,6 +8542,14 @@ msgid "Sort Field"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Instance Nodeset"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "This refers to data other than selected report/lookup-table."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/reminders/forms.py
 msgid "Advanced Options"
 msgstr ""
@@ -8474,18 +8577,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 msgid "Validation Message"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-msgid "Instance URI"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-msgid "Instance Nodeset"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-msgid "This refers to data other than selected report/lookup-table."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
@@ -8819,6 +8910,10 @@ msgid ""
 "this case list will be this type of case, and only cases of this type will "
 "show in the case list. Other case lists with the same case type will use the "
 "same set of cases."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
+msgid "This case type has been deprecated in the Data Dictionary."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
@@ -9335,6 +9430,23 @@ msgid "Make New Version"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+msgid ""
+"\n"
+"        The new application build contains the following deprecated case "
+"types:\n"
+"      "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+msgid ""
+"\n"
+"        For more information on deprecated case types, see the following\n"
+"        <a target=\"_blank\" href=\"https://confluence.dimagi.com/display/"
+"commcarepublic/Data+Dictionary\">documentation</a>.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/users/decorators.py
 msgid "Sorry, you don't have permission to do this action!"
 msgstr ""
@@ -9657,6 +9769,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html
+#: corehq/apps/cloudcare/templates/formplayer/settings_view.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 msgid "Sync"
 msgstr ""
 
@@ -9732,6 +9846,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Select All"
 msgstr ""
@@ -9768,7 +9883,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templatetags/xforms_extras.py
 #: corehq/motech/repeaters/const.py
-#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Empty"
 msgstr "Manejo de Casos"
@@ -10314,6 +10428,20 @@ msgid "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
 msgstr ""
 
 #: corehq/apps/app_manager/views/utils.py
+#, python-brace-format
+msgid ""
+"Session endpoint IDs must be unique. {duplicates} are used multiple times"
+msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
+msgid "Custom assertions must not be blank."
+msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
+msgid "Please add a message for assertion."
+msgstr ""
+
+#: corehq/apps/app_manager/views/utils.py
 msgid "There was an issue with your custom assertions: {}"
 msgstr ""
 
@@ -10768,6 +10896,21 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
+msgid ""
+"\n"
+"          The Excel file contains cases with the following deprecated case "
+"types:\n"
+"        "
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+msgid ""
+"\n"
+"          Cases that have the above case types will not be imported.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html
 msgid "Case Type to Update/Create"
 msgstr ""
 
@@ -10928,7 +11071,6 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 #: corehq/messaging/scheduling/views.py corehq/motech/generic_inbound/models.py
-#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Success"
@@ -10940,7 +11082,6 @@ msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/reports/filters/select.py corehq/motech/repeaters/const.py
-#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Failed"
 msgstr ""
@@ -11203,6 +11344,7 @@ msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
+#: corehq/apps/cloudcare/templates/formplayer/query_view.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/reports/filters/simple.py
@@ -11262,6 +11404,10 @@ msgstr ""
 msgid "Search has too many results. Please try a more specific search."
 msgstr ""
 
+#: corehq/apps/case_search/utils.py
+msgid "Fuzzy search is not supported with multiple values"
+msgstr ""
+
 #: corehq/apps/case_search/views.py corehq/apps/dashboard/views.py
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/views.py
@@ -11278,6 +11424,11 @@ msgstr ""
 #: corehq/apps/domain/views/settings.py corehq/apps/registry/models.py
 #: corehq/tabs/tabclasses.py
 msgid "Case Search"
+msgstr ""
+
+#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
+#, python-brace-format
+msgid "{node.name} is not supported with ancestor-exists"
 msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
@@ -11504,10 +11655,6 @@ msgid "The 'disable_web_apps' feature flag is turned on."
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Delete repeat"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid "Question Group"
 msgstr ""
 
@@ -11542,6 +11689,10 @@ msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid "Next Error"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/form_entry/templates.html
+msgid "Show help dialog"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
@@ -11599,6 +11750,11 @@ msgid "Clear"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
+msgid "Sort By"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html
+#: corehq/apps/cloudcare/templates/formplayer/no_items_text.html
 msgid "List is empty."
 msgstr ""
 
@@ -11645,6 +11801,10 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html
 #: corehq/messaging/scheduling/forms.py
 msgid "Start"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/menu_list.html
+msgid "Dropdown toggle"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/menu_list.html
@@ -11699,6 +11859,10 @@ msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html
 msgid "Break"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/settings_view.html
+msgid "Sync User Data"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/users.html
@@ -11985,6 +12149,18 @@ msgid "Edit {} Fields"
 msgstr ""
 
 #: corehq/apps/custom_data_fields/edit_model.py
+msgid "Could not update '{}'. Synced data cannot be created this way"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/edit_model.py
+msgid "Could not update '{}'. You do not have the appropriate role"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/edit_model.py
+msgid "Unable to remove synced fields. You do not have the appropriate role"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/edit_model.py
 msgid "Could not delete profile '{}' because it has users assigned."
 msgstr ""
 
@@ -12027,6 +12203,34 @@ msgstr ""
 #: corehq/apps/custom_data_fields/models.py
 #, python-brace-format
 msgid "{label} is required."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
+msgid "Unlock Linked Fields For Me"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
+msgid "Lock Linked Fields For Me"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+#: corehq/apps/reminders/templates/reminders/keyword_list.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Linked Configurations"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
+#: corehq/apps/reminders/templates/reminders/keyword_list.html
+msgid ""
+"\n"
+"              Linked configurations are controlled from a separate, linked "
+"project space.\n"
+"                <a href='https://confluence.dimagi.com/display/"
+"commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</"
+"a>.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
@@ -12151,6 +12355,14 @@ msgid ""
 "            will be removed the next time the %(entity_string)s is saved.\n"
 "          </p>\n"
 "        "
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_edit.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/modal_edit.html
+#: corehq/apps/fixtures/templates/fixtures/partials/modal_edit.html
+#: corehq/apps/reminders/templates/reminders/partials/modal_edit.html
+#: corehq/apps/users/templates/users/partials/linked_roles_modal.html
+msgid "Unlock"
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -12309,6 +12521,41 @@ msgstr ""
 msgid "Visit CommCare's knowledge base"
 msgstr ""
 
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Row {} in \"{}-vl\" sheet is missing a case property field"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Could not find resource type for {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Error in \"{}\" sheet, row {}: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid ""
+"Missing required valid \"{}-vl\" multi-choice sheet for case type \"{}\""
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Not enough columns in \"{}\" sheet"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py corehq/apps/data_dictionary/views.py
+msgid "FHIR Resource {} {}: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid ""
+"Case property \"{}\" referenced in \"{}-vl\" sheet that does not exist in "
+"\"{}\" sheet. Row(s) affected: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/models.py
+msgid "Group \"{}\" already exists for case type \"{}\""
+msgstr ""
+
 #: corehq/apps/data_dictionary/models.py
 msgid "Number"
 msgstr ""
@@ -12333,8 +12580,14 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/linked_domain/const.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-#: corehq/tabs/tabclasses.py
 msgid "Data Dictionary"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/export/templates/export/partials/table.html
+msgid "deprecated"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -12354,6 +12607,13 @@ msgid "Create Case Type"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"\n"
+"        There was an error deprecating the case type. Please try again.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
 msgid "FHIR Resource Type"
 msgstr ""
@@ -12363,14 +12623,19 @@ msgid "Import from Excel"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Show Deprecated Properties"
+msgid "Deprecate Case Type"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Hide Deprecated Properties"
+msgid "Restore Case Type"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "Show Deprecated"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "Hide Deprecated"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -12380,6 +12645,14 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "FHIR Resource Property Path"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "group's properties will be moved to"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "No Group"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -12400,25 +12673,76 @@ msgid "Add Case Property"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "A case property with this name already exists."
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add Case Property Group"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, python-format
-msgid ""
-"\n"
-"          Missing properties or case types? <a href=\"%(refresh_url)s\" "
-"target=\"_blank\">Click to sync</a>\n"
-"          (opens in a new tab, may be slow...)\n"
-"          "
+msgid "A case property group with this name already exists."
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add a new Case Type"
 msgstr ""
 
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"\n"
+"              Deprecate\n"
+"              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
+"              Case Type\n"
+"            "
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"\n"
+"            <p>\n"
+"              There are a total of\n"
+"              <strong>\n"
+"                <span data-bind=\"text: activeCaseTypeModuleCount()\"></"
+"span> application module(s)\n"
+"              </strong>\n"
+"              that are currently using this case type.\n"
+"            </p>\n"
+"            <p>\n"
+"              Deprecating this case type will have the following effects:\n"
+"            </p>\n"
+"            <ul>\n"
+"              <li>This case type will not be available from the reports "
+"filtering menu.</li>\n"
+"              <li>All case properties/groups for this case type will be "
+"deprecated.</li>\n"
+"              <li>New exports cannot be created with this case type.</li>\n"
+"              <li>Case imports cannot be done for cases with this case type."
+"</li>\n"
+"              <li>New automatic rules cannot be created with this case type."
+"</li>\n"
+"            </ul>\n"
+"            <!-- TODO: Remove this comment when following PR has been "
+"merged: https://github.com/dimagi/commcare-hq/pull/33113 -->\n"
+"            <!-- <p>\n"
+"              For more information on deprecated case types, see the\n"
+"              <a target=\"_blank\" href=\"https://confluence.dimagi.com/"
+"display/commcarepublic/Data+Dictionary\">following documentation</a>.\n"
+"            </p> -->\n"
+"          "
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/reports/templates/reports/notification_unsubscribe.html
+msgid "Confirm"
+msgstr ""
+
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
 msgid "Valid Values &amp; Formats"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Case Property Group must have a name"
 msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
@@ -12429,12 +12753,32 @@ msgstr ""
 msgid "Unable to save valid values longer than {} characters"
 msgstr ""
 
-#: corehq/apps/data_dictionary/views.py
-msgid "Case Type 'name' is required"
+#: corehq/apps/data_dictionary/util.py
+msgid "Column {} in \"{}\" sheet has an empty header"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Column {} has an empty header"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Invalid column \"{}\" in \"{}\" sheet. Valid column names are: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Invalid column \"{}\". Valid column names are: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Missing \"Case Property\" column header in \"{}\" sheet"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Missing \"Case Property\" column header"
 msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
-msgid "FHIR Resource {} {}: {}"
+msgid "Case Type 'name' is required"
 msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
@@ -12480,36 +12824,6 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
 msgid "Data dictionary import complete"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Error in valid values for case type {}, row {}: missing case property"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Not enough columns"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Could not find resource type for {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Error in case type {}, row {}: {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Missing valid values sheet for case type {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid ""
-"Error in valid values for case type {}, nonexistent property listed ({}), "
-"row(s): {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Not enough columns in {} sheet"
 msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py
@@ -13248,6 +13562,24 @@ msgid "Add Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+msgid "Unlock Linked Rules For Me"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+msgid "Lock Linked Rules For Me"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+msgid ""
+"\n"
+"            Linked configurations are controlled from a separate, linked "
+"project space.\n"
+"              <a href='https://confluence.dimagi.com/display/commcarepublic/"
+"Enterprise+Release+Management' target='_blank'>Learn more</a>.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 msgid "Last Run"
 msgstr ""
 
@@ -13384,8 +13716,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/events/forms.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/locations/forms.py
+#: corehq/apps/events/forms.py corehq/apps/events/views.py
+#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/locations/templates/locations/manage/locations.html
 #: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
@@ -13742,6 +14074,10 @@ msgid "Edit Case Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
+msgid "View Case Rule"
+msgstr ""
+
+#: corehq/apps/data_interfaces/views.py
 msgid "Deduplicate Cases"
 msgstr ""
 
@@ -14052,6 +14388,24 @@ msgid ""
 "            and allows users to do so only when they are in 'Release Mode' "
 "on the\n"
 "            release page of applications.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Show Orphan Case Alerts on Mobile Worker Edit Page"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Displays a warning message on the mobile worker location edit "
+"page\n"
+"            about locations that owns cases and only have one assigned "
+"mobile worker.\n"
+"            This helps prevent situations where cases are being orphaned by "
+"moving\n"
+"            the only assigned mobile worker out of the location owning that "
+"cases.\n"
 "            "
 msgstr ""
 
@@ -14635,6 +14989,26 @@ msgid ""
 "\n"
 "              This will slow down submissions but prevent case search data "
 "from going stale.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid "Sync Cases On Form Entry"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"                Update local case data immediately before entering a web "
+"apps form.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"              This will slow down form entry, but will prevent stale case "
+"data from populating the form.\n"
 "            "
 msgstr ""
 
@@ -16894,6 +17268,9 @@ msgid "Calculated Properties"
 msgstr ""
 
 #: corehq/apps/domain/views/internal.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+#: corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/hqwebapp/includes/global_navigation_bar.html.diff.txt
 msgid "Feature Flags and Privileges"
 msgstr ""
 
@@ -17501,6 +17878,21 @@ msgstr ""
 msgid "Controlling domain set to {}."
 msgstr ""
 
+#: corehq/apps/es/case_search.py
+#, python-brace-format
+msgid "{value} is not a correctly formatted date or datetime."
+msgstr ""
+
+#: corehq/apps/es/case_search.py
+#, python-brace-format
+msgid "{value} is an invalid date."
+msgstr ""
+
+#: corehq/apps/es/case_search.py
+#, python-brace-format
+msgid "{value} is an invalid datetime."
+msgstr ""
+
 #: corehq/apps/events/forms.py
 msgid "Per event day"
 msgstr ""
@@ -17535,6 +17927,10 @@ msgid "Attendance Takers"
 msgstr ""
 
 #: corehq/apps/events/forms.py
+msgid "Please choose at least one Attendance Taker"
+msgstr ""
+
+#: corehq/apps/events/forms.py
 #, python-brace-format
 msgid "{self.title_prefix} Attendance Tracking Event"
 msgstr ""
@@ -17553,6 +17949,11 @@ msgstr ""
 
 #: corehq/apps/events/forms.py
 msgid "You cannot specify the end date in the past"
+msgstr ""
+
+#: corehq/apps/events/forms.py corehq/apps/locations/forms.py
+#: corehq/apps/users/forms.py
+msgid "All Locations"
 msgstr ""
 
 #: corehq/apps/events/forms.py corehq/apps/users/forms.py
@@ -17744,6 +18145,14 @@ msgstr ""
 
 #: corehq/apps/events/templates/events_list.html
 msgid "Event has not yet started"
+msgstr ""
+
+#: corehq/apps/events/templates/new_event.html
+msgid ""
+"\n"
+"      There was a problem fetching the list of attendees and attendance "
+"takers. Please try again.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/events/views.py
@@ -18631,6 +19040,11 @@ msgid "Process"
 msgstr ""
 
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Show Deprecated Properties"
+msgstr ""
+
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 msgid ""
 "\n"
 "            In order to show you your deprecated properties, we need to "
@@ -19087,6 +19501,10 @@ msgid "Hide Deleted Properties"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Hide Deprecated Properties"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Use question labels"
 msgstr ""
 
@@ -19393,6 +19811,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
 #: corehq/apps/reports/standard/monitoring.py
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
@@ -19930,6 +20349,26 @@ msgid "Download Lookup Tables"
 msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+msgid "Unlock Linked Tables For Me"
+msgstr ""
+
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+msgid "Lock Linked Tables For Me"
+msgstr ""
+
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"                Linked configurations are controlled from a separate, linked "
+"project space.\n"
+"                  <a href='https://confluence.dimagi.com/display/"
+"commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</"
+"a>.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/userreports/ui/forms.py
 msgid "Table ID"
@@ -20030,23 +20469,23 @@ msgstr ""
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 msgid ""
 "\n"
-"                    \"<span data-bind=\"text: tag\"></span>\" is a duplicate "
-"field name.\n"
-"                  "
+"                      \"<span data-bind=\"text: tag\"></span>\" is a "
+"duplicate field name.\n"
+"                    "
 msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 msgid ""
 "\n"
-"                    Field name cannot contain \\, /, <, >, or spaces.\n"
-"                  "
+"                      Field name cannot contain \\, /, <, >, or spaces.\n"
+"                    "
 msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 msgid ""
 "\n"
-"                    Field name cannot start with xml.\n"
-"                  "
+"                      Field name cannot start with xml.\n"
+"                    "
 msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
@@ -20077,6 +20516,21 @@ msgstr ""
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
 #: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
 msgid "Upload failed! Details:"
+msgstr ""
+
+#: corehq/apps/fixtures/templates/fixtures/partials/modal_edit.html
+msgid ""
+"Linked Tables are tables that are controlled by a separate project space "
+"linked to this project. Click <a target=\"_blank\" href=\"https://confluence."
+"dimagi.com/display/commcarepublic/Enterprise+Release+Management\">here</a> "
+"to learn more."
+msgstr ""
+
+#: corehq/apps/fixtures/templates/fixtures/partials/modal_edit.html
+msgid ""
+"Changes made to Linked Tables may be overwritten by the next updates from "
+"the linked project space, and may also affect solutions on this project "
+"space."
 msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/upload_complete.html
@@ -20363,12 +20817,60 @@ msgstr ""
 msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
-#: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
+#: corehq/apps/geospatial/forms.py
+msgid "Custom user field"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "User's assigned location"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Fetch mobile worker location data from custom field"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The name of the mobile worker custom field which stores the users' geo-"
+"location data."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Fetch case location data from property"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The name of the case property storing the geo-location data of your cases."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Configure Geospatial Settings"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py
+msgid "Case Management Map"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py corehq/apps/geospatial/views.py
+#: corehq/tabs/tabclasses.py
 msgid "Geospatial"
 msgstr ""
 
-#: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
-msgid "Map Visualization"
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Filter by Saved Area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Export Area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Save Area"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
+msgid "Configuration Settings"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
@@ -23634,6 +24136,10 @@ msgid "Data Expressions and Filters"
 msgstr ""
 
 #: corehq/apps/linked_domain/const.py
+msgid "Automatic Update Rule"
+msgstr ""
+
+#: corehq/apps/linked_domain/const.py
 msgid "Custom User Data Fields"
 msgstr ""
 
@@ -23893,6 +24399,7 @@ msgid "Create Link"
 msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/partials/link_remote_ucr.html
+#: corehq/tabs/tabclasses.py
 msgid "Linked"
 msgstr ""
 
@@ -23951,21 +24458,25 @@ msgid "Linked Content"
 msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-msgid "Sync & Overwrite"
+msgid "Sync & Overwrite Matches"
 msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-msgid "Are you sure you want to overwrite <b data-bind=\"text: name\"></b>?"
+msgid "Sync & Overwrite Matches?"
 msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 msgid ""
-"This will pull <!-- ko text: name --><!-- /ko --> from the upstream project "
-"space <b data-bind=\"text: $parent.domainLink.upstreamDomain\"></b>, "
-"overwriting the existing <!-- ko text: name --><!-- /ko -->.<br/> <a "
+"If this project space has unlinked configurations that match with the "
+"configurations being synced from the upstream project space, continuing will "
+"overwrite them and establish them as linked configurations. <a "
 "href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Linked+Project+Spaces\" target=\"_blank\">Learn more</a> about pulling "
-"content from an upstream project space into a downstream project space."
+"Linked+Project+Spaces\" target=\"_blank\">Learn More</a>"
+msgstr ""
+
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+#: corehq/apps/linked_domain/updates.py
+msgid "Sync & Overwrite"
 msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
@@ -24016,6 +24527,11 @@ msgid "Create and release new build for apps"
 msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/partials/push_content.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/push_warning_dialog.html
+msgid "Push & Overwrite Matches"
+msgstr ""
+
+#: corehq/apps/linked_domain/templates/linked_domain/partials/push_content.html
 msgid ""
 "\n"
 "        You have no linked project spaces that allow you to push data.<br/>\n"
@@ -24023,6 +24539,19 @@ msgid ""
 "Linked+Project+Spaces\" target=\"_blank\">Learn more</a> about pushing "
 "content with Linked Project Spaces.\n"
 "      "
+msgstr ""
+
+#: corehq/apps/linked_domain/templates/linked_domain/partials/push_warning_dialog.html
+msgid "Push & Overwrite Matches?"
+msgstr ""
+
+#: corehq/apps/linked_domain/templates/linked_domain/partials/push_warning_dialog.html
+msgid ""
+"If any of the selected downstream project spaces have unlinked "
+"configurations that match with the configurations being pushed, continuing "
+"will overwrite them and establish them as linked configurations. <a "
+"href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Linked+Project+Spaces\" target=\"_blank\">Learn More</a>"
 msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py
@@ -24062,8 +24591,7 @@ msgstr ""
 
 #: corehq/apps/linked_domain/ucr_expressions.py
 #, python-brace-format
-msgid ""
-"Expression {expression_name} already exists in the downstream domain {domain}"
+msgid "Expression {name} already exists in the downstream domain {domain}"
 msgstr ""
 
 #: corehq/apps/linked_domain/ucr_expressions.py
@@ -24075,7 +24603,74 @@ msgid "Upstream Expression could not be found. Maybe it has been deleted?"
 msgstr ""
 
 #: corehq/apps/linked_domain/updates.py
-msgid "Found non-global lookup table '{}'."
+msgid "sync"
+msgstr ""
+
+#: corehq/apps/linked_domain/updates.py
+msgid "push"
+msgstr ""
+
+#: corehq/apps/linked_domain/updates.py
+msgid "Push & Overwrite"
+msgstr ""
+
+#: corehq/apps/linked_domain/updates.py
+#, python-brace-format
+msgid ""
+"Failed to {sync_action} the following {field_name} due to matching (same "
+"{property_name}) unlinked {field_name} in this downstream project space: "
+"{conflicts}. Please edit the {field_name} to resolve the matching or click "
+"\"{overwrite_btn}\" to overwrite and link the matching ones."
+msgstr ""
+
+#: corehq/apps/linked_domain/updates.py
+#, python-brace-format
+msgid ""
+"Failed to {sync_action} the following Custom User Data Fields Profiles due "
+"to matching (same User Profile) unlinked Custom User Data Fields Profiles in "
+"this downstream project space: {conflicts}. Please edit the Custom User Data "
+"Fields Profiles to resolve the matching or click \"{overwrite_btn}\" to "
+"overwrite and link the matching ones."
+msgstr ""
+
+#: corehq/apps/linked_domain/updates.py
+#, python-brace-format
+msgid ""
+"Cannot overwrite profiles, as the following profiles are still in use: "
+"{profiles}"
+msgstr ""
+
+#: corehq/apps/linked_domain/updates.py
+#, python-brace-format
+msgid "Found non-global lookup table '{table}'."
+msgstr ""
+
+#: corehq/apps/linked_domain/updates.py
+#, python-brace-format
+msgid ""
+"Failed to {sync_action} Lookup Table \"{table}\" due to matching (same Table "
+"ID) unlinked Lookup Table in the downstream project space. Please edit the "
+"Lookup Table to resolve the matching or click \"{overwrite_btn}\" to "
+"overwrite and link them."
+msgstr ""
+
+#: corehq/apps/linked_domain/updates.py
+#, python-brace-format
+msgid ""
+"Failed to {sync_action} the following default roles due to matching (same "
+"name but different permissions) unlinked roles in this downstream project "
+"space: {conflicting_role_names}. Please edit the roles to resolve the "
+"matching or click \"{overwrite_btn}\" to overwrite and link the matching "
+"ones."
+msgstr ""
+
+#: corehq/apps/linked_domain/updates.py
+#, python-brace-format
+msgid ""
+"Failed to {sync_action} the following custom roles due to matching (same "
+"name) unlinked roles in this downstream project space: "
+"{conflicting_role_names}. Please edit the roles to resolve the matching or "
+"click \"{overwrite_btn}\" to overwrite and link the matching ones."
 msgstr ""
 
 #: corehq/apps/linked_domain/util.py
@@ -24453,10 +25048,6 @@ msgstr ""
 msgid "Active / Archived"
 msgstr ""
 
-#: corehq/apps/locations/forms.py corehq/apps/users/forms.py
-msgid "All Locations"
-msgstr ""
-
 #: corehq/apps/locations/forms.py corehq/apps/locations/views.py
 msgid "Filter and Download Locations"
 msgstr ""
@@ -24532,6 +25123,19 @@ msgid ""
 "          Organizations on our <a href=\"https://help.commcarehq.org/display/"
 "commcarepublic/Organizations\">Help Site</a>.\n"
 "        "
+msgstr ""
+
+#: corehq/apps/locations/templates/locations/location_types.html
+#, python-format
+msgid ""
+"\n"
+"        If you have organization levels that can own cases, consider "
+"enabling the\n"
+"        <a href=\"%(project_settings_url)s\"> Show Orphan Case Alerts on "
+"Mobile Worker Edit Page </a>\n"
+"        project setting to alert users about potentially creating orphan "
+"cases when modifying cases or locations.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
@@ -25036,8 +25640,7 @@ msgstr ""
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
 #: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-#: corehq/motech/generic_inbound/views.py
-#: corehq/motech/repeaters/views/repeat_records.py corehq/motech/views.py
+#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
 msgid "URL"
 msgstr ""
 
@@ -27078,6 +27681,14 @@ msgid "Add Structured Keyword"
 msgstr ""
 
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
+msgid "Unlock Linked Keywords For Me"
+msgstr ""
+
+#: corehq/apps/reminders/templates/reminders/keyword_list.html
+msgid "Lock Linked Keywords For Me"
+msgstr ""
+
+#: corehq/apps/reminders/templates/reminders/keyword_list.html
 msgid ""
 "\n"
 "                  Delete the keyword '<span data-bind=\"text: keyword\"></"
@@ -27581,7 +28192,6 @@ msgid "Successful"
 msgstr ""
 
 #: corehq/apps/reports/filters/select.py corehq/motech/repeaters/const.py
-#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Cancelled"
@@ -27621,11 +28231,11 @@ msgstr ""
 
 #: corehq/apps/reports/filters/users.py
 msgid ""
-"<a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"Search+for+Locations\"target=\"_blank\">Advanced Search:</a> Put your "
-"location name in quotes to show only exact matches. To more easily find a "
-"location, you may specify multiple levels by separating with a \"/\". For "
-"example, \"Massachusetts/Suffolk/Boston\""
+"When searching by location, put your location name in quotes to show only "
+"exact matches. To more easily find a location, you may specify multiple "
+"levels by separating with a \"/\". For example, \"Massachusetts/Suffolk/"
+"Boston\". <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Search+for+Locations\"target=\"_blank\">Learn more</a>."
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py
@@ -27920,7 +28530,14 @@ msgid "unknown product"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
+#: corehq/privileges.py
 msgid "Case List Explorer"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_list_explorer.py
+msgid ""
+"Use Case List Explorer to run deep searches on your cases by case "
+"properties.  "
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
@@ -27950,9 +28567,10 @@ msgstr ""
 
 #: corehq/apps/reports/standard/cases/filters.py
 msgid ""
-"Search any text, or use a targeted query. For more info see the <a "
-"href=\"https://wiki.commcarehq.org/display/commcarepublic/"
-"Advanced+Case+Search\" target=\"_blank\">Case Search</a> help page"
+"Enter <a href=\"https://wiki.commcarehq.org/display/commcarepublic/"
+"Advanced+Case+Search\" target=\"_blank\">targeted queries</a> to search "
+"across all specific columns of this report. For deeper searches by case "
+"properties use the <a href=\"{}\">Case List Explorer</a>."
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/filters.py
@@ -28542,9 +29160,7 @@ msgstr ""
 msgid "Event"
 msgstr ""
 
-#: corehq/apps/reports/standard/sms.py
-#: corehq/apps/users/templates/users/roles_and_permissions.html
-#: corehq/motech/generic_inbound/reports.py
+#: corehq/apps/reports/standard/sms.py corehq/motech/generic_inbound/reports.py
 msgid "View Details"
 msgstr ""
 
@@ -28954,7 +29570,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/xpath_textarea.html
-msgid "Filter your cases by entering a search query in the box below."
+msgid ""
+"\n"
+"      Filter your cases by entering a <a href=\"https://confluence.dimagi."
+"com/pages/viewpage.action?"
+"spaceKey=commcarepublic&title=Case+Query+Language\" target=\"_blank\">Case "
+"Search Query</a>.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/readable_form.html
@@ -29145,6 +29767,18 @@ msgid "Resave this form"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid "Deleting Forms"
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid "This is a permanent action that cannot be undone."
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid "Delete this form"
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
 msgid "Unknown/Deleted Case"
 msgstr ""
 
@@ -29158,6 +29792,26 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
 msgid "Copy XML to clipboard"
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid "Permanently Delete Form"
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid ""
+"\n"
+"              It is important you read the entire message below thoroughly "
+"before completing this action.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html
+msgid ""
+"\n"
+"              Once deleted, you will not be able to recover this form. Are "
+"you sure you want to delete this form?\n"
+"            "
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form_tree.html
@@ -29212,10 +29866,6 @@ msgid ""
 "            To add yourself, you will need to contact the person who "
 "initially added you.\n"
 "          "
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/notification_unsubscribe.html
-msgid "Confirm"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/bulk_modal.html
@@ -29526,6 +30176,19 @@ msgid ""
 "      because the user %(owner_name)s added you as a recipient of their "
 "report.\n"
 "    "
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/reportdata/case_data.html
+msgid ""
+"\n"
+"                    This case uses a deprecated case type.\n"
+"                    <!-- TODO: Remove this comment when following PR has "
+"been merged: https://github.com/dimagi/commcare-hq/pull/33113 -->\n"
+"                    <!-- See the\n"
+"                    <a target=\"_blank\" href=\"https://confluence.dimagi."
+"com/display/commcarepublic/Data+Dictionary\">help documentation</a>\n"
+"                    for more information. -->\n"
+"                  "
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/reportdata/case_data.html
@@ -29989,6 +30652,11 @@ msgid "Undo"
 msgstr ""
 
 #: corehq/apps/reports/views.py
+#, python-brace-format
+msgid "Cannot delete form {instance_id} because it is not archived."
+msgstr ""
+
+#: corehq/apps/reports/views.py
 msgid "{} (this case)"
 msgstr ""
 
@@ -30208,11 +30876,11 @@ msgid "Unable to generate email report. Excel files are attached."
 msgstr ""
 
 #: corehq/apps/saved_reports/tasks.py
-msgid "Emailed report"
+msgid "Email report from CommCare HQ"
 msgstr ""
 
 #: corehq/apps/saved_reports/tasks.py
-msgid "Email report from CommCare HQ"
+msgid "Emailed report"
 msgstr ""
 
 #: corehq/apps/settings/forms.py
@@ -31380,6 +32048,10 @@ msgid "Message Sent Via Chat"
 msgstr ""
 
 #: corehq/apps/sms/models.py
+msgid "FCM Push Notification"
+msgstr ""
+
+#: corehq/apps/sms/models.py
 msgid "User Group"
 msgstr ""
 
@@ -31506,6 +32178,30 @@ msgstr ""
 
 #: corehq/apps/sms/models.py
 msgid "Email Gateway Error"
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "No FCM tokens found for recipient."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "FCM not available on this environment."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "FCM is supported for Mobile Workers only."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "No action selected for the FCM Data message type."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "Failure while sending FCM notifications to the devices."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid "Domain is not enabled for FCM Push Notifications"
 msgstr ""
 
 #: corehq/apps/sms/templates/sms/backend_map.html
@@ -34255,6 +34951,11 @@ msgid "Rows from the database"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
+msgid "Populating your report did not complete successfully."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/edit_data_source.html
 msgid "Please note that this datasource is being rebuilt."
 msgstr ""
 
@@ -34476,6 +35177,10 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/import_report.html
 msgid "paste report source here"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
+msgid "You can try clicking \"Advanced\" and choosing \"Resume Build\"."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
@@ -35263,6 +35968,13 @@ msgid "Invalid Deactivation Date format (expects MM-YYYY)."
 msgstr ""
 
 #: corehq/apps/users/forms.py
+#, python-brace-format
+msgid ""
+"{code} is not a valid language code. Please enter a valid ISO-639 two- or "
+"three-digit code."
+msgstr ""
+
+#: corehq/apps/users/forms.py
 msgid "Please enter a valid two or three digit language code."
 msgstr ""
 
@@ -35433,6 +36145,10 @@ msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid "Auto-Deactivation Settings"
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid "This location does not exist"
 msgstr ""
 
 #: corehq/apps/users/forms.py
@@ -36629,8 +37345,11 @@ msgstr ""
 #: corehq/apps/users/templates/users/partials/edit_commtrack_user_settings.html
 msgid ""
 "\n"
-"            The user shares all assigned locations with one or more other "
-"users.\n"
+"            Depending on your application's case sharing configuration, "
+"changing one or more of these\n"
+"            locations may result in some cases not being visible to any user "
+"until a new user is assigned\n"
+"            to those locations.\n"
 "          "
 msgstr ""
 
@@ -36851,11 +37570,19 @@ msgstr ""
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid ""
 "\n"
-"      <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"          <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
 "Roles+and+Permissions\"\n"
-"         target=\"_blank\">Learn more</a> about how roles &amp; permissions "
-"are used.\n"
-"    "
+"            target=\"_blank\">Learn more</a> about how roles &amp; "
+"permissions are used.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Unlock Linked Roles For Me"
+msgstr ""
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Lock Linked Roles For Me"
 msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
@@ -36882,7 +37609,7 @@ msgid "Roles"
 msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-msgid "Shared Exports"
+msgid "Manage Shared Exports"
 msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
@@ -36929,7 +37656,7 @@ msgid "Edit Role"
 msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
-msgid "Delete Role"
+msgid "View Role"
 msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
@@ -37283,6 +38010,14 @@ msgstr ""
 msgid ""
 "This is a location user. You must delete the corresponding location before "
 "you can delete this user."
+msgstr ""
+
+#: corehq/apps/users/views/mobile/users.py
+#, python-format
+msgid ""
+"User %s has been deleted. All their submissions and cases will be "
+"permanently\n"
+"        deleted in the next few minutes"
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
@@ -37913,6 +38648,18 @@ msgstr ""
 msgid "Click to export your [case data]({})."
 msgstr ""
 
+#: corehq/messaging/fcm/exceptions.py
+msgid "One of the fields from 'title, body, data' is required!"
+msgstr ""
+
+#: corehq/messaging/fcm/exceptions.py
+msgid "FCM is not setup on this environment!"
+msgstr ""
+
+#: corehq/messaging/fcm/utils.py
+msgid "Max devices allowed is {}! Please execute in batches."
+msgstr ""
+
 #: corehq/messaging/scheduling/forms.py
 msgid "Please enter a valid 24-hour time in the format HH:MM"
 msgstr ""
@@ -37942,7 +38689,15 @@ msgid "Intervals"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
+msgid "Action on Notification"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
 msgid "Please fill out at least one translation"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "This field must not exceed {} characters"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
@@ -37957,6 +38712,10 @@ msgstr ""
 msgid ""
 "Reminder intervals must add up to less than {} based on the current survey "
 "expiration"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "Message type"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
@@ -38429,6 +39188,10 @@ msgid "Custom SMS"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
+msgid "Push Notification"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
 msgid "The time from case property"
 msgstr ""
 
@@ -38562,8 +39325,36 @@ msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 msgid ""
+"Push Notifications is no longer available on this environment. Please "
+"contact Administrator."
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid ""
+"Push Notifications is not available for your project. Please contact "
+"Administrator."
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid "'{}' recipient types are not supported for Push Notifications"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
+msgid ""
 "An instance of the schedule will be created for each open case matching all "
 "filter criteria below."
+msgstr ""
+
+#: corehq/messaging/scheduling/models/content.py
+msgid "Background Sync"
+msgstr ""
+
+#: corehq/messaging/scheduling/models/content.py
+msgid "Display Messages"
+msgstr ""
+
+#: corehq/messaging/scheduling/models/content.py
+msgid "Data Messages"
 msgstr ""
 
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
@@ -38940,6 +39731,10 @@ msgstr ""
 
 #: corehq/messaging/scheduling/view_helpers.py
 msgid "Rule name must be the same in all rows"
+msgstr ""
+
+#: corehq/messaging/scheduling/view_helpers.py
+msgid "Missing message"
 msgstr ""
 
 #: corehq/messaging/scheduling/views.py
@@ -39656,6 +40451,32 @@ msgstr ""
 msgid "Use date that dataValues are sent"
 msgstr ""
 
+#: corehq/motech/dhis2/const.py
+msgid ""
+"It could be that CommCare HQ is sending data faster than DHIS2 can handle. "
+"If possible, try increasing the resources on your DHIS2 instance. The "
+"ability to send data from CommCare HQ slower is coming soon."
+msgstr ""
+
+#: corehq/motech/dhis2/const.py
+msgid ""
+"This Event’s Program has multiple stages. You will need to update the "
+"configuration to specify which program stage the Event’s data belongs to. "
+"(See the “programStage” property in the data forwarder’s configuration.)"
+msgstr ""
+
+#: corehq/motech/dhis2/const.py
+msgid ""
+"An event for this program stage has already been submitted. It could be that "
+"the new event is for a different program stage. You will need to update the "
+"configuration to specify the correct program stage for this submission. (See "
+"the “programStage” property in the data forwarder’s configuration.)"
+msgstr ""
+
+#: corehq/motech/dhis2/const.py
+msgid "The DHIS2 server is currently not accepting connections."
+msgstr ""
+
 #: corehq/motech/dhis2/entities_helpers.py
 #, python-brace-format
 msgid "{n} tracked entity instances were found for case {case}"
@@ -39862,6 +40683,10 @@ msgstr ""
 
 #: corehq/motech/dhis2/forms.py
 msgid "Please map CommCare values to DHIS2 data elements."
+msgstr ""
+
+#: corehq/motech/dhis2/parse_response.py
+msgid "No diagnosis available for this error"
 msgstr ""
 
 #: corehq/motech/dhis2/repeaters.py corehq/motech/dhis2/views.py
@@ -40638,7 +41463,7 @@ msgid "No attempts exist for this record."
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
-msgid "Unsent"
+msgid "Diagnosis:"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
@@ -40791,7 +41616,7 @@ msgid "Unable to generate url for record"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "Last sent date"
+msgid "Remote Service"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
@@ -40799,15 +41624,15 @@ msgid "Retry Date"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
+msgid "Delivery Attempts"
+msgstr ""
+
+#: corehq/motech/repeaters/views/repeat_records.py
 msgid "View Responses"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View payload"
-msgstr ""
-
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Cancel or Requeue payload"
+msgid "Cancel or Requeue"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
@@ -41146,6 +41971,14 @@ msgstr ""
 msgid "Allow exports to have ownership"
 msgstr ""
 
+#: corehq/privileges.py
+msgid "Bulk user management features"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Application error report"
+msgstr ""
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr ""
@@ -41184,6 +42017,10 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Data Manipulation"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Remote"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
@@ -41426,11 +42263,7 @@ msgid "Manage Attendance Tracking Events"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
-msgid "View Map"
-msgstr ""
-
-#: corehq/tabs/tabclasses.py
-msgid "Visually view and manage cases on a map"
+msgid "Configure geospatial settings"
 msgstr ""
 
 #: corehq/trans_override.py

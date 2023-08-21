@@ -221,10 +221,6 @@ msgid "Select a Report..."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-msgid "Advanced Mobile UCR Options"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Lookup Table Options"
 msgstr ""
 
@@ -236,10 +232,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Select a Lookup Table..."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-msgid "Advanced Lookup Table Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
@@ -333,6 +325,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 msgid "Unknown menu"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Don't Use Case Tiles"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
@@ -441,6 +437,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Markdown"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Address Popup (Web Apps only)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
@@ -841,6 +841,7 @@ msgid "Question"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Name"
 msgstr ""
 
@@ -2578,6 +2579,26 @@ msgstr ""
 msgid "Command Bar"
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Module ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Description"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Time Estimate"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Must be an integer"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Estimated time to complete the module in hours."
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
 msgstr ""
@@ -2661,8 +2682,8 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid ""
-"The file you selected exceeds the size limit of 3MB. Please select a file "
-"that is smaller than 3MB."
+"The file you selected exceeds the size limit of 4MB. Please select a file "
+"that is smaller than 4MB."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
@@ -2823,14 +2844,22 @@ msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-msgid "Page <%-num%>"
+msgid "Please perform a search."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
 "You have selected more than the maximum selection limit of <%= value %> . "
 "Please uncheck some values to continue."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid "Your location"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
+msgid "Page <%-num%>"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
@@ -3373,6 +3402,18 @@ msgstr ""
 msgid "Sensitive Date"
 msgstr ""
 
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Name of the Area"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "View here"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "There are case(s) missing geolocation data."
+msgstr ""
+
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
 msgstr ""
@@ -3521,7 +3562,7 @@ msgid "Add Item"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js
-msgid "Click <strong>Edit</strong> to Add Values"
+msgid "Click <strong>Edit</strong> to Add Values</span>"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
@@ -3823,6 +3864,7 @@ msgid "Search keywords"
 msgstr ""
 
 #: corehq/apps/reminders/static/reminders/js/keywords_list.js
+#: corehq/apps/users/static/users/js/roles.js
 msgid "Linked Project Spaces"
 msgstr ""
 
@@ -3991,6 +4033,10 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Gateway Timeout. Please contact CommCare HQ Support."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
@@ -4472,20 +4518,8 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
-"<strong>Shared Exports</strong> &mdash; access and edit the content and "
-"structure of shared exports"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Enterprise Release Management</strong> &mdash; access the Linked "
-"Project Spaces feature"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Multi-Environment Release Management</strong> &mdash; access the "
-"Linked Project Spaces feature"
+"<strong>Manage Shared Exports</strong> &mdash; access and edit the content "
+"and structure of shared exports"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -4496,6 +4530,26 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit Attendance Tracking Events"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Enterprise Release Management"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Multi-Environment Release Management"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to configure linked project spaces"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Linked Configurations"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to edit linked configurations on this project space"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js

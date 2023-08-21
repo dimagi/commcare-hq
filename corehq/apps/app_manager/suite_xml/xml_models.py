@@ -394,6 +394,12 @@ class StackDatum(IdNode):
     value = XPathField('@value')
 
 
+class StackInstanceDatum(IdNode):
+    ROOT_NAME = 'instance-datum'
+
+    value = XPathField('@value')
+
+
 class QueryData(XmlObject):
     ROOT_NAME = 'data'
 
@@ -486,6 +492,9 @@ class StackJump(XmlObject):
 
 class Argument(IdNode):
     ROOT_NAME = 'argument'
+
+    instance_id = StringField('@instance-id')
+    instance_src = StringField('@instance-src')
 
 
 class SessionEndpoint(IdNode):
@@ -620,6 +629,7 @@ class MenuMixin(XmlObject):
     style = StringField('@style')
     commands = NodeListField('command', Command)
     assertions = NodeListField('assertions/assert', Assertion)
+    instances = NodeListField('instance', Instance)
 
 
 class Menu(MenuMixin, DisplayNode, IdNode):
@@ -812,6 +822,13 @@ class DetailVariableList(XmlObject):
     variables = NodeListField('_', DetailVariable)
 
 
+class TileGroup(XmlObject):
+    ROOT_NAME = "group"
+
+    function = XPathField('@function')
+    header_rows = IntegerField('@header-rows')
+
+
 class Detail(OrderedXmlObject, IdNode):
     """
     <detail id="">
@@ -845,6 +862,7 @@ class Detail(OrderedXmlObject, IdNode):
     details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
     relevant = StringField('@relevant')
+    tile_group = NodeField('group', TileGroup)
 
     def _init_variables(self):
         if self._variables is None:

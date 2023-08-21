@@ -5,14 +5,13 @@ import logging
 from enum import Enum
 from functools import cached_property
 
-from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.conf import settings
 
 from memoized import memoized
-from corehq.apps.es.filters import term
 
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.es.filters import term
 from corehq.util.es.elasticsearch import (
     BulkIndexError,
     Elasticsearch,
@@ -21,7 +20,12 @@ from corehq.util.es.elasticsearch import (
     TransportError,
     bulk,
 )
-from corehq.util.metrics import metrics_counter
+from corehq.util.global_request import get_request_domain
+from corehq.util.metrics import (
+    limit_domains,
+    metrics_counter,
+    metrics_histogram_timer,
+)
 
 from .const import (
     INDEX_CONF_REINDEX,
@@ -31,7 +35,7 @@ from .const import (
 )
 from .exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 from .index.analysis import DEFAULT_ANALYSIS
-from .utils import ElasticJSONSerializer
+from .utils import ElasticJSONSerializer, index_runtime_name
 
 log = logging.getLogger(__name__)
 
@@ -230,6 +234,23 @@ class ElasticManageAdapter(BaseAdapter):
             self._validate_single_index(index)
         self._es.indices.refresh(",".join(indices), expand_wildcards="none")
 
+    def indices_info(self):
+        """Retrieve meta information about all the indices in the cluster.
+
+        :returns: ``dict`` A dict with index name in keys and index meta information
+        """
+        indices_info = self._es.cat.indices(format='json', bytes='b')
+        filtered_indices_info = {}
+        for info in indices_info:
+            filtered_indices_info[info['index']] = {
+                'health': info['health'],
+                'primary_shards': info['pri'],
+                'replica_shards': info['rep'],
+                'doc_count': info['docs.count'],
+                'size_on_disk': info['store.size'],  # in bytes
+            }
+        return filtered_indices_info
+
     def index_flush(self, index):
         """Flush an index.
 
@@ -371,7 +392,11 @@ class ElasticManageAdapter(BaseAdapter):
         elif "*" in index:
             raise ValueError(f"refusing to operate with index wildcards: {index}")
 
-    def reindex(self, source, dest, wait_for_completion=False, refresh=False):
+    def reindex(
+            self, source, dest, wait_for_completion=False,
+            refresh=False, batch_size=1000, purge_ids=False,
+            requests_per_second=None,
+    ):
         """
         Starts the reindex process in elastic search cluster
 
@@ -379,6 +404,16 @@ class ElasticManageAdapter(BaseAdapter):
         :param dest: ``str`` name of the destination index
         :param wait_for_completion: ``bool`` would block the request until reindex is complete
         :param refresh: ``bool`` refreshes index
+        :param requests_per_second: ``int`` throttles rate at which reindex issues batches of
+                            index operations by padding each batch with a wait time.
+        :param batch_size: ``int`` The size of the scroll batch used by the reindex process. larger
+                           batches may process more quickly but risk errors if the documents are too
+                           large. 1000 is the recommended maximum and elasticsearch default,
+                           and can be reduced if you encounter scroll timeouts.
+        :param purge_ids: ``bool`` adds an inline script to remove the _id field from documents source.
+                          these cause errors on reindexing the doc, but the script slows down the reindex
+                          substantially, so it is only recommended to enable this if you have run into
+                          the specific error it is designed to resolve.
 
         :returns: None if wait_for_completion is True else would return task_id of reindex task
         """
@@ -389,6 +424,7 @@ class ElasticManageAdapter(BaseAdapter):
         reindex_body = {
             "source": {
                 "index": source,
+                "size": batch_size,
             },
             "dest": {
                 "index": dest,
@@ -397,11 +433,18 @@ class ElasticManageAdapter(BaseAdapter):
             },
             "conflicts": "proceed"
         }
-        reindex_info = self._es.reindex(
-            reindex_body,
-            wait_for_completion=wait_for_completion,
-            refresh=refresh
-        )
+        if purge_ids:
+            reindex_body["script"] = {"inline": "if (ctx._source._id) {ctx._source.remove('_id')}"}
+
+        reindex_kwargs = {
+            "wait_for_completion": wait_for_completion,
+            "refresh": refresh,
+        }
+
+        if requests_per_second:
+            reindex_kwargs["requests_per_second"] = requests_per_second
+
+        reindex_info = self._es.reindex(reindex_body, **reindex_kwargs)
         if not wait_for_completion:
             return reindex_info['task']
 
@@ -590,7 +633,15 @@ class ElasticDocumentAdapter(BaseAdapter):
         """Perform a "low-level" search and return the raw result. This is
         split into a separate method for ease of testing the result format.
         """
-        return self._es.search(self.index_name, self.type, query, **kw)
+        with metrics_histogram_timer(
+                'commcare.elasticsearch.search.timing',
+                timing_buckets=(1, 10),
+                tags={
+                    'index': self.canonical_name,
+                    'domain': limit_domains(get_request_domain()),
+                },
+        ):
+            return self._es.search(self.index_name, self.type, query, **kw)
 
     def scroll(self, query, scroll=SCROLL_KEEPALIVE, size=None):
         """Perfrom a scrolling search, yielding each doc until the entire context
@@ -1318,23 +1369,52 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
     """Creates and returns a document adapter instance for the parameters
     provided.
 
+    One thing to note here is that the behaviour of the function can be altered with django settings.
+
+    The function would return multiplexed adapter only if
+    - ES_<app name>_INDEX_MULTIPLEXED is True
+    - Secondary index is provided.
+
+    The indexes would be swapped only if
+    - ES_<app_name>_INDEX_SWAPPED is set to True
+    - secondary index is provided
+
+    If both ES_<app name>_INDEX_MULTIPLEXED and ES_<app_name>_INDEX_SWAPPED are set to True
+    then primary index will act as secondary index and vice versa.
+
     :param cls: an ``ElasticDocumentAdapter`` subclass
     :param index_name: the name of the index that the adapter interacts with
     :param type_: the index ``_type`` for the adapter's mapping.
     :param secondary: the name of the secondary index in a multiplexing
-        configuration. If an index name is provided, the returned adapter will
-        be an instance of ``ElasticMultiplexAdapter``.  If ``None`` (the
-        default), the returned adapter will be an instance of ``cls``.
+        configuration.
+        If an index name is provided and ES_<app name>_INDEX_MULTIPLEXED is set to True,
+        then returned adapter will be an instance of ``ElasticMultiplexAdapter``.
+        If ``None`` (the default), the returned adapter will be an instance of ``cls``.
+        ES_<app name>_INDEX_MULTIPLEXED will be ignored if secondary is None.
     :returns: a document adapter instance.
     """
-    def runtime_name(name):
-        # transform the name if testing
-        return f"{TEST_DATABASE_PREFIX}{name}" if settings.UNIT_TESTING else name
 
-    doc_adapter = cls(runtime_name(index_name), type_)
-    if secondary is not None:
-        secondary_adapter = cls(runtime_name(secondary), type_)
+    def index_multiplexed(cls):
+        key = f"ES_{cls.canonical_name.upper()}_INDEX_MULTIPLEXED"
+        return getattr(settings, key)
+
+    def index_swapped(cls):
+        key = f"ES_{cls.canonical_name.upper()}_INDEX_SWAPPED"
+        return getattr(settings, key)
+
+    doc_adapter = cls(index_runtime_name(index_name), type_)
+
+    if secondary is None:
+        return doc_adapter
+
+    secondary_adapter = cls(index_runtime_name(secondary), type_)
+
+    if index_multiplexed(cls) and index_swapped(cls):
+        doc_adapter = ElasticMultiplexAdapter(secondary_adapter, doc_adapter)
+    elif index_multiplexed(cls):
         doc_adapter = ElasticMultiplexAdapter(doc_adapter, secondary_adapter)
+    elif index_swapped(cls):
+        doc_adapter = secondary_adapter
 
     return doc_adapter
 

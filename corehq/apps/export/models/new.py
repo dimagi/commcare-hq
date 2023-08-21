@@ -19,6 +19,7 @@ from couchdbkit import (
     SchemaListProperty,
     SchemaProperty,
 )
+from jsonobject.exceptions import BadValueError
 from memoized import memoized
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
@@ -58,6 +59,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
+    ALL_CASE_TYPE_EXPORT,
     CASE_ATTRIBUTES,
     CASE_CLOSE_TO_BOOLEAN,
     CASE_CREATE_ELEMENTS,
@@ -82,7 +84,6 @@ from corehq.apps.export.const import (
     UNKNOWN_INFERRED_FROM,
     USER_DEFINED_SPLIT_TYPES,
     SharingOption,
-    ALL_CASE_TYPE_EXPORT,
 )
 from corehq.apps.export.dbaccessors import (
     get_case_inferred_schema,
@@ -93,7 +94,7 @@ from corehq.apps.export.dbaccessors import (
 from corehq.apps.export.esaccessors import (
     get_case_export_base_query,
     get_form_export_base_query,
-    get_sms_export_base_query
+    get_sms_export_base_query,
 )
 from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.locations.models import SQLLocation
@@ -112,11 +113,11 @@ from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import random_url_id
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.global_request import get_request_domain
+from corehq.util.html_utils import strip_tags
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
-from corehq.util.html_utils import strip_tags
 from corehq.apps.data_dictionary.util import get_deprecated_fields
-from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
@@ -194,7 +195,7 @@ class ExportItem(DocumentSchema, ReadablePathMixin):
     inferred_from = SetProperty(default=set)
 
     def __key(self):
-        return'{}:{}:{}'.format(
+        return '{}:{}:{}'.format(
             _path_nodes_to_string(self.path),
             self.doc_type,
             self.transform,
@@ -400,8 +401,8 @@ class ExportColumn(DocumentSchema):
 
     def _is_deleted(self, app_ids_and_versions):
         return (
-            is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions) and
-            not self.item.inferred
+            is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions)
+            and not self.item.inferred
         )
 
     def update_properties_from_app_ids_and_versions(self, app_ids_and_versions):
@@ -689,7 +690,7 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
             else:
                 next_doc = {}
             if path[0].is_repeat:
-                if type(next_doc) != list:
+                if not isinstance(next_doc, list):
                     # This happens when a repeat group has a single repeat iteration
                     next_doc = [next_doc]
                 new_docs.extend([
@@ -972,15 +973,15 @@ class ExportInstance(BlobMixin, Document):
 
     def _insert_system_properties(self, domain, export_type, table):
         from corehq.apps.export.system_properties import (
-            ROW_NUMBER_COLUMN,
-            TOP_MAIN_FORM_TABLE_PROPERTIES,
-            BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
-            TOP_MAIN_CASE_TABLE_PROPERTIES,
             BOTTOM_MAIN_CASE_TABLE_PROPERTIES,
+            BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
             CASE_HISTORY_PROPERTIES,
             PARENT_CASE_TABLE_PROPERTIES,
-            STOCK_COLUMN,
+            ROW_NUMBER_COLUMN,
             SMS_TABLE_PROPERTIES,
+            STOCK_COLUMN,
+            TOP_MAIN_CASE_TABLE_PROPERTIES,
+            TOP_MAIN_FORM_TABLE_PROPERTIES,
         )
 
         nested_repeat_count = len([node for node in table.path if node.is_repeat])
@@ -1667,7 +1668,7 @@ class FormInferredSchema(InferredSchema):
     """This was used during the migratoin from the old models to capture
     export items that could not be found in the current apps.
 
-    See https://github.com/dimagi/commcare-hq/blob/34a9459462271cf2dcd7562b36cc86e300d343b8/corehq/apps/export/utils.py#L246-L265
+    See https://github.com/dimagi/commcare-hq/blob/34a9459462271cf2dcd7562b36cc86e300d343b8/corehq/apps/export/utils.py#L246-L265  # noqa: E501
     """
     xmlns = StringProperty(required=True)
     app_id = StringProperty()
@@ -1724,16 +1725,27 @@ class ExportDataSchema(Document):
         return current_schema
 
     @classmethod
-    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
-            only_process_current_builds=False, task=None):
-        """Builds a schema from Application builds for a given identifier
+    def generate_schema_from_builds(
+        cls,
+        domain,
+        app_id,
+        identifier,
+        force_rebuild=False,
+        only_process_current_builds=False,
+        task=None,
+    ):
+        """
+        Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
-        :param app_id: The app_id that the export belongs to (or None if export is not associated with an app.
-        :param identifier: The unique identifier of the schema being exported.
-            case_type for Case Exports and xmlns for Form Exports
-        :param only_process_current_builds: Only process the current apps, not any builds. This
-            means that deleted items may not be present in the schema since past builds have not been
+        :param app_id: The app_id that the export belongs to or None if
+            the export is not associated with an app.
+        :param identifier: The unique identifier of the schema being
+            exported: case_type for Case Exports and xmlns for Form
+            Exports
+        :param only_process_current_builds: Only process the current
+            apps, not any builds. This means that deleted items may not
+            be present in the schema since past builds have not been
             processed.
         :param task: A celery task to update the progress of the build
         :returns: Returns a ExportDataSchema instance
@@ -1912,7 +1924,15 @@ class ExportDataSchema(Document):
                     and app_doc.get('copy_of')):
                 continue
 
-            app = Application.wrap(app_doc)
+            try:
+                app = Application.wrap(app_doc)
+            except BadValueError as err:
+                logging.exception(
+                    f"Bad definition for Application {app_doc['_id']}",
+                    exc_info=err,
+                )
+                continue
+
             try:
                 schema = cls._process_app_build(
                     schema,
@@ -1930,6 +1950,7 @@ class ExportDataSchema(Document):
             set_task_progress(task, apps_processed, len(app_build_ids))
 
         return schema
+
 
 class FormExportDataSchema(ExportDataSchema):
 
@@ -2162,7 +2183,9 @@ class FormExportDataSchema(ExportDataSchema):
         questions = xform.get_questions(langs, include_triggers=True)
         repeats = cls._get_repeat_paths(xform, langs)
         schema = cls()
-        question_keyfn = lambda q: q['repeat']
+
+        def question_keyfn(q):
+            return q['repeat']
 
         question_groups = [
             (None, [q for q in questions if question_keyfn(q) is None])
@@ -2257,6 +2280,7 @@ class FormExportDataSchema(ExportDataSchema):
             app_build_ids,
             task
         )
+
 
 class CaseExportDataSchema(ExportDataSchema):
 
@@ -2426,7 +2450,7 @@ class CaseExportDataSchema(ExportDataSchema):
     def _process_apps_for_bulk_export(cls, domain, schema, app_build_ids, task):
         schema.group_schemas = []
         apps_processed = 0
-        case_types_to_use = get_case_types_from_apps(domain)
+        case_types_to_use = get_case_types_for_domain(domain)
         for case_type in case_types_to_use:
             case_type_schema = cls()
             for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
@@ -2465,6 +2489,7 @@ class CaseExportDataSchema(ExportDataSchema):
             set_task_progress(task, apps_processed, len(app_build_ids) * len(case_types_to_use))
 
         return schema
+
 
 class SMSExportDataSchema(ExportDataSchema):
     include_metadata = BooleanProperty(default=False)
@@ -2713,7 +2738,7 @@ class SplitGPSExportColumn(ExportColumn):
         return [header_template.format(header) for header_template in header_templates]
 
     def get_value(self, domain, doc_id, doc, base_path, split_column=False, **kwargs):
-        value = super(SplitGPSExportColumn, self).get_value(
+        coord_string = super().get_value(
             domain,
             doc_id,
             doc,
@@ -2721,18 +2746,30 @@ class SplitGPSExportColumn(ExportColumn):
             **kwargs
         )
         if not split_column:
-            return value
+            return coord_string
 
-        if value == MISSING_VALUE:
-            return [MISSING_VALUE] * 4
+        return self.extract_coordinate_array(coord_string)
 
-        values = [EMPTY_VALUE] * 4
+    @classmethod
+    def extract_coordinate_array(cls, coord_string):
+        NUM_VALUES = 4
 
-        if not isinstance(value, str):
+        if coord_string == MISSING_VALUE:
+            return [MISSING_VALUE] * NUM_VALUES
+
+        values = [EMPTY_VALUE] * NUM_VALUES
+        if not isinstance(coord_string, str):
             return values
 
-        for index, coordinate in enumerate(value.split(' ')):
+        for index, coordinate in enumerate(coord_string.split()):
+            # NOTE: Unclear if the intention here is to support situations where only the lat/lng are supplied,
+            # or if we really want to allow just specifying just lat, or lat/lng/alt as valid.
+            # I think it's likely we only want to support the lat/lng situation, but leaving as is
+            # in the event that this behavior is relied upon somewhere
+            if index >= NUM_VALUES:
+                break
             values[index] = coordinate
+
         return values
 
 
@@ -2877,7 +2914,9 @@ class StockFormExportColumn(ExportColumn):
         # In order to mitigate this, we encode the question id into the path so we do not
         # have to create a new TableConfiguration for the edge case mentioned above.
         for idx, path_name in enumerate(path):
-            is_stock_question_element = any([path_name.startswith('{}:'.format(tag_name)) for tag_name in STOCK_QUESTION_TAG_NAMES])
+            is_stock_question_element = any(
+                [path_name.startswith('{}:'.format(tag_name)) for tag_name in STOCK_QUESTION_TAG_NAMES]
+            )
             if is_stock_question_element:
                 question_path, question_id = path_name.split(':')
                 path[idx] = question_path

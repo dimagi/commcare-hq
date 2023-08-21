@@ -1,11 +1,13 @@
 from corehq.apps.users.models import DomainMembershipError
 from django import template
 from django.template.loader import render_to_string
+from django.utils.translation import get_language
 
 from corehq.tabs.config import MENU_TABS
 from corehq.tabs.exceptions import TabClassError, TabClassErrorSummary
 from corehq.tabs.extension_points import uitab_classes
 from corehq.tabs.utils import path_starts_with_url
+from corehq.tabs.uitab import UITab
 
 
 register = template.Library()
@@ -97,15 +99,31 @@ class MainMenuNode(template.Node):
         except DomainMembershipError:
             role_version = None
 
+        lang = get_language()
+
+        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+        bootstrap_version = get_bootstrap_version()
+        use_bootstrap5 = bootstrap_version == BOOTSTRAP_5
+
+        for tab in visible_tabs:
+            tab.frag_value = UITab.create_compound_cache_param(
+                tab.class_name(),
+                domain,
+                couch_user._id,
+                role_version,
+                tab.is_active_tab,
+                lang,
+                use_bootstrap5
+            )
+
         context.dicts[0]['active_tab'] = active_tab
         flat = context.flatten()
         flat.update({
             'tabs': visible_tabs,
-            'role_version': role_version
+            'role_version': role_version,
+            'use_bootstrap5': use_bootstrap5,
         })
-
-        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
-        return render_to_string(f"tabs/{get_bootstrap_version()}/menu_main.html", flat)
+        return render_to_string(f"tabs/{bootstrap_version}/menu_main.html", flat)
 
 
 @register.tag(name="format_main_menu")

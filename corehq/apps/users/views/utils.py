@@ -1,7 +1,13 @@
-from itertools import chain
-from django.utils.translation import gettext as _
 from collections import defaultdict
+from itertools import chain
 
+from django.utils.translation import gettext as _
+
+from corehq.apps.api.es import flatten_list
+from corehq.apps.es import filters
+from corehq.apps.es.aggregations import TermsAggregation
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -12,11 +18,7 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es.aggregations import TermsAggregation
-from corehq.apps.es.users import UserES
-from corehq.apps.es import filters
-from corehq.apps.api.es import flatten_list
+from corehq.util.quickcache import quickcache
 
 
 def get_editable_role_choices(domain, couch_user, allow_admin_role):
@@ -117,6 +119,7 @@ def log_commcare_user_locations_changes(request, user, old_location_id, old_assi
         )
 
 
+@quickcache(['domain', 'location_ids', 'user_id_to_exclude'], timeout=10)
 def _get_location_ids_with_other_users(domain, location_ids, user_id_to_exclude):
     """
     Gets all the location ids where a `CommCareUser` is assigned to one of the `location_ids`.
@@ -144,14 +147,14 @@ def _get_location_case_counts(domain, location_ids):
         CaseES()
         .domain(domain)
         .owner(location_ids)
-        .aggregation(TermsAggregation('by_location', 'owner_id').size(0))
+        .aggregation(TermsAggregation('by_location', 'owner_id'))
     ).run()
     counts = query.aggregations.by_location.counts_by_bucket()
 
     return counts
 
 
-def get_locations_with_orphaned_cases(domain, location_ids, user_id):
+def _get_locations_with_orphaned_cases(domain, location_ids, user_id):
     """
     Takes a list of location IDs and returns all the given location IDs
     where the user ID is the only one that has cases there. Also searched through descendant locations
@@ -184,4 +187,22 @@ def get_locations_with_orphaned_cases(domain, location_ids, user_id):
     return {
         loc.get_path_display(): case_count_per_loc[loc.location_id] for loc in all_locs
         if loc.location_id in case_count_per_loc
+    }
+
+
+def get_user_location_info(domain, user_location_ids, user_id):
+    shared_locations = _get_location_ids_with_other_users(
+        domain,
+        user_location_ids,
+        user_id
+    )
+
+    orphaned_case_count_per_location = _get_locations_with_orphaned_cases(
+        domain,
+        user_location_ids,
+        user_id
+    )
+    return {
+        'orphaned_case_count_per_location': orphaned_case_count_per_location,
+        'shared_locations': shared_locations,
     }

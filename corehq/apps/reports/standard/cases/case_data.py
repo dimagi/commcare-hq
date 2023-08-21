@@ -3,7 +3,6 @@ import csv
 import io
 from collections import defaultdict
 from datetime import datetime
-from functools import partial
 
 from django.contrib import messages
 from django.http import (
@@ -88,6 +87,7 @@ from corehq.motech.repeaters.views.repeat_record_display import (
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, get_case_or_404, reverse
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
 
 from .basic import CaseListReport
 from .utils import get_user_type
@@ -236,6 +236,7 @@ class CaseDataView(BaseProjectReportSectionView):
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
             "can_edit_data": can_edit_data,
             "is_usercase": self.case_instance.type == USERCASE_TYPE,
+            "is_case_type_deprecated": is_case_type_deprecated(self.domain, self.case_instance.type),
 
             "default_properties_as_table": default_properties,
             "dynamic_properties": dynamic_data,
@@ -274,7 +275,6 @@ def _get_dd_tables(domain, case_type, dynamic_data, timezone):
         ]))
         for group, props in dd_props_by_group
     ]
-
     props_in_dd = set(prop.name for _, prop_group in dd_props_by_group
                       for prop in prop_group)
     unrecognized = set(dynamic_data.keys()) - props_in_dd
@@ -295,15 +295,15 @@ def _get_dd_props_by_group(domain, case_type):
             case_type__domain=domain,
             case_type__name=case_type,
             deprecated=False,
-    ):
-        ret[prop.group].append(prop)
+    ).select_related('group_obj').order_by('group_obj__index', 'index'):
+        ret[prop.group_name].append(prop)
 
     uncategorized = ret.pop('', None)
-    for group, props in sorted(ret.items()):
-        yield (group, props)
+    for group, props in ret.items():
+        yield group, props
 
     if uncategorized:
-        yield (_('Uncategorized') if ret else None, uncategorized)
+        yield _('Uncategorized') if ret else None, uncategorized
 
 
 def _table_definition(props):
@@ -314,7 +314,7 @@ def _table_definition(props):
                 name=label or prop_name,
                 description=description,
                 has_history=True
-            ) for prop_name, label, description in sorted(props)
+            ) for prop_name, label, description in props
         ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
     }
 
@@ -461,7 +461,7 @@ def case_property_names(request, domain, case_id):
         item.path[-1].name for item in property_schema.items
         if not is_occurrence_deleted(item.last_occurrences, last_app_ids) and '/' not in item.path[-1].name
     }
-    all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES)
+    all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES) | {"case_name"}
     # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
     if case.external_id:
         all_property_names.add('external_id')

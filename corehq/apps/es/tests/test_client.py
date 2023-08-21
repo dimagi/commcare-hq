@@ -32,6 +32,7 @@ from ..client import (
     BulkActionItem,
     ElasticMultiplexAdapter,
     Tombstone,
+    create_document_adapter,
     get_client,
     manager,
     _elastic_hosts,
@@ -473,6 +474,30 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             self.adapter.index_refresh(self.index)
             patched.assert_called_once_with([self.index])
 
+    def test_reindex_with_all_params(self):
+        """A happy path test for all the reindex paramters passed to es client.
+        Should ensure validity of reindex api params in newer versions of ES.
+        If any new parameters are added to ElasticManageAdapter.reindex then they should be added in this test
+        """
+        SECONDARY_INDEX = 'secondary_index'
+
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+
+            all_ids = self._index_test_docs_for_reindex()
+
+            with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
+
+                # purge_ids is not added here as it is required temporarily
+                # And setting it would require turning on inline script updates on test es docker
+                manager.reindex(
+                    test_adapter.index_name, SECONDARY_INDEX,
+                    wait_for_completion=True,
+                    refresh=True,
+                    requests_per_second=2,
+                )
+
+                self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
+
     def test_reindex_with_wait_for_completion_is_true(self):
         SECONDARY_INDEX = 'secondary_index'
 
@@ -541,6 +566,15 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         self.adapter.indices_refresh({self.index})  # does not raise for set
         with self.assertRaises(ValueError):
             self.adapter.indices_refresh(self.index)  # string is invalid
+
+    def test_indices_info(self):
+        # Test will guard against any API change in es.cat.indices output format in future ES versions
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+            indices_details = self.adapter.indices_info()
+        index_detail = indices_details[test_adapter.index_name]
+        info_keys = set(index_detail.keys())
+        expected_keys = set(['health', 'primary_shards', 'replica_shards', 'doc_count', 'size_on_disk'])
+        self.assertEqual(info_keys, expected_keys)
 
     def test_index_flush(self):
         self.adapter.index_create(self.index)
@@ -2014,6 +2048,77 @@ class TestTombstone(SimpleTestCase):
             {Tombstone.PROPERTY_NAME: True},
             Tombstone.create_document(),
         )
+
+
+@es_test
+@override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=False)
+@override_settings(ES_FOR_TEST_INDEX_SWAPPED=False)
+class TestCreateDocumentAdapter(SimpleTestCase):
+
+    def test_create_document_adapter_returns_doc_adapter(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
+
+    def test_returns_doc_adapter_without_multiplexed_setting(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
+        self.assertEqual(test_adapter.index_name, 'test_some-primary')
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
+    def test_returns_multiplexer_adapter_with_multiplexed_setting(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), ElasticMultiplexAdapter)
+        self.assertEqual(test_adapter.index_name, 'test_some-primary')
+        self.assertEqual(test_adapter.secondary.index_name, 'test_some-secondary')
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
+    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    def test_returns_multiplexer_with_swapped_indexes(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), ElasticMultiplexAdapter)
+        self.assertEqual(test_adapter.primary.index_name, "test_some-secondary")
+        self.assertEqual(test_adapter.secondary.index_name, "test_some-primary")
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=False)
+    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    def test_returns_doc_adapater_with_secondary_index(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+            secondary="some-secondary",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
+        self.assertEqual(test_adapter.index_name, "test_some-secondary")
+
+    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
+    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    def test_settings_have_no_effect_if_secondary_is_None(self):
+        test_adapter = create_document_adapter(
+            TestDocumentAdapter,
+            "some-primary",
+            "test_doc",
+        )
+        self.assertEqual(type(test_adapter), TestDocumentAdapter)
 
 
 class OneshotIterable:

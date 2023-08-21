@@ -1,9 +1,13 @@
-from shapely.geometry import Point
-import geopandas as gpd
-from geopy.distance import great_circle
+from django.db import models
 from dataclasses import dataclass
 
+import geopandas as gpd
+from geopy.distance import great_circle
+from shapely.geometry import Point
+
 from .exceptions import InvalidCoordinate, InvalidDistributionParam
+from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
+
 
 @dataclass
 class GeoObject:
@@ -115,3 +119,29 @@ class ObjectiveAllocator:
                 gdf.drop(closest_user_id, inplace=True)
 
         return user_assignment
+
+
+class GeoPolygon(models.Model):
+    """
+    A GeoJSON file representing a polygon shape
+    """
+
+    name = models.CharField(max_length=256)
+    geo_json = models.JSONField(default=dict)
+    domain = models.CharField(max_length=256, db_index=True)
+
+
+class GeoConfig(models.Model):
+
+    CUSTOM_USER_PROPERTY = 'custom_user_property'
+    ASSIGNED_LOCATION = 'assigned_location'
+
+    VALID_LOCATION_SOURCES = [
+        CUSTOM_USER_PROPERTY,
+        ASSIGNED_LOCATION,
+    ]
+
+    domain = models.CharField(max_length=256, db_index=True, primary_key=True)
+    location_data_source = models.CharField(max_length=126, default=CUSTOM_USER_PROPERTY)
+    user_location_property_name = models.CharField(max_length=256, default=GEO_POINT_CASE_PROPERTY)
+    case_location_property_name = models.CharField(max_length=256, default=GEO_POINT_CASE_PROPERTY)

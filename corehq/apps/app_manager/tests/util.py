@@ -145,6 +145,17 @@ def patch_validate_xform():
     return mock.patch('corehq.apps.app_manager.models.validate_xform', lambda _: None)
 
 
+def case_search_sync_cases_on_form_entry_enabled_for_domain():
+    """
+    Decorate test methods with case_search_sync_cases_on_form_entry_enabled_for_domain() to override
+    default False for unit tests.
+    """
+    return mock.patch(
+        "corehq.apps.app_manager.suite_xml.sections.entries."
+        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=True
+    )
+
+
 @unit_testing_only
 def delete_all_apps():
     for doc_type in app_doc_types():

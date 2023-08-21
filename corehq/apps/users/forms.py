@@ -1,6 +1,8 @@
 import datetime
 import json
 import re
+import secrets
+import string
 
 from django import forms
 from django.conf import settings
@@ -21,9 +23,10 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
-from casexml.apps.phone.models import loadtest_users_enabled
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -66,6 +69,7 @@ from .util import cc_user_domain, format_username, log_user_change
 from ..hqwebapp.signals import clear_login_attempts
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
+STRONG_PASSWORD_LEN = 12
 
 
 def get_mobile_worker_max_username_length(domain):
@@ -78,20 +82,31 @@ def get_mobile_worker_max_username_length(domain):
     return min(128 - len(cc_user_domain(domain)) - 1, 80)
 
 
-def clean_mobile_worker_username(domain, username, name_too_long_message=None,
-        name_reserved_message=None, name_exists_message=None):
+def clean_mobile_worker_username(
+    domain,
+    username,
+    name_too_long_message=None,
+    name_reserved_message=None,
+    name_exists_message=None,
+):
 
     max_username_length = get_mobile_worker_max_username_length(domain)
 
     if len(username) > max_username_length:
-        raise forms.ValidationError(name_too_long_message
-            or _('Username %(username)s is too long.  Must be under %(max_length)s characters.')
-            % {'username': username, 'max_length': max_username_length})
+        raise forms.ValidationError(
+            name_too_long_message
+            or _(
+                'Username %(username)s is too long.  Must be under '
+                '%(max_length)s characters.'
+            ) % {'username': username, 'max_length': max_username_length}
+        )
 
     if username in UNALLOWED_MOBILE_WORKER_NAMES:
-        raise forms.ValidationError(name_reserved_message
+        raise forms.ValidationError(
+            name_reserved_message
             or _('The username "%(username)s" is reserved for CommCare.')
-            % {'username': username})
+            % {'username': username}
+        )
 
     username = format_username(username, domain)
     validate_username(username)
@@ -100,8 +115,9 @@ def clean_mobile_worker_username(domain, username, name_too_long_message=None,
     if exists.exists:
         if exists.is_deleted:
             raise forms.ValidationError(_('This username was used previously.'))
-        raise forms.ValidationError(name_exists_message
-            or _('This Mobile Worker already exists.'))
+        raise forms.ValidationError(
+            name_exists_message or _('This Mobile Worker already exists.')
+        )
 
     return username
 
@@ -121,22 +137,26 @@ def wrapped_language_validation(value):
     try:
         validate_lang(value)
     except ValueError:
-        raise forms.ValidationError("%s is not a valid language code! Please "
-                                    "enter a valid two or three digit code." % value)
+        raise forms.ValidationError(_(
+            "{code} is not a valid language code. Please enter a valid "
+            "ISO-639 two- or three-digit code."
+        ).format({'code': value}))
 
 
 def generate_strong_password():
-    import random
-    import string
-    possible = string.punctuation + string.ascii_lowercase + string.ascii_uppercase + string.digits
-    password = ''
-    password += random.choice(string.punctuation)
-    password += random.choice(string.ascii_lowercase)
-    password += random.choice(string.ascii_uppercase)
-    password += random.choice(string.digits)
-    password += ''.join(random.choice(possible) for i in range(random.randrange(6, 11)))
-
-    return ''.join(random.sample(password, len(password)))
+    # https://docs.python.org/3/library/secrets.html#recipes-and-best-practices
+    possible = string.punctuation + string.ascii_letters + string.digits
+    while True:
+        password = ''.join(secrets.choice(possible)
+                           for __ in range(STRONG_PASSWORD_LEN))
+        if (
+            any(c.islower() for c in password)
+            and any(c.isupper() for c in password)
+            and any(c.isdigit() for c in password)
+            and any(c in string.punctuation for c in password)
+        ):
+            break
+    return password
 
 
 class LanguageField(forms.CharField):
@@ -342,8 +362,8 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
         basic_fields = [
             crispy.Div(*username_controls),
-            hqcrispy.Field('first_name'),
-            hqcrispy.Field('last_name'),
+            'first_name',
+            'last_name',
         ]
 
         if self.is_using_sso:
@@ -357,9 +377,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
             # It is the presence of the "readonly" attribute that determines
             # whether an input is readonly. Its value does not matter.
-            basic_fields.append(hqcrispy.Field('email', readonly="readonly"))
+            basic_fields.append(crispy.Field('email', readonly="readonly"))
         else:
-            basic_fields.append(hqcrispy.Field('email'))
+            basic_fields.append('email')
 
         if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
@@ -371,7 +391,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             ),
             (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else crispy.Fieldset)(
                 gettext_lazy("Other Options"),
-                hqcrispy.Field('language'),
+                'language',
                 crispy.Div(hqcrispy.StaticField(
                     gettext_lazy('API Key'),
                     format_html_lazy(
@@ -939,18 +959,25 @@ class NewMobileWorkerForm(forms.Form):
                                 <!-- /ko -->
                             </p>
                         '''.format(
-                            suggested=_("This password is automatically generated. Please copy it or create "
-                                "your own. It will not be shown again."),
+                            suggested=_(
+                                "This password is automatically generated. "
+                                "Please copy it or create your own. It will "
+                                "not be shown again."
+                            ),
                             strong=_("Good Job! Your password is strong!"),
                             almost=_("Your password is almost strong enough! Try adding numbers or symbols!"),
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
                             custom_warning=_(settings.CUSTOM_PASSWORD_STRENGTH_MESSAGE),
-                            disabled_email=_("Setting a password is disabled. "
-                                            "The user will set their own password on "
-                                            "confirming their account email."),
-                            disabled_phone=_("Setting a password is disabled. "
-                                            "The user will set their own password on confirming "
-                                            "their account phone number."),
+                            disabled_email=_(
+                                "Setting a password is disabled. The user "
+                                "will set their own password on confirming "
+                                "their account email."
+                            ),
+                            disabled_phone=_(
+                                "Setting a password is disabled. The user "
+                                "will set their own password on confirming "
+                                "their account phone number."
+                            ),
                             short=_("Password must have at least {password_length} characters."
                                     ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH)
                         )),
@@ -988,6 +1015,9 @@ class NewMobileWorkerForm(forms.Form):
         location_id = self.cleaned_data['location_id']
         if not user_can_access_location_id(self.domain, self.request_user, location_id):
             raise forms.ValidationError("You do not have access to that location.")
+        if location_id:
+            if not SQLLocation.active_objects.filter(domain=self.domain, location_id=location_id).exists():
+                raise forms.ValidationError(_("This location does not exist"))
         return location_id
 
     def clean_username(self):
@@ -1029,7 +1059,7 @@ class GroupMembershipForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 fieldset_title,
-                crispy.Field('selected_ids'),
+                'selected_ids',
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -1395,9 +1425,9 @@ class DomainRequestForm(forms.Form):
         self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
         self.helper.show_form_errors = True
         self.helper.layout = crispy.Layout(
-            hqcrispy.Field('full_name'),
-            hqcrispy.Field('email'),
-            hqcrispy.Field('domain'),
+            'full_name',
+            'email',
+            'domain',
             self.form_actions,
         )
 
@@ -1499,7 +1529,10 @@ class CommCareUserFormSet(object):
         self.request_user = request_user
         self.request = request
         self.data = data
-        self.loadtest_users_enabled = loadtest_users_enabled(domain)
+        self.loadtest_users_enabled = domain_has_privilege(
+            domain,
+            privileges.LOADTEST_USERS,
+        )
 
     @property
     @memoized
@@ -1651,7 +1684,7 @@ class UserFilterForm(forms.Form):
             fieldset_label = _('Filter and Download Mobile Workers')
             fields += [
                 crispy.Div(
-                    crispy.Field("location_id",),
+                    "location_id",
                     data_bind="slideVisible: !isCrossDomain()",
                 ),
                 crispy.Div(
@@ -1661,7 +1694,7 @@ class UserFilterForm(forms.Form):
                     ),
                     data_bind="slideVisible: !isCrossDomain() && location_id",
                 ),
-                crispy.Field("user_active_status",),
+                "user_active_status",
                 crispy.Field("columns", data_bind="value: columns"),
             ]
 

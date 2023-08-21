@@ -1,7 +1,8 @@
 from datetime import datetime
 
+from django.core.validators import MaxLengthValidator
 from django.db import models
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.parsing import ISO_DATE_FORMAT
@@ -14,6 +15,7 @@ class CaseType(models.Model):
     name = models.CharField(max_length=255, default=None)
     description = models.TextField(default='', blank=True)
     fully_generated = models.BooleanField(default=False)
+    is_deprecated = models.BooleanField(default=False)
 
     class Meta(object):
         unique_together = ('domain', 'name')
@@ -49,6 +51,18 @@ class CasePropertyGroup(models.Model):
     name = models.CharField(max_length=255, default=None)
     description = models.TextField(default='', blank=True)
     index = models.IntegerField(default=0, blank=True)
+    deprecated = models.BooleanField(default=False)
+
+    class Meta(object):
+        unique_together = ('case_type', 'name')
+
+    def unique_error_message(self, model_class, unique_check):
+        if unique_check == ('case_type', 'name'):
+            return gettext_lazy('Group "{}" already exists for case type "{}"'.format(
+                self.name, self.case_type.name
+            ))
+        else:
+            return super().unique_error_message(model_class, unique_check)
 
 
 class CaseProperty(models.Model):
@@ -143,6 +157,12 @@ class CaseProperty(models.Model):
         allowed_values = self.allowed_values.values_list('allowed_value', flat=True)
         allowed_string = ', '.join(f'"{av}"' for av in allowed_values)
         return _("Valid values: %s") % allowed_string
+
+    @property
+    def group_name(self):
+        if self.group_obj:
+            return self.group_obj.name
+        return self.group
 
 
 class CasePropertyAllowedValue(models.Model):

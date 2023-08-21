@@ -336,6 +336,8 @@ class TestDocumentAdapter(ElasticDocumentAdapter):
     involving ``TestDoc`` model objects.
     """
 
+    canonical_name = 'for_test'
+
     mapping = {
         "properties": {
             "value": {

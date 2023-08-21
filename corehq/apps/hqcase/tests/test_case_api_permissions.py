@@ -15,6 +15,7 @@ from corehq.apps.es.client import manager
 from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import case_search_es_setup, es_test
 from corehq.apps.es.users import user_adapter
+from corehq.apps.es.cases import case_adapter
 from corehq.apps.hqcase.api.get_list import get_list
 from corehq.apps.locations.tests.util import setup_locations_and_types
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
@@ -31,6 +32,7 @@ from corehq.util.test_utils import (
     case_search_adapter,
     form_adapter,
     user_adapter,
+    case_adapter,
 ], setup_class=True)
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
@@ -52,6 +54,7 @@ class TestCaseAPIPermissions(TestCase):
         )
 
         cls.user_location = locations['RSA']
+        cls.restricted_location = locations['USA']
 
         names_locations = [
             ('Joe', locations['USA']),
@@ -61,54 +64,76 @@ class TestCaseAPIPermissions(TestCase):
         case_search_es_setup(cls.domain, case_blocks)
         cls.case_ids = [cb.case_id for cb in case_blocks]
 
+        cls.case_mapping = {
+            'restricted_case': cls.case_ids[0],
+            'user_case': cls.case_ids[1]
+        }
+
+        cls.base_permissions = {
+            'edit_data': True,
+            'access_api': True
+        }
+        cls.location_restricted_permissions = cls.base_permissions | {
+            'access_all_locations': False
+        }
+        cls.access_all_locations_permissions = cls.base_permissions | {
+            'access_all_locations': True
+        }
+
+        cls.test_case_property = {
+            'foo': 'bar'
+        }
+
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases()
         cls.domain_obj.delete()
         super().tearDownClass()
 
-    def test_case_api_list_happy_path(self):
-        permissions = {
-            'edit_data': True,
-            'access_api': True,
+    def _get_new_case_data(self, is_restricted=False):
+        data = {
+            'temporary_id': '1',
+            'case_name': 'test',
+            'case_type': 'case',
+            'properties': self.test_case_property
         }
+        if is_restricted:
+            data['owner_id'] = self.restricted_location.location_id
+        else:
+            data['owner_id'] = self.user_location.location_id
+        return data
+
+    def test_case_api_list_happy_path(self):
         with get_web_user(
             self.domain,
             self.user_location,
-            permissions,
+            self.base_permissions,
             self.client,
         ):
             url = reverse('case_api', args=(self.domain,))
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
             json = response.json()
-            self.assertEqual(json['matching_records'], 2)  # AssertionError: 0 != 2
+            self.assertEqual(json['matching_records'], 2)
 
-    def test_case_api_list_requires_access_all_locations(self):
-        permissions = {
-            'edit_data': True,
-            'access_api': True,
-            'access_all_locations': False,
-        }
+    def test_case_api_list_location_restricted(self):
         with get_web_user(
             self.domain,
             self.user_location,
-            permissions,
+            self.location_restricted_permissions,
             self.client,
         ):
             url = reverse('case_api', args=(self.domain,))
             response = self.client.get(url)
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 200)
+            json = response.json()
+            self.assertEqual(json['matching_records'], 1)
 
     def test_case_api_bulk_fetch_happy_path(self):
-        permissions = {
-            'edit_data': True,
-            'access_api': True,
-        }
         with get_web_user(
             self.domain,
             self.user_location,
-            permissions,
+            self.base_permissions,
             self.client,
         ):
             url = reverse('case_api_bulk_fetch', args=(self.domain,))
@@ -119,18 +144,13 @@ class TestCaseAPIPermissions(TestCase):
             )
             self.assertEqual(response.status_code, 200)
             json = response.json()
-            self.assertEqual(json['matching_records'], 2)  # AssertionError: 0 != 2
+            self.assertEqual(json['matching_records'], 2)
 
     def test_case_api_bulk_fetch_requires_access_all_locations(self):
-        permissions = {
-            'edit_data': True,
-            'access_api': True,
-            'access_all_locations': False,
-        }
         with get_web_user(
             self.domain,
             self.user_location,
-            permissions,
+            self.location_restricted_permissions,
             self.client,
         ):
             url = reverse('case_api_bulk_fetch', args=(self.domain,))
@@ -141,41 +161,187 @@ class TestCaseAPIPermissions(TestCase):
             )
             self.assertEqual(response.status_code, 403)
 
-    def test_get_list_access_all_locations(self):
-        permissions = {
-            'edit_data': True,
-            'access_api': True,
-            'access_all_locations': True,
-        }
+    def test_case_api_get_successful(self):
         with get_web_user(
             self.domain,
             self.user_location,
-            permissions,
+            self.location_restricted_permissions,
+            self.client,
+        ):
+            case_id = self.case_mapping['user_case']
+            url = reverse('case_api', args=(self.domain, case_id))
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            json = response.json()
+            self.assertEqual(json['case_id'], case_id)
+
+    def test_case_api_get_no_permission(self):
+        with get_web_user(
+            self.domain,
+            self.user_location,
+            self.location_restricted_permissions,
+            self.client,
+        ):
+            case_id = self.case_mapping['restricted_case']
+            url = reverse('case_api', args=(self.domain, case_id))
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 403)
+
+    def test_case_api_get_access_all_locations(self):
+        with get_web_user(
+            self.domain,
+            self.user_location,
+            self.access_all_locations_permissions,
+            self.client,
+        ):
+            case_id = self.case_mapping['restricted_case']
+            url = reverse('case_api', args=(self.domain, case_id))
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            json = response.json()
+            self.assertEqual(json['case_id'], case_id)
+
+    def test_case_api_update_successful(self):
+        with get_web_user(
+            self.domain,
+            self.user_location,
+            self.location_restricted_permissions,
+            self.client,
+        ):
+            case_id = self.case_mapping['user_case']
+            url = reverse('case_api', args=(self.domain, case_id))
+            response = self.client.put(
+                url,
+                {'properties': self.test_case_property},
+                content_type='application/json'
+            )
+            self.assertEqual(response.status_code, 200)
+            json = response.json()
+            self.assertEqual(json['case']['properties'], self.test_case_property)
+
+    def test_case_api_update_no_permission(self):
+        with get_web_user(
+            self.domain,
+            self.user_location,
+            self.location_restricted_permissions,
+            self.client,
+        ):
+            case_id = self.case_mapping['restricted_case']
+            url = reverse('case_api', args=(self.domain, case_id))
+            response = self.client.put(
+                url,
+                {'properties': self.test_case_property},
+                content_type='application/json'
+            )
+            self.assertEqual(response.status_code, 403)
+
+    def test_case_api_update_access_all_locations(self):
+        with get_web_user(
+            self.domain,
+            self.user_location,
+            self.access_all_locations_permissions,
+            self.client,
+        ):
+            case_id = self.case_mapping['restricted_case']
+            url = reverse('case_api', args=(self.domain, case_id))
+            response = self.client.put(
+                url,
+                {'properties': self.test_case_property},
+                content_type='application/json'
+            )
+            self.assertEqual(response.status_code, 200)
+            json = response.json()
+            self.assertEqual(json['case']['properties'], self.test_case_property)
+
+    def test_case_api_update_new_owner_no_permission(self):
+        with get_web_user(
+            self.domain,
+            self.user_location,
+            self.location_restricted_permissions,
+            self.client,
+        ):
+            case_update = {
+                'case_id': self.case_mapping['user_case'],
+                'owner_id': self.restricted_location.location_id,
+                'properties': self.test_case_property
+            }
+            url = reverse('case_api', args=(self.domain,))
+            response = self.client.put(url, case_update, content_type='application/json')
+            self.assertEqual(response.status_code, 403)
+
+    def test_case_api_create_successful(self):
+        with get_web_user(
+            self.domain,
+            self.user_location,
+            self.location_restricted_permissions,
+            self.client,
+        ):
+            url = reverse('case_api', args=(self.domain,))
+            response = self.client.post(
+                url,
+                self._get_new_case_data(),
+                content_type='application/json'
+            )
+            self.assertEqual(response.status_code, 200)
+            json = response.json()
+            self.assertEqual(json['case']['properties'], self.test_case_property)
+
+    def test_case_api_create_no_permission(self):
+        with get_web_user(
+            self.domain,
+            self.user_location,
+            self.location_restricted_permissions,
+            self.client,
+        ):
+            url = reverse('case_api', args=(self.domain,))
+            response = self.client.post(
+                url,
+                self._get_new_case_data(is_restricted=True),
+                content_type='application/json'
+            )
+            self.assertEqual(response.status_code, 403)
+
+    def test_case_api_create_access_all_locations(self):
+        with get_web_user(
+            self.domain,
+            self.user_location,
+            self.access_all_locations_permissions,
+            self.client,
+        ):
+            url = reverse('case_api', args=(self.domain,))
+            response = self.client.post(
+                url,
+                self._get_new_case_data(is_restricted=True),
+                content_type='application/json'
+            )
+            self.assertEqual(response.status_code, 200)
+            json = response.json()
+            self.assertEqual(json['case']['properties'], self.test_case_property)
+
+    def test_get_list_access_all_locations(self):
+        with get_web_user(
+            self.domain,
+            self.user_location,
+            self.access_all_locations_permissions,
             self.client,
         ) as web_user:
             result = get_list(self.domain, web_user, params=QueryDict())
-            self.assertEqual(result['matching_records'], 2)  # AssertionError: 0 != 2
+            self.assertEqual(result['matching_records'], 2)
             self.assertEqual(
                 {c['case_name'] for c in result['cases']},
                 {'Joe', 'Cyril'},
             )
 
     def test_get_list_location_restricted(self):
-        permissions = {
-            'edit_data': True,
-            'access_api': True,
-            'access_all_locations': False,
-        }
-
         with sync_users_to_es():
             with get_web_user(
                 self.domain,
                 self.user_location,
-                permissions,
+                self.location_restricted_permissions,
                 self.client,
             ) as web_user:
                 result = get_list(self.domain, web_user, params=QueryDict())
-                self.assertEqual(result['matching_records'], 1)  # AssertionError: 0 != 1
+                self.assertEqual(result['matching_records'], 1)
                 self.assertEqual(result['cases'][0]['case_name'], 'Cyril')
 
 

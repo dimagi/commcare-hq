@@ -126,9 +126,9 @@
                   <label class="{% css_label_class %} control-label">
                     {% trans "Include Forms" %}
                   </label>
-                  <div class="{% css_field_class %}"
+                  <table class="{% css_field_class %}"
                        data-bind="template: {name: 'module-forms-template',
-                                                 foreach: sourceForms()}"></div>
+                                                 foreach: sourceForms()}"></table>
                   <div class="hidden">
                     <select name="excl_form_ids"
                             multiple="multiple"
@@ -138,6 +138,9 @@
                                              selectedOptions: excludedFormIds"></select>
                     {# POST a value, even if no forms are excluded #}
                     <input name="excl_form_ids" type="checkbox" value="0" checked="">
+                    <div data-bind="foreach: formSessionEndpointIds()">
+                      <input type="hidden" name="form_session_endpoints" data-bind="value: $data">
+                    </div>
                   </div>
                 </div>
               </div>
@@ -251,6 +254,9 @@
 
             {% if session_endpoints_enabled %}
               {% include "app_manager/partials/session_endpoints.html" with module_or_form=module %}
+              {% if not module.is_surveys %}
+                {% include "app_manager/partials/case_list_session_endpoint.html" with module=module %}
+              {% endif %}
             {% endif %}
 
             {% if request|toggle_enabled:'USH_EMPTY_CASE_LIST_TEXT' %}

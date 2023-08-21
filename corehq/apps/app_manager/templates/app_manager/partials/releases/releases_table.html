@@ -62,6 +62,24 @@
   </p>
 
   <div id="build-errors-wrapper"></div>
+  <div class="alert alert-warning" data-bind="visible: depCaseTypes().length" id="deprecated-case-types-warning">
+    <p>
+      <i class="fa fa-warning"></i>
+      {% blocktrans %}
+        The new application build contains the following deprecated case types:
+      {% endblocktrans %}
+    </p>
+    <ul id="deprecated-case-types-list" data-bind="foreach: depCaseTypes">
+      <li data-bind="text: $data"></li>
+    </ul>
+    <!-- TODO: Remove this comment when following PR has been merged: https://github.com/dimagi/commcare-hq/pull/33113 -->
+    <!-- <p>
+      {% blocktrans %}
+        For more information on deprecated case types, see the following
+        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary">documentation</a>.
+      {% endblocktrans %}
+    </p> -->
+  </div>
 
   <div class="row">
     <div class="col-md-3 col-md-offset-9">
@@ -174,7 +192,7 @@
           <span data-bind="text: menu_item_label()"></span>
           <!--/ko-->
           <span data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</span>
-          {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
+          {% if has_application_error_report_access %}
             | <a class="release-error-report-link" data-bind="text: numErrorsText,
                               attr: {href: $root.app_error_url('{{ app.id }}', version())}"></a>
           {% endif %}

@@ -85,31 +85,35 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function (langs, enableLanguageMenu) {
-        var langModels,
-            langCollection;
+    var showFormMenu = function (langs, langCodeNameMapping) {
+      var langModels,
+          langCollection;
 
-        FormplayerFrontend.regions.addRegions({
-            formMenu: "#form-menu",
+      FormplayerFrontend.regions.addRegions({
+        formMenu: "#form-menu",
+      });
+
+      if (langs) {
+        langModels = _.map(langs, function (lang) {
+          var matchingLanguage = langCodeNameMapping[lang];
+          return {
+            lang_code: lang,
+            lang_label: matchingLanguage ? matchingLanguage : lang,
+          };
         });
-        if (langs && enableLanguageMenu) {
-            langModels = _.map(langs, function (lang) {
-                return {
-                    lang: lang,
-                };
-            });
-            langCollection = new Backbone.Collection(langModels);
-        } else {
-            langCollection = null;
-        }
-        var formMenuView = views.FormMenuView({
-            collection: langCollection,
-        });
-        FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
+        langCollection = new Backbone.Collection(langModels);
+      } else {
+        langCollection = null;
+      }
+      var formMenuView = views.FormMenuView({
+        collection: langCollection,
+      });
+      FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
     };
 
-    var getMenuView = function (menuResponse) {
-        var menuData = {                    // TODO: make this more concise
+
+    var getMenuData = function (menuResponse) {
+        return {                    // TODO: make this more concise
             collection: menuResponse,
             title: menuResponse.title,
             headers: menuResponse.headers,
@@ -131,6 +135,26 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             isMultiSelect: menuResponse.multiSelect,
             multiSelectMaxSelectValue: menuResponse.maxSelectValue,
         };
+    };
+
+    var getCaseListView = function (menuResponse) {
+        if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
+            if (menuResponse.multiSelect) {
+                return views.MultiSelectCaseListView;
+            } else {
+                return views.CaseListView;
+            }
+        } else {
+            if (menuResponse.groupHeaderRows >= 0) {
+                return views.CaseTileGroupedListView;
+            } else {
+                return views.CaseTileListView;
+            }
+        }
+    };
+
+    var getMenuView = function (menuResponse) {
+        var menuData = getMenuData(menuResponse);
         var urlObject = utils.currentUrlToObject();
 
         sessionStorage.queryKey = menuResponse.queryKey;
@@ -156,6 +180,9 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             if (searchText) {
                 event = "Searched Case List";
             }
+            if (menuResponse.queryResponse) {
+                menuData.sidebarEnabled = true;
+            }
             var eventData = {
                 domain: FormplayerFrontend.getChannel().request("currentUser").domain,
                 name: menuResponse.title,
@@ -170,24 +197,15 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                     'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
-            if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
-                if (menuData.isMultiSelect) {
-                    return views.MultiSelectCaseListView(menuData);
-                } else {
-                    return views.CaseListView(menuData);
-                }
-            } else {
-                if (menuResponse.numEntitiesPerRow > 1) {
-                    return views.GridCaseTileListView(menuData);
-                } else {
-                    return views.CaseTileListView(menuData);
-                }
-            }
+            var caseListView = getCaseListView(menuResponse);
+            return caseListView(menuData);
         }
     };
 
     return {
         getMenuView: getMenuView,
+        getMenuData: getMenuData,
+        getCaseListView: getCaseListView,
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
         showFormMenu: showFormMenu,

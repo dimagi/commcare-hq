@@ -26228,7 +26228,7 @@ define('vellum/mugs',[
          *
          * @param mug - The mug object.
          * @param node - This mug's data node, a jQuery object.
-         * @returns - A jquery collection of child nodes.
+         * @returns - A jquery collection of child nodes which will be passed through the parser in turn.
          */
         parseDataNode: function (mug, $node) {
             return $node.children();
@@ -26236,7 +26236,9 @@ define('vellum/mugs',[
         controlNodeChildren: null,
 
         /**
-         * Get data node path name
+         * Get data node path name.
+         *
+         * Use this to override the default path name.
          *
          * @param mug - The mug.
          * @param name - The default path name.
@@ -26245,7 +26247,9 @@ define('vellum/mugs',[
          */
         getPathName: null,
         /**
-         * Get data node tag name
+         * Get data node tag name.
+         *
+         * Use this to override the default tag name.
          *
          * @param mug - The mug.
          * @param name - The default tag name.
@@ -26253,19 +26257,34 @@ define('vellum/mugs',[
          */
         getTagName: null,
 
-        // XForm writer integration:
-        //  `childFilter(treeNodes, parentMug) -> treeNodes`
-        // The writer passes these filter functions to `processChildren` of
-        // `Tree.walk`. See `Tree.walk` documentation for more details.
+        /**
+         * Filter function for data node children.
+         *
+         * This allows integration into the XForm writer. It can be used to filter out
+         * child elements or generate additional child elements.
+         *
+         * The writer passes these filter functions to `processChildren` of
+         * `Tree.walk`. See `Tree.walk` documentation for more details.
+         *
+         *  @param treeNodes - The list of child nodes.
+         *  @param parentMug - The parent mug.
+         *  @returns {Array<Tree.Node>} - The list of child nodes to add to the form XML data element.
+         */
         dataChildFilter: null,
         controlChildFilter: null,
 
-        // data node writer options
-        getExtraDataAttributes: null, // function (mug) { return {...}; }
+        /**
+         * Get extra data node attributes to write to the XML.
+         *
+         * @param {Mug} mug - The mug.
+         * @returns {Object} - An object containing extra attributes to write to the XML.
+         */
+        getExtraDataAttributes: null,
         writeDataNodeXML: null,       // function (xmlWriter, mug) { ... }
 
         /**
-         * Returns a list of objects containing bind element attributes
+         * Returns a list of objects containing bind element attributes which will
+         * be written to the form XML.
          */
         getBindList: function (mug) {
             var constraintMsgItext = mug.p.constraintMsgItext,
@@ -26301,6 +26320,10 @@ define('vellum/mugs',[
             return attrs.nodeset ? [attrs] : [];
         },
 
+        /**
+         * Returns a list of objects containing `setvalue` element attributes which will
+         * be written to the form XML.
+         */
         getSetValues: function (mug) {
             var ret = [];
 
@@ -26333,7 +26356,33 @@ define('vellum/mugs',[
             return mug.options.icon;
         },
         isHashtaggable: true,
+        /**
+         * Init function called when adding a mug to a form. Typically used ot initialize
+         * mug properties.
+         *
+         * @param {Mug} mug
+         * @param {Form} form
+         */
         init: function (mug, form) {},
+
+        /**
+         * Attribute spec for the mug. Each attribute on the object
+         * defines the attribute spec for that attribute. The attribute
+         * spec is an object with the following properties:
+         * - visibility: 'visible', 'hidden', 'visible_if_present', 'visible_if_not_present'
+         * - presence: 'required', 'optional', 'notallowed'
+         * - lstring: The label string to use for the attribute on the UI
+         * - widget: The widget to use for the attribute. See `widgets.js`.
+         * - defaultOptions: The default options for the widget
+         * - validationFunc: A function to validate the attribute.
+         *      // (mug) => isValid ? "pass" : gettext("Error message")
+         * - mayReferenceSelf: Whether the attribute may reference the mug itself
+         * - enabled: A function to determine whether the attribute is enabled
+         *      // (mug) => true/false
+         * - help: Help text for the attribute
+         * - serialize: A function to serialize the attribute e.g. `mug.serializeXPath`
+         * - deserialize: A function to deserialize the attribute e.g. `mug.deserializeXPath`
+         */
         spec: {}
     };
 
@@ -32230,8 +32279,8 @@ $.fn.caret.apis = methods;
 }));
 
 /**
- * at.js - 1.5.3
- * Copyright (c) 2017 chord.luo <chord.luo@gmail.com>;
+ * at.js - 1.5.4
+ * Copyright (c) 2018 chord.luo <chord.luo@gmail.com>;
  * Homepage: http://ichord.github.com/At.js
  * License: MIT
  */
@@ -32319,7 +32368,7 @@ DEFAULT_CALLBACKS = {
     });
   },
   tplEval: function(tpl, map) {
-    var error, template;
+    var error, error1, template;
     template = tpl;
     try {
       if (typeof tpl !== 'string') {
@@ -32373,7 +32422,7 @@ App = (function() {
   };
 
   App.prototype.setupRootElement = function(iframe, asRoot) {
-    var error;
+    var error, error1;
     if (asRoot == null) {
       asRoot = false;
     }
@@ -32504,6 +32553,9 @@ App = (function() {
 
   App.prototype.dispatch = function(e) {
     var _, c, ref, results;
+    if (void 0 === e) {
+      return;
+    }
     ref = this.controllers;
     results = [];
     for (_ in ref) {
@@ -32639,7 +32691,7 @@ Controller = (function() {
   };
 
   Controller.prototype.callDefault = function() {
-    var args, error, funcName;
+    var args, error, error1, funcName;
     funcName = arguments[0], args = 2 <= arguments.length ? slice.call(arguments, 1) : [];
     try {
       return DEFAULT_CALLBACKS[funcName].apply(this, args);
@@ -32665,7 +32717,7 @@ Controller = (function() {
   };
 
   Controller.prototype.getOpt = function(at, default_value) {
-    var e;
+    var e, error1;
     try {
       return this.setting[at];
     } catch (error1) {
@@ -46757,6 +46809,11 @@ define('vellum/core',[
         },
     };
 
+    /**
+     * Get all Mug types.
+     *
+     * @returns {Object} - Object with `normal` and `auxiliary` properties containing mug definitions.
+     */
     fn.getMugTypes = function () {
         return mugs.baseMugTypes;
     };
@@ -46817,6 +46874,14 @@ define('vellum/core',[
         this.data.core.saveButton.ui.appendTo($saveButtonContainer);
     };
 
+    /**
+     * Get question groups to display.
+     *
+     * @returns {Object} - List of group configurations. Each group configuration is an object with the
+     *              following properties:
+     *              - group: [groupName, groupDisplayName]
+     *              - questions: [mugType, ...]
+     */
     fn.getQuestionGroups = function () {
         return [
             {
@@ -48839,6 +48904,18 @@ define('vellum/core',[
         });
     };
 
+    /**
+     * Get UI sections for the mug. This controls the UI for the mug.
+     *
+     * @param {Mug} mug - The mug to get sections for.
+     * @return {Array<Object>} List of sections to display for the given mug.
+     *      Each section is an object with the following properties:
+     *      - slug: The slug of the section.
+     *      - displayName: The display name of the section. Should be tagged for translation with `gettext`.
+     *      - properties: List of mug properties to display.
+     *      - help: Help configuration with `title`, `text` and `link` properties.
+     *      - isCollapsed: Boolean indicating whether the section should be collapsed by default.
+     */
     fn.getSections = function (mug) {
         return [
             {
@@ -49003,12 +49080,26 @@ define('vellum/core',[
         return parser.parseDataElement(form, el, parentMug, role);
     };
 
+    /**
+     * Parse data from a `bind` element during form loading.
+     *
+     * @param {Form} form - The form instance being loaded.
+     * @param {jQuery} el - JQuery object representing the bind element being processed.
+     * @param {String} path - The path of the element within the form.
+     */
     fn.parseBindElement = function (form, el, path) {
-        return parser.parseBindElement(form, el, path);
+        parser.parseBindElement(form, el, path);
     };
 
+    /**
+     * Parse data from a `setvalue` element during form loading.
+     *
+     * @param {Form} form - The form instance being loaded.
+     * @param {jQuery} el - JQuery object representing the bind element being processed.
+     * @param {String} path - The path of the element within the form.
+     */
     fn.parseSetValue = function (form, el, path) {
-        return parser.parseSetValue(form, el, path);
+        parser.parseSetValue(form, el, path);
     };
 
     fn.getControlNodeAdaptorFactory = function (tagName) {
@@ -93448,7 +93539,6 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
 
     // Stuff for processing the upload
     self.uploadParams = options.uploadParams || {};
-    self.sessionid = options.sessionid || null;
     self.licensingParams = options.licensingParams || [];
     self.uploadURL = options.uploadURL;
     self.processingURL = options.processingURL;
@@ -93695,14 +93785,6 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
                 postParams[key] = true;
             }
         }
-        var _cookie = document.cookie;
-        if (!/sessionid=/.exec(_cookie) && self.sessionid) {
-            if (_cookie) {
-                _cookie += '; ';
-            }
-            _cookie += 'sessionid=' + self.sessionid;
-        }
-        postParams['_cookie'] = _cookie;
         // With YUI 3.9 you can trigger downloads on a per file basis, but for now just keep the original behavior
         // of uploading the entire queue.
         self.uploader.uploadAll(self.uploadURL, postParams);
@@ -95372,6 +95454,252 @@ define('vellum/commander',[
     return fn;
 });
 
+/**
+ * CommCare Connect plugin for Vellum
+ *
+ * This plugin adds two new mug types:
+ * - Learn Module
+ * - Assessment Score
+ */
+define('vellum/commcareConnect',[
+    'jquery',
+    'underscore',
+    'vellum/mugs',
+    'vellum/tree',
+    'vellum/util',
+    'vellum/widgets',
+    'vellum/core'
+], function (
+    $,
+    _,
+    mugs,
+    Tree,
+    util,
+    widgets
+) {
+    let CCC_XMLNS = 'http://commcareconnect.com/data/v1/learn',
+        baseSection = {
+            slug: "main",
+            displayName: gettext("Basic"),
+            properties: [
+                "nodeID",
+            ],
+        },
+        baseSpec = {
+            xmlnsAttr: {
+                presence: "optional",
+                serialize: () => {},
+                deserialize: () => {}
+            },
+            requiredAttr: {presence: "notallowed"},
+            constraintAttr: {presence: "notallowed"},
+            calculateAttr: {presence: "notallowed"}
+        },
+        baseMugOptions = {
+            isTypeChangeable: false,
+            isDataOnly: true,
+            supportsDataNodeRole: true,
+            /**
+             * If true, the mug will write its values to the data node instead of
+             * using bind elements.
+             */
+            writeValuesToDataNode: false,
+            getExtraDataAttributes: mug => ({
+                // allows the parser to know which mug to associate with this node
+                "vellum:role": mug.__className,
+            }),
+            parseDataNode: () => {
+                // Extract values from the data node
+                // Return an empty list of child nodes since children are handled
+                // by this plugin directly.
+                return $([]);
+            },
+            dataChildFilter: (children, mug) => {
+                // called during write
+                // return a list nodes to add to the forms data node
+                let writeData = mug.options.writeValuesToDataNode;
+                children = mugConfigs[mug.__className].childNodes.map(childName => {
+                    let p = {rawDataAttributes: null};
+                    if (writeData) {
+                        p.dataValue = mug.p[childName];
+                    }
+                    return new Tree.Node([], {
+                        getNodeID: () => childName,
+                        p: p,
+                        options: {
+                            getExtraDataAttributes: () => {}
+                        }
+                    });
+                });
+                return [new Tree.Node(children, {
+                    getNodeID: () => mugConfigs[mug.__className].rootName,
+                    p: {rawDataAttributes: null},
+                    options: {
+                        getExtraDataAttributes: () => ({
+                            "xmlns": CCC_XMLNS,
+                            "id": mug.p.nodeID,
+                        })
+                    }
+                })];
+            },
+        },
+        mugConfigs = {
+            ConnectLearnModule: {
+                rootName: "module",
+                childNodes: [
+                    "name",
+                    "description",
+                    "time_estimate",
+                ],
+                mugOptions: util.extend(baseMugOptions, {
+                    typeName: 'Learn Module',
+                    icon: 'fa fa-graduation-cap',
+                    writeValuesToDataNode: true,
+                    init: mug => {
+                        mug.p.name = "";
+                        mug.p.description = "";
+                        mug.p.time_estimate = "";
+                    },
+                    parseDataNode: (mug, node) => {
+                        let children = node.children(),
+                            mugConfig = mugConfigs[mug.__className];
+                        if (children.length === 1) {
+                            let child = children[0];
+                            if (child.nodeName === mugConfig.rootName && child.getAttribute("xmlns") === CCC_XMLNS) {
+                                $(child).children().each((i, el) => {
+                                    mug.p[el.nodeName] = $(el).text();
+                                });
+                            }
+                        }
+                        return $([]);
+                    },
+                    getBindList: () => [],
+                    spec: util.extend(baseSpec, {
+                        nodeID: {
+                            lstring: gettext('Module ID'),
+                        },
+                        name: {
+                            lstring: gettext("Name"),
+                            visibility: 'visible',
+                            presence: 'required',
+                            widget: widgets.text,
+                        },
+                        description: {
+                            lstring: gettext("Description"),
+                            visibility: 'visible',
+                            presence: 'required',
+                            widget: widgets.richTextarea,
+                        },
+                        time_estimate: {
+                            lstring: gettext("Time Estimate"),
+                            visibility: 'visible',
+                            presence: 'required',
+                            widget: widgets.text,
+                            validationFunc: mug => {
+                                let val = mug.p.time_estimate;
+                                return val && val.match(/^\d+$/) ? "pass" : gettext("Must be an integer");
+                            },
+                            help: gettext('Estimated time to complete the module in hours.'),
+                        },
+                    })
+                }),
+                sections: [_.extend({}, baseSection, {
+                    properties: [
+                        "nodeID",
+                        "name",
+                        "description",
+                        "time_estimate",
+                    ],
+                })],
+            },
+            ConnectAssessment: {
+                rootName: "assessment",
+                childNodes: [
+                    "user_score",
+                ],
+                mugOptions: util.extend(baseMugOptions, {
+                    typeName: 'Assessment Score',
+                    icon: 'fa fa-leanpub',
+                    init: mug => {
+                        mug.p.user_score = "";
+                    },
+                    getBindList: mug => {
+                        // return list of bind elements to add to the form
+                        let mugConfig = mugConfigs[mug.__className];
+                        return mugConfig.childNodes.map(childName => {
+                            return {
+                                nodeset: `${mug.absolutePath}/${mugConfig.rootName}/${childName}`,
+                                calculate: mug.p[childName],
+                            };
+                        });
+                    },
+                    spec: util.extend(baseSpec, {
+                        nodeID: {
+                            lstring: gettext('Assessment ID'),
+                        },
+                        user_score: {
+                            lstring: gettext("User Score"),
+                            visibility: 'visible',
+                            presence: 'required',
+                            widget: widgets.xPath,
+                            serialize: mugs.serializeXPath,
+                            deserialize: mugs.deserializeXPath,
+                            help: gettext('XPath expression for the users assessment score.'),
+                        },
+                    })
+                }),
+                sections: [_.extend({}, baseSection, {
+                    properties: [
+                        "nodeID",
+                        "user_score",
+                    ],
+                })],
+            }
+        };
+
+
+    $.vellum.plugin("commcareConnect", {}, {
+        getAdvancedQuestions: function () {
+            return this.__callOld().concat(Object.keys(mugConfigs));
+        },
+        getMugTypes: function () {
+            let types = this.__callOld();
+            Object.entries(mugConfigs).forEach(([mugType, config]) => {
+                types.normal[mugType] = util.extend(mugs.defaultOptions, config.mugOptions);
+            });
+            return types;
+        },
+        getSections: function (mug) {
+            if (Object.hasOwn(mugConfigs, mug.__className)) {
+                return _.map(mugConfigs[mug.__className].sections, section => _.clone(section));
+            }
+            return this.__callOld();
+        },
+        parseBindElement: function (form, el, path) {
+            let mug = form.getMugByPath(path);
+            if (!mug) {
+                let matched = Object.entries(mugConfigs).some(([mugName, mugConfig]) => {
+                    let children = mugConfig.childNodes.join('|'),
+                        regex = new RegExp(`/${mugConfig.rootName}/(${children})`),
+                        matchRet = path.match(regex);
+                    if (matchRet && matchRet.length > 0) {
+                        let attr = matchRet[1];
+                        mug = form.getMugByPath(path.replace(regex, ""));
+                        if (mug && mug.__className === mugName) {
+                            mug.p[attr] = el.xmlAttr("calculate");
+                            return true;
+                        }
+                    }
+                });
+                if (matched) {
+                    return;
+                }
+            }
+            this.__callOld();
+        },
+    });
+});
+
 /* global requirejs */
 requirejs.config({
     // For some reason when using the map config as suggested by some of the
@@ -95439,7 +95767,7 @@ requirejs.config({
         'jsdiff': '../node_modules/jsdiff/diff',
         'markdown-it': '../node_modules/markdown-it/dist/markdown-it',
         'caretjs': '../node_modules/Caret.js/dist/jquery.caret',
-        'atjs': '../node_modules/At.js/dist/js/jquery.atwho',
+        'atjs': '../node_modules/at.js/dist/js/jquery.atwho',
         'ckeditor': '../lib/ckeditor/ckeditor',
         'ckeditor-jquery': '../lib/ckeditor/adapters/jquery',
         'fusejs': '../node_modules/fuse.js/src/fuse'
@@ -95502,7 +95830,7 @@ requirejs.config({
             exports: 'caretjs'
         },
         'atjs': {
-            deps: ['jquery', 'caretjs', 'css!../node_modules/At.js/dist/css/jquery.atwho'],
+            deps: ['jquery', 'caretjs', 'css!../node_modules/at.js/dist/css/jquery.atwho'],
             exports: 'atjs'
         },
         'ckeditor': {
@@ -95553,7 +95881,8 @@ define('main',[
     'vellum/window',
     'vellum/polyfills',
     'vellum/copy-paste',
-    'vellum/commander'
+    'vellum/commander',
+    'vellum/commcareConnect',
     // end buildmain.py delimiter
 ], function () {
     // adds $.vellum as a side-effect

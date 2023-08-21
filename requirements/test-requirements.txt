@@ -17,6 +17,8 @@ async-timeout==4.0.2
 attrs==21.4.0
     # via
     #   -r base-requirements.in
+    #   cattrs
+    #   ddtrace
     #   fiona
     #   jsonschema
 beaker==1.11.0
@@ -33,13 +35,19 @@ botocore==1.27.96
     #   s3transfer
 build==0.8.0
     # via pip-tools
+bytecode==0.14.2
+    # via ddtrace
+cachecontrol==0.12.11
+    # via firebase-admin
 cachetools==5.0.0
     # via google-auth
+cattrs==23.1.1
+    # via ddtrace
 celery==5.2.7
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2022.12.7
+certifi==2023.7.22
     # via
     #   fiona
     #   pyproj
@@ -50,8 +58,6 @@ cffi==1.14.3
     #   cryptography
     #   csiphash
     #   pynacl
-chardet==3.0.4
-    # via ghdiff
 charset-normalizer==3.1.0
     # via requests
 click==8.1.3
@@ -83,16 +89,22 @@ contextlib2==21.6.0
     # via schema
 coverage==7.1.0
     # via -r test-requirements.in
-cryptography==39.0.1
+crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
+    # via -r base-requirements.in
+cryptography==41.0.3
     # via
+    #   -r sso-requirements.in
     #   jwcrypto
     #   oic
+    #   pyjwt
     #   pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
 datadog==0.39.0
     # via -r base-requirements.in
-ddtrace==0.44.0
+ddsketch==2.0.4
+    # via ddtrace
+ddtrace==1.13.4
     # via -r base-requirements.in
 decorator==4.0.11
     # via
@@ -106,17 +118,20 @@ defusedxml==0.7.1
 deprecated==1.2.10
     # via
     #   jwcrypto
+    #   opentelemetry-api
     #   pygithub
 diff-match-patch==20230430
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.19
+django==3.2.20
     # via
     #   -r base-requirements.in
+    #   crispy-bootstrap3to5
     #   django-appconf
     #   django-braces
     #   django-bulk-update
+    #   django-crispy-forms
     #   django-formtools
     #   django-logentry-admin
     #   django-oauth-toolkit
@@ -146,8 +161,10 @@ django-compressor==4.1
     # via -r base-requirements.in
 django-countries==7.3.2
     # via -r base-requirements.in
-django-crispy-forms==1.10.0
-    # via -r base-requirements.in
+django-crispy-forms==2.0
+    # via
+    #   -r base-requirements.in
+    #   crispy-bootstrap3to5
 django-cte==1.2.0
     # via -r base-requirements.in
 django-field-audit==1.2.6
@@ -160,7 +177,7 @@ django-logentry-admin==1.0.6
     # via -r base-requirements.in
 django-nose @ https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
     # via -r test-requirements.in
-django-oauth-toolkit==1.5.0
+django-oauth-toolkit==2.3.0
     # via -r base-requirements.in
 django-otp==1.1.3
     # via
@@ -174,7 +191,7 @@ django-prbac==1.0.1
     # via -r base-requirements.in
 django-recaptcha==3.0.0
     # via -r base-requirements.in
-django-redis==4.12.1
+django-redis==5.3.0
     # via -r base-requirements.in
 django-redis-sessions==0.6.2
     # via -r base-requirements.in
@@ -198,18 +215,24 @@ elasticsearch2==2.5.1
     # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
+envier==0.4.0
+    # via ddtrace
 et-xmlfile==1.0.1
     # via openpyxl
 ethiopian-date-converter==0.1.5
     # via -r base-requirements.in
 eulxml==1.1.3
     # via -r base-requirements.in
+exceptiongroup==1.1.1
+    # via cattrs
 fakecouch==0.0.15
     # via -r test-requirements.in
 faker==18.6.1
     # via -r test-requirements.in
 fiona==1.9.3
     # via geopandas
+firebase-admin==6.1.0
+    # via -r base-requirements.in
 flaky==3.7.0
     # via -r test-requirements.in
 freezegun==1.1.0
@@ -228,31 +251,58 @@ gevent==21.8.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
-ghdiff==0.4
-    # via -r base-requirements.in
-google-api-core==2.5.0
-    # via google-api-python-client
+google-api-core[grpc]==2.11.0
+    # via
+    #   firebase-admin
+    #   google-api-python-client
+    #   google-cloud-core
+    #   google-cloud-firestore
+    #   google-cloud-storage
 google-api-python-client==2.32.0
-    # via -r base-requirements.in
-google-auth==2.6.0
+    # via
+    #   -r base-requirements.in
+    #   firebase-admin
+google-auth==2.18.1
     # via
     #   google-api-core
     #   google-api-python-client
     #   google-auth-httplib2
     #   google-auth-oauthlib
+    #   google-cloud-core
+    #   google-cloud-storage
 google-auth-httplib2==0.1.0
     # via
     #   -r base-requirements.in
     #   google-api-python-client
 google-auth-oauthlib==0.4.6
     # via -r base-requirements.in
-googleapis-common-protos==1.54.0
-    # via google-api-core
+google-cloud-core==2.3.2
+    # via
+    #   google-cloud-firestore
+    #   google-cloud-storage
+google-cloud-firestore==2.11.1
+    # via firebase-admin
+google-cloud-storage==2.9.0
+    # via firebase-admin
+google-crc32c==1.5.0
+    # via google-resumable-media
+google-resumable-media==2.5.0
+    # via google-cloud-storage
+googleapis-common-protos==1.59.0
+    # via
+    #   google-api-core
+    #   grpcio-status
 greenlet==1.1.2
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
     #   gevent
+grpcio==1.54.2
+    # via
+    #   google-api-core
+    #   grpcio-status
+grpcio-status==1.54.2
+    # via google-api-core
 gunicorn==20.0.4
     # via -r base-requirements.in
 hiredis==2.0.0
@@ -271,8 +321,7 @@ importlib-metadata==6.0.0
     # via
     #   fiona
     #   markdown
-intervaltree==3.1.0
-    # via ddtrace
+    #   opentelemetry-api
 iso8601==1.1.0
     # via -r base-requirements.in
 isodate==0.6.1
@@ -296,7 +345,9 @@ jsonobject-couchdbkit==1.0.1
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
 jsonschema==4.17.3
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   ddtrace
 jwcrypto==1.4
     # via django-oauth-toolkit
 kafka-python==1.4.7
@@ -324,6 +375,8 @@ markupsafe==2.1.2
     #   jinja2
     #   mako
     #   werkzeug
+msgpack==1.0.5
+    # via cachecontrol
 munch==2.5.0
     # via fiona
 nose==1.3.7
@@ -347,10 +400,13 @@ openpyxl==3.0.9
     # via
     #   -r base-requirements.in
     #   commcaretranslationchecker
+opentelemetry-api==1.18.0
+    # via ddtrace
 packaging==23.0
     # via
     #   -r base-requirements.in
     #   build
+    #   ddtrace
     #   geopandas
 pandas==2.0.1
     # via geopandas
@@ -377,14 +433,20 @@ prometheus-client==0.14.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.36
     # via click-repl
-protobuf==3.18.3
+proto-plus==1.22.2
+    # via google-cloud-firestore
+protobuf==4.23.1
     # via
+    #   ddsketch
     #   ddtrace
     #   google-api-core
+    #   google-cloud-firestore
     #   googleapis-common-protos
+    #   grpcio-status
+    #   proto-plus
 psycogreen==1.0.2
     # via -r base-requirements.in
-psycopg2==2.8.6
+psycopg2==2.9.6
     # via
     #   -r base-requirements.in
     #   sqlalchemy-postgres-copy
@@ -408,14 +470,15 @@ pygithub==1.55
     # via -r base-requirements.in
 pyjwkest==1.4.2
     # via oic
-pyjwt==2.4.0
+pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
+    #   firebase-admin
     #   pygithub
     #   twilio
 pynacl==1.5.0
     # via pygithub
-pyopenssl==23.0.0
+pyopenssl==23.2.0
     # via -r sso-requirements.in
 pyparsing==3.0.7
     # via httplib2
@@ -437,7 +500,7 @@ python-dateutil==2.8.2
     #   pandas
 python-imap==1.0.0
     # via -r base-requirements.in
-python-magic==0.4.22
+python-magic==0.4.27
     # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
@@ -475,11 +538,13 @@ reportlab==3.6.9
 requests==2.28.2
     # via
     #   -r base-requirements.in
+    #   cachecontrol
     #   cloudant
     #   datadog
     #   django-oauth-toolkit
     #   dropbox
     #   google-api-core
+    #   google-cloud-storage
     #   oic
     #   pygithub
     #   pyjwkest
@@ -522,15 +587,15 @@ six==1.16.0
     # via
     #   -r base-requirements.in
     #   click-repl
+    #   ddsketch
+    #   ddtrace
     #   django-braces
-    #   django-oauth-toolkit
     #   django-statici18n
     #   django-transfer
     #   django-websocket-redis
     #   dropbox
     #   ethiopian-date-converter
     #   eulxml
-    #   ghdiff
     #   google-auth
     #   google-auth-httplib2
     #   isodate
@@ -547,11 +612,8 @@ six==1.16.0
     #   requests-mock
     #   sqlalchemy-postgres-copy
     #   stone
-    #   tenacity
 socketpool==0.5.3
     # via -r base-requirements.in
-sortedcontainers==2.3.0
-    # via intervaltree
 soupsieve==2.0.1
     # via beautifulsoup4
 sqlagg==0.17.2
@@ -572,7 +634,7 @@ stripe==4.1.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
-tenacity==6.2.0
+tenacity==8.2.2
     # via ddtrace
 testil==1.1
     # via -r test-requirements.in
@@ -592,6 +654,9 @@ twilio==7.12.0
     # via -r base-requirements.in
 typing-extensions==4.1.1
     # via
+    #   bytecode
+    #   cattrs
+    #   ddtrace
     #   django-countries
     #   oic
     #   qrcode
@@ -608,6 +673,7 @@ urllib3==1.26.15
     #   botocore
     #   elasticsearch2
     #   elasticsearch5
+    #   google-auth
     #   py-kissmetrics
     #   requests
     #   sentry-sdk
@@ -634,6 +700,8 @@ xlwt==1.3.0
     # via -r base-requirements.in
 xmlsec==1.3.12
     # via python3-saml
+xmltodict==0.13.0
+    # via ddtrace
 zipp==3.7.0
     # via importlib-metadata
 zope-event==4.5.0
@@ -649,6 +717,7 @@ setuptools==67.3.2
     #   django-websocket-redis
     #   gevent
     #   gunicorn
+    #   opentelemetry-api
     #   pip-tools
     #   zope-event
     #   zope-interface

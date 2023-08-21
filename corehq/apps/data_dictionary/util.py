@@ -4,6 +4,7 @@ from operator import attrgetter
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
@@ -12,14 +13,11 @@ from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CasePropertyAllowedValue,
+    CasePropertyGroup,
     CaseType,
 )
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
-
-
-class OldExportsEnabledException(Exception):
-    pass
 
 
 def generate_data_dictionary(domain):
@@ -48,11 +46,7 @@ def _get_all_case_properties(domain):
             if len(item.path) > 1:
                 continue
 
-            if item.tag:
-                name = item.tag
-            else:
-                name = item.path[-1].name
-
+            name = item.tag if item.tag else item.path[-1].name
             if '/' not in name:
                 # Filter out index and parent properties as some are stored as parent/prop in item.path
                 properties.add(name)
@@ -103,8 +97,8 @@ def _create_properties_for_case_types(domain, case_type_to_prop):
             if '/' in prop:
                 continue
 
-            if (case_type not in current_properties or
-                    prop not in current_properties[case_type]):
+            if (case_type not in current_properties
+                    or prop not in current_properties[case_type]):
                 new_case_properties.append(CaseProperty(
                     case_type=case_type_obj, name=prop
                 ))
@@ -174,6 +168,35 @@ def get_deprecated_fields(domain, case_type_name):
     return deprecated_fields
 
 
+def save_case_property_group(id, name, case_type, domain, description, index, deprecated):
+    """
+    Takes a case property group to update and returns an error if there was one
+    """
+    if not name:
+        return gettext('Case Property Group must have a name')
+
+    case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
+    if id is not None:
+        group_obj = CasePropertyGroup.objects.get(id=id, case_type=case_type_obj)
+    else:
+        group_obj = CasePropertyGroup(case_type=case_type_obj)
+
+    group_obj.name = name
+    if description is not None:
+        group_obj.description = description
+    if index is not None:
+        group_obj.index = index
+    if deprecated is not None:
+        group_obj.deprecated = deprecated
+
+    try:
+        group_obj.full_clean(validate_unique=True)
+    except ValidationError as e:
+        return str(e)
+
+    group_obj.save()
+
+
 def save_case_property(name, case_type, domain=None, data_type=None,
                        description=None, label=None, group=None, deprecated=None,
                        fhir_resource_prop_path=None, fhir_resource_type=None, remove_path=False,
@@ -187,12 +210,16 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     prop = CaseProperty.get_or_create(
         name=name, case_type=case_type, domain=domain
     )
-    if data_type:
-        prop.data_type = data_type
+    prop.data_type = data_type if data_type else ""
     if description is not None:
         prop.description = description
-    if group:
+    if group is not None:
         prop.group = group
+        # Allow properties to have no group
+        if group:
+            prop.group_obj, created = CasePropertyGroup.objects.get_or_create(name=group, case_type=prop.case_type)
+        else:
+            prop.group_obj = None
     if deprecated is not None:
         prop.deprecated = deprecated
     if label is not None:
@@ -252,6 +279,11 @@ def get_data_dict_case_types(domain):
     return set(case_types)
 
 
+def get_data_dict_deprecated_case_types(domain):
+    case_types = CaseType.objects.filter(domain=domain, is_deprecated=True).values_list('name', flat=True)
+    return set(case_types)
+
+
 def fields_to_validate(domain, case_type_name):
     filter_kwargs = {
         'case_type__domain': domain,
@@ -269,3 +301,59 @@ def get_gps_properties(domain, case_type):
         case_type__name=case_type,
         data_type=CaseProperty.DataType.GPS,
     ).values_list('name', flat=True))
+
+
+def get_column_headings(row, valid_values, sheet_name=None, case_prop_name=None):
+    column_headings = []
+    errors = []
+    for index, cell in enumerate(row, start=1):
+        if not cell.value:
+            if sheet_name:
+                errors.append(
+                    _("Column {} in \"{}\" sheet has an empty header").format(index, sheet_name)
+                )
+            else:
+                errors.append(
+                    _("Column {} has an empty header").format(index)
+                )
+            continue
+
+        cell_value = cell.value.lower()
+        if cell_value in valid_values:
+            column_headings.append(valid_values[cell_value])
+        else:
+            formatted_valid_values = ', '.join(list(valid_values.keys())).title()
+            if sheet_name:
+                error = _("Invalid column \"{}\" in \"{}\" sheet. Valid column names are: {}").format(
+                    cell.value, sheet_name, formatted_valid_values)
+                errors.append(error)
+            else:
+                error = _("Invalid column \"{}\". Valid column names are: {}").format(
+                    cell.value, formatted_valid_values)
+                errors.append(error)
+    if case_prop_name and case_prop_name not in column_headings:
+        if sheet_name:
+            errors.append(
+                _("Missing \"Case Property\" column header in \"{}\" sheet").format(sheet_name)
+            )
+        else:
+            errors.append(_("Missing \"Case Property\" column header"))
+
+    return column_headings, errors
+
+
+def map_row_values_to_column_names(row, column_headings, default_val=None):
+    row_vals = defaultdict(lambda: default_val)
+    for index, cell in enumerate(row):
+        column_name = column_headings[index]
+        cell_val = '' if cell.value is None else str(cell.value)
+        row_vals[column_name] = cell_val
+    return row_vals
+
+
+def is_case_type_deprecated(domain, case_type):
+    try:
+        case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
+        return case_type_obj.is_deprecated
+    except CaseType.DoesNotExist:
+        return False
