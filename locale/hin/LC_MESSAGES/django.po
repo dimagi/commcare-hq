@@ -12521,6 +12521,37 @@ msgstr ""
 msgid "Visit CommCare's knowledge base"
 msgstr ""
 
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Row {} in \"{}-vl\" sheet is missing a case property field"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Could not find resource type for {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Error in \"{}\" sheet, row {}: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid ""
+"Missing required valid \"{}-vl\" multi-choice sheet for case type \"{}\""
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid "Not enough columns in \"{}\" sheet"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py corehq/apps/data_dictionary/views.py
+msgid "FHIR Resource {} {}: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid ""
+"Case property \"{}\" referenced in \"{}-vl\" sheet that does not exist in "
+"\"{}\" sheet. Row(s) affected: {}"
+msgstr ""
+
 #: corehq/apps/data_dictionary/models.py
 msgid "Group \"{}\" already exists for case type \"{}\""
 msgstr ""
@@ -12592,16 +12623,12 @@ msgid "Import from Excel"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Case Type:"
 msgid "Deprecate Case Type"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Case Type:"
 msgid "Restore Case Type"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Show Deprecated"
@@ -12726,12 +12753,32 @@ msgstr ""
 msgid "Unable to save valid values longer than {} characters"
 msgstr ""
 
-#: corehq/apps/data_dictionary/views.py
-msgid "Case Type 'name' is required"
+#: corehq/apps/data_dictionary/util.py
+msgid "Column {} in \"{}\" sheet has an empty header"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Column {} has an empty header"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Invalid column \"{}\" in \"{}\" sheet. Valid column names are: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Invalid column \"{}\". Valid column names are: {}"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Missing \"Case Property\" column header in \"{}\" sheet"
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+msgid "Missing \"Case Property\" column header"
 msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
-msgid "FHIR Resource {} {}: {}"
+msgid "Case Type 'name' is required"
 msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
@@ -12777,36 +12824,6 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
 msgid "Data dictionary import complete"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Error in valid values for case type {}, row {}: missing case property"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Not enough columns"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Could not find resource type for {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Error in case type {}, row {}: {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Missing valid values sheet for case type {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid ""
-"Error in valid values for case type {}, nonexistent property listed ({}), "
-"row(s): {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/views.py
-msgid "Not enough columns in {} sheet"
 msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py

@@ -86,7 +86,6 @@ from corehq.apps.translations.integrations.transifex.utils import (
 )
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
@@ -364,8 +363,8 @@ class SetupTab(UITab):
 
     @property
     def _is_viewable(self):
-        return (self.couch_user.is_domain_admin() and
-                self.project.commtrack_enabled)
+        return (self.couch_user.is_domain_admin()
+                and self.project.commtrack_enabled)
 
     @property
     @memoized
@@ -558,8 +557,8 @@ class ProjectDataTab(UITab):
 
     @property
     def can_view_ecd_preview(self):
-        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self._request) and
-                is_eligible_for_ecd_preview(self._request))
+        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self._request)
+                and is_eligible_for_ecd_preview(self._request))
 
     @property
     @memoized
@@ -1116,10 +1115,11 @@ class MessagingTab(UITab):
 
     @property
     def _is_viewable(self):
-        return (self.can_access_reminders or self.can_use_outbound_sms) and (
-            self.project and not (self.project.is_snapshot or
-                                  self.couch_user.is_commcare_user())
-        ) and self.couch_user.can_edit_messaging()
+        return ((self.can_access_reminders or self.can_use_outbound_sms)
+                and (self.project
+                     and not (self.project.is_snapshot
+                              or self.couch_user.is_commcare_user()))
+                and self.couch_user.can_edit_messaging())
 
     @property
     @memoized
@@ -1423,7 +1423,8 @@ class ProjectUsersTab(UITab):
 
     @property
     def can_view_cloudcare(self):
-        return has_privilege(self._request, privileges.CLOUDCARE) and self.couch_user.is_domain_admin()
+        return (has_privilege(self._request, privileges.CLOUDCARE)
+                and self.couch_user.is_domain_admin())
 
     @property
     def has_project_access(self):
@@ -1431,12 +1432,13 @@ class ProjectUsersTab(UITab):
 
     def _get_mobile_users_menu(self):
         menu = []
-        if ((self.couch_user.can_edit_commcare_users() or self.couch_user.can_view_commcare_users())
+        if ((self.couch_user.can_edit_commcare_users()
+                or self.couch_user.can_view_commcare_users())
                 and self.has_project_access):
             def _get_commcare_username(request=None, couch_user=None,
                                        **context):
-                if (couch_user.user_id != request.couch_user.user_id or
-                        couch_user.is_commcare_user()):
+                if (couch_user.user_id != request.couch_user.user_id
+                        or couch_user.is_commcare_user()):
                     username = couch_user.username_in_report
                     if couch_user.is_deleted():
                         username = format_html('{} ({})', username, _("Deleted"))
@@ -1512,8 +1514,8 @@ class ProjectUsersTab(UITab):
 
         if self.couch_user.can_edit_web_users() or self.couch_user.can_view_web_users():
             def _get_web_username(request=None, couch_user=None, **context):
-                if (couch_user.user_id != request.couch_user.user_id or
-                        not couch_user.is_commcare_user()):
+                if (couch_user.user_id != request.couch_user.user_id
+                        or not couch_user.is_commcare_user()):
                     username = couch_user.human_friendly_name
                     if couch_user.is_deleted():
                         username = format_html('{} ({})', username, _('Deleted'))
@@ -1644,8 +1646,8 @@ class ProjectUsersTab(UITab):
         from corehq.apps.locations.permissions import (
             user_can_edit_location_types,
         )
-        if (user_can_edit_location_types(self.couch_user, self.domain) and
-                self.couch_user.can_edit_locations()):
+        if (user_can_edit_location_types(self.couch_user, self.domain)
+                and self.couch_user.can_edit_locations()):
             from corehq.apps.locations.views import LocationTypesView
             menu.append({
                 'title': _(LocationTypesView.page_title),
@@ -2357,9 +2359,10 @@ class AdminTab(UITab):
     @property
     def sidebar_items(self):
         # todo: convert these to dispatcher-style like other reports
-        if (self.couch_user and
-                (not self.couch_user.is_superuser and
-                 toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
+        if (self.couch_user
+                and (
+                not self.couch_user.is_superuser
+                and toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
                 (_('System Health'), [
                     {'title': _('System Info'),
