@@ -78,10 +78,10 @@ class Command(BaseCommand):
             date_end = date_start + timedelta(days=1) - timedelta(seconds=1)
             try:
                 CreditLine.objects.get(account=invoice.subscription.account,
-                                       subscription=invoice.subscription, is_product=True, is_active=True,
-                                       date_created__range=(date_start, date_end))
+                                       subscription=invoice.subscription, is_product=True, is_active=True)
             except CreditLine.MultipleObjectsReturned:
-                print(f"Multiple plan credit lines found for subscription {invoice.subscription.id}.")
+                print(f"Multiple plan credit lines found for subscription"
+                      f" {invoice.subscription.plan_version.plan.name}.")
                 duplicate_cl = CreditLine.objects.filter(account=invoice.subscription.account,
                                                          subscription=invoice.subscription, is_product=True,
                                                          is_active=True,
