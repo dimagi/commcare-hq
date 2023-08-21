@@ -214,7 +214,7 @@ metrics_gauge_task(
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeater(repeater_id: int):
+def process_repeater(repeater_id):
     """
     Worker task to send SQLRepeatRecords in chronological order.
 
