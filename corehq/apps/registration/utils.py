@@ -149,6 +149,10 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
         try:
             _setup_subscription(new_domain.name, current_user)
         except Exception as error:
+            # any error thrown in this process will cause the transaction.atomic() block that
+            # the subscription setup is wrapped in to fail and any SQL changes related to the subscription
+            # to roll back. Since we don't want a Subscription-less domain to exist, we should raise the
+            # error and delete the domain.
             notify_exception(request, "Error initializing subscription for new domain", details={
                 'domain': new_domain.name,
                 'hr_name': project_name,
