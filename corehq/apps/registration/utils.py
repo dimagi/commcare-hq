@@ -159,18 +159,7 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
             new_domain.delete()
             raise ErrorInitializingDomain(f"Subscription setup failed for '{name}'")
 
-    try:
-        initialize_domain_with_default_roles(new_domain.name)
-    except Exception as error:
-        notify_exception(request, "Error initializing default roles for new domain", details={
-            'domain': new_domain.name,
-            'hr_name': project_name,
-            'creating_user': current_user.username,
-            'first_domain_for_user': is_new_user,
-            'error': str(error),
-        })
-        new_domain.delete()
-        raise ErrorInitializingDomain(f"Default Roles initialization failed for '{name}'")
+    initialize_domain_with_default_roles(new_domain.name)
 
     if request.user.is_authenticated:
         if not current_user:
