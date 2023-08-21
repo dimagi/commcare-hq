@@ -330,9 +330,9 @@ hqDefine("app_manager/js/details/column", function () {
         self.tileColumnStart.subscribe(fireChange);
         self.tileWidth.subscribe(fireChange);
         self.tileHeight.subscribe(fireChange);
-        self.horizontalAlign.subscribe(fireChange)
-        self.verticalAlign.subscribe(fireChange)
-        self.fontSize.subscribe(fireChange)
+        self.horizontalAlign.subscribe(fireChange);
+        self.verticalAlign.subscribe(fireChange);
+        self.fontSize.subscribe(fireChange);
 
         self.$format = $('<div/>').append(self.format.ui);
         self.$format.find("select").css("margin-bottom", "5px");
@@ -406,9 +406,9 @@ hqDefine("app_manager/js/details/column", function () {
             column.grid_y = self.tileRowStart();
             column.height = self.tileHeight();
             column.width = self.tileWidth();
-            column.horizontal_align = self.horizontalAlign()
-            column.vertial_align = self.verticalAlign()
-            column.font_size = self.fontSize()
+            column.horizontal_align = self.horizontalAlign();
+            column.vertial_align = self.verticalAlign();
+            column.font_size = self.fontSize();
             column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;
             column.late_flag = parseInt(self.late_flag_extra.val(), 10);
             column.time_ago_interval = parseFloat(self.time_ago_extra.val());

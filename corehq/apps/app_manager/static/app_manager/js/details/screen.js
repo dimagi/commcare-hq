@@ -60,7 +60,7 @@ hqDefine("app_manager/js/details/screen", function () {
 
         let baseCaseTileTemplateOptions = [[null, gettext("Don't Use Case Tiles")]];
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM')) {
-          baseCaseTileTemplateOptions = baseCaseTileTemplateOptions.concat([["custom", gettext("Manually configure Case Tiles")]]);
+            baseCaseTileTemplateOptions = baseCaseTileTemplateOptions.concat([["custom", gettext("Manually configure Case Tiles")]]);
         }
 
         self.caseTileTemplateOptions = baseCaseTileTemplateOptions.concat(options.caseTileTemplateOptions);
