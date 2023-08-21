@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db.models import Count
 from corehq.apps.accounting.interface import get_subtotal_and_deduction
-from corehq.apps.accounting.models import Invoice, CreditLine, FeatureType
+from corehq.apps.accounting.models import CreditAdjustment, Invoice, CreditLine, FeatureType
 from corehq.util.dates import get_first_last_days
 
 
@@ -70,6 +70,20 @@ class Command(BaseCommand):
                 if not dry_run:
                     CreditLine.add_credit(amount=plan_credit, subscription=invoice.subscription,
                                         is_product=True, note=note)
+        else:
+            # Check if we generate duplicate product credit line
+            try:
+                CreditLine.objects.get(account=invoice.subscription.account,
+                                       subscription=invoice.subscription, isProduct=True, isActive=True)
+            except CreditLine.MultipleObjectsReturned:
+                print(f"Multiple plan credit lines found for subscription {invoice.subscription.id}.")
+                duplicate_cl = CreditLine.objects.filter(account=invoice.subscription.account,
+                                                         subscription=invoice.subscription, isProduct=True,
+                                                         isActive=True).first()
+                if not dry_run:
+                    CreditAdjustment.objects.filter(credit_line=duplicate_cl).delete()
+                    duplicate_cl.delete()
+                    print("Duplicate Plan Credit Line deleted")
 
         # Feature Credit
         for feature in FeatureType.CHOICES:
