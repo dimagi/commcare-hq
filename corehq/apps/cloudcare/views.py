@@ -29,7 +29,7 @@ from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
 from couchforms.const import VALID_ATTACHMENT_FILE_EXTENSION_MAP
 from dimagi.utils.logging import notify_error, notify_exception
-from dimagi.utils.web import get_url_base, json_response
+from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import (
@@ -49,12 +49,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_doc,
     get_latest_released_build_id,
 )
-from corehq.apps.app_manager.exceptions import (
-    FormNotFoundException,
-    ModuleNotFoundException,
-)
-from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import get_cloudcare_session_data
+
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
     WEB_APPS_ENVIRONMENT,
@@ -63,7 +58,6 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_applicatio
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
-from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -83,10 +77,9 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
-from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.models import CommCareCase
-from corehq.form_processor.models import XFormInstance
 from xml2json.lib import xml2json
+
+from langcodes import get_name
 
 
 @require_cloudcare_access
@@ -196,6 +189,9 @@ class FormplayerMain(View):
 
         domain_obj = Domain.get_by_name(domain)
 
+        lang_codes = set().union(*(app.get("langs", []) for app in apps))
+        lang_code_name_mapping = {code: get_name(code) for code in lang_codes}
+
         context = {
             "domain": domain,
             "default_geocoder_location": domain_obj.default_geocoder_location,
@@ -211,7 +207,9 @@ class FormplayerMain(View):
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
+            "lang_code_name_mapping": lang_code_name_mapping,
         }
+
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
         )

@@ -85,28 +85,32 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function (langs, enableLanguageMenu) {
-        var langModels,
-            langCollection;
+    var showFormMenu = function (langs, langCodeNameMapping) {
+      var langModels,
+          langCollection;
 
-        FormplayerFrontend.regions.addRegions({
-            formMenu: "#form-menu",
+      FormplayerFrontend.regions.addRegions({
+        formMenu: "#form-menu",
+      });
+
+      if (langs) {
+        langModels = _.map(langs, function (lang) {
+          var matchingLanguage = langCodeNameMapping[lang];
+          return {
+            lang_code: lang,
+            lang_label: matchingLanguage ? matchingLanguage : lang,
+          };
         });
-        if (langs && enableLanguageMenu) {
-            langModels = _.map(langs, function (lang) {
-                return {
-                    lang: lang,
-                };
-            });
-            langCollection = new Backbone.Collection(langModels);
-        } else {
-            langCollection = null;
-        }
-        var formMenuView = views.FormMenuView({
-            collection: langCollection,
-        });
-        FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
+        langCollection = new Backbone.Collection(langModels);
+      } else {
+        langCollection = null;
+      }
+      var formMenuView = views.FormMenuView({
+        collection: langCollection,
+      });
+      FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
     };
+
 
     var getMenuData = function (menuResponse) {
         return {                    // TODO: make this more concise
@@ -130,10 +134,10 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
             multiSelectMaxSelectValue: menuResponse.maxSelectValue,
-        }
+        };
     };
 
-    var getCaseListView = function(menuResponse) {
+    var getCaseListView = function (menuResponse) {
         if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
             if (menuResponse.multiSelect) {
                 return views.MultiSelectCaseListView;
@@ -147,7 +151,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 return views.CaseTileListView;
             }
         }
-    }
+    };
 
     var getMenuView = function (menuResponse) {
         var menuData = getMenuData(menuResponse);
@@ -176,7 +180,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             if (searchText) {
                 event = "Searched Case List";
             }
-            if (menuResponse.queryResponse != null) {
+            if (menuResponse.queryResponse) {
                 menuData.sidebarEnabled = true;
             }
             var eventData = {

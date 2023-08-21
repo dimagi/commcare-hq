@@ -1,9 +1,11 @@
+import inspect
 import os
 import logging
 
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.core.cache import cache
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
@@ -61,11 +63,39 @@ from tastypie.http import HttpTooManyRequests
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
+CACHE_EXPIRY_30_DAYS_IN_SECS = 30 * 24 * 60 * 60
+
+
+def _audit_request_auth_errors(user_id, request):
+    cache_key = f"form_submission_audit:{user_id}"
+    if cache.get(cache_key):
+        # User is already logged once in last 30 days for incorrect access, so no need to log again
+        return []
+
+    stack = inspect.stack()
+    function_names = [frame.function for frame in stack if not inspect.isbuiltin(frame.function)]
+
+    def invalid_user_permission():
+        if hasattr(request, 'user'):
+            return not request.user.has_perm('access_mobile_endpoints')
+        return True
+
+    if post_api.__name__ not in function_names and invalid_user_permission():
+        cache.set(cache_key, True, CACHE_EXPIRY_30_DAYS_IN_SECS)
+        return f"Request not made from {post_api.__name__} handler for user"
+
+    return []
 
 
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
+    if authenticated:
+        request_error = _audit_request_auth_errors(user_id, request)
+        if request_error:
+            message = (f"Restricted access by user {request.user} with id {user_id} and app_id {app_id}. "
+                       f"Error details: {request_error}")
+            notify_exception(request, message=message)
 
     if rate_limit_submission(domain):
         return HttpTooManyRequests()
