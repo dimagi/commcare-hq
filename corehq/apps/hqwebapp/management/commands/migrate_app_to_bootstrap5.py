@@ -263,9 +263,9 @@ class Command(BaseCommand):
 
     def verify_migrated_references(self, app_name):
         migrated_files = self._get_migrated_files(app_name)
-        template_path = str(self._get_app_template_folder(app_name))
+        template_path = self._get_app_template_folder(app_name)
         for file_path in migrated_files:
-            is_template = template_path in str(file_path)
+            is_template = file_path.is_relative_to(template_path)
             new_reference = self.get_short_path(app_name, file_path, is_template)
             old_reference = new_reference.replace("/bootstrap3/", "/")
             references = self.update_and_get_references(
