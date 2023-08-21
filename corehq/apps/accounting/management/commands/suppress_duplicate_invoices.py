@@ -58,17 +58,18 @@ class Command(BaseCommand):
         reverted = False
 
         # Plan Credit
-        plan_subtotal, plan_deduction = get_subtotal_and_deduction(
-            invoice.lineitem_set.get_products().all()
-        )
-        plan_credit = -plan_deduction
-        if plan_credit:
-            reverted = True
-            print(f'{dry_run_tag}Adding plan credit: {plan_credit} to '
-                  f'domain {invoice.subscription.subscriber.domain}')
-            if not dry_run:
-                CreditLine.add_credit(amount=plan_credit, subscription=invoice.subscription,
-                                    is_product=True, note=note)
+        if not invoice.subscription.auto_generate_credits:
+            plan_subtotal, plan_deduction = get_subtotal_and_deduction(
+                invoice.lineitem_set.get_products().all()
+            )
+            plan_credit = -plan_deduction
+            if plan_credit:
+                reverted = True
+                print(f'{dry_run_tag}Adding plan credit: {plan_credit} to '
+                    f'domain {invoice.subscription.subscriber.domain}')
+                if not dry_run:
+                    CreditLine.add_credit(amount=plan_credit, subscription=invoice.subscription,
+                                        is_product=True, note=note)
 
         # Feature Credit
         for feature in FeatureType.CHOICES:
