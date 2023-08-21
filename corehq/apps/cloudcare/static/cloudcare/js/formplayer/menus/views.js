@@ -649,7 +649,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         templateContext: function () {
             const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
-            const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
+            const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
             const boldSortedCharIcon = (header) => {
                 const headerWords = header.trim().split(' ');
                 const lastChar = headerWords.pop();
@@ -667,7 +667,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 currentPage: this.options.currentPage,
                 endPage: paginateItems.endPage,
                 pageCount: paginateItems.pageCount,
-                rowRange: [10, 25, 50, 100],
+                rowRange: [5, 10, 25, 50, 100],
                 limit: casesPerPage,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
