@@ -20,9 +20,7 @@ from memoized import memoized
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.det.exceptions import DETConfigError
-from corehq.apps.export.det.schema_generator import (
-    generate_from_export_instance,
-)
+from corehq.apps.export.det.schema_generator import generate_from_export_instance
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from soil import DownloadBase
@@ -52,10 +50,9 @@ from corehq.apps.export.forms import (
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
     FilterSmsESExportDownloadForm,
-    DatasourceExportDownloadForm,
 )
 from corehq.apps.export.models import FormExportInstance
-from corehq.apps.export.models.new import EmailExportWhenDoneRequest, datasource_export_instance
+from corehq.apps.export.models.new import EmailExportWhenDoneRequest
 from corehq.apps.export.utils import get_export
 from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
@@ -75,8 +72,6 @@ from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.view_utils import is_ajax
-from corehq.toggles import EXPORT_DATA_SOURCE_DATA
-from corehq.apps.userreports.models import DataSourceConfiguration
 
 
 class DownloadExportViewHelper(object):
@@ -524,42 +519,6 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
         }]
 
 
-@location_safe
-class DownloadNewDatasourceExportView(BaseProjectDataView):
-    urlname = "data_export_page"
-    page_title = gettext_noop("Export Data Source Data")
-    template_name = 'export/datasource_export_view.html'
-
-    def dispatch(self, *args, **kwargs):
-        if not EXPORT_DATA_SOURCE_DATA.enabled(self.domain):
-            raise Http404()
-        return super(DownloadNewDatasourceExportView, self).dispatch(*args, **kwargs)
-
-    @property
-    def page_context(self):
-        context = super(DownloadNewDatasourceExportView, self).page_context
-        context["form"] = self.form
-        return context
-
-    def post(self, request, *args, **kwargs):
-        form = self.form
-        if not form.is_valid():
-            return HttpResponseBadRequest("Please check your query")
-
-        data_source_id = form.cleaned_data.get('data_source')
-        config = DataSourceConfiguration.get(data_source_id)
-        return _render_det_download(
-            filename=config.display_name,
-            export_instance=datasource_export_instance(config),
-        )
-
-    @property
-    def form(self):
-        if self.request.method == 'POST':
-            return DatasourceExportDownloadForm(self.domain, self.request.POST)
-        return DatasourceExportDownloadForm(self.domain)
-
-
 class DownloadNewSmsExportView(BaseDownloadExportView):
     urlname = 'new_export_download_sms'
     page_title = gettext_noop("Export SMS Messages")
@@ -609,24 +568,16 @@ class DownloadDETSchemaView(View):
     def get(self, request, domain, export_instance_id):
         export_instance = get_properly_wrapped_export_instance(export_instance_id)
         assert domain == export_instance.domain
+        output_file = BytesIO()
+        try:
+            generate_from_export_instance(export_instance, output_file)
+        except DETConfigError as e:
+            return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
 
-        return _render_det_download(
-            filename=export_instance.name,
-            export_instance=export_instance,
+        output_file.seek(0)
+        response = HttpResponse(
+            output_file,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
-
-
-def _render_det_download(filename, export_instance):
-    output_file = BytesIO()
-    try:
-        generate_from_export_instance(export_instance, output_file)
-    except DETConfigError as e:
-        return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
-
-    output_file.seek(0)
-    response = HttpResponse(
-        output_file,
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    )
-    response['Content-Disposition'] = f'attachment; filename="{filename}-DET.xlsx"'
-    return response
+        response['Content-Disposition'] = f'attachment; filename="{export_instance.name}-DET.xlsx"'
+        return response
