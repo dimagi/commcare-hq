@@ -1338,6 +1338,7 @@ def get_ucr_data(request, domain, config_id):
 
 
 def get_datasource_data(request, config_id, domain):
+    """Fetch data of the datasource specified by `config_id` in a paginated manner"""
     config, _ = get_datasource_config(config_id, domain)
     datasource_adapter = get_indicator_adapter(config, load_source='export_data_source')
     cursor_params = get_request_params(request).params
@@ -1345,12 +1346,12 @@ def get_datasource_data(request, config_id, domain):
     params["limit"] = params.get("limit", EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT)
     request_params = {**params, **cursor_params}
     query = _get_pagination_query(request_params, datasource_adapter)
-    data = _get_paginated_data(query, request_params, datasource_adapter)
+    data = _get_response_data(query, request_params, datasource_adapter)
     return JsonResponse(data)
 
 
 def _get_pagination_query(request_params, datasource_adapter):
-    # cursor params will be in CursorParams
+    """Constructs a paginated SQL query from `request_params` for the datasource table in `datasource_adapter`"""
     table = datasource_adapter.get_table()
     last_inserted_at = request_params.get("last_inserted_at", None)
     last_doc_id = request_params.get("last_doc_id", None)
@@ -1370,19 +1371,24 @@ def _get_pagination_query(request_params, datasource_adapter):
     return query.from_statement(pagination_query)
 
 
-def _get_paginated_data(query, request_params, datasource_adapter):
-    objects = _get_objects(query, datasource_adapter)
+def _get_response_data(query, request_params, datasource_adapter):
+    """Creates a response dictionary that can be used for cursor based pagination
+     :returns: The response dictionary
+    """
+    records = _get_datasource_records(query, datasource_adapter)
     return {
-        "objects": objects,
+        "objects": records,
         "meta": {
-            "next": _get_next_url_params(objects),
+            "next": _get_next_url_params(records),
             "limit": request_params["limit"]
         }
     }
 
 
-def _get_objects(query, adapter):
-    """Get paginated datasource data"""
+def _get_datasource_records(query, adapter):
+    """Executes `query` to fetch datasource data from the table in `adapter`
+    :returns: The datasource data from the SQL table specified by `adapter`
+    """
     table = adapter.get_table()
 
     def get_table(query):
@@ -1399,11 +1405,13 @@ def _get_objects(query, adapter):
         return exported_data[config_id]
 
 
-def _get_next_url_params(objects):
-    """Construct the next cursor"""
-    if not objects["rows"]:
+def _get_next_url_params(datasource_records):
+    """ Constructs the query string containing a base64-encoded cursor that points to the last entry in
+    `datasource_records`
+    :returns: The query string"""
+    if not datasource_records["rows"]:
         return None
-    last_object = objects["rows"][-1]
+    last_object = datasource_records["rows"][-1]
     cursor_params = {"last_doc_id": last_object[0], "last_inserted_at": last_object[1]}
     encoded_cursor = b64encode(urlencode(cursor_params).encode('utf-8'))
     next_params = {'cursor': encoded_cursor}
