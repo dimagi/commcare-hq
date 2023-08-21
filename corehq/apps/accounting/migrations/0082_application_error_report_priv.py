@@ -38,7 +38,7 @@ def _revert_application_error_report_priv(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0076_location_owner_in_report_builder_priv'),
+        ('accounting', '0081_billingaccount_bill_web_user'),
     ]
 
     operations = [

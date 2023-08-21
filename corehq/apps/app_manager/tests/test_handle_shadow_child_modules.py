@@ -140,6 +140,7 @@ class HandleShadowChildModulesTest(TestCase):
             "shadow_module_version",
             "session_endpoint_id",
             "case_list_session_endpoint_id",
+            "form_session_endpoints",
         ]
         required_properties = {
             prop

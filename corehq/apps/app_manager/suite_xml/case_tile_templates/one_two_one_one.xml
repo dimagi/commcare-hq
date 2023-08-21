@@ -26,6 +26,7 @@
   <field>
     <header>
       <text>
+        <locale id="{map[locale_id]}"/>
       </text>
     </header>
     <template form="{map[format]}" width="0">
@@ -40,6 +41,7 @@
   <field>
     <header>
       <text>
+        <locale id="{map_popup[locale_id]}"/>
       </text>
     </header>
     <template form="{map_popup[format]}" width="0">

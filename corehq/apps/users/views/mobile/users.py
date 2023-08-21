@@ -19,6 +19,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop, override
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 
@@ -51,9 +52,11 @@ from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
     PROFILE_SLUG,
 )
+from corehq.apps.domain.auth import get_connectid_userinfo
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
+    login_or_basic_ex,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
@@ -116,6 +119,7 @@ from corehq.apps.users.models import (
     CouchUser,
     DeactivateMobileWorkerTrigger,
     check_and_send_limit_email,
+    ConnectIDUserLink
 )
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
@@ -293,11 +297,13 @@ class EditCommCareUserView(BaseEditUserView):
             make_form_readonly(self.form_user_update.user_form)
             make_form_readonly(self.form_user_update.custom_data.form)
 
-        location_info = get_user_location_info(
-            domain=self.domain,
-            user_location_ids=self.editable_user.assigned_location_ids,
-            user_id=self.editable_user.user_id
-        )
+        warning_banner_info = None
+        if self.domain_object.orphan_case_alerts_warning:
+            warning_banner_info = get_user_location_info(
+                domain=self.domain,
+                user_location_ids=self.editable_user.assigned_location_ids,
+                user_id=self.editable_user.user_id
+            )
 
         can_edit_groups = self.request.couch_user.has_permission(self.domain, 'edit_groups')
         can_access_all_locations = self.request.couch_user.has_permission(self.domain, 'access_all_locations')
@@ -316,7 +322,7 @@ class EditCommCareUserView(BaseEditUserView):
             'needs_to_downgrade_locations': locations_present and not request_has_locations_privilege,
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'group_names': [g.name for g in self.groups],
-            'location_info': location_info
+            'warning_banner_info': warning_banner_info
         }
         if self.commtrack_form.errors:
             messages.error(self.request, _(
@@ -1655,3 +1661,20 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
         if hours_elapsed <= settings_obj.confirmation_link_expiry_time:
             return True
         return False
+
+
+@csrf_exempt
+@require_POST
+@login_or_basic_ex(allow_cc_users=True)
+def link_connectid_user(request, domain):
+    token = request.POST.get("token")
+    if token is None:
+        return HttpResponseBadRequest("Token Required")
+    connectid_username = get_connectid_userinfo(token)
+    link, new = ConnectIDUserLink.objects.get_or_create(
+        connectid_username=connectid_username, commcare_user=request.user, domain=request.domain
+    )
+    if new:
+        return HttpResponse(status=201)
+    else:
+        return HttpResponse()

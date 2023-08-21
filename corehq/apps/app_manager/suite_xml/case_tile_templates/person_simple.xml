@@ -146,7 +146,7 @@
     </style>
     <header>
       <text>
-        <locale id="{header[locale_id]}"/>
+        <locale id="{bottom_left[locale_id]}"/>
       </text>
     </header>
     <template form="{bottom_left[format]}">
@@ -179,7 +179,7 @@
     </style>
     <header>
       <text>
-        <locale id="{header[locale_id]}"/>
+        <locale id="{date[locale_id]}"/>
       </text>
     </header>
     <template form="{date[format]}">

@@ -220,7 +220,7 @@
        </style>
       <header>
         <text>
-          <locale id="m1.case_short.case_name_1.header"/>
+          <locale id="m1.case_short.case_name_3.header"/>
         </text>
       </header>
       <template form="plain">
@@ -245,7 +245,7 @@
        </style>
       <header>
         <text>
-          <locale id="m1.case_short.case_name_1.header"/>
+          <locale id="m1.case_short.case_name_5.header"/>
         </text>
       </header>
       <template form="plain">

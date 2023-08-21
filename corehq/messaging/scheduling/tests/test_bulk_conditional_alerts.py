@@ -56,7 +56,9 @@ class TestBulkConditionalAlerts(TestCase):
             default_timezone='America/New_York',
         )
         cls.domain_obj.save()
+        cls.addClassCleanup(cls.domain_obj.delete)
         cls.user = CommCareUser.create(cls.domain, 'test1', 'abc', None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
         cls.langs = ['en', 'es']
 
     def setUp(self):
@@ -123,12 +125,6 @@ class TestBulkConditionalAlerts(TestCase):
         locked_rule = self._get_rule(self.LOCKED_RULE)
         locked_rule.locked_for_editing = True
         locked_rule.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain, deleted_by=None)
-        cls.domain_obj.delete()
-        super(TestBulkConditionalAlerts, cls).tearDownClass()
 
     def tearDown(self):
         for rule in AutomaticUpdateRule.objects.filter(domain=self.domain):
@@ -230,7 +226,7 @@ class TestBulkConditionalAlerts(TestCase):
         return self._add_rule(timed_schedule_id=schedule.schedule_id)
 
     def _add_rule(self, alert_schedule_id=None, timed_schedule_id=None):
-        assert(alert_schedule_id or timed_schedule_id)
+        assert alert_schedule_id or timed_schedule_id
         rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
         self.addCleanup(rule.delete)
         rule.add_action(
@@ -586,10 +582,10 @@ class TestBulkConditionalAlerts(TestCase):
         data = (
             ("translated", (
                 (self._get_rule(self.DAILY_RULE).id, 'test daily', '', 'Más Oxidado'),
-                (self._get_rule(self.MONTHLY_RULE).id, 'test monthly', '', ''),
+                (self._get_rule(self.MONTHLY_RULE).id, 'test monthly', 'The Far Side', ''),
             )),
             ("not translated", (
-                (self._get_rule(self.UNTRANSLATED_IMMEDIATE_RULE).id, 'test untranslated', ''),
+                (self._get_rule(self.UNTRANSLATED_IMMEDIATE_RULE).id, 'test untranslated', 'Cannot be blank'),
             )),
         )
 
@@ -606,14 +602,14 @@ class TestBulkConditionalAlerts(TestCase):
         monthly_rule = self._get_rule(self.MONTHLY_RULE)
         monthly_content = monthly_rule.get_schedule().memoized_events[0].content
         self.assertEqual(monthly_content.message, {
-            'en': '',
+            'en': 'The Far Side',
             'es': '',
         })
         self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
         untranslated_rule = self._get_rule(self.UNTRANSLATED_IMMEDIATE_RULE)
         untranslated_content = untranslated_rule.get_schedule().memoized_events[0].content
         self.assertEqual(untranslated_content.message, {
-            '*': '',
+            '*': 'Cannot be blank',
         })
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
@@ -683,3 +679,60 @@ class TestBulkConditionalAlerts(TestCase):
         self.assertEqual(untranslated_content.message, {
             '*': 'Joanie',
         })
+
+    @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
+    def test_upload_blank_translated_message_should_fail(self, language_list_patch):
+        language_list_patch.return_value = self.langs
+        headers = (
+            ("translated", ("id", "name", "message_en", "message_es")),
+            ("not translated", ("id", "name")),
+        )
+        data = (
+            ("translated", (
+                (self._get_rule(self.DAILY_RULE).id, 'test', '', ''),
+            )),
+            ("not translated", (
+                (self._get_rule(self.UNTRANSLATED_DAILY_RULE).id, 'test'),
+            )),
+        )
+
+        msgs = self._upload(data, headers)
+
+        daily_rule = self._get_rule(self.DAILY_RULE)
+        self.assertEqual(msgs, [
+            f"Error updating rule with id {daily_rule.id} in 'translated' sheet: Missing message",
+            "Updated 0 rule(s) in 'translated' sheet",
+            "Updated 0 rule(s) in 'not translated' sheet",
+        ])
+        daily_content = daily_rule.get_schedule().memoized_events[0].content
+        self.assertEqual(daily_content.message, {
+            'en': 'Diamonds and Rust',
+            'es': 'Diamantes y Óxido',
+        })
+
+    @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
+    def test_upload_blank_untranslated_message_should_fail(self, language_list_patch):
+        language_list_patch.return_value = self.langs
+        headers = (
+            ("translated", ("id", "name")),
+            ("not translated", ("id", "name", "message")),
+        )
+        data = (
+            ("translated", (
+                (self._get_rule(self.DAILY_RULE).id, 'test'),
+            )),
+            ("not translated", (
+                (self._get_rule(self.UNTRANSLATED_DAILY_RULE).id, 'test', ''),
+            )),
+        )
+
+        msgs = self._upload(data, headers)
+
+        untrans_rule = self._get_rule(self.UNTRANSLATED_DAILY_RULE)
+        self.assertEqual(msgs, [
+            "Updated 0 rule(s) in 'translated' sheet",
+            f"Error updating rule with id {untrans_rule.id} in 'not translated' sheet: Missing message",
+            "Updated 0 rule(s) in 'not translated' sheet",
+        ])
+        daily_content = untrans_rule.get_schedule().memoized_events[0].content
+        self.assertEqual(daily_content.message, {'*': 'Joan'})
