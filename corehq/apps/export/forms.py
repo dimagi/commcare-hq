@@ -8,9 +8,6 @@ from django.utils.translation import gettext_lazy
 
 import dateutil
 from crispy_forms import layout as crispy
-from crispy_forms.helper import FormHelper
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from crispy_forms.bootstrap import StrictButton
 
 from corehq import privileges
 from dimagi.utils.dates import DateSpan
@@ -54,7 +51,6 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.util import flatten_non_iterable_list
-from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 
 
 class DateSpanField(forms.CharField):
@@ -1074,45 +1070,3 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
                 data_bind='value: dateRange',
             ),
         ]
-
-
-class DatasourceExportDownloadForm(forms.Form):
-
-    data_source = forms.ChoiceField(
-        label=gettext_lazy("Select project data source"),
-        required=True,
-    )
-
-    def __init__(self, domain, *args, **kwargs):
-        super(DatasourceExportDownloadForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
-
-        self.fields['data_source'].choices = self.domain_datasources(domain)
-
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                "",
-                crispy.Div(
-                    crispy.Field(
-                        'data_source',
-                        css_class='input-xlarge',
-                        data_bind='value: dataSource'
-                    ),
-                    data_bind='visible: haveDatasources'
-                ),
-            ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Download DET Config file"),
-                    type="submit",
-                    css_class="btn-primary",
-                    id="datasources_export_submit_button_id"
-                ),
-            )
-        )
-
-    @staticmethod
-    def domain_datasources(domain):
-        return [(ds.data_source_id, ds.display_name) for ds in get_datasources_for_domain(domain)]
