@@ -118,7 +118,6 @@ from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.data_dictionary.util import get_deprecated_fields
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
-from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 
 
@@ -1374,7 +1373,7 @@ class SMSExportInstance(ExportInstance):
 
 class DataSourceExportInstance(ExportInstance):
     type = 'datasource'
-    config = SchemaProperty(DataSourceConfiguration)
+    data_source_id = StringProperty()
 
 
 class ExportInstanceDefaults(object):
@@ -3144,5 +3143,5 @@ def datasource_export_instance(config):
                 ],
             )
         ],
-        config=config,
+        data_source_id=config.data_source_id,
     )

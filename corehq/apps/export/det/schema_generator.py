@@ -163,7 +163,7 @@ def generate_from_datasource_export_instance(export_instance, output_file):
         name=input_table.label,
         source=UCR_SOURCE,
         filter_name='data_source_id',
-        filter_value=export_instance.config.data_source_id,
+        filter_value=export_instance.data_source_id,
         rows=[],
     )
     _add_rows_for_table(input_table, output_table, helper=DatasourceDETSchemaHelper())
