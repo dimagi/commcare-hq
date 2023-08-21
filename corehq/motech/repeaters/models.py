@@ -935,7 +935,7 @@ class RepeatRecord(Document):
 
     def is_repeater_deleted(self):
         try:
-            return Repeater.all_objects.get(repeater_id=self.repeater_id).is_deleted
+            return Repeater.all_objects.values_list("is_deleted", flat=True).get(repeater_id=self.repeater_id)
         except Repeater.DoesNotExist:
             return True
 
