@@ -43,7 +43,7 @@ class Command(BaseCommand):
             help="Run migration against already split bootstrap 5 files"
         )
         parser.add_argument(
-            '--references',
+            '--verify-references',
             action='store_true',
             default=False,
             help="Verify that all references to migrated files have been updated"
@@ -59,7 +59,7 @@ class Command(BaseCommand):
         template_name = options.get('template_name')
         js_name = options.get('js_name')
         do_re_check = options.get('re_check')
-        verify_references = options.get('references')
+        verify_references = options.get('verify_references')
 
         if verify_references:
             self.stdout.write(f"\n\nVerifying that references to migrated files "
