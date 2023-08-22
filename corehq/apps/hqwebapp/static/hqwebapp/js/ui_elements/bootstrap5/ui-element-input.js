@@ -1,4 +1,4 @@
-hqDefine('hqwebapp/js/ui_elements/ui-element-input', [
+hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input', [
     'jquery',
     'hqwebapp/js/bootstrap3/main',
     'hqwebapp/js/ui_elements/ui-element-langcode-button',

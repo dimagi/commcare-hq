@@ -5,11 +5,11 @@ hqDefine('hqwebapp/js/bootstrap5/ui-element', function () {
     var module = {};
 
     module.input = function (value) {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-input').new(value);
+        return hqImport('hqwebapp/js/ui_elements/bootstrap5/ui-element-input').new(value);
     };
 
     module.textarea = function () {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-input').new_textarea();
+        return hqImport('hqwebapp/js/ui_elements/bootstrap5/ui-element-input').new_textarea();
     };
 
     module.select = function (options) {
