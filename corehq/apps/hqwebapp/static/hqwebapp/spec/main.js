@@ -5,7 +5,7 @@ hqDefine("hqwebapp/spec/main", [
 ) {
     hqRequire([
         "hqwebapp/spec/assert_properties_spec",
-        "hqwebapp/spec/inactivity_spec",
+        "hqwebapp/spec/bootstrap3/inactivity_spec",
         "hqwebapp/spec/urllib_spec",
         "hqwebapp/spec/widgets_spec",
     ], function () {
