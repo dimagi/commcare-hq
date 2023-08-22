@@ -3,7 +3,7 @@ hqDefine("translations/js/translations", [
     'underscore',
     'hqwebapp/js/bootstrap3/main',
     'hqwebapp/js/ui_elements/ui-element-input',
-    'hqwebapp/js/ui_elements/ui-element-select',
+    'hqwebapp/js/ui_elements/bootstrap3/ui-element-select',
 ], function (
     $,
     _,

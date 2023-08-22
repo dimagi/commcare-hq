@@ -13,7 +13,7 @@ hqDefine('hqwebapp/js/bootstrap5/ui-element', function () {
     };
 
     module.select = function (options) {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-select').new(options);
+        return hqImport('hqwebapp/js/ui_elements/bootstrap5/ui-element-select').new(options);
     };
 
     module.map_list = function (guid, modalTitle) {
