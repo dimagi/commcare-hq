@@ -23,7 +23,6 @@ from corehq.apps.saved_reports.models import (
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.toggles import HOURLY_SCHEDULED_REPORT, NAMESPACE_DOMAIN
 
-
 class SavedReportConfigForm(forms.Form):
     name = forms.CharField()
     description = forms.CharField(
@@ -317,6 +316,13 @@ class TableauServerForm(forms.Form):
         label=_('Target Site'),
     )
 
+    tableau_groups_allowed = forms.MultipleChoiceField(
+        label=_("Allowed Tableau Groups"),
+        choices=[],
+        required=False,
+        widget=forms.CheckboxSelectMultiple()
+    )
+
     class Meta:
         model = TableauServer
         fields = [
@@ -324,12 +330,14 @@ class TableauServerForm(forms.Form):
             'server_name',
             'validate_hostname',
             'target_site',
+            'tableau_groups_allowed'
         ]
 
-    def __init__(self, data, *args, **kwargs):
+    def __init__(self, data, user_syncing_config={}, *args, **kwargs):
         self.domain = kwargs.pop('domain')
         kwargs['initial'] = self.initial_data
         super(TableauServerForm, self).__init__(data, *args, **kwargs)
+        self.fields['tableau_groups_allowed'].choices = []
 
         self.helper = HQFormHelper()
         self.helper.form_method = 'POST'
@@ -351,6 +359,26 @@ class TableauServerForm(forms.Form):
             )
         )
 
+        if user_syncing_config['user_syncing_enabled'] and user_syncing_config.get('server_reachable'):
+            self._setup_tableau_groups_allowed_field(kwargs, user_syncing_config)
+            self.add_allowed_tableau_groups_field = bool(self.fields['tableau_groups_allowed'].choices)
+            if self.add_allowed_tableau_groups_field:
+                self.helper.layout.insert(
+                    -1,
+                    'tableau_groups_allowed',
+            )
+        else:
+            self.add_allowed_tableau_groups_field = False
+
+    def _setup_tableau_groups_allowed_field(self, kwargs, user_syncing_config):
+        self.all_tableau_groups = user_syncing_config['all_tableau_groups']
+        allowed_tableau_groups_initial = kwargs['initial']['allowed_tableau_groups']
+        self.fields['tableau_groups_allowed'].initial = []
+        for i, group in enumerate(self.all_tableau_groups):
+            self.fields['tableau_groups_allowed'].choices.append((i, group.name))
+            if allowed_tableau_groups_initial and group.name in allowed_tableau_groups_initial:
+                self.fields['tableau_groups_allowed'].initial.append(i)
+
     @property
     @memoized
     def _existing_config(self):
@@ -366,6 +394,7 @@ class TableauServerForm(forms.Form):
             'server_name': self._existing_config.server_name,
             'validate_hostname': self._existing_config.validate_hostname,
             'target_site': self._existing_config.target_site,
+            'allowed_tableau_groups': self._existing_config.allowed_tableau_groups,
         }
 
     def save(self):
@@ -373,6 +402,9 @@ class TableauServerForm(forms.Form):
         self._existing_config.server_name = self.cleaned_data['server_name']
         self._existing_config.validate_hostname = self.cleaned_data['validate_hostname']
         self._existing_config.target_site = self.cleaned_data['target_site']
+        if self.add_allowed_tableau_groups_field:
+            self._existing_config.allowed_tableau_groups = [
+                self.all_tableau_groups[int(i)].name for i in self.cleaned_data['tableau_groups_allowed']]
         self._existing_config.save()
 
 
