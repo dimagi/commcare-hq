@@ -543,15 +543,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        columnStyle: function () {
-            const self = this;
-            if (self.showMap) {
-                return "display: grid;grid-template-columns: [tiles] 7fr [map] 5fr;grid-template-rows: auto";
-            } else {
-                return "display: grid;grid-template-columns: [tiles] 100%;grid-template-rows: auto";
-            }
-        },
-
         fontAwesomeIcon: function (iconName) {
             return L.divIcon({
                 html: `<i class='fa ${iconName} fa-4x'></i>`,
@@ -577,6 +568,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     }).setView([lat, lon], zoom);
 
                 L.control.zoom({
+                    position: 'bottomright',
+                }).addTo(addressMap);
+
+                L.control.fullscreen({
+                    pseudoFullscreen: true,
                     position: 'bottomright',
                 }).addTo(addressMap);
 
@@ -621,9 +617,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     markers.forEach(m => m.setIcon(locationIcon));
                                     marker.setIcon(selectedLocationIcon);
 
+                                    let scrollTopOffset = 47.125; // standard height of breadcrumbs with shadow
+                                    if (this.smallScreenEnabled && !addressMap.isFullscreen()) {
+                                        scrollTopOffset += addressMap.getSize().y;
+                                    }
                                     $([document.documentElement, document.body]).animate({
-                                        // -50 Stay clear of the breadcrumbs
-                                        scrollTop: $(`#${rowId}`).offset().top - 50,
+                                        scrollTop: $(`#${rowId}`).offset().top - scrollTopOffset,
                                     }, 500);
 
                                     addressMap.panTo(markerCoordinates);
@@ -692,7 +691,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
                 showMap: this.showMap,
-                columnStyle: this.columnStyle(),
                 sidebarEnabled: this.options.sidebarEnabled,
                 smallScreenEnabled: this.smallScreenEnabled,
                 triggerEmptyCaseList: this.options.triggerEmptyCaseList,
@@ -947,13 +945,33 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    const FormMenuView = Marionette.CollectionView.extend({
-        template: _.template($("#form-menu-template").html() || ""),
+    const printBehavior = Marionette.Behavior.extend({
+        ui: {
+            selectPrint: ".print-button",
+        },
+        events: {
+            "keydown @ui.selectPrint": "printKeyAction",
+            "click @ui.selectPrint": "print",
+        },
+        printKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.print();
+            }
+        },
+        print: function () {
+            window.print();
+        },
+    });
+
+    const MenuDropdownView = Marionette.CollectionView.extend({
+        template: _.template($("#menu-dropdown-template").html() || ""),
         childView: LanguageOptionView,
         childViewContainer: 'ul',
         ui: {
-            dropdownMenu: "#form-menu-dropdown",
-            selectPrint: "#print-header.dropdown-header",
+            dropdownMenu: "#menu-dropdown",
+        },
+        behaviors: {
+            print: printBehavior,
         },
         childViewOptions: function () {
             return {
@@ -968,22 +986,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         events: {
             "keydown": "expandDropdown",
-            "keydown @ui.selectPrint": "printKeyAction",
-            "click @ui.selectPrint": "print",
         },
         expandDropdown: function (e) {
             if (e.keyCode === 13 || e.keyCode === 32) {
                 e.preventDefault();
                 $(this.ui.dropdownMenu).toggleClass("open");
             }
-        },
-        printKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.print();
-            }
-        },
-        print: function () {
-            window.print();
         },
     });
 
@@ -1079,8 +1087,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         BreadcrumbListView: function (options) {
             return new BreadcrumbListView(options);
         },
-        FormMenuView: function (options) {
-            return new FormMenuView(options);
+        MenuDropdownView: function (options) {
+            return new MenuDropdownView(options);
         },
         CaseDetailFooterView: function (options) {
             return new CaseDetailFooterView(options);
