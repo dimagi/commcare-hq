@@ -509,6 +509,18 @@ class AddSavedReportConfigView(View):
         return self.request.couch_user
 
 
+def _querydict_to_dict(query_dict):
+    data = {}
+    for key in query_dict.keys():
+        if key.endswith('[]'):
+            v = query_dict.getlist(key)
+            key = key[:-2]  # slice off the array naming
+        else:
+            v = query_dict[key]
+        data[key] = v
+    return data
+
+
 @dataclass
 class Timezone:
     hours: int
@@ -524,14 +536,15 @@ class Timezone:
 def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
     from .forms import EmailReportForm
 
-    form = EmailReportForm(request.POST)
+    form = EmailReportForm(_querydict_to_dict(request.POST))
     if not form.is_valid():
-        return HttpResponseBadRequest()
+        return HttpResponseBadRequest(json.dumps(form.get_readable_errors()))
 
     if not _can_email_report(report_slug, request, dispatcher_class, domain):
         raise Http404()
 
-    recipient_emails = set(form.cleaned_data['recipient_emails'])
+    recipient_emails = set(form.cleaned_data['recipient_emails'] or [])
+
     if form.cleaned_data['send_to_owner']:
         recipient_emails.add(request.couch_user.get_email())
 
