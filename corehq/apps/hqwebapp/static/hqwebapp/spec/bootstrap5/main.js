@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/spec/main", [
+hqDefine("hqwebapp/spec/bootstrap5/main", [
     "mocha/js/main",
 ], function (
     hqMocha
