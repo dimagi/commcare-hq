@@ -70,14 +70,14 @@ def get_table_diffs(engine, table_names, metadata):
 def get_tables_rebuild_migrate(diffs):
     tables_to_rebuild = get_tables_to_rebuild(diffs)
     tables_to_migrate = get_tables_to_migrate(diffs)
-    tables_to_ignore = get_tables_with_index_diff_only(diffs, column_index="inserted_at")
+    tables_to_ignore = get_tables_with_index_diff_only(diffs, index_column="inserted_at")
     tables_to_migrate -= tables_to_rebuild
     tables_to_migrate -= tables_to_ignore
     return MigrateRebuildTables(migrate=tables_to_migrate, rebuild=tables_to_rebuild)
 
 
-def get_tables_with_index_diff_only(diffs, column_index):
-    """Iterates `diffs` for tables where the only change is an index that's added to the `column_index`"""
+def get_tables_with_index_diff_only(diffs, index_column):
+    """Iterates `diffs` for tables where the only change is an index that's added to the `index_column`"""
     tables_to_ignore = set()
     tables_with_index_change = {diff.table_name for diff in _filter_diffs(
         diffs, DiffTypes.ADD_INDEX
@@ -92,7 +92,7 @@ def get_tables_with_index_diff_only(diffs, column_index):
             # Not sure if/when this will happen?
             continue
         column = columns[0]
-        if column.name == column_index:
+        if column.name == index_column:
             tables_to_ignore.add(table_name)
     return tables_to_ignore
 
