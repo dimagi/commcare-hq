@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/bootstrap3/maintenance_alerts",[
+hqDefine("hqwebapp/js/maintenance_alerts",[
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
