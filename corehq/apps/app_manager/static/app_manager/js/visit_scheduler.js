@@ -49,7 +49,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         var phaseModel = function (id, anchor, forms) {
             var self = {};
             self.id = id;
-            self.anchor = hqImport('hqwebapp/js/ui-element').select(params.caseProperties).val(anchor);
+            self.anchor = hqImport('hqwebapp/js/bootstrap3/ui-element').select(params.caseProperties).val(anchor);
             self.anchor.observableVal = ko.observable(self.anchor.val());
             self.anchor.on("change", function () {
                 self.anchor.observableVal(self.anchor.val());

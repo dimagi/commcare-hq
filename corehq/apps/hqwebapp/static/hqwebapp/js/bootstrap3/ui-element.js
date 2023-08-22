@@ -1,6 +1,6 @@
 /* globals hqImport, hqDefine */
 
-hqDefine('hqwebapp/js/ui-element', function () {
+hqDefine('hqwebapp/js/bootstrap3/ui-element', function () {
     'use strict';
     var module = {};
 

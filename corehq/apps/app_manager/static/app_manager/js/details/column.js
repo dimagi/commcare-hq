@@ -11,7 +11,7 @@
  * is responsible for creating the tab "columns" and injecting them into itself.
  */
 hqDefine("app_manager/js/details/column", function () {
-    var uiElement = hqImport('hqwebapp/js/ui-element');
+    var uiElement = hqImport('hqwebapp/js/bootstrap3/ui-element');
 
     return function (col, screen) {
         /*
