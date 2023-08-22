@@ -6,7 +6,7 @@ hqDefine("hqwebapp/js/bootstrap5/components.ko", [
     'hqwebapp/js/components/pagination',
     'hqwebapp/js/components/search_box',
     'hqwebapp/js/components/select_toggle',
-    'hqwebapp/js/components/bootstrap3/feedback',
+    'hqwebapp/js/components/bootstrap5/feedback',
 ], function (
     $,
     ko,
