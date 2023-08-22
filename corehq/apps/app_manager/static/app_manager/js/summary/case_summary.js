@@ -6,8 +6,8 @@ hqDefine('app_manager/js/summary/case_summary',[
     'hqwebapp/js/assert_properties',
     'app_manager/js/summary/models',
     'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
-    'hqwebapp/js/knockout_bindings.ko', // popover
-    'hqwebapp/js/components.ko',    // search box
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // popover
+    'hqwebapp/js/bootstrap3/components.ko',    // search box
 ], function ($, _, ko, initialPageData, assertProperties, models) {
 
     var caseTypeModel = function (caseType) {

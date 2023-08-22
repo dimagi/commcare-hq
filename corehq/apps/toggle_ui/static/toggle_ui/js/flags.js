@@ -4,7 +4,7 @@ hqDefine('toggle_ui/js/flags', [
     'underscore',
     'hqwebapp/js/alert_user',
     'reports/js/config.dataTables.bootstrap',
-    'hqwebapp/js/components.ko',    // select toggle widget
+    'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
 ], function (
     $,
     ko,
