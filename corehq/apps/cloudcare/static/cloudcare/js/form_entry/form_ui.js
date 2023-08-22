@@ -813,9 +813,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     /**
-     * Returns a boolean of whether the styles contain a pattern
-     * If a regex is provided, returns regex matches. If a string is provided
-     * an exact match is returned.
+     * Returns a boolean of whether the styles contain a pattern.
      * @param {Object} pattern - the regex or string used to find matching styles.
      */
     Question.prototype.stylesContains = function (pattern) {
