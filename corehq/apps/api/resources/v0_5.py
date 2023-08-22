@@ -19,6 +19,7 @@ from django.http import (
     HttpResponse,
     HttpResponseForbidden,
     HttpResponseNotFound,
+    HttpResponseBadRequest,
     JsonResponse,
     QueryDict,
 )
@@ -1326,11 +1327,14 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 @require_can_edit_data
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
-def get_ucr_data(request, domain, config_id):
+def get_ucr_data(request, domain):
     if not toggles.EXPORT_DATA_SOURCE_DATA.enabled(domain):
         return HttpResponseForbidden()
     try:
         if request.method == 'GET':
+            config_id = request.GET.get("data_source_id")
+            if not config_id:
+                return HttpResponseBadRequest("Missing data_source_id parameter")
             return get_datasource_data(request, config_id, domain)
         return JsonResponse({'error': "Request method not allowed"}, status=405)
     except BadRequest as e:

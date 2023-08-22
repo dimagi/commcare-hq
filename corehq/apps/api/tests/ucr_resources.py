@@ -444,14 +444,22 @@ class TestUCRPaginated(TestCase):
         cls.client = Client()
 
     def test_forbidden_when_feature_flag_not_enabled(self):
-        url = reverse("api_get_ucr_data", args=[self.domain.name, self.data_source._id])
+        url = reverse("api_get_ucr_data", args=[self.domain.name])
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 403)
 
     @flag_enabled("EXPORT_DATA_SOURCE_DATA")
+    def test_bad_request_when_data_source_id_not_specified(self):
+        url = reverse("api_get_ucr_data", args=[self.domain.name])
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+
+    @flag_enabled("EXPORT_DATA_SOURCE_DATA")
     def test_formatted_response(self):
-        url = reverse("api_get_ucr_data", args=[self.domain.name, self.data_source._id])
+        url = reverse("api_get_ucr_data", args=[self.domain.name])
+        url = f"{url}?data_source_id={self.data_source._id}"
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -462,12 +470,12 @@ class TestUCRPaginated(TestCase):
         self.assertIn("next", response_dict["meta"])
 
     @flag_enabled("EXPORT_DATA_SOURCE_DATA")
-    @patch("corehq.apps.api.resources.v0_5._get_objects")
-    def test_next_cursor_created(self, mock_get_objects):
+    @patch("corehq.apps.api.resources.v0_5._get_datasource_records")
+    def test_next_cursor_created(self, mock_get_datasource_records):
         """The cursor in the `next` parameter should point to the last record that was returned"""
         last_doc_id = "1aa9b660-dfb9-409a-a939-873ce608db2e"
         last_inserted_at = "2023-08-17T11:08:01.927384Z"
-        mock_get_objects.return_value = {
+        mock_get_datasource_records.return_value = {
             "rows": [
                 [
                     "dd00fe32-325f-4246-ac22-1261126dffe7",
@@ -487,9 +495,9 @@ class TestUCRPaginated(TestCase):
                 ]
             ]
         }
-        url = reverse("api_get_ucr_data", args=[self.domain.name, self.data_source._id])
+        url = reverse("api_get_ucr_data", args=[self.domain.name])
         limit = 2
-        url = f"{url}?limit={limit}"
+        url = f"{url}?limit={limit}&data_source_id={self.data_source._id}"
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
