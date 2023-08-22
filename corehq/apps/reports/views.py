@@ -167,7 +167,6 @@ def _can_view_form_attachment():
         def _inner(request, domain, *args, **kwargs):
             if VIEW_FORM_ATTACHMENT.enabled(domain):
                 return view_func(request, domain, *args, **kwargs)
-
             try:
                 response = require_form_view_permission(view_func)(request, domain, *args, **kwargs)
             except PermissionDenied:
@@ -181,7 +180,12 @@ def _can_view_form_attachment():
 can_view_form_attachment = _can_view_form_attachment()
 
 
+def location_restricted_scheduled_reports_enabled(request, *args, **kwargs):
+    return toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(kwargs.get('domain'))
+
+
 @login_and_domain_required
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 def reports_home(request, domain):
     if user_can_view_reports(request.project, request.couch_user):
         return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
@@ -210,7 +214,7 @@ class BaseProjectReportSectionView(BaseDomainView):
         return reverse('reports_home', args=(self.domain, ))
 
 
-@location_safe
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
     page_title = gettext_noop("My Saved Reports")
@@ -228,7 +232,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     @property
     def good_configs(self):
-        all_configs = ReportConfig.by_domain_and_owner(self.domain, self.request.couch_user._id)
+        all_configs = ReportConfig.by_domain_and_owner(self.domain, self.request.couch_user._id, stale=False)
         good_configs = []
         for config in all_configs:
             if config.is_configurable_report and not config.configurable_report:
@@ -569,6 +573,7 @@ def _can_email_report(report_slug, request, dispatcher_class, domain):
 
 @login_and_domain_required
 @require_http_methods(['DELETE'])
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 def delete_config(request, domain, config_id):
     ReportConfig.shared_on_domain.clear(ReportConfig, domain)
 
@@ -672,6 +677,8 @@ def soft_shift_to_server_timezone(report_notification):
     )
 
 
+#@location_safe
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 class ScheduledReportsView(BaseProjectReportSectionView):
     urlname = 'edit_scheduled_report'
     page_title = _("Scheduled Report")
@@ -926,6 +933,7 @@ class ReportNotificationUnsubscribeView(TemplateView):
 
 @login_and_domain_required
 @require_POST
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 def delete_scheduled_report(request, domain, scheduled_report_id):
     user = request.couch_user
     delete_count = request.POST.get("bulkDeleteCount")
@@ -977,6 +985,7 @@ def _can_delete_scheduled_report(report, user, domain):
 
 
 @login_and_domain_required
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 def send_test_scheduled_report(request, domain, scheduled_report_id):
     if not _can_send_test_report(scheduled_report_id, request.couch_user, domain):
         raise Http404()
@@ -1145,6 +1154,7 @@ def render_full_report_notification(request, content, email=None, report_notific
 
 
 @login_and_domain_required
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 def view_scheduled_report(request, domain, scheduled_report_id):
     report_text = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
     return render_full_report_notification(request, report_text)
