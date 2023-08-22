@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/components.ko", [
+hqDefine("hqwebapp/js/bootstrap5/components.ko", [
     'jquery',
     'knockout',
     'underscore',
@@ -39,6 +39,6 @@ hqDefine("hqwebapp/js/components.ko", [
             });
         });
     });
-    
+
     return 1;
 });
