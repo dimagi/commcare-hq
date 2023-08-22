@@ -31,7 +31,6 @@ class UpdateCounsellorLoadTest(BaseCaseRuleTest):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
-        self.patient_rule.delete()
         super().tearDown()
 
     def test_non_patient_case(self):
