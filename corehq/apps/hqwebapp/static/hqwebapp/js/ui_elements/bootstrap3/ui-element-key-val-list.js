@@ -1,4 +1,4 @@
-hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
+hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list', [
     'jquery',
     'underscore',
     'hqwebapp/js/bootstrap3/main',

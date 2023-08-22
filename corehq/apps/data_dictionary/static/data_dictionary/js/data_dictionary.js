@@ -5,7 +5,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap3/main",
     "analytix/js/google",
-    "hqwebapp/js/ui_elements/ui-element-key-val-list",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list",
     "DOMPurify/dist/purify.min",
     "hqwebapp/js/toggles",
     "hqwebapp/js/bootstrap3/knockout_bindings.ko",

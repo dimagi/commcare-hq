@@ -17,7 +17,7 @@ hqDefine('hqwebapp/js/bootstrap5/ui-element', function () {
     };
 
     module.map_list = function (guid, modalTitle) {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-key-val-list').new(guid, modalTitle);
+        return hqImport('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list').new(guid, modalTitle);
     };
 
     module.input_map = function (show_del_button) {
