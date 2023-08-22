@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/crud_paginated_list_init", [
+hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list_init", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
