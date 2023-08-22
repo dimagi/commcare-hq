@@ -93,7 +93,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         breadcrumbMenuDropdown: "#breadcrumb__menu-dropdown",
       });
 
-      if (langs) {
+      if (langs && langs.length > 1) {
         langModels = _.map(langs, function (lang) {
           let matchingLanguage = langCodeNameMapping[lang];
           return {
