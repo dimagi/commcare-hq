@@ -1,4 +1,4 @@
-hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
+hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map', [
     'jquery',
     'underscore',
     'hqwebapp/js/bootstrap3/main',

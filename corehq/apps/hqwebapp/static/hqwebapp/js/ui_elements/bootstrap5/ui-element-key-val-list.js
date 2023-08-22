@@ -2,7 +2,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list', [
     'jquery',
     'underscore',
     'hqwebapp/js/bootstrap3/main',
-    'hqwebapp/js/ui_elements/ui-element-input-map',
+    'hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map',
 ], function (
     $,
     _,

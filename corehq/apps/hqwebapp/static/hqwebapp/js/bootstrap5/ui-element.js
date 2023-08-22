@@ -21,7 +21,7 @@ hqDefine('hqwebapp/js/bootstrap5/ui-element', function () {
     };
 
     module.input_map = function (show_del_button) {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-input-map').new(show_del_button);
+        return hqImport('hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map').new(show_del_button);
     };
 
     module.checkbox = function () {
