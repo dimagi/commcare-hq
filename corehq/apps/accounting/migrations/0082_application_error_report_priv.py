@@ -32,7 +32,10 @@ def _grandfather_application_error_report_priv(apps, schema_editor):
 @skip_on_fresh_install
 def _revert_application_error_report_priv(apps, schema_editor):
     # Removing the associated Role will also drop related Grants for this feature
-    Role.objects.get(slug=APPLICATION_ERROR_REPORT).delete()
+    try:
+        Role.objects.get(slug=APPLICATION_ERROR_REPORT).delete()
+    except Role.DoesNotExist:
+        pass
 
 
 class Migration(migrations.Migration):
