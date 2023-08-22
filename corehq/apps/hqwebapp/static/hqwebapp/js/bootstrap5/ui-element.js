@@ -25,7 +25,7 @@ hqDefine('hqwebapp/js/bootstrap5/ui-element', function () {
     };
 
     module.checkbox = function () {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-checkbox').new();
+        return hqImport('hqwebapp/js/ui_elements/bootstrap5/ui-element-checkbox').new();
     };
 
     module.langcode_tag_btn = function ($elem, new_lang) {
