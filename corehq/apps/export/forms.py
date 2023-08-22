@@ -1105,7 +1105,7 @@ class DatasourceExportDownloadForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 StrictButton(
-                    _("Download DET Config file"),
+                    _("Download Data Export Tool query file"),
                     type="submit",
                     css_class="btn-primary",
                     id="datasources_export_submit_button_id"
