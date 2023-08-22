@@ -333,7 +333,7 @@ class Command(BaseCommand):
     def get_flags_in_javascript_line(javascript_line, spec):
         flags = flag_changed_javascript_plugins(javascript_line, spec)
         reference_flags = flag_path_references_to_migrated_javascript_files(javascript_line, "bootstrap3")
-        flags.append(reference_flags)
+        flags.extend(reference_flags)
         return flags
 
     @staticmethod
