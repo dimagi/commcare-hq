@@ -25,8 +25,11 @@
     </div>
     <% } %>
 
-    <div style="<%- columnStyle %>">
-      <div id="module-case-list-column-next-to-map">
+    <div class="row row-no-gutters">
+      <% if (showMap) { %>
+        <div id="module-case-list-map" class="sticky-map col-md-5 col-md-push-9<% if (useTiles) { %> white-border<% } %>"></div>
+      <% } %>
+      <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
         <% if (useTiles) { %>
           <% if (hasNoItems) { %>
             {% include 'formplayer/no_items_text.html' %}
@@ -82,9 +85,6 @@
         </div>
         <% } %>
       </div>
-      <% if (showMap) { %>
-        <div id="module-case-list-map" class="map <% if (useTiles) { %> white-border<% } %>"></div>
-      <% } %>
     </div>
     <% if (actions || isMultiSelect) { %>
     <div class="case-list-actions">
