@@ -85,17 +85,17 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function (langs, langCodeNameMapping) {
-      var langModels,
+    var showMenuDropdown = function (langs, langCodeNameMapping) {
+      let langModels,
           langCollection;
 
       FormplayerFrontend.regions.addRegions({
-        formMenu: "#form-menu",
+        breadcrumbMenuDropdown: "#breadcrumb__menu-dropdown",
       });
 
       if (langs) {
         langModels = _.map(langs, function (lang) {
-          var matchingLanguage = langCodeNameMapping[lang];
+          let matchingLanguage = langCodeNameMapping[lang];
           return {
             lang_code: lang,
             lang_label: matchingLanguage ? matchingLanguage : lang,
@@ -105,10 +105,10 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
       } else {
         langCollection = null;
       }
-      var formMenuView = views.FormMenuView({
+      let menuDropdownView = views.MenuDropdownView({
         collection: langCollection,
       });
-      FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
+      FormplayerFrontend.regions.getRegion('breadcrumbMenuDropdown').show(menuDropdownView);
     };
 
 
@@ -208,7 +208,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         getCaseListView: getCaseListView,
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
-        showFormMenu: showFormMenu,
+        showMenuDropdown: showMenuDropdown,
         startOrStopLocationWatching: startOrStopLocationWatching,
     };
 });

@@ -107,7 +107,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var enablePrintOption = !menuResponse.queryKey;
         var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview;
 
         if (sidebarEnabled && menuResponse.type === "query") {
@@ -153,8 +152,14 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
-            if (!appPreview && ((menuResponse.langs && menuResponse.langs.length > 1) || enablePrintOption)) {
-                menusUtils.showFormMenu(menuResponse.langs, initialPageData('lang_code_name_mapping'));
+            if (!appPreview) {
+                let isFormEntry = !menuResponse.queryKey;
+                if (isFormEntry) {
+                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData('lang_code_name_mapping'));
+                }
+                if (menuResponse.type === "entities"){
+                    menusUtils.showMenuDropdown()
+                }
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
