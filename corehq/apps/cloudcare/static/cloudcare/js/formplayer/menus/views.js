@@ -846,6 +846,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.reconcileMultiSelectUI();
             }
         },
+
+        onDestroy: function () {
+            $('#content-container').removeClass('full-width');
+        },
     });
 
     const CaseTileGroupedListView = CaseTileListView.extend({
