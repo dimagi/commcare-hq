@@ -219,7 +219,6 @@ def get_releases_context(request, domain, app_id):
         'can_edit_apps': request.couch_user.can_edit_apps(),
         'can_view_app_diff': (domain_has_privilege(domain, privileges.VIEW_APP_DIFF)
                               or request.user.is_superuser),
-        'has_application_error_report_access': ApplicationErrorReport.has_access(domain, request.couch_user)
     }
     if not app.is_remote_app():
         context.update({
