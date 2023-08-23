@@ -1045,6 +1045,9 @@ class FormBase(DocumentSchema):
     # computed datums IDs that are allowed in endpoints
     function_datum_endpoints = StringListProperty()
 
+    def __repr__(self):
+        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}')"
+
     @classmethod
     def wrap(cls, data):
         data.pop('validation_cache', '')
@@ -2246,6 +2249,9 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     def __init__(self, *args, **kwargs):
         super(ModuleBase, self).__init__(*args, **kwargs)
         self.assign_references()
+
+    def __repr__(self):
+        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}')"
 
     @property
     def is_surveys(self):
@@ -4590,6 +4596,10 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     custom_assertions = SchemaListProperty(CustomAssertion)
 
     family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
+
+    def __repr__(self):
+        return (f"{self.doc_type}(id='{self._id}', domain='{self.domain}', "
+                f"name='{self.name}', is_build={bool(self.copy_of)})")
 
     def has_modules(self):
         return len(self.get_modules()) > 0 and not self.is_remote_app()
