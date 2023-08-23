@@ -1411,7 +1411,7 @@ def _get_datasource_records(query, adapter):
             if column_name == 'doc_id':
                 columns_data['id'] = column_value
             columns_data[column_name] = column_value
-            tmp_table.append(columns_data)
+        tmp_table.append(columns_data)
     return tmp_table
 
 
