@@ -259,10 +259,11 @@ class RebuildTableTest(TestCase):
             skip_destructive=True,
         )
         self.assertEqual(1, len(logs))
-        self.assertEqual(
-            logs[0].migration_diffs,
-            [{'type': 'add_column', 'item_name': 'new_date'}],
-        )
+        migration_diffs = logs[0].migration_diffs
+        index_name = insp.get_indexes(table_name)[0]['name']
+        self.assertEqual(migration_diffs[0], {'type': 'add_column', 'item_name': 'new_date'})
+        self.assertEqual(migration_diffs[1], {'type': 'remove_index', 'item_name': index_name})
+        self.assertEqual(migration_diffs[2]['type'], 'add_index')
 
         # make the column allow nulls and check that it gets applied (since is non-destructive)
         self.config.configured_indicators[-1]['is_nullable'] = True
