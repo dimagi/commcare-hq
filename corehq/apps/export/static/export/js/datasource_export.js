@@ -11,9 +11,6 @@ hqDefine("export/js/datasource_export",[
         self.haveDatasources = ko.computed(function () {
             return self.dataSource() !== undefined && self.dataSource().length;
         });
-        self.updateExportButton = ko.computed(function () {
-            $("#datasources_export_submit_button_id").prop('disabled', !self.haveDatasources());
-        });
 
         return self;
     }

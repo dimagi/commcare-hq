@@ -1108,7 +1108,7 @@ class DatasourceExportDownloadForm(forms.Form):
                     _("Download Data Export Tool query file"),
                     type="submit",
                     css_class="btn-primary",
-                    id="datasources_export_submit_button_id"
+                    data_bind="enable: haveDatasources"
                 ),
             )
         )
