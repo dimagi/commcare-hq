@@ -12,14 +12,15 @@
  * @param options
  */
 hqDefine("app_manager/js/details/screen", function () {
-    var Utils = hqImport('app_manager/js/details/utils'),
-        ColumnModel = hqImport("app_manager/js/details/column");
+    const Utils = hqImport('app_manager/js/details/utils'),
+        ColumnModel = hqImport("app_manager/js/details/column"),
+        uiMapList = hqImport("hqwebapp/js/ui_elements/ui-element-key-val-list");
 
-    var getPropertyTitle = function (property) {
+    const getPropertyTitle = function (property) {
         // Strip "<prefix>:" before converting to title case.
         // This is aimed at prefixes like ledger: and attachment:
         property = property || '';
-        var i = property.indexOf(":");
+        const i = property.indexOf(":");
         return Utils.toTitleCase(property.substring(i + 1));
     };
 
@@ -111,6 +112,14 @@ hqDefine("app_manager/js/details/screen", function () {
         self.customVariablesViewModel.xml.subscribe(function () {
             self.fireChange();
         });
+
+        const customDataEditor = uiMapList.new("x", gettext("Edit Custom Variables"));
+        // customDataEditor.val();
+        customDataEditor.on("change", function () {
+            // $("#group-data").val(JSON.stringify(this.val()));
+        });
+        $("#custom-variables-editor").append(customDataEditor.ui);
+
         self.multiSelectEnabled = ko.observable(detail.multi_select);
         self.multiSelectEnabled.subscribe(function () {
             self.autoSelectEnabled(self.multiSelectEnabled() && self.autoSelectEnabled());

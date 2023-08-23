@@ -1949,6 +1949,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     # Custom variables to add into the <variables /> node
     custom_variables = StringProperty(exclude_if_none=True)
 
+    custom_variables_list = StringProperty(exclude_if_none=True)
+
     # Allow selection of mutiple cases. Only applies to 'short' details
     multi_select = BooleanProperty(default=False)
 
