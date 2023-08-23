@@ -19,7 +19,7 @@
     <header>
       <text/>
     </header>
-    <template form="image">
+    <template form="{image[format]}">
       <text>
         <xpath function="{image[xpath_function]}">
           {image[variables]}
