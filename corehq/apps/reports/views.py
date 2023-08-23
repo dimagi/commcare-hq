@@ -1082,7 +1082,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         return "", []
 
     for config in configs:
-        content, excel_file = config.get_report_content(lang, attach_excel=attach_excel, couch_user=couch_user)
+        content, excel_file = _get_location_safe_report_content(config, domain, couch_user, lang, attach_excel)
         if excel_file:
             excel_attachments.append({
                 'title': config.full_name + "." + format.extension,
@@ -1111,6 +1111,17 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "report_type": _("once off report") if once else _("scheduled report"),
     })
     return response.content.decode("utf-8"), excel_attachments
+
+
+def _get_location_safe_report_content(config, domain, couch_user, lang, attach_excel):
+    report_location_safe = any(["computed_owner_location" in report_filter for report_filter in config.filters.keys()])
+    if (toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(domain)
+            and not couch_user.has_permission(domain, 'access_all_locations')
+            and couch_user.get_location_ids(domain)
+            and not report_location_safe):
+        return "This project has restricted data access rules. \
+                Please contact your project administrator to be assigned access to data in this project.", []
+    return config.get_report_content(lang, attach_excel=attach_excel, couch_user=couch_user)
 
 
 def render_full_report_notification(request, content, email=None, report_notification=None):
