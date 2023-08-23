@@ -808,7 +808,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             $.getScript(gridPolyfillPath);
 
             registerContinueListener(this, options);
-            this.handleSmallScreenChange(this.smallScreenEnabled);
         },
 
         handleSmallScreenChange: function (enabled) {
@@ -845,6 +844,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (this.options.isMultiSelect) {
                 this.reconcileMultiSelectUI();
             }
+            this.handleSmallScreenChange(this.smallScreenEnabled);
         },
 
         onDestroy: function () {
