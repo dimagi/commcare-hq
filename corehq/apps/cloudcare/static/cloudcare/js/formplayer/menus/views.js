@@ -420,12 +420,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
             self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP');
-            self.smallScreenEnabled = cloudcareUtils.watchSmallScreenEnabled(enabled => self.smallScreenEnabled = enabled);
+            self.smallScreenEnabled = cloudcareUtils.watchSmallScreenEnabled(self.handleSmallScreenChange.bind(self));
         },
 
         ui: CaseListViewUI(),
 
         events: CaseListViewEvents(),
+
+        handleSmallScreenChange: function (enabled) {
+            this.smallScreenEnabled = enabled;
+        },
 
         caseListAction: function (e) {
             const index = $(e.currentTarget).data().index,
@@ -804,6 +808,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             $.getScript(gridPolyfillPath);
 
             registerContinueListener(this, options);
+            this.handleSmallScreenChange(this.smallScreenEnabled);
+        },
+
+        handleSmallScreenChange: function (enabled) {
+            CaseTileListView.__super__.handleSmallScreenChange.apply(this, arguments);
+            if (enabled) {
+                $('#content-container').addClass('full-width');
+            } else if (!this.options.sidebarEnabled) {
+                $('#content-container').removeClass('full-width');
+            }
         },
 
         childViewOptions: function () {
