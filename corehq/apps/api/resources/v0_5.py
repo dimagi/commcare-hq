@@ -29,7 +29,6 @@ from django.views.decorators.csrf import csrf_exempt
 
 import pytz
 from memoized import memoized_property
-from sqlalchemy import and_, asc, or_, select
 from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
