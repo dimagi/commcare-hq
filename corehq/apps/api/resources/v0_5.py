@@ -3,10 +3,8 @@ import functools
 import json
 from base64 import b64decode, b64encode
 from collections import namedtuple
-from contextlib import closing
 from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
-from io import BytesIO
 from urllib.parse import urlencode
 
 from django.conf.urls import re_path as url
@@ -31,7 +29,6 @@ from django.views.decorators.csrf import csrf_exempt
 
 import pytz
 from memoized import memoized_property
-from sqlalchemy import and_, asc, or_, select
 from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
@@ -40,8 +37,7 @@ from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
-from couchexport.export import export_from_tables
-from couchexport.models import Format
+
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
@@ -74,6 +70,7 @@ from corehq.apps.api.util import (
     get_obj,
     make_date_filter,
     parse_str_to_date,
+    cursor_based_query_for_datasource
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
@@ -139,7 +136,8 @@ from . import (
     v0_1,
     v0_4,
 )
-from .pagination import DoesNothingPaginator, NoCountingPaginator
+from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
+
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 20
@@ -1345,78 +1343,9 @@ def get_datasource_data(request, config_id, domain):
     """Fetch data of the datasource specified by `config_id` in a paginated manner"""
     config, _ = get_datasource_config(config_id, domain)
     datasource_adapter = get_indicator_adapter(config, load_source='export_data_source')
-    cursor_params = get_request_params(request).params
-    params = request.GET.dict()
-    params["limit"] = params.get("limit", EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT)
-    request_params = {**params, **cursor_params}
-    query = _get_pagination_query(request_params, datasource_adapter)
-    data = _get_response_data(query, request_params, datasource_adapter)
+    request_params = get_request_params(request).params
+    if "limit" not in request_params:
+        request_params["limit"] = EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT
+    query = cursor_based_query_for_datasource(request_params, datasource_adapter)
+    data = response_for_cursor_based_pagination(query, request_params, datasource_adapter)
     return JsonResponse(data)
-
-
-def _get_pagination_query(request_params, datasource_adapter):
-    """Constructs a paginated SQL query from `request_params` for the datasource table in `datasource_adapter`"""
-    table = datasource_adapter.get_table()
-    last_inserted_at = request_params.get("last_inserted_at", None)
-    last_doc_id = request_params.get("last_doc_id", None)
-    limit = request_params["limit"]
-
-    query = select([table]).order_by(asc(table.c.inserted_at), asc(table.c.doc_id))
-    if last_inserted_at and last_doc_id:
-        # If these are not specified, the limit parameter will pluck the first few records from the table
-        query = query.where(
-            or_(
-                and_(table.c.inserted_at == last_inserted_at, table.c.doc_id > last_doc_id),
-                table.c.inserted_at > last_inserted_at
-            )
-        )
-    pagination_query = query.limit(limit)
-    query = datasource_adapter.get_query_object()
-    return query.from_statement(pagination_query)
-
-
-def _get_response_data(query, request_params, datasource_adapter):
-    """Creates a response dictionary that can be used for cursor based pagination
-     :returns: The response dictionary
-    """
-    records = _get_datasource_records(query, datasource_adapter)
-    return {
-        "objects": records,
-        "meta": {
-            "next": _get_next_url_params(records),
-            "limit": request_params["limit"]
-        }
-    }
-
-
-def _get_datasource_records(query, adapter):
-    """Executes `query` to fetch datasource data from the table in `adapter`
-    :returns: The datasource data from the SQL table specified by `adapter`
-    """
-    table = adapter.get_table()
-
-    def get_table(query):
-        yield list(table.columns.keys())
-        for row in query:
-            adapter.track_load()
-            yield row
-
-    with closing(BytesIO()) as temp:
-        config_id = adapter.table_id
-        tables = [[config_id, get_table(query)]]
-        export_from_tables(tables, temp, Format.JSON)
-        exported_data = json.loads(temp.getvalue().decode('utf-8'))
-        return exported_data[config_id]
-
-
-def _get_next_url_params(datasource_records):
-    """ Constructs the query string containing a base64-encoded cursor that points to the last entry in
-    `datasource_records`
-    :returns: The query string"""
-    if not datasource_records["rows"]:
-        return None
-    last_object = datasource_records["rows"][-1]
-    cursor_params = {"last_doc_id": last_object[0], "last_inserted_at": last_object[1]}
-    encoded_cursor = b64encode(urlencode(cursor_params).encode('utf-8'))
-    next_params = {'cursor': encoded_cursor}
-    return f'?{urlencode(next_params)}'
