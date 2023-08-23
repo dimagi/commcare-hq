@@ -105,7 +105,7 @@ hqDefine("app_manager/js/details/screen", function () {
             const template = self.caseTileTemplate();
             return featureFlag && template === "custom";
         });
-        self.showCaseTileColumn = ko.computed(function () {
+        self.showCaseTileMappingColumn = ko.computed(function () {
             const featureFlag = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
             const caseTileTemplate = self.caseTileTemplate() && self.caseTileTemplate() !== "custom";
             return caseTileTemplate && featureFlag;

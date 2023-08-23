@@ -145,11 +145,10 @@
       </div>
 
       <span> This preview just shows the relative position of fields and is not an accurate representation.</span>
-      <!-- TODO: this is some kind of temporary -->
       <button class="btn btn-default btn-xs pull-right"
               data-bind="click: resetCaseTilePreview, visible: showCaseTileConfigColumns()">
           <i class="fa fa-magic"></i>
-          Reset Grid
+          {% trans "Reset Grid" %}
       </button>
       <div data-bind="visible: showCaseTileConfigColumns()" id="preview-box">
         <div id="case-tile-preview" data-bind="foreach: columns">
