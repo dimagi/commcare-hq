@@ -79,17 +79,31 @@ def data_dictionary_json(request, domain, case_type_name=None):
             "properties": [],
         }
         grouped_properties = {
-            group: [{
-                "description": prop.description,
-                "label": prop.label,
-                "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
-                "name": prop.name,
-                "deprecated": prop.deprecated,
-                "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
-            } | ({"data_type": prop.data_type} if data_validation_enabled else {}) for prop in props]
+            group: [
+                {
+                    'description': prop.description,
+                    'label': prop.label,
+                    'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(
+                        prop
+                    ),
+                    'name': prop.name,
+                    'deprecated': prop.deprecated,
+                }
+                | (
+                    {
+                        'data_type': prop.data_type,
+                        'allowed_values': {
+                            av.allowed_value: av.description
+                            for av in prop.allowed_values.all()
+                        },
+                    }
+                    if data_validation_enabled
+                    else {}
+                )
+                for prop in props
+            ]
             for group, props in itertools.groupby(
-                case_type.properties.all(),
-                key=attrgetter('group_obj_id')
+                case_type.properties.all(), key=attrgetter('group_obj_id')
             )
         }
         for group in case_type.groups.all():
@@ -183,7 +197,7 @@ def update_case_property(request, domain):
             data_type = property.get('data_type') if data_validation_enabled else None
             group = property.get('group')
             deprecated = property.get('deprecated')
-            allowed_values = property.get('allowed_values')
+            allowed_values = property.get('allowed_values') if data_validation_enabled else None
             if update_fhir_resources:
                 fhir_resource_prop_path = property.get('fhir_resource_prop_path')
                 remove_path = property.get('removeFHIRResourcePropertyPath', False)
@@ -251,7 +265,7 @@ def _export_data_dictionary(domain):
     outfile = io.BytesIO()
     writer = Excel2007ExportWriter()
     header_table = _get_headers_for_export(
-        export_fhir_data, case_type_headers, case_prop_headers, case_prop_data, allowed_value_headers)
+        export_fhir_data, case_type_headers, case_prop_headers, case_prop_data, allowed_value_headers, domain)
     writer.open(header_table=header_table, file=outfile)
     if export_fhir_data:
         _export_fhir_data(writer, case_type_headers, case_type_data)
@@ -317,14 +331,16 @@ def _add_fhir_resource_mapping_sheet(case_type_data, fhir_resource_type_name_by_
 
 
 def _get_headers_for_export(export_fhir_data, case_type_headers, case_prop_headers, case_prop_data,
-                            allowed_value_headers):
+                            allowed_value_headers, domain):
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
     header_table = []
     if export_fhir_data:
         header_table.append((FHIR_RESOURCE_TYPE_MAPPING_SHEET, [case_type_headers]))
         case_prop_headers.extend([_('FHIR Resource Property'), _('Remove Resource Property(Y)')])
     for tab_name in case_prop_data:
         header_table.append((tab_name, [case_prop_headers]))
-        header_table.append((f'{tab_name}{ALLOWED_VALUES_SHEET_SUFFIX}', [allowed_value_headers]))
+        if data_validation_enabled:
+            header_table.append((f'{tab_name}{ALLOWED_VALUES_SHEET_SUFFIX}', [allowed_value_headers]))
     return header_table
 
 

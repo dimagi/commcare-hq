@@ -186,7 +186,9 @@
           {% if fhir_integration_enabled %}
             <div class="row-item">{% trans "FHIR Resource Property Path" %}</div>
           {% endif %}
-          <div class="row-item">{% include "data_dictionary/partials/valid_values_th_content.html" %}</div>
+          {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+            <div class="row-item">{% include "data_dictionary/partials/valid_values_th_content.html" %}</div>
+          {% endif %}
           {% if not request.is_view_only %}
             <div class="row-item-small"></div>
           {% endif %}
@@ -229,7 +231,9 @@
             {% if fhir_integration_enabled %}
               <div class="row-item"></div>
             {% endif %}
-            <div class="row-item"></div>
+            {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+              <div class="row-item"></div>
+            {% endif %}
             {% if not request.is_view_only %}
             <div class="row-item-small">
               <!-- ko if: name() !== '' && !toBeDeprecated() -->
@@ -291,14 +295,16 @@
                 <!-- /ko -->
               </div>
             {% endif %}
-            <div class="row-item">
-              <div data-bind="visible: canHaveAllowedValues()">
-                <div data-bind="jqueryElement: $allowedValues"></div>
+            {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+              <div class="row-item">
+                <div data-bind="visible: canHaveAllowedValues()">
+                  <div data-bind="jqueryElement: $allowedValues"></div>
+                </div>
+                <div data-bind="visible: dataType() === 'date'" class="help-block">
+                  {% trans "YYYY-MM-DD" %}
+                </div>
               </div>
-              <div data-bind="visible: dataType() === 'date'" class="help-block">
-                {% trans "YYYY-MM-DD" %}
-              </div>
-            </div>
+            {% endif %}
             {% if not request.is_view_only %}
               <div class="row-item-small">
                 <!-- ko if: !deprecated() -->
