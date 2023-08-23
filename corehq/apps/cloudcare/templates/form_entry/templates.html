@@ -210,6 +210,7 @@
             }
         ">
     <label class="caption control-label" data-bind="css: labelWidth, attr: {'for': entry.entryId}">
+      {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
       <div data-bind="css: {
           'row': help(),
           'text-center': stylesContains('text-align-center'),
@@ -285,6 +286,7 @@
   <!-- /ko -->
   <!-- ko if: datatype() === 'info' -->
   <div class="info panel panel-default">
+    {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
     <div class="panel-body" data-bind="css: {
         'text-center': stylesContains('text-align-center'),
         'text-right': stylesContains('text-align-right'),
