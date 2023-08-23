@@ -149,16 +149,7 @@ class RebuildTableTest(TestCase):
         # assert new date isn't in the config
         insp = reflection.Inspector.from_engine(self.engine)
         table_name = get_table_name(self.config.domain, self.config.table_id)
-        self.assertEqual(
-            len(
-                [
-                    c
-                    for c in insp.get_columns(table_name)
-                    if c['name'] == 'new_date'
-                ]
-            ),
-            0,
-        )
+        self.assertEqual(len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0)
 
         # add the column to the config
         config = self._get_config('add_non_nullable_col')
@@ -185,30 +176,12 @@ class RebuildTableTest(TestCase):
             self.assertTrue(rebuild_table.called)
         # column doesn't exist because rebuild table was mocked
         insp = reflection.Inspector.from_engine(engine)
-        self.assertEqual(
-            len(
-                [
-                    c
-                    for c in insp.get_columns(table_name)
-                    if c['name'] == 'new_date'
-                ]
-            ),
-            0,
-        )
+        self.assertEqual(len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0)
 
         # Another time without the mock to ensure the column is there
         get_case_pillow(ucr_configs=[config])
         insp = reflection.Inspector.from_engine(engine)
-        self.assertEqual(
-            len(
-                [
-                    c
-                    for c in insp.get_columns(table_name)
-                    if c['name'] == 'new_date'
-                ]
-            ),
-            1,
-        )
+        self.assertEqual(len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1)
 
     def test_add_nullable_column(self):
         self._setup_data_source('add_nullable_col')
@@ -216,16 +189,7 @@ class RebuildTableTest(TestCase):
         # assert new date isn't in the config
         insp = reflection.Inspector.from_engine(self.engine)
         table_name = get_table_name(self.config.domain, self.config.table_id)
-        self.assertEqual(
-            len(
-                [
-                    c
-                    for c in insp.get_columns(table_name)
-                    if c['name'] == 'new_date'
-                ]
-            ),
-            0,
-        )
+        self.assertEqual(len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0)
 
         # add the column to the config
         config = self._get_config('add_nullable_col')
@@ -251,16 +215,7 @@ class RebuildTableTest(TestCase):
             get_case_pillow(ucr_configs=[config])
             self.assertFalse(rebuild_table.called)
         insp = reflection.Inspector.from_engine(engine)
-        self.assertEqual(
-            len(
-                [
-                    c
-                    for c in insp.get_columns(table_name)
-                    if c['name'] == 'new_date'
-                ]
-            ),
-            1,
-        )
+        self.assertEqual(len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1)
 
     @softer_assert()
     def test_skip_destructive_rebuild(self):
@@ -275,16 +230,7 @@ class RebuildTableTest(TestCase):
         # assert new date isn't in the config
         insp = reflection.Inspector.from_engine(self.engine)
         table_name = get_table_name(self.config.domain, self.config.table_id)
-        self.assertEqual(
-            len(
-                [
-                    c
-                    for c in insp.get_columns(table_name)
-                    if c['name'] == 'new_date'
-                ]
-            ),
-            0,
-        )
+        self.assertEqual(len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0)
 
         # re-fetch from DB to bust object caches
         self.config = DataSourceConfiguration.get(self.config.data_source_id)
@@ -342,16 +288,7 @@ class RebuildTableTest(TestCase):
         )
         # confirm the column was added to the table
         insp = reflection.Inspector.from_engine(self.engine)
-        self.assertEqual(
-            len(
-                [
-                    c
-                    for c in insp.get_columns(table_name)
-                    if c['name'] == 'new_date'
-                ]
-            ),
-            1,
-        )
+        self.assertEqual(len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1)
 
     def test_implicit_pk(self):
         self._setup_data_source('implicit_pk')
