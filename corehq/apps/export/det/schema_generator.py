@@ -15,6 +15,7 @@ PROPERTIES_PREFIX = 'properties.'
 ID_FIELD = 'id'
 FORM_ID_SOURCE = 'id'
 CASE_ID_SOURCE = 'case_id'
+DATASOURCE_ID_SOURCE = 'doc_id'
 
 CASE_SOURCE = 'case'
 FORM_SOURCE = 'form'
@@ -167,6 +168,7 @@ def generate_from_datasource_export_instance(export_instance, output_file):
         rows=[],
     )
     _add_rows_for_table(input_table, output_table, helper=DatasourceDETSchemaHelper())
+    _add_id_row_if_necessary(output_table, DATASOURCE_ID_SOURCE)
 
     output = DETConfig(name=export_instance.name, tables=[output_table])
     output.export_to_file(output_file)
