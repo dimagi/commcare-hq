@@ -231,12 +231,13 @@ class TestDatasourceInstance(SimpleTestCase, TestFileMixin):
             data_by_headings = [dict(zip(headings, row)) for row in ws_data]
 
             self.assertEqual(data_by_headings[0]['Data Source'], "ucr")
-            self.assertEqual(data_by_headings[1]['Source Field'], "inserted_at")
-            self.assertEqual(data_by_headings[1]['Map Via'], "str2date")
-            self.assertEqual(data_by_headings[2]['Source Field'], "name_string")
-            self.assertEqual(data_by_headings[3]['Source Field'], "computed_owner_name")
-            self.assertEqual(data_by_headings[4]['Source Field'], "age_string")
-            self.assertEqual(data_by_headings[5]['Source Field'], "closed_string")
+            self.assertEqual(data_by_headings[1]['Source Field'], "doc_id")
+            self.assertEqual(data_by_headings[2]['Source Field'], "inserted_at")
+            self.assertEqual(data_by_headings[2]['Map Via'], "str2date")
+            self.assertEqual(data_by_headings[3]['Source Field'], "name_string")
+            self.assertEqual(data_by_headings[4]['Source Field'], "computed_owner_name")
+            self.assertEqual(data_by_headings[5]['Source Field'], "age_string")
+            self.assertEqual(data_by_headings[6]['Source Field'], "closed_string")
 
     @classmethod
     def _sample_data_source_dict(cls):
