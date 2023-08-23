@@ -85,10 +85,11 @@ def _get_next_url_params(datasource_records):
     """ Constructs the query string containing a base64-encoded cursor that points to the last entry in
     `datasource_records`
     :returns: The query string"""
-    if not datasource_records["rows"]:
+    if not datasource_records:
         return None
-    last_object = datasource_records["rows"][-1]
-    cursor_params = {"last_doc_id": last_object[0], "last_inserted_at": last_object[1]}
+
+    last_object = datasource_records[-1]
+    cursor_params = {"last_doc_id": last_object["doc_id"], "last_inserted_at": last_object["inserted_at"]}
     encoded_cursor = b64encode(urlencode(cursor_params).encode('utf-8'))
     next_params = {'cursor': encoded_cursor}
     return f'?{urlencode(next_params)}'
