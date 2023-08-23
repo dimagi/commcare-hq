@@ -1255,7 +1255,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             case constants.GEO:
                 entry = new GeoPointEntry(question, {});
                 break;
-            case constants.INFO:
+            case constants.INFO: // it's a label
                 entry = new InfoEntry(question, {});
                 break;
             case constants.BINARY:
