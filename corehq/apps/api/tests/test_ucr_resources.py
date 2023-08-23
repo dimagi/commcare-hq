@@ -10,6 +10,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
+
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.accounting.models import (
@@ -470,7 +471,7 @@ class TestUCRPaginated(TestCase):
         self.assertIn("next", response_dict["meta"])
 
     @flag_enabled("EXPORT_DATA_SOURCE_DATA")
-    @patch("corehq.apps.api.resources.v0_5._get_datasource_records")
+    @patch("corehq.apps.api.resources.pagination.get_datasource_records")
     def test_next_cursor_created(self, mock_get_datasource_records):
         """The cursor in the `next` parameter should point to the last record that was returned"""
         last_doc_id = "1aa9b660-dfb9-409a-a939-873ce608db2e"
@@ -508,3 +509,47 @@ class TestUCRPaginated(TestCase):
         cursor_params = CursorParams(QueryDict(cursor_params_string).dict(), self.domain, True)
         self.assertEqual(cursor_params.params['last_doc_id'], last_doc_id)
         self.assertEqual(cursor_params.params['last_inserted_at'], last_inserted_at)
+
+    @flag_enabled("EXPORT_DATA_SOURCE_DATA")
+    @patch("corehq.apps.api.resources.pagination.get_datasource_records")
+    def test_cursor_decoded(self, mock_get_datasource_records):
+        """The cursor in the `next` parameter should point to the last record that was returned"""
+        last_doc_id = "1aa9b660-dfb9-409a-a939-873ce608db2e"
+        last_inserted_at = "2023-08-17T11:08:01.927384Z"
+        mock_get_datasource_records.return_value = {
+            "rows": [
+                [
+                    "dd00fe32-325f-4246-ac22-1261126dffe7",
+                    "2023-08-17T11:08:01.915246Z",
+                    "Ola",
+                    "ba7f99d16c494aa384e12d3c6b2b6156",
+                    None,
+                    "False"
+                ],
+                [
+                    last_doc_id,
+                    last_inserted_at,
+                    "Hello",
+                    "c18dfbefb65c4ed5b9524d69f245160b",
+                    None,
+                    "False"
+                ]
+            ]
+        }
+        url = reverse("api_get_ucr_data", args=[self.domain.name])
+        limit = 2
+        url = f"{url}?limit={limit}&data_source_id={self.data_source._id}"
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        response_dict = json.loads(response.content)
+        self.assertEqual(int(response_dict["meta"]["limit"]), limit)
+        cursor = response_dict["meta"]["next"].split("?cursor=")[1]
+
+        url = f"{url}&cursor={cursor}"
+        with patch("corehq.apps.api.resources.v0_5.cursor_based_query_for_datasource") as mock_method:
+            response = self.client.get(url)
+            args, _kwargs = mock_method.call_args_list[0]
+            request_params, datasource_adapter = args
+            self.assertIn("last_doc_id", request_params)
+            self.assertIn("last_inserted_at", request_params)

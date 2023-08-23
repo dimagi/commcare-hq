@@ -3,10 +3,8 @@ import functools
 import json
 from base64 import b64decode, b64encode
 from collections import namedtuple
-from contextlib import closing
 from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
-from io import BytesIO
 from urllib.parse import urlencode
 
 from django.conf.urls import re_path as url
@@ -40,8 +38,7 @@ from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
-from couchexport.export import export_from_tables
-from couchexport.models import Format
+
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
@@ -74,6 +71,7 @@ from corehq.apps.api.util import (
     get_obj,
     make_date_filter,
     parse_str_to_date,
+    cursor_based_query_for_datasource
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
@@ -139,7 +137,8 @@ from . import (
     v0_1,
     v0_4,
 )
-from .pagination import DoesNothingPaginator, NoCountingPaginator
+from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
+
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 20
@@ -1345,12 +1344,11 @@ def get_datasource_data(request, config_id, domain):
     """Fetch data of the datasource specified by `config_id` in a paginated manner"""
     config, _ = get_datasource_config(config_id, domain)
     datasource_adapter = get_indicator_adapter(config, load_source='export_data_source')
-    cursor_params = get_request_params(request).params
-    params = request.GET.dict()
-    params["limit"] = params.get("limit", EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT)
-    request_params = {**params, **cursor_params}
-    query = _get_pagination_query(request_params, datasource_adapter)
-    data = _get_response_data(query, request_params, datasource_adapter)
+    request_params = get_request_params(request).params
+    if "limit" not in request_params:
+        request_params["limit"] = EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT
+    query = cursor_based_query_for_datasource(request_params, datasource_adapter)
+    data = response_for_cursor_based_pagination(query, request_params, datasource_adapter)
     return JsonResponse(data)
 
 
