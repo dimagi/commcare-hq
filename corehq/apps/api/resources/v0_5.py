@@ -1401,22 +1401,28 @@ def _get_datasource_records(query, adapter):
             adapter.track_load()
             yield row
 
-    with closing(BytesIO()) as temp:
-        config_id = adapter.table_id
-        tables = [[config_id, get_table(query)]]
-        export_from_tables(tables, temp, Format.JSON)
-        exported_data = json.loads(temp.getvalue().decode('utf-8'))
-        return exported_data[config_id]
+    table_ = get_table(query)
+    headers = next(table_)
+
+    tmp_table = []
+    for row in table_:
+        columns_data = {}
+        for column_name, column_value in zip(headers, row):
+            if column_name == 'doc_id':
+                columns_data['id'] = column_value
+            columns_data[column_name] = column_value
+            tmp_table.append(columns_data)
+    return tmp_table
 
 
 def _get_next_url_params(datasource_records):
     """ Constructs the query string containing a base64-encoded cursor that points to the last entry in
     `datasource_records`
     :returns: The query string"""
-    if not datasource_records["rows"]:
+    if not datasource_records:
         return None
-    last_object = datasource_records["rows"][-1]
-    cursor_params = {"last_doc_id": last_object[0], "last_inserted_at": last_object[1]}
+    last_object = datasource_records[-1]
+    cursor_params = {"last_doc_id": last_object['doc_id'], "last_inserted_at": last_object['inserted_at']}
     encoded_cursor = b64encode(urlencode(cursor_params).encode('utf-8'))
     next_params = {'cursor': encoded_cursor}
     return f'?{urlencode(next_params)}'
