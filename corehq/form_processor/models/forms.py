@@ -4,7 +4,7 @@ from datetime import datetime
 from io import BytesIO
 
 from django.db import InternalError, models, transaction
-from django.db.models import F, Q
+from django.db.models import Q
 
 from jsonfield.fields import JSONField
 from lxml import etree
@@ -187,8 +187,7 @@ class XFormInstanceManager(RequireDBManager):
         for db_name in get_db_aliases_for_partitioned_query():
             result.extend(
                 self.using(db_name)
-                .annotate(state_deleted=F('state').bitand(XFormInstance.DELETED))
-                .filter(domain=domain, state_deleted=XFormInstance.DELETED)
+                .filter(domain=domain, deleted_on__isnull=False)
                 .values_list('form_id', flat=True)
             )
         return result
@@ -563,9 +562,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @property
     def is_deleted(self):
-        # deleting a form adds the deleted state to the current state
-        # in order to support restoring the pre-deleted state.
-        return self.state & self.DELETED == self.DELETED
+        return bool(self.deleted_on)
 
     @property
     def doc_type(self):
@@ -641,7 +638,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def soft_delete(self):
         type(self).objects.soft_delete_forms(self.domain, [self.form_id])
-        self.state |= self.DELETED
+        self.deleted_on = datetime.utcnow()
 
     def to_json(self, include_attachments=False):
         from ..serializers import XFormInstanceSerializer, lazy_serialize_form_attachments, \
