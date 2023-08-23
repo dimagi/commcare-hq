@@ -449,11 +449,15 @@ class UploadDataDictionaryView(BaseProjectDataView):
     @method_decorator(atomic)
     def post(self, request, *args, **kwargs):
         bulk_file = self.request.FILES['bulk_upload_file']
-        errors = process_bulk_upload(bulk_file, self.domain)
+        errors, warnings = process_bulk_upload(bulk_file, self.domain)
         if errors:
             messages.error(request, _("Errors in upload: {}").format(
                 "<ul>{}</ul>".format("".join([f"<li>{e}</li>" for e in errors]))
             ), extra_tags="html")
         else:
             messages.success(request, _('Data dictionary import complete'))
+            if warnings:
+                messages.warning(request, _("Warnings in upload: {}").format(
+                    "<ul>{}</ul>".format("".join([f"<li>{e}</li>" for e in warnings]))
+                ), extra_tags="html")
         return self.get(request, *args, **kwargs)

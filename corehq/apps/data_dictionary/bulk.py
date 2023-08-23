@@ -31,9 +31,7 @@ COLUMN_MAPPING = {
     'group': 'group',
     'description': 'description',
     'deprecated': 'deprecated',
-}
-DATA_TYPE_MAPPING = {
-    'data type': 'data_type_display'
+    'data type': 'data_type_display',
 }
 COLUMN_MAPPING_VL = {
     'case property': 'prop_name',
@@ -51,28 +49,41 @@ HEADER_ROW_INDEX = 1
 def process_bulk_upload(bulk_file, domain):
     filename = make_temp_file(bulk_file.read(), file_extention_from_filename(bulk_file.name))
     errors = []
+    warnings = []
     allowed_value_info = {}
     prop_row_info = {}
     seen_props = defaultdict(set)
 
     with open_any_workbook(filename) as workbook:
-        allowed_value_info, prop_row_info, error_list = _process_multichoice_sheets(
-            workbook, allowed_value_info, prop_row_info)
-        errors.extend(error_list)
-        error_list, seen_props = _process_sheets(domain, workbook, allowed_value_info)
-        errors.extend(error_list)
+        errors, warnings = _process_multichoice_sheets(
+            domain, workbook, allowed_value_info, prop_row_info)
+        sheet_errors, sheet_warnings, seen_props = _process_sheets(domain, workbook, allowed_value_info)
+        errors.extend(sheet_errors)
+        warnings.extend(sheet_warnings)
 
-    error_list = _validate_values(allowed_value_info, seen_props, prop_row_info)
-    errors.extend(error_list)
+    validation_errors = _validate_values(allowed_value_info, seen_props, prop_row_info)
+    errors.extend(validation_errors)
 
-    return errors
+    return errors, warnings
 
 
-def _process_multichoice_sheets(workbook, allowed_value_info, prop_row_info):
+def _process_multichoice_sheets(domain, workbook, allowed_value_info, prop_row_info):
+    """
+    `allowed_value_info` and `prop_row_info` are passed by reference, and so do not need
+    to be returned.
+    """
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
     errors = []
+    warnings = []
     for worksheet in workbook.worksheets:
         if not worksheet.title.endswith(ALLOWED_VALUES_SHEET_SUFFIX):
             continue
+        elif not data_validation_enabled:
+            warnings.append(
+                _('The multi-choice sheets (ending in "-vl") in the uploaded Excel file were ignored '
+                  'during the import as they are an unsupported format in the Data Dictionary')
+            )
+            return errors, warnings
 
         case_type = worksheet.title[:-len(ALLOWED_VALUES_SHEET_SUFFIX)]
         allowed_value_info[case_type] = defaultdict(dict)
@@ -103,21 +114,18 @@ def _process_multichoice_sheets(workbook, allowed_value_info, prop_row_info):
                 allowed_value_info[case_type][prop_name][allowed_value] = description
                 prop_row_info[case_type][prop_name].append(i)
 
-    return allowed_value_info, prop_row_info, errors
+    return errors, warnings
 
 
 def _process_sheets(domain, workbook, allowed_value_info):
     import_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
     fhir_resource_type_by_case_type = {}
     errors = []
+    warnings = set()
     data_type_map = {t.label: t.value for t in CaseProperty.DataType}
     seen_props = defaultdict(set)
     missing_valid_values = set()
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
-    if data_validation_enabled:
-        column_mapping = COLUMN_MAPPING | DATA_TYPE_MAPPING
-    else:
-        column_mapping = COLUMN_MAPPING
 
     for worksheet in workbook.worksheets:
         if worksheet.title.endswith(ALLOWED_VALUES_SHEET_SUFFIX):
@@ -135,10 +143,15 @@ def _process_sheets(domain, workbook, allowed_value_info):
         for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 0, None), start=1):
             if i == HEADER_ROW_INDEX:
                 column_headings, heading_errors = get_column_headings(
-                    row, valid_values=column_mapping, sheet_name=case_type, case_prop_name='name')
+                    row, valid_values=COLUMN_MAPPING, sheet_name=case_type, case_prop_name='name')
                 if len(heading_errors):
                     errors.extend(heading_errors)
                     break
+                if not data_validation_enabled and 'data_type_display' in column_headings:
+                    warnings.add(
+                        _('The "Data Type" column values were ignored during the import as they are '
+                          'an unsupported format in the Data Dictionary')
+                    )
                 continue
 
             # Simply ignore any fully blank rows
@@ -165,10 +178,10 @@ def _process_sheets(domain, workbook, allowed_value_info):
                 if fhir_resource_prop_path and not fhir_resource_type:
                     error = _('Could not find resource type for {}').format(case_type)
             if not error:
+                allowed_values = None
                 if case_type in allowed_value_info:
                     allowed_values = allowed_value_info[case_type][name]
-                else:
-                    allowed_values = None
+                elif data_validation_enabled:
                     missing_valid_values.add(case_type)
                 error = save_case_property(name, case_type, domain, data_type, description,
                                            label, group, deprecated, fhir_resource_prop_path,
@@ -180,7 +193,7 @@ def _process_sheets(domain, workbook, allowed_value_info):
         errors.append(_('Missing required valid \"{}-vl\" multi-choice sheet for case type \"{}\"').format(
             case_type, case_type))
 
-    return errors, seen_props
+    return errors, list(warnings), seen_props
 
 
 def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
