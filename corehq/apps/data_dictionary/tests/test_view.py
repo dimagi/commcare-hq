@@ -316,6 +316,7 @@ class TestDeprecateOrRestoreCaseTypeView(TestCase):
 
 
 @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
+@privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryJsonTest(TestCase):
     domain_name = uuid.uuid4().hex
 
