@@ -1,4 +1,4 @@
-/* eslint-env mocha sinon */
+/* eslint-env mocha */
 /* global Backbone, Marionette */
 hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function () {
     describe('Split Screen Case Search', function () {
@@ -12,13 +12,7 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
 
         const currentUrl = new Utils.CloudcareUrl({ appId: 'abc123' }),
             sandbox = sinon.sandbox.create(),
-            stubs = {},
-            REGIONS = {
-                main: 'main',
-                sidebar: 'sidebar',
-            };
-
-        let getRegion;
+            stubs = {};
 
         before(function () {
             sandbox.stub(Marionette.CollectionView.prototype, 'render').returns();
@@ -46,7 +40,6 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
                 },
                 addRegions: function () { return; },
             };
-            getRegion = sandbox.spy(FormplayerFrontend.regions, 'getRegion');
             stubs.splitScreenToggleEnabled = sandbox.stub(Toggles, 'toggleEnabled').withArgs('SPLIT_SCREEN_CASE_SEARCH');
         });
 
@@ -56,7 +49,6 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
         });
 
         afterEach(function () {
-            getRegion.reset();
             sandbox.resetHistory();
         });
 
@@ -70,6 +62,7 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
 
                 assert.isTrue(stubs.regions['sidebar'].show.called);
                 assert.isTrue(stubs.regions['main'].show.called);
+                assert.isTrue(stubs.regions['breadcrumbMenuDropdown'].show.called);
             });
 
             it('should show sidebar and main regions with query type split screen case search', function () {

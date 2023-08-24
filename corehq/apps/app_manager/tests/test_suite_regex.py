@@ -58,3 +58,12 @@ class RegexTest(SimpleTestCase):
         for case in ('./lmp < 570.5', '#case/lmp < 570.5'):
             with self.assertRaises(CaseXPathValidationError):
                 interpolate_xpath(case, None),
+
+    def test_interpolate_dots_flag(self):
+        case = 'string-length(.) = 10'
+        with self.assertRaises(CaseXPathValidationError):
+            interpolate_xpath(case, None)
+        self.assertEqual(
+            interpolate_xpath(case, None, interpolate_dots=False),
+            case
+        )

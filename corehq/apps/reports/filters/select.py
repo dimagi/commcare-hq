@@ -73,8 +73,10 @@ class CaseTypeMixin(object):
     @property
     def options(self):
         case_types = sorted(get_case_types_for_domain(self.domain))
-        return [(case, "%s" % case) for case in case_types
-                if case != USER_LOCATION_OWNER_MAP_TYPE]
+        return [
+            (case, "%s" % case) for case in case_types
+            if case != USER_LOCATION_OWNER_MAP_TYPE
+        ]
 
 
 class CaseTypeFilter(CaseTypeMixin, BaseSingleOptionFilter):

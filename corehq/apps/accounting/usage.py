@@ -3,7 +3,7 @@ import datetime
 
 from corehq.apps.accounting.models import FeatureType
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 
 
 class FeatureUsageCalculator(object):
@@ -25,6 +25,7 @@ class FeatureUsageCalculator(object):
             return {
                 FeatureType.USER: self._get_user_usage(),
                 FeatureType.SMS: self._get_sms_usage(),
+                FeatureType.WEB_USER: self._get_web_user_usage(),
             }[self.feature_rate.feature.feature_type]
         except KeyError:
             pass
@@ -39,3 +40,7 @@ class FeatureUsageCalculator(object):
             date_sent__gte=self.start_date,
             date_sent__lt=self.end_date + datetime.timedelta(days=1),
         ).count()
+
+    def _get_web_user_usage(self):
+        web_user_in_account = set(WebUser.ids_by_domain(self.domain))
+        return len(web_user_in_account)

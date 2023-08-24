@@ -861,6 +861,7 @@ msgid "Question"
 msgstr "Pregunta"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Name"
 msgstr "Nombre"
 
@@ -2716,6 +2717,26 @@ msgstr ""
 msgid "Command Bar"
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Module ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Description"
+msgstr "Descripción"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Time Estimate"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Must be an integer"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Estimated time to complete the module in hours."
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
 msgstr ""
@@ -3531,14 +3552,6 @@ msgstr "Fecha Confidencial"
 msgid "Name of the Area"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "View here"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "There are case(s) missing geolocation data."
-msgstr ""
-
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
 msgstr ""
@@ -3693,7 +3706,7 @@ msgid "Add Item"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js
-msgid "Click <strong>Edit</strong> to Add Values"
+msgid "Click <strong>Edit</strong> to Add Values</span>"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
@@ -4001,6 +4014,7 @@ msgid "Search keywords"
 msgstr ""
 
 #: corehq/apps/reminders/static/reminders/js/keywords_list.js
+#: corehq/apps/users/static/users/js/roles.js
 msgid "Linked Project Spaces"
 msgstr ""
 
@@ -4223,8 +4237,9 @@ msgid "Report successfully emailed"
 msgstr "Reporte enviado por correo electrónico exitosamente"
 
 #: corehq/apps/reports/static/reports/js/standard_hq_report.js
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
-msgid "An error occurred emailing you report. Please try again."
+#, fuzzy
+#| msgid "An error occurred emailing you report. Please try again."
+msgid "An error occurred emailing your report. Please try again."
 msgstr ""
 "Ocurrió un error al enviar por correo electrónico su reporte. Por favor "
 "intente de nuevo."
@@ -4412,6 +4427,12 @@ msgstr ""
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
 msgid "Please check above for any errors in your configuration."
 msgstr "Por favor verifique arriba si hay algún error en su configuración."
+
+#: corehq/apps/userreports/static/userreports/js/configurable_report.js
+msgid "An error occurred emailing you report. Please try again."
+msgstr ""
+"Ocurrió un error al enviar por correo electrónico su reporte. Por favor "
+"intente de nuevo."
 
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
 msgid "Edit a custom web report or custom web report source"
@@ -4705,24 +4726,32 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
-"<strong>Enterprise Release Management</strong> &mdash; access the Linked "
-"Project Spaces feature"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Multi-Environment Release Management</strong> &mdash; access the "
-"Linked Project Spaces feature"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
 "<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
 "events and users"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit Attendance Tracking Events"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Enterprise Release Management"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Multi-Environment Release Management"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to configure linked project spaces"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Linked Configurations"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to edit linked configurations on this project space"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js

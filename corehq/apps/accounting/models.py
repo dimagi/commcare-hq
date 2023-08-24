@@ -122,10 +122,12 @@ class InvoicingPlan(object):
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
+    WEB_USER = "Web User"
 
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
+        (WEB_USER, WEB_USER)
     )
 
 
@@ -423,6 +425,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         null=True,
         default=list
     )
+
+    bill_web_user = models.BooleanField(default=False)
 
     class Meta(object):
         app_label = 'accounting'
@@ -883,8 +887,8 @@ class SoftwarePlanVersion(models.Model):
 
     @property
     def version(self):
-        return (self.plan.softwareplanversion_set.count() -
-                self.plan.softwareplanversion_set.filter(
+        return (self.plan.softwareplanversion_set.count()
+                - self.plan.softwareplanversion_set.filter(
                     date_created__gt=self.date_created).count())
 
     @property
@@ -1947,8 +1951,8 @@ class Subscription(models.Model):
             return False, None
         last_subscription = last_subscription.latest('date_created')
         return (
-            last_subscription.account.pk == account.pk and
-            last_subscription.plan_version.pk == plan_version.pk
+            last_subscription.account.pk == account.pk
+            and last_subscription.plan_version.pk == plan_version.pk
         ), last_subscription
 
     @property
@@ -2606,8 +2610,8 @@ class BillingRecord(BillingRecordBase):
     def should_send_email(self):
         subscription = self.invoice.subscription
         autogenerate = (subscription.auto_generate_credits and not self.invoice.balance)
-        small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
-                            subscription.service_type == SubscriptionType.IMPLEMENTATION)
+        small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD
+                            and subscription.service_type == SubscriptionType.IMPLEMENTATION)
         hidden = self.invoice.is_hidden
         do_not_email_invoice = self.invoice.subscription.do_not_email_invoice
         return not (autogenerate or small_contracted or hidden or do_not_email_invoice)
@@ -3462,8 +3466,8 @@ class CreditLine(models.Model):
         return cls.objects.filter(
             account=account, subscription__exact=None, is_active=True
         ).filter(
-            Q(is_product=True) |
-            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
+            Q(is_product=True)
+            | Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
 
     @classmethod
@@ -3481,8 +3485,8 @@ class CreditLine(models.Model):
     @classmethod
     def get_non_general_credits_by_subscription(cls, subscription):
         return cls.objects.filter(subscription=subscription, is_active=True).filter(
-            Q(is_product=True) |
-            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
+            Q(is_product=True)
+            | Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
 
     @classmethod

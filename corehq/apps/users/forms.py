@@ -364,8 +364,8 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
         basic_fields = [
             crispy.Div(*username_controls),
-            hqcrispy.Field('first_name'),
-            hqcrispy.Field('last_name'),
+            'first_name',
+            'last_name',
         ]
 
         if self.is_using_sso:
@@ -379,9 +379,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
             # It is the presence of the "readonly" attribute that determines
             # whether an input is readonly. Its value does not matter.
-            basic_fields.append(hqcrispy.Field('email', readonly="readonly"))
+            basic_fields.append(crispy.Field('email', readonly="readonly"))
         else:
-            basic_fields.append(hqcrispy.Field('email'))
+            basic_fields.append('email')
 
         if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
@@ -393,7 +393,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             ),
             (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else crispy.Fieldset)(
                 gettext_lazy("Other Options"),
-                hqcrispy.Field('language'),
+                'language',
                 crispy.Div(hqcrispy.StaticField(
                     gettext_lazy('API Key'),
                     format_html_lazy(
@@ -1061,7 +1061,7 @@ class GroupMembershipForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 fieldset_title,
-                crispy.Field('selected_ids'),
+                'selected_ids',
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -1427,9 +1427,9 @@ class DomainRequestForm(forms.Form):
         self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
         self.helper.show_form_errors = True
         self.helper.layout = crispy.Layout(
-            hqcrispy.Field('full_name'),
-            hqcrispy.Field('email'),
-            hqcrispy.Field('domain'),
+            'full_name',
+            'email',
+            'domain',
             self.form_actions,
         )
 
@@ -1686,7 +1686,7 @@ class UserFilterForm(forms.Form):
             fieldset_label = _('Filter and Download Mobile Workers')
             fields += [
                 crispy.Div(
-                    crispy.Field("location_id",),
+                    "location_id",
                     data_bind="slideVisible: !isCrossDomain()",
                 ),
                 crispy.Div(
@@ -1696,7 +1696,7 @@ class UserFilterForm(forms.Form):
                     ),
                     data_bind="slideVisible: !isCrossDomain() && location_id",
                 ),
-                crispy.Field("user_active_status",),
+                "user_active_status",
                 crispy.Field("columns", data_bind="value: columns"),
             ]
 
