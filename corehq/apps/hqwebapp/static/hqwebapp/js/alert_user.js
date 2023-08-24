@@ -16,7 +16,7 @@
 hqDefine("hqwebapp/js/alert_user", [
     "jquery",
     "knockout",
-    "hqwebapp/js/hq.helpers",
+    "hqwebapp/js/bootstrap3/hq.helpers",
 ],
 function (
     $,

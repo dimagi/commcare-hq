@@ -1,7 +1,7 @@
 hqDefine("hqwebapp/js/bootstrap3/base_main", [
     'hqwebapp/js/bootstrap3/downgrade_modal',
     'hqwebapp/js/bootstrap3/prepaid_modal',
-    'hqwebapp/js/hq.helpers',
+    'hqwebapp/js/bootstrap3/hq.helpers',
     'hqwebapp/js/layout',
     'hqwebapp/js/bootstrap3/hq-bug-report',
     'hqwebapp/js/bootstrap3/sticky_tabs',
