@@ -1,4 +1,4 @@
-from unittest.mock import patch, Mock, ANY
+from unittest.mock import ANY, Mock, patch
 
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse
@@ -7,7 +7,7 @@ from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.views import post_api, secure_post
-from corehq.apps.users.models import WebUser, HqPermissions
+from corehq.apps.users.models import CommCareUser, HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
 
 
@@ -38,7 +38,7 @@ class TestAuditLoggingForFormSubmission(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
 
-    def _create_user(self, access_api, access_mobile_endpoints):
+    def _create_user(self, access_api, access_mobile_endpoints, user_cls=WebUser):
         role = UserRole.create(
             self.domain, 'api-user', permissions=HqPermissions(
                 edit_data=access_api,
@@ -46,10 +46,10 @@ class TestAuditLoggingForFormSubmission(TestCase):
                 access_mobile_endpoints=access_mobile_endpoints,
             )
         )
-        web_user = WebUser.create(self.domain, self.username, self.password,
-                                  None, None, role_id=role.get_id)
-        self.addCleanup(web_user.delete, None, None)
-        return web_user
+        user = user_cls.create(self.domain, self.username, self.password,
+                               None, None, role_id=role.get_id)
+        self.addCleanup(user.delete, None, None)
+        return user
 
     def assert_api_response(self, status, url):
         self.client.login(username=self.username, password=self.password)
@@ -62,9 +62,16 @@ class TestAuditLoggingForFormSubmission(TestCase):
             self.assert_api_response(200, url)
             mock_notify_exception.assert_not_called()
 
-    def test_mobile_user_regular_submission(self):
+    def test_web_user_regular_submission(self):
         url = reverse(secure_post, args=[self.domain])
         self._create_user(access_api=False, access_mobile_endpoints=True)
+        with patch('corehq.apps.receiverwrapper.views.notify_exception') as mock_notify_exception:
+            self.assert_api_response(200, url)
+            mock_notify_exception.assert_not_called()
+
+    def test_commcare_user_regular_submission(self):
+        url = reverse(secure_post, args=[self.domain])
+        user = self._create_user(access_api=False, access_mobile_endpoints=True, user_cls=CommCareUser)
         with patch('corehq.apps.receiverwrapper.views.notify_exception') as mock_notify_exception:
             self.assert_api_response(200, url)
             mock_notify_exception.assert_not_called()
