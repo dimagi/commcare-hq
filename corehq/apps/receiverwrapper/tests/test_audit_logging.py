@@ -86,7 +86,7 @@ class TestAuditLoggingForFormSubmission(TestCase):
 
             self.assertIsInstance(args[0], WSGIRequest)
 
-            expected_message = f'Restricted access by user {user.get_id} to app_id None.'
+            expected_message = f"NoMobileEndpointsAccess: invalid request by {user.get_id} on {self.domain}"
             self.assertEqual(expected_message, kwargs.get("message"))
 
     def test_web_user_no_api_access(self):
