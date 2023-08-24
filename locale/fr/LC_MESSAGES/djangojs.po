@@ -3406,14 +3406,6 @@ msgstr ""
 msgid "Name of the Area"
 msgstr ""
 
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "View here"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "There are case(s) missing geolocation data."
-msgstr ""
-
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
 msgstr ""
@@ -4065,8 +4057,7 @@ msgid "Report successfully emailed"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/standard_hq_report.js
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
-msgid "An error occurred emailing you report. Please try again."
+msgid "An error occurred emailing your report. Please try again."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js
@@ -4234,6 +4225,10 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
 msgid "Please check above for any errors in your configuration."
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configurable_report.js
+msgid "An error occurred emailing you report. Please try again."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js

@@ -1405,6 +1405,15 @@ SMS_LOG_CHANGES = StaticToggle(
                  "Report, and adds Status and Event columns"),
 )
 
+EXPORT_DATA_SOURCE_DATA = StaticToggle(
+    'export_data_source_data',
+    'Add Export Data Source Data page',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+    description="Add the Export Data Source Data page to the Data tab",
+)
+
+
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'enable_include_sms_gateway_charging',
     'Enable include SMS gateway charging',

@@ -3,7 +3,7 @@ hqDefine('accounting/js/pricing_table', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/main',
+    'hqwebapp/js/bootstrap3/main',
     "hqwebapp/js/assert_properties",
 ], function (
     $,
