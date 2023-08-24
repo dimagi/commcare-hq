@@ -4,7 +4,7 @@ hqDefine('registration/js/password', [
     'underscore',
     'zxcvbn/dist/zxcvbn',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/knockout_bindings.ko', // password initializeValue binding
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // password initializeValue binding
 ], function (
     $,
     ko,

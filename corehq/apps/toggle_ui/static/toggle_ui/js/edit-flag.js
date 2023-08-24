@@ -3,8 +3,8 @@ hqDefine('toggle_ui/js/edit-flag', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/main',
-    'hqwebapp/js/knockout_bindings.ko',     // save button
+    'hqwebapp/js/bootstrap3/main',
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko',     // save button
 ], function (
     $,
     ko,

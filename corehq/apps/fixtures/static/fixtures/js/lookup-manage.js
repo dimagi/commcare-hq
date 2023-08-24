@@ -8,7 +8,7 @@ hqDefine("fixtures/js/lookup-manage", [
     "hqwebapp/js/assert_properties",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/hq.helpers",
-    "hqwebapp/js/knockout_bindings.ko",
+    "hqwebapp/js/bootstrap3/knockout_bindings.ko",
 ], function (
     $,
     _,

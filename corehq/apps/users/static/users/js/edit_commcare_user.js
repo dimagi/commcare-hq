@@ -8,7 +8,7 @@ hqDefine('users/js/edit_commcare_user', [
     'users/js/custom_data_fields',
     'locations/js/widgets',
     'jquery-textchange/jquery.textchange',
-    'hqwebapp/js/knockout_bindings.ko',
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko',
     'hqwebapp/js/widgets',
     'registration/js/password',
     'select2/dist/js/select2.full.min',

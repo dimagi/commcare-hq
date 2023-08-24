@@ -3,9 +3,9 @@ hqDefine("groups/js/group_members", [
     "underscore",
     "analytix/js/google",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/ui_elements/ui-element-key-val-list",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list",
     "hqwebapp/js/select_2_ajax_widget",     // "Group Membership" select2
-    "hqwebapp/js/components.ko",            // select toggle for "Edit Setings" popup
+    "hqwebapp/js/bootstrap3/components.ko",            // select toggle for "Edit Setings" popup
 ], function (
     $,
     _,
