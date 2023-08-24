@@ -210,7 +210,7 @@ class XFormInstanceManager(RequireDBManager):
     def _get_form_ids_for_user(self, domain, user_id, is_deleted):
         with self.model.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
-                'SELECT form_id FROM get_form_ids_for_user(%s, %s, %s)',
+                'SELECT form_id FROM get_form_ids_for_user_2(%s, %s, %s)',
                 [domain, user_id, is_deleted]
             )
             results = fetchall_as_namedtuple(cursor)
@@ -341,7 +341,7 @@ class XFormInstanceManager(RequireDBManager):
         deletion_date = deletion_date or datetime.utcnow()
         with self.model.get_plproxy_cursor() as cursor:
             cursor.execute(
-                'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
+                'SELECT soft_delete_forms_2(%s, %s, %s, %s) as affected_count',
                 [domain, form_ids, deletion_date, deletion_id]
             )
             results = fetchall_as_namedtuple(cursor)
@@ -357,7 +357,7 @@ class XFormInstanceManager(RequireDBManager):
         problem = 'Restored on {}'.format(datetime.utcnow())
         with self.model.get_plproxy_cursor() as cursor:
             cursor.execute(
-                'SELECT soft_undelete_forms(%s, %s, %s) as affected_count',
+                'SELECT soft_undelete_forms_2(%s, %s, %s) as affected_count',
                 [domain, form_ids, problem]
             )
             results = fetchall_as_namedtuple(cursor)
