@@ -167,9 +167,15 @@ def get_datasource_records(query, adapter):
             adapter.track_load()
             yield row
 
-    with closing(BytesIO()) as temp:
-        config_id = adapter.table_id
-        tables = [[config_id, get_table(query)]]
-        export_from_tables(tables, temp, Format.JSON)
-        exported_data = json.loads(temp.getvalue().decode('utf-8'))
-        return exported_data[config_id]
+    table_ = get_table(query)
+    headers = next(table_)
+
+    tmp_table = []
+    for row in table_:
+        columns_data = {}
+        for column_name, column_value in zip(headers, row):
+            if column_name == 'doc_id':
+                columns_data['id'] = column_value
+            columns_data[column_name] = column_value
+        tmp_table.append(columns_data)
+    return tmp_table
