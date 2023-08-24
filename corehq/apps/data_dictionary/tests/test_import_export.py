@@ -15,6 +15,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import TestFileMixin, privilege_enabled
 from corehq import privileges
+from corehq.util.test_utils import flag_enabled
 
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
