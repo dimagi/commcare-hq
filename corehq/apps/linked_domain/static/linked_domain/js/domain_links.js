@@ -3,7 +3,7 @@ hqDefine("linked_domain/js/domain_links", [
     'hqwebapp/js/initial_page_data',
     'underscore',
     'knockout',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'hqwebapp/js/multiselect_utils',
     'analytix/js/kissmetrix',
     'hqwebapp/js/bootstrap3/components.ko', // for pagination and search box

@@ -392,10 +392,10 @@ hqDefine('app_manager/js/app_manager', function () {
                 method: 'POST',
                 data: data,
                 success: function () {
-                    hqImport('hqwebapp/js/alert_user').alert_user(gettext("Moved successfully."), "success");
+                    hqImport('hqwebapp/js/bootstrap3/alert_user').alert_user(gettext("Moved successfully."), "success");
                 },
                 error: function (xhr) {
-                    hqImport('hqwebapp/js/alert_user').alert_user(xhr.responseJSON.error, "danger");
+                    hqImport('hqwebapp/js/bootstrap3/alert_user').alert_user(xhr.responseJSON.error, "danger");
                 },
             });
             hqImport("app_manager/js/menu").setPublishStatus(true);

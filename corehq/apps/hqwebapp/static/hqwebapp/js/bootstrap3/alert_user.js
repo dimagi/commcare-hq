@@ -13,7 +13,7 @@
        (success < info < warning < danger).
     fadeOut: Set to 'true' to have the message automatically removed from the UI after 5s.
 */
-hqDefine("hqwebapp/js/alert_user", [
+hqDefine("hqwebapp/js/bootstrap3/alert_user", [
     "jquery",
     "knockout",
     "hqwebapp/js/bootstrap3/hq.helpers",

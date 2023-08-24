@@ -2,7 +2,7 @@ hqDefine('users/js/edit_commcare_user', [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'analytix/js/google',
     'hqwebapp/js/multiselect_utils',
     'users/js/custom_data_fields',

@@ -140,7 +140,7 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
             }
 
             if (errors.length) {
-                var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
+                var alert_user = hqImport("hqwebapp/js/bootstrap3/alert_user").alert_user;
                 _.each(errors, function (error) {
                     alert_user(error, "danger");
                 });

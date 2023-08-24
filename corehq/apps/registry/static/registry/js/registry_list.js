@@ -3,7 +3,7 @@ hqDefine("registry/js/registry_list", [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'registry/js/registry_text',
     'registry/js/registry_actions',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko', // openModal
