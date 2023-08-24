@@ -1163,7 +1163,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 });
                 break;
             case constants.SELECT:
-                isMinimal = style === constants.MINIMAL;
+                isMinimal = question.stylesContains(constants.MINIMAL);
                 if (style) {
                     isCombobox = question.stylesContains(constants.COMBOBOX);
                 }
@@ -1211,7 +1211,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 }
                 break;
             case constants.MULTI_SELECT:
-                isMinimal = style === constants.MINIMAL;
+                isMinimal = question.stylesContains(constants.MINIMAL);
                 if (style) {
                     isLabel = style === constants.LABEL;
                     hideLabel = style === constants.LIST_NOLABEL;
@@ -1255,7 +1255,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             case constants.GEO:
                 entry = new GeoPointEntry(question, {});
                 break;
-            case constants.INFO:
+            case constants.INFO: // it's a label
                 entry = new InfoEntry(question, {});
                 break;
             case constants.BINARY:
