@@ -4,7 +4,6 @@ API endpoints for filter options
 import logging
 import json
 import uuid
-from dataclasses import dataclass
 
 from django.views.generic import View
 from django.http import JsonResponse
@@ -43,6 +42,7 @@ from corehq.elastic import ESError
 from django_prbac.decorators import requires_privilege
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.hqcase.case_helper import UserDuck
 
 logger = logging.getLogger(__name__)
 
@@ -257,13 +257,6 @@ def copy_cases(request, domain, *args, **kwargs):
         {'copied_cases': count, 'error': errors},
         status=400 if count == 0 else 200,
     )
-
-
-@dataclass
-class UserDuck:
-    """Quacks like a User"""
-    user_id: str
-    username: str
 
 
 class CaseCopier:
