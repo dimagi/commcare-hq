@@ -25,7 +25,7 @@
     </div>
     <% } %>
 
-    <div style="<%- columnStyle %>">
+    <div id="module-case-list-container__results-container" style="<%- columnStyle %>">
       <div id="module-case-list-column-next-to-map">
         <% if (useTiles) { %>
           <% if (hasNoItems) { %>
@@ -83,7 +83,7 @@
         <% } %>
       </div>
       <% if (showMap) { %>
-        <div id="module-case-list-map" class="map <% if (useTiles) { %> white-border<% } %>"></div>
+        <div id="module-case-list-map" class="map <% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
       <% } %>
     </div>
     <% if (actions || isMultiSelect) { %>

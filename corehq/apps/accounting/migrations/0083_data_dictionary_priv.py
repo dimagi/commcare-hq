@@ -28,7 +28,7 @@ def _grandfather_data_dictionary_priv(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0081_billingaccount_bill_web_user'),
+        ('accounting', '0082_application_error_report_priv'),
     ]
 
     operations = [

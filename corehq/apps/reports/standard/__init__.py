@@ -7,6 +7,7 @@ from django.utils.translation import gettext_noop
 
 import dateutil
 from memoized import memoized
+from corehq.apps.reports.forms import EmailReportForm
 
 from dimagi.utils.dates import DateSpan
 
@@ -40,7 +41,10 @@ class ProjectReport(GenericReportView):
     @property
     def template_context(self):
         context = super().template_context
-        context.update({'user_types': HQUserType.human_readable})
+        context.update({
+            'user_types': HQUserType.human_readable,
+            'email_form': EmailReportForm()
+        })
         return context
 
 
@@ -139,7 +143,7 @@ class ProjectReportParametersMixin(object):
                 if self.include_inactive:
                     cc_users += CommCareUser.by_domain(self.domain, is_active=False)
                 ids = [ccu._id for ccu in cc_users]
-                cache.set(cache_str, ids, 24*60*60)
+                cache.set(cache_str, ids, 24 * 60 * 60)
         return ids
 
     @property
