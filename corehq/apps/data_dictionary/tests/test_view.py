@@ -10,10 +10,12 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
 
+from corehq.util.test_utils import privilege_enabled
+from corehq import privileges
 from corehq.util.test_utils import flag_enabled
 
 
-@flag_enabled('DATA_DICTIONARY')
+@privilege_enabled(privileges.DATA_DICTIONARY)
 @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 class UpdateCasePropertyViewTest(TestCase):
     domain_name = uuid.uuid4().hex
@@ -199,7 +201,7 @@ class UpdateCasePropertyViewTest(TestCase):
         self.assertIsNone(prop.group_obj)
 
 
-@flag_enabled('DATA_DICTIONARY')
+@privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryViewTest(TestCase):
     domain_name = uuid.uuid4().hex
 
@@ -249,7 +251,7 @@ class DataDictionaryViewTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
-@flag_enabled('DATA_DICTIONARY')
+@privilege_enabled(privileges.DATA_DICTIONARY)
 class TestDeprecateOrRestoreCaseTypeView(TestCase):
 
     urlname = 'deprecate_or_restore_case_type'
@@ -313,7 +315,6 @@ class TestDeprecateOrRestoreCaseTypeView(TestCase):
         self.assertEqual(case_prop_group_count, 0)
 
 
-@flag_enabled('DATA_DICTIONARY')
 @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 class DataDictionaryJsonTest(TestCase):
     domain_name = uuid.uuid4().hex
