@@ -1046,7 +1046,7 @@ class FormBase(DocumentSchema):
     function_datum_endpoints = StringListProperty()
 
     def __repr__(self):
-        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}')"
+        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
 
     @classmethod
     def wrap(cls, data):
@@ -2251,7 +2251,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         self.assign_references()
 
     def __repr__(self):
-        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}')"
+        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
 
     @property
     def is_surveys(self):
@@ -4599,7 +4599,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
     def __repr__(self):
         return (f"{self.doc_type}(id='{self._id}', domain='{self.domain}', "
-                f"name='{self.name}', is_build={bool(self.copy_of)})")
+                f"name='{self.name}', copy_of={repr(self.copy_of)})")
 
     def has_modules(self):
         return len(self.get_modules()) > 0 and not self.is_remote_app()
