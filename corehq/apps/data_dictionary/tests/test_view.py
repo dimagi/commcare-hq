@@ -315,7 +315,6 @@ class TestDeprecateOrRestoreCaseTypeView(TestCase):
         self.assertEqual(case_prop_group_count, 0)
 
 
-@flag_enabled('DATA_DICTIONARY')
 @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 class DataDictionaryJsonTest(TestCase):
     domain_name = uuid.uuid4().hex
