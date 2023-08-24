@@ -1,5 +1,6 @@
 import json
 import uuid
+from unittest.mock import patch
 
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -13,6 +14,7 @@ from corehq.util.test_utils import flag_enabled
 
 
 @flag_enabled('DATA_DICTIONARY')
+@flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 class UpdateCasePropertyViewTest(TestCase):
     domain_name = uuid.uuid4().hex
 
@@ -309,3 +311,81 @@ class TestDeprecateOrRestoreCaseTypeView(TestCase):
         self.assertEqual(case_prop_count, 0)
         case_prop_group_count = CasePropertyGroup.objects.filter(case_type=case_type_obj, deprecated=True).count()
         self.assertEqual(case_prop_group_count, 0)
+
+
+@flag_enabled('DATA_DICTIONARY')
+@flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
+class DataDictionaryJsonTest(TestCase):
+    domain_name = uuid.uuid4().hex
+
+    @classmethod
+    def setUpClass(cls):
+        super(DataDictionaryJsonTest, cls).setUpClass()
+        cls.domain = create_domain(cls.domain_name)
+        cls.couch_user = WebUser.create(None, "test", "foobar", None, None)
+        cls.couch_user.add_domain_membership(cls.domain_name, is_admin=True)
+        cls.couch_user.save()
+        cls.case_type_obj = CaseType(name='caseType', domain=cls.domain_name)
+        cls.case_type_obj.save()
+        cls.case_prop_group_obj = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
+        cls.case_prop_group_obj.save()
+        cls.case_prop_obj = CaseProperty(
+            case_type=cls.case_type_obj,
+            name='property',
+            data_type='number',
+            group_obj=cls.case_prop_group_obj
+        )
+        cls.case_prop_obj.save()
+        cls.client = Client()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.case_type_obj.delete()
+        cls.couch_user.delete(cls.domain_name, deleted_by=None)
+        cls.domain.delete()
+        super(DataDictionaryJsonTest, cls).tearDownClass()
+
+    def setUp(self):
+        self.endpoint = reverse('data_dictionary_json', args=[self.domain_name])
+
+    def test_no_access(self):
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, 302)
+
+    @patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
+    def test_get_json_success(self, *args):
+        self.client.login(username='test', password='foobar')
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, 200)
+        expected_response = {
+            "case_types": [
+                {
+                    "name": "caseType",
+                    "fhir_resource_type": None,
+                    "groups": [
+                        {
+                            "id": self.case_prop_group_obj.id,
+                            "name": "group",
+                            "description": "",
+                            "deprecated": False,
+                            "properties": [
+                                {
+                                    "description": "",
+                                    "label": "",
+                                    "fhir_resource_prop_path": None,
+                                    "name": "property",
+                                    "deprecated": False,
+                                    "allowed_values": {},
+                                    "data_type": "number",
+                                },
+                            ],
+                        },
+                        {"name": "", "properties": []},
+                    ],
+                    "is_deprecated": False,
+                    "module_count": 0,
+                    "properties": [],
+                }
+            ]
+        }
+        self.assertEqual(response.json(), expected_response)
