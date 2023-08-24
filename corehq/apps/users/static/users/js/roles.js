@@ -4,8 +4,7 @@ hqDefine('users/js/roles',[
     'knockout',
     'hqwebapp/js/toggles',
     'hqwebapp/js/privileges',
-    'hqwebapp/js/alert_user',
-], function ($, _, ko, toggles, privileges, alertUser) {
+], function ($, _, ko, toggles, privileges) {
     let selectPermissionModel = function (id, permissionModel, text) {
         /*
         Function to build the view model for permissions that aren't simple booleans. The data is
@@ -52,7 +51,7 @@ hqDefine('users/js/roles',[
         if (self.all()) {
             self.selection(ALL);
         } else if (_.find(permissionModel.specific(), item => item.value())) {
-            self.selection(SELECTED)
+            self.selection(SELECTED);
         } else {
             self.selection(NONE);
         }
@@ -71,7 +70,7 @@ hqDefine('users/js/roles',[
         });
 
         self.hasError = ko.pureComputed(() => {
-            return self.selection() === SELECTED && permissionModel.filteredSpecific().length == 0;
+            return self.selection() === SELECTED && permissionModel.filteredSpecific().length === 0;
         });
         return self;
     };
@@ -309,7 +308,7 @@ hqDefine('users/js/roles',[
                         // but for the small number of existing roles that have this combination
                         // we want it to be displayed.
                         // Unchecking "Access APIs" in this situation will then make the option disappear.
-                        showOption: ko.pureComputed(function() {
+                        showOption: ko.pureComputed(function () {
                             return self.permissions.access_all_locations() || self.permissions.access_api();
                         }),
                         editPermission: self.permissions.access_api,
@@ -437,7 +436,7 @@ hqDefine('users/js/roles',[
                         checkboxPermission: self.permissions.edit_reports,
                         checkboxText: gettext("Allow role to create and edit reports in report builder."),
                     },
-                ]
+                ];
                 if (toggles.toggleEnabled('USER_CONFIGURABLE_REPORTS')) {
                     if (toggles.toggleEnabled('UCR_UPDATED_NAMING')) {
                         self.reports.push({
@@ -502,7 +501,7 @@ hqDefine('users/js/roles',[
                 ];
                 // Automatically disable "Access APIs" when "Full Organization Access" is disabled
                 self.permissions.access_all_locations.subscribe(() => {
-                    if(!self.permissions.access_all_locations() && self.permissions.access_api()) {
+                    if (!self.permissions.access_all_locations() && self.permissions.access_api()) {
                         self.permissions.access_api(false);
                     }
                 });
@@ -527,11 +526,11 @@ hqDefine('users/js/roles',[
                     data.name = data.name.trim();
                 }
 
-                const unwrapItemList = function (items, item_attr = 'slug') {
+                const unwrapItemList = function (items, itemAttr = 'slug') {
                     return ko.utils.arrayMap(ko.utils.arrayFilter(items, function (item) {
                         return item.value;
                     }), function (item) {
-                        return item[item_attr];
+                        return item[itemAttr];
                     });
                 };
 
@@ -612,7 +611,7 @@ hqDefine('users/js/roles',[
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
         };
-        self.unsetRoleBeingEdited = function (_, event) {
+        self.unsetRoleBeingEdited = function () {
             self.roleBeingEdited(undefined);
         };
         self.setRoleBeingDeleted = function (role) {
@@ -685,7 +684,7 @@ hqDefine('users/js/roles',[
                         message = response.responseJSON.message;
                     }
                     self.setRoleError(form, message);
-                }
+                },
             });
         };
 

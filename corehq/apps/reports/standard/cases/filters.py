@@ -22,7 +22,6 @@ from corehq.apps.reports.filters.base import (
     BaseSimpleFilter,
     BaseSingleOptionFilter,
 )
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 
 

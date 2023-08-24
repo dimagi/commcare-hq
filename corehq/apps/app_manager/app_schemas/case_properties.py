@@ -3,7 +3,6 @@ from collections import defaultdict, deque, namedtuple
 
 from memoized import memoized
 
-from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain,

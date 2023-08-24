@@ -40,9 +40,6 @@ from corehq.motech.fhir.utils import (
     remove_fhir_resource_type,
     update_fhir_resource_type,
 )
-from corehq.util.files import file_extention_from_filename
-from corehq.util.workbook_reading import open_any_workbook
-from corehq.util.workbook_reading.datamodels import Cell
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege
 from corehq import privileges
 from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
@@ -72,6 +69,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
         queryset = queryset.filter(name=case_type_name)
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
     for case_type in queryset:
         module_count = case_type_app_module_count.get(case_type.name, 0)
         p = {
@@ -83,17 +81,31 @@ def data_dictionary_json(request, domain, case_type_name=None):
             "properties": [],
         }
         grouped_properties = {
-            group: [{
-                "description": prop.description,
-                "label": prop.label,
-                "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
-                "name": prop.name,
-                "data_type": prop.data_type,
-                "deprecated": prop.deprecated,
-                "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
-            } for prop in props] for group, props in itertools.groupby(
-                case_type.properties.all(),
-                key=attrgetter('group_obj_id')
+            group: [
+                {
+                    'description': prop.description,
+                    'label': prop.label,
+                    'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(
+                        prop
+                    ),
+                    'name': prop.name,
+                    'deprecated': prop.deprecated,
+                }
+                | (
+                    {
+                        'data_type': prop.data_type,
+                        'allowed_values': {
+                            av.allowed_value: av.description
+                            for av in prop.allowed_values.all()
+                        },
+                    }
+                    if data_validation_enabled
+                    else {}
+                )
+                for prop in props
+            ]
+            for group, props in itertools.groupby(
+                case_type.properties.all(), key=attrgetter('group_obj_id')
             )
         }
         for group in case_type.groups.all():
@@ -159,6 +171,7 @@ def update_case_property(request, domain):
     update_fhir_resources = toggles.FHIR_INTEGRATION.enabled(domain)
     property_list = json.loads(request.POST.get('properties'))
     group_list = json.loads(request.POST.get('groups'))
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
 
     if update_fhir_resources:
         errors, fhir_resource_type_obj = _update_fhir_resource_type(request, domain)
@@ -183,10 +196,10 @@ def update_case_property(request, domain):
             label = property.get('label')
             index = property.get('index')
             description = property.get('description')
-            data_type = property.get('data_type')
+            data_type = property.get('data_type') if data_validation_enabled else None
             group = property.get('group')
             deprecated = property.get('deprecated')
-            allowed_values = property.get('allowed_values')
+            allowed_values = property.get('allowed_values') if data_validation_enabled else None
             if update_fhir_resources:
                 fhir_resource_prop_path = property.get('fhir_resource_prop_path')
                 remove_path = property.get('removeFHIRResourcePropertyPath', False)
@@ -241,10 +254,12 @@ def _export_data_dictionary(domain):
         _('Case Property'),
         _('Label'),
         _('Group'),
-        _('Data Type'),
         _('Description'),
         _('Deprecated')
     ]
+    if toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain):
+        case_prop_headers.append(_('Data Type'))
+
     allowed_value_headers = [_('Case Property'), _('Valid Value'), _('Valid Value Description')]
 
     case_type_data, case_prop_data = _generate_data_for_export(domain, export_fhir_data)
@@ -252,7 +267,7 @@ def _export_data_dictionary(domain):
     outfile = io.BytesIO()
     writer = Excel2007ExportWriter()
     header_table = _get_headers_for_export(
-        export_fhir_data, case_type_headers, case_prop_headers, case_prop_data, allowed_value_headers)
+        export_fhir_data, case_type_headers, case_prop_headers, case_prop_data, allowed_value_headers, domain)
     writer.open(header_table=header_table, file=outfile)
     if export_fhir_data:
         _export_fhir_data(writer, case_type_headers, case_type_data)
@@ -267,18 +282,19 @@ def _generate_data_for_export(domain, export_fhir_data):
             _('Case Property'): case_prop.name,
             _('Label'): case_prop.label,
             _('Group'): case_prop.group_name,
-            _('Data Type'): case_prop.get_data_type_display() if case_prop.data_type else '',
             _('Description'): case_prop.description,
             _('Deprecated'): case_prop.deprecated
         }
-        if case_prop.data_type == 'select':
-            prop_dict['allowed_values'] = [
-                {
-                    _('Case Property'): case_prop.name,
-                    _('Valid Value'): av.allowed_value,
-                    _('Valid Value Description'): av.description,
-                } for av in case_prop.allowed_values.all()
-            ]
+        if toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain):
+            prop_dict[_('Data Type')] = case_prop.get_data_type_display() if case_prop.data_type else ''
+            if case_prop.data_type == 'select':
+                prop_dict['allowed_values'] = [
+                    {
+                        _('Case Property'): case_prop.name,
+                        _('Valid Value'): av.allowed_value,
+                        _('Valid Value Description'): av.description,
+                    } for av in case_prop.allowed_values.all()
+                ]
         if export_fhir_data:
             prop_dict[_('FHIR Resource Property')] = fhir_resource_prop
         return prop_dict
@@ -317,14 +333,16 @@ def _add_fhir_resource_mapping_sheet(case_type_data, fhir_resource_type_name_by_
 
 
 def _get_headers_for_export(export_fhir_data, case_type_headers, case_prop_headers, case_prop_data,
-                            allowed_value_headers):
+                            allowed_value_headers, domain):
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
     header_table = []
     if export_fhir_data:
         header_table.append((FHIR_RESOURCE_TYPE_MAPPING_SHEET, [case_type_headers]))
         case_prop_headers.extend([_('FHIR Resource Property'), _('Remove Resource Property(Y)')])
     for tab_name in case_prop_data:
         header_table.append((tab_name, [case_prop_headers]))
-        header_table.append((f'{tab_name}{ALLOWED_VALUES_SHEET_SUFFIX}', [allowed_value_headers]))
+        if data_validation_enabled:
+            header_table.append((f'{tab_name}{ALLOWED_VALUES_SHEET_SUFFIX}', [allowed_value_headers]))
     return header_table
 
 
@@ -433,11 +451,15 @@ class UploadDataDictionaryView(BaseProjectDataView):
     @method_decorator(atomic)
     def post(self, request, *args, **kwargs):
         bulk_file = self.request.FILES['bulk_upload_file']
-        errors = process_bulk_upload(bulk_file, self.domain)
+        errors, warnings = process_bulk_upload(bulk_file, self.domain)
         if errors:
             messages.error(request, _("Errors in upload: {}").format(
                 "<ul>{}</ul>".format("".join([f"<li>{e}</li>" for e in errors]))
             ), extra_tags="html")
         else:
             messages.success(request, _('Data dictionary import complete'))
+            if warnings:
+                messages.warning(request, _("Warnings in upload: {}").format(
+                    "<ul>{}</ul>".format("".join([f"<li>{e}</li>" for e in warnings]))
+                ), extra_tags="html")
         return self.get(request, *args, **kwargs)

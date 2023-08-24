@@ -38,6 +38,7 @@ def combined_patches(fn):
         res = patch_(res)
     return res
 
+
 class BaseSchemaTest(SimpleTestCase):
     def setUp(self):
         self.factory = AppFactory()
