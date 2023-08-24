@@ -437,7 +437,7 @@ msgstr "Se requiere un nombre para este nuevo rol."
 #: corehq/apps/events/views.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/locations/forms.py
+#: corehq/apps/geospatial/reports.py corehq/apps/locations/forms.py
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/templates/reminders/keyword.html
 #: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
@@ -522,10 +522,10 @@ msgstr ""
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
 msgid ""
-"Per-user fee exceeding limit of {monthly_limit} user with plan above."
+"Per-{user} fee exceeding limit of {monthly_limit} {user} with plan above."
 "{prorated_notice}"
 msgid_plural ""
-"Per-user fee exceeding limit of {monthly_limit} users with plan above."
+"Per-{user} fee exceeding limit of {monthly_limit} {user}s with plan above."
 "{prorated_notice}"
 msgstr[0] ""
 msgstr[1] ""
@@ -3211,6 +3211,13 @@ msgstr "Mensajes de texto"
 msgid "Mobile Workers"
 msgstr "Usuarios Móviles"
 
+#: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
+#: corehq/apps/export/forms.py corehq/apps/reports/models.py
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/apps/users/views/__init__.py
+msgid "Web Users"
+msgstr ""
+
 #: corehq/apps/accounting/user_text.py
 msgid "Mobile Users"
 msgstr "Usuarios Móviles"
@@ -5486,6 +5493,10 @@ msgstr ""
 msgid "Three upper rows, four rows with two cells, two lower rows and map"
 msgstr ""
 
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "Title row, second row with two cells, third row with two cells"
+msgstr ""
+
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
 #, python-brace-format
 msgid "There is no schedule for form {form_id}"
@@ -6269,6 +6280,7 @@ msgstr "Instale CommCare"
 #: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
@@ -6279,7 +6291,7 @@ msgstr "Instale CommCare"
 #: corehq/apps/integration/templates/integration/base_cloudcare_template.html
 #: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/reports/templates/reports/standard/base_template.html
+#: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/standard/submission_error_report.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 #: corehq/apps/users/templates/users/mobile_workers.html
@@ -13145,10 +13157,8 @@ msgid "Could not find resource type for {}"
 msgstr ""
 
 #: corehq/apps/data_dictionary/bulk.py
-#, fuzzy
-#| msgid "Error with location in sheet '{}', at row {}. {}: {}"
 msgid "Error in \"{}\" sheet, row {}: {}"
-msgstr "Error con la ubicación en la hoja '{}', en la fila  {}. {}: {}"
+msgstr ""
 
 #: corehq/apps/data_dictionary/bulk.py
 msgid ""
@@ -13181,7 +13191,7 @@ msgstr "Número"
 msgid "Multiple Choice"
 msgstr "Opción Multiple"
 
-#: corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_dictionary/models.py corehq/apps/geospatial/reports.py
 msgid "GPS"
 msgstr "GPS"
 
@@ -13375,21 +13385,16 @@ msgid "Column {} in \"{}\" sheet has an empty header"
 msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
-#, fuzzy
-#| msgid "You can't send an empty message"
 msgid "Column {} has an empty header"
-msgstr "No puede enviar un mensaje vacío"
+msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
 msgid "Invalid column \"{}\" in \"{}\" sheet. Valid column names are: {}"
 msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
-#, fuzzy
-#| msgid "Invalid or missing transform type: {}. Valid options are: {}"
 msgid "Invalid column \"{}\". Valid column names are: {}"
 msgstr ""
-"Tipo de transfomación inválida o faltante: {}. Las opciones válidas son: {}"
 
 #: corehq/apps/data_dictionary/util.py
 msgid "Missing \"Case Property\" column header in \"{}\" sheet"
@@ -13587,6 +13592,7 @@ msgstr "Reasignar Casos"
 
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/reports/v2/reports/explore_case_data.py
 msgid "Case Name"
 msgstr "Nombre del Caso"
@@ -18215,13 +18221,6 @@ msgstr ""
 msgid "Last Form Submission [UTC]"
 msgstr ""
 
-#: corehq/apps/enterprise/enterprise.py corehq/apps/export/forms.py
-#: corehq/apps/reports/models.py
-#: corehq/apps/users/templates/users/roles_and_permissions.html
-#: corehq/apps/users/views/__init__.py
-msgid "Web Users"
-msgstr ""
-
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/forms.py
 #: corehq/apps/registration/forms.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/users/forms.py corehq/apps/users/templates/users/web_users.html
@@ -21681,6 +21680,12 @@ msgstr ""
 msgid "Geospatial"
 msgstr ""
 
+#: corehq/apps/geospatial/reports.py
+#, fuzzy
+#| msgid "case id"
+msgid "case_id"
+msgstr "id del caso"
+
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Filter by Saved Area"
 msgstr ""
@@ -21692,6 +21697,28 @@ msgstr ""
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Save Area"
 msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Cases Missing GPS Data"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid "Related Cases"
+msgid "Selected Cases"
+msgstr "Casos Relacionados"
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid "Cases only"
+msgid "Cases on Map"
+msgstr "Solo casos"
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid "All Case Types"
+msgid "All Cases on Map"
+msgstr "Todos los Tipos de Caso"
 
 #: corehq/apps/geospatial/views.py
 msgid "Configuration Settings"
@@ -27974,6 +28001,18 @@ msgid "Project name already taken - please try another"
 msgstr "El nombre del proyecto ya está tomado - por favor intente otro"
 
 #: corehq/apps/registration/views.py
+#, fuzzy
+#| msgid ""
+#| "An error has occurred. Please try again, and if the problem persists, "
+#| "please report an issue."
+msgid ""
+"We encountered a temporary system issue. Please try again in a few minutes. "
+"If the issue persists, please contact support."
+msgstr ""
+"Ocurrió un error. Por favor intente de nuevo y si el problema continúa, por "
+"favor reporte un problema."
+
+#: corehq/apps/registration/views.py
 #, python-brace-format
 msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
 msgstr ""
@@ -29448,6 +29487,30 @@ msgstr "Configurar Reporte Agendado"
 #: corehq/apps/reports/forms.py
 msgid "Must be after 'From Time'"
 msgstr ""
+
+#: corehq/apps/reports/forms.py corehq/messaging/scheduling/forms.py
+msgid "Subject"
+msgstr "Asunto"
+
+#: corehq/apps/reports/forms.py
+msgid "Send to me"
+msgstr "Enviarme"
+
+#: corehq/apps/reports/forms.py
+msgid "Additional Recipients"
+msgstr "Destinatarios Adicionales"
+
+#: corehq/apps/reports/forms.py
+msgid "Report notes"
+msgstr "Notas del reporte"
+
+#: corehq/apps/reports/forms.py
+msgid "Send Email"
+msgstr "Enviar Correo Electrónico"
+
+#: corehq/apps/reports/forms.py
+msgid "Sending..."
+msgstr "Enviando..."
 
 #: corehq/apps/reports/forms.py
 msgid "Server Type"
@@ -31538,43 +31601,6 @@ msgstr "Enviar reporte por correo electrónico:"
 #: corehq/apps/reports/templates/reports/standard/base_template.html
 msgid "to"
 msgstr "para"
-
-#: corehq/apps/reports/templates/reports/standard/base_template.html
-#: corehq/messaging/scheduling/forms.py
-msgid "Subject"
-msgstr "Asunto"
-
-#: corehq/apps/reports/templates/reports/standard/base_template.html
-msgid "Sending Options"
-msgstr "Opciones de Envío"
-
-#: corehq/apps/reports/templates/reports/standard/base_template.html
-msgid "Send to me"
-msgstr "Enviarme"
-
-#: corehq/apps/reports/templates/reports/standard/base_template.html
-msgid "Additional Recipients"
-msgstr "Destinatarios Adicionales"
-
-#: corehq/apps/reports/templates/reports/standard/base_template.html
-msgid "Report notes"
-msgstr "Notas del reporte"
-
-#: corehq/apps/reports/templates/reports/standard/base_template.html
-msgid "Email successfully sent!"
-msgstr "¡Correo electrónico enviado exitosamente!"
-
-#: corehq/apps/reports/templates/reports/standard/base_template.html
-msgid "Error sending email."
-msgstr "Error al enviar el correo electrónico."
-
-#: corehq/apps/reports/templates/reports/standard/base_template.html
-msgid "Sending..."
-msgstr "Enviando..."
-
-#: corehq/apps/reports/templates/reports/standard/base_template.html
-msgid "Send Email"
-msgstr "Enviar Correo Electrónico"
 
 #: corehq/apps/reports/templates/reports/standard/base_template.html
 msgid "Notice"
@@ -34856,7 +34882,14 @@ msgstr ""
 #: corehq/apps/sso/utils/login_helpers.py
 msgid ""
 "We were unable to create your requested project because the name was already "
-"taken.Please contact support."
+"taken."
+msgstr ""
+
+#: corehq/apps/sso/utils/login_helpers.py
+msgid ""
+"We were unable to create your requested project due to an unexpected issue. "
+"Please try again in a few minutes.If the issue persists, please contact "
+"support."
 msgstr ""
 
 #: corehq/apps/sso/utils/message_helpers.py
@@ -44624,3 +44657,12 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#~ msgid "Sending Options"
+#~ msgstr "Opciones de Envío"
+
+#~ msgid "Email successfully sent!"
+#~ msgstr "¡Correo electrónico enviado exitosamente!"
+
+#~ msgid "Error sending email."
+#~ msgstr "Error al enviar el correo electrónico."

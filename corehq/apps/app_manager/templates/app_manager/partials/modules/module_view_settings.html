@@ -138,9 +138,11 @@
                                              selectedOptions: excludedFormIds"></select>
                     {# POST a value, even if no forms are excluded #}
                     <input name="excl_form_ids" type="checkbox" value="0" checked="">
-                    <div data-bind="foreach: formSessionEndpointIds()">
-                      <input type="hidden" name="form_session_endpoints" data-bind="value: $data">
-                    </div>
+                    {% if session_endpoints_enabled %}
+                      <div data-bind="foreach: formSessionEndpointIds()">
+                        <input type="hidden" name="form_session_endpoints" data-bind="value: $data">
+                      </div>
+                    {% endif %}
                   </div>
                 </div>
               </div>

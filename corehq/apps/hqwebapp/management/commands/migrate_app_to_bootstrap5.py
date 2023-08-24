@@ -13,6 +13,9 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_changed_css_classes,
     flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
+    flag_path_references_to_migrated_javascript_files,
+    file_contains_reference_to_path,
+    replace_path_references,
 )
 
 COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
@@ -39,6 +42,12 @@ class Command(BaseCommand):
             default=False,
             help="Run migration against already split bootstrap 5 files"
         )
+        parser.add_argument(
+            '--verify-references',
+            action='store_true',
+            default=False,
+            help="Verify that all references to migrated files have been updated"
+        )
 
     def handle(self, app_name, **options):
         if not settings.BOOTSTRAP_MIGRATION_LOGS_DIR:
@@ -50,6 +59,13 @@ class Command(BaseCommand):
         template_name = options.get('template_name')
         js_name = options.get('js_name')
         do_re_check = options.get('re_check')
+        verify_references = options.get('verify_references')
+
+        if verify_references:
+            self.stdout.write(f"\n\nVerifying that references to migrated files "
+                              f"in {app_name} have been updated...")
+            self.verify_migrated_references(app_name)
+            return
 
         if not js_name:
             self.stdout.write(f"\n\nMigrating {app_name} templates...")
@@ -60,6 +76,14 @@ class Command(BaseCommand):
             self.stdout.write(f"\n\nMigrating {app_name} javascript...")
             app_javascript = self.get_js_files_for_migration(app_name, js_name, do_re_check)
             self.migrate_files(app_javascript, app_name, spec, is_template=False)
+
+    @staticmethod
+    def _get_app_template_folder(app_name):
+        return COREHQ_BASE_DIR / "apps" / app_name / "templates" / app_name
+
+    @staticmethod
+    def _get_app_static_folder(app_name):
+        return COREHQ_BASE_DIR / "apps" / app_name / "static" / app_name
 
     def _get_files_for_migration(self, files, file_name, do_re_check):
         if file_name is not None:
@@ -76,12 +100,12 @@ class Command(BaseCommand):
         return files
 
     def get_templates_for_migration(self, app_name, template_name, do_re_check):
-        app_template_folder = COREHQ_BASE_DIR / "apps" / app_name / "templates" / app_name
+        app_template_folder = self._get_app_template_folder(app_name)
         app_templates = [f for f in app_template_folder.glob('**/*') if f.is_file()]
         return self._get_files_for_migration(app_templates, template_name, do_re_check)
 
     def get_js_files_for_migration(self, app_name, js_name, do_re_check):
-        app_static_folder = COREHQ_BASE_DIR / "apps" / app_name / "static" / app_name
+        app_static_folder = self._get_app_static_folder(app_name)
         app_js_files = [f for f in app_static_folder.glob('**/*.js') if f.is_file()]
         return self._get_files_for_migration(app_js_files, js_name, do_re_check)
 
@@ -196,14 +220,20 @@ class Command(BaseCommand):
                 self.save_split_templates(
                     file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
                 )
-                self.refactor_references(short_path, bootstrap3_short_path, is_template)
+                self.stdout.write("updating references...")
+                references = self.update_and_get_references(short_path, bootstrap3_short_path, is_template)
                 if not is_template:
                     # also check extension-less references for javascript files
-                    self.refactor_references(
+                    references.extend(self.update_and_get_references(
                         short_path.replace('.js', ''),
                         bootstrap3_short_path.replace('.js', ''),
                         is_template=False
-                    )
+                    ))
+                if references:
+                    self.stdout.write(f"Updated references to {short_path} in these files:")
+                    self.stdout.write("\n".join(references))
+                else:
+                    self.stdout.write(f"No references were found for {short_path}...")
             self.stdout.write("\nNow would be a good time to review changes with git and "
                               "commit before moving on to the next template.")
             self.stdout.write("\nSuggested commit message:")
@@ -220,9 +250,48 @@ class Command(BaseCommand):
         with open(bootstrap5_path, 'w') as file:
             file.writelines(bootstrap5_lines)
 
-    def refactor_references(self, old_reference, new_reference, is_template):
-        self.stdout.write("updating references...")
-        found_references = False
+    def _get_migrated_files(self, app_name):
+        app_template_folder = self._get_app_template_folder(app_name)
+        migrated_files = [f for f in app_template_folder.glob('**/*')
+                          if f.is_file() and '/bootstrap3/' in str(f) and '/crispy/' not in str(f)]
+        app_static_folder = self._get_app_static_folder(app_name)
+        migrated_files.extend(
+            f for f in app_static_folder.glob('**/*.js')
+            if f.is_file() and '/bootstrap3/' in str(f)
+        )
+        return migrated_files
+
+    def verify_migrated_references(self, app_name):
+        migrated_files = self._get_migrated_files(app_name)
+        template_path = self._get_app_template_folder(app_name)
+        for file_path in migrated_files:
+            is_template = file_path.is_relative_to(template_path)
+            new_reference = self.get_short_path(app_name, file_path, is_template)
+            old_reference = new_reference.replace("/bootstrap3/", "/")
+            references = self.update_and_get_references(
+                old_reference,
+                new_reference,
+                is_template
+            )
+            if not is_template:
+                references.extend(self.update_and_get_references(
+                    old_reference.replace(".js", ""),
+                    new_reference.replace(".js", ""),
+                    is_template=False
+                ))
+            if references:
+                self.stdout.write(f"\n\nUpdated references to {old_reference} in these files:")
+                self.stdout.write("\n".join(references))
+                self.stdout.write("\nNow would be a good time to review changes with git and "
+                                  "commit before moving on to the next template.")
+                self.stdout.write(f"\nSuggested commit message:\n"
+                                  f"Bootstrap 5 - Updated references to '{old_reference}'\n")
+                input("\nENTER to continue...")
+                self.stdout.write("\n\n")
+
+    @staticmethod
+    def update_and_get_references(old_reference, new_reference, is_template):
+        references = []
         bootstrap5_reference = new_reference.replace("/bootstrap3/", "/bootstrap5/")
         file_types = ["**/*.py", "**/*.html", "**/*.md"]
         if not is_template:
@@ -234,16 +303,15 @@ class Command(BaseCommand):
                 with open(file_path, 'r') as file:
                     filedata = file.read()
                 use_bootstrap5_reference = "/bootstrap5/" in str(file_path)
-                if old_reference in filedata:
-                    found_references = True
-                    self.stdout.write(f"- replaced reference in {str(file_path)}")
+                if file_contains_reference_to_path(filedata, old_reference):
+                    references.append(str(file_path))
                     with open(file_path, 'w') as file:
-                        file.write(filedata.replace(
+                        file.write(replace_path_references(
+                            filedata,
                             old_reference,
                             bootstrap5_reference if use_bootstrap5_reference else new_reference
                         ))
-        if not found_references:
-            self.stdout.write(f"No references were found for {old_reference}...")
+        return references
 
     @staticmethod
     def make_template_line_changes(old_line, spec):
@@ -263,7 +331,10 @@ class Command(BaseCommand):
 
     @staticmethod
     def get_flags_in_javascript_line(javascript_line, spec):
-        return flag_changed_javascript_plugins(javascript_line, spec)
+        flags = flag_changed_javascript_plugins(javascript_line, spec)
+        reference_flags = flag_path_references_to_migrated_javascript_files(javascript_line, "bootstrap3")
+        flags.extend(reference_flags)
+        return flags
 
     @staticmethod
     def get_split_file_paths(file_path):
