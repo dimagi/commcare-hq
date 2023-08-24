@@ -8,7 +8,8 @@ from .api.updates import BaseJsonCaseChange, handle_case_update
 class CaseHelper:
     """
     CaseHelper aims to offer a simple interface for simple operations on
-    cases.
+    a single case. (For managing caseblock submissions for many cases,
+    take a look at `SubmitCaseBlockHandler`.)
 
     Initialize ``CaseHelper`` with an existing case ... ::
 

@@ -40,4 +40,6 @@ class CaseDataFormatter(CaseDisplaySQL):
             "CaseDataFormatter.{} not found".format(prop))
 
     def _get_special_property(self, prop):
+        if prop not in SPECIAL_CASE_PROPERTIES_MAP:
+            return None
         return SPECIAL_CASE_PROPERTIES_MAP[prop].value_getter(self.raw_data)

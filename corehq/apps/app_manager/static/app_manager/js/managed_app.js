@@ -11,7 +11,7 @@ hqDefine("app_manager/js/managed_app", function () {
         });
 
         $('.btn-langcode-preprocessed').each(function () {
-            hqImport('hqwebapp/js/ui-element').langcode_tag_btn($(this), $(this).text());
+            hqImport('hqwebapp/js/bootstrap3/ui-element').langcode_tag_btn($(this), $(this).text());
             if ($(this).hasClass('langcode-input')) {
                 var $langcodeInput = $(this).parent().find("input");
                 var that = this;
