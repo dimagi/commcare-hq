@@ -65,10 +65,8 @@ SPECIAL_CASE_PROPERTIES_MAP = {
                                      get_field_lambda('closed_on')),
     'last_modified': SpecialCaseProperty('last_modified', lambda doc: doc.get('modified_on'), 'modified_on',
                                          get_field_lambda('modified_on')),
-    'commcare_case_copy': SpecialCaseProperty('commcare_case_copy', lambda doc: doc.get('commcare_case_copy'),
-                                              'commcare_case_copy', None),
 }
-SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys())
+SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys()) + ['commcare_case_copy']
 
 
 # Properties that can be shown in the report but are not stored on the case or in the case index
