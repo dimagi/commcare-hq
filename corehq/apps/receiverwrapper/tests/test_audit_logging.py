@@ -71,7 +71,7 @@ class TestAuditLoggingForFormSubmission(TestCase):
 
     def test_commcare_user_regular_submission(self):
         url = reverse(secure_post, args=[self.domain])
-        user = self._create_user(access_api=False, access_mobile_endpoints=True, user_cls=CommCareUser)
+        self._create_user(access_api=False, access_mobile_endpoints=True, user_cls=CommCareUser)
         with patch('corehq.apps.receiverwrapper.views.notify_exception') as mock_notify_exception:
             self.assert_api_response(200, url)
             mock_notify_exception.assert_not_called()
@@ -92,5 +92,5 @@ class TestAuditLoggingForFormSubmission(TestCase):
     def test_web_user_no_api_access(self):
         url = reverse(post_api, args=[self.domain])
         self._create_user(access_api=False, access_mobile_endpoints=True)
-        with patch('corehq.apps.receiverwrapper.views.notify_exception') as mock_notify_exception:
+        with patch('corehq.apps.receiverwrapper.views.notify_exception'):
             self.assert_api_response(403, url)
