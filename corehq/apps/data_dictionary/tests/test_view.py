@@ -12,6 +12,7 @@ from corehq.apps.users.models_role import UserRole
 
 from corehq.util.test_utils import privilege_enabled
 from corehq import privileges
+from corehq.util.test_utils import flag_enabled
 
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
