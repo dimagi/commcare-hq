@@ -66,35 +66,25 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 CACHE_EXPIRY_30_DAYS_IN_SECS = 30 * 24 * 60 * 60
 
 
-def _audit_request_auth_errors(domain, user_id, request):
+def _user_has_bad_permissions(domain, user_id, request):
     cache_key = f"form_submission_audit:{user_id}"
     if cache.get(cache_key):
         # User is already logged once in last 30 days for incorrect access, so no need to log again
-        return []
+        False
 
-    stack = inspect.stack()
-    function_names = [frame.function for frame in stack if not inspect.isbuiltin(frame.function)]
-
-    def invalid_user_permission():
-        if hasattr(request, 'couch_user'):
-            return not request.couch_user.has_permission(domain, 'access_mobile_endpoints')
+    if not request.couch_user.has_permission(domain, 'access_mobile_endpoints'):
+        cache.set(cache_key, True, CACHE_EXPIRY_30_DAYS_IN_SECS)
         return True
 
-    if post_api.__name__ not in function_names and invalid_user_permission():
-        cache.set(cache_key, True, CACHE_EXPIRY_30_DAYS_IN_SECS)
-        return f"Request not made from {post_api.__name__} handler for user"
-
-    return []
+    return False
 
 
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
-                  auth_cls=AuthContext):
-    if authenticated:
-        request_error = _audit_request_auth_errors(domain, user_id, request)
-        if request_error:
-            message = (f"Restricted access by user {request.couch_user.username} with id {user_id} and app_id {app_id}. "
-                       f"Error details: {request_error}")
+                  auth_cls=AuthContext, is_api=False):
+    if authenticated and not is_api:
+        if _user_has_bad_permissions(domain, user_id, request):
+            message = f"Restricted access by user {user_id} to app_id {app_id}."
             notify_exception(request, message=message)
 
     if rate_limit_submission(domain):
@@ -253,6 +243,7 @@ def post_api(request, domain):
         app_id=None,
         user_id=request.couch_user.get_id,
         authenticated=True,
+        is_api=True,
     )
 
 

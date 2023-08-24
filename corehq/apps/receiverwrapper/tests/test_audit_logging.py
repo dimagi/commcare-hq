@@ -86,6 +86,11 @@ class TestAuditLoggingForFormSubmission(TestCase):
 
             self.assertIsInstance(args[0], WSGIRequest)
 
-            expected_message = (f'Restricted access by user samiam with id {user.get_id} and app_id None. '
-                                f'Error details: Request not made from post_api handler for user')
+            expected_message = f'Restricted access by user {user.get_id} to app_id None.'
             self.assertEqual(expected_message, kwargs.get("message"))
+
+    def test_web_user_no_api_access(self):
+        url = reverse(post_api, args=[self.domain])
+        self._create_user(access_api=False, access_mobile_endpoints=True)
+        with patch('corehq.apps.receiverwrapper.views.notify_exception') as mock_notify_exception:
+            self.assert_api_response(403, url)
