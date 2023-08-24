@@ -53,6 +53,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     langs: self.langs,
                     properties: self.properties,
                     saveUrl: self.saveUrl,
+                    moduleId: self.module_id,
                     columnKey: columnType,
                     childCaseTypes: spec.childCaseTypes,
                     fixtures: _.keys(spec.fixture_columns_by_type),

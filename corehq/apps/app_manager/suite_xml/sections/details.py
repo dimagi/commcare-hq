@@ -244,10 +244,13 @@ class DetailContributor(SectionContributor):
 
     def _add_custom_variables(self, detail, d):
         custom_variables = detail.custom_variables
-        if custom_variables:
+        custom_variables_map = detail.custom_variables_map
+        if custom_variables or custom_variables_map:
             custom_variable_elements = [
                 variable for variable in
                 etree.fromstring("<variables>{}</variables>".format(custom_variables))
+            ] + [
+                etree.fromstring(f"<{ p[0] } function=\"{ p[1] }\"/>") for p in custom_variables_map.items()
             ]
             d.variables.extend([
                 load_xmlobject_from_string(etree.tostring(e, encoding='utf-8'), xmlclass=DetailVariable)

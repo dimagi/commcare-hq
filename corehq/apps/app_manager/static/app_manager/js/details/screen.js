@@ -29,6 +29,7 @@ hqDefine("app_manager/js/details/screen", function () {
         var i,
             columns;
         hqImport("hqwebapp/js/main").eventize(self);
+        self.moduleId = options.moduleId
         self.type = spec.type;
         self.saveUrl = options.saveUrl;
         self.config = config;
@@ -113,12 +114,15 @@ hqDefine("app_manager/js/details/screen", function () {
             self.fireChange();
         });
 
-        const customDataEditor = uiMapList.new("x", gettext("Edit Custom Variables"));
-        // customDataEditor.val();
+        self.customVariablesMap = detail.custom_variables_map || {}
+
+        const customDataEditor = uiMapList.new(`${ self.moduleId }-${self.columnKey}`, gettext("Edit Custom Variables"));
+        customDataEditor.val(self.customVariablesMap);
         customDataEditor.on("change", function () {
-            // $("#group-data").val(JSON.stringify(this.val()));
+            self.customVariablesMap = this.val()
+            self.fireChange();
         });
-        $("#custom-variables-editor").append(customDataEditor.ui);
+        $(`#custom-variables-editor-${self.columnKey}`).append(customDataEditor.ui);
 
         self.multiSelectEnabled = ko.observable(detail.multi_select);
         self.multiSelectEnabled.subscribe(function () {
@@ -433,6 +437,7 @@ hqDefine("app_manager/js/details/screen", function () {
                 data.custom_xml = self.config.customXMLViewModel.xml();
             }
             data[self.columnKey + '_custom_variables'] = self.customVariablesViewModel.xml();
+            data[self.columnKey + '_custom_variables_map'] = JSON.stringify(self.customVariablesMap);
             data.multi_select = self.multiSelectEnabled();
             data.auto_select = self.autoSelectEnabled();
             data.max_select_value = self.maxSelectValue();
