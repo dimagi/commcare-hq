@@ -29,7 +29,7 @@ hqDefine("app_manager/js/details/screen", function () {
         var i,
             columns;
         hqImport("hqwebapp/js/main").eventize(self);
-        self.moduleId = options.moduleId
+        self.moduleId = options.moduleId;
         self.type = spec.type;
         self.saveUrl = options.saveUrl;
         self.config = config;
@@ -114,12 +114,12 @@ hqDefine("app_manager/js/details/screen", function () {
             self.fireChange();
         });
 
-        self.customVariablesMap = detail.custom_variables_map || {}
+        self.customVariablesMap = detail.custom_variables_map || {};
 
         const customDataEditor = uiMapList.new(`${ self.moduleId }-${self.columnKey}`, gettext("Edit Custom Variables"));
         customDataEditor.val(self.customVariablesMap);
         customDataEditor.on("change", function () {
-            self.customVariablesMap = this.val()
+            self.customVariablesMap = this.val();
             self.fireChange();
         });
         $(`#custom-variables-editor-${self.columnKey}`).append(customDataEditor.ui);
@@ -183,10 +183,10 @@ hqDefine("app_manager/js/details/screen", function () {
                     self.fire("columnChange", [{
                         "value": column,
                         "index": self.columns.indexOf(column),
-                        "status": "edited"
+                        "status": "edited",
                     }]);
                 }
-            })
+            });
             return column;
         };
 
@@ -277,8 +277,8 @@ hqDefine("app_manager/js/details/screen", function () {
                 affectedColumns.forEach(c => {
                     let index = self.columns.indexOf(c);
                     events.push({
-                        value: c, index: index, status: "added", moved: index + move
-                    })
+                        value: c, index: index, status: "added", moved: index + move,
+                    });
                 });
             }
 
@@ -387,7 +387,7 @@ hqDefine("app_manager/js/details/screen", function () {
             
             data.case_tile_group = JSON.stringify({
                 index_identifier: self.caseTileGrouped() ? self.caseTileGroupBy() : null,
-                header_rows: self.caseTileGroupHeaderRows()
+                header_rows: self.caseTileGroupHeaderRows(),
             });
 
             if (self.containsParentConfiguration) {
