@@ -6,15 +6,20 @@
     <thead data-bind="visible: columns().length > 0">
     <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
       <th class="col-sm-1"></th>
-      <th class="col-sm-3">{% trans "Property" %}</th>
-      <!-- ko if: showCaseTileColumn() -->
+      <th class="col-sm-2">{% trans "Property" %}</th>
+      <!-- ko if: showCaseTileMappingColumn() -->
       <th class="col-sm-2">{% trans "Display Text" %}</th>
       <th class="col-sm-3">{% trans "Format" %}</th>
       <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
       <!--/ko-->
-      <!-- ko ifnot: showCaseTileColumn() -->
-      <th class="col-sm-3">{% trans "Display Text" %}</th>
-      <th class="col-sm-4">{% trans "Format" %}</th>
+      <!-- ko ifnot: showCaseTileMappingColumn() -->
+      <th class="col-sm-2">{% trans "Display Text" %}</th>
+      <th class="col-sm-2">{% trans "Format" %}</th>
+      <!-- /ko -->
+      <!-- ko if: showCaseTileConfigColumns() -->
+      <th class="col-sm-1">{% trans "Row/Column" %}</th>
+      <th class="col-sm-1">{% trans "Width/Height" %}</th>
+      <th class="col-sm-1">{% trans "Align/Text Size" %}</th>
       <!-- /ko -->
       <th class="col-sm-1"></th>
     </tr>
@@ -40,7 +45,7 @@
                     "></i>
       </td>
       <!--ko if: !isTab -->
-      <td class="col-sm-3" data-bind="css: {'has-error': showWarning}">
+      <td class="col-sm-2" data-bind="css: {'has-error': showWarning}">
         <div data-bind="html: hqImport('app_manager/js/details/utils').getFieldHtml(field.val()), visible: !field.edit"></div>
         <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
         <!-- ko if: useXpathExpression -->
@@ -54,13 +59,28 @@
         </div>
       </td>
       <td data-bind="jqueryElement: header.ui, css: {
-                            'col-sm-2': $parent.showCaseTileColumn(),
-                            'col-sm-3': !$parent.showCaseTileColumn(),
+                            'col-sm-2': $parent.showCaseTileMappingColumn(),
+                            'col-sm-2': !$parent.showCaseTileMappingColumn(),
                         }"></td>
       <td data-bind="jqueryElement: $format, css: {
-                            'col-sm-3': $parent.showCaseTileColumn(),
-                            'col-sm-4': !$parent.showCaseTileColumn(),
+                            'col-sm-3': $parent.showCaseTileMappingColumn(),
+                            'col-sm-2': !$parent.showCaseTileMappingColumn(),
                         }"></td>
+      <!-- ko if: $parent.showCaseTileConfigColumns() -->
+      <td>
+        <select class="form-control" data-bind="value: tileRowStart, options: tileRowOptions, visible: coordinatesVisible"></select>
+        <select class="form-control" data-bind="value: tileColumnStart, options: tileColumnOptions, visible: coordinatesVisible"></select>
+      </td>
+      <td>
+        <select class="form-control" data-bind="value: tileWidth, options: tileWidthOptions, visible: coordinatesVisible"></select>
+        <select class="form-control" data-bind="value: tileHeight, options: tileHeightOptions, visible: coordinatesVisible"></select>
+      </td>
+      <td>
+        <select class="form-control" data-bind="value: horizontalAlign, options: horizontalAlignOptions, visible: coordinatesVisible"></select>
+        <select class="form-control" data-bind="value: verticalAlign, options: verticalAlignOptions, visible: coordinatesVisible"></select>
+        <select class="form-control" data-bind="value: fontSize, options: fontSizeOptions, visible: coordinatesVisible"></select>
+      </td>
+      <!--/ko-->
       <!--/ko-->
       <!--ko if: isTab -->
       <!--ko if: $data.hasNodeset -->
@@ -82,7 +102,7 @@
       <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
       <!--/ko-->
       <!--/ko-->
-      <!-- ko if: $parent.showCaseTileColumn() && $parent.caseTileFieldsForTemplate() -->
+      <!-- ko if: $parent.showCaseTileMappingColumn() && $parent.caseTileFieldsForTemplate() -->
       <td class="col-sm-2">
         <select class="form-control" data-bind="value: case_tile_field, options: $parent.caseTileFieldsForTemplate"></select>
       </td>
