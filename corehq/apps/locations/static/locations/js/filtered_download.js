@@ -4,8 +4,8 @@ hqDefine('locations/js/filtered_download', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'locations/js/widgets',     // location search
-    'hqwebapp/js/components.ko',    // select toggle widget
-    'hqwebapp/js/knockout_bindings.ko', // slideVisible binding
+    'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // slideVisible binding
 ], function (
     $,
     ko,
