@@ -35,8 +35,8 @@ class CaseListCustomVariablesTests(SimpleTestCase):
 
         did_migrate = Command.migrate_detail_forward(detail)
         self.assertTrue(did_migrate)
-        self.assertIsNotNone(detail.get("custom_variables_map"))
-        self.assertTrue(detail.get("custom_variables_map"), CaseListCustomVariablesTests.custom_variables_dict)
+        self.assertIsNotNone(detail.get("custom_variables_dict"))
+        self.assertTrue(detail.get("custom_variables_dict"), CaseListCustomVariablesTests.custom_variables_dict)
         self.assertIsNone(detail.get("custom_variables"))
 
     def test_migrate_details_forward_no_variables(self):
@@ -46,14 +46,14 @@ class CaseListCustomVariablesTests(SimpleTestCase):
 
     def test_migrate_details_backward(self):
         detail = {
-            "custom_variables_map": CaseListCustomVariablesTests.custom_variables_dict,
+            "custom_variables_dict": CaseListCustomVariablesTests.custom_variables_dict,
         }
 
         did_migrate = Command.migrate_detail_backward(detail)
         self.assertTrue(did_migrate)
         self.assertIsNotNone(detail.get("custom_variables"))
         self.assertTrue(detail.get("custom_variables"), CaseListCustomVariablesTests.custom_variables_xml)
-        self.assertIsNone(detail.get("custom_variables_map"))
+        self.assertIsNone(detail.get("custom_variables_dict"))
 
     def test_migrate_app_impl(self):
         app = self.make_app({"custom_variables": CaseListCustomVariablesTests.custom_variables_xml})
@@ -61,7 +61,7 @@ class CaseListCustomVariablesTests(SimpleTestCase):
         self.assertIsNotNone(migrated_app)
         self.assertEqual(
             migrated_app,
-            self.make_app({"custom_variables_map": CaseListCustomVariablesTests.custom_variables_dict})
+            self.make_app({"custom_variables_dict": CaseListCustomVariablesTests.custom_variables_dict})
         )
 
     def test_migrate_app_impl_no_change(self):
@@ -70,7 +70,7 @@ class CaseListCustomVariablesTests(SimpleTestCase):
         self.assertIsNone(migrated_app)
 
     def test_migrate_app_impl_reverse(self):
-        app = self.make_app({"custom_variables_map": CaseListCustomVariablesTests.custom_variables_dict})
+        app = self.make_app({"custom_variables_dict": CaseListCustomVariablesTests.custom_variables_dict})
         migrated_app = Command.migrate_app_impl(app, True)
         self.assertIsNotNone(migrated_app)
         self.assertEqual(

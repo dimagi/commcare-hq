@@ -114,12 +114,12 @@ hqDefine("app_manager/js/details/screen", function () {
             self.fireChange();
         });
 
-        self.customVariablesMap = detail.custom_variables_map || {};
+        self.customVariablesDict = detail.custom_variables_dict || {};
 
         const customDataEditor = uiMapList.new(`${ self.moduleId }-${self.columnKey}`, gettext("Edit Custom Variables"));
-        customDataEditor.val(self.customVariablesMap);
+        customDataEditor.val(self.customVariablesDict);
         customDataEditor.on("change", function () {
-            self.customVariablesMap = this.val();
+            self.customVariablesDict = this.val();
             self.fireChange();
         });
         $(`#custom-variables-editor-${self.columnKey}`).append(customDataEditor.ui);
@@ -437,7 +437,7 @@ hqDefine("app_manager/js/details/screen", function () {
                 data.custom_xml = self.config.customXMLViewModel.xml();
             }
             data[self.columnKey + '_custom_variables'] = self.customVariablesViewModel.xml();
-            data[self.columnKey + '_custom_variables_map'] = JSON.stringify(self.customVariablesMap);
+            data[self.columnKey + '_custom_variables_dict'] = JSON.stringify(self.customVariablesDict);
             data.multi_select = self.multiSelectEnabled();
             data.auto_select = self.autoSelectEnabled();
             data.max_select_value = self.maxSelectValue();

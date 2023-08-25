@@ -35,7 +35,7 @@ class Command(AppMigrationCommandBase):
     @staticmethod
     def migrate_detail_forward(detail):
         if detail and (detail.get('custom_variables') is not None):
-            detail['custom_variables_map'] = Command.parse(detail['custom_variables'])
+            detail['custom_variables_dict'] = Command.parse(detail['custom_variables'])
             del detail['custom_variables']
             return True
         return False
@@ -46,9 +46,9 @@ class Command(AppMigrationCommandBase):
 
     @staticmethod
     def migrate_detail_backward(detail):
-        if detail and (detail.get('custom_variables_map') is not None):
-            detail['custom_variables'] = Command.serialize(detail['custom_variables_map'])
-            del detail['custom_variables_map']
+        if detail and (detail.get('custom_variables_dict') is not None):
+            detail['custom_variables'] = Command.serialize(detail['custom_variables_dict'])
+            del detail['custom_variables_dict']
             return True
         return False
 

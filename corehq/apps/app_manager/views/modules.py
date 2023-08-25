@@ -1172,9 +1172,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         'short': params.get("short_custom_variables", None),
         'long': params.get("long_custom_variables", None)
     }
-    custom_variables_map = {
-        'short': params.get("short_custom_variables_map", None),
-        'long': params.get("long_custom_variables_map", None)
+    custom_variables_dict = {
+        'short': params.get("short_custom_variables_dict", None),
+        'long': params.get("long_custom_variables_dict", None)
     }
 
     app = get_app(domain, app_id)
@@ -1217,7 +1217,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 "There was an issue with your custom variables: {}".format(error)
             )
         detail.short.custom_variables = custom_variables['short']
-    detail.short.custom_variables_map = custom_variables_map['short']
+    detail.short.custom_variables_dict = custom_variables_dict['short']
 
     if custom_variables['long'] is not None:
         try:
@@ -1227,7 +1227,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 "There was an issue with your custom variables: {}".format(error)
             )
         detail.long.custom_variables = custom_variables['long']
-    detail.long.custom_variables_map = custom_variables_map['long']
+    detail.long.custom_variables_dict = custom_variables_dict['long']
 
     if sort_elements is not None:
         # Attempt to map new elements to old so we don't lose translations
