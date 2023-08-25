@@ -2106,6 +2106,13 @@ class Invoice(InvoiceBase):
 
     class Meta(object):
         app_label = 'accounting'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['subscription', 'date_start', 'date_end'],
+                name='unique_invoice_per_subscription_period',
+                condition=models.Q(is_hidden_to_ops=False)
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         from corehq.apps.accounting.mixins import get_overdue_invoice
@@ -2251,6 +2258,13 @@ class CustomerInvoice(InvoiceBase):
 
     class Meta(object):
         app_label = 'accounting'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['account', 'date_start', 'date_end'],
+                name='unique_invoice_per_account_period',
+                condition=models.Q(is_hidden_to_ops=False)
+            )
+        ]
 
     @property
     def is_customer_invoice(self):
