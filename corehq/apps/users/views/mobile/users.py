@@ -3,9 +3,6 @@ import json
 import re
 import time
 
-import requests
-
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -300,11 +297,13 @@ class EditCommCareUserView(BaseEditUserView):
             make_form_readonly(self.form_user_update.user_form)
             make_form_readonly(self.form_user_update.custom_data.form)
 
-        location_info = get_user_location_info(
-            domain=self.domain,
-            user_location_ids=self.editable_user.assigned_location_ids,
-            user_id=self.editable_user.user_id
-        )
+        warning_banner_info = None
+        if self.domain_object.orphan_case_alerts_warning:
+            warning_banner_info = get_user_location_info(
+                domain=self.domain,
+                user_location_ids=self.editable_user.assigned_location_ids,
+                user_id=self.editable_user.user_id
+            )
 
         can_edit_groups = self.request.couch_user.has_permission(self.domain, 'edit_groups')
         can_access_all_locations = self.request.couch_user.has_permission(self.domain, 'access_all_locations')
@@ -323,7 +322,7 @@ class EditCommCareUserView(BaseEditUserView):
             'needs_to_downgrade_locations': locations_present and not request_has_locations_privilege,
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'group_names': [g.name for g in self.groups],
-            'location_info': location_info
+            'warning_banner_info': warning_banner_info
         }
         if self.commtrack_form.errors:
             messages.error(self.request, _(
@@ -1663,6 +1662,7 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
             return True
         return False
 
+
 @csrf_exempt
 @require_POST
 @login_or_basic_ex(allow_cc_users=True)
@@ -1671,7 +1671,9 @@ def link_connectid_user(request, domain):
     if token is None:
         return HttpResponseBadRequest("Token Required")
     connectid_username = get_connectid_userinfo(token)
-    link, new = ConnectIDUserLink.objects.get_or_create(connectid_username=connectid_username, commcare_user=request.user, domain=request.domain)
+    link, new = ConnectIDUserLink.objects.get_or_create(
+        connectid_username=connectid_username, commcare_user=request.user, domain=request.domain
+    )
     if new:
         return HttpResponse(status=201)
     else:

@@ -1,6 +1,6 @@
 # CommCare HQ Dependency Policy
 
-We separate our dependencies based on environment, which ensures that 
+We separate our dependencies based on environment, which ensures that
 dependencies are not installed on an environment where they are not needed.
 
 When adding new dependencies, consider what environment(s) require these
@@ -10,12 +10,12 @@ environment(s).
 After making these edits, you need to run
 ```.env
 make requirements
-``` 
+```
 
-`base-requirements` — Every environment, including tests and documentation, 
+`base-requirements` — Every environment, including tests and documentation,
 requires these dependencies
 
-`sso-requirements` — These requirements are needed for SSO and 
+`sso-requirements` — These requirements are needed for SSO and
 are required by all environments that run CommCare HQ. This excludes one
 environment, documentation, which cannot install these requirements.
 

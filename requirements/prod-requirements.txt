@@ -48,7 +48,7 @@ celery==5.2.7
     #   -r base-requirements.in
     #   django-celery-results
     #   flower
-certifi==2022.12.7
+certifi==2023.7.22
     # via
     #   -r prod-requirements.in
     #   fiona
@@ -86,7 +86,9 @@ commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
 contextlib2==21.6.0
     # via schema
-cryptography==41.0.2
+crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
+    # via -r base-requirements.in
+cryptography==41.0.3
     # via
     #   -r prod-requirements.in
     #   -r sso-requirements.in
@@ -124,9 +126,11 @@ dimagi-memoized==1.1.3
 django==3.2.20
     # via
     #   -r base-requirements.in
+    #   crispy-bootstrap3to5
     #   django-appconf
     #   django-braces
     #   django-bulk-update
+    #   django-crispy-forms
     #   django-formtools
     #   django-logentry-admin
     #   django-oauth-toolkit
@@ -156,8 +160,10 @@ django-compressor==4.1
     # via -r base-requirements.in
 django-countries==7.3.2
     # via -r base-requirements.in
-django-crispy-forms==1.10.0
-    # via -r base-requirements.in
+django-crispy-forms==2.0
+    # via
+    #   -r base-requirements.in
+    #   crispy-bootstrap3to5
 django-cte==1.2.0
     # via -r base-requirements.in
 django-field-audit==1.2.6
@@ -186,7 +192,7 @@ django-redis==5.3.0
     # via -r base-requirements.in
 django-redis-sessions==0.6.2
     # via -r base-requirements.in
-django-statici18n==1.9.0
+django-statici18n==2.4.0
     # via -r base-requirements.in
 django-tastypie==0.14.4
     # via -r base-requirements.in
@@ -465,7 +471,7 @@ pycryptodomex==3.14.1
     #   pyjwkest
 pygithub==1.55
     # via -r base-requirements.in
-pygments==2.11.2
+pygments==2.15.0
     # via ipython
 pyjwkest==1.4.2
     # via oic
@@ -589,7 +595,6 @@ six==1.16.0
     #   ddsketch
     #   ddtrace
     #   django-braces
-    #   django-statici18n
     #   django-transfer
     #   django-websocket-redis
     #   dropbox
@@ -633,7 +638,7 @@ text-unidecode==1.3
     # via -r base-requirements.in
 toposort==1.7
     # via -r base-requirements.in
-tornado==6.3.2
+tornado==6.3.3
     # via flower
 traitlets==5.1.1
     # via

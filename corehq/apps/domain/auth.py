@@ -1,7 +1,6 @@
 import base64
 import binascii
 import logging
-import re
 import requests
 from functools import wraps
 
@@ -347,9 +346,11 @@ class ConnectIDAuthBackend:
         password: an oauth access token issued by ConnectID
         """
         # Only allow for the token backend, for now
-        if not request.path == '/oauth/token/':
-           return None
+        if not request or not request.path == '/oauth/token/':
+            return None
         couch_user = CouchUser.get_by_username(username)
+        if couch_user is None:
+            return None
         connect_username = get_connectid_userinfo(password)
         if connect_username is None:
             return None
@@ -358,6 +359,6 @@ class ConnectIDAuthBackend:
             domain=couch_user.domain
         )
 
-        if not couch_user or (couch_user.username != link.commcare_user.username):
+        if (couch_user.username != link.commcare_user.username):
             return None
         return link.commcare_user

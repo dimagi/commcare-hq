@@ -13,6 +13,7 @@ from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_static_url_prefix
 
@@ -34,6 +35,7 @@ from corehq.apps.analytics.tasks import (
     HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID,
     send_hubspot_form,
 )
+from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.registration.models import RegistrationRequest
@@ -144,7 +146,22 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
     dom_req.domain = new_domain.name
 
     if not settings.ENTERPRISE_MODE:
-        _setup_subscription(new_domain.name, current_user)
+        try:
+            _setup_subscription(new_domain.name, current_user)
+        except Exception as error:
+            # any error thrown in this process will cause the transaction.atomic() block that
+            # the subscription setup is wrapped in to fail and any SQL changes related to the subscription
+            # to roll back. Since we don't want a Subscription-less domain to exist, we should raise the
+            # error and delete the domain.
+            notify_exception(request, "Error initializing subscription for new domain", details={
+                'domain': new_domain.name,
+                'hr_name': project_name,
+                'creating_user': current_user.username,
+                'first_domain_for_user': is_new_user,
+                'error': str(error),
+            })
+            new_domain.delete()
+            raise ErrorInitializingDomain(f"Subscription setup failed for '{name}'")
 
     initialize_domain_with_default_roles(new_domain.name)
 

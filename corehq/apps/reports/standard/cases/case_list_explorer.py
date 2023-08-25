@@ -7,6 +7,7 @@ from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES_MAP,
+    DOCS_LINK_CASE_LIST_EXPLORER,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
@@ -32,6 +33,8 @@ class CaseListExplorer(CaseListReport):
     name = _('Case List Explorer')
     slug = 'case_list_explorer'
     search_class = CaseSearchES
+    description = _("Use Case List Explorer to run deep searches on your cases by case properties.  ")
+    documentation_link = DOCS_LINK_CASE_LIST_EXPLORER
 
     exportable = True
     exportable_all = True

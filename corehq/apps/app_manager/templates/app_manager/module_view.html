@@ -150,14 +150,32 @@
   </div>
 
   <script type="text/html" id="module-forms-template">
-    <div class="checkbox">
-      <label>
-        <input name="incl_form_ids"
-               type="checkbox"
-               data-bind="value: uniqueId, checked: $parent.includedFormIds"/>
-        <span data-bind="text: name"></span>
-      </label>
-    </div>
+    <tr>
+      <td>
+        <div class="checkbox">
+          <label>
+            <input name="incl_form_ids"
+                   type="checkbox"
+                   data-bind="value: uniqueId, checked: $parent.includedFormIds"/>
+            <span data-bind="text: name"></span>
+          </label>
+        </div>
+      </td>
+
+      {% if session_endpoints_enabled %}
+        <td>
+          <div class="checkbox">
+            <label>
+              <input
+                class="form-control"
+                name="form_session_endpoint_ids"
+                placeholder="{% trans "Session Endpoint Id" %}"
+                data-bind="textInput: sessionEndpointId"/>
+            </label>
+          </div>
+        </td>
+      {% endif %}
+    </tr>
   </script>
 
   <script type="text/html" id="module-case-detail-tab-nodeset-template">

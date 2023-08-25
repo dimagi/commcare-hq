@@ -436,6 +436,19 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    orphan_case_alerts_warning = BooleanField(
+        label=gettext_lazy("Show Orphan Case Alerts on Mobile Worker Edit Page"),
+        required=False,
+        help_text=gettext_lazy(
+            """
+            Displays a warning message on the mobile worker location edit page
+            about locations that owns cases and only have one assigned mobile worker.
+            This helps prevent situations where cases are being orphaned by moving
+            the only assigned mobile worker out of the location owning that cases.
+            """
+        )
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -445,6 +458,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
         self.helper[6] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper[14] = twbscrispy.PrependedText('release_mode_visibility', '')
+        self.helper[15] = twbscrispy.PrependedText('orphan_case_alerts_warning', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -480,6 +494,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._handle_call_limit_visibility()
         self._handle_account_confirmation_by_sms_settings()
         self._handle_release_mode_setting_value()
+        self._handle_orphan_case_alerts_setting_value()
 
     def _handle_account_confirmation_by_sms_settings(self):
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
@@ -511,6 +526,9 @@ class DomainGlobalSettingsForm(forms.Form):
     def _handle_release_mode_setting_value(self):
         self.fields['release_mode_visibility'].initial = AppReleaseModeSetting.get_settings(
             domain=self.domain).is_visible
+
+    def _handle_orphan_case_alerts_setting_value(self):
+        self.fields['orphan_case_alerts_warning'].initial = self.project.orphan_case_alerts_warning
 
     def _add_range_validation_to_integer_input(self, settings_name, min_value, max_value):
         setting = self.fields.get(settings_name)
@@ -641,6 +659,9 @@ class DomainGlobalSettingsForm(forms.Form):
             setting_obj.is_visible = self.cleaned_data.get("release_mode_visibility")
             setting_obj.save()
 
+    def _save_orphan_case_alerts_setting(self, domain):
+        domain.orphan_case_alerts_warning = self.cleaned_data.get("orphan_case_alerts_warning", False)
+
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
@@ -658,6 +679,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_timezone_configuration(domain)
         self._save_account_confirmation_settings(domain)
         self._save_release_mode_setting(domain)
+        self._save_orphan_case_alerts_setting(domain)
         domain.save()
         return True
 
