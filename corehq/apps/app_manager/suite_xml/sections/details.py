@@ -243,13 +243,9 @@ class DetailContributor(SectionContributor):
                 return d
 
     def _add_custom_variables(self, detail, d):
-        custom_variables = detail.custom_variables
         custom_variables_dict = detail.custom_variables_dict
-        if custom_variables or custom_variables_dict:
+        if custom_variables_dict:
             custom_variable_elements = [
-                variable for variable in
-                etree.fromstring("<variables>{}</variables>".format(custom_variables))
-            ] + [
                 etree.fromstring(f"<{ p[0] } function=\"{ p[1] }\"/>") for p in custom_variables_dict.items()
             ]
             d.variables.extend([

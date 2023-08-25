@@ -108,18 +108,12 @@ hqDefine("app_manager/js/details/screen", function () {
 
         self.customVariablesViewModel = {
             enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
-            xml: ko.observable(detail.custom_variables || ""),
+            dict: detail.custom_variables_dict || {},
         };
-        self.customVariablesViewModel.xml.subscribe(function () {
-            self.fireChange();
-        });
-
-        self.customVariablesDict = detail.custom_variables_dict || {};
-
         const customDataEditor = uiMapList.new(`${ self.moduleId }-${self.columnKey}`, gettext("Edit Custom Variables"));
-        customDataEditor.val(self.customVariablesDict);
+        customDataEditor.val(self.customVariablesViewModel.dict);
         customDataEditor.on("change", function () {
-            self.customVariablesDict = this.val();
+            self.customVariablesViewModel.dict = this.val();
             self.fireChange();
         });
         $(`#custom-variables-editor-${self.columnKey}`).append(customDataEditor.ui);
@@ -436,8 +430,7 @@ hqDefine("app_manager/js/details/screen", function () {
             if (self.containsCustomXMLConfiguration) {
                 data.custom_xml = self.config.customXMLViewModel.xml();
             }
-            data[self.columnKey + '_custom_variables'] = self.customVariablesViewModel.xml();
-            data[self.columnKey + '_custom_variables_dict'] = JSON.stringify(self.customVariablesDict);
+            data[self.columnKey + '_custom_variables_dict'] = JSON.stringify(self.customVariablesViewModel.dict);
             data.multi_select = self.multiSelectEnabled();
             data.auto_select = self.autoSelectEnabled();
             data.max_select_value = self.maxSelectValue();
