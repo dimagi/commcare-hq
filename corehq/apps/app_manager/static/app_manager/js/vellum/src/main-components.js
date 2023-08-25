@@ -31127,7 +31127,7 @@ define('vellum/datasources',[
           return outStr;
         };
 
-        function validateWordLength(inStr, maxLength) {
+        function insertWordBreaks(inStr, maxLength) {
           let words = inStr.split(" ");
           let outStr = "";
           for (word of words) {
@@ -31149,7 +31149,7 @@ define('vellum/datasources',[
 
                 return {
                     name: name,
-                    description: validateWordLength(tree.description, 43),
+                    description: insertWordBreaks(tree.description, 43),
                     hashtag: info.hashtag && !index ? info.hashtag + '/' + name : null,
                     parentPath: parentPath,
                     xpath: path,
