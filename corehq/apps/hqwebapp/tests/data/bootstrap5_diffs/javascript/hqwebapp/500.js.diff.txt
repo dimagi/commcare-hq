@@ -1,0 +1,8 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-hqDefine("hqwebapp/js/bootstrap3/500",[
++hqDefine("hqwebapp/js/bootstrap5/500",[
+     'jquery',
+     'bootstrap',
+ ], function ($) {

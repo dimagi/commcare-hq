@@ -10,7 +10,7 @@ hqDefine("users/js/enterprise_users", [
     "underscore",
     "hqwebapp/js/initial_page_data",
     "users/js/web_users_list",
-    "hqwebapp/js/components.ko",    // pagination and search box widgets
+    "hqwebapp/js/bootstrap3/components.ko",    // pagination and search box widgets
 ], function (
     $,
     ko,
