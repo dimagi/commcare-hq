@@ -3,7 +3,7 @@ hqDefine('openmrs/js/openmrs_importers', [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'hqwebapp/js/base_ace',
 ], function (
     $,

@@ -11,7 +11,7 @@ hqDefine("app_manager/js/add_ons", function () {
                 collapse: sectionChanger.shouldCollapse("add-ons", s.slug, s.collapse),
             });
         });
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes."),
             save: function () {
                 // Send server map of slug => enabled
