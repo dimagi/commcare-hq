@@ -457,6 +457,17 @@ def get_all_tableau_groups(domain, session=None):
     return _group_json_to_tuples(group_json)
 
 
+def get_allowed_tableau_groups_for_domain(domain):
+    '''
+    Returns a list of the Tableau groups that have been approved in the project settings.
+    '''
+    allowed_groups = TableauServer.objects.get(domain=domain).allowed_tableau_groups
+    if allowed_groups:
+        return allowed_groups
+    else:
+        return []
+
+
 def get_tableau_groups_for_user(domain, username):
     '''
     Returns a list of Tableau groups that the given user belongs to.
@@ -544,10 +555,11 @@ def update_tableau_user(domain, username, role=None, groups=[], session=None):
     if role:
         user.role = role
     user.save()
-    _update_user_remote(session, user, groups)
+    _update_user_remote(session, user, domain, groups)
 
 
-def _update_user_remote(session, user, groups=[]):
+def _update_user_remote(session, user, domain, groups=[]):
+    groups = filter(lambda group: group.name in get_allowed_tableau_groups_for_domain(domain), groups)
     new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(user.username))
     user.tableau_user_id = new_id
     user.save()
@@ -623,6 +635,7 @@ def sync_tableau_users_on_domain(domain):
                 _update_user_remote(
                     session,
                     local_user,
+                    domain,
                     groups=_group_json_to_tuples(session.get_groups_for_user_id(local_user.tableau_user_id))
                 )
 
