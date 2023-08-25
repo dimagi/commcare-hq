@@ -1,0 +1,70 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+<div class="modal fade full-screen-no-background-modal modal-primary modal-force-show"
+     id="mobile-experience-modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">{% trans "CommCare HQ looks better on desktop!" %}</h4>
+      </div>
+      <div class="modal-body">
+        <p class="mobile-ux-lead">
+          {% blocktrans %}
+            Hi{{ " " + full_name }}, it looks like you’re on a mobile device.
+          {% endblocktrans %}
+        </p>
+        <p class="mobile-ux-lead">
+          {% blocktrans %}
+            CommCare HQ is optimized for desktop or laptop browsers.
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans %}
+            Send yourself an email with a login link to use when you’re back on a full-size browser:
+          {% endblocktrans %}
+        </p>
+        <p class="text-center">
+          <a href="#" class="btn btn-lg btn-primary-dark" id="send-mobile-reminder-button">{% trans 'Email Link' %}</a>
+        </p>
+        <div class="svg-yikes-face" style="margin-top: 20px;">
+          {% include 'hqwebapp/svg/yikes_face.html' %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="full-screen-no-background-modal modal fade modal-primary" id="mobile-experience-video-modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">{% trans "CommCare HQ looks better on desktop!" %}</h4>
+      </div>
+      <div class="modal-body">
+        <p class="mobile-ux-lead">
+          {% blocktrans %}
+            Reminder sent!
+          {% endblocktrans %}
+        </p>
+        <p class="mobile-ux-lead">
+          {% blocktrans %}
+            Check out this video to get an introduction to CommCare HQ.
+          {% endblocktrans %}
+        </p>
+        <div id="about-commcare-video" class="video-container section-primary-video">
+          <script src="https://fast.wistia.com/embed/medias/9uvnpbecdy.jsonp" async></script>
+          <script src="https://fast.wistia.com/assets/external/E-v1.js" async></script>
+          <div class="wistia_responsive_padding" style="padding:56.25% 0 0 0;position:relative;">
+            <div class="wistia_responsive_wrapper" style="height:100%;left:0;position:absolute;top:0;width:100%;">
+              <div class="wistia_embed wistia_async_o2zz5dxgk7 videoFoam=true" style="height:100%;width:100%">
+                &nbsp;
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

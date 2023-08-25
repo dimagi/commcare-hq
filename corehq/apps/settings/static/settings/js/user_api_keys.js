@@ -3,7 +3,7 @@ hqDefine("settings/js/user_api_keys", [
     "knockout",
     'underscore',
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/crud_paginated_list",
+    "hqwebapp/js/bootstrap3/crud_paginated_list",
     'hqwebapp/js/widgets',
 ], function (
     $,
