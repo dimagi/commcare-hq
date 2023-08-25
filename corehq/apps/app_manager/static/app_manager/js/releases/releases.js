@@ -199,6 +199,9 @@ hqDefine('app_manager/js/releases/releases', function () {
             hqImport('analytix/js/google').track.event('App Manager', 'Deploy Button', self.id());
             hqImport('analytix/js/kissmetrix').track.event('Clicked Deploy');
             $.post(releasesMain.reverse('hubspot_click_deploy'));
+            if (self.short_odk_url_is_available()) {
+                self.get_short_odk_url();
+            }
         };
 
         self.clickScan = function () {
