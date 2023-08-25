@@ -208,7 +208,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
         always_return_data = True
-        authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)
 
     def serialize(self, request, data, format, options=None):
         if not isinstance(data, dict) and request.method == 'POST':
@@ -236,6 +235,9 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
         if not (bundle.data.get('password') or bundle.data.get('connect_username')):
             raise BadRequest(_('Password or connect username required'))
+
+        if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled_for_domain(kwargs['domain']):
+            raise BadRequest(_("You don't have permission to use connect_username field"))
 
         try:
             bundle.obj = CommCareUser.create(
