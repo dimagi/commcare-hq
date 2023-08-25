@@ -5,6 +5,13 @@ from corehq.apps.users.models import CouchUser
 from .api.updates import BaseJsonCaseChange, handle_case_update
 
 
+@dataclass
+class UserDuck:
+    """Quacks like a User"""
+    user_id: str
+    username: str
+
+
 class CaseHelper:
     """
     CaseHelper aims to offer a simple interface for simple operations on
@@ -191,13 +198,6 @@ class CaseHelper:
 
     @staticmethod
     def _get_user_duck(user_id, domain):
-
-        @dataclass
-        class UserDuck:
-            """Quacks like a User"""
-            user_id: str
-            username: str
-
         user_duck = UserDuck(user_id='', username='')
         if user_id:
             user_duck.user_id = user_id
