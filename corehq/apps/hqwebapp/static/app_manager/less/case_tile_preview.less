@@ -1,0 +1,47 @@
+#case-tile-preview {
+    display: grid;
+    grid-template-columns: repeat(12, 8%) min-content 5px;  // TODO: maybe don't hard code the grid dimensions (here and everywhere)
+    grid-template-rows: repeat(3, 35px);
+    width: 100%;
+    margin: 10px;
+    padding: 5px;
+
+    .cell {
+        margin: 2px;
+        border: 1px @cc-light-cool-accent-low dotted;
+        position: relative;
+
+        // TODO: to be truly adorable, add transitions on changes to grid style, this doesn't work
+        transition: 2s;
+
+        .content {
+            padding: 5px;
+        }
+
+        .controls {
+            visibility: hidden;
+            opacity: 0.7;
+            background-color: white;
+            text-align: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        &:hover {
+            .content {
+                position: relative;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+            }
+
+            .controls {
+                visibility: visible;
+            }
+        }
+    }
+}
