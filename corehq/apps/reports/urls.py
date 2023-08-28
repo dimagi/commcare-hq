@@ -61,6 +61,7 @@ from .views import (
     unarchive_form,
     view_form_attachment,
     view_scheduled_report,
+    copy_cases,
 )
 
 custom_report_urls = [
@@ -168,6 +169,7 @@ urlpatterns = [
     url(r'^release_management/', include(release_management_urls)),
 
     url(r'^get_or_create_hash/', get_or_create_filter_hash, name='get_or_create_filter_hash'),
+    url(r'^copy_cases/$', copy_cases, name='copy_cases'),
 ]
 
 # Exporting Case List Explorer reports with the word " on*" at the end of the search query

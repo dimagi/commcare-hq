@@ -28,8 +28,7 @@ from corehq.apps.reports.filters.controllers import (
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
-from django_prbac.decorators import requires_privilege
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 
 logger = logging.getLogger(__name__)
@@ -211,39 +210,3 @@ class DeviceLogUsers(DeviceLogFilter):
 
 class DeviceLogIds(DeviceLogFilter):
     field = 'device_id'
-
-
-@require_POST
-@toggles.COPY_CASES.required_decorator()
-@require_permission(HqPermissions.edit_data)
-@requires_privilege(privileges.CASE_COPY)
-@location_safe
-def copy_cases(request, domain, *args, **kwargs):
-    from corehq.apps.hqcase.case_helper import CaseCopier
-
-    body = json.loads(request.body)
-
-    case_ids = body.get('case_ids')
-    if not case_ids:
-        return JsonResponse({'error': _("Missing case ids")}, status=400)
-
-    new_owner = body.get('owner_id')
-    if not new_owner:
-        return JsonResponse({'error': _("Missing new owner id")}, status=400)
-
-    censor_data = {
-        prop['name']: prop['label']
-        for prop in body.get('sensitive_properties', [])
-    }
-
-    case_copier = CaseCopier(
-        domain,
-        to_owner=new_owner,
-        censor_data=censor_data,
-    )
-    case_id_pairs, errors = case_copier.copy_cases(case_ids)
-    count = len(case_id_pairs)
-    return JsonResponse(
-        {'copied_cases': count, 'error': errors},
-        status=400 if count == 0 else 200,
-    )
