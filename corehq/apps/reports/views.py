@@ -2015,7 +2015,6 @@ def get_or_create_filter_hash(request, domain):
 @location_safe
 def copy_cases(request, domain, *args, **kwargs):
     from corehq.apps.hqcase.case_helper import CaseCopier
-
     body = json.loads(request.body)
 
     case_ids = body.get('case_ids')
