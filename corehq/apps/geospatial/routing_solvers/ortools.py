@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.spatial.distance import cdist
+import haversine
 
 import requests
 
@@ -14,37 +14,21 @@ class ORToolsRadialDistanceSolver:
 
     """
 
-
     def __init__(self, request_json, max_route_distance):
         validate_routing_request(request_json)
         self.user_locations = request_json['users']
         self.case_locations = request_json['cases']
 
     def calculate_distance_matrix(self):
-        def haversine_distance(coord1, coord2):
-            lat1, lon1 = np.radians(coord1)
-            lat2, lon2 = np.radians(coord2)
-
-            dlat = lat2 - lat1
-            dlon = lon2 - lon1
-
-            a = np.sin(dlat / 2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2)**2
-            c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
-
-            distance = 6371 * c  # Earth's radius in kilometers
-            return distance
-
-        users = []
-        cases = []
-
-        for user in self.user_locations:
-            users.append([user['lat'], user['lon']])
-
-        for case in self.case_locations:
-            cases.append([case['lat'], case['lon']])
-
-        haversine_matrix = cdist(np.array(users), np.array(cases), haversine_distance)
-        return haversine_matrix
+        users = [
+            (float(user['lat']), float(user['lon']))
+            for user in self.user_locations
+        ]
+        cases = [
+            (float(case['lat']), float(case['lon']))
+            for case in self.case_locations
+        ]
+        return haversine.haversine_vector(cases, users, comb=True)
 
     def solve(self, print_solution=False):
         # Modelled after https://developers.google.com/optimization/assignment/assignment_teams

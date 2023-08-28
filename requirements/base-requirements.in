@@ -52,6 +52,7 @@ google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.4.6
 greenlet
 gunicorn
+haversine
 hiredis
 httpagentparser
 iso8601
