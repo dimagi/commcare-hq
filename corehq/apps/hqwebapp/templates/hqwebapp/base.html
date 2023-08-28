@@ -281,11 +281,7 @@
 
     {# javascript below this line #}
 
-    {% if use_bootstrap5 %}
-      <script src="{% static "bootstrap5/dist/js/bootstrap.bundle.min.js" %}"></script>
-    {% else %}
-      {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
-    {% endif %}
+    {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
 
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
