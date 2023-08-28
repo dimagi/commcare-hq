@@ -51,7 +51,9 @@ from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import TableauUser
 from corehq.apps.reports.util import (
+    TableauGroupTuple,
     get_all_tableau_groups,
+    get_allowed_tableau_groups_for_domain,
     get_tableau_groups_for_user,
     update_tableau_user,
 )
@@ -1786,15 +1788,21 @@ class TableauUserForm(forms.Form):
         self.domain = kwargs.pop('domain', None)
         self.username = kwargs.pop('username', None)
         super(TableauUserForm, self).__init__(*args, **kwargs)
-        self.all_tableau_groups = get_all_tableau_groups(self.domain)
+
+        self.allowed_tableau_groups = [
+            TableauGroupTuple(group.name, group.id) for group in get_all_tableau_groups(self.domain)
+            if group.name in get_allowed_tableau_groups_for_domain(self.domain)]
         user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
+        self.fields['groups'].choices = []
         self.fields['groups'].initial = []
-        for i, group in enumerate(self.all_tableau_groups):
+        for i, group in enumerate(self.allowed_tableau_groups):
             # Add a choice for each tableau group on the server
             self.fields['groups'].choices.append((i, group.name))
             if group.name in user_group_names:
                 # Pre-choose groups that the user already belongs to
                 self.fields['groups'].initial.append(i)
+        if not self.fields['groups'].choices:
+            del self.fields['groups']
 
         self.helper = FormHelper()
 
@@ -1806,5 +1814,5 @@ class TableauUserForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def save(self, username, commit=True):
-        groups = [self.all_tableau_groups[int(i)] for i in self.cleaned_data['groups']]
+        groups = [self.allowed_tableau_groups[int(i)] for i in self.cleaned_data['groups']]
         update_tableau_user(self.domain, username, self.cleaned_data['role'], groups)
