@@ -4,6 +4,8 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
+absl-py==1.4.0
+    # via ortools
 alembic==1.7.7
     # via -r base-requirements.in
 amqp==5.1.1
@@ -358,6 +360,7 @@ munch==2.5.0
     # via fiona
 numpy==1.24.3
     # via
+    #   ortools
     #   pandas
     #   shapely
 oauthlib==3.1.0
@@ -372,6 +375,8 @@ openpyxl==3.0.9
     #   commcaretranslationchecker
 opentelemetry-api==1.18.0
     # via ddtrace
+ortools==9.7.2996
+    # via -r base-requirements.in
 packaging==23.0
     # via
     #   -r base-requirements.in
@@ -400,7 +405,7 @@ prompt-toolkit==3.0.36
     # via click-repl
 proto-plus==1.22.2
     # via google-cloud-firestore
-protobuf==4.23.1
+protobuf==4.24.2
     # via
     #   ddsketch
     #   ddtrace
@@ -408,6 +413,7 @@ protobuf==4.23.1
     #   google-cloud-firestore
     #   googleapis-common-protos
     #   grpcio-status
+    #   ortools
     #   proto-plus
 psycogreen==1.0.2
     # via -r base-requirements.in
