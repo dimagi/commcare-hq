@@ -7,6 +7,12 @@
       "compare_all_files": true
     },
     {
+      "directories": ["crispy/bootstrap3/", "crispy/bootstrap5/"],
+      "file_type": "template",
+      "label": "hqwebapp/crispy",
+      "compare_all_files": true
+    },
+    {
       "directories": ["includes/bootstrap3/", "includes/bootstrap5/"],
       "file_type": "template",
       "label": "hqwebapp/includes",
@@ -24,6 +30,18 @@
       "directories": ["js/bootstrap3/", "js/bootstrap5/"],
       "file_type": "javascript",
       "label": "javascript/hqwebapp",
+      "compare_all_files": true
+    },
+    {
+      "directories": ["js/components/bootstrap3/", "js/components/bootstrap5/"],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp/components",
+      "compare_all_files": true
+    },
+    {
+      "directories": ["js/ui_elements/bootstrap3/", "js/ui_elements/bootstrap5/"],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp/ui_elements",
       "compare_all_files": true
     },
     {
