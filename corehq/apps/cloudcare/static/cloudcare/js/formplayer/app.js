@@ -419,6 +419,8 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 $('.last').removeClass('last');
             }
         );
+
+        appcues.identify(user.username);
     });
 
     FormplayerFrontend.on('configureDebugger', function () {
