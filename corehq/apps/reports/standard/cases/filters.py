@@ -23,6 +23,7 @@ from corehq.apps.reports.filters.base import (
     BaseSingleOptionFilter,
 )
 from corehq import toggles, privileges
+from corehq.apps.reports.filters.api import CaseCopier
 
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: Replace with library method
@@ -170,7 +171,7 @@ class SensitiveCaseProperties(CaseListExplorerColumns):
     template = "reports/filters/sensitive_columns.html"
     EXCLUDE_PROPERTIES = [
         '@case_id', '@case_type', '@owner_id', '@status', 'closed_on', 'last_modified', 'date_opened',
-        'commcare_case_copy'
+        CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME,
     ]
 
     @property

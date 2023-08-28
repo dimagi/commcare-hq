@@ -285,7 +285,7 @@ hqDefine("data_interfaces/js/case_management",[
             var $select = $('#reassign_owner_select');
             if ($select.length) {
                 $select.select2({
-                    placeholder: gettext(placeholderText),
+                    placeholder: placeholderText,
                     ajax: {
                         url: initialPageData.reverse("case_action_options"),
                         data: function (params) {
