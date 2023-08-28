@@ -1,5 +1,5 @@
 from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
-from corehq.apps.domain.models import Domain
+from corehq.toggles import CASE_LIST_CUSTOM_VARIABLES
 
 from lxml import etree
 
@@ -24,8 +24,7 @@ class Command(AppMigrationCommandBase):
         )
 
     def get_domains(self):
-        # TODO: to many?
-        return Domain.get_all_names()
+        return CASE_LIST_CUSTOM_VARIABLES.get_enabled_domains()
 
     @staticmethod
     def parse(xml):
