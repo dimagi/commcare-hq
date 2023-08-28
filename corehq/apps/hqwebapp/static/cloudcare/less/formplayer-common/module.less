@@ -132,12 +132,11 @@
   transition: background .6s;
 }
 
-// Apply to all children to cover both regular case lists and case tiles
-.module-table-case-list tbody tr:nth-child(even) > * {
+.module-table-case-list tbody tr:nth-child(even) > td {
   background-color: @cc-bg;
 }
 
-.module-table-case-list tbody tr:hover > * {
+.module-table-case-list tbody tr:hover > td {
   background-color: darken(@cc-bg, 5);
 }
 
