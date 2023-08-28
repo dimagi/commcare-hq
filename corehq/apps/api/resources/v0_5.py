@@ -236,7 +236,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if not (bundle.data.get('password') or bundle.data.get('connect_username')):
             raise BadRequest(_('Password or connect username required'))
 
-        if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled_for_domain(kwargs['domain']):
+        if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
             raise BadRequest(_("You don't have permission to use connect_username field"))
 
         try:
