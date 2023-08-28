@@ -153,10 +153,6 @@ class SensitiveCaseProperties(CaseListExplorerColumns):
     slug = "sensitive_properties"
     label = gettext_lazy("De-identify options")
     template = "reports/filters/sensitive_columns.html"
-    EXCLUDE_PROPERTIES = [
-        '@case_id', '@case_type', '@owner_id', '@status', 'closed_on', 'last_modified', 'date_opened',
-        CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME,
-    ]
 
     @property
     def filter_context(self):
@@ -181,7 +177,7 @@ class SensitiveCaseProperties(CaseListExplorerColumns):
         case_properties = get_flattened_case_properties(self.domain, include_parent_properties=False)
         special_properties = [
             {'name': prop, 'case_type': None, 'meta_type': 'info'}
-            for prop in SPECIAL_CASE_PROPERTIES if prop not in self.EXCLUDE_PROPERTIES
+            for prop in ('name', 'case_name', 'external_id')
         ]
         return case_properties + special_properties
 
