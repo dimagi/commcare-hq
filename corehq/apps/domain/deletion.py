@@ -458,8 +458,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ]),
     ModelDeletion('repeaters', 'Repeater', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain'),
-    ModelDeletion('repeaters', 'SQLRepeatRecord', 'domain'),
-    ModelDeletion('repeaters', 'SQLRepeatRecordAttempt', 'repeat_record__domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedArchiveStub', 'domain'),
     ModelDeletion('fixtures', 'LookupTable', 'domain'),

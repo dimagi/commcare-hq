@@ -1164,12 +1164,18 @@ class RepeatRecord(Document):
         self.next_check = datetime.utcnow()
 
 
+# on_delete=DB_CASCADE denotes ON DELETE CASCADE in the database. The
+# constraints are configured in a migration. Note that Django signals
+# will not fire on records deleted via cascade.
+DB_CASCADE = models.DO_NOTHING
+
+
 class SQLRepeatRecord(models.Model):
     domain = models.CharField(max_length=126)
     couch_id = models.CharField(max_length=36, null=True, blank=True)
     payload_id = models.CharField(max_length=36)
     repeater = models.ForeignKey(Repeater,
-                                 on_delete=models.CASCADE,
+                                 on_delete=DB_CASCADE,
                                  related_name='repeat_records')
     state = models.TextField(choices=RECORD_STATES,
                              default=RECORD_PENDING_STATE)
@@ -1301,8 +1307,7 @@ class SQLRepeatRecord(models.Model):
 
 
 class SQLRepeatRecordAttempt(models.Model):
-    repeat_record = models.ForeignKey(SQLRepeatRecord,
-                                      on_delete=models.CASCADE)
+    repeat_record = models.ForeignKey(SQLRepeatRecord, on_delete=DB_CASCADE)
     state = models.TextField(choices=RECORD_STATES)
     message = models.TextField(blank=True, default='')
     traceback = models.TextField(blank=True, default='')

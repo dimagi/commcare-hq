@@ -344,7 +344,7 @@ class TestDeleteDomain(TestCase):
 
     def _assert_queryset_count(self, queryset_list, count):
         for queryset in queryset_list:
-            self.assertEqual(queryset.count(), count)
+            self.assertEqual(queryset.count(), count, queryset.query)
 
     def _assert_aggregate_ucr_count(self, domain_name, count):
         self._assert_queryset_count([
