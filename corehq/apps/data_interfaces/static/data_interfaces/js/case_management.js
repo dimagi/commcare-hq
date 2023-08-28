@@ -174,7 +174,7 @@ hqDefine("data_interfaces/js/case_management",[
                     contentType: "application/json",
                     success: function (response) {
                         updateCaseRowCopy(self.selectedCases())();
-                        var message = gettext("Successfully copied " + response.copied_cases + " case(s).");
+                        var message = gettext("Cases copied") + ": " + response.copied_cases;
                         alertUser.alert_user(message, "success");
                     },
                     error: function (response) {
