@@ -151,6 +151,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildRecord, BuildSpec
 from corehq.apps.builds.utils import get_default_build_spec
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import (
     ApplicationMediaMixin,
@@ -1043,6 +1044,9 @@ class FormBase(DocumentSchema):
 
     # computed datums IDs that are allowed in endpoints
     function_datum_endpoints = StringListProperty()
+
+    def __repr__(self):
+        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
 
     @classmethod
     def wrap(cls, data):
@@ -2245,6 +2249,9 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     def __init__(self, *args, **kwargs):
         super(ModuleBase, self).__init__(*args, **kwargs)
         self.assign_references()
+
+    def __repr__(self):
+        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
 
     @property
     def is_surveys(self):
@@ -4590,6 +4597,10 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
     family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
 
+    def __repr__(self):
+        return (f"{self.doc_type}(id='{self._id}', domain='{self.domain}', "
+                f"name='{self.name}', copy_of={repr(self.copy_of)})")
+
     def has_modules(self):
         return len(self.get_modules()) > 0 and not self.is_remote_app()
 
@@ -5698,6 +5709,10 @@ class DeleteApplicationRecord(DeleteRecord):
 
     def undo(self):
         app = ApplicationBase.get(self.app_id)
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         app.doc_type = app.get_doc_type()
         app.save(increment_version=False)
 
@@ -5712,6 +5727,10 @@ class DeleteModuleRecord(DeleteRecord):
         app = Application.get(self.app_id)
         modules = app.modules
         modules.insert(self.module_id, self.module)
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         app.modules = modules
         app.save()
 
@@ -5734,6 +5753,10 @@ class DeleteFormRecord(DeleteRecord):
             )
         else:
             module = app.modules[self.module_id]
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         forms = module.forms
         forms.insert(self.form_id, self.form)
         module.forms = forms

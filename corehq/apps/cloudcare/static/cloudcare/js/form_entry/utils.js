@@ -84,7 +84,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         clearCallBack,
         initialPageData,
         inputOnKeyDown,
-        showGeolocationButton= false,
+        showGeolocationButton = false,
         geolocateOnLoad = false,
         setProximity = false
     ) {

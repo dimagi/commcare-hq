@@ -90,6 +90,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
          * @param {function} errorResponseCallback - function to be called on a "success" response with .status = 'error'
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
+        // eslint-disable-next-line no-unused-vars
         self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
             if (self.blockingStatus === constants.BLOCK_ALL) {
                 return;

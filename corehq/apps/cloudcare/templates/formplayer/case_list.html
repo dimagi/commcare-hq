@@ -4,8 +4,14 @@
 <script type="text/template" id="case-view-list-template">
   <div class="module-case-list-container">
 
-    <div aria-label="<%- title %>" tabindex="0" class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
-
+    <div class="page-header menu-header" id="case-list-menu-header">
+      <% if (title.length > 0) {%>
+      <h1  aria-label="<%- title %>" tabindex="0" class="page-title"><%- title %></h1>
+      <% } %>
+      <% if (sidebarEnabled && description.length > 0) {%>
+        <div aria-label="<%- description %>" tabindex="0" class="query-description"><%= description %></div>
+      <% } %>
+    </div>
     <% if (!sidebarEnabled) { %>
     <div class="module-search-container">
       <div class="input-group input-group-lg">
@@ -19,7 +25,7 @@
     </div>
     <% } %>
 
-    <div style="<%- columnStyle %>">
+    <div id="module-case-list-container__results-container" style="<%- columnStyle %>">
       <div id="module-case-list-column-next-to-map">
         <% if (useTiles) { %>
           <% if (hasNoItems) { %>
@@ -77,7 +83,7 @@
         <% } %>
       </div>
       <% if (showMap) { %>
-        <div id="module-case-list-map" class="map <% if (useTiles) { %> white-border<% } %>"></div>
+        <div id="module-case-list-map" class="map <% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
       <% } %>
     </div>
     <% if (actions || isMultiSelect) { %>

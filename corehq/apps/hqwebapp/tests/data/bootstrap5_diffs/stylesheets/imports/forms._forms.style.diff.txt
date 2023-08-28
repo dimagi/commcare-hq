@@ -353,7 +353,7 @@
  .form-hide-actions .form-actions {
    display: none;
  }
-@@ -355,7 +6,15 @@
+@@ -355,15 +6,15 @@
    .validationMessage {
      display: block;
      padding-top: 8px;
@@ -362,11 +362,17 @@
      font-weight: bold;
    }
  }
-+
+ 
+-.checkboxinput.form-control {
+-  border-radius: 0 !important;
+-  height: 13px;
+-  float: none;
+-  position: initial;
+-  width: 13px;
 +.help-block,
 +p.help-block {
 +  display: block;
 +  margin-top: 5px;
 +  margin-bottom: 10px;
 +  color: lighten($cc-text, 25%);
-+}
+ }

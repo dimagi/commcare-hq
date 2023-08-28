@@ -26,7 +26,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "help_video": null,
             "hint": null,
             "output": null,
-            "add-choice": null
+            "add-choice": null,
         })),
 
         selectJSON: (options = {}) => (_.defaults(options, {
@@ -55,7 +55,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "help_video": null,
             "hint": null,
             "output": null,
-            "add-choice": null
+            "add-choice": null,
         })),
 
         labelJSON: (options = {}) => (_.defaults(options, {
@@ -84,7 +84,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "help_video": null,
             "hint": null,
             "output": null,
-            "add-choice": null
+            "add-choice": null,
         })),
 
         repeatJSON: (options = {}) => (_.defaults(options, {
@@ -143,6 +143,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
         groupJSON: (options = {}) => (_.defaults(options, {
             "type": "sub-group",
             "ix": "1",
+            "caption": "Group",
             "children": [
                 {
                     "type": "sub-group",
@@ -151,6 +152,13 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
                         {
                             "type": "question",
                             "ix": "2,3",
+                            "datatype": "str",
+                            "answer": null,
+                            "children": [],
+                        },
+                        {
+                            "type": "question",
+                            "ix": "2,4",
                             "datatype": "str",
                             "answer": null,
                             "children": [],
@@ -170,7 +178,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
                     "children": [],
                 },
             ],
-        })
+        }),
 
     };
 });
