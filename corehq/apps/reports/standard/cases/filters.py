@@ -23,7 +23,6 @@ from corehq.apps.reports.filters.base import (
     BaseSingleOptionFilter,
 )
 from corehq import toggles, privileges
-from corehq.apps.reports.filters.api import CaseCopier
 
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: Replace with library method

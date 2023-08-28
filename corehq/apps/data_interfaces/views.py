@@ -99,7 +99,7 @@ from .interfaces import (
     CaseReassignmentInterface,
     FormManagementMode,
 )
-from corehq.apps.reports.filters.api import CaseCopier
+from corehq.apps.hqcase.case_helper import CaseCopier
 
 
 @login_and_domain_required
