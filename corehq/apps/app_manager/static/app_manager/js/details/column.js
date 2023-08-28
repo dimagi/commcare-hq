@@ -83,18 +83,7 @@ hqDefine("app_manager/js/details/column", function () {
         });
         self.tileContent = ko.observable();
         self.setTileContent = function () {
-            let content = self.header.val();
-            if (content) {
-                content += ": ";
-            }
-            if (self.useXpathExpression) {
-                // TODO: this isn't displaying
-                content += gettext("Calculated Property") + " #" + self.$index();     // copied from calculatedColLabel
-            } else {
-                // TODO: this doesn't display if the value is in a select2 dropdown
-                content += self.field.val();
-            }
-            self.tileContent(content);
+            self.tileContent(self.header.val());
         };
 
         // Set up tab defaults
