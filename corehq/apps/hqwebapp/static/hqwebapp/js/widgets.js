@@ -33,6 +33,7 @@ hqDefine("hqwebapp/js/widgets",[
                     multiple: true,
                     placeholder: ' ',
                     tags: true,
+                    tokenSeparators: [','],
                     width: '100%',
                     createTag: function (params) {
                         // Support pasting in comma-separated values
@@ -43,7 +44,6 @@ hqDefine("hqwebapp/js/widgets",[
                                 text: terms[0],
                             };
                         }
-
                         $input.select2('close');
                         var values = $input.val() || [];
                         if (!_.isArray(values)) {
