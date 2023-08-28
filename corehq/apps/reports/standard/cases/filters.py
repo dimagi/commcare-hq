@@ -95,20 +95,12 @@ class XPathCaseSearchFilter(BaseSimpleFilter):
         special_case_properties = [
             {'name': prop, 'case_type': None, 'meta_type': 'info'}
             for prop in SPECIAL_CASE_PROPERTIES
-            if prop not in self.exclude_special_case_properties
         ]
         operators = [
             {'name': prop, 'case_type': None, 'meta_type': 'operator'}
             for prop in ['=', '!=', '>=', '<=', '>', '<', 'and', 'or']
         ]
         return case_properties + special_case_properties + operators
-
-    @property
-    def exclude_special_case_properties(self):
-        from corehq.apps.reports.filters.api import CaseCopier
-        if not toggles.COPY_CASES.enabled(self.domain):
-            return [CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME]
-        return []
 
 
 class CaseListExplorerColumns(BaseSimpleFilter):
@@ -140,16 +132,8 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         special_properties = [
             {'name': prop, 'case_type': None, 'meta_type': 'info'}
             for prop in SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA
-            if prop not in self.exclude_special_case_properties
         ]
         return case_properties + special_properties
-
-    @property
-    def exclude_special_case_properties(self):
-        from corehq.apps.reports.filters.api import CaseCopier
-        if not toggles.COPY_CASES.enabled(self.domain):
-            return [CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME]
-        return []
 
     @classmethod
     def get_value(cls, request, domain):

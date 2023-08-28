@@ -99,6 +99,7 @@ from .interfaces import (
     CaseReassignmentInterface,
     FormManagementMode,
 )
+from corehq.apps.reports.filters.api import CaseCopier
 
 
 @login_and_domain_required
@@ -1228,9 +1229,11 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
         update_properties = [prop['name'] for prop in action_params['properties_to_update']]
         update_properties_set = set(update_properties)
+        reserved_properties = set(prop.replace("@", "") for prop in SPECIAL_CASE_PROPERTIES)
+        reserved_properties.add(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME)
 
         reserved_properties_updated = (
-            set(prop.replace("@", "") for prop in SPECIAL_CASE_PROPERTIES) & update_properties_set
+            reserved_properties & update_properties_set
         )
         if reserved_properties_updated:
             errors.append(

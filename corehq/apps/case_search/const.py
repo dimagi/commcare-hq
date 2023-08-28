@@ -66,9 +66,8 @@ SPECIAL_CASE_PROPERTIES_MAP = {
     'last_modified': SpecialCaseProperty('last_modified', lambda doc: doc.get('modified_on'), 'modified_on',
                                          get_field_lambda('modified_on')),
 }
-# "commcare_case_copy" relates to CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME and
-# should be a reserved case property.
-SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys()) + ['commcare_case_copy']
+
+SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys())
 
 
 # Properties that can be shown in the report but are not stored on the case or in the case index
