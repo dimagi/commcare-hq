@@ -36,6 +36,7 @@ from corehq.apps.users.role_utils import (
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util.es.testing import sync_users_to_es
+from corehq.util.test_utils import flag_enabled
 
 from ..resources.v0_5 import BadRequest, UserDomainsResource
 from .utils import APIResourceTest
@@ -171,6 +172,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
         self.assertEqual(user_back.default_phone_number, "50253311399")
 
+    @flag_enabled('COMMCARE_CONNECT')
     def test_create_connect_user_no_password(self):
         user_json = {
             "username": "ccc",
@@ -190,6 +192,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_link.domain, self.domain.name)
         self.assertEqual(user_link.connectid_username, "ccc_user")
 
+    @flag_enabled('COMMCARE_CONNECT')
     def test_create_connect_user_with_password(self):
         user_json = {
             "username": "ccc",
@@ -209,6 +212,17 @@ class TestCommCareUserResource(APIResourceTest):
         self.addCleanup(user_link.delete)
         self.assertEqual(user_link.domain, self.domain.name)
         self.assertEqual(user_link.connectid_username, "ccc_user")
+
+    def test_create_connect_user_no_flag(self):
+        user_json = {
+            "username": "ccc",
+            "connect_username": "ccc_user",
+        }
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 400)
 
     def test_bad_request_if_username_already_exists(self):
         # create user with same username first
