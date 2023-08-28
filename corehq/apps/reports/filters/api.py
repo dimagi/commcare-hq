@@ -2,12 +2,8 @@
 API endpoints for filter options
 """
 import logging
-import json
 
 from django.views.generic import View
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.utils.translation import gettext_lazy as _
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
@@ -15,8 +11,6 @@ from dimagi.utils.logging import notify_exception
 from phonelog.models import DeviceReportEntry
 
 from corehq.apps.domain.decorators import LoginAndDomainMixin
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import HqPermissions
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.reports.filters.controllers import (
