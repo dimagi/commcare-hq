@@ -8,7 +8,6 @@ from .api import (
     MobileWorkersOptionsView,
     CaseListActionOptions,
     EnterpriseUserOptions,
-    copy_cases,
 )
 from .location import LocationGroupFilterOptions
 
@@ -18,7 +17,6 @@ urlpatterns = [
     url(r'^enterprise_users_options/$', EnterpriseUserOptions.as_view(), name="enterprise_user_options"),
     url(r'^case_list_options/$', CaseListFilterOptions.as_view(), name='case_list_options'),
     url(r'^case_action_options/$', CaseListActionOptions.as_view(), name='case_action_options'),
-    url(r'^copy_cases/$', copy_cases, name='copy_cases'),
     url(r'^grouplocationfilter_options/$', LocationGroupFilterOptions.as_view(),
         name='grouplocationfilter_options'),
     url(r'^device_log_users/$', DeviceLogUsers.as_view(), name='device_log_users'),

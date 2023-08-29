@@ -151,7 +151,6 @@ hqDefine("data_interfaces/js/case_management",[
                 // users are u__id and groups are sg__id
                 newOwner = newOwner.slice(newOwner.indexOf('__') + 2);
             }
-
             if (_.isEmpty(newOwner)) {
                 $modal.find('.modal-body').text("Please select an owner");
                 $modal.modal('show');
@@ -174,7 +173,7 @@ hqDefine("data_interfaces/js/case_management",[
                     contentType: "application/json",
                     success: function (response) {
                         updateCaseRowCopy(self.selectedCases())();
-                        var message = gettext("Successfully copied " + response.copied_cases + " case(s).");
+                        var message = gettext("Cases copied") + ": " + response.copied_cases;
                         alertUser.alert_user(message, "success");
                     },
                     error: function (response) {
@@ -285,7 +284,7 @@ hqDefine("data_interfaces/js/case_management",[
             var $select = $('#reassign_owner_select');
             if ($select.length) {
                 $select.select2({
-                    placeholder: gettext(placeholderText),
+                    placeholder: placeholderText,
                     ajax: {
                         url: initialPageData.reverse("case_action_options"),
                         data: function (params) {
