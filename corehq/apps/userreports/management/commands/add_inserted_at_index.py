@@ -90,17 +90,17 @@ class Command(BaseCommand):
             except Exception as ex:
                 logger.exception(ex)
             finally:
-                adapter._log_action(
+                adapter.log_table_migrate(
                     initiated_by=initiated_by,
-                    source='management-command',
+                    source='management_command',
                     action=DataSourceActionLog.MIGRATE,
                     diffs=diffs_addressed,
                 )
-                logger.info(f'{len(diffs_addressed)} indecies added')
+                logger.info(f'{len(diffs_addressed)} indexes added')
                 if not len(diffs_addressed) == num_diffs_to_attend:
                     num_diffs_not_attended = num_diffs_to_attend - len(
                         diffs_addressed
                     )
                     logger.warning(
-                        f'{num_diffs_not_attended} indecies were not added'
+                        f'{num_diffs_not_attended} indexes were not added'
                     )
