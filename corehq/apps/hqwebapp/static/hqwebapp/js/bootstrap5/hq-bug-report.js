@@ -34,6 +34,8 @@ hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
         });
 
         self.$hqwebappBugReportForm.submit(function (e) {
+            e.preventDefault();
+
             let isDescriptionEmpty = !$("#bug-report-subject").val() && !$("#bug-report-message").val();
             if (isDescriptionEmpty) {
                 self.highlightInvalidField(self.$issueSubjectFormGroup);
