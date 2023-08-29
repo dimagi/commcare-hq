@@ -17,10 +17,10 @@ hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
         self.isBugReportSubmitting = false;
 
         self.resetForm = function () {
-            self.$hqwebappBugReportForm.find("button[type='submit']").button('reset');
+            self.$hqwebappBugReportForm.find("button[type='submit']").changeButtonState('reset');
             self.$hqwebappBugReportForm.resetForm();
             self.$hqwebappBugReportCancel.enableButton();
-            self.$hqwebappBugReportSubmit.button('reset');
+            self.$hqwebappBugReportSubmit.changeButtonState('reset');
             self.$ccFormGroup.removeClass('has-error has-feedback');
             self.$ccFormGroup.find(".label-danger").addClass('hide');
             self.$emailFormGroup.removeClass('has-error has-feedback');
@@ -61,7 +61,7 @@ hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
                 self.$hqwebappBugReportModal.modal('hide');
             } else if (!self.isBugReportSubmitting) {
                 self.$hqwebappBugReportCancel.disableButtonNoSpinner();
-                self.$hqwebappBugReportSubmit.button('loading');
+                self.$hqwebappBugReportSubmit.changeButtonState('loading');
                 $(this).ajaxSubmit({
                     type: "POST",
                     url: $(this).attr('action'),
@@ -93,13 +93,13 @@ hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
                 self.resetForm();
             });
             self.$hqwebappBugReportForm.find("button[type='submit']")
-                .button('success')
+                .changeButtonState('success')
                 .removeClass('btn-danger').addClass('btn-primary');
         };
 
         self.hqwebappBugReportError = function () {
             self.isBugReportSubmitting = false;
-            self.$hqwebappBugReportForm.find("button[type='submit']").button('error')
+            self.$hqwebappBugReportForm.find("button[type='submit']").changeButtonState('error')
                 .removeClass('btn-primary').addClass('btn-danger');
             self.$hqwebappBugReportCancel.enableButton();
         };
