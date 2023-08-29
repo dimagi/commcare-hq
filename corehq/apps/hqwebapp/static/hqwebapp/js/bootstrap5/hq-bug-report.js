@@ -1,13 +1,15 @@
 hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
     "jquery",
+    "hqwebapp/js/bootstrap5_loader",
     "jquery-form/dist/jquery.form.min",
     "hqwebapp/js/bootstrap5/hq.helpers",
-], function ($) {
+], function ($, bootstrap) {
     'use strict';
     $(function () {
         let self = {};
 
-        self.$hqwebappBugReportModal = $('#modalReportIssue');
+        self.$bugReportModalElement = $('#modalReportIssue');
+        self.bugReportModal = new bootstrap.Modal(self.$bugReportModalElement);
         self.$hqwebappBugReportForm = $('#hqwebapp-bugReportForm');
         self.$hqwebappBugReportSubmit = $('#bug-report-submit');
         self.$hqwebappBugReportCancel = $('#bug-report-cancel');
@@ -27,7 +29,7 @@ hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
             self.$emailFormGroup.find(".label-danger").addClass('hide');
         };
 
-        self.$hqwebappBugReportModal.on('shown.bs.modal', function () {
+        self.$bugReportModalElement.on('shown.bs.modal', function () {
             $("input#bug-report-subject").focus();
         });
 
@@ -58,7 +60,7 @@ hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
 
             if (!self.isBugReportSubmitting && self.$hqwebappBugReportSubmit.text() ===
                     self.$hqwebappBugReportSubmit.data("success-text")) {
-                self.$hqwebappBugReportModal.modal('hide');
+                self.bugReportModal.hide();
             } else if (!self.isBugReportSubmitting) {
                 self.$hqwebappBugReportCancel.disableButtonNoSpinner();
                 self.$hqwebappBugReportSubmit.changeButtonState('loading');
@@ -89,7 +91,7 @@ hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
 
         self.hqwebappBugReportSuccess = function () {
             self.isBugReportSubmitting = false;
-            self.$hqwebappBugReportModal.one('hidden.bs.modal', function () {
+            self.$bugReportModalElement.one('hidden.bs.modal', function () {
                 self.resetForm();
             });
             self.$hqwebappBugReportForm.find("button[type='submit']")
