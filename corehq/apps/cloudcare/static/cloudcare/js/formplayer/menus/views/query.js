@@ -1,7 +1,7 @@
 /*global DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
-    // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
+    // 'hqwebapp/js/bootstrap3/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
         cloudcareUtils = hqImport("cloudcare/js/utils"),

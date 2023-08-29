@@ -1,0 +1,42 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ <script type="text/html" id="ko-inline-edit-template">
+   <div class="ko-inline-edit inline" data-bind="css: {'has-error': hasError()}">
+     <div class="read-only" data-bind="visible: !isEditing(), click: edit, attr: readOnlyAttrs, style: {cursor: disallow_edit ? 'default' : 'pointer'}">
+-            <span data-bind="visible: isSaving()" class="pull-right">
++            <span data-bind="visible: isSaving()" class="float-end">
+                 <i class="fa fa-spin fa-spinner"></i>
+             </span>
+       <!-- ko if: iconClass -->
+@@ -10,10 +10,10 @@
+             </span>
+       <!-- /ko -->
+       <!-- ko if: lang -->
+-      <span class="btn btn-xs btn-info btn-langcode-preprocessed" data-bind="text: lang, visible: !value()"></span>
++      <span class="btn btn-sm btn-info btn-langcode-preprocessed" data-bind="text: lang, visible: !value()"></span>
+       <!-- /ko -->
+       <span data-bind="text: value, visible: value, attr: {'class': containerClass + ' ' + readOnlyClass + ' text'}"></span>
+-      <span class="placeholder text-muted" data-bind="text: placeholder, css: containerClass, visible: !value()"></span>
++      <span class="placeholder text-body-secondary" data-bind="text: placeholder, css: containerClass, visible: !value()"></span>
+       <span class="inline-edit-icon" data-bind="css: containerClass, visible: !disallow_edit"><i class="fa fa-pencil"></i></span>
+     </div>
+     <div class="read-write form-inline" data-bind="visible: isEditing(), css: containerClass">
+@@ -33,7 +33,7 @@
+                     " />
+         <!-- /ko -->
+         <!-- ko if: lang -->
+-        <span class="btn btn-xs btn-info btn-langcode-preprocessed langcode-input pull-right"
++        <span class="btn btn-sm btn-info btn-langcode-preprocessed langcode-input float-end"
+               data-bind="text: lang, visible: !value()"
+         ></span>
+         <!-- /ko -->
+@@ -43,7 +43,7 @@
+         <button class="btn btn-primary" data-bind="click: save, hasFocus: saveHasFocus, visible: !isSaving()">
+           <i class="fa fa-check"></i>
+         </button>
+-        <button class="btn btn-danger" data-bind="click: cancel, hasFocus: cancelHasFocus, visible: !isSaving()">
++        <button class="btn btn-outline-danger" data-bind="click: cancel, hasFocus: cancelHasFocus, visible: !isSaving()">
+           <i class="fa fa-remove"></i>
+         </button>
+       </div>

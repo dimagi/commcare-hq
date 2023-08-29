@@ -1,0 +1,10 @@
+--- 
++++ 
+@@ -1,5 +1,5 @@
+-hqDefine('hqwebapp/js/bootstrap3/hq-bug-report', [
+-    "jquery", "jquery-form/dist/jquery.form.min", "hqwebapp/js/bootstrap3/hq.helpers",
++hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
++    "jquery", "jquery-form/dist/jquery.form.min", "hqwebapp/js/bootstrap5/hq.helpers",
+ ], function ($) {
+     $(function () {
+         var $hqwebappBugReportModal = $('#modalReportIssue'),
