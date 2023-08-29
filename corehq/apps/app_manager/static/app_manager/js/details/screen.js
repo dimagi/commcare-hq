@@ -172,7 +172,8 @@ hqDefine("app_manager/js/details/screen", function () {
                 newColumnStart = activeColumn.tileColumnStart() + columnDelta,
                 newRowEnd = newRowStart + activeColumn.tileHeight() + heightDelta,
                 newColumnEnd = newColumnStart + activeColumn.tileWidth() + widthDelta;
-            if (newRowStart < 1 || newRowEnd > 4 || newColumnStart < 1 || newColumnEnd > 13) {
+            if (newRowStart < 1 || newRowEnd > activeColumn.tileRowMax ||
+                newColumnStart < 1 || newColumnEnd > activeColumn.tileColumnMax()) {
                 throw new Error("cannot move tile out of bounds");
             }
 
