@@ -632,7 +632,7 @@ redis==4.5.4
     #   django-redis
     #   django-redis-sessions
     #   django-websocket-redis
-reportlab==3.6.9
+reportlab==3.6.13
     # via -r base-requirements.in
 requests==2.28.2
     # via
@@ -820,7 +820,7 @@ urllib3==1.26.12
     #   sentry-sdk
 user-agents==2.2.0
     # via django-user-agents
-uwsgi==2.0.20
+uwsgi==2.0.22
     # via -r test-requirements.in
 vine==5.0.0
     # via

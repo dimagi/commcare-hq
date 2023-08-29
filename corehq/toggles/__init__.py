@@ -1395,6 +1395,15 @@ SMS_LOG_CHANGES = StaticToggle(
                  "Report, and adds Status and Event columns"),
 )
 
+EXPORT_DATA_SOURCE_DATA = StaticToggle(
+    'export_data_source_data',
+    'Add Export Data Source Data page',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+    description="Add the Export Data Source Data page to the Data tab",
+)
+
+
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'enable_include_sms_gateway_charging',
     'Enable include SMS gateway charging',
@@ -1559,15 +1568,6 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
         "other reports - by individual user, group, or location.  Note that this "
         "will also force the report to always display by user."
     ),
-)
-
-DATA_DICTIONARY = StaticToggle(
-    'data_dictionary',
-    'Project level data dictionary of cases',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-    description='Available in the Data section, shows the names of all properties of each case type.',
-    help_link='https://confluence.dimagi.com/display/GS/Data+Dictionary+for+Case+Properties',
 )
 
 DD_CASE_DATA = StaticToggle(
@@ -2605,4 +2605,14 @@ APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
     description="Show Application Error Report.",
     # TODO: Move to public wiki
     help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
+)
+
+DATA_DICTIONARY = FrozenPrivilegeToggle(
+    privileges.DATA_DICTIONARY,
+    'data_dictionary',
+    label='Project level data dictionary of cases',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Project level data dictionary of cases',
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary'
 )

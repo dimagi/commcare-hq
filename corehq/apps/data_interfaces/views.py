@@ -585,7 +585,7 @@ class XFormManagementStatusView(DataInterfaceSection):
             'title': mode.status_page_title,
             'error_text': mode.error_text,
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -646,7 +646,7 @@ class BulkCaseActionSatusView(DataInterfaceSection):
                 "Bulk Case {action_text} failed for some reason and we have noted this failure."
             ).format(action_text=action_text),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def poll_url(self, download_id):
         return reverse(

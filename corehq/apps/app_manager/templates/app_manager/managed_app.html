@@ -17,7 +17,7 @@
     <script src="{% static 'app_manager/js/menu.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager.js' %}"></script><!-- depends on menu.js -->
     <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/bootstrap3/rollout_modal.js' %}"></script>
     <script src="{% static 'app_manager/js/section_changer.js' %}"></script>
   {% endcompress %}
 {% endblock %}
@@ -208,6 +208,6 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-  {% include "hqwebapp/rollout_revert_modal.html" %}
+  {% include "hqwebapp/bootstrap3/rollout_revert_modal.html" %}
   {% include 'app_manager/partials/confirm_delete_app.html' %}
 {% endblock %}
