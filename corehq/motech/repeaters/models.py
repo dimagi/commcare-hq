@@ -189,6 +189,8 @@ class RepeaterSuperProxy(models.Model):
         # If repeater_id is not set then set one
         if not self.repeater_id:
             self.repeater_id = uuid.uuid4().hex
+        if self.id is None:
+            self.id = uuid.UUID(self.repeater_id)
         self.name = self.name or self.connection_settings.name
         return super().save(*args, **kwargs)
 
@@ -252,6 +254,7 @@ class RepeaterManager(models.Manager):
 
 @foreign_init
 class Repeater(RepeaterSuperProxy):
+    id = models.UUIDField(primary_key=True, db_column="id_")
     domain = models.CharField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
     name = models.CharField(max_length=255, null=True)
@@ -1176,6 +1179,7 @@ class SQLRepeatRecord(models.Model):
     payload_id = models.CharField(max_length=36)
     repeater = models.ForeignKey(Repeater,
                                  on_delete=DB_CASCADE,
+                                 db_column="repeater_id_",
                                  related_name='repeat_records')
     state = models.TextField(choices=RECORD_STATES,
                              default=RECORD_PENDING_STATE)

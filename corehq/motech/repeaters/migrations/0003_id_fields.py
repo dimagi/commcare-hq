@@ -22,11 +22,34 @@ class Migration(migrations.Migration):
             field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
         ),
         migrations.RunSQL(
+            # Requires "repeaters_repeatrecord" to be empty
             sql="""
+            CREATE FUNCTION set_default_repeaters_repeater_id()
+                RETURNS trigger LANGUAGE plpgsql AS $BODY$
+                BEGIN
+                    IF NEW.id_ IS NULL THEN
+                        NEW.id_ = NEW.repeater_id::uuid;
+                    END IF;
+                    RETURN NEW;
+                END
+                $BODY$;
+            SET CONSTRAINTS "repeaters_repeatreco_repeater_id_01b51f9d_fk_repeaters" IMMEDIATE;
+            ALTER TABLE "repeaters_repeatrecord"
+                DROP CONSTRAINT "repeaters_repeatreco_repeater_id_01b51f9d_fk_repeaters",
+                ADD COLUMN "repeater_id_" uuid,
+                ALTER COLUMN repeater_id DROP NOT NULL;
+            ALTER TABLE "repeaters_repeater" ADD COLUMN "id_" uuid;
+            ALTER TABLE "repeaters_repeater"
+                ADD CONSTRAINT "repeaters_repeater_id_key" UNIQUE ("id"),
+                DROP CONSTRAINT "repeaters_repeater_pkey",
+                ALTER COLUMN "id_" TYPE uuid USING "repeater_id"::uuid,
+                ADD CONSTRAINT "repeaters_repeater_pkey" PRIMARY KEY ("id_"),
+                ADD CONSTRAINT id_eq CHECK ("id_" = "repeater_id"::uuid);
+            CREATE TRIGGER repeaters_repeater_default_id BEFORE INSERT ON repeaters_repeater
+                FOR EACH ROW EXECUTE FUNCTION set_default_repeaters_repeater_id();
             ALTER TABLE repeaters_repeatrecord
-                DROP CONSTRAINT repeaters_repeatreco_repeater_id_01b51f9d_fk_repeaters,
                 ADD CONSTRAINT repeaters_repeatreco_repeater_id_01b51f9d_fk_repeaters
-                    FOREIGN KEY (repeater_id) REFERENCES repeaters_repeater(id)
+                    FOREIGN KEY (repeater_id_) REFERENCES repeaters_repeater(id_)
                     ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED;
             ALTER TABLE repeaters_repeatrecordattempt
                 DROP CONSTRAINT repeaters_repeatrecordattempt_repeat_record_id_cc88c323_fk,
@@ -35,8 +58,19 @@ class Migration(migrations.Migration):
                     ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED;
             """,
             reverse_sql="""
-            ALTER TABLE repeaters_repeatrecord
+            SET CONSTRAINTS "repeaters_repeatreco_repeater_id_01b51f9d_fk_repeaters" IMMEDIATE;
+            ALTER TABLE "repeaters_repeatrecord"
                 DROP CONSTRAINT repeaters_repeatreco_repeater_id_01b51f9d_fk_repeaters,
+                DROP COLUMN "repeater_id_";
+            DROP TRIGGER repeaters_repeater_default_id ON repeaters_repeater;
+            DROP FUNCTION set_default_repeaters_repeater_id();
+            ALTER TABLE "repeaters_repeater"
+                DROP CONSTRAINT "repeaters_repeater_pkey",
+                DROP CONSTRAINT id_eq,
+                DROP COLUMN "id_",
+                ADD CONSTRAINT "repeaters_repeater_pkey" PRIMARY KEY ("id"),
+                DROP CONSTRAINT "repeaters_repeater_id_key";
+            ALTER TABLE repeaters_repeatrecord
                 ADD CONSTRAINT repeaters_repeatreco_repeater_id_01b51f9d_fk_repeaters
                     FOREIGN KEY (repeater_id) REFERENCES repeaters_repeater(id)
                     DEFERRABLE INITIALLY DEFERRED;
@@ -48,9 +82,15 @@ class Migration(migrations.Migration):
             """,
             state_operations=[
                 migrations.AlterField(
+                    model_name='repeater',
+                    name='id',
+                    field=models.UUIDField(db_column="id_", primary_key=True, serialize=False),
+                ),
+                migrations.AlterField(
                     model_name='sqlrepeatrecord',
                     name='repeater',
                     field=models.ForeignKey(
+                        db_column='repeater_id_',
                         on_delete=DO_NOTHING,
                         related_name='repeat_records',
                         to='repeaters.repeater',
