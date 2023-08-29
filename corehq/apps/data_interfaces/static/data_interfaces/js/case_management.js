@@ -151,7 +151,6 @@ hqDefine("data_interfaces/js/case_management",[
                 // users are u__id and groups are sg__id
                 newOwner = newOwner.slice(newOwner.indexOf('__') + 2);
             }
-
             if (_.isEmpty(newOwner)) {
                 $modal.find('.modal-body').text("Please select an owner");
                 $modal.modal('show');

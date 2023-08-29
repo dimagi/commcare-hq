@@ -1,6 +1,7 @@
 import uuid
 from dataclasses import dataclass
 from django.utils.translation import gettext_lazy as _
+from soil import DownloadBase
 
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
@@ -252,11 +253,12 @@ class CaseCopier:
         )
         self.row_count = 0
 
-    def copy_cases(self, case_ids):
+    def copy_cases(self, case_ids, progress_task=None):
         """
         Copies the cases specified by ``case_ids`` to ``self.to_owner``.
 
         :param case_ids: The case IDs of the cases to copy.
+        :param progress_task: The task which tracks the progress of this method
         :returns: A list of original- and new case ID pairs and a list
             of any errors encountered.
         """
@@ -273,7 +275,7 @@ class CaseCopier:
         self.processed_cases = {}
 
         errors = []
-        for orig_case in original_cases:
+        for idx, orig_case in enumerate(original_cases):
             if orig_case.owner_id == self.to_owner:
                 errors.append(_(
                     'Original case owner {owner_id} cannot copy '
@@ -287,6 +289,9 @@ class CaseCopier:
                 caseblock = self._create_caseblock(orig_case)
                 self.processed_cases[orig_case.case_id] = caseblock
                 self._add_to_submission_handler(caseblock)
+
+            if progress_task is not None:
+                DownloadBase.set_progress(progress_task, idx, len(case_ids))
 
         self._commit_cases()
 
