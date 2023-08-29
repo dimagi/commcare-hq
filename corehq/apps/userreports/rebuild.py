@@ -83,10 +83,10 @@ def get_tables_with_index_diff_only(diffs, index_column):
         diffs, DiffTypes.ADD_INDEX
     )}
     for table_name in tables_with_index_change:
-        diffs = list(filter(lambda diff: diff.table_name == table_name, diffs))
-        if len(diffs) > 1:
+        filtered_diffs = list(filter(lambda diff: diff.table_name == table_name, diffs))
+        if len(filtered_diffs) > 1:
             continue
-        _change_type, index = diffs[0].raw
+        _change_type, index = filtered_diffs[0].raw
         columns = list(index.columns)
         if len(columns) > 1:
             # Not sure if/when this will happen?
