@@ -642,9 +642,9 @@ class BulkCaseActionSatusView(DataInterfaceSection):
             'poll_url': self.poll_url(kwargs['download_id']),
             'title': _(self.page_title),
             'progress_text': _("{action_text} Cases. This may take some time...").format(action_text=action_text),
-            'error_text': _("Bulk Case {action_text} failed for some reason and we have noted this failure.").format(
-                action_text=action_text
-            ),
+            'error_text': _(
+                "Bulk Case {action_text} failed for some reason and we have noted this failure."
+            ).format(action_text=action_text),
         })
         return render(request, 'hqwebapp/soil_status_full.html', context)
 
