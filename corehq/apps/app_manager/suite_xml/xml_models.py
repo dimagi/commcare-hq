@@ -758,7 +758,7 @@ class Response(XmlObject):
 
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
-    ORDER = ('header', 'template', 'sort_node')
+    ORDER = ('style', 'header', 'template', 'sort_node')
 
     sort = StringField('@sort')
     print_id = StringField('@print-id')
