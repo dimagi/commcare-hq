@@ -4,7 +4,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/base_ace',  // ace editor for UCR filter
-    'hqwebapp/js/components.ko',    // select toggle widget
+    'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
 ], function ($, _, ko, initialPageData, baseAce) {
 
     var CaseRuleCriteria = function (initial, constants, caseTypeObservable) {

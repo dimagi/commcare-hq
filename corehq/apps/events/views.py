@@ -476,7 +476,7 @@ class MobileWorkerAttendeeSatusView(BaseEventView):
             'next_url': reverse(AttendeesListView.urlname, args=[self.domain]),
             'next_url_text': _("Go back to view attendees"),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

@@ -2,7 +2,7 @@ hqDefine("hqmedia/js/manage_paths_main", [
     "jquery",
     "knockout",
     "hqwebapp/js/assert_properties",
-    "hqwebapp/js/components.ko",    // select toggle widget
+    "hqwebapp/js/bootstrap3/components.ko",    // select toggle widget
 ], function (
     $,
     ko,
