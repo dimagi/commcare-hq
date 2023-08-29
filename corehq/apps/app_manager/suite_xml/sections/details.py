@@ -242,11 +242,15 @@ class DetailContributor(SectionContributor):
                 # only yield the Detail if it has Fields
                 return d
 
+    def _create_tag(self, name, function):
+        element = etree.Element(name, function=function)
+        return etree.tostring(element, encoding=str)
+
     def _add_custom_variables(self, detail, d):
         custom_variables_dict = detail.custom_variables_dict
         if custom_variables_dict:
             custom_variable_elements = [
-                etree.fromstring(f"<{ p[0] } function=\"{ p[1] }\"/>") for p in custom_variables_dict.items()
+                self._create_tag(p[0], p[1]) for p in custom_variables_dict.items()
             ]
             d.variables.extend([
                 load_xmlobject_from_string(etree.tostring(e, encoding='utf-8'), xmlclass=DetailVariable)
