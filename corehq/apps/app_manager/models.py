@@ -1950,6 +1950,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     persistent_case_context_xml = StringProperty(default='case_name')
 
     # Custom variables to add into the <variables /> node
+    custom_variables = StringProperty(exclude_if_none=True)
     custom_variables_dict = DictProperty(exclude_if_none=True)
 
     # Allow selection of mutiple cases. Only applies to 'short' details
@@ -2045,12 +2046,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
                     setattr(self, ele, getattr(src_detail, ele))
             else:
                 setattr(self, attr, getattr(src_detail, attr))
-
-    @classmethod
-    def wrap(cls, data):
-        from corehq.apps.app_manager.management.commands.migrate_case_list_custom_variables import Command
-        Command.migrate_detail_forward(data)
-        return super(Detail, cls).wrap(data)
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
