@@ -3,49 +3,52 @@ hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
     "jquery-form/dist/jquery.form.min",
     "hqwebapp/js/bootstrap5/hq.helpers",
 ], function ($) {
+    'use strict';
     $(function () {
-        var $hqwebappBugReportModal = $('#modalReportIssue'),
-            $hqwebappBugReportForm = $('#hqwebapp-bugReportForm'),
-            $hqwebappBugReportSubmit = $('#bug-report-submit'),
-            $hqwebappBugReportCancel = $('#bug-report-cancel'),
-            $ccFormGroup = $("#bug-report-cc-form-group"),
-            $emailFormGroup = $("#bug-report-email-form-group"),
-            $issueSubjectFormGroup = $("#bug-report-subject-form-group"),
-            isBugReportSubmitting = false;
+        let self = {};
 
-        var resetForm = function () {
-            $hqwebappBugReportForm.find("button[type='submit']").button('reset');
-            $hqwebappBugReportForm.resetForm();
-            $hqwebappBugReportCancel.enableButton();
-            $hqwebappBugReportSubmit.button('reset');
-            $ccFormGroup.removeClass('has-error has-feedback');
-            $ccFormGroup.find(".label-danger").addClass('hide');
-            $emailFormGroup.removeClass('has-error has-feedback');
-            $emailFormGroup.find(".label-danger").addClass('hide');
+        self.$hqwebappBugReportModal = $('#modalReportIssue');
+        self.$hqwebappBugReportForm = $('#hqwebapp-bugReportForm');
+        self.$hqwebappBugReportSubmit = $('#bug-report-submit');
+        self.$hqwebappBugReportCancel = $('#bug-report-cancel');
+        self.$ccFormGroup = $("#bug-report-cc-form-group");
+        self.$emailFormGroup = $("#bug-report-email-form-group");
+        self.$issueSubjectFormGroup = $("#bug-report-subject-form-group");
+        self.isBugReportSubmitting = false;
+
+        self.resetForm = function () {
+            self.$hqwebappBugReportForm.find("button[type='submit']").button('reset');
+            self.$hqwebappBugReportForm.resetForm();
+            self.$hqwebappBugReportCancel.enableButton();
+            self.$hqwebappBugReportSubmit.button('reset');
+            self.$ccFormGroup.removeClass('has-error has-feedback');
+            self.$ccFormGroup.find(".label-danger").addClass('hide');
+            self.$emailFormGroup.removeClass('has-error has-feedback');
+            self.$emailFormGroup.find(".label-danger").addClass('hide');
         };
 
-        $hqwebappBugReportModal.on('shown.bs.modal', function () {
+        self.$hqwebappBugReportModal.on('shown.bs.modal', function () {
             $("input#bug-report-subject").focus();
         });
 
-        $hqwebappBugReportForm.submit(function () {
-            var isDescriptionEmpty = !$("#bug-report-subject").val() && !$("#bug-report-message").val();
+        self.$hqwebappBugReportForm.submit(function (e) {
+            let isDescriptionEmpty = !$("#bug-report-subject").val() && !$("#bug-report-message").val();
             if (isDescriptionEmpty) {
-                highlightInvalidField($issueSubjectFormGroup);
+                self.highlightInvalidField(self.$issueSubjectFormGroup);
             }
 
-            var emailAddress = $(this).find("input[name='email']").val();
-            if (emailAddress && !IsValidEmail(emailAddress)) {
-                highlightInvalidField($emailFormGroup);
+            let emailAddress = $(this).find("input[name='email']").val();
+            if (emailAddress && !self.isValidEmail(emailAddress)) {
+                self.highlightInvalidField(self.$emailFormGroup);
                 return false;
             }
 
-            var emailAddresses = $(this).find("input[name='cc']").val();
+            let emailAddresses = $(this).find("input[name='cc']").val();
             emailAddresses = emailAddresses.replace(/ /g, "").split(",");
-            for (var index in emailAddresses) {
-                var email = emailAddresses[index];
-                if (email && !IsValidEmail(email)) {
-                    highlightInvalidField($ccFormGroup);
+            for (let index in emailAddresses) {
+                let email = emailAddresses[index];
+                if (email && !self.isValidEmail(email)) {
+                    self.highlightInvalidField(self.$ccFormGroup);
                     return false;
                 }
             }
@@ -53,57 +56,61 @@ hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
                 return false;
             }
 
-            if (!isBugReportSubmitting && $hqwebappBugReportSubmit.text() === $hqwebappBugReportSubmit.data("success-text")) {
-                $hqwebappBugReportModal.modal("hide");
-            } else if (!isBugReportSubmitting) {
-                $hqwebappBugReportCancel.disableButtonNoSpinner();
-                $hqwebappBugReportSubmit.button('loading');
+            if (!self.isBugReportSubmitting && self.$hqwebappBugReportSubmit.text() ===
+                    self.$hqwebappBugReportSubmit.data("success-text")) {
+                self.$hqwebappBugReportModal.modal('hide');
+            } else if (!self.isBugReportSubmitting) {
+                self.$hqwebappBugReportCancel.disableButtonNoSpinner();
+                self.$hqwebappBugReportSubmit.button('loading');
                 $(this).ajaxSubmit({
                     type: "POST",
                     url: $(this).attr('action'),
-                    beforeSerialize: hqwebappBugReportBeforeSerialize,
-                    beforeSubmit: hqwebappBugReportBeforeSubmit,
-                    success: hqwebappBugReportSucccess,
-                    error: hqwebappBugReportError,
+                    beforeSerialize: self.hqwebappBugReportBeforeSerialize,
+                    beforeSubmit: self.hqwebappBugReportBeforeSubmit,
+                    success: self.hqwebappBugReportSuccess,
+                    error: self.hqwebappBugReportError,
                 });
             }
             return false;
         });
 
-        function IsValidEmail(email) {
-            var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+        self.isValidEmail = function (email) {
+            let regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
             return regex.test(email);
-        }
+        };
 
-        function hqwebappBugReportBeforeSerialize($form) {
+        self.hqwebappBugReportBeforeSerialize = function ($form) {
             $form.find("#bug-report-url").val(location.href);
-        }
+        };
 
-        function hqwebappBugReportBeforeSubmit() {
-            isBugReportSubmitting = true;
-        }
+        self.hqwebappBugReportBeforeSubmit = function () {
+            self.isBugReportSubmitting = true;
+        };
 
-        function hqwebappBugReportSucccess() {
-            isBugReportSubmitting = false;
-            $hqwebappBugReportForm.find("button[type='submit']").button('success').removeClass('btn-danger').addClass('btn-primary');
-            $hqwebappBugReportModal.one('hidden.bs.modal', function () {
-                resetForm();
+        self.hqwebappBugReportSuccess = function () {
+            self.isBugReportSubmitting = false;
+            self.$hqwebappBugReportModal.one('hidden.bs.modal', function () {
+                self.resetForm();
             });
-        }
+            self.$hqwebappBugReportForm.find("button[type='submit']")
+                .button('success')
+                .removeClass('btn-danger').addClass('btn-primary');
+        };
 
-        function hqwebappBugReportError() {
-            isBugReportSubmitting = false;
-            $hqwebappBugReportForm.find("button[type='submit']").button('error').removeClass('btn-primary').addClass('btn-danger');
-            $hqwebappBugReportCancel.enableButton();
-        }
+        self.hqwebappBugReportError = function () {
+            self.isBugReportSubmitting = false;
+            self.$hqwebappBugReportForm.find("button[type='submit']").button('error')
+                .removeClass('btn-primary').addClass('btn-danger');
+            self.$hqwebappBugReportCancel.enableButton();
+        };
 
-        function highlightInvalidField($element) {
+        self.highlightInvalidField = function ($element) {
             $element.addClass('has-error has-feedback');
             $element.find(".label-danger").removeClass('hide');
             $element.find("input").focus(function () {
                 $element.removeClass("has-error has-feedback");
                 $element.find(".label-danger").addClass('hide');
             });
-        }
+        };
     });
 });
