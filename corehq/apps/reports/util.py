@@ -461,11 +461,7 @@ def get_allowed_tableau_groups_for_domain(domain):
     '''
     Returns a list of the Tableau groups that have been approved in the project settings.
     '''
-    allowed_groups = TableauServer.objects.get(domain=domain).allowed_tableau_groups
-    if allowed_groups:
-        return allowed_groups
-    else:
-        return []
+    return TableauServer.objects.get(domain=domain).allowed_tableau_groups
 
 
 def get_tableau_groups_for_user(domain, username):

@@ -162,7 +162,7 @@ class TableauServer(models.Model):
     server_name = models.CharField(max_length=128)
     validate_hostname = models.CharField(max_length=128, default='', blank=True)
     target_site = models.CharField(max_length=64, default='Default')
-    allowed_tableau_groups = ArrayField(models.CharField(max_length=255), null=True, blank=True)
+    allowed_tableau_groups = ArrayField(models.CharField(max_length=255), null=True, blank=True, default=list)
 
     def __str__(self):
         return '{domain} {server} {server_type} {site}'.format(domain=self.domain,
@@ -249,6 +249,7 @@ class TableauConnectedApp(models.Model):
         except TableauConnectedApp.DoesNotExist:
             pass
         return False
+
 
 class TableauUser(models.Model):
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
