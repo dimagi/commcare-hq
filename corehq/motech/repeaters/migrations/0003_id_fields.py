@@ -43,6 +43,8 @@ class Migration(migrations.Migration):
                 BEGIN
                     IF NEW.id_ IS NULL THEN
                         NEW.id_ = NEW.repeater_id::uuid;
+                    ELSIF NEW.repeater_id IS NULL THEN
+                        NEW.repeater_id = REPLACE(NEW.id_::varchar, '-', '');
                     END IF;
                     RETURN NEW;
                 END
