@@ -8,7 +8,7 @@ from corehq.apps.export.const import DEID_ID_TRANSFORM
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.models import CommCareCase
 
-from ..filters.api import CaseCopier
+from corehq.apps.hqcase.case_helper import CaseCopier
 
 DOMAIN = 'test-domain'
 

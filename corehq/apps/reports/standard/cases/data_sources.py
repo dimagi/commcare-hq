@@ -22,7 +22,7 @@ from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import parse_date
 from corehq.util.view_utils import absolute_reverse
-from corehq.apps.reports.filters.api import CaseCopier
+from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.form_processor.models import CommCareCase
 
 CASE_COPY_PROPERTY = CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME
