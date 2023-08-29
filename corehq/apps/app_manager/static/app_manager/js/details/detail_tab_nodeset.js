@@ -27,7 +27,7 @@ hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
         self.ui = $(_.template($("#module-case-detail-tab-nodeset-template").text())());
         self.ui.koApplyBindings(self);
 
-        hqImport("hqwebapp/js/main").eventize(self);
+        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
         self.nodeset.subscribe(function () {
             self.fire('change');
         });

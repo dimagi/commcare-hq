@@ -28,7 +28,7 @@ hqDefine("app_manager/js/details/screen", function () {
         var self = {};
         var i,
             columns;
-        hqImport("hqwebapp/js/main").eventize(self);
+        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
         self.moduleId = options.moduleId;
         self.type = spec.type;
         self.saveUrl = options.saveUrl;
@@ -222,7 +222,7 @@ hqDefine("app_manager/js/details/screen", function () {
             self.initColumnAsColumn(self.columns()[i]);
         }
 
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
             unsavedMessage: gettext('You have unsaved detail screen configurations.'),
             save: function () {
                 self.save();
