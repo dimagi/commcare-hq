@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from tastypie.paginator import Paginator
 
 from corehq.apps.api.util import get_datasource_records
+from corehq.util import reverse
 
 
 class NoCountingPaginator(Paginator):
@@ -67,7 +68,7 @@ class DoesNothingPaginatorCompat(Paginator):
         }
 
 
-def response_for_cursor_based_pagination(query, request_params, datasource_adapter):
+def response_for_cursor_based_pagination(request, query, request_params, datasource_adapter):
     """Creates a response dictionary that can be used for cursor based pagination
      :returns: The response dictionary
     """
@@ -75,21 +76,25 @@ def response_for_cursor_based_pagination(query, request_params, datasource_adapt
     return {
         "objects": records,
         "meta": {
-            "next": _get_next_url_params(records),
+            "next": _get_next_url_params(request.domain, request_params, records),
             "limit": request_params["limit"]
         }
     }
 
 
-def _get_next_url_params(datasource_records):
+def _get_next_url_params(domain, request_params, datasource_records):
     """ Constructs the query string containing a base64-encoded cursor that points to the last entry in
     `datasource_records`
     :returns: The query string"""
     if not datasource_records:
         return None
 
+    new_params = request_params.copy()
+    # These are old values for `last_inserted_at` and `last_doc_id`
+    new_params.pop('last_inserted_at', None)
+    new_params.pop('last_doc_id', None)
     last_object = datasource_records[-1]
     cursor_params = {"last_doc_id": last_object["doc_id"], "last_inserted_at": last_object["inserted_at"]}
     encoded_cursor = b64encode(urlencode(cursor_params).encode('utf-8'))
-    next_params = {'cursor': encoded_cursor}
-    return f'?{urlencode(next_params)}'
+    next_params = new_params | {'cursor': encoded_cursor}
+    return reverse('api_get_ucr_data', args=[domain], params=next_params, absolute=True)

@@ -1347,5 +1347,5 @@ def get_datasource_data(request, config_id, domain):
     if "limit" not in request_params or request_params["limit"] > EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT:
         request_params["limit"] = EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT
     query = cursor_based_query_for_datasource(request_params, datasource_adapter)
-    data = response_for_cursor_based_pagination(query, request_params, datasource_adapter)
+    data = response_for_cursor_based_pagination(request, query, request_params, datasource_adapter)
     return JsonResponse(data)

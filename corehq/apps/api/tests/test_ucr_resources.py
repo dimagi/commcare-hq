@@ -10,7 +10,6 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
-
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.accounting.models import (
@@ -476,26 +475,24 @@ class TestUCRPaginated(TestCase):
         """The cursor in the `next` parameter should point to the last record that was returned"""
         last_doc_id = "1aa9b660-dfb9-409a-a939-873ce608db2e"
         last_inserted_at = "2023-08-17T11:08:01.927384Z"
-        mock_get_datasource_records.return_value = {
-            "rows": [
-                [
-                    "dd00fe32-325f-4246-ac22-1261126dffe7",
-                    "2023-08-17T11:08:01.915246Z",
-                    "Ola",
-                    "ba7f99d16c494aa384e12d3c6b2b6156",
-                    None,
-                    "False"
-                ],
-                [
-                    last_doc_id,
-                    last_inserted_at,
-                    "Hello",
-                    "c18dfbefb65c4ed5b9524d69f245160b",
-                    None,
-                    "False"
-                ]
-            ]
-        }
+        mock_get_datasource_records.return_value = [
+            {
+                "id": "dd00fe32-325f-4246-ac22-1261126dffe7",
+                "doc_id": "dd00fe32-325f-4246-ac22-1261126dffe7",
+                "inserted_at": "2023-08-17T11:08:01.915246Z",
+                "val1": "Ola",
+                "val2": None,
+                "val3": "False"
+            },
+            {
+                "id": last_doc_id,
+                "doc_id": last_doc_id,
+                "inserted_at": last_inserted_at,
+                "val1": "Hello",
+                "val2": "c18dfbefb65c4ed5b9524d69f245160b",
+                "val3": None,
+            }
+        ]
         url = reverse("api_get_ucr_data", args=[self.domain.name])
         limit = 2
         url = f"{url}?limit={limit}&data_source_id={self.data_source._id}"
@@ -504,7 +501,8 @@ class TestUCRPaginated(TestCase):
         self.assertEqual(response.status_code, 200)
         response_dict = json.loads(response.content)
         self.assertEqual(int(response_dict["meta"]["limit"]), limit)
-        cursor = response_dict["meta"]["next"].split("?cursor=")[1]
+        query_params = parse_qs(urlparse(response_dict["meta"]["next"]).query)
+        cursor = query_params['cursor'][0]
         cursor_params_string = b64decode(unquote(cursor)).decode('utf-8')
         cursor_params = CursorParams(QueryDict(cursor_params_string).dict(), self.domain, True)
         self.assertEqual(cursor_params.params['last_doc_id'], last_doc_id)
@@ -516,26 +514,24 @@ class TestUCRPaginated(TestCase):
         """The cursor in the `next` parameter should point to the last record that was returned"""
         last_doc_id = "1aa9b660-dfb9-409a-a939-873ce608db2e"
         last_inserted_at = "2023-08-17T11:08:01.927384Z"
-        mock_get_datasource_records.return_value = {
-            "rows": [
-                [
-                    "dd00fe32-325f-4246-ac22-1261126dffe7",
-                    "2023-08-17T11:08:01.915246Z",
-                    "Ola",
-                    "ba7f99d16c494aa384e12d3c6b2b6156",
-                    None,
-                    "False"
-                ],
-                [
-                    last_doc_id,
-                    last_inserted_at,
-                    "Hello",
-                    "c18dfbefb65c4ed5b9524d69f245160b",
-                    None,
-                    "False"
-                ]
-            ]
-        }
+        mock_get_datasource_records.return_value = [
+            {
+                "id": "dd00fe32-325f-4246-ac22-1261126dffe7",
+                "doc_id": "dd00fe32-325f-4246-ac22-1261126dffe7",
+                "inserted_at": "2023-08-17T11:08:01.915246Z",
+                "val1": "Ola",
+                "val2": None,
+                "val3": "False"
+            },
+            {
+                "id": last_doc_id,
+                "doc_id": last_doc_id,
+                "inserted_at": last_inserted_at,
+                "val1": "Hello",
+                "val2": "c18dfbefb65c4ed5b9524d69f245160b",
+                "val3": None,
+            }
+        ]
         url = reverse("api_get_ucr_data", args=[self.domain.name])
         limit = 2
         url = f"{url}?limit={limit}&data_source_id={self.data_source._id}"
@@ -544,7 +540,8 @@ class TestUCRPaginated(TestCase):
         self.assertEqual(response.status_code, 200)
         response_dict = json.loads(response.content)
         self.assertEqual(int(response_dict["meta"]["limit"]), limit)
-        cursor = response_dict["meta"]["next"].split("?cursor=")[1]
+        query_params = parse_qs(urlparse(response_dict["meta"]["next"]).query)
+        cursor = query_params['cursor'][0]
 
         url = f"{url}&cursor={cursor}"
         with patch("corehq.apps.api.resources.v0_5.cursor_based_query_for_datasource") as mock_method:
