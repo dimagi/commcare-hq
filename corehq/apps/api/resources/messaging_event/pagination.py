@@ -27,7 +27,7 @@ def _get_objects(query, request_params, limit):
     """Get the list of objects to return. For pages > 1 this will
     skip the first object in the page if it was present in the previous
     page (as encoded in the cursor)"""
-    if request_params.is_cursor:
+    if request_params.has_cursor:
         objects = list(query[:limit + 1])
         last_id = request_params.get(LAST_OBJECT_ID)
         try:
