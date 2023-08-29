@@ -1,4 +1,3 @@
-import numpy as np
 import haversine
 
 import requests
@@ -80,7 +79,9 @@ class ORToolsRadialDistanceSolver:
                     if x[i, j].solution_value() > 0.5:
                         solution[self.user_locations[i]['id']].append(self.case_locations[j]['id'])
                         if print_solution:
-                            print(f"user {self.user_locations[i]['id']} assigned to case {self.case_locations[j]['id']}." + f" Cost: {costs[i][j]}")
+                            print(f"Case {self.case_locations[j]['id']} assigned to "
+                                  f"user {self.user_locations[i]['id']}. "
+                                  f"Cost: {costs[i][j]}")
         else:
             if print_solution:
                 print("No solution found.")
@@ -98,8 +99,8 @@ class ORToolsRoadNetworkSolver(ORToolsRadialDistanceSolver):
             raise Exception("This is more than Mapbox matrix API limit (25)")
 
         coordinates = ';'.join([
-            f'{l["lon"]},{l["lat"]}'
-            for l in self.user_locations + self.case_locations]
+            f'{loc["lon"]},{loc["lat"]}'
+            for loc in self.user_locations + self.case_locations]
         )
         sources = ";".join(map(str, list(range(len(self.user_locations)))))
 

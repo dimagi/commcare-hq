@@ -24,7 +24,6 @@ from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA
 from .models import GeoPolygon, GeoConfig
 
 
-
 def geospatial_default(request, *args, **kwargs):
     return HttpResponseRedirect(CaseManagementMap.get_url(*args, **kwargs))
 
