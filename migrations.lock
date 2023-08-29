@@ -102,6 +102,7 @@ accounting
  0080_add_web_user_feature_in_other_models
  0081_billingaccount_bill_web_user
  0082_application_error_report_priv
+ 0083_data_dictionary_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -611,6 +612,8 @@ linked_domain
  0020_auto_20211102_1501
  0021_alter_domainlinkhistory_model
  0022_alter_domainlinkhistory_model
+ 0023_alter_domainlinkhistory_model
+ 0024_alter_domainlinkhistory_model
 locations
  0001_initial
  0002_auto_20160420_2105
