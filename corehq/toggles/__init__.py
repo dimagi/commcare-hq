@@ -707,6 +707,16 @@ CASE_LIST_TILE = StaticToggle(
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
+CASE_LIST_TILE_CUSTOM = StaticToggle(
+    'case_list_tile_custom',
+    'USH: Configure custom case list tile',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?'
+              'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
+    parent_toggles=[CASE_LIST_TILE],
+)
+
 CASE_LIST_MAP = StaticToggle(
     'case_list_map',
     'USH: Allow use of a map in the case list in Web Apps',
