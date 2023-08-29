@@ -44,7 +44,7 @@ class Command(BaseCommand):
         for config in tables:
             adapters.append(
                 get_indicator_adapter(
-                    config, load_source='find_datasource_mismatches'
+                    config, load_source='add_inserted_at_index'
                 )
             )
 
