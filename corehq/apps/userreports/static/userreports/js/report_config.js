@@ -158,7 +158,7 @@ hqDefine('userreports/js/report_config', function () {
                         self.previewChart(false);
                     } else {
                         if (self.previewChart()) {
-                            hqImport('userreports/js/report_analytix').track.event('Change Chart Type', hqImport('hqwebapp/js/main').capitalize(newValue));
+                            hqImport('userreports/js/report_analytix').track.event('Change Chart Type', hqImport('hqwebapp/js/bootstrap3/main').capitalize(newValue));
                         }
                         self.previewChart(true);
                         self.refreshPreview();
@@ -229,7 +229,7 @@ hqDefine('userreports/js/report_config', function () {
                 };
 
                 var _ga_track_config_change = function (analyticsAction, optReportType) {
-                    var analyticsLabel = hqImport('hqwebapp/js/main').capitalize(self._sourceType) + "-" + hqImport('hqwebapp/js/main').capitalize(optReportType || self.reportType());
+                    var analyticsLabel = hqImport('hqwebapp/js/bootstrap3/main').capitalize(self._sourceType) + "-" + hqImport('hqwebapp/js/bootstrap3/main').capitalize(optReportType || self.reportType());
                     hqImport('userreports/js/report_analytix').track.event(analyticsAction, analyticsLabel);
                 };
 
@@ -499,7 +499,7 @@ hqDefine('userreports/js/report_config', function () {
                     };
                 };
 
-                var button = hqImport("hqwebapp/js/main").SaveButton;
+                var button = hqImport("hqwebapp/js/bootstrap3/main").SaveButton;
                 self.saveButton = button.init({
                     unsavedMessage: "You have unsaved settings.",
                     save: function () {

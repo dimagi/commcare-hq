@@ -3,10 +3,10 @@ hqDefine("linked_domain/js/domain_links", [
     'hqwebapp/js/initial_page_data',
     'underscore',
     'knockout',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'hqwebapp/js/multiselect_utils',
     'analytix/js/kissmetrix',
-    'hqwebapp/js/components.ko', // for pagination and search box
+    'hqwebapp/js/bootstrap3/components.ko', // for pagination and search box
     'hqwebapp/js/select2_knockout_bindings.ko',     // selects2 for fields
 ], function (
     RMI,

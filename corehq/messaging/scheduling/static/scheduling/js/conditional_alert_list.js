@@ -4,7 +4,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/components.ko',    // pagination and search box widgets
+    'hqwebapp/js/bootstrap3/components.ko',    // pagination and search box widgets
 ], function (
     $,
     ko,
