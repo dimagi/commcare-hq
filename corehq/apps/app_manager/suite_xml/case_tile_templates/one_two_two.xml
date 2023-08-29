@@ -11,7 +11,7 @@
         vert-align="center"
         font-size="medium">
       <grid
-          grid-height="3"
+          grid-height="10"
           grid-width="2"
           grid-x="0"
           grid-y="0" />
@@ -30,7 +30,7 @@
 
   <field>
     <style horz-align="left" vert-align="center" font-size="medium">
-      <grid grid-height="1" grid-width="8" grid-x="3" grid-y="0"/>
+      <grid grid-height="1" grid-width="8" grid-x="3" grid-y="4"/>
     </style>
     <header>
       <text>
@@ -49,7 +49,7 @@
 
   <field>
     <style horz-align="left" vert-align="center" font-size="small">
-      <grid grid-height="1" grid-width="3" grid-x="3" grid-y="1"/>
+      <grid grid-height="1" grid-width="3" grid-x="3" grid-y="5"/>
     </style>
     <header>
       <text>
@@ -68,7 +68,7 @@
 
   <field>
     <style horz-align="left" vert-align="center" font-size="small">
-      <grid grid-height="1" grid-width="5" grid-x="6" grid-y="1"/>
+      <grid grid-height="1" grid-width="5" grid-x="6" grid-y="5"/>
     </style>
     <header>
       <text>
@@ -87,7 +87,7 @@
 
   <field>
     <style horz-align="left" vert-align="center" font-size="small">
-      <grid grid-height="1" grid-width="3" grid-x="3" grid-y="2"/>
+      <grid grid-height="1" grid-width="3" grid-x="3" grid-y="6"/>
     </style>
     <header>
       <text>
@@ -106,7 +106,7 @@
 
   <field>
     <style horz-align="left" vert-align="center" font-size="small">
-      <grid grid-height="1" grid-width="5" grid-x="6" grid-y="2"/>
+      <grid grid-height="1" grid-width="5" grid-x="6" grid-y="6"/>
     </style>
     <header>
       <text>
