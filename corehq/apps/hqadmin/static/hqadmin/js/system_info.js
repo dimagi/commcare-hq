@@ -3,7 +3,7 @@ hqDefine('hqadmin/js/system_info', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
 ], function (
     $,
     ko,

@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -6,7 +6,7 @@
+                                attr: {selected: $data.selected}"></option>
+     </select>
+     <div class="btn-group-separated" data-bind="foreach: options()">
+-      <button class="btn btn-default"
++      <button class="btn btn-outline-primary"
+               data-bind="css: {
+                            active: $data.selected,
+                            disabled: $parent.disabled,

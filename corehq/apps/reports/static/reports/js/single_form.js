@@ -9,7 +9,7 @@ hqDefine("reports/js/single_form", [
     "underscore",
     "hqwebapp/js/assert_properties",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/main",
+    "hqwebapp/js/bootstrap3/main",
     "analytix/js/google",
     "analytix/js/kissmetrix",
     "reports/js/readable_form",
