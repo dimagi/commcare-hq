@@ -196,9 +196,9 @@ class OpenmrsImporterView(BaseProjectSettingsView):
             dict_['column_map'] = json.dumps([
                 {k: v for k, v in dict(m).items() if not (
                     # Drop '"doc_type": ColumnMapping' from each column mapping.
-                    k == 'doc_type' or
+                    k == 'doc_type'
                     # Drop "data_type" if it's not specified
-                    (k == 'data_type' and v is None)
+                    or (k == 'data_type' and v is None)
                 )}
                 for m in dict_['column_map']
             ], indent=2)

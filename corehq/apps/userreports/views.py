@@ -4,7 +4,7 @@ import json
 import os
 import tempfile
 from collections import OrderedDict, namedtuple
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
@@ -21,9 +21,6 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 from django.utils.html import format_html
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 from sqlalchemy import exc, types
@@ -791,7 +788,7 @@ class ReportPreview(BaseDomainView):
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
-        report_data = json.loads(six.moves.urllib.parse.unquote(request.body.decode('utf-8')))
+        report_data = json.loads(unquote(request.body.decode('utf-8')))
         form_class = _get_form_type(report_data['report_type'])
 
         # ignore user filters

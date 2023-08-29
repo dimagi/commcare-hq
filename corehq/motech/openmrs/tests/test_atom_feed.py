@@ -347,7 +347,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                     <last_visit_date>2018-01-18</last_visit_date>
                   </update>
                 </case>"""
-            case_block_re = ''.join((l.strip() for l in case_block_re.split('\n'))).replace('»', '')
+            case_block_re = ''.join((x.strip() for x in case_block_re.split('\n'))).replace('»', '')
             ([case_block], domain), kwargs = submit_case_blocks_patch.call_args
             self.assertRegex(case_block, case_block_re)
             self.assertEqual(domain, 'test_domain')
@@ -412,7 +412,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 <parent case_type="patient" relationship="extension">test-case-id</parent>
               </index>
             </case>"""
-        case_block = ''.join((l.strip() for l in case_block.split('\n'))).replace('»', '')
+        case_block = ''.join((x.strip() for x in case_block.split('\n'))).replace('»', '')
         self.assertEqual(case_blocks[0].as_text(), case_block)
 
     def test_get_case_blocks_from_bahmni_diagnoses(self):
@@ -445,7 +445,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 <parent case_type="patient" relationship="extension">test-case-id</parent>
               </index>
             </case>"""
-        case_block = ''.join((l.strip() for l in case_block.split('\n'))).replace('»', '')
+        case_block = ''.join((x.strip() for x in case_block.split('\n'))).replace('»', '')
         self.assertEqual(case_blocks[0].as_text(), case_block)
 
 

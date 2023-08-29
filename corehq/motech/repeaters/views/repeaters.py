@@ -69,9 +69,9 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
             'repeater_types_info': self.repeater_types_info,
             'pending_record_count': RepeatRecord.count(self.domain),
             'user_can_configure': (
-                self.request.couch_user.is_superuser or
-                self.request.couch_user.can_edit_motech() or
-                toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
+                self.request.couch_user.is_superuser
+                or self.request.couch_user.can_edit_motech()
+                or toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
             )
         }
 
