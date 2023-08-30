@@ -80,6 +80,11 @@ class TestLocationRestrictedScheduledReportViews(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
+    def test_location_restricted_user_cannot_access_scheduled_report_view_when_ff_not_enabled(self):
+        url = reverse(ScheduledReportsView.urlname, args=(self.domain,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
     @flag_enabled('LOCATION_RESTRICTED_SCHEDULED_REPORTS')
     def test_location_restricted_user_can_delete_scheduled_report(self):
         config = self.create_report_config(self.domain, self.web_user._id)
@@ -90,6 +95,14 @@ class TestLocationRestrictedScheduledReportViews(TestCase):
         self.assertNotEqual(response.status_code, 403)
         # Assert status code when non-error response is received
         self.assertEqual(response.status_code, 302)
+
+    def test_location_restricted_user_cannot_delete_scheduled_report_when_ff_not_enabled(self):
+        config = self.create_report_config(self.domain, self.web_user._id)
+        rn = self.create_report_notification([config], owner_id=self.web_user._id)
+        url = reverse('delete_scheduled_report', args=(self.domain, rn._id))
+        response = self.client.post(url)
+        # Assert that forbidden error code is received
+        self.assertEqual(response.status_code, 403)
 
     @flag_enabled('LOCATION_RESTRICTED_SCHEDULED_REPORTS')
     def test_location_restricted_user_can_send_scheduled_report(self):
@@ -102,6 +115,14 @@ class TestLocationRestrictedScheduledReportViews(TestCase):
         # Assert status code when forbidden error is not received
         self.assertEqual(response.status_code, 302)
 
+    def test_location_restricted_user_cannot_send_scheduled_report_when_ff_not_enabled(self):
+        config = self.create_report_config(self.domain, self.web_user._id)
+        rn = self.create_report_notification([config], owner_id=self.web_user._id)
+        url = reverse('send_test_scheduled_report', args=(self.domain, rn._id))
+        response = self.client.post(url)
+        # Assert status code when forbidden error is received
+        self.assertEqual(response.status_code, 403)
+
     @flag_enabled('LOCATION_RESTRICTED_SCHEDULED_REPORTS')
     def test_location_restricted_user_can_delete_saved_report(self):
         config = self.create_report_config(self.domain, self.web_user._id)
@@ -112,19 +133,12 @@ class TestLocationRestrictedScheduledReportViews(TestCase):
         # Assert status code when forbidden error is not received
         self.assertEqual(response.status_code, 200)
 
-    def _get_web_user_with_permissions_added(self):
-        permissions = {
-            'download_reports': True,
-            'view_reports': True,
-            'access_all_locations': False,
-        }
-        web_user = get_web_user(
-            self.domain,
-            self.user_location,
-            permissions,
-            self.client,
-        )
-        return web_user
+    def test_location_restricted_user_cannot_delete_saved_report_when_ff_not_enabled(self):
+        config = self.create_report_config(self.domain, self.web_user._id)
+        url = reverse('delete_report_config', args=(self.domain, config._id))
+        response = self.client.delete(url)
+        # Assert status code when forbidden error is received
+        self.assertEqual(response.status_code, 403)
 
     def create_report_config(self, domain, owner_id, **kwargs):
         rc = ReportConfig(domain=domain, owner_id=owner_id, **kwargs)
