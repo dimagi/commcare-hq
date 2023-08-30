@@ -2,7 +2,7 @@
  * Document ready handling for pages that use notifications/js/notifications_service.js
  */
 
-hqDefine('notifications/js/notifications_service_main', [
+hqDefine('notifications/js/bootstrap5/notifications_service_main', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'notifications/js/bootstrap3/notifications_service',
