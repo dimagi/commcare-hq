@@ -6,7 +6,7 @@ hqDefine("data_interfaces/js/case_management",[
     'case/js/casexml',
     'hqwebapp/js/initial_page_data',
     'reports/js/standard_hq_report',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
 ], function ($, _, ko, casexmlModule, initialPageData, standardHqReport, alertUser) {
     var caseManagement = function (o) {
         'use strict';
