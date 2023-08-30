@@ -14,7 +14,7 @@
 hqDefine("app_manager/js/details/screen", function () {
     const Utils = hqImport('app_manager/js/details/utils'),
         ColumnModel = hqImport("app_manager/js/details/column"),
-        uiMapList = hqImport("hqwebapp/js/ui_elements/ui-element-key-val-list");
+        uiMapList = hqImport("hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list");
 
     const getPropertyTitle = function (property) {
         // Strip "<prefix>:" before converting to title case.
