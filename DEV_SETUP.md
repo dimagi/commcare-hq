@@ -501,12 +501,41 @@ Before running any of the commands below, you should have all of the following
 running: Postgres, CouchDB, Redis, and Elasticsearch.
 The easiest way to do this is using the Docker instructions above.
 
+If you want to use a partitioned database, change
+`USE_PARTITIONED_DATABASE = False` to `True` in `localsettings.py`.
+
+You will also need to create the additional databases manually:
+
+```sh
+$ psql -h localhost -p 5432 -U commcarehq
+```
+
+(assuming that "commcarehq" is the username in `DATABASES` in
+`localsettings.py`). When prompted, use the password associated with the
+username, of course.
+
+```sh
+commcarehq=# CREATE DATABASE commcarehq_proxy;
+CREATE DATABASE
+commcarehq=# CREATE DATABASE commcarehq_p1;
+CREATE DATABASE
+commcarehq=# CREATE DATABASE commcarehq_p2;
+CREATE DATABASE
+commcarehq=# \q
+```
+
 Populate your database:
 
 ```sh
-./manage.py sync_couch_views
-./manage.py create_kafka_topics
-env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
+$ ./manage.py sync_couch_views
+$ ./manage.py create_kafka_topics
+$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
+```
+
+If you are using a partitioned database, populate the additional databases too:
+
+```sh
+$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate_multi --noinput
 ```
 
 You should run `./manage.py migrate` frequently, but only use the environment
