@@ -21,7 +21,6 @@ from django.views import View
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
 from looseversion import LooseVersion
-from lxml import etree
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -1168,9 +1167,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     sort_elements = params.get('sort_elements', None)
     print_template = params.get('printTemplate', None)
     search_properties = params.get("search_properties")
-    custom_variables = {
-        'short': params.get("short_custom_variables", None),
-        'long': params.get("long_custom_variables", None)
+    custom_variables_dict = {
+        'short': params.get("short_custom_variables_dict", None),
+        'long': params.get("long_custom_variables_dict", None)
     }
 
     app = get_app(domain, app_id)
@@ -1205,23 +1204,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
 
-    if custom_variables['short'] is not None:
-        try:
-            etree.fromstring("<variables>{}</variables>".format(custom_variables['short']))
-        except etree.XMLSyntaxError as error:
-            return HttpResponseBadRequest(
-                "There was an issue with your custom variables: {}".format(error)
-            )
-        detail.short.custom_variables = custom_variables['short']
-
-    if custom_variables['long'] is not None:
-        try:
-            etree.fromstring("<variables>{}</variables>".format(custom_variables['long']))
-        except etree.XMLSyntaxError as error:
-            return HttpResponseBadRequest(
-                "There was an issue with your custom variables: {}".format(error)
-            )
-        detail.long.custom_variables = custom_variables['long']
+    detail.short.custom_variables_dict = custom_variables_dict['short']
+    detail.long.custom_variables_dict = custom_variables_dict['long']
 
     if sort_elements is not None:
         # Attempt to map new elements to old so we don't lose translations
