@@ -494,24 +494,37 @@ def add_tableau_user(domain, username):
     except TableauConnectedApp.DoesNotExist as e:
         _notify_tableau_exception(e, domain)
         return
-    user, created = _add_tableau_user_local(session, username)
-    if not created:
-        return
-    _add_tableau_user_remote(session, user)
+    user, created, matching_tableau_users_from_other_domains_exist = _add_tableau_user_local(session, username)
+    if created and not matching_tableau_users_from_other_domains_exist:
+        try:
+            _add_tableau_user_remote(session, user)
+        except TableauAPIError as e:
+            if e.code != 409017:  # This is the "user already added to site" code.
+                raise
 
 
 def _add_tableau_user_local(session, username, role=DEFAULT_TABLEAU_ROLE):
-    return TableauUser.objects.get_or_create(
+    user, created = TableauUser.objects.get_or_create(
         server=session.tableau_connected_app.server,
         username=username,
         role=role,
     )
 
+    # Copy information from matching TableauUsers on other domains if there are any
+    matching_tableau_users_from_other_domains = get_matching_tableau_users_from_other_domains(user)
+    if matching_tableau_users_from_other_domains:
+        user.tableau_user_id = matching_tableau_users_from_other_domains[0].tableau_user_id
+        user.role = matching_tableau_users_from_other_domains[0].role
+        user.save()
+
+    return (user, created, bool(matching_tableau_users_from_other_domains))
+
 
 def _add_tableau_user_remote(session, user, role=DEFAULT_TABLEAU_ROLE):
     new_id = session.create_user(tableau_username(user.username), role)
-    user.tableau_user_id = new_id
-    user.save()
+    for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
+        local_tableau_user.tableau_user_id = new_id
+        local_tableau_user.save()
     _add_user_to_HQ_group(session, user)
     return new_id
 
@@ -522,8 +535,12 @@ def delete_tableau_user(domain, username, session=None):
     Deletes the TableauUser object with the given username and removes it from the Tableau instance.
     '''
     session = session or TableauAPISession.create_session_for_domain(domain)
-    deleted_user_id = _delete_user_local(session, username)
-    _delete_user_remote(session, deleted_user_id)
+    if get_matching_tableau_users_from_other_domains(
+            TableauUser.objects.get(username=username, server__domain=domain)):
+        _delete_user_local(session, username)
+    else:
+        deleted_user_id = _delete_user_local(session, username)
+        _delete_user_remote(session, deleted_user_id)  # Only delete remotely if no other local TableauUsers exist
 
 
 def _delete_user_local(session, username):
@@ -550,15 +567,17 @@ def update_tableau_user(domain, username, role=None, groups=[], session=None):
         server=session.tableau_connected_app.server
     ).get(username=username)
     if role:
-        user.role = role
-    user.save()
+        for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
+            local_tableau_user.role = role
+            local_tableau_user.save()
     _update_user_remote(session, user, groups)
 
 
 def _update_user_remote(session, user, groups=[]):
     new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(user.username))
-    user.tableau_user_id = new_id
-    user.save()
+    for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
+        local_tableau_user.tableau_user_id = new_id
+        local_tableau_user.save()
     # Add default group
     _add_user_to_HQ_group(session, user)
     for group in groups:
