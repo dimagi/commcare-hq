@@ -37,7 +37,7 @@ class CaseListCustomVariablesTests(SimpleTestCase):
         self.assertTrue(did_migrate)
         self.assertIsNotNone(detail.get("custom_variables_dict"))
         self.assertTrue(detail.get("custom_variables_dict"), CaseListCustomVariablesTests.custom_variables_dict)
-        self.assertIsNone(detail.get("custom_variables"))
+        self.assertIsNotNone(detail.get("custom_variables"))
 
     def test_migrate_details_forward_no_variables(self):
         detail = {}
@@ -61,7 +61,10 @@ class CaseListCustomVariablesTests(SimpleTestCase):
         self.assertIsNotNone(migrated_app)
         self.assertEqual(
             migrated_app,
-            self.make_app({"custom_variables_dict": CaseListCustomVariablesTests.custom_variables_dict})
+            self.make_app({
+                "custom_variables": CaseListCustomVariablesTests.custom_variables_xml,
+                "custom_variables_dict": CaseListCustomVariablesTests.custom_variables_dict
+            })
         )
 
     def test_migrate_app_impl_no_change(self):
