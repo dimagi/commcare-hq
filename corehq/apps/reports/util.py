@@ -574,16 +574,10 @@ def update_tableau_user(domain, username, role=None, groups=[], session=None):
         server=session.tableau_connected_app.server
     ).get(username=username)
     if role:
-<<<<<<< HEAD
-        user.role = role
-    user.save()
-    _update_user_remote(session, user, domain, groups)
-=======
         for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
             local_tableau_user.role = role
             local_tableau_user.save()
     _update_user_remote(session, user, groups)
->>>>>>> 6e2a91940579d1a7faa89a8baa3fb166a74881d9
 
 
 def _update_user_remote(session, user, domain, groups=[]):
