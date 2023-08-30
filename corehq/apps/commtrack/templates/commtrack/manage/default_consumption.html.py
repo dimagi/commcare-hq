@@ -1,0 +1,25 @@
+BBBBBBB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+BBBB BBBB
+BBBB BBBBBBBBBBBBBBBBB
+BBBB BBBBBBBBBBBBBB
+
+BBBBB BBBBBBBBBBBB
+  XXXX XXXXXXXXXXXX
+    XXXX XXXXXXXXXXXXXXXXX
+      XXX
+         gettext(u'\n          Use this page to edit the default monthly consumption\n          values for your products. These will be used if there\n          is not enough information to compute an accurate value.\n        ') 
+          SSS SSSS SSSS SS SSSS SSS SSSSSSS SSSSSSS SSSSSSSSSSS
+          SSSSSS SSS SSSS SSSSSSSSS SSSSS SSSS SS SSSS SS SSSSS
+          SS SSS SSSSSS SSSSSSSSSSS SS SSSSSSS SS SSSSSSSS SSSSSS
+        
+      XXXX
+    XXXXXX
+  XXXXXX
+  XXXXX XXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXX
+    BBBBBBBBBB
+    XXXXXXXXXX
+      XXXXXXXX gettext(u'Edit Default Monthly Consumption') XXXXXXXXX
+      BBBBBB BBBB
+    XXXXXXXXXXX
+  XXXXXXX
+BBBBBBBB
