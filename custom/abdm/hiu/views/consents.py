@@ -91,6 +91,7 @@ class GenerateConsent(HIUBaseView):
 class GatewayConsentRequestOnInit(HIUGatewayBaseView):
 
     def post(self, request, format=None):
+        print(f"GatewayConsentRequestOnInit {request.data}")
         GatewayConsentRequestOnInitSerializer(data=request.data).is_valid(raise_exception=True)
         self.process_request(request.data)
         return Response(status=HTTP_202_ACCEPTED)
@@ -109,6 +110,7 @@ class GatewayConsentRequestOnInit(HIUGatewayBaseView):
 class GatewayConsentRequestNotify(HIUGatewayBaseView):
 
     def post(self, request, format=None):
+        print(f"GatewayConsentRequestNotify {request.data}")
         GatewayConsentRequestNotifySerializer(data=request.data).is_valid(raise_exception=True)
         self.process_request(request.data)
         return Response(status=HTTP_202_ACCEPTED)
@@ -167,6 +169,7 @@ class GatewayConsentRequestNotify(HIUGatewayBaseView):
 class GatewayConsentRequestOnFetch(HIUGatewayBaseView):
 
     def post(self, request, format=None):
+        print(f"GatewayConsentRequestOnFetch {request.data}")
         GatewayConsentRequestOnFetchSerializer(data=request.data).is_valid(raise_exception=True)
         self.process_request(request.data)
         return Response(status=HTTP_202_ACCEPTED)

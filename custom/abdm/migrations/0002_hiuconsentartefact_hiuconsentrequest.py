@@ -6,7 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    replaces = [('abdm', '0002_hiuconsentartefact_hiuconsentrequest'), ('abdm', '0003_hiuconsentartefact_error')]
+    # replaces = [('abdm', '0002_hiuconsentartefact_hiuconsentrequest'), ('abdm', '0003_hiuconsentartefact_error')]
 
     dependencies = [
         ('abdm', '0001_initial'),

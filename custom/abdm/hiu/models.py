@@ -7,7 +7,7 @@ from custom.abdm.const import (
     STATUS_GRANTED,
     STATUS_PENDING,
     STATUS_REQUESTED,
-    STATUS_REVOKED,
+    STATUS_REVOKED, STATUS_ACKNOWLEDGED, STATUS_TRANSFERRED, STATUS_FAILED,
 )
 from custom.abdm.models import ABDMUser
 
@@ -59,4 +59,25 @@ class HIUConsentArtefact(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     details = models.JSONField(null=True)
+    error = models.JSONField(null=True)
+
+
+class HIUHealthInformationRequest(models.Model):
+    STATUS = [
+        (STATUS_PENDING, 'Pending request from Gateway'),
+        (STATUS_REQUESTED, 'Requested'),
+        (STATUS_ACKNOWLEDGED, 'Acknowledged'),
+        (STATUS_ERROR, 'Error occurred'),
+        (STATUS_TRANSFERRED, 'Transferred'),
+        (STATUS_FAILED, 'Failed'),
+    ]
+
+    consent_artefact = models.ForeignKey(HIUConsentArtefact, to_field='artefact_id', on_delete=models.PROTECT,
+                                         related_name='health_information_request')
+    gateway_request_id = models.UUIDField(unique=True)
+    transaction_id = models.UUIDField(null=True, unique=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    key_material = models.JSONField(null=True)
+    status = models.CharField(choices=STATUS, default=STATUS_PENDING, max_length=40)
     error = models.JSONField(null=True)

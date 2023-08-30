@@ -12,6 +12,7 @@ HIU_ERROR_MESSAGES = {
     4503: "Gateway Service down",
     4554: "Error received from Gateway",
     4407: "Patient details not found",
+    4451: "Consent has expired",
 }
 
 
@@ -27,7 +28,7 @@ def hiu_exception_handler(exc, context):
 
 def hiu_gateway_exception_handler(exc, context):
     response = drf_standardized_exception_handler(exc, context)
-    return HIUErrorResponseFormatter().format(response, error_details=False)
+    return HIUErrorResponseFormatter().format(response, error_details=True)
 
 
 def send_custom_error_response(error_code, status_code=400, details_message=None, details_field=None):

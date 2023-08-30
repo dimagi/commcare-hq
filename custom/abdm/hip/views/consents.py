@@ -21,6 +21,7 @@ from custom.abdm.utils import (
 class GatewayConsentRequestNotify(HIPGatewayBaseView):
 
     def post(self, request, format=None):
+        print("GatewayConsentRequestNotify", request.data)
         GatewayConsentRequestNotifySerializer(data=request.data).is_valid(raise_exception=True)
         self.process_request(request.data)
         return Response(status=HTTP_202_ACCEPTED)
@@ -29,7 +30,7 @@ class GatewayConsentRequestNotify(HIPGatewayBaseView):
         artefact_id = request_data['notification']['consentId']
         if request_data['notification']['status'] in (STATUS_REVOKED, STATUS_EXPIRED):
             HIPConsentArtefact.objects.get(artefact_id=artefact_id).delete()
-            self.gateway_consents_on_notify(artefact_id, request_data['requestId'])
+            # self.gateway_consents_on_notify(artefact_id, request_data['requestId'])
         else:
             consent_artefact = HIPConsentArtefact(artefact_id=artefact_id,
                                                   signature=request_data['notification']['signature'],
@@ -37,6 +38,7 @@ class GatewayConsentRequestNotify(HIPGatewayBaseView):
                                                   grant_acknowledgement=request_data['notification']
                                                   ['grantAcknowledgement'])
             consent_artefact.save()
+        self.gateway_consents_on_notify(artefact_id, request_data['requestId'])
 
     def gateway_consents_on_notify(self, artefact_id, request_id):
         request_data = GatewayRequestHelper.common_request_data()

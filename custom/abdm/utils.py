@@ -1,7 +1,9 @@
+import hashlib
 import json
 import uuid
+from base64 import b64encode
 from datetime import datetime
-
+from dateutil import parser
 import requests
 from django.conf import settings
 from rest_framework import serializers
@@ -42,10 +44,12 @@ class GatewayRequestHelper:
         return resp.json().get("accessToken")
 
     def post(self, api_path, payload, additional_headers=None):
+        print(f"Gateway Call: {api_path} with data : {payload}")
         self.headers.update({"Authorization": f"Bearer {self.get_access_token()}"})
         if additional_headers:
             self.headers.update(additional_headers)
         resp = requests.post(url=self.base_url + api_path, data=json.dumps(payload), headers=self.headers)
+        print(f"Response status code : {resp.status_code} and JSON: {self.json_from_response(resp)}")
         resp.raise_for_status()
         return self.json_from_response(resp)
 
@@ -66,8 +70,8 @@ class GatewayRequestHelper:
 
 
 class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page'
+    page_size = 1
+    page_size_query_param = 'page_size'
     max_page_size = 1000
 
 
@@ -79,3 +83,13 @@ def future_date_validator(value):
 def past_date_validator(value):
     if value > datetime.utcnow():
         raise serializers.ValidationError(ERROR_PAST_DATE_MESSAGE)
+
+
+def abdm_iso_to_datetime(value):
+    """Converts varying iso format datetime obtained from ABDM to python datetime"""
+    return parser.isoparse(value).replace(tzinfo=None).replace(microsecond=0)
+
+
+# TODO Move to encryption util
+def generate_checksum(data):
+    return b64encode(hashlib.md5(data.encode('utf-8')).digest()).decode()
