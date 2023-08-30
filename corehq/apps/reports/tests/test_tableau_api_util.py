@@ -9,6 +9,7 @@ from corehq.apps.reports.util import (
     TableauGroupTuple,
     get_all_tableau_groups,
     get_tableau_groups_for_user,
+    get_matching_tableau_users_from_other_domains,
     add_tableau_user,
     delete_tableau_user,
     update_tableau_user
@@ -34,6 +35,23 @@ class TestTableauAPIUtil(TestTableauAPISession):
             username='dschrute',
             tableau_user_id='wer789iop',
             role='Viewer'
+        )
+
+        self.domain2 ='test-domain-name2'
+        self.repeated_tableau_server = TableauServer.objects.create(
+            domain=self.domain2,
+            server_type='server',
+            server_name='test_server',
+            target_site='target site'
+        )
+        TableauConnectedApp.objects.create(
+            server=self.repeated_tableau_server
+        )
+        self.repeated_tableau_user = TableauUser.objects.create(
+            server=self.repeated_tableau_server,
+            username='pbeasley',
+            tableau_user_id='asdf',
+            role='Explorer'
         )
 
     @mock.patch('corehq.apps.reports.models.requests.request')
@@ -103,3 +121,10 @@ class TestTableauAPIUtil(TestTableauAPISession):
             updated_user.role,
             'Explorer'
         )
+
+    def test_get_matching_tableau_users_from_other_domains(self):
+        matching_local_users = list(get_matching_tableau_users_from_other_domains(self.repeated_tableau_user))
+        self.assertEqual(len(matching_local_users), 1)
+        matched_user = matching_local_users[0]
+        self.assertEqual(matched_user.username, 'pbeasley')
+        self.assertEqual(matched_user.tableau_user_id, 'dfg789poi')

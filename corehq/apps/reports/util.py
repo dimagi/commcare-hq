@@ -475,6 +475,14 @@ def _notify_tableau_exception(e, domain):
     })
 
 
+def get_matching_tableau_users_from_other_domains(user):
+    return list(TableauUser.objects.filter(
+        username=user.username,
+        server__server_name=user.server.server_name,
+        server__target_site=user.server.target_site,
+    ).exclude(server__domain=user.server.domain))
+
+
 @atomic
 def add_tableau_user(domain, username):
     '''
