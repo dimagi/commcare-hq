@@ -114,8 +114,6 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
 
     @property
     def bulk_response(self):
-        from .views import BulkCaseReassignSatusView
-        from .tasks import bulk_case_reassign_async
         if self.request.method != 'POST':
             return HttpResponseBadRequest()
         owner_id = self.request_params.get('new_owner_id', None)
@@ -137,20 +135,34 @@ class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
         task_ref = expose_cached_download(
             payload=case_ids, expiry=60 * 60, file_extension=None
         )
-        task = bulk_case_reassign_async.delay(
+        task = self.bulk_async_task().delay(
             self.domain,
             self.request.couch_user.get_id,
             owner_id,
             task_ref.download_id,
-            self.request.META['HTTP_REFERER']
+            self.request.META['HTTP_REFERER'],
+            **self.additional_bulk_action_params,
         )
         task_ref.set_task(task)
         return HttpResponseRedirect(
-            reverse(
-                BulkCaseReassignSatusView.urlname,
-                args=[self.domain, task_ref.download_id]
-            )
+            self.bulk_url(task_ref.download_id)
         )
+
+    def bulk_url(self, download_id):
+        from .views import BulkCaseActionSatusView
+        return reverse(
+            BulkCaseActionSatusView.urlname,
+            args=[self.domain, download_id]
+        ) + f'?action={self.action}'
+
+    @staticmethod
+    def bulk_async_task():
+        from .tasks import bulk_case_reassign_async
+        return bulk_case_reassign_async
+
+    @property
+    def additional_bulk_action_params(self):
+        return {}
 
 
 @location_safe
@@ -173,7 +185,7 @@ class CaseCopyInterface(CaseReassignmentInterface):
 
     @property
     def template_context(self):
-        context = super(CaseReassignmentInterface, self).template_context
+        context = super(CaseCopyInterface, self).template_context
         context.update({
             "action": self.action,
             "action_text": self.action_text,
@@ -188,6 +200,21 @@ class CaseCopyInterface(CaseReassignmentInterface):
             'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
             'corehq.apps.reports.standard.cases.filters.SensitiveCaseProperties',
         ]
+
+    @staticmethod
+    def bulk_async_task():
+        from .tasks import bulk_case_copy_async
+        return bulk_case_copy_async
+
+    @property
+    def additional_bulk_action_params(self):
+        return {
+            'sensitive_properties': self._parse_sensitive_props(self.request_params['sensitive_properties']),
+        }
+
+    @staticmethod
+    def _parse_sensitive_props(props):
+        return {p['name']: p['label'] for p in props if p['name']}
 
 
 class FormManagementMode(object):
