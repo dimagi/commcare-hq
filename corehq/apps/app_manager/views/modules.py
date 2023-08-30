@@ -1204,8 +1204,10 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
 
-    detail.short.custom_variables_dict = custom_variables_dict['short']
-    detail.long.custom_variables_dict = custom_variables_dict['long']
+    if custom_variables_dict['short'] is not None:
+        detail.short.custom_variables_dict = custom_variables_dict['short']
+    if custom_variables_dict['long'] is not None:
+        detail.long.custom_variables_dict = custom_variables_dict['long']
 
     if sort_elements is not None:
         # Attempt to map new elements to old so we don't lose translations
