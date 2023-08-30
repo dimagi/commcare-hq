@@ -2,37 +2,24 @@ hqDefine("geospatial/js/geospatial_map", [
     "jquery",
     "hqwebapp/js/initial_page_data",
     "knockout",
-    "hqwebapp/js/alert_user",
+    "hqwebapp/js/bootstrap3/alert_user",
 ], function (
     $,
     initialPageData,
     ko,
     alert_user
 ) {
-    $(function () {
-        const defaultMarkerColor = "#808080"; // Gray
-        const selectedMarkerColor = "#00FF00"; // Green
-        var map;
-        var cases = [];
-        var userFilteredCases = [];
-        var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
+    const defaultMarkerColor = "#808080"; // Gray
+    const selectedMarkerColor = "#00FF00"; // Green
+    var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
 
-        function filterCasesInPolygon(polygonFeature) {
-            userFilteredCases = [];
-            cases.filter(function (currCase) {
-                if (currCase.coordinates) {
-                    var coordinates = [currCase.coordinates.lng, currCase.coordinates.lat];
-                    var point = turf.point(coordinates);
-                    var caseIsInsidePolygon = turf.booleanPointInPolygon(point, polygonFeature.geometry);
-                    if (caseIsInsidePolygon) {
-                        userFilteredCases.push(currCase);
-                        changeCaseMarkerColor(currCase, selectedMarkerColor);
-                    } else {
-                        changeCaseMarkerColor(currCase, defaultMarkerColor);
-                    }
-                }
-            });
-        }
+    function caseModel(case_obj, marker) {
+        'use strict';
+        var self = {};
+        self.case = case_obj;
+        self.marker = marker;
+        self.selectCssId = "select" + case_obj.case_id;
+        self.isSelected = ko.observable(false);
 
         function changeCaseMarkerColor(selectedCase, newColor) {
             let marker = selectedCase.marker;
@@ -41,6 +28,41 @@ hqDefine("geospatial/js/geospatial_map", [
             let path = svg.getElementsByTagName("path")[0];
             path.setAttribute("fill", newColor);
         };
+
+        self.isSelected.subscribe( function (value) {
+            var color = self.isSelected() ? selectedMarkerColor : defaultMarkerColor;
+            changeCaseMarkerColor(self, color);
+        });
+        return self;
+    };
+
+    function showMapControls(state) {
+        $("#geospatial-map").toggle(state);
+        $("#case-buttons").toggle(state);
+        $("#mapControls").toggle(state);
+    }
+
+    $(function () {
+        // Global var
+        var map;
+
+        var caseModels = ko.observableArray([]);
+        var selectedCases = ko.computed(function () {
+            return caseModels().filter(function (currCase) {
+                return currCase.isSelected();
+            });
+        });
+
+        function filterCasesInPolygon(polygonFeature) {
+            _.values(caseModels()).filter(function (currCase) {
+                if (currCase.case.coordinates) {
+                    var coordinates = [currCase.case.coordinates.lng, currCase.case.coordinates.lat];
+                    var point = turf.point(coordinates);
+                    var caseIsInsidePolygon = turf.booleanPointInPolygon(point, polygonFeature.geometry);
+                    currCase.isSelected(caseIsInsidePolygon);
+                }
+            });
+        }
 
         var loadMapBox = function (centerCoordinates) {
             'use strict';
@@ -131,20 +153,18 @@ hqDefine("geospatial/js/geospatial_map", [
                 return map;
             };
 
-            self.clearMap = function () {
-                // Clear filtered cases
-                userFilteredCases = [];
+            self.removeMarkers = function () {
                 // Remove markers
-                cases.forEach(currCase => {
+                _.each(caseModels(), function(currCase) {
                     if (currCase.marker) {
                         currCase.marker.remove();
                     }
                 });
-                cases = [];
+                caseModels([]);
             };
 
-            self.addCaseMarkersToMap = function () {
-                cases.forEach(element => {
+            self.addCaseMarkersToMap = function (rawCases) {
+                _.each(rawCases, function(element) {
                     let coordinates = element.coordinates;
                     if (coordinates && coordinates.lat && coordinates.lng) {
                         self.addMarker(element, defaultMarkerColor);
@@ -152,19 +172,50 @@ hqDefine("geospatial/js/geospatial_map", [
                 });
             };
 
-            self.addMarker = function (currCase, color) {
-                let coordinates = currCase.coordinates;
+            self.addMarker = function (rawCase, color) {
+                let coordinates = rawCase.coordinates;
                 // Create the marker
                 const marker = new mapboxgl.Marker({ color: color, draggable: false });
                 marker.setLngLat(coordinates);
+
 
                 // Add the marker to the map
                 marker.addTo(map);
                 // We need to keep track of current markers
 
-                currCase.marker = marker;
+                var popupDiv = document.createElement("div");
+                popupDiv.setAttribute("data-bind", "template: 'select-case'");
+
+                var popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })
+                    .setLngLat(coordinates)
+                    .setDOMContent(popupDiv)
+
+                marker.setPopup(popup);
+
+                const markerDiv = marker.getElement();
+                // Show popup on hover
+                markerDiv.addEventListener('mouseenter', () => marker.togglePopup());
+
+                // Hide popup if mouse leaves marker and popup
+                var addLeaveEvent = function(fromDiv, toDiv) {
+                    fromDiv.addEventListener('mouseleave', function () {
+                        setTimeout(function(){
+                            if (!$(toDiv).is(':hover')) {
+                                // mouse left toDiv as well
+                                marker.togglePopup();
+                            }
+                        }, 100);
+                    });
+                }
+                addLeaveEvent(markerDiv, popupDiv);
+                addLeaveEvent(popupDiv, markerDiv);
+
+                var caseModelInstance = new caseModel(rawCase, marker);
+                caseModels.push(caseModelInstance);
+                $(popupDiv).koApplyBindings(caseModelInstance);
             };
 
+            ko.applyBindings({'caseModels': caseModels, 'selectedCases': selectedCases}, $("#case-modals")[0])
             // Handle click events here
             map.on('click', (event) => {
                 let coordinates = getCoordinates(event);
@@ -238,28 +289,30 @@ hqDefine("geospatial/js/geospatial_map", [
                     mapboxinstance.removeLayer(self.activePolygon());
                     mapboxinstance.removeSource(self.activePolygon());
                 }
-                // Add selected polygon
-                mapboxinstance.addSource(
-                    String(polygonObj.id),
-                    {'type': 'geojson', 'data':polygonObj.geoJson}
-                );
-                mapboxinstance.addLayer({
-                    'id': String(polygonObj.id),
-                    'type': 'fill',
-                    'source': String(polygonObj.id),
-                    'layout': {},
-                    'paint': {
-                        'fill-color': '#0080ff',
-                        'fill-opacity': 0.5
-                    }
-                });
-                polygonObj.geoJson.features.forEach(
-                    filterCasesInPolygon
-                );
+                if (value !== undefined) {
+                    // Add selected polygon
+                    mapboxinstance.addSource(
+                        String(polygonObj.id),
+                        {'type': 'geojson', 'data':polygonObj.geoJson}
+                    );
+                    mapboxinstance.addLayer({
+                        'id': String(polygonObj.id),
+                        'type': 'fill',
+                        'source': String(polygonObj.id),
+                        'layout': {},
+                        'paint': {
+                            'fill-color': '#0080ff',
+                            'fill-opacity': 0.5
+                        }
+                    });
+                    polygonObj.geoJson.features.forEach(
+                        filterCasesInPolygon
+                    );
+                    self.btnExportDisabled(false);
+                    self.btnSaveDisabled(true);
+                }
                 // Mark as active polygon
                 self.activePolygon(self.selectedPolygon());
-                self.btnExportDisabled(false);
-                self.btnSaveDisabled(true);
             });
 
             var mapHasPolygons = function () {
@@ -295,60 +348,81 @@ hqDefine("geospatial/js/geospatial_map", [
             return self;
         };
 
-
-        $(document).ajaxComplete(function (event, xhr, settings) {
-            // This indicates that the report data is fetched
-            if (!settings.url.includes('geospatial/async/case_management_map/')) {
-                return;
-            }
-            var mapDiv = $('#geospatial-map');
-            var $data = $(".map-data");
-            var $exportDrawnArea = $("#btnExportDrawnArea");
-            var $saveDrawnArea = $("#btnSaveDrawnArea");
+        function initMapControls() {
+            // Assumes `map` var is initialized
             var $mapControlDiv = $("#mapControls");
-
-            if (mapDiv.length && !map) {
-                map = loadMapBox();
-            }
-
             var mapControlsModelInstance = mapControlsModel();
-
-            if ($data.length && map) {
-                var contextData = $data.data("context");
-                map.clearMap();
-                cases = contextData.cases;
-                map.addCaseMarkersToMap();
-
-                if (contextData.invalid_geo_cases_report_link) {
-                    var missingCasesLink = contextData.invalid_geo_cases_report_link;
-                    var missingCasesLinkTag = "<a href=" + missingCasesLink + ">" + gettext("View here") + "</a>";
-                    var message = gettext("There are case(s) missing geolocation data.");
-
-                    alert_user.alert_user(message + " " + missingCasesLinkTag, "warning");
-
-                    var $bannerAlert = $("#message-alerts");
-                    if ($bannerAlert.children().length > 1) {
-                        // Remove the initial banner, since it contains the old link
-                        $bannerAlert.children()[0].remove();
-                    }
-                }
-            }
-
             if ($mapControlDiv.length) {
-                ko.cleanNode($mapControlDiv);
+                ko.cleanNode($mapControlDiv[0]);
                 $mapControlDiv.koApplyBindings(mapControlsModelInstance);
             }
 
+            var $saveDrawnArea = $("#btnSaveDrawnArea");
             $saveDrawnArea.click(function(e) {
                 if (map) {
                     saveGeoJson(map.getMapboxDrawInstance(), mapControlsModelInstance);
                 }
             });
+
+            var $exportDrawnArea = $("#btnExportDrawnArea");
             $exportDrawnArea.click(function(e) {
                 if (map) {
                     mapControlsModelInstance.exportGeoJson()
                 }
             });
+        };
+
+        var missingGPSModel = function(cases) {
+            this.casesWithoutGPS = ko.observable(cases);
+        };
+        var missingGPSModelInstance = new missingGPSModel([]);
+
+        $(document).ajaxComplete(function (event, xhr, settings) {
+            const isAfterReportLoad = settings.url.includes('geospatial/async/case_management_map/');
+            // This indicates clicking Apply button or initial page load
+            if (isAfterReportLoad) {
+                map = loadMapBox();
+                initMapControls();
+                // Hide controls until data is displayed
+                showMapControls(false);
+                return;
+            }
+
+            // This indicates that report data is fetched either after apply or after pagination
+            const isAfterDataLoad = settings.url.includes('geospatial/json/case_management_map/');
+            if (!isAfterDataLoad) {
+                return;
+            }
+            isDataNeverFetched = true;
+            showMapControls(true);
+            // Hide the datatable rows but not the pagination bar
+            $('.dataTables_scroll').hide();
+
+            if (xhr.responseJSON.aaData.length && map) {
+                map.removeMarkers();
+                var casesWithGPS = xhr.responseJSON.aaData.filter(function(item) {
+                    return item[1] != null;
+                })
+                // Index by case_id
+                var casesById = _.object(_.map(casesWithGPS, function(item) {
+                    if (item[1]) {
+                        return [item[0], {'coordinates': item[1], 'link': item[2]}];
+                    }
+                }));
+                map.addCaseMarkersToMap(casesById);
+
+                var $missingCasesDiv = $("#missing-gps-cases");
+                var casesWithoutGPS = xhr.responseJSON.aaData.filter(function(item) {
+                    return item[1] == null;
+                });
+                var casesWithoutGPS = _.map(casesWithoutGPS, function (item) {return {"link": item[2]};});
+                // Don't re-apply if this is the next page of the pagination
+                if (ko.dataFor($missingCasesDiv[0]) === undefined) {
+                    $missingCasesDiv.koApplyBindings(missingGPSModelInstance);
+                    missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
+                }
+                missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
+            }
         });
     });
 });

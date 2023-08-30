@@ -6,7 +6,7 @@
         class: isRepetition ? 'repetition' : '',
         css: {
           'gr-no-children': $data.children().length === 0,
-          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'question' }),
+          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'grouped-question-tile-row' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'panel panel-default': collapsible,
           'required-group': !showChildren() && childrenRequired(),
@@ -192,7 +192,15 @@
 </script>
 
 
+<script type="text/html" id="grouped-question-tile-row-fullform-ko-template">
+  <div class="row">
+    <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+  </div>
+</script>
+
+
 <script type="text/html" id="question-fullform-ko-template">
+  <div data-bind="class:questionTileWidth">
   <!-- ko if: datatype() !== 'info' -->
   <div class="q form-group" data-bind="
             css: {
@@ -202,7 +210,12 @@
             }
         ">
     <label class="caption control-label" data-bind="css: labelWidth, attr: {'for': entry.entryId}">
-      <div data-bind="css: {'row': help()}">
+      {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
+      <div data-bind="css: {
+          'row': help(),
+          'text-center': stylesContains('text-align-center'),
+          'text-right': stylesContains('text-align-right'),
+        }">
         <span class="webapp-markdown-output" tabindex="0"
               data-bind="
                 html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
@@ -273,7 +286,11 @@
   <!-- /ko -->
   <!-- ko if: datatype() === 'info' -->
   <div class="info panel panel-default">
-    <div class="panel-body">
+    {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
+    <div class="panel-body" data-bind="css: {
+        'text-center': stylesContains('text-align-center'),
+        'text-right': stylesContains('text-align-right'),
+      }">
       <span class="ix" data-bind="text: ixInfo($data)">></span>
       <span class="caption webapp-markdown-output"
             data-bind="
@@ -286,15 +303,16 @@
       >
       </div>
       <div class="widget-container controls" data-bind="css: controlWidth">
-      <!-- labels only deal with server errors, since there's no data type validation for the browser to do-->
-      <div class="text-danger error-message" data-bind="
-                visible: serverError,
-                text: serverError
-      "></div>
-    </div>
+        <!-- labels only deal with server errors, since there's no data type validation for the browser to do-->
+        <div class="text-danger error-message" data-bind="
+          visible: serverError,
+          text: serverError
+          "></div>
+      </div>
     </div>
   </div>
   <!-- /ko -->
+  </div>
 </script>
 
 <script type="text/html" id="repeat-juncture-fullform-ko-template">

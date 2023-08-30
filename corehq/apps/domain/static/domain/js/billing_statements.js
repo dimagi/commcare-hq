@@ -4,7 +4,7 @@ hqDefine("domain/js/billing_statements", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'accounting/js/payment_method_handler',
-    'hqwebapp/js/crud_paginated_list',
+    'hqwebapp/js/bootstrap3/crud_paginated_list',
     'accounting/js/lib/stripe',
 ], function (
     $,
@@ -70,10 +70,10 @@ hqDefine("domain/js/billing_statements", [
     for (var i = 0; i < handlers.length; i++) {
         handlers[i].handlers = handlers;
     }
-    var stripe_cards = initialPageData.get("stripe_options").stripe_cards;
-    if (stripe_cards) {
-        bulkPaymentHandler.loadCards(stripe_cards);
-        paymentHandler.loadCards(stripe_cards);
+    var stripeCards = initialPageData.get("stripe_options").stripe_cards;
+    if (stripeCards) {
+        bulkPaymentHandler.loadCards(stripeCards);
+        paymentHandler.loadCards(stripeCards);
     }
 
     $(function () {
@@ -112,13 +112,13 @@ hqDefine("domain/js/billing_statements", [
     };
 
     paginatedListModel.getAdditionalData = function () {
-        var additional_data = {
+        var additionalData = {
             'show_unpaid': paginatedListModel.showUnpaidBills(),
         };
         if (window.location.href.split('?').length > 2) {
-            additional_data['show_hidden'] = _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true');
+            additionalData['show_hidden'] = _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true');
         }
-        return additional_data;
+        return additionalData;
     };
     paginatedListModel.initRow = function (rowElems, paginatedItem) {
         var paymentButton = $(rowElems).find('.payment-button');

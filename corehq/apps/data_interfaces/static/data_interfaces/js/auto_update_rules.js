@@ -4,7 +4,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
-    'hqwebapp/js/components.ko', // for pagination and search box
+    'hqwebapp/js/bootstrap3/components.ko', // for pagination and search box
 ], function (
     $,
     ko,
@@ -13,12 +13,37 @@ hqDefine("data_interfaces/js/auto_update_rules", [
     googleAnalytics
 ) {
 
+    var RuleViewModel = function (data, parent) {
+        ko.mapping.fromJS(data, {}, this);
+
+        this.url = ko.pureComputed(function () {
+            if (!this.upstream_id()) {
+                return data.edit_url;
+            }
+
+            return parent.unlockLinkedData() ? data.edit_url : data.view_url;
+        }, this);
+    };
+
     var RuleListViewModel = function (rules) {
         var self = {};
-        self.rules = ko.mapping.fromJS(rules);
+
+        self.has_linked_data = initialPageData.get('has_linked_data');
+        self.allowEdit = initialPageData.get('can_edit_linked_data');
+        self.unlockLinkedData = ko.observable(false);
+
+        self.toggleLinkedLock = function () {
+            self.unlockLinkedData(!self.unlockLinkedData());
+        };
+
+        self.rules = ko.observableArray(rules.map(rule => new RuleViewModel(rule, self)));
         self.paginatedRules = ko.observableArray([]);
         self.rulesById = ko.computed(function () {
             return _.indexBy(self.rules(), 'id');
+        });
+
+        self.hasLinkedModels = ko.pureComputed(function () {
+            return self.rules().some(rule => rule.upstream_id());
         });
 
         // pagination
@@ -75,7 +100,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
                 success: function (data) {
                     if (data.success) {
                         self.rules.remove(rule);
-                        var updatedRule = ko.mapping.fromJS(data.itemData);
+                        var updatedRule = new RuleViewModel(data.itemData, self);
                         self.rules.push(updatedRule);
                         self.rules(_.sortBy(self.rules(), function (rule) { return rule.name().toUpperCase(); }));
                         self.goToPage(1);
@@ -93,6 +118,11 @@ hqDefine("data_interfaces/js/auto_update_rules", [
             var ruleToUpdate = self.rulesById()[rule.id];
             ruleToUpdate.action_error = error;
             self.rules.valueHasMutated();
+        };
+
+        self.modalModel = ko.observable();
+        self.setModalModel = function (model) {
+            self.modalModel(model);
         };
 
         return self;
@@ -139,6 +169,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
         var rules = initialPageData.get('rules');
         var ruleListViewModel = RuleListViewModel(rules);
         $("#ko-tabs-update-rules").koApplyBindings(ruleListViewModel);
+        $("#edit-warning-modal").koApplyBindings(ruleListViewModel);
 
         var ruleRuns = initialPageData.get('rule_runs');
         var ruleRunHistoryViewModel = RuleRunHistoryViewModel(ruleRuns);

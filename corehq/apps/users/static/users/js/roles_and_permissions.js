@@ -4,7 +4,7 @@ hqDefine("users/js/roles_and_permissions",[
     'underscore',
     "hqwebapp/js/initial_page_data",
     'users/js/roles',
-    'hqwebapp/js/knockout_bindings.ko', // for roles modal
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // for roles modal
 ], function ($, ko, _, initialPageData, userRoles) {
 
     ko.bindingHandlers.permissionIcon = {
@@ -53,8 +53,10 @@ hqDefine("users/js/roles_and_permissions",[
         var url = initialPageData.reverse;
 
         var $userRolesTable = $('#user-roles-table');
+        let $linkedRolesModal = $('#modal_linked_roles');
+        const $infoBar = $('#infobar');
 
-        userRoles.initUserRoles($userRolesTable, {
+        userRoles.initUserRoles($userRolesTable, $linkedRolesModal, $infoBar, {
             userRoles: initialPageData.get("user_roles"),
             nonAdminRoles: initialPageData.get("non_admin_roles"),
             defaultRole: initialPageData.get("default_role"),
@@ -72,6 +74,7 @@ hqDefine("users/js/roles_and_permissions",[
             DataFileDownloadEnabled: initialPageData.get("data_file_download_enabled"),
             ExportOwnershipEnabled: initialPageData.get("export_ownership_enabled"),
             dataRegistryChoices: initialPageData.get("data_registry_choices"),
+            canEditLinkedData: initialPageData.get("can_edit_linked_data"),
         });
     });
 });

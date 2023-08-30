@@ -3,12 +3,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "knockout",
     "underscore",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/main",
+    "hqwebapp/js/bootstrap3/main",
     "analytix/js/google",
-    "hqwebapp/js/ui_elements/ui-element-key-val-list",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list",
     "DOMPurify/dist/purify.min",
     "hqwebapp/js/toggles",
-    "hqwebapp/js/knockout_bindings.ko",
+    "hqwebapp/js/bootstrap3/knockout_bindings.ko",
     "data_interfaces/js/make_read_only",
     'hqwebapp/js/select2_knockout_bindings.ko',
     'knockout-sortable/build/knockout-sortable',
@@ -23,9 +23,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
     DOMPurify,
     toggles
 ) {
-    var caseType = function (name, fhirResourceType) {
+    var caseType = function (name, fhirResourceType, deprecated, moduleCount) {
         var self = {};
         self.name = name || gettext("No Name");
+        self.deprecated = deprecated;
+        self.appCount = moduleCount;  // The number of application modules using this case type
         self.url = "#" + name;
         self.fhirResourceType = ko.observable(fhirResourceType);
         self.groups = ko.observableArray();
@@ -227,7 +229,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
             $.getJSON(dataUrl)
                 .done(function (data) {
                     _.each(data.case_types, function (caseTypeData) {
-                        var caseTypeObj = caseType(caseTypeData.name, caseTypeData.fhir_resource_type);
+                        var caseTypeObj = caseType(
+                            caseTypeData.name,
+                            caseTypeData.fhir_resource_type,
+                            caseTypeData.is_deprecated,
+                            caseTypeData.module_count,
+                        );
                         caseTypeObj.init(caseTypeData.groups, changeSaveButton);
                         self.caseTypes.push(caseTypeObj);
                     });
@@ -256,6 +263,47 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 }
             }
             return [];
+        };
+
+        self.isActiveCaseTypeDeprecated = function () {
+            const activeCaseType = self.getActiveCaseType();
+            return (activeCaseType) ? activeCaseType.deprecated : false;
+        };
+
+        self.activeCaseTypeModuleCount = function () {
+            const activeCaseType = self.getActiveCaseType();
+            return (activeCaseType) ? activeCaseType.appCount : 0;
+        };
+
+        self.deprecateCaseType = function () {
+            self.deprecateOrRestoreCaseType(true);
+        };
+
+        self.restoreCaseType = function () {
+            self.deprecateOrRestoreCaseType(false);
+        };
+
+        self.deprecateOrRestoreCaseType = function (shouldDeprecate) {
+            let activeCaseType = self.getActiveCaseType();
+            if (!activeCaseType) {
+                return;
+            }
+
+            activeCaseType.deprecated = shouldDeprecate;
+            $("#deprecate-case-type-error").hide();
+            $.ajax({
+                url: initialPageData.reverse('deprecate_or_restore_case_type', activeCaseType.name),
+                method: 'POST',
+                data: {
+                    'is_deprecated': shouldDeprecate
+                },
+                success: function () {
+                    window.location.reload(true);
+                },
+                error: function (error) {
+                    $("#deprecate-case-type-error").show();
+                }
+            });
         };
 
         self.goToCaseType = function (caseType) {

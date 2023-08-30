@@ -1,4 +1,4 @@
-/* globals moment, MapboxGeocoder, DOMPurify */
+/* globals moment, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
         cloudcareUtils = hqImport("cloudcare/js/utils"),
@@ -62,7 +62,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     /**
      * Serves as the base for all entries that take an array answer.
      */
-    function EntryArrayAnswer(question, options) {
+    function EntryArrayAnswer(question) {
         var self = this;
         Entry.call(self, question);
         self.rawAnswer = ko.observableArray(_.clone(question.answer()));
@@ -1029,7 +1029,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     zoomControl: false,
                 }).setView([lat, lon], zoom);
                 L.control.zoom({
-                    position: 'bottomright'
+                    position: 'bottomright',
                 }).addTo(self.map);
 
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
@@ -1163,7 +1163,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 });
                 break;
             case constants.SELECT:
-                isMinimal = style === constants.MINIMAL;
+                isMinimal = question.stylesContains(constants.MINIMAL);
                 if (style) {
                     isCombobox = question.stylesContains(constants.COMBOBOX);
                 }
@@ -1211,7 +1211,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 }
                 break;
             case constants.MULTI_SELECT:
-                isMinimal = style === constants.MINIMAL;
+                isMinimal = question.stylesContains(constants.MINIMAL);
                 if (style) {
                     isLabel = style === constants.LABEL;
                     hideLabel = style === constants.LIST_NOLABEL;
@@ -1255,7 +1255,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             case constants.GEO:
                 entry = new GeoPointEntry(question, {});
                 break;
-            case constants.INFO:
+            case constants.INFO: // it's a label
                 entry = new InfoEntry(question, {});
                 break;
             case constants.BINARY:
@@ -1323,7 +1323,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * Function to handle answer changes for entries using selct2
      */
     function select2AnswerChange(parentClass) {
-        return function(newValue) {
+        return function (newValue) {
             var self = this;
             parentClass.prototype.onAnswerChange.call(self, newValue);
             _.delay(function () {

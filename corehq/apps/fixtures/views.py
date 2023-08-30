@@ -161,7 +161,7 @@ def table_json(table):
         '_id': table.id.hex,
         'fields': [asdict(f) for f in table.fields],
     }
-    for key in ['description', 'is_global', 'item_attributes', 'tag']:
+    for key in ['description', 'is_global', 'item_attributes', 'tag', 'is_synced']:
         data[key] = getattr(table, key)
     return data
 
@@ -361,7 +361,7 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
             'next_url': reverse('edit_lookup_tables', args=[self.domain]),
             'next_url_text': _("Return to manage lookup tables"),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

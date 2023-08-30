@@ -1,0 +1,13 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends 'hqwebapp/bootstrap3/base_page.html' %}
++{% extends 'hqwebapp/bootstrap5/base_page.html' %}
+ {% block page_name %}{{ page_name }}{% endblock %}
+ {% block page_content %}
+   <div class="row">
+-    <div class="col-sm-12">
++    <div class="col-md-12">
+       {% include tmpl %}
+     </div>
+   </div>

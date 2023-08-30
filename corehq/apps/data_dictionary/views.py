@@ -1,7 +1,6 @@
 import io
 import itertools
 import json
-from collections import defaultdict
 from operator import attrgetter
 
 from django.contrib import messages
@@ -19,7 +18,6 @@ from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 
 from corehq import toggles
-from corehq.apps.case_importer.tracking.filestorage import make_temp_file
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CasePropertyAllowedValue,
@@ -42,16 +40,19 @@ from corehq.motech.fhir.utils import (
     remove_fhir_resource_type,
     update_fhir_resource_type,
 )
-from corehq.util.files import file_extention_from_filename
-from corehq.util.workbook_reading import open_any_workbook
-from corehq.util.workbook_reading.datamodels import Cell
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege
+from corehq import privileges
+from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
 
-FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
-ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
+from .bulk import (
+    process_bulk_upload,
+    FHIR_RESOURCE_TYPE_MAPPING_SHEET,
+    ALLOWED_VALUES_SHEET_SUFFIX,
+)
 
 
 @login_and_domain_required
-@toggles.DATA_DICTIONARY.required_decorator()
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 def data_dictionary_json(request, domain, case_type_name=None):
     props = []
     fhir_resource_type_name_by_case_type = {}
@@ -66,25 +67,45 @@ def data_dictionary_json(request, domain, case_type_name=None):
             domain)
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
+
+    case_type_app_module_count = get_case_type_app_module_count(domain)
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
     for case_type in queryset:
+        module_count = case_type_app_module_count.get(case_type.name, 0)
         p = {
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
             "groups": [],
+            "is_deprecated": case_type.is_deprecated,
+            "module_count": module_count,
             "properties": [],
         }
         grouped_properties = {
-            group: [{
-                "description": prop.description,
-                "label": prop.label,
-                "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
-                "name": prop.name,
-                "data_type": prop.data_type,
-                "deprecated": prop.deprecated,
-                "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
-            } for prop in props] for group, props in itertools.groupby(
-                case_type.properties.all(),
-                key=attrgetter('group_obj_id')
+            group: [
+                {
+                    'description': prop.description,
+                    'label': prop.label,
+                    'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(
+                        prop
+                    ),
+                    'name': prop.name,
+                    'deprecated': prop.deprecated,
+                }
+                | (
+                    {
+                        'data_type': prop.data_type,
+                        'allowed_values': {
+                            av.allowed_value: av.description
+                            for av in prop.allowed_values.all()
+                        },
+                    }
+                    if data_validation_enabled
+                    else {}
+                )
+                for prop in props
+            ]
+            for group, props in itertools.groupby(
+                case_type.properties.all(), key=attrgetter('group_obj_id')
             )
         }
         for group in case_type.groups.all():
@@ -106,7 +127,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
 
 @login_and_domain_required
-@toggles.DATA_DICTIONARY.required_decorator()
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 @require_permission(HqPermissions.edit_data_dict)
 def create_case_type(request, domain):
     name = request.POST.get("name")
@@ -123,11 +144,26 @@ def create_case_type(request, domain):
     return HttpResponseRedirect(f"{url}#{name}")
 
 
+@login_and_domain_required
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
+@require_permission(HqPermissions.edit_data_dict)
+def deprecate_or_restore_case_type(request, domain, case_type_name):
+    is_deprecated = request.POST.get("is_deprecated") == 'true'
+    case_type_obj = CaseType.objects.get(domain=domain, name=case_type_name)
+    case_type_obj.is_deprecated = is_deprecated
+    case_type_obj.save()
+
+    CaseProperty.objects.filter(case_type=case_type_obj).update(deprecated=is_deprecated)
+    CasePropertyGroup.objects.filter(case_type=case_type_obj).update(deprecated=is_deprecated)
+
+    return JsonResponse({'status': 'success'})
+
+
 # atomic decorator is a performance optimization for looped saves
 # as per http://stackoverflow.com/questions/3395236/aggregating-saves-in-django#comment38715164_3397586
 @atomic
 @login_and_domain_required
-@toggles.DATA_DICTIONARY.required_decorator()
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 @require_permission(HqPermissions.edit_data_dict)
 def update_case_property(request, domain):
     fhir_resource_type_obj = None
@@ -135,6 +171,7 @@ def update_case_property(request, domain):
     update_fhir_resources = toggles.FHIR_INTEGRATION.enabled(domain)
     property_list = json.loads(request.POST.get('properties'))
     group_list = json.loads(request.POST.get('groups'))
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
 
     if update_fhir_resources:
         errors, fhir_resource_type_obj = _update_fhir_resource_type(request, domain)
@@ -159,10 +196,10 @@ def update_case_property(request, domain):
             label = property.get('label')
             index = property.get('index')
             description = property.get('description')
-            data_type = property.get('data_type')
+            data_type = property.get('data_type') if data_validation_enabled else None
             group = property.get('group')
             deprecated = property.get('deprecated')
-            allowed_values = property.get('allowed_values')
+            allowed_values = property.get('allowed_values') if data_validation_enabled else None
             if update_fhir_resources:
                 fhir_resource_prop_path = property.get('fhir_resource_prop_path')
                 remove_path = property.get('removeFHIRResourcePropertyPath', False)
@@ -198,7 +235,7 @@ def _update_fhir_resource_type(request, domain):
 
 
 @login_and_domain_required
-@toggles.DATA_DICTIONARY.required_decorator()
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 def update_case_property_description(request, domain):
     case_type = request.POST.get('caseType')
     name = request.POST.get('name')
@@ -217,10 +254,12 @@ def _export_data_dictionary(domain):
         _('Case Property'),
         _('Label'),
         _('Group'),
-        _('Data Type'),
         _('Description'),
         _('Deprecated')
     ]
+    if toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain):
+        case_prop_headers.append(_('Data Type'))
+
     allowed_value_headers = [_('Case Property'), _('Valid Value'), _('Valid Value Description')]
 
     case_type_data, case_prop_data = _generate_data_for_export(domain, export_fhir_data)
@@ -228,7 +267,7 @@ def _export_data_dictionary(domain):
     outfile = io.BytesIO()
     writer = Excel2007ExportWriter()
     header_table = _get_headers_for_export(
-        export_fhir_data, case_type_headers, case_prop_headers, case_prop_data, allowed_value_headers)
+        export_fhir_data, case_type_headers, case_prop_headers, case_prop_data, allowed_value_headers, domain)
     writer.open(header_table=header_table, file=outfile)
     if export_fhir_data:
         _export_fhir_data(writer, case_type_headers, case_type_data)
@@ -243,18 +282,19 @@ def _generate_data_for_export(domain, export_fhir_data):
             _('Case Property'): case_prop.name,
             _('Label'): case_prop.label,
             _('Group'): case_prop.group_name,
-            _('Data Type'): case_prop.get_data_type_display() if case_prop.data_type else '',
             _('Description'): case_prop.description,
             _('Deprecated'): case_prop.deprecated
         }
-        if case_prop.data_type == 'select':
-            prop_dict['allowed_values'] = [
-                {
-                    _('Case Property'): case_prop.name,
-                    _('Valid Value'): av.allowed_value,
-                    _('Valid Value Description'): av.description,
-                } for av in case_prop.allowed_values.all()
-            ]
+        if toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain):
+            prop_dict[_('Data Type')] = case_prop.get_data_type_display() if case_prop.data_type else ''
+            if case_prop.data_type == 'select':
+                prop_dict['allowed_values'] = [
+                    {
+                        _('Case Property'): case_prop.name,
+                        _('Valid Value'): av.allowed_value,
+                        _('Valid Value Description'): av.description,
+                    } for av in case_prop.allowed_values.all()
+                ]
         if export_fhir_data:
             prop_dict[_('FHIR Resource Property')] = fhir_resource_prop
         return prop_dict
@@ -293,14 +333,16 @@ def _add_fhir_resource_mapping_sheet(case_type_data, fhir_resource_type_name_by_
 
 
 def _get_headers_for_export(export_fhir_data, case_type_headers, case_prop_headers, case_prop_data,
-                            allowed_value_headers):
+                            allowed_value_headers, domain):
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
     header_table = []
     if export_fhir_data:
         header_table.append((FHIR_RESOURCE_TYPE_MAPPING_SHEET, [case_type_headers]))
         case_prop_headers.extend([_('FHIR Resource Property'), _('Remove Resource Property(Y)')])
     for tab_name in case_prop_data:
         header_table.append((tab_name, [case_prop_headers]))
-        header_table.append((f'{tab_name}{ALLOWED_VALUES_SHEET_SUFFIX}', [allowed_value_headers]))
+        if data_validation_enabled:
+            header_table.append((f'{tab_name}{ALLOWED_VALUES_SHEET_SUFFIX}', [allowed_value_headers]))
     return header_table
 
 
@@ -349,7 +391,7 @@ class DataDictionaryView(BaseProjectDataView):
 
     @method_decorator(login_and_domain_required)
     @use_jquery_ui
-    @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
+    @method_decorator(requires_privilege_with_fallback(privileges.DATA_DICTIONARY))
     @method_decorator(require_permission(HqPermissions.edit_data_dict,
                                          view_only_permission=HqPermissions.view_data_dict))
     def dispatch(self, request, *args, **kwargs):
@@ -379,7 +421,7 @@ class UploadDataDictionaryView(BaseProjectDataView):
 
     @method_decorator(login_and_domain_required)
     @use_jquery_ui
-    @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
+    @method_decorator(requires_privilege(privileges.DATA_DICTIONARY))
     @method_decorator(require_permission(HqPermissions.edit_data_dict))
     def dispatch(self, request, *args, **kwargs):
         return super(UploadDataDictionaryView, self).dispatch(request, *args, **kwargs)
@@ -409,137 +451,15 @@ class UploadDataDictionaryView(BaseProjectDataView):
     @method_decorator(atomic)
     def post(self, request, *args, **kwargs):
         bulk_file = self.request.FILES['bulk_upload_file']
-        errors = _process_bulk_upload(bulk_file, self.domain)
+        errors, warnings = process_bulk_upload(bulk_file, self.domain)
         if errors:
             messages.error(request, _("Errors in upload: {}").format(
                 "<ul>{}</ul>".format("".join([f"<li>{e}</li>" for e in errors]))
             ), extra_tags="html")
         else:
             messages.success(request, _('Data dictionary import complete'))
+            if warnings:
+                messages.warning(request, _("Warnings in upload: {}").format(
+                    "<ul>{}</ul>".format("".join([f"<li>{e}</li>" for e in warnings]))
+                ), extra_tags="html")
         return self.get(request, *args, **kwargs)
-
-
-def _process_bulk_upload(bulk_file, domain):
-    filename = make_temp_file(bulk_file.read(), file_extention_from_filename(bulk_file.name))
-    errors = []
-    import_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
-    fhir_resource_type_by_case_type = {}
-    expected_columns_in_prop_sheet = 5
-    data_type_map = {t.label: t.value for t in CaseProperty.DataType}
-
-    if import_fhir_data:
-        expected_columns_in_prop_sheet = 7
-
-    worksheets = []
-    allowed_value_info = {}
-    prop_row_info = {}
-    seen_props = defaultdict(set)
-    missing_valid_values = set()
-    with open_any_workbook(filename) as workbook:
-        for worksheet in workbook.worksheets:
-            if worksheet.title.endswith(ALLOWED_VALUES_SHEET_SUFFIX):
-                case_type = worksheet.title[:-len(ALLOWED_VALUES_SHEET_SUFFIX)]
-                allowed_value_info[case_type] = defaultdict(dict)
-                prop_row_info[case_type] = defaultdict(list)
-                for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None), start=2):
-                    row_len = len(row)
-                    if row_len < 1:
-                        # simply ignore any fully blank rows
-                        continue
-                    if row_len < 3:
-                        # if missing value or description, fill in "blank"
-                        row += [Cell(value='') for __ in range(3 - row_len)]
-                    row = [cell.value if cell.value is not None else '' for cell in row]
-                    prop_name, allowed_value, description = [str(val) for val in row[0:3]]
-                    if allowed_value and not prop_name:
-                        msg_format = _('Error in valid values for case type {}, row {}: missing case property')
-                        msg_val = msg_format.format(case_type, i)
-                        errors.append(msg_val)
-                    else:
-                        allowed_value_info[case_type][prop_name][allowed_value] = description
-                        prop_row_info[case_type][prop_name].append(i)
-            else:
-                worksheets.append(worksheet)
-
-        for worksheet in worksheets:
-            if worksheet.title == FHIR_RESOURCE_TYPE_MAPPING_SHEET:
-                if import_fhir_data:
-                    _errors, fhir_resource_type_by_case_type = _process_fhir_resource_type_mapping_sheet(
-                        domain, worksheet)
-                    errors.extend(_errors)
-                continue
-            case_type = worksheet.title
-            for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None), start=2):
-                if len(row) < expected_columns_in_prop_sheet:
-                    error = _('Not enough columns')
-                else:
-                    error, fhir_resource_prop_path, fhir_resource_type, remove_path = None, None, None, None
-                    (
-                        name,
-                        label,
-                        group,
-                        data_type_display,
-                        description,
-                        deprecated
-                    ) = [cell.value for cell in row[:6]]
-                    # Fall back to value from file if data_type_display is not found in the map.
-                    # This allows existing error path to report accurately the value that isn't found,
-                    # and also has a side-effect of allowing older files (pre change to export
-                    # display values) to import successfully.
-                    data_type = data_type_map.get(data_type_display, data_type_display)
-                    seen_props[case_type].add(name)
-                    if import_fhir_data:
-                        fhir_resource_prop_path, remove_path = row[5:]
-                        remove_path = remove_path == 'Y' if remove_path else False
-                        fhir_resource_type = fhir_resource_type_by_case_type.get(case_type)
-                        if fhir_resource_prop_path and not fhir_resource_type:
-                            error = _('Could not find resource type for {}').format(case_type)
-                    if not error:
-                        if case_type in allowed_value_info:
-                            allowed_values = allowed_value_info[case_type][name]
-                        else:
-                            allowed_values = None
-                            missing_valid_values.add(case_type)
-                        error = save_case_property(name, case_type, domain, data_type, description, label, group,
-                                                   deprecated, fhir_resource_prop_path, fhir_resource_type,
-                                                   remove_path, allowed_values)
-                if error:
-                    errors.append(_('Error in case type {}, row {}: {}').format(case_type, i, error))
-
-    for case_type in missing_valid_values:
-        errors.append(_('Missing valid values sheet for case type {}').format(case_type))
-
-    for case_type in allowed_value_info:
-        for prop_name in allowed_value_info[case_type]:
-            if prop_name not in seen_props[case_type]:
-                msg_format = _(
-                    'Error in valid values for case type {}, nonexistent property listed ({}), row(s): {}')
-                msg_val = msg_format.format(
-                    case_type, prop_name, ', '.join(str(v) for v in prop_row_info[case_type][prop_name]))
-                errors.append(msg_val)
-
-    return errors
-
-
-def _process_fhir_resource_type_mapping_sheet(domain, worksheet):
-    errors = []
-    fhir_resource_type_by_case_type = {}
-    for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
-        if len(row) < 3:
-            errors.append(_('Not enough columns in {} sheet').format(FHIR_RESOURCE_TYPE_MAPPING_SHEET))
-        else:
-            case_type, fhir_resource_type, remove_resource_type = [cell.value for cell in row[:3]]
-            remove_resource_type = remove_resource_type == 'Y' if remove_resource_type else False
-            if remove_resource_type:
-                remove_fhir_resource_type(domain, case_type)
-                continue
-            case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
-            try:
-                fhir_resource_type_obj = update_fhir_resource_type(domain, case_type_obj, fhir_resource_type)
-            except ValidationError as e:
-                for key, msgs in dict(e).items():
-                    for msg in msgs:
-                        errors.append(_("FHIR Resource {} {}: {}").format(fhir_resource_type, key, msg))
-            else:
-                fhir_resource_type_by_case_type[case_type] = fhir_resource_type_obj
-    return errors, fhir_resource_type_by_case_type

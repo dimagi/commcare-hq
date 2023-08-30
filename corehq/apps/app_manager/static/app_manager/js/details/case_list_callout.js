@@ -140,7 +140,7 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
             }
 
             if (errors.length) {
-                var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
+                var alert_user = hqImport("hqwebapp/js/bootstrap3/alert_user").alert_user;
                 _.each(errors, function (error) {
                     alert_user(error, "danger");
                 });
@@ -184,7 +184,7 @@ hqDefine("app_manager/js/details/case_list_callout", function () {
             });
         }
 
-        self.lookup_field_header = hqImport('hqwebapp/js/ui-element').input().val(invisible);
+        self.lookup_field_header = hqImport('hqwebapp/js/bootstrap3/ui-element').input().val(invisible);
         self.lookup_field_header.setVisibleValue(visible);
         self.lookup_field_header.observableVal = ko.observable(self.lookup_field_header.val());
         self.lookup_field_header.on('change', function () {

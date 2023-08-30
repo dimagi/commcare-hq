@@ -41,6 +41,14 @@ def _get_plugin_regex(js_plugin):
     return r"(\.)(" + js_plugin + r")(\([\{\"\'])"
 
 
+def _get_extension_regex(js_plugin):
+    return r"(\$\.fn\.)(" + js_plugin + r")(\.Constructor)"
+
+
+def _get_path_reference_regex(path_reference):
+    return r"([\"\'])(" + path_reference + r")([\"\'])"
+
+
 def _do_rename(line, change_map, regex_fn, replacement_fn):
     renames = []
     for css_class in change_map.keys():
@@ -100,9 +108,17 @@ def flag_changed_css_classes(line, spec):
 def flag_changed_javascript_plugins(line, spec):
     flags = []
     for plugin in spec['flagged_js_plugins']:
-        regex = _get_plugin_regex(plugin)
-        if re.search(regex, line):
+        plugin_regex = _get_plugin_regex(plugin)
+        extension_regex = _get_extension_regex(plugin)
+        if re.search(plugin_regex, line) or re.search(extension_regex, line):
             flags.append(_get_change_guide(f"js-{plugin}"))
+    return flags
+
+
+def flag_path_references_to_migrated_javascript_files(line, reference):
+    flags = []
+    if "/" + reference + "/" in line:
+        flags.append(f"Found reference to a migrated file ({reference})")
     return flags
 
 
@@ -113,3 +129,17 @@ def flag_stateful_button_changes_bootstrap5(line):
         flags.append("You are using stateful buttons here, "
                      "which are no longer supported in Bootstrap 5.")
     return flags
+
+
+def file_contains_reference_to_path(filedata, path_reference):
+    regex = _get_path_reference_regex(path_reference)
+    return re.search(regex, filedata) is not None
+
+
+def replace_path_references(filedata, old_reference, new_reference):
+    regex = _get_path_reference_regex(old_reference)
+    return re.sub(
+        pattern=regex,
+        repl=r"\1" + new_reference + r"\3",
+        string=filedata
+    )

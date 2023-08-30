@@ -6,6 +6,7 @@ from corehq.apps.export.views.download import (
     DownloadNewCaseExportView,
     DownloadNewFormExportView,
     DownloadNewSmsExportView,
+    DownloadNewDatasourceExportView,
     add_export_email_request,
     has_multimedia,
     poll_custom_export_download,
@@ -142,6 +143,9 @@ urlpatterns = [
     url(r"^custom/new/sms/download/$",
         DownloadNewSmsExportView.as_view(),
         name=DownloadNewSmsExportView.urlname),
+    url(r"^custom/new/datasource/download/$",
+        DownloadNewDatasourceExportView.as_view(),
+        name=DownloadNewDatasourceExportView.urlname),
 
     # Schema Download views
     url(r"^custom/schema/det/download/(?P<export_instance_id>[\w\-]+)/$",
