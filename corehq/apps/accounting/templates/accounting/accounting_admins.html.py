@@ -1,0 +1,94 @@
+BBBBBBB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+BBBB BBBBBBBBBBBBBB
+BBBB BBBB
+BBBB BBBBBBBBBBBBBBBBB
+
+BBBBBBBBBBBBBB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+
+BBBBB BBBBBBBBBBBBBBBBB
+  XXXX gettext(u'Manage Accounting Admins') XXXXX
+  XX XXXXXXXXXXXXX
+     gettext(u'\n      Add or delete users that can view and edit accounting settings.\n    ') 
+      SSS SS SSSSSS SSSSS SSSS SSS SSSS SSS SSSS SSSSSSSSSS SSSSSSSSS
+    
+  XXXX
+BBBBBBBB
+
+BBBBB BBBBBBBBBBBBBBBBBBBB
+  XXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXX
+    XXX XXXXXXXXXXXXXXXXX
+      XX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXX
+    XXXXX
+    XXX XXXXXXXXXXXXXXXXX
+      XXXXXXX XXXXXXXXXXXXX
+              XXXXXXXXXXXXXXXXXXX
+              XXXXXXXXXXX
+                        XXXXX X
+                            XXXXXXXXXXXXXX XXXXXXXXXXXXXXXX X XX
+                        X
+                    X
+              XXXXXXXXXX XXXXXXXXXXXX
+        XX XXXXXXXXX XXXXXXXXXXXXXXX  gettext(u'Remove') 
+      XXXXXXXXX
+
+      XXXX XXXXXXXXXXXX XXXXX
+           XXXXXXXXXXX
+                    XXXXX X
+                        XXX XXXXXXXXXXXXXXX X XX
+                    X
+                 XX
+        XXXX XXXXXXXXXXXXXXXXXXXXX
+          XXXX XXXXXXXXXXXXXXXXXXXXXX
+            XXXX XXXXXXXXXXXXXXXXXXXXX
+              XXXXXXX XXXXXXXXXXXXX XXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+              XXX XXXXXXXXXXXXXXXXXXXX
+                 gettext(u'\n                  Remove <strong data-bind="text: username"></strong>\n                  from admins?\n                ') 
+                  SSSSSS SSSSSSS SSSSSSSSSSSSSSSS SSSSSSSSSSSSSSSSSSS
+                  SSSS SSSSSSS
+                
+              XXXXX
+            XXXXXX
+            XXXX XXXXXXXXXXXXXXXXXXX
+              XXX
+                 gettext(u'\n                  Yes, remove <strong data-bind="text: username"></strong>\'s\n                  Accounting Admin privileges.\n                ') 
+                  SSSS SSSSSS SSSSSSS SSSSSSSSSSSSSSSS SSSSSSSSSSSSSSSSSSSSS
+                  SSSSSSSSSS SSSSS SSSSSSSSSSS
+                
+              XXXX
+            XXXXXX
+            XXXX XXXXXXXXXXXXXXXXXXXXX
+              XXXXXXX XXXXXXXXXXXXX
+                      XXXXXXXXXX XXXXXXXXXXXX
+                      XXXXXXXXXXXXXXXXXXXXX
+                 gettext(u'Cancel') 
+              XXXXXXXXX
+              XXXXXXX XXXXXXXXXXXXX
+                      XXXXXXXXXX XXXXXXXXXX XXXXXXXXXXXXXXXXXXXX
+                      XXXXXXXXXXXXXXXXXXX gettext(u'Removing User...') XX
+                XX XXXXXXXXX XXXXXXXXXXXXXXX  gettext(u'Remove User') 
+              XXXXXXXXX
+            XXXXXX
+          XXXXXX
+        XXXXXX
+
+      XXXXXX
+    XXXXX
+  XXXXXXXXX
+  XXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXX
+    XXX XXXXXXXXXXXXXXXXX
+      XX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXX
+    XXXXX
+    XXX XXXXXXXXXXXXXXXXX
+      XXXXX XXXXXXXXXXXX XXXXXXXXXXXXXXX gettext(u'New') XXXXXXX
+    XXXXX
+  XXXXXXXXX
+  XXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    XXX XXXXXXXXXXXXXXXXX
+      XX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXX
+    XXXXX
+    XXX XXXXXXXXXXXXXXXXX
+      XXXXX XXXXXXXXXXXX XXXXXXXXXXXXXXX gettext(u'Removed') XXXXXXX
+    XXXXX
+  XXXXXXXXX
+
+BBBBBBBB

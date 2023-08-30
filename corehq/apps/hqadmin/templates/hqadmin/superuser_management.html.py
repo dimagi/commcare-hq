@@ -1,0 +1,50 @@
+BBBBBBB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+BBBB BBBBBBBBBBBBBBBBB
+BBBB BBBB
+
+BBBBB BBBBBBBBBBBB
+  XXXX XXXXXXXXXXXX
+    XXXX XXXXXXXXXXXXXXXXXX
+      XXXXXXXXX
+        XX XXXXXXXXXXXXXXXXXXX
+          BB BBB BBBBBBBBBBBBBBBBB
+             gettext(u'You do not have permission to change superuser and staff status.') 
+          BBBB
+             gettext(u'Please type comma or new-line separated email addresses of users to grant/revoke superuser privileges.') 
+          BBBBB
+        XXXX
+      BB BBBBBBBBBBBBBBBBB
+        BBBBBB BBBB
+      BBBBB
+    XXXXXX
+  XXXXXX
+  XXXX XXXXXXXXXXXX
+    XXXX XXXXXXXXXXXXXXXXXX
+      XXXX gettext(u'All superusers and staff users') XXXXX
+      XX XXXXXXXXXX XXXXXXXXXXXX XXXXXXBBB BBBBBBBBBBBBBBBBBX XXXXXXXXXXXXXXXXXX XXXXXXXXX XXXXXXXXXXXXXXXXX XXXXXXXXXXXX
+      XXXXXX XXXXXXXXXXXXXX
+        XXXX
+          XXXX gettext(u'Username') XXXXX
+          XXXX gettext(u'Developer') XXXXX
+          XXXX gettext(u'Superuser') XXXXX
+          XXXX gettext(u'Can assign Superuser') XXXXX
+          XXXX gettext(u'Two Factor Enabled') XXXXX
+        XXXXX
+        BBB BBBB BB BBBBB
+          XXXX
+            XXXXXXXXX
+            XXXXBB BBBBBBBBBBBBBXX XXXXXXXXX XXXXXXXXXXXXXXBBBBBXXXXX
+            XXXXBB BBBBBBBBBBBBBBBBBXX XXXXXXXXX XXXXXXXXXXXXXXBBBBBXXXXX
+            XXXXBB BBBBBBBBBBBBBBBBBBBBBBBBBXX XXXXXXXXX XXXXXXXXXXXXXXBBBBBXXXXX
+            XXXXBB BBBBBBBBBBBBBBBBBBBBBBBXX XXXXXXXXX XXXXXXXXXXXXXXBBBBBXXXXX
+          XXXXX
+        BBBBBB
+      XXXXXXXX
+    XXXXXX
+  XXXXXX
+  XXXXXXX
+    XX X
+      XXXXXXXXXXXXXXXX XXXXX
+    X
+  XXXXXXXX
+BBBBBBBB

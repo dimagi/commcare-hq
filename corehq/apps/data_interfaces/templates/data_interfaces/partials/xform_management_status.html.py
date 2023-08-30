@@ -1,0 +1,42 @@
+BBBB BBBB
+BB BBBBBBBB
+  XXXX XXXXXXXXXXXX
+    XXXXXXXXXXXXXXXXX
+    BBBBB BBBBBBB
+      BB BBBBBBBBBBBBBB
+        XXXX XXXXXXXXXXXX XXXXXXXXXXXXXXX
+          XXXXXXXXX
+          BB BBBBBBBBBBBBB
+            BBB B BB BBBBBBBBBBBBBB
+              XXXXXXX
+            BBBBBB
+          BBBBB
+        XXXXXX
+        BB BBBBBBBBBBBBB
+          XXXX XXXXXXXXXXXX XXXXXXXXXXXXXX
+            XXXX gettext(u'However, we ran into the following problems:') XXXXX
+            BBB B BB BBBBBBBBBBBBB
+              XXXXXXX
+            BBBBBB
+          XXXXXX
+        BBBBB
+      BBBB
+        XXXX XXXXXXXXXXXX XXXXXXXXXXXXXX
+          XXXXXXXXX
+          BBB B BB BBBBBBBBBBBBB
+            XXXXXXX
+          BBBBBB
+        XXXXXX
+      BBBBB
+    BBBBBBBB BBBBBBB
+  XXXXXX
+  XXXXXXXXXXXXX
+   gettext(u'\n    <span>Return to <a href="%(form_management_url)s">Manage Forms</a> to reverse this.</span>\n  ') 
+    SSSSSSSSSSSS SS SS SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS SSSSSSSSS SS SSSSSSS SSSSSSSSSSSS
+  
+BBBB
+  XXXXXXXX
+    
+  XXXXXXXXX
+  BBBBBBB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+BBBBB

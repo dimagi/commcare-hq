@@ -1,0 +1,33 @@
+BBBBBBB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+BBBB BBBB
+BBBBB BBBBBBB
+  BB BBBBBBBBBBBBBB
+    XXXX XXXXXXXXXXXX XXXXXXXXXXXXXXX
+      XXXX gettext(u'Lookup table upload has finished') XXXXX
+      XXX gettext(u'Successfully uploaded %(count)s tables.') SSSSSSSSSSSS SSSSSSSS SSSSSSSSS SSSSSSSXXXX
+    XXXXXX
+    BB BBBBBBBBBBBBB
+      XXXX XXXXXXXXXXXX XXXXXXXXXXXXXX
+        XXXX gettext(u'However, we ran into the following problems:') XXXXX
+        BBB B BB BBBBBBBBBBBBB
+          XXXXXXX
+        BBBBBB
+      XXXXXX
+    BBBBB
+    BB BBBBBBBBBBBBBBB
+      XXXX XXXXXXXXXXXX XXXXXXXXXXXX
+        XXXX gettext(u'Additional information:') XXXXX
+        BBB BBB BB BBBBBBBBBBBBBBB
+          XXXXXXX
+        BBBBBB
+      XXXXXX
+    BBBBB
+  BBBB
+    XXXX XXXXXXXXXXXX XXXXXXXXXXXXXX
+      XXXX gettext(u'Upload failed! Details:') XXXXX
+      BBB B BB BBBBBBBBBBBBB
+        XXXXXXX
+      BBBBBB
+    XXXXXX
+  BBBBB
+BBBBBBBB BBBBBBB
