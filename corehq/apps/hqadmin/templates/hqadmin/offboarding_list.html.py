@@ -1,0 +1,46 @@
+BBBBBBB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+BBBB BBBBBBBBBBBBBBBBB
+BBBB BBBB
+
+BBBBB BBBBBBBBBBBB
+  XXXX XXXXXXXXXXXX
+    XXXX XXXXXXXXXXXXXXXXXX
+      XXXXXXXXX
+      XX XXXXXXXXXXXXXXXXXXX
+         gettext(u'Please type comma or new-line separated email addresses from the official list of current employees.') 
+      XXXX
+      BBBBBB BBBB
+    XXXXXX
+  XXXXXX
+  XXXX XXXXXXXXXXXX
+    XXXX XXXXXXXXXXXXXXXXXX
+      BB BBBBBBBBBBBBBBBBB
+        XXXX  gettext(u'The following users do not exist on this site and so do not need to be offboarded.')  XXXXX
+          BBB BBBB BB BBBBBBBBBBBBBBBBB
+             XXXX
+          BBBBBB
+      BBBBB
+      XXXX XXXXX
+      XXXXXX XXXXXXXXXXXXXX
+        XXXX
+          XXXX gettext(u'Username') XXXXX
+          XXXX gettext(u'Developer') XXXXX
+          XXXX gettext(u'Superuser') XXXXX
+          XXXX gettext(u'Accounting Admin') XXXXX
+          XXXX gettext(u'Active') XXXXX
+          XXXX gettext(u'Two Factor Enabled') XXXXX
+        XXXXX
+        BBB BBBB BB BBBBB
+          XXXX
+            XXXXXXXXX
+            XXXXBB BBBBBBBBBBBBBXX XXXXXXXXX XXXXXXXXXXXXXXBBBBBXXXXX
+            XXXXBB BBBBBBBBBBBBBBBBBXX XXXXXXXXX XXXXXXXXXXXXXXBBBBBXXXXX
+            XXXXBB BBBBBBBBBBBBBBBBBBBBBBBBXX XXXXXXXXX XXXXXXXXXXXXXXBBBBBXXXXX
+            XXXXBB BBBBBBBBBBBBBBXX XXXXXXXXX XXXXXXXXXXXXXXBBBBBXXXXX
+            XXXXBB BBBBBBBBBBBBBBBBBBBBBBBXX XXXXXXXXX XXXXXXXXXXXXXXBBBBBXXXXX
+          XXXXX
+        BBBBBB
+      XXXXXXXX
+    XXXXXX
+  XXXXXX
+BBBBBBBB

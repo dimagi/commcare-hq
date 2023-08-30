@@ -1,0 +1,117 @@
+BBBB BBBB
+
+XXXX XXXXXXXXXXXXXXXXXXXX XXXXX XXXXX XXXXXX
+  XXXX XXXXXXXXXXXXXXXXXXXXX
+    XXXX XXXXXXXXXXXXXXXXXXXXXX
+      XXXX XXXXXXXXXXXXXXXXXXXXX
+        XXXXXXX XXXXXXXXXXXXX XXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXX
+                XXXXXXXXXXXXXXXXXXX
+          XXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        XXXXXXXXX
+        XXX XXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXX X
+                    XXXXX XXXXXXXXX
+                    XXXXX XXX
+                    XXX XXXXXXXXXXX
+                XXXXXXXX
+      XXXXXX
+      XXXXX XXXXXXXXXXXXX
+            XXXXXXXXXXXXXXXXXXXXXXX
+            XXXXXXXXXXXXXXXX X
+                      XXX XXXXXXX
+                      XXXXXXX XXXXXXXXXX
+                  XXX
+        BBBBBBBBBB
+        XXXX XXXXXXXXXXXXXXXXXXX
+          XXXX XXXXXXXXXXXXXXXXXXXX X
+                        XXXXX XXXXXXXXX
+                        XXXXX XXX
+                        XXX XXXXXXXXXXX
+                    XX XXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+          XX XXXXXXXXXXXX XXXXXXXXXXXXX
+             XXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXX
+            XX XXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+            XXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXX
+          XXXX
+
+          XXXX XX XXX XXXXXXXXXXXXXXX XXX XXXX XXX
+          XXXXXXXXX XXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXX
+            XXXXXXXX gettext(u'Wire Payment Information') XXXXXXXXX
+            XXX
+               gettext(u'\n                Dimagi accepts wire payments via ACH and wire transfer. You will receive an invoice via email with bank information and instructions for wire payment. Please include the Invoice # in the wire payment memo or note field.\n                <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment" target="_blank">More information...</a>\n              ') 
+                SSSSSS SSSSSSS SSSS SSSSSSSS SSS SSS SSS SSSS SSSSSSSSS SSS SSSS SSSSSSS SS SSSSSSS SSS SSSSS SSSS SSSS SSSSSSSSSSS SSS SSSSSSSSSSSS SSS SSSS SSSSSSSS SSSSSS SSSSSSS SSS SSSSSSS S SS SSS SSSS SSSSSSS SSSS SS SSSS SSSSSS
+                SS SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS SSSSSSSSSSSSSSSSSSSS SSSSSSSSSSSSSSSSSS
+              
+            XXXX
+            XXXX XXXXXXXXXXXXXXXXXXX
+              XXXXXX XXXXXXXXXXXXXXXXXXXX XXXXXXXXXX
+                 gettext(u'Invoice Recipients') 
+              XXXXXXXX
+              XXXX XXXXXXXXXXXXXXXXX
+                XXXXXX XXXXXXXXXXX
+                       XXXXXXXXXXXXXXXXX XXXXXXXXXXX
+                       XXXXXXXXX
+                       XXXXXXXXXXXXX
+                       XXXXXXXXXXXXXXXXXXXX
+                       XXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXX XX
+              XXXXXX
+            XXXXXX
+          XXXXXXXXXXX
+          XXXX XXX XXX
+
+          XXXX XX XXX XXXXXXXXXXXXXXX XXX XXXXXXXXXXX XXX
+          XXXX XXXXXXXXXXXXXXXXXXXX X
+                        XXXXX XXXXXXXX
+                        XXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                        XXX XXXXXXXXXXXXXXXXX
+                    XXXXXXXXX
+
+          XXXX XXXXXXXXXXXXXXXXXXXX X
+                        XXXXX XXXXXX
+                        XXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                        XXX XXXXXXXXXXXXX
+                    XXXXXXXXX
+          XXXX XXX XXX
+
+          XXXX XXXXXXXXXXXX XXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXX XXXXXXXXX X
+                        XXXXX XXX
+                    XXXXXXXXX
+        XXXXXX
+        XXXX XXXXXXXXXXXXXXXXXXXXX
+          XXXXXXX XXXXXXXXXXXXX
+                  XXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXX
+                  XXXXXXXXXX XXXXXXXXXXXX
+                  XXXXXXXXXXXXXXXXXXXXX
+             gettext(u'Cancel') 
+          XXXXXXXXX
+          XXXX XX XXX XXXXXXXXXXXXXXXXXX XX XXXXXXXXXXX XXX
+          XXXXXXX XXXXXXXXXXXXX
+                  XXXXXXXXXXX
+                                XXXXXXXX XXXXXXXXXXXXXXXXXXXXX
+                                XXXXXXXX XXXXXXXXXXXXXXXXX
+                                XXXXXX XXXXXXXXXXXXXXX
+                                XXXXX XXXXXXXXXXXXXX
+                  XXXXXXXXXX XXXXXXXXXXXXX
+          XXXXXXXXX
+          XXXX XXX XXX
+          XXXX XX XXXXXX XXXXXXXXXXXXXXXXXX XXX
+          XXXXXXX XXXXXXXXXXXXX
+                  XXXXXXXXXX XXXXXXXXXXX XXXXXXXXX
+                  XXXXXXXXXXX
+                                XXXXX XXXXXXXXXXXXXX
+                  XXXXXXXXXXXXXXXXXXXX
+          XXXXXXXXX
+          XXXXX XXXXXXXXXXXX XXXXXXXXXXXX gettext(u'Please agree to the Privacy Policy.') XXXXXXX
+          XXXX XXX XXX
+          XXXXXXX XXXXXXXXXXXXX
+                  XXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXX
+                  XXXXXXXXXX XXXXXXXXXXXX
+                  XXXXXXXXXXXXXXXXXXXXX
+             gettext(u'Close') 
+          XXXXXXXXX
+        XXXXXX
+      XXXXXXX
+    XXXXXX
+  XXXXXX
+
+XXXXXX

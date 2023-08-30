@@ -1,0 +1,25 @@
+BBBBBBB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+BBBB BBBBBBBBBBBBBBBBB
+BBBB BBBBBBBBBBBBBB
+BBBB BBBB
+
+BBBBBBBBBBBBBB BBBBBBBBBBBBBBBBBBBBBBBBBBBB
+
+BBBBB BBBBBBBBBBBB
+  BBBBBBBBBBBBBBBBB BBBBB BBBBBBBBBBBBB
+  XXXX XXXXXXXXXXXX
+    XXXX XXXXXXXXXXXXXXXXXX
+      XXXXXXXXX
+      XX XXXXXXXXXXXXXXXXXXX
+         gettext(u'\n          Use this form to log in as a mobile user.\n          You can fill out the fully qualified username of\n          a mobile worker in the username box\n          (&lt;username&gt;@&lt;domain&gt;.commcarehq.org)\n          or fill the username and domain.\n        ') 
+          SSS SSSS SSSS SS SSS SS SS S SSSSSS SSSSS
+          SSS SSS SSSS SSS SSS SSSSS SSSSSSSSS SSSSSSSS SS
+          S SSSSSS SSSSSS SS SSS SSSSSSSS SSS
+          SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+          SS SSSS SSS SSSSSSSS SSS SSSSSSS
+        
+      XXXX
+      BBBBBB BBBB
+    XXXXXX
+  XXXXXX
+BBBBBBBB

@@ -1,0 +1,105 @@
+BBBB BBBBBBBBBBBBBB
+BBBB BBBB
+
+XXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  XXXX XXXXXXXXXXXX XXXXX XXXXXXXXXXXXXXXX
+    XXXX XXXXXXXXXXXXXXXXXXXXX
+      XXXX XXXXXXXXXXXXXXXXXXXXXX
+        XXXX XXXXXXXXXXXXXXXXXXXXX
+          XXXXXXX XXXXXXXXXXXXX XXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+          XXX XXXXXXXXXXXXXXXXXXXX gettext(u'Add New Credit Card') XXXXX
+        XXXXXX
+        XXXX XXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXX
+          XXXXXX XXXXXXXXXXXXX
+                 XXXXXXXXXXXXXXXXXX
+                 XXXXXXXXXXXXXXXXX XXXXXX XX
+          XXXX XXXXXXXXXXXX XXXXXXXXXXXXXX
+               XXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXX
+            XX XXXXXXXXX XXXXXXXXXX XXXXXXXXXXXXX  gettext(u'Processing your request') 
+          XXXXXX
+          XXXX XXXXXXXXXXXX XXXXXXXXXXXXX
+               XXXXXXXXXXXXXXXXXXX XXXXXXXXXX XX XXX
+                                    XXXXX XXXXXXXXXX
+          XXXXXX
+
+          XXXX XXXXXXXXXXXXXXXXXXX
+            XXXXXX XXXXXXXXXXXXXXXXXXXX XXXXXXXXXX
+               gettext(u'Card Number') 
+            XXXXXXXX
+            XXXX XXXXXXXXXXXXXXXXX
+              XXXXXX XXXXXXXXXXX
+                     XXXXXXXXXXXXXXXXX XXXXXXX XXXXXXXX XXXXXXXXXXXXX
+                     XXXXXXXXX
+                     XXXXXXXXXXXXXXXXXXXX
+                     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XX
+            XXXXXX
+          XXXXXX
+
+          XXXX XXXXXXXXXXXXXXXXXXX
+            XXXXXX XXXXXXXXXXXXXXXXXXXX XXXXXXXXXX
+               pgettext(u'Check digits of credit card', u'CVC') 
+            XXXXXXXX
+            XXXX XXXXXXXXXXXXXXXXX
+              XXXXXX XXXXXXXXXXX
+                     XXXXXXXXXXXXXXXXX XXXX XXXXXXXX XXXXXXXXXXXXX
+                     XXXXXXXX
+                     XXXXXXXXXXXXXXXXXXXX
+                     XXXXXXXXXXXXXXXXXXXX
+            XXXXXX
+          XXXXXX
+
+          XXXX XXXXXXXXXXXXXXXXXXX
+            XXXXXX XXXXXXXXXXXXXXXXXXXX XXXXXXXXXX
+               gettext(u'Expiration') 
+            XXXXXXXX
+            XXXX XXXXXXXXXXXXXXXXX
+              XXXX XXXXXXXXXXXX
+                XXXX XXXXXXXXXXXXXXXXX
+                  XXXXXX XXXXXXXXXXX
+                         XXXXXXXXXXXXXXXXX XXXXXXXXX XXXXXXXX XXXXXXXXXXXXX
+                         XXXXXXXX
+                         XXXXXXXXXXXXXXXXXXXX
+                         XXXXXXXXXXXXXXXX XX
+                XXXXXX
+                XXXX XXXXXXXXXXXXXXXXX
+                  XXXXXX XXXXXXXXXXX
+                         XXXXXXXXXXXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXXXXXXX
+                         XXXXXXXX
+                         XXXXXXXXXXXXXXXXXXXX
+                         XXXXXXXXXXXXXXXXXX XX
+                XXXXXX
+              XXXXXX
+            XXXXXX
+          XXXXXX
+          XXXX XXXXXXXXXXXXXXXXXXX
+            XXXX XXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXX
+              XXXX XXXXXXXXXXXXXXXXX
+                XXXXXXX
+                  XXXXXX XXXXXXXXXXXXXXX XXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXX XXXXXXXXXX XXXXXXXX XXXXXXXXXXXXXXX
+                   gettext(u'Use this card to autopay') 
+                XXXXXXXX
+              XXXXXX
+              XXXXX XXXXXXXXXXXXXXXXXXX
+                                XX XXXXXXXXX XXXXXXXXXXXXXXXXXXXX
+                 gettext(u'\n                  We use <a href="http://www.stripe.com/" target="_blank">Stripe</a>\n                  to process this transaction.\n                ') 
+                  SS SSS SS SSSSSSSSSSSSSSSSSSSSSSSSSSSSS SSSSSSSSSSSSSSSSSSSSSSSSSS
+                  SS SSSSSSS SSSS SSSSSSSSSSSS
+                
+                            XXXXXXX
+            XXXXXX
+          XXXXXX
+        XXXXXX
+        XXXX XXXXXXXXXXXXXXXXXXXXX
+          XXXXXXX XXXXXXXX XXXXXXXXXXXXX XXXXXXXXXX XXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXX
+             gettext(u'Cancel') 
+          XXXXXXXXX
+          XXXXXXX XXXXXXXXXXXXX XXXXXXXXXX XXXXXXXXXXXX
+                  XXXXXXXXXXXXXXXXX XXXXXXXXX
+                                       XXXXXXX XXXXXXXXXXXXXXXXX
+             gettext(u'Save') 
+          XXXXXXXXX
+        XXXXXX
+      XXXXXX
+    XXXXXX
+  XXXXXX
+XXXXXXXXX

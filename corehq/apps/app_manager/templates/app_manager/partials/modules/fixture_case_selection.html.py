@@ -1,0 +1,90 @@
+BBBB BBBBBBBBBBBBBB
+BBBB BBBB
+BBBB BBBBBBBBBBBBB
+
+XXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXX
+     XXXXXXXXXXXX XXXXXXXXXXXXXXXXXX
+  XXXX XXXXXXXXXXXXXXXXXXXXXX
+    XXX XXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXX
+       gettext(u'Lookup Table Case Selection') 
+    XXXXX
+  XXXXXX
+  XXXX XXXXXXXXXXXXXXXXXXX
+    XXXXX XXXXXXXXXXX XXXXXXXXXXXXXXXXX
+      XXXX XXXXXXXXXXXXXXXXXXX
+        XXXXXX XXXXXXXXXXXXXXXXXXXX BBBBBBBBBBBBBBBXX gettext(u'Enable Lookup Table Filtering') 
+          XXXXX XXXXXXXXXXXXXXXXXXXXXXXX
+                XXXXXXXXXXXX gettext(u'Lookup Table Case Selection') X
+                XXXXXXXXXXXXXX gettext(u'Enabling this allows you to filter the case list based on a lookup table selection and an xpath expression that consumes that selection') X
+          XXXXXXXX
+        XXXXXXXX
+        XXXX XXXXXXXBBBBBBBBBBBBBBBXX
+          XXXXXX XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXX XXXXXXXXX
+        XXXXXX
+      XXXXXX
+      XXXX XXXXXXXXXXXXXXXXXXX
+        XXXXXX XXXXXXXXXXXXXXXXXXXX BBBBBBBBBBBBBBBXX
+           gettext(u'Lookup Table Type') 
+          XXXXX XXXXXXXXXXXXXXXXXXXXXXXX
+                XXXXXXXXXXXX gettext(u'Lookup Table Type') X
+                XXXXXXXXXXXXXX gettext(u'Lookup Table Type refers to the lookup table that should be used in selection') X
+          XXXXXXXX
+        XXXXXXXX
+        XXXX XXXXXXXBBBBBBBBBBBBBBBXX
+          XXXXXXX XXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXX XXXXXXXXXXXXX
+            XXXXXXX XXXXXXXXX gettext(u'Select One') XXXXXXXXX
+            BBB BBBBBBBBBBBB BB BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+              XXXXXXX XXXXXXXXXXXXXXXXXX
+            BBBBBB
+          XXXXXXXXX
+        XXXXXX
+      XXXXXX
+      XXXX XXXXXXXXXXXXXXXXXXX
+        XXXXXX XXXXXXXXXXXXXXXXXXXX BBBBBBBBBBBBBBBXX
+           gettext(u'Display Column') 
+          XXXXX XXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXX gettext(u'Display Column') X
+                XXXXXXXXXXXXXX gettext(u'This Column will be displayed as the choice for the user to select from') XX
+                    XXXXXXX
+        XXXXXXXX
+        XXXX XXXXXXXBBBBBBBBBBBBBBBXX
+          XXXXXXX XXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXX XXXXXXXXXXXXXX XXXXXXXX XXXXXXXXXXXXXXXXX
+          XXXXXXXXX
+        XXXXXX
+      XXXXXX
+      XXXX XXXXXXXXXXXXXXXXXXX
+        XXXXXX XXXXXXXXXXXXXXXXXXXX BBBBBBBBBBBBBBBXX gettext(u'Localize Display Column') 
+          XXXXX XXXXXXXXXXXXXXXXXXXXXXXX
+                XXXXXXXXXXXX gettext(u'Localize Display Column') X
+                XXXXXXXXXXXXXX gettext(u'Set this checkbox to indicate that the lookup table does not contain the display string, but a reference to the localization string') X
+          XXXXXXXX
+        XXXXXXXX
+        XXXX XXXXXXXBBBBBBBBBBBBBBBXX
+          XXXXXX XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXX XXXXXXXXXXX
+        XXXXXX
+      XXXXXX
+      XXXX XXXXXXXXXXXXXXXXXXX
+        XXXXXX XXXXXXXXXXXXXXXXXXXX BBBBBBBBBBBBBBBXX
+           gettext(u'Variable Column') 
+          XXXXX XXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXX gettext(u'Variable Column') X
+                XXXXXXXXXXXXXX gettext(u'This column will be used as the variable which is input into the xpath expression below') XX
+                    XXXXXXX
+        XXXXXXXX
+        XXXX XXXXXXXBBBBBBBBBBBBBBBXX
+          XXXXXXX XXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXX XXXXXXXX XXXXXXXXXXXXXXXXX
+          XXXXXXXXX
+        XXXXXX
+      XXXXXX
+      XXXX XXXXXXXXXXXXXXXXXXX
+        XXXXXX XXXXXXXXXXXXXXXXXXXX BBBBBBBBBBBBBBBXX gettext(u'XPath filtering expression') 
+          XXXXX XXXXXXXXXXXXXXXXXXXXXXXX
+                XXXXXXXXXXXX gettext(u'Lookup Table Type') X
+                XXXXXXXXXXXXXX gettext(u'The XPath filtering expression will be added to the list of conditions that filter the case list') X
+          XXXXXXXX
+        XXXXXXXX
+        XXXX XXXXXXXXXXXXXXX BBBBBBBBBBBBBBBXX
+          XXXXXX XXXXXXXXXXX XXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXX XXXXXX XX
+        XXXXXX
+      XXXXXX
+    XXXXXXX
+  XXXXXX
+XXXXXX
