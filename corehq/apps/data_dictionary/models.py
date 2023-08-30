@@ -125,7 +125,7 @@ class CaseProperty(models.Model):
                 )
             except CaseProperty.DoesNotExist:
                 from corehq.apps.hqcase.case_helper import CaseCopier
-                if name in [CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME]:
+                if name == CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME:
                     raise ValueError(f"{name} is a reserved property name")
 
                 case_type_obj = CaseType.get_or_create(domain, case_type)
