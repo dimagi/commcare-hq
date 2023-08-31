@@ -1,18 +1,29 @@
 --- 
 +++ 
-@@ -1,119 +1,111 @@
+@@ -1,119 +1,122 @@
 -@import "@{b3-import-variables}";
-+// Typography Overrides
-+$font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-+$font-size-base: .75rem; // approx 12px
++// Grid Containers
++// we will want to adapt the defaults in a full redesign
++$container-max-widths: (
++  sm: 540px,
++  md: 720px,
++  lg: 960px,
++  xl: 1140px,
++  xxl: 1160px
++);
  
 -// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
 -@font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-+// Links
-+$link-decoration:   none;
  
 -@font-size-base:  12px;
 -@icon-font-path:  "../../bootstrap/fonts/";
++// Typography Overrides
++$font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
++$font-size-base: .75rem; // approx 12px
++
++// Links
++$link-decoration:   none;
++
 +// Form Overrides
 +$input-border-radius-lg: 5px;
 +
