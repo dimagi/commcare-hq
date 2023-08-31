@@ -52,8 +52,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
         query = query.NOT(case_es.case_type("user-owner-mapping-case"))
 
-        if self.case_type:
-            query = query.case_type(self.case_type)
+        if self.case_types:
+            query = query.case_type(self.case_types)
 
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
