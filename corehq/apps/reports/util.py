@@ -642,13 +642,6 @@ def sync_tableau_users_on_domains(domains):
         all_remote_users = {username.lower(): value for username, value in session.get_users_on_site().items()}
         all_local_users = TableauUser.objects.filter(server__domain__in=domains)
         distinct_local_users = all_local_users.distinct('username')
-        if len(distinct_local_users) < len(all_local_users):
-            notify_exception(None, message='Duplicate usernames found when syncing domains.',
-                details={
-                    'domains': domains,
-                    'duplicate_users': [user.username for user in all_local_users.difference(distinct_local_users)]
-                }
-            )
         remote_HQ_group_users = _get_HQ_group_users(session)
 
         # Add/delete/update remote users to match with local reality
