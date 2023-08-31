@@ -577,7 +577,7 @@ def update_tableau_user(domain, username, role=None, groups=[], session=None):
         for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
             local_tableau_user.role = role
             local_tableau_user.save()
-    _update_user_remote(session, user, groups)
+    _update_user_remote(session, user, domain, groups=groups)
 
 
 def _update_user_remote(session, user, domain, groups=[]):
