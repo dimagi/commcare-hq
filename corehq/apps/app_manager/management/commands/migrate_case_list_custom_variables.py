@@ -45,7 +45,7 @@ class Command(AppMigrationCommandBase):
             element = etree.Element(name, function=function)
             return etree.tostring(element, encoding=str)
 
-        return "\n".join([create_tag(p[0], p[1]) for p in variables_dict.items()])
+        return "\n".join([create_tag(name, function) for name, function in variables_dict.items()])
 
     @staticmethod
     def migrate_detail_backward(detail):
