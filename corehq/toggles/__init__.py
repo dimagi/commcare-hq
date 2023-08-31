@@ -1786,6 +1786,13 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+COPY_CASES = StaticToggle(
+    'copy_cases',
+    'Enable users to copy cases between mobile workers',
+    TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 DASHBOARD_REACH_REPORT = StaticToggle(
     'dashboard_reach_reports',
     'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
