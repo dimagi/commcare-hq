@@ -246,7 +246,7 @@ class DetailContributor(SectionContributor):
         custom_variables_dict = detail.custom_variables_dict
         if custom_variables_dict:
             custom_variable_elements = [
-                etree.Element(p[0], function=p[1]) for p in custom_variables_dict.items()
+                etree.Element(name, function=function) for (name, function) in custom_variables_dict.items()
             ]
             d.variables.extend([
                 load_xmlobject_from_string(etree.tostring(e, encoding='utf-8'), xmlclass=DetailVariable)
