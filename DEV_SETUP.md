@@ -538,11 +538,18 @@ If you are using a partitioned database, populate the additional databases too:
 $ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate_multi --noinput
 ```
 
-The Django management commands above do not create the three CouchDB
-system databases, `_users`, `_replicator` and `_global_changes` for
-you. The `_global_changes` database is not necessary if you do not
-expect to be using the global changes feed. You can use `curl` to create
-them:
+You should run `./manage.py migrate` frequently, but only use the environment
+variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
+few tricky migrations that aren't necessary for new installs.
+
+#### Troubleshooting errors from the CouchDB Docker container
+
+If you are seeing errors from the CouchDB Docker container that include
+`database_does_not_exist` ... `"_users"`, it is because CouchDB is
+missing its three system databases, `_users`, `_replicator` and
+`_global_changes`. The `_global_changes` database is not necessary if
+you do not expect to be using the global changes feed. You can use
+`curl` to create the databases:
 
 ```sh
 $ curl -X PUT http://username:password@127.0.0.1:5984/_users
@@ -552,10 +559,6 @@ $ curl -X PUT http://username:password@127.0.0.1:5984/_replicator
 where "username" and "password" are the values of "COUCH_USERNAME"
 and "COUCH_PASSWORD" given in `COUCH_DATABASES` set in
 `dev_settings.py`.
-
-You should run `./manage.py migrate` frequently, but only use the environment
-variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
-few tricky migrations that aren't necessary for new installs.
 
 #### Troubleshooting Issues with `sync_couch_views`
 
