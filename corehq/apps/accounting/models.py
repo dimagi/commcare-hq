@@ -1364,6 +1364,34 @@ class Subscription(models.Model):
             if property_value is not None:
                 setattr(self, property_name, property_value)
 
+    def upgrade_plan_to_main_billing_plan(self, main_billing_plan, upgrade_note, web_user):
+        """
+        This is for keeping all subscription that are type PRODUCT or IMPLEMENTATION
+        under customer billing account consistent.
+        Update subscription to match main billing plan should only update the software plan,
+        but keep all other properties like service_type, pro_bono_status,etc ... the same
+        """
+        assert self.is_trial is False
+        assert self.service_type in [SubscriptionType.PRODUCT, SubscriptionType.IMPLEMENTATION]
+
+        self.change_plan(
+            new_plan_version=main_billing_plan,
+            note=upgrade_note,
+            web_user=web_user,
+            service_type=self.service_type,
+            pro_bono_status=self.pro_bono_status,
+            funding_source=self.funding_source,
+            internal_change=True,
+            do_not_invoice=self.do_not_invoice,
+            no_invoice_reason=self.no_invoice_reason,
+            do_not_email_invoice=self.do_not_email_invoice,
+            do_not_email_reminder=self.do_not_email_reminder,
+            auto_generate_credits=self.auto_generate_credits,
+            skip_invoicing_if_no_feature_charges=self.skip_invoicing_if_no_feature_charges,
+            skip_auto_downgrade=self.skip_auto_downgrade,
+            skip_auto_downgrade_reason=self.skip_auto_downgrade_reason,
+        )
+
     @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
