@@ -1,4 +1,5 @@
-import time
+from __future__ import annotations
+
 import uuid
 from collections import Counter, defaultdict, namedtuple
 
@@ -13,7 +14,6 @@ from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import TaskProgressManager
 
-from corehq.apps.case_importer.exceptions import CaseRowError
 from corehq.apps.data_dictionary.util import fields_to_validate
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -35,8 +35,24 @@ from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 
-from . import exceptions
 from .const import LookupErrors
+from .exceptions import (
+    BlankExternalId,
+    CaseGeneration,
+    CaseNameTooLong,
+    CaseRowError,
+    CaseRowErrorList,
+    DuplicateLocationName,
+    ExternalIdTooLong,
+    ImportErrorMessage,
+    InvalidCustomFieldNameException,
+    InvalidLocation,
+    InvalidOwner,
+    InvalidOwnerName,
+    InvalidParentId,
+    TooManyMatches,
+    UnexpectedError,
+)
 from .extension_points import custom_case_import_operations
 from .util import EXTERNAL_ID, RESERVED_FIELDS, lookup_case
 
@@ -55,7 +71,7 @@ def do_import(spreadsheet, config, domain, task=None, record_form_callback=None)
                 continue  # skip first row (header row)
             sheet_domain = row.get('domain')
             if sheet_domain != domain and sheet_domain not in allowed_domains:
-                err = exceptions.CaseRowError(column_name='domain')
+                err = CaseRowError(column_name='domain')
                 err.title = _('Invalid domain')
                 err.message = _('Following rows contain invalid value for domain column.')
                 import_results.add_error(row_num, err)
@@ -73,19 +89,39 @@ def do_import(spreadsheet, config, domain, task=None, record_form_callback=None)
             importer.do_import(spreadsheet)
         return import_results.to_json()
     else:
-        importer = _TimedAndThrottledImporter(domain, config, task, record_form_callback, multi_domain=False)
+        importer = _TimedAndThrottledImporter(
+            domain,
+            config,
+            task,
+            record_form_callback,
+            multi_domain=False,
+        )
         return importer.do_import(spreadsheet)
 
 
-class _Importer(object):
-    def __init__(self, domain, config, task, record_form_callback, import_results=None, multi_domain=False):
+class _TimedAndThrottledImporter:
+
+    def __init__(
+        self,
+        domain,
+        config,
+        task,
+        record_form_callback,
+        import_results=None,
+        multi_domain=False,
+    ):
         self.domain = domain
         self.task = task
         self.record_form_callback = record_form_callback
         self.results = import_results or _ImportResults()
         self.config = config
         self.submission_handler = SubmitCaseBlockHandler(
-            domain, self.results, self.config.case_type, self.user, record_form_callback, throttle=False
+            domain,
+            import_results=self.results,
+            case_type=self.config.case_type,
+            user=self.user,
+            record_form_callback=record_form_callback,
+            throttle=True,
         )
         self.owner_accessor = _OwnerAccessor(domain, self.user)
         self._unsubmitted_caseblocks = []
@@ -96,8 +132,17 @@ class _Importer(object):
             self.fields_to_validate = {}
         self.field_map = self._create_field_map()
 
-
     def do_import(self, spreadsheet):
+        with TimingContext() as timer:
+            results = self._do_import(spreadsheet)
+        try:
+            self._report_import_timings(timer, results)
+        except Exception:
+            notify_exception(None, "Error reporting case import timings")
+        finally:
+            return results
+
+    def _do_import(self, spreadsheet):
         with TaskProgressManager(self.task, src="case_importer") as progress_manager:
             # context to be used by extensions to keep during import
             import_context = {}
@@ -113,9 +158,9 @@ class _Importer(object):
                         if self.domain != row.get('domain'):
                             continue
                     self.import_row(row_num, row, import_context)
-                except exceptions.CaseRowErrorList as errors:
+                except CaseRowErrorList as errors:
                     self.results.add_errors(row_num, errors)
-                except exceptions.CaseRowError as error:
+                except CaseRowError as error:
                     self.results.add_error(row_num, error)
 
             self.submission_handler.commit_caseblocks()
@@ -125,8 +170,12 @@ class _Importer(object):
         search_id = self._parse_search_id(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
         if self._has_custom_case_import_operations():
-            fields_to_update = self._perform_custom_case_import_operations(row_num, raw_row, fields_to_update,
-                                                                           import_context)
+            fields_to_update = self._perform_custom_case_import_operations(
+                row_num,
+                raw_row,
+                fields_to_update,
+                import_context,
+            )
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
             return
@@ -154,7 +203,7 @@ class _Importer(object):
                 caseblock = row.get_update_caseblock()
                 self.results.add_updated(row_num)
         except CaseBlockError as e:
-            raise exceptions.CaseGeneration(message=str(e))
+            raise CaseGeneration(message=str(e))
 
         self.submission_handler.add_caseblock(RowAndCase(row_num, caseblock))
 
@@ -168,10 +217,10 @@ class _Importer(object):
         extensions_response = custom_case_import_operations(self.domain, row_num, raw_row,
                                                             fields_to_update, import_context)
         if not extensions_response:
-            raise exceptions.UnexpectedError()
+            raise UnexpectedError()
         fields_to_update, custom_errors = extensions_response
         if custom_errors:
-            raise exceptions.CaseRowErrorList(custom_errors)
+            raise CaseRowErrorList(custom_errors)
         return fields_to_update
 
     @cached_property
@@ -219,10 +268,10 @@ class _Importer(object):
 
             if update_field_name in RESERVED_FIELDS:
                 if update_field_name == 'parent_ref':
-                    raise exceptions.InvalidCustomFieldNameException(
+                    raise InvalidCustomFieldNameException(
                         _('Field name "{}" is deprecated. Please use "parent_identifier" instead.'))
                 else:
-                    raise exceptions.InvalidCustomFieldNameException(
+                    raise InvalidCustomFieldNameException(
                         _('Field name "{}" is reserved').format(update_field_name))
 
             if isinstance(update_value, str) and update_value.strip() == SCALAR_NEVER_WAS:
@@ -237,14 +286,14 @@ class _Importer(object):
                 case_property = self.fields_to_validate[update_field_name]
                 try:
                     case_property.check_validity(update_value)
-                except exceptions.CaseRowError as error:
+                except CaseRowError as error:
                     error.column_name = update_field_name
                     errors.append(error)
 
             fields_to_update[update_field_name] = update_value
 
         if errors:
-            raise exceptions.CaseRowErrorList(errors)
+            raise CaseRowErrorList(errors)
 
         return fields_to_update
 
@@ -262,35 +311,20 @@ class _Importer(object):
                 if case_fields[i]:
                     field_map[field]['field_name'] = case_fields[i]
                 elif custom_fields[i]:
-                    # if we have configured this field for external_id populate external_id instead
-                    # of the default property name from the column
+                    # if we have configured this field for external_id
+                    # populate external_id instead of the default
+                    # property name from the column
                     if config.search_field == EXTERNAL_ID and field == config.search_column:
                         field_map[field]['field_name'] = EXTERNAL_ID
                     else:
                         field_map[field]['field_name'] = custom_fields[i]
-        # hack: make sure the external_id column ends up in the field_map if the user
-        # didn't explicitly put it there
+        # hack: make sure the external_id column ends up in the
+        # field_map if the user didn't explicitly put it there
         if config.search_column not in field_map and config.search_field == EXTERNAL_ID:
             field_map[config.search_column] = {
                 'field_name': EXTERNAL_ID
             }
         return field_map
-
-
-class _TimedAndThrottledImporter(_Importer):
-    def __init__(self, domain, config, task, record_form_callback, import_results=None, multi_domain=False):
-        super().__init__(domain, config, task, record_form_callback, import_results, multi_domain)
-        self.submission_handler.throttle = True
-
-    def do_import(self, spreadsheet):
-        with TimingContext() as timer:
-            results = super().do_import(spreadsheet)
-        try:
-            self._report_import_timings(timer, results)
-        except Exception:
-            notify_exception(None, "Error reporting case import timings")
-        finally:
-            return results
 
     def _report_import_timings(self, timer, results):
         active_duration = timer.duration - self.submission_handler._total_delayed_duration
@@ -313,17 +347,51 @@ class _TimedAndThrottledImporter(_Importer):
             })
 
 
-class SubmitCaseBlockHandler(object):
+class SubmitCaseBlockHandler:
+    """
+    ``SubmitCaseBlockHandler`` can handle the submission of large
+    numbers of case blocks. It supports throttling.
 
-    def __init__(self, domain, import_results, case_type, user, record_form_callback=None, throttle=False):
+    Used by this module, ``corehq.apps.data_interfaces.tasks`` and
+    ``corehq.apps.reports.filters.api``.
+    """
+
+    def __init__(
+        self,
+        domain,
+        *,
+        import_results,
+        case_type,
+        user,
+        record_form_callback=None,
+        throttle=False,
+        add_inferred_props_to_schema=True,
+    ):
+        """
+        Initialize ``SubmitCaseBlockHandler``.
+
+        :param domain: Domain name
+        :param import_results: Used for storing success and error
+            results of an import.
+        :param case_type: Used for adding inferred properties to schema.
+        :param user: A CouchUser, or an object with ``user_id`` and
+            ``username`` properties.
+        :param record_form_callback: Only used in one place, which uses
+            ``CaseUpload.record_form()``. It takes a form ID.
+        :param throttle: If ``True``, uses heuristics to rate-limit
+            caseblock submissions.
+        :param add_inferred_props_to_schema: If ``True``, add inferred
+            properties to schema of ``case_type``
+        """
         self.domain = domain
-        self._unsubmitted_caseblocks = []
+        self._unsubmitted_caseblocks: list[RowAndCase] = []
         self.results = import_results or _ImportResults()
         self.uncreated_external_ids = set()
         self.record_form_callback = record_form_callback
         self._last_submission_duration = 1  # duration in seconds; start with a value of 1s
         self._total_delayed_duration = 0  # sum of all rate limiter delays, in seconds
         self.throttle = throttle
+        self.add_inferred_props_to_schema = add_inferred_props_to_schema
         self.case_type = case_type
         self.user = user
 
@@ -351,48 +419,55 @@ class SubmitCaseBlockHandler(object):
         except Exception:
             notify_exception(None, "Case Importer: Uncaught failure submitting caseblocks")
             for row_number, case in caseblocks:
-                self.results.add_error(row_number, exceptions.ImportErrorMessage())
+                self.results.add_error(row_number, ImportErrorMessage())
         else:
             if self.record_form_callback:
                 self.record_form_callback(form.form_id)
-            properties = {p for c in cases for p in c.dynamic_case_properties().keys()}
-            if self.case_type and len(properties):
-                add_inferred_export_properties.delay(
-                    'CaseImporter',
-                    self.domain,
-                    self.case_type,
-                    properties,
-                )
-            else:
-                _soft_assert = soft_assert(notify_admins=True)
-                _soft_assert(
-                    len(properties) == 0,
-                    'error adding inferred export properties in domain '
-                    '({}): {}'.format(self.domain, ", ".join(properties))
-                )
+            if self.add_inferred_props_to_schema:
+                properties = {
+                    p for c in cases
+                    for p in c.dynamic_case_properties().keys()
+                }
+                if self.case_type and len(properties):
+                    add_inferred_export_properties.delay(
+                        'CaseImporter',
+                        self.domain,
+                        self.case_type,
+                        properties,
+                    )
+                else:
+                    _soft_assert = soft_assert(notify_admins=True)
+                    _soft_assert(
+                        len(properties) == 0,
+                        'error adding inferred export properties in domain '
+                        '({}): {}'.format(self.domain, ", ".join(properties))
+                    )
 
     def pre_submit_hook(self):
         if not self.throttle:
             return
         if rate_limit_submission(
-                self.domain,
-                delay_rather_than_reject=True,
-                max_wait=self._last_submission_duration):
-            # the duration of the last submission is a combined heuristic
-            # for the amount of load on the databases
-            # and the amount of load that the requests from this import put on the databases.
-            # The amount of time to wait, during a high submission period
-            # and while this project is using up more than its fair share
-            # should be proportional to this heuristic.
-            # For a fully throttled domain, this will up to double
-            # the amount of time the case import takes
+            self.domain,
+            delay_rather_than_reject=True,
+            max_wait=self._last_submission_duration
+        ):
+            # The duration of the last submission is a combined
+            # heuristic for the amount of load on the databases and the
+            # amount of load that the requests from this import put on
+            # the databases. The amount of time to wait, during a high
+            # submission period and while this project is using up more
+            # than its fair share should be proportional to this
+            # heuristic. For a fully throttled domain, this will up to
+            # double the amount of time the case import takes
             metrics_histogram(
-                'commcare.case_importer.import_delays', self._last_submission_duration,
-                buckets=[5, 7, 10, 15, 25, 35, 50], bucket_tag='duration', bucket_unit='s',
+                'commcare.case_importer.import_delays',
+                self._last_submission_duration,
+                buckets=[5, 7, 10, 15, 25, 35, 50],
+                bucket_tag='duration',
+                bucket_unit='s',
                 tags={'domain': self.domain}
             )
             self._total_delayed_duration += self._last_submission_duration
-
 
     def submit_case_blocks(self, caseblocks):
         if not self.throttle:
@@ -412,8 +487,8 @@ class SubmitCaseBlockHandler(object):
             self.user.username,
             self.user.user_id,
             device_id=__name__ + ".do_import",
-            # Skip the rate-limiting
-            # because this importing code will take care of any rate-limiting
+            # Skip the rate-limiting because this importing code will
+            # take care of any rate-limiting
             max_wait=None,
         )
 
@@ -443,15 +518,15 @@ class _CaseImportRow(object):
 
     def _check_case_name(self):
         if self.case_name and len(self.case_name) > STANDARD_CHARFIELD_LENGTH:
-            raise exceptions.CaseNameTooLong('name')
+            raise CaseNameTooLong('name')
 
     def _check_valid_external_id(self):
         if self.external_id and len(self.external_id) > STANDARD_CHARFIELD_LENGTH:
-            raise exceptions.ExternalIdTooLong('external_id')
+            raise ExternalIdTooLong('external_id')
 
         if self.config.search_field == 'external_id' and not self.search_id:
             # do not allow blank external id since we save this
-            raise exceptions.BlankExternalId()
+            raise BlankExternalId()
 
     def validate_parent_column(self):
         # host_id column is used to create extension cases. Run below validations
@@ -461,12 +536,12 @@ class _CaseImportRow(object):
             return
         elif self.parent_relationship_type == 'extension':
             if not self.parent_identifier:
-                raise exceptions.InvalidParentId(_(
+                raise InvalidParentId(_(
                     "'parent_identifier' column must be provided "
                     "when 'parent_relationship_type' column is set to 'extension'"
                 ))
         else:
-            raise exceptions.InvalidParentId(_("Invalid value for 'parent_relationship_type' column"))
+            raise InvalidParentId(_("Invalid value for 'parent_relationship_type' column"))
 
     def relies_on_uncreated_case(self, uncreated_external_ids):
         return any(lookup_id and lookup_id in uncreated_external_ids
@@ -482,7 +557,7 @@ class _CaseImportRow(object):
         )
         _log_case_lookup(self.domain)
         if error == LookupErrors.MultipleResults:
-            raise exceptions.TooManyMatches()
+            raise TooManyMatches()
         return case
 
     @property
@@ -516,7 +591,7 @@ class _CaseImportRow(object):
                     elif self.parent_relationship_type == 'extension':
                         identifier = self.parent_identifier
                         return {identifier: (parent_case.type, parent_case.case_id, "extension")}
-                raise exceptions.InvalidParentId(column)
+                raise InvalidParentId(column)
 
     def _get_date_opened(self):
         if self.date_opened and BULK_UPLOAD_DATE_OPENED.enabled(self.domain):
@@ -588,7 +663,7 @@ class _ImportResults(object):
         try:
             self._errors[key][column_name]['description'] = error.message
         except KeyError:
-            self._errors[key][column_name]['description'] = exceptions.CaseGeneration.message
+            self._errors[key][column_name]['description'] = CaseGeneration.message
 
         if 'rows' not in self._errors[key][column_name]:
             self._errors[key][column_name]['rows'] = []
@@ -663,11 +738,11 @@ class _OwnerAccessor(object):
             except SQLLocation.DoesNotExist:
                 return None
             except SQLLocation.MultipleObjectsReturned:
-                raise exceptions.DuplicateLocationName()
+                raise DuplicateLocationName()
 
         owner = get_user(name) or get_group(name) or get_location(name)
         if not owner:
-            raise exceptions.InvalidOwnerName('owner_name')
+            raise InvalidOwnerName('owner_name')
         self._check_owner(owner, 'owner_name')
         return owner._id
 
@@ -691,9 +766,9 @@ class _OwnerAccessor(object):
                              and owner.domain == self.domain
                              and owner.location_type.shares_cases)
         if not (is_valid_user or is_valid_group or is_valid_location):
-            raise exceptions.InvalidOwner(owner_field)
+            raise InvalidOwner(owner_field)
         if not self._location_is_accessible(owner):
-            raise exceptions.InvalidLocation(owner_field)
+            raise InvalidLocation(owner_field)
         return True
 
     def _location_is_accessible(self, owner):
