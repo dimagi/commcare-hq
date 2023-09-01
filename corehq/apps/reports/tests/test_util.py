@@ -23,7 +23,7 @@ from corehq.apps.es import case_search_adapter
 from corehq.form_processor.models import CommCareCase
 from corehq.apps.reports.util import domain_copied_cases_by_owner
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.reports.filters.api import CaseCopier
+from corehq.apps.hqcase.case_helper import CaseCopier
 
 DOMAIN = 'test_domain'
 USER_ID = "5bc1315c-da6f-466d-a7c4-4580bc84a7b9"

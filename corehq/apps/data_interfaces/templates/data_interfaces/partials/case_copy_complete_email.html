@@ -1,0 +1,21 @@
+{% load i18n %}
+
+<p>Hello,</p>
+
+<p>
+  {% trans "The bulk case copy has completed successfully." %}
+</p>
+
+<p>
+  {% blocktrans with case_count=result.case_count report_url=result.report_url %}
+  Succesfully copied {{ case_count }} cases.
+  <p>The list of cases that were copied can be viewed at <a href='{{ report_url }}'>{{ report_url }}</a>.</p>
+  <p>
+  It's possible that in the report the owner_id is not yet updated, you can open individual cases and confirm
+  the right case owner, the report gets updated with a slight delay.
+  </p>
+  {% endblocktrans %}
+<p>
+  Thank you,<br/>
+  The CommCare HQ Team
+</p>
