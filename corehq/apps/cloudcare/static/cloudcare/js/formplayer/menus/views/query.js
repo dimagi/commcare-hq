@@ -376,10 +376,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             let placeHolderText;
             switch (this.model.get('input')) {
               case 'select1':
-                placeHolderText = 'Please select one';
+                placeHolderText = gettext('Please select one');
                 break;
               case 'select':
-                placeHolderText = 'Please select one or more';
+                placeHolderText = gettext('Please select one or more');
                 break;
               default:
                 placeHolderText = ' ';
