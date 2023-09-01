@@ -372,12 +372,29 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.parentView.setStickyQueryInputs();
         },
 
-        onRender: function () {
+        _initializeSelect2Dropdown: function () {
+            let placeHolderText;
+            switch (this.model.get('input')) {
+              case 'select1':
+                placeHolderText = 'Please select one';
+                break;
+              case 'select':
+                placeHolderText = 'Please select one or more';
+                break;
+              default:
+                placeHolderText = ' ';
+                break;
+            }
+
             this.ui.valueDropdown.select2({
                 allowClear: true,
-                placeholder: " ",   // required for allowClear to work
+                placeholder: placeHolderText,   // required for allowClear to work
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
+        },
+
+        onRender: function () {
+            this._initializeSelect2Dropdown()
             this.ui.hqHelp.hqHelp();
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.daterangepicker({
