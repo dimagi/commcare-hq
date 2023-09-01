@@ -545,8 +545,8 @@ few tricky migrations that aren't necessary for new installs.
 #### Troubleshooting errors from the CouchDB Docker container
 
 If you are seeing errors from the CouchDB Docker container that include
-`database_does_not_exist` ... `"_users"`, it is because CouchDB is
-missing its three system databases, `_users`, `_replicator` and
+`database_does_not_exist` ... `"_users"`, it could be because CouchDB
+is missing its three system databases, `_users`, `_replicator` and
 `_global_changes`. The `_global_changes` database is not necessary if
 you do not expect to be using the global changes feed. You can use
 `curl` to create the databases:
