@@ -8,7 +8,7 @@ hqDefine("geospatial/js/gps_capture",[
     $,
     ko,
     _,
-    initialPageData,
+    initialPageData
 ) {
     'use strict';
 
