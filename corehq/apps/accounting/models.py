@@ -1371,8 +1371,9 @@ class Subscription(models.Model):
         Update subscription to match main billing plan should only update the software plan,
         but keep all other properties like service_type, pro_bono_status,etc ... the same
         """
-        assert self.is_trial is False
-        assert self.service_type in [SubscriptionType.PRODUCT, SubscriptionType.IMPLEMENTATION]
+        assert self.is_trial is False, "The subscription is a trial and cannot be processed."
+        assert self.service_type in [SubscriptionType.PRODUCT, SubscriptionType.IMPLEMENTATION], \
+            "The subscription service type is neither PRODUCT nor IMPLEMENTATION."
 
         self.change_plan(
             new_plan_version=main_billing_plan,
