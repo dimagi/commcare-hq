@@ -6,6 +6,7 @@ from django.db.models.functions import Lower
 from django.utils.translation import gettext as _
 
 from corehq.apps.es.users import UserES
+from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # If mobile-worker is demo, this will be set to value 'demo'
@@ -27,7 +28,7 @@ def validate_reserved_words(slug):
     if slug in SYSTEM_FIELDS:
         raise ValidationError(_('You may not use "{}" as a field name').format(slug))
     for prefix in [SYSTEM_PREFIX, 'xml']:
-        if slug and slug.startswith(prefix):
+        if slug and slug.startswith(prefix) and slug != GEO_POINT_CASE_PROPERTY:
             raise ValidationError(_('Field names may not begin with "{}"').format(prefix))
 
 
