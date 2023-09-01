@@ -7,7 +7,31 @@ class Command(BaseCommand):
     help = 'List customer billing accounts and associated software plans'
 
     def handle(self, *args, **kwargs):
-        customer_billing_account = BillingAccount.objects.filter(is_customer_billing_account=True, is_active=True)
+        billing_account_names = []
+        while True:
+            account_name = input("Enter a customer billing account name, "
+                                 "type 'ALL' for all customer billing account, "
+                                 "type 'DONE' when finished:\n")
+            if account_name.upper() == 'ALL':
+                billing_account_names = ['ALL']
+                break
+            elif account_name.upper() == 'DONE':
+                break
+            else:
+                try:
+                    BillingAccount.objects.get(name=account_name, is_active=True, is_customer_billing_account=True)
+                except BillingAccount.DoesNotExist:
+                    print(f"Customer billing account {account_name} does not exist")
+                else:
+                    billing_account_names.append(account_name)
+
+        if 'ALL' in billing_account_names:
+            customer_billing_account = BillingAccount.objects.filter(
+                is_customer_billing_account=True, is_active=True)
+        else:
+            customer_billing_account = BillingAccount.objects.filter(
+                is_customer_billing_account=True, is_active=True, name__in=billing_account_names)
+
         file_path = "/tmp/customer_billing_plans.csv"
         with open(file_path, 'w', newline='') as csvfile:
             csvwriter = csv.writer(csvfile)
