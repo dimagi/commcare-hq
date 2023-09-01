@@ -6,9 +6,9 @@
       "middle_left_image", "middle_left_text", "middle_right_image", "middle_right_text",
       "bottom_left_image", "bottom_left_text"],
     "grid": {
-        "top_left_image": {"x": 0, "y": 0, "width": 1, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "top_left_image": {"x": 0, "y": 0, "width": 1, "height": 1, "horz-align": "center", "vert-align": "center"},
         "top_left_text": {"x": 1, "y": 0, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"},
-        "top_right_image": {"x": 6, "y": 0, "width": 1, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "top_right_image": {"x": 6, "y": 0, "width": 1, "height": 1, "horz-align": "center", "vert-align": "center"},
         "top_right_text": {"x": 7, "y": 0, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"},
 
         "middle_left_image": {"x": 0, "y": 1, "width": 1, "height": 1, "horz-align": "center", "vert-align": "center"},
