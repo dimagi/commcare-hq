@@ -394,7 +394,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         onRender: function () {
-            this._initializeSelect2Dropdown()
+            this._initializeSelect2Dropdown();
             this.ui.hqHelp.hqHelp();
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.daterangepicker({
