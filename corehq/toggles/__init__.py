@@ -2428,6 +2428,15 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
     description='This can be used to create report builder reports that are location-safe.'
 )
 
+LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
+    'location_restricted_scheduled_reports',
+    'Allows access to report scheduling views for location restricted users',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Provides access to views for resport scheduling '
+                'such as schedule creation and deletion.'
+)
+
 
 ALIGN_ON_CHILDEXTENSION_CASES = FeatureRelease(
     slug='align_on_childextension_cases',
