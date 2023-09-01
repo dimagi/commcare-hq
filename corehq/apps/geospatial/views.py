@@ -1,8 +1,13 @@
 import json
 import jsonschema
 
+from django.forms.models import model_to_dict
 from django.urls import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
+from django.http import (
+    HttpResponseRedirect,
+    Http404,
+    HttpResponseBadRequest,
+)
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from dimagi.utils.web import json_response
@@ -13,7 +18,10 @@ from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA
 from .models import GeoPolygon, GeoConfig
-from django.forms.models import model_to_dict
+from .utils import (
+    process_gps_values_for_cases,
+    process_gps_values_for_users,
+)
 
 
 def geospatial_default(request, *args, **kwargs):
@@ -125,3 +133,45 @@ class GeospatialConfigPage(BaseDomainView):
         instance.save()
 
         return self.get(request, *args, **kwargs)
+
+
+class GPSCaptureView(BaseDomainView):
+    urlname = 'gps_capture'
+    template_name = 'gps_capture.html'
+
+    page_name = _("GPS Capture")
+    section_name = _("Geospatial")
+
+    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    def dispatch(self, *args, **kwargs):
+        return super(GPSCaptureView, self).dispatch(*args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @property
+    def page_context(self):
+        data_type = self.request.GET.get('data_type', 'case')
+        return {
+            'data_type': data_type
+        }
+
+    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    def post(self, request, *args, **kwargs):
+        json_data = json.loads(request.body)
+        data_type = json_data.get('data_type', None)
+        data_items = json_data.get('data_items', [])
+
+        if data_type == 'case':
+            process_gps_values_for_cases(request.domain, data_items)
+        elif data_type == 'user':
+            process_gps_values_for_users(request.domain, data_items)
+
+        return json_response({
+            'status': 'success'
+        })
