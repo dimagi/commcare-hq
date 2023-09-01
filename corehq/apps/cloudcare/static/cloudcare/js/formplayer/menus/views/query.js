@@ -375,15 +375,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         _initializeSelect2Dropdown: function () {
             let placeHolderText;
             switch (this.model.get('input')) {
-              case 'select1':
-                placeHolderText = gettext('Please select one');
-                break;
-              case 'select':
-                placeHolderText = gettext('Please select one or more');
-                break;
-              default:
-                placeHolderText = ' ';
-                break;
+                case 'select1':
+                    placeHolderText = gettext('Please select one');
+                    break;
+                case 'select':
+                    placeHolderText = gettext('Please select one or more');
+                    break;
+                default:
+                    placeHolderText = ' ';
+                    break;
             }
 
             this.ui.valueDropdown.select2({
