@@ -7,3 +7,11 @@ def get_geo_case_property(domain):
     except GeoConfig.DoesNotExist:
         config = GeoConfig()
     return config.case_location_property_name
+
+
+def get_geo_user_property(domain):
+    try:
+        config = GeoConfig.objects.get(domain=domain)
+    except GeoConfig.DoesNotExist:
+        config = GeoConfig()
+    return config.user_location_property_name
