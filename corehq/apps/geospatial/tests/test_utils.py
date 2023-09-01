@@ -1,21 +1,141 @@
+from uuid import uuid4
+
 from django.test import TestCase
+
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es import case_search_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.form_processor.models import CommCareCase
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.tests.utils import create_case
 from corehq.apps.geospatial.models import GeoConfig
-from corehq.apps.geospatial.utils import get_geo_case_property
+from corehq.apps.geospatial.utils import (
+    get_geo_case_property,
+    get_geo_user_property,
+    process_gps_values_for_cases,
+    process_gps_values_for_users,
+)
 from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
 
 
-class TestGetGeoCaseProperty(TestCase):
+class TestGetGeoProperty(TestCase):
 
     DOMAIN = "test-domain"
 
     def test_no_config_set(self):
         self.assertEqual(get_geo_case_property(self.DOMAIN), GEO_POINT_CASE_PROPERTY)
+        self.assertEqual(get_geo_user_property(self.DOMAIN), GEO_POINT_CASE_PROPERTY)
 
-    def custom_config_set(self):
-        geo_property = "where-art-thou"
+    def test_custom_config_set(self):
+        case_geo_property = "where-art-thou"
+        user_geo_property = "right-here"
 
-        GeoConfig(domain=self.DOMAIN, case_location_property_name=geo_property).save()
-        self.assertEqual(get_geo_case_property(self.DOMAIN), geo_property)
+        config = GeoConfig(
+            domain=self.DOMAIN,
+            case_location_property_name=case_geo_property,
+            user_location_property_name=user_geo_property,
+        )
+        config.save()
+
+        self.assertEqual(get_geo_case_property(self.DOMAIN), case_geo_property)
+        self.assertEqual(get_geo_user_property(self.DOMAIN), user_geo_property)
 
     def test_invalid_domain_provided(self):
         self.assertEqual(get_geo_case_property(None), GEO_POINT_CASE_PROPERTY)
+        self.assertEqual(get_geo_user_property(None), GEO_POINT_CASE_PROPERTY)
+
+
+@es_test(requires=[case_search_adapter], setup_class=True)
+class TestProcessGPSValues(TestCase):
+    DOMAIN = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.DOMAIN)
+
+        case_type = 'foobar'
+
+        cls.case_a = create_case(
+            cls.DOMAIN,
+            case_id=uuid4().hex,
+            case_type=case_type,
+            name='CaseA',
+            save=True,
+        )
+        cls.case_b = create_case(
+            cls.DOMAIN,
+            case_id=uuid4().hex,
+            case_type=case_type,
+            name='CaseB',
+            save=True,
+        )
+        case_search_adapter.bulk_index([
+            cls.case_a,
+            cls.case_b,
+        ], refresh=True)
+
+        cls.user_a = CommCareUser.create(
+            cls.DOMAIN, 'UserA', '1234', None, None
+        )
+        cls.user_b = CommCareUser.create(
+            cls.DOMAIN, 'UserB', '1234', None, None
+        )
+
+        cls.user_submit_data = [
+            {
+                'id': cls.user_a.user_id,
+                'name': cls.user_a.username,
+                'lat': '1.23',
+                'lon': '4.56',
+            },
+            {
+                'id': cls.user_b.user_id,
+                'name': cls.user_b.username,
+                'lat': '1.23',
+                'lon': '',
+            },
+        ]
+
+    @classmethod
+    def tearDownClass(cls):
+        CommCareCase.objects.hard_delete_cases(cls.DOMAIN, [
+            cls.case_a.case_id,
+            cls.case_b.case_id,
+        ])
+        cls.user_a.delete(cls.DOMAIN, None)
+        cls.user_b.delete(cls.DOMAIN, None)
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def test_process_gps_values_for_cases(self):
+        submit_data = [
+            {
+                'id': self.case_a.case_id,
+                'name': self.case_a.name,
+                'lat': '1.23',
+                'lon': '4.56',
+            },
+            {
+                'id': self.case_b.case_id,
+                'name': self.case_b.name,
+                'lat': '1.23',
+                'lon': '',
+            },
+        ]
+
+        process_gps_values_for_cases(self.DOMAIN, submit_data)
+        cases = CommCareCase.objects.get_cases(
+            [self.case_a.case_id, self.case_b.case_id],
+            domain=self.DOMAIN,
+            ordered=True,
+        )
+        self.assertEqual(cases[0].case_json[GEO_POINT_CASE_PROPERTY], '1.23 4.56')
+        self.assertFalse(GEO_POINT_CASE_PROPERTY in cases[1].case_json)
+
+    def test_process_gps_values_for_users(self):
+        process_gps_values_for_users(self.DOMAIN, self.user_submit_data)
+        user_with_gps_data = CommCareUser.get_by_user_id(self.user_a.user_id, self.DOMAIN)
+        self.assertEqual(user_with_gps_data.metadata[GEO_POINT_CASE_PROPERTY], '1.23 4.56')
+        user_no_gps_data = CommCareUser.get_by_user_id(self.user_b.user_id, self.DOMAIN)
+        self.assertFalse(GEO_POINT_CASE_PROPERTY in user_no_gps_data.metadata)
