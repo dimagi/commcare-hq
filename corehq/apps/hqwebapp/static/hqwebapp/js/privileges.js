@@ -6,14 +6,7 @@ hqDefine('hqwebapp/js/privileges', [
     initialPageData
 ) {
     var privilegePresent = function (allPrivileges, privilegeName) {
-        var value = allPrivileges.includes(privilegeName);
-        if (value === false) {
-            throw new Error(
-                'Privilege ' + privilegeName + ' not recognized. Must be one of: \n\n' +
-                allPrivileges.sort()
-            );
-        }
-        return value;
+        return allPrivileges.includes(privilegeName);
     };
     return {
         hasPrivilege: function (privilegeName) {

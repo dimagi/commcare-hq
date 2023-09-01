@@ -4,7 +4,7 @@ hqDefine("users/js/roles_and_permissions",[
     'underscore',
     "hqwebapp/js/initial_page_data",
     'users/js/roles',
-    'hqwebapp/js/knockout_bindings.ko', // for roles modal
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // for roles modal
 ], function ($, ko, _, initialPageData, userRoles) {
 
     ko.bindingHandlers.permissionIcon = {

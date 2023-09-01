@@ -20,7 +20,7 @@ from corehq.apps.reports.filters.base import (
     BaseSimpleFilter,
     BaseSingleOptionFilter,
 )
-from corehq import toggles, privileges
+from corehq import privileges
 
 # TODO: Replace with library method
 
@@ -140,7 +140,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         ret = json.loads(value or "[]")
 
         # convert legacy list of strings to list of dicts
-        if ret and type(ret[0]) == str:
+        if ret and isinstance(ret[0], str):
             ret = [{
                 'name': prop_name,
                 'label': prop_name
@@ -156,7 +156,7 @@ def get_flattened_case_properties(domain, include_parent_properties=False):
     )
     property_counts = Counter(item for sublist in all_properties_by_type.values() for item in sublist)
 
-    if toggles.DATA_DICTIONARY.enabled(domain):
+    if domain_has_privilege(domain, privileges.DATA_DICTIONARY):
         prop_labels = get_case_property_label_dict(domain)
         all_properties = [
             {
