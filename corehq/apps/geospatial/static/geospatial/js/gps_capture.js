@@ -31,7 +31,7 @@ hqDefine("geospatial/js/gps_capture",[
 
         self.onMapCaptureStart = function () {
             // TODO: Implement this function
-        }
+        };
 
         return self;
     };
@@ -105,14 +105,14 @@ hqDefine("geospatial/js/gps_capture",[
             self.hasUnsavedChanges(true);
         };
 
-        self.onSaveClicked = function() {
+        self.onSaveClicked = function () {
             self.hasSubmissionError(false);
             $.ajax({
                 method: 'POST',
                 url: initialPageData.reverse('gps_capture'),
                 data: JSON.stringify({
                     'data_type': self.dataType,
-                    'data_items': ko.mapping.toJS(self.dataItems())
+                    'data_items': ko.mapping.toJS(self.dataItems()),
                 }),
                 dataType: "json",
                 contentType: "application/json; charset=utf-8",
@@ -122,7 +122,7 @@ hqDefine("geospatial/js/gps_capture",[
                 error: function (e) {
                     self.hasSubmissionError(true);
                     console.e("Error in submission", e);
-                }
+                },
             });
         };
 
