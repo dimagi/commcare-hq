@@ -134,7 +134,7 @@ from .forms import (
     UpdateTableauVisualizationForm,
 )
 from .lookup import ReportLookup, get_full_report_name
-from .models import TableauServer, TableauVisualization
+from .models import TableauVisualization
 from .standard import ProjectReport, inspect
 
 DATE_FORMAT = "%Y-%m-%d %H:%M"

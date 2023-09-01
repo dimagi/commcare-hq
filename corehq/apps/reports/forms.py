@@ -23,6 +23,7 @@ from corehq.apps.saved_reports.models import (
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.toggles import HOURLY_SCHEDULED_REPORT, NAMESPACE_DOMAIN
 
+
 class SavedReportConfigForm(forms.Form):
     name = forms.CharField()
     description = forms.CharField(
@@ -366,7 +367,7 @@ class TableauServerForm(forms.Form):
                 self.helper.layout.insert(
                     -1,
                     'tableau_groups_allowed',
-            )
+                )
         else:
             self.add_allowed_tableau_groups_field = False
 
