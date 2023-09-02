@@ -4,6 +4,8 @@ import csv
 
 
 class Command(BaseCommand):
+    # Always run this command without '--update' first
+    # let Ops review the output before running with '--update'
     help = 'List customer billing accounts and associated software plans'
 
     def add_arguments(self, parser):
