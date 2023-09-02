@@ -18,6 +18,8 @@ from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.utils.software_plans import (
     upgrade_subscriptions_to_latest_plan_version,
 )
+from unittest.mock import patch
+from django.core.management import call_command
 
 
 class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
@@ -184,3 +186,91 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
 
         new_subscription3 = Subscription.get_active_subscription_by_domain(self.domain3)
         self.assertEqual(old_subscription3, new_subscription3)
+
+
+class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.domain1, subscriber1 = generator.arbitrary_domain_and_subscriber()
+        cls.domain2, subscriber2 = generator.arbitrary_domain_and_subscriber()
+        cls.admin_web_user = generator.create_arbitrary_web_user_name()
+
+        account = generator.billing_account(cls.admin_web_user, cls.admin_web_user)
+        account.is_customer_billing_account = True
+        account.save()
+
+        enterprise_plan = SoftwarePlan.objects.create(
+            name="Helping Earth INGO Enterprise Plan",
+            description="Enterprise plan for Helping Earth",
+            edition=SoftwarePlanEdition.ENTERPRISE,
+            visibility=SoftwarePlanVisibility.INTERNAL,
+            is_customer_software_plan=True,
+        )
+
+        # Create first version of software plan
+        first_product_rate = SoftwareProductRate.objects.create(
+            monthly_fee=3000,
+            name="HQ Enterprise"
+        )
+        cls.first_version = SoftwarePlanVersion.objects.create(
+            plan=enterprise_plan,
+            role=Role.objects.first(),
+            product_rate=first_product_rate
+        )
+        cls.first_version.save()
+
+        # Create second version of software plan
+        new_product_rate = SoftwareProductRate.objects.create(
+            monthly_fee=5000,
+            name="HQ Enterprise"
+        )
+        cls.newest_version = SoftwarePlanVersion.objects.create(
+            plan=enterprise_plan,
+            role=Role.objects.first(),
+            product_rate=new_product_rate
+        )
+        cls.newest_version.save()
+
+        today = datetime.date.today()
+        two_months_ago = today - datetime.timedelta(days=60)
+
+        # Setup main billing domain and its subscription
+        subscription1 = Subscription(
+            account=account,
+            plan_version=cls.newest_version,
+            subscriber=subscriber1,
+            date_start=two_months_ago,
+            date_end=None,
+            service_type=SubscriptionType.IMPLEMENTATION,
+            is_active=True
+        )
+        subscription1.save()
+
+        subscription2 = Subscription(
+            account=account,
+            plan_version=cls.first_version,
+            subscriber=subscriber2,
+            date_start=two_months_ago,
+            date_end=None,
+            service_type=SubscriptionType.IMPLEMENTATION,
+            is_active=True,
+            do_not_invoice=True,
+            no_invoice_reason="test no invoice"
+        )
+        subscription2.save()
+
+    @patch('builtins.input', return_value='ALL')
+    def test_keep_software_plan_consistent_for_all_customer_billing_account(self, mock_input):
+        old_subscription1 = Subscription.get_active_subscription_by_domain(self.domain1)
+        self.assertEqual(old_subscription1.plan_version, self.newest_version)
+
+        old_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
+        self.assertEqual(old_subscription2.plan_version, self.first_version)
+
+        call_command('list_customer_billing_account_software_plan', update=True)
+
+        new_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
+        self.assertEqual(new_subscription2.plan_version, self.newest_version)
