@@ -5,6 +5,7 @@ from django.db.models import Count
 from corehq.apps.accounting.interface import get_subtotal_and_deduction
 from corehq.apps.accounting.models import CreditAdjustment, Invoice, CreditLine, FeatureType
 from corehq.util.dates import get_first_last_days
+from dimagi.utils.dates import add_months
 
 
 class Command(BaseCommand):
@@ -41,7 +42,7 @@ class Command(BaseCommand):
             first_created_invoice_id = related_invoices[0].id
             for invoice in related_invoices[:-1]:
                 custom_note = f"{note}. Referenced to invoice {first_created_invoice_id}."
-                self.revert_invoice_payment(invoice, custom_note, dry_run)
+                self.revert_invoice_payment(invoice, custom_note, year, month, dry_run)
                 # suppress invoice
                 print(f'{dry_run_tag}Suppressing invoice {invoice.id} for domain '
                       f'{invoice.subscription.subscriber.domain} ', end='')
@@ -54,7 +55,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f'{dry_run_tag}Successfully suppressed {suppressed_count} '
                                              f'duplicate invoices for Statement Period: {year}-{month}'))
 
-    def revert_invoice_payment(self, invoice, note, dry_run=False):
+    def revert_invoice_payment(self, invoice, note, year, month, dry_run=False):
         dry_run_tag = '[DRY_RUN] ' if dry_run else ''
         payment_by_other = invoice.subtotal
         reverted = False
@@ -74,7 +75,9 @@ class Command(BaseCommand):
                                         is_product=True, note=note)
         else:
             # Check if we generate duplicate product credit line
-            date_start = datetime.datetime(2023, 8, 1)
+            current_year, current_month = add_months(year, month, 1)
+
+            date_start = datetime.datetime(current_year, current_month, 1)
             date_end = date_start + timedelta(days=1) - timedelta(seconds=1)
             try:
                 CreditLine.objects.get(account=invoice.subscription.account,
