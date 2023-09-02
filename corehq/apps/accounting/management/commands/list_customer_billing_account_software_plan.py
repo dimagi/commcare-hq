@@ -6,7 +6,13 @@ import csv
 class Command(BaseCommand):
     help = 'List customer billing accounts and associated software plans'
 
+    def add_arguments(self, parser):
+        parser.add_argument('--update', action='store_true', default=False,
+                            help='Update all software plans (type PRODUCT or IMPLEMENTATION) '
+                            'under each billing account to the main billing subscription')
+
     def handle(self, *args, **kwargs):
+        update = kwargs['update']
         billing_account_names = []
         while True:
             account_name = input("Enter a customer billing account name, "
@@ -36,13 +42,13 @@ class Command(BaseCommand):
         with open(file_path, 'w', newline='') as csvfile:
             csvwriter = csv.writer(csvfile)
             headers = ["Account", "Domain", "Software Plan", "Type", "Do not invoice",
-                       "Start Date", "End Date", "Main Subscription", "Need Update"]
+                       "Start Date", "End Date", "Main Subscription", "Need Update", "Status"]
             csvwriter.writerow(headers)
 
             for account in customer_billing_account:
                 subscriptions = Subscription.visible_objects.filter(account=account, is_active=True)
                 if len(subscriptions) == 0:
-                    csvwriter.writerow([account.name, "", "", "", "", "", "", "", ""])
+                    csvwriter.writerow([account.name, "", "", "", "", "", "", "", "", ""])
                 else:
                     # Value for csv column Main Subscription
                     csv_main_subscription = ""
@@ -57,6 +63,7 @@ class Command(BaseCommand):
                         csv_main_subscription = "Multiple Main Subscriptions"
                     for subscription in subscriptions:
                         need_update = False
+                        update_status = ''
                         if (
                             main_subscription
                             and subscription.plan_version != main_subscription.plan_version
@@ -64,6 +71,16 @@ class Command(BaseCommand):
                                                               SubscriptionType.IMPLEMENTATION)
                         ):
                             need_update = True
+                        if update and need_update:
+                            try:
+                                subscription.upgrade_plan_to_main_billing_plan(
+                                    main_billing_plan=main_subscription.plan_version,
+                                    upgrade_note="Upgraded to main billing software plan by command",
+                                    web_user=None)
+                            except Exception as e:
+                                update_status = f"Failed, {e}"
+                            else:
+                                update_status = "Success"
                         csvwriter.writerow([
                             account.name,
                             subscription.subscriber.domain,
@@ -73,6 +90,7 @@ class Command(BaseCommand):
                             subscription.date_start,
                             subscription.date_end,
                             csv_main_subscription,
-                            need_update
+                            need_update,
+                            update_status
                         ])
         print(f"File has been saved to {file_path}")
