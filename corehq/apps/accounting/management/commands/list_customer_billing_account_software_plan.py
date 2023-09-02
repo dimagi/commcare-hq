@@ -73,8 +73,8 @@ class Command(BaseCommand):
                             need_update = True
                         if update and need_update:
                             try:
-                                subscription.upgrade_plan_to_main_billing_plan(
-                                    main_billing_plan=main_subscription.plan_version,
+                                subscription.upgrade_plan_for_consistency(
+                                    new_plan_version=main_subscription.plan_version,
                                     upgrade_note="Upgraded to main billing software plan by command",
                                     web_user=None)
                             except Exception as e:

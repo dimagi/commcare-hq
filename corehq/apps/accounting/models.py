@@ -1364,19 +1364,14 @@ class Subscription(models.Model):
             if property_value is not None:
                 setattr(self, property_name, property_value)
 
-    def upgrade_plan_to_main_billing_plan(self, main_billing_plan, upgrade_note, web_user):
+    def upgrade_plan_for_consistency(self, new_plan_version, upgrade_note, web_user):
         """
-        This is for keeping all subscription that are type PRODUCT or IMPLEMENTATION
-        under customer billing account consistent.
-        Update subscription to match main billing plan should only update the software plan,
+        Upgrade subscription for keeping consistency should only update the software plan,
         but keep all other properties like service_type, pro_bono_status,etc ... the same
         """
-        assert self.is_trial is False, "The subscription is a trial and cannot be processed."
-        assert self.service_type in [SubscriptionType.PRODUCT, SubscriptionType.IMPLEMENTATION], \
-            "The subscription service type is neither PRODUCT nor IMPLEMENTATION."
 
         self.change_plan(
-            new_plan_version=main_billing_plan,
+            new_plan_version=new_plan_version,
             note=upgrade_note,
             web_user=web_user,
             service_type=self.service_type,

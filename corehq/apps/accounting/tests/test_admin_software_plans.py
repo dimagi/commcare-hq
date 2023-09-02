@@ -30,7 +30,6 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
 
         cls.domain1, subscriber1 = generator.arbitrary_domain_and_subscriber()
         cls.domain2, subscriber2 = generator.arbitrary_domain_and_subscriber()
-        cls.domain3, subscriber3 = generator.arbitrary_domain_and_subscriber()
         cls.admin_web_user = generator.create_arbitrary_web_user_name()
 
         account = generator.billing_account(cls.admin_web_user, cls.admin_web_user)
@@ -87,22 +86,12 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         subscription2.do_not_email_reminder = True
         subscription2.auto_generate_credits = True
         subscription2.skip_invoicing_if_no_feature_charges = True
+        subscription2.service_type = SubscriptionType.SANDBOX
         subscription2.pro_bono_status = ProBonoStatus.DISCOUNTED
         subscription2.funding_source = FundingSource.EXTERNAL
         subscription2.skip_auto_downgrade = True
         subscription2.skip_auto_downgrade_reason = "test skip auto downgrade"
         subscription2.save()
-
-        subscription3 = Subscription(
-            account=account,
-            plan_version=cls.first_version,
-            subscriber=subscriber3,
-            date_start=two_months_ago,
-            date_end=None,
-            service_type=SubscriptionType.SANDBOX,
-        )
-        subscription3.is_active = True
-        subscription3.save()
 
         new_product_rate = SoftwareProductRate.objects.create(
             monthly_fee=5000,
@@ -140,13 +129,11 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         self.assertTrue(old_subscription2.do_not_email_reminder)
         self.assertTrue(old_subscription2.auto_generate_credits)
         self.assertTrue(old_subscription2.skip_invoicing_if_no_feature_charges)
-        self.assertEqual(old_subscription2.service_type, SubscriptionType.IMPLEMENTATION)
+        self.assertEqual(old_subscription2.service_type, SubscriptionType.SANDBOX)
         self.assertEqual(old_subscription2.pro_bono_status, ProBonoStatus.DISCOUNTED)
         self.assertEqual(old_subscription2.funding_source, FundingSource.EXTERNAL)
         self.assertTrue(old_subscription2.skip_auto_downgrade)
         self.assertEqual(old_subscription2.skip_auto_downgrade_reason, "test skip auto downgrade")
-
-        old_subscription3 = Subscription.get_active_subscription_by_domain(self.domain3)
 
         upgrade_subscriptions_to_latest_plan_version(
             self.first_version,
@@ -178,14 +165,11 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         self.assertTrue(new_subscription2.do_not_email_reminder)
         self.assertTrue(new_subscription2.auto_generate_credits)
         self.assertTrue(new_subscription2.skip_invoicing_if_no_feature_charges)
-        self.assertEqual(new_subscription2.service_type, SubscriptionType.IMPLEMENTATION)
+        self.assertEqual(new_subscription2.service_type, SubscriptionType.SANDBOX)
         self.assertEqual(new_subscription2.pro_bono_status, ProBonoStatus.DISCOUNTED)
         self.assertEqual(new_subscription2.funding_source, FundingSource.EXTERNAL)
         self.assertTrue(new_subscription2.skip_auto_downgrade)
         self.assertEqual(new_subscription2.skip_auto_downgrade_reason, "test skip auto downgrade")
-
-        new_subscription3 = Subscription.get_active_subscription_by_domain(self.domain3)
-        self.assertEqual(old_subscription3, new_subscription3)
 
 
 class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
