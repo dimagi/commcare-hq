@@ -9,6 +9,7 @@ from custom.dfci_swasth.constants import (
     CASE_TYPE_CASELOAD,
     PROP_CCUSER_CASELOAD_CASE_ID,
     PROP_COUNSELLOR_LOAD,
+    PROP_COUNSELLOR_CLOSED_CASE_LOAD,
 )
 from custom.dfci_swasth.rules.custom_actions import update_counsellor_load
 
@@ -54,39 +55,47 @@ class UpdateCounsellorLoadTest(BaseCaseRuleTest):
 
         self.assertEqual(0, result.num_related_updates)
 
-    def test_case_update_not_successful_ccuser_caseload_property_non_numeric(self):
-        _, patient_case = self._create_cases('abc')
+    def test_case_update_not_successful_when_both_properties_non_numeric(self):
+        _, patient_case = self._create_cases('abc', 'xyz')
 
         result = update_counsellor_load(patient_case, self.patient_rule)
 
         self.assertEqual(0, result.num_related_updates)
 
-    def test_case_update_not_successful_counsellor_load_zero(self):
-        _, patient_case = self._create_cases(0)
-
-        result = update_counsellor_load(patient_case, self.patient_rule)
-
-        self.assertEqual(0, result.num_related_updates)
-
-    def test_case_update_not_successful_counsellor_load_negative(self):
-        _, patient_case = self._create_cases(-1)
+    def test_case_update_not_successful_when_both_properties_invalid(self):
+        _, patient_case = self._create_cases(0, -1)
 
         result = update_counsellor_load(patient_case, self.patient_rule)
 
         self.assertEqual(0, result.num_related_updates)
 
     def test_case_update_successful_ccuser_caseload_case_present(self):
-        _, patient_case = self._create_cases(10)
+        _, patient_case = self._create_cases(10, 0)
 
         result = update_counsellor_load(patient_case, self.patient_rule)
 
         self.assertEqual(1, result.num_related_updates)
 
-    def _create_cases(self, counsellor_load):
+    def test_case_update_successful_when_only_case_load_non_numeric(self):
+        _, patient_case = self._create_cases('abc', 0)
+
+        result = update_counsellor_load(patient_case, self.patient_rule)
+
+        self.assertEqual(1, result.num_related_updates)
+
+    def test_case_update_successful_when_only_coun_closed_case_load_non_numeric(self):
+        _, patient_case = self._create_cases(1, 'abc')
+
+        result = update_counsellor_load(patient_case, self.patient_rule)
+
+        self.assertEqual(1, result.num_related_updates)
+
+    def _create_cases(self, counsellor_load, counsellor_closed_case_load):
         ccuser_caseload_case = CaseFactory(self.domain).create_case(
             case_type=CASE_TYPE_CASELOAD,
             update={
                 PROP_COUNSELLOR_LOAD: counsellor_load,
+                PROP_COUNSELLOR_CLOSED_CASE_LOAD: counsellor_closed_case_load,
             },
         )
 

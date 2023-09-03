@@ -5,6 +5,7 @@ from corehq.form_processor.models import CommCareCase
 from custom.dfci_swasth.constants import (
     CASE_TYPE_PATIENT,
     PROP_CCUSER_CASELOAD_CASE_ID,
+    PROP_COUNSELLOR_CLOSED_CASE_LOAD,
     PROP_COUNSELLOR_LOAD,
 )
 
@@ -48,19 +49,35 @@ def _get_ccuser_caseload_case(patient_case):
 
 def _get_case_updates(ccuser_caseload_case):
     counsellor_load = _get_updated_counsellor_load(ccuser_caseload_case)
-    if not counsellor_load:
-        return {}
-    return {PROP_COUNSELLOR_LOAD: counsellor_load}
+    counsellor_closed_case_load = _get_updated_counsellor_closed_case_load(ccuser_caseload_case)
+
+    result = {}
+    if counsellor_load is not None:
+        result.update({PROP_COUNSELLOR_LOAD: counsellor_load})
+    if counsellor_closed_case_load is not None:
+        result.update({PROP_COUNSELLOR_CLOSED_CASE_LOAD: counsellor_closed_case_load})
+    return result
 
 
 def _get_updated_counsellor_load(ccuser_caseload_case):
+    counsellor_load = _get_integer_case_property_value(ccuser_caseload_case, PROP_COUNSELLOR_LOAD)
+    # Value of counsellor load can be minimum 0
+    if counsellor_load is not None and counsellor_load >= 1:
+        return counsellor_load - 1
+
+
+def _get_updated_counsellor_closed_case_load(ccuser_caseload_case):
+    counsellor_closed_case_load = _get_integer_case_property_value(
+        ccuser_caseload_case, PROP_COUNSELLOR_CLOSED_CASE_LOAD)
+    # Value of counsellor closed case load can be minimum 0
+    if counsellor_closed_case_load is not None and counsellor_closed_case_load >= 0:
+        return counsellor_closed_case_load + 1
+
+
+def _get_integer_case_property_value(case, property_name):
     try:
-        counsellor_load_raw = ccuser_caseload_case.get_case_property(PROP_COUNSELLOR_LOAD)
-        if counsellor_load_raw is None:
-            return
-        counsellor_load = int(counsellor_load_raw)
-        # Value of counsellor load can be minimum 0
-        if counsellor_load >= 1:
-            return counsellor_load - 1
+        property_raw = case.get_case_property(property_name)
+        if property_raw is not None:
+            return int(property_raw)
     except (TypeError, ValueError):
         return
