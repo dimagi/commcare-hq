@@ -128,3 +128,34 @@ def nested(path, filter_):
 
 def regexp(field, regex):
     return {"regexp": {field: regex}}
+
+
+def geo_bounding_box(field, top_left, bottom_right):
+    """
+    Only return geopoints stored in ``field`` that are located within
+    the bounding box defined by lat-lon pairs ``top_left`` and
+    ``bottom_right``.
+
+    `"Geo-bounding box query" reference <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-geo-bounding-box-query.html>`_
+
+    :param field: The field where geopoints are stored
+    :param top_left: A space-separated latitude-longitude pair
+    :param bottom_right: A space-separated latitude-longitude pair
+    :return: A filter dict
+    """  # noqa: E501
+    top_left_lat, top_left_lon = top_left.split()
+    bottom_right_lat, bottom_right_lon = bottom_right.split()
+    return {
+        'geo_bounding_box': {
+            field: {
+                'top_left': {
+                    'lat': top_left_lat,
+                    'lon': top_left_lon,
+                },
+                'bottom_right': {
+                    'lat': bottom_right_lat,
+                    'lon': bottom_right_lon,
+                },
+            }
+        }
+    }
