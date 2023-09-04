@@ -1654,7 +1654,7 @@ class SoftwarePlanVersionForm(forms.Form):
         if errors:
             self._errors.setdefault('feature_rates', errors)
 
-        required_types = list(dict(FeatureType.CHOICES))
+        required_types = [FeatureType.USER, FeatureType.SMS]
         feature_types = [r.feature.feature_type for r in rate_instances]
         if any([feature_types.count(t) != 1 for t in required_types]):
             raise ValidationError(_(
