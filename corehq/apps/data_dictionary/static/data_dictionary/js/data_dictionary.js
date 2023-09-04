@@ -42,7 +42,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 for (let prop of group.properties) {
                     var propObj = propertyListItem(prop.name, prop.label, false, prop.group, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath);
+                        prop.removeFHIRResourcePropertyPath, prop.is_geo_case_property);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.label.subscribe(changeSaveButton);
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
@@ -87,7 +87,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     var propertyListItem = function (name, label, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath) {
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeospatialProperty) {
         var self = {};
         self.name = name;
         self.label = ko.observable(label);
@@ -100,6 +100,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.fhirResourcePropPath = ko.observable(fhirResourcePropPath);
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
+        self.isGeospatialProperty = ko.observable(isGeospatialProperty);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
         let subTitle;
         if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
@@ -125,7 +126,16 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.deprecateProperty = function () {
-            self.deprecated(true);
+            if (!self.isGeospatialProperty()) {
+                self.deprecated(true);
+                return;
+            }
+
+            const $modal = $("#deprecate-geospatial-prop-modal").modal('show');
+            $("#deprecate-geospatial-prop-btn").on('click', function () {
+                self.deprecated(true);
+                $modal.modal('hide');
+            });
         };
 
         self.restoreProperty = function () {

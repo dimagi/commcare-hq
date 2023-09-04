@@ -43,6 +43,7 @@ from corehq.motech.fhir.utils import (
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege
 from corehq import privileges
 from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
+from corehq.apps.geospatial.utils import get_geo_case_property
 
 from .bulk import (
     process_bulk_upload,
@@ -70,6 +71,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    geo_case_property_name = get_geo_case_property(domain)
     for case_type in queryset:
         module_count = case_type_app_module_count.get(case_type.name, 0)
         p = {
@@ -90,6 +92,10 @@ def data_dictionary_json(request, domain, case_type_name=None):
                     ),
                     'name': prop.name,
                     'deprecated': prop.deprecated,
+                    'is_geo_case_property': (
+                        data_validation_enabled
+                        and prop.name == geo_case_property_name
+                    ),
                 }
                 | (
                     {
