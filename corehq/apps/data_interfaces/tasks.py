@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional  # noqa: F401
 
 from django.conf import settings
 from django.core.cache import cache
@@ -259,7 +259,12 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
     DownloadBase.set_progress(task, 0, len(case_ids))
     user = CouchUser.get_by_user_id(user_id)
     submission_handler = SubmitCaseBlockHandler(
-        domain, None, None, user, None, throttle=True
+        domain,
+        import_results=None,
+        case_type=None,
+        user=user,
+        record_form_callback=None,
+        throttle=True,
     )
     for idx, case_id in enumerate(case_ids):
         submission_handler.add_caseblock(

@@ -825,13 +825,13 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
 
 
 def get_index_map(indices):
-    return dict([
-        (index.identifier, {
+    return {
+        index.identifier: {
             "case_type": index.referenced_type,
             "case_id": index.referenced_id,
             "relationship": index.relationship,
-        }) for index in indices
-    ])
+        } for index in indices
+    }
 
 
 class CaseAttachmentManager(RequireDBManager):
