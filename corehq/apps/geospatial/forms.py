@@ -45,6 +45,14 @@ class GeospatialConfigForm(forms.ModelForm):
             crispy.Layout(
                 crispy.Fieldset(
                     _("Configure Geospatial Settings"),
+                    crispy.Div(
+                        crispy.HTML('%s' % _(
+                            "The custom case property has been deprecated in the Data Dictionary. "
+                            "Please consider switching this to another property.")
+                        ),
+                        css_class='alert alert-warning',
+                        data_bind="visible: isCasePropDeprecated"
+                    ),
                     crispy.Field(
                         'user_location_property_name',
                         data_bind="value: customUserFieldName"

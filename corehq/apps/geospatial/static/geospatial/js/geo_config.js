@@ -16,6 +16,7 @@ hqDefine("geospatial/js/geo_config", [
         var data = configData.get('config')
         self.customUserFieldName = ko.observable(data.user_location_property_name);
         self.geoCasePropertyName = ko.observable(data.case_location_property_name);
+        self.isCasePropDeprecated = ko.observable(configData.get('is_case_prop_deprecated'));
 
         return self;
     }
