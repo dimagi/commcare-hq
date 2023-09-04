@@ -303,6 +303,17 @@ def get_gps_properties(domain, case_type):
     ).values_list('name', flat=True))
 
 
+@quickcache(['domain'], timeout=24 * 60 * 60)
+def get_gps_properties_all_case_types(domain, exclude_deprecated=True):
+    case_props = CaseProperty.objects.filter(
+        case_type__domain=domain,
+        data_type=CaseProperty.DataType.GPS,
+    )
+    if exclude_deprecated:
+        case_props = case_props.filter(deprecated=False)
+    return set(case_props.values_list('name', flat=True))
+
+
 def get_column_headings(row, valid_values, sheet_name=None, case_prop_name=None):
     column_headings = []
     errors = []
