@@ -36,7 +36,15 @@
    }
    .nav-input {
      padding: 3px 20px;
-@@ -68,7 +68,7 @@
+@@ -54,6 +54,7 @@
+ .nav-main-icon {
+   font-size: 1.7em;
+   line-height: 0.7em;
++  color: $gray-light;
+ }
+ 
+ .text-hq-nav-header {
+@@ -68,7 +69,7 @@
  }
  
  .nav > li > a {
