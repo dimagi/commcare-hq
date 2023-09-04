@@ -513,6 +513,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
+            if (self.dynamicSearchEnabled) {
+                self.updateSearchResults();
+            }
         },
 
         clearAction: function () {
@@ -539,6 +542,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     self.options.sidebarEnabled
                 );
             });
+        },
+
+        updateSearchResults: function () {
+            var self = this;
+            var invalidRequiredFields = [];
+            self.children.each(function (childView) {
+                if (childView.hasRequiredError()) {
+                    invalidRequiredFields.push(childView.model.get('text'));
+                }
+            });
+            if (invalidRequiredFields.length === 0) {
+                self.performSubmit();
+            }
         },
 
         validateFieldChange: function (changedChildView) {
