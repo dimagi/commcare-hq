@@ -5,7 +5,7 @@ hqDefine("geospatial/js/geo_config", [
 ], function (
     $,
     ko,
-    initialPageData,
+    initialPageData
 ) {
     const CUSTOM_USER_PROP = "custom_user_property";
 
