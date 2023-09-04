@@ -52,7 +52,7 @@ def get_order_by_field(request_params):
 class CursorParams():
     params = attrib()
     domain = attrib()
-    is_cursor = attrib()
+    has_cursor = attrib()
 
     def __getitem__(self, key):
         return self.params[key]
@@ -74,10 +74,11 @@ def get_request_params(request):
     """Get the query params from the request. If the request is using a cursor
     decode the cursor and return those values as the query params.
     :returns: CursorParams tuple"""
+    has_cursor = False
     request_params = request.GET.dict()
     if 'cursor' in request_params:
-        params_string = b64decode(request_params['cursor']).decode('utf-8')
-        return CursorParams(
-            QueryDict(params_string).dict(), request.domain, True
-        )
-    return CursorParams(request_params, request.domain, False)
+        has_cursor = True
+        cursor_params_dict = QueryDict(b64decode(request_params['cursor']).decode('utf-8')).dict()
+        request_params.pop('cursor')
+        request_params = {**request_params, **cursor_params_dict}
+    return CursorParams(request_params, request.domain, has_cursor)
