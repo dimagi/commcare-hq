@@ -1082,7 +1082,14 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         return "", []
 
     for config in configs:
-        content, excel_file = _get_location_safe_report_content(config, domain, couch_user, lang, attach_excel)
+        if _is_location_restricted(domain, config, couch_user):
+            content, excel_file = _("This project has restricted data access rules. \
+                                    Please contact your project administrator to be assigned access \
+                                    to data in this project."), []
+        else:
+            content, excel_file = config.get_report_content(lang,
+                                                            attach_excel=attach_excel,
+                                                            couch_user=couch_user)
         if excel_file:
             excel_attachments.append({
                 'title': config.full_name + "." + format.extension,
@@ -1113,15 +1120,20 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
     return response.content.decode("utf-8"), excel_attachments
 
 
-def _get_location_safe_report_content(config, domain, couch_user, lang, attach_excel):
-    report_location_safe = any(["computed_owner_location" in report_filter for report_filter in config.filters.keys()])
-    if (toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(domain)
-            and not couch_user.has_permission(domain, 'access_all_locations')
-            and couch_user.get_location_ids(domain)
-            and not report_location_safe):
-        return "This project has restricted data access rules. \
-                Please contact your project administrator to be assigned access to data in this project.", []
-    return config.get_report_content(lang, attach_excel=attach_excel, couch_user=couch_user)
+def _is_location_restricted(domain, config, couch_user):
+    '''
+    Checks if request is location restricted for the asked report.
+    Returns True if request is restricted for the asked user and the report. Returns False otherwise.
+    '''
+    # Check if report is location safe
+    if any(["computed_owner_location" in report_filter for report_filter in config.filters.keys()]):
+        return False
+    if not toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(domain):
+        return False
+    if (couch_user.get_location_ids(domain)
+            and not couch_user.has_permission(domain, 'access_all_locations')):
+        return True
+    return False
 
 
 def render_full_report_notification(request, content, email=None, report_notification=None):
