@@ -1,8 +1,5 @@
-import uuid
 from memoized import memoized
 
-from corehq import toggles
-from corehq.apps.reports_core.filters import Choice
 from couchexport.export import export_from_tables
 
 from corehq.apps.userreports.columns import get_expanded_column_config
@@ -39,37 +36,18 @@ class ReportExport(object):
     """Export all the rows of a UCR report
     """
 
-    def __init__(self, domain, title, report_config, lang, filter_values, request_user=None):
+    def __init__(self, domain, title, report_config, lang, filter_values):
         self.domain = domain
         self.title = title
         self.report_config = report_config
         self.lang = lang
         self.filter_values = filter_values
-        self.request_user = request_user
 
     @property
     def data_source(self):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         data_source = ConfigurableReportDataSource.from_spec(self.report_config, include_prefilters=True)
         data_source.lang = self.lang
-        # Removing location from the filters for the locations that are not applicable for the current user.
-        if (toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(self.domain)
-                and not self.request_user.has_permission(self.domain, 'access_all_locations')):
-            location_key = None
-            user_location_ids = self.request_user.get_location_ids(self.domain)
-            user_filtered_locations = []
-            for k, v in self.filter_values.items():
-                if 'computed_owner_location' in k:
-                    location_key = k
-                    user_filtered_locations = [choice for choice in v if choice.value in user_location_ids]
-            if location_key:
-                if user_filtered_locations:
-                    self.filter_values[location_key] = user_filtered_locations
-                else:
-                    # Case where user is assigned a new dynamic location that is not present in report filters
-                    # In this case, user should not see any data
-                    empty_location = Choice(value=uuid.uuid4().hex, display=None)
-                    self.filter_values[location_key] = [empty_location]
 
         data_source.set_filter_values(self.filter_values)
         data_source.set_order_by([(o['field'], o['order']) for o in self.report_config.sort_expression])
