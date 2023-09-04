@@ -523,7 +523,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         submitAction: function (e) {
             var self = this;
             e.preventDefault();
+            self.performSubmit();
+        },
 
+        performSubmit: function () {
+            var self = this;
             self.validateAllFields().done(function () {
                 FormplayerFrontend.trigger(
                     "menu:query",
