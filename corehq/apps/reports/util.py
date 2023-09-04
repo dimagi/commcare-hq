@@ -749,7 +749,7 @@ def domain_copied_cases_by_owner(domain, owner_ids):
     where the cases have the COMMCARE_CASE_COPY_PROPERTY_NAME case
     property.
     """
-    from corehq.apps.reports.filters.api import CaseCopier
+    from corehq.apps.hqcase.case_helper import CaseCopier
     return CaseSearchES()\
         .domain(domain)\
         .owner(owner_ids)\

@@ -436,19 +436,15 @@ def wrap_case_search_hit(hit, include_score=False):
     :returns: A `CommCareCase` instance.
     """
     from corehq.form_processor.models import CommCareCase
-    from corehq.apps.reports.filters.api import CaseCopier
 
     data = hit.get("_source", hit)
-    ignore_props = [
-        prop for prop in SPECIAL_CASE_PROPERTIES if prop != CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME
-    ]
     _VALUE = VALUE
     case = CommCareCase(
         case_id=data.get("_id", None),
         case_json={
             prop["key"]: prop[_VALUE]
             for prop in data.get(CASE_PROPERTIES_PATH, {})
-            if prop["key"] not in ignore_props
+            if prop["key"] not in SPECIAL_CASE_PROPERTIES
         },
         indices=data.get("indices", []),
     )
