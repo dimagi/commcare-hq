@@ -71,7 +71,10 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
-    geo_case_property_name = get_geo_case_property(domain)
+    if data_validation_enabled and toggles.GEOSPATIAL.enabled(domain):
+        geo_case_property_name = get_geo_case_property(domain)
+    else:
+        geo_case_property_name = None
     for case_type in queryset:
         module_count = case_type_app_module_count.get(case_type.name, 0)
         p = {
@@ -92,10 +95,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                     ),
                     'name': prop.name,
                     'deprecated': prop.deprecated,
-                    'is_geo_case_property': (
-                        data_validation_enabled
-                        and prop.name == geo_case_property_name
-                    ),
+                    'is_geo_case_property': (prop.name == geo_case_property_name)
                 }
                 | (
                     {
