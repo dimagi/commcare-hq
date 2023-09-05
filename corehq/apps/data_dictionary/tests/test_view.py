@@ -379,6 +379,7 @@ class DataDictionaryJsonTest(TestCase):
                                     "deprecated": False,
                                     "allowed_values": {},
                                     "data_type": "number",
+                                    "is_geo_case_property": False,
                                 },
                             ],
                         },
