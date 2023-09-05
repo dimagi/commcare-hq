@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
             SET CONSTRAINTS "repeaters_repeatreco_repeater_id_01b51f9d_fk_repeaters" IMMEDIATE;
             ALTER TABLE "repeaters_repeatrecord"
                 DROP CONSTRAINT "repeaters_repeatreco_repeater_id_01b51f9d_fk_repeaters",
-                ADD COLUMN "repeater_id_" uuid,
+                ADD COLUMN "repeater_id_" uuid NOT NULL,
                 ALTER COLUMN repeater_id DROP NOT NULL;
             ALTER TABLE "repeaters_repeater" ADD COLUMN "id_" uuid;
             ALTER TABLE "repeaters_repeater"
@@ -77,7 +77,8 @@ class Migration(migrations.Migration):
             SET CONSTRAINTS "repeaters_repeatreco_repeater_id_01b51f9d_fk_repeaters" IMMEDIATE;
             ALTER TABLE "repeaters_repeatrecord"
                 DROP CONSTRAINT repeaters_repeatreco_repeater_id_01b51f9d_fk_repeaters,
-                DROP COLUMN "repeater_id_";
+                DROP COLUMN "repeater_id_",
+                ALTER COLUMN repeater_id SET NOT NULL;
             DROP TRIGGER repeaters_repeater_default_id ON repeaters_repeater;
             DROP FUNCTION set_default_repeaters_repeater_id();
             ALTER TABLE "repeaters_repeater"
