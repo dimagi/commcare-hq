@@ -287,7 +287,7 @@ importlib-metadata==6.0.0
     # via
     #   markdown
     #   opentelemetry-api
-iso8601==1.1.0
+iso8601==2.0.0
     # via -r base-requirements.in
 isodate==0.6.1
     # via python3-saml

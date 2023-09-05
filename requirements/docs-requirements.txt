@@ -302,7 +302,7 @@ importlib-metadata==6.0.0
     #   markdown
     #   opentelemetry-api
     #   sphinx
-iso8601==1.1.0
+iso8601==2.0.0
     # via -r base-requirements.in
 jinja2==3.1.2
     # via
