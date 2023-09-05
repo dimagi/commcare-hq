@@ -61,8 +61,9 @@ def _get_case_updates(ccuser_caseload_case):
 
 def _get_updated_counsellor_load(ccuser_caseload_case):
     counsellor_load = _get_integer_case_property_value(ccuser_caseload_case, PROP_COUNSELLOR_LOAD)
-    # Value of counsellor load can be minimum 0
-    if counsellor_load is not None and counsellor_load >= 1:
+    # Value of counsellor load can be minimum 0, so it's value is
+    # decremented by 1 only if its current value is >= 1
+    if counsellor_load and counsellor_load >= 1:
         return counsellor_load - 1
 
 
