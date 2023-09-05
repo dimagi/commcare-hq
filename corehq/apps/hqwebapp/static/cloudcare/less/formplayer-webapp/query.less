@@ -8,11 +8,19 @@
   }
 }
 
+#search-more {
+  margin-top: 17px;
+}
+
 #sidebar-region {
   background: transparent;
   @media (min-width: @screen-md-min) {
     width: 300px;
     position: absolute;
+  }
+  @media (max-width: @screen-sm-max) {
+    max-width: 600px;
+    margin: auto;
   }
 
   table {
