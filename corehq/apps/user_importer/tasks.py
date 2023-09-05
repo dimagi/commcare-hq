@@ -124,6 +124,7 @@ def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_
                 notify_exception(None, str(e), details={
                     'domain': domain
                 })
+                user_results['errors'].append(str(e))
     else:
         user_results = create_or_update_commcare_users_and_groups(
             domain,
