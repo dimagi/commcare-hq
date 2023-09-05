@@ -9,7 +9,6 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
             hqImport("hqwebapp/js/initial_page_data").register(
                 "toggles_dict",
                 {
-                    CHANGE_FORM_LANGUAGE: false,
                     SPLIT_SCREEN_CASE_SEARCH: false,
                 }
             );

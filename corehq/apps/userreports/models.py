@@ -211,7 +211,7 @@ class DataSourceBuildInformation(DocumentSchema):
         Returns ``True`` if the rebuild failed, ``False`` if it succeeded
         or has not yet failed, or ``None`` if Flower is not available.
         """
-        flower_url = getattr(settings, 'CELERY_FLOWER_URL')
+        flower_url = getattr(settings, 'CELERY_FLOWER_URL', None)
 
         def none_max(a, b):
             if a is None:
@@ -1515,6 +1515,7 @@ class UCRExpression(models.Model):
             description = f"{self.description[:64]}…"
         description = f": {description}" if description else ""
         return f"{self.name}{description}"
+
 
 def get_datasource_config_infer_type(config_id, domain):
     return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
