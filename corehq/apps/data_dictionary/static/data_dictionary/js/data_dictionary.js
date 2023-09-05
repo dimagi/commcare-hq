@@ -243,7 +243,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             caseTypeData.name,
                             caseTypeData.fhir_resource_type,
                             caseTypeData.is_deprecated,
-                            caseTypeData.module_count,
+                            caseTypeData.module_count
                         );
                         caseTypeObj.init(caseTypeData.groups, changeSaveButton);
                         self.caseTypes.push(caseTypeObj);
@@ -305,14 +305,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 url: initialPageData.reverse('deprecate_or_restore_case_type', activeCaseType.name),
                 method: 'POST',
                 data: {
-                    'is_deprecated': shouldDeprecate
+                    'is_deprecated': shouldDeprecate,
                 },
                 success: function () {
                     window.location.reload(true);
                 },
-                error: function (error) {
+                error: function () {
                     $("#deprecate-case-type-error").show();
-                }
+                },
             });
         };
 
@@ -330,7 +330,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.saveButton.setState('saved');
         };
 
-        self.newPropertyNameUnique = ko.computed(function() {
+        self.newPropertyNameUnique = ko.computed(function () {
             if (!self.newPropertyName()) {
                 return true;
             }
@@ -345,7 +345,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return true;
         });
 
-        self.newGroupNameUnique = ko.computed(function() {
+        self.newGroupNameUnique = ko.computed(function () {
             if (!self.newGroupName()) {
                 return true;
             }
@@ -416,7 +416,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         // CREATE workflow
         self.name = ko.observable("").extend({
-            rateLimit: { method: "notifyWhenChangesStop", timeout: 400, }
+            rateLimit: { method: "notifyWhenChangesStop", timeout: 400 },
         });
 
         self.nameValid = ko.observable(false);
