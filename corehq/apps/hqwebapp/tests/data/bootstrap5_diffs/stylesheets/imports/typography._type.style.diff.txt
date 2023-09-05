@@ -28,3 +28,14 @@
  }
  
  .no-border {
+@@ -89,3 +90,10 @@
+ a {
+     cursor: pointer;
+ }
++
++// we should eventually get rid of this as bootstrap5+ doesn't natively support
++.page-header {
++    padding-bottom: 7.5px;
++    margin: 34px 0 17px;
++    border-bottom: 1px solid #eeeeee;
++}
