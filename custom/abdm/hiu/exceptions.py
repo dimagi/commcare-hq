@@ -8,10 +8,12 @@ HIU_ERROR_MESSAGES = {
     4401: "Unauthorized request",
     4404: "Resource not found",
     4405: "Method not allowed",
+    4407: "Patient details not found",
+    4451: "Consent has expired",
     4500: "Unknown error occurred",
     4503: "Gateway Service down",
     4554: "Error received from Gateway",
-    4407: "Patient details not found",
+    4555: "Health information not received from Provider in the time limit. Please try again!"
 }
 
 
@@ -27,7 +29,7 @@ def hiu_exception_handler(exc, context):
 
 def hiu_gateway_exception_handler(exc, context):
     response = drf_standardized_exception_handler(exc, context)
-    return HIUErrorResponseFormatter().format(response, error_details=False)
+    return HIUErrorResponseFormatter().format(response, error_details=True)
 
 
 def send_custom_error_response(error_code, status_code=400, details_message=None, details_field=None):

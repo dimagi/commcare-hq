@@ -1,0 +1,122 @@
+[
+    {
+        "health_information_type": "Prescription",
+        "config": [
+            {
+                "resource_type": "Patient",
+                "sections": [
+                    {
+                        "section": "Patient Details",
+                        "entries": [
+                            {
+                                "path": "$.name[0].text",
+                                "label": "Patient Registered As"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "resource_type": "Encounter",
+                "sections": [
+                    {
+                        "section": "Visit Details",
+                        "entries": [
+                            {
+                                "path": "$.class.display",
+                                "label": "Visit Type"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "resource_type": "Practitioner",
+                "sections": [
+                    {
+                        "section": "Practitioner Details",
+                        "entries": [
+                            {
+                                "path": "$.name[0].prefix",
+                                "label": "Prefix"
+                            },
+                            {
+                                "path": "$.name[0].text",
+                                "label": "Name"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "resource_type": "MedicationRequest",
+                "sections": [
+                    {
+                        "section": "Prescription Medicine Name and Reason",
+                        "entries": [
+                            {
+                                "path": "$.medicationCodeableConcept.coding[0].display",
+                                "label": "Medicine Name"
+                            },
+                            {
+                                "path": "$.reasonCode[0].coding[0].display",
+                                "label": "Reason of Medicine"
+                            }
+                        ]
+                    },
+                    {
+                        "section": "Prescription Medicine Instruction",
+                        "entries": [
+                            {
+                                "path": "$.dosageInstruction[0].text",
+                                "label": "Instructions"
+                            },
+                            {
+                                "path": "$.dosageInstruction[0].additionalInstruction[0].coding[0].display",
+                                "label": "With/Without Food"
+                            },
+                            {
+                                "path": "$.dosageInstruction[0].timing.repeat.frequency",
+                                "label": "How many times"
+                            },
+                            {
+                                "path": "$.dosageInstruction[0].timing.repeat.period",
+                                "label": "How many days"
+                            },
+                            {
+                                "path": "$.dosageInstruction[0].timing.repeat.periodUnit",
+                                "label": "Period Unit"
+                            },
+                            {
+                                "path": "$.dosageInstruction[0].route.coding[0].display",
+                                "label": "Route"
+                            },
+                            {
+                                "path": "$.dosageInstruction[0].method.coding[0].display",
+                                "label": "Method"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "resource_type": "Binary",
+                "sections": [
+                    {
+                        "section": "Documents",
+                        "entries": [
+                            {
+                                "path": "$.data",
+                                "label": "View File"
+                            },
+                            {
+                                "path": "$.contentType",
+                                "label": "Name"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+  }
+]

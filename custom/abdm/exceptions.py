@@ -1,4 +1,5 @@
 from rest_framework.exceptions import APIException
+from rest_framework.response import Response
 
 ERROR_CODE_REQUIRED = 'required'
 ERROR_CODE_REQUIRED_MESSAGE = 'This field is required.'
@@ -11,6 +12,7 @@ class ABDMErrorResponseFormatter:
     error_code_prefix = ''
     error_messages = {}
 
+    # TODO Rename to format_standard_error_response
     def format(self, response, error_details=True):
         """
         ABDM (M2/M3) has a different response body format which includes custom codes for standard errors.
@@ -53,6 +55,21 @@ class ABDMErrorResponseFormatter:
                 data['error']['details'] = response.data.get('errors', [])
             response.data = data
         return response
+
+    def generate_custom_error_response(self, error_code, status_code=400, details_message=None, details_field=None):
+        data = {
+            'error': {
+                'code': error_code,
+                'message': self.error_messages.get(error_code)
+            }
+        }
+        if details_message or details_field:
+            data['error']['details'] = [{
+                'code': 'invalid',
+                'detail': details_message or self.error_messages.get(error_code),
+                'attr': details_field
+            }]
+        return Response(data=data, status=status_code)
 
 
 class ABDMServiceUnavailable(APIException):

@@ -1,5 +1,6 @@
 from django.urls import path
 
+from custom.abdm.hip.urls import hip_urls
 from custom.abdm.hiu.urls import hiu_urls
 from custom.abdm.milestone_one.views import (
     abha_creation_views,
@@ -25,4 +26,4 @@ abha_verification_urls = [
     path('api/exists_by_health_id', abha_verification_views.get_existence_by_health_id, name='exists_by_health_id'),
 ]
 
-urlpatterns = abha_creation_urls + abha_verification_urls + hiu_urls
+urlpatterns = abha_creation_urls + abha_verification_urls + hiu_urls + hip_urls

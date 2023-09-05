@@ -5,7 +5,6 @@ from custom.abdm.const import TIME_UNITS, DATA_ACCESS_MODES, GATEWAY_CONSENT_STA
 
 class GatewayRequestBaseSerializer(serializers.Serializer):
     requestId = serializers.UUIDField()
-    timestamp = serializers.DateTimeField()
 
 
 class GatewayErrorSerializer(serializers.Serializer):
@@ -53,7 +52,7 @@ class GatewayPermissionSerializer(serializers.Serializer):
 
 
 class GatewayNotificationSerializer(serializers.Serializer):
-    consentRequestId = serializers.CharField(required=False)
+    consentRequestId = serializers.CharField(required=False, allow_blank=True)
     status = serializers.ChoiceField(choices=GATEWAY_CONSENT_STATUS_CHOICES)
     consentArtefacts = serializers.ListField(required=False, child=GatewayIdSerializer())
 
@@ -61,4 +60,17 @@ class GatewayNotificationSerializer(serializers.Serializer):
 class GatewayPurposeSerializer(serializers.Serializer):
     code = serializers.ChoiceField(choices=CONSENT_PURPOSES)
     text = serializers.CharField()
-    refUri = serializers.CharField(required=False)
+    refUri = serializers.CharField(required=False, allow_null=True)
+
+
+class KeyMaterialSerializer(serializers.Serializer):
+
+    class DHPublicKeySerializer(serializers.Serializer):
+        expiry = serializers.DateTimeField()
+        parameters = serializers.CharField()
+        keyValue = serializers.CharField()
+
+    cryptoAlg = serializers.CharField()
+    curve = serializers.CharField()
+    dhPublicKey = DHPublicKeySerializer()
+    nonce = serializers.CharField()

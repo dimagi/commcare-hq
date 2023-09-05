@@ -7,7 +7,7 @@ from custom.abdm.const import (
     HI_TYPES,
 )
 from custom.abdm.hiu.models import HIUConsentArtefact, HIUConsentRequest
-from custom.abdm.hiu.serializers.base import (
+from custom.abdm.serializers import (
     GatewayCareContextSerializer,
     GatewayErrorSerializer,
     GatewayIdSerializer,
@@ -18,7 +18,7 @@ from custom.abdm.hiu.serializers.base import (
     GatewayRequesterSerializer,
     GatewayResponseReferenceSerializer,
 )
-from custom.abdm.utils import past_date_validator, future_date_validator
+from custom.abdm.utils import future_date_validator, past_date_validator
 
 
 class HIUGenerateConsentSerializer(serializers.Serializer):
