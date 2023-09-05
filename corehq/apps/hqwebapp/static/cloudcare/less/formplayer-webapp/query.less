@@ -3,13 +3,17 @@
 }
 
 .sidebar-push {
-  margin-left: 310px;
+  @media (min-width: @screen-md-min) {
+    margin-left: 310px;
+  }
 }
 
 #sidebar-region {
   background: transparent;
-  width: 300px;
-  position: absolute;
+  @media (min-width: @screen-md-min) {
+    width: 300px;
+    position: absolute;
+  }
 
   table {
     table-layout: fixed;

@@ -5,6 +5,12 @@
   <div class="module-case-list-container">
 
     <div class="page-header menu-header" id="case-list-menu-header">
+      <% if (sidebarEnabled) {%>
+        <button id="search-more" class="btn btn-primary visible-xs visible-sm pull-right" type="button"
+          data-toggle="collapse" data-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
+          {% trans "Refine search" %}
+        </button>
+      <% } %>
       <% if (title.length > 0) {%>
       <h1  aria-label="<%- title %>" tabindex="0" class="page-title"><%- title %></h1>
       <% } %>
