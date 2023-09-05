@@ -11,6 +11,8 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
                 {
                     CHANGE_FORM_LANGUAGE: false,
                     SPLIT_SCREEN_CASE_SEARCH: false,
+                    DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
+
                 }
             );
             sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });
