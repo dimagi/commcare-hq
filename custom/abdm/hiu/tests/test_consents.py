@@ -12,7 +12,8 @@ from custom.abdm.const import STATUS_PENDING, STATUS_EXPIRED, STATUS_GRANTED
 from custom.abdm.hiu.exceptions import HIU_ERROR_MESSAGES
 from custom.abdm.hiu.models import HIUConsentRequest, HIUConsentArtefact
 from custom.abdm.models import ABDMUser
-from custom.abdm.tests.utils import json_from_file, convert_utc_iso_to_datetime
+from custom.abdm.tests.utils import convert_utc_iso_to_datetime
+from custom.abdm.utils import json_from_file
 from custom.abdm.exceptions import (
     ERROR_FUTURE_DATE_MESSAGE,
     ERROR_CODE_REQUIRED,

@@ -1,7 +1,11 @@
 from rest_framework import serializers
 
-from custom.abdm.serializers import GatewayRequestBaseSerializer, GatewayIdSerializer, KeyMaterialSerializer, \
-    GatewayPermissionSerializer
+from custom.abdm.serializers import (
+    GatewayIdSerializer,
+    GatewayPermissionSerializer,
+    GatewayRequestBaseSerializer,
+    KeyMaterialSerializer,
+)
 
 
 class GatewayHealthInformationRequestSerializer(GatewayRequestBaseSerializer):

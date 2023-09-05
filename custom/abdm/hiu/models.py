@@ -81,3 +81,7 @@ class HIUHealthInformationRequest(models.Model):
     key_material = models.JSONField(null=True)
     status = models.CharField(choices=STATUS, default=STATUS_PENDING, max_length=40)
     error = models.JSONField(null=True)
+
+    def update_status(self, status):
+        self.status = status
+        self.save()

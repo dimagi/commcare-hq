@@ -25,7 +25,9 @@ class HIPHealthInformationRequest(models.Model):
     transaction_id = models.UUIDField(null=True, unique=True)
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
-    # TODO Check if  key pair is needed
-    # key_pairs = models.JSONField(null=True)
     status = models.CharField(choices=STATUS, default=STATUS_ACKNOWLEDGED, max_length=40)
     error = models.JSONField(null=True)
+
+    def update_status(self, status):
+        self.status = status
+        self.save()

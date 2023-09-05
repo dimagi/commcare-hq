@@ -1,22 +1,43 @@
 import json
+import math
+from datetime import datetime
 
-from rest_framework.status import HTTP_202_ACCEPTED
-import hashlib
-from datetime import datetime, timedelta
-from custom.abdm.const import CRYPTO_ALGORITHM, CURVE, STATUS_ACKNOWLEDGED, STATUS_TRANSFERRED, STATUS_FAILED, \
-    STATUS_ERROR, HEALTH_INFORMATION_MEDIA_TYPE
-from custom.abdm.encryption_util import generate_key_material, compute_shared_key, calculate_salt_iv, compute_aes_key, encrypt
-from custom.abdm.encryption_util2 import getEcdhKeyMaterial, encryptData
-from custom.abdm.hip.const import GW_HEALTH_INFO_ON_TRANSFER_URL, GW_HEALTH_INFO_ON_REQUEST_URL
-from custom.abdm.hip.exceptions import HIPErrorResponseFormatter, HIP_ERROR_MESSAGES
-from custom.abdm.hip.integrations import fhir_data_care_context
-from custom.abdm.hip.models import HIPConsentArtefact, HIPHealthInformationRequest
-from custom.abdm.hip.serializers.health_information import GatewayHealthInformationRequestSerializer
-from custom.abdm.hip.views.base import HIPGatewayBaseView
+import requests
 from rest_framework.response import Response
-from base64 import b64encode
+from rest_framework.status import HTTP_202_ACCEPTED
 
-from custom.abdm.utils import GatewayRequestHelper, abdm_iso_to_datetime, generate_checksum
+from custom.abdm.const import (
+    HEALTH_INFORMATION_MEDIA_TYPE,
+    STATUS_ACKNOWLEDGED,
+    STATUS_ERROR,
+    STATUS_FAILED,
+    STATUS_TRANSFERRED, STATUS_DELIVERED, STATUS_ERRORED,
+)
+from custom.abdm.cyrpto import ABDMCrypto
+from custom.abdm.hip.const import (
+    GW_HEALTH_INFO_ON_REQUEST_URL,
+    GW_HEALTH_INFO_ON_TRANSFER_URL,
+    TOTAL_HEALTH_ENTRIES_PER_PAGE,
+)
+from custom.abdm.hip.exceptions import HIP_ERROR_MESSAGES
+from custom.abdm.hip.integrations import get_fhir_data_care_context
+from custom.abdm.hip.models import (
+    HIPConsentArtefact,
+    HIPHealthInformationRequest,
+)
+from custom.abdm.hip.serializers.health_information import (
+    GatewayHealthInformationRequestSerializer,
+)
+from custom.abdm.hip.views.base import HIPGatewayBaseView
+from custom.abdm.utils import (
+    GatewayRequestHelper,
+    abdm_iso_to_datetime,
+)
+
+
+# TODO For multiple pages check if need to save in Database
+# TODO Error Handling/Status Update in case of failed transfers
+# TODO General Refactoring and Error Handling
 
 
 class GatewayHealthInformationRequest(HIPGatewayBaseView):
@@ -32,29 +53,45 @@ class GatewayHealthInformationRequest(HIPGatewayBaseView):
 
     def process_request(self, request_data):
         artefact_id = request_data['hiRequest']['consent']['id']
+        # TODO Check for key material expiry
         artefact = self.fetch_artefact(artefact_id)
-        error_code = self.perform_validations(artefact, request_data)
-        error = {'code': error_code, 'message': HIP_ERROR_MESSAGES.get(error_code)} if error_code else None
+        error = self.validate_artefact(artefact, request_data)
         health_information_request = self.save_health_information_request(artefact, request_data, error)
+        self.gateway_health_information_on_request(request_data, error)
         if error:
-            return self.gateway_health_information_on_request(request_data, error)
-        self.gateway_health_information_on_request(request_data, {})
-        hip_key_material_transfer, entries = self.get_entries(artefact.details['careContexts'],
-                                                              request_data['hiRequest']['keyMaterial'])
-        request_body = self.format_request_body(request_data, entries, hip_key_material_transfer)
-        status = self.transfer_data_to_hiu(request_data["hiRequest"]["dataPushUrl"], request_body)
-        self.update_health_information_request(health_information_request, status)
-        # self.gateway_health_information_on_transfer(artefact_id, request_data['transactionId'], status, {})
+            return error
+        transfer_status, care_contexts_status = self.encrypt_and_transfer(artefact.details['careContexts'], request_data)
+        health_information_request.update_status(STATUS_TRANSFERRED if transfer_status else STATUS_FAILED)
+        self.gateway_health_information_on_transfer(artefact_id, request_data['transactionId'], transfer_status,
+                                                    care_contexts_status)
 
-    def perform_validations(self, artefact, request_data):
-        error_code = None
-        if artefact is None:
-            error_code = 3416
-        elif self.validate_consent_expiry(artefact, request_data) is False:
-            error_code = 3418
-        elif self.validate_date_range(artefact, request_data) is False:
-            error_code = 3419
-        return error_code
+    def encrypt_and_transfer(self, care_contexts, request_data):
+        hip_crypto = ABDMCrypto()
+        hiu_transfer_material = request_data['hiRequest']['keyMaterial']
+        data = {
+            "pageCount": int(math.ceil(len(care_contexts)/TOTAL_HEALTH_ENTRIES_PER_PAGE)),
+            "transactionId": request_data["transactionId"],
+            "keyMaterial": hip_crypto.transfer_material
+        }
+        care_contexts_status = []
+        for index, care_contexts_chunks in enumerate(self._generate_chunks(care_contexts,
+                                                                           TOTAL_HEALTH_ENTRIES_PER_PAGE)):
+            data['pageNumber'] = index + 1
+            data['entries'] = self.get_encrypted_entries(care_contexts_chunks, hiu_transfer_material, hip_crypto)
+            transfer_status = self.transfer_data_to_hiu(request_data["hiRequest"]["dataPushUrl"], data)
+            care_contexts_status.extend(self._care_contexts_transfer_status(care_contexts_chunks, transfer_status))
+        transfer_status = not any(status['hiStatus'] == STATUS_ERRORED for status in care_contexts_status)
+        return transfer_status, care_contexts_status
+
+    def _care_contexts_transfer_status(self, care_contexts_chunks, transfer_status):
+        hi_status = STATUS_DELIVERED if transfer_status else STATUS_ERRORED
+        return [{'careContextReference': care_context['careContextReference'], 'hiStatus': hi_status}
+                for care_context in care_contexts_chunks]
+
+    def _generate_chunks(self, data, count):
+        assert type(data) == list
+        for i in range(0, len(data), count):
+            yield data[i:i + count]
 
     def fetch_artefact(self, artefact_id):
         try:
@@ -62,13 +99,22 @@ class GatewayHealthInformationRequest(HIPGatewayBaseView):
         except HIPConsentArtefact.DoesNotExist:
             return None
 
-    def validate_date_range(self, artefact, request_data):
+    def validate_artefact(self, artefact, request_data):
+        error_code = None
+        if artefact is None:
+            error_code = 3416
+        elif not self.validate_consent_expiry(artefact, request_data):
+            error_code = 3418
+        elif not self.validate_requested_date_range(artefact, request_data):
+            error_code = 3419
+        return {'code': error_code, 'message': HIP_ERROR_MESSAGES.get(error_code)} if error_code else {}
+
+    def validate_requested_date_range(self, artefact, request_data):
         artefact_from_date = abdm_iso_to_datetime(artefact.details['permission']['dateRange']['from'])
         artefact_to_date = abdm_iso_to_datetime(artefact.details['permission']['dateRange']['to'])
         if not (artefact_from_date <= abdm_iso_to_datetime(request_data['hiRequest']['dateRange']['from']) <= artefact_to_date):
             return False
-        if not (artefact_from_date <= abdm_iso_to_datetime(
-                request_data['hiRequest']['dateRange']['to']) <= artefact_to_date):
+        if not (artefact_from_date <= abdm_iso_to_datetime(request_data['hiRequest']['dateRange']['to']) <= artefact_to_date):
             return False
         return True
 
@@ -93,61 +139,20 @@ class GatewayHealthInformationRequest(HIPGatewayBaseView):
         request_body['resp'] = {'requestId': request_data['requestId']}
         GatewayRequestHelper().post(GW_HEALTH_INFO_ON_REQUEST_URL, request_body)
 
-    def get_entries(self, care_contexts, hiu_key_material):
+    def get_encrypted_entries(self, care_contexts, hiu_transfer_material, hip_crypto):
         entries = []
-        # TODO Consider moving to utility or maybe create a class for this
-        hip_key_material = getEcdhKeyMaterial()
-        # shared_key = compute_shared_key(hiu_key_material['dhPublicKey']['keyValue'], hip_key_material['privateKey'])
-        # salt, iv = calculate_salt_iv(hip_key_material['nonce'], hiu_key_material['nonce'])
-        # aes_key = compute_aes_key(salt, shared_key)
         for care_context in care_contexts:
             entry = {'media': HEALTH_INFORMATION_MEDIA_TYPE, 'careContextReference': care_context['careContextReference']}
-            fhir_data = fhir_data_care_context(care_context['careContextReference'])
-            fhir_data_str = json.dumps(fhir_data)
-            entry['checksum'] = generate_checksum(fhir_data_str)
-            entry['content'] = encryptData(
-                {
-                    'stringToEncrypt': fhir_data_str,
-                    'senderNonce': hip_key_material['nonce'],
-                    'requesterNonce': hiu_key_material['nonce'],
-                    'senderPrivateKey': hip_key_material['privateKey'],
-                    'requesterPublicKey': hiu_key_material['dhPublicKey']['keyValue']
-                }
-            )['encryptedData']
+            fhir_data_str = json.dumps(get_fhir_data_care_context(care_context['careContextReference']))
+            entry['checksum'] = hip_crypto.generate_checksum(fhir_data_str)
+            entry['content'] = hip_crypto.encrypt(fhir_data_str, hiu_transfer_material)
             entries.append(entry)
-        hip_key_material_transfer = self._hip_key_material_transfer(hip_key_material)
-        return hip_key_material_transfer, entries
-
-    def _hip_key_material_transfer(self, hip_key_material):
-        return {
-            "cryptoAlg": CRYPTO_ALGORITHM,
-            "curve": CURVE,
-            "dhPublicKey": {
-                "expiry": (datetime.utcnow() + timedelta(days=10)).isoformat(),
-                "parameters": "Curve25519",
-                "keyValue": hip_key_material['x509PublicKey']
-            },
-            "nonce": hip_key_material['nonce']
-        }
-
-    def format_request_body(self, request_data, entries, hip_key_material_transfer):
-        data = {
-            "pageNumber": 1,
-            "pageCount": 1,
-            "transactionId": request_data["transactionId"],
-            "entries": entries,
-            "keyMaterial": hip_key_material_transfer
-        }
-        return data
+        return entries
 
     def transfer_data_to_hiu(self, url, data):
-        # TODO Refine and check how to do for multiple pages
-        headers = {"Content-Type": "application/json"}
-        import requests
-        import json
         print(f"HIP: Transferring data to data push url: {url} provided by HIU and data: {data}")
         try:
-            resp = requests.post(url=url, data=json.dumps(data), headers=headers)
+            resp = requests.post(url=url, data=json.dumps(data), headers={"Content-Type": "application/json"})
             resp.raise_for_status()
             print("HIP: Health data transfer status code from HIU: ", resp.status_code)
             print("HIP: Health data transfer response from HIU: ", resp.text)
@@ -156,16 +161,13 @@ class GatewayHealthInformationRequest(HIPGatewayBaseView):
             print("exception", e)
             return False
 
-    def gateway_health_information_on_transfer(self, artefact_id, transaction_id, status, care_contexts):
+    def gateway_health_information_on_transfer(self, artefact_id, transaction_id, transfer_status,
+                                               care_contexts_status):
         request_data = GatewayRequestHelper.common_request_data()
         request_data['notification'] = {'consent_id': artefact_id, 'transaction_id': transaction_id,
                                         "doneAt": datetime.utcnow().isoformat()}
         request_data['notification']["notifier"] = {"type": "HIP", "id": 6004}
-        session_status = STATUS_TRANSFERRED if status else STATUS_FAILED
+        session_status = STATUS_TRANSFERRED if transfer_status else STATUS_FAILED
         request_data['notification']["statusNotification"] = {"sessionStatus": session_status, "hipId": 6004}
-        # TODO Add more params
+        request_data['notification']["statusNotification"]["statusResponses"] = care_contexts_status
         GatewayRequestHelper().post(GW_HEALTH_INFO_ON_TRANSFER_URL, request_data)
-
-    def update_health_information_request(self, health_information_request, status):
-        health_information_request.status = status
-        health_information_request.save()

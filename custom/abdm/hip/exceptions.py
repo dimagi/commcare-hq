@@ -2,6 +2,8 @@ from drf_standardized_errors.handler import exception_handler as drf_standardize
 
 from custom.abdm.exceptions import ABDMErrorResponseFormatter
 
+
+# TODO Consider using variables for error codes
 HIP_ERROR_MESSAGES = {
     3400: "Required attributes not provided or Request information is not as expected",
     3401: "Unauthorized request",

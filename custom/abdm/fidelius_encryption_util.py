@@ -3,7 +3,9 @@ import uuid
 import json
 import subprocess
 
-FIDELIUS_CLI_PATH = '/home/ajeet/ldrive/dev/Resources/abdm/fidelius-cli-1.2.0/bin/fidelius-cli'
+from django.conf import settings
+
+FIDELIUS_CLI_PATH = settings.FIDELIUS_CLI_PATH
 
 dirname = os.path.dirname(os.path.abspath(__file__))
 binPath = FIDELIUS_CLI_PATH

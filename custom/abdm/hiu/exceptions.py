@@ -8,11 +8,12 @@ HIU_ERROR_MESSAGES = {
     4401: "Unauthorized request",
     4404: "Resource not found",
     4405: "Method not allowed",
+    4407: "Patient details not found",
+    4451: "Consent has expired",
     4500: "Unknown error occurred",
     4503: "Gateway Service down",
     4554: "Error received from Gateway",
-    4407: "Patient details not found",
-    4451: "Consent has expired",
+    4555: "Health information not received from Provider in the time limit. Please try again!"
 }
 
 

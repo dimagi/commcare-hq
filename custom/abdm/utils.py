@@ -90,6 +90,6 @@ def abdm_iso_to_datetime(value):
     return parser.isoparse(value).replace(tzinfo=None).replace(microsecond=0)
 
 
-# TODO Move to encryption util
-def generate_checksum(data):
-    return b64encode(hashlib.md5(data.encode('utf-8')).digest()).decode()
+def json_from_file(file_path):
+    with open(file_path) as file:
+        return json.load(file)

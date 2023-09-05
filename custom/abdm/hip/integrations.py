@@ -1,11 +1,18 @@
+import json
+
+from django.conf import settings
+from custom.abdm.fhir.document_bundle import document_bundle_from_hq
+from custom.abdm.utils import json_from_file
 
 
-def fhir_data_care_context(care_context_id):
-    # To be implemented on HQ side
-    # TODO FIGURE out how to do this For package purpose, this will raise NotImplememtedError
-    # TODO Load Real data
-    import json
-    SAMPLE_FHIR_BUNDLE = '/home/ajeet/ldrive/dev/Resources/abdm/sample fhir records/pathology_sample.json'
-    with open(SAMPLE_FHIR_BUNDLE) as user_file:
-        parsed_json = json.load(user_file)
-    return parsed_json
+def get_fhir_data_care_context(care_context_reference):
+    # TODO FIGURE out how to do this For package purpose, this will raise NotImplementedError
+    # TODO Health information type from care context reference
+    # TODO Error handling
+    from custom.abdm.const import HealthInformationType
+    health_information_type = HealthInformationType.PRESCRIPTION
+    # return document_bundle_from_hq(care_context_reference, health_information_type)
+    if care_context_reference in ("CC-101"):
+        return json_from_file(settings.SAMPLE_FHIR_BUNDLES[0])
+    else:
+        return json_from_file(settings.SAMPLE_FHIR_BUNDLES[1])
