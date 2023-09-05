@@ -185,12 +185,12 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                             "geo_bounding_box": {
                                 "location": {
                                     "top_left": {
-                                        "lat": "40.73",
-                                        "lon": "-74.1"
+                                        "lat": 40.73,
+                                        "lon": -74.1
                                     },
                                     "bottom_right": {
-                                        "lat": "40.01",
-                                        "lon": "-71.12"
+                                        "lat": 40.01,
+                                        "lon": -71.12
                                     }
                                 }
                             }
@@ -209,7 +209,11 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
         query = CaseSearchES().domain('test-domain').filter(
             filters.geo_bounding_box('location', '40.73 -74.1', '40.01 -71.12')
         )
-        self.checkQuery(query, json_output)
+        self.checkQuery(
+            query,
+            json_output,
+            validate_query=False,  # Avoid creating an index just for this test
+        )
 
 
 @es_test
