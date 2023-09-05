@@ -61,6 +61,7 @@ from .views import (
     unarchive_form,
     view_form_attachment,
     view_scheduled_report,
+    copy_cases,
 )
 
 custom_report_urls = [
@@ -78,6 +79,7 @@ release_management_urls = [
 urlpatterns = [
     ConfigurableReportView.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
+    url(r'^copy_cases/$', copy_cases, name='copy_cases'),
 
     # Report Builder
     url(r'^builder/select_source/$', ReportBuilderDataSourceSelect.as_view(),
@@ -166,7 +168,6 @@ urlpatterns = [
     ProjectReportDispatcher.url_pattern(),
     url(r'^user_management/', include(user_management_urls)),
     url(r'^release_management/', include(release_management_urls)),
-
     url(r'^get_or_create_hash/', get_or_create_filter_hash, name='get_or_create_filter_hash'),
 ]
 

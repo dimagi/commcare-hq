@@ -41,6 +41,10 @@ def _get_plugin_regex(js_plugin):
     return r"(\.)(" + js_plugin + r")(\([\{\"\'])"
 
 
+def _get_extension_regex(js_plugin):
+    return r"(\$\.fn\.)(" + js_plugin + r")(\.Constructor)"
+
+
 def _get_path_reference_regex(path_reference):
     return r"([\"\'])(" + path_reference + r")([\"\'])"
 
@@ -104,8 +108,9 @@ def flag_changed_css_classes(line, spec):
 def flag_changed_javascript_plugins(line, spec):
     flags = []
     for plugin in spec['flagged_js_plugins']:
-        regex = _get_plugin_regex(plugin)
-        if re.search(regex, line):
+        plugin_regex = _get_plugin_regex(plugin)
+        extension_regex = _get_extension_regex(plugin)
+        if re.search(plugin_regex, line) or re.search(extension_regex, line):
             flags.append(_get_change_guide(f"js-{plugin}"))
     return flags
 

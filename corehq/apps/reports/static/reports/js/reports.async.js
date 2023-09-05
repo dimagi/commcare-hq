@@ -63,7 +63,7 @@ hqDefine("reports/js/reports.async", function () {
                     var url = window.location.href.replace(self.standardReport.urlRoot,
                         self.standardReport.urlRoot + 'async/') + "?" + "&" + params;
                     if (url.length > self.maxInputLimit) {
-                        hqImport('hqwebapp/js/alert_user').alert_user(self.humanReadableErrors['maxInputError'], "danger");
+                        hqImport('hqwebapp/js/bootstrap3/alert_user').alert_user(self.humanReadableErrors['maxInputError'], "danger");
                     } else {
                         self.getQueryId(params, false, true, pathName);
                     }

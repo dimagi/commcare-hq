@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.core.validators import MaxLengthValidator
 from django.db import models
 from django.utils.translation import gettext as _, gettext_lazy
 
@@ -125,6 +124,10 @@ class CaseProperty(models.Model):
                     name=name, case_type__name=case_type, case_type__domain=domain
                 )
             except CaseProperty.DoesNotExist:
+                from corehq.apps.hqcase.case_helper import CaseCopier
+                if name == CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME:
+                    raise ValueError(f"{name} is a reserved property name")
+
                 case_type_obj = CaseType.get_or_create(domain, case_type)
                 prop = CaseProperty.objects.create(case_type=case_type_obj, name=name)
             return prop
