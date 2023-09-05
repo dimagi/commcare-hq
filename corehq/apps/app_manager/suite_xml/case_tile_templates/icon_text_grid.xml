@@ -6,7 +6,7 @@
   </title>
 
   <field>
-    <style horz-align="center" vert-align="center" font-size="small">
+    <style horz-align="center" vert-align="top" font-size="small">
       <grid grid-height="1" grid-width="1" grid-x="0" grid-y="0" />
     </style>
     <header>
@@ -41,7 +41,7 @@
   </field>
 
   <field>
-    <style horz-align="center" vert-align="center" font-size="small">
+    <style horz-align="center" vert-align="top" font-size="small">
       <grid grid-height="1" grid-width="1" grid-x="6" grid-y="0" />
     </style>
     <header>
@@ -76,7 +76,7 @@
   </field>
 
   <field>
-    <style horz-align="center" vert-align="center" font-size="small">
+    <style horz-align="center" vert-align="top" font-size="small">
       <grid grid-height="1" grid-width="1" grid-x="0" grid-y="1" />
     </style>
     <header>
@@ -111,7 +111,7 @@
   </field>
 
   <field>
-    <style horz-align="center" vert-align="center" font-size="small">
+    <style horz-align="center" vert-align="top" font-size="small">
       <grid grid-height="1" grid-width="1" grid-x="6" grid-y="1" />
     </style>
     <header>
@@ -146,7 +146,7 @@
   </field>
 
   <field>
-    <style horz-align="center" vert-align="center" font-size="small">
+    <style horz-align="center" vert-align="top" font-size="small">
       <grid grid-height="1" grid-width="1" grid-x="0" grid-y="2" />
     </style>
     <header>
