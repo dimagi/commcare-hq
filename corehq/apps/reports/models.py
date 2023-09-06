@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
@@ -161,6 +162,7 @@ class TableauServer(models.Model):
     server_name = models.CharField(max_length=128)
     validate_hostname = models.CharField(max_length=128, default='', blank=True)
     target_site = models.CharField(max_length=64, default='Default')
+    allowed_tableau_groups = ArrayField(models.CharField(max_length=255), null=True, blank=True, default=list)
 
     def __str__(self):
         return '{domain} {server} {server_type} {site}'.format(domain=self.domain,
@@ -234,6 +236,19 @@ class TableauConnectedApp(models.Model):
             }
         )
         return token
+
+    @classmethod
+    def is_server_setup(cls, domain):
+        try:
+            server = TableauServer.objects.get(domain=domain)
+        except TableauServer.DoesNotExist:
+            return False
+        try:
+            if server.server_name and cls.objects.get(server=server):
+                return True
+        except TableauConnectedApp.DoesNotExist:
+            pass
+        return False
 
 
 class TableauUser(models.Model):
