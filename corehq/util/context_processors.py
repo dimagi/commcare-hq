@@ -311,3 +311,9 @@ def bootstrap5(request):
     return {
         "use_bootstrap5": bootstrap.get_bootstrap_version() == bootstrap.BOOTSTRAP_5,
     }
+
+
+def es6_requirejs(request):
+    return {
+        'is_local_requirejs_es6': settings.IS_LOCAL_REQUIREJS_ES6,
+    }
