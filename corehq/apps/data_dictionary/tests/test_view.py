@@ -270,6 +270,11 @@ class TestDeprecateOrRestoreCaseTypeView(TestCase):
         CaseProperty(case_type=cls.case_type_obj, name='property').save()
         CasePropertyGroup(case_type=cls.case_type_obj, name='group').save()
 
+    def setUp(self):
+        self.endpoint = reverse(self.urlname, args=(self.domain, self.case_type_obj.name))
+        self.client = Client()
+        self.client.login(username='test', password='foobar')
+
     @classmethod
     def tearDownClass(cls):
         cls.case_type_obj.delete()
