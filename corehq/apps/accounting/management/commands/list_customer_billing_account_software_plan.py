@@ -34,10 +34,10 @@ class Command(BaseCommand):
                     billing_account_names.append(account_name)
 
         if 'ALL' in billing_account_names:
-            customer_billing_account = BillingAccount.objects.filter(
+            customer_billing_accounts = BillingAccount.objects.filter(
                 is_customer_billing_account=True, is_active=True)
         else:
-            customer_billing_account = BillingAccount.objects.filter(
+            customer_billing_accounts = BillingAccount.objects.filter(
                 is_customer_billing_account=True, is_active=True, name__in=billing_account_names)
 
         file_path = "/tmp/customer_billing_plans.csv"
@@ -47,7 +47,7 @@ class Command(BaseCommand):
                        "Start Date", "End Date", "Main Subscription", "Need Update", "Status"]
             csvwriter.writerow(headers)
 
-            for account in customer_billing_account:
+            for account in customer_billing_accounts:
                 subscriptions = Subscription.visible_objects.filter(account=account, is_active=True)
                 if len(subscriptions) == 0:
                     csvwriter.writerow([account.name, "", "", "", "", "", "", "", "", ""])
