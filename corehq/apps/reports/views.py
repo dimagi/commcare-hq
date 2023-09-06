@@ -40,6 +40,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from no_exceptions.exceptions import Http403
+from django_prbac.decorators import requires_privilege
 
 from casexml.apps.case import const
 from casexml.apps.case.templatetags.case_tags import case_inline_display
@@ -49,7 +50,6 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.web import json_response
 
-from corehq import privileges, toggles
 from corehq.apps.app_manager.util import get_form_source_download_url
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.domain.decorators import (
@@ -124,6 +124,7 @@ from corehq.util.timezones.utils import (
     get_timezone_for_user,
 )
 from corehq.util.view_utils import get_form_or_404, request_as_dict, reverse
+from corehq import privileges, toggles
 
 from .dispatcher import ProjectReportDispatcher
 from .forms import (
@@ -508,6 +509,18 @@ class AddSavedReportConfigView(View):
         return self.request.couch_user
 
 
+def _querydict_to_dict(query_dict):
+    data = {}
+    for key in query_dict.keys():
+        if key.endswith('[]'):
+            v = query_dict.getlist(key)
+            key = key[:-2]  # slice off the array naming
+        else:
+            v = query_dict[key]
+        data[key] = v
+    return data
+
+
 @dataclass
 class Timezone:
     hours: int
@@ -523,14 +536,15 @@ class Timezone:
 def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
     from .forms import EmailReportForm
 
-    form = EmailReportForm(request.POST)
+    form = EmailReportForm(_querydict_to_dict(request.POST))
     if not form.is_valid():
-        return HttpResponseBadRequest()
+        return HttpResponseBadRequest(json.dumps(form.get_readable_errors()))
 
     if not _can_email_report(report_slug, request, dispatcher_class, domain):
         raise Http404()
 
-    recipient_emails = set(form.cleaned_data['recipient_emails'])
+    recipient_emails = set(form.cleaned_data['recipient_emails'] or [])
+
     if form.cleaned_data['send_to_owner']:
         recipient_emails.add(request.couch_user.get_email())
 
@@ -1992,3 +2006,38 @@ def get_or_create_filter_hash(request, domain):
         'query_id': query_id,
         'not_found': not_found,
     })
+
+
+@require_POST
+@toggles.COPY_CASES.required_decorator()
+@require_permission(HqPermissions.edit_data)
+@requires_privilege(privileges.CASE_COPY)
+@location_safe
+def copy_cases(request, domain, *args, **kwargs):
+    from corehq.apps.hqcase.case_helper import CaseCopier
+    body = json.loads(request.body)
+
+    case_ids = body.get('case_ids')
+    if not case_ids:
+        return JsonResponse({'error': _("Missing case ids")}, status=400)
+
+    new_owner = body.get('owner_id')
+    if not new_owner:
+        return JsonResponse({'error': _("Missing new owner id")}, status=400)
+
+    censor_data = {
+        prop['name']: prop['label']
+        for prop in body.get('sensitive_properties', [])
+    }
+
+    case_copier = CaseCopier(
+        domain,
+        to_owner=new_owner,
+        censor_data=censor_data,
+    )
+    case_id_pairs, errors = case_copier.copy_cases(case_ids)
+    count = len(case_id_pairs)
+    return JsonResponse(
+        {'copied_cases': count, 'error': errors},
+        status=400 if count == 0 else 200,
+    )

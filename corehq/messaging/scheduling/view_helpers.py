@@ -229,7 +229,7 @@ class ConditionalAlertUploader(object):
         message_dirty = False
         new_messages = []
         row_index = 0
-        for index, event in enumerate(events):
+        for event in events:
             old_message = event.content.message
             new_message = copy(old_message)
             if self.event_is_relevant(event) or allow_sheet_swap:
@@ -345,7 +345,9 @@ class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
         for lang in self.langs:
             key = 'message_' + lang
             if key in row:
-                message.update({lang: row[key]})
+                message[lang] = row[key]
+        if not any(message.values()):
+            raise RuleUpdateError(_("Missing message"))
         return message
 
 
@@ -362,5 +364,7 @@ class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
 
     def update_message(self, message, row):
         if 'message' in row:
+            if not row['message']:
+                raise RuleUpdateError(_("Missing message"))
             return {'*': row['message']}
         return message

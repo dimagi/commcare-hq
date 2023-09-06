@@ -1,4 +1,4 @@
-/* globals moment, MapboxGeocoder, DOMPurify */
+/* globals moment, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
         cloudcareUtils = hqImport("cloudcare/js/utils"),
@@ -62,7 +62,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     /**
      * Serves as the base for all entries that take an array answer.
      */
-    function EntryArrayAnswer(question, options) {
+    function EntryArrayAnswer(question) {
         var self = this;
         Entry.call(self, question);
         self.rawAnswer = ko.observableArray(_.clone(question.answer()));
@@ -792,11 +792,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
     function TimeEntry(question, options) {
         this.templateType = 'time';
-        var style = "",
-            is12Hour = false;
+        let is12Hour = false;
         if (question.style) {
-            style = ko.utils.unwrapObservable(question.style.raw);
-            if (style === constants.TIME_12_HOUR) {
+            if (question.stylesContains(constants.TIME_12_HOUR)) {
                 this.clientFormat = 'h:mm a';
                 is12Hour = true;
             }
@@ -1029,7 +1027,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     zoomControl: false,
                 }).setView([lat, lon], zoom);
                 L.control.zoom({
-                    position: 'bottomright'
+                    position: 'bottomright',
                 }).addTo(self.map);
 
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
@@ -1163,13 +1161,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 });
                 break;
             case constants.SELECT:
-                isMinimal = style === constants.MINIMAL;
+                isMinimal = question.stylesContains(constants.MINIMAL);
                 if (style) {
                     isCombobox = question.stylesContains(constants.COMBOBOX);
                 }
                 if (style) {
-                    isLabel = style === constants.LABEL || style === constants.LIST_NOLABEL;
-                    hideLabel = style === constants.LIST_NOLABEL;
+                    isLabel = question.stylesContains(constants.LABEL) || question.stylesContains(constants.LIST_NOLABEL);
+                    hideLabel = question.stylesContains(constants.LIST_NOLABEL);
                 }
 
                 if (isMinimal) {
@@ -1211,10 +1209,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 }
                 break;
             case constants.MULTI_SELECT:
-                isMinimal = style === constants.MINIMAL;
+                isMinimal = question.stylesContains(constants.MINIMAL);
                 if (style) {
-                    isLabel = style === constants.LABEL;
-                    hideLabel = style === constants.LIST_NOLABEL;
+                    isLabel = question.stylesContains(constants.LABEL);
+                    hideLabel = question.stylesContains(constants.LIST_NOLABEL);
                 }
 
                 if (isMinimal) {
@@ -1243,7 +1241,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 }
                 break;
             case constants.DATE:
-                if (style === constants.ETHIOPIAN) {
+                if (question.stylesContains(constants.ETHIOPIAN)) {
                     entry = new EthiopianDateEntry(question, {});
                 } else {
                     entry = new DateEntry(question, {});
@@ -1255,7 +1253,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             case constants.GEO:
                 entry = new GeoPointEntry(question, {});
                 break;
-            case constants.INFO:
+            case constants.INFO: // it's a label
                 entry = new InfoEntry(question, {});
                 break;
             case constants.BINARY:
@@ -1323,7 +1321,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * Function to handle answer changes for entries using selct2
      */
     function select2AnswerChange(parentClass) {
-        return function(newValue) {
+        return function (newValue) {
             var self = this;
             parentClass.prototype.onAnswerChange.call(self, newValue);
             _.delay(function () {

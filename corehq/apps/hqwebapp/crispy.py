@@ -8,7 +8,7 @@ from crispy_forms.bootstrap import AccordionGroup
 from crispy_forms.bootstrap import FormActions as OriginalFormActions
 from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Field as OldField
+from crispy_forms.layout import Field
 from crispy_forms.layout import LayoutObject
 from crispy_forms.utils import flatatt, get_template_pack, render_field
 
@@ -36,11 +36,11 @@ class HQModalFormHelper(FormHelper):
     field_class = 'col-xs-12 col-sm-9 col-md-9 col-lg-6'
 
 
-class HiddenFieldWithErrors(OldField):
+class HiddenFieldWithErrors(Field):
     template = "hqwebapp/crispy/field/hidden_with_errors.html"
 
 
-class TextField(OldField):
+class TextField(Field):
     """
     Layout object.
     Contains text specified in place of the field's normal input.
@@ -51,15 +51,15 @@ class TextField(OldField):
         self.text = text
         super(TextField, self).__init__(field_name, *args, **kwargs)
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         template_pack = template_pack or get_template_pack()
         context.update({
             'field_text': self.text,
         })
-        return super(TextField, self).render(form, form_style, context, template_pack=template_pack)
+        return super(TextField, self).render(form, context, template_pack=template_pack, **kwargs)
 
 
-class ErrorsOnlyField(OldField):
+class ErrorsOnlyField(Field):
     template = 'hqwebapp/crispy/field/errors_only_field.html'
 
 
@@ -74,12 +74,12 @@ class FormActions(OriginalFormActions):
     """
     template = 'hqwebapp/crispy/form_actions.html'
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         template_pack = template_pack or get_template_pack()
         fields_html = ''
         for field in self.fields:
             fields_html += render_field(
-                field, form, form_style, context,
+                field, form, context,
                 template_pack=template_pack,
             )
         fields_html = mark_safe(fields_html)  # nosec: just concatenated safe fields
@@ -92,30 +92,6 @@ class FormActions(OriginalFormActions):
         })
 
 
-class Field(OldField):
-    """Overrides the logic behind choosing the offset class for the field to
-    actually be responsive (col-lg-offset-*, col-md-offset-*, etc). Also includes
-    support for static controls.
-    todo since we forked crispy forms, this class is no longer necessary.
-    http://manage.dimagi.com/default.asp?186372
-    """
-    template = 'hqwebapp/crispy/field.html'
-
-    def __init__(self, *args, **kwargs):
-        self.is_static = False
-        if 'is_static' in kwargs:
-            self.is_static = kwargs.pop('is_static')
-        super(Field, self).__init__(*args, **kwargs)
-
-    def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
-        offsets = _get_offsets(context)
-        context.update({
-            'offsets': offsets,
-        })
-        return super(Field, self).render(form, form_style, context, template_pack)
-
-
 class StaticField(LayoutObject):
     template = 'hqwebapp/crispy/static_field.html'
 
@@ -123,7 +99,7 @@ class StaticField(LayoutObject):
         self.field_label = field_label
         self.field_value = field_value
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         template_pack = template_pack or get_template_pack()
         context.update({
             'field_label': self.field_label,
@@ -138,7 +114,7 @@ class FormStepNumber(LayoutObject):
     def __init__(self, step_num, total_steps):
         self.step_label = gettext("Step {} of {}".format(step_num, total_steps))
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         context.update({
             'step_label': self.step_label,
         })
@@ -152,7 +128,7 @@ class ValidationMessage(LayoutObject):
     def __init__(self, ko_observable):
         self.ko_observable = ko_observable
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         context.update({
             'ko_observable': self.ko_observable,
         })
@@ -190,7 +166,7 @@ class B3MultiField(LayoutObject):
         self.help_bubble_text = kwargs.pop('help_bubble_text', '')
         self.flat_attrs = flatatt(kwargs)
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         template_pack = template_pack or get_template_pack()
 
         errors = self._get_errors(form, self.fields)
@@ -199,7 +175,7 @@ class B3MultiField(LayoutObject):
 
         html = ''
         for field in self.fields:
-            html += render_field(field, form, form_style, context, template_pack=template_pack)
+            html += render_field(field, form, context, template_pack=template_pack, **kwargs)
         html = mark_safe(html)  # nosec: this is joining together fields which themselves are safe
 
         context.update({
@@ -222,7 +198,7 @@ class B3MultiField(LayoutObject):
     def _get_errors(self, form, fields):
         errors = []
         for field in fields:
-            if isinstance(field, OldField) or issubclass(field.__class__, OldField):
+            if isinstance(field, Field) or issubclass(field.__class__, Field):
                 fname = field.fields[0]
                 if fname not in form.fields:
                     continue
@@ -255,7 +231,7 @@ class CrispyTemplate(object):
         self.template = template
         self.context = context
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         context.update(self.context)
         return render_to_string(self.template, context.flatten())
 
@@ -269,10 +245,10 @@ class FieldWithExtras(Field):
         }
         super(FieldWithExtras, self).__init__(*args, **kwargs)
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         template_pack = template_pack or get_template_pack()
         context.update(self.extras)
-        return super(FieldWithExtras, self).render(form, form_style, context, template_pack=template_pack)
+        return super(FieldWithExtras, self).render(form, context, template_pack=template_pack, **kwargs)
 
 
 class FieldWithHelpBubble(FieldWithExtras):
@@ -315,7 +291,7 @@ class LinkButton(LayoutObject):
             else:
                 self.attrs['class'] = kwargs.pop('css_class')
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         context.update({
             'button_text': self.button_text,
             'button_url': self.button_url,
@@ -324,14 +300,14 @@ class LinkButton(LayoutObject):
         return render_to_string(self.template, context.flatten())
 
 
-class B3TextField(OldField):
+class B3TextField(Field):
 
     def __init__(self, field_name, text, *args, **kwargs):
         self.text = text
         super(B3TextField, self).__init__(field_name, *args, **kwargs)
         self.template = 'hqwebapp/crispy/text_field.html'
 
-    def render(self, form, form_style, context, template_pack=None):
+    def render(self, form, context, template_pack=None, **kwargs):
         context.update({
             'field_text': self.text,
         })
@@ -340,18 +316,14 @@ class B3TextField(OldField):
 
         html = ''
         for field in self.fields:
-            html += render_field(field, form, form_style, context,
+            html += render_field(field, form, context,
                                  template=self.template, attrs=self.attrs,
-                                 template_pack=template_pack)
+                                 template_pack=template_pack, **kwargs)
         return html
 
 
 class FieldsetAccordionGroup(AccordionGroup):
     template = "hqwebapp/crispy/accordion_group.html"
-
-
-class B3HiddenFieldWithErrors(Field):
-    template = "hqwebapp/crispy/hidden_with_errors.html"
 
 
 class RadioSelect(Field):

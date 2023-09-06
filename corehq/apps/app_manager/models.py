@@ -151,6 +151,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildRecord, BuildSpec
 from corehq.apps.builds.utils import get_default_build_spec
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import (
     ApplicationMediaMixin,
@@ -1044,6 +1045,9 @@ class FormBase(DocumentSchema):
     # computed datums IDs that are allowed in endpoints
     function_datum_endpoints = StringListProperty()
 
+    def __repr__(self):
+        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
+
     @classmethod
     def wrap(cls, data):
         data.pop('validation_cache', '')
@@ -1823,6 +1827,14 @@ class DetailColumn(IndexedSchema):
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
 
+    grid_x = IntegerProperty(exclude_if_none=True)
+    grid_y = IntegerProperty(exclude_if_none=True)
+    width = IntegerProperty(exclude_if_none=True)
+    height = IntegerProperty(exclude_if_none=True)
+    horizontal_align = StringProperty(exclude_if_none=True)
+    vertical_align = StringProperty(exclude_if_none=True)
+    font_size = StringProperty(exclude_if_none=True)
+
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
     case_tile_field = StringProperty(exclude_if_none=True)
@@ -2199,6 +2211,17 @@ class DetailPair(DocumentSchema):
         return self
 
 
+class ShadowFormEndpoint(DocumentSchema):
+    form_id = StringProperty()
+    session_endpoint_id = StringProperty()
+
+    def __eq__(self, other):
+        if not isinstance(other, ShadowFormEndpoint):
+            return False
+
+        return self.form_id == other.form_id and self.session_endpoint_id == other.session_endpoint_id
+
+
 class CaseListForm(NavMenuItemMediaMixin):
     form_id = FormIdProperty('modules[*].case_list_form.form_id')
     label = DictProperty()
@@ -2234,6 +2257,9 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     def __init__(self, *args, **kwargs):
         super(ModuleBase, self).__init__(*args, **kwargs)
         self.assign_references()
+
+    def __repr__(self):
+        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
 
     @property
     def is_surveys(self):
@@ -3684,6 +3710,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     source_module_id = StringProperty()
     forms = []
     excluded_form_ids = SchemaListProperty()
+    form_session_endpoints = SchemaListProperty(ShadowFormEndpoint)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
     case_list = SchemaProperty(CaseList)
@@ -4577,6 +4604,10 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     custom_assertions = SchemaListProperty(CustomAssertion)
 
     family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
+
+    def __repr__(self):
+        return (f"{self.doc_type}(id='{self._id}', domain='{self.domain}', "
+                f"name='{self.name}', copy_of={repr(self.copy_of)})")
 
     def has_modules(self):
         return len(self.get_modules()) > 0 and not self.is_remote_app()
@@ -5536,6 +5567,13 @@ class LinkedApplication(Application):
         if self.domain_link:
             return self.domain_link.is_remote
 
+    def get_master_name(self):
+        if self.master_is_remote:
+            return _('Remote Application')  # Avoid the potentially expensive or impossible query
+
+        latest_app = self.get_latest_master_release(self.upstream_app_id)
+        return latest_app.name
+
     def get_latest_master_release(self, master_app_id):
         if self.domain_link:
             return get_latest_master_app_release(self.domain_link, master_app_id)
@@ -5679,6 +5717,10 @@ class DeleteApplicationRecord(DeleteRecord):
 
     def undo(self):
         app = ApplicationBase.get(self.app_id)
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         app.doc_type = app.get_doc_type()
         app.save(increment_version=False)
 
@@ -5693,6 +5735,10 @@ class DeleteModuleRecord(DeleteRecord):
         app = Application.get(self.app_id)
         modules = app.modules
         modules.insert(self.module_id, self.module)
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         app.modules = modules
         app.save()
 
@@ -5715,6 +5761,10 @@ class DeleteFormRecord(DeleteRecord):
             )
         else:
             module = app.modules[self.module_id]
+        DeletedCouchDoc.objects.filter(
+            doc_id=self._id,
+            doc_type=self.doc_type,
+        ).delete()
         forms = module.forms
         forms.insert(self.form_id, self.form)
         module.forms = forms

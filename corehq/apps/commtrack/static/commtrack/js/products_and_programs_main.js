@@ -97,9 +97,9 @@ hqDefine('commtrack/js/products_and_programs_main', [
 
     ko.bindingHandlers.isPaginationActive = {
         update: function (element, valueAccessor, allBindingsAccessor) {
-            var current_page = parseInt(valueAccessor()());
-            var current_item = parseInt(allBindingsAccessor()['text']);
-            if (current_page === current_item) {
+            var currentPage = parseInt(valueAccessor()()),
+                currentItem = parseInt(allBindingsAccessor()['text']);
+            if (currentPage === currentItem) {
                 $(element).parent().addClass('active');
             } else {
                 $(element).parent().removeClass('active');

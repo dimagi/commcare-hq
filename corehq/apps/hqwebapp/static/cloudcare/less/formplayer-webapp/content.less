@@ -12,6 +12,13 @@ body {
   display: none;
 }
 
+#case-list-menu-header{
+  padding-left: 1.5rem;
+  h1 {
+    padding-left: 0px;
+  }
+}
+
 .page-header {
   border-bottom: none;
   padding: 14px 8px 7px;
@@ -37,6 +44,10 @@ body {
   padding-left: 0;
 }
 
+#content-container {
+  background: transparent;
+}
+
 .case-tile-container {
   background: transparent !important;
   > div {
@@ -47,9 +58,14 @@ body {
   }
 }
 
-#select-all-tile-wrapper {
+#case-list-search-controls {
   background-color: @cc-bg;
   border: 1px solid white;
+  display: flex;
+  justify-content: space-between;
+    #case-list-sort-by-btn {
+      background-color: transparent;
+    }
 }
 
 #select-all-tile-checkbox {

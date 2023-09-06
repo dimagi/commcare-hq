@@ -4,7 +4,7 @@
 <ul class="navbar-nav mainmenu-tabs"
     id="hq-main-tabs">
   {% for tab in tabs %}
-    {% cache 500 header_tab tab.class_name tab.domain tab.is_active_tab tab.couch_user.get_id role_version LANGUAGE_CODE use_bootstrap5 %}
+    {% cache 500 header_tab tab.frag_value %}
       {% with tab.filtered_dropdown_items as items %}
         <li class="nav-item mainmenu-tab{% if items %} dropdown{% endif %}" {# mainmenu-tab is old class #}
             id="{{ tab.class_name }}"

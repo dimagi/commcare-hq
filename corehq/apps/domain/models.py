@@ -446,6 +446,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     default_mobile_ucr_sync_interval = IntegerProperty()
 
     ga_opt_out = BooleanProperty(default=False)
+    orphan_case_alerts_warning = BooleanProperty(default=False)
+
 
     @classmethod
     def wrap(cls, data):

@@ -3,8 +3,8 @@ hqDefine("dashboard/js/dashboard", [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/components.ko',    // pagination widget
-    'hqwebapp/js/main',     // post-link function
+    'hqwebapp/js/bootstrap3/components.ko',    // pagination widget
+    'hqwebapp/js/bootstrap3/main',     // post-link function
 ], function (
     $,
     ko,

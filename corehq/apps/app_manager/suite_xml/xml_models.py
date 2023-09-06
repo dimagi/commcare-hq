@@ -394,6 +394,12 @@ class StackDatum(IdNode):
     value = XPathField('@value')
 
 
+class StackInstanceDatum(IdNode):
+    ROOT_NAME = 'instance-datum'
+
+    value = XPathField('@value')
+
+
 class QueryData(XmlObject):
     ROOT_NAME = 'data'
 
@@ -486,6 +492,9 @@ class StackJump(XmlObject):
 
 class Argument(IdNode):
     ROOT_NAME = 'argument'
+
+    instance_id = StringField('@instance-id')
+    instance_src = StringField('@instance-src')
 
 
 class SessionEndpoint(IdNode):
@@ -749,7 +758,7 @@ class Response(XmlObject):
 
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
-    ORDER = ('header', 'template', 'sort_node')
+    ORDER = ('style', 'header', 'template', 'sort_node')
 
     sort = StringField('@sort')
     print_id = StringField('@print-id')

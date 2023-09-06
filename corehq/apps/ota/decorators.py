@@ -5,7 +5,6 @@ from django.http import HttpResponseForbidden
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.auth import BASIC
 from corehq.apps.domain.decorators import (
     get_multi_auth_decorator,
@@ -67,7 +66,7 @@ def mobile_auth(view_func):
     It supports basic, session, and apikey auth, but not digest.
     Endpoints with this decorator will not enforce two factor authentication.
     """
-    return get_multi_auth_decorator(default=BASIC)(
+    return get_multi_auth_decorator(default=BASIC, oauth_scopes=['mobile_access'])(
         two_factor_exempt(
             require_mobile_access(view_func)
         )
@@ -79,7 +78,7 @@ def mobile_auth_or_formplayer(view_func):
     This decorator is used only for anonymous web apps and SMS forms.
     Endpoints with this decorator will not enforce two factor authentication.
     """
-    return get_multi_auth_decorator(default=BASIC, allow_formplayer=True)(
+    return get_multi_auth_decorator(default=BASIC, allow_formplayer=True, oauth_scopes=['mobile_access'])(
         two_factor_exempt(
             require_mobile_access(view_func)
         )

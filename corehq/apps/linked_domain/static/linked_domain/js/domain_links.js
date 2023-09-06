@@ -3,9 +3,10 @@ hqDefine("linked_domain/js/domain_links", [
     'hqwebapp/js/initial_page_data',
     'underscore',
     'knockout',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'hqwebapp/js/multiselect_utils',
-    'hqwebapp/js/components.ko', // for pagination and search box
+    'analytix/js/kissmetrix',
+    'hqwebapp/js/bootstrap3/components.ko', // for pagination and search box
     'hqwebapp/js/select2_knockout_bindings.ko',     // selects2 for fields
 ], function (
     RMI,
@@ -13,7 +14,8 @@ hqDefine("linked_domain/js/domain_links", [
     _,
     ko,
     alertUser,
-    multiselectUtils
+    multiselectUtils,
+    kissmetrics
 ) {
     var _private = {};
     _private.RMI = function () {};
@@ -34,13 +36,19 @@ hqDefine("linked_domain/js/domain_links", [
         self.hasSuccess = ko.observable(false);
         self.showSpinner = ko.observable(false);
 
-        self.update = function () {
+        self.resetStatus = function () {
+            self.error("");
+            self.hasSuccess(false);
+            self.showUpdate(true);
+        };
+
+        var updateFn = function (overwrite) {
             self.showSpinner(true);
             self.showUpdate(false);
             _private.RMI("update_linked_model", {"model": {
                 'type': self.type,
                 'detail': self.detail,
-            }}).done(function (data) {
+            }, 'overwrite': overwrite}).done(function (data) {
                 if (data.error) {
                     self.error(data.error);
                 } else {
@@ -53,6 +61,9 @@ hqDefine("linked_domain/js/domain_links", [
                 self.showSpinner(false);
             });
         };
+
+        self.update = () => updateFn(false);
+        self.forceUpdate = () => updateFn(true);
 
         return self;
     };
@@ -113,7 +124,9 @@ hqDefine("linked_domain/js/domain_links", [
 
         // Tab Header Statuses
         self.manageDownstreamDomainsTabStatus = ko.computed(function () {
-            return self.isUpstreamDomain() ? "active" : "";
+            // A bit of a hack. We need to set an active tab *unless* the URL hash
+            // is already pointing at a valid tab.
+            return self.isUpstreamDomain() && !window.location.hash  ? "active" : "";
         });
 
         self.pullContentTabStatus = ko.computed(function () {
@@ -122,7 +135,7 @@ hqDefine("linked_domain/js/domain_links", [
 
         // Tab Content Statuses
         self.manageTabActiveStatus = ko.computed(function () {
-            return self.isUpstreamDomain() ? "in active" : "";
+            return self.isUpstreamDomain() && !window.location.hash ? "in active" : "";
         });
 
         self.pullTabActiveStatus = ko.computed(function () {
@@ -199,6 +212,12 @@ hqDefine("linked_domain/js/domain_links", [
             });
         };
 
+        self.addDownstreamProjectSpace = function () {
+            kissmetrics.track.event("Clicked Add Downstream Project Space button", {
+                domain: self.domain,
+            });
+        };
+
         self.deleteLink = function (link) {
             _private.RMI("delete_domain_link", {
                 "linked_domain": link.downstreamDomain,
@@ -238,15 +257,21 @@ hqDefine("linked_domain/js/domain_links", [
 
     var PushContentViewModel = function (data) {
         var self = {};
+
+        self.PUSH_TYPE_NONE = '';
+        self.PUSH_TYPE_NORMAL = 'push';
+        self.PUSH_TYPE_OVERWRITE = 'overwrite';
+
         self.parent = data.parent;
         self.domainsToPush = ko.observableArray();
         self.modelsToPush = ko.observableArray();
         self.buildAppsOnPush = ko.observable(false);
-        self.pushInProgress = ko.observable(false);
+        self.pushType = ko.observable(self.PUSH_TYPE_NONE);
         self.shouldShowSelectedERMDomain = ko.observable(false);
         self.shouldShowSelectedMRMDomain = ko.observable(false);
-        self.enablePushButton = ko.computed(function () {
-            return self.domainsToPush().length && self.modelsToPush().length && !self.pushInProgress();
+        self.enablePushButton = ko.pureComputed(function () {
+            return self.domainsToPush().length && self.modelsToPush().length &&
+                self.pushType() === self.PUSH_TYPE_NONE;
         });
         self.containsLiteAndFullLinks = ko.computed(function () {
             if (!self.parent.hasFullAccess) {
@@ -268,7 +293,7 @@ hqDefine("linked_domain/js/domain_links", [
                 let shouldDisable = false;
                 if (self.shouldShowSelectedERMDomain()) {
                     // disable if not full access
-                    shouldDisable = !self.parent.domainLinksByName[option.value].hasFullAccess;
+                    shouldDisable = !self.parent.domainLinksByName()[option.value].hasFullAccess;
                 } else if (self.shouldShowSelectedMRMDomain()) {
                     shouldDisable = true;
                 }
@@ -367,20 +392,24 @@ hqDefine("linked_domain/js/domain_links", [
             return self.localDownstreamDomains().length > 0;
         });
 
-        self.pushContent = function () {
-            self.pushInProgress(true);
+        self.pushContentFn = function (overwrite) {
+            self.pushType(overwrite ? self.PUSH_TYPE_OVERWRITE : self.PUSH_TYPE_NORMAL);
             _private.RMI("create_release", {
                 models: _.map(self.modelsToPush(), JSON.parse),
                 linked_domains: self.domainsToPush(),
                 build_apps: self.buildAppsOnPush(),
+                overwrite: overwrite,
             }).done(function (data) {
                 alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
-                self.pushInProgress(false);
+                self.pushType(self.PUSH_TYPE_NONE);
             }).fail(function () {
                 alertUser.alert_user(gettext('Something unexpected happened.\nPlease try again, or report an issue if the problem persists.'), 'danger');
-                self.pushInProgress(false);
+                self.pushType(self.PUSH_TYPE_NONE);
             });
         };
+
+        self.pushContent = () => self.pushContentFn(false);
+        self.pushAndOverwrite = () => self.pushContentFn(true);
 
         return self;
     };

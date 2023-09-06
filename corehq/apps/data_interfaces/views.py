@@ -89,6 +89,7 @@ from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_with_params
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
 
 from ..users.decorators import require_permission
 from ..users.models import HqPermissions
@@ -96,8 +97,10 @@ from .dispatcher import require_form_management_privilege
 from .interfaces import (
     BulkFormManagementInterface,
     CaseReassignmentInterface,
+    CaseCopyInterface,
     FormManagementMode,
 )
+from corehq.apps.hqcase.case_helper import CaseCopier
 
 
 @login_and_domain_required
@@ -582,7 +585,7 @@ class XFormManagementStatusView(DataInterfaceSection):
             'title': mode.status_page_title,
             'error_text': mode.error_text,
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -608,37 +611,74 @@ def xform_management_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
-class BulkCaseReassignSatusView(DataInterfaceSection):
-    urlname = "bulk_case_reassign_status"
-    page_title = gettext_noop("Bulk Case Reassignment Status")
+class BulkCaseActionSatusView(DataInterfaceSection):
+    urlname = "bulk_case_action_status"
 
     @property
     def section_url(self):
-        return CaseReassignmentInterface.get_url(self.domain)
+        interface_class = CaseReassignmentInterface
+        if self.is_copy_action:
+            interface_class = CaseCopyInterface
+
+        return interface_class.get_url(self.domain)
+
+    @property
+    def page_title(self):
+        title = "Bulk Case Reassignment Status"
+        if self.is_copy_action:
+            title = "Bulk Case Copy Status"
+        return gettext_noop(title)
 
     def get(self, request, *args, **kwargs):
-        context = super(BulkCaseReassignSatusView, self).main_context
+        if self.is_copy_action:
+            action_text = "Copying"
+        else:
+            action_text = "Reassigning"
+
+        context = super(BulkCaseActionSatusView, self).main_context
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
-            'poll_url': reverse('case_reassign_job_poll', args=[self.domain, kwargs['download_id']]),
+            'poll_url': self.poll_url(kwargs['download_id']),
             'title': _(self.page_title),
-            'progress_text': _("Reassigning Cases. This may take some time..."),
-            'error_text': _("Bulk Case Reassignment failed for some reason and we have noted this failure."),
+            'progress_text': _("{action_text} Cases. This may take some time...").format(action_text=action_text),
+            'error_text': _(
+                "Bulk Case {action_text} failed for some reason and we have noted this failure."
+            ).format(action_text=action_text),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
+
+    def poll_url(self, download_id):
+        return reverse(
+            'case_action_job_poll',
+            args=[self.domain, download_id]
+        ) + f"?action={self.case_action}"
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
+    @property
+    def case_action(self):
+        return self.request.GET.get('action', CaseReassignmentInterface.action)
 
-def case_reassign_job_poll(request, domain, download_id):
+    @property
+    def is_copy_action(self):
+        return self.case_action == CaseCopyInterface.action
+
+
+def case_action_job_poll(request, domain, download_id):
     try:
         context = get_download_context(download_id, require_result=True)
     except TaskFailedError as e:
         notify_exception(request, message=str(e))
         return HttpResponseServerError()
-    template = "data_interfaces/partials/case_reassign_status.html"
+
+    case_action = request.GET.get('action', CaseReassignmentInterface.action)
+    if case_action == CaseCopyInterface.action:
+        template = "data_interfaces/partials/case_copy_status.html"
+    else:
+        template = "data_interfaces/partials/case_reassign_status.html"
+
     return render(request, template, context)
 
 
@@ -699,9 +739,17 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
         context.update({
             'rules': [self._format_rule(rule) for rule in self._rules()],
             'time': f"{hour}:00" if hour else _('midnight'),  # noqa: E999
-            'rule_runs': [self._format_rule_run(run) for run in self._rule_runs()]
+            'rule_runs': [self._format_rule_run(run) for run in self._rule_runs()],
+            'has_linked_data': self.has_linked_data(),
+            'can_edit_linked_data': self.can_edit_linked_data(),
         })
         return context
+
+    def has_linked_data(self):
+        return bool(self._rules().exclude(upstream_id=None)[:1])
+
+    def can_edit_linked_data(self):
+        return self.request.couch_user.can_edit_linked_data(self.domain)
 
     def post(self, request, *args, **kwargs):
         response = self._update_rule(request.POST['id'], request.POST['action'])
@@ -711,15 +759,22 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
     def edit_url_name(self):
         return EditCaseRuleView.urlname
 
+    @property
+    def view_url_name(self):
+        return ViewCaseRuleView.urlname
+
     def _format_rule(self, rule):
         return {
             'id': rule.pk,
             'name': rule.name,
             'case_type': rule.case_type,
+            'is_case_type_deprecated': is_case_type_deprecated(self.domain, rule.case_type),
             'active': rule.active,
             'last_run': self._convert_to_user_time(rule.last_run),
             'edit_url': reverse(self.edit_url_name, args=[self.domain, rule.pk]),
+            'view_url': reverse(self.view_url_name, args=[self.domain, rule.pk]),
             'action_error': "",     # must be provided because knockout template looks for it
+            'upstream_id': rule.upstream_id,
         }
 
     def _format_rule_run(self, rule_run):
@@ -803,11 +858,12 @@ class AddCaseRuleView(DataInterfaceSection):
     @property
     @memoized
     def read_only_mode(self):
-        return (
-            not self.is_system_admin and (
-                self.criteria_form.requires_system_admin_to_edit
-                or self.actions_form.requires_system_admin_to_edit
-            )
+        return self.requires_system_admin()
+
+    def requires_system_admin(self):
+        return not self.is_system_admin and (
+            self.criteria_form.requires_system_admin_to_edit
+            or self.actions_form.requires_system_admin_to_edit
         )
 
     @property
@@ -844,6 +900,7 @@ class AddCaseRuleView(DataInterfaceSection):
             'criteria_form': self.criteria_form,
             'actions_form': self.actions_form,
             'read_only_mode': self.read_only_mode,
+            'requires_sysadmin': self.requires_system_admin(),
             'all_case_properties': {
                 t: sorted(names) for t, names in
                 get_data_dict_props_by_case_type(self.domain).items()
@@ -917,6 +974,16 @@ class EditCaseRuleView(AddCaseRuleView):
             raise Http404()
 
         return rule
+
+
+class ViewCaseRuleView(EditCaseRuleView):
+    urlname = 'view_case_rule'
+    page_title = gettext_lazy("View Case Rule")
+
+    @property
+    @memoized
+    def read_only_mode(self):
+        return True
 
 
 @method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
@@ -1038,6 +1105,7 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'id': rule.pk,
             'name': rule.name,
             'case_type': rule.case_type,
+            'is_case_type_deprecated': is_case_type_deprecated(self.domain, rule.case_type),
             'active': rule.active,
             'last_run': (ServerTime(rule.last_run)
                          .user_time(get_timezone_for_user(None, self.domain))
@@ -1199,9 +1267,11 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
         update_properties = [prop['name'] for prop in action_params['properties_to_update']]
         update_properties_set = set(update_properties)
+        reserved_properties = set(prop.replace("@", "") for prop in SPECIAL_CASE_PROPERTIES)
+        reserved_properties.add(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME)
 
         reserved_properties_updated = (
-            set(prop.replace("@", "") for prop in SPECIAL_CASE_PROPERTIES) & update_properties_set
+            reserved_properties & update_properties_set
         )
         if reserved_properties_updated:
             errors.append(

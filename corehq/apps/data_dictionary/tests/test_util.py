@@ -4,11 +4,17 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.utils.translation import gettext
 
+from corehq.util.workbook_reading.datamodels import Cell
+
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.data_dictionary.util import (
     generate_data_dictionary,
     get_values_hints_dict,
+    get_column_headings,
+    map_row_values_to_column_names,
+    is_case_type_deprecated,
+    get_data_dict_deprecated_case_types
 )
 
 
@@ -94,6 +100,30 @@ class GenerateDictionaryTest(TestCase):
 class MiscUtilTest(TestCase):
     domain = uuid.uuid4().hex
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.case_type_name = 'caseType'
+        cls.deprecated_case_type_name = 'depCaseType'
+        cls.case_type_obj = CaseType(name=cls.case_type_name, domain=cls.domain)
+        cls.case_type_obj.save()
+        cls.dep_case_type_obj = CaseType(
+            name=cls.deprecated_case_type_name,
+            domain=cls.domain,
+            is_deprecated=True
+        )
+        cls.dep_case_type_obj.save()
+
+        cls.invalid_col = 'barr'
+        cls.invalid_header_row = [Cell('Foo'), Cell(cls.invalid_col), Cell('Test Column'), Cell(None)]
+        cls.valid_header_row = [Cell('Foo'), Cell('Bar'), Cell('Test Column')]
+        cls.row = [Cell('a'), Cell('b')]
+        cls.valid_values = {
+            'foo': 'col_1',
+            'bar': 'col_2',
+            'test column': 'col_3',
+        }
+
     def tearDown(self):
         CaseType.objects.filter(domain=self.domain).delete()
 
@@ -126,3 +156,38 @@ class MiscUtilTest(TestCase):
         for prop_name, _ in prop_list:
             self.assertTrue(prop_name in values_hints)
             self.assertEqual(sorted(values_hints[prop_name]), sorted(av_dict[prop_name]))
+
+    def test_get_column_headings(self):
+        case_type = 'case'
+        expected_errors = [
+            f"Invalid column \"{self.invalid_col}\" in \"{case_type}\" sheet. "
+            "Valid column names are: Foo, Bar, Test Column",
+            f"Column 4 in \"{case_type}\" sheet has an empty header",
+            f"Missing \"Case Property\" column header in \"{case_type}\" sheet",
+        ]
+        column_headings, errors = get_column_headings(
+            self.invalid_header_row, self.valid_values, case_type, case_prop_name='Prop')
+        self.assertEqual(column_headings, ['col_1', 'col_3'])
+        self.assertEqual(errors, expected_errors)
+
+    def test_map_row_values_to_column_names(self):
+        column_headings, _ = get_column_headings(self.valid_header_row, self.valid_values)
+        row_vals = map_row_values_to_column_names(self.row, column_headings, default_val='empty')
+        expected_output = {
+            'col_1': 'a',
+            'col_2': 'b',
+            'col_3': 'empty',
+        }
+        for key, val in expected_output.items():
+            self.assertEqual(row_vals[key], val)
+
+    def test_is_case_type_deprecated(self):
+        is_deprecated = is_case_type_deprecated(self.domain, self.deprecated_case_type_name)
+        self.assertTrue(is_deprecated)
+        is_deprecated = is_case_type_deprecated(self.domain, '1234')
+        self.assertFalse(is_deprecated)
+
+    def test_get_data_dict_deprecated_case_types(self):
+        deprecated_case_types = get_data_dict_deprecated_case_types(self.domain)
+        self.assertEqual(len(deprecated_case_types), 1)
+        self.assertEqual(deprecated_case_types, {self.deprecated_case_type_name})
