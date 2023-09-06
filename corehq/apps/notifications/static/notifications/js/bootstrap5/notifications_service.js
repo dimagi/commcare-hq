@@ -10,7 +10,7 @@ hqDefine('notifications/js/bootstrap5/notifications_service', [
     'underscore',
     'jquery.rmi/jquery.rmi',
     'analytix/js/kissmetrix',
-    'hqwebapp/js/bootstrap3/hq.helpers',
+    'hqwebapp/js/bootstrap5/hq.helpers',
 ], function (
     $,
     ko,
