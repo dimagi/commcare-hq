@@ -4,8 +4,11 @@ from warnings import filterwarnings
 import settingshelper as helper
 from settings import *  # noqa: F403
 
-if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
-    ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
+# Commenting out temporarily for tests
+# if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
+#     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
+
+ELASTICSEARCH_MAJOR_VERSION = 5
 
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
