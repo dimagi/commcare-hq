@@ -185,8 +185,7 @@ CASE_MAPPING = {
             "type": "text"
         },
         "xform_ids": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"
