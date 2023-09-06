@@ -20,6 +20,10 @@ DEBUG = True
 VELLUM_DEBUG = None
 
 
+# For loading es6 requirejs modules in a local environment, set this to True
+IS_LOCAL_REQUIREJS_ES6 = DEBUG
+
+
 # For Single Sign On (SSO) Implementations
 SAML2_DEBUG = False
 ENFORCE_SSO_LOGIN = False
@@ -1277,6 +1281,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.sentry',
                 'corehq.util.context_processors.bootstrap5',
                 'corehq.util.context_processors.js_privileges',
+                'corehq.util.context_processors.es6_requirejs',
             ],
             'debug': DEBUG,
             'loaders': [
