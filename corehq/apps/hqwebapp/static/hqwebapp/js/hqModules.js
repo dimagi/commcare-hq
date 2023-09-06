@@ -51,6 +51,23 @@ function hqDefine(path, dependencies, moduleAccessor) {
 
     (function (factory) {
         if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
+
+            // Before running build_requirejs, define doesn't know how to handle modules tagged with `es6!`
+            // After requirejs is built on production, es6 modules are always referenced without the es6! prefix
+            // when included as a dependency. However, when running locally without build_requirejs, it
+            // is essential to reference the es6 module with the es6! prefix.
+            if (window.IS_LOCAL_REQUIREJS_ES6) {
+                var es6Dependencies = [
+                    'hqwebapp/js/bootstrap5_loader',
+                ];
+                for (var i = 0; i < dependencies.length; i++) {
+                    var dependency = dependencies[i];
+                    if (es6Dependencies.indexOf(dependency) >= 0) {
+                        dependencies[i] = 'es6!' + dependency;
+                    }
+                }
+            }
+
             // HQ's requirejs build process (build_requirejs.py) replaces hqDefine calls with
             // define calls, so it's important that this do nothing but pass through to require
             define(path, dependencies, factory);
