@@ -145,7 +145,7 @@ class InstancesHelper(PostProcessor):
         if not self.app.supports_menu_instances:
             xpaths.update(self._menu_xpaths_by_command[entry.command.id])
 
-        if self.app.enable_localized_menu_media:
+        if self.app.enable_localized_menu_media and hasattr(entry, 'localized_command'):
             xpaths.update(entry.localized_command.get_all_xpaths())
         else:
             xpaths.update(entry.command.get_all_xpaths())
