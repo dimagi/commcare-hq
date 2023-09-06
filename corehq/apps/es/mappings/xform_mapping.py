@@ -11,46 +11,40 @@ XFORM_MAPPING = {
     "dynamic": False,
     "properties": {
         "#export_tag": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "@uiVersion": {
-            "type": "string"
+            "type": "text"
         },
         "@version": {
-            "type": "string"
+            "type": "text"
         },
         "__retrieved_case_ids": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "_attachments": {
             "dynamic": False,
             "type": "object"
         },
         "app_id": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "backend_id": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "build_id": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "doc_type": {
-            "type": "string"
+            "type": "text"
         },
         "domain": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "external_blobs": {
             "dynamic": False,
@@ -60,12 +54,10 @@ XFORM_MAPPING = {
             "dynamic": False,
             "properties": {
                 "#type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "@name": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "case": {
                     "dynamic": False,
@@ -76,36 +68,30 @@ XFORM_MAPPING = {
                         # template needs to be added along with fundamentally
                         # altering case queries
                         "@case_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "@date_modified": {
                             "format": DATE_FORMATS_STRING,
                             "type": "date"
                         },
                         "@user_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "@xmlns": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "case_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "date_modified": {
                             "format": DATE_FORMATS_STRING,
                             "type": "date"
                         },
                         "user_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "xmlns": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     }
                 },
@@ -113,20 +99,16 @@ XFORM_MAPPING = {
                     "dynamic": False,
                     "properties": {
                         "appVersion": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "app_build_version": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "commcare_version": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "deviceID": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "geo_point": {
                             "geohash": True,
@@ -136,8 +118,7 @@ XFORM_MAPPING = {
                             "type": "geo_point"
                         },
                         "instanceID": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "timeEnd": {
                             "format": DATE_FORMATS_STRING,
@@ -148,13 +129,10 @@ XFORM_MAPPING = {
                             "type": "date"
                         },
                         "userID": {
-                            "index": "not_analyzed",
-                            "null_value": NULL_VALUE,
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "username": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     }
                 }
@@ -171,8 +149,7 @@ XFORM_MAPPING = {
             "type": "boolean"
         },
         "path": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "received_on": {
             "format": DATE_FORMATS_STRING,
@@ -186,18 +163,15 @@ XFORM_MAPPING = {
             "type": "ip"
         },
         "user_type": {
-            "index": "not_analyzed",
-            "null_value": NULL_VALUE,
-            "type": "string"
+            "type": "keyword"
         },
         "xmlns": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"
