@@ -158,6 +158,12 @@ class UserInvitationView(object):
                         signup_request = AsyncSignupRequest.create_from_invitation(invitation)
                         return HttpResponseRedirect(idp.get_login_url(signup_request.username))
 
+                    # TODO: only if domain property is set
+                    if request.POST.get("email").lower() != invitation.email.lower():
+                        messages.error(request, _("You can only accept the invitation with the same email "
+                                                  "address."))
+                        return HttpResponseRedirect(reverse("login"))
+
                     user = activate_new_user_via_reg_form(
                         form,
                         created_by=invited_by_user,

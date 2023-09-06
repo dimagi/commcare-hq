@@ -446,6 +446,8 @@ class WebUserInvitationForm(BaseUserInvitationForm):
         else:
             # web users login with their emails
             self.fields['email'].help_text = _('You will use this email to log in.')
+            # TODO: only if domain property is set
+            self.fields['email'].readonly = True
 
     def clean_email(self):
         data = super().clean_email()
