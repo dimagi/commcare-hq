@@ -151,6 +151,7 @@ app_manager
  0025_migrate_to_search_filter_flag
  0026_conditional_case_update_deleted_apps
  0027_add_case_tile_template_field
+ 0028_case_list_custom_variable_xml_to_dict
 auditcare
  0001_sqlmodels
  0002_uniques
