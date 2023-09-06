@@ -8,6 +8,7 @@ from corehq.apps.users.models import CommCareUser
 from .models import GeoConfig
 
 
+# TODO: quickcache
 def get_geo_case_property(domain):
     try:
         config = GeoConfig.objects.get(domain=domain)

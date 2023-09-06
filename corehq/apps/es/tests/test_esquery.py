@@ -370,3 +370,26 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         real_scroll = query.scroll
         with patch.object(query, "scroll", scroll_then_delete_one):
             self.assertEqual([doc1], list(query.scroll_ids_to_disk_and_iter_docs()))
+
+
+class TestESQueryLaziness:
+
+    def test_lazy(self):
+        """ESQuery should not be evaluated immediately"""
+        pass
+
+    def test_count(self):
+        """ESQuery should be evaluated on call to ``count()``"""
+        pass
+
+    def test_slice(self):
+        """ESQuery should be evaluated on slice"""
+        pass
+
+    def test_count_and_slice(self):
+        """ESQuery should only be evaluated once"""
+        # TODO: Or is that not how that works?
+        pass
+
+    def test_pagination(self):
+        """ESQuery should work efficiently with Django's ``Paginator``"""

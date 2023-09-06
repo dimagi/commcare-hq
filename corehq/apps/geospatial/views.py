@@ -29,7 +29,8 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.util.view_utils import json_error
 
-from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA
+from .const import MAX_GEOHASH_DOC_COUNT, POLYGON_COLLECTION_GEOJSON_SCHEMA
+from .es import get_geohashes
 from .forms import GeospatialConfigForm
 from .models import GeoConfig, GeoPolygon
 from .reports import CaseManagementMap
@@ -63,9 +64,12 @@ class MapboxOptimizationV2(BaseDomainView):
         request_json = json.loads(request.body.decode('utf-8'))
         try:
             poll_id = submit_routing_request(request_json)
-            return json_response(
-                {"poll_url": reverse("mapbox_routing_status", args=[self.domain, poll_id])}
-            )
+            return JsonResponse({
+                "poll_url": reverse(
+                    "mapbox_routing_status",
+                    args=[self.domain, poll_id],
+                ),
+            })
         except (jsonschema.exceptions.ValidationError, HTTPError) as e:
             return HttpResponseBadRequest(str(e))
 
@@ -97,7 +101,7 @@ class GeoPolygonView(BaseDomainView):
             assert polygon.domain == self.domain
         except (GeoPolygon.DoesNotExist, AssertionError):
             raise Http404()
-        return json_response(polygon.geo_json)
+        return JsonResponse(polygon.geo_json)
 
     def post(self, request, *args, **kwargs):
         try:
@@ -125,7 +129,7 @@ class GeoPolygonView(BaseDomainView):
             domain=self.domain,
             geo_json=geo_json
         )
-        return json_response({
+        return JsonResponse({
             'id': geo_polygon.id,
         })
 
@@ -326,3 +330,52 @@ def get_users_with_gps(request, domain):
     ]
 
     return json_response({'user_data': user_data})
+
+
+class CaseGroupingMapView(BaseDomainView):
+    urlname = 'case_grouping_map'
+    template_name = 'case_grouping_map.html'
+
+    page_name = _("Case Grouping Map")
+    section_name = _("Geospatial")
+
+    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+
+@toggles.GEOSPATIAL.required_decorator()
+def view_paginated_geohashes_json(request, domain, *args, **kwargs):
+    case_property = get_geo_case_property(domain)
+    precision = request.GET.get('precision')
+    geohash_resultset = get_geohashes(
+        domain,
+        field=case_property,
+        precision=precision,
+    )
+    paginator = Paginator(geohash_resultset, MAX_GEOHASH_DOC_COUNT)
+    page_num = request.GET.get('page')
+    page = paginator.get_page(page_num)
+
+    page_numbers = {
+        'current': page.number
+    }
+    if page.has_previous():
+        page_numbers['first'] = 1
+        page_numbers['previous'] = page.previous_page_number()
+    if page.has_next():
+        page_numbers['next'] = page.next_page_number()
+        page_numbers['last'] = page.num_pages()
+
+    return JsonResponse({
+        'geohashes': page.object_list,
+        'pages': page_numbers,
+    })
