@@ -51,15 +51,13 @@
       {% endif %}
 
       {% if allow_report_an_issue %}
-        <div class="panel panel-modern-gray">
-          <div class="panel-heading">
-            <h4 class="panel-title panel-title-nolink">
+        <div class="card text-bg-light">
+          <div class="card-body">
+            <h4 class="card-title pb-1 mb-3 border-bottom">
               {% blocktrans %}
                 Been here before? Report an issue to help us get this problem fixed faster.
               {% endblocktrans %}
             </h4>
-          </div>
-          <div class="panel-body">
             <form class="form form-horizontal" action="{% url "bug_report" %}" method="post">
               {% csrf_token %}
               <input type="hidden" id="bug-report-500-url" name="url" value="{{ request.build_absolute_uri }}"/>
