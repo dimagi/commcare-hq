@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/bootstrap5/500",[
+hqDefine("hqwebapp/js/500",[
     'jquery',
     'hqwebapp/js/bootstrap5_loader',
 ], function ($, bootstrap) {
