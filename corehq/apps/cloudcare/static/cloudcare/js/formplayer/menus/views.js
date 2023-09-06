@@ -899,13 +899,19 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 "role": "link",
                 "tabindex": "0",
+                "style": this.buildMaxWidth(),
             };
         },
         events: {
             "click": "crumbClick",
             "keydown": "crumbKeyAction",
         },
-
+        buildMaxWidth: function () {
+            // to avoid overflow, compute the max width in CSS based on number of breadcrumbs
+            const fullWidthOffset = 106.5; // padding including home and hamburger icons
+            const crumbCount = this.model.collection.length;
+            return `max-width: calc((100vw - ${fullWidthOffset}px) / ${crumbCount});`;
+        },
         crumbClick: function (e) {
             e.preventDefault();
             const crumbId = this.options.model.get('id');
