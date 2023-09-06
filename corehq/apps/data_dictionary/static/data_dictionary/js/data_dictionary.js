@@ -23,7 +23,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     DOMPurify,
     toggles
 ) {
-    var caseType = function (name, fhirResourceType, deprecated, moduleCount) {
+    var caseType = function (name, fhirResourceType, deprecated, moduleCount, geoCaseProp) {
         var self = {};
         self.name = name || gettext("No Name");
         self.deprecated = deprecated;
@@ -31,6 +31,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.url = "#" + name;
         self.fhirResourceType = ko.observable(fhirResourceType);
         self.groups = ko.observableArray();
+        self.geoCaseProp = geoCaseProp;
 
         self.init = function (groupData, changeSaveButton) {
             for (let group of groupData) {
@@ -40,9 +41,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 groupObj.toBeDeprecated.subscribe(changeSaveButton);
 
                 for (let prop of group.properties) {
+                    const isGeoCaseProp = (self.geoCaseProp === prop.name);
                     var propObj = propertyListItem(prop.name, prop.label, false, prop.group, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath, prop.is_geo_case_property);
+                        prop.removeFHIRResourcePropertyPath, isGeoCaseProp);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.label.subscribe(changeSaveButton);
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
@@ -87,7 +89,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     var propertyListItem = function (name, label, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeospatialProperty) {
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeoCaseProp) {
         var self = {};
         self.name = name;
         self.label = ko.observable(label);
@@ -100,7 +102,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.fhirResourcePropPath = ko.observable(fhirResourcePropPath);
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
-        self.isGeospatialProperty = ko.observable(isGeospatialProperty);
+        self.isGeoCaseProp = ko.observable(isGeoCaseProp);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
         let subTitle;
         if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
@@ -126,7 +128,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.deprecateProperty = function () {
-            if (!self.isGeospatialProperty()) {
+            if (!toggles.toggleEnabled('GEOSPATIAL') || !self.isGeoCaseProp()) {
                 self.deprecated(true);
                 return;
             }
@@ -243,7 +245,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             caseTypeData.name,
                             caseTypeData.fhir_resource_type,
                             caseTypeData.is_deprecated,
-                            caseTypeData.module_count
+                            caseTypeData.module_count,
+                            data.geo_case_property
                         );
                         caseTypeObj.init(caseTypeData.groups, changeSaveButton);
                         self.caseTypes.push(caseTypeObj);
