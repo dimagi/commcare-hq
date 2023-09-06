@@ -659,7 +659,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         """
         In this test, we particularly test the scenario that
         half of the billable is within the limit, the remaining half exceeds the limit.
-        Current monthly_limit for sms i 0. I'll override the monthly_limit to 1 in this test.
+        So it's crucial to use test plan in this test instead of default plan whose limit is 0.
         """
 
         def _set_billable_date_sent_day(sms_billable, day):
