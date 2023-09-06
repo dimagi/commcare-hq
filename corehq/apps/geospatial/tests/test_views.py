@@ -29,20 +29,20 @@ class GeoConfigViewTestClass(TestCase):
         )
         cls.webuser.save()
 
-        case_type = CaseType(domain=cls.domain, name='case_type')
-        case_type.save()
+        cls.case_type = CaseType(domain=cls.domain, name='case_type')
+        cls.case_type.save()
         cls.case_prop_name = 'gps_prop'
         CaseProperty(
-            case_type=case_type,
+            case_type=cls.case_type,
             name=cls.case_prop_name,
             data_type=CaseProperty.DataType.GPS,
         ).save()
 
     @classmethod
     def tearDownClass(cls):
+        cls.case_type.delete()
         cls.webuser.delete(None, None)
         cls.domain_obj.delete()
-
         super().tearDownClass()
 
     def _make_post(self, data):
