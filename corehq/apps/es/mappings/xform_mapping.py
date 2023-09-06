@@ -1,6 +1,5 @@
 from corehq.apps.es.client import Tombstone
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-from corehq.apps.es.mappings.const import NULL_VALUE
 
 XFORM_MAPPING = {
     "_meta": {
