@@ -109,5 +109,13 @@
       "label": "notifications/partials",
       "compare_all_files": true
     }
+  ],
+  "apps/analytics/templates/analytics": [
+    {
+      "directories": ["forms/bootstrap3/", "forms/bootstrap5/"],
+      "file_type": "template",
+      "label": "analytics/forms",
+      "compare_all_files": true
+    }
   ]
 }
