@@ -95,7 +95,7 @@ class InstancesHelper(PostProcessor):
         for remote_request in self.suite.remote_requests:
             self.add_entry_instances(remote_request)
         if self.app.supports_menu_instances:
-            for menu in self.suite.menus:
+            for menu in self.suite.localized_menus:
                 self._add_menu_instances(menu)
 
     def add_entry_instances(self, entry):
@@ -144,6 +144,11 @@ class InstancesHelper(PostProcessor):
 
         if not self.app.supports_menu_instances:
             xpaths.update(self._menu_xpaths_by_command[entry.command.id])
+
+        if self.app.enable_localized_menu_media:
+            xpaths.update(entry.localized_command.get_all_xpaths())
+        else:
+            xpaths.update(entry.command.get_all_xpaths())
 
         if entry.command.id in self._relevancy_xpaths_by_command:
             xpaths.add(self._relevancy_xpaths_by_command[entry.command.id])
@@ -284,14 +289,12 @@ class InstancesHelper(PostProcessor):
     def _add_menu_instances(self, menu):
         # 2.54 and later only (supports_menu_instances)
         # Prior to that, instances are added to entries
-        xpaths = {assertion.test for assertion in menu.assertions}
-        if menu.relevant:
-            xpaths.add(menu.relevant)
-
+        xpaths = menu.get_all_xpaths()
         known_instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app, xpaths)
         assert_no_unknown_instances(unknown_instance_ids)
         for instance in known_instances:
             menu.instances.append(instance)
+
 
 _factory_map = {}
 
@@ -434,6 +437,7 @@ def assert_no_unknown_instances(instance_ids):
             "Instance reference not recognized: {} in XPath \"{}\""
             .format(instance_id, getattr(instance_id, 'xpath', "(XPath Unknown)"))
         )
+
 
 instance_re = re.compile(r"""instance\(\s*['"]([\w\-:]+)['"]\s*\)""", re.UNICODE)
 
