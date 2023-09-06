@@ -1272,6 +1272,7 @@ class MessagingTab(UITab):
                 ],
             })
 
+        if toggles.CUSTOM_EMAIL_GATEWAY.enabled(self.domain) and self.couch_user.is_domain_admin():
             settings_urls.append({
                 'title': _('Email Connectivity'),
                 'url': reverse(DomainEmailGatewayListView.urlname, args=[self.domain]),

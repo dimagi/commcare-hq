@@ -5,6 +5,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop, gettext_lazy
 from memoized import memoized
 
+from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.models import cached_property
 from corehq.apps.domain.views import BaseDomainView
@@ -30,6 +31,7 @@ class BaseMessagingSectionView(BaseDomainView):
         return reverse("email_default", args=[self.domain])
 
 
+@method_decorator(toggles.CUSTOM_EMAIL_GATEWAY.required_decorator(), name='dispatch')
 class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
     template_name = "email/gateway_list.html"
     urlname = 'list_domain_email_backends'
@@ -60,25 +62,14 @@ class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionVie
 
     @property
     def page_context(self):
-        mappings = SQLEmailSMTPBackend.objects.filter(
-            domain=self.domain,
-        )
-        # extra_backend_mappings = {
-        #     mapping.prefix: mapping.backend.name
-        #     for mapping in mappings if mapping.prefix != '*'
-        # }
-
-        extra_backend_mappings = {}
-
         context = self.pagination_context
-        #context = {}
 
         context.update({
             'initiate_new_form': InitiateAddEmailBackendForm(
                 user=self.request.couch_user,
                 domain=self.domain
             ),
-            'extra_backend_mappings': extra_backend_mappings,
+            'extra_backend_mappings': {},
             'is_system_admin': self.is_system_admin,
         })
         return context
@@ -87,6 +78,8 @@ class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionVie
     def paginated_list(self):
         backends = SQLEmailSMTPBackend.get_domain_backends(
             self.domain,
+            offset=self.skip,
+            limit=self.limit
         )
         default_backend = SQLEmailSMTPBackend.get_domain_default_backend(
             self.domain
@@ -178,6 +171,7 @@ class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionVie
         return self.paginate_crud_response
 
 
+@method_decorator(toggles.CUSTOM_EMAIL_GATEWAY.required_decorator(), name='dispatch')
 class AddDomainEmailGatewayView(BaseMessagingSectionView):
     urlname = 'add_domain_gateway'
     template_name = 'email/add_gateway.html'
@@ -274,6 +268,7 @@ class AddDomainEmailGatewayView(BaseMessagingSectionView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(toggles.CUSTOM_EMAIL_GATEWAY.required_decorator(), name='dispatch')
 class EditDomainEmailGatewayView(AddDomainEmailGatewayView):
     urlname = 'edit_domain_gateway'
     page_title = gettext_lazy("Edit Email Gateway")

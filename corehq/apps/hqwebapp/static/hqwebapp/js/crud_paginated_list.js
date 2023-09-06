@@ -90,7 +90,6 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
         self.allPages = ko.computed(function () {
             var last_ind = self.maxPage() + 1;
             if (self.maxPage() <= 5 || self.currentPage() <= 3)
-                console.log("self.maxPage() " + self.maxPage());
                 return _.range(1, Math.min(last_ind, 6));
             if (self.currentPage() >= self.maxPage() - 2)
                 return _.range(self.maxPage() - 4, last_ind);

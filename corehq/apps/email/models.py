@@ -65,7 +65,7 @@ class SQLEmailSMTPBackend(models.Model):
         return False
 
     @classmethod
-    def get_domain_backends(cls, domain, count_only=False):
+    def get_domain_backends(cls, domain, count_only=False, offset=None, limit=None):
         """
         Returns all the backends that the given domain has access to.
         """
@@ -76,6 +76,9 @@ class SQLEmailSMTPBackend(models.Model):
             return result.count()
 
         result = result.order_by('name').values_list('id', flat=True)
+
+        if offset is not None and limit is not None:
+            result = result[offset:offset + limit]
 
         return [cls.load(pk) for pk in result]
 
