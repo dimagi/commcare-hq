@@ -64,15 +64,13 @@ class Command(BaseCommand):
                         main_subscription = None
                         csv_main_subscription = "Multiple Main Subscriptions"
                     for subscription in subscriptions:
-                        need_update = False
                         update_status = ''
-                        if (
+                        need_update = bool(
                             main_subscription
                             and subscription.plan_version != main_subscription.plan_version
                             and subscription.service_type in (SubscriptionType.PRODUCT,
                                                               SubscriptionType.IMPLEMENTATION)
-                        ):
-                            need_update = True
+                        )
                         if update and need_update:
                             try:
                                 subscription.upgrade_plan_for_consistency(
