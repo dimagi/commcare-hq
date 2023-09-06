@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,49 +1,58 @@
+@@ -1,49 +1,63 @@
 -hqDefine('hqwebapp/js/bootstrap3/hq-bug-report', [
 -    "jquery", "jquery-form/dist/jquery.form.min", "hqwebapp/js/bootstrap3/hq.helpers",
 -], function ($) {
@@ -32,6 +32,11 @@
 -            $emailFormGroup.removeClass('has-error has-feedback');
 -            $emailFormGroup.find(".label-danger").addClass('hide');
 +        self.$bugReportModalElement = $('#modalReportIssue');
++        if (self.$bugReportModalElement.length === 0) {
++            // If the modal element is not present on the page, don't continue
++            return;
++        }
++
 +        self.bugReportModal = new bootstrap.Modal(self.$bugReportModalElement);
 +        self.$hqwebappBugReportForm = $('#hqwebapp-bugReportForm');
 +        self.$hqwebappBugReportSubmit = $('#bug-report-submit');
@@ -91,7 +96,7 @@
                      return false;
                  }
              }
-@@ -51,57 +60,61 @@
+@@ -51,57 +65,61 @@
                  return false;
              }
  
