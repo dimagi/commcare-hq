@@ -23,7 +23,6 @@ from .routing_solvers.mapbox_optimize import (
 
 from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA
 from .models import GeoPolygon, GeoConfig
-from .utils import is_gps_case_property_deprecated
 
 
 def geospatial_default(request, *args, **kwargs):
