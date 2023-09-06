@@ -5,9 +5,7 @@ from crispy_forms.bootstrap import StrictButton
 from django.utils.translation import gettext_lazy as _
 from django import forms
 from corehq.apps.geospatial.models import GeoConfig
-from corehq.apps.data_dictionary.util import get_gps_properties_all_case_types
-from .const import GEO_POINT_CASE_PROPERTY
-from .utils import get_geo_case_property
+
 
 LOCATION_SOURCE_OPTIONS = [
     (GeoConfig.CUSTOM_USER_PROPERTY, _("Custom user field")),
@@ -29,9 +27,9 @@ class GeospatialConfigForm(forms.ModelForm):
         required=True,
         help_text=_("The name of the mobile worker custom field which stores the users' geo-location data."),
     )
-    case_location_property_name = forms.ChoiceField(
+    case_location_property_name = forms.CharField(
         label=_("Fetch case location data from property"),
-        choices=(),
+        widget=forms.widgets.Select(choices=[]),
         required=True,
         help_text=_("The name of the case property storing the geo-location data of your cases."),
     )
@@ -39,7 +37,6 @@ class GeospatialConfigForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['case_location_property_name'].choices = self._get_gps_prop_choices()
         self.helper = hqcrispy.HQFormHelper()
         self.helper.add_layout(
             crispy.Layout(
@@ -57,7 +54,10 @@ class GeospatialConfigForm(forms.ModelForm):
                         'user_location_property_name',
                         data_bind="value: customUserFieldName"
                     ),
-                    crispy.Field('case_location_property_name', data_bind="value: geoCasePropertyName"),
+                    crispy.Field(
+                        'case_location_property_name',
+                        data_bind="options: geoCasePropOptions, value: geoCasePropertyName"
+                    ),
                 ),
                 hqcrispy.FormActions(
                     StrictButton(
@@ -68,16 +68,4 @@ class GeospatialConfigForm(forms.ModelForm):
                     )
                 )
             )
-        )
-
-    def _get_gps_prop_choices(self):
-        gps_props = get_gps_properties_all_case_types(self.instance.domain)
-
-        # The selected geo case property may be deprecated, so we
-        # should fetch it to ensure it is in the final list
-        gps_props.add(get_geo_case_property(self.instance.domain))
-        return (
-            tuple((prop_name, prop_name) for prop_name in gps_props)
-            if gps_props
-            else [(GEO_POINT_CASE_PROPERTY, GEO_POINT_CASE_PROPERTY)]
         )
