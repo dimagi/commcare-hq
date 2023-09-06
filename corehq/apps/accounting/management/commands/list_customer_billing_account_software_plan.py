@@ -14,7 +14,7 @@ class Command(BaseCommand):
                             'under each billing account to the main billing subscription')
 
     def handle(self, *args, **kwargs):
-        update = kwargs['update']
+        allow_update = kwargs['update']
         customer_billing_accounts = []
         while True:
             account_name = input("Enter a customer billing account name, "
@@ -63,13 +63,13 @@ class Command(BaseCommand):
                         csv_main_subscription = "Multiple Main Subscriptions"
                     for subscription in subscriptions:
                         update_status = ''
-                        need_update = bool(
+                        needs_update = bool(
                             main_subscription
                             and subscription.plan_version != main_subscription.plan_version
                             and subscription.service_type in (SubscriptionType.PRODUCT,
                                                               SubscriptionType.IMPLEMENTATION)
                         )
-                        if update and need_update:
+                        if allow_update and needs_update:
                             try:
                                 subscription.upgrade_plan_for_consistency(
                                     new_plan_version=main_subscription.plan_version,
@@ -88,7 +88,7 @@ class Command(BaseCommand):
                             subscription.date_start,
                             subscription.date_end,
                             csv_main_subscription,
-                            need_update,
+                            needs_update,
                             update_status
                         ])
         print(f"File has been saved to {file_path}")
