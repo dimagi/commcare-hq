@@ -64,7 +64,6 @@
       {% endif %}
 
       {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
-
         <div class="collapse navbar-collapse ms-2" id="hq-full-menu">
           <div class="nav-settings-bar">
             {% include 'hqwebapp/includes/bootstrap5/global_navigation_bar.html' %}
