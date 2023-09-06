@@ -7,7 +7,7 @@
 
 {% requirejs_main 'hqwebapp/js/bootstrap5/500' %}
 
-{% block page_name %}<h2>{% trans "Oh no, something unexpected just happened!" %}</h2>{% endblock %}
+{% block page_name %}{% trans "Oh no, something unexpected just happened!" %}{% endblock %}
 {% block page_content %}
   <div class="row">
   {% if not enterprise_mode %}
