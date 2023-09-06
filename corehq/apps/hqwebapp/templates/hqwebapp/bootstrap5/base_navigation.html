@@ -64,7 +64,7 @@
             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
             {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
               <a href="#cta-form-get-demo"
-                 data-toggle="modal"
+                 data-bs-toggle="modal"
                  id="cta-form-get-demo-button-header"
                  class="btn btn-purple navbar-btn">
                 {% trans 'Schedule a Demo' %}
