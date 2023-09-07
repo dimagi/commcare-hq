@@ -2,7 +2,7 @@ hqDefine("export/js/export_list_main", [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'analytix/js/kissmetrix',
-    'hqwebapp/js/main',
+    'hqwebapp/js/bootstrap3/main',
     'export/js/create_export',
     'export/js/export_list',
     'hqwebapp/js/select_2_ajax_widget',  // for case owner & user filters in DashboardFeedFilterForm
@@ -77,6 +77,7 @@ hqDefine("export/js/export_list_main", [
                 toggleEnabled: initialPageData.reverse("toggle_saved_export_enabled"),
                 update: initialPageData.reverse("update_emailed_export_data"),
             },
+            exportOwnershipEnabled: initialPageData.get("export_ownership_enabled"),
         }));
 
         if (modelType === 'form') {

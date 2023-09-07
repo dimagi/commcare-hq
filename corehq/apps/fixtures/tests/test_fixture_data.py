@@ -7,7 +7,6 @@ from casexml.apps.phone.tests.utils import \
     call_fixture_generator as call_fixture_generator_raw
 
 from corehq.apps.fixtures import fixturegenerators
-from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.models import (
     FIXTURE_BUCKET,
     Field,
@@ -32,7 +31,6 @@ class FixtureDataTest(TestCase):
         super(FixtureDataTest, self).setUp()
         self.domain = 'qwerty'
         self.tag = "district"
-        delete_all_fixture_data()
 
         self.data_type = LookupTable(
             domain=self.domain,
@@ -46,7 +44,6 @@ class FixtureDataTest(TestCase):
             item_attributes=[],
         )
         self.data_type.save()
-        self.addCleanup(self.data_type._migration_get_couch_object().delete)
 
         self.data_item = LookupTableRow(
             domain=self.domain,
@@ -67,7 +64,6 @@ class FixtureDataTest(TestCase):
             sort_key=0,
         )
         self.data_item.save()
-        self.addCleanup(self.data_item._migration_get_couch_object().delete)
 
         self.user = CommCareUser.create(self.domain, 'to_delete', '***', None, None)
         self.addCleanup(self.user.delete, self.domain, deleted_by=None)
@@ -78,7 +74,7 @@ class FixtureDataTest(TestCase):
             owner_type=OwnerType.User,
             row_id=self.data_item.id,
         )
-        self.ownership.save(sync_to_couch=False)
+        self.ownership.save()
         self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + '/' + self.domain)
 
     def test_xml(self):
@@ -182,7 +178,6 @@ class FixtureDataTest(TestCase):
             item_attributes=[],
         )
         empty_data_type.save()
-        self.addCleanup(empty_data_type._migration_get_couch_object().delete)
 
         fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         self.assertEqual(2, len(fixtures))
@@ -268,7 +263,6 @@ class FixtureDataTest(TestCase):
             item_attributes=[],
         )
         data_type.save()
-        self.addCleanup(data_type._migration_get_couch_object().delete)
         return data_type
 
     def make_data_item(self, data_type, cost):
@@ -280,7 +274,6 @@ class FixtureDataTest(TestCase):
             sort_key=0,
         )
         data_item.save()
-        self.addCleanup(data_item._migration_get_couch_object().delete)
         return data_item
 
 
@@ -315,7 +308,6 @@ class TestFixtureOrdering(TestCase):
             cls._make_data_item(2, "Stark", "Winterfell", "Direwolf"),
             cls._make_data_item(7, "Baratheon", "Storm's End", "Stag"),
         ]
-        cls.addClassCleanup(delete_all_fixture_data, cls.domain)
 
     @classmethod
     def _make_data_item(cls, sort_key, name, seat, sigil):

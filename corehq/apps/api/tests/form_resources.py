@@ -3,30 +3,27 @@ import uuid
 from datetime import datetime, timedelta
 
 from django.test import TestCase
-from django.utils.http import urlencode
 from django.urls import reverse
+from django.utils.http import urlencode
+
+from django_prbac.models import Role
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.parsing import json_format_datetime
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.api.resources import v0_4
+from corehq.apps.domain.models import Domain
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import reset_es_index
 from corehq.apps.users.models import WebUser
-from corehq.apps.domain.models import Domain
-from django_prbac.models import Role
-
-from .utils import APIResourceTest, FakeFormESView
+from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.util.test_utils import flag_enabled
 
+from .utils import APIResourceTest, FakeFormESView
 
-@es_test
+
+@es_test(requires=[form_adapter])
 class TestXFormInstanceResource(APIResourceTest):
     """
     Tests the XFormInstanceResource, currently only v0_4
@@ -38,11 +35,6 @@ class TestXFormInstanceResource(APIResourceTest):
 
     resource = v0_4.XFormInstanceResource
 
-    def setUp(self):
-        self.es = get_es_new()
-        reset_es_index(XFORM_INDEX_INFO)
-        initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
-
     def _submit_case_update_form(self):
         # Create an xform that touches a case
         case_id = uuid.uuid4().hex
@@ -53,9 +45,10 @@ class TestXFormInstanceResource(APIResourceTest):
             ).as_text(),
             self.domain.name
         )[0]
-
-        send_to_elasticsearch('forms', transform_xform_for_elasticsearch(form.to_json()))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        form_adapter.index(
+            form,
+            refresh=True
+        )
         return form, case_id
 
     def test_fetching_xform_cases(self):
@@ -100,8 +93,10 @@ class TestXFormInstanceResource(APIResourceTest):
             )
 
             to_ret.append(backend_form)
-            send_to_elasticsearch('forms', transform_xform_for_elasticsearch(backend_form.to_json()))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+            form_adapter.index(
+                backend_form,
+                refresh=True
+            )
         return to_ret
 
     def test_get_list(self):
@@ -211,8 +206,10 @@ class TestXFormInstanceResource(APIResourceTest):
         # archive
         update = forms[0].to_json()
         update['doc_type'] = 'xformarchived'
-        send_to_elasticsearch('forms', transform_xform_for_elasticsearch(update))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        form_adapter.index(
+            update,
+            refresh=True
+        )
 
         # archived form should not be included by default
         response = self._assert_auth_get_resource(self.list_endpoint)
@@ -376,7 +373,7 @@ class TestXFormPillow(TestCase):
                 }
             }
         }
-        cleaned = transform_xform_for_elasticsearch(bad_appVersion)
+        cleaned = form_adapter.to_json(bad_appVersion)
         self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
         self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
         self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")

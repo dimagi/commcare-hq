@@ -5,7 +5,6 @@
   "auto_gps_capture": false,
   "deployment_date": null,
   "user_type": null,
-  "text_input": "roman",
   "secure_submissions": false,
   "build_broken": false,
   "show_user_registration": false,
@@ -142,7 +141,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -169,7 +168,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -259,7 +258,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/name_of_series",
+              "name_update": {
+                "question_path": "/data/name_of_series"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -442,7 +443,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "short"
         },
         "long": {
@@ -495,7 +496,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "long"
         }
       },
@@ -611,7 +612,7 @@
               "followup_date": null
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -700,7 +701,7 @@
           "tabs": [
           ],
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "short",
@@ -743,7 +744,7 @@
           "tabs": [
           ],
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "long",
@@ -794,7 +795,7 @@
           "tabs": [
           ],
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "short",
@@ -808,7 +809,7 @@
           "tabs": [
           ],
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "long",
@@ -859,7 +860,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -886,7 +887,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -945,7 +946,9 @@
                 "case_type": "point",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/x",
+                "name_update": {
+                  "question_path": "/data/x"
+                },
                 "condition": {
                   "answer": null,
                   "question": null,
@@ -1011,7 +1014,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1194,7 +1197,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "short"
         },
         "long": {
@@ -1346,7 +1349,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "long"
         }
       },
@@ -1421,7 +1424,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -1448,7 +1451,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -1538,7 +1541,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1749,7 +1752,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": false,
+          "case_tile_template": null,
           "display": "short"
         },
         "long": {
@@ -1822,7 +1825,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "long"
         }
       },
@@ -2133,7 +2136,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "short"
         },
         "long": {
@@ -2185,7 +2188,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "display": "long"
         }
       },
@@ -2218,7 +2221,7 @@
           "print_template": {},
           "lookup_responses": [],
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "columns": [
             {
               "doc_type": "DetailColumn",
@@ -2270,7 +2273,7 @@
           "print_template": {},
           "lookup_name": null,
           "filter": null,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }

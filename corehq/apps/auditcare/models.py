@@ -14,7 +14,7 @@ from corehq.util.models import (
     ForeignValue,
     NullJsonField,
     TruncatingCharField,
-    foreign_value_init,
+    foreign_init,
 )
 
 log = logging.getLogger(__name__)
@@ -45,6 +45,7 @@ STANDARD_HEADER_KEYS = [
     'REMOTE_ADDR',
     'HTTP_ACCEPT_LANGUAGE',
     'CONTENT_TYPE',
+    'CONTENT_LENGTH',
     'HTTP_ACCEPT_ENCODING',
     'HTTP_USER_AGENT',
     # settings.AUDIT_TRACE_ID_HEADER (django-ified) will be added here
@@ -125,7 +126,7 @@ class AuditEvent(models.Model):
 
 
 @architect.install('partition', type='range', subtype='date', constraint='month', column='event_date')
-@foreign_value_init
+@foreign_init
 class NavigationEventAudit(AuditEvent):
     """
     Audit event to track happenings within the system, ie, view access
@@ -182,7 +183,7 @@ ACCESS_CHOICES = {
 
 
 @architect.install('partition', type='range', subtype='date', constraint='month', column='event_date')
-@foreign_value_init
+@foreign_init
 class AccessAudit(AuditEvent):
     access_type = models.CharField(max_length=1, choices=ACCESS_CHOICES.items())
     http_accept_fk = models.ForeignKey(

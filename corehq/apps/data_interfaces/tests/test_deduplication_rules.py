@@ -9,22 +9,17 @@ from corehq.apps.data_interfaces.views import (
     DeduplicationRuleEditView,
     HttpResponseRedirect,
 )
+from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.elastic import get_es_new
-from pillowtop.es_utils import initialize_index_and_mapping
 
 
-@es_test
+@es_test(requires=[case_adapter], setup_class=True)
 class DeduplicationRuleCreateViewTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = 'test-domain-create'
-        cls.es = get_es_new()
-        initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
-
 
     @patch('corehq.apps.data_interfaces.views.messages')
     @patch('corehq.apps.data_interfaces.views.reverse', Mock(return_value='url'))
@@ -97,15 +92,13 @@ class DeduplicationRuleCreateViewTest(TestCase):
         return res.id
 
 
-@es_test
+@es_test(requires=[case_adapter], setup_class=True)
 class DeduplicationRuleEditViewTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = 'test-domain-edit'
-        cls.es = get_es_new()
-        initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
 
     @patch('corehq.apps.data_interfaces.views.messages')
     @patch('corehq.apps.data_interfaces.views.DeduplicationRuleEditView.dedupe_action')

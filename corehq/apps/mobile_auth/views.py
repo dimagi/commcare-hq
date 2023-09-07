@@ -78,7 +78,7 @@ def fetch_key_records(request, domain):
     return HttpResponse(payload)
 
 
-@api_auth
+@api_auth()
 @domain_admin_required
 @require_GET
 def admin_fetch_key_records(request, domain):

@@ -1,0 +1,72 @@
+.flex-container {
+  display: flex;
+  align-items: stretch;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.flex-child {
+  flex: 1;
+  min-width: 200px;
+  &:empty {
+    display: none;
+  }
+}
+
+.flex-child-sidebar {
+  max-width: 400px;
+  table {
+    table-layout: fixed;
+  }
+  .query-input-group {
+    margin-right: 8px;
+    margin-bottom: 4px;
+    margin-left: 8px;
+  }
+  .query-caption {
+    margin-top: 4px;
+    margin-right: 8px;
+    margin-left: 8px;
+  }
+  .mapboxgl-ctrl-geocoder {
+    min-width: 100%;
+    font-size: 1em;
+    > .mapboxgl-ctrl-geocoder--input {
+      height: inherit;
+    }
+  }
+  .select2-container .select2-selection--multiple {
+    min-height: inherit;
+  }
+}
+
+#sidebar-region {
+  background: transparent;
+  table {
+    background: white;
+  }
+}
+
+.flex-child-menu {
+  flex: 2;
+}
+
+.query-field > .checkbox {
+  &:first-of-type {
+    margin-top: 0;
+  }
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.query-description {
+  a {
+    color: @cc-brand-mid;
+  }
+  a:hover {
+    color: @cc-brand-low;
+  }
+}

@@ -10,6 +10,10 @@ couch_reindex_schedule = deserialize_run_every_setting(settings.COUCH_REINDEX_SC
 
 @periodic_task(run_every=couch_reindex_schedule, queue=settings.CELERY_PERIODIC_QUEUE)
 def run_continuous_indexing_task():
+    """
+    prevent infrequently queried views from being very slow
+    and keep stale=true queries reasonably fresh
+    """
     preindex_couch_views.delay()
 
 

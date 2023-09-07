@@ -209,7 +209,7 @@ class SessionDetailsViewTest(TestCase):
         self.assertEqual(401, response.status_code)
 
     @softer_assert()
-    @flag_enabled('FORM_LINK_WORKFLOW')
+    @flag_enabled('SECURE_SESSION_TIMEOUT')
     @flag_enabled('CALC_XPATHS', is_preview=True)
     def test_session_details_view_toggles(self):
         toggles.all_toggles()
@@ -217,7 +217,7 @@ class SessionDetailsViewTest(TestCase):
         response = _post_with_hmac(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         expected_response = self.expected_response.copy()
-        expected_response['enabled_toggles'] = ['FORM_LINK_WORKFLOW']
+        expected_response['enabled_toggles'] = ['SECURE_SESSION_TIMEOUT']
         expected_response['enabled_previews'] = ['CALC_XPATHS']
         self.assertJSONEqual(response.content, expected_response)
 

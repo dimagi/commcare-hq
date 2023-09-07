@@ -67,8 +67,8 @@ msgid ""
 "p><p>Continuing ahead will allow you to schedule your current <%- oldPlan %> "
 "Edition Plan subscription to be paused on <strong> <%- date %> </strong></"
 "p><p>If you have questions or if you would like to speak to us about your "
-"subscription, please reach out to <a href='mailto: <%- invoicingContact %>'><"
-"%- invoicingContact %></a>.</p>"
+"subscription, please reach out to <a href='mailto: <%- invoicingContact "
+"%>'><%- invoicingContact %></a>.</p>"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
@@ -221,10 +221,6 @@ msgid "Select a Report..."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-msgid "Advanced Mobile UCR Options"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Lookup Table Options"
 msgstr ""
 
@@ -238,10 +234,6 @@ msgstr ""
 msgid "Select a Lookup Table..."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-msgid "Advanced Lookup Table Options"
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Tab Name"
 msgstr ""
@@ -249,10 +241,6 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Display Condition"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Markdown"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
@@ -340,6 +328,14 @@ msgid "Unknown menu"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Don't Use Case Tiles"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Manually configure Case Tiles"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "You have unsaved detail screen configurations."
 msgstr ""
 
@@ -363,6 +359,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "There are errors in your configuration."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
+msgid "<%- name %> (Calculated Property #<%- index %>)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
@@ -437,6 +437,14 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Distance from current location"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Markdown"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Address Popup (Web Apps only)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
@@ -728,7 +736,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
 #: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "There was an error saving"
 msgstr ""
 
@@ -837,6 +846,7 @@ msgid "Question"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Name"
 msgstr ""
 
@@ -1011,8 +1021,10 @@ msgid "Change Question Type To"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
 msgid "Delete"
 msgstr ""
 
@@ -1058,12 +1070,14 @@ msgid "XML mismatch"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
 msgid "key"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
 msgid "value"
 msgstr ""
 
@@ -1259,6 +1273,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+#: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Password"
 msgstr ""
 
@@ -1523,7 +1538,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/export/static/export/js/models.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "Save"
 msgstr ""
 
@@ -2257,7 +2273,8 @@ msgid "Property Name"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Calculation"
 msgstr ""
 
@@ -2573,6 +2590,26 @@ msgstr ""
 msgid "Command Bar"
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Module ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Description"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Time Estimate"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Must be an integer"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Estimated time to complete the module in hours."
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
 msgstr ""
@@ -2651,6 +2688,16 @@ msgid "24-hour clock"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Invalid file type chosen. Please select a valid multimedia file."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid ""
+"The file you selected exceeds the size limit of 4MB. Please select a file "
+"that is smaller than 4MB."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Upload image"
 msgstr ""
 
@@ -2660,10 +2707,6 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Upload video file"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "Upload signature file"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
@@ -2678,6 +2721,10 @@ msgstr ""
 msgid ""
 "Something unexpected went wrong on that request. If you have problems "
 "filling in the rest of your form please submit an issue. Technical Details: "
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
+msgid "You have been logged out because of inactivity."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
@@ -2720,16 +2767,6 @@ msgstr ""
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
 msgid "This answer is outside the allowed range."
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js
-msgid ""
-"Looks like you got logged out because of inactivity, but your work is safe. "
-"<a href='<%- url %>' target='_blank'>Click here to log back in.</a>"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js
-msgid "You have been logged out because of inactivity."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
@@ -2794,7 +2831,7 @@ msgid "Hide Full Menu"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
-msgid "Permission Denied"
+msgid "The application could not be found"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
@@ -2813,7 +2850,26 @@ msgstr ""
 msgid "Switching project spaces..."
 msgstr ""
 
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
+msgid "Fetching your location..."
+msgstr ""
+
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid "Please perform a search."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid ""
+"You have selected more than the maximum selection limit of <%= value %> . "
+"Please uncheck some values to continue."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid "Your location"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
 msgid "Page <%-num%>"
 msgstr ""
 
@@ -2821,6 +2877,14 @@ msgstr ""
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
 "Geocoder privilege"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please select one"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please select one or more"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
@@ -3039,6 +3103,12 @@ msgid ""
 "continue?"
 msgstr ""
 
+#: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/deduplication_rules.js
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Issue communicating with server. Try again."
+msgstr ""
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js
 msgid "OR"
 msgstr ""
@@ -3056,7 +3126,27 @@ msgid "True when ALL of the case properties match"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+msgid "Out of range of filter. Will not appear on page refresh."
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+msgid "updated"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+msgid "Case copied"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+msgid "Cases copied"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
 msgid "Case Reassignment (via HQ)"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+msgid "Search for users"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
@@ -3107,11 +3197,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Form submission found!"
-msgstr ""
-
-#: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js
-#: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Issue communicating with server. Try again."
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js
@@ -3192,6 +3277,38 @@ msgid ""
 "hour to take effect. <br>This will affect users with email addresses from "
 "the following domains: <strong><%- domains %></strong><br>Contact <a "
 "href='mailto:<%- email %>'><%- email %></a> to change the list of domains."
+msgstr ""
+
+#: corehq/apps/events/static/events/js/event_attendees.js
+msgid "Disable Mobile Worker Attendees"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/event_attendees.js
+msgid "Enable Mobile Worker Attendees"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Possible Attendees"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Expected Attendees"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Search Attendees"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Possible Attendance Takers"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Selected Attendance Takers"
+msgstr ""
+
+#: corehq/apps/events/static/events/js/new_event.js
+msgid "Search Attendance Takers"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/create_export.js
@@ -3324,6 +3441,10 @@ msgstr ""
 msgid "Sensitive Date"
 msgstr ""
 
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Name of the Area"
+msgstr ""
+
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
 msgstr ""
@@ -3350,14 +3471,75 @@ msgid ""
 "problem persists."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/500.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/500.js
 msgid "This is Danny, one of our best developers."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/500.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/500.js
 msgid ""
 "Danny is pretty sad that you had to encounter this issue. He's making sure "
 "it gets fixed as soon as possible."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js
+msgid "Could not authenticate, please log in and try again"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js
+msgid "There was a problem, please refresh and try again"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
+msgid "Done"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Saving..."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Saved"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Try Again"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Deleting..."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "Deleted"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
+msgid "There was an error deleting"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/rollout_modal.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/rollout_modal.js
+msgid ""
+"We could not turn on the new feature. You will have the opportunity to turn "
+"it on the next time you visit this page."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/rollout_modal.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/rollout_modal.js
+msgid "We could not turn off the new feature. Please try again later."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
@@ -3380,43 +3562,6 @@ msgstr ""
 #: corehq/apps/registry/static/registry/js/registry_logs.js
 #: corehq/apps/reports/static/reports/js/filters/main.js
 msgid "Show All Dates"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js
-msgid "Could not authenticate, please log in and try again"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js
-msgid "There was a problem, please refresh and try again"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js
-msgid "Done"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js
-msgid "Saving..."
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js
-msgid "Saved"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js
-msgid "Try Again"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js
-msgid "Deleting..."
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js
-msgid "Deleted"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js
-msgid "There was an error deleting"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
@@ -3443,68 +3588,71 @@ msgstr ""
 msgid "Your password is too weak! Try adding numbers or symbols."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/rollout_modal.js
-msgid ""
-"We could not turn on the new feature. You will have the opportunity to turn "
-"it on the next time you visit this page."
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/rollout_modal.js
-msgid "We could not turn off the new feature. Please try again later."
-msgstr ""
-
 #: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js
 msgid ""
 "There was an issue communicating with the server. Please try back later."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
 msgid "blank"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Edit"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
 msgid "Add Item"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js
-msgid "Click <strong>Edit</strong> to Add Values"
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
+msgid "Click <strong>Edit</strong> to Add Values</span>"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Calculation is duplicated"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Add Image"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Calculation contains an invalid character."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Add Key, Value Mapping"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Key"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Key is duplicated"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Key contains an invalid character."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js
-msgid "Edit mapping for <%- property %>"
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
+msgid "Edit mapping for \"<%- property %>\""
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js
@@ -3774,6 +3922,7 @@ msgid "Search keywords"
 msgstr ""
 
 #: corehq/apps/reminders/static/reminders/js/keywords_list.js
+#: corehq/apps/users/static/users/js/roles.js
 msgid "Linked Project Spaces"
 msgstr ""
 
@@ -3945,6 +4094,10 @@ msgid "Gateway Timeout. Please contact CommCare HQ Support."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "We were unsuccessful loading the report:"
 msgstr ""
 
@@ -3970,8 +4123,7 @@ msgid "Report successfully emailed"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/standard_hq_report.js
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
-msgid "An error occurred emailing you report. Please try again."
+msgid "An error occurred emailing your report. Please try again."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js
@@ -4141,6 +4293,10 @@ msgstr ""
 msgid "Please check above for any errors in your configuration."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/configurable_report.js
+msgid "An error occurred emailing you report. Please try again."
+msgstr ""
+
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
 msgid "Edit a custom web report or custom web report source"
 msgstr ""
@@ -4211,11 +4367,19 @@ msgid "Show Deactivated Mobile Workers"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/filtered_download.js
-msgid "Download <%- count %> user"
+msgid "<%- user_count %> user"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/filtered_download.js
-msgid "Download <%- count %> users"
+msgid "<%- user_count %> users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/filtered_download.js
+msgid " and <%- group_count %> group"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/filtered_download.js
+msgid " and <%- group_count %> groups"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/filtered_download.js
@@ -4326,6 +4490,20 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
+"<strong>Data Dictionary</strong> &mdash; manage case properties within "
+"CommCare HQ"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Data Dictionary"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Data Dictionary"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
 "<strong>Data</strong> &mdash; view, export, and edit form and case data, "
 "reassign cases"
 msgstr ""
@@ -4401,20 +4579,38 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
-"<strong>Shared Exports</strong> &mdash; access and edit the content and "
-"structure of shared exports"
+"<strong>Manage Shared Exports</strong> &mdash; access and edit the content "
+"and structure of shared exports"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
-"<strong>Enterprise Release Management</strong> &mdash; access the Linked "
-"Project Spaces feature"
+"<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
+"events and users"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Multi-Environment Release Management</strong> &mdash; access the "
-"Linked Project Spaces feature"
+msgid "Edit Attendance Tracking Events"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Enterprise Release Management"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Multi-Environment Release Management"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to configure linked project spaces"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Linked Configurations"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to edit linked configurations on this project space"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -4423,6 +4619,22 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit reports in report builder."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Create and Edit Custom Web Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to create and edit custom web reports."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Create and Edit Configurable Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to create and edit configurable reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -4443,27 +4655,19 @@ msgid "Allow role to access all reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
+msgid "Download and Email Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to download and email report data."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Tableau Reports"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all embedded Tableau reports."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Create and Edit Custom Web Reports"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to create and edit custom web reports."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Create and Edit Configurable Reports"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to create and edit configurable reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -4703,6 +4907,10 @@ msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+msgid "Failed to fetch attempts"
+msgstr ""
+
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
 msgid "Failed to fetch payload"
 msgstr ""
 
@@ -4712,6 +4920,22 @@ msgstr ""
 
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
 msgid "Failed to cancel"
+msgstr ""
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Username"
+msgstr ""
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Client ID"
+msgstr ""
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "Client Secret"
+msgstr ""
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "API Key"
 msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js

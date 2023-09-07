@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
-from corehq.motech.repeaters.models import Repeater, RepeatRecordAttempt
+from corehq.motech.repeaters.models import RepeatRecordAttempt, Repeater
 
 
 class Command(BaseCommand):
@@ -75,7 +75,7 @@ class Command(BaseCommand):
         success_message = options.get('success_message')
         response_status = options.get('response_status')
 
-        repeater = Repeater.get(repeater_id)
+        repeater = Repeater.objects.get(repeater_id=repeater_id)
         print("Looking up repeat records for '{}'".format(repeater.friendly_name))
 
         def meets_filter(record):
@@ -109,7 +109,7 @@ class Command(BaseCommand):
 
         filename = "{}_{}_records-{}.csv".format(
             action,
-            repeater.__class__.__name__,
+            repeater._repeater_type,
             datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M.%S'))
         with open(filename, 'w', encoding='utf-8') as f:
             writer = csv.writer(f)

@@ -1,6 +1,8 @@
 /*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/users/collections", function () {
+    var Models = hqImport("cloudcare/js/formplayer/users/models");
+
     /**
      * This collection represents a mobile worker user
      */
@@ -11,7 +13,7 @@ hqDefine("cloudcare/js/formplayer/users/collections", function () {
             }
             return '/a/' + this.domain + '/cloudcare/api/login_as/users/';
         },
-        model: hqImport("cloudcare/js/formplayer/users/models").User,
+        model: Models.User,
 
         initialize: function (models, options) {
             options = options || {};

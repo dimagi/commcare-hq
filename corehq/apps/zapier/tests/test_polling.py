@@ -11,8 +11,10 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.api.models import ESXFormInstance
 
 from corehq.apps.zapier.api.v0_5 import ZapierApplicationResource, ZapierXFormInstanceResource
+from corehq.util.test_utils import flag_enabled
 
 
+@flag_enabled('API_THROTTLE_WHITELIST')
 class XFormPollingTests(SimpleTestCase):
     def test_can_poll_with_only_zapier_privilege(self):
         self.forms = [self._create_form(id='7', domain='test-domain')]
@@ -80,6 +82,7 @@ class XFormPollingTests(SimpleTestCase):
         return self.forms
 
 
+@flag_enabled('API_THROTTLE_WHITELIST')
 class ApplicationPollingTests(SimpleTestCase):
     def test_can_poll_with_only_zapier_privilege(self):
         self.applications = [self._create_app('1'), self._create_app('2')]

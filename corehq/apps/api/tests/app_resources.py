@@ -50,6 +50,11 @@ class TestAppResource(APIResourceTest):
             self.get_expected_structure(with_version=False),
         ])
 
+    def test_get_list_cache_bug(self):
+        self.test_get_list()
+        # subsequent requests use cached data which does not have the `_parent` refs set
+        self.test_get_list()
+
     def test_get_list_null_sorting(self):
         another_app = self.make_app()
         another_app.date_created = None

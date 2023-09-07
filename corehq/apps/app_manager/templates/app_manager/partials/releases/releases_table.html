@@ -1,6 +1,5 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-
 <div id="releases-table" class="hide" data-bind="css: {hide: false}">
   <div class="alert alert-danger hide" data-bind="visible: brokenBuilds, css: {hide: false}">
     <p>
@@ -34,7 +33,7 @@
         </span>
   </p>
   <p>
-    {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+    {% if can_view_app_diff %}
       <a class="btn btn-default" data-bind="
                 attr: {href: compareUnbuiltChangesUrl},
                 visible: savedApps().length,
@@ -52,7 +51,7 @@
     {% endif %}
     <button class="btn btn-primary" data-bind="
             click: function() {
-              trackClick('Clicked Make New Version')
+              trackClick('Clicked Make New Version');
               return makeNewBuild();
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
@@ -63,6 +62,24 @@
   </p>
 
   <div id="build-errors-wrapper"></div>
+  <div class="alert alert-warning" data-bind="visible: depCaseTypes().length" id="deprecated-case-types-warning">
+    <p>
+      <i class="fa fa-warning"></i>
+      {% blocktrans %}
+        The new application build contains the following deprecated case types:
+      {% endblocktrans %}
+    </p>
+    <ul id="deprecated-case-types-list" data-bind="foreach: depCaseTypes">
+      <li data-bind="text: $data"></li>
+    </ul>
+    <!-- TODO: Remove this comment when following PR has been merged: https://github.com/dimagi/commcare-hq/pull/33113 -->
+    <!-- <p>
+      {% blocktrans %}
+        For more information on deprecated case types, see the following
+        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary">documentation</a>.
+      {% endblocktrans %}
+    </p> -->
+  </div>
 
   <div class="row">
     <div class="col-md-3 col-md-offset-9">
@@ -138,20 +155,22 @@
             <button type="button"
                     class="btn btn-xs"
                     data-bind="click: $root.toggleRelease,
+                                attr: {disabled: !showReleaseOperations()},
                                            css: {
                                               'active': is_released(),
                                               'btn-primary': is_released(),
-                                              'btn-default': !is_released()
+                                              'btn-default': !is_released(),
                                            }">
               {% trans "Released" %}
             </button>
             <button type="button"
                     class="btn btn-xs btn-default"
                     data-bind="click: $root.toggleRelease,
+                                attr: {disabled: !showReleaseOperations()},
                                            css: {
                                               'active': !is_released(),
                                               'btn-primary': !is_released(),
-                                              'btn-default': is_released()
+                                              'btn-default': is_released(),
                                            }">
               {% trans "In Test" %}
             </button>
@@ -173,10 +192,6 @@
           <span data-bind="text: menu_item_label()"></span>
           <!--/ko-->
           <span data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</span>
-          {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
-            | <a class="release-error-report-link" data-bind="text: numErrorsText,
-                              attr: {href: $root.app_error_url('{{ app.id }}', version())}"></a>
-          {% endif %}
         </h4>
       </div>
       <div class="panel-body">
@@ -195,7 +210,7 @@
         </div>
       </div><!-- .panel-body -->
       <div class="panel-footer clearfix">
-        {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+        {% if can_view_app_diff %}
           <a class="btn btn-default" data-bind="
                     attr: {href: $parent.reverse(
                             'app_form_summary_diff',

@@ -62,6 +62,7 @@ def make_events_for_test(
     )
     subevent = MessagingSubEvent.objects.create(
         parent=event,
+        domain=domain,
         date=message_date,
         recipient_type=recipient_type,
         recipient_id=None,
@@ -236,5 +237,6 @@ def make_email_event_for_test(domain, schedule_name, user_ids, utcnow=None):
                 "eventType": "Delivery",
                 "delivery": {"timestamp": "2021-05-27T07:09:42.318Z"}
             }, subevent.id)
+            subevent.refresh_from_db()
             subevents[subevent.recipient_id] = subevent
     return subevents

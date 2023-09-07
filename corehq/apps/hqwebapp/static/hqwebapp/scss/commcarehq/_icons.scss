@@ -1,0 +1,37 @@
+.hq-help {
+    display: inline-block;
+    vertical-align: top;
+    position: relative;
+    overflow: visible;
+    line-height: 25px;
+    margin: 0 3px;
+    i {
+        font-size: 20px;
+        text-decoration: none;
+    }
+    &:hover i,
+    &.on i {
+        color: $cc-att-pos-mid;
+    }
+    .popover {
+        width: 300px;
+        color: $text-color;
+    }
+}
+
+.hq-icon-full {
+  width: 100%;
+  line-height: 30px;
+  text-align: center;
+  color: $cc-brand-mid;
+  &:hover {
+    color: $cc-brand-low;
+  }
+}
+
+// Make accordion icons display down/left depending on collapsed status
+a[data-toggle="collapse"].collapsed {
+  .fa-angle-double-down::before {
+    content: "\f101" !important;
+  }
+}

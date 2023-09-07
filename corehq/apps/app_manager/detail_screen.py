@@ -11,7 +11,6 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
     UsercaseXPath,
     XPath,
-    dot_interpolate,
 )
 from corehq.apps.hqmedia.models import CommCareMultimedia
 
@@ -28,14 +27,16 @@ CASE_PROPERTY_MAP = {
 
 
 def get_column_generator(app, module, detail, column, sort_element=None,
-                         order=None, detail_type=None, parent_tab_nodeset=None):
+                         order=None, detail_type=None, parent_tab_nodeset=None, style=None):
     cls = get_class_for_format(column.format)  # cls will be FormattedDetailColumn or a subclass of it
     return cls(app, module, detail, column, sort_element, order,
-               detail_type=detail_type, parent_tab_nodeset=parent_tab_nodeset)
+               detail_type=detail_type, parent_tab_nodeset=parent_tab_nodeset, style=style)
 
 
 def get_class_for_format(slug):
     return get_class_for_format._format_map.get(slug, FormattedDetailColumn)
+
+
 get_class_for_format._format_map = {}
 
 
@@ -56,6 +57,8 @@ def get_column_xpath_generator(app, module, detail, column):
 
 def get_class_for_type(slug):
     return get_class_for_type._type_map.get(slug, BaseXpathGenerator)
+
+
 get_class_for_type._type_map = {}
 
 
@@ -92,7 +95,7 @@ class FormattedDetailColumn(object):
     SORT_TYPE = 'string'
 
     def __init__(self, app, module, detail, column, sort_element=None,
-                 order=None, detail_type=None, parent_tab_nodeset=None):
+                 order=None, detail_type=None, parent_tab_nodeset=None, style=None):
         self.app = app
         self.module = module
         self.detail = detail
@@ -102,6 +105,7 @@ class FormattedDetailColumn(object):
         self.order = order
         self.id_strings = id_strings
         self.parent_tab_nodeset = parent_tab_nodeset
+        self.style = style
 
     def has_sort_node_for_nodeset_column(self):
         return self.parent_tab_nodeset and self.detail.sort_nodeset_columns_for_detail()
@@ -157,8 +161,8 @@ class FormattedDetailColumn(object):
 
     @property
     def sort_node(self):
-        if not (self.app.enable_multi_sort and
-                (self.detail.display == 'short' or self.has_sort_node_for_nodeset_column())
+        if not (self.app.enable_multi_sort
+                and (self.detail.display == 'short' or self.has_sort_node_for_nodeset_column())
                 ):
             return
 
@@ -283,6 +287,7 @@ class FormattedDetailColumn(object):
 
         if self.app.enable_multi_sort:
             yield sx.Field(
+                style=self.style,
                 header=self.header,
                 template=self.template,
                 sort_node=self.sort_node,
@@ -290,17 +295,20 @@ class FormattedDetailColumn(object):
             )
         elif self.sort_xpath_function and self.detail.display == 'short':
             yield sx.Field(
+                style=self.style,
                 header=self.header,
                 template=self.hidden_template,
                 print_id=print_id,
             )
             yield sx.Field(
+                style=self.style,
                 header=self.hidden_header,
                 template=self.template,
                 print_id=print_id,
             )
         else:
             yield sx.Field(
+                style=self.style,
                 header=self.header,
                 template=self.template,
                 print_id=print_id,
@@ -348,7 +356,8 @@ class TimeAgo(FormattedDetailColumn):
 
 @register_format_type('distance')
 class Distance(FormattedDetailColumn):
-    XPATH_FUNCTION = "if(here() = '' or {xpath} = '', '', concat(round(distance({xpath}, here()) div 100) div 10, ' km'))"
+    XPATH_FUNCTION = \
+        "if(here() = '' or {xpath} = '', '', concat(round(distance({xpath}, here()) div 100) div 10, ' km'))"
     SORT_XPATH_FUNCTION = "if({xpath} = '', 2147483647, round(distance({xpath}, here())))"
     SORT_TYPE = 'double'
 
@@ -508,14 +517,17 @@ class Markdown(FormattedDetailColumn):
 
     @property
     def template_form(self):
-        if self.detail.display == 'long':
-            return 'markdown'
+        return 'markdown'
 
 
 @register_format_type('address')
 class Address(HideShortColumn):
     template_form = 'address'
-    template_width = 0
+
+
+@register_format_type('address-popup')
+class AddressPopup(HideShortColumn):
+    template_form = 'address-popup'
 
 
 @register_format_type('picture')

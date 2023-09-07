@@ -6,9 +6,6 @@ from memoized import memoized
 
 from corehq.apps.es import filters as es_filters
 from corehq.apps.es import forms as form_es
-from corehq.apps.es.filters import match_all
-from corehq.apps.es.utils import track_es_report_load
-from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import FormDisplay
@@ -36,7 +33,12 @@ from corehq.const import MISSING_APP_ID
 from corehq.toggles import SUPPORT
 
 
-class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
+class ProjectInspectionReport(
+    ProjectInspectionReportParamsMixin,
+    GenericTabularReport,
+    ProjectReport,
+    ProjectReportParametersMixin
+):
     """
         Base class for this reporting section
     """
@@ -84,7 +86,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                                        mobile_user_and_group_slugs,
                                        self.request.couch_user)
                     .values_list('_id', flat=True))
-        track_es_report_load(self.domain, self.slug, len(user_ids))
         if HQUserType.UNKNOWN in EMWF.selected_user_types(mobile_user_and_group_slugs):
             user_ids.append(SYSTEM_USER_ID)
 

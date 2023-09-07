@@ -13,6 +13,8 @@ from corehq.apps.es import AppES
 from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
 from corehq.util.quickcache import quickcache
 from quickcache.django_quickcache import tiered_django_cache
+from corehq.toggles import VELLUM_SAVE_TO_CASE
+from corehq.apps.es import apps as app_es
 
 
 AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version', 'comment'])
@@ -497,19 +499,67 @@ def get_version_build_id(domain, app_id, version):
     return build['id']
 
 
+def _get_save_to_case_updates(domain):
+    save_to_case_updates = set()
+    for app in get_apps_in_domain(domain):
+        for form in app.get_forms():
+            for update in form.get_save_to_case_updates():
+                save_to_case_updates.add(update)
+
+    return save_to_case_updates
+
+
+def _get_case_types_from_apps_query(domain, is_build=False):
+    case_types_agg = NestedAggregation('modules', 'modules').aggregation(
+        TermsAggregation('case_types', 'modules.case_type.exact'))
+    return (
+        AppES()
+        .domain(domain)
+        .is_build(is_build)
+        .size(0)
+        .aggregation(case_types_agg)
+    )
+
+
 def get_case_types_from_apps(domain):
     """
     Get the case types of modules in applications in the domain.
+    Also returns case types for SaveToCase properties in the domain, if the toggle is enabled.
     :returns: A set of case_types
     """
-    case_types_agg = NestedAggregation('modules', 'modules').aggregation(
-        TermsAggregation('case_types', 'modules.case_type.exact'))
-    q = (AppES()
-         .domain(domain)
-         .is_build(False)
-         .size(0)
-         .aggregation(case_types_agg))
-    return set(q.run().aggregations.modules.case_types.keys) - {''}
+    save_to_case_updates = set()
+    if VELLUM_SAVE_TO_CASE.enabled(domain):
+        save_to_case_updates = _get_save_to_case_updates(domain)
+    q = _get_case_types_from_apps_query(domain)
+    case_types = set(q.run().aggregations.modules.case_types.keys)
+    return (case_types.union(save_to_case_updates) - {''})
+
+
+def get_case_type_app_module_count(domain):
+    """
+    Gets the case types of modules in applications in the domain, returning
+    how many application modules are associated with each case type.
+    :returns: A list of case types as the key and the number of associated modules as the value
+    """
+    q = _get_case_types_from_apps_query(domain)
+    case_types = q.run().aggregations.modules.case_types.counts_by_bucket()
+    if '' in case_types:
+        del case_types['']
+    return case_types
+
+
+def get_case_types_for_app_build(domain, app_id):
+    """
+    Gets the case types of modules for a specific application in the domain.
+    :returns: A set of case_types
+    """
+    q = _get_case_types_from_apps_query(domain, is_build=True)
+    if app_id:
+        q = q.filter(
+            app_es.app_id(app_id)
+        )
+    case_types = set(q.run().aggregations.modules.case_types.keys)
+    return case_types - {''}
 
 
 @quickcache(['domain'], timeout=24 * 60 * 60)

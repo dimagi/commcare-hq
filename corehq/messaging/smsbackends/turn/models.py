@@ -4,7 +4,7 @@ from corehq.apps.sms.api import MessageMetadata, send_sms_with_backend
 from corehq.apps.sms.models import SMS, MessagingEvent, SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.turn.forms import TurnBackendForm
-from turn import TurnBusinessManagementClient, TurnClient
+from turn import TurnBusinessManagementClient, TurnClient, TurnRequest
 from turn.exceptions import WhatsAppContactNotFound
 from corehq.messaging.whatsapputil import (
     WhatsAppTemplateStringException,
@@ -15,6 +15,9 @@ from corehq.messaging.whatsapputil import (
 
 
 class SQLTurnWhatsAppBackend(SQLSMSBackend):
+
+    url = TurnRequest.base_url  # for SSL verification only
+
     class Meta(object):
         proxy = True
         app_label = "sms"

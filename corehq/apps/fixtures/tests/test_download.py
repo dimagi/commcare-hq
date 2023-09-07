@@ -14,7 +14,6 @@ from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser
 
 from .. import download as mod
-from ..dbaccessors import delete_all_fixture_data
 from ..models import LookupTable, LookupTableRow, OwnerType, TypeField
 from ..upload.run_upload import _run_upload
 from ..upload.workbook import get_workbook
@@ -62,9 +61,6 @@ class TestLookupTableOwners(TestCase):
         cls.loc2.save()
         cls.loc3 = SQLLocation(domain=cls.domain, name="3", location_type=cls.region)
         cls.loc3.save()
-
-    def tearDown(self):
-        delete_all_fixture_data(self.domain)
 
     def test_download(self):
         self.upload([
@@ -179,6 +175,30 @@ class TestLookupTableOwners(TestCase):
         self.assertEqual(names.get_location_codes(rows[1]), ['loc2'])
         self.assertEqual(names.get_location_codes(rows[2]), ['3'])
         self.assertEqual(len(rows), 3)
+
+    def test_with_missing_owners(self):
+        self.upload([
+            (None, 'N', 'apple', 'user1', 'G1', 'loc1'),
+            (None, 'N', 'banana', '', 'g2', 'loc2'),
+            (None, 'N', 'coconut', '', '', '3'),
+        ])
+        table = LookupTable.objects.get(domain=self.domain, tag='things')
+        rows = list(LookupTableRow.objects.iter_rows(self.domain, tag='things'))
+        names = mod.OwnerNames([table])
+
+        # simulate owners that have been deleted, but are still present in LookupTableRowOwner
+        banana = {r.fields["name"][0].value: r for r in rows}["banana"]
+        names.owners[banana.id][OwnerType.User].add("xu")
+        names.owners[banana.id][OwnerType.Group].add("xg")
+        names.owners[banana.id][OwnerType.Location].add("xl")
+
+        self.assertEqual(sum(names.count(r, OwnerType.User) for r in rows), 1)
+        self.assertEqual(sum(names.count(r, OwnerType.Group) for r in rows), 2)
+        self.assertEqual(sum(names.count(r, OwnerType.Location) for r in rows), 3)
+
+        self.assertEqual(names.get_usernames(banana), [])
+        self.assertEqual(names.get_group_names(banana), ['g2'])
+        self.assertEqual(names.get_location_codes(banana), ['loc2'])
 
     def upload(self, rows, *, check_result=True, **kw):
         data = self.make_rows(rows)

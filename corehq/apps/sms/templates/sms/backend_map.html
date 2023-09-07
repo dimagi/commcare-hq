@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -6,7 +6,7 @@
 {% requirejs_main "sms/js/backend_map" %}
 
 {% block page_content %}
-  {% initial_page_data 'form.backend_map' form.backend_map.value|safe %}
+  {% initial_page_data 'form.backend_map' form.backend_map.value %}
   <div id="backend-map-form">
     {% crispy form %}
   </div>

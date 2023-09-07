@@ -9,7 +9,7 @@ These external resources are text files that are also part of the application's 
 * ``LocaleResourceContributor`` handles the text files containing translations
 * ``PracticeUserRestoreContributor`` handles a dummy restore used for Practice Mode
 """
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor

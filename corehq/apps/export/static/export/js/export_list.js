@@ -16,20 +16,18 @@ hqDefine("export/js/export_list", [
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
-    'hqwebapp/js/toggles',
     'clipboard/dist/clipboard',
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'export/js/utils',
     'hqwebapp/js/validators.ko',        // needed for validation of startDate and endDate
-    'hqwebapp/js/components.ko',        // pagination & feedback widget
+    'hqwebapp/js/bootstrap3/components.ko',        // pagination & feedback widget
     'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
     _,
     assertProperties,
-    toggles,
     Clipboard,
     googleAnalytics,
     kissmetricsAnalytics,
@@ -67,6 +65,7 @@ hqDefine("export/js/export_list", [
             'type',
         ], [
             'case_type',
+            'is_case_type_deprecated',
             'isAutoRebuildEnabled',
             'isDailySaved',
             'isFeed',
@@ -232,7 +231,7 @@ hqDefine("export/js/export_list", [
             self.taskStatus.percentComplete();
             self.taskStatus.started(true);
             self.taskStatus.success(false);
-            self.taskStatus.failed(false);
+            self.taskStatus.failed(null);
             var tick = function () {
                 $.ajax({
                     method: 'GET',
@@ -289,7 +288,18 @@ hqDefine("export/js/export_list", [
     };
 
     var exportPanelModel = function (options) {
-        assertProperties.assert(options, ['header', 'isDailySavedExport', 'isDeid', 'isFeed', 'isOData', 'modelType', 'myExports', 'showOwnership', 'urls']);
+        assertProperties.assert(options, [
+            'header',
+            'isDailySavedExport',
+            'isDeid',
+            'isFeed',
+            'isOData',
+            'modelType',
+            'myExports',
+            'showOwnership',
+            'urls',
+            'exportOwnershipEnabled',
+        ]);
 
         var self = _.extend({}, options);
 
@@ -378,7 +388,16 @@ hqDefine("export/js/export_list", [
     };
 
     var exportListModel = function (options) {
-        assertProperties.assert(options, ['headers', 'isDailySavedExport', 'isDeid', 'isFeed', 'isOData', 'modelType', 'urls']);
+        assertProperties.assert(options, [
+            'headers',
+            'isDailySavedExport',
+            'isDeid',
+            'isFeed',
+            'isOData',
+            'modelType',
+            'urls',
+            'exportOwnershipEnabled'
+        ]);
 
         var self = {};
 
@@ -387,6 +406,7 @@ hqDefine("export/js/export_list", [
         self.isDailySavedExport = options.isDailySavedExport;
         self.isFeed = options.isFeed;
         self.isOData = options.isOData;
+        self.exportOwnershipEnabled = options.exportOwnershipEnabled;
 
         assertProperties.assert(options.urls, ['commitFilters', 'getExportsPage', 'poll', 'toggleEnabled', 'update']);
         self.urls = options.urls;
@@ -396,7 +416,7 @@ hqDefine("export/js/export_list", [
 
         var panelOptions = _.omit(options, 'headers');
         self.panels = ko.observableArray([]);
-        if (toggles.toggleEnabled("EXPORT_OWNERSHIP")) {
+        if (self.exportOwnershipEnabled) {
             self.panels.push(exportPanelModel(_.extend({}, panelOptions, {
                 header: self.headers.my_export_type,
                 showOwnership: true,

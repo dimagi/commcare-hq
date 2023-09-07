@@ -2,13 +2,11 @@ import uuid
 
 from django.core.management.base import BaseCommand
 
-from casexml.apps.case.mock import CaseStructure, CaseFactory
-from corehq.elastic import send_to_elasticsearch, get_es_new
-from corehq.pillows.case import transform_case_for_elasticsearch as es_case_hq
-from corehq.pillows.case_search import transform_case_for_elasticsearch as es_case_search, \
-    domain_needs_search_index
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
+from casexml.apps.case.mock import CaseFactory, CaseStructure
+
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.cases import case_adapter
+from corehq.pillows.case_search import domain_needs_search_index
 
 
 class Command(BaseCommand):
@@ -38,10 +36,14 @@ class Command(BaseCommand):
             },
         )
         [case] = CaseFactory(domain).create_or_update_cases([case_structure], user_id=owner_id)
-        case_json = case.to_json()
-        send_to_elasticsearch('cases', es_case_hq(case_json))
-        get_es_new().indices.refresh(CASE_INDEX)
+
+        case_adapter.index(
+            case,
+            refresh=True
+        )
         if domain_needs_search_index(domain):
-            send_to_elasticsearch('case_search', es_case_search(case_json))
-            get_es_new().indices.refresh(CASE_SEARCH_INDEX)
+            case_search_adapter.index(
+                case,
+                refresh=True
+            )
         print(f"Created case with ID: {case.case_id}")

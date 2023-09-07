@@ -40,7 +40,8 @@ class SyncPersonAttributesTask(WorkflowTask):
             attribute['attributeType']['uuid']: (attribute['uuid'], attribute['value'])
             for attribute in self.attributes
         }
-        for person_attribute_type, value_source_dict in self.openmrs_config.case_config.person_attributes.items():
+        person_attrs = self.openmrs_config['case_config']['person_attributes']
+        for person_attribute_type, value_source_dict in person_attrs.items():
             value_source = as_value_source(value_source_dict)
             if not value_source.can_export:
                 continue
@@ -86,7 +87,7 @@ class SyncPatientIdentifiersTask(WorkflowTask):
             identifier['identifierType']['uuid']: (identifier['uuid'], identifier['identifier'])
             for identifier in self.patient['identifiers']
         }
-        for patient_identifier_type, dict_ in self.openmrs_config.case_config.patient_identifiers.items():
+        for patient_identifier_type, dict_ in self.openmrs_config['case_config']['patient_identifiers'].items():
             value_source = as_value_source(dict_)
             if not value_source.can_export:
                 continue
@@ -138,21 +139,21 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         Returns a start datetime for the Visit and the Encounter, and a
         stop_datetime for the Visit
         """
-        if form_config.openmrs_start_datetime:
-            value_source = as_value_source(form_config.openmrs_start_datetime)
+        if form_config['openmrs_start_datetime']:
+            value_source = as_value_source(form_config['openmrs_start_datetime'])
             if value_source.can_export:
                 cc_start_datetime_str = value_source.get_commcare_value(self.info)
                 if cc_start_datetime_str is None:
                     raise ConfigurationError(
                         'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
-                        'the visit but no value was found in the form.'.format(form_config.xmlns)
+                        'the visit but no value was found in the form.'.format(form_config['xmlns'])
                     )
                 try:
                     cc_start_datetime = string_to_utc_datetime(cc_start_datetime_str)
                 except ValueError:
                     raise ConfigurationError(
                         'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
-                        'the visit but an invalid value was found in the form.'.format(form_config.xmlns)
+                        'the visit but an invalid value was found in the form.'.format(form_config['xmlns'])
                     )
                 cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
                 # We need to serialize both values with the data type of
@@ -181,8 +182,8 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
             # OpenMRS, but it breaks Bahmni. Bahmni has an "Unknown
             # Location". Use that, if it exists.
         )
-        for form_config in self.openmrs_config.form_configs:
-            if form_config.xmlns == self.form_json['form']['@xmlns']:
+        for form_config in self.openmrs_config['form_configs']:
+            if form_config['xmlns'] == self.form_json['form']['@xmlns']:
                 start_datetime, stop_datetime = self._get_start_stop_datetime(form_config)
                 subtasks.append(
                     CreateOptionalVisitTask(
@@ -192,9 +193,9 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
                         start_datetime=start_datetime,
                         stop_datetime=stop_datetime,
                         values_for_concept=get_values_for_concept(form_config, self.info),
-                        encounter_type=form_config.openmrs_encounter_type,
-                        openmrs_form=form_config.openmrs_form,
-                        visit_type=form_config.openmrs_visit_type,
+                        encounter_type=form_config['openmrs_encounter_type'],
+                        openmrs_form=form_config['openmrs_form'],
+                        visit_type=form_config['openmrs_visit_type'],
                         location_uuid=location_uuid,
                     )
                 )
@@ -207,14 +208,14 @@ def get_values_for_concept(form_config, info):
     values. Each value will be exported as a separate Observation.
     """
     values_for_concept = defaultdict(list)
-    for obs in form_config.openmrs_observations:
-        if obs.concept == ALL_CONCEPTS:
+    for obs in form_config['openmrs_observations']:
+        if obs['concept'] == ALL_CONCEPTS:
             # ALL_CONCEPTS is a special value for importing all
             # Observations as extension cases. It's not applicable here.
             continue
-        value_source = as_value_source(obs.value)
+        value_source = as_value_source(obs['value'])
         if value_source.can_export and not is_blank(value_source.get_value(info)):
-            values_for_concept[obs.concept].append(value_source.get_value(info))
+            values_for_concept[obs['concept']].append(value_source.get_value(info))
     return values_for_concept
 
 
@@ -513,7 +514,7 @@ class UpdatePersonNameTask(WorkflowTask):
 
     def run(self):
         export_data = get_export_data(
-            self.openmrs_config.case_config.person_preferred_name,
+            self.openmrs_config['case_config']['person_preferred_name'],
             NAME_PROPERTIES,
             self.info,
         )
@@ -535,7 +536,7 @@ class UpdatePersonNameTask(WorkflowTask):
         """
         properties = {
             property_: self.person['preferredName'].get(property_)
-            for property_ in self.openmrs_config.case_config.person_preferred_name.keys()
+            for property_ in self.openmrs_config['case_config']['person_preferred_name'].keys()
             if property_ in NAME_PROPERTIES
         }
         if properties:
@@ -561,7 +562,7 @@ class CreatePersonAddressTask(WorkflowTask):
 
     def run(self):
         export_data = get_export_data(
-            self.openmrs_config.case_config.person_preferred_address,
+            self.openmrs_config['case_config']['person_preferred_address'],
             ADDRESS_PROPERTIES,
             self.info,
         )
@@ -596,7 +597,7 @@ class UpdatePersonAddressTask(WorkflowTask):
 
     def run(self):
         export_data = get_export_data(
-            self.openmrs_config.case_config.person_preferred_address,
+            self.openmrs_config['case_config']['person_preferred_address'],
             ADDRESS_PROPERTIES,
             self.info,
         )
@@ -613,7 +614,7 @@ class UpdatePersonAddressTask(WorkflowTask):
     def rollback(self):
         properties = {
             property_: self.person['preferredAddress'].get(property_)
-            for property_ in self.openmrs_config.case_config.person_preferred_address.keys()
+            for property_ in self.openmrs_config['case_config']['person_preferred_address'].keys()
             if property_ in ADDRESS_PROPERTIES
         }
         if properties:
@@ -637,7 +638,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
 
     def run(self):
         export_data = get_export_data(
-            self.openmrs_config.case_config.person_properties,
+            self.openmrs_config['case_config']['person_properties'],
             PERSON_PROPERTIES,
             self.info,
         )
@@ -656,7 +657,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         """
         properties = {
             property_: self.person.get(property_)
-            for property_ in self.openmrs_config.case_config.person_properties.keys()
+            for property_ in self.openmrs_config['case_config']['person_properties'].keys()
             if property_ in PERSON_PROPERTIES
         }
         if properties:

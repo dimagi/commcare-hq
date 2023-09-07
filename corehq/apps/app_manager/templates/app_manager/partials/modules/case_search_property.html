@@ -57,7 +57,7 @@
                     <p class="help-block" data-bind="visible: appearance() == 'daterange'">
                       {% trans 'In "YYYY-MM-DD to YYYY-MM-DD" format' %}
                     </p>
-                    <p class="help-block" data-bind="visible: appearanceFinal() == 'fixture' && isMultiselect()">
+                    <p class="help-block" data-bind="visible: (appearanceFinal() == 'fixture' && isMultiselect()) || appearanceFinal() == 'checkbox'">
                       {% trans 'e.g. Use #,# as separator to select multiple values' %}
                     </p>
                   </div>
@@ -72,7 +72,10 @@
                       <select class="form-control" data-bind="value: appearance">
                         <option value="">{% trans "Text" %}</option>
                         {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
-                          {# limit to USH since datepicker is only available on web apps #}
+                          {# limit to USH since datepicker and checkbox are only available on web apps #}
+                          {% if js_options.has_lookup_tables %}
+                          <option value="checkbox">{% trans "Checkbox" %}</option>
+                          {% endif %}
                           <option value="date">{% trans "Date" %}</option>
                         {% endif %}
                         <option value="daterange">{% trans "Date Range" %}</option>
@@ -89,12 +92,13 @@
                       </select>
                     </div>
                   </div>
-                  <div class="form-group" data-bind="visible: appearanceFinal() == 'fixture'">
+                  <div class="form-group" data-bind="visible: appearanceFinal() == 'fixture' || appearanceFinal() == 'checkbox'">
                       <label class="control-label col-xs-12 col-sm-3">
                           {% trans "Allow multiple selections" %}
                       </label>
                       <div class="col-xs-12 col-sm-9">
-                          <input type="checkbox" data-bind="checked: isMultiselect"/>
+                          <input type="checkbox" data-bind="visible: appearanceFinal() != 'checkbox', checked: isMultiselect"/>
+                          <input type="checkbox" checked disabled data-bind="visible: appearanceFinal() == 'checkbox'"/>
                       </div>
                   </div>
                 {% endif %}
@@ -110,7 +114,7 @@
                 {% endif %}
               </fieldset>
               {% if js_options.search_prompt_appearance_enabled %}
-              <fieldset data-bind="visible: appearanceFinal() == 'fixture'">
+              <fieldset data-bind="visible: appearanceFinal() == 'fixture' || appearanceFinal() == 'checkbox'">
                 <legend data-bind="text: dropdownLabels().optionsLabel"></legend>
                 <div class="form-group">
                   <label class="control-label col-xs-12 col-sm-3"
@@ -144,13 +148,24 @@
                     <input class="form-control" type="text" data-bind="value: itemset.sort, attr:{placeholder:dropdownLabels().labelPlaceholder}"/>
                   </div>
                 </div>
+                <div class="form-group">
+                  <label class="control-label col-xs-12 col-sm-3">
+                    {% trans "Instance Nodeset" %}
+                  </label>
+                  <div class="col-xs-12 col-sm-9">
+                    <input class="form-control" type="text" data-bind="value: itemset.nodeset"/>
+                    <p class="alert alert-warning" data-bind="visible: !itemset.nodesetValid()">
+                      {% trans "This refers to data other than selected report/lookup-table." %}
+                    </p>
+                  </div>
+                </div>
                 </fieldset>
                 {% if js_options.has_geocoder_privs or js_options.ush_case_claim_2_53 %}
                     <fieldset>
                       <legend>{% trans "Advanced Options" %}</legend>
                       {% if js_options.has_geocoder_privs %}
-                        <div data-bind="visible: appearanceFinal() == 'fixture' || appearance() == ''">
-                          <div class="form-group" >
+                        <div data-bind="visible: ['', 'fixture', 'checkbox'].indexOf(appearanceFinal()) !== -1 ">
+                          <div class="form-group" data-bind="visible: appearanceFinal() !== 'checkbox'">
                             <label class="control-label col-xs-12 col-sm-3">
                               {% trans "Geocoder Receiver Expression" %}
                             </label>
@@ -214,28 +229,6 @@
                       {% endif %}
                     </fieldset>
                 {% endif %}
-                <fieldset data-bind="visible: appearanceFinal() == 'fixture'">
-                  <legend  data-bind="text: dropdownLabels().advancedLabel"></legend>
-                  <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-3">
-                      {% trans "Instance URI" %}
-                    </label>
-                    <div class="col-xs-12 col-sm-9">
-                      <input class="form-control" type="text" data-bind="value: itemset.instance_uri"/>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-3">
-                      {% trans "Instance Nodeset" %}
-                    </label>
-                    <div class="col-xs-12 col-sm-9">
-                      <input class="form-control" type="text" data-bind="value: itemset.nodeset"/>
-                      <p class="alert alert-warning" data-bind="visible: !itemset.nodesetValid()">
-                        {% trans "This refers to data other than selected report/lookup-table." %}
-                      </p>
-                    </div>
-                  </div>
-                </fieldset>
               {% endif %}
             </div>
           </div>

@@ -73,7 +73,6 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.onSMSPanelClick = function () {
             self.track_deploy_type('Send to phone via SMS');
-            self.generate_short_url('short_url');
         };
 
         self.build_profile.subscribe(self.changeAppCode);
@@ -85,7 +84,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.generate_short_url = function (urlType) {
-            //accepted url types = ['short_odk_url', 'short_odk_media_url', 'short_url']
+            //accepted url types = ['short_odk_url', 'short_odk_media_url']
             urlType = urlType || savedAppModel.URL_TYPES.SHORT_ODK_URL;
             var baseUrl = self.base_url(),
                 shouldGenerateUrl = self.shouldGenerateUrl();
@@ -112,14 +111,20 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         };
 
-        self.get_short_odk_url = function () {
-            var urlType;
+        self.get_odk_url_type = function () {
             if (self.include_media()) {
-                urlType = savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL;
+                return savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL;
             } else {
-                urlType = savedAppModel.URL_TYPES.SHORT_ODK_URL;
+                return savedAppModel.URL_TYPES.SHORT_ODK_URL;
             }
-            if (!(ko.utils.unwrapObservable(self[urlType])) || self.build_profile()) {
+        };
+        self.short_odk_url_is_available = function () {
+            var urlType = self.get_odk_url_type();
+            return ko.utils.unwrapObservable(self[urlType]) && !self.build_profile();
+        };
+        self.get_short_odk_url = function () {
+            var urlType = self.get_odk_url_type();
+            if (!self.short_odk_url_is_available()) {
                 return self.generate_short_url(urlType);
             } else {
                 var data = ko.utils.unwrapObservable(self[urlType]);
@@ -184,10 +189,6 @@ hqDefine('app_manager/js/releases/releases', function () {
             return self.short_odk_url();
         };
 
-        self.sms_url = function () {
-            return self.short_url();
-        };
-
         self.download_application_zip = function (multimediaOnly, buildProfile) {
             releasesMain.download_application_zip(
                 self.id(), multimediaOnly, buildProfile, self.download_targeted_version()
@@ -198,7 +199,9 @@ hqDefine('app_manager/js/releases/releases', function () {
             hqImport('analytix/js/google').track.event('App Manager', 'Deploy Button', self.id());
             hqImport('analytix/js/kissmetrix').track.event('Clicked Deploy');
             $.post(releasesMain.reverse('hubspot_click_deploy'));
-            self.get_short_odk_url();
+            if (self.short_odk_url_is_available()) {
+                self.get_short_odk_url();
+            }
         };
 
         self.clickScan = function () {
@@ -249,10 +252,14 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.buildComment = ko.observable();
         self.upstreamBriefsById = _.indexBy(self.options.upstreamBriefs, '_id');
         self.upstreamUrl = self.options.upstreamUrl;
+        self.showReleaseOperations = ko.observable(true);
+        self.depCaseTypes = ko.observableArray();
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
-
+        self.savedApps.subscribe(() => {
+            self.options.appReleaseLogs && self.options.appReleaseLogs.goToPage(1);
+        });
         // Spinner behavior
         self.showLoadingSpinner = ko.observable(true);
         self.showPaginationSpinner = ko.observable(false);
@@ -369,6 +376,9 @@ hqDefine('app_manager/js/releases/releases', function () {
                     );
                     self.totalItems(data.pagination.total);
                     self.fetchState('');
+                    if (data.pagination.total > 0) {
+                        $("#release-control").removeClass("hidden");
+                    }
                 },
                 error: function () {
                     self.fetchState('error');
@@ -401,6 +411,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                             savedApp.is_released(data.is_released);
                             self.latestReleasedVersion(data.latest_released_version);
                             $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                            self.options.appReleaseLogs && self.options.appReleaseLogs.goToPage(1);
                         }
                     },
                     error: function () {
@@ -440,6 +451,13 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.revertSavedApp = function (savedApp) {
             $.postGo(self.reverse('revert_to_copy'), {build_id: savedApp.id()});
         };
+        self.handleDeprecatedCaseTypesWarning = function(depCaseTypes) {
+            if (depCaseTypes && depCaseTypes.length) {
+                self.depCaseTypes(depCaseTypes);
+            } else {
+                self.depCaseTypes([]);
+            }
+        };
         self.makeNewBuild = function () {
             if (self.buildState() === 'pending') {
                 return false;
@@ -478,9 +496,11 @@ hqDefine('app_manager/js/releases/releases', function () {
                 url: self.reverse('save_copy'),
                 success: function (data) {
                     $('#build-errors-wrapper').html(data.error_html);
+                    self.handleDeprecatedCaseTypesWarning(data.deprecated_case_types);
                     if (data.saved_app) {
                         var app = savedAppModel(data.saved_app, self);
                         self.savedApps.unshift(app);
+                        $("#release-control").removeClass("hidden");
                     }
                     self.buildState('');
                     self.buildErrorCode('');
@@ -502,7 +522,6 @@ hqDefine('app_manager/js/releases/releases', function () {
     savedAppModel.URL_TYPES = {
         SHORT_ODK_URL: 'short_odk_url',
         SHORT_ODK_MEDIA_URL: 'short_odk_media_url',
-        SHORT_URL: 'short_url',
     };
 
     return {

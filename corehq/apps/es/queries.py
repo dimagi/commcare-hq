@@ -58,36 +58,28 @@ def match_all():
     return {"match_all": {}}
 
 
-def _smart_query_string(search_string):
-    special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
-                     '~', '*', '?', ':', '\\', '/']
-    for char in special_chars:
-        if char in search_string:
-            return True, search_string
-    r = re.compile(r'\w+')
-    tokens = r.findall(search_string)
-    return False, "*{}*".format("* *".join(tokens))
-
-
-def search_string_query(search_string, default_fields=None):
+def search_string_query(search_string, default_fields):
     """
-    Allows users to use advanced query syntax, but if ``search_string`` does
-    not use the ES query string syntax, default to doing an infix search for
-    each term.  (This may later change to some kind of fuzzy matching).
+    All input defaults to doing an infix search for each term.
+    (This may later change to some kind of fuzzy matching).
 
     This is also available via the main ESQuery class.
     """
     if not search_string:
         return match_all()
 
-    # use simple_query_string for user-provided syntax, since it won't error
-    uses_syntax, query_string = _smart_query_string(search_string)
-    query_method = "simple_query_string" if uses_syntax else "query_string"
+    # Parse user input into individual search terms
+    r = re.compile(r'\w+')
+    tokens = r.findall(search_string)
+    query_string = "*{}*".format("* *".join(tokens))
+
+    # TODO: add support for searching date ranges.
+
     return {
-        query_method: {
+        "query_string": {
             "query": query_string,
             "default_operator": "AND",
-            "fields": default_fields if not uses_syntax else None,
+            "fields": default_fields,
         }
     }
 

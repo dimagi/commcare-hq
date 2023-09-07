@@ -1,10 +1,9 @@
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
-from corehq.elastic import get_es_new
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 
-from .mappings.group_mapping import GROUP_INDEX_INFO
+from corehq.apps.es.groups import group_adapter
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
@@ -21,10 +20,7 @@ def get_group_to_elasticsearch_processor():
     Writes to:
       - GroupES index
     """
-    return ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=GROUP_INDEX_INFO,
-    )
+    return ElasticProcessor(group_adapter)
 
 
 def get_group_pillow_old(pillow_id='GroupPillow', num_processes=1, process_num=0, **kwargs):
@@ -35,7 +31,7 @@ def get_group_pillow_old(pillow_id='GroupPillow', num_processes=1, process_num=0
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'GroupPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, GROUP_INDEX_INFO, [topics.GROUP])
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, group_adapter.index_name, [topics.GROUP])
     processor = get_group_to_elasticsearch_processor()
     change_feed = KafkaChangeFeed(
         topics=[topics.GROUP], client_id='groups-to-es', num_processes=num_processes, process_num=process_num
@@ -59,7 +55,7 @@ class GroupReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        iteration_key = "GroupToElasticsearchPillow_{}_reindexer".format(GROUP_INDEX_INFO.index)
+        iteration_key = "GroupToElasticsearchPillow_{}_reindexer".format(group_adapter.index_name)
         doc_provider = CouchDocumentProvider(iteration_key, [Group])
         options = {
             'chunk_size': 5
@@ -67,9 +63,7 @@ class GroupReindexerFactory(ReindexerFactory):
         options.update(self.options)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=GROUP_INDEX_INFO,
-            doc_transform=lambda x: x,
+            group_adapter,
             pillow=get_group_pillow_old(),
             **options
         )

@@ -385,10 +385,17 @@ class SessionDatum(IdNode, OrderedXmlObject):
 
 class InstanceDatum(SessionDatum):
     ROOT_NAME = 'instance-datum'
+    max_select_value = IntegerField('@max-select-value')
 
 
 class StackDatum(IdNode):
     ROOT_NAME = 'datum'
+
+    value = XPathField('@value')
+
+
+class StackInstanceDatum(IdNode):
+    ROOT_NAME = 'instance-datum'
 
     value = XPathField('@value')
 
@@ -486,6 +493,9 @@ class StackJump(XmlObject):
 class Argument(IdNode):
     ROOT_NAME = 'argument'
 
+    instance_id = StringField('@instance-id')
+    instance_src = StringField('@instance-src')
+
 
 class SessionEndpoint(IdNode):
     ROOT_NAME = 'endpoint'
@@ -528,12 +538,13 @@ class QueryPrompt(DisplayNode):
 
 class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'query'
-    ORDER = ('title', 'data', 'prompts')
+    ORDER = ('title', 'description', 'data', 'prompts')
 
     url = StringField('@url')
     storage_instance = StringField('@storage-instance')
     template = StringField('@template')
     title = NodeField('title', DisplayNode)
+    description = NodeField('description', DisplayNode)
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
     default_search = BooleanField("@default_search")
@@ -617,6 +628,8 @@ class MenuMixin(XmlObject):
     relevant = XPathField('@relevant')
     style = StringField('@style')
     commands = NodeListField('command', Command)
+    assertions = NodeListField('assertions/assert', Assertion)
+    instances = NodeListField('instance', Instance)
 
 
 class Menu(MenuMixin, DisplayNode, IdNode):
@@ -634,7 +647,7 @@ class LocalizedMenu(MenuMixin, TextOrDisplay, IdNode):
 
 
 class AbstractTemplate(XmlObject):
-    form = StringField('@form', choices=['image', 'phone', 'address'])
+    form = StringField('@form', choices=['image', 'phone', 'address', 'markdown'])
     width = IntegerField('@width')
     text = NodeField('text', Text)
 
@@ -745,7 +758,7 @@ class Response(XmlObject):
 
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
-    ORDER = ('header', 'template', 'sort_node')
+    ORDER = ('style', 'header', 'template', 'sort_node')
 
     sort = StringField('@sort')
     print_id = StringField('@print-id')
@@ -809,6 +822,13 @@ class DetailVariableList(XmlObject):
     variables = NodeListField('_', DetailVariable)
 
 
+class TileGroup(XmlObject):
+    ROOT_NAME = "group"
+
+    function = XPathField('@function')
+    header_rows = IntegerField('@header-rows')
+
+
 class Detail(OrderedXmlObject, IdNode):
     """
     <detail id="">
@@ -817,6 +837,7 @@ class Detail(OrderedXmlObject, IdNode):
             <extra key="" value = "" />
             <response key ="" />
         </lookup>
+        <no_items_text><text></no_items_text>
         <variables>
             <__ function=""/>
         </variables>
@@ -828,18 +849,20 @@ class Detail(OrderedXmlObject, IdNode):
     """
 
     ROOT_NAME = 'detail'
-    ORDER = ('title', 'lookup', 'details', 'fields')
+    ORDER = ('title', 'lookup', 'no_items_text', 'details', 'fields')
 
     nodeset = StringField('@nodeset')
     print_template = StringField('@print-template')
 
     title = NodeField('title/text', Text)
     lookup = NodeField('lookup', Lookup)
+    no_items_text = NodeField('no_items_text/text', Text)
     fields = NodeListField('field', Field)
     actions = NodeListField('action', Action)
     details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
     relevant = StringField('@relevant')
+    tile_group = NodeField('group', TileGroup)
 
     def _init_variables(self):
         if self._variables is None:

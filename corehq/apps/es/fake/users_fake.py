@@ -1,5 +1,5 @@
 from corehq.apps.es.fake.es_query_fake import HQESQueryFake
-from corehq.pillows.user import transform_user_for_elasticsearch
+from corehq.apps.es.users import user_adapter
 
 
 class UserESFake(HQESQueryFake):
@@ -25,7 +25,7 @@ class UserESFake(HQESQueryFake):
     @staticmethod
     def transform_doc(doc):
         doc['username.exact'] = doc.get('username', '')
-        return transform_user_for_elasticsearch(doc)
+        return user_adapter.to_json(doc)
 
     def count(self):
         return len(self._result_docs)

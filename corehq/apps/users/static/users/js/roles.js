@@ -3,8 +3,9 @@ hqDefine('users/js/roles',[
     'underscore',
     'knockout',
     'hqwebapp/js/toggles',
-    'hqwebapp/js/alert_user',
-], function ($, _, ko, toggles, alertUser) {
+    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/privileges',
+], function ($, _, ko, toggles, alertUser, privileges) {
     let selectPermissionModel = function (id, permissionModel, text) {
         /*
         Function to build the view model for permissions that aren't simple booleans. The data is
@@ -51,7 +52,7 @@ hqDefine('users/js/roles',[
         if (self.all()) {
             self.selection(ALL);
         } else if (_.find(permissionModel.specific(), item => item.value())) {
-            self.selection(SELECTED)
+            self.selection(SELECTED);
         } else {
             self.selection(NONE);
         }
@@ -70,7 +71,7 @@ hqDefine('users/js/roles',[
         });
 
         self.hasError = ko.pureComputed(() => {
-            return self.selection() === SELECTED && permissionModel.filteredSpecific().length == 0;
+            return self.selection() === SELECTED && permissionModel.filteredSpecific().length === 0;
         });
         return self;
     };
@@ -96,7 +97,6 @@ hqDefine('users/js/roles',[
                         };
                     }),
                 };
-                data.permissions.download_reports = true;  // the user must explicitly disable this when visible
 
                 data.tableauPermissions = {
                     all: data.permissions.view_tableau,
@@ -151,6 +151,9 @@ hqDefine('users/js/roles',[
                         });
                     });
                 };
+                self.isEditable = ko.computed(function () {
+                    return root.allowEdit && (!self.upstream_id() || root.unlockLinkedRoles());
+                });
                 self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
                 self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
@@ -233,6 +236,22 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: self.permissions.edit_users_in_locations,
                     },
                     {
+                        showOption: privileges.hasPrivilege('data_dictionary'),
+                        editPermission: self.permissions.edit_data_dict,
+                        viewPermission: self.permissions.view_data_dict,
+                        text: gettext("<strong>Data Dictionary</strong> &mdash; manage case properties within CommCare HQ"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-data-dict-checkbox",
+                        showViewCheckbox: true,
+                        viewCheckboxLabel: "view-data-dict-checkbox",
+                        screenReaderEditAndViewText: gettext("Edit & View Data Dictionary"),
+                        screenReaderViewOnlyText: gettext("View-Only Data Dictionary"),
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
+                    },
+                    {
                         showOption: true,
                         editPermission: self.permissions.edit_data,
                         viewPermission: null,
@@ -281,7 +300,18 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: null,
                     },
                     {
-                        showOption: true,
+                        // Since disabling "Full Organization Access" automatically disables "Access APIs"
+                        // and we never want "Access APIs" without "Full Organization Access",
+                        // we hide "Access APIs" when "Full Organization Access" is disabled.
+                        // If "Access APIs" is checked though, even if "Full Organization Access" isn't
+                        // we always want to show it.
+                        // One can no longer make this combination happen in the UI,
+                        // but for the small number of existing roles that have this combination
+                        // we want it to be displayed.
+                        // Unchecking "Access APIs" in this situation will then make the option disappear.
+                        showOption: ko.pureComputed(function () {
+                            return self.permissions.access_all_locations() || self.permissions.access_api();
+                        }),
                         editPermission: self.permissions.access_api,
                         viewPermission: null,
                         text: gettext("<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update data. Specific APIs may require additional permissions."),
@@ -348,7 +378,7 @@ hqDefine('users/js/roles',[
                         showOption: root.ExportOwnershipEnabled,
                         editPermission: self.permissions.edit_shared_exports,
                         viewPermission: null,
-                        text: gettext("<strong>Shared Exports</strong> &mdash; access and edit the content and structure of shared exports"),
+                        text: gettext("<strong>Manage Shared Exports</strong> &mdash; access and edit the content and structure of shared exports"),
                         showEditCheckbox: true,
                         editCheckboxLabel: "edit-shared-exports-checkbox",
                         showViewCheckbox: false,
@@ -361,39 +391,44 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: null,
                     },
                     {
-                        showOption: root.ermPrivilege,
-                        editPermission: self.permissions.access_release_management,
+                        showOption: root.attendanceTrackingPrivilege,
+                        editPermission: self.permissions.manage_attendance_tracking,
                         viewPermission: null,
-                        text: gettext("<strong>Enterprise Release Management</strong> &mdash; access the Linked Project Spaces feature"),
+                        text: gettext("<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking events and users"),
                         showEditCheckbox: true,
-                        editCheckboxLabel: "edit-release-management-checkbox",
+                        editCheckboxLabel: "edit-attenance-tracking-checkbox",
                         showViewCheckbox: false,
-                        viewCheckboxLabel: "view-release-management-checkbox",
-                        screenReaderEditAndViewText: null,
-                        screenReaderViewOnlyText: null,
+                        viewCheckboxLabel: "view-attenance-tracking-checkbox",
+                        screenReaderEditAndViewText: gettext("Edit Attendance Tracking Events"),
+                        screenReaderViewOnlyText: gettext("Edit Attendance Tracking Events"),
                         showAllowCheckbox: false,
                         allowCheckboxText: null,
                         allowCheckboxId: null,
                         allowCheckboxPermission: null,
                     },
-                    {
-                        showOption: root.mrmPrivilege,
-                        editPermission: self.permissions.access_release_management,
-                        viewPermission: null,
-                        text: gettext("<strong>Multi-Environment Release Management</strong> &mdash; access the Linked Project Spaces feature"),
-                        showEditCheckbox: true,
-                        editCheckboxLabel: "edit-release-management-checkbox",
-                        showViewCheckbox: false,
-                        viewCheckboxLabel: "view-release-management-checkbox",
-                        screenReaderEditAndViewText: null,
-                        screenReaderViewOnlyText: null,
-                        showAllowCheckbox: false,
-                        allowCheckboxText: null,
-                        allowCheckboxId: null,
-                        allowCheckboxPermission: null,
-                    }];
+                ];
 
                 var hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
+
+                const linkedTitle = root.ermPrivilege ?
+                    gettext("Enterprise Release Management") : gettext("Multi-Environment Release Management");
+                self.erm = {
+                    'title': linkedTitle,
+                    'visible': root.ermPrivilege || root.mrmPrivilege,
+                    'access_release_management': {
+                        text: gettext('Linked Project Spaces'),
+                        checkboxLabel: "erm-checkbox",
+                        checkboxPermission: self.permissions.access_release_management,
+                        checkboxText: gettext("Allow role to configure linked project spaces"),
+                    },
+                    'edit_linked_configs': {
+                        text: gettext("Linked Configurations"),
+                        checkboxLabel: "erm-edit-linked-checkbox",
+                        checkboxPermission: self.permissions.edit_linked_configurations,
+                        checkboxText: gettext("Allow role to edit linked configurations on this project space"),
+                    },
+                };
+
                 self.reports = [
                     {
                         visibilityRestraint: self.permissions.access_all_locations,
@@ -402,16 +437,42 @@ hqDefine('users/js/roles',[
                         checkboxPermission: self.permissions.edit_reports,
                         checkboxText: gettext("Allow role to create and edit reports in report builder."),
                     },
-                    {
-                        visibilityRestraint: true,
-                        text: hasEmbeddedTableau ? gettext("Access All CommCare Reports") : gettext("Access All Reports"),
-                        checkboxLabel: "access-all-reports-checkbox",
-                        checkboxPermission: self.reportPermissions.all,
-                        checkboxText: hasEmbeddedTableau
-                            ? gettext("Allow role to view all CommCare reports. Excludes embedded Tableau reports")
-                            : gettext("Allow role to access all reports."),
-                    },
                 ];
+                if (toggles.toggleEnabled('USER_CONFIGURABLE_REPORTS')) {
+                    if (toggles.toggleEnabled('UCR_UPDATED_NAMING')) {
+                        self.reports.push({
+                            visibilityRestraint: self.permissions.access_all_locations,
+                            text: gettext("Create and Edit Custom Web Reports"),
+                            checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                            checkboxPermission: self.permissions.edit_ucrs,
+                            checkboxText: gettext("Allow role to create and edit custom web reports."),
+                        });
+                    } else {
+                        self.reports.push({
+                            visibilityRestraint: self.permissions.access_all_locations,
+                            text: gettext("Create and Edit Configurable Reports"),
+                            checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                            checkboxPermission: self.permissions.edit_ucrs,
+                            checkboxText: gettext("Allow role to create and edit configurable reports."),
+                        });
+                    }
+                }
+                self.reports.push({
+                    visibilityRestraint: true,
+                    text: hasEmbeddedTableau ? gettext("Access All CommCare Reports") : gettext("Access All Reports"),
+                    checkboxLabel: "access-all-reports-checkbox",
+                    checkboxPermission: self.reportPermissions.all,
+                    checkboxText: hasEmbeddedTableau
+                        ? gettext("Allow role to view all CommCare reports. Excludes embedded Tableau reports")
+                        : gettext("Allow role to access all reports."),
+                });
+                self.reports.push({
+                    visibilityRestraint: self.canSeeAnyReports,
+                    text: gettext("Download and Email Reports"),
+                    checkboxLabel: "download-and-email-reports-checkbox",
+                    checkboxPermission: self.permissions.download_reports,
+                    checkboxText: gettext("Allow role to download and email report data."),
+                });
                 if (toggles.toggleEnabled('EMBEDDED_TABLEAU')) {
                     self.reports.push({
                         visibilityRestraint: true,
@@ -420,23 +481,6 @@ hqDefine('users/js/roles',[
                         checkboxPermission: self.tableauPermissions.all,
                         checkboxText: gettext("Allow role to access all embedded Tableau reports."),
                     });
-                }
-                if (toggles.toggleEnabled('UCR_UPDATED_NAMING')) {
-                    self.ucrs = [{
-                        visibilityRestraint: self.permissions.access_all_locations,
-                        text: gettext("Create and Edit Custom Web Reports"),
-                        checkboxLabel: "create-and-edit-configurable-reports-checkbox",
-                        checkboxPermission: self.permissions.edit_ucrs,
-                        checkboxText: gettext("Allow role to create and edit custom web reports."),
-                    }];
-                } else {
-                    self.ucrs = [{
-                        visibilityRestraint: self.permissions.access_all_locations,
-                        text: gettext("Create and Edit Configurable Reports"),
-                        checkboxLabel: "create-and-edit-configurable-reports-checkbox",
-                        checkboxPermission: self.permissions.edit_ucrs,
-                        checkboxText: gettext("Allow role to create and edit configurable reports."),
-                    }];
                 }
                 self.registryPermissions = [
                     selectPermissionModel(
@@ -456,6 +500,12 @@ hqDefine('users/js/roles',[
                         }
                     ),
                 ];
+                // Automatically disable "Access APIs" when "Full Organization Access" is disabled
+                self.permissions.access_all_locations.subscribe(() => {
+                    if (!self.permissions.access_all_locations() && self.permissions.access_api()) {
+                        self.permissions.access_api(false);
+                    }
+                });
 
                 self.validate = function () {
                     self.registryPermissions.forEach((perm) => {
@@ -477,11 +527,11 @@ hqDefine('users/js/roles',[
                     data.name = data.name.trim();
                 }
 
-                const unwrapItemList = function (items, item_attr = 'slug') {
+                const unwrapItemList = function (items, itemAttr = 'slug') {
                     return ko.utils.arrayMap(ko.utils.arrayFilter(items, function (item) {
                         return item.value;
                     }), function (item) {
-                        return item[item_attr];
+                        return item[itemAttr];
                     });
                 };
 
@@ -489,11 +539,6 @@ hqDefine('users/js/roles',[
                 data.permissions.view_report_list = unwrapItemList(data.reportPermissions.specific, 'path');
                 data.permissions.view_tableau = data.tableauPermissions.all;
                 data.permissions.view_tableau_list = unwrapItemList(data.tableauPermissions.specific);
-
-                // Set download_reports to true only if the user can see reports
-                data.permissions.download_reports = data.permissions.download_reports && (
-                    data.permissions.view_reports || data.permissions.view_report_list.length !== 0
-                );
 
                 data.permissions.manage_data_registry = data.manageRegistryPermission.all;
                 data.permissions.manage_data_registry_list = unwrapItemList(data.manageRegistryPermission.specific);
@@ -519,6 +564,9 @@ hqDefine('users/js/roles',[
         self.webAppsPrivilege = o.webAppsPrivilege;
         self.ermPrivilege = o.ermPrivilege;
         self.mrmPrivilege = o.mrmPrivilege;
+        self.attendanceTrackingPrivilege = o.attendanceTrackingPrivilege;
+        self.unlockLinkedRoles = ko.observable(false);
+        self.canEditLinkedData = o.canEditLinkedData;
 
         self.userRoles = ko.observableArray(ko.utils.arrayMap(o.userRoles, function (userRole) {
             return UserRole.wrap(userRole);
@@ -526,6 +574,14 @@ hqDefine('users/js/roles',[
         self.roleBeingEdited = ko.observable();
         self.roleBeingDeleted = ko.observable();
         self.defaultRole = UserRole.wrap(o.defaultRole);
+
+        self.hasLinkedRoles = ko.computed(function () {
+            return self.userRoles().some(element => element.upstream_id());
+        });
+
+        self.toggleLinkedRoles = function () {
+            self.unlockLinkedRoles(!self.unlockLinkedRoles());
+        };
 
         self.addOrReplaceRole = function (role) {
             var newRole = UserRole.wrap(role);
@@ -556,7 +612,7 @@ hqDefine('users/js/roles',[
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
         };
-        self.unsetRoleBeingEdited = function (_, event) {
+        self.unsetRoleBeingEdited = function () {
             self.roleBeingEdited(undefined);
         };
         self.setRoleBeingDeleted = function (role) {
@@ -629,7 +685,7 @@ hqDefine('users/js/roles',[
                         message = response.responseJSON.message;
                     }
                     self.setRoleError(form, message);
-                }
+                },
             });
         };
 
@@ -637,10 +693,13 @@ hqDefine('users/js/roles',[
     };
 
     return {
-        initUserRoles: function ($element, o) {
+        initUserRoles: function ($element, $modal, $infoBar, o) {
+            const viewModel = RolesViewModel(o);
             $element.each(function () {
-                $element.koApplyBindings(RolesViewModel(o));
+                $element.koApplyBindings(viewModel);
             });
+            $modal.koApplyBindings(viewModel);
+            $infoBar.koApplyBindings(viewModel);
         },
     };
 });

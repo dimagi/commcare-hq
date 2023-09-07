@@ -290,14 +290,8 @@ class DomainReportDispatcher(ReportDispatcher):
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
-        from corehq.apps.export.views.incremental import IncrementalExportLogView
-
-        from corehq.toggles import INCREMENTAL_EXPORTS
-
         if (report.endswith(DomainForwardingRepeatRecords.__name__)
                 and not domain_has_privilege(domain, privileges.DATA_FORWARDING)):
-            return False
-        if (report.endswith(IncrementalExportLogView.__name__) and not INCREMENTAL_EXPORTS.enabled(domain)):
             return False
         return super(DomainReportDispatcher, self).permissions_check(report, request, domain, is_navigation_check)
 

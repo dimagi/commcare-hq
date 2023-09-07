@@ -15,7 +15,7 @@ hqDefine('export/js/models', [
     'export/js/const',
     'export/js/utils',
     'hqwebapp/js/validators.ko',        // needed for validation of customPathString
-    'hqwebapp/js/knockout_bindings.ko', // needed for multirow_sortable binding
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // needed for multirow_sortable binding
 ], function (
     $,
     ko,
@@ -221,7 +221,10 @@ hqDefine('export/js/models', [
 
         // We've already built the schema and now the user is clicking the button to refresh the page
         if (this.buildSchemaProgress() === 100) {
-            window.location.reload(false);
+            // This param will let us know to automatically enable the filter after the page refreshes
+            let pageUrl = new URL(window.location.href);
+            pageUrl.searchParams.append('delete_filter_enabled', 'True');
+            window.location.href = pageUrl;
             return;
         }
 
@@ -299,6 +302,12 @@ hqDefine('export/js/models', [
             },
             error: errorHandler,
         });
+    };
+
+    ExportInstance.prototype.onLoadAllProperties = function () {
+        var pageUrl = new URL(window.location.href);
+        pageUrl.searchParams.append('load_deprecated', 'True');
+        window.location.href = pageUrl;
     };
 
     ExportInstance.prototype.getFormatOptionValues = function () {
@@ -489,6 +498,7 @@ hqDefine('export/js/models', [
                     },
                     selected: true,
                     is_advanced: false,
+                    is_deprecated: false,
                     label: 'number',
                     deid_transform: null,
                     repeat: null,
@@ -538,9 +548,12 @@ hqDefine('export/js/models', [
      */
     var TableConfiguration = function (tableJSON) {
         var self = this;
+        const urlParams = new URLSearchParams(window.location.search);
         // Whether or not to show advanced columns in the UI
         self.showAdvanced = ko.observable(false);
-        self.showDeleted = ko.observable(false);
+        self.showDeleted = ko.observable(urlParams.get('delete_filter_enabled') === 'True');
+
+        self.showDeprecated = ko.observable(urlParams.get('load_deprecated') === 'True');
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
     };
 
@@ -551,6 +564,16 @@ hqDefine('export/js/models', [
 
     TableConfiguration.prototype.toggleShowAdvanced = function (table) {
         table.showAdvanced(!table.showAdvanced());
+    };
+
+    TableConfiguration.prototype.toggleShowDeprecated = function (table) {
+        table.showDeprecated(!table.showDeprecated());
+
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        if (urlParams.get('load_deprecated') !== 'True' && table.showDeprecated()) {
+            $('#export-process-deprecated-properties').modal('show');
+        }
     };
 
     TableConfiguration.prototype._select = function (select) {
@@ -678,6 +701,7 @@ hqDefine('export/js/models', [
 
         self.showAdvanced = ko.observable(false);
         self.showDeleted = ko.observable(false);
+        self.showDeprecated = ko.observable(false);
         self.customPathString.subscribe(self.onCustomPathChange.bind(self));
     };
     UserDefinedTableConfiguration.prototype = Object.create(TableConfiguration.prototype);
@@ -805,7 +829,7 @@ hqDefine('export/js/models', [
             return true;
         }
 
-        if (!this.is_advanced() && !this.is_deleted()) {
+        if (!this.is_advanced() && !this.is_deleted() && !this.is_deprecated()) {
             return true;
         }
 
@@ -814,6 +838,10 @@ hqDefine('export/js/models', [
         }
 
         if (table.showDeleted() && this.is_deleted()) {
+            return true;
+        }
+
+        if (table.showDeprecated() && this.is_deprecated()) {
             return true;
         }
 
@@ -855,6 +883,7 @@ hqDefine('export/js/models', [
             'label',
             'is_advanced',
             'is_deleted',
+            'is_deprecated',
             'selected',
             'tags',
             'deid_transform',

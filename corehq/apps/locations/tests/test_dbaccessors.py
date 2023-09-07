@@ -3,13 +3,13 @@ from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser, WebUser
 
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO, USER_INDEX
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.testing import sync_users_to_es
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.apps.es.users import user_adapter
+from corehq.apps.es.client import manager
+
 from corehq.apps.domain.models import Domain
 
 from ..analytics import users_have_locations
@@ -30,14 +30,14 @@ from .util import make_loc, delete_all_locations
 from ..dbaccessors import get_filtered_locations_count
 
 
+@es_test(requires=[user_adapter], setup_class=True)
 class TestUsersByLocation(TestCase):
 
     @classmethod
     @sync_users_to_es()
-    @mock.patch('corehq.pillows.user.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
+    @mock.patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
     def setUpClass(cls):
         super(TestUsersByLocation, cls).setUpClass()
-        initialize_index_and_mapping(get_es_new(), USER_INDEX_INFO)
         cls.domain = 'test-domain'
         cls.domain_obj = create_domain(cls.domain)
         bootstrap_location_types(cls.domain)
@@ -63,13 +63,12 @@ class TestUsersByLocation(TestCase):
         )
         cls.george.set_location(cls.domain, cls.meereen)
 
-        get_es_new().indices.refresh(USER_INDEX)
+        manager.index_refresh(user_adapter.index_name)
 
     @classmethod
     def tearDownClass(cls):
         cls.george.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
-        ensure_index_deleted(USER_INDEX)
         super(TestUsersByLocation, cls).tearDownClass()
 
     def test_get_users_by_location_id(self):

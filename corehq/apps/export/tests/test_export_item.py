@@ -34,6 +34,7 @@ class TestExportItemGeneration(SimpleTestCase):
 
         self.assertEqual(column.is_advanced, False)
         self.assertEqual(column.is_deleted, False)
+        self.assertEqual(column.is_deprecated, False)
         self.assertEqual(column.label, 'data.question1')
         self.assertEqual(column.selected, True)
 
@@ -42,14 +43,33 @@ class TestExportItemGeneration(SimpleTestCase):
 
         self.assertEqual(column.is_advanced, False)
         self.assertEqual(column.is_deleted, True)
+        self.assertEqual(column.is_deprecated, False)
+        self.assertEqual(column.label, 'data.question1')
+        self.assertEqual(column.selected, False)
+
+    def test_create_default_from_export_item_deprecated(self, _):
+        column = ExportColumn.create_default_from_export_item(
+            table_path=MAIN_TABLE,
+            item=self.item,
+            app_ids_and_versions={self.app_id: 3},
+            is_deprecated=True
+        )
+
+        self.assertEqual(column.is_advanced, False)
+        self.assertEqual(column.is_deleted, False)
+        self.assertEqual(column.is_deprecated, True)
         self.assertEqual(column.label, 'data.question1')
         self.assertEqual(column.selected, False)
 
     def test_create_default_from_export_item_not_main_table(self, _):
-        column = ExportColumn.create_default_from_export_item(['other_table'], self.item, {self.app_id: 3})
+        column = ExportColumn.create_default_from_export_item(
+            [PathNode(name='other_table')],
+            self.item, {self.app_id: 3}
+        )
 
         self.assertEqual(column.is_advanced, False)
         self.assertEqual(column.is_deleted, False)
+        self.assertEqual(column.is_deprecated, False)
         self.assertEqual(column.label, 'data.question1')
         self.assertEqual(column.selected, False)
 

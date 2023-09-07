@@ -1,11 +1,16 @@
 import uuid
+from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
-from unittest.mock import Mock, patch
+
+from pillowtop.feed.interface import Change, ChangeMeta
+from pillowtop.pillow.interface import PillowBase
+from pillowtop.processors.elastic import BulkElasticProcessor
+from pillowtop.utils import bulk_fetch_changes_docs, get_errors_with_ids
 
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
-from corehq.apps.es.tests.utils import es_test
-from corehq.elastic import get_es_new
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.tests.utils import es_test, test_adapter
 from corehq.form_processor.document_stores import CaseDocumentStore
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tests.utils import (
@@ -15,15 +20,7 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.es.interface import ElasticsearchInterface
-from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
-from pillowtop.es_utils import initialize_index_and_mapping
-from pillowtop.feed.interface import Change, ChangeMeta
-from pillowtop.pillow.interface import PillowBase
-from pillowtop.processors.elastic import BulkElasticProcessor
-from pillowtop.tests.utils import TEST_INDEX_INFO
-from pillowtop.utils import bulk_fetch_changes_docs, get_errors_with_ids
+from corehq.util.test_utils import create_and_save_a_case
 
 
 class BulkTest(SimpleTestCase):
@@ -52,7 +49,7 @@ class BulkTest(SimpleTestCase):
 
 
 @sharded
-@es_test(index=TEST_INDEX_INFO)
+@es_test(requires=[case_adapter], setup_class=True)
 class TestBulkDocOperations(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -65,19 +62,9 @@ class TestBulkDocOperations(TestCase):
             for case_id in cls.case_ids:
                 create_form_for_test(cls.domain, case_id)
 
-        cls.es = get_es_new()
-        cls.es_interface = ElasticsearchInterface(cls.es)
-        cls.index = TEST_INDEX_INFO.index
-        cls.es_alias = TEST_INDEX_INFO.alias
-
-        with trap_extra_setup(ConnectionError):
-            ensure_index_deleted(cls.index)
-            initialize_index_and_mapping(cls.es, TEST_INDEX_INFO)
-
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
-        ensure_index_deleted(cls.index)
         super().tearDownClass()
 
     def _changes_from_ids(self, case_ids):
@@ -107,7 +94,7 @@ class TestBulkDocOperations(TestCase):
         )
 
     def test_process_changes_chunk(self):
-        processor = BulkElasticProcessor(self.es, TEST_INDEX_INFO)
+        processor = BulkElasticProcessor(case_adapter)
 
         changes = self._changes_from_ids(self.case_ids)
 
@@ -115,8 +102,7 @@ class TestBulkDocOperations(TestCase):
         self.assertEqual([], retry)
         self.assertEqual([], errors)
 
-        es_docs = self.es_interface.get_bulk_docs(
-            self.es_alias, doc_type=TEST_INDEX_INFO.type, doc_ids=self.case_ids)
+        es_docs = case_adapter.get_docs(self.case_ids)
         ids_in_es = {
             doc['_id'] for doc in es_docs
         }
@@ -124,12 +110,12 @@ class TestBulkDocOperations(TestCase):
 
     def test_process_changes_chunk_with_errors(self):
         mock_response = (5, [{'index': {'_id': self.case_ids[0], 'error': 'DateParseError'}}])
-        processor = BulkElasticProcessor(Mock(), TEST_INDEX_INFO)
+        processor = BulkElasticProcessor(case_adapter)
 
         missing_case_ids = [uuid.uuid4().hex, uuid.uuid4().hex]
         changes = self._changes_from_ids(self.case_ids + missing_case_ids)
 
-        with patch.object(ElasticsearchInterface, 'bulk_ops', return_value=mock_response):
+        with patch.object(case_adapter, 'bulk', return_value=mock_response):
             retry, errors = processor.process_changes_chunk(changes)
         self.assertEqual(
             set(missing_case_ids),
@@ -141,20 +127,12 @@ class TestBulkDocOperations(TestCase):
         )
 
 
-@es_test(index=TEST_INDEX_INFO)
+@es_test(requires=[test_adapter])
 class TestBulkOperationsCaseToSQL(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.es = get_es_new()
-        cls.es_interface = ElasticsearchInterface(cls.es)
-        cls.index = TEST_INDEX_INFO.index
-        cls.es_alias = TEST_INDEX_INFO.alias
-
-        with trap_extra_setup(ConnectionError):
-            ensure_index_deleted(cls.index)
-            initialize_index_and_mapping(cls.es, TEST_INDEX_INFO)
 
         cls.domain = uuid.uuid4().hex
         cls.case_ids = [
@@ -167,7 +145,6 @@ class TestBulkOperationsCaseToSQL(TestCase):
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
-        ensure_index_deleted(cls.index)
         super().tearDownClass()
 
     def _changes_from_ids(self, case_ids):
@@ -186,7 +163,8 @@ class TestBulkOperationsCaseToSQL(TestCase):
 
     def test_process_changes_chunk_ignore_couch(self):
         processor = BulkElasticProcessor(
-            self.es, TEST_INDEX_INFO, change_filter_fn=is_couch_change_for_sql_domain)
+            adapter=test_adapter,
+            change_filter_fn=is_couch_change_for_sql_domain)
 
         changes = self._changes_from_ids(self.case_ids)
 
@@ -194,6 +172,5 @@ class TestBulkOperationsCaseToSQL(TestCase):
         self.assertEqual([], retry)
         self.assertEqual([], errors)
 
-        es_docs = self.es_interface.get_bulk_docs(
-            self.es_alias, doc_type=TEST_INDEX_INFO.type, doc_ids=self.case_ids)
+        es_docs = processor.adapter.get_docs(doc_ids=self.case_ids)
         self.assertEqual([], es_docs)

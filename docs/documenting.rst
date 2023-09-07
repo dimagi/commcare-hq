@@ -5,7 +5,7 @@ Documenting
 
 Documentation is awesome.  You should write it.  Here's how.
 
-All the CommCareHQ docs are stored in a ``docs/`` folder in the root of the repo.
+All the CommCare HQ docs are stored in a ``docs/`` folder in the root of the repo.
 To add a new doc, make an appropriately-named rst file in the ``docs/`` directory.
 For the doc to appear in the table of contents, add it to the ``toctree`` list in ``index.rst``.
 
@@ -204,7 +204,7 @@ Examples
 Some basic examples adapted from 2 Scoops of Django:
 
 Section Header
-^^^^^^^^^^^^^^
+..............
 
 Sections are explained well `here <http://docutils.sourceforge.net/docs/user/rst/quickstart.html#sections>`_ 
 
@@ -218,11 +218,11 @@ Sections are explained well `here <http://docutils.sourceforge.net/docs/user/rst
 
 Simple link: http://commcarehq.org
 
-Inline link: `CommCareHQ <https://commcarehq.org>`_
+Inline link: `CommCare HQ <https://commcarehq.org>`_
 
-Fancier Link: `CommCareHQ`_
+Fancier Link: `CommCare HQ`_
 
-.. _`CommCareHQ`: https://commcarehq.org
+.. _`CommCare HQ`: https://commcarehq.org
 
 #. An enumerated list item
 #. Second item

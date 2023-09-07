@@ -1,38 +1,37 @@
-from datetime import datetime
 import uuid
+from datetime import datetime
 from io import BytesIO
+from unittest.mock import patch
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
-from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import deprecated_check_user_has_case
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.tests.utils import create_restore_user
+
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
-from corehq.apps.es import CaseSearchES
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.client import manager
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import get_blob_db
-from corehq.pillows.mappings.case_search_mapping import (
-    CASE_SEARCH_INDEX,
-    CASE_SEARCH_INDEX_INFO,
+from corehq.form_processor.interfaces.processor import (
+    FormProcessorInterface,
+    XFormQuestionValueIterator,
 )
-from corehq.util.elastic import ensure_index_deleted
-from corehq.elastic import get_es_new
-from corehq.form_processor.interfaces.processor import FormProcessorInterface, XFormQuestionValueIterator
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.form_processor.utils import get_simple_form_xml
 from corehq.util.dates import coerce_to_datetime
 from corehq.util.test_utils import flag_enabled
-from pillowtop.es_utils import initialize_index_and_mapping
 
 DOMAIN = 'fundamentals'
 
@@ -487,19 +486,14 @@ class FundamentalCaseTests(FundamentalBaseTests):
 
 @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
 @patch('corehq.motech.repeaters.models.domain_has_privilege', lambda x, y: True)
+@es_test(requires=[case_search_adapter])
 class CaseSearchTests(FundamentalBaseTests):
     def setUp(self):
-        self.elasticsearch = get_es_new()
         CaseSearchConfig(
             domain=DOMAIN,
             enabled=True,
             synchronous_web_apps=True,
         ).save()
-        ensure_index_deleted(CASE_SEARCH_INDEX)
-        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
-
-    def tearDown(self):
-        ensure_index_deleted(CASE_SEARCH_INDEX)
 
     @patch.object(CouchUser, 'get_by_user_id', return_value=None)
     def test_create_case_and_update_elasticsearch(self, user_mock):
@@ -515,9 +509,8 @@ class CaseSearchTests(FundamentalBaseTests):
             xmlns=xmlns
         )
         # This case is sent to elasticsearch synchronously, without pillowtop
-        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
-
-        es_case = CaseSearchES().doc_id(case_id).run().hits[0]
+        manager.index_refresh(case_search_adapter.index_name)
+        es_case = case_search_adapter.get(case_id)
         case_props = {prop['key']: prop['value'] for prop in es_case['case_properties']}
         self.assertEqual(case_props['dynamic'], '123')
 

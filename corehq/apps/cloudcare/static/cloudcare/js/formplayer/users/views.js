@@ -2,7 +2,9 @@
 
 hqDefine("cloudcare/js/formplayer/users/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        Toggles = hqImport("hqwebapp/js/toggles"),
+        usersUtils = hqImport("cloudcare/js/formplayer/users/utils");
 
     /**
      * RestoreAsBanner
@@ -21,7 +23,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         },
         templateContext: function () {
             var template = "";
-            if (hqImport('hqwebapp/js/toggles').toggleEnabled('WEB_APPS_DOMAIN_BANNER')) {
+            if (Toggles.toggleEnabled('WEB_APPS_DOMAIN_BANNER')) {
                 template = gettext("Working as <b><%- restoreAs %></b> in <b><%- domain %></b>.");
             } else {
                 template = gettext("Working as <b><%- restoreAs %></b>.");
@@ -64,14 +66,14 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             };
         },
         onClickUser: function () {
-            Utils.confirmationModal({
+            formplayerUtils.confirmationModal({
                 title: _.template(gettext('Log in as <%= username %>?'))({username: this.model.get('username')}),
                 message: _.template($('#user-data-template').html())(
                     { user: this.model.toJSON() }
                 ),
                 confirmText: gettext('Yes, log in as this user'),
                 onConfirm: function () {
-                    hqImport("cloudcare/js/formplayer/users/utils").Users.logInAsUser(this.model.get('username'));
+                    usersUtils.Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                         new RestoreAsBanner({
                             model: FormplayerFrontend.getChannel().request('currentUser'),
@@ -80,8 +82,9 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                     var loginAsNextOptions = FormplayerFrontend.getChannel().request('getLoginAsNextOptions');
                     if (loginAsNextOptions) {
                         FormplayerFrontend.trigger("clearLoginAsNextOptions");
-                        var menusController = hqImport("cloudcare/js/formplayer/menus/controller");
-                        menusController.selectMenu(loginAsNextOptions);
+                        hqRequire(["cloudcare/js/formplayer/menus/controller"], function (MenusController) {
+                            MenusController.selectMenu(loginAsNextOptions);
+                        });
                     } else {
                         FormplayerFrontend.trigger('navigateHome');
                     }
@@ -136,8 +139,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
         },
         templateContext: function () {
-            var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
-            var paginationOptions = paginateItems.paginateOptions(this.model.get('page') - 1, this.totalPages());
+            var paginationOptions = formplayerUtils.paginateOptions(this.model.get('page') - 1, this.totalPages());
             return {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
@@ -193,10 +195,9 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             });
         },
         paginationGoAction: function (e) {
-            var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
             e.preventDefault();
             var page = Number(this.ui.paginationGoText.val());
-            var pageNo = paginateItems.paginationGoPageNumber(page, this.totalPages());
+            var pageNo = formplayerUtils.paginationGoPageNumber(page, this.totalPages());
             this.model.set('page', pageNo);
         },
         paginationGoKeyAction: function (e) {
@@ -211,7 +212,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             this.limit = Number(rowCount);
             this.fetchUsers();
             this.model.set('page', 1);
-            Utils.savePerPageLimitCookie('users', this.limit);
+            formplayerUtils.savePerPageLimitCookie('users', this.limit);
         },
     });
 

@@ -94,3 +94,22 @@ class ShadowModuleWithChildSuiteTest(SimpleTestCase, SuiteMixin):
 
         self.assertXmlPartialEqual(self.get_xml('shadow_module_source_parent_v1_v2'),
                                    self.app.create_suite(), "./menu")
+
+
+@patch_get_xform_resource_overrides()
+class ShadowModuleWithPersistentCaseContextOnSource(SimpleTestCase, SuiteMixin):
+    def setUp(self):
+        self.app = Application.new_app('domain', "Untitled Application")
+        self.parent = self.app.add_module(Module.new_module('Parent Module', None))
+        self.parent.case_details.short.persist_case_context = True
+        form = self.app.new_form(self.parent.id, "Parent Form", None)
+        form.requires = 'case'
+        self.shadow = self.app.add_module(ShadowModule.new_module('Shadow Module', None))
+
+    def test_source_module_have_persistent_context_enabled(self, *args):
+        """When a shadow module doesn't have persistent case context enabled, but its source module does, then the
+        shadow module should not be regarded as also having this setting enabled. A KeyError will be raised if
+        this happens, and this test will fail.
+        """
+        self.shadow.source_module_id = self.parent.unique_id
+        self.app.create_suite()

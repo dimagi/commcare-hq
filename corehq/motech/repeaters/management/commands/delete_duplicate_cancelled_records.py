@@ -11,7 +11,7 @@ from corehq.motech.repeaters.const import (
     RECORD_SUCCESS_STATE,
 )
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
-from corehq.motech.repeaters.models import Repeater, RepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord, Repeater
 from corehq.util.couch import IterDB
 
 
@@ -45,7 +45,7 @@ class Command(BaseCommand):
     def handle(self, domain, repeater_id, *args, **options):
         self.domain = domain
         self.repeater_id = repeater_id
-        repeater = Repeater.get(repeater_id)
+        repeater = Repeater.objects.get(repeater_id=repeater_id)
         print("Looking up repeat records for '{}'".format(repeater.friendly_name))
 
         redundant_records = []
@@ -77,7 +77,7 @@ class Command(BaseCommand):
         duplicates_log = self.resolve_duplicates(records_by_payload_id)
 
         filename = "cancelled_{}_records-{}.csv".format(
-            repeater.__class__.__name__,
+            repeater._repeater_type,
             datetime.datetime.utcnow().isoformat())
         print("Writing log of changes to {}".format(filename))
         with open(filename, 'w', encoding='utf-8') as f:

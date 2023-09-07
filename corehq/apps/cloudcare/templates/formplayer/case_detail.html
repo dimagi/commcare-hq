@@ -15,7 +15,7 @@
   <% } else if (style.displayFormat === 'Phone') { %>
   <td><a href="tel:<%- data %>"><%- data %></a></td>
   <% } else if (style.displayFormat === 'Markdown' && html) { %>
-  <td><%= html %></td>
+  <td class="webapp-markdown-output"><%= html %></td>
   <% } else { %>
   <td><%- data %></td>
   <% } %>
@@ -51,7 +51,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <button type="button" aria-label='{% trans_html_attr "Close" %}' class="close" data-dismiss="modal">&times;</button>
         <h4 class="modal-title">{% trans "Case Detail" %}</h4>
       </div>
       <div class="modal-body">

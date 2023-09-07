@@ -49,6 +49,7 @@ class Schedule(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
     active = models.BooleanField(default=True)
     deleted = models.BooleanField(default=False)
+    deleted_on = models.DateTimeField(null=True)
 
     # Only matters when the recipient of a ScheduleInstance is a Location
     # If False, only include users at that location as recipients
@@ -239,6 +240,8 @@ class ContentForeignKeyMixin(models.Model):
     ivr_survey_content = models.ForeignKey('scheduling.IVRSurveyContent', null=True, on_delete=models.CASCADE)
     custom_content = models.ForeignKey('scheduling.CustomContent', null=True, on_delete=models.CASCADE)
     sms_callback_content = models.ForeignKey('scheduling.SMSCallbackContent', null=True, on_delete=models.CASCADE)
+    fcm_notification_content = models.ForeignKey('scheduling.FCMNotificationContent', null=True,
+                                                 on_delete=models.CASCADE)
 
     class Meta(object):
         abstract = True
@@ -257,6 +260,8 @@ class ContentForeignKeyMixin(models.Model):
             return self.custom_content
         elif self.sms_callback_content_id:
             return self.sms_callback_content
+        elif self.fcm_notification_content:
+            return self.fcm_notification_content
 
         raise NoAvailableContent()
 
@@ -272,7 +277,7 @@ class ContentForeignKeyMixin(models.Model):
     @content.setter
     def content(self, value):
         from corehq.messaging.scheduling.models import (SMSContent, EmailContent,
-            SMSSurveyContent, IVRSurveyContent, CustomContent, SMSCallbackContent)
+            SMSSurveyContent, IVRSurveyContent, CustomContent, SMSCallbackContent, FCMNotificationContent)
 
         self.sms_content = None
         self.email_content = None
@@ -293,6 +298,8 @@ class ContentForeignKeyMixin(models.Model):
             self.custom_content = value
         elif isinstance(value, SMSCallbackContent):
             self.sms_callback_content = value
+        elif isinstance(value, FCMNotificationContent):
+            self.fcm_notification_content = value
         else:
             raise UnknownContentType()
 
@@ -512,6 +519,7 @@ class Broadcast(models.Model):
     name = models.CharField(max_length=1000)
     last_sent_timestamp = models.DateTimeField(null=True)
     deleted = models.BooleanField(default=False)
+    deleted_on = models.DateTimeField(null=True)
 
     # A List of [recipient_type, recipient_id]
     recipients = jsonfield.JSONField(default=list)

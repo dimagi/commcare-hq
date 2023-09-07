@@ -32,29 +32,26 @@ class CommCareSettingsTest(SimpleTestCase):
         return tuple(apps)
 
     def test_parse_condition(self):
-        str1 = "{features.sense}='true'"
+        str1 = "{type1.id2}='true'"
         cond1 = parse_condition_string(str1)
-        self.assertEqual(cond1, {"type": "features", "id": "sense", "equals": "true"})
-        str2 = "{features.sense}=true"
+        self.assertEqual(cond1, {"type": "type1", "id": "id2", "equals": "true"})
+        str2 = "{type1.id2}=true"
         cond2 = parse_condition_string(str2)
-        self.assertEqual(cond2, {"type": "features", "id": "sense", "equals": True})
-        str3 = "{properties.server-tether}='sync'"
-        cond3 = parse_condition_string(str3)
-        self.assertEqual(cond3, {"type": "properties", "id": "server-tether", "equals": "sync"})
+        self.assertEqual(cond2, {"type": "type1", "id": "id2", "equals": True})
 
     def test_check_condition(self):
-        sense_condition = "{features.sense}='true'"
+        condition = "{features.id2}='true'"
         server_tether_condition = "{properties.server-tether}='sync'"
 
         test_app1, test_app2, test_app3, test_app4 = self.set_up_apps(4)
-        test_app1.profile["features"]["sense"] = True
-        test_app2.profile["features"]["sense"] = False
-        test_app3.profile["features"]["sense"] = 'true'
+        test_app1.profile["features"]["id2"] = True
+        test_app2.profile["features"]["id2"] = False
+        test_app3.profile["features"]["id2"] = 'true'
         test_app4.profile["properties"]["server-tether"] = 'sync'
 
-        self.assertTrue(check_condition(test_app1, sense_condition))
-        self.assertFalse(check_condition(test_app2, sense_condition))
-        self.assertTrue(check_condition(test_app3, sense_condition))
+        self.assertTrue(check_condition(test_app1, condition))
+        self.assertFalse(check_condition(test_app2, condition))
+        self.assertTrue(check_condition(test_app3, condition))
         self.assertTrue(check_condition(test_app4, server_tether_condition))
 
     def test_circular_dependencies(self):

@@ -1,0 +1,43 @@
+--- 
++++ 
+@@ -1,5 +1,5 @@
+ .ace_editor.ace_autocomplete {
+-  font-family: @font-family-sans-serif !important;
++  font-family: $font-family-sans-serif !important;
+   font-size: 12px !important;
+   line-height: 28px !important;
+   color: #1c2126;
+@@ -19,7 +19,7 @@
+       font-size: 75%;
+       font-weight: 700;
+       line-height: 1;
+-      color: @label-color;
++      color: #ffff;
+       text-align: center;
+       white-space: nowrap;
+       vertical-align: top;
+@@ -27,21 +27,19 @@
+       display: inline-block;
+       margin: 7px !important;
+       opacity: 1.0 !important;
+-
+-      .label-variant(@label-default-bg);
+     }
+ 
+     .ace_completion-highlight {
+       font-weight: bold;
+-      color: @cc-brand-mid;
++      color: $cc-brand-mid;
+     }
+   }
+   .ace_active-line {
+-    background-color: @cc-brand-mid !important;
++    background-color: $cc-brand-mid !important;
+   }
+   .ace_line-hover {
+     border: none !important;
+-    background-color: @cc-brand-hi !important;
++    background-color: $cc-brand-hi !important;
+   }
+   .ace_line.ace_selected {
+     color: #ffffff;

@@ -17,17 +17,9 @@
     <script src="{% static 'app_manager/js/menu.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager.js' %}"></script><!-- depends on menu.js -->
     <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/bootstrap3/rollout_modal.js' %}"></script>
     <script src="{% static 'app_manager/js/section_changer.js' %}"></script>
   {% endcompress %}
-{% endblock %}
-
-{% block breadcrumbs %}
-  <li>
-    <a href="{% url "view_app" domain app.id %}">
-      <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
-    </a>
-  </li>
 {% endblock %}
 
 {% block page_navigation %}
@@ -39,7 +31,7 @@
     </div>
     <nav class="appmanager-content">
 
-      {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app.id app_name=app.name releases_active=release_manager settings_active=is_app_settings_page %}
+      {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app.id app_name=app.name releases_active=release_manager settings_active=is_app_settings_page linked_name=linked_name linked_version=app.upstream_version %}
 
       {% if app.get_doc_type == 'Application' %}
         {% if not app.is_remote_app and app.langs|length > 1%}
@@ -216,6 +208,6 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-  {% include "hqwebapp/rollout_revert_modal.html" %}
+  {% include "hqwebapp/bootstrap3/rollout_revert_modal.html" %}
   {% include 'app_manager/partials/confirm_delete_app.html' %}
 {% endblock %}

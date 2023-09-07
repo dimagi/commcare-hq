@@ -1,7 +1,13 @@
 /*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/menus/utils", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        kissmetrics = hqImport("analytix/js/kissmetrix"),
+        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
+        QueryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
+        toggles = hqImport("hqwebapp/js/toggles"),
+        utils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        views = hqImport("cloudcare/js/formplayer/menus/views");
 
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
@@ -12,9 +18,11 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
 
     var handleLocationRequest = function (optionsFromLastRequest) {
         var success = function (position) {
-            FormplayerFrontend.regions.getRegion('loadingProgress').empty();
-            recordPosition(position);
-            hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(optionsFromLastRequest);
+            hqRequire(["cloudcare/js/formplayer/menus/controller"], function (MenusController) {
+                FormplayerFrontend.regions.getRegion('loadingProgress').empty();
+                recordPosition(position);
+                MenusController.selectMenu(optionsFromLastRequest);
+            });
         };
 
         var error = function (err) {
@@ -39,8 +47,8 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         };
 
         if (navigator.geolocation) {
-            var progressView = hqImport("cloudcare/js/formplayer/layout/views/progress_bar")({
-                progressMessage: "Fetching your location...",
+            var progressView = ProgressBar({
+                progressMessage: gettext("Fetching your location..."),
             });
             FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView.render());
             navigator.geolocation.getCurrentPosition(success, error, {timeout: 10000});
@@ -71,35 +79,41 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         });
 
         detailCollection = new Backbone.Collection(breadcrumbModels);
-        var breadcrumbView = hqImport("cloudcare/js/formplayer/menus/views").BreadcrumbListView({
+        var breadcrumbView = views.BreadcrumbListView({
             collection: detailCollection,
         });
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showLanguageMenu = function (langs) {
-        var langModels,
+    var showMenuDropdown = function (langs, langCodeNameMapping) {
+        let langModels,
             langCollection;
 
         FormplayerFrontend.regions.addRegions({
-            formMenu: "#form-menu",
-        });
-        langModels = _.map(langs, function (lang) {
-            return {
-                lang: lang,
-            };
+            breadcrumbMenuDropdown: "#breadcrumb__menu-dropdown",
         });
 
-        langCollection = new Backbone.Collection(langModels);
-        var formMenuView = hqImport("cloudcare/js/formplayer/menus/views").FormMenuView({
+        if (langs && langs.length > 1) {
+            langModels = _.map(langs, function (lang) {
+            let matchingLanguage = langCodeNameMapping[lang];
+            return {
+                lang_code: lang,
+                lang_label: matchingLanguage ? matchingLanguage : lang,
+            };
+            });
+            langCollection = new Backbone.Collection(langModels);
+        } else {
+            langCollection = null;
+        }
+        let menuDropdownView = views.MenuDropdownView({
             collection: langCollection,
         });
-        FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
+        FormplayerFrontend.regions.getRegion('breadcrumbMenuDropdown').show(menuDropdownView);
     };
 
 
-    var getMenuView = function (menuResponse) {
-        var menuData = {                    // TODO: make this more concise
+    var getMenuData = function (menuResponse) {
+        return {                    // TODO: make this more concise
             collection: menuResponse,
             title: menuResponse.title,
             headers: menuResponse.headers,
@@ -119,64 +133,82 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             isPersistentDetail: menuResponse.isPersistentDetail,
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
+            multiSelectMaxSelectValue: menuResponse.maxSelectValue,
         };
-        var Utils = hqImport("cloudcare/js/formplayer/utils/utils");
-        var urlObject = Utils.currentUrlToObject();
+    };
+
+    var getCaseListView = function (menuResponse) {
+        if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
+            if (menuResponse.multiSelect) {
+                return views.MultiSelectCaseListView;
+            } else {
+                return views.CaseListView;
+            }
+        } else {
+            if (menuResponse.groupHeaderRows >= 0) {
+                return views.CaseTileGroupedListView;
+            } else {
+                return views.CaseTileListView;
+            }
+        }
+    };
+
+    var getMenuView = function (menuResponse) {
+        var menuData = getMenuData(menuResponse);
+        var urlObject = utils.currentUrlToObject();
 
         sessionStorage.queryKey = menuResponse.queryKey;
         if (menuResponse.type === "commands") {
-            return hqImport("cloudcare/js/formplayer/menus/views").MenuListView(menuData);
+            return views.MenuListView(menuData);
         } else if (menuResponse.type === "query") {
-            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
-                var props = {
-                    domain: FormplayerFrontend.getChannel().request('currentUser').domain,
-                };
-                if (menuResponse.breadcrumbs && menuResponse.breadcrumbs.length) {
-                    props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
-                }
-                hqImport('analytix/js/kissmetrix').track.event('Case Search', props);
+            var props = {
+                domain: FormplayerFrontend.getChannel().request('currentUser').domain,
+            };
+            if (menuResponse.breadcrumbs && menuResponse.breadcrumbs.length) {
+                props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
             }
-            urlObject.setQueryData({}, false, false);
-            return hqImport("cloudcare/js/formplayer/menus/views/query")(menuData);
+            kissmetrics.track.event('Case Search', props);
+            urlObject.setQueryData({
+                inputs: {},
+                execute: false,
+                forceManualSearch: false,
+            });
+            return QueryView(menuData);
         } else if (menuResponse.type === "entities") {
-            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
-                var searchText = urlObject.search;
-                var event = "Viewed Case List";
-                if (searchText) {
-                    event = "Searched Case List";
-                }
-                var eventData = {
-                    domain: FormplayerFrontend.getChannel().request("currentUser").domain,
-                    name: menuResponse.title,
-                };
-                var fields = _.pick(Utils.getCurrentQueryInputs(), function (v) { return !!v; });
-                if (!_.isEmpty(fields)) {
-                    eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
-                }
-                hqImport('analytix/js/kissmetrix').track.event(event, eventData);
+            var searchText = urlObject.search;
+            var event = "Viewed Case List";
+            if (searchText) {
+                event = "Searched Case List";
             }
+            if (menuResponse.queryResponse) {
+                menuData.sidebarEnabled = true;
+            }
+            var eventData = {
+                domain: FormplayerFrontend.getChannel().request("currentUser").domain,
+                name: menuResponse.title,
+            };
+            var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
+            if (!_.isEmpty(fields)) {
+                eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
+            }
+            kissmetrics.track.event(event, eventData);
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
-                hqImport('analytix/js/kissmetrix').track.event('Started Case Search', {
-                    'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                kissmetrics.track.event('Started Case Search', {
+                    'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
-            if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
-                return hqImport("cloudcare/js/formplayer/menus/views").CaseListView(menuData);
-            } else {
-                if (menuResponse.numEntitiesPerRow > 1) {
-                    return hqImport("cloudcare/js/formplayer/menus/views").GridCaseTileListView(menuData);
-                } else {
-                    return hqImport("cloudcare/js/formplayer/menus/views").CaseTileListView(menuData);
-                }
-            }
+            var caseListView = getCaseListView(menuResponse);
+            return caseListView(menuData);
         }
     };
 
     return {
         getMenuView: getMenuView,
+        getMenuData: getMenuData,
+        getCaseListView: getCaseListView,
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
-        showLanguageMenu: showLanguageMenu,
+        showMenuDropdown: showMenuDropdown,
         startOrStopLocationWatching: startOrStopLocationWatching,
     };
 });

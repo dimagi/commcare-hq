@@ -336,9 +336,9 @@ def import_patients():
 
 @task(queue='background_queue')
 def poll_openmrs_atom_feeds(domain_name):
-    for repeater in OpenmrsRepeater.by_domain(domain_name):
+    for repeater in OpenmrsRepeater.objects.by_domain(domain_name):
         errors = []
-        if repeater.atom_feed_enabled and not repeater.paused:
+        if repeater.atom_feed_enabled and not repeater.is_paused:
             patient_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
             encounter_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_ENCOUNTER)
             for patient_uuid in patient_uuids:

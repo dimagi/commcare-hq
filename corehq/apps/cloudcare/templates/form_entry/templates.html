@@ -6,7 +6,7 @@
         class: isRepetition ? 'repetition' : '',
         css: {
           'gr-no-children': $data.children().length === 0,
-          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'question' }),
+          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'grouped-question-tile-row' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'panel panel-default': collapsible,
           'required-group': !showChildren() && childrenRequired(),
@@ -17,25 +17,27 @@
            clickable: collapsible
         },
         attr: collapsible ? {
-                role: 'button',
+                'role': 'button',
                 'aria-expanded': showChildren() ? 'true' : 'false',
-                'aria-labelledby': captionId()
+                'aria-labelledby': captionId(),
+                // tab focus only if group is visible
+                'tabindex': isVisibleGroup() ? '0' : '-1'
               } : {
-                'aria-labelledby': captionId()
+                'aria-labelledby': captionId(),
+                'tabindex': isVisibleGroup() ? '0' : '-1'
               },
         click: toggleChildren,
-        event: {keypress: keyPressAction}"
-              tabindex="0">
+        event: {keypress: keyPressAction}">
       <div data-bind="ifnot: collapsible">
         <legend>
           <span class="caption webapp-markdown-output"
                 data-bind="
                   html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
                 "></span>
-          <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
+          <button class="btn btn-danger del pull-right" href="#" data-bind="
                       visible: isRepetition,
                       click: deleteRepeat
-                  ">{% trans "Delete repeat" %}</button>
+                  "><i class="fa fa-remove"></i></button>
         </legend>
       </div>
       <div data-bind="if: collapsible">
@@ -46,10 +48,10 @@
         </div>
         <span class="caption" data-bind="html: caption(), attr: {id: captionId()}"></span><!-- Markdown interferes with header styling -->
         <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
-        <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
+        <button class="btn btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
                     click: deleteRepeat
-                ">{% trans "Delete repeat" %}</button>
+                "><i class="fa fa-remove"></i></button>
       </div>
       <span class="ix"></span>
     </fieldset>
@@ -121,33 +123,37 @@
           <div class="question-container">
             <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
           </div>
-          <div class="row" data-bind="visible: erroredQuestions().length > 0">
-            <div class="col-sm-12 alert alert-danger">
-              {% blocktrans %}
-                Please correct the answers below before submitting.
-                <br>
-                You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.
-              {% endblocktrans %}
-              <ul data-bind="foreach: erroredQuestions">
-                  <li>
-                      <a href="#" data-bind="click: navigateTo, html: caption_markdown() || caption() || question_id() || gettext('Unknown Question')"></a>
-                      <span data-bind="visible: serverError, text: serverError"></span>
-                      <span data-bind="if: error">
-                        <!-- ko text: error --><!-- /ko -->
-                      </span>
-                      <span data-bind="visible: !serverError() && !error()">
-                        {% trans "An answer is required." %}
-                      </span>
-                  </li>
-              </ul>
+          {% if environment == "web-apps" %}
+            <div class="row" data-bind="visible: erroredQuestions().length > 0">
+              <div class="col-sm-12 alert alert-danger">
+                {% blocktrans %}
+                  Please correct the answers below before submitting.
+                  <br>
+                  You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.
+                {% endblocktrans %}
+                <ul data-bind="foreach: erroredQuestions">
+                    <li>
+                        <a href="#" data-bind="click: navigateTo, html: caption_markdown() || caption() || question_id() || gettext('Unknown Question')"></a>
+                        <span data-bind="visible: serverError, text: serverError"></span>
+                        <span data-bind="if: error">
+                          <!-- ko text: error --><!-- /ko -->
+                        </span>
+                        <span data-bind="visible: !serverError() && !error()">
+                          {% trans "An answer is required." %}
+                        </span>
+                    </li>
+                </ul>
+              </div>
             </div>
-          </div>
+          {% endif %}
           <div id="submit-button" class="form-actions form-group noprint-sub-container" data-bind="visible: showSubmitButton">
             <div data-bind="css: submitClass">
               <button class="submit btn btn-primary"
                      type="submit"
                      data-bind="enable: enableSubmitButton">
-                <i class="fa fa-spin fa-refresh" data-bind="visible: !enableSubmitButton() && erroredQuestions.length != 0"></i>
+                <i class="fa fa-spin fa-refresh"
+                   data-bind="visible: !enableSubmitButton(){% if environment == "web-apps" %} && erroredQuestions.length != 0{% endif %}"
+                ></i>
                 <!-- ko text: submitText --><!-- /ko -->
               </button>
             </div>
@@ -186,7 +192,15 @@
 </script>
 
 
+<script type="text/html" id="grouped-question-tile-row-fullform-ko-template">
+  <div class="row">
+    <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+  </div>
+</script>
+
+
 <script type="text/html" id="question-fullform-ko-template">
+  <div data-bind="class:questionTileWidth">
   <!-- ko if: datatype() !== 'info' -->
   <div class="q form-group" data-bind="
             css: {
@@ -196,17 +210,33 @@
             }
         ">
     <label class="caption control-label" data-bind="css: labelWidth, attr: {'for': entry.entryId}">
-      <div>
+      {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
+      <div data-bind="css: {
+          'row': help(),
+          'text-center': stylesContains('text-align-center'),
+          'text-right': stylesContains('text-align-right'),
+        }">
+        <span class="webapp-markdown-output" tabindex="0"
+              data-bind="
+                html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+                css: {'col-md-11' : help()}"></span>
         <!-- ko if: help() -->
         <a
-          class="help-text-trigger"
+          class="help-text-trigger col-md-1"
           role="button"
+          href="javascript:void(0)"
+          title="{% trans "Show help dialog" %}"
         ><i class="fa fa-question-circle"></i></a>
         <div class="modal fade" role="dialog">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-body">
-                <p class="webapp-markdown-output" align="left" data-bind="html: help"></p>
+                <p class="webapp-markdown-output" tabindex="0" align="left" data-bind="html: help"></p>
+                <div class="widget-multimedia" data-bind="
+                    template: {
+                      name: 'widget-help-multimedia-ko-template',
+                      data: $data
+                    } "></div>
               </div>
               <div class="modal-footer">
                 <button class="btn btn-default help-modal-close" data-dismiss="modal">{% trans "Close" %}</button>
@@ -215,7 +245,6 @@
           </div>
         </div>
         <!-- /ko -->
-        <span class="webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
       </div>
       <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
       <!-- ko if: required() -->
@@ -257,23 +286,33 @@
   <!-- /ko -->
   <!-- ko if: datatype() === 'info' -->
   <div class="info panel panel-default">
-    <div class="panel-body">
+    {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
+    <div class="panel-body" data-bind="css: {
+        'text-center': stylesContains('text-align-center'),
+        'text-right': stylesContains('text-align-right'),
+      }">
       <span class="ix" data-bind="text: ixInfo($data)">></span>
-      <span class="caption webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption(), attr: {'for': entry.entryId}"></span>
+      <span class="caption webapp-markdown-output"
+            data-bind="
+              html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+              attr: {'for': entry.entryId}"
+            tabindex="0">
+      </span>
       <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
       >
       </div>
       <div class="widget-container controls" data-bind="css: controlWidth">
-      <!-- labels only deal with server errors, since there's no data type validation for the browser to do-->
-      <div class="text-danger error-message" data-bind="
-                visible: serverError,
-                text: serverError
-      "></div>
-    </div>
+        <!-- labels only deal with server errors, since there's no data type validation for the browser to do-->
+        <div class="text-danger error-message" data-bind="
+          visible: serverError,
+          text: serverError
+          "></div>
+      </div>
     </div>
   </div>
   <!-- /ko -->
+  </div>
 </script>
 
 <script type="text/html" id="repeat-juncture-fullform-ko-template">
@@ -289,9 +328,12 @@
       </div>
     </div>
     <div class="panel-footer">
-      <button class="btn btn-default btn-xs add" href="#"
-              data-bind="click: newRepeat, text: getTranslation('repeat.dialog.add.new', '{% trans_html_attr 'Add new repeat' %}')"
-              id="repeat-add-new" />
+      <button class="btn btn-default add" href="#"
+              data-bind="click: newRepeat"
+              id="repeat-add-new">
+              <i class="fa fa-plus"></i>
+              <!-- ko text: getTranslation('repeat.dialog.add.new', '{% trans_html_attr 'Add new repeat' %}') --><!-- /ko -->
+      </button>
     </div>
   </div>
 </script>
@@ -305,6 +347,22 @@
     {% trans "Your browser does not support audio" %}
   </audio>
   <video controls="controls" data-bind="visible: caption_video, attr: { src: mediaSrc($data.caption_video()) }">
+    {% trans "Your browser does not support video" %}
+  </video>
+</script>
+
+<script type="text/html" id="widget-help-multimedia-ko-template">
+  <img class="img-responsive" data-bind="
+      attr: { src: mediaSrc($data.help_image()) },
+      visible: mediaSrc($data.help_image())" />
+  <audio controls="controls" data-bind="
+      visible: help_audio,
+      attr: { src: mediaSrc($data.help_audio()) }">
+    {% trans "Your browser does not support audio" %}
+  </audio>
+  <video controls="controls" data-bind="
+      visible: help_video,
+      attr: { src: mediaSrc($data.help_video()) }">
     {% trans "Your browser does not support video" %}
   </video>
 </script>
@@ -398,6 +456,8 @@
 </script>
 
 <script type="text/html" id="address-entry-ko-template">
+  <!-- ARIA live region for highlighted geocoder values, populated via javascript -->
+  <div role="region" aria-live="polite" class="sr-only" data-bind="attr: { id: entryId+'-sr' }"></div>
   <div data-bind="attr: { id: entryId }"></div>
 </script>
 
@@ -433,7 +493,7 @@
 </script>
 <script type="text/html" id="select-entry-ko-template">
   <fieldset>
-  <legend aria-hidden="true" class="sr-only">{% trans "Answer Choices" %}</legend>
+  <legend class="sr-only" data-bind="text: question.caption()"></legend>
     <div class="sel clear">
       <div data-bind="foreach: choices, as: 'choice'">
         <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }, class: $parent.colStyleIfHideLabel">
@@ -448,9 +508,7 @@
                               class: 'group-' + $parent.entryId,
                           },
                       "/>
-            <!-- ko ifnot: $parent.hideLabel -->
-              <span data-bind="renderMarkdown: $data"></span>
-            <!-- /ko -->
+              <span data-bind="renderMarkdown: $data, class: $parent.hideLabel ? 'sr-only' : ''"></span>
           </label>
           </div>
         </div>
@@ -512,14 +570,13 @@
                 checkedValue: $index() + 1,
                 attr: {
                     id: 'group-' + $parent.entryId + '-choice-' + $index(),
+                    'aria-labelledby': $parent.entryId + '-choice-' + $index() + '-sr',
                     name: $parent.entryId,
                     class: 'group-' + $parent.entryId,
                 }
             "/>
         <!-- /ko -->
-        <!-- ko ifnot: $parent.hideLabel -->
-          <span data-bind="renderMarkdown: $data"></span>
-        <!-- /ko -->
+        <span data-bind="renderMarkdown: $data, class: $parent.hideLabel ? 'sr-only' : '', attr: { id: $parent.entryId + '-choice-' + $index() + '-sr' }"></span>
       </div>
     <!-- /ko -->
     <!-- ko if: hideLabel -->
@@ -533,7 +590,8 @@
 </script>
 <script type="text/html" id="date-entry-ko-template">
   <div class="input-group">
-    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
+    <input type="text" class="form-control"
+      data-bind="attr: {id: entryId, 'aria-required': $parent.required() ? 'true' : 'false'}"/>
     <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
   </div>
 </script>

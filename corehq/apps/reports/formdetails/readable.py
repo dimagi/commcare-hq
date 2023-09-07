@@ -6,6 +6,8 @@ from django.http import Http404
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
+from couchdbkit import ResourceNotFound
+
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     FormQuestionResponse,
 )
@@ -15,6 +17,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from corehq.form_processor.exceptions import XFormQuestionValueNotFound
 from corehq.form_processor.utils.xform import get_node
+from corehq.util.soft_assert import soft_assert
 
 SYSTEM_FIELD_NAMES = (
     "drugs_prescribed", "case", "meta", "clinic_ids", "drug_drill_down", "tmp",
@@ -48,7 +51,17 @@ def get_questions(domain, app_id, xmlns):
             _("Remote apps are not supported")
         )
 
-    xform = app.get_xform_by_xmlns(xmlns)
+    try:
+        xform = app.get_xform_by_xmlns(xmlns)
+    except ResourceNotFound:
+        _soft_assert = soft_assert(notify_admins=True)
+        _soft_assert(
+            False,
+            f'XForm XML missing for XMLNS {xmlns!r} on domain {domain!r}',
+        )
+        raise QuestionListNotFound(_(
+            "We could not find the form source XML document"
+        ))
     if not xform:
         if xmlns == 'http://code.javarosa.org/devicereport':
             raise QuestionListNotFound(

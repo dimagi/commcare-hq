@@ -8,7 +8,7 @@ from corehq.apps.es.es_query import HQESQuery, InvalidQueryError
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 
 
-@es_test
+@es_test(requires=[users.user_adapter])
 class TestESQuery(ElasticTestMixin, SimpleTestCase):
     maxDiff = 1000
 
@@ -156,8 +156,8 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             "size": SIZE_LIMIT
         }
         query = forms.FormES()\
-                .filter(filters.domain("zombocom"))\
-                .xmlns('banana')
+            .filter(filters.domain("zombocom"))\
+            .xmlns('banana')
         raw_query = query.raw_query
         self.checkQuery(raw_query, json_output, is_raw_query=True)
 
@@ -177,40 +177,42 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
     def test_values_list(self):
         example_response = {
             '_shards': {'failed': 0, 'successful': 5, 'total': 5},
-            'hits': {'hits': [{
-                '_id': '8063dff5-460b-46f2-b4d0-5871abfd97d4',
-                '_index': 'xforms_1cce1f049a1b4d864c9c25dc42648a45',
-                '_score': 1.0,
-                '_type': 'xform',
-                '_source': {
-                    'app_id': 'fe8481a39c3738749e6a4766fca99efd',
-                    'doc_type': 'xforminstance',
-                    'domain': 'mikesproject',
-                    'xmlns': 'http://openrosa.org/formdesigner/3a7cc07c-551c-4651-ab1a-d60be3017485'
-                    }
-                },
-                {
-                    '_id': 'dc1376cd-0869-4c13-a267-365dfc2fa754',
-                    '_index': 'xforms_1cce1f049a1b4d864c9c25dc42648a45',
-                    '_score': 1.0,
-                    '_type': 'xform',
-                    '_source': {
-                        'app_id': '3d622620ca00d7709625220751a7b1f9',
-                        'doc_type': 'xforminstance',
-                        'domain': 'jacksproject',
-                        'xmlns': 'http://openrosa.org/formdesigner/54db1962-b938-4e2b-b00e-08414163ead4'
+            'hits': {
+                'hits': [
+                    {
+                        '_id': '8063dff5-460b-46f2-b4d0-5871abfd97d4',
+                        '_index': 'xforms_1cce1f049a1b4d864c9c25dc42648a45',
+                        '_score': 1.0,
+                        '_type': 'xform',
+                        '_source': {
+                            'app_id': 'fe8481a39c3738749e6a4766fca99efd',
+                            'doc_type': 'xforminstance',
+                            'domain': 'mikesproject',
+                            'xmlns': 'http://openrosa.org/formdesigner/3a7cc07c-551c-4651-ab1a-d60be3017485'
+                        }
+                    },
+                    {
+                        '_id': 'dc1376cd-0869-4c13-a267-365dfc2fa754',
+                        '_index': 'xforms_1cce1f049a1b4d864c9c25dc42648a45',
+                        '_score': 1.0,
+                        '_type': 'xform',
+                        '_source': {
+                            'app_id': '3d622620ca00d7709625220751a7b1f9',
+                            'doc_type': 'xforminstance',
+                            'domain': 'jacksproject',
+                            'xmlns': 'http://openrosa.org/formdesigner/54db1962-b938-4e2b-b00e-08414163ead4'
                         }
                     }
                 ],
                 'max_score': 1.0,
                 'total': 5247
-                },
+            },
             'timed_out': False,
             'took': 4
         }
         fields = ['app_id', 'doc_type', 'domain']
         query = forms.FormES()
-        with patch('corehq.apps.es.es_query.run_query', return_value=example_response):
+        with patch.object(query.adapter, "search", return_value=example_response):
             response = query.values_list(*fields)
             self.assertEqual(
                 [
@@ -261,6 +263,10 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         ]
         self.checkQuery(query.sort('timeStart', reset_sort=False), json_output)
 
+    def test_sort_raises_on__id_field(self):
+        with self.assertRaisesMessage(AssertionError, "Cannot sort on reserved _id field"):
+            HQESQuery('forms').sort('_id')
+
     def test_exclude_source(self):
         json_output = {
             "query": {
@@ -290,28 +296,28 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         query = HQESQuery('forms').size(1)
         self.assertEqual(1, query._size)
         scroll_query_testfunc = self._scroll_query_mock_assert(size=1)
-        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+        with patch.object(query.adapter, "scroll", scroll_query_testfunc):
             list(query.scroll())
 
     def test_scroll_without_query_size_uses_default_scroll_size(self):
         query = HQESQuery('forms')
         self.assertIsNone(query._size)
         scroll_query_testfunc = self._scroll_query_mock_assert(size=SCROLL_SIZE)
-        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+        with patch.object(query.adapter, "scroll", scroll_query_testfunc):
             list(query.scroll())
 
     def test_scroll_ids_uses_scroll_size_from_query(self):
         query = HQESQuery('forms').size(1)
         self.assertEqual(1, query._size)
         scroll_query_testfunc = self._scroll_query_mock_assert(size=1)
-        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+        with patch.object(query.adapter, "scroll", scroll_query_testfunc):
             list(query.scroll_ids())
 
     def test_scroll_ids_without_query_size_uses_default_scroll_size(self):
         query = HQESQuery('forms')
         self.assertIsNone(query._size)
         scroll_query_testfunc = self._scroll_query_mock_assert(size=SCROLL_SIZE)
-        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+        with patch.object(query.adapter, "scroll", scroll_query_testfunc):
             list(query.scroll_ids())
 
     def test_scroll_with_aggregations_raises(self):
@@ -320,9 +326,47 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             list(query.scroll())
 
     def _scroll_query_mock_assert(self, **raw_query_assertions):
-        def scroll_query_tester(index, raw_query, **kw):
+        def scroll_query_tester(raw_query, **kw):
             for key, value in raw_query_assertions.items():
                 self.assertEqual(value, raw_query[key])
             return []
         self.assertNotEqual({}, raw_query_assertions)
         return scroll_query_tester
+
+    def test_scroll_ids_to_disk_and_iter_docs(self):
+        doc = {"_id": "test", "doc_type": "SomeUser", "username": "u1"}
+        with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
+            users.user_adapter.index(doc, refresh=True)
+        query = users.UserES().remove_default_filters()
+        # add extra keys added in transformation
+        doc.update({
+            'base_username': 'u1',
+            'user_data_es': [],
+            '__group_ids': [],
+            '__group_names': []
+        })
+        self.assertEqual([doc], list(query.scroll_ids_to_disk_and_iter_docs()))
+
+    def test_scroll_ids_to_disk_and_iter_docs_does_not_raise_for_deleted_doc(self):
+
+        def scroll_then_delete_one():
+            results = real_scroll()
+            users.user_adapter.delete(doc2["_id"], refresh=True)
+            return results
+
+        doc1 = {"_id": "test", "doc_type": "SomeUser", "username": "u1"}
+        doc2 = {"_id": "vanishes", "doc_type": "SomeUser", "username": "u2"}
+        for doc in [doc1, doc2]:
+            with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
+                users.user_adapter.index(doc, refresh=True)
+        query = users.UserES().remove_default_filters()
+        # add extra keys added in transformation
+        doc1.update({
+            'base_username': 'u1',
+            'user_data_es': [],
+            '__group_ids': [],
+            '__group_names': []
+        })
+        real_scroll = query.scroll
+        with patch.object(query, "scroll", scroll_then_delete_one):
+            self.assertEqual([doc1], list(query.scroll_ids_to_disk_and_iter_docs()))

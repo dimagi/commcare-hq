@@ -1,6 +1,7 @@
 import datetime
 import uuid
 from base64 import b64decode
+from unittest.mock import Mock
 
 from django.http import QueryDict
 from django.test import TestCase
@@ -10,10 +11,12 @@ from casexml.apps.case.mock import CaseBlock, IndexAttrs
 from corehq import privileges
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
-    case_search_es_teardown,
     es_test,
 )
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import generate_cases, privilege_enabled
+from corehq.apps.data_dictionary.models import CaseType
 
 from ..api.core import UserError
 from ..api.get_list import MAX_PAGE_SIZE, get_list
@@ -22,15 +25,18 @@ GOOD_GUYS_ID = str(uuid.uuid4())
 BAD_GUYS_ID = str(uuid.uuid4())
 
 
-@es_test
+@es_test(requires=[case_search_adapter], setup_class=True)
 @privilege_enabled(privileges.API_ACCESS)
 class TestCaseListAPI(TestCase):
     domain = 'test-case-list-api'
+    couch_user = Mock(has_permission=lambda domain, permission: True)
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         case_search_es_setup(cls.domain, cls._get_case_blocks())
+        cls.case_type_obj = CaseType(domain=cls.domain, name='person')
+        cls.case_type_obj.save()
 
     @staticmethod
     def _get_case_blocks():
@@ -71,11 +77,13 @@ class TestCaseListAPI(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        case_search_es_teardown()
+        FormProcessorTestUtils.delete_all_cases()
+        cls.case_type_obj.delete()
         super().tearDownClass()
 
     def test_pagination(self):
-        res = get_list(self.domain, {"limit": "3", "case_type": "person"})
+        query_dict = QueryDict('limit=3&case_type=person&case_type=household')
+        res = get_list(self.domain, self.couch_user, query_dict)
         self.assertItemsEqual(res.keys(), ['next', 'cases', 'matching_records'])
         self.assertEqual(res['matching_records'], 5)
         self.assertEqual(
@@ -86,16 +94,34 @@ class TestCaseListAPI(TestCase):
         cursor = b64decode(res['next']['cursor']).decode('utf-8')
         self.assertIn('limit=3', cursor)
         self.assertIn('case_type=person', cursor)
+        self.assertIn('case_type=household', cursor)
         self.assertIn('indexed_on.gte', cursor)
         self.assertIn('last_case_id', cursor)
 
-        res = get_list(self.domain, res['next'])
+        res = get_list(self.domain, self.couch_user, res['next'])
         self.assertEqual(res['matching_records'], 2)
         self.assertEqual(
             ['chaney', 'ned'],
             [c['external_id'] for c in res['cases']]
         )
         self.assertNotIn('next', res)  # No pages after this one
+
+    def test_deprecated_case_type(self):
+        self.case_type_obj.is_deprecated = True
+        self.case_type_obj.save()
+
+        query_dict = QueryDict('')
+        res = get_list(self.domain, self.couch_user, query_dict)
+        self.assertEqual(res['matching_records'], 7)
+        self.assertNotIn('next', res)
+
+        query_dict = QueryDict('include_deprecated=True')
+        res = get_list(self.domain, self.couch_user, query_dict)
+        self.assertEqual(res['matching_records'], 7)
+
+        query_dict = QueryDict('include_deprecated=False')
+        res = get_list(self.domain, self.couch_user, query_dict)
+        self.assertEqual(res['matching_records'], 2)
 
 
 @generate_cases([
@@ -105,6 +131,8 @@ class TestCaseListAPI(TestCase):
     ("external_id=the-man-with-no-name", []),
     ("case_type=team", ["good_guys", "bad_guys"]),
     ("owner_id=person_owner", ['mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
+    ("owner_id=person_owner&owner_id=team_owner",
+     ['good_guys', 'bad_guys', 'mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
     ("case_name=Mattie Ross", ["mattie"]),
     ("case_name=Mattie+Ross", ["mattie"]),
     ("case_name=Mattie", []),
@@ -125,8 +153,9 @@ class TestCaseListAPI(TestCase):
     (f"indices.parent={GOOD_GUYS_ID}", ['mattie', 'rooster', 'laboeuf']),
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
-    params = QueryDict(querystring).dict()
-    actual = [c['external_id'] for c in get_list(self.domain, params)['cases']]
+    params = QueryDict(querystring)
+    case_list = get_list(self.domain, self.couch_user, params)
+    actual = [c['external_id'] for c in case_list['cases']]
     # order matters, so this doesn't use assertItemsEqual
     self.assertEqual(actual, expected)
 
@@ -146,6 +175,6 @@ def test_case_list_queries(self, querystring, expected):
 ], TestCaseListAPI)
 def test_bad_requests(self, querystring, error_msg):
     with self.assertRaises(UserError) as e:
-        params = QueryDict(querystring).dict()
-        get_list(self.domain, params)
+        params = QueryDict(querystring)
+        get_list(self.domain, self.couch_user, params)
     self.assertEqual(str(e.exception), error_msg)

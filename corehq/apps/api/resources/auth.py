@@ -4,6 +4,7 @@ from functools import wraps
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 
+from attrs import define, field
 from tastypie.authentication import Authentication
 
 from corehq.apps.api.odata.views import odata_permissions_check
@@ -17,7 +18,7 @@ from corehq.apps.users.decorators import (
     require_api_permission,
     require_permission_raw,
 )
-from corehq.toggles import API_THROTTLE_WHITELIST, IS_CONTRACTOR
+from corehq.toggles import IS_CONTRACTOR
 
 
 def wrap_4xx_errors_for_apis(view_func):
@@ -36,11 +37,20 @@ def wrap_4xx_errors_for_apis(view_func):
     return _inner
 
 
+@define
+class ApiIdentifier:
+    username = field()
+    domain = field()
+
+
 def get_rate_limit_identifier(request):
-    username = request.couch_user.username
-    if API_THROTTLE_WHITELIST.enabled(username):
-        return username
-    return f"{getattr(request, 'domain', '')}_{username}"
+    couch_user = getattr(request, 'couch_user', None)
+    if couch_user is not None:
+        username = couch_user.username
+    else:
+        username = ''
+    domain = getattr(request, 'domain', '')
+    return ApiIdentifier(username=username, domain=domain)
 
 
 class HQAuthenticationMixin:
@@ -51,6 +61,10 @@ class HQAuthenticationMixin:
 
     def get_identifier(self, request):
         return get_rate_limit_identifier(request)
+
+
+class SSOAuthentication(HQAuthenticationMixin, Authentication):
+    pass
 
 
 class LoginAuthentication(HQAuthenticationMixin, Authentication):
@@ -191,8 +205,7 @@ class AdminAuthentication(LoginAndDomainAuthentication):
     @staticmethod
     def _permission_check(couch_user, domain):
         return (
-            couch_user.is_superuser or
-            IS_CONTRACTOR.enabled(couch_user.username)
+            couch_user.is_superuser or IS_CONTRACTOR.enabled(couch_user.username)
         )
 
     def is_authenticated(self, request, **kwargs):

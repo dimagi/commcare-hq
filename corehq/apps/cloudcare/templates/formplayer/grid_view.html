@@ -10,6 +10,7 @@
     <div class="js-application-container">
 
     </div>
+    <% if (shouldShowIncompleteForms) { %>
     <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
       <div class="js-incomplete-sessions-item appicon appicon-incomplete" role="link" tabindex="0" aria-labelledby="grid-template-incomplete-forms-heading">
         <i class="ff ff-incomplete-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
@@ -19,7 +20,9 @@
         </div>
       </div>
     </div>
+    <% } %>
 
+    {% if not request|toggle_enabled:"HIDE_SYNC_BUTTON" %}
     <div class=" grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
       <div class="js-sync-item appicon appicon-sync" role="link" tabindex="0" aria-labelledby="grid-template-sync-heading">
         <i class="ff ff-sync appicon-icon" aria-hidden="true"></i>
@@ -28,13 +31,14 @@
         </div>
       </div>
     </div>
+    {% endif %}
 
     {% if request|can_use_restore_as %}
       <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
         <div class="js-restore-as-item appicon appicon-restore-as" role="link" tabindex="0" aria-labelledby="grid-template-login-as-heading">
           <i class="fa fa-user appicon-icon" aria-hidden="true"></i>
           <div class="appicon-title">
-            <h3 id="grid-template-login-as-heading">{% trans "Login as" %}</h3>
+            <h3 id="grid-template-login-as-heading">{% trans "Log in as" %}</h3>
           </div>
         </div>
       </div>
@@ -50,6 +54,7 @@
   </div>
 </script>
 
+{# App Preview #}
 <script id="single-app-template" type="text/template">
   <ol class="breadcrumb">
     <li class="breadcrumb-text"><%- appName %></li>
@@ -65,7 +70,7 @@
           </div>
         </div>
       </div>
-      <% if (showIncompleteForms()) { %>
+      <% if (shouldShowIncompleteForms()) { %>
       <div class=" grid-item col-xs-6 col-sm-4 formplayer-request">
         <div class="js-incomplete-sessions-item appicon appicon-incomplete" role="link" tabindex="0" aria-labelledby="single-app-incomplete-forms-heading">
           <i class="ff ff-incomplete-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
@@ -89,7 +94,7 @@
           <div class="js-restore-as-item appicon appicon-restore-as" role="link" tabindex="0" aria-labelledby="single-app-login-as-heading">
             <i class="fa fa-user appicon-icon" aria-hidden="true"></i>
             <div class="appicon-title">
-              <h3 id="single-app-login-as-heading">{% trans "Login as" %}</h3>
+              <h3 id="single-app-login-as-heading">{% trans "Log in as" %}</h3>
             </div>
           </div>
         </div>

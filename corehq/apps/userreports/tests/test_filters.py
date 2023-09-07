@@ -212,6 +212,20 @@ class BooleanExpressionFilterTest(SimpleTestCase):
         for non_match in (-10, 0, 2):
             self.assertFalse(filter({'foo': non_match}))
 
+    def test_regex_search(self):
+        expression = '^[bc]ar$'
+        filter = self.get_filter('regex', expression)
+        self.assertTrue(filter({'foo': 'bar'}))
+        self.assertTrue(filter({'foo': 'car'}))
+        self.assertFalse(filter({'foo': ' bar '}))
+        self.assertFalse(filter({'foo': None}))
+
+    def test_regex_compile_error(self):
+        expression = '['
+        filter = self.get_filter('regex', expression)
+        with self.assertRaises(BadSpecError):
+            filter('foo', expression)
+
     def test_date_conversion(self):
         filter_with_date = FilterFactory.from_spec({
             "type": "boolean_expression",

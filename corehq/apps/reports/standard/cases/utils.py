@@ -11,6 +11,8 @@ from corehq.apps.locations.dbaccessors import (
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 
 
 def _get_special_owner_ids(domain, admin, unknown, web, demo, commtrack):
@@ -158,21 +160,36 @@ def get_case_owners(request, domain, mobile_user_and_group_slugs):
     return owner_ids
 
 
-def _get_location_accessible_ids(request):
+def _get_location_accessible_ids(domain, couch_user):
     accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
-        request.domain,
-        request.couch_user
+        domain,
+        couch_user
     ))
     accessible_user_ids = mobile_user_ids_at_locations(accessible_location_ids)
     accessible_ids = accessible_user_ids + list(accessible_location_ids)
     return accessible_ids
 
 
-def query_location_restricted_cases(query, request):
-    accessible_ids = _get_location_accessible_ids(request)
+def query_location_restricted_cases(query, domain, couch_user):
+    accessible_ids = _get_location_accessible_ids(domain, couch_user)
     return query.filter(case_es.owner(accessible_ids))
 
 
-def query_location_restricted_forms(query, request):
-    accessible_ids = _get_location_accessible_ids(request)
+def query_location_restricted_forms(query, domain, couch_user):
+    accessible_ids = _get_location_accessible_ids(domain, couch_user)
     return query.filter(form_es.user_id(accessible_ids))
+
+
+def get_user_type(form, domain=None):
+    user_type = 'Unknown'
+    if getattr(form.metadata, 'username', None) == 'system':
+        if form.xmlns in SYSTEM_FORM_XMLNS_MAP:
+            user_type = SYSTEM_FORM_XMLNS_MAP[form.xmlns]
+        else:
+            user_type = 'System'
+    elif getattr(form.metadata, 'userID', None):
+        doc_info = get_doc_info_by_id(domain, form.metadata.userID)
+        if doc_info.type_display:
+            user_type = doc_info.type_display
+
+    return user_type

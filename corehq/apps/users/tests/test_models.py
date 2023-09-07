@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
@@ -8,6 +8,8 @@ from corehq.apps.users.models import (
     CouchUser,
     Invitation,
     WebUser,
+    DeviceAppMeta,
+    HqPermissions,
 )
 
 from corehq.apps.domain.models import Domain
@@ -94,3 +96,219 @@ class User_MessagingDomain_Tests(SimpleTestCase):
 
     def _get_domain_by_name(self, name):
         return self.domains[name]
+
+
+class DeviceAppMetaMergeTests(SimpleTestCase):
+    def test_overwrites_key(self):
+        self.original_meta.num_unsent_forms = 5
+        self.updates_meta.num_unsent_forms = 2
+
+        self.original_meta.merge(self.updates_meta)
+        self.assertEqual(self.original_meta.num_unsent_forms, 2)
+
+    def test_ignores_older_submissions(self):
+        recent_meta = DeviceAppMeta(num_unsent_forms=5, last_request=self.current_time)
+        older_meta = DeviceAppMeta(num_unsent_forms=2, last_request=self.previous_time)
+
+        recent_meta.merge(older_meta)
+        self.assertEqual(recent_meta.num_unsent_forms, 5)
+
+    def test_ignores_simultaneous_submissions(self):
+        meta1 = DeviceAppMeta(num_unsent_forms=5, last_request=self.current_time)
+        meta2 = DeviceAppMeta(num_unsent_forms=2, last_request=self.current_time)
+
+        meta1.merge(meta2)
+        self.assertEqual(meta1.num_unsent_forms, 5)
+
+    def test_merges_new_properties(self):
+        self.updates_meta.num_unsent_forms = 5
+
+        self.original_meta.merge(self.updates_meta)
+        self.assertEqual(self.original_meta.num_unsent_forms, 5)
+
+    def test_merges_new_dates(self):
+        self.updates_meta.last_heartbeat = self.current_time
+
+        self.original_meta.merge(self.updates_meta)
+        self.assertEqual(self.original_meta.last_heartbeat, self.current_time)
+
+    def test_does_not_overwrite_unspecified_properties(self):
+        self.original_meta.num_unsent_forms = 5
+
+        self.original_meta.merge(self.updates_meta)
+        self.assertEqual(self.original_meta.num_unsent_forms, 5)
+
+    def test_uses_nontruthy_values(self):
+        self.original_meta.num_unsent_forms = 5
+        self.updates_meta.num_unsent_forms = 0
+
+        self.original_meta.merge(self.updates_meta)
+        self.assertEqual(self.original_meta.num_unsent_forms, 0)
+
+    def test_updates_dates(self):
+        self.original_meta.last_heartbeat = self.previous_time
+        self.updates_meta.last_heartbeat = self.current_time
+
+        self.original_meta.merge(self.updates_meta)
+        self.assertEqual(self.original_meta.last_heartbeat, self.current_time)
+
+    def test_ignores_older_dates(self):
+        self.original_meta.num_unsent_forms = 5
+        self.original_meta.last_heartbeat = self.current_time
+
+        self.updates_meta.num_unsent_forms = 2
+        self.updates_meta.last_heartbeat = self.previous_time
+
+        self.original_meta.merge(self.updates_meta)
+        self.assertEqual(self.original_meta.num_unsent_forms, 2)  # Normal values should still merge
+        # But the older time should be ignored
+        self.assertEqual(self.original_meta.last_heartbeat, self.current_time)
+
+    def test_updates_last_request(self):
+        original_meta = DeviceAppMeta(last_request=self.previous_time)
+        updates_meta = DeviceAppMeta(last_heartbeat=self.current_time)
+
+        original_meta.merge(updates_meta)
+        self.assertEqual(original_meta.last_request, self.current_time)
+
+    def setUp(self):
+        self.previous_time = datetime(2022, 10, 2)
+        self.current_time = self.previous_time + timedelta(hours=1)
+
+        self.original_meta = DeviceAppMeta(last_request=self.previous_time)
+        self.updates_meta = DeviceAppMeta(last_request=self.current_time)
+
+
+class DeviceAppMetaLatestRequestTests(SimpleTestCase):
+    def test_uses_max_from_submission(self):
+        meta = DeviceAppMeta(
+            last_submission=self.current_time,
+            last_sync=self.previous_time,
+            last_heartbeat=self.previous_time
+        )
+        meta._update_latest_request()
+        self.assertEqual(meta.last_request, self.current_time)
+
+    def test_uses_max_from_sync(self):
+        meta = DeviceAppMeta(
+            last_sync=self.current_time,
+            last_submission=self.previous_time,
+            last_heartbeat=self.previous_time
+        )
+        meta._update_latest_request()
+        self.assertEqual(meta.last_request, self.current_time)
+
+    def test_uses_max_from_heartbeat(self):
+        meta = DeviceAppMeta(
+            last_heartbeat=self.current_time,
+            last_submission=self.previous_time,
+            last_sync=self.previous_time
+        )
+        meta._update_latest_request()
+        self.assertEqual(meta.last_request, self.current_time)
+
+    def setUp(self):
+        self.previous_time = datetime(2022, 10, 2)
+        self.current_time = self.previous_time + timedelta(hours=1)
+
+
+class HQPermissionsTests(SimpleTestCase):
+    def test_normalize_removes_permissions_from_location_restricted_user(self):
+        permissions = HqPermissions(
+            edit_web_users=True,
+            view_web_users=True,
+            edit_groups=True,
+            view_groups=True,
+            edit_apps=True,
+            view_roles=True,
+            edit_reports=True,
+            edit_billing=True
+        )
+        permissions.access_all_locations = False
+
+        permissions.normalize()
+
+        self.assertFalse(permissions.edit_web_users)
+        self.assertFalse(permissions.view_web_users)
+        self.assertFalse(permissions.edit_groups)
+        self.assertFalse(permissions.view_groups)
+        self.assertFalse(permissions.edit_apps)
+        self.assertFalse(permissions.view_roles)
+        self.assertFalse(permissions.edit_reports)
+        self.assertFalse(permissions.edit_billing)
+
+    def test_normalize_edit_users_implies_view_users(self):
+        permissions = HqPermissions(edit_web_users=True, view_web_users=False)
+        permissions.normalize()
+
+        self.assertTrue(permissions.view_web_users)
+
+    def test_normalize_edit_commcare_users_implies_view_users(self):
+        permissions = HqPermissions(edit_commcare_users=True, view_commcare_users=False)
+        permissions.normalize()
+
+        self.assertTrue(permissions.view_commcare_users)
+
+    def test_normalize_edit_group_implies_view_group(self):
+        permissions = HqPermissions(edit_groups=True, view_groups=False)
+        permissions.normalize()
+
+        self.assertTrue(permissions.view_groups)
+
+    def test_normalize_disabled_edit_groups_prevents_editing_users_in_groups(self):
+        permissions = HqPermissions(edit_groups=False, edit_users_in_groups=True)
+        permissions.normalize()
+
+        self.assertFalse(permissions.edit_users_in_groups)
+
+    def test_normalize_edit_locations_implies_viewing_locations(self):
+        permissions = HqPermissions(edit_locations=True, view_locations=False)
+        permissions.normalize()
+
+        self.assertTrue(permissions.view_locations)
+
+    def test_normalize_disabled_edit_locations_prevents_editing_users_locations(self):
+        permissions = HqPermissions(edit_locations=False, edit_users_in_locations=True)
+        permissions.normalize()
+
+        self.assertFalse(permissions.edit_users_in_locations)
+
+    def test_normalize_edit_apps_implies_view_apps(self):
+        permissions = HqPermissions(edit_apps=True, view_apps=False)
+        permissions.normalize()
+
+        self.assertTrue(permissions.view_apps)
+
+    def test_normalize_access_release_management_preserves_previous_edit_linked_config_value(self):
+        permissions = HqPermissions(access_release_management=True, edit_linked_configurations=True)
+        old_permissions = HqPermissions(edit_linked_configurations=False)
+        permissions.normalize(previous=old_permissions)
+
+        self.assertFalse(permissions.edit_linked_configurations)
+
+    def test_normalize_disabled_release_management_uses_edit_linked_config_value(self):
+        permissions = HqPermissions(access_release_management=False, edit_linked_configurations=True)
+        old_permissions = HqPermissions(edit_linked_configurations=False)
+        permissions.normalize(previous=old_permissions)
+
+        self.assertTrue(permissions.edit_linked_configurations)
+
+    def test_diff_returns_an_empty_list_for_matching_permissions(self):
+        left = HqPermissions(edit_apps=True, view_apps=True)
+        right = HqPermissions(edit_apps=True, view_apps=True)
+        self.assertEqual(HqPermissions.diff(left, right), [])
+
+    def test_diff_builds_array_of_mismatched_permission_names(self):
+        left = HqPermissions(view_report_list=['report1'])
+        right = HqPermissions(view_report_list=['report2'])
+        self.assertEqual(HqPermissions.diff(left, right), ['view_reports'])
+
+    def test_diff_includes_missing_permissions_from_left(self):
+        left = HqPermissions()
+        right = HqPermissions(view_reports=True)
+        self.assertEqual(HqPermissions.diff(left, right), ['view_reports'])
+
+    def test_diff_includes_missing_permissions_from_right(self):
+        left = HqPermissions(view_reports=True)
+        right = HqPermissions()
+        self.assertEqual(HqPermissions.diff(left, right), ['view_reports'])

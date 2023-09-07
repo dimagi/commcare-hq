@@ -177,6 +177,9 @@
         <span data-bind="css: $parent.getLoadSaveDiffClass('save_properties', $data.case_type, $data.property), popover: $parent.getLoadSavePopover('save_properties', $data.case_type, $data.property)">
           <span class="text-muted" data-bind="text:$data.case_type"></span> -
           <!-- ko text: $data.property --><!-- /ko -->
+          <!-- ko if: $data.update_mode === 'edit' -->
+          <sup class="text-muted">{% trans 'save only on edit' %}</sup>
+          <!-- /ko -->
         </span>
       </li>
       <!-- /ko -->

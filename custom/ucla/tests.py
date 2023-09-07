@@ -77,7 +77,6 @@ class TestUCLACustomHandler(TestCase):
             item_attributes=[],
         )
         self.data_type.save()
-        self.addCleanup(self.data_type._migration_get_couch_object().delete)
         self._setup_data_item()
 
     def _setup_data_item(self, risk='risk1', sequence='1', message='message1'):
@@ -115,7 +114,6 @@ class TestUCLACustomHandler(TestCase):
             item_attributes=[]
         )
         data_type.save()
-        self.addCleanup(data_type._migration_get_couch_object().delete)
         with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
             self.assertRaises(
                 AssertionError, general_health_message_bank_content, self._reminder(), self._handler(), case)
@@ -172,7 +170,6 @@ class TestUCLACustomHandler(TestCase):
             item_attributes=[]
         )
         data_type.save()
-        self.addCleanup(data_type._migration_get_couch_object().delete)
         with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
             with self.assertRaises(AssertionError) as e:
                 self._get_current_event_messages(self._schedule_instance(case))

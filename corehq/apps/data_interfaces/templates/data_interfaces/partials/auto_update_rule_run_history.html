@@ -1,0 +1,49 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div id="ko-tabs-rule-run-history" class="ko-template">
+  <div class="spacer"></div>
+    <p>
+      {% blocktrans trimmed %}
+        All rules for a specific case type are run together and are referred to as rule runs. This table displays
+        information associated with each rule run.
+      {% endblocktrans %}
+    </p>
+  <div class="panel panel-default">
+    <div class="panel-body">
+      <search-box data-apply-bindings="false"
+          params="value: caseTypeQuery,
+                  action: filter,
+                  immediate: true,
+                  placeholder: '{% trans_html_attr "Search Rule Runs By Case Type..." %}'"></search-box>
+      <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+          <th>{% trans "Case Type" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Started On" %}</th>
+          <th>{% trans "Finished On" %}</th>
+          <th>{% trans "# of Cases Updated" %}</th>
+          <th>{% trans "# of Cases Closed" %}</th>
+        </tr>
+        </thead>
+        <tbody data-bind="foreach: paginatedRuleRuns">
+          <tr>
+            <td data-bind="text: case_type"></td>
+            <td data-bind="text: status"></td>
+            <td data-bind="text: started_on"></td>
+            <td data-bind="text: finished_on"></td>
+            <td data-bind="text: cases_updated"></td>
+            <td data-bind="text: cases_closed"></td>
+          </tr>
+        </tbody>
+      </table>
+      <pagination data-apply-bindings="false"
+        params="goToPage: goToPage,
+                perPage: itemsPerPage,
+                totalItems: totalItems,
+                onLoad: onPaginationLoad,
+                slug: 'rule-run-list'"></pagination>
+    </div>
+  </div>
+</div>

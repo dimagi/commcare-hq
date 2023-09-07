@@ -1,0 +1,22 @@
+--- 
++++ 
+@@ -1 +1,18 @@
+-@import "@{b3-import-mixins}";
++// Mixins from Bootstrap 3
++@mixin input-size($input-height, $padding-vertical, $padding-horizontal, $font-size, $line-height, $border-radius) {
++  height: $input-height;
++  padding: $padding-vertical $padding-horizontal;
++  font-size: $font-size;
++  line-height: $line-height;
++  border-radius: $border-radius;
++
++  select& {
++    height: $input-height;
++    line-height: $input-height;
++  }
++
++  textarea&,
++  select[multiple]& {
++    height: auto;
++  }
++}

@@ -1,3 +1,4 @@
+from uuid import uuid4
 from datetime import datetime
 
 from django.conf import settings
@@ -93,7 +94,9 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
 
 # rate limit to two bulk saves per second so cloudant has time to reindex
 @task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True)
-def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
+def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date=None):
+    if not deletion_date:
+        deletion_date = datetime.utcnow()
     from corehq.apps.data_interfaces.tasks import delete_duplicates_for_cases
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.messaging.scheduling.tasks import (
@@ -330,7 +333,7 @@ def process_reporting_metadata_staging():
     lock_key = "PROCESS_REPORTING_METADATA_STAGING_TASK"
     process_reporting_metadata_lock = get_redis_lock(
         lock_key,
-        timeout=60 * 60, # one hour
+        timeout=60 * 60,  # one hour
         name=lock_key,
     )
     if not process_reporting_metadata_lock.acquire(blocking=False):
@@ -340,11 +343,11 @@ def process_reporting_metadata_staging():
     try:
         start = datetime.utcnow()
 
-        for i in range(20):
+        for i in range(100):
             with transaction.atomic():
                 records = (
                     UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
-                )[:5]
+                )[:1]
                 for record in records:
                     user = CouchUser.get_by_user_id(record.user_id, record.domain)
                     try:
@@ -389,3 +392,11 @@ def apply_correct_demo_mode_to_loadtest_user(commcare_user_id):
             user.is_loadtest_user = False  # This change gets saved by
             # turn_off_demo_mode()
             turn_off_demo_mode(user)
+
+
+@task(queue='background_queue')
+def remove_users_test_cases(domain, owner_ids):
+    from corehq.apps.reports.util import domain_copied_cases_by_owner
+
+    test_case_ids = domain_copied_cases_by_owner(domain, owner_ids)
+    tag_cases_as_deleted_and_remove_indices(domain, test_case_ids, uuid4().hex)

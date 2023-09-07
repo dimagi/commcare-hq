@@ -58,6 +58,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Stack,
     StackDatum,
     SessionDatum,
+    InstanceDatum,
     RemoteRequestQuery,
     StackQuery,
     QueryData,
@@ -110,6 +111,20 @@ class WorkflowHelper(PostProcessor):
         for frame in frames:
             entry.stack.add_frame(frame)
 
+    @staticmethod
+    def _get_id_suffix(module):
+        from corehq.apps.app_manager.models import ShadowModule
+
+        root_module = None
+        if not module.put_in_root:
+            if module.root_module:
+                root_module = module.root_module
+            elif module.module_type == 'shadow' and module.source_module.root_module:
+                root_module = module.source_module.root_module
+
+        suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
+        return suffix
+
     def get_frame_children(self, module, form=None, include_root_module=False):
         """
         For a form or module return the list of stack frame children that are required
@@ -138,7 +153,7 @@ class WorkflowHelper(PostProcessor):
         :returns:   list of strings and DatumMeta objects. String represent stack commands
                     and DatumMeta's represent stack datums.
         """
-        module_command = id_strings.menu_id(module)
+        module_command = id_strings.menu_id(module, WorkflowHelper._get_id_suffix(module))
         if form is None and module.module_type == "shadow":
             module_datums = self.get_module_datums(f'm{module.source_module.id}')
         else:
@@ -397,7 +412,15 @@ class EndOfFormNavigationWorkflow(object):
         source_form_datums = self.helper.get_form_datums(form)
         if link.form_id:
             target_form = self.helper.app.get_form(link.form_id)
-            target_module = target_form.get_module()
+            if link.form_module_id:
+                target_module = self.helper.app.get_module_by_unique_id(link.form_module_id)
+            else:
+                target_module = target_form.get_module()
+            if module.module_type == "shadow" and module.source_module_id == target_module.unique_id:
+                # If this is a shadow module and we're navigating to a form from the source module,
+                # presume we should navigate to the version of the form in the current (shadow) module.
+                # This only affects breadcrumbs.
+                target_module = module
             target_frame_children = self.helper.get_frame_children(target_module, target_form)
         elif link.module_unique_id:
             target_module = self.helper.app.get_module_by_unique_id(link.module_unique_id)
@@ -410,7 +433,8 @@ class EndOfFormNavigationWorkflow(object):
 
         if target_module.root_module_id:
             root_module = self.helper.app.get_module_by_unique_id(target_module.root_module_id)
-            frame_children = prepend_parent_frame_children(self.helper, frame_children, root_module)
+            frame_children = prepend_parent_frame_children(
+                self.helper, frame_children, root_module, link.datums, form)
 
         return StackFrameMeta(link.xpath, list(frame_children), current_session=source_form_datums)
 
@@ -425,10 +449,15 @@ class EndOfFormNavigationWorkflow(object):
                 )
 
 
-def prepend_parent_frame_children(helper, frame_children, parent_module):
+def prepend_parent_frame_children(helper, frame_children, parent_module, manual_values=None, form=None):
     # Note: this fn is roughly equivalent to just passing include_root_module
     # to get_frame_children in the first place, but that gives the wrong order
     parent_frame_children = helper.get_frame_children(parent_module)
+    if manual_values:
+        parent_frame_children = list(
+            _get_datums_matched_to_manual_values(parent_frame_children, manual_values, form)
+        )
+
     parent_ids = {parent.id for parent in parent_frame_children}
     return parent_frame_children + [
         child for child in frame_children
@@ -565,7 +594,8 @@ class CaseListFormWorkflow(object):
         except ValueError:
             # This either means that the source module (with the registration form) requires datums that the
             # target module (the module which called the reg form).
-            # OR it could mean that not all the forms in the target module have the same case management configuration.
+            # OR it could mean that not all the forms in the target module have the same case management
+            # configuration.
             return
         return target_dm
 
@@ -664,7 +694,8 @@ class CommandId(object):
 
 def workflow_meta_from_session_datum(session_datum, next_datum):
     if isinstance(session_datum, SessionDatum):
-        return WorkflowDatumMeta(session_datum.id, session_datum.nodeset, session_datum.function)
+        is_instance = isinstance(session_datum, InstanceDatum)
+        return WorkflowDatumMeta(session_datum.id, session_datum.nodeset, session_datum.function, is_instance)
     if isinstance(session_datum, RemoteRequestQuery):
         return WorkflowQueryMeta(session_datum, next_datum)
     raise ValueError
@@ -711,11 +742,12 @@ class WorkflowDatumMeta(WorkflowSessionMeta):
     """
     type_regex = re.compile(r"\[@case_type='([\w-]+)'\]")
 
-    def __init__(self, datum_id, nodeset, function):
+    def __init__(self, datum_id, nodeset, function, is_instance):
         super().__init__(datum_id)
 
         self.nodeset = nodeset
         self.function = function
+        self.is_instance = is_instance
 
     @property
     def requires_selection(self):
@@ -747,7 +779,7 @@ class WorkflowDatumMeta(WorkflowSessionMeta):
         self._case_type = case_type
 
     def clone_to_match(self, source_id=None):
-        new_meta = WorkflowDatumMeta(self.id, self.nodeset, self.function)
+        new_meta = WorkflowDatumMeta(self.id, self.nodeset, self.function, self.is_instance)
         new_meta.source_id = source_id or self.id
         return new_meta
 

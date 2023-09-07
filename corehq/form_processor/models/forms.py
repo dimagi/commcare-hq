@@ -122,7 +122,7 @@ class XFormInstanceManager(RequireDBManager):
 
     def get_attachment_content(self, form_id, attachment_name):
         meta = self.get_attachment_by_name(form_id, attachment_name)
-        return AttachmentContent(meta.content_type, meta.open())
+        return AttachmentContent(meta.content_type, meta.open(), meta.content_length)
 
     def get_forms_with_attachments_meta(self, form_ids, ordered=False):
         assert isinstance(form_ids, list)
@@ -370,7 +370,12 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(self, domain, form_ids, delete_attachments=True):
+    def hard_delete_forms(self, domain, form_ids, delete_attachments=True, *, publish_changes=True):
+        """Delete forms permanently
+
+        :param publish_changes: Flag for change feed publication.
+            Documents in Elasticsearch will not be deleted if this is false.
+        """
         assert isinstance(form_ids, list)
 
         deleted_count = 0
@@ -394,7 +399,8 @@ class XFormInstanceManager(RequireDBManager):
             metas = get_blob_db().metadb.get_for_parents(deleted_forms)
             get_blob_db().bulk_delete(metas=metas)
 
-        self.publish_deleted_forms(domain, form_ids)
+        if publish_changes:
+            self.publish_deleted_forms(domain, form_ids)
 
         return deleted_count
 
@@ -798,7 +804,7 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     @property
     def commcare_version(self):
         from corehq.apps.receiverwrapper.util import get_commcare_version_from_appversion_text
-        from distutils.version import LooseVersion
+        from looseversion import LooseVersion
         version_text = get_commcare_version_from_appversion_text(self.appVersion)
         if version_text:
             return LooseVersion(version_text)

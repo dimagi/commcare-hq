@@ -44,6 +44,7 @@ from corehq.apps.userreports.util import (
 
 LinkedUCRInfo = namedtuple("LinkedUCRInfo", "datasource report")
 
+
 def create_linked_ucr(domain_link, report_config_id):
     if domain_link.is_remote:
         remote_configs = remote_get_ucr_config(domain_link, report_config_id)
@@ -63,7 +64,7 @@ def create_linked_ucr(domain_link, report_config_id):
             raise DataSourceConfigurationNotFoundError(_(
                 'The data source referenced by this report could not be found.'
             ))
-    if is_data_registry_report(report_config):
+    if is_data_registry_report(report_config, datasource):
         try:
             DataRegistry.objects.accessible_to_domain(domain_link.linked_domain, slug=report_config.registry_slug)
         except DataRegistry.DoesNotExist:
@@ -166,7 +167,7 @@ def _get_or_create_report_link(domain_link, report, datasource):
     return new_report
 
 
-def update_linked_ucr(domain_link, report_id):
+def update_linked_ucr(domain_link, report_id, is_pull=False, overwrite=False):
     linked_report = ReportConfiguration.get(report_id)
     linked_datasource = linked_report.config
 

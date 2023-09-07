@@ -21,7 +21,7 @@ def _mock_is_hubspot_js_allowed_for_request(request):
 @override_settings(ANALYTICS_IDS={
     'GOOGLE_ANALYTICS_API_ID': 'UA-for-tests-only',
     'HUBSPOT_API_ID': 'test_api_id',
-    'HUBSPOT_API_KEY': 'test_api_key',
+    'HUBSPOT_ACCESS_TOKEN': 'test_api_key',
 })
 class TestJsApiKeys(SimpleTestCase):
 
@@ -50,8 +50,8 @@ class TestJsApiKeys(SimpleTestCase):
 
         blocked_js_keys = js_api_keys(blocked_request)
         self.assertEqual(blocked_js_keys['ANALYTICS_IDS'].get('HUBSPOT_API_ID'), '')
-        self.assertEqual(blocked_js_keys['ANALYTICS_IDS'].get('HUBSPOT_API_KEY'), '')
+        self.assertEqual(blocked_js_keys['ANALYTICS_IDS'].get('HUBSPOT_ACCESS_TOKEN'), '')
 
         normal_js_keys = js_api_keys(blocked_request)
         self.assertIsNotNone(normal_js_keys['ANALYTICS_IDS'].get('HUBSPOT_API_ID'))
-        self.assertIsNotNone(normal_js_keys['ANALYTICS_IDS'].get('HUBSPOT_API_KEY'))
+        self.assertIsNotNone(normal_js_keys['ANALYTICS_IDS'].get('HUBSPOT_ACCESS_TOKEN'))

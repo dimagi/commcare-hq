@@ -66,7 +66,7 @@ Install the configuration file
 
 In ``/etc/nginx/nginx.conf``, at the bottom of the ``http{}`` block, above any other site includes, add the line:
 
-``include /path/to/commcarehq/deployment/nginx/cchq*local*nginx.conf;``
+``include /path/to/commcarehq/deployment/nginx/cchq_local_nginx.conf;``
 
 Start nginx
 ###########
@@ -80,20 +80,24 @@ Make sure your local django application is accessible over the network
 
 Try accessing ``http://localhost/a/domain`` and see if it works. nginx should
 
-proxy all requests to localhost to your django server. You should also be able
-
-to access ``http://your_ip_address/a/domain`` from a phone or other device on the
-
-same network.
+proxy all requests to localhost to your django server.
 
 Make Commcare use your local IP address
 #######################################
 
 Set the ``BASE_ADDRESS`` setting in ``localsettings.py`` to your IP address (e.g.
 
-``192.168.0.10``), without a port. You'll have to update this if you ever change
+``192.168.0.10``), without a port.
 
-networks or get a new IP address.
+Additionally, modify ``deployment/nginx/cchq_local_nginx.conf`` to replace localhost with
+your IP address as ``server_name``.
+For example, set server_name as ``192.168.0.10``.
+Then run ``sudo nginx -s reload`` or ``brew services restart nginx`` to reload configuration.
+
+You should now be able to access ``http://your_ip_address/a/domain`` from a phone or other device on the
+same network.
+
+Note: You'll have to update these if you ever change networks or get a new IP address.
 
 Rebuild and redeploy your application
 #####################################
@@ -110,19 +114,18 @@ CommCare apps are bundled as ``.ccz`` files, which are just zip files with a cus
 See `ccz.sh <https://github.com/dimagi/commcare-hq/tree/master/scripts/ccz.sh>`_ for utilities for unzipping, editing, and rezipping CCZ files. Doing this via the command line is often
 cleaner than doing it an in OS, which may add additional hidden files.
 
-Adding CommCare (J2ME) Builds to CommCare HQ
-=====================================
+Adding CommCare Builds to CommCare HQ
+============================================
 
 Using a management command
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - `./manage.py add_commcare_build --latest` To fetch the latest released build from github
 - `./manage.py add_commcare_build --build_version 2.53.0` To manually specify the build number to use
-- `./manage.py add_commcare_build path/to/build/ 2.53.0 2321` To make a J2ME build from a zip. The args are build_path, version, and build_number
 
 
 In the web UI
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 - Go to `http://HQ_ADDRESS/builds/edit_menu/`
 - In the second section `Import a new build from the build server`
@@ -130,30 +133,3 @@ In the web UI
    #. In the Version field input the version in `x.y.z` format
    #. Click `Import Build`
 - In the first section `Menu Options` add the version to HQ to make sure the build is available in the app settings.
-
-For legacy J2ME builds
-^^^^^^^^^^^^^^^^^^^^^^
-
-Finally, in order to get full permissions on a J2ME phone, you need to set up jar signing. To do so, you will need
-
-acquire a code signing certificate (from e.g. Thawte).
-
-To enable jar signing, put your certificate information in localsettings.py as follows:
-
-.. code-block:: python
-
-    JAR_SIGN = dict(
-
-        key_store = "/PATH/TO/KEY_STORE",
-
-        key_alias = "KEY",
-
-        store_pass = "*****",
-
-        key_pass = "*****",
-
-    )
-
-If you don't need this, skip this step by commenting out the code entirely.
-
-You're done!

@@ -1,8 +1,8 @@
-{% extends "hqwebapp/two_column.html" %}
+{% extends "hqwebapp/bootstrap3/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}{% trans report.title|default:"Project Reports"|safe %}{% endblock %}\
+{% block title %}{% trans report.title|default:"Project Reports" %}{% endblock %}
 
 {% block page_breadcrumbs %}
   <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
@@ -20,7 +20,7 @@
       {% endfor %}
     {% endif %}
     <li class="active">
-      {% trans report.title|safe %}
+      {% trans report.title %}
     </li>
   </ol>
 {% endblock %}

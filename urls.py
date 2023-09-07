@@ -70,6 +70,7 @@ domain_specific = [
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
+    url(r'^geospatial/', include('corehq.apps.geospatial.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
     url(r'^up_nrhm/', include('custom.up_nrhm.urls')),
@@ -81,7 +82,7 @@ domain_specific = [
     url(r'^', include('corehq.motech.fhir.urls')),
     url(r'^openmrs/', include('corehq.motech.openmrs.urls')),
     url(r'^_base_template/$', login_and_domain_required(
-        lambda request, domain: render(request, 'hqwebapp/base_navigation.html', {'domain': domain})
+        lambda request, domain: render(request, 'hqwebapp/bootstrap3/base_navigation.html', {'domain': domain})
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
     url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),

@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from corehq.apps.es.client import ElasticManageAdapter
+from corehq.apps.es.client import manager as es_manager
 from corehq.pillows.utils import get_all_expected_es_indices
 from corehq.util.es.elasticsearch import AuthorizationException
 
@@ -29,12 +29,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
-        es_manager = ElasticManageAdapter()
         # call this before getting existing indices because apparently getting the pillow will create the index
         # if it doesn't exist
         # fixme: this can delete real indices if a reindex is in progress
         found_indices = set(es_manager.get_indices())
-        expected_indices = {info.index for info in get_all_expected_es_indices()}
+        expected_indices = {adapter.index_name for adapter in get_all_expected_es_indices()}
         print(expected_indices)
 
         if options['verbose']:
@@ -48,14 +47,14 @@ class Command(BaseCommand):
         unref_indices = set([index for index in found_indices if index not in expected_indices])
         if unref_indices:
             if options['delete']:
-                _delete_indices(es_manager, unref_indices)
+                _delete_indices(unref_indices)
             else:
-                _close_indices(es_manager, unref_indices, options['noinput'])
+                _close_indices(unref_indices, options['noinput'])
         else:
             print('no indices need pruning')
 
 
-def _delete_indices(es_manager, to_delete):
+def _delete_indices(to_delete):
     # always ask for confirmation when doing irreversible things
     if input(
             '\n'.join([
@@ -76,7 +75,7 @@ def _delete_indices(es_manager, to_delete):
         print('aborted')
 
 
-def _close_indices(es_manager, to_close, noinput):
+def _close_indices(to_close, noinput):
     if noinput or input(
             '\n'.join([
                 'Really close ALL the unrecognized elastic indices?',

@@ -2,16 +2,18 @@ hqDefine("reports/js/hq_report", [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/widgets', //multi-emails
 ], function (
     $,
     ko,
     _,
     alertUser,
     kissmetrics,
-    initialPageData
+    initialPageData,
+    widgets  // eslint-disable-line no-unused-vars
 ) {
     var hqReport = function (options) {
         'use strict';
@@ -70,8 +72,8 @@ hqDefine("reports/js/hq_report", [
                                     data: getReportParams(undefined),
                                     type: "POST",
                                     success: function () {
-                                        alertUser.alert_user(gettext("Your requested Excel report will be sent to the email " +
-                                            "address defined in your account settings."), "success");
+                                        alertUser.alert_user(gettext("Your requested Excel report will be sent " +
+                                            "to the email address defined in your account settings."), "success");
                                     },
                                 });
                             } else {
@@ -128,17 +130,17 @@ hqDefine("reports/js/hq_report", [
 
         self.loadDatespanFromCookie = function () {
             if (self.datespan) {
-                var cookie_startdate = $.cookie(self.cookieDatespanStart),
-                    cookie_enddate = $.cookie(self.cookieDatespanEnd),
-                    load_success = false;
+                var cookieStartDate = $.cookie(self.cookieDatespanStart),
+                    cookieEndDate = $.cookie(self.cookieDatespanEnd),
+                    loadSuccess = false;
 
-                if (cookie_enddate && cookie_startdate) {
-                    load_success = true;
-                    self.datespan.startdate = cookie_startdate;
-                    self.datespan.enddate = cookie_enddate;
+                if (cookieEndDate && cookieStartDate) {
+                    loadSuccess = true;
+                    self.datespan.startdate = cookieStartDate;
+                    self.datespan.enddate = cookieEndDate;
                 }
             }
-            return load_success;
+            return loadSuccess;
         };
 
         var checkFilterAccordionToggleState = function () {
@@ -188,15 +190,29 @@ hqDefine("reports/js/hq_report", [
 
         function getReportParams(additionalParams) {
             var params = window.location.search.substr(1);
+            if (params.includes('query_id=')) {
+                // getting the proper params for reports with obfuscated urls (Case List Explorer)
+                $.ajax({
+                    url: getReportBaseUrl('get_or_create_hash'),
+                    type: 'POST',
+                    dataType: 'json',
+                    async: false,
+                    data: {
+                        'query_id': params.replace('query_id=', ''),
+                        'params': '',
+                    },
+                    success: function (data) {
+                        params = data.query_string;
+                    },
+                });
+            }
             if (params.length <= 1) {
                 if (self.loadDatespanFromCookie()) {
-                    params = "startdate=" + self.datespan.startdate +
-                        "&enddate=" + self.datespan.enddate;
+                    params = "startdate=" + self.datespan.startdate + "&enddate=" + self.datespan.enddate;
                 }
             }
             params += (additionalParams ? "&" + additionalParams : "");
             return params;
-
         }
 
         function getReportBaseUrl(renderType) {
@@ -214,17 +230,20 @@ hqDefine("reports/js/hq_report", [
 
             self.send_to_owner = ko.observable(true);
             self.subject = ko.observable(hqReport.emailDefaultSubject);
-            self.recipient_emails = ko.observable();
+            self.recipient_emails = ko.observableArray();
             self.notes = ko.observable();
             self.getReportRenderUrl = hqReport.getReportRenderUrl;
+            self.params = hqReport.getReportParams;
 
             self.unwrap = function () {
                 var data = ko.mapping.toJS(self, {
-                    ignore: ['sendEmail', 'unwrap', 'resetModal'],
+                    ignore: ['sendEmail', 'unwrap', 'resetModal', 'getReportRenderUrl'],
                 });
 
                 for (var i in data) {
-                    if (data[i] === null || data[i] === undefined) delete data[i];
+                    if (data[i] === null || data[i] === undefined) {
+                        delete data[i];
+                    }
                 }
                 return data;
             };
@@ -239,10 +258,13 @@ hqDefine("reports/js/hq_report", [
                         self.resetModal();
                         alertUser.alert_user(hqReport.emailSuccessMessage, "success");
                     })
-                    .fail(function () {
+                    .fail(function (response) {
                         $(hqReport.emailReportModal).modal('hide');
                         self.resetModal();
-                        alertUser.alert_user(hqReport.emailErrorMessage, "error");
+                        const errors = JSON.parse(response.responseText);
+                        let messages = [hqReport.emailErrorMessage].concat(errors);
+                        const message = messages.join('<br/>');
+                        alertUser.alert_user(message, "error");
                     });
             };
 

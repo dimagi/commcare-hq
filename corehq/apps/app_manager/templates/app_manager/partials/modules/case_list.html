@@ -42,15 +42,21 @@
       {% if request|toggle_enabled:'CASE_LIST_TILE' %}
         <div class="row">
           <div class="col-sm-6">
-            <select data-bind="value: useCaseTiles" class="form-control">
-              <option value="no">{% trans "Don't Use Case Tiles" %}</option>
-              <option value="yes">{% trans "Use Case Tiles" %}</option>
-            </select>
+            <label>
+              {% trans "Case Tile Template" %}
+            </label>
+            <select data-bind="options:caseTileTemplateOptions, optionsText: 'templateName', optionsValue: 'templateValue', value:caseTileTemplate" class="form-control"></select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-12" data-bind="visible: caseTilePreviewForTemplate">
+            <label></label>
+            <div data-bind="html: caseTilePreviewForTemplate"></div>
           </div>
         </div>
       {% endif %}
       {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
-        <div data-bind="visible: useCaseTiles() == 'no'">
+        <div data-bind="visible: !caseTileTemplate()">
           <div class="checkbox">
             <label>
               <input type="checkbox" data-bind="checked: persistCaseContext">
@@ -65,7 +71,35 @@
           </div>
         </div>
       {% endif %}
-      <div data-bind="visible: useCaseTiles() == 'yes' || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
+      {% if app.supports_grouped_case_tiles %}
+      <div data-bind="visible: caseTileTemplate()">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" data-bind="checked: caseTileGrouped">
+            {% trans "Show case tiles grouped by parent case" %}
+          </label>
+        </div>
+        <div class="form-horizontal" data-bind="visible: caseTileGrouped">
+          <div class="form-group">
+              <label for="id_case_tile_group_by" class="col-xs-6 col-sm-4 col-md-4 col-lg-2 control-label">
+                {% trans "Parent case index name" %}
+              </label>
+              <div class="col-xs-6 col-sm-2 col-md-2 col-lg-2 controls">
+                <input class="form-control" type="text" data-bind="value: caseTileGroupBy" id="id_case_tile_group_by" placeholder="e.g. parent" />
+              </div>
+          </div>
+          <div class="form-group">
+              <label for="id_case_tile_header_rows" class="col-xs-6 col-sm-4 col-md-4 col-lg-2 control-label">
+                {% trans "Case tile header rows" %}
+              </label>
+              <div class="col-xs-6 col-sm-2 col-md-2 col-lg-2 controls">
+                <input class="form-control" type="text" data-bind="value: caseTileGroupHeaderRows" id="id_case_tile_header_rows" placeholder="e.g. 2" />
+              </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      <div data-bind="visible: caseTileTemplate() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
         <div class="checkbox">
           <label>
             <input type="checkbox" data-bind="checked: persistTileOnForms">
@@ -98,7 +132,7 @@
         {% endwith %}
       {% endif %}
 
-      <div data-bind="visible: useCaseTiles() == 'yes' || persistentCaseTileFromModule() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
+      <div data-bind="visible: caseTileTemplate() || persistentCaseTileFromModule() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
         <div class="checkbox" data-bind="visible: persistTileOnForms() || persistentCaseTileFromModule">
           <label>
             <input type="checkbox" data-bind="checked: enableTilePullDown">
@@ -111,6 +145,77 @@
           </label>
         </div>
       </div>
+
+      <button class="btn btn-default btn-xs pull-right"
+              data-bind="click: resetCaseTilePreview, visible: showCaseTileConfigColumns()">
+          <i class="fa fa-magic"></i>
+          {% trans "Reset Grid" %}
+      </button>
+      <div data-bind="visible: showCaseTileConfigColumns()" id="preview-box">
+        <div id="case-tile-preview" data-bind="foreach: columns">
+          <div class="cell" data-bind="visible: showInTilePreview, style: {
+                'grid-row-start': tileRowStart,
+                'grid-row-end': tileRowEnd,
+                'grid-column-start': tileColumnStart,
+                'grid-column-end': tileColumnEnd,
+            }">
+            <div class="content">
+              #<span data-bind="text: $index()"></span>:
+              <span data-bind="text: tileContent"></span>
+            </div>
+            <!-- TODO: align less terribly, this gets messed up as screen/tiles resize -->
+            <div class="controls">
+              <table style="width: 100%;"><tbody><tr><td style="text-align: center;">
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-xs btn-default"
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, -1, 0, 0); }, enable: tileColumnStart() > 1">
+                    <i class="fa fa-arrow-left"></i>
+                  </button>
+                  <button type="button" class="btn btn-xs btn-default"
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), -1, 0, 0, 0); }, enable: tileRowStart() > 1">
+                    <i class="fa fa-arrow-up"></i>
+                  </button>
+                  <button type="button" class="btn btn-xs btn-default"
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 1, 0, 0, 0); }, enable: tileRowEnd() < tileRowMax()">
+                    <i class="fa fa-arrow-down"></i>
+                  </button>
+                  <button type="button" class="btn btn-xs btn-default"
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 1, 0, 0); }, enable: tileColumnEnd() < tileColumnMax()">
+                    <i class="fa fa-arrow-right"></i>
+                  </button>
+                </div>
+                <div class="btn-group" role="group" style="float: left; margin: 0 2px;">
+                  <button type="button" class="btn btn-xs btn-default"
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, -1, 0);}, enable: tileWidth() > 1">
+                    <i class="fa fa-minus"></i>
+                  </button>
+                  <button type="button" class="btn btn-xs" disabled>
+                    <i class="fa fa-arrows-h"></i>
+                  </button>
+                  <button type="button" class="btn btn-xs btn-default"
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 1, 0); }, enable: tileColumnEnd() < tileColumnMax()">
+                    <i class="fa fa-plus"></i>
+                  </button>
+                </div>
+                <div class="btn-group" role="group" style="float: right; margin: 0 2px;">
+                  <button type="button" class="btn btn-xs btn-default"
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 0, -1); }, enable: tileHeight() > 1">
+                    <i class="fa fa-minus"></i>
+                  </button>
+                  <button type="button" class="btn btn-xs" disabled>
+                    <i class="fa fa-arrows-v"></i>
+                  </button>
+                  <button type="button" class="btn btn-xs btn-default"
+                          data-bind="click: function () { $parent.adjustTileGridArea($index(), 0, 0, 0, 1); }, enable: tileRowEnd() < tileRowMax()">
+                    <i class="fa fa-plus"></i>
+                  </button>
+                </div>
+              </td></tr></tbody></table>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {% include 'app_manager/partials/modules/case_list_properties.html' %}
     </div>
   </div>
@@ -189,7 +294,7 @@
                 <td>
                   <i class="grip fa fa-arrows-v icon-blue"></i>
                 </td>
-                <td class="form-group" data-bind="css: {'has-error': showWarning}">
+                <td class="form-group col-sm-2" data-bind="css: {'has-error': showWarning}">
                   <div data-bind="jqueryElement: selectField.ui"></div>
                   <div data-bind="visible: showWarning">
                                     <span class="help-block" data-bind="

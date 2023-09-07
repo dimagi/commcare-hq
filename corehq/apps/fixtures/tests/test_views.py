@@ -1,18 +1,17 @@
 from contextlib import contextmanager
 from unittest.mock import patch
 
-from django.test import TestCase
-from django.test.client import Client
+from django.test import TestCase, override_settings
+from django.test.client import Client, RequestFactory
 from django.urls import reverse
-
-from couchdbkit import ResourceNotFound
+from corehq.apps.domain.models import Domain
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 
-from ..dbaccessors import delete_all_fixture_data, get_fixture_items_for_data_type
 from ..interface import FixtureEditInterface
 from ..models import LookupTable, LookupTableRow, Field, TypeField
+from corehq.apps.fixtures.views import update_tables
 
 DOMAIN = "lookup"
 USER = "test@test.com"
@@ -32,7 +31,6 @@ class LookupTableViewsTest(TestCase):
         cls.user.is_superuser = True
         cls.user.save()
         cls.addClassCleanup(cls.user.delete, DOMAIN, deleted_by=None)
-        cls.addClassCleanup(delete_all_fixture_data, DOMAIN)
 
     def test_update_tables_get(self):
         table = self.create_lookup_table()
@@ -123,7 +121,6 @@ class LookupTableViewsTest(TestCase):
             response = client.post(self.url(), data)
         self.assertEqual(response.status_code, 200)
         table = LookupTable.objects.get(domain=DOMAIN, tag="atable")
-        self.addCleanup(table._migration_get_couch_object().delete)
         self.assertTrue(table.is_global)
         self.assertEqual(table.description, "A Table")
         self.assertEqual(table.fields, [TypeField(name="wing")])
@@ -160,14 +157,6 @@ class LookupTableViewsTest(TestCase):
         row = LookupTableRow.objects.get(table_id=table.id)
         self.assertEqual(row.fields, {
             "foot": [Field(value="duck", properties={"says": "quack"})]
-        })
-
-        from ..models import FieldList, FixtureItemField
-        couch_row = row._migration_get_couch_object()
-        self.assertEqual(couch_row.fields, {
-            "foot": FieldList(field_list=[
-                FixtureItemField(field_value="duck", properties={"says": "quack"})
-            ])
         })
 
     def test_update_tables_put_multiple_field_updates_on_multiple_rows(self):
@@ -221,48 +210,6 @@ class LookupTableViewsTest(TestCase):
             "e": [],
         })
 
-        from ..models import FieldList, FixtureItemField
-        couch_row1 = row1._migration_get_couch_object()
-        self.assertEqual(couch_row1.fields, {
-            "c": FieldList(field_list=[FixtureItemField(field_value="3", properties={"p": "z"})]),
-            "d": FieldList(field_list=[FixtureItemField(field_value="1", properties={"p": "x"})]),
-            "e": FieldList(field_list=[]),
-        })
-        couch_row2 = row2._migration_get_couch_object()
-        self.assertEqual(couch_row2.fields, {
-            "c": FieldList(field_list=[FixtureItemField(field_value="6", properties={"p": "o"})]),
-            "d": FieldList(field_list=[FixtureItemField(field_value="4", properties={"p": "m"})]),
-            "e": FieldList(field_list=[]),
-        })
-
-    def test_delete_table_with_previously_deleted_row(self):
-        from dimagi.utils.couch.bulk import _bulk_delete as real_bulk_delete
-
-        def bulk_delete(cls, chunk):
-            if cls in [LookupTableRow._migration_get_couch_model_class(), LookupTableRow]:
-                # simulate concurrent delete, causes BulkSaveError
-                chunk[0].delete()
-            real_bulk_delete(cls, chunk)
-
-        table = self.create_lookup_table()
-        row1 = self.create_row(table)
-        row2 = self.create_row(table)
-        delete_patch = patch("dimagi.utils.couch.bulk._bulk_delete", bulk_delete)
-        with self.get_client() as client, delete_patch:
-            response = client.delete(self.url(data_type_id=table.id.hex))
-        self.assertEqual(response.status_code, 200)
-        self.assert_deleted(table, [row1, row2])
-
-    def assert_deleted(self, table, rows):
-        row_ids = [row.id.hex for row in rows]
-        self.assertFalse(LookupTable.objects.filter(id=table.id).exists())
-        self.assertFalse(LookupTableRow.objects.filter(id__in=row_ids).exists())
-        doc_ids = [table._migration_couch_id] + row_ids
-        db = LookupTable._migration_get_couch_model_class().get_db()
-        couch_rows = db.view("_all_docs", keys=doc_ids)
-        self.assertTrue(all(r["value"]["deleted"] for r in couch_rows), couch_rows)
-        self.assertFalse(get_fixture_items_for_data_type(table.domain, table._migration_couch_id))
-
     @contextmanager
     def get_client(self, data=None):
         client = Client()
@@ -290,7 +237,6 @@ class LookupTableViewsTest(TestCase):
             fields=fields or [TypeField(name="wing")]
         )
         table.save()
-        self.addCleanup(delete_if_exists, table._migration_get_couch_object())
         return table
 
     def create_row(self, table, fields=None):
@@ -303,12 +249,10 @@ class LookupTableViewsTest(TestCase):
             sort_key=0,
         )
         row.save()
-        self.addCleanup(delete_if_exists, row._migration_get_couch_object())
         return row
 
 
 class TestFixtureEditInterface(TestCase):
-
     def test_json_conversion(self):
         # initial_page_data performs JSON conversion in manage_tables.html
         class FakeRequest:
@@ -329,6 +273,7 @@ class TestFixtureEditInterface(TestCase):
             [{
                 "_id": table.id.hex,
                 "is_global": True,
+                "is_synced": False,
                 "tag": "atable",
                 "fields": [{
                     "name": "wing",
@@ -341,8 +286,33 @@ class TestFixtureEditInterface(TestCase):
         )
 
 
-def delete_if_exists(doc):
-    try:
-        doc.delete()
-    except ResourceNotFound:
-        pass
+@override_settings(REQUIRE_TWO_FACTOR_FOR_SUPERUSERS=False)
+class UpdateTablesTests(TestCase):
+    def test_can_delete_synced_fixture(self):
+        request = self._create_request('DELETE')
+        fixture = LookupTable.objects.create(domain='test-domain', tag='test-fixture', is_synced=True)
+
+        update_tables(request, 'test-domain', fixture.id)
+
+        remaining_table_count = LookupTable.objects.filter(domain='test-domain', tag='test-fixture').count()
+        self.assertEqual(remaining_table_count, 0)
+
+    def setUp(self):
+        super().setUp()
+
+        self.domain = Domain(name='test-domain', is_active=True)
+
+        patcher = patch.object(Domain, 'get_by_name', return_value=self.domain)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        privilege_patcher = patch('django_prbac.decorators.has_privilege', return_value=True)
+        privilege_patcher.start()
+        self.addCleanup(privilege_patcher.stop)
+
+    def _create_request(self, method):
+        method = method.lower()
+        request = getattr(RequestFactory(), method)('/some/url')
+        request.user = request.couch_user = WebUser(is_superuser=True, is_authenticated=True, is_active=True)
+
+        return request

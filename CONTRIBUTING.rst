@@ -1,8 +1,8 @@
-==========================
-Contributing to CommCareHQ
-==========================
+===========================
+Contributing to CommCare HQ
+===========================
 
-CommCareHQ is primarily developed by `Dimagi`_, but we welcome contributions.
+CommCare HQ is primarily developed by `Dimagi`_, but we welcome contributions.
 
 Code Contributions
 ------------------
@@ -27,9 +27,32 @@ considered for review or re-review
 - Any automated feedback (label bot, lint bot, etc) is addressed
 - Any previous developer feedback is addressed
 
-Before submitting a PR, review our `Guide to Authoring Pull Requests`_.  
+
+
+When opening a PR, please review our `Guide to Authoring Pull Requests`_.  
 You may also be interested in the `Developers category`_ of the `CommCare Forum`_ 
 if you have questions or need feedback.
+
+Useful Tools
+------------
+Here are some tools widely used by CommCareHQ developers
+
+flake8
+    Flake8 is run on all PRs automatically. You can run it locally to ensure your
+    code meets those standards before opening a PR.
+
+pylint
+    It requires some configuration, but this is the most comprehensive python linter
+    out there and can provide some useful feedback.
+
+isort
+    This will organize the imports in the file you're editing according to the
+    ``.isort.cfg`` in the root of the repository.  See how to run this from within
+    your editor `here <https://github.com/pycqa/isort/wiki/isort-Plugins>`_
+
+./manage.py show_urls
+    Provided by ``django-extensions``, this outputs a list of all URL paths used in the
+    project. Pipe the output to ``grep`` to easily find what view handles a particular URL.
 
 CommCare Enhancement Proposals
 ------------------------------
@@ -125,13 +148,27 @@ Label descriptions can be seen on the GitHub `labels`_ page or in the
 Reindex / migration
 ~~~~~~~~~~~~~~~~~~~
 Any PR that will require a database migration or some kind of data reindexing to be done
-must be labeled with the `reindex/migration` label. This label will get automatically applied
+must be labeled with the **reindex/migration** label. This label will get automatically applied
 if the PR changes `certain files`_ but it can also be added manually.
+
+It is necessary to add a `RequestReindex`_ Django migration operation, which may
+also require adding a new migration file, if the **reindex/migration** label is added to a PR on
+account of Couch ``_design`` doc changes (or if a new Elasticsearch index is added, but this
+will soon change). The following command will automatically add a migration and update the
+Couch views lock file when a reindex is required on account of Couch view changes::
+
+    $ ./manage.py makemigrations preindex
+
+A change log entry should be published in `commcare-cloud`_ to alert
+operators to run the migration before deploying if it may disrupt the normal deploy cycle (if it
+will run for a long time on any environment, for example).
 
 Any PR with this label will fail the `required-labels` check. This is intentional to prevent
 premature merging of the PR.
 
 .. _certain files: .github/labels.yml#L12-L13
+.. _RequestReindex: corehq/preindex/django_migrations.py
+.. _commcare-cloud: https://github.com/dimagi/commcare-cloud/
 
 Risk
 ~~~~

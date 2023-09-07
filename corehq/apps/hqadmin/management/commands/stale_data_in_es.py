@@ -17,7 +17,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     FormReindexAccessor,
 )
 from corehq.form_processor.models import CommCareCase
-from corehq.pillows.case_search import domains_needing_search_index
+from corehq.pillows.case_search import domain_needs_search_index
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.doc_processor.progress import (
     ProcessorProgressLogger,
@@ -199,7 +199,7 @@ class CaseHelper:
                                                    case_search_es_modified_on_by_ids)
             return True, DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type,
                                  domain=domain, es_date=es_modified_on, primary_date=modified_on)
-        elif domain in domains_needing_search_index():
+        elif domain_needs_search_index(domain):
             es_modified_on, es_domain = case_search_es_modified_on_by_ids.get(case_id, (None, None))
             if (es_modified_on, es_domain) != (modified_on, domain):
                 # if the doc is newer in ES than sql, refetch from sql to get newest
@@ -241,7 +241,7 @@ class CaseHelper:
         case_search_ids = []
         for val in chunk:
             case_ids.append(val[0])
-            if val[3] in domains_needing_search_index():
+            if domain_needs_search_index(val[3]):
                 case_search_ids.append(val[0])
         return case_ids, case_search_ids
 

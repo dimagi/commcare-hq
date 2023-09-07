@@ -1,9 +1,8 @@
 import uuid
+from unittest.mock import patch
 
 from django.http import HttpRequest
 from django.test import TestCase
-
-from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
@@ -18,6 +17,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.signals import sql_case_post_save
@@ -104,6 +104,8 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         data_source_config.save()
         self.addCleanup(data_source_config.delete)
         tasks.rebuild_indicators(data_source_config._id)
+        adapter = get_indicator_adapter(data_source_config)
+        self.addCleanup(adapter.drop_table)
 
         report_config = ReportConfiguration(
             domain=self.domain,
@@ -173,16 +175,14 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for case in cls.cases:
-            case.delete()
         # todo: understand why this is necessary. the view call uses the session and the
         # signal doesn't fire to kill it.
         Session.remove()
-        super(ConfigurableReportViewTest, cls).tearDownClass()
+        super().tearDownClass()
 
     @classmethod
     def setUpClass(cls):
-        super(ConfigurableReportViewTest, cls).setUpClass()
+        super().setUpClass()
         cls.cases = []
         cls.cases.append(cls._new_case({'fruit': 'apple', 'num1': 4, 'num2': 6}))
         cls.cases.append(cls._new_case({'fruit': 'mango', 'num1': 7, 'num2': 4}))

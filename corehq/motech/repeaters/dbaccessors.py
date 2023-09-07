@@ -12,16 +12,8 @@ from .const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
+    RECORD_EMPTY_STATE,
 )
-
-
-def force_update_repeaters_views():
-    from .models import Repeater
-    Repeater.get_db().view(
-        'repeaters/repeaters',
-        reduce=False,
-        limit=1,
-    ).all()
 
 
 def get_pending_repeat_record_count(domain, repeater_id):
@@ -33,10 +25,14 @@ def get_failure_repeat_record_count(domain, repeater_id):
 
 
 def get_success_repeat_record_count(domain, repeater_id):
-    return get_repeat_record_count(domain, repeater_id, RECORD_SUCCESS_STATE)
+    return (
+        get_repeat_record_count(domain, repeater_id, RECORD_SUCCESS_STATE)
+        + get_repeat_record_count(domain, repeater_id, RECORD_EMPTY_STATE)
+    )
 
 
 def get_cancelled_repeat_record_count(domain, repeater_id):
+    # Does not include RECORD_EMPTY_STATE
     return get_repeat_record_count(domain, repeater_id, RECORD_CANCELLED_STATE)
 
 
@@ -227,34 +223,6 @@ def get_sql_repeat_records_by_payload_id(domain, payload_id):
             .all())
 
 
-def get_repeaters_by_domain(domain):
-    from .models import Repeater
-
-    results = Repeater.get_db().view('repeaters/repeaters',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=True,
-        reduce=False,
-    ).all()
-
-    return [Repeater.wrap(result['doc']) for result in results
-            if Repeater.get_class_from_doc_type(result['doc']['doc_type'])
-            ]
-
-
-def _get_repeater_ids_by_domain(domain):
-    from .models import Repeater
-
-    results = Repeater.get_db().view('repeaters/repeaters',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=False,
-        reduce=False,
-    ).all()
-
-    return [result['id'] for result in results]
-
-
 def iterate_repeat_records_for_ids(doc_ids):
     from .models import RepeatRecord
     return (RepeatRecord.wrap(doc) for doc in iter_docs(RepeatRecord.get_db(), doc_ids))
@@ -306,32 +274,4 @@ def delete_all_repeat_records():
 @unit_testing_only
 def delete_all_repeaters():
     from .models import Repeater
-    for repeater in Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=True).all():
-        Repeater.wrap(repeater['doc']).delete()
-
-
-def get_all_repeater_docs():
-    from .models import Repeater
-    results = Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=True).all()
-    return [
-        repeater['doc'] for repeater in results
-        if Repeater.get_class_from_doc_type(repeater['doc']['doc_type'])
-    ]
-
-
-def get_repeater_count_for_domains(domains):
-    from .models import Repeater
-    view_kwargs = {
-        'reduce': True,
-        'include_docs': False,
-    }
-    count = 0
-    for domain in domains:
-        view_kwargs.update({
-            'startkey': [domain],
-            'endkey': [domain, {}]
-        })
-        result = Repeater.get_db().view('repeaters/repeaters', **view_kwargs).first()
-        if result:
-            count += result['value']
-    return count
+    Repeater.objects.all().delete()

@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
 
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
@@ -39,7 +39,7 @@
       <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Information for {{ friendly_name }}{% endblocktrans %}</legend>
       <dl class="dl-horizontal hq-dl-userinfo">
         <dt>{% trans 'Username' %}</dt>
-        <dd>{{ couch_user.html_username|safe }}</dd>
+        <dd>{{ couch_user.html_username }}</dd>
         {% for field in form_uneditable.visible_fields %}
           {% if couch_user|getattr:field.name %}
             <dt>{{ field.label }}</dt>
@@ -55,10 +55,6 @@
               {% endfor %}
             </ul>
           </dd>
-        {% endif %}
-        {% if token %}
-          <dt>{% trans 'Backup Token' %}</dt>
-          <dd>{{ token }}</dd>
         {% endif %}
       </dl>
     </fieldset>
@@ -93,6 +89,25 @@
         <div class="form-actions">
           <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
             <button type="submit" class="btn btn-primary">{% trans 'Update Location Settings' %}</button>
+          </div>
+        </div>
+      {% endif %}
+    </form>
+  {% endif %}
+
+  {% if tableau_form %}
+    <hr />
+    <form id="tableau_form" class="form form-horizontal" name="" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_type" value="tableau" />
+      <fieldset>
+        <legend>{% trans 'Tableau Configuration' %}</legend>
+        {% crispy tableau_form %}
+      </fieldset>
+      {% if not request.is_view_only %}
+        <div class="form-actions">
+          <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+            <button type="submit" class="btn btn-primary">{% trans 'Update Tableau Configuration' %}</button>
           </div>
         </div>
       {% endif %}

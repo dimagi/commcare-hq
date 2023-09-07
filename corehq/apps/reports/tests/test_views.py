@@ -1,8 +1,8 @@
 import io
 import json
 import unittest
-from urllib.parse import urlencode
 from couchdbkit import ResourceNotFound
+from django.http import QueryDict
 from django.http.response import Http404
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase, RequestFactory
@@ -19,6 +19,8 @@ from corehq.apps.reports.views import (
 )
 from django.urls.base import reverse
 from .. import views
+
+from django.http import HttpRequest
 
 
 REPORT_NAME_LOOKUP = {
@@ -39,21 +41,20 @@ class TestEmailReport(TestCase):
 
     @patch.object(views, 'send_email_report')
     def test_email_is_sent_to_recipient_list(self, mock_send_email):
-        # NOTE: It appears the email form is broken and will only accept a single email
-        # so that's all that is being tested here
-        self.request = self._create_request(params={'recipient_emails': 'user1@test.com'})
+        self.request = self._create_request(
+            params=QueryDict('recipient_emails[]=user1@test.com&recipient_emails[]=user2@test.com'))
         self.email_report()
 
         self.assertEqual(
             mock_send_email.delay.call_args[self.ARG_INDEX][self.RECIPIENT_INDEX],
-            {'user1@test.com'}
+            {'user1@test.com', 'user2@test.com'}
         )
 
     @patch.object(views, 'send_email_report')
     def test_owner_flag_adds_owner_email_to_recipient_list(self, mock_send_email):
         # Setup creates a user with email address 'test_user@dimagi.com'
         self.request = self._create_request(params={
-            'recipient_emails': 'user1@test.com',
+            'recipient_emails[]': 'user1@test.com',
             'send_to_owner': True
         })
         self.email_report()
@@ -126,12 +127,16 @@ class TestEmailReport(TestCase):
         if params is None:
             params = {'send_to_owner': True}
 
-        url = f'/a/{self.domain}/emailReport'
-
+        # NOTE: The reason we're constructing an HttpRequest object here, rather than relying on RequestFactory,
+        # is because some of our tests require duplicate keys. RequestFactory doesn't support the QueryDicts
+        # that would be needed to represent those keys.
+        request = HttpRequest()
         if method == 'get':
-            request = RequestFactory().get(url, params)
+            request.GET.update(params)
+            request.method = 'GET'
         else:
-            request = RequestFactory().post(url, params)
+            request.POST.update(params)
+            request.method = 'POST'
 
         request.user = self.user
         return request
@@ -733,7 +738,7 @@ class TestUserConfigsWithShared(TestReportsBase):
         self.assertEqual(configs[0]._id, config._id)
 
     def test_with_other_owner_shared_config(self):
-        _config = self.create_report_config(self.DOMAIN, self.admin_user._id)
+        self.create_report_config(self.DOMAIN, self.admin_user._id)
         config2 = self.create_report_config(self.DOMAIN, self.other_admin_user._id)
         self.create_report_notification([config2], owner_id=self.other_admin_user._id)
 
@@ -773,7 +778,7 @@ class TestMySavedReportsView(TestReportsBase):
     @patch('corehq.apps.reports.views.user_can_view_reports', return_value=True)
     def test_multiple_admins_can_see_shared_reports(self, *args):
         config1 = self.create_report_config(domain=self.DOMAIN, owner_id=self.admin_user._id)
-        _config2 = self.create_report_config(domain=self.DOMAIN, owner_id=self.other_admin_user._id)
+        self.create_report_config(domain=self.DOMAIN, owner_id=self.other_admin_user._id)
 
         # Test scenario when only one admin user create a ReportNotification
         self.create_report_notification([config1], owner_id=self.admin_user._id)
@@ -855,7 +860,7 @@ class TestAddSavedReportConfigView(TestReportsBase):
 
         self.log_user_in(self.other_admin_user.username)
         try:
-            _response = self.client.post(
+            self.client.post(
                 self.URL,
                 json.dumps(post_data),
                 content_type='application/json;charset=UTF-8',
@@ -912,7 +917,7 @@ class TestAddSavedReportConfigView(TestReportsBase):
 
         self.log_user_in(self.non_admin_user.username)
         try:
-            _response = self.client.post(
+            self.client.post(
                 self.URL,
                 json.dumps(post_data),
                 content_type='application/json;charset=UTF-8',

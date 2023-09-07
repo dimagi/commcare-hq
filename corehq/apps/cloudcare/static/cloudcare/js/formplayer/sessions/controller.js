@@ -1,10 +1,13 @@
 hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var constants = hqImport("cloudcare/js/formplayer/constants"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        Views = hqImport("cloudcare/js/formplayer/sessions/views");
+
     return {
         listSessions: function listSessions(pageNumber, pageSize) {
             /* eslint-disable */
             if (pageSize == null) {
-                pageSize = hqImport("cloudcare/js/formplayer/constants").DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE;
+                pageSize = parseInt($.cookie("sessions-per-page-limit")) || constants.DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE;
             }
             /* eslint-disable */
             if (pageNumber == null) {
@@ -13,23 +16,16 @@ hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
             var fetchingSessions = FormplayerFrontend.getChannel().request("sessions", pageNumber, pageSize);
 
             $.when(fetchingSessions).done(function (sessions) {
-
-                var sessionListView = hqImport("cloudcare/js/formplayer/sessions/views")({
+                var totalPages = Math.max(1, Math.ceil(sessions.totalSessions / pageSize));
+                var sessionListView = Views({
                     collection: sessions,
+                    pageNumber: pageNumber,
+                    pageSize: pageSize,
+                    totalPages: totalPages,
+                    listSessions: listSessions
                 });
 
                 FormplayerFrontend.regions.getRegion('main').show(sessionListView);
-                var totalPages = Math.max(1, Math.ceil(sessions.totalSessions / pageSize));
-                if (totalPages > 1) {
-                    $('#sessions-paginator').bootpag({
-                        page: pageNumber + 1,
-                        total: totalPages,
-                        maxVisible: Math.min(totalPages, 5),
-                        firstLastUse: true,
-                    }).on("page", function (event, page) {
-                        listSessions(page - 1, pageSize);
-                    });
-                }
             });
         },
     };

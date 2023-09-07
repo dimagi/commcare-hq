@@ -3,7 +3,6 @@ import math
 from collections import namedtuple
 from urllib.parse import urlencode
 
-from django.conf import settings
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -25,7 +24,6 @@ from corehq.apps.es.aggregations import (
     MissingAggregation,
     TermsAggregation,
 )
-from corehq.apps.es.utils import track_es_report_load
 from corehq.apps.locations.permissions import (
     conditionally_location_safe,
     location_safe,
@@ -244,7 +242,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
         landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
         landmarks = landmarks_param if landmarks_param else self._default_landmarks
-        return [('landmark_' + str(idx), datetime.timedelta(days=l)) for idx, l in enumerate(landmarks)]
+        return [('landmark_' + str(i), datetime.timedelta(days=lmk))
+                for i, lmk in enumerate(landmarks)]
 
     _default_milestone = 120
 
@@ -389,7 +388,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def rows(self):
-        track_es_report_load(self.domain, self.slug, len(self.paginated_user_ids))
         es_results = self.es_queryset(
             user_ids=self.paginated_user_ids,
             size=self.pagination.start + self.pagination.count
@@ -716,11 +714,9 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                     USER_QUERY_LIMIT,
                 )
             )
-        selected_users = self.selected_simplified_users
-        track_es_report_load(self.domain, self.slug, len(self.selected_simplified_users))
 
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        for simplified_user in selected_users:
+        for simplified_user in self.selected_simplified_users:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
@@ -924,7 +920,6 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         else:
             users = self.users_by_username(order)
 
-        track_es_report_load(self.domain, self.slug, len(users))
         # Todo; this hits ES seperately for each user
         #   should instead aggregate by user in one ES query
         rows = [self.get_row(user) for user in users]
@@ -1055,8 +1050,6 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
         app_id = self.selected_form_data['app_id']
         xmlns = self.selected_form_data['xmlns']
 
-        track_es_report_load(self.domain, self.slug, len(self.users))
-
         data_map = get_form_duration_stats_by_user(
             self.domain,
             app_id,
@@ -1139,7 +1132,6 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             user_map = {user.user_id: user
                         for user in users if user.user_id}
             user_ids = [user.user_id for user in users if user.user_id]
-            track_es_report_load(self.domain, self.slug, len(self.user_ids))
 
             xmlnss = []
             app_ids = []
@@ -1270,10 +1262,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     exportable_all = True
 
     NO_FORMS_TEXT = gettext_noop('None')
-
-    @property
-    def include_active_cases(self):
-        return not settings.CASE_ES_DROP_FORM_FIELDS
 
     @property
     def fields(self):
@@ -1549,17 +1537,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             owner_ids = _get_owner_ids_from_users(users)
 
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
-            if self.include_active_cases:
-                active_cases = sum([
-                    int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids
-                ])
-                active_cases_cell = util.numcell(active_cases)
-                pct_active = util.numcell(
-                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
-                )
-            else:
-                active_cases_cell = util.numcell('---')
-                pct_active = util.numcell('---')
+            active_cases = sum([
+                int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids
+            ])
+            active_cases_cell = util.numcell(active_cases)
+            pct_active = util.numcell(
+                (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+            )
 
             active_users = int(active_users_by_group.get(group, 0))
             total_users = len(self.users_by_group.get(group, []))
@@ -1613,24 +1597,20 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             owner_ids = set([user["user_id"].lower(), user["location_id"]] + user["group_ids"])
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
 
-            if self.include_active_cases:
-                active_cases = sum([
-                    int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids
-                ])
-                if today_or_tomorrow(self.datespan.enddate):
-                    active_cases_cell = util.numcell(
-                        self._html_anchor_tag(self._case_list_url_active_cases(user['user_id']), active_cases),
-                        active_cases,
-                    )
-                else:
-                    active_cases_cell = util.numcell(active_cases)
-
-                pct_active = util.numcell(
-                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+            active_cases = sum([
+                int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids
+            ])
+            if today_or_tomorrow(self.datespan.enddate):
+                active_cases_cell = util.numcell(
+                    self._html_anchor_tag(self._case_list_url_active_cases(user['user_id']), active_cases),
+                    active_cases,
                 )
             else:
-                active_cases_cell = util.numcell('---')
-                pct_active = util.numcell('---')
+                active_cases_cell = util.numcell(active_cases)
+
+            pct_active = util.numcell(
+                (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+            )
 
             cases_opened = int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
             cases_closed = int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
@@ -1692,12 +1672,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         case_owners = _get_owner_ids_from_users(users_to_iterate)
         user_ids = user_ids
 
-        if self.include_active_cases:
-            active_cases_by_owner = get_active_case_counts_by_owner(
-                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
-            )
-        else:
-            active_cases_by_owner = {}
+        active_cases_by_owner = get_active_case_counts_by_owner(
+            self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
+        )
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
@@ -1734,7 +1711,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         total_row[6] = sum(
             [int(report_data.active_cases_by_owner.get(id, 0))
-             for id in case_owners]) if self.include_active_cases else '---'
+             for id in case_owners])
 
         total_row[7] = sum(
             [int(report_data.total_cases_by_owner.get(id, 0))
@@ -1765,8 +1742,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
         )
         chunk_size = 50000
-        from corehq.elastic import iter_es_docs_from_query
-        user_iterator = iter_es_docs_from_query(user_es_query)
+        user_iterator = user_es_query.scroll_ids_to_disk_and_iter_docs()
         for user_chunk in chunked(user_iterator, chunk_size):
             users = [util._report_user(user) for user in user_chunk]
             formatted_data = self._report_data(users_to_iterate=users)
@@ -1817,7 +1793,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         if self.view_by_groups:
             rows = self._rows_by_group(report_data)
         else:
-            track_es_report_load(self.domain, self.slug, len(self.users_to_iterate))
             rows = self._rows_by_user(report_data, self.users_to_iterate)
 
         self.total_row = self._format_total_row(self._total_row(rows, report_data, self.users_to_iterate))

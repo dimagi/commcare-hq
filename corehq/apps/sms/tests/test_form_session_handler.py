@@ -82,6 +82,7 @@ class FormSessionTestCase(TestCase):
         )
         subevent = MessagingSubEvent.objects.create(
             parent=event,
+            domain=self.domain.name,
             date=datetime.utcnow(),
             recipient_type=MessagingEvent.RECIPIENT_CASE,
             content_type=MessagingEvent.CONTENT_SMS_SURVEY,

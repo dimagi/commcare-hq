@@ -1,7 +1,7 @@
 from corehq.apps.es import UserES, users, queries
 from corehq.apps.users.models import CommCareUser, Invitation
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
+from corehq.apps.es.client import manager
+from corehq.apps.es.users import user_adapter
 from corehq.toggles import RESTRICT_LOGIN_AS
 from corehq.util.couch import stale_ok
 
@@ -14,7 +14,7 @@ def update_analytics_indexes():
     (modeled very closely after the same function in couchforms.analytics)
     """
     CommCareUser.get_db().view('users/by_domain', limit=1).all()
-    get_es_new().indices.refresh(USER_INDEX_INFO.index)
+    manager.index_refresh(user_adapter.index_name)
 
 
 def get_count_of_active_commcare_users_in_domain(domain):

@@ -14,16 +14,11 @@ from corehq.apps.accounting.models import (
     SMALL_INVOICE_THRESHOLD,
     BillingAccount,
     BillingRecord,
-    CreditAdjustment,
-    CreditLine,
     DefaultProductPlan,
     FeatureType,
     Invoice,
-    LineItem,
     SoftwarePlanEdition,
     Subscriber,
-    Subscription,
-    SubscriptionAdjustment,
     SubscriptionType,
 )
 from corehq.apps.accounting.tasks import calculate_users_in_all_domains
@@ -47,6 +42,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
 
     is_using_test_plans = False
     min_subscription_length = 3
+    is_testing_web_user_feature = False
 
     @classmethod
     def setUpClass(cls):
@@ -64,12 +60,17 @@ class BaseInvoiceTestCase(BaseAccountingTest):
 
         cls.subscription_length = 15  # months
         subscription_start_date = datetime.date(2016, 2, 23)
+        cls.subscription_is_active = False
+        if cls.is_testing_web_user_feature:
+            # make sure the subscription is still active when we count web users
+            cls.subscription_is_active = True
         subscription_end_date = add_months_to_date(subscription_start_date, cls.subscription_length)
         cls.subscription = generator.generate_domain_subscription(
             cls.account,
             cls.domain,
             date_start=subscription_start_date,
             date_end=subscription_end_date,
+            is_active=cls.subscription_is_active
         )
 
     def tearDown(self):
@@ -101,7 +102,8 @@ class TestInvoice(BaseInvoiceTestCase):
         self.assertEqual(self.subscription.invoice_set.count(), 0)
 
     def test_subscription_invoice(self):
-        invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
         calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices_based_on_date(invoice_date)
         self.assertEqual(self.subscription.invoice_set.count(), 1)
@@ -259,7 +261,8 @@ class TestProductLineItem(BaseInvoiceTestCase):
         - quantity is 1
         - subtotal = monthly fee
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
         calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices_based_on_date(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
@@ -334,7 +337,8 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestUserLineItem, self).setUp()
-        self.user_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
+        self.user_rate = self.subscription.plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.USER)[:1].get()
 
     def test_under_limit(self):
         """
@@ -346,9 +350,11 @@ class TestUserLineItem(BaseInvoiceTestCase):
         - unit_description is None
         - total and subtotals are 0.0
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
 
-        num_users = lambda: random.randint(0, self.user_rate.monthly_limit)
+        def num_users():
+            return random.randint(0, self.user_rate.monthly_limit)
         num_active = num_users()
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
 
@@ -378,9 +384,11 @@ class TestUserLineItem(BaseInvoiceTestCase):
         - quantity is equal to number of commcare users in that domain minus the monthly_limit on the user rate
         - total and subtotals are equal to number of extra users * per_excess_fee
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
 
-        num_users = lambda: random.randint(self.user_rate.monthly_limit + 1, self.user_rate.monthly_limit + 2)
+        def num_users():
+            return random.randint(self.user_rate.monthly_limit + 1, self.user_rate.monthly_limit + 2)
         num_active = num_users()
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
 
@@ -442,7 +450,119 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertEqual(user_line_item.total, num_to_charge * self.user_rate.per_excess_fee)
 
 
+class TestWebUserLineItem(BaseInvoiceTestCase):
+
+    is_using_test_plans = True
+    is_testing_web_user_feature = True
+
+    def setUp(self):
+        super(TestWebUserLineItem, self).setUp()
+        self.web_user_rate = self.subscription.plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.WEB_USER)[:1].get()
+        self.subscription.account.bill_web_user = True
+        self.subscription.account.save()
+
+    def test_under_limit(self):
+        """
+        Make sure that the Web User rate produced:
+        - base_description is None
+        - base_cost is 0.0
+        - unit_cost is equal to the per_excess_fee
+        - quantity is equal to 0
+        - unit_description is None
+        - total and subtotals are 0.0
+        """
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
+
+        def num_users():
+            return random.randint(0, self.web_user_rate.monthly_limit)
+        num_active = num_users()
+        generator.arbitrary_webusers_for_domain(self.domain.name, num_active)
+
+        num_inactive = num_users()
+        generator.arbitrary_webusers_for_domain(self.domain.name, num_inactive, is_active=False)
+
+        calculate_users_in_all_domains(invoice_date)
+        tasks.calculate_web_users_in_all_billing_accounts(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
+        invoice = self.subscription.invoice_set.latest('date_created')
+        web_user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER).get()
+
+        self.assertIsNone(web_user_line_item.base_description)
+        self.assertEqual(web_user_line_item.base_cost, Decimal('0.0000'))
+        self.assertIsNone(web_user_line_item.unit_description)
+        self.assertEqual(web_user_line_item.quantity, 0)
+        self.assertEqual(web_user_line_item.unit_cost, self.web_user_rate.per_excess_fee)
+        self.assertEqual(web_user_line_item.subtotal, Decimal('0.0000'))
+        self.assertEqual(web_user_line_item.total, Decimal('0.0000'))
+
+    def test_over_limit(self):
+        """
+        Make sure that the Web User rate produced:
+        - base_description is None
+        - base_cost is 0.0
+        - unit_description is not None
+        - unit_cost is equal to the per_excess_fee on the web user rate
+        - quantity is equal to number of web users in that account minus the monthly_limit on the web user rate
+        - total and subtotals are equal to number of extra users * per_excess_fee
+        """
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
+
+        def num_users():
+            return random.randint(self.web_user_rate.monthly_limit + 1, self.web_user_rate.monthly_limit + 2)
+        num_active = num_users()
+        generator.arbitrary_webusers_for_domain(self.domain.name, num_active)
+
+        num_inactive = num_users()
+        generator.arbitrary_webusers_for_domain(self.domain.name, num_inactive, is_active=False)
+
+        calculate_users_in_all_domains(datetime.date(invoice_date.year, invoice_date.month, 1))
+        tasks.calculate_web_users_in_all_billing_accounts(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
+        invoice = self.subscription.invoice_set.latest('date_created')
+        web_user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER).get()
+
+        # there is no base cost
+        self.assertIsNone(web_user_line_item.base_description)
+        self.assertEqual(web_user_line_item.base_cost, Decimal('0.0000'))
+
+        num_to_charge = num_active - self.web_user_rate.monthly_limit
+        self.assertIsNotNone(web_user_line_item.unit_description)
+        self.assertEqual(web_user_line_item.quantity, num_to_charge)
+        self.assertEqual(web_user_line_item.unit_cost, self.web_user_rate.per_excess_fee)
+        self.assertEqual(web_user_line_item.subtotal, num_to_charge * self.web_user_rate.per_excess_fee)
+        self.assertEqual(web_user_line_item.total, num_to_charge * self.web_user_rate.per_excess_fee)
+
+    def test_no_line_item_when_bill_web_user_flag_is_false(self):
+        """
+        For a billing account that have bill_web_user flag set to False
+        - there should be no web user line item on the invoice
+        """
+        self.subscription.account.bill_web_user = False
+        self.subscription.account.save()
+
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
+
+        def num_users():
+            return random.randint(self.web_user_rate.monthly_limit + 1, self.web_user_rate.monthly_limit + 2)
+        num_active = num_users()
+        generator.arbitrary_webusers_for_domain(self.domain.name, num_active)
+
+        num_inactive = num_users()
+        generator.arbitrary_webusers_for_domain(self.domain.name, num_inactive, is_active=False)
+
+        calculate_users_in_all_domains(datetime.date(invoice_date.year, invoice_date.month, 1))
+        tasks.calculate_web_users_in_all_billing_accounts(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
+        invoice = self.subscription.invoice_set.latest('date_created')
+        self.assertEqual(invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER).count(), 0)
+
+
 class TestSmsLineItem(BaseInvoiceTestCase):
+    is_using_test_plans = True
 
     @classmethod
     def setUpClass(cls):
@@ -535,7 +655,13 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         self.assertEqual(sms_line_item.subtotal, Decimal('0.0000'))
         self.assertEqual(sms_line_item.total, Decimal('0.0000'))
 
-    def test_multipart_over_limit(self):
+    def test_multipart_over_limit_and_part_of_the_billable_is_under_limit(self):
+        """
+        In this test, we particularly test the scenario that
+        half of the billable is within the limit, the remaining half exceeds the limit.
+        So it's crucial to use test plan in this test instead of default plan whose limit is 0.
+        """
+
         def _set_billable_date_sent_day(sms_billable, day):
             sms_billable.date_sent = datetime.date(
                 sms_billable.date_sent.year,

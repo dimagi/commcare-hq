@@ -4,7 +4,6 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import cmp_to_key, wraps
-from wsgiref.util import FileWrapper
 
 from django.conf import settings
 from django.contrib import messages
@@ -18,12 +17,12 @@ from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
     JsonResponse,
-    StreamingHttpResponse,
 )
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.http import (
@@ -41,6 +40,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from no_exceptions.exceptions import Http403
+from django_prbac.decorators import requires_privilege
 
 from casexml.apps.case import const
 from casexml.apps.case.templatetags.case_tags import case_inline_display
@@ -50,7 +50,6 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.web import json_response
 
-from corehq import privileges, toggles
 from corehq.apps.app_manager.util import get_form_source_download_url
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.domain.decorators import (
@@ -88,6 +87,7 @@ from corehq.apps.reports.formdetails.readable import (
     get_data_cleaning_data,
     get_readable_data_for_submission,
 )
+from corehq.apps.reports.models import QueryStringHash
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.saved_reports.tasks import (
     send_delayed_report,
@@ -99,7 +99,6 @@ from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import (
     CommCareUser,
-    CouchUser,
     HqPermissions,
     WebUser,
 )
@@ -112,24 +111,27 @@ from corehq.blobs import CODES, NotFound, get_blob_db, models
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.form_processor.utils.xform import resave_form
+from corehq.motech.generic_inbound.utils import revert_api_request_from_form
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.toggles import VIEW_FORM_ATTACHMENT
 from corehq.util import cmp
 from corehq.util.couch import get_document_or_404
+from corehq.util.download import get_download_response
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import (
     get_timezone_for_request,
     get_timezone_for_user,
 )
 from corehq.util.view_utils import get_form_or_404, request_as_dict, reverse
+from corehq import privileges, toggles
 
 from .dispatcher import ProjectReportDispatcher
 from .forms import (
     SavedReportConfigForm,
     TableauServerForm,
     TableauVisualizationForm,
+    UpdateTableauVisualizationForm,
 )
 from .lookup import ReportLookup, get_full_report_name
 from .models import TableauServer, TableauVisualization
@@ -172,7 +174,7 @@ def _can_view_form_attachment():
                 response = HttpResponseForbidden()
             return response
 
-        return api_auth(_inner)
+        return api_auth()(_inner)
     return decorator
 
 
@@ -470,8 +472,7 @@ class AddSavedReportConfigView(View):
             # in case a non-admin user maliciously tries to edit another user's config
             # or an admin edits a non-shared report in some way
             assert config.owner_id == self.user_id or (
-                self.user.is_domain_admin(self.domain) and
-                config.is_shared_on_domain()
+                self.user.is_domain_admin(self.domain) and config.is_shared_on_domain()
             )
         else:
             config.domain = self.domain
@@ -508,6 +509,18 @@ class AddSavedReportConfigView(View):
         return self.request.couch_user
 
 
+def _querydict_to_dict(query_dict):
+    data = {}
+    for key in query_dict.keys():
+        if key.endswith('[]'):
+            v = query_dict.getlist(key)
+            key = key[:-2]  # slice off the array naming
+        else:
+            v = query_dict[key]
+        data[key] = v
+    return data
+
+
 @dataclass
 class Timezone:
     hours: int
@@ -523,14 +536,15 @@ class Timezone:
 def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
     from .forms import EmailReportForm
 
-    form = EmailReportForm(request.POST)
+    form = EmailReportForm(_querydict_to_dict(request.POST))
     if not form.is_valid():
-        return HttpResponseBadRequest()
+        return HttpResponseBadRequest(json.dumps(form.get_readable_errors()))
 
     if not _can_email_report(report_slug, request, dispatcher_class, domain):
         raise Http404()
 
-    recipient_emails = set(form.cleaned_data['recipient_emails'])
+    recipient_emails = set(form.cleaned_data['recipient_emails'] or [])
+
     if form.cleaned_data['send_to_owner']:
         recipient_emails.add(request.couch_user.get_email())
 
@@ -575,8 +589,7 @@ def delete_config(request, domain, config_id):
 
 def _can_delete_saved_report(report, user, domain):
     return domain == report.domain and user._id == report.owner_id or (
-        user.is_domain_admin(domain) and
-        report.is_shared_on_domain()
+        user.is_domain_admin(domain) and report.is_shared_on_domain()
     )
 
 
@@ -784,11 +797,11 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
 
         form.fields['hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
-                                        (Domain.get_by_name(self.domain)['default_timezone'],
-                                        get_timezone_difference(self.domain))
+                                         (Domain.get_by_name(self.domain)['default_timezone'],
+                                          get_timezone_difference(self.domain))
         form.fields['stop_hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
-                                        (Domain.get_by_name(self.domain)['default_timezone'],
-                                        get_timezone_difference(self.domain))
+                                              (Domain.get_by_name(self.domain)['default_timezone'],
+                                               get_timezone_difference(self.domain))
         return form
 
     @property
@@ -1125,7 +1138,8 @@ def render_full_report_notification(request, content, email=None, report_notific
         })
 
     return render(request, "reports/report_email.html", {
-        'email_content': content,
+        # TODO: move the responsibility for safety up the chain, to scheduled reports, etc
+        'email_content': mark_safe(content),  # nosec: content is expected to be the report's HTML
         'unsub_link': unsub_link
     })
 
@@ -1439,25 +1453,52 @@ class FormDataView(BaseProjectReportSectionView):
 @require_form_view_permission
 @location_safe
 def view_form_attachment(request, domain, instance_id, attachment_id):
-    # Open form attachment in browser
-    return get_form_attachment_response(request, domain, instance_id, attachment_id)
+    # This view differs from corehq.apps.api.object_fetch_api.view_form_attachment
+    # by using login_and_domain_required as auth to allow domain aware login page
+    # in browser
+    # This is not used in HQ anywhere but the link for the same is created
+    # in the apps and saved as case properties
+    # example: https://india.commcarehq.org/a/gcc-sangath/reports/case_data/b7dcdb76-d58a-4aa6-80d1-de35d7f600d0/
+    # View image/audio/video form attachment in browser
+    # download option is restricted in html for audio/video if FF enabled
+    _ensure_form_access(request, domain, instance_id, attachment_id)
+    attachment_meta = XFormInstance.objects.get_attachment_by_name(instance_id, attachment_id)
+    context = {
+        'download_url': reverse('api_form_attachment', args=[domain, instance_id, attachment_id]),
+        'content_name': attachment_id,
+        'disable_download': toggles.DISABLE_FORM_ATTACHMENT_DOWNLOAD_IN_BROWSER.enabled_for_request(request),
+        'is_image': attachment_meta.is_image
+    }
+    return render(
+        request,
+        template_name='reports/reportdata/view_form_attachment.html',
+        context=context
+    )
 
 
-def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+def _ensure_form_access(request, domain, instance_id, attachment_id):
     if not instance_id or not attachment_id:
         raise Http404
 
     # this raises a PermissionDenied error if necessary
     safely_get_form(request, domain, instance_id)
 
+
+def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+    _ensure_form_access(request, domain, instance_id, attachment_id)
+
     try:
         content = XFormInstance.objects.get_attachment_content(instance_id, attachment_id)
     except AttachmentNotFound:
         raise Http404
 
-    return StreamingHttpResponse(
-        streaming_content=FileWrapper(content.content_stream),
-        content_type=content.content_type
+    return get_download_response(
+        payload=content.content_stream,
+        content_length=content.content_length,
+        content_type=content.content_type,
+        download=False,
+        filename=attachment_id,
+        request=request
     )
 
 
@@ -1486,7 +1527,7 @@ def case_form_data(request, domain, case_id, xform_id):
 @require_GET
 def download_form(request, domain, instance_id):
     instance = get_form_or_404(domain, instance_id)
-    assert(domain == instance.domain)
+    assert (domain == instance.domain)
 
     response = HttpResponse(content_type='application/xml')
     response.write(instance.get_xml())
@@ -1528,6 +1569,7 @@ def archive_form(request, domain, instance_id):
             notify_level = messages.ERROR
         else:
             instance.archive(user_id=request.couch_user._id)
+            revert_api_request_from_form(instance_id)
             notify_msg = _("Form was successfully archived.")
     elif instance.is_archived:
         notify_msg = _("Form was already archived.")
@@ -1546,6 +1588,24 @@ def archive_form(request, domain, instance_id):
     messages.add_message(request, notify_level, msg, extra_tags='html')
 
     return HttpResponseRedirect(redirect)
+
+
+@require_form_view_permission
+@require_permission(HqPermissions.edit_data)
+@require_POST
+@location_safe
+def delete_form(request, domain, instance_id):
+    form = safely_get_form(request, domain, instance_id)
+    assert form.domain == domain
+    if form.is_archived:
+        form.soft_delete()
+        form.save()
+        return HttpResponseRedirect(reverse('project_report_dispatcher',
+                                            args=(domain, 'submit_history')))
+    else:
+        return HttpResponseForbidden(
+            _(f"Cannot delete form {instance_id} because it is not archived.")
+        )
 
 
 def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request):
@@ -1731,7 +1791,8 @@ def export_report(request, domain, export_hash, format):
             return HttpResponseNotFound(_("We don't support this format"))
 
 
-@require_permission(HqPermissions.view_report, 'corehq.apps.reports.standard.project_health.ProjectHealthDashboard')
+@require_permission(HqPermissions.view_report,
+                    'corehq.apps.reports.standard.project_health.ProjectHealthDashboard')
 def project_health_user_details(request, domain, user_id):
     # todo: move to project_health.py? goes with project health dashboard.
     user = get_document_or_404(CommCareUser, domain, user_id)
@@ -1834,6 +1895,9 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
             'title': tableau_visualization.title,
             'server': tableau_visualization.server.server_name,
             'view_url': tableau_visualization.view_url,
+            'updateForm': self.get_update_form_response(
+                self.get_update_form(tableau_visualization)
+            ),
         }
         return data
 
@@ -1846,6 +1910,23 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
         return {
             'itemData': self._get_item_data(tableau_viz),
             'template': 'tableau-visualization-deleted-template',
+        }
+
+    def get_update_form(self, instance=None):
+        if instance is None:
+            instance = TableauVisualization.objects.get(
+                pk=self.request.POST.get("id"),
+                domain=self.domain,
+            )
+        if self.request.method == 'POST' and self.action == 'update':
+            return UpdateTableauVisualizationForm(self.domain, self.request.POST, instance=instance)
+        return UpdateTableauVisualizationForm(self.domain, instance=instance)
+
+    def get_updated_item_data(self, update_form):
+        tableau_viz = update_form.save()
+        return {
+            "itemData": self._get_item_data(tableau_viz),
+            "template": "tableau-visualization-template",
         }
 
     def post(self, *args, **kwargs):
@@ -1888,3 +1969,75 @@ class TableauVisualizationDetailView(BaseProjectReportSectionView, ModelFormMixi
     def form_valid(self, form):
         form.save()
         return super().form_valid(form)
+
+
+@login_and_domain_required
+@location_safe
+@require_POST
+def get_or_create_filter_hash(request, domain):
+    query_id = request.POST.get('query_id')
+    query_string = request.POST.get('params')
+    not_found = False
+    max_input_limit = 4500
+
+    if query_string:
+        if len(query_string) > max_input_limit:
+            not_found = True
+        else:
+            query, created = QueryStringHash.objects.get_or_create(query_string=query_string, domain=domain)
+            query_id = query.query_id.hex
+            query.save()  # Updates the 'last_accessed' field
+    elif query_id:
+        try:
+            query = QueryStringHash.objects.filter(query_id=query_id, domain=domain)
+        except ValidationError:
+            query = None
+        if not query:
+            not_found = True
+        else:
+            query = query[0]
+            query_string = query.query_string
+            query.save()  # Updates the 'last_accessed' field
+    else:
+        not_found = True
+
+    return JsonResponse({
+        'query_string': query_string,
+        'query_id': query_id,
+        'not_found': not_found,
+    })
+
+
+@require_POST
+@toggles.COPY_CASES.required_decorator()
+@require_permission(HqPermissions.edit_data)
+@requires_privilege(privileges.CASE_COPY)
+@location_safe
+def copy_cases(request, domain, *args, **kwargs):
+    from corehq.apps.hqcase.case_helper import CaseCopier
+    body = json.loads(request.body)
+
+    case_ids = body.get('case_ids')
+    if not case_ids:
+        return JsonResponse({'error': _("Missing case ids")}, status=400)
+
+    new_owner = body.get('owner_id')
+    if not new_owner:
+        return JsonResponse({'error': _("Missing new owner id")}, status=400)
+
+    censor_data = {
+        prop['name']: prop['label']
+        for prop in body.get('sensitive_properties', [])
+    }
+
+    case_copier = CaseCopier(
+        domain,
+        to_owner=new_owner,
+        censor_data=censor_data,
+    )
+    case_id_pairs, errors = case_copier.copy_cases(case_ids)
+    count = len(case_id_pairs)
+    return JsonResponse(
+        {'copied_cases': count, 'error': errors},
+        status=400 if count == 0 else 200,
+    )

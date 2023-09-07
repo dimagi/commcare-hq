@@ -231,10 +231,7 @@ def _ethiopian_date_to_gregorian_date(spec, factory_context):
 
 def _evaluator_expression(spec, factory_context):
     wrapped = EvalExpressionSpec.wrap(spec)
-    wrapped.configure(
-        context_variables={slug: ExpressionFactory.from_spec(expression, factory_context)
-                           for slug, expression in wrapped.context_variables.items()}
-    )
+    wrapped.configure(factory_context)
     return wrapped
 
 

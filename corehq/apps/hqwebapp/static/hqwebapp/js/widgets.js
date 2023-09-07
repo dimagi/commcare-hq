@@ -4,6 +4,7 @@ hqDefine("hqwebapp/js/widgets",[
         '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
         'hqwebapp/js/initial_page_data',
         'select2/dist/js/select2.full.min',
+        'jquery-ui/ui/widgets/datepicker',
     ], function ($, _, MapboxGeocoder, initialPageData) {
         var init = function () {
             var MAPBOX_ACCESS_TOKEN = initialPageData.get(
@@ -32,6 +33,7 @@ hqDefine("hqwebapp/js/widgets",[
                     multiple: true,
                     placeholder: ' ',
                     tags: true,
+                    tokenSeparators: [','],
                     width: '100%',
                     createTag: function (params) {
                         // Support pasting in comma-separated values
@@ -42,7 +44,6 @@ hqDefine("hqwebapp/js/widgets",[
                                 text: terms[0],
                             };
                         }
-
                         $input.select2('close');
                         var values = $input.val() || [];
                         if (!_.isArray(values)) {
@@ -98,6 +99,8 @@ hqDefine("hqwebapp/js/widgets",[
                     geocoder.setInput(getGeocoderValue());
                 }
             });
+
+            $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
         };
 
         var parseEmails = function (input) {

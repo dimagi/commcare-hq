@@ -1,0 +1,35 @@
+.bg-full-cover-fixed {
+  background: no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+
+  background-color: lighten($cc-text, 10%);
+  min-height: 100%;
+  width: 100%;
+
+  opacity: 0;
+  transition: opacity .2s ease-in-out;
+}
+
+.bg-full-cover-fixed.b-loaded {
+  opacity: 1.0;
+}
+
+.bg-overlay {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #45566E;
+  opacity: 0.75;
+}
+
+.bg-container {
+  height: 100%;
+  width: 100%;
+  background-color: lighten($cc-text, 10%);
+  position: fixed;
+}

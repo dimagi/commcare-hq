@@ -129,13 +129,16 @@
   }
 }
 
-
 @media print {
   .form-container.print-container {
     margin: 0px;
     .page-header {
       padding-top: 0px;
     }
+  }
+
+  .q.form-group {
+    break-inside: avoid;
   }
 
   .panel.panel-default.last,
@@ -145,8 +148,8 @@
     margin-bottom: 0px;
     padding-bottom: 0px;
     .widget-container {
-      margin: 0px;
-      padding: 0px;
+      margin-bottom: 0px;
+      padding-bottom: 0px;
     }
   }
 

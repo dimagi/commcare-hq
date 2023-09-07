@@ -1,0 +1,20 @@
+// todo find out if this is actually needed
+//body, html {
+//    height: 100%;
+//}
+
+.footer-mobile {
+  font-size: 10px;
+  text-align: center;
+  border-top: 1px solid $cc-neutral-hi;
+  padding-top: 8px;
+  margin-top:10px;
+
+  p {
+    margin: 0;
+  }
+}
+
+.ui-widget-content a.btn-primary {
+  color: $white;
+}

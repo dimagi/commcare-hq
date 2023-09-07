@@ -1,4 +1,5 @@
 import os
+from warnings import filterwarnings
 
 import settingshelper as helper
 from settings import *  # noqa: F403
@@ -8,6 +9,11 @@ if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
 
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
+
+# Default multiplexed value for_test adapter
+ES_FOR_TEST_INDEX_MULTIPLEXED = False
+ES_FOR_TEST_INDEX_SWAPPED = False
+
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
@@ -38,6 +44,7 @@ NOSE_PLUGINS = [
     'corehq.tests.noseplugins.logfile.LogFilePlugin',
     'corehq.tests.noseplugins.timing.TimingPlugin',
     'corehq.tests.noseplugins.output.OutputPlugin',
+    'corehq.tests.noseplugins.elasticsnitch.ElasticSnitchPlugin',
 
     # Uncomment to debug tests. Plugins have nice hooks for inspecting state
     # before/after each test or context setup/teardown, etc.
@@ -73,6 +80,8 @@ ENABLE_PRELOGIN_SITE = True
 # override dev_settings
 CACHE_REPORTS = True
 
+# Hide couchdb 'unclosed socket' warnings
+filterwarnings("ignore", r"unclosed.*socket.*raddr=\([^) ]* 5984\)", ResourceWarning)
 
 def _set_logging_levels(levels):
     import logging
@@ -123,3 +132,6 @@ METRICS_PROVIDERS = [
 ]
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"
+
+# A workaround to test the messaging framework. See: https://stackoverflow.com/a/60218100
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'

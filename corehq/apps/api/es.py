@@ -14,19 +14,12 @@ from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es.forms import FormES
+from corehq.apps.es.cases import CaseES, case_adapter
+from corehq.apps.es.exceptions import ESError
+from corehq.apps.es.forms import FormES, form_adapter
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import (
-    ESError,
-    get_es_new,
-    report_and_fail_on_shard_failures,
-)
-from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS, CASE_ES_TYPE
-from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS, XFORM_ES_TYPE
-from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
-from corehq.util.es.interface import ElasticsearchInterface
+from corehq.util.es.elasticsearch import NotFoundError
 
 logger = logging.getLogger('es')
 
@@ -66,10 +59,7 @@ class ESView(View):
     #     -d"query=@myquery.json&csrfmiddlewaretoken=<csrftoken>"
     #or, call this programmatically to avoid CSRF issues.
 
-    es_alias = ""
-    es_type = None
     domain = ""
-    es = None
     doc_type = None
     model = None
 
@@ -78,8 +68,6 @@ class ESView(View):
     def __init__(self, domain):
         super(ESView, self).__init__()
         self.domain = domain.lower()
-        self.es = get_es_new()
-        self.es_interface = ElasticsearchInterface(self.es)
 
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
@@ -118,7 +106,7 @@ class ESView(View):
 
     def get_document(self, doc_id):
         try:
-            doc = self.es_interface.get_doc(self.es_alias, self.es_type, doc_id)
+            doc = self.adapter.get(doc_id)
         except NotFoundError:
             raise object_does_not_exist(self.doc_type, doc_id)
 
@@ -127,7 +115,7 @@ class ESView(View):
 
         return self.model(doc) if self.model else doc
 
-    def run_query(self, es_query, es_type=None):
+    def run_query(self, es_query):
         """
         Run a more advanced POST based ES query
 
@@ -142,12 +130,9 @@ class ESView(View):
             fields.append('domain')
             es_query['fields'] = fields
 
-        if es_type is None:
-            es_type = self.es_type
         try:
-            es_results = self.es_interface.search(self.es_alias, es_type, body=es_query)
-            report_and_fail_on_shard_failures(es_results)
-        except ElasticsearchException as e:
+            es_results = self.adapter.search(es_query)
+        except ESError:
             if 'query_string' in es_query.get('query', {}).get('filtered', {}).get('query', {}):
                 # the error may have been caused by a bad query string
                 # re-run with no query string to check
@@ -160,9 +145,7 @@ class ESView(View):
                     # an error with a blank query will return None
                     raise ESUserError("Error with elasticsearch query: %s" %
                         querystring)
-
-            msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.es_alias, str(e), es_query)
-            raise ESError(msg)
+            raise
 
         hits = []
         for res in es_results['hits']['hits']:
@@ -182,7 +165,7 @@ class ESView(View):
         return es_results
 
     def count_query(self, es_query):
-        return self.es_interface.count(self.es_alias, self.es_type, es_query)
+        return self.adapter.count(es_query)
 
 
 class CaseESView(ESView):
@@ -192,15 +175,13 @@ class CaseESView(ESView):
     Yes, this is redundant with pieces of the v0_1.py CaseAPI - todo to merge these applications
     Which this should be the final say on ES access for Casedocs
     """
-    es_alias = CASE_ES_ALIAS
-    es_type = CASE_ES_TYPE
+    adapter = case_adapter
     doc_type = "CommCareCase"
     model = ESCase
 
 
 class FormESView(ESView):
-    es_alias = XFORM_ALIAS
-    es_type = XFORM_ES_TYPE
+    adapter = form_adapter
     doc_type = "XFormInstance"
     model = ESXFormInstance
 
@@ -528,3 +509,16 @@ def es_query_from_get_params(search_params, domain, doc_type='form'):
         query = query.filter(filters.term(param, value))
 
     return query.raw_query
+
+
+def flatten_list(list_2d):
+    flat_list = []
+    # Iterate through the outer list
+    for element in list_2d:
+        if isinstance(element, list):
+            # If the element is of type list, iterate through the sublist
+            for item in element:
+                flat_list.append(item)
+        else:
+            flat_list.append(element)
+    return flat_list

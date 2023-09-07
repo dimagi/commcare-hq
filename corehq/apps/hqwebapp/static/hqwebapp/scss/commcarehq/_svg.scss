@@ -1,0 +1,9 @@
+.svg-yikes-face svg {
+  width: calc(100% - 40px);
+  height: auto;
+  margin: 0 auto;
+  display: block;
+  path {
+    fill: $cc-brand-low;
+  }
+}

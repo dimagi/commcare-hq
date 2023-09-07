@@ -1,0 +1,31 @@
+.clickable {
+  cursor: pointer;
+}
+
+.spacer {
+  height: 20px;
+  width: 100%;
+  display: block;
+}
+
+.ko-template {
+  display: none;
+}
+
+.break-all-words {
+    word-break: break-all;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.fadeIn {
+  animation-name: fadeIn;
+  animation-duration: 1s;
+}

@@ -17,10 +17,7 @@ from corehq.form_processor.models import (
     CommCareCaseIndex,
 )
 from corehq.motech.repeaters.exceptions import DataRegistryCaseUpdateError
-from corehq.motech.repeaters.models import (
-    DataRegistryCaseUpdateRepeater,
-    Repeater,
-)
+from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater
 from corehq.motech.repeaters.repeater_generators import (
     DataRegistryCaseUpdatePayloadGenerator,
 )
@@ -386,9 +383,12 @@ def _test_payload_generator(intent_case, registry_mock_cases=None,
 
     registry_mock_cases = _mock_registry() if registry_mock_cases is None else registry_mock_cases
 
-    repeater = DataRegistryCaseUpdateRepeater(domain=SOURCE_DOMAIN, white_listed_case_types=[
-        IntentCaseBuilder.CASE_TYPE
-    ])
+    repeater = DataRegistryCaseUpdateRepeater(domain=SOURCE_DOMAIN,
+        white_listed_case_types=[
+            IntentCaseBuilder.CASE_TYPE
+        ],
+        repeater_id=uuid.uuid4().hex
+    )
     generator = DataRegistryCaseUpdatePayloadGenerator(repeater)
     generator.submission_user_id = Mock(return_value='user1')
     generator.submission_username = Mock(return_value='user1')

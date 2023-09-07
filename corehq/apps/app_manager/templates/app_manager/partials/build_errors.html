@@ -77,22 +77,10 @@
                 to a menu using "Display only forms," which makes that menu an invalid choice.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
-            {% case "multi select form links" %}
+            {% case "mismatch multi select form links" %}
               {% blocktrans %}
-                Please check that end of form navigation is correct. It appears to involve
-                a multi-select form, which is not supported.
-              {% endblocktrans %}
-              {% include "app_manager/partials/form_error_message.html" %}
-            {% case "parent multi select form links" %}
-              {% blocktrans %}
-                Please check that end of form navigation is correct. It appears to involve
-                a parent menu that uses multi-select, which is not supported.
-              {% endblocktrans %}
-              {% include "app_manager/partials/form_error_message.html" %}
-            {% case "previous multi select form links" %}
-              {% blocktrans %}
-                Please check that end of form navigation is correct. It appears to involve
-                a multi-select case list and the "Previous Screen" workflow, which are not compatible.
+                Please check that end of form navigation is correct. It appears to involve both
+                a multi-select form and a single select-form, which is not supported.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
             {% case "workflow previous inline search" %}
@@ -511,6 +499,11 @@
               {% if not not_actual_build %}The shadow form is {% include "app_manager/partials/form_error_message.html" %}{% endif %}
             {% case "password_format" %}
               {# Do nothing; the full message is contained in error.message #}
+            {% case "case search nodeset invalid" %}
+              {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
+                <a href="{{ module_url }}">{{ module_name }}</a> has a case search property
+                <code>{{ property }}</code> that references an invalid instance.
+              {% endblocktrans %}
             {% case "error" %}
               Details: {{ error.message }}
             {% else %}

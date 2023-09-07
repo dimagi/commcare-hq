@@ -1,0 +1,33 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<div class="modal fade" tabindex="-1" role="dialog" id="export-process-deprecated-properties">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">
+          {% trans "Show Deprecated Properties" %}
+        </h4>
+      </div>
+      <div class="modal-body">
+        <p>
+          {% blocktrans %}
+            In order to show you your deprecated properties, we need to refresh the page and
+            load in all the properties. This operation can sometimes take a few minutes.
+          {% endblocktrans %}
+        </p>
+        <div class="spacer"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+        <button type="button" class="btn btn-primary" data-bind="
+            click: onLoadAllProperties,
+            ">
+          {% trans "Refresh" %}
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

@@ -9,7 +9,6 @@ from django.utils.http import urlencode
 from tastypie.bundle import Bundle
 
 from corehq.apps.api.tests.utils import APIResourceTest
-from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.models import (
     Field,
     LookupTable,
@@ -48,7 +47,6 @@ class TestFixtureResource(APIResourceTest):
         cls.ohio = cls._create_data_item(cls.state, {"state": "Ohio"}, 0)
         cls.akron = cls._create_data_item(cls.city, {"city": "Akron", "state": "Ohio"}, 0)
         cls.toledo = cls._create_data_item(cls.city, {"city": "Toledo", "state": "Ohio"}, 1)
-        cls.addClassCleanup(delete_all_fixture_data, cls.domain.name)
 
     def test_get_list(self):
         response = self._assert_auth_get_resource(self.list_endpoint)
@@ -158,7 +156,6 @@ class TestLookupTableResource(APIResourceTest):
             item_attributes=[]
         )
         self.data_type.save()
-        self.addCleanup(delete_all_fixture_data, self.domain.name)
 
     def _data_type_json(self):
         return {
@@ -198,7 +195,7 @@ class TestLookupTableResource(APIResourceTest):
             item_attributes=[]
         )
         data_type.save()
-        TestLookupTableItemResource._create_data_item(self, cleanup=False, data_type=data_type)
+        TestLookupTableItemResource._create_data_item(self, data_type=data_type)
 
         self.assertEqual(2, LookupTable.objects.by_domain(self.domain.name).count())
         response = self._assert_auth_post_resource(self.single_endpoint(data_type.id), '', method='DELETE')
@@ -255,9 +252,8 @@ class TestLookupTableItemResource(APIResourceTest):
             item_attributes=[]
         )
         cls.data_type.save()
-        cls.addClassCleanup(delete_all_fixture_data, cls.domain.name)
 
-    def _create_data_item(self, cleanup=True, data_type=None):
+    def _create_data_item(self, data_type=None):
         data_item = LookupTableRow(
             domain=self.domain.name,
             table_id=(data_type or self.data_type).id,
@@ -271,8 +267,6 @@ class TestLookupTableItemResource(APIResourceTest):
             sort_key=1
         )
         data_item.save()
-        if cleanup:
-            self.addCleanup(data_item._migration_get_couch_object().delete)
         return data_item
 
     def _data_item_json(self, id_, sort_key):
@@ -310,7 +304,8 @@ class TestLookupTableItemResource(APIResourceTest):
         self.assertEqual(fixture_data_type, self._data_item_json(data_item.id.hex, data_item.sort_key))
 
     def test_delete(self):
-        data_item = self._create_data_item(cleanup=False)
+        data_item = self._create_data_item()
+        self.assertEqual(1, LookupTableRow.objects.filter(domain=self.domain.name).count())
         response = self._assert_auth_post_resource(self.single_endpoint(data_item.id.hex), '', method='DELETE')
         self.assertEqual(response.status_code, 204, response.content)
         self.assertEqual(0, LookupTableRow.objects.filter(domain=self.domain.name).count())

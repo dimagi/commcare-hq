@@ -274,42 +274,6 @@ class UserDeviceTest(SimpleTestCase):
         app_meta = device.get_meta_for_app('123')
         self.assertIsNotNone(app_meta)
 
-    def test_merge_device_app_meta(self):
-        m1 = DeviceAppMeta(
-            build_id='build1',
-            build_version=1,
-            last_submission=datetime.utcnow(),
-            num_unsent_forms=1
-        )
-        m2 = DeviceAppMeta(
-            build_id='build2',
-            build_version=2,
-            last_submission=datetime.utcnow(),
-        )
-
-        m2.merge(m1)
-        self.assertNotEqual(m2.build_id, m1.build_id)
-        self.assertNotEqual(m2.build_version, m1.build_version)
-        self.assertNotEqual(m2.last_submission, m1.last_submission)
-        self.assertIsNone(m2.num_unsent_forms)
-
-        m1.merge(m2)
-        self.assertEqual(m1.build_id, m2.build_id)
-        self.assertEqual(m1.build_version, m2.build_version)
-        self.assertEqual(m1.last_submission, m2.last_submission)
-        self.assertEqual(m1.num_unsent_forms, 1)
-
-    def test_merge_device_app_meta_last_is_none(self):
-        m1 = DeviceAppMeta(
-            last_submission=datetime.utcnow(),
-        )
-        m2 = DeviceAppMeta(
-            last_sync=datetime.utcnow(),
-        )
-
-        m1.merge(m2)
-        self.assertEqual(m1.last_sync, m2.last_sync)
-
 
 class TestCommCareUserRoles(TestCase):
     user_class = CommCareUser

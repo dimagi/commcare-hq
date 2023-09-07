@@ -13,10 +13,7 @@ from soil.util import expose_blob_download, process_email_request
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.exceptions import RejectedStaleExport
-from corehq.apps.export.models.incremental import (
-    generate_and_send_incremental_export,
-)
-from corehq.apps.export.utils import get_export
+from corehq.apps.export.utils import get_export, get_default_export_settings_if_available
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.celery_monitoring.signals import get_task_time_to_start
@@ -32,9 +29,13 @@ from .dbaccessors import (
     get_properly_wrapped_export_instance,
 )
 from .export import get_export_file, rebuild_export
-from .models.incremental import IncrementalExport
-from .models.new import EmailExportWhenDoneRequest
+from .models.new import (
+    EmailExportWhenDoneRequest,
+    CaseExportInstance,
+    CaseExportDataSchema
+)
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
+from django.core.cache import cache
 
 logger = logging.getLogger('export_migration')
 
@@ -223,17 +224,35 @@ def generate_schema_for_all_builds(self, export_type, domain, app_id, identifier
     )
 
 
-@periodic_task(run_every=crontab(hour="*", minute="30", day_of_week="*"),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def generate_incremental_exports():
-    incremental_exports = IncrementalExport.objects.filter(active=True)
-    for incremental_export in incremental_exports:
-        process_incremental_export.delay(incremental_export.id)
+@task(queue='background_queue')
+def process_populate_export_tables(export_id, progress_id=None):
+    """
+    When creating a bulk case export instance, it will be created without any tables. This is because
+    there may be a lot of case types on the project which can cause performance issues. The tables for
+    the export instance are instead added async in this task after the instance has been saved.
+    """
+    export = CaseExportInstance.get(export_id)
+    progress_data = {
+        'table_name': export.name,
+        'progress': 0
+    }
 
+    if progress_id:
+        cache.set(progress_id, progress_data)
 
-@task
-def process_incremental_export(incremental_export_id):
-    incremental_export = IncrementalExport.objects.get(id=incremental_export_id)
-    last_valid_checkpoint = incremental_export.last_valid_checkpoint
-    last_doc_date = last_valid_checkpoint.last_doc_date if last_valid_checkpoint else None
-    generate_and_send_incremental_export(incremental_export, last_doc_date)
+    schema = CaseExportDataSchema.generate_schema_from_builds(export.domain, None, export.case_type)
+    if progress_id:
+        progress_data['progress'] = 50
+        cache.set(progress_id, progress_data)
+
+    export_settings = get_default_export_settings_if_available(export.domain)
+    export_instance = CaseExportInstance.generate_instance_from_schema(
+        schema,
+        export_settings=export_settings,
+        load_deprecated=False
+    )
+    export.tables = export_instance.tables
+    export.save()
+
+    if progress_id:
+        cache.expire(progress_id, 0)

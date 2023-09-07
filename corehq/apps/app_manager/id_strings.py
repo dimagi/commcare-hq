@@ -284,9 +284,13 @@ def search_property_validation_text(module, search_prop, index):
     return f"search_property.m{module.id}.{search_prop}.validation.{index}.text"
 
 
-@pattern('custom_assertion.m%d.f%d.%d')
-def custom_assertion_locale(module, form, id):
-    return 'custom_assertion.m{module.id}.f{form.id}.{id}'.format(module=module, form=form, id=id)
+@pattern('custom_assertion.%s.%d')
+def custom_assertion_locale(id, module=None, form=None):
+    if module and form:
+        return 'custom_assertion.m{module.id}.f{form.id}.{id}'.format(module=module, form=form, id=id)
+    if module:
+        return 'custom_assertion.m{module.id}.{id}'.format(module=module, id=id)
+    return 'custom_assertion.root.{id}'.format(id=id)
 
 
 @pattern('referral_lists.m%d')
@@ -436,12 +440,22 @@ def case_search_title_translation(module):
     return "case_search.m{module.id}.inputs".format(module=module)
 
 
+@pattern('case_search.m%d.description')
+def case_search_description_locale(module):
+    return "case_search.m{module.id}.description".format(module=module)
+
+
 def detail(module, detail_type):
     return "m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
 
 def persistent_case_context_detail(module):
     return detail(module, 'persistent_case_context')
+
+
+@pattern('m%d_no_items_text')
+def no_items_text_detail(module):
+    return detail(module, 'no_items_text')
 
 
 def fixture_detail(module):

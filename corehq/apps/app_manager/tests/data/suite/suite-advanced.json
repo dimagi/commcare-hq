@@ -3,13 +3,9 @@
   "_rev": "37-0f7a55e21778fe782a7ee041d5f85eb7",
   "short_odk_url": null,
   "domain": "domain",
-  "build_langs": [
-    "en"
-  ],
   "short_url": null,
   "deployment_date": null,
   "user_type": null,
-  "text_input": "roman",
   "secure_submissions": false,
   "build_broken": false,
   "copy_of": null,
@@ -18,7 +14,6 @@
   "build_signed": true,
   "recipients": "",
   "copy_history": [],
-  "platform": "nokia/s40",
   "application_version": "2.0",
   "is_released": false,
   "version": 26,
@@ -33,30 +28,20 @@
   "success_message": {},
   "profile": {
     "features": {
-      "users": "true",
-      "sense": "false"
+      "users": "true"
     },
     "properties": {
-      "cc-send-procedure": "cc-send-http",
       "logenabled": "Enabled",
-      "cc-login-images": "No",
-      "cc-user-mode": "cc-u-normal",
       "cc-autoup-freq": "freq-never",
       "log_prop_weekly": "log_short",
       "user_reg_server": "required",
       "log_prop_daily": "log_never",
-      "cc-send-unsent": "cc-su-auto",
       "loose_media": "no",
       "restore-tolerance": "loose",
       "purge-freq": "0",
-      "server-tether": "push-only",
-      "password_format": "n",
       "unsent-number-limit": "5",
       "cc-content-valid": "no",
-      "cc-entry-mode": "cc-entry-quick",
-      "ViewStyle": "v_chatterbox",
-      "cc-days-form-retain": "-1",
-      "extra_key_action": "audio"
+      "cc-days-form-retain": "-1"
     }
   },
   "comment_from": null,
@@ -210,7 +195,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/name",
+              "name_update": {
+                "question_path": "/data/name"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -371,7 +358,6 @@
               {
                 "preload": {},
                 "doc_type": "LoadUpdateAction",
-                "parent_tag": "",
                 "case_tag": "case_clinic",
                 "close_condition": {
                   "answer": null,
@@ -381,8 +367,7 @@
                 },
                 "case_properties": {},
                 "case_type": "clinic",
-                "show_product_stock": true,
-                "parent_reference_id": "parent"
+                "show_product_stock": true
               }
             ]
           },
@@ -403,7 +388,6 @@
             "open_cases": [
               {
                 "doc_type": "AdvancedOpenCaseAction",
-                "parent_tag": "load_clinic0",
                 "open_condition": {
                   "answer": null,
                   "type": "always",
@@ -419,9 +403,17 @@
                 "repeat_context": null,
                 "case_type": "requisition",
                 "case_tag": "open_clinic_0",
-                "name_path": "/data/req_name",
+                "name_update": {
+                  "question_path": "/data/req_name"
+                },
                 "case_properties": {},
-                "parent_reference_id": ""
+                "case_indices": [
+                  {
+                    "tag": "load_clinic0",
+                    "reference_id": "",
+                    "relationship": "child"
+                  }
+                ]
               }
             ],
             "doc_type": "AdvancedFormActions",
@@ -429,7 +421,6 @@
               {
                 "preload": {},
                 "doc_type": "LoadUpdateAction",
-                "parent_tag": "",
                 "case_tag": "load_clinic0",
                 "close_condition": {
                   "answer": null,
@@ -439,8 +430,7 @@
                 },
                 "case_properties": {},
                 "case_type": "clinic",
-                "show_product_stock": false,
-                "parent_reference_id": "parent"
+                "show_product_stock": false
               }
             ]
           },
@@ -464,7 +454,6 @@
               {
                 "preload": {},
                 "doc_type": "LoadUpdateAction",
-                "parent_tag": "",
                 "case_tag": "load_clinic0",
                 "close_condition": {
                   "answer": null,
@@ -474,13 +463,11 @@
                 },
                 "case_properties": {},
                 "case_type": "clinic",
-                "show_product_stock": false,
-                "parent_reference_id": "parent"
+                "show_product_stock": false
               },
               {
                 "preload": {},
                 "doc_type": "LoadUpdateAction",
-                "parent_tag": "load_clinic0",
                 "case_tag": "case_requisition",
                 "close_condition": {
                   "answer": null,
@@ -491,7 +478,11 @@
                 "case_properties": {},
                 "case_type": "requisition",
                 "show_product_stock": true,
-                "parent_reference_id": "parent"
+                "case_index": {
+                  "tag": "load_clinic0",
+                  "reference_id": "parent",
+                  "relationship": "child"
+                }
               }
             ]
           },
@@ -656,10 +647,9 @@
             "load_update_cases": [
               {
                 "preload": {
-                  "name": "/data/amount"
+                  "/data/amount": "name"
                 },
                 "doc_type": "LoadUpdateAction",
-                "parent_tag": "",
                 "case_tag": "case_requisition",
                 "close_condition": {
                   "answer": null,
@@ -675,8 +665,7 @@
                 },
                 "case_type": "requisition",
                 "show_product_stock": true,
-                "product_program": "abc123def",
-                "parent_reference_id": "parent"
+                "product_program": "abc123def"
               }
             ]
           },
@@ -747,10 +736,10 @@
   "translation_strategy": "dump-known",
   "case_sharing": false,
   "_attachments": {
-    "a1e369bc819d3060a5d66dec3b62940899c4526b.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/5FBED77B-E327-495D-97E8-0733B97D8EA5\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<name />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>", 
-    "39f0eab3e58615f7d2f578010d85090b406f6dda.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/E42CCD8F-AD30-48ED-98C8-84451C855AE4\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<question1 />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/question1\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"question1-label\">\n\t\t\t\t\t\t<value>question1</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/question1\">\n\t\t\t<label ref=\"jr:itext('question1-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>", 
-    "94d7c0f74533ebf746a8067ea326c25245f24514.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/BF9D5051-D9E8-4740-A48E-91BFD8EB6371\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<name />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>", 
-    "a983e96a6bcd4a820f93cc5115ec969d7119d5ec.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/A0B00710-9AD6-4887-98EC-6D3D2F4B1F0D\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<req_name />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/req_name\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"req_name-label\">\n\t\t\t\t\t\t<value>req_name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/req_name\">\n\t\t\t<label ref=\"jr:itext('req_name-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>", 
+    "a1e369bc819d3060a5d66dec3b62940899c4526b.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/5FBED77B-E327-495D-97E8-0733B97D8EA5\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<name />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>",
+    "39f0eab3e58615f7d2f578010d85090b406f6dda.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/E42CCD8F-AD30-48ED-98C8-84451C855AE4\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<question1 />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/question1\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"question1-label\">\n\t\t\t\t\t\t<value>question1</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/question1\">\n\t\t\t<label ref=\"jr:itext('question1-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>",
+    "94d7c0f74533ebf746a8067ea326c25245f24514.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/BF9D5051-D9E8-4740-A48E-91BFD8EB6371\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<name />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>",
+    "a983e96a6bcd4a820f93cc5115ec969d7119d5ec.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/A0B00710-9AD6-4887-98EC-6D3D2F4B1F0D\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<req_name />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/req_name\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"req_name-label\">\n\t\t\t\t\t\t<value>req_name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/req_name\">\n\t\t\t<label ref=\"jr:itext('req_name-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>",
     "6989628b62f3cedd3813b73bd9a627b637b4055c.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>Fulfil requisition</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/4A846AD9-17A4-47F4-8DEA-884EC9040190\" uiVersion=\"1\" version=\"1\" name=\"Fulfil requisition\">\n\t\t\t\t\t<amount />\n\t\t\t\t\t<name />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/amount\" type=\"xsd:string\" />\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"amount-label\">\n\t\t\t\t\t\t<value>amount</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/amount\">\n\t\t\t<label ref=\"jr:itext('amount-label')\" />\n\t\t</input>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>"
   }
 }

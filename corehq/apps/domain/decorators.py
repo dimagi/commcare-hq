@@ -181,8 +181,8 @@ class LoginAndDomainMixin(object):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
 
-def api_key():
-    api_auth_class = HQApiKeyAuthentication()
+def _api_key(allow_creds_in_data=True):
+    api_auth_class = HQApiKeyAuthentication(allow_creds_in_data=allow_creds_in_data)
 
     def real_decorator(view):
         def wrapper(request, *args, **kwargs):
@@ -322,9 +322,9 @@ def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True, require_do
     )
 
 
-def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
+def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True, require_domain=True, allow_creds_in_data=True):
     return _login_or_challenge(
-        api_key(),
+        _api_key(allow_creds_in_data=allow_creds_in_data),
         allow_cc_users=allow_cc_users,
         api_key=True,
         allow_sessions=allow_sessions,
@@ -343,7 +343,7 @@ def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain
     )
 
 
-def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=None):
+def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=None, allow_creds_in_data=True):
     """
     :param allow_formplayer: If True this will allow one additional auth mechanism which is used
          by Formplayer:
@@ -366,7 +366,11 @@ def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=None)
                 )
                 return HttpResponseForbidden()
             request.auth_type = authtype  # store auth type on request for access in views
-            function_wrapper = get_auth_decorator_map(allow_cc_users=True, oauth_scopes=oauth_scopes)[authtype]
+            function_wrapper = get_auth_decorator_map(
+                allow_cc_users=True,
+                oauth_scopes=oauth_scopes,
+                allow_creds_in_data=allow_creds_in_data,
+            )[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
     return decorator
@@ -385,13 +389,13 @@ def two_factor_exempt(view_func):
     return wraps(view_func)(wrapped_view)
 
 
-# Use api_auth or api_auth_with_scope decorators to allow -
-# any auth type basic, digest, session, apikey, or oauth
-api_auth = get_multi_auth_decorator(default=DIGEST)
-
-
-def api_auth_with_scope(oauth_scopes):
-    return get_multi_auth_decorator(default=DIGEST, oauth_scopes=oauth_scopes)
+def api_auth(*, allow_creds_in_data=True, oauth_scopes=None):
+    """Allow any auth type basic, digest, session, apikey, or oauth"""
+    return get_multi_auth_decorator(
+        default=DIGEST,
+        oauth_scopes=oauth_scopes,
+        allow_creds_in_data=allow_creds_in_data,
+    )
 
 
 # Use these decorators on views to allow sesson-auth or an extra authorization method
@@ -404,7 +408,13 @@ api_key_auth = login_or_api_key_ex(allow_sessions=False)
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
 
-def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sessions=True, oauth_scopes=None):
+def get_auth_decorator_map(
+        allow_cc_users=False,
+        require_domain=True,
+        allow_sessions=True,
+        oauth_scopes=None,
+        allow_creds_in_data=True,
+):
     # get a mapped set of decorators for different auth types with the specified parameters
     oauth_scopes = oauth_scopes or ['access_apis']
     decorator_function_kwargs = {
@@ -415,7 +425,8 @@ def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sess
     return {
         DIGEST: login_or_digest_ex(**decorator_function_kwargs),
         BASIC: login_or_basic_ex(**decorator_function_kwargs),
-        API_KEY: login_or_api_key_ex(**decorator_function_kwargs),
+        API_KEY: login_or_api_key_ex(allow_creds_in_data=allow_creds_in_data,
+                                     **decorator_function_kwargs),
         OAUTH2: login_or_oauth2_ex(oauth_scopes=oauth_scopes, **decorator_function_kwargs),
         FORMPLAYER: login_or_formplayer_ex(**decorator_function_kwargs),
     }
@@ -521,7 +532,7 @@ def api_domain_view(view):
     See http://manage.dimagi.com/default.asp?225116#1137527
     """
     @wraps(view)
-    @api_key()
+    @_api_key()
     @login_and_domain_required
     def _inner(request, domain, *args, **kwargs):
         if request.user.is_authenticated:
@@ -539,8 +550,20 @@ def login_required(view_func):
         if not (user.is_authenticated and user.is_active):
             return redirect_for_login_or_domain(request)
 
-        # User's login and domain have been validated - it's safe to call the view function
         return view_func(request, *args, **kwargs)
+    return _inner
+
+
+def active_domains_required(view_func):
+    from corehq.apps.registration.views import registration_default
+
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        if not Domain.active_for_user(request.user):
+            return registration_default(request)
+
+        return view_func(request, *args, **kwargs)
+
     return _inner
 
 

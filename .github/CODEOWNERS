@@ -4,17 +4,14 @@
 *.js @orangejenny
 *.less @orangejenny
 
-/Makefile @joxl
-
 /.github/ @orangejenny
 
 /corehq/blobs/ @millerdev
-/corehq/elastic.py @joxl
 /corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
 /corehq/form_processor/ @snopoke
 /corehq/messaging/ @orangejenny @mkangia
 /corehq/motech/ @kaapstorm
-/corehq/pillows/ @calellowitz @joxl
+/corehq/pillows/ @calellowitz @amitphulera
 /corehq/sql_accessors/ @snopoke
 /corehq/sql_db/ @snopoke @calellowitz
 /corehq/sql_proxy_accessors/ @snopoke
@@ -35,9 +32,11 @@
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/commtrack/static/ @esoergel @orangejenny
 /corehq/apps/commtrack/templates/ @esoergel @orangejenny
+/corehq/apps/data_dictionary/ @esoergel @orangejenny
 /corehq/apps/domain/decorators.py @esoergel
 /corehq/apps/domain/auth.py @esoergel
-/corehq/apps/es/ @esoergel @joxl
+/corehq/apps/es/ @esoergel @amitphulera
+/corehq/apps/hqcase/ @esoergel
 /corehq/apps/hqwebapp/ @orangejenny
 /corehq/apps/linked_domain/ @gherceg
 /corehq/apps/locations/ @esoergel
@@ -63,22 +62,22 @@
 /corehq/apps/users/static/ @esoergel @orangejenny
 /corehq/apps/users/templates/ @esoergel @orangejenny
 /corehq/ex-submodules/pillowtop @dannyroberts @calellowitz
-/corehq/util/es/ @joxl
 
 /custom/covid/management/commands/ @stephherbers @AddisonDunn
 
 /docs/js-guide/ @orangejenny @millerdev
 
-/docker/ @millerdev @joxl
+/docker/ @millerdev
 
 /package.json @dimagi/dependency-watchers
 
-/scripts/docker @millerdev @joxl
+/scripts/docker @millerdev
+/scripts/test-make-docs.sh @dimagi/dependency-watchers
 /scripts/vellum-to-hq @millerdev
 
 /requirements/ @dimagi/dependency-watchers
 
-/testapps/test_pillowtop/ @joxl
-/testapps/test_elasticsearch/ @joxl
+/testapps/test_pillowtop/ @amitphulera
+/testapps/test_elasticsearch/ @amitphulera
 
 /yarn.lock @dimagi/dependency-watchers

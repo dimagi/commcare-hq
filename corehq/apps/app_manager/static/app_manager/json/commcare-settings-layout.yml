@@ -23,33 +23,6 @@
     - properties.cc-content-valid  # Multimedia Validation
     - properties.cc-autosync-freq  # Auto-Sync Frequency
     - properties.unsent-time-limit  # Unsynced Time Limit
-    
-
-- title: 'Java Phone General Settings'
-  id: app-settings-j2me-properties
-  collapse: true
-  settings:
-    - hq.use_j2me_endpoint  # Use HTTP
-    - hq.platform  # J2ME Platform
-    - hq.admin_password  # Admin Password
-    - properties.password_format  # Password Format
-    - properties.cc-send-procedure  # Send Data
-    - properties.server-tether  # Sync Mode
-    - properties.logenabled  # Logging Enabled
-
-
-- title: 'Java Phone User Interface Settings'
-  id: app-settings-j2me-ui
-  collapse: true
-  settings:
-    - features.sense  # CommCare Sense
-    - properties.extra_key_action  # Extra Key Action
-    - properties.cc-entry-mode  # Item Selection Mode
-    - properties.cc-send-unsent  # Send Forms Mode
-    - hq.text_input  # Text Input
-    - properties.ViewStyle  # Form Entry Style
-    - properties.cc-user-mode  # User Login Mode
-    - properties.cc-login-images # Login Buttons
 
 - title: 'Android Settings'
   id: app-settings-android
@@ -72,6 +45,7 @@
     - properties.cc-maps-default-layer
     - properties.cc-enable-tts
     - properties.cc-label-required-questions-with-asterisk
+    - properties.logenabled  # Logging Enabled
     - hq.use_grid_menus
     - hq.grid_form_menus
     - hq.target_commcare_flavor

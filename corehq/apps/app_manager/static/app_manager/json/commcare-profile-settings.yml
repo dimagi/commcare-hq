@@ -46,7 +46,6 @@
     - ['92', 'Three Months']
     - ['365', 'One Year']
     - ['-1', 'Forms are Never Removed']
-  requires: "{features.sense}='false'"
   default: "-1"
   values_txt: "Any positive integer. Represents period of purging in days." 
   since: "2.8"
@@ -87,26 +86,6 @@
     - ['log_short', 'Short']
     - ['log_full', 'Full']
   group: "log"
-  force: true
-
-- name: "Send Data"
-  description: "Whether or not the phone collects, saves, and sends data."
-  id: "cc-send-procedure"
-  default: "cc-send-http"
-  values:
-    - ['cc-send-http', 'Yes']
-    - ['cc-send-none', 'No (NOT RECOMMENDED)']
-  "//values": ["cc-send-file"]
-  "//value_names": ["Save to the File System"]
-  force: true
-
-- name: "Password Format"
-  description: "Determines whether phone keys will type letters or numbers by default when typing in the password field."
-  id: "password_format"
-  values:
-    - ['a', 'Alphanumeric']
-    - ['n', 'Numeric']
-  default: "a"
   force: true
 
 - name: "CommCare Home Screen Logo"
@@ -152,17 +131,6 @@
   default: "required"
   force: true
 
-- name: "Sync Mode"
-  description: "Determines if the server automatically attempts to send data to the phone (Two-Way), or only attempt to send data on demand (Push Only); projects using Case Sharing should choose Two-Way. If set to Push Only, the Auto-Sync Frequency and Unsynced Time Limit settings will have no effect."
-  id: "server-tether"
-  values:
-    - ['push-only', 'Push Only']
-    - ['sync', 'Two-Way Sync']
-  default: "push-only"
-  requires: "{hq.case_sharing}=false"
-  contingent_default: [{"condition": "{hq.case_sharing}=true", "value": "sync"}]
-  force: true
-
 - name: "Auto-Sync Frequency"
   description: "Automatically trigger a two-way sync on a regular schedule"
   id: "cc-autosync-freq"
@@ -185,16 +153,6 @@
   default: "loose"
   force: true
 
-- name: "Form Entry Style"
-  description: "What user interface style should be used during form entry."
-  id: "ViewStyle"
-  values:
-    - ['v_chatterbox', 'Multiple Questions per Screen']
-    - ['v_singlequestionscreen', 'One Question per Screen']
-  values_txt: "Multiple Questions per Screen displays a running list of questions on the screen at the same time. One Question per Screen displays each question independently. Note: OQPS does not support some features"
-  default: "v_chatterbox"
-  force: true
-
 - disabled: true
   id: "users"
   type: "features"
@@ -206,72 +164,6 @@
   default: "true"
   group: "sense"
   widget: "bool"
-  force: true
-
-- id: "sense"
-  type: "features"
-  name: "CommCare Sense"
-  description: "Configure for low-literate users, J2ME only"
-  values:
-    - ['true', 'Yes']
-    - ['false', 'No']
-  default: "false"
-  group: "sense"
-  widget: "bool"
-  force: true
-
-- id: "cc-user-mode"
-  name: "User Login Mode"
-  values:
-    - ['cc-u-normal', 'Normal']
-    - ['cc-u-auto', 'Auto-login']
-  default: "cc-u-normal"
-  commcare_default: "<-- having this property be different from 'default' forces 'cc-user-mode' to show up in the profile file"
-  "//contingent_default": [{"condition": "{features.sense}='true'", "value": "cc-u-auto"}]
-  description: "In normal mode, users log in each time with their username and password. In auto-login mode, once a user (not the 'admin' or 'demo' users) has logged in, the application will start up with that user already logged in."
-  group: "sense"
-  since: "1.3"
-  force: true
-
-- name: "Item Selection Mode"
-  description: "Whether form entry is optimized for speed, or for new users."
-  id: "cc-entry-mode"
-  requires: "{features.sense}='false'"
-  values:
-    - ['cc-entry-quick', 'Normal Scrolling']
-    - ['cc-entry-review', 'Numeric Selection']
-  values_txt: "Numeric Selection mode will display information about questions for longer and require more input from the user. Normal Scrolling will proceed to the next question whenever enough information is provided."
-  default: "cc-entry-quick"
-  contingent_default: [{"condition": "{features.sense}='true'", "value": "cc-entry-review"}]
-  group: "sense"
-  force: true
-
-- name: "Send Forms Mode"
-  description: "How Send All Unsent functionality is presented to the user"
-  id: "cc-send-unsent"
-  requires: "{features.sense}='false'"
-  values:
-    - ['cc-su-auto', 'Automatic']
-    - ['cc-su-man', 'Manual']
-  values_txt: "If automatic is enabled, forms will attempt to send on their own without intervention from the user. If manual is enabled, the user must manually decide when to attempt to send forms."
-  default: "cc-su-auto"
-  commcare_default: "cc-su-man"
-  contingent_default: [{"condition": "{features.sense}='true'", "value": "cc-su-auto"}]
-  group: "sense"
-  force: true
-
-- name: "Extra Key Action"
-  description: "What the 'Extra Key' (# on Nokia Phones) does when pressed"
-  id: "extra_key_action"
-  requires: "{features.sense}='false'"
-  values:
-    - ['cycle', 'Languages']
-    - ['audio', 'Audio']
-  values_txt: "Language cycles through any available translations. Audio plays the question's audio if available. NOTE: If audio is selected, a question's audio will not be played by default when the question is displayed."
-  default: "audio"
-  commcare_default: "cycle"
-  contingent_default: [{"condition": "{features.sense}='true'", "value": "audio"}]
-  group: "sense"
   force: true
 
 - disabled: true
@@ -328,18 +220,6 @@
   since: "2.4"
   force: true
 
-- name: "Login Buttons"
-  description: "Choose to label the login buttons with Icons or Text"
-  id: "cc-login-images"
-  values:
-    - ['Yes', 'Icons']
-    - ['No', 'Text']
-  default: "No"
-  contingent_default: [{"condition": "{features.sense}='true'", "value": "Yes"}]
-  values_txt: "This value will set whether the login screen uses customizable icons for login and demo mode options or uses the standard buttons with labels."
-  since: "2.8"
-  force: true
-
 - name: "Saved Forms"
   description: "Choose whether or not mobile workers can view previously submitted forms."
   id: "cc-show-saved"
@@ -348,7 +228,6 @@
     - ['no', 'Disable']
   default: "no"
   commcare_default: "yes"
-  contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
   values_txt: "This will show or hide the 'Saved' button on the CommCare ODK home screen. Turning this off will prevent users from saving forms locally."
   since: "2.11"
   force: true
@@ -361,7 +240,6 @@
     - ['no', 'Disable']
   default: "no"
   commcare_default: "yes"
-  contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
   values_txt: "This will show or hide the 'Incomplete' button on the CommCare ODK home screen. Turning this off will prevent users from saving incomplete forms."
   since: "2.11"
   force: true

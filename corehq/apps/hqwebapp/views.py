@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import pytz
 import re
 import sys
 import traceback
@@ -75,7 +76,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
-from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.decorators import waf_allow, use_bootstrap5
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.encoders import LazyEncoder
@@ -88,6 +89,7 @@ from corehq.apps.hqwebapp.forms import (
 from corehq.apps.hqwebapp.models import HQOauthApplication
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.users.event_handlers import handle_email_invite_message
@@ -101,6 +103,7 @@ from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_g
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.public_only_requests.public_only_requests import get_public_only_session
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import reverse
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
@@ -262,6 +265,7 @@ def _two_factor_needed(domain_name, request):
             and not request.couch_user.two_factor_disabled
             and not request.user.is_verified()
         )
+
 
 @login_required()
 def password_change(req):
@@ -461,7 +465,7 @@ def iframe_domain_login(req, domain):
 @xframe_options_sameorigin
 @location_safe
 def iframe_sso_login_pending(request):
-    return TemplateView.as_view(template_name='hqwebapp/iframe_sso_login_pending.html')(request)
+    return TemplateView.as_view(template_name='hqwebapp/bootstrap3/iframe_sso_login_pending.html')(request)
 
 
 class HQLoginView(LoginView):
@@ -565,15 +569,15 @@ def login_new_window(request):
 @location_safe
 @login_required
 def domain_login_new_window(request):
-    template = ('hqwebapp/iframe_sso_login_success.html'
+    template = ('hqwebapp/bootstrap3/iframe_sso_login_success.html'
                 if is_request_using_sso(request)
-                else 'hqwebapp/iframe_close_window.html')
+                else 'hqwebapp/bootstrap3/iframe_close_window.html')
     return TemplateView.as_view(template_name=template)(request)
 
 
 @login_and_domain_required
 @track_domain_request(calculated_prop='cp_n_downloads_custom_exports')
-def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file_download.html"):
+def retrieve_download(req, domain, download_id, template="hqwebapp/includes/bootstrap3/file_download.html"):
     next_url = req.GET.get('next', reverse('my_project_settings', args=[domain]))
     return soil_views.retrieve_download(req, download_id, template,
                                         extra_context={'domain': domain, 'next_url': next_url})
@@ -838,14 +842,16 @@ def render_static(request, template, page_name):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "hqwebapp/blank.html",
+    return render(request, f"hqwebapp/{get_bootstrap_version()}/blank.html",
                   {'tmpl': template, 'page_name': page_name})
 
 
+@use_bootstrap5
 def apache_license(request):
     return render_static(request, "apache_license.html", _("Apache License"))
 
 
+@use_bootstrap5
 def bsd_license(request):
     return render_static(request, "bsd_license.html", _("BSD License"))
 
@@ -853,7 +859,7 @@ def bsd_license(request):
 class BasePageView(TemplateView):
     urlname = None  # name of the view used in urls
     page_title = None  # what shows up in the <title>
-    template_name = 'hqwebapp/base_page.html'
+    template_name = 'hqwebapp/bootstrap3/base_page.html'
 
     @property
     def page_name(self):
@@ -914,7 +920,7 @@ class BasePageView(TemplateView):
 
 class BaseSectionPageView(BasePageView):
     section_name = ""
-    template_name = "hqwebapp/base_section.html"
+    template_name = "hqwebapp/bootstrap3/base_section.html"
 
     @property
     def section_url(self):
@@ -1234,20 +1240,39 @@ def osdd(request, template='osdd.xml'):
 class MaintenanceAlertsView(BasePageView):
     urlname = 'alerts'
     page_title = gettext_noop("Maintenance Alerts")
-    template_name = 'hqwebapp/maintenance_alerts.html'
+    template_name = 'hqwebapp/bootstrap3/maintenance_alerts.html'
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(MaintenanceAlertsView, self).dispatch(request, *args, **kwargs)
 
+    @method_decorator(require_superuser)
+    def post(self, request):
+        from corehq.apps.hqwebapp.models import MaintenanceAlert
+        ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
+        command = request.POST.get('command')
+        if command == 'activate':
+            ma.active = True
+        elif command == 'deactivate':
+            ma.active = False
+        ma.save()
+        return HttpResponseRedirect(reverse('alerts'))
+
     @property
     def page_context(self):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
+        now = datetime.utcnow()
         return {
+            'timezones': pytz.common_timezones,
             'alerts': [{
                 'created': str(alert.created),
                 'active': alert.active,
                 'html': alert.html,
+                'start_time': ServerTime(alert.start_time).user_time(pytz.timezone(alert.timezone))
+                                                          .ui_string() if alert.start_time else None,
+                'end_time': ServerTime(alert.end_time).user_time(pytz.timezone(alert.timezone))
+                                                      .ui_string() if alert.end_time else None,
+                'expired': alert.end_time and alert.end_time < now,
                 'id': alert.id,
                 'domains': ", ".join(alert.domains) if alert.domains else "All domains",
             } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:20]]
@@ -1263,28 +1288,24 @@ class MaintenanceAlertsView(BasePageView):
 def create_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
     alert_text = request.POST.get('alert_text')
-    domains = request.POST.get('domains').split() or None
-    MaintenanceAlert(active=False, text=alert_text, domains=domains).save()
-    return HttpResponseRedirect(reverse('alerts'))
+    domains = request.POST.get('domains')
+    domains = domains.split() if domains else None
 
+    start_time = request.POST.get('start_time')
+    end_time = request.POST.get('end_time')
+    timezone = request.POST.get('timezone') or 'UTC'
 
-@require_POST
-@require_superuser
-def activate_alert(request):
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-    ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
-    ma.active = True
-    ma.save()
-    return HttpResponseRedirect(reverse('alerts'))
+    start_time = UserTime(
+        datetime.fromisoformat(start_time),
+        tzinfo=pytz.timezone(timezone)
+    ).server_time().done() if start_time else None
+    end_time = UserTime(
+        datetime.fromisoformat(end_time),
+        tzinfo=pytz.timezone(timezone)
+    ).server_time().done() if end_time else None
 
-
-@require_POST
-@require_superuser
-def deactivate_alert(request):
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-    ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
-    ma.active = False
-    ma.save()
+    MaintenanceAlert(active=False, text=alert_text, domains=domains,
+                     start_time=start_time, end_time=end_time, timezone=timezone).save()
     return HttpResponseRedirect(reverse('alerts'))
 
 
@@ -1355,7 +1376,7 @@ def log_email_event(request, secret):
 class OauthApplicationRegistration(BasePageView):
     urlname = 'oauth_application_registration'
     page_title = "Oauth Application Registration"
-    template_name = "hqwebapp/oauth_application_registration_form.html"
+    template_name = "hqwebapp/bootstrap3/oauth_application_registration_form.html"
 
     @property
     def page_url(self):

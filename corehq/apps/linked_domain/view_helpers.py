@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
@@ -13,6 +14,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_KEYWORD,
     MODEL_REPORT,
     MODEL_UCR_EXPRESSION,
+    MODEL_AUTO_UPDATE_RULE,
     SUPERUSER_DATA_MODELS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
@@ -24,7 +26,9 @@ from corehq.apps.linked_domain.models import (
     KeywordLinkDetail,
     ReportLinkDetail,
     UCRExpressionLinkDetail,
+    UpdateRuleLinkDetail
 )
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.linked_domain.util import server_to_user_time, is_keyword_linkable
 from corehq.apps.sms.models import Keyword
 from corehq.apps.userreports.models import ReportConfiguration, UCRExpression
@@ -74,6 +78,11 @@ def get_upstream_and_downstream_fixtures(domain, upstream_link):
 def get_fixtures_for_domain(domain):
     fixtures = LookupTable.objects.filter(domain=domain, is_global=True)
     return {f.tag: f for f in fixtures}
+
+
+def get_rules_for_domain(domain):
+    rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, active_only=False)
+    return {rule.id: rule for rule in rules}
 
 
 def get_upstream_and_downstream_reports(domain):
@@ -128,6 +137,12 @@ def get_upstream_and_downstream_ucr_expressions(domain):
     return upstream_list, downstream_list
 
 
+def get_upstream_and_downstream_update_rules(domain, upstream_link):
+    upstream_rules = get_rules_for_domain(domain)
+    downstream_rules = get_rules_for_domain(upstream_link.master_domain) if upstream_link else {}
+    return upstream_rules, downstream_rules
+
+
 def build_app_view_model(app, last_update=None):
     if not app:
         return None
@@ -150,6 +165,18 @@ def build_fixture_view_model(fixture, last_update=None):
         detail=FixtureLinkDetail(tag=fixture.tag).to_json(),
         last_update=last_update,
         can_update=fixture.is_global,
+    )
+
+
+def build_update_rule_model(rule, last_update=None):
+    if not rule:
+        return None
+
+    return build_linked_data_view_model(
+        model_type=MODEL_AUTO_UPDATE_RULE,
+        name=f"Update Rule ({rule.name})",
+        detail=UpdateRuleLinkDetail(id=rule.id).to_json(),
+        last_update=last_update
     )
 
 
@@ -244,7 +271,8 @@ def build_superuser_view_models(ignore_models=None):
     return view_models
 
 
-def build_linked_data_view_model(model_type, name, detail, last_update=None, can_update=True, is_linkable=True):
+def build_linked_data_view_model(model_type, name, detail,
+        last_update=None, can_update=True, is_linkable=True):
     return {
         'type': model_type,
         'name': name,
@@ -256,7 +284,8 @@ def build_linked_data_view_model(model_type, name, detail, last_update=None, can
 
 
 def build_view_models_from_data_models(
-    domain, apps, fixtures, reports, keywords, ucr_expressions, ignore_models=None, is_superuser=False
+    domain, apps, fixtures, reports, keywords, ucr_expressions, update_rules,
+    ignore_models=None, is_superuser=False
 ):
     """
     Based on the provided data models, convert to view models, ignoring any models specified in ignore_models
@@ -299,25 +328,25 @@ def build_view_models_from_data_models(
         if ucr_expression_view_model:
             view_models.append(ucr_expression_view_model)
 
+    for update_rule in update_rules.values():
+        update_rule_view_model = build_update_rule_model(update_rule)
+        if update_rule_view_model:
+            view_models.append(update_rule_view_model)
+
     return view_models
 
 
-def pop_app_for_action(action, apps):
-    app = None
-    if action.model_detail:
-        app_id = action.wrapped_detail.app_id
-        app = apps.pop(app_id, None)
-
-    return app
+def pop_app(app_id, apps):
+    return apps.pop(app_id, None)
 
 
-def pop_fixture_for_action(action, fixtures, domain):
-    fixture = None
-    if action.model_detail:
-        tag = action.wrapped_detail.tag
-        fixture = fixtures.pop(tag, None)
-        if not fixture:
-            fixture = LookupTable.objects.by_domain_tag(domain, tag)
+def pop_fixture(fixture_id, fixtures, domain):
+    fixture = fixtures.pop(fixture_id, None)
+    if not fixture:
+        try:
+            fixture = LookupTable.objects.by_domain_tag(domain, fixture_id)
+        except LookupTable.DoesNotExist:
+            fixture = None
 
     return fixture
 
@@ -325,10 +354,24 @@ def pop_fixture_for_action(action, fixtures, domain):
 def pop_report(report_id, reports):
     report = reports.pop(report_id, None)
     if report is None:
-        report = ReportConfiguration.get(report_id)
-        if report.doc_type == "ReportConfiguration-Deleted":
+        try:
+            report = ReportConfiguration.get(report_id)
+        except ResourceNotFound:
             return None
+
+        if report.doc_type == "ReportConfiguration-Deleted":
+            report = None
     return report
+
+
+def pop_update_rule(rule_id, rules):
+    rule = rules.pop(rule_id, None)
+    if rule is None:
+        try:
+            rule = AutomaticUpdateRule.objects.get(id=rule_id)
+        except AutomaticUpdateRule.DoesNotExist:
+            rule = None
+    return rule
 
 
 def pop_keyword(keyword_id, keywords):
@@ -352,7 +395,8 @@ def pop_ucr_expression(ucr_expression_id, ucr_expressions):
 
 
 def build_pullable_view_models_from_data_models(
-    domain, upstream_link, apps, fixtures, reports, keywords, ucr_expressions, timezone, is_superuser=False
+    domain, upstream_link, apps, fixtures, reports, keywords, ucr_expressions, update_rules,
+    timezone, is_superuser=False
 ):
     """
     Data models that originated in this domain's upstream domain that are available to pull
@@ -374,10 +418,12 @@ def build_pullable_view_models_from_data_models(
         last_update = server_to_user_time(action.date, timezone)
 
         if action.model == MODEL_APP:
-            app = pop_app_for_action(action, apps)
+            app_id = action.wrapped_detail.app_id if action.model_detail else None
+            app = pop_app(app_id, apps)
             view_model = build_app_view_model(app, last_update=last_update)
         elif action.model == MODEL_FIXTURE:
-            fixture = pop_fixture_for_action(action, fixtures, domain)
+            fixture_id = action.wrapped_detail.tag if action.model_detail else None
+            fixture = pop_fixture(fixture_id, fixtures, domain)
             view_model = build_fixture_view_model(fixture, last_update=last_update)
         elif action.model == MODEL_REPORT:
             report = pop_report(action.wrapped_detail.report_id, reports)
@@ -388,7 +434,14 @@ def build_pullable_view_models_from_data_models(
         elif action.model == MODEL_UCR_EXPRESSION:
             ucr_expression = pop_ucr_expression(action.wrapped_detail.ucr_expression_id, ucr_expressions)
             view_model = build_ucr_expression_view_model(ucr_expression, last_update=last_update)
+        elif action.model == MODEL_AUTO_UPDATE_RULE:
+            rule = pop_update_rule(action.wrapped_detail.id, update_rules)
+            view_model = build_update_rule_model(rule, last_update=last_update)
         else:
+            # I would like to grab the last time that all automatic update rules were updated,
+            # and use that as a fallback for when individual update rules were last updated,
+            # but that would require knowing what rules were present when the group was updated,
+            # which the present code doesn't support
             view_model = build_linked_data_view_model(
                 model_type=action.model,
                 name=LINKED_MODELS_MAP[action.model],
@@ -409,6 +462,7 @@ def build_pullable_view_models_from_data_models(
             reports,
             keywords,
             ucr_expressions,
+            update_rules,
             ignore_models=models_seen,
             is_superuser=is_superuser
         )

@@ -2,6 +2,7 @@ import json
 import re
 import string
 
+import requests
 import sentry_sdk
 from django.conf import settings
 from django.contrib import messages
@@ -26,8 +27,9 @@ from text_unidecode import unidecode
 
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
-from dimagi.utils.logging import notify_error
-from dimagi.utils.web import get_url_base, json_response
+from couchforms.const import VALID_ATTACHMENT_FILE_EXTENSION_MAP
+from dimagi.utils.logging import notify_error, notify_exception
+from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import (
@@ -47,12 +49,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_doc,
     get_latest_released_build_id,
 )
-from corehq.apps.app_manager.exceptions import (
-    FormNotFoundException,
-    ModuleNotFoundException,
-)
-from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import get_cloudcare_session_data
+
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
     WEB_APPS_ENVIRONMENT,
@@ -61,7 +58,6 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_applicatio
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
-from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -70,7 +66,6 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
-    use_datatables,
     use_jquery_ui,
     waf_allow,
 )
@@ -82,10 +77,9 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
-from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.models import CommCareCase
-from corehq.form_processor.models import XFormInstance
 from xml2json.lib import xml2json
+
+from langcodes import get_name
 
 
 @require_cloudcare_access
@@ -100,7 +94,6 @@ class FormplayerMain(View):
     urlname = 'formplayer_main'
 
     @use_daterangepicker
-    @use_datatables
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -196,6 +189,9 @@ class FormplayerMain(View):
 
         domain_obj = Domain.get_by_name(domain)
 
+        lang_codes = set().union(*(app.get("langs", []) for app in apps))
+        lang_code_name_mapping = {code: get_name(code) for code in lang_codes}
+
         context = {
             "domain": domain,
             "default_geocoder_location": domain_obj.default_geocoder_location,
@@ -210,7 +206,10 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
+            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
+            "lang_code_name_mapping": lang_code_name_mapping,
         }
+
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
         )
@@ -243,7 +242,6 @@ class FormplayerPreviewSingleApp(View):
 
     urlname = 'formplayer_single_app'
 
-    @use_datatables
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -282,6 +280,7 @@ class FormplayerPreviewSingleApp(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
+            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -301,6 +300,7 @@ class PreviewAppView(TemplateView):
             "environment": PREVIEW_APP_ENVIRONMENT,
             "integrations": integration_contexts(request.domain),
             "has_geocoder_privs": has_geocoder_privs(request.domain),
+            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         })
 
 
@@ -476,7 +476,7 @@ def report_formplayer_error(request, domain):
             'domain': domain,
             'cloudcare_env': data.get('cloudcareEnv'),
         })
-        message = data.get("readableErrorMessage") or "request failure in web form session"
+        message = data.get("message") or "request failure in web form session"
         thread_topic = _message_to_sentry_thread_topic(message)
         notify_error(message=f'[Cloudcare] {thread_topic}', details=data)
     elif error_type == 'show_error_notification':
@@ -495,6 +495,34 @@ def report_formplayer_error(request, domain):
         })
         notify_error(message='[Cloudcare] unknown error type', details=data)
     return JsonResponse({'status': 'ok'})
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@location_safe
+@login_and_domain_required
+def report_sentry_error(request, domain):
+    # code modified from Sentry example:
+    # https://github.com/getsentry/examples/blob/master/tunneling/python/app.py
+
+    try:
+        envelope = request.body.decode("utf-8")
+        json_lines = envelope.split("\n")
+        header = json.loads(json_lines[0])
+        if header.get("dsn") != settings.SENTRY_DSN:
+            raise Exception(f"Invalid Sentry DSN: {header.get('dsn')}")
+
+        dsn = urllib.parse.urlparse(header.get("dsn"))
+        project_id = dsn.path.strip("/")
+        if project_id != settings.SENTRY_DSN.split('/')[-1]:
+            raise Exception(f"Invalid Sentry Project ID: {project_id}")
+
+        url = f"https://{dsn.hostname}/api/{project_id}/envelope/"
+        requests.post(url=url, data=envelope)
+    except Exception:
+        notify_exception(request, "Error sending frontend data to Sentry")
+
+    return JsonResponse({})
 
 
 def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + string.digits + '_'):
@@ -537,7 +565,7 @@ def _message_to_sentry_thread_topic(message):
 @require_cloudcare_access
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @location_safe
-def session_endpoint(request, domain, app_id, endpoint_id):
+def session_endpoint(request, domain, app_id, endpoint_id=None):
     def _fail(error):
         messages.error(request, error)
         return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]))
@@ -555,21 +583,24 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         if app_id in id_map:
             if len(id_map[app_id]) == 1:
                 build_id = _fetch_build_id(domain, request.couch_user.username, id_map[app_id][0])
+            else:
+                return _fail(_("Multiple corresponding applications found. Could not follow link."))
         if not build_id:
-            return _fail(_("Could not find application."))
+            return _fail(_("No corresponding application found in this project."))
 
     restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
     force_login_as = not restore_as_user.is_commcare_user()
     if force_login_as and not can_use_restore_as(request):
         return _fail(_("This user cannot access this link."))
 
-    cloudcare_state = json.dumps({
-        "appId": build_id,
-        "endpointId": endpoint_id,
-        "endpointArgs": {
-            urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)
-            for key, value in request.GET.items()
-        },
-        "forceLoginAs": force_login_as,
-    })
+    state = {"appId": build_id, "forceLoginAs": force_login_as}
+    if endpoint_id is not None:
+        state.update({
+            "endpointId": endpoint_id,
+            "endpointArgs": {
+                urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)
+                for key, value in request.GET.items()
+            }
+        })
+    cloudcare_state = json.dumps(state)
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)

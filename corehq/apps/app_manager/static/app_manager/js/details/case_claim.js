@@ -22,7 +22,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
     var itemsetModel = function (options, saveButton) {
         options = _.defaults(options, {
             'instance_id': '',
-            'instance_uri': '',
             'nodeset': null,
             'label': '',
             'value': '',
@@ -41,7 +40,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         return item.id === value;
                     });
                     if (itemList && itemList.length === 1) {
-                        self.instance_uri(itemList[0]['uri']);
                         self.nodeset(itemsetValue(itemList[0]));
                     }
                     else {
@@ -73,7 +71,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return false;
         });
         subscribeToSave(self,
-            ['nodeset', 'label', 'value', 'sort', 'instance_uri'], saveButton);
+            ['nodeset', 'label', 'value', 'sort'], saveButton);
 
         return self;
     };
@@ -128,7 +126,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     'optionsLabel': gettext("Mobile UCR Options"),
                     'tableLabel': gettext("Mobile UCR Report"),
                     'selectLabel': gettext("Select a Report..."),
-                    'advancedLabel': gettext("Advanced Mobile UCR Options"),
                 };
             }
             else {
@@ -138,7 +135,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     'optionsLabel': gettext("Lookup Table Options"),
                     'tableLabel': gettext("Lookup Table"),
                     'selectLabel': gettext("Select a Lookup Table..."),
-                    'advancedLabel': gettext("Advanced Lookup Table Options"),
                 };
             }
         });
@@ -148,7 +144,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
             var itemLists = get('js_options').item_lists;
             return _.map(
                 _.filter(itemLists, function (p) {
-                    return p.fixture_type === self.appearance();
+                    return (
+                        p.fixture_type === self.appearance()
+                        || (p.fixture_type === 'lookup_table_fixture' && self.appearance() === 'checkbox')
+                    );
                 }),
                 function (p) {
                     return {
@@ -190,9 +189,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
     var searchConfigKeys = [
         'auto_launch', 'blacklisted_owner_ids_expression', 'default_search', 'search_again_label',
-        'title_label', 'search_button_display_condition', 'search_label', 'search_filter',
+        'title_label', 'description', 'search_button_display_condition', 'search_label', 'search_filter',
         'additional_relevant', 'data_registry', 'data_registry_workflow', 'additional_registry_cases',
-        'custom_related_case_property', 'inline_search',
+        'custom_related_case_property', 'inline_search', 'include_all_related_cases',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
@@ -200,6 +199,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         options.search_label = options.search_label[lang] || "";
         options.search_again_label = options.search_again_label[lang] || "";
         options.title_label = options.title_label[lang] || "";
+        options.description = options.description[lang] || "";
         var mapping = {
             'additional_registry_cases': {
                 create: function(options) {
@@ -297,18 +297,17 @@ hqDefine("app_manager/js/details/case_claim", function () {
         // init with blank string to avoid triggering save button
         var appearance = searchProperty.appearance || "";
         if (searchProperty.input_ === "select1" || searchProperty.input_ === "select") {
-            var uri = searchProperty.itemset.instance_uri;
-            if (uri !== null && uri.includes("commcare-reports")) {
+            var instance_id = searchProperty.itemset.instance_id;
+            if (instance_id !== null && instance_id.includes("commcare-reports")) {
                 appearance = "report_fixture";
-            }
-            else {
+            } else {
                 appearance = "lookup_table_fixture";
             }
         }
         if (searchProperty.appearance === "address") {
             appearance = "address";
         }
-        if (["date", "daterange"].indexOf(searchProperty.input_) !== -1) {
+        if (["date", "daterange", "checkbox"].indexOf(searchProperty.input_) !== -1) {
             appearance = searchProperty.input_;
         }
         return appearance;

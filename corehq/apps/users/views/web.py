@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.utils.html import format_html
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
@@ -76,10 +77,16 @@ class UserInvitationView(object):
         if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
 
-        # Add zero-width space to username for better line breaking
-        username = self.request.user.username.replace("@", "&#x200b;@")
+        username = self.request.user.username
+        if username:
+            userhalf, domainhalf = username.split('@')
+            # Add zero-width space to username for better line breaking
+            formatted_username = format_html('{}&#x200b;@{}', userhalf, domainhalf)
+        else:
+            formatted_username = username
+
         context = {
-            'formatted_username': username,
+            'formatted_username': formatted_username,
             'domain': self.domain,
             'invite_to': self.domain,
             'invite_type': _('Project'),

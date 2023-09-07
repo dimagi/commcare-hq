@@ -6,18 +6,15 @@ from corehq.apps.data_interfaces.views import XFormManagementView
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import WebUser
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.elastic import reset_es_index, ensure_index_deleted
+from corehq.apps.es.users import user_adapter
+from corehq.apps.es.forms import form_adapter
 
 
-@es_test
+@es_test(requires=[form_adapter, user_adapter], setup_class=True)
 class XFormManagementTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        reset_es_index(USER_INDEX_INFO)
-        reset_es_index(XFORM_INDEX_INFO)
         cls.domain = create_domain('xform-management-test')
         cls.web_user = WebUser.create('xform-management-test', 'test', 'test', None, None,
                                       is_superuser=True)
@@ -27,8 +24,6 @@ class XFormManagementTest(TestCase):
     def tearDownClass(cls):
         cls.web_user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
-        ensure_index_deleted(USER_INDEX_INFO.index)
-        ensure_index_deleted(XFORM_INDEX_INFO.index)
 
     def test_get_xform_ids__sanity_check(self):
         # This helper has to mock a request in a brittle way.

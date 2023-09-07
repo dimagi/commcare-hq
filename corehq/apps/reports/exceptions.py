@@ -14,3 +14,9 @@ class InvalidDaterangeException(Exception):
 
 class TooMuchDataError(Exception):
     pass
+
+
+class TableauAPIError(Exception):
+    def __init__(self, message, code=None):
+        self.code = int(code) if code else None
+        super().__init__(message)

@@ -1,50 +1,41 @@
-import copy
-import datetime
 import logging
 
 from django.conf import settings
 
-from corehq.apps.change_feed.topics import CASE_TOPICS
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import get_ucr_processor, get_data_registry_ucr_processor
-from corehq.elastic import get_es_new
-from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
-from corehq.messaging.pillow import CaseMessagingSyncProcessor
-from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.pillows.case_search import get_case_search_processor
-from corehq.pillows.utils import get_user_type
-from corehq.util.doc_processor.sql import SqlDocumentProvider
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow, KafkaPillowCheckpoint
+from pillowtop.checkpoints.manager import (
+    KafkaPillowCheckpoint,
+    get_checkpoint_for_elasticsearch_pillow,
+)
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
+from pillowtop.reindexer.reindexer import (
+    ReindexerFactory,
+    ResumableBulkElasticPillowReindexer,
+)
+
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
+from corehq.apps.change_feed.topics import CASE_TOPICS
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.userreports.data_source_providers import (
+    DynamicDataSourceProvider,
+    StaticDataSourceProvider,
+)
+from corehq.apps.userreports.pillow import (
+    get_data_registry_ucr_processor,
+    get_ucr_processor,
+)
+from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
+from corehq.messaging.pillow import CaseMessagingSyncProcessor
+from corehq.pillows.base import is_couch_change_for_sql_domain
+from corehq.pillows.case_search import get_case_search_processor
+from corehq.util.doc_processor.sql import SqlDocumentProvider
 
 pillow_logging = logging.getLogger("pillowtop")
 pillow_logging.setLevel(logging.INFO)
-
-
-def transform_case_for_elasticsearch(doc_dict):
-    doc_ret = copy.deepcopy(doc_dict)
-    if not doc_ret.get("owner_id"):
-        if doc_ret.get("user_id"):
-            doc_ret["owner_id"] = doc_ret["user_id"]
-
-    doc_ret['owner_type'] = get_user_type(doc_ret.get("owner_id", None))
-    doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
-
-    if 'backend_id' not in doc_ret:
-        doc_ret['backend_id'] = 'couch'
-
-    if settings.CASE_ES_DROP_FORM_FIELDS:
-        # these fields are lazily loaded so replacing or removing them
-        # prevents them from being loaded from the DB
-        doc_ret['actions'] = []
-        doc_ret['xform_ids'] = []
-
-    return doc_ret
 
 
 def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_processes=1,
@@ -56,11 +47,9 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'CaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO, CASE_TOPICS)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, case_adapter.index_name, CASE_TOPICS)
     case_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=CASE_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch,
+        case_adapter,
         change_filter_fn=is_couch_change_for_sql_domain
     )
     kafka_change_feed = KafkaChangeFeed(
@@ -115,15 +104,13 @@ def get_case_pillow(
         ucr_configs=ucr_configs
     )
     case_to_es_processor = BulkElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=CASE_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch,
+        adapter=case_adapter,
         change_filter_fn=is_couch_change_for_sql_domain
     )
     case_search_processor = get_case_search_processor()
 
     checkpoint_id = "{}-{}-{}-{}".format(
-        pillow_id, CASE_INDEX_INFO.index, case_search_processor.index_info.index, 'messaging-sync')
+        pillow_id, case_adapter.index_name, case_search_processor.adapter.index_name, 'messaging-sync')
     checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
@@ -163,7 +150,7 @@ class SqlCaseReindexerFactory(ReindexerFactory):
         start_date = self.options.pop('start_date', None)
         end_date = self.options.pop('end_date', None)
         iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}_{}_from_{}_until_{}".format(
-            CASE_INDEX_INFO.index, limit_to_db or 'all', domain or 'all',
+            case_adapter.index_name, limit_to_db or 'all', domain or 'all',
             start_date or 'beginning', end_date or 'current'
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
@@ -175,8 +162,6 @@ class SqlCaseReindexerFactory(ReindexerFactory):
         doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=CASE_INDEX_INFO,
-            doc_transform=transform_case_for_elasticsearch,
+            adapter=case_adapter,
             **self.options
         )

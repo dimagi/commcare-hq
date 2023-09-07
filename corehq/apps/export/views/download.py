@@ -20,7 +20,9 @@ from memoized import memoized
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.det.exceptions import DETConfigError
-from corehq.apps.export.det.schema_generator import generate_from_export_instance
+from corehq.apps.export.det.schema_generator import (
+    generate_from_export_instance,
+)
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from soil import DownloadBase
@@ -34,10 +36,12 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
+from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE, ALL_CASE_TYPE_EXPORT
 from corehq.apps.export.exceptions import (
     ExportAsyncException,
     ExportFormValidationException,
+    CaseTypeOrAppLimitExceeded,
+    NoTablesException
 )
 from corehq.apps.export.export import (
     get_export_download,
@@ -48,13 +52,15 @@ from corehq.apps.export.forms import (
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
     FilterSmsESExportDownloadForm,
+    DatasourceExportDownloadForm,
 )
 from corehq.apps.export.models import FormExportInstance
-from corehq.apps.export.models.new import EmailExportWhenDoneRequest
+from corehq.apps.export.models.new import EmailExportWhenDoneRequest, datasource_export_instance
 from corehq.apps.export.utils import get_export
 from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     get_timezone,
+    case_type_or_app_limit_exceeded
 )
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
@@ -69,6 +75,8 @@ from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.view_utils import is_ajax
+from corehq.toggles import EXPORT_DATA_SOURCE_DATA
+from corehq.apps.userreports.models import DataSourceConfiguration
 
 
 class DownloadExportViewHelper(object):
@@ -267,14 +275,27 @@ def _check_export_size(domain, export_instances, export_filters):
     count = 0
     for instance in export_instances:
         count += get_export_size(instance, export_filters)
-    if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(domain):
+    if count > MAX_NORMAL_EXPORT_SIZE and not PAGINATED_EXPORTS.enabled(domain):
         raise ExportAsyncException(
             _("This export contains %(row_count)s rows. Please change the "
               "filters to be less than %(max_rows)s rows.") % {
                 'row_count': count,
-                'max_rows': MAX_EXPORTABLE_ROWS
+                'max_rows': MAX_NORMAL_EXPORT_SIZE
             }
         )
+
+
+def _validate_case_export_instances(domain, export_instances):
+    limit_exceeded = case_type_or_app_limit_exceeded(domain)
+    for instance in export_instances:
+        if limit_exceeded and instance.case_type == ALL_CASE_TYPE_EXPORT:
+            raise CaseTypeOrAppLimitExceeded()
+        elif not len(instance.tables):
+            raise NoTablesException(
+                _("There are no sheets to export. If this is a bulk case export then "
+                  "the export configuration might still be busy populating its tables. "
+                  "Please try again later.")
+            )
 
 
 def _check_deid_permissions(permissions, export_instances):
@@ -321,7 +342,9 @@ def prepare_custom_export(request, domain):
     try:
         _check_deid_permissions(permissions, export_instances)
         _check_export_size(domain, export_instances, export_filters)
-    except ExportAsyncException as e:
+        if form_or_case == 'case':
+            _validate_case_export_instances(domain, export_instances)
+    except (ExportAsyncException, CaseTypeOrAppLimitExceeded, NoTablesException) as e:
         return json_response({
             'error': str(e),
         })
@@ -501,6 +524,42 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
         }]
 
 
+@location_safe
+class DownloadNewDatasourceExportView(BaseProjectDataView):
+    urlname = "data_export_page"
+    page_title = gettext_noop("Export Data Source Data")
+    template_name = 'export/datasource_export_view.html'
+
+    def dispatch(self, *args, **kwargs):
+        if not EXPORT_DATA_SOURCE_DATA.enabled(self.domain):
+            raise Http404()
+        return super(DownloadNewDatasourceExportView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        context = super(DownloadNewDatasourceExportView, self).page_context
+        context["form"] = self.form
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.form
+        if not form.is_valid():
+            return HttpResponseBadRequest("Please check your query")
+
+        data_source_id = form.cleaned_data.get('data_source')
+        config = DataSourceConfiguration.get(data_source_id)
+        return _render_det_download(
+            filename=config.display_name,
+            export_instance=datasource_export_instance(config),
+        )
+
+    @property
+    def form(self):
+        if self.request.method == 'POST':
+            return DatasourceExportDownloadForm(self.domain, self.request.POST)
+        return DatasourceExportDownloadForm(self.domain)
+
+
 class DownloadNewSmsExportView(BaseDownloadExportView):
     urlname = 'new_export_download_sms'
     page_title = gettext_noop("Export SMS Messages")
@@ -550,16 +609,24 @@ class DownloadDETSchemaView(View):
     def get(self, request, domain, export_instance_id):
         export_instance = get_properly_wrapped_export_instance(export_instance_id)
         assert domain == export_instance.domain
-        output_file = BytesIO()
-        try:
-            generate_from_export_instance(export_instance, output_file)
-        except DETConfigError as e:
-            return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
 
-        output_file.seek(0)
-        response = HttpResponse(
-            output_file,
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        return _render_det_download(
+            filename=export_instance.name,
+            export_instance=export_instance,
         )
-        response['Content-Disposition'] = f'attachment; filename="{export_instance.name}-DET.xlsx"'
-        return response
+
+
+def _render_det_download(filename, export_instance):
+    output_file = BytesIO()
+    try:
+        generate_from_export_instance(export_instance, output_file)
+    except DETConfigError as e:
+        return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
+
+    output_file.seek(0)
+    response = HttpResponse(
+        output_file,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}-DET.xlsx"'
+    return response

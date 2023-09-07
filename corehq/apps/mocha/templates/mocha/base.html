@@ -1,5 +1,7 @@
 {% load compress %}
 {% load hq_shared_tags %}
+{% load statici18n %}
+{% requirejs_main %}
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
@@ -20,32 +22,28 @@
 
     {% block stylesheets %}{% endblock %}
 
-    <script src="{% static 'mocha/mocha.js' %}"></script>
-    <script src="{% static 'chai/chai.js' %}"></script>
-    <script src="{% static 'sinon/pkg/sinon.js' %}"></script>
-    <script>
-      mocha.setup('bdd')
-      window.assert = chai.assert
+    {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=False %}
 
-      function gettext(str) {
-        return str;
-      }
-    </script>
+    <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+
+    {% if not requirejs_main %}
+      <script src="{% static 'mocha/mocha.js' %}"></script>
+      <script src="{% static 'chai/chai.js' %}"></script>
+      <script src="{% static 'sinon/pkg/sinon.js' %}"></script>
+    {% endif %}
 
     <!-- Core Libraries -->
-    {% block core_libraries %}
-      {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
-    {% endblock %}
-    <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+    {% if not requirejs_main %}
+      {% block core_libraries %}
+        {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
+      {% endblock %}
+      <script src="{% static 'mocha/js/main.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+    {% endif %}
 
     <!-- App specific dependencies -->
     {% block dependencies %}{% endblock %}
 
-    <script>
-      hqImport('analytix/js/google').track.event = sinon.spy();
-      hqImport('analytix/js/google').track.click = sinon.spy();
-      hqImport('analytix/js/kissmetrix').track.event = sinon.spy();
-    </script>
   </head>
   <body>
     <div class="initial-analytics-data hide"></div>
@@ -57,11 +55,11 @@
     </div>
     <div id="mocha-sandbox"></div>
     {% block mocha_tests %}{% endblock %}
-    <script charset="utf-8">
-      // Only tests run in real browser, injected script run if options.run == true
-      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
-        mocha.run();
-      }
-    </script>
+
+    {% if not requirejs_main %}
+      <script charset="utf-8">
+        hqImport("mocha/js/main").run();
+      </script>
+    {% endif %}
   </body>
 </html>

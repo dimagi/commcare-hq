@@ -2,7 +2,7 @@ hqDefine("data_interfaces/js/manage_case_groups", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/crud_paginated_list_init',
+    'hqwebapp/js/bootstrap3/crud_paginated_list_init',
 ], function (
     $,
     _,

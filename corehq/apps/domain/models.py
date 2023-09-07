@@ -302,7 +302,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     name = StringProperty()
     is_active = BooleanProperty()
-    date_created = DateTimeProperty()
+    # date_created is expected to be a naive datetime specified in UTC
+    # Defaulting to a lambda rather than utcnow directly to make freezegun function. Not ideal
+    date_created = DateTimeProperty(default=lambda: datetime.utcnow())
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     default_geocoder_location = DictProperty()
     case_sharing = BooleanProperty(default=False)
@@ -444,6 +446,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     default_mobile_ucr_sync_interval = IntegerProperty()
 
     ga_opt_out = BooleanProperty(default=False)
+    orphan_case_alerts_warning = BooleanProperty(default=False)
+
 
     @classmethod
     def wrap(cls, data):
@@ -1143,4 +1147,15 @@ class SMSAccountConfirmationSettings(models.Model):
     @staticmethod
     def get_settings(domain):
         domain_obj, _ = SMSAccountConfirmationSettings.objects.get_or_create(domain=domain)
+        return domain_obj
+
+
+class AppReleaseModeSetting(models.Model):
+
+    domain = models.CharField(max_length=256, db_index=True, unique=True)
+    is_visible = models.BooleanField(default=False)
+
+    @staticmethod
+    def get_settings(domain):
+        domain_obj, created = AppReleaseModeSetting.objects.get_or_create(domain=domain)
         return domain_obj

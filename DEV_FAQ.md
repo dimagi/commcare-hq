@@ -75,7 +75,7 @@ Alternatively, you can run `ptop_reindexer_v2` as needed to sync individual inde
 Running it without any arguments will list the available indexes. The indexes you're most likely to use:
 + `sql-form` and `sql-case` populate form-based and case-based reports and exports
 + `user` and `group` may be useful, depending on what you're working on
-+ `case_search` populates the Case list Explorer and Explore Case Data reports, as well as the case search/claim feature. This is relevant only for those domains with the CASE_LIST_EXPLORER, EXPLORE_CASE_DATA or SEARCH_CLAIM feature flags enabled.
++ `case_search` populates the Case list Explorer and Explore Case Data reports, as well as the case search/claim feature. For now, this data stands as a duplicate but different format of the origin `case` index and at some point in the future, features that use the legacy `case` index will move to using `case-search`.
 + `sms` populates messaging reports and SMS exports
 + You do **not** care about `case` or `form`, which are only used on legacy domains that store forms and cases in CouchDB.
 

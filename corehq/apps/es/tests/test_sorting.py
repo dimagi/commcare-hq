@@ -25,6 +25,7 @@ class TestESSort(SimpleTestCase):
         expected = [{
             "case_properties.value": {
                 "order": "asc",
+                "nested_path": path,
                 "nested_filter": sort_filter
             }
         }]

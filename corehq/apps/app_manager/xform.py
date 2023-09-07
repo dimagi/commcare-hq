@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 
 from lxml import etree as ET
 from memoized import memoized
+from requests import RequestException
 
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.case.xml import V2_NAMESPACE
@@ -637,8 +638,11 @@ def validate_xform(source):
     source = ET.tostring(parse_xml(source), encoding='utf-8')
     try:
         validation_results = formplayer_api.validate_form(source)
-    except FormplayerAPIException:
-        raise XFormValidationFailed("Unable to validate form")
+    except FormplayerAPIException as err:
+        if isinstance(err.__cause__, RequestException):
+            raise XFormValidationFailed("Unable to connect to Formplayer")
+        else:
+            raise XFormValidationFailed("Unable to validate form")
 
     if not validation_results.success:
         raise XFormValidationError(
@@ -1657,7 +1661,7 @@ class XForm(WrappedNode):
         if form.get_module().is_multi_select():
             self.add_instance(
                 'selected_cases',
-                'jr://instance/selected-entities'
+                'jr://instance/selected-entities/selected_cases'
             )
             default_case_management = False
         else:

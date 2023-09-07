@@ -38,6 +38,7 @@ class GrapevineException(Exception):
 
 class SQLGrapevineBackend(SQLSMSBackend):
 
+    url = 'https://bms27.vine.co.za/httpInputhandler/ApplinkUpload'
     show_inbound_api_key_during_edit = False
 
     class Meta(object):
@@ -105,10 +106,8 @@ class SQLGrapevineBackend(SQLSMSBackend):
             msisdn=escape(phone_number)
         )
 
-        url = 'http://www.gvi.bms9.vine.co.za/httpInputhandler/ApplinkUpload'
-
         response = requests.post(
-            url,
+            self.url,
             data=data.encode('utf-8'),
             headers={'content-type': 'text/xml'},
             timeout=settings.SMS_GATEWAY_TIMEOUT,

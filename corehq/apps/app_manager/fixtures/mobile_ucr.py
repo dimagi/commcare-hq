@@ -34,8 +34,6 @@ from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
-from corehq.apps.userreports.tasks import compare_ucr_dbs
-from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
@@ -175,7 +173,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         fixtures = []
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
             fixtures.append(_get_report_index_fixture(restore_user))
-            fixtures.extend(self._v1_fixture(restore_user, report_configs))
+            fixtures.extend(self._v1_fixture(restore_user, report_configs, restore_state.params.fail_hard))
         else:
             fixtures.extend(self._empty_v1_fixture(restore_user))
 
@@ -184,7 +182,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
     def _empty_v1_fixture(self, restore_user):
         return [E.fixture(id=self.id, user_id=restore_user.user_id)]
 
-    def _v1_fixture(self, restore_user, report_configs):
+    def _v1_fixture(self, restore_user, report_configs, fail_hard=False):
         user_id = restore_user.user_id
         root = E.fixture(id=self.id, user_id=user_id)
         reports_elem = E.reports(last_sync=_format_last_sync_time(restore_user))
@@ -193,13 +191,15 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
                 reports_elem.extend(self.report_config_to_fixture(report_config, restore_user))
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
+                if fail_hard:
+                    raise
                 continue
             except UserReportsError:
-                if settings.UNIT_TESTING or settings.DEBUG:
+                if settings.UNIT_TESTING or settings.DEBUG or fail_hard:
                     raise
             except Exception as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
-                if settings.UNIT_TESTING or settings.DEBUG:
+                if settings.UNIT_TESTING or settings.DEBUG or fail_hard:
                     raise
         root.append(reports_elem)
         return [root]
@@ -243,7 +243,7 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
 
             oldest_sync_time = self._get_oldest_sync_time(restore_state, synced_fixtures, purged_fixture_ids)
             fixtures.append(_get_report_index_fixture(restore_user, oldest_sync_time))
-            fixtures.extend(self._v2_fixtures(restore_user, synced_fixtures))
+            fixtures.extend(self._v2_fixtures(restore_user, synced_fixtures, restore_state.params.fail_hard))
             for report_uuid in purged_fixture_ids:
                 fixtures.extend(self._empty_v2_fixtures(report_uuid))
 
@@ -322,20 +322,22 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
             E.fixture(id=self._report_filter_id(report_uuid))
         ]
 
-    def _v2_fixtures(self, restore_user, report_configs):
+    def _v2_fixtures(self, restore_user, report_configs, fail_hard=False):
         fixtures = []
         for report_config in report_configs:
             try:
                 fixtures.extend(self.report_config_to_fixture(report_config, restore_user))
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
+                if fail_hard:
+                    raise
                 continue
             except UserReportsError:
-                if settings.UNIT_TESTING or settings.DEBUG:
+                if settings.UNIT_TESTING or settings.DEBUG or fail_hard:
                     raise
             except Exception as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
-                if settings.UNIT_TESTING or settings.DEBUG:
+                if settings.UNIT_TESTING or settings.DEBUG or fail_hard:
                     raise
         return fixtures
 
@@ -428,10 +430,6 @@ def generate_rows_and_filters(report_data_cache, report_config, restore_user, ro
         row_to_element,
     )
     filters_elem = _get_filters_elem(defer_filters, filter_options_by_field, restore_user._couch_user)
-
-    if (report_config.report_id in settings.UCR_COMPARISONS and
-        COMPARE_UCR_REPORTS.enabled(uuid.uuid4().hex, NAMESPACE_OTHER)):
-        compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
     return row_elements, filters_elem
 

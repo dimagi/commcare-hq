@@ -52,9 +52,47 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
   - **Linux**:
 
     In Ubuntu you will also need to install the modules for `python-dev`, `pip`, and `venv` explicitly.
-    ```sh
-    sudo apt install python3.9-dev python3-pip python3-venv
-    ```
+
+    The [deadsnakes PPA](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa)
+    allows you to use multiple versions of Python on your own machine as we do
+    in production environments. The deadsnakes PPA supports Ubuntu LTS
+    releases, but you can use their Python versions on interim Ubuntu releases
+    as follows:
+
+    1. Find the name of your Ubuntu release if you don't already know it:
+       ```shell
+       $ cat /etc/lsb-release
+       DISTRIB_ID=Ubuntu
+       DISTRIB_RELEASE=23.04
+       DISTRIB_CODENAME=lunar  # <-- This is the name you want
+       DISTRIB_DESCRIPTION="Ubuntu 23.04"
+       ```
+
+    2. Pin your release's package priority to 1001 so that deadsnakes packages
+       can't replace official packages, even if they are newer:
+       ```shell
+       $ cat << EOF | sudo tee /etc/apt/preferences.d/99lunar
+       Package: *
+       Pin: release lunar
+       Pin-Priority: 1001
+       EOF
+       ```
+       but change "lunar" to the name of the release you are using.
+
+    3. Add the deadsnakes PPA, and install the Python version that CommCare HQ
+       requires:
+       ```shell
+       $ sudo add-apt-repository ppa:deadsnakes/ppa
+       ```
+       This will create a file in `/etc/apt/sources.list.d/` with the name of your
+       release. Change the filename, and the name inside the file, to the latest
+       LTS release instead (e.g. "jammy").
+
+    4. Install the version of Python that CommCare HQ requires.
+       ```shell
+       $ sudo apt update
+       $ sudo apt install python3.9 python3.9-dev python3-pip python3.9-venv
+       ```
 
   - **Mac**:
 
@@ -125,12 +163,15 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
 
     If you have an M1 chip and are using a Rosetta-based install of Postgres and run into problems with psycopg2, see [this solution](https://github.com/psycopg/psycopg2/issues/1216#issuecomment-767892042).
 
-##### A note on `xmlsec`
+##### Notes on `xmlsec`
 
 `xmlsec` is a `pip` dependency that will require some non-`pip`-installable
 packages. The above notes should have covered these requirements for linux and
 macOS, but if you are on a different platform or still experiencing issues,
 please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
+
+If you encounter issues installing `xmlsec` on a M1 mac, you can try following a workaround
+outlined in the Mac setup [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 
 
 ## Downloading & Running CommCare HQ
@@ -235,6 +276,29 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     python3 -m pip install --upgrade pip
     ```
 
+#### Option C: With standard Python venv
+
+Virtual environments were introduced as a standard in Python 3.3 [with PEP 405](https://peps.python.org/pep-0405/).
+
+By convention, virtual environments use a ".venv" or "venv" directory in the
+root of the codebase. Once you have cloned the CommCare HQ repo in "Step 2"
+below, create a Python 3.9 virtual environment in the root of the codebase
+with:
+```shell
+$ python3.9 -m venv .venv
+```
+
+For convenience, you can create an alias to activate virtual environments in
+".venv" and "venv" directories. To do that, add the following to your
+`.bashrc` or `.zshrc` file:
+```shell
+alias venv='if [[ -d .venv ]] ; then source .venv/bin/activate ; elif [[ -d venv ]] ; then source venv/bin/activate ; fi'
+```
+Then you can activate virtual environments with
+```shell
+$ venv
+```
+
 
 ### Step 2: Clone this repo and install requirements
 
@@ -324,7 +388,7 @@ needs of most developers.
     systemctl is-active docker || sudo systemctl start docker
     # add your user to the `docker` group
     sudo adduser $USER docker
-    # login as yourself again to activate membership of the "docker" group
+    # log in as yourself again to activate membership of the "docker" group
     su - $USER
 
     # re-activate your virtualenv (with your venv tool of choice)
@@ -338,10 +402,11 @@ needs of most developers.
     source $WORKON_HOME/hq/bin/activate
     ```
 
-3. Install the `docker-compose` python library
-
+3. Install `docker compose`
+  - **Mac**: comes with Docker Desktop
+  - **Linux**:
     ```sh
-    pip install docker-compose
+    sudo apt install docker-compose-plugin
     ```
 
 4. Ensure the elasticsearch config files are world-readable (their containers
@@ -413,6 +478,16 @@ that to the new install. If not, proceed to Step 5B.
     ```
 
   - Fire up Fauxton to check that the dbs are there: http://localhost:5984/_utils/
+    - As of CouchDB 3.x, Fauxton is no longer shipped in the container and must
+      be installed separately:
+
+      ```sh
+      npm install -g fauxton
+      fauxton
+      ```
+
+      Open http://localhost:8000 in a browser. Run fauxton with ``-p PORT`` to
+      use a port other than 8000.
 
 - Shared Directory
   - If you are following the default instructions, move/merge the `sharedfiles`
@@ -426,17 +501,64 @@ Before running any of the commands below, you should have all of the following
 running: Postgres, CouchDB, Redis, and Elasticsearch.
 The easiest way to do this is using the Docker instructions above.
 
+If you want to use a partitioned database, change
+`USE_PARTITIONED_DATABASE = False` to `True` in `localsettings.py`.
+
+You will also need to create the additional databases manually:
+
+```sh
+$ psql -h localhost -p 5432 -U commcarehq
+```
+
+(assuming that "commcarehq" is the username in `DATABASES` in
+`localsettings.py`). When prompted, use the password associated with the
+username, of course.
+
+```sh
+commcarehq=# CREATE DATABASE commcarehq_proxy;
+CREATE DATABASE
+commcarehq=# CREATE DATABASE commcarehq_p1;
+CREATE DATABASE
+commcarehq=# CREATE DATABASE commcarehq_p2;
+CREATE DATABASE
+commcarehq=# \q
+```
+
 Populate your database:
 
 ```sh
-./manage.py sync_couch_views
-./manage.py create_kafka_topics
-env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
+$ ./manage.py sync_couch_views
+$ ./manage.py create_kafka_topics
+$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
+```
+
+If you are using a partitioned database, populate the additional databases too:
+
+```sh
+$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate_multi --noinput
 ```
 
 You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
+
+#### Troubleshooting errors from the CouchDB Docker container
+
+If you are seeing errors from the CouchDB Docker container that include
+`database_does_not_exist` ... `"_users"`, it could be because CouchDB
+is missing its three system databases, `_users`, `_replicator` and
+`_global_changes`. The `_global_changes` database is not necessary if
+you do not expect to be using the global changes feed. You can use
+`curl` to create the databases:
+
+```sh
+$ curl -X PUT http://username:password@127.0.0.1:5984/_users
+$ curl -X PUT http://username:password@127.0.0.1:5984/_replicator
+```
+
+where "username" and "password" are the values of "COUCH_USERNAME"
+and "COUCH_PASSWORD" given in `COUCH_DATABASES` set in
+`dev_settings.py`.
 
 #### Troubleshooting Issues with `sync_couch_views`
 
@@ -494,20 +616,27 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
 To set up elasticsearch indexes run the following:
 
 ```sh
-./manage.py ptop_preindex
+./manage.py ptop_preindex [--reset]
 ```
 
-This will create all of the elasticsearch indexes (that don't already exist) and
+This will create all the elasticsearch indexes (that don't already exist) and
 populate them with any data that's in the database.
 
-Next, set the aliases of the elastic indices. These can be set by a management
-command that sets the stored index names to the aliases.
 
-```sh
-./manage.py ptop_es_manage --flip_all_aliases
+### Step 7: Installing JavaScript and Front-End Requirements
+
+#### Install Dart Sass
+
+We are transitioning to using `sass`/`scss` for our stylesheets. In order to compile `*.scss`,
+Dart Sass is required.
+
+We recommend using `npm` to install this globally with:
+```
+npm install -g sass
 ```
 
-### Step 7: Installing JavaScript Requirements
+You can also [follow the instructions here](https://sass-lang.com/install) if you encounter issues with this method.
+
 
 #### Installing Yarn
 
@@ -545,16 +674,16 @@ for these packages.
 
 ```sh
 $ npm --version
-7.24.2
+8.19.3
 $ node --version
-v14.19.1
+v16.19.1
 ```
 
-On a clean Ubuntu 18.04 LTS install, the packaged nodejs version is v8. The
-easiest way to get onto the current nodejs v14 is
+On a clean Ubuntu 22.04 LTS install, the packaged nodejs version is expected to be v12. The
+easiest way to get onto the current nodejs v16 is
 
 ```sh
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
@@ -716,6 +845,11 @@ They can each be run in separate terminals:
 
 Pillowtop is used to keep elasticsearch indices and configurable reports in sync.
 
+> **Note**
+> Typically, you won't need to run these in a dev environment unless you are testing them.
+> It is simpler to run the 'reindex' command to update ES with local changes when needed.
+> See [Populate Elasticsearch](#step-6--populate-elasticsearch)
+
 **Mac OS:**  `run_ptop` Will likely not work for you.
 See the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md) for help.
 
@@ -751,6 +885,8 @@ This can be done using:
 celery -A corehq worker -l info
 ```
 
+This will run a worker that will listen to default queue which is named celery.
+
 You may need to add a `-Q` argument based on the queue you want to listen to.
 
 For example, to use case importer with celery locally you need to run:
@@ -759,6 +895,17 @@ For example, to use case importer with celery locally you need to run:
 celery -A corehq worker -l info -Q case_import_queue
 ```
 
+You can also run multiple queues on a single worker by passing multiple queue names separated by `,`
+
+```sh
+celery -A corehq worker -l info -Q case_import_queue,background_queue
+```
+
+If you want to run periodic tasks you would need to start `beat` service along with celery by running
+
+```sh
+celery -A corehq beat
+```
 
 ## Running Formdesigner (Vellum) in Development mode
 
@@ -915,13 +1062,7 @@ ignore:the imp module is deprecated::celery.utils.imports,
 ignore:unclosed:ResourceWarning'
 ```
 
-Personal whitelist items may also be added in localsettings.py. For example:
-
-```py
-from warnings import filterwarnings  # noqa: E402
-filterwarnings("ignore", "unclosed", ResourceWarning)
-del filterwarnings
-```
+Personal whitelist items may also be added in localsettings.py.
 
 
 ### Running tests by tag
@@ -1023,6 +1164,21 @@ For example:
 ```
 http://localhost:8000/mocha/app_manager/b3
 ```
+
+### Measuring test coverage
+
+To generate a JavaScript test coverage report, ensure the development server is
+active on port 8000 and run:
+
+```sh
+./scripts/coverage-js.sh
+```
+
+This script goes through the steps to prepare a report for test coverage of
+JavaScript files _that are touched by tests_, i.e., apps and files with 0% test
+coverage will not be shown. A coverage summary is output to the terminal and a
+detailed html report is generated at ``coverage-js/index.html``.
+
 
 ## Sniffer
 

@@ -1,8 +1,9 @@
 from datetime import date
 
-from couchdbkit import ResourceConflict
 from django.contrib.auth.signals import user_logged_in, user_login_failed
 from django.dispatch import receiver
+
+from couchdbkit import ResourceConflict
 
 from corehq.apps.users.models import CouchUser
 from corehq.util.metrics import metrics_counter
@@ -52,4 +53,10 @@ def add_failed_attempt(sender, credentials, token_failure=False, **kwargs):
         user.attempt_date = date.today()
 
     user.login_attempts += 1
-    user.save()
+
+    try:
+        user.save()
+    except ResourceConflict:
+        # swallow this exception to ensure the user still sees an auth failed
+        # error, not a 500
+        return

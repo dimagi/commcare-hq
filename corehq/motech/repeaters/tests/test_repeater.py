@@ -37,15 +37,13 @@ from corehq.motech.repeaters.const import (
 )
 from corehq.motech.repeaters.dbaccessors import (
     delete_all_repeat_records,
-    delete_all_repeaters,
 )
 from corehq.motech.repeaters.models import (
+    RepeatRecord,
     CaseRepeater,
     FormRepeater,
     LocationRepeater,
     Repeater,
-    RepeatRecord,
-    SQLRepeater,
     ShortFormRepeater,
     UserRepeater,
     _get_retry_interval,
@@ -151,6 +149,7 @@ class RepeaterTest(BaseRepeaterTest):
             domain=self.domain,
             connection_settings_id=self.case_connx.id,
             format='case_json',
+            repeater_id=uuid.uuid4().hex
         )
         self.case_repeater.save()
 
@@ -161,7 +160,8 @@ class RepeaterTest(BaseRepeaterTest):
         self.form_repeater = FormRepeater(
             domain=self.domain,
             connection_settings_id=self.form_connx.id,
-            format='form_json'
+            format='form_json',
+            repeater_id=uuid.uuid4().hex
         )
         self.form_repeater.save()
         self.log = []
@@ -249,7 +249,7 @@ class RepeaterTest(BaseRepeaterTest):
         now = datetime.utcnow()
         record = RepeatRecord(
             domain=self.domain,
-            repeater_id=self.case_repeater.get_id,
+            repeater_id=self.case_repeater.repeater_id,
             next_check=now,
         )
         self.assertIsNone(record.last_checked)
@@ -443,6 +443,7 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
             format='form_xml',
+            repeater_id=uuid.uuid4().hex,
         )
         cls.repeatergenerator = FormRepeaterXMLPayloadGenerator(
             repeater=cls.repeater
@@ -481,6 +482,7 @@ class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
             format='form_xml',
+            repeater_id=uuid.uuid4().hex
         )
         cls.repeater.save()
 
@@ -516,6 +518,7 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         cls.repeater = ShortFormRepeater(
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
+            repeater_id=uuid.uuid4().hex
         )
         cls.repeater.save()
 
@@ -554,6 +557,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='case_xml',
+            repeater_id=uuid.uuid4().hex,
         )
         self.repeater.save()
 
@@ -691,6 +695,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='case_json',
+            repeater_id=uuid.uuid4().hex
         )
         self.repeater.save()
 
@@ -765,13 +770,13 @@ class IgnoreDocumentTest(BaseRepeaterTest):
         self.repeater = FormRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
-            format='new_format'
+            format='new_format',
+            repeater_id=uuid.uuid4().hex
         )
-        # We have created restriction on SQL Repeaters, so for now we would not be copying the new format to SQL
-        self.repeater.save(sync_to_sql=False)
+        self.repeater.save()
 
     def tearDown(self):
-        self.repeater.delete(sync_to_sql=False)
+        self.repeater.delete()
         self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
@@ -821,11 +826,10 @@ class TestRepeaterFormat(BaseRepeaterTest):
             connection_settings_id=self.connx.id,
             format='new_format',
         )
-        # SQL Repeater Model restricts format and would raise error on unexpected values
-        self.repeater.save(sync_to_sql=False)
+        self.repeater.save()
 
     def tearDown(self):
-        self.repeater.delete(sync_to_sql=False)
+        self.repeater.delete()
         self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
@@ -878,7 +882,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
     def test_get_format_by_deprecated_name(self):
         self.assertIsInstance(CaseRepeater(
             domain=self.domain,
-            url='case-repeater-url',
+            connection_settings=self.connx,
             format='new_format_alias',
         ).generator, self.new_generator)
 
@@ -904,6 +908,7 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
         self.repeater = UserRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
+            repeater_id=uuid.uuid4().hex
         )
         self.repeater.save()
 
@@ -917,7 +922,7 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
     def tearDown(self):
         super().tearDown()
         delete_all_repeat_records()
-        delete_all_repeaters()
+        self.repeater.delete()
         self.connx.delete()
 
     def repeat_records(self):
@@ -954,6 +959,7 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'groups': [],
                 'phone_numbers': [],
                 'email': '',
+                'eulas': '[]',
                 'resource_uri': '/a/user-repeater/api/v0.5/user/{}/'.format(user._id),
             }
         )
@@ -997,8 +1003,6 @@ class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
     def tearDown(self):
         super().tearDown()
         delete_all_repeat_records()
-        delete_all_repeaters()
-        self.connx.delete()
 
     def repeat_records(self):
         # Enqueued repeat records have next_check set 48 hours in the future.
@@ -1058,10 +1062,11 @@ class TestRepeaterPause(BaseRepeaterTest):
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='case_json',
+            repeater_id=uuid.uuid4().hex,
         )
         self.repeater.save()
         self.post_xml(self.xform_xml, self.domain)
-        self.repeater = reloaded(self.repeater)
+        self.repeater = Repeater.objects.get(repeater_id=self.repeater.repeater_id)
 
     def tearDown(self):
         self.repeater.delete()
@@ -1114,13 +1119,8 @@ class TestRepeaterDeleted(BaseRepeaterTest):
         )
         self.repeater.save()
         self.post_xml(self.xform_xml, self.domain)
-        self.repeater = reloaded(self.repeater)
 
     def tearDown(self):
-        self.repeater.delete()
-        # Making sure that SQL repeater are deleted after retire is called.
-        SQLRepeater.all_objects.all().delete()
-        self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
         super().tearDown()
@@ -1130,6 +1130,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:
             self.repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+            self.repeat_record = reloaded(self.repeat_record)
             _process_repeat_record(self.repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
@@ -1140,6 +1141,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:
             self.repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+            self.repeat_record = reloaded(self.repeat_record)
             _process_repeat_record(self.repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
@@ -1167,6 +1169,9 @@ class Response(object):
 
 class DummyRepeater(Repeater):
 
+    class Meta:
+        proxy = True
+
     @property
     def generator(self):
         return FormRepeaterXMLPayloadGenerator(self)
@@ -1181,7 +1186,8 @@ class HandleResponseTests(SimpleTestCase):
     def setUp(self):
         self.repeater = DummyRepeater(
             domain=self.domain,
-            url="https://example.com/api/",
+            connection_settings_id=1,
+
         )
         self.repeat_record = Mock()
 

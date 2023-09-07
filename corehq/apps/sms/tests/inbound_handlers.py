@@ -800,7 +800,6 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         session.submit_partially_completed_forms = True
         session.include_case_updates_in_partial_submissions = True
         session.close()
-        session.save()
 
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "arm", "arm_b")
@@ -820,7 +819,6 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         session.submit_partially_completed_forms = True
         session.include_case_updates_in_partial_submissions = False
         session.close()
-        session.save()
 
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "arm", "arm_a")
