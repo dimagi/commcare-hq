@@ -40,24 +40,6 @@ class RepeaterDbSQL(migrations.RunSQL):
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ('repeaters', '0001_adjust_auth_field_format'),
-        ('repeaters', '0002_sqlrepeatrecord'),
-        ('repeaters', '0003_migrate_connectionsettings'),
-        ('repeaters', '0004_attempt_strings'),
-        ('repeaters', '0005_rename_repeaterstub_to_sql_repeater'),
-        ('repeaters', '0006_add_proxy_models'),
-        ('repeaters', '0007_migrate_to_sql'),
-        ('repeaters', '0008_add_related_name_in_connection_settings'),
-        ('repeaters', '0009_add_create_update_info'),
-        ('repeaters', '00010_add_repeater_name'),
-        ('repeaters', '0011_alter_sqlrepeater_name'),
-        ('repeaters', '00012_create_default_names_for_repeaters'),
-        ('repeaters', '0013_rename_sqlrepeaters_to_repeaters'),
-        ('repeaters', '0014_add_new_state_empty'),
-        ('repeaters', '0015_drop_connection_settings_fk'),
-    ]
-
     dependencies = [
         ('motech', '0007_auto_20200909_2138'),
         ('motech', '0008_requestlog_response_headers'),

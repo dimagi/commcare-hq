@@ -38,6 +38,21 @@
     vertical-align: top;
     background-color: @cc-bg;
     container-type: inline-size;
+
+    a {
+      color: @cc-brand-mid;
+    }
+
+    .module-icon,
+    .webapp-markdown-output img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+
+    &:hover {
+      background-color: darken(@cc-bg, 5);
+      transition: background 0.6s;
+    }
   }
 
   .highlighted-case {
@@ -71,4 +86,16 @@
   padding-bottom: 6px;
 }
 
+@media print {
+  #menu-region .module-menu-container,
+  #menu-region .module-case-list-container {
+    #module-case-list-container__results-container {
+      grid-template-columns: [tiles] 1fr !important;
+    }
 
+    .list-cell-wrapper-style {
+      border: 1px solid @cc-bg;
+    break-inside: avoid;
+    }
+  }
+}

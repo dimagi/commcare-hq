@@ -52,6 +52,7 @@ google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.4.6
 greenlet
 gunicorn
+haversine  # SolTech - Used in Geospatial features
 hiredis
 httpagentparser
 iso8601
@@ -68,6 +69,7 @@ looseversion
 lxml
 markdown
 oic
+ortools  # Used in Geospatial features to solve routing problems - SolTech
 openpyxl
 packaging
 phonenumberslite

@@ -1,0 +1,29 @@
+--- 
++++ 
+@@ -13,7 +13,7 @@
+         {% trans "Form has errors" %}
+       </div>
+     {% endif %}
+-    <div class="panel panel-default">
++    <div class="card card-default">
+       <table class="table table-striped table-bordered">
+ 
+         <thead>
+@@ -32,7 +32,7 @@
+                 {% if spec.type == "RAW" %}
+                   <span data-bind="text: data.{{ spec.key }}"></span>
+                 {% else %}
+-                  <input class="col-sm-12 form-control" name="{{ spec.key }}"
++                  <input class="col-md-12 form-control" name="{{ spec.key }}"
+                   {% for k, v in spec.html_attrs.items %}
+                     {{ k }}="{{ v }}"
+                   {% endfor %}
+@@ -55,7 +55,7 @@
+       </table>
+     </div>
+     <div class="form-actions">
+-      <div class="col-sm-12">
++      <div class="col-md-12">
+         <button type="submit" class="btn btn-primary">
+           {% trans "Submit" %}
+         </button>

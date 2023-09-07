@@ -1,7 +1,7 @@
 /*global DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
-    // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
+    // 'hqwebapp/js/bootstrap3/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
         cloudcareUtils = hqImport("cloudcare/js/utils"),
@@ -372,12 +372,29 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.parentView.setStickyQueryInputs();
         },
 
-        onRender: function () {
+        _initializeSelect2Dropdown: function () {
+            let placeHolderText;
+            switch (this.model.get('input')) {
+                case 'select1':
+                    placeHolderText = gettext('Please select one');
+                    break;
+                case 'select':
+                    placeHolderText = gettext('Please select one or more');
+                    break;
+                default:
+                    placeHolderText = ' ';
+                    break;
+            }
+
             this.ui.valueDropdown.select2({
                 allowClear: true,
-                placeholder: " ",   // required for allowClear to work
+                placeholder: placeHolderText,   // required for allowClear to work
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
+        },
+
+        onRender: function () {
+            this._initializeSelect2Dropdown();
             this.ui.hqHelp.hqHelp();
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.daterangepicker({

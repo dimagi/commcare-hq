@@ -15,7 +15,7 @@ hqDefine('export/js/models', [
     'export/js/const',
     'export/js/utils',
     'hqwebapp/js/validators.ko',        // needed for validation of customPathString
-    'hqwebapp/js/knockout_bindings.ko', // needed for multirow_sortable binding
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // needed for multirow_sortable binding
 ], function (
     $,
     ko,

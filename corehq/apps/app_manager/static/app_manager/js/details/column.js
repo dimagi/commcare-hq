@@ -11,20 +11,20 @@
  * is responsible for creating the tab "columns" and injecting them into itself.
  */
 hqDefine("app_manager/js/details/column", function () {
-    var uiElement = hqImport('hqwebapp/js/ui-element');
+    const uiElement = hqImport('hqwebapp/js/bootstrap3/ui-element');
 
     return function (col, screen) {
         /*
             column properties: model, field, header, format
             column extras: enum, late_flag
         */
-        var self = {};
-        hqImport("hqwebapp/js/main").eventize(self);
+        const self = {};
+        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
         self.original = JSON.parse(JSON.stringify(col));
 
         // Set defaults for normal (non-tab) column attributes
-        var Utils = hqImport('app_manager/js/details/utils');
-        var defaults = {
+        const Utils = hqImport('app_manager/js/details/utils');
+        const defaults = {
             calc_xpath: ".",
             enum: [],
             field: "",
@@ -36,6 +36,9 @@ hqDefine("app_manager/js/details/column", function () {
             model: screen.model,
             date_format: "",
             time_ago_interval: Utils.TIME_AGO.year,
+            horizontal_align: "left",
+            vertical_align: "start",
+            font_size: "medium",
         };
         _.each(_.keys(defaults), function (key) {
             self.original[key] = self.original[key] || defaults[key];
@@ -45,8 +48,46 @@ hqDefine("app_manager/js/details/column", function () {
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
+        self.coordinatesVisible = ko.observable(true);
+        self.tileRowMax = ko.observable(7);
+        self.tileColumnMax = ko.observable(13);
+        self.tileRowStart = ko.observable(self.original.grid_y || 1);
+        self.tileRowOptions = [""].concat(_.range(1, self.tileRowMax()));
+        self.tileColumnStart = ko.observable(self.original.grid_x || 1);
+        self.tileColumnOptions = [""].concat(_.range(1, self.tileColumnMax()));
+        self.tileWidth = ko.observable(self.original.width || self.tileRowMax() - 1);
+        self.tileWidthOptions = ko.computed(function () {
+            return _.range(1, self.tileColumnMax() + 1 - (self.tileColumnStart() || 1));
+        });
+        self.tileHeight = ko.observable(self.original.height || 1);
+        self.tileHeightOptions = ko.computed(function () {
+            return _.range(1, 5 - (self.tileRowStart() || 1));
+        });
+        self.horizontalAlign = ko.observable(self.original.horizontal_align || 'left');
+        self.horizontalAlignOptions = ['left', 'center', 'right'];
+
+        self.verticalAlign = ko.observable(self.original.vertial_align || 'start');
+        self.verticalAlignOptions = ['start', 'center', 'end'];
+
+        self.fontSize = ko.observable(self.original.font_size || 'medium');
+        self.fontSizeOptions = ['small', 'medium', 'large'];
+
+        self.tileRowEnd = ko.computed(function () {
+            return Number(self.tileRowStart()) + Number(self.tileHeight());
+        });
+        self.tileColumnEnd = ko.computed(function () {
+            return Number(self.tileColumnStart()) + Number(self.tileWidth());
+        });
+        self.showInTilePreview = ko.computed(function () {
+            return self.coordinatesVisible() && self.tileRowStart() && self.tileColumnStart() && self.tileWidth() && self.tileHeight();
+        });
+        self.tileContent = ko.observable();
+        self.setTileContent = function () {
+            self.tileContent(self.header.val());
+        };
+
         // Set up tab defaults
-        var tabDefaults = {
+        const tabDefaults = {
             isTab: false,
             hasNodeset: false,
             nodeset: "",
@@ -69,7 +110,7 @@ hqDefine("app_manager/js/details/column", function () {
             value: "case",
         }]).val(self.original.model);
 
-        var icon = Utils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
+        const icon = Utils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
         self.field = undefined;
         if (self.original.hasAutocomplete) {
             self.field = uiElement.select();
@@ -87,7 +128,7 @@ hqDefine("app_manager/js/details/column", function () {
         });
 
         (function () {
-            var i,
+            let i,
                 lang,
                 visibleVal = "",
                 invisibleVal = "";
@@ -125,6 +166,15 @@ hqDefine("app_manager/js/details/column", function () {
             }
         }());
 
+        // TODO: use self.field.observableVal instead, and do something similar for header?
+        self.header.on("change", function () {
+            self.setTileContent();
+        });
+        self.field.on("change", function () {
+            self.setTileContent();
+        });
+        self.setTileContent();
+
         self.saveAttempted = ko.observable(false);
         self.useXpathExpression = self.original.useXpathExpression;
         self.showWarning = ko.computed(function () {
@@ -140,7 +190,7 @@ hqDefine("app_manager/js/details/column", function () {
         }, self);
 
         // Add the graphing option if self is a graph so self we can set the value to graph
-        var menuOptions = Utils.getFieldFormats();
+        let menuOptions = Utils.getFieldFormats();
         if (self.original.format === "graph") {
             menuOptions = menuOptions.concat([{
                 value: "graph",
@@ -149,9 +199,9 @@ hqDefine("app_manager/js/details/column", function () {
         }
 
         if (self.useXpathExpression) {
-            var menuOptionsToRemove = ['picture', 'audio'];
-            for (var i = 0; i < menuOptionsToRemove.length; i++) {
-                for (var j = 0; j < menuOptions.length; j++) {
+            const menuOptionsToRemove = ['picture', 'audio'];
+            for (let i = 0; i < menuOptionsToRemove.length; i++) {
+                for (let j = 0; j < menuOptions.length; j++) {
                     if (
                         menuOptions[j].value !== self.original.format
                         && menuOptions[j].value === menuOptionsToRemove[i]
@@ -165,7 +215,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.format = uiElement.select(menuOptions).val(self.original.format || null);
 
         (function () {
-            var o = {
+            const o = {
                 lang: self.lang,
                 langs: self.screen.langs,
                 module_id: self.screen.config.module_id,
@@ -177,7 +227,7 @@ hqDefine("app_manager/js/details/column", function () {
             };
             self.enum_extra = uiElement.key_value_mapping(o);
         }());
-        var graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
+        const graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
         self.graph_extra = graphConfigurationUiElement({
             childCaseTypes: self.screen.childCaseTypes,
             fixtures: self.screen.fixtures,
@@ -190,7 +240,7 @@ hqDefine("app_manager/js/details/column", function () {
             self.graph_extra.setName(self.header.val());
         });
 
-        var yyyy = new Date().getFullYear(),
+        const yyyy = new Date().getFullYear(),
             yy = String(yyyy).substring(2);
         self.date_extra = uiElement.select([{
             label: '31/10/' + yy,
@@ -265,10 +315,18 @@ hqDefine("app_manager/js/details/column", function () {
             self[element].on('change', fireChange);
         });
         self.case_tile_field.subscribe(fireChange);
+        self.tileRowStart.subscribe(fireChange);
+        self.tileColumnStart.subscribe(fireChange);
+        self.tileWidth.subscribe(fireChange);
+        self.tileHeight.subscribe(fireChange);
+        self.horizontalAlign.subscribe(fireChange);
+        self.verticalAlign.subscribe(fireChange);
+        self.fontSize.subscribe(fireChange);
 
         self.$format = $('<div/>').append(self.format.ui);
         self.$format.find("select").css("margin-bottom", "5px");
         self.format.on('change', function () {
+            self.coordinatesVisible(!_.contains(['address', 'address-popup', 'invisible'], self.format.val()));
             // Prevent self from running on page load before init
             if (self.format.ui.parent().length > 0) {
                 self.date_extra.ui.detach();
@@ -327,12 +385,19 @@ hqDefine("app_manager/js/details/column", function () {
             hqImport('analytix/js/google').track.event('Case List Config', 'Display Format', event.target.value);
         });
         self.serialize = function () {
-            var column = self.original;
+            const column = self.original;
             column.field = self.field.val();
             column.header[self.lang] = self.header.val();
             column.format = self.format.val();
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
+            column.grid_x = self.tileColumnStart();
+            column.grid_y = self.tileRowStart();
+            column.height = self.tileHeight();
+            column.width = self.tileWidth();
+            column.horizontal_align = self.horizontalAlign();
+            column.vertial_align = self.verticalAlign();
+            column.font_size = self.fontSize();
             column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;
             column.late_flag = parseInt(self.late_flag_extra.val(), 10);
             column.time_ago_interval = parseFloat(self.time_ago_extra.val());
@@ -341,7 +406,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.case_tile_field = self.case_tile_field();
             if (self.isTab) {
                 // Note: starting_index is added by screenModel.serialize
-                var tab = {
+                let tab = {
                     header: column.header,
                     isTab: true,
                     starting_index: self.starting_index,
@@ -363,7 +428,7 @@ hqDefine("app_manager/js/details/column", function () {
             self.grip = grip;
         };
         self.copyCallback = function () {
-            var column = self.serialize();
+            const column = self.serialize();
             // add a marker self self is copied for self purpose
             return JSON.stringify({
                 type: 'detail-screen-config:Column',
