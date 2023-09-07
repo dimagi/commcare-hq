@@ -290,6 +290,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
             "ga_opt_out": self.domain_object.ga_opt_out,
             "disable_mobile_login_lockout": self.domain_object.disable_mobile_login_lockout,
+            "allow_invite_email_only": self.domain_object.allow_invite_email_only,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,

@@ -804,6 +804,10 @@ class PrivacySecurityForm(forms.Form):
         help_text=gettext_lazy("Mobile Workers will never be locked out of their account, regardless"
             "of the number of failed attempts")
     )
+    allow_invite_email_only = BooleanField(
+        label=gettext_lazy("Allow only the email from the invite when signing up"),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
@@ -861,6 +865,7 @@ class PrivacySecurityForm(forms.Form):
         domain_obj.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
         domain_obj.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
         domain_obj.disable_mobile_login_lockout = self.cleaned_data.get('disable_mobile_login_lockout', False)
+        domain_obj.allow_invite_email_only = self.cleaned_data.get('allow_invite_email_only', False)
 
         domain_obj.save()
 

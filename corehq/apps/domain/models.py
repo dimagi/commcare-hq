@@ -439,6 +439,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
     disable_mobile_login_lockout = BooleanProperty(default=False)
+    allow_invite_email_only = BooleanProperty(default=False)
 
     requested_report_builder_subscription = StringListProperty()
 
@@ -447,7 +448,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     ga_opt_out = BooleanProperty(default=False)
     orphan_case_alerts_warning = BooleanProperty(default=False)
-
 
     @classmethod
     def wrap(cls, data):
