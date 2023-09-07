@@ -1,4 +1,5 @@
 from corehq.apps.es.client import Tombstone
+from corehq.apps.es.mappings.const import NULL_VALUE
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
 XFORM_DATE_FORMATS_STRING = "epoch_millis||" + DATE_FORMATS_STRING
@@ -126,7 +127,8 @@ XFORM_MAPPING = {
                             "type": "date"
                         },
                         "userID": {
-                            "type": "keyword"
+                            "type": "keyword",
+                            "null_value": NULL_VALUE
                         },
                         "username": {
                             "type": "keyword"
@@ -160,7 +162,8 @@ XFORM_MAPPING = {
             "type": "ip"
         },
         "user_type": {
-            "type": "keyword"
+            "type": "keyword",
+            "null_value": NULL_VALUE
         },
         "xmlns": {
             "fields": {
