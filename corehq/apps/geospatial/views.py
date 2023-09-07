@@ -19,7 +19,6 @@ from dimagi.utils.couch.bulk import get_docs
 
 from corehq import toggles
 from corehq.apps.es import CaseSearchES, UserES
-from corehq.apps.es.users import missing_metadata_property, missing_metadata_value
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.form_processor.models import CommCareCase
@@ -275,10 +274,7 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
         UserES()
         .domain(domain)
         .mobile_users()
-        .OR(
-            missing_metadata_property(location_prop_name),
-            missing_metadata_value(location_prop_name)
-        )
+        .missing_or_empty_metadata_property(location_prop_name)
         .search_string_query(query, ['username'])
         .sort('created_on', desc=True)
     )

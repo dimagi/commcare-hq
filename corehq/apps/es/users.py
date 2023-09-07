@@ -61,6 +61,7 @@ class UserES(HQESQuery):
             metadata,
             missing_metadata_property,
             missing_metadata_value,
+            missing_or_empty_metadata_property,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -271,4 +272,14 @@ def missing_metadata_value(property_name):
                 filters.wildcard(field='user_data_es.value', value='*')
             )
         )
+    )
+
+
+def missing_or_empty_metadata_property(property_name):
+    """
+    A metadata property doesn't exist, or does exist but has an empty string value.
+    """
+    return filters.OR(
+        missing_metadata_property(property_name),
+        missing_metadata_value(property_name),
     )
