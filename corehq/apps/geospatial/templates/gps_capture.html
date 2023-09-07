@@ -29,14 +29,6 @@
                 {% endblocktrans %}
             {% endif %}
         </p>
-        <div class="btn-toolbar">
-            <button id="save-changes"
-                    type="button"
-                    class="btn btn-primary"
-                    data-bind="enable: hasUnsavedChanges, event: {click: onSaveClicked}">
-                {% trans "Save changes" %}
-            </button>
-        </div>
     </p>
     <div class="panel panel-default">
         <div class="panel-heading">
@@ -71,7 +63,7 @@
                         </th>
                         <th class="col-xs-3">{% trans "Latitude" %}</th>
                         <th class="col-xs-3">{% trans "Longitude" %}</th>
-                        <th class="col-xs-3">{% trans "Map Capture" %}</th>
+                        <th class="col-xs-3">{% trans "Actions" %}</th>
                     </tr>
                 </thead>
                 <tbody data-bind="foreach: dataItems">
@@ -87,7 +79,7 @@
                                    step="any"
                                    name="latInput"
                                    placeholder="{% trans 'Enter latitude...' %}"
-                                   data-bind="value: lat, event: {change: $root.onValueChanged}" />
+                                   data-bind="value: lat, event: {change: onValueChanged}" />
                         </td>
                         <td>
                             <input class="form-control"
@@ -95,11 +87,14 @@
                                    step="any"
                                    name="lonInput"
                                    placeholder="{% trans 'Enter longitude...' %}"
-                                   data-bind="value: lon, event: {change: $root.onValueChanged}" />
+                                   data-bind="value: lon, event: {change: onValueChanged}" />
                         </td>
                         <td>
                             <button type="button" class="btn btn-default" data-bind="event: {click: onMapCaptureStart}">
                                 {% trans "Capture on Map" %}
+                            </button>
+                            <button type="button" class="btn btn-primary" data-bind="visible: canSaveRow, event: {click: $root.saveDataRow.bind($data)}">
+                                {% trans "Save" %}
                             </button>
                         </td>
                     </tr>
@@ -129,6 +124,11 @@
                   Please check your internet connection.
                   If this problem continues, please
                   <a href="#modalReportIssue" data-toggle="modal">report an issue</a>.
+                {% endblocktrans %}
+            </div>
+            <div class="alert alert-success" data-bind="visible: isSubmissionSuccess">
+                {% blocktrans %}
+                    Changes have been saved successfully!
                 {% endblocktrans %}
             </div>
             <pagination data-apply-bindings="false"

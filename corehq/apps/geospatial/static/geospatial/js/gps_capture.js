@@ -3,7 +3,7 @@ hqDefine("geospatial/js/gps_capture",[
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
-    "hqwebapp/js/components.ko", // for pagination
+    "hqwebapp/js/bootstrap3/components.ko", // for pagination
 ], function (
     $,
     ko,
@@ -23,15 +23,25 @@ hqDefine("geospatial/js/gps_capture",[
 
         var self = ko.mapping.fromJS(options);
         self.url = ko.observable();
-        if (dataType === 'user') {
+        self.dataType = dataType;
+        if (self.dataType === 'user') {
             self.url(initialPageData.reverse('edit_commcare_user', options.id));
         } else {
             self.url(initialPageData.reverse('case_data', options.id));
         }
+        self.hasUnsavedChanges = ko.observable(false);
 
         self.onMapCaptureStart = function () {
             // TODO: Implement this function
         };
+
+        self.onValueChanged = function () {
+            self.hasUnsavedChanges(true);
+        };
+
+        self.canSaveRow = ko.computed(function () {
+            return self.lat().length && self.lon().length && self.hasUnsavedChanges();
+        });
 
         return self;
     };
@@ -42,7 +52,6 @@ hqDefine("geospatial/js/gps_capture",[
 
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.observable(0);
-        self.hasUnsavedChanges = ko.observable(false);
         self.query = ko.observable('');
 
         self.dataType = initialPageData.get('data_type');
@@ -51,24 +60,15 @@ hqDefine("geospatial/js/gps_capture",[
         self.showPaginationSpinner = ko.observable(false);
         self.hasError = ko.observable(false);
         self.hasSubmissionError = ko.observable(false);
+        self.isSubmissionSuccess = ko.observable(false);
         self.showTable = ko.computed(function () {
             return !self.showLoadingSpinner() && !self.hasError();
         });
 
         self.goToPage = function (pageNumber) {
-            if (self.hasUnsavedChanges()) {
-                const dialog = confirm(gettext(
-                    "You have unsaved changes. Are you sure you would like to continue?"
-                ));
-                if (!dialog) {
-                    return;
-                }
-            }
             self.dataItems.removeAll();
             self.hasError(false);
-            self.hasSubmissionError(false);
             self.showPaginationSpinner(true);
-            self.hasUnsavedChanges(false);
             $.ajax({
                 method: 'GET',
                 url: initialPageData.reverse('get_paginated_cases_or_users_without_gps'),
@@ -101,27 +101,25 @@ hqDefine("geospatial/js/gps_capture",[
             self.goToPage(1);
         };
 
-        self.onValueChanged = function () {
-            self.hasUnsavedChanges(true);
-        };
-
-        self.onSaveClicked = function () {
+        self.saveDataRow = function (dataItem) {
+            self.isSubmissionSuccess(false);
             self.hasSubmissionError(false);
             $.ajax({
                 method: 'POST',
                 url: initialPageData.reverse('gps_capture'),
                 data: JSON.stringify({
                     'data_type': self.dataType,
-                    'data_items': ko.mapping.toJS(self.dataItems()),
+                    'data_item': ko.mapping.toJS(dataItem),
                 }),
                 dataType: "json",
                 contentType: "application/json; charset=utf-8",
                 success: function () {
-                    location.reload();
+                    dataItem.hasUnsavedChanges(false);
+                    self.isSubmissionSuccess(true);
                 },
                 error: function (e) {
+                    console.error("Error in submission", e);
                     self.hasSubmissionError(true);
-                    console.e("Error in submission", e);
                 },
             });
         };
