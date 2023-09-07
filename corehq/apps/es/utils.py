@@ -110,8 +110,9 @@ def check_task_progress(task_id, just_once=False):
         status = task_details["status"]
         total = status["total"]
         if total:  # total can be 0 initially
-            created, updated, deleted = status["created"], status["updated"], status["deleted"]
-            progress = created + updated + deleted
+            created, updated = status["created"], status["updated"]
+            deleted, conflicts = status["deleted"], status["version_conflicts"]
+            progress = created + updated + deleted + conflicts
             progress_percent = progress / total * 100
 
             running_time_nanos = task_details["running_time_in_nanos"]
