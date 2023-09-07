@@ -1132,6 +1132,7 @@ class MessagingTab(UITab):
         '/a/{domain}/sms/',
         '/a/{domain}/reminders/',
         '/a/{domain}/data/edit/case_groups/',
+        '/a/{domain}/email/',
     )
 
     @property
