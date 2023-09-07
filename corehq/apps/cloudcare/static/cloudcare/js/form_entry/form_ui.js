@@ -746,6 +746,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }, self.throttle);
         self.onchange = self.triggerAnswer;
 
+        self.triggerClear = function () {
+            publishClearEvent();
+        };
+        var publishClearEvent = _.throttle(function () {
+            $.publish('formplayer.' + constants.CLEAR_ANSWER, self);
+        }, self.throttle)
+        self.onClear = self.triggerClear;
+
         self.mediaSrc = function (resourceType) {
             if (!resourceType || !_.isFunction(formEntryUtils.resourceMap)) { return ''; }
             return formEntryUtils.resourceMap(resourceType);
