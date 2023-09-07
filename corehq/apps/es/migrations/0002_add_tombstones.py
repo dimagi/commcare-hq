@@ -9,6 +9,7 @@ import corehq.apps.es.migration_operations
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('es', '0001_bootstrap_es_indexes'),
     ]
 
     operations = [
