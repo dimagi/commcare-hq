@@ -38,6 +38,7 @@ CASE_SEARCH_MAPPING = {
                         },
                         "exact": {
                             "ignore_above": 8191,
+                            "null_value": "",
                             "type": "keyword"
                         },
                         "numeric": {
