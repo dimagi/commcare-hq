@@ -8,11 +8,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
 )
 
-FEATURE_TYPES = [
-    FeatureType.USER,
-    FeatureType.SMS,
-    FeatureType.WEB_USER,
-]
+FEATURE_TYPES = list(dict(FeatureType.CHOICES))
 
 
 def ensure_plans(config, verbose, apps):
