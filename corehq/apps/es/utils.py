@@ -102,7 +102,7 @@ def check_task_progress(task_id, just_once=False):
             task_details = manager.get_task(task_id=task_id)
         except TaskMissing:
             if not just_once:
-                return  # task completed
+                return  # task completed ES 2
             raise CommandError(f"Task with id {task_id} not found")
         except TaskError as err:
             raise CommandError(f"Fetching task failed: {err}")
@@ -148,6 +148,8 @@ def check_task_progress(task_id, just_once=False):
                   f"(recent average = {_format_timedelta(remaining_time_relative)})")
         if just_once:
             return
+        if task_details.get("completed"):
+            return  # task completed ES 5
         time.sleep(TASK_POLL_DELAY)
 
 
