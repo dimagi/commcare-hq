@@ -250,6 +250,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             var self = this;
             $.unsubscribe([
                 'formplayer.' + constants.ANSWER,
+                'formplayer.' + constants.CLEAR_ANSWER,
                 'formplayer.' + constants.DELETE_REPEAT,
                 'formplayer.' + constants.NEW_REPEAT,
                 'formplayer.' + constants.EVALUATE_XPATH,
@@ -264,6 +265,9 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 self.submitForm(form);
             });
             $.subscribe('formplayer.' + constants.ANSWER, function (e, question) {
+                self.answerQuestion(question);
+            });
+            $.subscribe('formplayer.' + constants.CLEAR_ANSWER, function (e, question) {
                 self.answerQuestion(question);
             });
             $.subscribe('formplayer.' + constants.DELETE_REPEAT, function (e, group) {
@@ -321,7 +325,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         self.answerQuestion = function (q) {
             var self = this;
             var ix = formUI.getIx(q);
-            var answer = q.answer();
+            var answer = q.entry.xformAction == constants.CLEAR_ANSWER ? constants.NO_ANSWER : q.answer();
             var oneQuestionPerScreen = self.isOneQuestionPerScreen();
             var form = q.form();
 

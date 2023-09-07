@@ -892,6 +892,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
         self.file = ko.observable();
         self.extensionsMap = initialPageData.get("valid_multimedia_extensions_map");
+        self.onClear = function () {
+            self.file(null);
+            self.rawAnswer(constants.NO_ANSWER);
+            self.xformAction = constants.CLEAR_ANSWER;
+            self.question.onClear();
+            self.xformAction= constants.ANSWER_MEDIA;
+        };
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
