@@ -11,7 +11,7 @@ hqDefine("geospatial/js/geo_config", [
         'use strict';
         var self = {};
 
-        const gpsCaseProps = configData.get('gps_case_props');
+        const gpsCaseProps = configData.get('gps_case_props_deprecated_state');
         self.geoCasePropOptions = ko.observableArray(Object.keys(gpsCaseProps));
 
         var data = configData.get('config');

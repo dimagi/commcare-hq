@@ -140,7 +140,7 @@ class GeospatialConfigPage(BaseDomainView):
                 self.config,
                 fields=GeospatialConfigForm.Meta.fields
             ),
-            'gps_case_props': {
+            'gps_case_props_deprecated_state': {
                 prop.name: prop.deprecated for prop in gps_case_props
             }
         }

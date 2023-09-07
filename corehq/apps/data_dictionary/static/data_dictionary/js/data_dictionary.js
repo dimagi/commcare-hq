@@ -102,7 +102,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.fhirResourcePropPath = ko.observable(fhirResourcePropPath);
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
-        self.isGeoCaseProp = ko.observable(isGeoCaseProp);
+        self.isGeoCaseProp = isGeoCaseProp;
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
         let subTitle;
         if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
@@ -128,13 +128,16 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.deprecateProperty = function () {
-            if (!toggles.toggleEnabled('GEOSPATIAL') || !self.isGeoCaseProp()) {
+            if (toggles.toggleEnabled('GEOSPATIAL') && self.isGeoCaseProp) {
+                self.confirmGeospatialDeprecation();
+            } else {
                 self.deprecated(true);
-                return;
             }
+        };
 
+        self.confirmGeospatialDeprecation = function () {
             const $modal = $("#deprecate-geospatial-prop-modal").modal('show');
-            $("#deprecate-geospatial-prop-btn").on('click', function () {
+            $("#deprecate-geospatial-prop-btn").off('click').on('click', function () {
                 self.deprecated(true);
                 $modal.modal('hide');
             });
