@@ -7,6 +7,8 @@ hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
     'use strict';
     $(function () {
         let self = {};
+        console.log('test bootstrap');
+        console.log(bootstrap);
 
         self.$bugReportModalElement = $('#modalReportIssue');
         if (self.$bugReportModalElement.length === 0) {
