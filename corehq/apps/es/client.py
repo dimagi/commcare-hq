@@ -149,9 +149,15 @@ class ElasticManageAdapter(BaseAdapter):
         :returns: ``dict`` of task details
         :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)
         """
-        # NOTE: elasticsearch5 python library doesn't support `task_id` as a
-        # kwarg for the `tasks.list()` method, and uses `tasks.get()` for that
-        # instead.
+        if self.elastic_major_version == 5:
+            try:
+                task_details = self._es.tasks.get(task_id=task_id)
+                task_info = task_details['task']
+                task_info['completed'] = task_details['completed']
+            except NotFoundError as e:
+                # unknown task id provided
+                raise TaskMissing(e)
+            return task_info
         return self._parse_task_result(self._es.tasks.list(task_id=task_id,
                                                            detailed=True))
 
