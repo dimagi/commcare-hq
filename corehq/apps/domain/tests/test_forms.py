@@ -24,7 +24,8 @@ class PrivacySecurityFormTests(SimpleTestCase):
             'restrict_superusers',
             'secure_submissions',
             'allow_domain_requests',
-            'disable_mobile_login_lockout'
+            'disable_mobile_login_lockout',
+            'allow_invite_email_only'
         ])
 
     @patch.object(forms.HIPAA_COMPLIANCE_CHECKBOX, 'enabled', return_value=True)
