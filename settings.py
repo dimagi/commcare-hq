@@ -312,6 +312,7 @@ HQ_APPS = (
     'corehq.apps.groups',
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
+    'corehq.apps.email',
     'corehq.apps.events',
     'corehq.apps.geospatial',
     'corehq.apps.smsforms',
@@ -346,6 +347,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
     'corehq.messaging.smsbackends.airtel_tcl',
+    'corehq.messaging.emailbackends.aws',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.saved_reports',
@@ -1716,6 +1718,10 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
     'corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend',
+]
+
+EMAIL_SQL_BACKENDS = [
+    'corehq.messaging.emailbackends.aws.models.AWSBackend',
 ]
 
 # The number of seconds to use as a timeout when making gateway requests

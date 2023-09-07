@@ -2373,6 +2373,13 @@ TABLEAU_USER_SYNCING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
 )
 
+CUSTOM_EMAIL_GATEWAY = StaticToggle(
+    'custom_email_gateway',
+    'Allows user to define custom email gateway that can be used to send emails from HQ',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 
 def _handle_attendance_tracking_role(domain, is_enabled):
     from corehq.apps.accounting.utils import domain_has_privilege
