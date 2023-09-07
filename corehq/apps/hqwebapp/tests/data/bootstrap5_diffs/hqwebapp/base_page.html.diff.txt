@@ -6,3 +6,12 @@
  {% load hq_shared_tags %}
  
  {% block title %}{{ section.page_name }}{% if current_page.title %}: {{ current_page.title }}{% endif %}{% endblock %}
+@@ -21,7 +21,7 @@
+     {% endif %}
+   {% endblock page_breadcrumbs %}
+   <div class="container">
+-    <div class="page-header">
++    <div class="border-bottom pb-1 my-4">
+       <h1>{% block page_name %}{{ current_page.page_name }}{% endblock %}</h1>
+     </div>
+     {% block page_content %}
