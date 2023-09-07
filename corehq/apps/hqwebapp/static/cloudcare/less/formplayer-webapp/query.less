@@ -1,24 +1,19 @@
-.flex-container {
-  display: flex;
-  align-items: stretch;
-}
-
 .full-width {
   width: 100%;
 }
 
-.flex-child {
-  flex: 1;
-  min-width: 200px;
-  &:empty {
-    display: none;
-  }
+.sidebar-push {
+  margin-left: 310px;
 }
 
-.flex-child-sidebar {
-  max-width: 400px;
+#sidebar-region {
+  background: transparent;
+  width: 300px;
+  position: absolute;
+
   table {
     table-layout: fixed;
+    background: white;
   }
   .query-input-group {
     margin-right: 8px;
@@ -40,17 +35,6 @@
   .select2-container .select2-selection--multiple {
     min-height: inherit;
   }
-}
-
-#sidebar-region {
-  background: transparent;
-  table {
-    background: white;
-  }
-}
-
-.flex-child-menu {
-  flex: 2;
 }
 
 .query-field > .checkbox {
