@@ -187,7 +187,7 @@ class GPSCaptureView(BaseDomainView):
     urlname = 'gps_capture'
     template_name = 'gps_capture.html'
 
-    page_name = _("GPS Capture")
+    page_name = _("Manage GPS Data")
     section_name = _("Geospatial")
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
