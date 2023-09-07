@@ -110,7 +110,9 @@ class ElasticManageAdapter(BaseAdapter):
         :returns: ``dict`` with format ``{<alias>: [<index>, ...], ...}``
         """
         aliases = {}
-        for index, alias_info in self._es.indices.get_aliases().items():
+        aliases_obj = (self._es.indices.get_aliases()
+                       if self.elastic_major_version == 2 else self._es.indices.get_alias())
+        for index, alias_info in aliases_obj.items():
             for alias in alias_info.get("aliases", {}):
                 aliases.setdefault(alias, []).append(index)
         return aliases
