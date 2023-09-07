@@ -1,7 +1,6 @@
 import copy
 import re
 
-from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.layout import Div
@@ -11,12 +10,10 @@ from django.forms.forms import Form
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_noop
 
-from corehq import toggles
 from corehq.apps.email.models import SQLEmailSMTPBackend
 from corehq.apps.email.util import get_email_backend_classes
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
-from corehq.apps.sms.util import is_superuser_or_contractor
 from corehq.apps.userreports.exceptions import ValidationError
 from corehq.apps.users.models import CouchUser
 
@@ -35,16 +32,7 @@ class InitiateAddEmailBackendForm(Form):
         domain = kwargs.pop('domain', None)
         super(InitiateAddEmailBackendForm, self).__init__(*args, **kwargs)
 
-        from corehq.messaging.smsbackends.telerivet.models import (
-            SQLTelerivetBackend,
-        )
-        backend_classes = self.backend_classes_for_domain(domain)
-
         backend_choices = []
-        for api_id, klass in backend_classes.items():
-            if is_superuser_or_contractor(user) or api_id == SQLTelerivetBackend.get_api_id():
-                friendly_name = klass.get_generic_name()
-                backend_choices.append((api_id, friendly_name))
         backend_choices = sorted(backend_choices, key=lambda backend: backend[1])
         self.fields['hq_api_id'].choices = backend_choices
 

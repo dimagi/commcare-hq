@@ -1,12 +1,9 @@
 from django.conf.urls import re_path as url
 
 from corehq.apps.email.views import DomainEmailGatewayListView, AddDomainEmailGatewayView, EditDomainEmailGatewayView
-from corehq.apps.sms.views import (
-    default,
-)
+
 
 urlpatterns = [
-    url(r'^$', default, name='email_default'),
     url(r'^add_gateway/(?P<hq_api_id>[\w-]+)/$',
         AddDomainEmailGatewayView.as_view(), name=AddDomainEmailGatewayView.urlname
         ),
