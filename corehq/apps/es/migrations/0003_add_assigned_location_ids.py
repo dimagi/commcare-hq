@@ -11,13 +11,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        corehq.apps.es.migration_operations.UpdateIndexMapping(
-            name='hqusers_2017-09-07',
-            type_='user',
-            properties={
-                'assigned_location_ids': {'type': 'string'},
-                'domain_memberships': {'properties': {'assigned_location_ids': {'type': 'string'}}},
-                'domain_membership': {'properties': {'assigned_location_ids': {'type': 'string'}}},
-            },
-        ),
+        migrations.RunPython(migrations.RunPython.noop)
     ]
