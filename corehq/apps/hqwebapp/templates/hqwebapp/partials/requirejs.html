@@ -6,6 +6,7 @@
   // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
   window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
   window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
+  window.IS_LOCAL_REQUIREJS_ES6 = {{ is_local_requirejs_es6|BOOL }};
 </script>
 
 {% if requirejs_main %}
@@ -23,11 +24,10 @@
       deps: [
           'knockout',
           'ko.mapping',
-          {% if use_bootstrap5 %}'es6!bootstrap5_loader'{% else %}'bootstrap'{% endif %},
+          {% if use_bootstrap5 %}'hqwebapp/js/bootstrap5_loader'{% else %}'bootstrap'{% endif %},
       ],
-      callback: function (ko, mapping{% if use_bootstrap5 %}, bootstrap5{% endif %}) {
+      callback: function (ko, mapping) {
         ko.mapping = mapping;
-        {% if use_bootstrap5 %}window.bootstrap5 = bootstrap5;{% endif %}
       }
     });
     requirejs([
