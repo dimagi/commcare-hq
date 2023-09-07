@@ -387,6 +387,7 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.is_sso = kwargs.pop('is_sso', False)
+        self.allow_invite_email_only = kwargs.pop('allow_invite_email_only', False)
         super().__init__(*args, **kwargs)
 
         if settings.ENFORCE_SSO_LOGIN and self.is_sso:
@@ -446,8 +447,8 @@ class WebUserInvitationForm(BaseUserInvitationForm):
         else:
             # web users login with their emails
             self.fields['email'].help_text = _('You will use this email to log in.')
-            # TODO: only if domain property is set
-            self.fields['email'].readonly = True
+            if self.allow_invite_email_only:
+                self.fields['email'].widget.attrs['readonly'] = 'readonly'
 
     def clean_email(self):
         data = super().clean_email()

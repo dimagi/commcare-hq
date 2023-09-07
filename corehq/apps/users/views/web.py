@@ -144,12 +144,18 @@ class UserInvitationView(object):
                 })
                 return render(request, self.template, context)
         else:
+            domain_obj = Domain.get_by_name(invitation.domain)
+            allow_invite_email_only = domain_obj and domain_obj.allow_invite_email_only
+
             idp = None
             if settings.ENFORCE_SSO_LOGIN:
                 idp = IdentityProvider.get_required_identity_provider(invitation.email)
 
             if request.method == "POST":
-                form = WebUserInvitationForm(request.POST, is_sso=idp is not None)
+                form = WebUserInvitationForm(
+                    request.POST,
+                    is_sso=idp is not None,
+                    allow_invite_email_only=allow_invite_email_only)
                 if form.is_valid():
                     # create the new user
                     invited_by_user = CouchUser.get_by_user_id(invitation.invited_by)
@@ -158,10 +164,10 @@ class UserInvitationView(object):
                         signup_request = AsyncSignupRequest.create_from_invitation(invitation)
                         return HttpResponseRedirect(idp.get_login_url(signup_request.username))
 
-                    # TODO: only if domain property is set
-                    if request.POST.get("email").lower() != invitation.email.lower():
-                        messages.error(request, _("You can only accept the invitation with the same email "
-                                                  "address."))
+                    if allow_invite_email_only and \
+                            request.POST.get("email").lower() != invitation.email.lower():
+                        messages.error(request, _("You can only sign up with the email "
+                                                  "address your invitation was send to."))
                         return HttpResponseRedirect(reverse("login"))
 
                     user = activate_new_user_via_reg_form(
@@ -205,6 +211,7 @@ class UserInvitationView(object):
                         'email': invitation.email,
                     },
                     is_sso=idp is not None,
+                    allow_invite_email_only=allow_invite_email_only
                 )
 
             context.update({
