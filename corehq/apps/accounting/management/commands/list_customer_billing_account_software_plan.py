@@ -21,7 +21,8 @@ class Command(BaseCommand):
                                  "type 'ALL' for all customer billing account, "
                                  "type 'DONE' when finished:\n")
             if account_name.upper() == 'ALL':
-                customer_billing_accounts = ['ALL']
+                customer_billing_accounts = BillingAccount.objects.filter(
+                    is_customer_billing_account=True, is_active=True)
                 break
             elif account_name.upper() == 'DONE':
                 break
@@ -33,10 +34,6 @@ class Command(BaseCommand):
                     print(f"Customer billing account {account_name} does not exist")
                 else:
                     customer_billing_accounts.append(account)
-
-        if 'ALL' in customer_billing_accounts:
-            customer_billing_accounts = BillingAccount.objects.filter(
-                is_customer_billing_account=True, is_active=True)
 
         file_path = "/tmp/customer_billing_plans.csv"
         with open(file_path, 'w', newline='') as csvfile:
