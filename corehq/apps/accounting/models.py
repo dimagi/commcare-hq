@@ -2004,6 +2004,8 @@ class InvoiceBase(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
 
+    note = models.TextField(null=True)
+
     objects = InvoiceBaseManager()
     api_objects = Manager()
 
