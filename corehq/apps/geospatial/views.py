@@ -19,7 +19,7 @@ from dimagi.utils.couch.bulk import get_docs
 
 from corehq import toggles
 from corehq.apps.es import CaseSearchES, UserES
-from corehq.apps.es.case_search import case_property_missing, case_property_query
+from corehq.apps.es.users import missing_metadata_property, missing_metadata_value
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.form_processor.models import CommCareCase
@@ -249,23 +249,20 @@ def _get_paginated_cases_without_gps(domain, page, limit, query):
         CaseSearchES()
         .domain(domain)
         .is_closed(False)
+        .case_property_missing(location_prop_name)
         .search_string_query(query, ['name'])
-        .OR(
-            case_property_missing(location_prop_name),
-            case_property_query(location_prop_name, ""),
-        )
         .sort('server_modified_on', desc=True)
     ).get_ids()
 
     paginator = Paginator(case_ids, limit)
     case_ids_page = list(paginator.get_page(page))
     cases = CommCareCase.objects.get_cases(case_ids_page, domain, ordered=True)
-    case_data = []
-    for c in cases:
-        case_data.append({
-            'id': c.case_id,
-            'name': c.name,
-        })
+    case_data = [
+        {
+            'id': case_obj.case_id,
+            'name': case_obj.name,
+        } for case_obj in cases
+    ]
     return {
         'items': case_data,
         'total': paginator.count,
@@ -278,6 +275,10 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
         UserES()
         .domain(domain)
         .mobile_users()
+        .OR(
+            missing_metadata_property(location_prop_name),
+            missing_metadata_value(location_prop_name)
+        )
         .search_string_query(query, ['username'])
         .sort('created_on', desc=True)
     )
@@ -285,20 +286,13 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
     paginator = Paginator(query.get_ids(), limit)
     user_ids_page = list(paginator.get_page(page))
     user_docs = get_docs(CommCareUser.get_db(), keys=user_ids_page)
-    user_data = []
-    skipped_count = 0
-    for user_doc in user_docs:
-        if (
-            location_prop_name in user_doc['user_data']
-            and user_doc['user_data'][location_prop_name] != ''
-        ):
-            skipped_count += 1
-            continue
-        user_data.append({
+    user_data = [
+        {
             'id': user_doc['_id'],
-            'name': user_doc['username'].split("@")[0],
-        })
+            'name': user_doc['username'].split('@')[0],
+        } for user_doc in user_docs
+    ]
     return {
         'items': user_data,
-        'total': paginator.count - skipped_count,
+        'total': paginator.count,
     }
