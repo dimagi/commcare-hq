@@ -6,22 +6,22 @@ from django.utils.translation import gettext_noop, gettext_lazy
 from memoized import memoized
 
 from corehq import toggles
-from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.models import cached_property
+from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.email.forms import InitiateAddEmailBackendForm
 from corehq.apps.email.models import SQLEmailSMTPBackend
 from corehq.apps.email.util import get_email_backend_classes
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.sms.util import is_superuser_or_contractor
+
+
+@login_and_domain_required
+def default(request, domain):
+    from corehq.messaging.scheduling.views import MessagingDashboardView
+    return HttpResponseRedirect(reverse(MessagingDashboardView.urlname, args=[domain]))
 
 
 class BaseMessagingSectionView(BaseDomainView):
-    section_name = gettext_noop("Messaging")
-
-    @cached_property
-    def is_system_admin(self):
-        return is_superuser_or_contractor(self.request.couch_user)
+    section_name = gettext_noop("Email")
 
     def dispatch(self, request, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
@@ -31,6 +31,7 @@ class BaseMessagingSectionView(BaseDomainView):
         return reverse("email_default", args=[self.domain])
 
 
+@method_decorator(domain_admin_required, name='dispatch')
 @method_decorator(toggles.CUSTOM_EMAIL_GATEWAY.required_decorator(), name='dispatch')
 class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
     template_name = "email/gateway_list.html"
@@ -65,12 +66,7 @@ class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionVie
         context = self.pagination_context
 
         context.update({
-            'initiate_new_form': InitiateAddEmailBackendForm(
-                user=self.request.couch_user,
-                domain=self.domain
-            ),
-            'extra_backend_mappings': {},
-            'is_system_admin': self.is_system_admin,
+            'initiate_new_form': InitiateAddEmailBackendForm(),
         })
         return context
 
@@ -122,7 +118,8 @@ class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionVie
             'deleteModalId': 'delete_%s' % backend.pk,
         }
 
-    def _get_backend_from_item_id(self, item_id):
+    @staticmethod
+    def _get_backend_from_item_id(item_id):
         try:
             item_id = int(item_id)
             backend = SQLEmailSMTPBackend.load(item_id)
@@ -131,7 +128,7 @@ class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionVie
             raise Http404()
 
     def get_deleted_item_data(self, item_id):
-        item_id, backend = self._get_backend_from_item_id(item_id)
+        item_id, backend = DomainEmailGatewayListView._get_backend_from_item_id(item_id)
 
         if backend.domain != self.domain:
             raise Http404()
@@ -144,7 +141,7 @@ class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionVie
         }
 
     def refresh_item(self, item_id):
-        item_id, backend = self._get_backend_from_item_id(item_id)
+        item_id, backend = DomainEmailGatewayListView._get_backend_from_item_id(item_id)
 
         if not backend.domain_is_authorized(self.domain):
             raise Http404()
@@ -172,8 +169,9 @@ class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionVie
 
 
 @method_decorator(toggles.CUSTOM_EMAIL_GATEWAY.required_decorator(), name='dispatch')
+@method_decorator(domain_admin_required, name='dispatch')
 class AddDomainEmailGatewayView(BaseMessagingSectionView):
-    urlname = 'add_domain_gateway'
+    urlname = 'add_domain_email_gateway'
     template_name = 'email/add_gateway.html'
     page_title = gettext_lazy("Add Email Gateway")
 
@@ -268,9 +266,10 @@ class AddDomainEmailGatewayView(BaseMessagingSectionView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(domain_admin_required, name='dispatch')
 @method_decorator(toggles.CUSTOM_EMAIL_GATEWAY.required_decorator(), name='dispatch')
 class EditDomainEmailGatewayView(AddDomainEmailGatewayView):
-    urlname = 'edit_domain_gateway'
+    urlname = 'edit_domain_email_gateway'
     page_title = gettext_lazy("Edit Email Gateway")
 
     @property
