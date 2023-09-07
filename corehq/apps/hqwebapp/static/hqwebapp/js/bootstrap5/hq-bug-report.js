@@ -1,6 +1,6 @@
 hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
     "jquery",
-    "es6!hqwebapp/js/bootstrap5_loader",
+    "hqwebapp/js/bootstrap5_loader",
     "jquery-form/dist/jquery.form.min",
     "hqwebapp/js/bootstrap5/hq.helpers",
 ], function ($, bootstrap) {
