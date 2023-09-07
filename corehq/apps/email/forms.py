@@ -1,7 +1,6 @@
 import copy
 import re
 
-from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.layout import Div
@@ -11,12 +10,10 @@ from django.forms.forms import Form
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_noop
 
-from corehq import toggles
 from corehq.apps.email.models import SQLEmailSMTPBackend
 from corehq.apps.email.util import get_email_backend_classes
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
-from corehq.apps.sms.util import is_superuser_or_contractor
 from corehq.apps.userreports.exceptions import ValidationError
 from corehq.apps.users.models import CouchUser
 
@@ -31,20 +28,16 @@ class InitiateAddEmailBackendForm(Form):
         label="Gateway Type",
     )
 
-    def __init__(self, user: CouchUser, *args, **kwargs):
-        domain = kwargs.pop('domain', None)
+    def __init__(self, *args, **kwargs):
         super(InitiateAddEmailBackendForm, self).__init__(*args, **kwargs)
 
-        from corehq.messaging.smsbackends.telerivet.models import (
-            SQLTelerivetBackend,
-        )
-        backend_classes = self.backend_classes_for_domain(domain)
+        backend_classes = InitiateAddEmailBackendForm.email_backend_classes()
 
         backend_choices = []
         for api_id, klass in backend_classes.items():
-            if is_superuser_or_contractor(user) or api_id == SQLTelerivetBackend.get_api_id():
-                friendly_name = klass.get_generic_name()
-                backend_choices.append((api_id, friendly_name))
+            friendly_name = klass.get_generic_name()
+            backend_choices.append((api_id, friendly_name))
+
         backend_choices = sorted(backend_choices, key=lambda backend: backend[1])
         self.fields['hq_api_id'].choices = backend_choices
 
@@ -63,7 +56,8 @@ class InitiateAddEmailBackendForm(Form):
             ),
         )
 
-    def backend_classes_for_domain(self, domain):
+    @staticmethod
+    def email_backend_classes():
         backends = copy.deepcopy(get_email_backend_classes())
         return backends
 
@@ -91,6 +85,7 @@ class BackendForm(Form):
     password = CharField(
         label=gettext_noop("Password"),
         required=True,
+        widget=forms.PasswordInput(),
     )
     server = CharField(
         label=gettext_noop("Server"),
@@ -128,16 +123,6 @@ class BackendForm(Form):
                 *self.general_fields
             ),
             self.gateway_specific_fields,
-            # crispy.Fieldset(
-            #     _("Phone Numbers"),
-            #     crispy.Div(
-            #         data_bind="template: {"
-            #                   " name: 'ko-load-balancing-template', "
-            #                   " data: $data"
-            #                   "}",
-            #     ),
-            #     data_bind="visible: use_load_balancing",
-            # ),
             hqcrispy.FormActions(
                 StrictButton(
                     button_text,
@@ -177,38 +162,3 @@ class BackendForm(Form):
             raise ValidationError(_("Name is already in use."))
 
         return value
-
-    def clean_authorized_domains(self):
-        if not self.cleaned_data.get("give_other_domains_access"):
-            return []
-        else:
-            value = self.cleaned_data.get("authorized_domains")
-            if value is None or value.strip() == "":
-                return []
-            else:
-                return [domain.strip() for domain in value.split(",")]
-
-    def clean_opt_out_keywords(self):
-        keywords = self.cleaned_data.get('opt_out_keywords')
-        if not keywords:
-            return []
-        else:
-            return [kw.strip().upper() for kw in keywords.split(',')]
-
-    def clean_opt_in_keywords(self):
-        keywords = self.cleaned_data.get('opt_in_keywords')
-        if not keywords:
-            return []
-        else:
-            return [kw.strip().upper() for kw in keywords.split(',')]
-
-    def clean_reply_to_phone_number(self):
-        value = self.cleaned_data.get("reply_to_phone_number")
-        if value is None:
-            return None
-        else:
-            value = value.strip()
-            if value == "":
-                return None
-            else:
-                return value

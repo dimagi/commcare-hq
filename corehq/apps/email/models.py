@@ -89,7 +89,6 @@ class SQLEmailSMTPBackend(models.Model):
             is_default=True,
         ).values_list(flat=True)
 
-
         if len(result) > 1:
             raise cls.MultipleObjectsReturned(
                 "More than one default backend found for "
@@ -98,18 +97,17 @@ class SQLEmailSMTPBackend(models.Model):
         elif len(result) == 1:
             if id_only:
                 return result[0]
-            else:
-                return cls.load(result[0])
-        else:
-            return None
+            return cls.load(result[0])
+        return None
 
     @staticmethod
     def set_to_domain_default_backend(existing_default_backend, current_backend):
-        if existing_default_backend:
+        if existing_default_backend and current_backend:
             existing_default_backend.is_default = False
             existing_default_backend.save()
-        current_backend.is_default = True
-        current_backend.save()
+
+            current_backend.is_default = True
+            current_backend.save()
 
     @staticmethod
     def unset_domain_default_backend(existing_default_backend):
@@ -132,8 +130,8 @@ class SQLEmailSMTPBackend(models.Model):
     @quickcache(['backend_id'], timeout=5 * 60)
     def load(cls, backend_id, api_id=None):
         """
-        backend_id - the pk of the SQLMobileBackend to load
-        api_id - if you know the hq_api_id of the SQLMobileBackend, pass it
+        backend_id - the pk of the SQLEmailSMTPBackend to load
+        api_id - if you know the hq_api_id of the SQLEmailSNTPBackend, pass it
                  here for a faster lookup; otherwise, it will be looked up
                  automatically
         """
@@ -145,23 +143,11 @@ class SQLEmailSMTPBackend(models.Model):
                                           "backend '%s'" % (api_id, backend_id))
 
         klass = backend_classes[api_id]
-
         result = klass.objects
-
         return result.get(pk=backend_id)
 
     @classmethod
     def get_backend_from_id_and_api_id_result(cls, result):
         if len(result) > 0:
             return cls.load(result[0]['id'], api_id=result[0]['hq_api_id'])
-
         return None
-
-    def save(self, *args, **kwargs):
-        # self.__clear_caches()
-        return super(SQLEmailSMTPBackend, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        # self.__clear_caches()
-        # self.__clear_shared_domain_cache([])
-        return super(SQLEmailSMTPBackend, self).delete(*args, **kwargs)
