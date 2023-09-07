@@ -139,6 +139,7 @@ class StaticChoiceProvider(ChoiceProvider):
     def default_value(self, user):
         return None
 
+
 class ChainableChoiceProvider(ChoiceProvider, metaclass=ABCMeta):
     @abstractmethod
     def query(self, query_context):
@@ -343,6 +344,14 @@ class LocationChoiceProvider(ChainableChoiceProvider):
             else:
                 return loc.display_name
         return [Choice(loc.location_id, display(loc)) for loc in locations]
+
+    def get_sorted_choices_for_values(self, choices, user):
+        locations = SQLLocation.objects if self.show_all_locations else SQLLocation.active_objects
+        accessible_locations = (locations.accessible_to_user(self.domain, user)
+                                .filter(domain=self.domain)
+                                .values_list("location_id", flat=True))
+        accessible_choices = [c for c in choices if c in accessible_locations]
+        return super(LocationChoiceProvider, self).get_sorted_choices_for_values(accessible_choices, user)
 
 
 class UserChoiceProvider(ChainableChoiceProvider):
