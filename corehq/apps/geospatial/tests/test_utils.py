@@ -12,8 +12,8 @@ from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.geospatial.utils import (
     get_geo_case_property,
     get_geo_user_property,
-    process_gps_values_for_cases,
-    process_gps_values_for_users,
+    process_gps_values_for_case,
+    process_gps_values_for_user,
 )
 from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
 
@@ -56,86 +56,46 @@ class TestProcessGPSValues(TestCase):
 
         case_type = 'foobar'
 
-        cls.case_a = create_case(
+        cls.case_obj = create_case(
             cls.DOMAIN,
             case_id=uuid4().hex,
             case_type=case_type,
             name='CaseA',
             save=True,
         )
-        cls.case_b = create_case(
-            cls.DOMAIN,
-            case_id=uuid4().hex,
-            case_type=case_type,
-            name='CaseB',
-            save=True,
-        )
-        case_search_adapter.bulk_index([
-            cls.case_a,
-            cls.case_b,
-        ], refresh=True)
+        case_search_adapter.bulk_index([cls.case_obj], refresh=True)
 
-        cls.user_a = CommCareUser.create(
+        cls.user = CommCareUser.create(
             cls.DOMAIN, 'UserA', '1234', None, None
         )
-        cls.user_b = CommCareUser.create(
-            cls.DOMAIN, 'UserB', '1234', None, None
-        )
-
-        cls.user_submit_data = [
-            {
-                'id': cls.user_a.user_id,
-                'name': cls.user_a.username,
-                'lat': '1.23',
-                'lon': '4.56',
-            },
-            {
-                'id': cls.user_b.user_id,
-                'name': cls.user_b.username,
-                'lat': '1.23',
-                'lon': '',
-            },
-        ]
 
     @classmethod
     def tearDownClass(cls):
         CommCareCase.objects.hard_delete_cases(cls.DOMAIN, [
-            cls.case_a.case_id,
-            cls.case_b.case_id,
+            cls.case_obj.case_id,
         ])
-        cls.user_a.delete(cls.DOMAIN, None)
-        cls.user_b.delete(cls.DOMAIN, None)
+        cls.user.delete(cls.DOMAIN, None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
     def test_process_gps_values_for_cases(self):
-        submit_data = [
-            {
-                'id': self.case_a.case_id,
-                'name': self.case_a.name,
-                'lat': '1.23',
-                'lon': '4.56',
-            },
-            {
-                'id': self.case_b.case_id,
-                'name': self.case_b.name,
-                'lat': '1.23',
-                'lon': '',
-            },
-        ]
-
-        process_gps_values_for_cases(self.DOMAIN, submit_data)
-        cases = CommCareCase.objects.get_cases(
-            [self.case_a.case_id, self.case_b.case_id],
-            domain=self.DOMAIN,
-            ordered=True,
-        )
-        self.assertEqual(cases[0].case_json[GEO_POINT_CASE_PROPERTY], '1.23 4.56')
-        self.assertFalse(GEO_POINT_CASE_PROPERTY in cases[1].case_json)
+        submit_data = {
+            'id': self.case_obj.case_id,
+            'name': self.case_obj.name,
+            'lat': '1.23',
+            'lon': '4.56',
+        }
+        process_gps_values_for_case(self.DOMAIN, submit_data)
+        case_obj = CommCareCase.objects.get_case(self.case_obj.case_id, self.DOMAIN)
+        self.assertEqual(case_obj.case_json[GEO_POINT_CASE_PROPERTY], '1.23 4.56')
 
     def test_process_gps_values_for_users(self):
-        process_gps_values_for_users(self.DOMAIN, self.user_submit_data)
-        user_with_gps_data = CommCareUser.get_by_user_id(self.user_a.user_id, self.DOMAIN)
-        self.assertEqual(user_with_gps_data.metadata[GEO_POINT_CASE_PROPERTY], '1.23 4.56')
-        user_no_gps_data = CommCareUser.get_by_user_id(self.user_b.user_id, self.DOMAIN)
-        self.assertFalse(GEO_POINT_CASE_PROPERTY in user_no_gps_data.metadata)
+        submit_data = {
+            'id': self.user.user_id,
+            'name': self.user.username,
+            'lat': '1.23',
+            'lon': '4.56',
+        }
+        process_gps_values_for_user(self.DOMAIN, submit_data)
+        user = CommCareUser.get_by_user_id(self.user.user_id, self.DOMAIN)
+        self.assertEqual(user.metadata[GEO_POINT_CASE_PROPERTY], '1.23 4.56')
