@@ -30,7 +30,6 @@ class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, Repo
     def _db_columns(self):
         return [c for conf in self.column_configs for c in conf.columns]
 
-    @memoized
     @method_decorator(catch_and_raise_exceptions)
     def get_data(self, start=None, limit=None):
         ret = self._provider.get_data(start, limit)
