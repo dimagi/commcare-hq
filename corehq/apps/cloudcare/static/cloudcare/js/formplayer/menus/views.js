@@ -428,7 +428,26 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         events: CaseListViewEvents(),
 
         handleSmallScreenChange: function (enabled) {
-            this.smallScreenEnabled = enabled;
+            const self = this;
+            self.smallScreenEnabled = enabled;
+            if (self.options.sidebarEnabled) {
+                self.positionStickyItems(enabled);
+            }
+        },
+
+        positionStickyItems: function (smallScreenEnabled) {
+            const $caseListHeader = $('#case-list-menu-header');
+            const $caseListMap = $('#module-case-list-map');
+            const stickyHeaderId = 'small-screen-sticky-header';
+            if (smallScreenEnabled) {
+                $caseListHeader.wrap(`<div class="sticky sticky-header" id="${stickyHeaderId}"></div>`);
+                $caseListMap.appendTo($(`#${stickyHeaderId}`));
+            } else {
+                if ($caseListHeader.parent()[0] === $(`#${stickyHeaderId}`)[0]) {
+                    $caseListHeader.unwrap();
+                }
+                $caseListMap.prependTo($('#module-case-list-container__results-container'));
+            }
         },
 
         caseListAction: function (e) {
@@ -654,6 +673,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (self.showMap) {
                 self.loadMap();
             }
+            self.handleSmallScreenChange(self.smallScreenEnabled);
         },
 
         templateContext: function () {
@@ -844,7 +864,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (this.options.isMultiSelect) {
                 this.reconcileMultiSelectUI();
             }
-            this.handleSmallScreenChange(this.smallScreenEnabled);
         },
 
         onDestroy: function () {

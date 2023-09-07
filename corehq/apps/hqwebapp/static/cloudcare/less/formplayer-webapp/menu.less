@@ -2,10 +2,15 @@
   background: transparent;
 }
 
-.sticky-map {
-  position: sticky !important; // Has to be important so the leaflet code does not set it to relative
-  top: 46px; // based on the height of the crumbs bar
-  z-index: 1; // keep map on top of case list
+.sticky {
+  position: sticky !important;
+  z-index: 1; // keep sticky elements on top of case list
+  &-header {
+    top: 32px; // header scrolls excess padding under breadcrumbs
+  }
+  &-map {
+    top: 46px; // map sits directly against breadcrumbs
+  }
 }
 
 // override leaflet-fullscreen styles to fix icon alignment in mapbox.js
