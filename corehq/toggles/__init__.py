@@ -1037,6 +1037,7 @@ DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
     TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
     namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
 )
 
 SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
@@ -1046,7 +1047,7 @@ SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
     TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
     namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM, DYNAMICALLY_UPDATE_SEARCH_RESULTS]
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
