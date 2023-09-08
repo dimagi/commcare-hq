@@ -1,4 +1,5 @@
 import json
+from jsonobject.exceptions import BadValueError
 import jsonschema
 from requests.exceptions import HTTPError
 
@@ -16,6 +17,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 from dimagi.utils.web import json_response
 from dimagi.utils.couch.bulk import get_docs
+from couchforms.geopoint import GeoPoint
 
 from corehq import toggles
 from corehq.apps.es import CaseSearchES, UserES
@@ -257,12 +259,12 @@ def _get_paginated_cases_without_gps(domain, page, limit, query):
     cases = CommCareCase.objects.get_cases(case_ids_page, domain, ordered=True)
     case_data = []
     for case_obj in cases:
-        lat, lon = ('', '')
-        if location_prop_name in case_obj.case_json:
+        try:
             gps_location_prop = case_obj.case_json[location_prop_name]
-            gps_data = gps_location_prop.split(' ')
-            if len(gps_data) > 1:
-                lat, lon = (gps_data[0], gps_data[1])
+            geo_point = GeoPoint.from_string(gps_location_prop, flexible=True)
+            lat, lon = (str(geo_point.latitude), str(geo_point.longitude))
+        except (KeyError, BadValueError):
+            lat, lon = ('', '')
         case_data.append(
             {
                 'id': case_obj.case_id,
@@ -293,12 +295,12 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
     user_docs = get_docs(CommCareUser.get_db(), keys=user_ids_page)
     user_data = []
     for user_doc in user_docs:
-        lat, lon = ('', '')
-        if location_prop_name in user_doc['user_data']:
+        try:
             gps_location_prop = user_doc['user_data'][location_prop_name]
-            gps_data = gps_location_prop.split(' ')
-            if len(gps_data) > 1:
-                lat, lon = (gps_data[0], gps_data[1])
+            geo_point = GeoPoint.from_string(gps_location_prop, flexible=True)
+            lat, lon = (str(geo_point.latitude), str(geo_point.longitude))
+        except (KeyError, BadValueError):
+            lat, lon = ('', '')
         user_data.append(
             {
                 'id': user_doc['_id'],
