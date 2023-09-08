@@ -66,7 +66,7 @@ def flatten_field_dict(results, fields_property='fields'):
     field_dict = results.get(fields_property, {})
     for key, val in field_dict.items():
         new_val = val
-        if type(val) == list and len(val) == 1:
+        if type(val) is list and len(val) == 1:
             new_val = val[0]
         field_dict[key] = new_val
     return field_dict
