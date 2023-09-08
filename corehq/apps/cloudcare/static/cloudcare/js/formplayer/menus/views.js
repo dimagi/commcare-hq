@@ -370,6 +370,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             columnHeader: '.header-clickable',
             paginationGoText: '#goText',
             casesPerPageLimit: '.per-page-limit',
+            searchMoreButton: '#search-more',
         };
     };
 
@@ -380,6 +381,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.paginators': 'paginateAction',
             'click @ui.paginationGoButton': 'paginationGoAction',
             'click @ui.columnHeader': 'columnSortAction',
+            'click @ui.searchMoreButton': 'searchMoreAction',
             'keypress @ui.columnHeader': 'columnSortAction',
             'change @ui.casesPerPageLimit': 'onPerPageLimitChange',
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
@@ -464,6 +466,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             e.preventDefault();
             const searchText = $('#searchText').val();
             FormplayerFrontend.trigger("menu:search", searchText);
+        },
+
+        searchMoreAction: function () {
+            if (!$('#sidebar-region').hasClass('in')) {
+                $([document.documentElement, document.body]).animate({
+                    scrollTop: $('#content-container').offset().top - constants.BREADCRUMB_HEIGHT_PX,
+                }, 350);
+            }
         },
 
         searchTextKeyAction: function (event) {
@@ -582,7 +592,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 if ($stickyHeader[0]) {
                     scrollTopOffset = parseInt($stickyHeader.css('top')) + $stickyHeader.outerHeight();
                 } else if (addressMap.isFullscreen()) {
-                    scrollTopOffset = $('#breadcrumb-region').outerHeight();
+                    scrollTopOffset = constants.BREADCRUMB_HEIGHT_PX;
                 } else {
                     scrollTopOffset += $mapEl.outerHeight();
                 }
