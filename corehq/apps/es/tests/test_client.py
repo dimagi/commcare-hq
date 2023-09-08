@@ -292,7 +292,10 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
     def test_get_task(self):
         with self._mock_single_task_response() as (task_id, patched):
             task = self.adapter.get_task(task_id)
-            patched.assert_called_once_with(task_id=task_id, detailed=True)
+            if self.adapter.elastic_major_version == 2:
+                patched.assert_called_once_with(task_id=task_id, detailed=True)
+            else:
+                patched.assert_called_once_with(task_id=task_id)
             self.assertIn("running_time_in_nanos", task)
 
     def test_cancel_task_with_invalid_task_id(self):
@@ -366,12 +369,22 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         parsed = self.adapter._parse_task_result(response, _return_one=False)
         task_id = list(parsed)[0]  # get the first task_id
         # prune the response of all tasks but one
+        es5_response = {
+            'task': {},
+            'completed': True
+        }
         for node_name, info in response["nodes"].items():
             for t_id in list(info["tasks"]):
                 if t_id != task_id:
                     info["tasks"].pop(t_id)
-        with patch.object(self.adapter._es.tasks, "list", return_value=response) as patched:
-            yield task_id, patched
+                else:
+                    es5_response['task'] = info['tasks'][t_id]
+        if self.adapter.elastic_major_version == 2:
+            with patch.object(self.adapter._es.tasks, "list", return_value=response) as patched:
+                yield task_id, patched
+        else:
+            with patch.object(self.adapter._es.tasks, "get", return_value=es5_response) as patched:
+                yield task_id, patched
 
     def test_get_task_missing(self):
         node_name = list(self.adapter._es.nodes.info()["nodes"])[0]
