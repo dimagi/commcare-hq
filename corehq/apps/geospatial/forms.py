@@ -48,7 +48,9 @@ class GeospatialConfigForm(forms.ModelForm):
                     ),
                     crispy.Field(
                         'case_location_property_name',
-                        data_bind="options: geoCasePropOptions, value: geoCasePropertyName"
+                        data_bind="options: geoCasePropOptions, "
+                                  "value: geoCasePropertyName, "
+                                  "event: {change: onGeoCasePropChange}"
                     ),
                     crispy.Div(
                         crispy.HTML('%s' % _(
@@ -57,6 +59,18 @@ class GeospatialConfigForm(forms.ModelForm):
                         ),
                         css_class='alert alert-warning',
                         data_bind="visible: isCasePropDeprecated"
+                    ),
+                    crispy.Div(
+                        crispy.HTML('%s' % _(
+                            'The currently used "{{ config.case_location_property_name }}" case '
+                            'property may be associated with cases. Selecting a new case '
+                            'property will have the following effects:'
+                            '<ul><li>All cases using the old case property will no longer appear in maps.</li>'
+                            '<li>If the old case property is being used in an application, the application will '
+                            'need to be updated with the new case property.</li></ul>')
+                        ),
+                        css_class='alert alert-warning',
+                        data_bind="visible: hasGeoCasePropChanged"
                     ),
                 ),
                 hqcrispy.FormActions(

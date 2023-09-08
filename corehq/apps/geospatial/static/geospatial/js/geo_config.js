@@ -18,6 +18,16 @@ hqDefine("geospatial/js/geo_config", [
         self.customUserFieldName = ko.observable(data.user_location_property_name);
         self.geoCasePropertyName = ko.observable(data.case_location_property_name);
         self.isCasePropDeprecated = ko.observable(gpsCaseProps[self.geoCasePropertyName()]);
+        self.savedGeoCasePropName = ko.observable(data.case_location_property_name);
+        self.hasGeoCasePropChanged = ko.observable(false);
+
+        self.onGeoCasePropChange = function () {
+            if (self.geoCasePropertyName() !== self.savedGeoCasePropName()) {
+                self.hasGeoCasePropChanged(true);
+            } else {
+                self.hasGeoCasePropChanged(false);
+            }
+        };
 
         return self;
     };
