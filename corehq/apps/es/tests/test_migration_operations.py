@@ -80,7 +80,7 @@ class TestCreateIndex(BaseCase):
     mapping = {
         "_meta": {},
         "properties": {
-            "value": {"type": "string"},
+            "value": {"type": "text"},
         },
     }
     analysis = {"analyzer": {"default": {
@@ -321,7 +321,7 @@ class TestCreateIndexIfNotExists(BaseCase):
     mapping = {
         "_meta": {},
         "properties": {
-            "value": {"type": "string"},
+            "value": {"type": "text"},
         },
     }
     analysis = {"analyzer": {"default": {
@@ -343,6 +343,12 @@ class TestCreateIndexIfNotExists(BaseCase):
 
     def test_does_not_fail_if_index_exists(self):
         manager.index_create(self.index)
+        new_mapping = {
+            "properties": {
+                "some_other_val": {"type": "text"},
+            },
+        }
+        manager.index_put_mapping(self.index, self.type, new_mapping)
         self.assertIndexExists(self.index)
 
         migration = TestMigration(self.CreateIndexIfNotExists(*self.create_index_args))
@@ -353,7 +359,7 @@ class TestCreateIndexIfNotExists(BaseCase):
 
         fetched_mapping = manager.index_get_mapping(self.index, self.type)
         # existing mapping is not changed
-        self.assertIsNone(fetched_mapping)
+        self.assertEqual(fetched_mapping, new_mapping)
 
     def test_creates_index_if_not_exists(self):
         self.assertIndexDoesNotExist(self.index)
@@ -480,7 +486,7 @@ class TestUpdateIndexMapping(BaseCase):
             "date_detection": False,
             "dynamic": True,
             "dynamic_date_formats": ["yyyy-MM-dd"],
-            "properties": {"prop": {"type": "string"}},
+            "properties": {"prop": {"type": "text"}},
         }
         CreateIndex(self.index, self.type, self.mapping, {}, "test").run()
 
@@ -509,7 +515,7 @@ class TestUpdateIndexMapping(BaseCase):
     def test_adds_new_properties(self):
         properties = manager.index_get_mapping(self.index, self.type)["properties"]
         new_properties = {
-            "new_str_prop": {"type": "string"},
+            "new_str_prop": {"type": "text"},
             "new_int_prop": {"type": "integer"},
         }
         self.assertNotEqual(properties, new_properties)
@@ -568,10 +574,9 @@ class TestUpdateIndexMapping(BaseCase):
     def test_extends_existing_property_fields(self):
         properties = manager.index_get_mapping(self.index, self.type)["properties"]
         property_update = {"prop": {
-            "type": "string",
+            "type": "text",
             "fields": {"raw_value": {
-                "index": "not_analyzed",
-                "type": "string",
+                "type": "keyword",
             }},
         }}
         self.assertNotEqual(properties, property_update)
@@ -595,7 +600,7 @@ class TestUpdateIndexMapping(BaseCase):
     def test_fails_for_existing_property_type_change(self):
         self.assertEqual(
             manager.index_get_mapping(self.index, self.type)["properties"]["prop"],
-            {"type": "string"},
+            {"type": "text"},
         )
         migration = TestMigration(UpdateIndexMapping(
             self.index,
@@ -604,7 +609,7 @@ class TestUpdateIndexMapping(BaseCase):
         ))
         literal = (
             "TransportError(400, 'illegal_argument_exception', 'mapper [prop] "
-            "of different type, current_type [string], merged_type [integer]')"
+            "of different type, current_type [text], merged_type [integer]')"
         )
         with self.assertRaisesRegex(RequestError, f"^{re.escape(literal)}$"):
             migration.apply()
@@ -612,19 +617,16 @@ class TestUpdateIndexMapping(BaseCase):
     def test_fails_for_changing_existing_property_index_values(self):
         self.assertEqual(
             manager.index_get_mapping(self.index, self.type)["properties"]["prop"],
-            {"type": "string"},
+            {"type": "text"},
         )
         migration = TestMigration(UpdateIndexMapping(
             self.index,
             self.type,
-            {"prop": {"type": "string", "index": "not_analyzed"}},
+            {"prop": {"type": "keyword"}},
         ))
         literal = (
             "TransportError(400, 'illegal_argument_exception', "
-            "'Mapper for [prop] conflicts with existing mapping in other "
-            "types:\\n[mapper [prop] has different [index] values, mapper "
-            "[prop] has different [doc_values] values, cannot change from "
-            "disabled to enabled, mapper [prop] has different [analyzer]]')"
+            "'mapper [prop] of different type, current_type [text], merged_type [keyword]')"
         )
         with self.assertRaisesRegex(RequestError, f"^{re.escape(literal)}$"):
             migration.apply()
@@ -664,7 +666,7 @@ class TestUpdateIndexMapping(BaseCase):
                 +            "type": "integer"
                 +        },
                          "prop": {
-                             "type": "string"
+                             "type": "text"
                          }
             """),
             stream.getvalue(),
