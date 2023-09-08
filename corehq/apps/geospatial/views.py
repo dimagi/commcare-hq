@@ -1,17 +1,30 @@
 import json
+from jsonobject.exceptions import BadValueError
 import jsonschema
-
 from requests.exceptions import HTTPError
 
+from django.core.paginator import Paginator
+from django.http import (
+    HttpResponseRedirect,
+    Http404,
+    HttpResponseBadRequest,
+    JsonResponse,
+)
 from django.forms.models import model_to_dict
 from django.utils.decorators import method_decorator
 from django.urls import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_GET
 from dimagi.utils.web import json_response
+from dimagi.utils.couch.bulk import get_docs
+from couchforms.geopoint import GeoPoint
 
 from corehq import toggles
+from corehq.apps.es import CaseSearchES, UserES
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.form_processor.models import CommCareCase
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.util.view_utils import json_error
@@ -22,6 +35,12 @@ from .routing_solvers.mapbox_optimize import (
 
 from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA
 from .models import GeoPolygon, GeoConfig
+from .utils import (
+    get_geo_case_property,
+    get_geo_user_property,
+    process_gps_values_for_case,
+    process_gps_values_for_user,
+)
 
 
 def geospatial_default(request, *args, **kwargs):
@@ -163,3 +182,134 @@ class GeospatialConfigPage(BaseDomainView):
         instance.save()
 
         return self.get(request, *args, **kwargs)
+
+
+class GPSCaptureView(BaseDomainView):
+    urlname = 'gps_capture'
+    template_name = 'gps_capture.html'
+
+    page_name = _("Manage GPS Data")
+    section_name = _("Geospatial")
+
+    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    def dispatch(self, *args, **kwargs):
+        return super(GPSCaptureView, self).dispatch(*args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @property
+    def page_context(self):
+        data_type = self.request.GET.get('data_type', 'case')
+        return {
+            'data_type': data_type
+        }
+
+    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    def post(self, request, *args, **kwargs):
+        json_data = json.loads(request.body)
+        data_type = json_data.get('data_type', None)
+        data_item = json_data.get('data_item', None)
+
+        if data_type == 'case':
+            process_gps_values_for_case(request.domain, data_item)
+        elif data_type == 'user':
+            process_gps_values_for_user(request.domain, data_item)
+
+        return json_response({
+            'status': 'success'
+        })
+
+
+@require_GET
+@login_and_domain_required
+def get_paginated_cases_or_users_without_gps(request, domain):
+    page = max(int(request.GET.get('page', 1)), 1)
+    limit = max(int(request.GET.get('limit', 5)), 1)
+    query = request.GET.get('query', '')
+    case_or_user = request.GET.get('data_type', 'case')
+    if case_or_user not in ['case', 'user']:
+        case_or_user = 'case'
+
+    if case_or_user == 'user':
+        data = _get_paginated_users_without_gps(domain, page, limit, query)
+    else:
+        data = _get_paginated_cases_without_gps(domain, page, limit, query)
+    return JsonResponse(data)
+
+
+def _get_paginated_cases_without_gps(domain, page, limit, query):
+    location_prop_name = get_geo_case_property(domain)
+    case_ids = (
+        CaseSearchES()
+        .domain(domain)
+        .is_closed(False)
+        .case_property_missing(location_prop_name)
+        .search_string_query(query, ['name'])
+        .sort('server_modified_on', desc=True)
+    ).get_ids()
+
+    paginator = Paginator(case_ids, limit)
+    case_ids_page = list(paginator.get_page(page))
+    cases = CommCareCase.objects.get_cases(case_ids_page, domain, ordered=True)
+    case_data = []
+    for case_obj in cases:
+        try:
+            gps_location_prop = case_obj.case_json[location_prop_name]
+            geo_point = GeoPoint.from_string(gps_location_prop, flexible=True)
+            lat, lon = (str(geo_point.latitude), str(geo_point.longitude))
+        except (KeyError, BadValueError):
+            lat, lon = ('', '')
+        case_data.append(
+            {
+                'id': case_obj.case_id,
+                'name': case_obj.name,
+                'lat': lat,
+                'lon': lon,
+            }
+        )
+    return {
+        'items': case_data,
+        'total': paginator.count,
+    }
+
+
+def _get_paginated_users_without_gps(domain, page, limit, query):
+    location_prop_name = get_geo_user_property(domain)
+    query = (
+        UserES()
+        .domain(domain)
+        .mobile_users()
+        .missing_or_empty_metadata_property(location_prop_name)
+        .search_string_query(query, ['username'])
+        .sort('created_on', desc=True)
+    )
+
+    paginator = Paginator(query.get_ids(), limit)
+    user_ids_page = list(paginator.get_page(page))
+    user_docs = get_docs(CommCareUser.get_db(), keys=user_ids_page)
+    user_data = []
+    for user_doc in user_docs:
+        try:
+            gps_location_prop = user_doc['user_data'][location_prop_name]
+            geo_point = GeoPoint.from_string(gps_location_prop, flexible=True)
+            lat, lon = (str(geo_point.latitude), str(geo_point.longitude))
+        except (KeyError, BadValueError):
+            lat, lon = ('', '')
+        user_data.append(
+            {
+                'id': user_doc['_id'],
+                'name': user_doc['username'].split('@')[0],
+                'lat': lat,
+                'lon': lon,
+            }
+        )
+    return {
+        'items': user_data,
+        'total': paginator.count,
+    }
