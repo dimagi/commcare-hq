@@ -61,6 +61,7 @@ domain_specific = [
     url(r'^phone/', include('corehq.apps.ota.urls')),
     url(r'^phone/', include('corehq.apps.mobile_auth.urls')),
     url(r'^sms/', include('corehq.apps.sms.urls')),
+    url(r'^email/', include('corehq.apps.email.urls')),
     url(r'^reminders/', include('corehq.apps.reminders.urls')),
     url(r'^reports/', include('corehq.apps.reports.urls')),
     url(r'^messaging/', include('corehq.messaging.scheduling.urls')),
