@@ -121,6 +121,55 @@ def transform_multi_field(mapping, key=None):
         return mapping
 
 
+def transform_string_to_text_and_keyword(mapping, key=None):
+    """
+    ``string`` fields have been replaced by ``text`` and ``keyword`` fields.
+    The string keyword should be replaced in following manner.
+
+        string + not_analyzed => keyword
+        string => text
+
+    See - https://www.elastic.co/guide/en/elasticsearch/reference/5.0/breaking_50_mapping_changes.html#breaking_50_mapping_changes  # noqa E501
+
+    Tranforms-
+    a)  "name": {
+            "index": "not_analyzed",
+            "type": "string"
+        }
+        To:
+        "name": {
+            "type": "keyword"
+        }
+
+
+    b)   "address": {
+            "type": "string"
+        }
+        To:
+        "address": {
+            "type": "text"
+        }
+    """
+    if isinstance(mapping, dict):
+        if mapping.get("type") == "string":
+            mapping = mapping.copy()
+            if key is None:
+                raise ValueError(f"'string' property {key!r} is missing "
+                                 f"the 'default' field: {mapping}")
+            if mapping.get("index") == "not_analyzed":
+                mapping["type"] = "keyword"
+            else:
+                mapping["type"] = "text"
+            if mapping.get("index"):
+                del mapping["index"]
+        return {k: transform_string_to_text_and_keyword(v, k) for k, v in mapping.items()}
+    elif isinstance(mapping, (tuple, list, set)):
+        return [transform_string_to_text_and_keyword(v) for v in mapping]
+    else:
+        return mapping
+
+
 ALL_TRANSFORMS = {
     "multi_field": transform_multi_field,
+    "string": transform_string_to_text_and_keyword
 }

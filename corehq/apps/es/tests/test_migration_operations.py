@@ -20,6 +20,7 @@ from corehq.apps.es.migration_operations import (
     make_mapping_meta,
 )
 from corehq.apps.es.tests.utils import es_test
+from corehq.pillows.management.commands.print_elastic_mappings import transform_string_to_text_and_keyword
 from corehq.util.es.elasticsearch import NotFoundError, RequestError
 
 
@@ -681,6 +682,35 @@ class TestMakeMappingMeta(SimpleTestCase):
     def test_make_mapping_meta_adds_comment_if_provided(self):
         comment = object()
         self.assertEqual(comment, make_mapping_meta(comment)["comment"])
+
+
+class TestMappingTransformFunctions(SimpleTestCase):
+
+    def test_transform_string_to_text_and_keyword(self):
+        old_mapping = {
+            "_meta": {"created": "now"},
+            "properties": {
+                "value": {"type": "string"},
+                "dict_val": {
+                    "properties": {"nested_val": {"type": "string", "index": "not_analyzed"}}
+                }
+
+            },
+        }
+
+        transformed_mappings = transform_string_to_text_and_keyword(old_mapping)
+
+        expected_mappings = {
+            "_meta": {"created": "now"},
+            "properties": {
+                "value": {"type": "text"},
+                "dict_val": {
+                    "properties": {"nested_val": {"type": "keyword"}}
+                }
+
+            },
+        }
+        self.assertEqual(transformed_mappings, expected_mappings)
 
 
 def get_datetime_mock(created):
