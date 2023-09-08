@@ -200,6 +200,8 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
                 {
                     'id': self.case_a.case_id,
                     'name': self.case_a.name,
+                    'lat': '',
+                    'lon': '',
                 },
             ],
         }
@@ -214,6 +216,8 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
                 {
                     'id': self.user_b.user_id,
                     'name': self.user_b.username,
+                    'lat': '',
+                    'lon': '',
                 },
             ],
         }
