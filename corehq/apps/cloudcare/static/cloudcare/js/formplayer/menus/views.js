@@ -574,6 +574,22 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             });
         },
 
+        getMapScrollOffset: function (addressMap) {
+            const $mapEl = $('#module-case-list-map');
+            const $stickyHeader = $('#small-screen-sticky-header');
+            let scrollTopOffset = parseInt(($mapEl).css('top'));
+            if (this.smallScreenEnabled) {
+                if ($stickyHeader[0]) {
+                    scrollTopOffset = parseInt($stickyHeader.css('top')) + $stickyHeader.outerHeight();
+                } else if (addressMap.isFullscreen()) {
+                    scrollTopOffset = $('#breadcrumb-region').outerHeight();
+                } else {
+                    scrollTopOffset += $mapEl.outerHeight();
+                }
+            }
+            return scrollTopOffset;
+        },
+
         loadMap: function () {
             const token = initialPageData.get("mapbox_access_token");
 
@@ -640,12 +656,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     markers.forEach(m => m.setIcon(locationIcon));
                                     marker.setIcon(selectedLocationIcon);
 
-                                    let scrollTopOffset = 47.125; // standard height of breadcrumbs with shadow
-                                    if (this.smallScreenEnabled && !addressMap.isFullscreen()) {
-                                        scrollTopOffset += addressMap.getSize().y;
-                                    }
                                     $([document.documentElement, document.body]).animate({
-                                        scrollTop: $(`#${rowId}`).offset().top - scrollTopOffset,
+                                        scrollTop: $(`#${rowId}`).offset().top - this.getMapScrollOffset(addressMap),
                                     }, 500);
 
                                     addressMap.panTo(markerCoordinates);
