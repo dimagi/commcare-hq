@@ -325,7 +325,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         self.answerQuestion = function (q) {
             var self = this;
             var ix = formUI.getIx(q);
-            var answer = q.entry.xformAction == constants.CLEAR_ANSWER ? constants.NO_ANSWER : q.answer();
+            var answer = q.entry.xformAction === constants.CLEAR_ANSWER ? constants.NO_ANSWER : q.answer();
             var oneQuestionPerScreen = self.isOneQuestionPerScreen();
             var form = q.form();
 
