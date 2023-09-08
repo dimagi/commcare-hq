@@ -142,7 +142,7 @@ class Text(XmlObject):
         if self.xpath:
             for variable in self.xpath.variables:
                 if variable.xpath:
-                    result.add(str(variable.xpath.function))
+                    result.add(variable.xpath.function)
         return result - {None}
 
 
@@ -305,7 +305,7 @@ class MediaText(XmlObject):
         if self.xpath:
             for variable in self.xpath.variables:
                 if variable.xpath:
-                    result.add(str(variable.xpath.function))
+                    result.add(variable.xpath.function)
         return result - {None}
 
 
