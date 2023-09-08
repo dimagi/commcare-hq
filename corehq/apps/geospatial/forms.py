@@ -54,8 +54,9 @@ class GeospatialConfigForm(forms.ModelForm):
                     ),
                     crispy.Div(
                         crispy.HTML('%s' % _(
-                            "The custom case property has been deprecated in the Data Dictionary. "
-                            "Please consider switching this to another property.")
+                            'The currently used "{{ config.case_location_property_name }}" case property '
+                            'has been deprecated in the Data Dictionary. Please consider switching this '
+                            'to another property.')
                         ),
                         css_class='alert alert-warning',
                         data_bind="visible: isCasePropDeprecated"
@@ -65,9 +66,10 @@ class GeospatialConfigForm(forms.ModelForm):
                             'The currently used "{{ config.case_location_property_name }}" case '
                             'property may be associated with cases. Selecting a new case '
                             'property will have the following effects:'
-                            '<ul><li>All cases using the old case property will no longer appear in maps.</li>'
-                            '<li>If the old case property is being used in an application, the application will '
-                            'need to be updated with the new case property.</li></ul>')
+                            '<ul><li>All cases using the old case property will no longer appear on maps.</li>'
+                            '<li>If the old case property is being used in an application, a new version would '
+                            'need to be released with the new case property for all users that capture '
+                            'location data.</li></ul>')
                         ),
                         css_class='alert alert-warning',
                         data_bind="visible: hasGeoCasePropChanged"
