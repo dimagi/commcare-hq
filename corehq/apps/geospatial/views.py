@@ -257,9 +257,12 @@ def _get_paginated_cases_without_gps(domain, page, limit, query):
     cases = CommCareCase.objects.get_cases(case_ids_page, domain, ordered=True)
     case_data = []
     for case_obj in cases:
-        gps_location_prop = case_obj.case_json[location_prop_name]
-        gps_data = gps_location_prop.split(' ')
-        lat, lon = (gps_data[0], gps_data[1]) if len(gps_data) > 1 else ('', '')
+        lat, lon = ('', '')
+        if location_prop_name in case_obj.case_json:
+            gps_location_prop = case_obj.case_json[location_prop_name]
+            gps_data = gps_location_prop.split(' ')
+            if len(gps_data) > 1:
+                lat, lon = (gps_data[0], gps_data[1])
         case_data.append(
             {
                 'id': case_obj.case_id,
@@ -290,9 +293,12 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
     user_docs = get_docs(CommCareUser.get_db(), keys=user_ids_page)
     user_data = []
     for user_doc in user_docs:
-        gps_location_prop = user_doc['user_data'][location_prop_name]
-        gps_data = gps_location_prop.split(' ')
-        lat, lon = (gps_data[0], gps_data[1]) if len(gps_data) > 1 else ('', '')
+        lat, lon = ('', '')
+        if location_prop_name in user_doc['user_data']:
+            gps_location_prop = user_doc['user_data'][location_prop_name]
+            gps_data = gps_location_prop.split(' ')
+            if len(gps_data) > 1:
+                lat, lon = (gps_data[0], gps_data[1])
         user_data.append(
             {
                 'id': user_doc['_id'],
