@@ -15,7 +15,7 @@ from corehq.apps.geospatial.utils import (
     process_gps_values_for_case,
     process_gps_values_for_user,
 )
-from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 
 
 class TestGetGeoProperty(TestCase):
@@ -23,8 +23,8 @@ class TestGetGeoProperty(TestCase):
     DOMAIN = "test-domain"
 
     def test_no_config_set(self):
-        self.assertEqual(get_geo_case_property(self.DOMAIN), GEO_POINT_CASE_PROPERTY)
-        self.assertEqual(get_geo_user_property(self.DOMAIN), GEO_POINT_CASE_PROPERTY)
+        self.assertEqual(get_geo_case_property(self.DOMAIN), GPS_POINT_CASE_PROPERTY)
+        self.assertEqual(get_geo_user_property(self.DOMAIN), GPS_POINT_CASE_PROPERTY)
 
     def test_custom_config_set(self):
         case_geo_property = "where-art-thou"
@@ -41,8 +41,8 @@ class TestGetGeoProperty(TestCase):
         self.assertEqual(get_geo_user_property(self.DOMAIN), user_geo_property)
 
     def test_invalid_domain_provided(self):
-        self.assertEqual(get_geo_case_property(None), GEO_POINT_CASE_PROPERTY)
-        self.assertEqual(get_geo_user_property(None), GEO_POINT_CASE_PROPERTY)
+        self.assertEqual(get_geo_case_property(None), GPS_POINT_CASE_PROPERTY)
+        self.assertEqual(get_geo_user_property(None), GPS_POINT_CASE_PROPERTY)
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
@@ -87,7 +87,7 @@ class TestProcessGPSValues(TestCase):
         }
         process_gps_values_for_case(self.DOMAIN, submit_data)
         case_obj = CommCareCase.objects.get_case(self.case_obj.case_id, self.DOMAIN)
-        self.assertEqual(case_obj.case_json[GEO_POINT_CASE_PROPERTY], '1.23 4.56')
+        self.assertEqual(case_obj.case_json[GPS_POINT_CASE_PROPERTY], '1.23 4.56')
 
     def test_process_gps_values_for_users(self):
         submit_data = {
@@ -98,4 +98,4 @@ class TestProcessGPSValues(TestCase):
         }
         process_gps_values_for_user(self.DOMAIN, submit_data)
         user = CommCareUser.get_by_user_id(self.user.user_id, self.DOMAIN)
-        self.assertEqual(user.metadata[GEO_POINT_CASE_PROPERTY], '1.23 4.56')
+        self.assertEqual(user.metadata[GPS_POINT_CASE_PROPERTY], '1.23 4.56')

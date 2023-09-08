@@ -1,5 +1,5 @@
 
-GEO_POINT_CASE_PROPERTY = 'geo_point'
+GPS_POINT_CASE_PROPERTY = 'gps_point'
 
 # Modified version of https://geojson.org/schema/FeatureCollection.json
 #   Modification 1 - Added top-level name attribute

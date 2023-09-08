@@ -12,7 +12,7 @@ from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.geospatial.views import GeospatialConfigPage, GPSCaptureView
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.util.test_utils import flag_enabled
-from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 
 
 class BaseGeospatialViewClass(TestCase):
@@ -169,14 +169,14 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
             case_type=case_type,
             name='CaseB',
             case_json={
-                GEO_POINT_CASE_PROPERTY: '12.34 45.67',
+                GPS_POINT_CASE_PROPERTY: '12.34 45.67',
             },
             save=True,
         )
         case_search_adapter.bulk_index([cls.case_a, cls.case_b], refresh=True)
 
         cls.user_a = CommCareUser.create(
-            cls.domain, 'UserA', '1234', None, None, metadata={GEO_POINT_CASE_PROPERTY: '12.34 45.67'}
+            cls.domain, 'UserA', '1234', None, None, metadata={GPS_POINT_CASE_PROPERTY: '12.34 45.67'}
         )
         cls.user_b = CommCareUser.create(
             cls.domain, 'UserB', '1234', None, None
