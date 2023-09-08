@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyGroup, CasePropertyAllowedValue, CaseType
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
 from corehq.apps.users.models import WebUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
 
@@ -269,17 +270,17 @@ class TestDeprecateOrRestoreCaseTypeView(TestCase):
         CaseProperty(case_type=cls.case_type_obj, name='property').save()
         CasePropertyGroup(case_type=cls.case_type_obj, name='group').save()
 
+    def setUp(self):
+        self.endpoint = reverse(self.urlname, args=(self.domain, self.case_type_obj.name))
+        self.client = Client()
+        self.client.login(username='test', password='foobar')
+
     @classmethod
     def tearDownClass(cls):
         cls.case_type_obj.delete()
         cls.admin_webuser.delete(cls.domain, None)
         cls.domain_obj.delete()
         return super().tearDownClass()
-
-    def setUp(self):
-        self.endpoint = reverse(self.urlname, args=(self.domain, self.case_type_obj.name))
-        self.client = Client()
-        self.client.login(username='test', password='foobar')
 
     def _update_deprecate_state(self, is_deprecated):
         case_type_obj = CaseType.objects.get(name=self.case_type_name)
@@ -388,6 +389,7 @@ class DataDictionaryJsonTest(TestCase):
                     "module_count": 0,
                     "properties": [],
                 }
-            ]
+            ],
+            "geo_case_property": GEO_POINT_CASE_PROPERTY,
         }
         self.assertEqual(response.json(), expected_response)
