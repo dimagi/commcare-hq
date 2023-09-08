@@ -88,8 +88,7 @@ hqDefine("geospatial/js/gps_capture",[
                     self.showPaginationSpinner(false);
 
                 },
-                error: function (e) {
-                    console.log("Error in retrieving data", e);
+                error: function () {
                     self.showLoadingSpinner(false);
                     self.showPaginationSpinner(false);
                     self.hasError(true);
@@ -117,8 +116,7 @@ hqDefine("geospatial/js/gps_capture",[
                     dataItem.hasUnsavedChanges(false);
                     self.isSubmissionSuccess(true);
                 },
-                error: function (e) {
-                    console.error("Error in submission", e);
+                error: function () {
                     self.hasSubmissionError(true);
                 },
             });
