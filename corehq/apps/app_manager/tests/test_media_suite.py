@@ -309,7 +309,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.app = Application.new_app('domain', "my app")
         self.module = self.app.add_module(Module.new_module("Module 1", None))
         self.form = self.app.new_form(0, "Form 1", None)
-        self.min_spec = BuildSpec.from_string('2.21.0/latest')
+        self.min_spec = BuildSpec.from_string('2.54.0/latest')
         self.app.build_spec = self.min_spec
 
     def makeXML(self, menu_locale_id, image_locale_id, audio_locale_id):
@@ -398,7 +398,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
     def test_custom_icons_in_modules(self):
         self._test_custom_icon_in_suite(
             self.module, "modules.m0",
-            id_strings.module_custom_icon_locale, "./menu[@id='m0']/display")
+            id_strings.module_custom_icon_locale, "./menu[@id='m0']", "display")
 
     @patch_get_xform_resource_overrides()
     def test_case_list_form_media(self):
@@ -428,7 +428,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
     def test_custom_icons_in_forms(self):
         self._test_custom_icon_in_suite(
             self.form, "forms.m0f0",
-            id_strings.form_custom_icon_locale, "./entry/command[@id='m0-f0']/")
+            id_strings.form_custom_icon_locale, "./entry", "command[@id='m0-f0']/")
 
     @patch_get_xform_resource_overrides()
     def test_case_list_menu_media(self):
@@ -595,13 +595,16 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app_strings = commcare_translations.loads(app.create_app_strings(lang))
         self.assertEqual(app_strings[media_locale_id], media_path)
 
-    def _test_custom_icon_in_suite(self, form_or_module, locale_id, custom_icon_locale_method, xml_node):
+    def _test_custom_icon_in_suite(self, form_or_module, locale_id, custom_icon_locale_method, xpath_base,
+                                   xpath_display_node):
         """
         :param form_or_module: form or module for which to test
         :param locale_id: text locale id in display block for form or module
         :param custom_icon_locale_method: method to find locale id in app strings for custom icon
         :param xml_node: where to find the xml partial for comparison
         """
+
+        xpath_full = f"{xpath_base}/{xpath_display_node}"
         custom_icon = CustomIcon(form="badge", text={'en': 'IconText', 'hin': 'चित्र'})
         form_or_module.custom_icons = [custom_icon]
 
@@ -623,7 +626,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         # check for text locale
         custom_icon_block = custom_icon_block_template.format(locale_id=locale_id,
                                                               locale_or_xpath=text_locale_partial)
-        self.assertXmlPartialEqual(custom_icon_block, self.app.create_suite(), xml_node)
+        self.assertXmlPartialEqual(custom_icon_block, self.app.create_suite(), xpath_full)
         self._assert_app_strings_available(self.app, 'en')
 
         # check for translation for text locale
@@ -633,11 +636,18 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self._assert_valid_media_translation(self.app, 'secret', custom_icon_locale, custom_icon.text['en'])
 
         # check for xpath being set for custom icon
-        custom_icon.xpath = "if(1=1, 'a', 'b')"
+        custom_icon.xpath = "if(1=1, 'a', instance('casedb')/casedb/case[@case_id='b']/case_name)"
         custom_icon.text = {}
         form_or_module.custom_icons = [custom_icon]
         custom_icon_block = custom_icon_block_template.format(
             locale_id=locale_id,
             locale_or_xpath='<xpath function="{xpath}"/>'.format(xpath=custom_icon.xpath)
         )
-        self.assertXmlPartialEqual(custom_icon_block, self.app.create_suite(), xml_node)
+        suite = self.app.create_suite()
+        self.assertXmlPartialEqual(custom_icon_block, suite, xpath_full)
+        expected_instances = """
+        <partial>
+            <instance id="casedb" src="jr://instance/casedb"/>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected_instances, suite, f"{xpath_base}/instance")

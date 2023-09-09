@@ -116,6 +116,14 @@
       "file_type": "template",
       "label": "analytics/forms",
       "compare_all_files": true
+    },
+  ],
+  "apps/notifications/static/notifications": [
+    {
+      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
+      "file_type": "javascript",
+      "label": "javascript/notifications",
+      "compare_all_files": true
     }
   ]
 }
