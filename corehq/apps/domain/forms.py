@@ -805,7 +805,7 @@ class PrivacySecurityForm(forms.Form):
             "of the number of failed attempts")
     )
     allow_invite_email_only = BooleanField(
-        label=gettext_lazy("During sign up only allow the email address the invite was send to"),
+        label=gettext_lazy("During sign up, only allow the email address the invitation was sent to"),
         required=False,
         help_text=gettext_lazy("Disables the email field on the sign up page")
     )
