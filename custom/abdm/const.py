@@ -1,18 +1,11 @@
-SESSIONS_PATH = '/v0.5/sessions'
 GATEWAY_CALLBACK_URL_PREFIX = 'api/gateway/v0.5'
+SESSIONS_PATH = '/v0.5/sessions'
+HEALTH_INFORMATION_MEDIA_TYPE = 'application/fhir+json'
 
-CONSENT_PURPOSES = [('CAREMGT', 'Care Management'), ('BTG', 'Break the Glass'), ('PUBHLTH', 'Public Health'),
-                    ('HPAYMT', 'Healthcare Payment'), ('DSRCH', 'Disease Specific Healthcare Research'),
-                    ('PATRQT', 'Self Requested')]
-CONSENT_PURPOSES_REF_URI = 'http://terminology.hl7.org/ValueSet/v3-PurposeOfUse'
-
-HI_TYPES = [('OPConsultation', 'OP Consultation'), ('Prescription', 'Prescription'),
-            ('DischargeSummary', 'Discharge Summary'), ('DiagnosticReport', 'Diagnostic Report'),
-            ('ImmunizationRecord', 'Immunization Record'), ('HealthDocumentRecord', 'Record artifact'),
-            ('WellnessRecord', 'Wellness Record')]
+DATA_ACCESS_MODES = [(c, c) for c in ['VIEW', 'STORE', 'QUERY', 'STREAM']]
+TIME_UNITS = [(c, c) for c in ['HOUR', 'WEEK', 'DAY', 'MONTH', 'YEAR']]
 
 
-# TODO Use below instead of HI_TYPES
 class HealthInformationType:
     PRESCRIPTION = "Prescription"
     OP_CONSULTATION = "OPConsultation"
@@ -27,8 +20,21 @@ class HealthInformationType:
                (WELLNESS_RECORD, 'Wellness Record')]
 
 
-DATA_ACCESS_MODES = [(c, c) for c in ['VIEW', 'STORE', 'QUERY', 'STREAM']]
-TIME_UNITS = [(c, c) for c in ['HOUR', 'WEEK', 'DAY', 'MONTH', 'YEAR']]
+class ConsentPurpose:
+    CARE_MANAGEMENT = 'CAREMGT'
+    BREAK_THE_GLASS = 'BTG'
+    PUBLIC_HEALTH = 'PUBHLTH'
+    HEALTHCARE_PAYMENT = 'HPAYMT'
+    DISEASE_SPECIFIC_HEALTHCARE_RESEARCH = 'DSRCH'
+    SELF_REQUESTED = 'PATRQT'
+
+    CHOICES = [(CARE_MANAGEMENT, 'Care Management'), (BREAK_THE_GLASS, 'Break the Glass'),
+               (PUBLIC_HEALTH, 'Public Health'), (HEALTHCARE_PAYMENT, 'Healthcare Payment'),
+               (DISEASE_SPECIFIC_HEALTHCARE_RESEARCH, 'Disease Specific Healthcare Research'),
+               (SELF_REQUESTED, 'Self Requested')]
+
+    REFERENCE_URI = 'http://terminology.hl7.org/ValueSet/v3-PurposeOfUse'
+
 
 STATUS_PENDING = 'PENDING'
 STATUS_REQUESTED = 'REQUESTED'
@@ -38,20 +44,8 @@ STATUS_ERROR = 'ERROR'
 STATUS_REVOKED = 'REVOKED'
 STATUS_EXPIRED = 'EXPIRED'
 
-GATEWAY_CONSENT_STATUS_CHOICES = [(c, c) for c in [STATUS_GRANTED, STATUS_DENIED, STATUS_REVOKED,
-                                                   STATUS_EXPIRED]]
-
-
-# Health Data Transfer Status
 STATUS_ACKNOWLEDGED = 'ACKNOWLEDGED'
 STATUS_TRANSFERRED = 'TRANSFERRED'
 STATUS_DELIVERED = 'DELIVERED'
 STATUS_FAILED = 'FAILED'
 STATUS_ERRORED = 'ERRORED'
-
-
-CRYPTO_ALGORITHM = 'ECDH'
-CURVE = 'Curve25519'
-AES_KEY_LENGTH = 32
-NONCE_LENGTH = 32
-HEALTH_INFORMATION_MEDIA_TYPE = 'application/fhir+json'

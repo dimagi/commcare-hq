@@ -15,17 +15,18 @@ from custom.abdm.const import STATUS_ERROR
 from custom.abdm.cyrpto import ABDMCrypto
 from custom.abdm.exceptions import ABDMServiceUnavailable, ABDMGatewayError
 from custom.abdm.hiu.const import GW_HEALTH_INFO_REQUEST_PATH
-from custom.abdm.hiu.exceptions import send_custom_error_response
+from custom.abdm.hiu.exceptions import HIU_ERROR_MESSAGES, HIUErrorResponseFormatter
 from custom.abdm.hiu.fhir_ui_parser import generate_display_fields_for_bundle
 from custom.abdm.hiu.models import HIUConsentArtefact, HIUHealthInformationRequest
 from custom.abdm.hiu.serializers.health_information import HIURequestHealthInformationSerializer, \
     HIUReceiveHealthInformationSerializer, GatewayHealthInformationOnRequestSerializer
 from custom.abdm.hiu.views.base import HIUBaseView, HIUGatewayBaseView
-from custom.abdm.utils import GatewayRequestHelper
+from custom.abdm.utils import ABDMRequestHelper, abdm_iso_to_datetime
 
 
 # TODO Check if models required for scenario where multiple pages of data are received
 # TODO Refine the use of django cache
+# TODO Handle for Links
 
 class RequestHealthInformation(HIUBaseView):
     authentication_classes = [ABDMUserAuthentication]
@@ -33,11 +34,14 @@ class RequestHealthInformation(HIUBaseView):
 
     def get(self, request, format=None):
         print("RequestHealthInformation", request.query_params)
+        return HIUErrorResponseFormatter().generate_custom_error_response(error_code=4451,
+                                                                   details_field='artefact_id')
         serializer = HIURequestHealthInformationSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         artefact = self.validate_artefact_expiry(serializer.data['artefact_id'])
         if artefact is False:
-            return send_custom_error_response(error_code=4451, details_field='artefact_id')
+            return HIUErrorResponseFormatter().generate_custom_error_response(error_code=4451,
+                                                                            details_field='artefact_id')
         # TODO Refactor below
         current_url = request.build_absolute_uri(reverse('request_health_information'))
         request_data = request.query_params
@@ -50,7 +54,7 @@ class RequestHealthInformation(HIUBaseView):
                 return Response(status=HTTP_200_OK, data=self.format_response_data(data, current_url,
                                                                                    artefact.artefact_id))
             else:
-                return send_custom_error_response(error_code=4555, status_code=555)
+                return HIUErrorResponseFormatter().generate_custom_error_response(error_code=4555, status_code=555)
         health_info_url = request.build_absolute_uri(reverse('receive_health_information'))
         gateway_request_data, key_material = self.gateway_health_information_cm_request(artefact, health_info_url)
         self.save_health_info_request(artefact, gateway_request_data, key_material)
@@ -61,7 +65,7 @@ class RequestHealthInformation(HIUBaseView):
             return Response(status=HTTP_200_OK, data=self.format_response_data(data, current_url,
                                                                                artefact.artefact_id))
         else:
-            return send_custom_error_response(error_code=4555, status_code=555)
+            return HIUErrorResponseFormatter().generate_custom_error_response(error_code=4555, status_code=555)
 
     def _get_next_query_params(self, response_data, artefact_id):
         from django.http import QueryDict
@@ -75,7 +79,7 @@ class RequestHealthInformation(HIUBaseView):
         # TODO Handle for parsing exception
         # TODO Specs in case of sending directly FHIR data
         # TODO Add a setting for this at the django app level with default to False
-        entries = self.parse_fhir_bundle_for_ui(response_data["entries"])
+        entries = self.parse_fhir_bundle_for_ui(response_data['entries'])
         data = {
             'transaction_id': response_data['transactionId'],
             'page': response_data['pageNumber'],
@@ -116,19 +120,19 @@ class RequestHealthInformation(HIUBaseView):
         # TODO Get health information type and title from Care Context Reference
         from custom.abdm.const import HealthInformationType
         for entry in entries:
-            entry["title"] = HealthInformationType.PRESCRIPTION
-            entry["content"] = generate_display_fields_for_bundle(entry["content"], HealthInformationType.PRESCRIPTION)
+            entry['title'] = HealthInformationType.PRESCRIPTION
+            entry['content'] = generate_display_fields_for_bundle(entry['content'], HealthInformationType.PRESCRIPTION)
         return entries
 
     def gateway_health_information_cm_request(self, artefact, health_info_url):
         hiu_crypto = ABDMCrypto()
-        request_data = GatewayRequestHelper.common_request_data()
+        request_data = ABDMRequestHelper.common_request_data()
         request_data['hiRequest'] = {'consent': {'id': str(artefact.artefact_id)}}
         request_data['hiRequest']['dateRange'] = artefact.details['permission']['dateRange']
         request_data['hiRequest']['dataPushUrl'] = health_info_url
         request_data['hiRequest']['keyMaterial'] = hiu_crypto.transfer_material
         try:
-            GatewayRequestHelper().post(GW_HEALTH_INFO_REQUEST_PATH, request_data)
+            ABDMRequestHelper().gateway_post(GW_HEALTH_INFO_REQUEST_PATH, request_data)
         except requests.Timeout:
             raise ABDMServiceUnavailable()
         except requests.HTTPError as err:
@@ -161,26 +165,55 @@ class ReceiveHealthInformation(HIUBaseView):
     def post(self, request, format=None):
         print(f"ReceiveHealthInformation {request.data['transactionId']} and page: {request.data['pageCount']}")
         HIUReceiveHealthInformationSerializer(data=request.data).is_valid(raise_exception=True)
-        self.process_request(request.data)
+        ReceiveHealthInformationProcessor(request.data).process_request()
         return Response(status=HTTP_202_ACCEPTED)
 
-    def process_request(self, request_data):
-        health_information_request = HIUHealthInformationRequest.objects.get(transaction_id=
-                                                                             request_data['transactionId'])
-        request_data = self.decrypt_data(request_data, health_information_request)
-        cache_key = f"{health_information_request.gateway_request_id}_{request_data['pageNumber']}"
-        cache.set(cache_key, request_data, 45)
 
-    def decrypt_data(self, request_data, health_information_request):
-        # TODO Decrypt data and create appropriate response body
+class ReceiveHealthInformationProcessor:
+    # TODO Decide if we need to run this in background
+
+    def __init__(self, request_data):
+        self.request_data = request_data
+
+    def process_request(self):
+        health_information_request = HIUHealthInformationRequest.objects.get(transaction_id=
+                                                                             self.request_data['transactionId'])
+        return HIUErrorResponseFormatter().generate_custom_error_response(error_code=4410)
+        error = self.validate_request(health_information_request.consent_artefact)
+        if error:
+            return HIUErrorResponseFormatter().generate_custom_error_response(error_code=error['code'])
+        decrypted_data = self.decrypt_data(health_information_request)
+        cache_key = f"{health_information_request.gateway_request_id}_{self.request_data['pageNumber']}"
+        cache.set(cache_key, decrypted_data, 60)
+
+    def validate_request(self, artefact):
+        error_code = None
+        if artefact is None:
+            error_code = 4416
+        elif not self._validate_key_material_expiry():
+            error_code = 4410
+        elif not self._validate_consent_expiry(artefact):
+            error_code = 4418
+        return {'code': error_code, 'message': HIU_ERROR_MESSAGES.get(error_code)} if error_code else None
+
+    def _validate_key_material_expiry(self):
+        key_material_expiry = self.request_data['keyMaterial']['dhPublicKey']['expiry']
+        return abdm_iso_to_datetime(key_material_expiry) < datetime.utcnow()
+
+    def _validate_consent_expiry(self, artefact):
+        return abdm_iso_to_datetime(artefact.details['permission']['dataEraseAt']) > datetime.utcnow()
+
+    def decrypt_data(self, health_information_request):
         print("Starting data decryption")
         hiu_crypto = ABDMCrypto(key_material_json=health_information_request.key_material)
-        hip_transfer_material = request_data['keyMaterial']
+        hip_transfer_material = self.request_data['keyMaterial']
         decrypted_entries = []
-        for entry in request_data["entries"]:
-            data = {"care_context_reference": entry["careContextReference"]}
-            data["content"] = json.loads(hiu_crypto.decrypt(entry['content'], hip_transfer_material))
-            # TODO Test for checksum
+        for entry in self.request_data['entries']:
+            data = {'care_context_reference': entry['careContextReference']}
+            data['content'] = json.loads(hiu_crypto.decrypt(entry['content'], hip_transfer_material))
+            if not hiu_crypto.generate_checksum(data['content']) == entry['checksum']:
+                print("Checksum error")
+                return False
             decrypted_entries.append(data)
-        request_data['entries'] = decrypted_entries
-        return request_data
+        self.request_data['entries'] = decrypted_entries
+        return self.request_data

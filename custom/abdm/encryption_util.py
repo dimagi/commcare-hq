@@ -5,19 +5,13 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from custom.abdm.const import AES_KEY_LENGTH, NONCE_LENGTH
-from custom.abdm.encryption_util2 import decryptData
+from custom.abdm.fidelius_encryption_util import decryptData
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
-# TODO Check if data (public key , nonce, encrypted data) to be sent as bytes or string
-
-# TODO Check if anything else needed like authentication or something while encryption/decryption
-
-# 1
-# In order to generate the shared secret key, dhpk(P) should be used, minus headers.
-# Following the big endian (network byte order) keeps the used to derive the shared secret consistent.
-# Also as the cryptography deals with large numbers, it’s recommended that no data is converted to binary format
-# until its first converted to big integer. Here is a sample set of libraries that you can use:
+CRYPTO_ALGORITHM = 'ECDH'
+CURVE = 'Curve25519'
+AES_KEY_LENGTH = 32
+NONCE_LENGTH = 32
 
 
 def generate_key_material():
@@ -116,9 +110,6 @@ def run_example():
         'senderPublicKey': hip_public_key
     })
 
-
-
-# run_example()
 
 if __name__ == '__main__':
     run_example()

@@ -1,10 +1,10 @@
 from rest_framework import serializers
 
 from custom.abdm.const import (
-    HI_TYPES,
     STATUS_EXPIRED,
     STATUS_GRANTED,
     STATUS_REVOKED,
+    HealthInformationType,
 )
 from custom.abdm.serializers import (
     GatewayCareContextSerializer,
@@ -30,7 +30,8 @@ class GatewayConsentRequestNotifySerializer(GatewayRequestBaseSerializer):
             purpose = GatewayPurposeSerializer()
             hip = GatewayIdSerializer()
             consentManager = GatewayIdSerializer()
-            hiTypes = serializers.ListField(child=serializers.ChoiceField(choices=HI_TYPES), min_length=1)
+            hiTypes = serializers.ListField(child=serializers.ChoiceField(choices=HealthInformationType.CHOICES),
+                                            min_length=1)
             permission = GatewayPermissionSerializer()
 
         consentId = serializers.CharField()

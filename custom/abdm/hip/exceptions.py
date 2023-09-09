@@ -9,14 +9,15 @@ HIP_ERROR_MESSAGES = {
     3401: "Unauthorized request",
     3404: "Resource not found",
     3405: "Method not allowed",
+    3410: "Expired Key Pair",
     3500: "Unknown error occurred",
-    3503: "Gateway Service down",
-    3554: "Error received from Gateway",
     3407: "Patient details not found",
     3416: "Consent Artefact Not Found",
     3417: "Invalid Consent Status",
     3418: "Consent has expired",
     3419: "Date range is not valid",
+    3503: "Gateway Service down",
+    3554: "Error received from Gateway",
 }
 
 
@@ -27,9 +28,9 @@ class HIPErrorResponseFormatter(ABDMErrorResponseFormatter):
 
 def hip_exception_handler(exc, context):
     response = drf_standardized_exception_handler(exc, context)
-    return HIPErrorResponseFormatter().format(response)
+    return HIPErrorResponseFormatter().format_drf_response(response)
 
 
 def hip_gateway_exception_handler(exc, context):
     response = drf_standardized_exception_handler(exc, context)
-    return HIPErrorResponseFormatter().format(response, error_details=True)
+    return HIPErrorResponseFormatter().format_drf_response(response, error_details=True)

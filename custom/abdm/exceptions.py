@@ -12,12 +12,12 @@ class ABDMErrorResponseFormatter:
     error_code_prefix = ''
     error_messages = {}
 
-    # TODO Rename to format_standard_error_response
-    def format(self, response, error_details=True):
+    def format_drf_response(self, response, error_details=True):
         """
         ABDM (M2/M3) has a different response body format which includes custom codes for standard errors.
         This modifies the response body format obtained by drf_standardized_errors to the required format.
-        Use this method for standard HTTP errors such as 4xx, 5xx methods.
+        Used for standard frameworks errors like serializers, authentication, unhandled exceptions etc.
+        Takes input as response returned by drf_standardized_errors.
         'keep_details' flag is used to decide on sending 'error'>'details' field.
         The field 'error'>'code' is created by appending 'error_code_prefix' to the response status code.
         Sample:
@@ -57,6 +57,9 @@ class ABDMErrorResponseFormatter:
         return response
 
     def generate_custom_error_response(self, error_code, status_code=400, details_message=None, details_field=None):
+        """
+        Used for creating response for custom errors
+        """
         data = {
             'error': {
                 'code': error_code,

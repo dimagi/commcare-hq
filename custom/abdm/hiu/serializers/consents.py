@@ -1,17 +1,14 @@
 from rest_framework import serializers
 
 from custom.abdm.const import (
-    CONSENT_PURPOSES,
-    CONSENT_PURPOSES_REF_URI,
-    GATEWAY_CONSENT_STATUS_CHOICES,
-    HI_TYPES,
+    ConsentPurpose,
+    HealthInformationType, STATUS_GRANTED, STATUS_DENIED, STATUS_REVOKED, STATUS_EXPIRED,
 )
 from custom.abdm.hiu.models import HIUConsentArtefact, HIUConsentRequest
 from custom.abdm.serializers import (
     GatewayCareContextSerializer,
     GatewayErrorSerializer,
     GatewayIdSerializer,
-    GatewayNotificationSerializer,
     GatewayPermissionSerializer,
     GatewayPurposeSerializer,
     GatewayRequestBaseSerializer,
@@ -23,12 +20,12 @@ from custom.abdm.utils import future_date_validator, past_date_validator
 
 class HIUGenerateConsentSerializer(serializers.Serializer):
     class PurposeSerializer(serializers.Serializer):
-        code = serializers.ChoiceField(choices=CONSENT_PURPOSES)
-        refUri = serializers.CharField(default=CONSENT_PURPOSES_REF_URI)
+        code = serializers.ChoiceField(choices=ConsentPurpose.CHOICES)
+        refUri = serializers.CharField(default=ConsentPurpose.REFERENCE_URI)
         text = serializers.SerializerMethodField(method_name='get_code_text')
 
         def get_code_text(self, obj):
-            return next(x[1] for x in CONSENT_PURPOSES if x[0] == obj['code'])
+            return next(x[1] for x in ConsentPurpose.CHOICES if x[0] == obj['code'])
 
     class PermissionSerializer(GatewayPermissionSerializer):
         class DateRangeSerializer(serializers.Serializer):
@@ -44,7 +41,8 @@ class HIUGenerateConsentSerializer(serializers.Serializer):
     hiu = GatewayIdSerializer()
     careContexts = serializers.ListField(required=False, child=GatewayCareContextSerializer(), min_length=1)
     requester = GatewayRequesterSerializer()
-    hiTypes = serializers.ListField(child=serializers.ChoiceField(choices=HI_TYPES), min_length=1)
+    hiTypes = serializers.ListField(child=serializers.ChoiceField(choices=HealthInformationType.CHOICES),
+                                    min_length=1)
     permission = PermissionSerializer()
 
 
@@ -84,7 +82,8 @@ class GatewayConsentRequestOnFetchSerializer(GatewayRequestBaseSerializer):
             hiu = GatewayIdSerializer()
             consentManager = GatewayIdSerializer()
             requester = GatewayRequesterSerializer()
-            hiTypes = serializers.ListField(child=serializers.ChoiceField(choices=HI_TYPES), min_length=1)
+            hiTypes = serializers.ListField(child=serializers.ChoiceField(choices=HealthInformationType.CHOICES),
+                                            min_length=1)
             permission = GatewayPermissionSerializer()
 
         status = serializers.ChoiceField(choices=GATEWAY_CONSENT_STATUS_CHOICES)
@@ -95,3 +94,13 @@ class GatewayConsentRequestOnFetchSerializer(GatewayRequestBaseSerializer):
     consent = ConsentSerializer(required=False)
     error = GatewayErrorSerializer(required=False, allow_null=True)
     resp = GatewayResponseReferenceSerializer()
+
+
+class GatewayNotificationSerializer(serializers.Serializer):
+    consentRequestId = serializers.CharField(required=False, allow_blank=True)
+    status = serializers.ChoiceField(choices=GATEWAY_CONSENT_STATUS_CHOICES)
+    consentArtefacts = serializers.ListField(required=False, child=GatewayIdSerializer())
+
+
+GATEWAY_CONSENT_STATUS_CHOICES = [(c, c) for c in [STATUS_GRANTED, STATUS_DENIED, STATUS_REVOKED,
+                                                   STATUS_EXPIRED]]

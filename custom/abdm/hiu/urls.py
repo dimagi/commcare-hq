@@ -1,6 +1,7 @@
 from django.urls import path
 
 from custom.abdm.const import GATEWAY_CALLBACK_URL_PREFIX
+from custom.abdm.hiu.views.base import TestBackgroundCelery
 from custom.abdm.hiu.views.consents import (GenerateConsent, ConsentFetch, ConsentArtefactFetch,
                                             GatewayConsentRequestOnInit, GatewayConsentRequestNotify,
                                             GatewayConsentRequestOnFetch)
@@ -17,6 +18,7 @@ hiu_urls = [
     path('api/hiu/health-information/request', RequestHealthInformation.as_view(), name='request_health_information'),
     path('api/hiu/v0.5/health-information/transfer', ReceiveHealthInformation.as_view(),
          name='receive_health_information'),
+    path('api/test_celery_background', TestBackgroundCelery.as_view()),
 
     # APIS that will be triggered by ABDM Gateway
     path(f'{GATEWAY_CALLBACK_URL_PREFIX}/consent-requests/on-init', GatewayConsentRequestOnInit.as_view(),

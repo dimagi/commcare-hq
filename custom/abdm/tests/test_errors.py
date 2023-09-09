@@ -27,7 +27,7 @@ class SampleErrorResponseFormatter(ABDMErrorResponseFormatter):
 
 def sample_exception_handler(exc, context):
     response = drf_standardized_exception_handler(exc, context)
-    return SampleErrorResponseFormatter().format(response)
+    return SampleErrorResponseFormatter().format_drf_response(response)
 
 
 class SampleAPIView(APIView):

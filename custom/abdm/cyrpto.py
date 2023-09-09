@@ -7,6 +7,7 @@ from custom.abdm.fidelius_encryption_util import getEcdhKeyMaterial, encryptData
 
 CRYPTO_ALGORITHM = 'ECDH'
 CURVE = 'Curve25519'
+KEY_MATERIAL_EXPIRY = 30 * 60   # in seconds
 
 
 class ABDMCrypto:
@@ -84,7 +85,7 @@ class KeyMaterial:
             "cryptoAlg": CRYPTO_ALGORITHM,
             "curve": CURVE,
             "dhPublicKey": {
-                "expiry": (datetime.utcnow() + timedelta(days=10)).isoformat(),
+                "expiry": (datetime.utcnow() + timedelta(seconds=KEY_MATERIAL_EXPIRY)).isoformat(),
                 "parameters": "Curve25519",
                 "keyValue": self.public_key
             },

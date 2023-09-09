@@ -5,3 +5,5 @@ GW_CONSENTS_FETCH_PATH = '/v0.5/consents/fetch'
 
 GW_HEALTH_INFO_REQUEST_PATH = '/v0.5/health-information/cm/request'
 GW_HEALTH_INFO_NOTIFY_PATH = '/v0.5/health-information/notify'
+
+ABHA_EXISTS_BY_HEALTH_ID = 'v1/search/existsByHealthId'

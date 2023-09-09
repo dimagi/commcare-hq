@@ -22,7 +22,7 @@ Note: Below example with values are from ABDM Sandbox environment
 ```commandline
 ABDM_CLIENT_ID = '<Actual client ID>'
 ABDM_CLIENT_SECRET = '<Actual client secret>'
-ABDM_X_CM_ID = 'sbx'
+ABDM_X_CM_ID = 'sbx'    # 'sbx' for sandbox 
 ABDM_ABHA_URL = "https://healthidsbx.abdm.gov.in/api/"
 ABDM_GATEWAY_URL = "https://dev.abdm.gov.in/gateway"
 ```
@@ -30,7 +30,7 @@ ABDM_GATEWAY_URL = "https://dev.abdm.gov.in/gateway"
 Projects that need to use the ABDM APIs, and therefore receive the token in restore response, should enable `restore_add_abdm_token` feature flag.
 
 
-### Error Response Format
+### Error Response Format (M2 and M3)
 
 ABDM Gateway uses a custom response format in case of errors. This is true for both APIs exposed by them and APIs consumed by them from HIU/HIP server to send callback responses.
 It is also applicable to all types of error types -  client(4xx), server(5xx), unhandled exceptions.

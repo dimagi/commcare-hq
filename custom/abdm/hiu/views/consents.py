@@ -1,13 +1,10 @@
-import requests
 from django.db import transaction
 from django.db.models import Q
 from rest_framework import viewsets
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_202_ACCEPTED
 
-from custom.abdm.auth import ABDMUserAuthentication
 from custom.abdm.const import (
     STATUS_ERROR,
     STATUS_EXPIRED,
@@ -16,17 +13,15 @@ from custom.abdm.const import (
     STATUS_REVOKED,
 )
 from custom.abdm.exceptions import (
-    ABDMGatewayError,
-    ABDMServiceUnavailable,
     ERROR_CODE_REQUIRED,
     ERROR_CODE_REQUIRED_MESSAGE
 )
 from custom.abdm.hiu.const import (
     GW_CONSENT_REQUEST_INIT_PATH,
     GW_CONSENT_REQUEST_ON_NOTIFY_PATH,
-    GW_CONSENTS_FETCH_PATH,
+    GW_CONSENTS_FETCH_PATH, ABHA_EXISTS_BY_HEALTH_ID,
 )
-from custom.abdm.hiu.exceptions import send_custom_error_response
+from custom.abdm.hiu.exceptions import HIUErrorResponseFormatter
 from custom.abdm.hiu.models import HIUConsentArtefact, HIUConsentRequest
 from custom.abdm.hiu.serializers.consents import (
     GatewayConsentRequestNotifySerializer,
@@ -36,50 +31,36 @@ from custom.abdm.hiu.serializers.consents import (
     HIUConsentArtefactSerializer,
     HIUConsentRequestSerializer,
 )
+from custom.abdm.hiu.tasks import process_hiu_consent_notification_request
 from custom.abdm.hiu.views.base import HIUBaseView, HIUGatewayBaseView
-from custom.abdm.milestone_one.utils.abha_verification_util import (
-    exists_by_health_id,
-)
 from custom.abdm.utils import (
-    GatewayRequestHelper,
+    ABDMRequestHelper,
     StandardResultsSetPagination,
 )
 
 
 class GenerateConsent(HIUBaseView):
-    authentication_classes = [ABDMUserAuthentication]
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
         serializer = HIUGenerateConsentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         consent_data = serializer.data
         if self.check_if_health_id_exists(consent_data["patient"]["id"]) is False:
-            return send_custom_error_response(error_code=4407, details_field='patient.id')
+            return HIUErrorResponseFormatter().generate_custom_error_response(error_code=4407,
+                                                                              details_field='patient.id')
         gateway_request_id = self.gateway_consent_request_init(consent_data)
         consent_request = self.save_consent_request(gateway_request_id, consent_data, request.user)
         return Response(status=HTTP_201_CREATED,
                         data=HIUConsentRequestSerializer(consent_request).data)
 
     def check_if_health_id_exists(self, health_id):
-        try:
-            # TODO (M1 Change) - Move this to common utils
-            response = exists_by_health_id(health_id)
-            return response.get('status')
-        except requests.Timeout:
-            raise ABDMServiceUnavailable()
-        except requests.HTTPError as err:
-            raise ABDMGatewayError(detail=err)
+        response = ABDMRequestHelper().abha_post(ABHA_EXISTS_BY_HEALTH_ID, {"healthId": health_id})
+        return response.get('status')
 
     def gateway_consent_request_init(self, consent_data):
-        request_data = GatewayRequestHelper.common_request_data()
+        request_data = ABDMRequestHelper.common_request_data()
         request_data['consent'] = consent_data
-        try:
-            GatewayRequestHelper().post(GW_CONSENT_REQUEST_INIT_PATH, request_data)
-        except requests.Timeout:
-            raise ABDMServiceUnavailable()
-        except requests.HTTPError as err:
-            raise ABDMGatewayError(detail=err)
+        ABDMRequestHelper().gateway_post(GW_CONSENT_REQUEST_INIT_PATH, request_data)
         return request_data["requestId"]
 
     def save_consent_request(self, gateway_request_id, consent_data, user):
@@ -112,58 +93,64 @@ class GatewayConsentRequestNotify(HIUGatewayBaseView):
     def post(self, request, format=None):
         print(f"GatewayConsentRequestNotify {request.data}")
         GatewayConsentRequestNotifySerializer(data=request.data).is_valid(raise_exception=True)
-        self.process_request(request.data)
+        process_hiu_consent_notification_request(request.data).delay()
         return Response(status=HTTP_202_ACCEPTED)
 
-    def process_request(self, request_data):
-        consent_status = request_data['notification']['status']
-        consent_request_id = request_data['notification'].get('consentRequestId')
+
+class GatewayConsentRequestNotifyProcessor:
+
+    def __init__(self, request_data):
+        self.request_data = request_data
+
+    def process_request(self):
+        consent_status = self.request_data['notification']['status']
         if consent_status == STATUS_REVOKED:
-            self.handle_revoked(request_data)
+            self.handle_revoked()
         else:
+            consent_request_id = self.request_data['notification']['consentRequestId']
             consent_request = HIUConsentRequest.objects.get(consent_request_id=consent_request_id)
             consent_request.update_status(consent_status)
             if consent_status == STATUS_GRANTED:
-                self.handle_granted(request_data, consent_request)
+                self.handle_granted(consent_request)
             elif consent_status == STATUS_EXPIRED:
-                self.handle_expired(request_data, consent_request)
+                self.handle_expired(consent_request)
 
-    def handle_granted(self, request_data, consent_request):
-        for artefact in request_data['notification']['consentArtefacts']:
+    def handle_granted(self, consent_request):
+        for artefact in self.request_data['notification']['consentArtefacts']:
             hiu_consent_artefact = HIUConsentArtefact(artefact_id=artefact['id'], consent_request=consent_request)
             hiu_consent_artefact.save()
             gateway_request_id = self.gateway_fetch_artefact_details(artefact['id'])
             hiu_consent_artefact.gateway_request_id = gateway_request_id
             hiu_consent_artefact.save()
 
-    def handle_expired(self, request_data, consent_request):
+    def handle_expired(self, consent_request):
         artefact_ids = []
         for artefact in consent_request.artefacts.all():
             artefact_ids.append(artefact.artefact_id)
             artefact.delete()
-        self.gateway_consents_on_notify(artefact_ids, request_data['requestId'])
+        self.gateway_consents_on_notify(artefact_ids)
 
-    def handle_revoked(self, request_data):
-        artefact_ids = [artefact['id'] for artefact in request_data['notification']['consentArtefacts']]
+    def handle_revoked(self):
+        artefact_ids = [artefact['id'] for artefact in self.request_data['notification']['consentArtefacts']]
         consent_request = HIUConsentRequest.objects.get(artefacts__artefact_id=artefact_ids[0])
         for artefact_id in artefact_ids:
             HIUConsentArtefact.objects.get(artefact_id=artefact_id).delete()
         if consent_request.artefacts.all().count() == 0:
             consent_request.update_status(STATUS_REVOKED)
-        self.gateway_consents_on_notify(artefact_ids, request_data['requestId'])
+        self.gateway_consents_on_notify(artefact_ids)
 
     def gateway_fetch_artefact_details(self, artefact_id):
-        request_data = GatewayRequestHelper.common_request_data()
-        request_data["consentId"] = artefact_id
-        GatewayRequestHelper().post(GW_CONSENTS_FETCH_PATH, request_data)
-        return request_data["requestId"]
+        request_body = ABDMRequestHelper.common_request_data()
+        request_body["consentId"] = artefact_id
+        ABDMRequestHelper().gateway_post(GW_CONSENTS_FETCH_PATH, request_body)
+        return request_body["requestId"]
 
-    def gateway_consents_on_notify(self, artefact_ids, request_id):
-        request_data = GatewayRequestHelper.common_request_data()
-        request_data['acknowledgement'] = [{'status': 'OK', 'consentId': artefact_id}
+    def gateway_consents_on_notify(self, artefact_ids):
+        request_body = ABDMRequestHelper.common_request_data()
+        request_body['acknowledgement'] = [{'status': 'OK', 'consentId': artefact_id}
                                            for artefact_id in artefact_ids]
-        request_data['resp'] = {'requestId': request_id}
-        GatewayRequestHelper().post(GW_CONSENT_REQUEST_ON_NOTIFY_PATH, request_data)
+        request_body['resp'] = {'requestId': self.request_data['requestId']}
+        ABDMRequestHelper().gateway_post(GW_CONSENT_REQUEST_ON_NOTIFY_PATH, request_body)
 
 
 class GatewayConsentRequestOnFetch(HIUGatewayBaseView):
@@ -194,8 +181,6 @@ class GatewayConsentRequestOnFetch(HIUGatewayBaseView):
 class ConsentFetch(HIUBaseView, viewsets.ReadOnlyModelViewSet):
     serializer_class = HIUConsentRequestSerializer
     pagination_class = StandardResultsSetPagination
-    authentication_classes = [ABDMUserAuthentication]
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         queryset = HIUConsentRequest.objects.all().order_by('-date_created')
@@ -221,8 +206,6 @@ class ConsentFetch(HIUBaseView, viewsets.ReadOnlyModelViewSet):
 class ConsentArtefactFetch(HIUBaseView, viewsets.ReadOnlyModelViewSet):
     serializer_class = HIUConsentArtefactSerializer
     pagination_class = StandardResultsSetPagination
-    authentication_classes = [ABDMUserAuthentication]
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         queryset = HIUConsentArtefact.objects.all().order_by('-date_created')
