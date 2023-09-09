@@ -47,10 +47,12 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         FormplayerFrontend.regions = new RegionContainer();
         let sidebar = FormplayerFrontend.regions.getRegion('sidebar');
         sidebar.on('show', function () {
-            $('#menu-container .flex-container').addClass('full-width');
+            $('#content-container').addClass('full-width');
+            $('#menu-region').addClass('sidebar-push');
         });
         sidebar.on('hide empty', function () {
-            $('#menu-container .flex-container').removeClass('full-width');
+            $('#content-container').removeClass('full-width');
+            $('#menu-region').removeClass('sidebar-push');
         });
 
         hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
