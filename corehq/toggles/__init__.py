@@ -1050,6 +1050,16 @@ SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
+DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
+    'dynamically_update_search_results',
+    "In case search with split screen case search enabled, search results update when a search field is updated"
+    " without requiring the user to manually press a button to search.",
+    TAG_CUSTOM,
+    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
+)
+
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
     'usercases_for_web_users',
     "USH: Enable the creation of usercases for web users.",
@@ -1784,6 +1794,13 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'Do not show modal on mobile that mobile hq experience is bad',
     TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+COPY_CASES = StaticToggle(
+    'copy_cases',
+    'Enable users to copy cases between mobile workers',
+    TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DASHBOARD_REACH_REPORT = StaticToggle(

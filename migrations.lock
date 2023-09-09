@@ -103,6 +103,8 @@ accounting
  0081_billingaccount_bill_web_user
  0082_application_error_report_priv
  0083_data_dictionary_priv
+ 0084_copy_cases_priv
+ 0085_remove_free_50_sms
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -739,6 +741,7 @@ pillowtop
  0007_copy_xforms_checkpoint
 preindex
  0001_initial
+ 0002_initial
 products
  0001_initial
 project_limits

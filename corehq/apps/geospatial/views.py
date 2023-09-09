@@ -22,6 +22,7 @@ from couchforms.geopoint import GeoPoint
 from corehq import toggles
 from corehq.apps.es import CaseSearchES, UserES
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.form_processor.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
@@ -148,12 +149,19 @@ class GeospatialConfigPage(BaseDomainView):
 
     @property
     def page_context(self):
+        gps_case_props = CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            data_type=CaseProperty.DataType.GPS,
+        )
         return {
             'form': self.settings_form,
             'config': model_to_dict(
                 self.config,
                 fields=GeospatialConfigForm.Meta.fields
-            )
+            ),
+            'gps_case_props_deprecated_state': {
+                prop.name: prop.deprecated for prop in gps_case_props
+            }
         }
 
     @property

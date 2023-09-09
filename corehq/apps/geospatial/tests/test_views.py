@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from corehq.apps.es import case_search_adapter, user_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.tests.utils import create_case
 from corehq.form_processor.models import CommCareCase
@@ -66,11 +67,20 @@ class GeoConfigViewTestClass(TestCase):
         )
         cls.webuser.save()
 
+        cls.case_type = CaseType(domain=cls.domain, name='case_type')
+        cls.case_type.save()
+        cls.gps_case_prop_name = 'gps_prop'
+        CaseProperty(
+            case_type=cls.case_type,
+            name=cls.gps_case_prop_name,
+            data_type=CaseProperty.DataType.GPS,
+        ).save()
+
     @classmethod
     def tearDownClass(cls):
+        cls.case_type.delete()
         cls.webuser.delete(None, None)
         cls.domain_obj.delete()
-
         super().tearDownClass()
 
     def _make_post(self, data):
@@ -96,21 +106,21 @@ class GeoConfigViewTestClass(TestCase):
         self._make_post(
             self.construct_data(
                 user_property='some_user_field',
-                case_property='some_case_prop',
+                case_property=self.gps_case_prop_name,
             )
         )
         config = GeoConfig.objects.get(domain=self.domain)
 
         self.assertTrue(config.location_data_source == GeoConfig.CUSTOM_USER_PROPERTY)
         self.assertEqual(config.user_location_property_name, 'some_user_field')
-        self.assertEqual(config.case_location_property_name, 'some_case_prop')
+        self.assertEqual(config.case_location_property_name, self.gps_case_prop_name)
 
     @flag_enabled('GEOSPATIAL')
     def test_config_update(self):
         self._make_post(
             self.construct_data(
                 user_property='some_user_field',
-                case_property='some_case_prop',
+                case_property=self.gps_case_prop_name,
             )
         )
         config = GeoConfig.objects.get(domain=self.domain)
