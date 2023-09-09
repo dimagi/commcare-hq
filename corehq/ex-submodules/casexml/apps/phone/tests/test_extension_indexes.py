@@ -8,7 +8,7 @@ from nose.tools import nottest
 from casexml.apps.case.mock import CaseIndex, CaseStructure
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from corehq.form_processor.tests.utils import sharded
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import softer_assert, flag_enabled
 
 
 @nottest
@@ -110,6 +110,7 @@ class TestSequenceMeta(type):
 
 
 @sharded
+@flag_enabled('ALIGN_ON_CHILDEXTENSION_CASES')
 class IndexTreeTest(BaseSyncTest, metaclass=TestSequenceMeta):
     """Fetch all testcases from data/case_relationship_tests.json and run them
 
