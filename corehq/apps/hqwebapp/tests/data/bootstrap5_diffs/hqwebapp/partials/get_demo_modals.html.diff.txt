@@ -1,0 +1,46 @@
+--- 
++++ 
+@@ -1,23 +1,26 @@
+ {% load i18n %}
+ 
+ <div class="modal fade"
++     tabindex="-1"
++     aria-labelledby="requestDemoModal"
++     aria-hidden="true"
+      id="cta-form-get-demo">
+-  <div class="modal-dialog">
++  <div class="modal-dialog modal-lg">
+     <div class="modal-content">
+       <div class="modal-header">
+-        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+-        <h4 class="modal-title">
++        <h1 class="modal-title fs-5" id="requestDemoModal">
+           {% if not request.user.is_authenticated %}
+             {% trans "Request a CommCare Demo" %}
+           {% else %}
+             {% trans "Get a Tour of CommCare" %}
+           {% endif %}
+-        </h4>
++        </h1>
++        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+       </div>
+ 
+       {# Hubspot Form #}
+       <div id="get-demo-cta-form-content">
+-        {% include "analytics/forms/bootstrap3/hubspot_cta_form.html" %}
++        {% include "analytics/forms/bootstrap5/hubspot_cta_form.html" %}
+       </div>
+ 
+       <div id="get-demo-cta-success" style="display: none;">
+@@ -29,10 +32,9 @@
+           </p>
+         </div>
+         <div class="modal-footer">
+-          <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Done" %}</a>
++          <a href="#" data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans "Done" %}</a>
+         </div>
+       </div>
+-
+     </div>
+   </div>
+ </div>
