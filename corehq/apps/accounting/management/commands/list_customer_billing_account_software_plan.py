@@ -21,9 +21,13 @@ class Command(BaseCommand):
                                  "type 'ALL' for all customer billing account, "
                                  "type 'DONE' when finished:\n")
             if account_name.upper() == 'ALL':
-                customer_billing_accounts = BillingAccount.objects.filter(
-                    is_customer_billing_account=True, is_active=True)
-                break
+                if allow_update:
+                    print("Please specify the exact list of account when running with --update"
+                          " to avoid accidental update.")
+                else:
+                    customer_billing_accounts = BillingAccount.objects.filter(
+                        is_customer_billing_account=True, is_active=True)
+                    break
             elif account_name.upper() == 'DONE':
                 break
             else:
