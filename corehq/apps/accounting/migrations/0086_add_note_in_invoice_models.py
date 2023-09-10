@@ -22,9 +22,7 @@ class Migration(migrations.Migration):
                                                         date_end=duplicate['date_end']).order_by('date_created')
             first_invoice = duplicate_invoices.first()
             for invoice in duplicate_invoices[1:]:
-                note = f"Invoice {invoice.id} is a duplicate of invoice id: {first_invoice.id}."
-                invoice.note = note
-                invoice.save()
+                invoice.update(note=f"Invoice {invoice.id} is a duplicate of invoice id: {first_invoice.id}.")
 
     def _add_note_to_existing_customer_invoice_duplicates(apps, schema_editor):
         CustomerInvoice = apps.get_model('accounting', 'CustomerInvoice')
@@ -38,9 +36,7 @@ class Migration(migrations.Migration):
                                                         date_end=duplicate['date_end']).order_by('date_created')
             first_invoice = duplicate_invoices.first()
             for invoice in duplicate_invoices[1:]:
-                note = f"Customer invoice {invoice.id} is a duplicate of customer invoice id: {first_invoice.id}."
-                invoice.note = note
-                invoice.save()
+                invoice.update(note=f"Customer invoice {invoice.id} is a duplicate of customer invoice id: {first_invoice.id}.")
 
     operations = [
         migrations.AddField(
