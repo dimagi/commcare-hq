@@ -20,18 +20,18 @@ class Command(BaseCommand):
             self.stdout.write('Found no duplicate domains\n')
 
         for domain in list(dups):
-            real_dom = Domain.get_by_name(domain)
-            total_doms = Domain.view("domain/domains",
+            currently_chosen_domain_doc = Domain.get_by_name(domain)
+            all_domain_docs = Domain.view("domain/domains",
                 key=domain,
                 reduce=False,
                 include_docs=True,
             ).all()
-            fake_doms = [d for d in total_doms if d.get_id != real_dom.get_id]
+            other_domain_docs = [d for d in all_domain_docs if d.get_id != currently_chosen_domain_doc.get_id]
 
             self.stdout.write('Found Dup: %s\n' % domain)
-            self.stdout.write(" -- _id of correct domain: %s\n" % real_dom.get_id)
-            self.stdout.write(" -- ids of duplicate domains: %s\n" % [d.get_id for d in fake_doms])
+            self.stdout.write(" -- _id of correct domain: %s\n" % currently_chosen_domain_doc.get_id)
+            self.stdout.write(" -- ids of duplicate domains: %s\n" % [d.get_id for d in other_domain_docs])
 
-            for dom in fake_doms:
+            for dom in other_domain_docs:
                 dom.doc_type = 'Domain-DUPLICATE'
                 dom.save()
