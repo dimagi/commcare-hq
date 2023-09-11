@@ -31,9 +31,13 @@ class Command(BaseCommand):
             ).all()
             other_domain_docs = [d for d in all_domain_docs if d.get_id != currently_chosen_domain_doc.get_id]
 
-            self.stdout.write('Found Dup: %s\n' % domain)
-            self.stdout.write(" -- _id of correct domain: %s\n" % currently_chosen_domain_doc.get_id)
-            self.stdout.write(" -- ids of duplicate domains: %s\n" % [d.get_id for d in other_domain_docs])
+            self.stdout.write(f'Found duplicate docs for domain: {domain}\n')
+            self.stdout.write(f'Chosen\t{"_id":32}\t{"name":16}\tis_active\t{"date_created":26}\t{"_rev":32}\n')
+
+            for domain_doc in all_domain_docs:
+                chosen = domain_doc._id == currently_chosen_domain_doc._id
+                chosen_str = '-->' if chosen else ''
+                self.stdout.write(f'{chosen_str}\t{domain_doc._id}\t{domain_doc.name:16}\t{str(domain_doc.is_active):9}\t{domain_doc.date_created}\t{domain_doc._rev}\n')
 
             if not dry_run:
                 for dom in other_domain_docs:
