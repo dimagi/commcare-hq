@@ -73,9 +73,13 @@ class Command(BaseCommand):
                     f'\n')
 
             if not dry_run:
+                self.stdout.write('')
+                self.stdout.write(f'{chosen_domain_doc._id} chosen\n')
                 for dom in other_domain_docs:
+                    self.stdout.write(f'{dom._id} ...', ending='')
                     dom.doc_type = 'Domain-DUPLICATE'
                     dom.save()
+                    self.stdout.write(' archived\n')
 
 
 @memoized
