@@ -48,12 +48,29 @@ class Command(BaseCommand):
 
 
             self.stdout.write(f'Found duplicate docs for domain: {domain}\n')
-            self.stdout.write(f'Chosen\t{"_id":32}\t{"name":16}\tis_active\t{"date_created":26}\t{"_rev":32}\tscore\n')
+            self.stdout.write(
+                f'Chosen\t'
+                f'{"_id":32}\t'
+                f'{"name":16}\t'
+                f'is_active\t'
+                f'{"date_created":26}\t'
+                f'{"_rev":32}\t'
+                f'score'
+                f'\n'
+            )
 
             for domain_doc in all_domain_docs:
                 chosen = domain_doc._id == chosen_domain_doc._id
                 chosen_str = '-->' if chosen else ''
-                self.stdout.write(f'{chosen_str}\t{domain_doc._id}\t{domain_doc.name:16}\t{str(domain_doc.is_active):9}\t{domain_doc.date_created}\t{domain_doc._rev}\t{score_domain_doc(domain_doc, is_currently_chosen=chosen)}\n')
+                self.stdout.write(
+                    f'{chosen_str}\t'
+                    f'{domain_doc._id}\t'
+                    f'{domain_doc.name:16}\t'
+                    f'{str(domain_doc.is_active):9}\t'
+                    f'{domain_doc.date_created}\t'
+                    f'{domain_doc._rev}\t'
+                    f'{score_domain_doc(domain_doc, is_currently_chosen=chosen):.2f}'
+                    f'\n')
 
             if not dry_run:
                 for dom in other_domain_docs:
