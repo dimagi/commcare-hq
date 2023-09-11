@@ -223,9 +223,15 @@ class Command(BaseCommand):
         Role(slug=privileges.APPLICATION_ERROR_REPORT,
              name='Application error report',
              description='Show Application Error Report'),
+        Role(slug=privileges.DATA_DICTIONARY,
+             name='Data dictionary',
+             description='Project level data dictionary of cases'),
         Role(slug=privileges.CASE_LIST_EXPLORER,
              name='Case List Explorer',
              description='Show Case List Explorer under Inspect Data in Reports'),
+        Role(slug=privileges.CASE_COPY,
+             name='Allow Case Copy',
+             description='Allow case copy from one user to another'),
     ]
 
     BOOTSTRAP_PLANS = [

@@ -97,8 +97,10 @@ from .dispatcher import require_form_management_privilege
 from .interfaces import (
     BulkFormManagementInterface,
     CaseReassignmentInterface,
+    CaseCopyInterface,
     FormManagementMode,
 )
+from corehq.apps.hqcase.case_helper import CaseCopier
 
 
 @login_and_domain_required
@@ -583,7 +585,7 @@ class XFormManagementStatusView(DataInterfaceSection):
             'title': mode.status_page_title,
             'error_text': mode.error_text,
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -609,37 +611,74 @@ def xform_management_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
-class BulkCaseReassignSatusView(DataInterfaceSection):
-    urlname = "bulk_case_reassign_status"
-    page_title = gettext_noop("Bulk Case Reassignment Status")
+class BulkCaseActionSatusView(DataInterfaceSection):
+    urlname = "bulk_case_action_status"
 
     @property
     def section_url(self):
-        return CaseReassignmentInterface.get_url(self.domain)
+        interface_class = CaseReassignmentInterface
+        if self.is_copy_action:
+            interface_class = CaseCopyInterface
+
+        return interface_class.get_url(self.domain)
+
+    @property
+    def page_title(self):
+        title = "Bulk Case Reassignment Status"
+        if self.is_copy_action:
+            title = "Bulk Case Copy Status"
+        return gettext_noop(title)
 
     def get(self, request, *args, **kwargs):
-        context = super(BulkCaseReassignSatusView, self).main_context
+        if self.is_copy_action:
+            action_text = "Copying"
+        else:
+            action_text = "Reassigning"
+
+        context = super(BulkCaseActionSatusView, self).main_context
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
-            'poll_url': reverse('case_reassign_job_poll', args=[self.domain, kwargs['download_id']]),
+            'poll_url': self.poll_url(kwargs['download_id']),
             'title': _(self.page_title),
-            'progress_text': _("Reassigning Cases. This may take some time..."),
-            'error_text': _("Bulk Case Reassignment failed for some reason and we have noted this failure."),
+            'progress_text': _("{action_text} Cases. This may take some time...").format(action_text=action_text),
+            'error_text': _(
+                "Bulk Case {action_text} failed for some reason and we have noted this failure."
+            ).format(action_text=action_text),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
+
+    def poll_url(self, download_id):
+        return reverse(
+            'case_action_job_poll',
+            args=[self.domain, download_id]
+        ) + f"?action={self.case_action}"
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
+    @property
+    def case_action(self):
+        return self.request.GET.get('action', CaseReassignmentInterface.action)
 
-def case_reassign_job_poll(request, domain, download_id):
+    @property
+    def is_copy_action(self):
+        return self.case_action == CaseCopyInterface.action
+
+
+def case_action_job_poll(request, domain, download_id):
     try:
         context = get_download_context(download_id, require_result=True)
     except TaskFailedError as e:
         notify_exception(request, message=str(e))
         return HttpResponseServerError()
-    template = "data_interfaces/partials/case_reassign_status.html"
+
+    case_action = request.GET.get('action', CaseReassignmentInterface.action)
+    if case_action == CaseCopyInterface.action:
+        template = "data_interfaces/partials/case_copy_status.html"
+    else:
+        template = "data_interfaces/partials/case_reassign_status.html"
+
     return render(request, template, context)
 
 
@@ -1228,9 +1267,11 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
         update_properties = [prop['name'] for prop in action_params['properties_to_update']]
         update_properties_set = set(update_properties)
+        reserved_properties = set(prop.replace("@", "") for prop in SPECIAL_CASE_PROPERTIES)
+        reserved_properties.add(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME)
 
         reserved_properties_updated = (
-            set(prop.replace("@", "") for prop in SPECIAL_CASE_PROPERTIES) & update_properties_set
+            reserved_properties & update_properties_set
         )
         if reserved_properties_updated:
             errors.append(

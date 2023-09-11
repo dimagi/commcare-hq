@@ -64,12 +64,30 @@ def test_flag_changed_javascript_plugins_bootstrap5():
     flags = flag_changed_javascript_plugins(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(flags, ['The `modal` plugin has been restructured since the removal of jQuery.\n\n'
-               'There is now a new way of triggering modal events and interacting with '
-               'modals in javascript.\n\nPlease feel free to update this help text as '
-               'you find common replacements/restructuring\nfor our usage of this plugin. '
-               'Thanks!\n\nOld docs: https://getbootstrap.com/docs/3.4/javascript/#modals\n'
-               'New docs: https://getbootstrap.com/docs/5.3/components/modal/#via-javascript\n'])
+    eq(flags, ["The `modal` plugin has been restructured since the removal of jQuery.\n\n"
+               "There is now a new way of triggering modal events and interacting with "
+               "modals in javascript.\nFor instance, if we wanted to hide a modal with "
+               "id `#bugReport` before, we would now do the\nfollowing...\n\npreviously"
+               "\n```\n$('#bugReport').modal('hide');\n```\n\nnow\n```\nconst bugReportModal"
+               " = new bootstrap.Modal($('#bugReport'));\nbugReportModal.hide();\n```\n\n"
+               "Hint: make sure to list `hqwebapp/js/bootstrap5_loader` as a js dependency "
+               "in the file where\nbootstrap is referenced.\n\nOld docs: "
+               "https://getbootstrap.com/docs/3.4/javascript/#modals\nNew docs: "
+               "https://getbootstrap.com/docs/5.3/components/modal/#via-javascript\n"])
+
+
+def test_flag_extended_changed_javascript_plugins_bootstrap5():
+    line = """    var oldHide = $.fn.popover.Constructor.prototype.hide;\n"""
+    flags = flag_changed_javascript_plugins(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(flags, ['The `popover` plugin has been restructured since the removal of jQuery.\n'
+               '\nThere is now a new way of triggering popover events and interacting '
+               'with popovers in javascript.\n\nPlease feel free to update this help text'
+               ' as you find common replacements/restructuring\nfor our usage of this '
+               'plugin. Thanks!\n\nOld docs: https://getbootstrap.com/docs/3.4/'
+               'javascript/#popovers\nNew docs: https://getbootstrap.com/docs/5.3/'
+               'components/popovers/\n'])
 
 
 def test_flag_path_references_to_migrated_javascript_files_bootstrap5():
