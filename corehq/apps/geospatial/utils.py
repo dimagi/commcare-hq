@@ -1,3 +1,7 @@
+from jsonobject.exceptions import BadValueError
+
+from couchforms.geopoint import GeoPoint
+
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.users.models import CommCareUser
 
@@ -43,3 +47,13 @@ def process_gps_values_for_user(domain, user_data):
     metadata[location_prop_name] = _format_coordinates(user_data['lat'], user_data['lon'])
     user.update_metadata(metadata)
     user.save()
+
+
+def get_lat_lon_from_dict(data, key):
+    try:
+        gps_location_prop = data[key]
+        geo_point = GeoPoint.from_string(gps_location_prop, flexible=True)
+        lat, lon = (str(geo_point.latitude), str(geo_point.longitude))
+    except (KeyError, BadValueError):
+        lat, lon = ('', '')
+    return lat, lon

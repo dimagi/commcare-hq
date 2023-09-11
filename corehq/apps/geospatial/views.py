@@ -1,5 +1,4 @@
 import json
-from jsonobject.exceptions import BadValueError
 import jsonschema
 from requests.exceptions import HTTPError
 
@@ -17,7 +16,6 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 from dimagi.utils.web import json_response
 from dimagi.utils.couch.bulk import get_docs
-from couchforms.geopoint import GeoPoint
 
 from corehq import toggles
 from corehq.apps.es import CaseSearchES, UserES
@@ -41,6 +39,7 @@ from .utils import (
     get_geo_user_property,
     process_gps_values_for_case,
     process_gps_values_for_user,
+    get_lat_lon_from_dict,
 )
 
 
@@ -267,12 +266,7 @@ def _get_paginated_cases_without_gps(domain, page, limit, query):
     cases = CommCareCase.objects.get_cases(case_ids_page, domain, ordered=True)
     case_data = []
     for case_obj in cases:
-        try:
-            gps_location_prop = case_obj.case_json[location_prop_name]
-            geo_point = GeoPoint.from_string(gps_location_prop, flexible=True)
-            lat, lon = (str(geo_point.latitude), str(geo_point.longitude))
-        except (KeyError, BadValueError):
-            lat, lon = ('', '')
+        lat, lon = get_lat_lon_from_dict(case_obj.case_json, location_prop_name)
         case_data.append(
             {
                 'id': case_obj.case_id,
@@ -303,12 +297,7 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
     user_docs = get_docs(CommCareUser.get_db(), keys=user_ids_page)
     user_data = []
     for user_doc in user_docs:
-        try:
-            gps_location_prop = user_doc['user_data'][location_prop_name]
-            geo_point = GeoPoint.from_string(gps_location_prop, flexible=True)
-            lat, lon = (str(geo_point.latitude), str(geo_point.longitude))
-        except (KeyError, BadValueError):
-            lat, lon = ('', '')
+        lat, lon = get_lat_lon_from_dict(user_doc['user_data'], location_prop_name)
         user_data.append(
             {
                 'id': user_doc['_id'],
