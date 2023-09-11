@@ -381,6 +381,8 @@ domain_migration_flags
  0003_add_migration_dates
 dropbox
  0001_initial
+email
+ 0001_initial
 enterprise
  0001_initial
  0002_enterprisepermissions_account_unique
