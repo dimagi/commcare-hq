@@ -172,7 +172,7 @@ class InstancesHelper(PostProcessor):
         # multiple menus can have the same ID - merge them first
         xpaths_by_menu_id = defaultdict(set)
         for menu in self.suite.menus:
-            xpaths_by_menu_id[menu.id] = menu.get_all_xpaths()
+            xpaths_by_menu_id[menu.id].update(menu.get_all_xpaths())
 
         return defaultdict(set, {
             command.id: xpaths_by_menu_id[menu.id]
