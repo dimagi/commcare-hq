@@ -1,5 +1,6 @@
 import jsonfield
 from django.db import models
+from django.db import transaction
 
 from corehq.apps.email.util import BadEmailConfigException, get_email_backend_classes
 from corehq.util.quickcache import quickcache
@@ -101,6 +102,7 @@ class SQLEmailSMTPBackend(models.Model):
         return None
 
     @staticmethod
+    @transaction.atomic
     def set_to_domain_default_backend(existing_default_backend, current_backend):
         if existing_default_backend and current_backend:
             existing_default_backend.is_default = False
