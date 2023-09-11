@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from dimagi.utils.web import json_response
 
 from corehq import toggles
+from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.geospatial.forms import GeospatialConfigForm
@@ -129,12 +130,19 @@ class GeospatialConfigPage(BaseDomainView):
 
     @property
     def page_context(self):
+        gps_case_props = CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            data_type=CaseProperty.DataType.GPS,
+        )
         return {
             'form': self.settings_form,
             'config': model_to_dict(
                 self.config,
                 fields=GeospatialConfigForm.Meta.fields
-            )
+            ),
+            'gps_case_props_deprecated_state': {
+                prop.name: prop.deprecated for prop in gps_case_props
+            }
         }
 
     @property
