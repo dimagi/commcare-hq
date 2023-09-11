@@ -122,13 +122,13 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     brew install libmagic libxmlsec1 libxml2 libxslt openssl readline sqlite3 xz zlib tcl-tk
     ```
 
-- Java (JDK 8)
+- Java (JDK 17)
 
   - **Linux**:
 
-    install `default-jre` via apt:
+    install `openjdk-17-jre` via apt:
     ```sh
-    sudo apt install default-jre
+    sudo apt install openjdk-17-jre
     ```
 
   - **macOS**:
