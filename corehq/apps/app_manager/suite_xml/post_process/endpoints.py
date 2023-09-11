@@ -22,8 +22,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     SessionEndpoint,
     Stack,
     StackDatum,
-    StackInstanceDatum,
-    StackQuery
+    StackInstanceDatum
 )
 from corehq.apps.app_manager.util import module_uses_inline_search
 from corehq.util.timer import time_method

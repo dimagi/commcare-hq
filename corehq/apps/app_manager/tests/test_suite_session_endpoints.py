@@ -19,6 +19,7 @@ from .util import (
     patch_validate_xform,
 )
 
+
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
 @flag_enabled('SESSION_ENDPOINTS')
@@ -509,13 +510,13 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         )
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
-            suite = self.factory.app.create_suite()
+            self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
            <partial>
                 <endpoint id="case_list">
                     <argument id="case_id"/>
-                    <stack>                    
+                    <stack>
                         <push>
                              <command value="'m0'"/>
                              <query id="results:inline" value="http://localhost:8000/a/test-domain/phone/case_fixture/None/">
@@ -546,13 +547,13 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         )
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
-            suite = self.factory.app.create_suite()
+            self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
            <partial>
                 <endpoint id="case_list">
                     <argument id="selected_cases" instance-id="selected_cases" instance-src="jr://instance/selected-entities"/>
-                    <stack>                    
+                    <stack>
                         <push>
                              <command value="'m0'"/>
                              <query id="results:inline" value="http://localhost:8000/a/test-domain/phone/case_fixture/None/">
