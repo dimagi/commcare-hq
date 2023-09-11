@@ -104,6 +104,7 @@ def score_domain_doc(domain_doc, *, is_currently_chosen):
         score += 2
     if domain_doc.is_active:
         score += 3
-    # add to the score the square root of the number of times the doc has been updated
-    score += float(domain_doc._rev.split('-')[0])**(.5)
-    return score / 6
+    # add to the score the square root of the number of times the doc has been updated (since initial creation)
+    rev_count = float(domain_doc._rev.split('-')[0])
+    score += (rev_count - 1) ** .5
+    return score / 5
