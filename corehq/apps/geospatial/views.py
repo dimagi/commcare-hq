@@ -236,12 +236,10 @@ class GPSCaptureView(BaseDomainView):
 @require_GET
 @login_and_domain_required
 def get_paginated_cases_or_users_without_gps(request, domain):
-    page = max(int(request.GET.get('page', 1)), 1)
-    limit = max(int(request.GET.get('limit', 5)), 1)
+    page = int(request.GET.get('page', 1))
+    limit = int(request.GET.get('limit', 5))
     query = request.GET.get('query', '')
     case_or_user = request.GET.get('data_type', 'case')
-    if case_or_user not in ['case', 'user']:
-        case_or_user = 'case'
 
     if case_or_user == 'user':
         data = _get_paginated_users_without_gps(domain, page, limit, query)
