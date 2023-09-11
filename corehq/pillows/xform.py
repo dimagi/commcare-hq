@@ -51,9 +51,9 @@ def xform_pillow_filter(doc_dict):
     :return: True to filter out doc
     """
     return (
-        doc_dict.get('xmlns', None) == DEVICE_LOG_XMLNS or
-        doc_dict.get('domain', None) is None or
-        doc_dict['form'] is None
+        doc_dict.get('xmlns', None) == DEVICE_LOG_XMLNS
+        or doc_dict.get('domain', None) is None
+        or doc_dict['form'] is None
     )
 
 
@@ -103,7 +103,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
       - :py:class:`corehq.apps.data_interfaces.pillow.CaseDeduplicationPillow``
     """
     if topics:
-        assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
+        assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process forms only"
     topics = topics or FORM_TOPICS
     change_feed = KafkaChangeFeed(
         topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num,
