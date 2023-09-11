@@ -31,7 +31,8 @@ class Command(BaseCommand):
 
         for domain in sorted(dups):
             currently_chosen_domain_doc = Domain.get_by_name(domain)
-            all_domain_docs = Domain.view("domain/domains",
+            all_domain_docs = Domain.view(
+                "domain/domains",
                 key=domain,
                 reduce=False,
                 include_docs=True,
@@ -40,7 +41,13 @@ class Command(BaseCommand):
             if selection_method == 'default':
                 chosen_domain_doc = currently_chosen_domain_doc
             elif selection_method == 'smart':
-                chosen_domain_doc = sorted(all_domain_docs, key=lambda d: score_domain_doc(d, is_currently_chosen=(d.get_id == currently_chosen_domain_doc.get_id)))[-1]
+                chosen_domain_doc = sorted(
+                    all_domain_docs,
+                    key=lambda d: score_domain_doc(
+                        d,
+                        is_currently_chosen=(d.get_id == currently_chosen_domain_doc.get_id)
+                    )
+                )[-1]
             else:
                 raise NotImplementedError()
 
