@@ -28,7 +28,7 @@ def _format_coordinates(lat, lon):
     return f"{lat} {lon} 0.0 0.0"
 
 
-def process_gps_values_for_case(domain, case_data):
+def set_user_gps_property(domain, case_data):
     location_prop_name = get_geo_case_property(domain)
     helper = CaseHelper(domain=domain, case_id=case_data['id'])
     case_data = {
@@ -40,7 +40,7 @@ def process_gps_values_for_case(domain, case_data):
     helper.update(case_data)
 
 
-def process_gps_values_for_user(domain, user_data):
+def set_case_gps_property(domain, user_data):
     location_prop_name = get_geo_user_property(domain)
     user = CommCareUser.get_by_user_id(user_data['id'])
     metadata = user.metadata

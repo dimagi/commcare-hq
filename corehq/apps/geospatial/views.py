@@ -37,8 +37,8 @@ from .models import GeoPolygon, GeoConfig
 from .utils import (
     get_geo_case_property,
     get_geo_user_property,
-    process_gps_values_for_case,
-    process_gps_values_for_user,
+    set_case_gps_property,
+    set_user_gps_property,
     get_lat_lon_from_dict,
 )
 
@@ -224,9 +224,9 @@ class GPSCaptureView(BaseDomainView):
         data_item = json_data.get('data_item', None)
 
         if data_type == 'case':
-            process_gps_values_for_case(request.domain, data_item)
+            set_case_gps_property(request.domain, data_item)
         elif data_type == 'user':
-            process_gps_values_for_user(request.domain, data_item)
+            set_user_gps_property(request.domain, data_item)
 
         return json_response({
             'status': 'success'
