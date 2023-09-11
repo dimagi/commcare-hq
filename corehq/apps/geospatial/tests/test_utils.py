@@ -87,7 +87,7 @@ class TestProcessGPSValues(TestCase):
         }
         process_gps_values_for_case(self.DOMAIN, submit_data)
         case_obj = CommCareCase.objects.get_case(self.case_obj.case_id, self.DOMAIN)
-        self.assertEqual(case_obj.case_json[GPS_POINT_CASE_PROPERTY], '1.23 4.56')
+        self.assertEqual(case_obj.case_json[GPS_POINT_CASE_PROPERTY], '1.23 4.56 0.0 0.0')
 
     def test_process_gps_values_for_users(self):
         submit_data = {
@@ -98,4 +98,4 @@ class TestProcessGPSValues(TestCase):
         }
         process_gps_values_for_user(self.DOMAIN, submit_data)
         user = CommCareUser.get_by_user_id(self.user.user_id, self.DOMAIN)
-        self.assertEqual(user.metadata[GPS_POINT_CASE_PROPERTY], '1.23 4.56')
+        self.assertEqual(user.metadata[GPS_POINT_CASE_PROPERTY], '1.23 4.56 0.0 0.0')
