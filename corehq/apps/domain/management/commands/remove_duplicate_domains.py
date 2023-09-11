@@ -29,7 +29,7 @@ class Command(BaseCommand):
         if not dups:
             self.stdout.write('Found no duplicate domains')
 
-        for domain in list(dups):
+        for domain in sorted(dups):
             currently_chosen_domain_doc = Domain.get_by_name(domain)
             all_domain_docs = Domain.view("domain/domains",
                 key=domain,
