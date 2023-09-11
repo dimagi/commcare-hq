@@ -7,7 +7,6 @@ from sqlalchemy import text
 
 from corehq.apps.userreports.alembic_diffs import DiffTypes
 from corehq.apps.userreports.models import (
-    DataSourceActionLog,
     DataSourceConfiguration,
     StaticDataSourceConfiguration,
 )
@@ -91,10 +90,9 @@ class Command(BaseCommand):
                 logger.exception(ex)
             finally:
                 adapter.log_table_migrate(
-                    initiated_by=initiated_by,
                     source='management_command',
-                    action=DataSourceActionLog.MIGRATE,
                     diffs=diffs_addressed,
+                    initiated_by=initiated_by,
                 )
                 logger.info(f'{len(diffs_addressed)} indexes added')
                 if not len(diffs_addressed) == num_diffs_to_attend:
