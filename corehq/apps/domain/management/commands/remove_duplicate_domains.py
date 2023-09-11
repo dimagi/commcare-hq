@@ -6,7 +6,10 @@ from corehq.apps.domain.models import Domain
 class Command(BaseCommand):
     help = "Detects and removes duplicate domains"
 
-    def handle(self, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('--dry-run', action='store_true', default=False)
+
+    def handle(self, dry_run, **options):
         domains = Domain.get_all()
         seen = set([])
         dups = set([])
@@ -32,6 +35,7 @@ class Command(BaseCommand):
             self.stdout.write(" -- _id of correct domain: %s\n" % currently_chosen_domain_doc.get_id)
             self.stdout.write(" -- ids of duplicate domains: %s\n" % [d.get_id for d in other_domain_docs])
 
-            for dom in other_domain_docs:
-                dom.doc_type = 'Domain-DUPLICATE'
-                dom.save()
+            if not dry_run:
+                for dom in other_domain_docs:
+                    dom.doc_type = 'Domain-DUPLICATE'
+                    dom.save()
