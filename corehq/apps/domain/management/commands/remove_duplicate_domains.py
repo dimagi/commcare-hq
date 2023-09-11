@@ -27,7 +27,7 @@ class Command(BaseCommand):
                 seen.add(domain.name)
 
         if not dups:
-            self.stdout.write('Found no duplicate domains\n')
+            self.stdout.write('Found no duplicate domains')
 
         for domain in list(dups):
             currently_chosen_domain_doc = Domain.get_by_name(domain)
@@ -46,8 +46,7 @@ class Command(BaseCommand):
 
             other_domain_docs = [d for d in all_domain_docs if d.get_id != chosen_domain_doc.get_id]
 
-
-            self.stdout.write(f'Found duplicate docs for domain: {domain}\n')
+            self.stdout.write(f'Found duplicate docs for domain: {domain}')
             self.stdout.write(
                 f'Chosen\t'
                 f'{"_id":32}\t'
@@ -56,7 +55,6 @@ class Command(BaseCommand):
                 f'{"date_created":26}\t'
                 f'{"_rev":32}\t'
                 f'score'
-                f'\n'
             )
 
             for domain_doc in all_domain_docs:
@@ -70,16 +68,16 @@ class Command(BaseCommand):
                     f'{domain_doc.date_created}\t'
                     f'{domain_doc._rev}\t'
                     f'{score_domain_doc(domain_doc, is_currently_chosen=chosen):.2f}'
-                    f'\n')
+                )
 
             if not dry_run:
                 self.stdout.write('')
-                self.stdout.write(f'{chosen_domain_doc._id} chosen\n')
+                self.stdout.write(f'{chosen_domain_doc._id} chosen')
                 for dom in other_domain_docs:
                     self.stdout.write(f'{dom._id} ...', ending='')
                     dom.doc_type = 'Domain-DUPLICATE'
                     dom.save()
-                    self.stdout.write(' archived\n')
+                    self.stdout.write(' archived')
 
 
 @memoized
