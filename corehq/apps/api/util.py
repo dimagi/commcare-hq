@@ -43,8 +43,9 @@ def object_does_not_exist(doc_type, doc_id):
     """
     Builds a 404 error message with standard, translated, verbiage
     """
-    return ObjectDoesNotExist(_("Could not find %(doc_type)s with id %(id)s") % \
-                              {"doc_type": doc_type, "id": doc_id})
+    return ObjectDoesNotExist(
+        _("Could not find %(doc_type)s with id %(id)s") % {"doc_type": doc_type, "id": doc_id}
+    )
 
 
 def get_obj(bundle_or_obj):
