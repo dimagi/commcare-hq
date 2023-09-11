@@ -21,7 +21,7 @@ def get_geo_user_property(domain):
 
 
 def _format_coordinates(lat, lon):
-    return f"{lat} {lon}"
+    return f"{lat} {lon} 0.0 0.0"
 
 
 def process_gps_values_for_case(domain, case_data):
