@@ -1,3 +1,5 @@
+.. _Change Feeds:
+
 ============
 Change Feeds
 ============
