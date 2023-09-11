@@ -1,11 +1,12 @@
 import jsonfield
 from django.db import models
+from django.db import transaction
 
 from corehq.apps.email.util import BadEmailConfigException, get_email_backend_classes
 from corehq.util.quickcache import quickcache
 
 
-class SQLEmailSMTPBackend(models.Model):
+class EmailSMTPBackend(models.Model):
     objects = models.Manager()
 
     # This tells us which type of backend this is
@@ -49,7 +50,7 @@ class SQLEmailSMTPBackend(models.Model):
         return domain == self.domain
 
     @classmethod
-    def name_is_unique(cls, name, domain, backend_id=None):
+    def name_is_unique(cls, name, domain, backend_id):
         result = cls.objects.filter(
             domain=domain,
             name=name,
@@ -70,7 +71,7 @@ class SQLEmailSMTPBackend(models.Model):
         Returns all the backends that the given domain has access to.
         """
         domain_owned_backends = models.Q(domain=domain)
-        result = SQLEmailSMTPBackend.objects.filter(domain_owned_backends).distinct()
+        result = EmailSMTPBackend.objects.filter(domain_owned_backends).distinct()
 
         if count_only:
             return result.count()
@@ -83,8 +84,8 @@ class SQLEmailSMTPBackend(models.Model):
         return [cls.load(pk) for pk in result]
 
     @classmethod
-    def get_domain_default_backend(cls, domain, id_only=False):
-        result = SQLEmailSMTPBackend.objects.filter(
+    def get_domain_default_backend(cls, domain):
+        result = EmailSMTPBackend.objects.filter(
             domain=domain,
             is_default=True,
         ).values_list(flat=True)
@@ -95,16 +96,14 @@ class SQLEmailSMTPBackend(models.Model):
                 "domain %s" % (domain)
             )
         elif len(result) == 1:
-            if id_only:
-                return result[0]
             return cls.load(result[0])
         return None
 
     @staticmethod
+    @transaction.atomic
     def set_to_domain_default_backend(existing_default_backend, current_backend):
         if existing_default_backend and current_backend:
-            existing_default_backend.is_default = False
-            existing_default_backend.save()
+            EmailSMTPBackend._make_backend_non_default(existing_default_backend)
 
         current_backend.is_default = True
         current_backend.save()
@@ -112,14 +111,18 @@ class SQLEmailSMTPBackend(models.Model):
     @staticmethod
     def unset_domain_default_backend(existing_default_backend):
         if existing_default_backend:
-            existing_default_backend.is_default = False
-            existing_default_backend.save()
+            EmailSMTPBackend._make_backend_non_default(existing_default_backend)
+
+    @staticmethod
+    def _make_backend_non_default(backend):
+        backend.is_default = False
+        backend.save()
 
     @classmethod
     @quickcache(['backend_id'], timeout=60 * 60)
     def get_backend_api_id(cls, backend_id):
         filter_args = {'pk': backend_id}
-        result = SQLEmailSMTPBackend.objects.filter(**filter_args).values_list('hq_api_id', flat=True)
+        result = EmailSMTPBackend.objects.filter(**filter_args).values_list('hq_api_id', flat=True)
 
         if len(result) == 0:
             raise cls.DoesNotExist
@@ -145,9 +148,3 @@ class SQLEmailSMTPBackend(models.Model):
         klass = backend_classes[api_id]
         result = klass.objects
         return result.get(pk=backend_id)
-
-    @classmethod
-    def get_backend_from_id_and_api_id_result(cls, result):
-        if len(result) > 0:
-            return cls.load(result[0]['id'], api_id=result[0]['hq_api_id'])
-        return None

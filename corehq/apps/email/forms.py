@@ -10,7 +10,7 @@ from django.forms.forms import Form
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_noop
 
-from corehq.apps.email.models import SQLEmailSMTPBackend
+from corehq.apps.email.models import EmailSMTPBackend
 from corehq.apps.email.util import get_email_backend_classes
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
@@ -33,13 +33,11 @@ class InitiateAddEmailBackendForm(Form):
 
         backend_classes = InitiateAddEmailBackendForm.email_backend_classes()
 
-        backend_choices = []
-        for api_id, klass in backend_classes.items():
-            friendly_name = klass.get_generic_name()
-            backend_choices.append((api_id, friendly_name))
-
-        backend_choices = sorted(backend_choices, key=lambda backend: backend[1])
-        self.fields['hq_api_id'].choices = backend_choices
+        self.fields['hq_api_id'].choices = sorted([
+            (api_id, klass.get_generic_name())
+            for api_id, klass in backend_classes.items()],
+            key=lambda backend: backend[1]
+        )
 
         self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
@@ -152,7 +150,7 @@ class BackendForm(Form):
         if re.compile(r"\s").search(value) is not None:
             raise ValidationError(_("Name may not contain any spaces."))
 
-        is_unique = SQLEmailSMTPBackend.name_is_unique(
+        is_unique = EmailSMTPBackend.name_is_unique(
             value,
             domain=self.domain,
             backend_id=self.backend_id

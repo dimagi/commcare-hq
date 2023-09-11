@@ -1,8 +1,8 @@
-from corehq.apps.email.models import SQLEmailSMTPBackend
+from corehq.apps.email.models import EmailSMTPBackend
 from corehq.messaging.emailbackends.aws.forms import AWSBackendForm
 
 
-class AWSBackend(SQLEmailSMTPBackend):
+class AWSBackend(EmailSMTPBackend):
     class Meta(object):
         app_label = 'email'
 

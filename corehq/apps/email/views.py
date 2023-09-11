@@ -9,7 +9,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.email.forms import InitiateAddEmailBackendForm
-from corehq.apps.email.models import SQLEmailSMTPBackend
+from corehq.apps.email.models import EmailSMTPBackend
 from corehq.apps.email.util import get_email_backend_classes
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 
@@ -49,7 +49,7 @@ class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionVie
     @property
     @memoized
     def total(self):
-        return SQLEmailSMTPBackend.get_domain_backends(self.domain, count_only=True)
+        return EmailSMTPBackend.get_domain_backends(self.domain, count_only=True)
 
     @property
     def column_names(self):
@@ -70,12 +70,12 @@ class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionVie
 
     @property
     def paginated_list(self):
-        backends = SQLEmailSMTPBackend.get_domain_backends(
+        backends = EmailSMTPBackend.get_domain_backends(
             self.domain,
             offset=self.skip,
             limit=self.limit
         )
-        default_backend = SQLEmailSMTPBackend.get_domain_default_backend(
+        default_backend = EmailSMTPBackend.get_domain_default_backend(
             self.domain
         )
 
@@ -120,9 +120,9 @@ class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionVie
     def _get_backend_from_item_id(item_id):
         try:
             item_id = int(item_id)
-            backend = SQLEmailSMTPBackend.load(item_id)
+            backend = EmailSMTPBackend.load(item_id)
             return item_id, backend
-        except (SQLEmailSMTPBackend.DoesNotExist, TypeError, ValueError):
+        except (EmailSMTPBackend.DoesNotExist, TypeError, ValueError):
             raise Http404()
 
     def get_deleted_item_data(self, item_id):
@@ -144,15 +144,14 @@ class DomainEmailGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionVie
         if not backend.domain_is_authorized(self.domain):
             raise Http404()
 
-        domain_default_backend = SQLEmailSMTPBackend.get_domain_default_backend(
-            self.domain,
-            id_only=False
+        domain_default_backend = EmailSMTPBackend.get_domain_default_backend(
+            self.domain
         )
 
         if domain_default_backend and domain_default_backend.id == item_id:
-            SQLEmailSMTPBackend.unset_domain_default_backend(backend)
+            EmailSMTPBackend.unset_domain_default_backend(backend)
         else:
-            SQLEmailSMTPBackend.set_to_domain_default_backend(domain_default_backend, backend)
+            EmailSMTPBackend.set_to_domain_default_backend(domain_default_backend, backend)
 
     @property
     def allowed_actions(self):
