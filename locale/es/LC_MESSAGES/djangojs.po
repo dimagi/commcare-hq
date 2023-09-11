@@ -3021,6 +3021,18 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+#, fuzzy
+#| msgid "Please Select a Country Code"
+msgid "Please select one"
+msgstr "Por favor Seleccione un Código de País"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+#, fuzzy
+#| msgid "Please Select a Country Code"
+msgid "Please select one or more"
+msgstr "Por favor Seleccione un Código de País"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
 msgid "Please check the following fields:"
 msgstr ""
 
@@ -3263,8 +3275,36 @@ msgid "True when ALL of the case properties match"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+msgid "Out of range of filter. Will not appear on page refresh."
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#, fuzzy
+#| msgid "Update"
+msgid "updated"
+msgstr "Actualizar"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#, fuzzy
+#| msgid "Case Type"
+msgid "Case copied"
+msgstr "Tipo de Caso"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#, fuzzy
+#| msgid "Case Type"
+msgid "Cases copied"
+msgstr "Tipo de Caso"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
 msgid "Case Reassignment (via HQ)"
 msgstr "Reasignación de Caso (vía HQ)"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+#, fuzzy
+#| msgid "Search Countries..."
+msgid "Search for users"
+msgstr "Buscar Países..."
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
 msgid "Search for users or groups"

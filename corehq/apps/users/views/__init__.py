@@ -1218,6 +1218,9 @@ class BaseUploadUser(BaseUserSettingsView):
                 upload_record.pk,
                 self.is_web_upload
             )
+        errors = task.info['messages']['errors']
+        if errors:
+            messages.error(request, errors)
         task_ref.set_task(task)
         if self.is_web_upload:
             return HttpResponseRedirect(

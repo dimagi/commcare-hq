@@ -29,6 +29,7 @@ class CaseTileTemplates(models.TextChoices):
     ONE_3X_TWO_4X_ONE_2X = ("one_3X_two_4X_one_2X", _("Three upper rows, four rows with two cells, two lower rows "
                                                     "and map"))
     ONE_TWO_TWO = ("one_two_two", _("Title row, second row with two cells, third row with two cells"))
+    ICON_TEXT_GRID = ("icon_text_grid", _("2 x 3 grid of image and text"))
 
 
 @dataclass
