@@ -182,9 +182,9 @@ class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
         cls.domain2, subscriber2 = generator.arbitrary_domain_and_subscriber()
         cls.admin_web_user = generator.create_arbitrary_web_user_name()
 
-        account = generator.billing_account(cls.admin_web_user, cls.admin_web_user)
-        account.is_customer_billing_account = True
-        account.save()
+        cls.account = generator.billing_account(cls.admin_web_user, cls.admin_web_user)
+        cls.account.is_customer_billing_account = True
+        cls.account.save()
 
         enterprise_plan = SoftwarePlan.objects.create(
             name="Helping Earth INGO Enterprise Plan",
@@ -223,7 +223,7 @@ class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
 
         # Setup main billing domain and its subscription
         subscription1 = Subscription(
-            account=account,
+            account=cls.account,
             plan_version=cls.newest_version,
             subscriber=subscriber1,
             date_start=two_months_ago,
@@ -234,7 +234,7 @@ class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
         subscription1.save()
 
         subscription2 = Subscription(
-            account=account,
+            account=cls.account,
             plan_version=cls.first_version,
             subscriber=subscriber2,
             date_start=two_months_ago,
@@ -246,15 +246,15 @@ class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
         )
         subscription2.save()
 
-    @patch('builtins.input', return_value='ALL')
-    def test_keep_software_plan_consistent_for_all_customer_billing_account(self, mock_input):
-        old_subscription1 = Subscription.get_active_subscription_by_domain(self.domain1)
-        self.assertEqual(old_subscription1.plan_version, self.newest_version)
+    def test_keep_software_plan_consistent_for_customer_billing_accounts(self):
+        with patch('builtins.input', side_effect=[self.account.name, 'DONE']):
+            old_subscription1 = Subscription.get_active_subscription_by_domain(self.domain1)
+            self.assertEqual(old_subscription1.plan_version, self.newest_version)
 
-        old_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
-        self.assertEqual(old_subscription2.plan_version, self.first_version)
+            old_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
+            self.assertEqual(old_subscription2.plan_version, self.first_version)
 
-        call_command('list_customer_billing_account_software_plan', update=True)
+            call_command('list_customer_billing_account_software_plan', update=True)
 
-        new_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
-        self.assertEqual(new_subscription2.plan_version, self.newest_version)
+            new_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
+            self.assertEqual(new_subscription2.plan_version, self.newest_version)
