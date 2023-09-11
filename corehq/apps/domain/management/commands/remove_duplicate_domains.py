@@ -92,9 +92,9 @@ def score_domain_doc(domain_doc, *, is_currently_chosen):
     """
     score = 0
     if is_currently_chosen:
-        score += 1
+        score += 2
     if domain_doc.is_active:
-        score += 1
+        score += 3
     # add to the score the square root of the number of times the doc has been updated
     score += float(domain_doc._rev.split('-')[0])**(.5)
-    return score
+    return score / 6
