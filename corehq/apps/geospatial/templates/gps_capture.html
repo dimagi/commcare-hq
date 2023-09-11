@@ -30,6 +30,11 @@
             {% endif %}
         </p>
     </p>
+    <div class="alert alert-success" data-bind="visible: isSubmissionSuccess">
+        {% blocktrans %}
+            Changes have been saved successfully!
+        {% endblocktrans %}
+    </div>
     <div class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">
@@ -124,11 +129,6 @@
                   Please check your internet connection.
                   If this problem continues, please
                   <a href="#modalReportIssue" data-toggle="modal">report an issue</a>.
-                {% endblocktrans %}
-            </div>
-            <div class="alert alert-success" data-bind="visible: isSubmissionSuccess">
-                {% blocktrans %}
-                    Changes have been saved successfully!
                 {% endblocktrans %}
             </div>
             <pagination data-apply-bindings="false"
