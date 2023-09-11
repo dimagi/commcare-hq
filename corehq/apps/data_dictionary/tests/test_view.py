@@ -7,7 +7,7 @@ from django.urls import reverse
 
 from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyGroup, CasePropertyAllowedValue, CaseType
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.users.models import WebUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
 
@@ -390,6 +390,6 @@ class DataDictionaryJsonTest(TestCase):
                     "properties": [],
                 }
             ],
-            "geo_case_property": GEO_POINT_CASE_PROPERTY,
+            "geo_case_property": GPS_POINT_CASE_PROPERTY,
         }
         self.assertEqual(response.json(), expected_response)
