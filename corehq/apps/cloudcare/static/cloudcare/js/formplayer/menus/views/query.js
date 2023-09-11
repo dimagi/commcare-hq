@@ -456,8 +456,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             // only here to maintain backward compatibility and can be removed
             // once web apps fully transition using keys to convey select prompt selection.
             this.selectValuesByKeys = false;
-            this.dynamicSearchEnabled = toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') &&
-                this.options.sidebarEnabled;
+            this.dynamicSearchEnabled = options.disableDynamicSearch ? false:
+                (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
 
             for (let model of this.parentModel) {
                 if ("itemsetChoicesKey" in model.attributes) {
