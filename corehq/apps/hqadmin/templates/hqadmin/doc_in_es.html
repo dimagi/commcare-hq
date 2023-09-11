@@ -36,7 +36,7 @@
           </div>
         </div>
       {% endfor %}
-      {% if not found_indices %}
+      {% if not es_info.found_indices %}
         <div class="col-xs-6">
           <h3>Couch/SQL Doc:</h3>
           <pre>{{ couch_info.doc|default:"NOT FOUND" }}</pre>
