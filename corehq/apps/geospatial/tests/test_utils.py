@@ -46,7 +46,7 @@ class TestGetGeoProperty(TestCase):
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
-class TestProcessGPSValues(TestCase):
+class TestSetGPSProperty(TestCase):
     DOMAIN = 'test-domain'
 
     @classmethod
