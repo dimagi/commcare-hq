@@ -22,7 +22,7 @@ class Command(BaseCommand):
                                  "type 'DONE' when finished:\n")
             if account_name.upper() == 'ALL':
                 if allow_update:
-                    print("Please specify the exact list of account when running with --update"
+                    print("Please specify the exact list of accounts when running with --update"
                           " to avoid accidental update.")
                 else:
                     customer_billing_accounts = BillingAccount.objects.filter(
