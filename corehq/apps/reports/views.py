@@ -87,7 +87,8 @@ from corehq.apps.reports.formdetails.readable import (
     get_data_cleaning_data,
     get_readable_data_for_submission,
 )
-from corehq.apps.reports.models import QueryStringHash
+from corehq.apps.reports.models import QueryStringHash, TableauConnectedApp
+from corehq.apps.reports.util import get_all_tableau_groups, TableauAPIError
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.saved_reports.tasks import (
     send_delayed_report,
@@ -114,7 +115,7 @@ from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.utils.xform import resave_form
 from corehq.motech.generic_inbound.utils import revert_api_request_from_form
 from corehq.tabs.tabclasses import ProjectReportsTab
-from corehq.toggles import VIEW_FORM_ATTACHMENT
+from corehq.toggles import VIEW_FORM_ATTACHMENT, TABLEAU_USER_SYNCING
 from corehq.util import cmp
 from corehq.util.couch import get_document_or_404
 from corehq.util.download import get_download_response
@@ -134,7 +135,7 @@ from .forms import (
     UpdateTableauVisualizationForm,
 )
 from .lookup import ReportLookup, get_full_report_name
-from .models import TableauServer, TableauVisualization
+from .models import TableauVisualization
 from .standard import ProjectReport, inspect
 
 DATE_FORMAT = "%Y-%m-%d %H:%M"
@@ -1856,14 +1857,32 @@ class TableauServerView(BaseProjectReportSectionView):
     def tableau_server_form(self):
         data = self.request.POST if self.request.method == 'POST' else None
         return TableauServerForm(
-            data, domain=self.domain
+            data, domain=self.domain, user_syncing_config=self.get_user_syncing_config()
         )
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['domain'] = self.domain
-        kwargs['initial'] = TableauServer.objects.get_or_create(domain=self.domain)
-        return kwargs
+    def get_user_syncing_config(self):
+        '''
+        returns a dict --
+            {
+                'user_syncing_enabled': Bool; is FF enabled
+                'all_tableau_groups': List or None; all tableau groups on linked Tableau site
+                'server_reachable': Bool or None; could Tableau Server be reached
+            }
+        '''
+        user_syncing_config = {}
+        user_syncing_config['user_syncing_enabled'] = TABLEAU_USER_SYNCING.enabled(self.domain)
+        if user_syncing_config['user_syncing_enabled']:
+            if TableauConnectedApp.is_server_setup(self.domain):
+                try:
+                    user_syncing_config['all_tableau_groups'] = get_all_tableau_groups(self.domain)
+                    user_syncing_config['server_reachable'] = True
+                except TableauAPIError:
+                    messages.warning(self.request, _("""Cannot reach Tableau Server right now, allowed Tableau
+                                                        groups cannot be edited."""))
+            else:
+                messages.warning(self.request, _("""Tableau Server is not configured yet, allowed Tableau groups
+                                                    cannot be edited."""))
+        return user_syncing_config
 
     @property
     def page_context(self):
