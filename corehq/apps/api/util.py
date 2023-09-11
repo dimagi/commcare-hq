@@ -1,7 +1,4 @@
 import datetime
-import json
-from contextlib import closing
-from io import BytesIO
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext as _
@@ -10,9 +7,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from dateutil.parser import parse
 from sqlalchemy import and_, asc, or_, select
 from tastypie.bundle import Bundle
-
-from couchexport.export import export_from_tables
-from couchexport.models import Format
 
 from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.forms import form_adapter
