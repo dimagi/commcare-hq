@@ -79,20 +79,37 @@
                             </a>
                         </td>
                         <td>
-                            <input class="form-control"
-                                   type="number"
-                                   step="any"
-                                   name="latInput"
-                                   placeholder="{% trans 'Enter latitude...' %}"
-                                   data-bind="value: lat, event: {change: onValueChanged}" />
+                            <div data-bind="css: {'has-error': !isLatValid()}">
+                                <input class="form-control"
+                                       type="number"
+                                       step="any"
+                                       name="latInput"
+                                       placeholder="{% trans 'Enter latitude...' %}"
+                                       data-bind="value: lat, event: {change: onValueChanged}" />
+                                <span class="help-block" data-bind="visible: !isLatValid()">
+                                    {% blocktrans %}
+                                        The value should be between -90 and 90
+                                    {% endblocktrans %}
+                                </span>
+                            </div>
                         </td>
                         <td>
-                            <input class="form-control"
-                                   type="number"
-                                   step="any"
-                                   name="lonInput"
-                                   placeholder="{% trans 'Enter longitude...' %}"
-                                   data-bind="value: lon, event: {change: onValueChanged}" />
+                            <div data-bind="css: {'has-error': !isLonValid()}">
+                                <input class="form-control"
+                                       type="number"
+                                       step="any"
+                                       min="-180"
+                                       max="180"
+                                       maxlength="20"
+                                       name="lonInput"
+                                       placeholder="{% trans 'Enter longitude...' %}"
+                                       data-bind="value: lon, event: {change: onValueChanged}" />
+                                <span class="help-block" data-bind="visible: !isLonValid()">
+                                    {% blocktrans %}
+                                        The value should be between -180 and 180
+                                    {% endblocktrans %}
+                                </span>
+                            </div>
                         </td>
                         <td>
                             <button type="button" class="btn btn-default" data-bind="event: {click: onMapCaptureStart}">

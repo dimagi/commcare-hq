@@ -30,6 +30,8 @@ hqDefine("geospatial/js/gps_capture",[
             self.url(initialPageData.reverse('case_data', options.id));
         }
         self.hasUnsavedChanges = ko.observable(false);
+        self.isLatValid = ko.observable(true);
+        self.isLonValid = ko.observable(true);
 
         self.onMapCaptureStart = function () {
             // TODO: Implement this function
@@ -37,10 +39,19 @@ hqDefine("geospatial/js/gps_capture",[
 
         self.onValueChanged = function () {
             self.hasUnsavedChanges(true);
+
+            self.lat(self.lat().substr(0, 20));
+            self.lon(self.lon().substr(0, 20));
+
+            const latValid = (self.lat() >= -90 && self.lat() <= 90);
+            self.isLatValid(latValid);
+            const lonValid = (self.lon() >= -180 && self.lon() <= 180);
+            self.isLonValid(lonValid);
         };
 
         self.canSaveRow = ko.computed(function () {
-            return self.lat().length && self.lon().length && self.hasUnsavedChanges();
+            const isValidInput = self.isLatValid() && self.isLonValid();
+            return self.lat().length && self.lon().length && self.hasUnsavedChanges() && isValidInput;
         });
 
         return self;
