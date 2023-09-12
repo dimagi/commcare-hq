@@ -127,6 +127,69 @@ hqDefine("geospatial/js/geospatial_map", [
                 }
             });
 
+            map.on('load', () => {
+                map.addSource('caseWithGPS', {
+                    type: 'geojson',
+                    data: {
+                      "type": "FeatureCollection",
+                      "features": []
+                    },
+                    cluster: true,
+                    clusterMaxZoom: 14, // Max zoom to cluster points on
+                    clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
+                });
+
+                map.addLayer({
+                    id: 'clusters',
+                    type: 'circle',
+                    source: 'caseWithGPS',
+                    filter: ['has', 'point_count'],
+                    paint: {
+                        'circle-color': [
+                            'step',
+                            ['get', 'point_count'],
+                            '#51bbd6',
+                            100,
+                            '#f1f075',
+                            750,
+                            '#f28cb1'
+                        ],
+                        'circle-radius': [
+                            'step',
+                            ['get', 'point_count'],
+                            20,
+                            100,
+                            30,
+                            750,
+                            40
+                        ]
+                    }
+                });
+                map.addLayer({
+                    id: 'cluster-count',
+                    type: 'symbol',
+                    source: 'caseWithGPS',
+                    filter: ['has', 'point_count'],
+                    layout: {
+                        'text-field': ['get', 'point_count_abbreviated'],
+                        'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+                        'text-size': 12
+                    }
+                });
+                map.addLayer({
+                    id: 'unclustered-point',
+                    type: 'circle',
+                    source: 'caseWithGPS',
+                    filter: ['!', ['has', 'point_count']],
+                    paint: {
+                        'circle-color': 'red',
+                        'circle-radius': 10,
+                        'circle-stroke-width': 1,
+                        'circle-stroke-color': '#fff'
+                    }
+                });
+            });
+
             function getCoordinates(event) {
                 return event.lngLat;
             }
