@@ -378,7 +378,7 @@ hqDefine("geospatial/js/geospatial_map", [
         var missingGPSModelInstance = new missingGPSModel([]);
 
         $(document).ajaxComplete(function (event, xhr, settings) {
-            const isAfterReportLoad = settings.url.includes('geospatial/async/case_management_map/');
+            const isAfterReportLoad = settings.url.includes('geospatial/async/case_management_map/') || settings.url.includes('geospatial/async/case_grouping_management_map/');
             // This indicates clicking Apply button or initial page load
             if (isAfterReportLoad) {
                 map = loadMapBox();
@@ -389,7 +389,7 @@ hqDefine("geospatial/js/geospatial_map", [
             }
 
             // This indicates that report data is fetched either after apply or after pagination
-            const isAfterDataLoad = settings.url.includes('geospatial/json/case_management_map/');
+            const isAfterDataLoad = settings.url.includes('geospatial/json/case_management_map/') || settings.url.includes('geospatial/json/case_grouping_management_map/');
             if (!isAfterDataLoad) {
                 return;
             }
