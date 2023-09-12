@@ -83,7 +83,7 @@ class ElasticDomain(ElasticDocumentAdapter):
         if sub:
             domain_dict['subscription'] = sub[0].plan_version.plan.edition
         for country in countries:
-            domain_dict['deployment']['countries'].append(Countries[country].upper())
+            domain_dict['deployment']['countries'].append(Countries().countries[country].upper())
         return super()._from_dict(domain_dict)
 
 
