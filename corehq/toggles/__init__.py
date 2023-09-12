@@ -551,10 +551,10 @@ def all_toggles_by_name_in_scope(scope_dict, toggle_class=StaticToggle):
         if not toggle_name.startswith('__'):
             if toggle_class == FrozenPrivilegeToggle:
                 # Include only FrozenPrivilegeToggle types
-                include = type(toggle) == FrozenPrivilegeToggle
+                include = isinstance(toggle, FrozenPrivilegeToggle)
             else:
                 # Exclude FrozenPrivilegeToggle but include other subclasses such as FeatureRelease
-                include = isinstance(toggle, toggle_class) and type(toggle) != FrozenPrivilegeToggle
+                include = isinstance(toggle, toggle_class) and not isinstance(toggle, FrozenPrivilegeToggle)
             if include:
                 result[toggle_name] = toggle
     return result
@@ -705,6 +705,16 @@ CASE_LIST_TILE = StaticToggle(
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
+)
+
+CASE_LIST_TILE_CUSTOM = StaticToggle(
+    'case_list_tile_custom',
+    'USH: Configure custom case list tile',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?'
+              'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
+    parent_toggles=[CASE_LIST_TILE],
 )
 
 CASE_LIST_MAP = StaticToggle(
@@ -1038,6 +1048,16 @@ SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
     help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+)
+
+DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
+    'dynamically_update_search_results',
+    "In case search with split screen case search enabled, search results update when a search field is updated"
+    " without requiring the user to manually press a button to search.",
+    TAG_CUSTOM,
+    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
 )
 
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
@@ -1395,6 +1415,15 @@ SMS_LOG_CHANGES = StaticToggle(
                  "Report, and adds Status and Event columns"),
 )
 
+EXPORT_DATA_SOURCE_DATA = StaticToggle(
+    'export_data_source_data',
+    'Add Export Data Source Data page',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+    description="Add the Export Data Source Data page to the Data tab",
+)
+
+
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'enable_include_sms_gateway_charging',
     'Enable include SMS gateway charging',
@@ -1559,15 +1588,6 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
         "other reports - by individual user, group, or location.  Note that this "
         "will also force the report to always display by user."
     ),
-)
-
-DATA_DICTIONARY = StaticToggle(
-    'data_dictionary',
-    'Project level data dictionary of cases',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-    description='Available in the Data section, shows the names of all properties of each case type.',
-    help_link='https://confluence.dimagi.com/display/GS/Data+Dictionary+for+Case+Properties',
 )
 
 DD_CASE_DATA = StaticToggle(
@@ -1774,6 +1794,13 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'Do not show modal on mobile that mobile hq experience is bad',
     TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+COPY_CASES = StaticToggle(
+    'copy_cases',
+    'Enable users to copy cases between mobile workers',
+    TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DASHBOARD_REACH_REPORT = StaticToggle(
@@ -2018,17 +2045,6 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     """,
     help_link="https://confluence.dimagi.com/display/saas/One+Phone+Number+-+Multiple+Contacts",
     parent_toggles=[INBOUND_SMS_LENIENCY]
-)
-
-CHANGE_FORM_LANGUAGE = StaticToggle(
-    'change_form_language',
-    'USH: Allow user to change form language in web apps',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Allows the user to change the language of the form content while in the form itself in Web Apps
-    """,
-    help_link="https://confluence.dimagi.com/display/saas/Change+Form+Language"
 )
 
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
@@ -2395,6 +2411,15 @@ GEOSPATIAL = StaticToggle(
 
 )
 
+COMMCARE_CONNECT = StaticToggle(
+    'commcare_connect',
+    'Enable CommCare Connect features',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='More details to come',
+
+)
+
 FCM_NOTIFICATION = StaticToggle(
     'fcm_notification',
     'Allows access to FCM Push Notifications',
@@ -2600,4 +2625,14 @@ APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
     description="Show Application Error Report.",
     # TODO: Move to public wiki
     help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
+)
+
+DATA_DICTIONARY = FrozenPrivilegeToggle(
+    privileges.DATA_DICTIONARY,
+    'data_dictionary',
+    label='Project level data dictionary of cases',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Project level data dictionary of cases',
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary'
 )

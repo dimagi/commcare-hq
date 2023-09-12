@@ -1,0 +1,34 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% with slug="app_manager_v2" name="New App Builder" %}
+  <div id="rollout-revert-modal"
+       class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        {% blocktrans %}
+          <div class="modal-header">
+            <h4 class="modal-title">Turn Off {{ name }}</h4>
+          </div>
+          <div class="modal-body">
+            <p class="lead">
+              Are you sure you want to turn off {{ name }} for now?
+            </p>
+            <div class="row">
+              <div class="col-md-6 text-center">
+                <button class="btn btn-outline-primary btn-full-width" id="rollout-revert" data-slug="{{ slug }}">
+                  Yes, turn off {{ name }}
+                </button>
+              </div>
+              <div class="col-md-6 text-center">
+                <button class="btn btn-primary btn-full-width" data-bs-dismiss="modal">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        {% endblocktrans %}
+      </div>
+    </div>
+  </div>
+{% endwith %}

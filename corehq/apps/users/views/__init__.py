@@ -626,7 +626,7 @@ class DownloadWebUsersStatusView(BaseUserSettingsView):
             'next_url': reverse(ListWebUsersView.urlname, args=[self.domain]),
             'next_url_text': _("Go back to Web Users"),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -1218,6 +1218,9 @@ class BaseUploadUser(BaseUserSettingsView):
                 upload_record.pk,
                 self.is_web_upload
             )
+        errors = task.info['messages']['errors']
+        if errors:
+            messages.error(request, errors)
         task_ref.set_task(task)
         if self.is_web_upload:
             return HttpResponseRedirect(
@@ -1275,7 +1278,7 @@ class WebUserUploadStatusView(BaseManageWebUserView):
             'next_url': reverse(ListWebUsersView.urlname, args=[self.domain]),
             'next_url_text': _("Return to manage web users"),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

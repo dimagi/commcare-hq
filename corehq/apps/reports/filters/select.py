@@ -22,7 +22,6 @@ from corehq.motech.repeaters.const import (
     RECORD_SUCCESS_STATE,
 )
 from corehq.motech.repeaters.models import Repeater
-from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 
 
 class GroupFilterMixin(object):

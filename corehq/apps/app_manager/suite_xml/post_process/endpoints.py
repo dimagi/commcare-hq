@@ -21,6 +21,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     SessionEndpoint,
     Stack,
     StackDatum,
+    StackInstanceDatum,
 )
 from corehq.util.timer import time_method
 
@@ -61,13 +62,13 @@ class EndpointsHelper(PostProcessor):
 
         # Add a claim request for each endpoint argument.
         # This assumes that all arguments are case ids.
-        non_computed_argument_ids = [
-            child.id for child in children
+        non_computed_arguments = [
+            child for child in children
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection
             and (should_add_last_selection_datum or child != children[-1])
         ]
-        for arg_id in non_computed_argument_ids:
-            self._add_claim_frame(stack, arg_id, endpoint_id)
+        for arg in non_computed_arguments:
+            self._add_claim_frame(stack, arg, endpoint_id)
 
         # Add a frame to navigate to the endpoint
         frame = PushFrame()
@@ -76,11 +77,28 @@ class EndpointsHelper(PostProcessor):
             if isinstance(child, CommandId):
                 frame.add_command(child.to_command())
             elif child.id in argument_ids:
-                self._add_datum_for_arg(frame, child.id)
+                self._add_datum_for_arg(frame, child)
+
+        def get_child(child_id):
+            for child in children:
+                if child.id == child_id:
+                    return child
+
+        arguments = []
+        for arg_id in argument_ids:
+            child = get_child(arg_id)
+            if child.is_instance:
+                arguments.append(Argument(
+                    id=arg_id,
+                    instance_id=arg_id,
+                    instance_src="jr://instance/selected-entities",
+                ))
+            else:
+                arguments.append(Argument(id=arg_id))
 
         return SessionEndpoint(
             id=endpoint_id,
-            arguments=[Argument(id=i) for i in argument_ids],
+            arguments=arguments,
             stack=stack,
         )
 
@@ -100,16 +118,17 @@ class EndpointsHelper(PostProcessor):
             if should_include(child, should_add_last_selection_datum or child != frame_children[-1])
         ]
 
-    def _add_claim_frame(self, stack, arg_id, endpoint_id):
+    def _add_claim_frame(self, stack, arg, endpoint_id):
         frame = PushFrame()
         stack.add_frame(frame)
-        self._add_datum_for_arg(frame, arg_id)
-        frame.add_command(f"'claim_command.{endpoint_id}.{arg_id}'")
+        self._add_datum_for_arg(frame, arg)
+        frame.add_command(f"'claim_command.{endpoint_id}.{arg.id}'")
 
-    def _add_datum_for_arg(self, frame, arg_id):
-        frame.add_datum(
-            StackDatum(id=arg_id, value=f"${arg_id}")
-        )
+    def _add_datum_for_arg(self, frame, child):
+        datum = StackInstanceDatum(id=child.id, value=f"${child.id}") if child.is_instance \
+            else StackDatum(id=child.id, value=f"${child.id}")
+
+        frame.add_datum(datum)
 
     def get_frame_children(self, module, form):
         helper = WorkflowHelper(self.suite, self.app, self.app.get_modules())

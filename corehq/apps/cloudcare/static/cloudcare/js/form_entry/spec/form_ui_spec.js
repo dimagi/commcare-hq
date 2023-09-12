@@ -3,7 +3,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
     describe('Fullform formUI', function () {
         var constants = hqImport("cloudcare/js/form_entry/const"),
             formUI = hqImport("cloudcare/js/form_entry/form_ui"),
-            fixutres = hqImport("cloudcare/js/form_entry/spec/fixtures"),
+            fixtures = hqImport("cloudcare/js/form_entry/spec/fixtures"),
             questionJSON,
             formJSON,
             groupJSON,
@@ -14,15 +14,15 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             repeatNestJSON;
 
         beforeEach(function () {
-            questionJSON = fixutres.selectJSON();
+            questionJSON = fixtures.selectJSON();
 
-            repeatJSON = fixutres.repeatJSON();
+            repeatJSON = fixtures.repeatJSON();
 
-            repeatNestJSON = fixutres.repeatNestJSON();
+            repeatNestJSON = fixtures.repeatNestJSON();
 
-            groupJSON = fixutres.groupJSON();
+            groupJSON = fixtures.groupJSON();
 
-            noQuestionGroupJSON = fixutres.noQuestionGroupJSON();
+            noQuestionGroupJSON = fixtures.noQuestionGroupJSON();
 
             nestedGroupJSON = {
                 tree: [groupJSON, noQuestionGroupJSON],
@@ -75,13 +75,48 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             assert.equal(form.children()[0].children().length, 1);
             assert.equal(form.children()[0].children()[0].type(), constants.GROUP_TYPE);
             assert.isTrue(form.children()[0].children()[0].isRepetition);
-            assert.equal(form.children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);
+            assert.equal(form.children()[0].children()[0].children()[0].type(), constants.GROUPED_QUESTION_TILE_ROW_TYPE);
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);
+        });
+
+        it('Should render questions grouped by row', function () {
+            let styleObj = {raw: '2-per-row'};
+            let q0 = fixtures.textJSON({
+                style: styleObj,
+                ix: "0",
+            });
+            let g0 = fixtures.groupJSON({
+                ix: "1",
+            });
+            g0.children[0].children[0].style = styleObj;
+            g0.children[0].children[1].style = styleObj;
+            let q1 = fixtures.selectJSON({
+                style: styleObj,
+                ix: "2",
+            });
+            let q2 = fixtures.labelJSON({
+                style: styleObj,
+                ix: "3",
+            });
+            let q3 = fixtures.labelJSON({
+                style: styleObj,
+                ix: "4",
+            });
+            formJSON.tree = [q0, g0, q1, q2, q3];
+            let form = formUI.Form(formJSON);
+
+            // Expected structure (where gq signifies type "grouped-question-tile-row")
+            assert.equal(form.children().length, 4); // [gq, g, gq, gq]
+            assert.equal(form.children()[0].children().length, 1); // [q0]
+            assert.equal(form.children()[1].children()[0].children()[0].children().length, 2); // [q(ix=2,3), q(ix=2,4)]
+            assert.equal(form.children()[2].children().length, 2); // [q1, q2]
+            assert.equal(form.children()[3].children().length, 1); // [q3]
         });
 
         it('Should reconcile question choices', function () {
             formJSON.tree = [questionJSON];
             var form = formUI.Form(formJSON),
-                question = form.children()[0];
+                question = form.children()[0].children()[0];
             assert.equal(form.children().length, 1);
             assert.equal(question.choices().length, 2);
 
@@ -97,7 +132,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             questionJSON.answer = null;
             formJSON.tree = [questionJSON];
             var form = formUI.Form(_.clone(formJSON)),
-                question = form.children()[0];
+                question = form.children()[0].children()[0];
             assert.equal(question.answer(), null);
 
             questionJSON.answer = [1,2];
@@ -107,7 +142,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
 
             questionJSON.answer = [3,3];
             form = formUI.Form(_.clone(formJSON)),
-            question = form.children()[0];
+            question = form.children()[0].children()[0];
             $.publish('session.reconcile', [_.clone(formJSON), question]);
             assert.sameMembers(question.answer(), [3,3]);
         });
@@ -118,7 +153,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             questionJSON.answer = "chucknorris.png";
             formJSON.tree = [questionJSON];
             var form = formUI.Form(_.clone(formJSON)),
-                question = form.children()[0];
+                question = form.children()[0].children()[0];
             assert.equal(question.answer(), "chucknorris.png");
 
             // simulate response processing from FP
@@ -204,7 +239,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             questionJSON.answer = "first answer";
             formJSON.tree = [questionJSON];
             var form = formUI.Form(_.clone(formJSON)),
-                question = form.children()[0];
+                question = form.children()[0].children()[0];
             assert.equal(question.answer(), "first answer");
 
             // question is updated

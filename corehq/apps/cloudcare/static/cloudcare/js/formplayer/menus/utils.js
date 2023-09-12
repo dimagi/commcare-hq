@@ -85,28 +85,32 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function (langs, enableLanguageMenu) {
-        var langModels,
+    var showMenuDropdown = function (langs, langCodeNameMapping) {
+        let langModels,
             langCollection;
 
         FormplayerFrontend.regions.addRegions({
-            formMenu: "#form-menu",
+            breadcrumbMenuDropdown: "#breadcrumb__menu-dropdown",
         });
-        if (langs && enableLanguageMenu) {
+
+        if (langs && langs.length > 1) {
             langModels = _.map(langs, function (lang) {
-                return {
-                    lang: lang,
-                };
+            let matchingLanguage = langCodeNameMapping[lang];
+            return {
+                lang_code: lang,
+                lang_label: matchingLanguage ? matchingLanguage : lang,
+            };
             });
             langCollection = new Backbone.Collection(langModels);
         } else {
             langCollection = null;
         }
-        var formMenuView = views.FormMenuView({
+        let menuDropdownView = views.MenuDropdownView({
             collection: langCollection,
         });
-        FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
+        FormplayerFrontend.regions.getRegion('breadcrumbMenuDropdown').show(menuDropdownView);
     };
+
 
     var getMenuData = function (menuResponse) {
         return {                    // TODO: make this more concise
@@ -204,7 +208,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         getCaseListView: getCaseListView,
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
-        showFormMenu: showFormMenu,
+        showMenuDropdown: showMenuDropdown,
         startOrStopLocationWatching: startOrStopLocationWatching,
     };
 });

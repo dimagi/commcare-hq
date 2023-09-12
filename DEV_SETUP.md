@@ -501,17 +501,64 @@ Before running any of the commands below, you should have all of the following
 running: Postgres, CouchDB, Redis, and Elasticsearch.
 The easiest way to do this is using the Docker instructions above.
 
+If you want to use a partitioned database, change
+`USE_PARTITIONED_DATABASE = False` to `True` in `localsettings.py`.
+
+You will also need to create the additional databases manually:
+
+```sh
+$ psql -h localhost -p 5432 -U commcarehq
+```
+
+(assuming that "commcarehq" is the username in `DATABASES` in
+`localsettings.py`). When prompted, use the password associated with the
+username, of course.
+
+```sh
+commcarehq=# CREATE DATABASE commcarehq_proxy;
+CREATE DATABASE
+commcarehq=# CREATE DATABASE commcarehq_p1;
+CREATE DATABASE
+commcarehq=# CREATE DATABASE commcarehq_p2;
+CREATE DATABASE
+commcarehq=# \q
+```
+
 Populate your database:
 
 ```sh
-./manage.py sync_couch_views
-./manage.py create_kafka_topics
-env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
+$ ./manage.py sync_couch_views
+$ ./manage.py create_kafka_topics
+$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
+```
+
+If you are using a partitioned database, populate the additional databases too:
+
+```sh
+$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate_multi --noinput
 ```
 
 You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
+
+#### Troubleshooting errors from the CouchDB Docker container
+
+If you are seeing errors from the CouchDB Docker container that include
+`database_does_not_exist` ... `"_users"`, it could be because CouchDB
+is missing its three system databases, `_users`, `_replicator` and
+`_global_changes`. The `_global_changes` database is not necessary if
+you do not expect to be using the global changes feed. You can use
+`curl` to create the databases:
+
+```sh
+$ curl -X PUT http://username:password@127.0.0.1:5984/_users
+$ curl -X PUT http://username:password@127.0.0.1:5984/_replicator
+```
+
+where "username" and "password" are the values of "COUCH_USERNAME"
+and "COUCH_PASSWORD" given in `COUCH_DATABASES` set in
+`dev_settings.py`.
 
 #### Troubleshooting Issues with `sync_couch_views`
 
@@ -1117,6 +1164,21 @@ For example:
 ```
 http://localhost:8000/mocha/app_manager/b3
 ```
+
+### Measuring test coverage
+
+To generate a JavaScript test coverage report, ensure the development server is
+active on port 8000 and run:
+
+```sh
+./scripts/coverage-js.sh
+```
+
+This script goes through the steps to prepare a report for test coverage of
+JavaScript files _that are touched by tests_, i.e., apps and files with 0% test
+coverage will not be shown. A coverage summary is output to the terminal and a
+detailed html report is generated at ``coverage-js/index.html``.
+
 
 ## Sniffer
 

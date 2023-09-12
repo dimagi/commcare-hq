@@ -1,3 +1,4 @@
+import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 
@@ -11,6 +12,13 @@ from corehq.apps.users.tasks import (
     apply_correct_demo_mode_to_loadtest_user,
     update_domain_date,
 )
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es import case_search_adapter
+from corehq.form_processor.models import CommCareCase
+from corehq.apps.users.tasks import remove_users_test_cases
+from corehq.apps.reports.util import domain_copied_cases_by_owner
+from corehq.apps.hqcase.case_helper import CaseCopier
+
 
 class TasksTest(TestCase):
 
@@ -120,3 +128,51 @@ def _get_user(loadtest_factor, is_demo_user):
     finally:
         user.delete(domain_name, None)
         domain_obj.delete()
+
+
+@es_test(requires=[case_search_adapter])
+class TestRemoveUsersTestCases(TestCase):
+
+    domain = "test-domain"
+
+    @classmethod
+    def setUpClass(cls):
+        super()
+        cls.user = CommCareUser.create(cls.domain, 'user', 'password', None, None)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete(deleted_by_domain=None, deleted_by=None)
+        super()
+
+    def test_only_copied_cases_gets_removed(self):
+        _ = self._send_case_to_es(owner_id=self.user.user_id)
+        test_case = self._send_case_to_es(owner_id=self.user.user_id, is_copy=True)
+
+        remove_users_test_cases(self.domain, [self.user.user_id])
+        case_ids = domain_copied_cases_by_owner(self.domain, self.user.user_id)
+
+        self.assertEqual(case_ids, [test_case.case_id])
+
+    def _send_case_to_es(
+        self,
+        owner_id=None,
+        is_copy=False,
+    ):
+        case_json = {}
+        if is_copy:
+            case_json[CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME] = 'case_id'
+
+        case = CommCareCase(
+            case_id=uuid.uuid4().hex,
+            domain=self.domain,
+            owner_id=owner_id,
+            type='case_type',
+            case_json=case_json,
+            modified_on=datetime.utcnow(),
+            server_modified_on=datetime.utcnow(),
+        )
+        case.save()
+
+        case_search_adapter.index(case, refresh=True)
+        return case

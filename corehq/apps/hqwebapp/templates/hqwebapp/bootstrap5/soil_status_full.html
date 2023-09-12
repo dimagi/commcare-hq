@@ -1,0 +1,30 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main "hqwebapp/js/soil" %}
+
+{% block page_content %}
+  {% initial_page_data 'download_id' download_id %}
+  {% initial_page_data 'error_text' error_text %}
+  {% initial_page_data 'poll_url' poll_url %}
+
+  <header>
+    <div class="row">
+      <div class="col-md-8">
+        <h2>{{ title }}</h2>
+      </div>
+    </div>
+  </header>
+
+  <div class="downloader_container"
+       id="display_{{ download_id }}">
+    <legend>
+      {{ progress_text }}
+    </legend>
+  </div>
+
+  {% if next_url and next_url_text %}
+    <a href='{{ next_url }}'>{{ next_url_text }}</a>
+  {% endif %}
+{% endblock %}

@@ -51,7 +51,9 @@ from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import TableauUser
 from corehq.apps.reports.util import (
+    TableauGroupTuple,
     get_all_tableau_groups,
+    get_allowed_tableau_groups_for_domain,
     get_tableau_groups_for_user,
     update_tableau_user,
 )
@@ -362,8 +364,8 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
         basic_fields = [
             crispy.Div(*username_controls),
-            hqcrispy.Field('first_name'),
-            hqcrispy.Field('last_name'),
+            'first_name',
+            'last_name',
         ]
 
         if self.is_using_sso:
@@ -377,9 +379,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
             # It is the presence of the "readonly" attribute that determines
             # whether an input is readonly. Its value does not matter.
-            basic_fields.append(hqcrispy.Field('email', readonly="readonly"))
+            basic_fields.append(crispy.Field('email', readonly="readonly"))
         else:
-            basic_fields.append(hqcrispy.Field('email'))
+            basic_fields.append('email')
 
         if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
@@ -391,7 +393,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             ),
             (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else crispy.Fieldset)(
                 gettext_lazy("Other Options"),
-                hqcrispy.Field('language'),
+                'language',
                 crispy.Div(hqcrispy.StaticField(
                     gettext_lazy('API Key'),
                     format_html_lazy(
@@ -1059,7 +1061,7 @@ class GroupMembershipForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 fieldset_title,
-                crispy.Field('selected_ids'),
+                'selected_ids',
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -1425,9 +1427,9 @@ class DomainRequestForm(forms.Form):
         self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
         self.helper.show_form_errors = True
         self.helper.layout = crispy.Layout(
-            hqcrispy.Field('full_name'),
-            hqcrispy.Field('email'),
-            hqcrispy.Field('domain'),
+            'full_name',
+            'email',
+            'domain',
             self.form_actions,
         )
 
@@ -1684,7 +1686,7 @@ class UserFilterForm(forms.Form):
             fieldset_label = _('Filter and Download Mobile Workers')
             fields += [
                 crispy.Div(
-                    crispy.Field("location_id",),
+                    "location_id",
                     data_bind="slideVisible: !isCrossDomain()",
                 ),
                 crispy.Div(
@@ -1694,7 +1696,7 @@ class UserFilterForm(forms.Form):
                     ),
                     data_bind="slideVisible: !isCrossDomain() && location_id",
                 ),
-                crispy.Field("user_active_status",),
+                "user_active_status",
                 crispy.Field("columns", data_bind="value: columns"),
             ]
 
@@ -1786,15 +1788,21 @@ class TableauUserForm(forms.Form):
         self.domain = kwargs.pop('domain', None)
         self.username = kwargs.pop('username', None)
         super(TableauUserForm, self).__init__(*args, **kwargs)
-        self.all_tableau_groups = get_all_tableau_groups(self.domain)
+
+        self.allowed_tableau_groups = [
+            TableauGroupTuple(group.name, group.id) for group in get_all_tableau_groups(self.domain)
+            if group.name in get_allowed_tableau_groups_for_domain(self.domain)]
         user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
+        self.fields['groups'].choices = []
         self.fields['groups'].initial = []
-        for i, group in enumerate(self.all_tableau_groups):
+        for i, group in enumerate(self.allowed_tableau_groups):
             # Add a choice for each tableau group on the server
             self.fields['groups'].choices.append((i, group.name))
             if group.name in user_group_names:
                 # Pre-choose groups that the user already belongs to
                 self.fields['groups'].initial.append(i)
+        if not self.fields['groups'].choices:
+            del self.fields['groups']
 
         self.helper = FormHelper()
 
@@ -1806,5 +1814,5 @@ class TableauUserForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def save(self, username, commit=True):
-        groups = [self.all_tableau_groups[int(i)] for i in self.cleaned_data['groups']]
+        groups = [self.allowed_tableau_groups[int(i)] for i in self.cleaned_data['groups']]
         update_tableau_user(self.domain, username, self.cleaned_data['role'], groups)

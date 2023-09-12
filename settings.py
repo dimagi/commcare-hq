@@ -222,6 +222,7 @@ DEFAULT_APPS = (
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
+    'crispy_bootstrap3to5',
     'field_audit',
     'gunicorn',
     'compressor',
@@ -241,11 +242,8 @@ SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
 
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
-CRISPY_ALLOWED_TEMPLATE_PACKS = (
-    'bootstrap',
-    'bootstrap3',
-)
+CRISPY_TEMPLATE_PACK = 'bootstrap3to5'
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3to5"
 
 FIELD_AUDIT_AUDITORS = [
     "corehq.apps.users.auditors.HQAuditor",
@@ -1979,6 +1977,11 @@ DOMAIN_MODULE_MAP = {
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
     'kenya-vca': 'custom.abt',
+    'pmievolve-madagascar': 'custom.abt',
+    'pmievolve-malawi': 'custom.abt',
+    'pmievolve-mozambique': 'custom.abt',
+    'pmievolve-rwanda': 'custom.abt',
+    'pmievolve-zambia': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',

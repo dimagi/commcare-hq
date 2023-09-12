@@ -9,6 +9,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         views = hqImport("cloudcare/js/formplayer/menus/views"),
         toggles = hqImport("hqwebapp/js/toggles"),
         QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
         Collection = hqImport("cloudcare/js/formplayer/menus/collections");
     var selectMenu = function (options) {
 
@@ -106,15 +107,14 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var changeFormLanguage = toggles.toggleEnabled('CHANGE_FORM_LANGUAGE');
-        var enablePrintOption = !menuResponse.queryKey;
         var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview;
 
         if (sidebarEnabled && menuResponse.type === "query") {
             var menuData = menusUtils.getMenuData(menuResponse);
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
-            menuData["title"] = menuResponse.resultsTitle;
+            menuData["description"] = menuResponse.description;
+
             var caseListView = menusUtils.getCaseListView(menuResponse);
             FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
         } else if (menuListView) {
@@ -152,8 +152,14 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
-            if (!appPreview && ((menuResponse.langs && menuResponse.langs.length > 1 && changeFormLanguage) || enablePrintOption)) {
-                menusUtils.showFormMenu(menuResponse.langs, changeFormLanguage);
+            if (!appPreview) {
+                let isFormEntry = !menuResponse.queryKey;
+                if (isFormEntry) {
+                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData('lang_code_name_mapping'));
+                }
+                if (menuResponse.type === "entities") {
+                    menusUtils.showMenuDropdown();
+                }
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
