@@ -46,12 +46,6 @@ class HQUserType(object):
         return cls._get_manual_filterset(cls.included_defaults, cls.toggle_defaults)
 
     @classmethod
-    def all_but_users(cls):
-        no_users = [True] * cls.count
-        no_users[cls.ACTIVE] = False
-        return cls._get_manual_filterset(cls.included_defaults, no_users)
-
-    @classmethod
     def commtrack_defaults(cls):
         # this is just a convenience method for clarity on commtrack projects
         return cls.all()
