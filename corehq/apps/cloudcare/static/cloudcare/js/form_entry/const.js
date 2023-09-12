@@ -61,6 +61,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         NEW_FORM: 'new-form',
         ANSWER: 'answer',
         ANSWER_MEDIA: 'answer_media',
+        CLEAR_ANSWER: 'clear_answer',
         CURRENT: 'current',
         EVALUATE_XPATH: 'evaluate-xpath',
         NEW_REPEAT: 'new-repeat',
