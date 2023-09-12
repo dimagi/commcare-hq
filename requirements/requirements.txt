@@ -4,6 +4,10 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
+abdm_python_integrator @ git+https://github.com/dimagi/abdm-python-integrator.git
+    # via -r base-requirements.in
+absl-py==1.4.0
+    # via ortools
 alembic==1.7.7
     # via -r base-requirements.in
 amqp==5.1.1
@@ -109,6 +113,7 @@ dimagi-memoized==1.1.3
 django==3.2.23
     # via
     #   -r base-requirements.in
+    #   abdm-python-integrator
     #   crispy-bootstrap3to5
     #   django-appconf
     #   django-braces
@@ -188,7 +193,9 @@ django-user-agents==0.4.0
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
     # via -r base-requirements.in
 djangorestframework==3.13.1
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   abdm-python-integrator
 dropbox==11.36.0
     # via -r base-requirements.in
 elasticsearch2==2.5.1

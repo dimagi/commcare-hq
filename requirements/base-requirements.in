@@ -1,3 +1,5 @@
+# India - Used for ABDM Integration
+abdm_python_integrator @ git+https://github.com/dimagi/abdm-python-integrator.git
 alembic
 architect
 attrs>=21.4
