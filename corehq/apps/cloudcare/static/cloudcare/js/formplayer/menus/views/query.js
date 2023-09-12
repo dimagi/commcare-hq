@@ -541,6 +541,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 childView.clear();
             });
             self.setStickyQueryInputs();
+            if (self.dynamicSearchEnabled) {
+                self.updateSearchResults();
+            }
         },
 
         submitAction: function (e) {
