@@ -2458,6 +2458,14 @@ CUSTOM_EMAIL_GATEWAY = StaticToggle(
                'can+be+used+to+send+emails+from+HQ'),
 )
 
+ABDM_INTEGRATION = StaticToggle(
+    'abdm_integration',
+    'Allows the project to use ABDM Integration',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='This feature flag allows the project to use ABDM Integration.'
+)
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
