@@ -463,6 +463,8 @@ hqDefine("geospatial/js/geospatial_map", [
 
             if (xhr.responseJSON.aaData.length && map) {
                 map.removeMarkers();
+                var mapboxinstance = map.getMapboxInstance();
+
                 var casesWithGPS = xhr.responseJSON.aaData.filter(function(item) {
                     return item[1] != null;
                 })
@@ -472,6 +474,35 @@ hqDefine("geospatial/js/geospatial_map", [
                         return [item[0], {'coordinates': item[1], 'link': item[2]}];
                     }
                 }));
+
+                var caseLocationsGeoJson = {
+                    "type": "FeatureCollection",
+                    "features": []
+                }
+                _.each(casesById, function(caseWithGPS) {
+                    let coordinates = caseWithGPS.coordinates;
+                    if (coordinates && coordinates.lat && coordinates.lng) {
+                        caseLocationsGeoJson["features"].push(
+                            {
+                                "type": "feature",
+                                "properties": {
+                                    "id": caseWithGPS.case_id
+                                },
+                                "geometry": {
+                                    "type": "Point",
+                                    "coordinates": [coordinates.lng, coordinates.lat]
+                                }
+                            }
+                        )
+                    }
+                });
+                if(mapboxinstance.getSource('caseWithGPS')) {
+                    mapboxinstance.getSource('caseWithGPS').setData(caseLocationsGeoJson);
+                } else {
+                    mapboxinstance.on('load', () => {
+                        mapboxinstance.getSource('caseWithGPS').setData(caseLocationsGeoJson);
+                    })
+                }
                 map.addCaseMarkersToMap(casesById);
 
                 var $missingCasesDiv = $("#missing-gps-cases");
