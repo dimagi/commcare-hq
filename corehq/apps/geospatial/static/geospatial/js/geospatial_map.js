@@ -503,7 +503,7 @@ hqDefine("geospatial/js/geospatial_map", [
                         mapboxinstance.getSource('caseWithGPS').setData(caseLocationsGeoJson);
                     })
                 }
-                map.addCaseMarkersToMap(casesById);
+//                map.addCaseMarkersToMap(casesById);
 
                 var $missingCasesDiv = $("#missing-gps-cases");
                 var casesWithoutGPS = xhr.responseJSON.aaData.filter(function(item) {
