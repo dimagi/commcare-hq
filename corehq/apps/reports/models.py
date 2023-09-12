@@ -30,7 +30,7 @@ class HQUserType(object):
     COMMTRACK = 4
     DEACTIVATED = 5
     WEB = 6
-    human_readable = [settings.COMMCARE_USER_TERM,
+    human_readable = [gettext_noop("Mobile Worker"),
                       gettext_noop("demo_user"),
                       gettext_noop("admin"),
                       gettext_noop("Unknown Users"),
