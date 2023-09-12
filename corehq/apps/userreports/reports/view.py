@@ -263,15 +263,14 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 if 'computed_owner_location' in k:
                     location_key = k
                     user_filtered_locations = [choice for choice in v if choice.value in user_location_ids]
-            if location_key:
-                if user_filtered_locations:
-                    report_filters[location_key] = user_filtered_locations
-                else:
-                    # Case where user is assigned a new dynamic location that is not present in report filters
-                    # In this case, user should not see any data as this location will not be assigned
-                    # to the user
-                    empty_location = Choice(value=uuid.uuid4().hex, display=None)
-                    report_filters[location_key] = [empty_location]
+            if user_filtered_locations:
+                report_filters[location_key] = user_filtered_locations
+            elif location_key:
+                # Case where user is assigned a new dynamic location that is not present in report filters
+                # In this case, user should not see any data as this location will not be assigned
+                # to the user
+                empty_location = Choice(value=uuid.uuid4().hex, display=None)
+                report_filters[location_key] = [empty_location]
         return report_filters
 
     @property
