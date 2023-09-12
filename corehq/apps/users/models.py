@@ -1466,7 +1466,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     bulk_save = save_docs
 
-    def save(self, fire_signals=True, **params):
+    def save(self, fire_signals=True, update_django_user=True, **params):
         # HEADS UP!
         # When updating this method, please also ensure that your updates also
         # carry over to bulk_auto_deactivate_commcare_users.
@@ -1478,7 +1478,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             if by_username and by_username['id'] != self._id:
                 raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
-            if self._rev and not self.to_be_deleted():
+            if update_django_user and self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()
                 django_user.save()
 
@@ -3025,7 +3025,7 @@ class UserReportingMetadataStaging(models.Model):
                 fcm_token=self.fcm_token, fcm_token_timestamp=self.last_heartbeat, save_user=False
             )
         if save:
-            user.save(fire_signals=False)
+            user.save(fire_signals=False, update_django_user=False)
 
     class Meta(object):
         unique_together = ('domain', 'user_id', 'app_id')
