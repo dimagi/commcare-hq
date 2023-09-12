@@ -10,9 +10,9 @@ from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from couchforms.geopoint import GeoPoint
-from .const import GEO_POINT_CASE_PROPERTY
 from .models import GeoPolygon
 from .utils import get_geo_case_property
+
 
 class CaseManagementMap(ProjectReport, CaseListMixin):
     name = gettext_noop("Case Management Map")
