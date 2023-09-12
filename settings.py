@@ -401,6 +401,7 @@ HQ_APPS = (
     'custom.hmhb',
 
     'custom.ccqa',
+    'custom.abdm',
 
     'corehq.extensions.app_config.ExtensionAppConfig',  # this should be last in the list
 )
