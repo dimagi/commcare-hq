@@ -8,6 +8,7 @@ from casexml.apps.case.xml.generator import get_generator, date_to_xml_string,\
 import six
 
 from casexml.apps.phone.exceptions import RestoreException
+from corehq.extensions import extension_point
 
 USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user-registration"
 USER_REGISTRATION_XMLNS = "http://openrosa.org/user/registration"
@@ -129,8 +130,23 @@ def get_registration_element_data(restore_user):
         "password": restore_user.password,
         "uuid": restore_user.user_id,
         "date": date_to_xml_string(restore_user.date_joined),
-        "user_data": restore_user.user_session_data
+        "user_data": get_user_data_for_restore(restore_user)
     }
+
+
+def get_user_data_for_restore(restore_user):
+    user_data = restore_user.user_session_data
+    for custom_user_data in get_custom_user_data_for_restore(restore_user):
+        user_data.update(custom_user_data)
+    return user_data
+
+
+@extension_point
+def get_custom_user_data_for_restore(restore_user):
+    """
+    Get additional user data for restore
+    :returns: Dict of user data
+    """
 
 
 # Case registration blocks do not have a password
