@@ -43,9 +43,12 @@ hqDefine("geospatial/js/gps_capture",[
             self.lat(self.lat().substr(0, 20));
             self.lon(self.lon().substr(0, 20));
 
-            const latValid = (self.lat() >= -90 && self.lat() <= 90);
+            let latNum = parseFloat(self.lat());
+            let lonNum = parseFloat(self.lon());
+
+            const latValid = (latNum >= -90 && latNum <= 90) || !self.lat().length;
             self.isLatValid(latValid);
-            const lonValid = (self.lon() >= -180 && self.lon() <= 180);
+            const lonValid = (lonNum >= -180 && lonNum <= 180) || !self.lon().length;
             self.isLonValid(lonValid);
         };
 
@@ -80,6 +83,7 @@ hqDefine("geospatial/js/gps_capture",[
             self.dataItems.removeAll();
             self.hasError(false);
             self.showPaginationSpinner(true);
+            self.showLoadingSpinner(true);
             $.ajax({
                 method: 'GET',
                 url: initialPageData.reverse('get_paginated_cases_or_users_without_gps'),
