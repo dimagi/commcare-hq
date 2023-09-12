@@ -139,11 +139,6 @@ def domains_for_user(context, request, selected_domain=None):
     )
 
 
-@register.simple_tag
-def commcare_user():
-    return _(settings.COMMCARE_USER_TERM)
-
-
 # This is taken from https://code.djangoproject.com/ticket/15583
 @register.filter(name='sort')
 def listsort(value):
