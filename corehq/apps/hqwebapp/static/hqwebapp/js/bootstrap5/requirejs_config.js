@@ -16,7 +16,6 @@ requirejs.config({
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
         "datatables.scroller": "datatables-scroller/js/dataTables.scroller",
         "datatables.colReorder": "datatables-colreorder/js/dataTables.colReorder",
-        "es6!hqwebapp/js/bootstrap5_loader": "hqwebapp/js/bootstrap5_loader",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
