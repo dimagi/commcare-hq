@@ -72,14 +72,14 @@ hqDefine("geospatial/js/geospatial_map", [
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
 
             if (!centerCoordinates) {
-                centerCoordinates = [-91.874, 42.76]; // should be domain specific
+                centerCoordinates = [2.43333330, 9.750]; // should be domain specific
             }
 
             const map = new mapboxgl.Map({
                 container: 'geospatial-map', // container ID
                 style: 'mapbox://styles/mapbox/streets-v12', // style URL
                 center: centerCoordinates, // starting position [lng, lat]
-                zoom: 12,
+                zoom: 6,
                 attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             });
