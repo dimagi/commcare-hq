@@ -641,7 +641,7 @@ class ProjectDataTab(UITab):
             self.domain,
             get_permission_name(HqPermissions.view_data_dict)
         )
-        return toggles.DATA_DICTIONARY.enabled(self.domain) and has_view_data_dict_permission
+        return domain_has_privilege(self.domain, privileges.DATA_DICTIONARY) and has_view_data_dict_permission
 
     def _get_export_data_views(self):
         export_data_views = []
