@@ -115,8 +115,8 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
             $.postGo(action, $.unparam(data));
         });
 
-        $(".button", $elem).button().wrap('<span />');
-        $("input[type='submit']", $elem).button();
+        //$(".button", $elem).button().wrap('<span />');
+        //$("input[type='submit']", $elem).button();
         $("input[type='text'], input[type='password'], textarea", $elem);
         $('.container', $elem).addClass('ui-widget ui-widget-content');
         $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
@@ -383,7 +383,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
         $(window).on('beforeunload', beforeUnloadCallback);
         initBlock($("body"));
 
-        $('#modalTrial30Day').modal('show');
+        //$('#modalTrial30Day').modal('show');
 
         $(document).on('click', '.track-usage-link', function (e) {
             var $link = $(e.currentTarget),
@@ -474,10 +474,10 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
                         },
                     });
                 });
-                $modal.modal({
-                    keyboard: false,
-                    backdrop: 'static',
-                });
+                // $modal.modal({
+                //     keyboard: false,
+                //     backdrop: 'static',
+                // });
             }
         }
 
@@ -488,7 +488,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
                 $(this).find(".fetched-data").load($(this).data("url"));
             });
             if ($modal.data("showOnPageLoad")) {
-                $modal.modal('show');
+                // $modal.modal('show');
             }
         });
     });

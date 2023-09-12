@@ -51,6 +51,22 @@ function hqDefine(path, dependencies, moduleAccessor) {
 
     (function (factory) {
         if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
+
+            // The es6! prefix confuses the define() dependency structure and requirejs fails
+            // to load the module properly. However, including es6! in the dependency names causes
+            // the requirejs build to fail
+            if (window.USE_BOOTSTRAP5) {
+                var es6Dependencies = {
+                    'hqwebapp/js/bootstrap5_loader': 'es6!hqwebapp/js/bootstrap5_loader',
+                };
+                for (var i = 0; i < dependencies.length; i++) {
+                    var dependency = dependencies[i];
+                    if (es6Dependencies.hasOwnProperty(dependency)) {
+                        dependencies[i] = es6Dependencies[dependency];
+                    }
+                }
+            }
+
             // HQ's requirejs build process (build_requirejs.py) replaces hqDefine calls with
             // define calls, so it's important that this do nothing but pass through to require
             define(path, dependencies, factory);
@@ -70,7 +86,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'sinon/pkg/sinon': 'sinon',
             };
             if (window.USE_BOOTSTRAP5) {
-                thirdPartyGlobals['hqwebapp/js/bootstrap5_loader'] = 'bootstrap';
+                thirdPartyGlobals['es6!hqwebapp/js/bootstrap5_loader'] = 'bootstrap';
             }
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
