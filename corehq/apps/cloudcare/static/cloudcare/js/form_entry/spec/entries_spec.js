@@ -502,6 +502,15 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {
             assert.isTrue(entry instanceof entries.VideoEntry);
         });
 
+        it('Should return SignatureEntry', function () {
+            var entry;
+            questionJSON.datatype = constants.BINARY;
+            questionJSON.style = { raw: constants.SIGNATURE };
+
+            entry = formUI.Question(questionJSON).entry;
+            assert.isTrue(entry instanceof entries.SignatureEntry);
+        });
+
         it('Should return UnsuportedEntry when binary question has an unsupported control', function () {
             var entry;
             questionJSON.datatype = constants.BINARY;
