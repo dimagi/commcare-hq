@@ -9,6 +9,11 @@ hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
         let self = {};
 
         self.$bugReportModalElement = $('#modalReportIssue');
+        if (self.$bugReportModalElement.length === 0) {
+            // If the modal element is not present on the page, don't continue
+            return;
+        }
+
         self.bugReportModal = new bootstrap.Modal(self.$bugReportModalElement);
         self.$hqwebappBugReportForm = $('#hqwebapp-bugReportForm');
         self.$hqwebappBugReportSubmit = $('#bug-report-submit');

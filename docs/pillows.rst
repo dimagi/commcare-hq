@@ -2,17 +2,42 @@
 Pillows
 =======
 
-What they are
-=============
+Overview
+========
 
-A pillow is a subscriber to a change feed. When a
-change is published the pillow receives the document, performs some calculation
-or transform, and publishes it to another database.
+What are pillows
+----------------
+Pillows are a component of the publisher/subscriber design pattern that
+is used for asynchronous communication.
 
-Creating a pillow
-=================
+A pillow subscribes to a change feed, and when changes are received, performs
+specific operations related to that change.
 
-All pillows inherit from `ConstructedPillow` class. A pillow consists of a few parts:
+Why do we need pillows
+----------------------
+In CommCare HQ, pillows are primarily used to update secondary databases like
+Elasticsearch and User Configurable Reports (UCRs). Examples of other use cases
+are invalidating cache or checking if alerts need to be sent.
+
+How do pillows receive changes
+------------------------------
+We use Kafka as our message queue, which allows producers to publish changes to
+the queue, and consumers (i.e. pillows) to listen for and process those changes.
+
+Kafka uses _topics_ to organize related changes, and pillows can listen for
+changes to one or more specific topics.
+
+Why the name
+------------
+Pillows, as part of the pillowtop framework, were created by us to consume and
+process changes from the CouchDB change feed. Our usage of pillows has since
+expanded beyond CouchDB.
+
+Deconstructing a Pillow
+=======================
+
+All pillows inherit from the `ConstructedPillow` class. A pillow consists of a
+few parts:
 
 1. Change Feed
 2. Checkpoint
@@ -21,10 +46,11 @@ All pillows inherit from `ConstructedPillow` class. A pillow consists of a few p
 
 Change Feed
 -----------
+The brief overview is that a change feed publishes changes which a pillow can
+subscribe to. When setting up a pillow, an instance of a `ChangeFeed` class is
+created and configured to only contain changes the pillow cares about.
 
-Change feeds are documented in the Changes Feed section available on the left.
-
-The 10,000 foot view is a change feed publishes changes which you can subscribe to.
+For more information about change feeds, see :ref:`Change Feeds`.
 
 Checkpoint
 ----------
@@ -32,13 +58,14 @@ Checkpoint
 The checkpoint is a json field that tells processor where to start the change
 feed.
 
-Processor(s)
+Processors
 ------------
 
-A processor is what handles the transformation or calculation and publishes it
-to a database. Most pillows only have one processor, but sometimes it will make
-sense to combine processors into one pillow when you are only iterating over a
-small number of documents (such as custom reports).
+A processor is a method that operates on the incoming change. Historically, we
+had one processor per pillow, however we have since shifted to favor multiple
+processors for each pillow. This way, all processors can operate on the change
+which ensures all operations relevant for a change happen within relatively the
+same time window.
 
 When creating a processor you should be aware of how much time it will take to
 process the record. A useful baseline is:
@@ -57,14 +84,33 @@ the checkpoint to the database.
 Error Handling
 ==============
 
-Pillow errors are handled by saving to model `PillowError`. A celery queue
-reads from this model and retries any errors on the pillow.
+Errors
+------
+Pillows can fail to process a change for a number of reasons. The most common
+causes of pillow errors are a code bug, or a failure in a dependent service
+(e.g., attempting to save a change to Elasticsearch but it is unreachable).
+
+Errors encountered in processors are handled by creating an instance of the
+`PillowError` database model.
+
+Retries
+--------
+The `run_pillow_retry_queue` command is configured to run continuously in a
+celery queue, and looks for new `PillowError` objects to retry. A pillow has the
+option to disable retrying errors via the `retry_errors` property.
+
+If the related pillow reads from a Kafka change feed, the change associated with
+the error is re-published into Kafka. However if it reads from a Couch change
+feed, the pillow's processor is called directly with the change passed in. In
+both cases, the `PillowError` is deleted, a new one will be created if it fails
+again.
 
 Monitoring
 ==========
 
-There are several datadog metrics with the prefix `commcare.change_feed` that can be helpful for monitoring pillows.
-Generally these metrics will have tags for pillow name, topic and partition to filter on
+There are several datadog metrics with the prefix `commcare.change_feed` that
+can be helpful for monitoring pillows. Generally these metrics will have tags
+for pillow name, topic, and partition to filter on.
 
 .. list-table::
    :header-rows: 1
@@ -91,12 +137,12 @@ Generally these metrics will have tags for pillow name, topic and partition to f
 
 Generally when planning for pillows, you should:
     - Minimize change_lag
-        - for up to date reports for users
+        - ensures changes are processed in a reasonable time (e.g., up to date reports for users)
     - Minimize changes.exceptions
-        - for consistency between primary and reporting databases
-        - because exceptions mean that they must be reprocessed at a later time (effectively adding more load and lag later)
+        - ensures consistency across application (e.g., secondary databases contain accurate data)
+        - more exceptions mean more load since they will be reprocessed at a later time
     - Minimize number of pillows running
-        - for fewer server resources needed
+        - minimizes server resources required
 
 The ideal setup would have 1 pillow with no exceptions and 0 second lag.
 
@@ -107,17 +153,23 @@ Troubleshooting
 A pillow is falling behind
 --------------------------
 
-A pillow can fall behind for two reasons:
+Otherwise known as "pillow lag", a pillow can fall behind for a few reasons:
 
-1. The processor is too slow for the number of changes that are coming in. (i.e. `change_lag` for that pillow is very high)
-2. There has been an issue with the change feed that has caused the checkpoint to be "rewound"
-3. Many exceptions happen during the day which requires pillows to process the same changes later.
+1. The processor is too slow for the number of changes that are coming in.
+2. There was an issue with the change feed that caused the checkpoint to be
+   "rewound".
+3. A processor continues to fail so changes are re-queued and processed again
+   later.
+
+Lag is inherent to asynchronous change processing, so the question is what
+amount of lag is acceptable for users.
 
 Optimizing a processor
 ~~~~~~~~~~~~~~~~~~~~~~
 To solve #1 you should use any monitors that have been set up to attempt to
 pinpoint the issue.
-`commcare.change_feed.processor.timing` can help determine what processors/pillows are the root cause of slow processing.
+`commcare.change_feed.processor.timing` can help determine what
+processors/pillows are the root cause of slow processing.
 
 If this is a UCR pillow use the `profile_data_source` management command to
 profile the expensive data sources.
@@ -129,12 +181,12 @@ To scale pillows horizontally do the following:
 
 1. Look for what pillows are behind. This can be found in the change feed
    dashboard or the hq admin system info page.
-2. Ensure you have enough resources on the pillow server to scale the pillows
+2. Ensure you have enough resources on the pillow server to scale the pillows.
    This can be found through datadog.
 3. Decide what topics need to have added partitions in kafka. There is no way
-   to scale a couch pillow horizontally. You can also not remove partitions so
-   you should attempt scaling in small increments. Also attempt to make sure
-   pillows are able to split partitions easily. It's easiest to use powers of 2
+   to scale a couch pillow horizontally. Removing partitions isn't
+   straightforward, so you should attempt scaling in small increments. Also
+   make sure pillows are able to split partitions easily by using powers of 2.
 4. Run `./manage.py add_kafka_partition <topic> <number partitions to have>`
 5. In the commcare-cloud repo environments/<env>/app-processes.yml file
    change num_processes to the pillows you want to scale.

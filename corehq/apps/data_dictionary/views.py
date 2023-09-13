@@ -43,6 +43,7 @@ from corehq.motech.fhir.utils import (
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege
 from corehq import privileges
 from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
+from corehq.apps.geospatial.utils import get_geo_case_property
 
 from .bulk import (
     process_bulk_upload,
@@ -123,7 +124,10 @@ def data_dictionary_json(request, domain, case_type_name=None):
             "properties": grouped_properties.get(None, [])
         })
         props.append(p)
-    return JsonResponse({'case_types': props})
+    return JsonResponse({
+        'case_types': props,
+        'geo_case_property': get_geo_case_property(domain),
+    })
 
 
 @login_and_domain_required

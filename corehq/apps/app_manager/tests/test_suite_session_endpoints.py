@@ -3,7 +3,12 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_LOAD_CASE, REGISTRY_WORKFLOW_SMART_LINK
-from corehq.apps.app_manager.models import LoadCaseFromFixture, LoadUpdateAction
+from corehq.apps.app_manager.models import (
+    LoadCaseFromFixture,
+    LoadUpdateAction,
+    CaseSearch,
+    CaseSearchProperty
+)
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.util.test_utils import flag_enabled
 
@@ -483,6 +488,79 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                         <push>
                             <command value="'m0'"/>
                             <command value="'m1'"/>
+                        </push>
+                    </stack>
+                </endpoint>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./endpoint",
+        )
+
+    def test_inline_case_search_list_module_session_endpoint_id(self):
+        self.module.session_endpoint_id = 'case_list'
+        self.factory.form_requires_case(self.form, case_type=self.parent_case_type)
+        self.module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+            search_filter="active = 'yes'",
+            auto_launch=True,
+            inline_search=True,
+        )
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+           <partial>
+                <endpoint id="case_list">
+                    <argument id="case_id"/>
+                    <stack>
+                        <push>
+                             <command value="'m0'"/>
+                             <query id="results:inline" value="http://localhost:8000/a/test-domain/phone/case_fixture/None/">
+                               <data key="case_type" ref="'mother'"/>
+                               <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+                             </query>
+                            <datum id="case_id" value="$case_id"/>
+                        </push>
+                    </stack>
+                </endpoint>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./endpoint",
+        )
+
+    def test_inline_case_search_multi_list_module_session_endpoint_id(self):
+        self.module.session_endpoint_id = 'case_list'
+        self.factory.form_requires_case(self.form, case_type=self.parent_case_type)
+        self.module.case_details.short.multi_select = True
+        self.module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+            search_filter="active = 'yes'",
+            auto_launch=True,
+            inline_search=True,
+        )
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+           <partial>
+                <endpoint id="case_list">
+                    <argument id="selected_cases" instance-id="selected_cases" instance-src="jr://instance/selected-entities"/>
+                    <stack>
+                        <push>
+                             <command value="'m0'"/>
+                             <query id="results:inline" value="http://localhost:8000/a/test-domain/phone/case_fixture/None/">
+                               <data key="case_type" ref="'mother'"/>
+                               <data key="case_id" nodeset="instance('selected_cases')/results/value" ref="."/>
+                             </query>
+                             <instance-datum id="selected_cases" value="$selected_cases"/>
                         </push>
                     </stack>
                 </endpoint>

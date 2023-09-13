@@ -298,7 +298,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         if (user.environment === Const.WEB_APPS_ENVIRONMENT) {
             // This isn't a circular import, but importing it at the top level would
             // mean it would need to be faked for tests
-            hqRequire(["notifications/js/notifications_service_main"], function (Notifications) {
+            hqRequire(["notifications/js/bootstrap3/notifications_service_main"], function (Notifications) {
                 Notifications.initNotifications();
             });
         }
