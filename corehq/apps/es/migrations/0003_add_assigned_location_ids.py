@@ -19,5 +19,6 @@ class Migration(migrations.Migration):
                 'domain_memberships': {'properties': {'assigned_location_ids': {'type': 'string'}}},
                 'domain_membership': {'properties': {'assigned_location_ids': {'type': 'string'}}},
             },
+            es_versions=[2],
         ),
     ]
