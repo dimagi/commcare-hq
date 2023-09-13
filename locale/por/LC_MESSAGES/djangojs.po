@@ -2888,10 +2888,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
-#, fuzzy
-#| msgid "Select None"
 msgid "Please select one"
-msgstr "Selecionar Nenhum"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
 msgid "Please select one or more"
@@ -3140,22 +3138,16 @@ msgid "Out of range of filter. Will not appear on page refresh."
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
-#, fuzzy
-#| msgid "Update"
 msgid "updated"
-msgstr "Atualizar"
+msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
-#, fuzzy
-#| msgid "Case Type"
 msgid "Case copied"
-msgstr "Tipo de Caso"
+msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
-#, fuzzy
-#| msgid "Case Type"
 msgid "Cases copied"
-msgstr "Tipo de Caso"
+msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
 msgid "Case Reassignment (via HQ)"
