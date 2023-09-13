@@ -4,7 +4,7 @@ from datetime import datetime
 from io import BytesIO
 
 from django.db import InternalError, models, transaction
-from django.db.models import Q
+from django.db.models import F, Q
 
 from jsonfield.fields import JSONField
 from lxml import etree
@@ -188,7 +188,8 @@ class XFormInstanceManager(RequireDBManager):
         for db_name in get_db_aliases_for_partitioned_query():
             result.extend(
                 self.using(db_name)
-                .filter(domain=domain, deleted_on__isnull=False)
+                .annotate(state_deleted=F('state').bitand(XFormInstance.DELETED))
+                .filter(domain=domain, state_deleted=XFormInstance.DELETED)
                 .values_list('form_id', flat=True)
             )
         return result
@@ -210,7 +211,7 @@ class XFormInstanceManager(RequireDBManager):
     def _get_form_ids_for_user(self, domain, user_id, is_deleted):
         with self.model.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
-                'SELECT form_id FROM get_form_ids_for_user_2(%s, %s, %s)',
+                'SELECT form_id FROM get_form_ids_for_user(%s, %s, %s)',
                 [domain, user_id, is_deleted]
             )
             results = fetchall_as_namedtuple(cursor)
@@ -341,7 +342,7 @@ class XFormInstanceManager(RequireDBManager):
         deletion_date = deletion_date or datetime.utcnow()
         with self.model.get_plproxy_cursor() as cursor:
             cursor.execute(
-                'SELECT soft_delete_forms_3(%s, %s, %s, %s) as affected_count',
+                'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
                 [domain, form_ids, deletion_date, deletion_id]
             )
             results = fetchall_as_namedtuple(cursor)
@@ -357,7 +358,7 @@ class XFormInstanceManager(RequireDBManager):
         problem = 'Restored on {}'.format(datetime.utcnow())
         with self.model.get_plproxy_cursor() as cursor:
             cursor.execute(
-                'SELECT soft_undelete_forms_3(%s, %s, %s) as affected_count',
+                'SELECT soft_undelete_forms(%s, %s, %s) as affected_count',
                 [domain, form_ids, problem]
             )
             results = fetchall_as_namedtuple(cursor)
@@ -563,7 +564,9 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @property
     def is_deleted(self):
-        return bool(self.deleted_on)
+        # deleting a form adds the deleted state to the current state
+        # in order to support restoring the pre-deleted state.
+        return self.state & self.DELETED == self.DELETED
 
     @property
     def doc_type(self):
@@ -639,7 +642,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def soft_delete(self):
         type(self).objects.soft_delete_forms(self.domain, [self.form_id])
-        self.deleted_on = datetime.utcnow()
+        self.state |= self.DELETED
 
     def to_json(self, include_attachments=False):
         from ..serializers import XFormInstanceSerializer, lazy_serialize_form_attachments, \
