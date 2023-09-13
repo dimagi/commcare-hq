@@ -9554,7 +9554,9 @@ msgid ""
 "\n"
 "        For more information on deprecated case types, see the following\n"
 "        <a target=\"_blank\" href=\"https://confluence.dimagi.com/display/"
-"commcarepublic/Data+Dictionary\">documentation</a>.\n"
+"commcarepublic/"
+"Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary\">documentation</"
+"a>.\n"
 "      "
 msgstr ""
 
@@ -12876,19 +12878,56 @@ msgid ""
 "              <li>New automatic rules cannot be created with this case type."
 "</li>\n"
 "            </ul>\n"
-"            <!-- TODO: Remove this comment when following PR has been "
-"merged: https://github.com/dimagi/commcare-hq/pull/33113 -->\n"
-"            <!-- <p>\n"
+"            <p>\n"
 "              For more information on deprecated case types, see the\n"
 "              <a target=\"_blank\" href=\"https://confluence.dimagi.com/"
-"display/commcarepublic/Data+Dictionary\">following documentation</a>.\n"
-"            </p> -->\n"
+"display/commcarepublic/"
+"Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary\">following "
+"documentation</a>.\n"
+"            </p>\n"
 "          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/reports/templates/reports/notification_unsubscribe.html
 msgid "Confirm"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid "Case property"
+msgid "Deprecate GPS property"
+msgstr "Propriedade do Caso"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"\n"
+"              This GPS case property is currently being used to store the "
+"geolocation for cases.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, python-format
+msgid ""
+"\n"
+"              Deprecating this case property may result in unintended "
+"behaviour, and so\n"
+"              it is advised to first change the selected custom case "
+"property in\n"
+"              <a href=\"%(geospatial_settings_url)s\">\n"
+"                geospatial settings\n"
+"              </a>\n"
+"              before deprecating this case property.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"\n"
+"              Would you like to proceed with deprecating this case "
+"property?\n"
+"            "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
@@ -13146,10 +13185,8 @@ msgid "An owner_id needs to be specified to bulk reassign cases"
 msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
-#, fuzzy
-#| msgid "Owns Cases"
 msgid "Copy Cases"
-msgstr "Possui Casos"
+msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Normal Forms"
@@ -13571,10 +13608,8 @@ msgid "Select New Owner..."
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
-#, fuzzy
-#| msgid "Case property"
 msgid "Case Copy"
-msgstr "Propriedade do Caso"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
 msgid "Case Reassignment"
@@ -13832,10 +13867,8 @@ msgid "However, we ran into the following problems:"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
-#, fuzzy
-#| msgid "Case Details"
 msgid "Case Copy Failed! Details:"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_complete_email.html
 msgid "The bulk case reassignment has completed successfully."
@@ -21123,6 +21156,23 @@ msgstr ""
 
 #: corehq/apps/geospatial/forms.py
 msgid "Configure Geospatial Settings"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The currently used \"{{ config.case_location_property_name }}\" case "
+"property has been deprecated in the Data Dictionary. Please consider "
+"switching this to another property."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The currently used \"{{ config.case_location_property_name }}\" case "
+"property may be associated with cases. Selecting a new case property will "
+"have the following effects:<ul><li>All cases using the old case property "
+"will no longer appear on maps.</li><li>If the old case property is being "
+"used in an application, a new version would need to be released with the new "
+"case property for all users that capture location data.</li></ul>"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
@@ -28717,6 +28767,10 @@ msgstr ""
 msgid "Target Site"
 msgstr ""
 
+#: corehq/apps/reports/forms.py
+msgid "Allowed Tableau Groups"
+msgstr ""
+
 #: corehq/apps/reports/forms.py corehq/apps/reports/views.py
 msgid "View URL"
 msgstr ""
@@ -28944,10 +28998,8 @@ msgid "Sensitive ID"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/filters.py
-#, fuzzy
-#| msgid "Payment Date"
 msgid "Sensitive Date"
-msgstr "Data de Pagamento"
+msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Application Status"
@@ -29946,10 +29998,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/sensitive_columns.html
-#, fuzzy
-#| msgid "Properties"
 msgid "Sensitive Properties"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/sensitive_columns.html
 msgid ""
@@ -30578,12 +30628,12 @@ msgstr ""
 msgid ""
 "\n"
 "                    This case uses a deprecated case type.\n"
-"                    <!-- TODO: Remove this comment when following PR has "
-"been merged: https://github.com/dimagi/commcare-hq/pull/33113 -->\n"
-"                    <!-- See the\n"
+"                    See the\n"
 "                    <a target=\"_blank\" href=\"https://confluence.dimagi."
-"com/display/commcarepublic/Data+Dictionary\">help documentation</a>\n"
-"                    for more information. -->\n"
+"com/display/commcarepublic/"
+"Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary\">help "
+"documentation</a>\n"
+"                    for more information.\n"
 "                  "
 msgstr ""
 
@@ -31055,6 +31105,19 @@ msgid "Tableau Server Config"
 msgstr ""
 
 #: corehq/apps/reports/views.py
+msgid ""
+"Cannot reach Tableau Server right now, allowed Tableau\n"
+"                                                        groups cannot be "
+"edited."
+msgstr ""
+
+#: corehq/apps/reports/views.py
+msgid ""
+"Tableau Server is not configured yet, allowed Tableau groups\n"
+"                                                    cannot be edited."
+msgstr ""
+
+#: corehq/apps/reports/views.py
 msgid "Tableau Server Settings Updated"
 msgstr ""
 
@@ -31075,10 +31138,8 @@ msgid "Missing case ids"
 msgstr ""
 
 #: corehq/apps/reports/views.py
-#, fuzzy
-#| msgid "Missing Report Date"
 msgid "Missing new owner id"
-msgstr "Data do relatório ausente"
+msgstr ""
 
 #: corehq/apps/reports_core/filters.py
 #: corehq/apps/reports_core/templates/reports_core/filters/quarter_filter.html

@@ -424,18 +424,12 @@ msgid "Search Privileges..."
 msgstr "Recherche de privilèges"
 
 #: corehq/apps/accounting/forms.py
-#, fuzzy
-#| msgid "You must specify a start date"
 msgid "You must specify a rate for SMS and USER feature type"
-msgstr "Vous devez spécifier une date de début."
+msgstr ""
 
 #: corehq/apps/accounting/forms.py
-#, fuzzy
-#| msgid "You must specify exactly one rate per feature type (SMS, USER, etc.)"
 msgid "You can only specify one rate per feature type (SMS, USER, etc.)"
 msgstr ""
-"Vous devez spécifier exactement un tarif par fonctionnalité (SMS, "
-"Utilisateur, etc.)"
 
 #: corehq/apps/accounting/forms.py
 msgid "You must specify exactly one product rate."
@@ -9940,7 +9934,9 @@ msgid ""
 "\n"
 "        For more information on deprecated case types, see the following\n"
 "        <a target=\"_blank\" href=\"https://confluence.dimagi.com/display/"
-"commcarepublic/Data+Dictionary\">documentation</a>.\n"
+"commcarepublic/"
+"Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary\">documentation</"
+"a>.\n"
 "      "
 msgstr ""
 
@@ -13323,13 +13319,13 @@ msgid ""
 "              <li>New automatic rules cannot be created with this case type."
 "</li>\n"
 "            </ul>\n"
-"            <!-- TODO: Remove this comment when following PR has been "
-"merged: https://github.com/dimagi/commcare-hq/pull/33113 -->\n"
-"            <!-- <p>\n"
+"            <p>\n"
 "              For more information on deprecated case types, see the\n"
 "              <a target=\"_blank\" href=\"https://confluence.dimagi.com/"
-"display/commcarepublic/Data+Dictionary\">following documentation</a>.\n"
-"            </p> -->\n"
+"display/commcarepublic/"
+"Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary\">following "
+"documentation</a>.\n"
+"            </p>\n"
 "          "
 msgstr ""
 
@@ -13337,6 +13333,43 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/notification_unsubscribe.html
 msgid "Confirm"
 msgstr "Confirmer"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid "Show Deprecated Properties"
+msgid "Deprecate GPS property"
+msgstr "Afficher les propriétés obsolètes"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"\n"
+"              This GPS case property is currently being used to store the "
+"geolocation for cases.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, python-format
+msgid ""
+"\n"
+"              Deprecating this case property may result in unintended "
+"behaviour, and so\n"
+"              it is advised to first change the selected custom case "
+"property in\n"
+"              <a href=\"%(geospatial_settings_url)s\">\n"
+"                geospatial settings\n"
+"              </a>\n"
+"              before deprecating this case property.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"\n"
+"              Would you like to proceed with deprecating this case "
+"property?\n"
+"            "
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
 msgid "Valid Values &amp; Formats"
@@ -13597,10 +13630,8 @@ msgid "An owner_id needs to be specified to bulk reassign cases"
 msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
-#, fuzzy
-#| msgid "Empty Case"
 msgid "Copy Cases"
-msgstr "Dossier vide"
+msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Normal Forms"
@@ -14031,10 +14062,8 @@ msgid "Select New Owner..."
 msgstr "Sélectionnez un nouveau propriétaire..."
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
-#, fuzzy
-#| msgid "Case Group"
 msgid "Case Copy"
-msgstr "Groupes de dossiers"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
 msgid "Case Reassignment"
@@ -14264,10 +14293,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
-#, fuzzy
-#| msgid "All Case Properties"
 msgid "All cases were copied"
-msgstr "Toutes les propriétés de dossier"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
 #, python-format
@@ -14294,10 +14321,8 @@ msgid "However, we ran into the following problems:"
 msgstr "Néanmoins, nous sommes tombés sur les problèmes suivants:"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
-#, fuzzy
-#| msgid "Restore Failed. Details:"
 msgid "Case Copy Failed! Details:"
-msgstr "Échec de la restauration. Détails:"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_complete_email.html
 msgid "The bulk case reassignment has completed successfully."
@@ -14697,10 +14722,9 @@ msgid "Form Status"
 msgstr "Statut de formulaire"
 
 #: corehq/apps/data_interfaces/views.py
-#, fuzzy, python-brace-format
-#| msgid "Importing your data. This may take some time..."
+#, python-brace-format
 msgid "{action_text} Cases. This may take some time..."
-msgstr "Importation de vos données. Cela pourrait prendre un moment..."
+msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
 #, python-brace-format
@@ -21738,6 +21762,23 @@ msgstr ""
 
 #: corehq/apps/geospatial/forms.py
 msgid "Configure Geospatial Settings"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The currently used \"{{ config.case_location_property_name }}\" case "
+"property has been deprecated in the Data Dictionary. Please consider "
+"switching this to another property."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The currently used \"{{ config.case_location_property_name }}\" case "
+"property may be associated with cases. Selecting a new case property will "
+"have the following effects:<ul><li>All cases using the old case property "
+"will no longer appear on maps.</li><li>If the old case property is being "
+"used in an application, a new version would need to be released with the new "
+"case property for all users that capture location data.</li></ul>"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
@@ -29606,6 +29647,10 @@ msgstr ""
 msgid "Target Site"
 msgstr ""
 
+#: corehq/apps/reports/forms.py
+msgid "Allowed Tableau Groups"
+msgstr ""
+
 #: corehq/apps/reports/forms.py corehq/apps/reports/views.py
 msgid "View URL"
 msgstr ""
@@ -29791,10 +29836,8 @@ msgid "No link found"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/data_sources.py
-#, fuzzy
-#| msgid "Close the case"
 msgid "Copied case"
-msgstr "Fermer le dossier"
+msgstr ""
 
 #: corehq/apps/reports/standard/cases/duplicate_cases.py
 msgid "Duplicate Cases"
@@ -29833,22 +29876,16 @@ msgid "Columns"
 msgstr "Colonnes"
 
 #: corehq/apps/reports/standard/cases/filters.py
-#, fuzzy
-#| msgid "Hide Options"
 msgid "De-identify options"
-msgstr "Masquer les options"
+msgstr ""
 
 #: corehq/apps/reports/standard/cases/filters.py
-#, fuzzy
-#| msgid "Sensitivity"
 msgid "Sensitive ID"
-msgstr "Niveau de confidentialité"
+msgstr "Identifiant sensible"
 
 #: corehq/apps/reports/standard/cases/filters.py
-#, fuzzy
-#| msgid "Sensitivity"
 msgid "Sensitive Date"
-msgstr "Niveau de confidentialité"
+msgstr "Date sensible"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Application Status"
@@ -30876,10 +30913,8 @@ msgstr ""
 "soumissions pour qu'il reste seulement les soumissions les plus exactes."
 
 #: corehq/apps/reports/templates/reports/filters/sensitive_columns.html
-#, fuzzy
-#| msgid "Case Properties"
 msgid "Sensitive Properties"
-msgstr "Propriétés de dossier"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/sensitive_columns.html
 msgid ""
@@ -31520,12 +31555,12 @@ msgstr ""
 msgid ""
 "\n"
 "                    This case uses a deprecated case type.\n"
-"                    <!-- TODO: Remove this comment when following PR has "
-"been merged: https://github.com/dimagi/commcare-hq/pull/33113 -->\n"
-"                    <!-- See the\n"
+"                    See the\n"
 "                    <a target=\"_blank\" href=\"https://confluence.dimagi."
-"com/display/commcarepublic/Data+Dictionary\">help documentation</a>\n"
-"                    for more information. -->\n"
+"com/display/commcarepublic/"
+"Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary\">help "
+"documentation</a>\n"
+"                    for more information.\n"
 "                  "
 msgstr ""
 
@@ -32004,6 +32039,19 @@ msgid "Tableau Server Config"
 msgstr ""
 
 #: corehq/apps/reports/views.py
+msgid ""
+"Cannot reach Tableau Server right now, allowed Tableau\n"
+"                                                        groups cannot be "
+"edited."
+msgstr ""
+
+#: corehq/apps/reports/views.py
+msgid ""
+"Tableau Server is not configured yet, allowed Tableau groups\n"
+"                                                    cannot be edited."
+msgstr ""
+
+#: corehq/apps/reports/views.py
 msgid "Tableau Server Settings Updated"
 msgstr ""
 
@@ -32020,16 +32068,12 @@ msgid "Tableau Visualization"
 msgstr ""
 
 #: corehq/apps/reports/views.py
-#, fuzzy
-#| msgid "case id"
 msgid "Missing case ids"
-msgstr "identifiant dossier"
+msgstr ""
 
 #: corehq/apps/reports/views.py
-#, fuzzy
-#| msgid "Missing Report Date"
 msgid "Missing new owner id"
-msgstr "Date du rapport manquant"
+msgstr ""
 
 #: corehq/apps/reports_core/filters.py
 #: corehq/apps/reports_core/templates/reports_core/filters/quarter_filter.html
