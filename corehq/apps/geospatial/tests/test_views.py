@@ -186,10 +186,19 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
         case_search_adapter.bulk_index([cls.case_a, cls.case_b], refresh=True)
 
         cls.user_a = CommCareUser.create(
-            cls.domain, 'UserA', '1234', None, None, metadata={GPS_POINT_CASE_PROPERTY: '12.34 45.67'}
+            cls.domain,
+            username='UserA',
+            password='1234',
+            created_by=None,
+            created_via=None,
+            metadata={GPS_POINT_CASE_PROPERTY: '12.34 45.67'}
         )
         cls.user_b = CommCareUser.create(
-            cls.domain, 'UserB', '1234', None, None
+            cls.domain,
+            username='UserB',
+            password='1234',
+            created_by=None,
+            created_via=None
         )
         user_adapter.bulk_index([cls.user_a, cls.user_b], refresh=True)
 
