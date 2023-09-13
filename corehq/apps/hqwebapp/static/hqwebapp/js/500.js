@@ -1,6 +1,6 @@
 hqDefine("hqwebapp/js/500",[
     'jquery',
-    'hqwebapp/js/bootstrap5_loader',
+    'es6!hqwebapp/js/bootstrap5_loader',
 ], function ($, bootstrap) {
     $(function () {
         console.log('test bootstrap 500');
