@@ -72,6 +72,7 @@ class CreateIndex(BaseElasticOperation):
         kwargs = {}
         if self.comment is not None:
             kwargs["comment"] = self.comment
+        kwargs['es_versions'] = self.es_versions
         mapping = {k: v for k, v in self.mapping.items() if k != "_meta"}
         return (
             self.__class__.__qualname__,
@@ -160,6 +161,7 @@ class DeleteIndex(BaseElasticOperation):
 
     def deconstruct(self):
         kwargs = {}
+        kwargs['es_versions'] = self.es_versions
         if self.reversible:
             kwargs["reverse_params"] = (
                 self.reverse_type,
@@ -258,6 +260,7 @@ class UpdateIndexMapping(BaseElasticOperation):
             kwargs["comment"] = self.comment
         if not self.print_diff:
             kwargs["print_diff"] = False
+        kwargs['es_versions'] = self.es_versions
         return (
             self.__class__.__qualname__,
             [self.name, self.type, self.properties],
