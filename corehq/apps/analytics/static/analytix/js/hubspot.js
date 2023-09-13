@@ -70,7 +70,7 @@ hqDefine('analytix/js/hubspot', [
             phoneNumberSelector: $form.find('input[name="phone"]'),
             submitCallbackFn: function () {
                 $('#get-demo-cta-success').fadeIn();
-                $('#get-demo-cta-form-content').addClass('hidden').addClass('d-none');
+                $('#get-demo-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration
 
                 kissmetrics.track.event("Demo Workflow - Contact Info Received");
             },
@@ -118,8 +118,8 @@ hqDefine('analytix/js/hubspot', [
             submitCallbackFn: function () {
                 kissmetrics.track.event("Get Trial Workflow - Contact Info Received");
 
-                $('#choose-callback-options').toggleClass('hidden').toggleClass('d-none');
-                $('#get-trial-cta-form-content').addClass('hidden').addClass('d-none');
+                $('#choose-callback-options').toggleClass('hidden').toggleClass('d-none'); // todo after bootstrap 5 migration
+                $('#get-trial-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration
                 $('#start-trial-modal-header').text(gettext("Your trial request has been received!"));
             },
         });
