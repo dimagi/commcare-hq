@@ -1,4 +1,4 @@
-xfrom corehq.apps.data_interfaces.models import CaseRuleActionResult
+from corehq.apps.data_interfaces.models import CaseRuleActionResult
 from corehq.apps.hqcase.utils import update_case, AUTO_UPDATE_XMLNS
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
