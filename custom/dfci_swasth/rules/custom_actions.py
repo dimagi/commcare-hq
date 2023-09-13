@@ -1,4 +1,4 @@
-from corehq.apps.data_interfaces.models import CaseRuleActionResult
+xfrom corehq.apps.data_interfaces.models import CaseRuleActionResult
 from corehq.apps.hqcase.utils import update_case, AUTO_UPDATE_XMLNS
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
@@ -61,8 +61,6 @@ def _get_case_updates(ccuser_caseload_case):
 
 def _get_updated_counsellor_load(ccuser_caseload_case):
     counsellor_load = _get_integer_case_property_value(ccuser_caseload_case, PROP_COUNSELLOR_LOAD)
-    # Value of counsellor load can be minimum 0, so it's value is
-    # decremented by 1 only if its current value is >= 1
     if counsellor_load and counsellor_load >= 1:
         return counsellor_load - 1
 
@@ -70,7 +68,8 @@ def _get_updated_counsellor_load(ccuser_caseload_case):
 def _get_updated_counsellor_closed_case_load(ccuser_caseload_case):
     counsellor_closed_case_load = _get_integer_case_property_value(
         ccuser_caseload_case, PROP_COUNSELLOR_CLOSED_CASE_LOAD)
-    # Value of counsellor closed case load can be minimum 0
+    # increment counsellor_closed_case_load if its present and is at least 0
+    # check for not None to avoid false negative for value 0
     if counsellor_closed_case_load is not None and counsellor_closed_case_load >= 0:
         return counsellor_closed_case_load + 1
 
