@@ -288,6 +288,29 @@ class ESSyncUtil:
         self._prepare_index_for_normal_usage(adapter.secondary)
         logger.info(f"Successfully set replicas for index {adapter.secondary.index_name}")
 
+    def remove_residual_indices(self):
+        """
+        Remove the residual indices that are not used by HQ
+        """
+        existing_indices = es_manager.get_indices()
+        known_indices = self._get_all_known_indices_name()
+        for index_name in existing_indices.keys():
+            if index_name not in known_indices:
+                print(f"Trying to delete residual index: {index_name}")
+                user_confirmation = input(f"Enter '{index_name}' to continue, any other key to cancel\n")
+                if user_confirmation != index_name:
+                    raise CommandError(f"Input {user_confirmation} did not match index name {index_name}. "
+                                       "Index deletion aborted")
+                es_manager.index_delete(index_name)
+
+    def _get_all_known_indices_name(self):
+        # get index name from CANONICAL_NAME_ADAPTER_MAP
+        known_indices = set()
+        for cname, adapter in CANONICAL_NAME_ADAPTER_MAP.items():
+            for idx in self._get_current_and_older_index_name(cname):
+                known_indices.add(idx)
+        return known_indices
+
 
 class Command(BaseCommand):
     """
