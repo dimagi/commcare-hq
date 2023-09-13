@@ -11,13 +11,20 @@ hqDefine("geospatial/js/geo_config", [
         'use strict';
         var self = {};
 
-        const gpsCaseProps = configData.get('gps_case_props_deprecated_state');
-        self.geoCasePropOptions = ko.observableArray(Object.keys(gpsCaseProps));
-
         var data = configData.get('config');
         self.customUserFieldName = ko.observable(data.user_location_property_name);
         self.geoCasePropertyName = ko.observable(data.case_location_property_name);
-        self.isCasePropDeprecated = ko.observable(gpsCaseProps[self.geoCasePropertyName()]);
+
+        const gpsCasePropsDepState = configData.get('gps_case_props_deprecated_state');
+        let gpsCaseProps = [];
+        for (const key in gpsCasePropsDepState) {
+            if (!gpsCasePropsDepState[key] || key === data.case_location_property_name) {
+                gpsCaseProps.push(key);
+            }
+        }
+        self.geoCasePropOptions = ko.observableArray(gpsCaseProps);
+
+        self.isCasePropDeprecated = ko.observable(gpsCasePropsDepState[self.geoCasePropertyName()]);
         self.savedGeoCasePropName = ko.observable(data.case_location_property_name);
         self.hasGeoCasePropChanged = ko.observable(false);
 
