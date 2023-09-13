@@ -47,7 +47,7 @@ hqDefine('analytix/js/hubspot', [
      */
     _utils.loadDemoForm = function () {
         let isTrial = _get('isDemoTrial'),
-            isVariant = _get('demoABv2').version === 'variant',
+            isVariant = _get('demoABv2') && _get('demoABv2').version === 'variant',
             $modal = $('#cta-form-get-demo'),
             $form = $('#get-demo-cta-form-content'),
             hasInteractedWithForm = false,

@@ -76,7 +76,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
-from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.decorators import waf_allow, use_bootstrap5
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.encoders import LazyEncoder
@@ -89,6 +89,7 @@ from corehq.apps.hqwebapp.forms import (
 from corehq.apps.hqwebapp.models import HQOauthApplication
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.users.event_handlers import handle_email_invite_message
@@ -841,14 +842,16 @@ def render_static(request, template, page_name):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "hqwebapp/bootstrap3/blank.html",
+    return render(request, f"hqwebapp/{get_bootstrap_version()}/blank.html",
                   {'tmpl': template, 'page_name': page_name})
 
 
+@use_bootstrap5
 def apache_license(request):
     return render_static(request, "apache_license.html", _("Apache License"))
 
 
+@use_bootstrap5
 def bsd_license(request):
     return render_static(request, "bsd_license.html", _("BSD License"))
 

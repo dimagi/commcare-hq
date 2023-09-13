@@ -396,7 +396,11 @@ msgid "Search Privileges..."
 msgstr ""
 
 #: corehq/apps/accounting/forms.py
-msgid "You must specify exactly one rate per feature type (SMS, USER, etc.)"
+msgid "You must specify a rate for SMS and USER feature type"
+msgstr ""
+
+#: corehq/apps/accounting/forms.py
+msgid "You can only specify one rate per feature type (SMS, USER, etc.)"
 msgstr ""
 
 #: corehq/apps/accounting/forms.py
@@ -3670,6 +3674,7 @@ msgstr ""
 #: corehq/apps/app_manager/forms.py
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
+#: corehq/apps/data_interfaces/interfaces.py
 msgid "Copy"
 msgstr ""
 
@@ -5107,6 +5112,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/features/case_tiles.py
 msgid "Title row, second row with two cells, third row with two cells"
+msgstr ""
+
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "2 x 3 grid of image and text"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
@@ -7141,6 +7150,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/reports/templates/reports/filters/explorer_columns.html
+#: corehq/apps/reports/templates/reports/filters/sensitive_columns.html
 #: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
 msgid "Property"
 msgstr ""
@@ -7158,6 +7168,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/add_property_button.html
 #: corehq/apps/reports/templates/reports/filters/explorer_columns.html
+#: corehq/apps/reports/templates/reports/filters/sensitive_columns.html
 msgid "Add Property"
 msgstr ""
 
@@ -13023,6 +13034,10 @@ msgid "Reassign Cases"
 msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
+msgid "Reassign"
+msgstr ""
+
+#: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/reports/v2/reports/explore_case_data.py
@@ -13044,6 +13059,10 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "An owner_id needs to be specified to bulk reassign cases"
+msgstr ""
+
+#: corehq/apps/data_interfaces/interfaces.py
+msgid "Copy Cases"
 msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
@@ -13448,10 +13467,10 @@ msgstr ""
 msgid ""
 "\n"
 "          <!-- ko if: selectAllMatches -->\n"
-"            Reassign %(total_cases)s selected cases to\n"
+"            %(action_text)s %(total_cases)s selected cases to\n"
 "          <!-- /ko -->\n"
 "          <!-- ko ifnot: selectAllMatches -->\n"
-"            Reassign <span data-bind=\"text: selectedCount\"></span> "
+"            %(action_text)s <span data-bind=\"text: selectedCount\"></span> "
 "selected cases to\n"
 "          <!-- /ko -->\n"
 "          "
@@ -13466,8 +13485,10 @@ msgid "Select New Owner..."
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
-msgid "Reassign"
-msgstr ""
+#, fuzzy
+#| msgid "Case Type:"
+msgid "Case Copy"
+msgstr "Manejo de Casos"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
 msgid "Case Reassignment"
@@ -13677,6 +13698,59 @@ msgstr ""
 msgid "# of Cases Closed"
 msgstr ""
 
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_complete_email.html
+msgid "The bulk case copy has completed successfully."
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_complete_email.html
+#, python-format
+msgid ""
+"\n"
+"  Succesfully copied %(case_count)s cases.\n"
+"  <p>The list of cases that were copied can be viewed at <a "
+"href='%(report_url)s'>%(report_url)s</a>.</p>\n"
+"  <p>\n"
+"  It's possible that in the report the owner_id is not yet updated, you can "
+"open individual cases and confirm\n"
+"  the right case owner, the report gets updated with a slight delay.\n"
+"  </p>\n"
+"  "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
+msgid "All cases were copied"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
+#, python-format
+msgid ""
+"\n"
+"        Succesfully copied %(case_count)s cases.\n"
+"        <p>The list of cases that were copied can be viewed at <a "
+"href='%(report_url)s'>%(report_url)s</a>.</p>\n"
+"        <p>\n"
+"        It's possible that in the report the owner_id is not yet updated, "
+"you can open individual cases and confirm\n"
+"        the right case owner, the report gets updated with a slight delay.\n"
+"        </p>\n"
+"        "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
+#: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html
+#: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
+#: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
+msgid "However, we ran into the following problems:"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
+#, fuzzy
+#| msgid "Case Details"
+msgid "Case Copy Failed! Details:"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_complete_email.html
 msgid "The bulk case reassignment has completed successfully."
 msgstr ""
@@ -13713,14 +13787,6 @@ msgid ""
 "        the right case owner, the report gets updated with a slight delay.\n"
 "        </p>\n"
 "        "
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
-#: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html
-#: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
-#: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
-msgid "However, we ran into the following problems:"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
@@ -14081,16 +14147,15 @@ msgid "Form Status"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-msgid "Bulk Case Reassignment Status"
+#, python-brace-format
+msgid "{action_text} Cases. This may take some time..."
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-msgid "Reassigning Cases. This may take some time..."
-msgstr ""
-
-#: corehq/apps/data_interfaces/views.py
+#, python-brace-format
 msgid ""
-"Bulk Case Reassignment failed for some reason and we have noted this failure."
+"Bulk Case {action_text} failed for some reason and we have noted this "
+"failure."
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py corehq/tabs/tabclasses.py
@@ -19598,6 +19663,7 @@ msgid "Split multi-select data"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+#: corehq/apps/reports/templates/reports/filters/sensitive_columns.html
 msgid "Sensitivity"
 msgstr ""
 
@@ -21750,6 +21816,16 @@ msgstr ""
 #: corehq/apps/hqadmin/views/utils.py corehq/apps/users/bulk_download.py
 #: corehq/apps/users/models.py corehq/tabs/tabclasses.py
 msgid "Admin"
+msgstr ""
+
+#: corehq/apps/hqcase/case_helper.py
+msgid "Must copy cases to valid new owner"
+msgstr ""
+
+#: corehq/apps/hqcase/case_helper.py
+#, python-brace-format
+msgid ""
+"Original case owner {owner_id} cannot copy case {case_id} to themselves."
 msgstr ""
 
 #: corehq/apps/hqcase/utils.py
@@ -28651,6 +28727,10 @@ msgstr ""
 msgid "No link found"
 msgstr ""
 
+#: corehq/apps/reports/standard/cases/data_sources.py
+msgid "Copied case"
+msgstr ""
+
 #: corehq/apps/reports/standard/cases/duplicate_cases.py
 msgid "Duplicate Cases"
 msgstr ""
@@ -28685,6 +28765,18 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
 #: corehq/apps/users/forms.py
 msgid "Columns"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/filters.py
+msgid "De-identify options"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/filters.py
+msgid "Sensitive ID"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/filters.py
+msgid "Sensitive Date"
 msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py
@@ -29661,6 +29753,20 @@ msgid ""
 "Some of the submissions included in the report results could not be matched "
 "with precision to your selected applications. This hides those submissions "
 "so that only the most accurate submissions remain."
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/filters/sensitive_columns.html
+#, fuzzy
+#| msgid "Properties"
+msgid "Sensitive Properties"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/reports/templates/reports/filters/sensitive_columns.html
+msgid ""
+"\n"
+"          Select the case properties which must be de-identified when "
+"copying the cases to the new user.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/xpath_textarea.html
@@ -30766,6 +30872,14 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Tableau Visualization"
+msgstr ""
+
+#: corehq/apps/reports/views.py
+msgid "Missing case ids"
+msgstr ""
+
+#: corehq/apps/reports/views.py
+msgid "Missing new owner id"
 msgstr ""
 
 #: corehq/apps/reports_core/filters.py
@@ -42045,6 +42159,10 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Project level data dictionary of cases"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Allow case copy from one user to another"
 msgstr ""
 
 #: corehq/reports.py
