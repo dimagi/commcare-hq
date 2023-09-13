@@ -420,12 +420,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
             self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP');
-            self.smallScreenEnabled = cloudcareUtils.watchSmallScreenEnabled(enabled => self.smallScreenEnabled = enabled);
+            self.smallScreenEnabled = cloudcareUtils.watchSmallScreenEnabled(self.handleSmallScreenChange.bind(self));
         },
 
         ui: CaseListViewUI(),
 
         events: CaseListViewEvents(),
+
+        handleSmallScreenChange: function (enabled) {
+            this.smallScreenEnabled = enabled;
+        },
 
         caseListAction: function (e) {
             const index = $(e.currentTarget).data().index,
@@ -543,15 +547,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        columnStyle: function () {
-            const self = this;
-            if (self.showMap) {
-                return "display: grid;grid-template-columns: [tiles] 7fr [map] 5fr;grid-template-rows: auto";
-            } else {
-                return "display: grid;grid-template-columns: [tiles] 100%;grid-template-rows: auto";
-            }
-        },
-
         fontAwesomeIcon: function (iconName) {
             return L.divIcon({
                 html: `<i class='fa ${iconName} fa-4x'></i>`,
@@ -577,6 +572,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     }).setView([lat, lon], zoom);
 
                 L.control.zoom({
+                    position: 'bottomright',
+                }).addTo(addressMap);
+
+                L.control.fullscreen({
+                    pseudoFullscreen: true,
                     position: 'bottomright',
                 }).addTo(addressMap);
 
@@ -621,9 +621,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     markers.forEach(m => m.setIcon(locationIcon));
                                     marker.setIcon(selectedLocationIcon);
 
+                                    let scrollTopOffset = 47.125; // standard height of breadcrumbs with shadow
+                                    if (this.smallScreenEnabled && !addressMap.isFullscreen()) {
+                                        scrollTopOffset += addressMap.getSize().y;
+                                    }
                                     $([document.documentElement, document.body]).animate({
-                                        // -50 Stay clear of the breadcrumbs
-                                        scrollTop: $(`#${rowId}`).offset().top - 50,
+                                        scrollTop: $(`#${rowId}`).offset().top - scrollTopOffset,
                                     }, 500);
 
                                     addressMap.panTo(markerCoordinates);
@@ -655,7 +658,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         templateContext: function () {
             const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
-            const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
+            const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
             const boldSortedCharIcon = (header) => {
                 const headerWords = header.trim().split(' ');
                 const lastChar = headerWords.pop();
@@ -680,7 +683,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 currentPage: this.options.currentPage,
                 endPage: paginateItems.endPage,
                 pageCount: paginateItems.pageCount,
-                rowRange: [10, 25, 50, 100],
+                rowRange: [5, 10, 25, 50, 100],
                 limit: casesPerPage,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
@@ -692,7 +695,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
                 showMap: this.showMap,
-                columnStyle: this.columnStyle(),
                 sidebarEnabled: this.options.sidebarEnabled,
                 smallScreenEnabled: this.smallScreenEnabled,
                 triggerEmptyCaseList: this.options.triggerEmptyCaseList,
@@ -808,6 +810,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             registerContinueListener(this, options);
         },
 
+        handleSmallScreenChange: function (enabled) {
+            CaseTileListView.__super__.handleSmallScreenChange.apply(this, arguments);
+            if (enabled) {
+                $('#content-container').addClass('full-width');
+            } else if (!this.options.sidebarEnabled) {
+                $('#content-container').removeClass('full-width');
+            }
+        },
+
         childViewOptions: function () {
             const dict = CaseTileListView.__super__.childViewOptions.apply(this, arguments);
             dict.prefix = 'list';
@@ -833,6 +844,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (this.options.isMultiSelect) {
                 this.reconcileMultiSelectUI();
             }
+            this.handleSmallScreenChange(this.smallScreenEnabled);
+        },
+
+        onDestroy: function () {
+            $('#content-container').removeClass('full-width');
         },
     });
 
