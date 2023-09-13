@@ -4,7 +4,7 @@
  */
 hqDefine("hqwebapp/js/bootstrap5/sticky_tabs", [
     "jquery",
-    "hqwebapp/js/bootstrap5_loader",    // needed for $.tab
+    "es6!hqwebapp/js/bootstrap5_loader",
 ], function (
     $
 ) {
@@ -24,9 +24,9 @@ hqDefine("hqwebapp/js/bootstrap5/sticky_tabs", [
             $tabFromUrl = hash ? $("a[href='" + hash + "']") : undefined;
 
         if ($tabFromUrl && $tabFromUrl.length) {
-            $tabFromUrl.tab('show');
+            //$tabFromUrl.tab('show');
         } else {
-            $(navSelector + ' ' + tabSelector).first().tab('show');
+            //$(navSelector + ' ' + tabSelector).first().tab('show');
         }
 
         $('body').on('click', tabSelector, function (e) {
@@ -42,13 +42,13 @@ hqDefine("hqwebapp/js/bootstrap5/sticky_tabs", [
                 window.location.hash = tabName;
             }
 
-            $link.tab('show');
+            //$link.tab('show');
             return false;
         });
 
         $(window).on('popstate', function () {
             var anchor = getHash() || $(navSelector + ' ' + tabSelector).first().attr('href');
-            $("a[href='" + anchor + "']").tab('show');
+            //$("a[href='" + anchor + "']").tab('show');
         });
     });
 });
