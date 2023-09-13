@@ -80,6 +80,11 @@ class CreateIndex(BaseElasticOperation):
         )
 
     def run(self, *args, **kw):
+        if self.es_versions and self._is_mapping_incompatibe(self.es_versions):
+            # skip running the operation if compatible ES versions are provided
+            # and mapping is created for a differnt es version
+            return
+
         from corehq.apps.es.client import manager
         log.info("Creating Elasticsearch index: %s" % self.name)
         manager.index_create(self.name, self.render_index_metadata(
@@ -92,6 +97,8 @@ class CreateIndex(BaseElasticOperation):
         manager.index_configure_for_standard_ops(self.name)
 
     def reverse_run(self, *args, **kw):
+        if self.es_versions and self._is_mapping_incompatibe(self.es_versions):
+            return
         DeleteIndex(self.name).run(*args, **kw)
 
     def describe(self):
@@ -167,11 +174,15 @@ class DeleteIndex(BaseElasticOperation):
         )
 
     def run(self, *args, **kw):
+        if self.es_versions and self._is_mapping_incompatibe(self.es_versions):
+            return
         from corehq.apps.es.client import manager
         log.info("Deleting Elasticsearch index: %s" % self.name)
         manager.index_delete(self.name)
 
     def reverse_run(self, *args, **kw):
+        if self.es_versions and self._is_mapping_incompatibe(self.es_versions):
+            return
         create_kw = {
             "name": self.name,
             "type_": self.reverse_type,
@@ -254,6 +265,8 @@ class UpdateIndexMapping(BaseElasticOperation):
         )
 
     def run(self, *args, **kw):
+        if self.es_versions and self._is_mapping_incompatibe(self.es_versions):
+            return
         from corehq.apps.es.client import manager
         mapping = manager.index_get_mapping(self.name, self.type) or {}
         mapping.setdefault("_meta", {}).update(make_mapping_meta(self.comment))
