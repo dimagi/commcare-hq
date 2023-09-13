@@ -196,12 +196,6 @@ class RepeaterSuperProxy(models.Model):
     def save(self, *args, **kwargs):
         self.clear_caches()
         self.repeater_type = self._repeater_type
-        # For first save when reepater is created
-        # If repeater_id is not set then set one
-        if not self.repeater_id:
-            self.repeater_id = uuid.uuid4().hex
-        if self.id is None:
-            self.id = uuid.UUID(self.repeater_id)
         self.name = self.name or self.connection_settings.name
         return super().save(*args, **kwargs)
 
@@ -269,9 +263,8 @@ class RepeaterManager(models.Manager):
 
 @foreign_init
 class Repeater(RepeaterSuperProxy):
-    id = models.UUIDField(primary_key=True, db_column="id_")
+    id = models.UUIDField(primary_key=True, db_column="id_", default=uuid.uuid4)
     domain = CharIdField(max_length=126, db_index=True)
-    repeater_id = models.CharField(max_length=36, unique=True)
     name = models.CharField(max_length=255, null=True)
     format = models.CharField(max_length=64, null=True)
     request_method = models.CharField(
@@ -307,6 +300,10 @@ class Repeater(RepeaterSuperProxy):
         return ConnectionSettings.objects.get(id=id_, domain=self.domain)
 
     connection_settings = ForeignObject(connection_settings_id, _get_connection_settings)
+
+    @property
+    def repeater_id(self):
+        return self.id.hex
 
     @cached_property
     def _optionvalue_fields(self):
@@ -999,13 +996,13 @@ class RepeatRecord(Document):
     @memoized
     def repeater(self):
         try:
-            return Repeater.objects.get(repeater_id=self.repeater_id)
+            return Repeater.objects.get(id=self.repeater_id)
         except Repeater.DoesNotExist:
             return None
 
     def is_repeater_deleted(self):
         try:
-            return Repeater.all_objects.values_list("is_deleted", flat=True).get(repeater_id=self.repeater_id)
+            return Repeater.all_objects.values_list("is_deleted", flat=True).get(id=self.repeater_id)
         except Repeater.DoesNotExist:
             return True
 

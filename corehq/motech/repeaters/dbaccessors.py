@@ -61,7 +61,7 @@ def get_sql_repeat_record_count(domain, repeater_id=None, state=None):
 
     queryset = SQLRepeatRecord.objects.filter(domain=domain)
     if repeater_id:
-        queryset = queryset.filter(repeater__repeater_id=repeater_id)
+        queryset = queryset.filter(repeater__id=repeater_id)
     if state:
         queryset = queryset.filter(state=state)
     return estimate_row_count(queryset)
@@ -127,7 +127,7 @@ def get_paged_sql_repeat_records(domain, skip, limit, repeater_id=None, state=No
 
     queryset = SQLRepeatRecord.objects.filter(domain=domain)
     if repeater_id:
-        queryset = queryset.filter(repeater__repeater_id=repeater_id)
+        queryset = queryset.filter(repeater__id=repeater_id)
     if state:
         queryset = queryset.filter(state=state)
     return (queryset.order_by('-registered_at')[skip:skip + limit]

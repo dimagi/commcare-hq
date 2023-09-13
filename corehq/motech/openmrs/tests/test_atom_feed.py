@@ -300,7 +300,6 @@ class ImportEncounterTest(TestCase, TestFileMixin):
     def get_repeater_dict(self, observations, diagnoses):
         return {
             "domain": "test_domain",
-            "repeater_id": "123456",
             "connection_settings": self.connx,
             "white_listed_case_types": ['patient'],
             "openmrs_config": {
@@ -352,7 +351,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
             ([case_block], domain), kwargs = submit_case_blocks_patch.call_args
             self.assertRegex(case_block, case_block_re)
             self.assertEqual(domain, 'test_domain')
-            self.assertEqual(kwargs['device_id'], 'openmrs-atomfeed-123456')
+            self.assertEqual(kwargs['device_id'], f'openmrs-atomfeed-{self.repeater.id.hex}')
             self.assertEqual(kwargs['xmlns'], 'http://commcarehq.org/openmrs-integration')
 
     def test_get_case_block_kwargs_from_observations(self):

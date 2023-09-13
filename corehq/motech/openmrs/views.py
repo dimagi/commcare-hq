@@ -82,7 +82,7 @@ class OpenmrsModelListViewHelper(object):
     @property
     @memoized
     def repeater(self):
-        repeater = OpenmrsRepeater.objects.get(repeater_id=self.repeater_id)
+        repeater = OpenmrsRepeater.objects.get(id=self.repeater_id)
         assert repeater.domain == self.domain
         return repeater
 
@@ -114,7 +114,7 @@ def openmrs_person_attribute_types(request, domain, repeater_id):
 def openmrs_raw_api(request, domain, repeater_id, rest_uri):
     get_params = dict(request.GET)
     no_links = get_params.pop('links', None) is None
-    repeater = OpenmrsRepeater.objects.get(repeater_id=repeater_id)
+    repeater = OpenmrsRepeater.objects.get(id=repeater_id)
     assert repeater.domain == domain
     raw_json = repeater.requests.get('/ws/rest/v1' + rest_uri, get_params).json()
     if no_links:
@@ -124,11 +124,11 @@ def openmrs_raw_api(request, domain, repeater_id, rest_uri):
 
 @login_and_domain_required
 def openmrs_test_fire(request, domain, repeater_id, record_id):
-    repeater = OpenmrsRepeater.objects.get(repeater_id=repeater_id)
+    repeater = OpenmrsRepeater.objects.get(id=repeater_id)
     record = RepeatRecord.get(record_id)
     assert repeater.domain == domain
     assert record.domain == domain
-    assert record.repeater_id == repeater.repeater_id
+    assert record.repeater_id == repeater.id
 
     attempt = repeater.fire_for_record(record)
     return JsonResponse(attempt.to_json())

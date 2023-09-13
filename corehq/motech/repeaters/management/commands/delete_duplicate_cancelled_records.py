@@ -45,7 +45,7 @@ class Command(BaseCommand):
     def handle(self, domain, repeater_id, *args, **options):
         self.domain = domain
         self.repeater_id = repeater_id
-        repeater = Repeater.objects.get(repeater_id=repeater_id)
+        repeater = Repeater.objects.get(id=repeater_id)
         print("Looking up repeat records for '{}'".format(repeater.friendly_name))
 
         redundant_records = []
@@ -63,11 +63,11 @@ class Command(BaseCommand):
 
         unique_payloads = len(records_by_payload_id)
         redundant_payloads = len(redundant_records)
-        print ("There are {total} total cancelled records, {redundant} with payloads which "
-               "have since succeeded, and {unique} unsent unique payload ids."
-               .format(total=total_records,
-                       redundant=redundant_payloads,
-                       unique=unique_payloads))
+        print("There are {total} total cancelled records, {redundant} with payloads which "
+              "have since succeeded, and {unique} unsent unique payload ids."
+              .format(total=total_records,
+                      redundant=redundant_payloads,
+                      unique=unique_payloads))
         print("Delete {} duplicate records?".format(total_records - unique_payloads))
         if not input("(y/n)") == 'y':
             print("Aborting")

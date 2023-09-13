@@ -1,4 +1,3 @@
-import uuid
 import datetime
 import functools
 import json
@@ -1576,7 +1575,6 @@ def subscribe_to_data_source_changes(request, domain, config_id):
         name=f"{client_hostname}_{config_id}",
         domain=domain,
         data_source_id=config_id,
-        repeater_id=uuid.uuid4().hex,
         connection_settings_id=conn_settings.id,
     )
     return HttpResponse(status=201)

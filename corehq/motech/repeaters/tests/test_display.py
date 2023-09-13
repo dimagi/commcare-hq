@@ -1,5 +1,4 @@
 from datetime import datetime
-import uuid
 
 from django.test import TestCase
 
@@ -27,7 +26,6 @@ class RepeaterTestCase(TestCase):
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,
-            repeater_id=uuid.uuid4().hex
         )
         self.repeater.save()
         self.date_format = "%Y-%m-%d %H:%M:%S"
