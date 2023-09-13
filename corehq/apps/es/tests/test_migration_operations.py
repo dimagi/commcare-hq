@@ -262,7 +262,7 @@ class TestCreateIndex(BaseCase):
         operation = CreateIndex(*args)
         self.assertEqual(
             operation.deconstruct(),
-            (CreateIndex.__qualname__, args, {}),
+            (CreateIndex.__qualname__, args, {'es_versions': []}),
         )
 
     def test_deconstruct_omits_mapping__meta(self):
@@ -271,7 +271,7 @@ class TestCreateIndex(BaseCase):
             "top_level": True,
             "_meta": {"key": "value"},
         }
-        operation = CreateIndex(name, type_, mapping, analysis, settings_key)
+        operation = CreateIndex(name, type_, mapping, analysis, settings_key, es_versions=[])
         self.assertEqual(
             operation.deconstruct(),
             (
@@ -283,7 +283,7 @@ class TestCreateIndex(BaseCase):
                     analysis,
                     settings_key,
                 ],
-                {},
+                {'es_versions': []},
             ),
         )
 
@@ -295,7 +295,7 @@ class TestCreateIndex(BaseCase):
             (
                 CreateIndex.__qualname__,
                 args[:-1],
-                {"comment": "this is the comment"},
+                {"comment": "this is the comment", "es_versions": []},
             ),
         )
 
@@ -450,7 +450,7 @@ class TestDeleteIndex(BaseCase):
         operation = DeleteIndex(name)
         self.assertEqual(
             operation.deconstruct(),
-            (DeleteIndex.__qualname__, [name], {}),
+            (DeleteIndex.__qualname__, [name], {'es_versions': []}),
         )
 
     def test_deconstruct_with_reverse_params(self):
@@ -462,7 +462,7 @@ class TestDeleteIndex(BaseCase):
             (
                 DeleteIndex.__qualname__,
                 [name],
-                {"reverse_params": reverse_params},
+                {"reverse_params": reverse_params, "es_versions": []},
             ),
         )
 
@@ -713,7 +713,7 @@ class TestUpdateIndexMapping(BaseCase):
         operation = UpdateIndexMapping(*args)
         self.assertEqual(
             operation.deconstruct(),
-            (UpdateIndexMapping.__qualname__, args, {}),
+            (UpdateIndexMapping.__qualname__, args, {'es_versions': []}),
         )
 
     def test_deconstruct_with_comment(self):
@@ -724,7 +724,10 @@ class TestUpdateIndexMapping(BaseCase):
             (
                 UpdateIndexMapping.__qualname__,
                 args[:-1],
-                {"comment": "this is the comment"},
+                {
+                    "comment": "this is the comment",
+                    "es_versions": [],
+                }
             ),
         )
 
@@ -733,7 +736,7 @@ class TestUpdateIndexMapping(BaseCase):
         operation = UpdateIndexMapping(*args, print_diff=False)
         self.assertEqual(
             operation.deconstruct(),
-            (UpdateIndexMapping.__qualname__, args, {"print_diff": False}),
+            (UpdateIndexMapping.__qualname__, args, {"print_diff": False, 'es_versions': []}),
         )
 
 
