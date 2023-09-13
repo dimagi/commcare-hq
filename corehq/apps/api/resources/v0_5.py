@@ -1344,7 +1344,8 @@ def get_datasource_data(request, config_id, domain):
     config, _ = get_datasource_config(config_id, domain)
     datasource_adapter = get_indicator_adapter(config, load_source='export_data_source')
     request_params = get_request_params(request).params
-    if "limit" not in request_params or int(request_params["limit"]) > EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT:
+    request_params["limit"] = request.GET.dict().get("limit", EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT)
+    if int(request_params["limit"]) > EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT:
         request_params["limit"] = EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT
     query = cursor_based_query_for_datasource(request_params, datasource_adapter)
     data = response_for_cursor_based_pagination(request, query, request_params, datasource_adapter)
