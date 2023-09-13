@@ -544,6 +544,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     self.selectValuesByKeys,
                     self.options.sidebarEnabled
                 );
+                if (self.smallScreenEnabled && self.options.sidebarEnabled) {
+                    $('#sidebar-region').collapse('hide');
+                }
             });
         },
 
