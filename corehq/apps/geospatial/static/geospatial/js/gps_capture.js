@@ -46,9 +46,9 @@ hqDefine("geospatial/js/gps_capture",[
             let latNum = parseFloat(self.lat());
             let lonNum = parseFloat(self.lon());
 
-            const latValid = (latNum >= -90 && latNum <= 90) || !self.lat().length;
+            const latValid = (!isNaN(latNum) && latNum >= -90 && latNum <= 90) || !self.lat().length;
             self.isLatValid(latValid);
-            const lonValid = (lonNum >= -180 && lonNum <= 180) || !self.lon().length;
+            const lonValid = (!isNaN(lonNum) && lonNum >= -180 && lonNum <= 180) || !self.lon().length;
             self.isLonValid(lonValid);
         };
 

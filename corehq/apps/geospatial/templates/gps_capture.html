@@ -85,14 +85,9 @@
                                        name="latInput"
                                        placeholder="{% trans 'Enter latitude...' %}"
                                        data-bind="value: lat, event: {change: onValueChanged}" />
-                                <span class="help-block" data-bind="visible: !isLatValid() && !isNaN(lat())">
+                                <span class="help-block" data-bind="visible: !isLatValid()">
                                     {% blocktrans %}
-                                        The value should be between -90 and 90
-                                    {% endblocktrans %}
-                                </span>
-                                <span class="help-block" data-bind="visible: !isLatValid() && isNaN(lat())">
-                                    {% blocktrans %}
-                                       The value must be a number
+                                        The value should be a number between -90 and 90
                                     {% endblocktrans %}
                                 </span>
                             </div>
@@ -104,14 +99,9 @@
                                        name="lonInput"
                                        placeholder="{% trans 'Enter longitude...' %}"
                                        data-bind="value: lon, event: {change: onValueChanged}" />
-                                <span class="help-block" data-bind="visible: !isLonValid() && !isNaN(lon())">
+                                <span class="help-block" data-bind="visible: !isLonValid()">
                                     {% blocktrans %}
-                                        The value should be between -180 and 180
-                                    {% endblocktrans %}
-                                </span>
-                                <span class="help-block" data-bind="visible: !isLonValid() && isNaN(lon())">
-                                    {% blocktrans %}
-                                       The value must be a number
+                                        The value should be a number between -180 and 180
                                     {% endblocktrans %}
                                 </span>
                             </div>
