@@ -23,6 +23,19 @@ class BaseElasticOperation(RunPython):
     def reverse_run(self, *args, **kw):
         raise NotImplementedError(type(self).__name__)
 
+    def _is_mapping_incompatibe(self, mapping_es_major_versions):
+        """
+        The mappings should be applied on ES if running version of ES is same as the targetted es versions.
+        :param mapping_es_major_version: an array consisting of all major versions that the mapping support
+        """
+        from corehq.apps.es.client import manager
+        current_es_major_version = manager.elastic_major_version
+        if current_es_major_version in mapping_es_major_versions:
+            return False
+        log.info(f"The mappings were created for Elasticsearch version/s {mapping_es_major_versions}")
+        log.info(f"Current Elasticsearch version in {current_es_major_version}. Skipping the operation.")
+        return True
+
     def __repr__(self):
         return f"<{type(self).__name__} index={self.name!r}>"
 
