@@ -469,6 +469,9 @@
       border-radius: 4px;
       width: 100%;"/></canvas>
   </div>
+  <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear">
+    {% trans "Clear" %}
+  </button>
   <input type="file" class="hidden" data-bind="
       value: $data.rawAnswer,
       attr: {

@@ -1031,6 +1031,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             });
         };
 
+        self.onClear = function () {
+            // TODO: Connect this to the imminent "clear" action on FileEntry
+            self.signaturePad.clear();
+        };
+
         self.resizeCanvas = function () {
             var aspectRatio = 4,
                 width = self.$wrapper.width() - 2; // otherwise misaligned by 2px
