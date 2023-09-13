@@ -37,30 +37,11 @@
 
 <div id="case-buttons" class="col-sm-12 col-md-12 col-lg-12">
     <div id="missing-gps-cases" style="display: inline;">
-        <button class="btn btn-danger" data-toggle="modal" data-target="#case-list"
+        <a class="btn btn-default" target="_blank" href="{% url 'gps_capture' domain %}"
                 data-bind="visible: casesWithoutGPS().length > 0">
             <span data-bind="text: casesWithoutGPS().length"></span>
             &nbsp;{% trans "Cases Missing GPS Data" %}
-        </button>
-        <div class="modal fade" id="case-list">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span>
-                        <span class="sr-only">{% trans "Close" %}</span></button>
-                        <h4 class="modal-title">{% trans "Cases Missing GPS Data" %}</h4>
-                    </div>
-                    <div class="modal-body">
-                        <table class="table table-striped table-responsive">
-                            <thead><th>{% trans "Case Name" %}</th></thead>
-                            <tbody data-bind="foreach: casesWithoutGPS">
-                                <tr><td data-bind="html: link"></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </a>
     </div>
     <div id="case-modals"  class="pull-right">
         <button class="btn btn-default" data-toggle="modal" data-target="#selected-case-list"
