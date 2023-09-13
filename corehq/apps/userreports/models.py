@@ -517,9 +517,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             }
         }, self.get_factory_context())]
 
-        default_indicators.append(IndicatorFactory.from_spec({
-            "type": "inserted_at",
-        }, self.get_factory_context()))
+        default_indicators.append(self._get_inserted_at_indicator())
 
         if self.base_item_expression:
             default_indicators.append(IndicatorFactory.from_spec({
@@ -527,6 +525,11 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             }, self.get_factory_context()))
 
         return default_indicators
+
+    def _get_inserted_at_indicator(self):
+        return IndicatorFactory.from_spec({
+            "type": "inserted_at",
+        }, self.get_factory_context())
 
     @property
     @memoized
