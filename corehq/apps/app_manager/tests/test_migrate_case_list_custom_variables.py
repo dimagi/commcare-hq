@@ -24,10 +24,6 @@ class CaseListCustomVariablesTests(SimpleTestCase):
         var_dict = Command.parse(CaseListCustomVariablesTests.custom_variables_xml)
         self.assertEqual(var_dict, CaseListCustomVariablesTests.custom_variables_dict)
 
-    def test_serialize(self):
-        xml = Command.serialize(CaseListCustomVariablesTests.custom_variables_dict)
-        self.assertEqual(xml, CaseListCustomVariablesTests.custom_variables_xml)
-
     def test_migrate_details_forward(self):
         detail = {
             "custom_variables": CaseListCustomVariablesTests.custom_variables_xml,
@@ -46,6 +42,7 @@ class CaseListCustomVariablesTests(SimpleTestCase):
 
     def test_migrate_details_backward(self):
         detail = {
+            "custom_variables": CaseListCustomVariablesTests.custom_variables_xml,
             "custom_variables_dict": CaseListCustomVariablesTests.custom_variables_dict,
         }
 
@@ -73,7 +70,10 @@ class CaseListCustomVariablesTests(SimpleTestCase):
         self.assertIsNone(migrated_app)
 
     def test_migrate_app_impl_reverse(self):
-        app = self.make_app({"custom_variables_dict": CaseListCustomVariablesTests.custom_variables_dict})
+        app = self.make_app({
+            "custom_variables": CaseListCustomVariablesTests.custom_variables_xml,
+            "custom_variables_dict": CaseListCustomVariablesTests.custom_variables_dict
+        })
         migrated_app = Command.migrate_app_impl(app, True)
         self.assertIsNotNone(migrated_app)
         self.assertEqual(

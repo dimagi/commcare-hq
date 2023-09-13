@@ -40,18 +40,8 @@ class Command(AppMigrationCommandBase):
         return False
 
     @staticmethod
-    def serialize(variables_dict):
-        def create_tag(name, function):
-            element = etree.Element(name, function=function)
-            return etree.tostring(element, encoding=str)
-
-        return "\n".join([create_tag(name, function=function) for name, function in variables_dict.items()])
-
-    @staticmethod
     def migrate_detail_backward(detail):
-        if detail and (detail.get('custom_variables_dict') is not None) and \
-                (detail.get('custom_variables') is None):
-            detail['custom_variables'] = Command.serialize(detail['custom_variables_dict'])
+        if detail and detail.get('custom_variables_dict') is not None:
             del detail['custom_variables_dict']
             return True
         return False
