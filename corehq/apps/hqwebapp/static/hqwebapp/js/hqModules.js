@@ -70,7 +70,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'sinon/pkg/sinon': 'sinon',
             };
             if (window.USE_BOOTSTRAP5) {
-                thirdPartyGlobals['hqwebapp/js/bootstrap5_loader'] = 'bootstrap';
+                thirdPartyGlobals['es6!hqwebapp/js/bootstrap5_loader'] = 'bootstrap';
             }
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {

@@ -1,12 +1,14 @@
 hqDefine('hqwebapp/js/bootstrap5/hq-bug-report', [
     "jquery",
-    "hqwebapp/js/bootstrap5_loader",
+    "es6!hqwebapp/js/bootstrap5_loader",
     "jquery-form/dist/jquery.form.min",
     "hqwebapp/js/bootstrap5/hq.helpers",
 ], function ($, bootstrap) {
     'use strict';
     $(function () {
         let self = {};
+        console.log('test bootstrap');
+        console.log(bootstrap);
 
         self.$bugReportModalElement = $('#modalReportIssue');
         if (self.$bugReportModalElement.length === 0) {
