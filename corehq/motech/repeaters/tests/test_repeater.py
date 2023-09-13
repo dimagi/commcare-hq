@@ -255,7 +255,8 @@ class RepeaterTest(BaseRepeaterTest):
         self.assertIsNone(record.last_checked)
 
         attempt = record.make_set_next_try_attempt(None)
-        record.add_attempt(attempt)
+        with patch.object(RepeatRecord, "_migration_do_sync"):
+            record.add_attempt(attempt)
         self.assertTrue(record.last_checked > now)
         self.assertEqual(record.next_check, record.last_checked + MIN_RETRY_WAIT)
 

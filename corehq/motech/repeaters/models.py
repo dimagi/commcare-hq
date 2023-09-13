@@ -1135,6 +1135,18 @@ class RepeatRecord(SyncCouchToSQLMixin, Document):
         self.succeeded = attempt.succeeded
         self.cancelled = attempt.cancelled
         self.failure_reason = attempt.failure_reason
+        try:
+            record_id = SQLRepeatRecord.objects.values("id").get(couch_id=self._id)["id"]
+        except SQLRepeatRecord.DoesNotExist:
+            with enable_attempts_sync_to_sql(self, True):
+                self._migration_do_sync()
+        else:
+            SQLRepeatRecordAttempt.objects.create(
+                repeat_record_id=record_id,
+                state=attempt.state,
+                message=attempt.message,
+                created_at=attempt.created_at,
+            )
 
     def get_numbered_attempts(self):
         for i, attempt in enumerate(self.attempts):

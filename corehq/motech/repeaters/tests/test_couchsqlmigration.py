@@ -19,6 +19,7 @@ from ..management.commands.populate_repeatrecords import Command, get_state
 from ..models import (
     ConnectionSettings,
     RepeatRecord,
+    RepeatRecordAttempt,
     SQLRepeatRecord,
     SQLRepeatRecordAttempt,
 )
@@ -283,6 +284,44 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         self.assertEqual(len(doc["attempts"]), 2, doc["attempts"])
         self.assertEqual(doc["attempts"][-1]["succeeded"], True)
         self.assertFalse(doc["attempts"][-1]["success_response"])
+
+    def test_repeater_add_attempt_syncs_to_sql(self):
+        doc, obj = self.create_repeat_record(unwrap_doc=False)
+        doc.save(sync_attempts=True)
+        obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
+        initial_attempt_ids = [a.id for a in obj.attempts]
+
+        attempt = RepeatRecordAttempt(
+            datetime=datetime.utcnow(),
+            success_response="manual resend",
+            succeeded=True,
+        )
+        doc.add_attempt(attempt)
+        doc.save()
+        attempts = list(obj.attempts)
+        self.assertEqual(
+            initial_attempt_ids,
+            [attempts[0].id, attempts[1].id],
+            "initial attempts should not be deleted/recreated"
+        )
+        self.assertEqual(len(attempts), 3, [a.message for a in attempts])
+        self.assertEqual(attempts[-1].message, "manual resend")
+
+    def test_repeater_syncs_attempt_to_sql_when_sql_record_does_not_exist(self):
+        doc, obj = self.create_repeat_record(unwrap_doc=False)
+        doc.save(sync_to_sql=False)
+
+        attempt = RepeatRecordAttempt(
+            datetime=datetime.utcnow(),
+            success_response="manual resend",
+            succeeded=True,
+        )
+        doc.add_attempt(attempt)
+        doc.save()
+        obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
+        attempts = list(obj.attempts)
+        self.assertEqual(len(attempts), 3, [a.message for a in attempts])
+        self.assertEqual(attempts[-1].message, "manual resend")
 
     def test_migration(self):
         @property
