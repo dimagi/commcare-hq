@@ -23,11 +23,10 @@
       deps: [
           'knockout',
           'ko.mapping',
-          {% if use_bootstrap5 %}'es6!bootstrap5_loader'{% else %}'bootstrap'{% endif %},
+          {% if use_bootstrap5 %}'es6!hqwebapp/js/bootstrap5_loader'{% else %}'bootstrap'{% endif %},
       ],
-      callback: function (ko, mapping{% if use_bootstrap5 %}, bootstrap5{% endif %}) {
+      callback: function (ko, mapping) {
         ko.mapping = mapping;
-        {% if use_bootstrap5 %}window.bootstrap5 = bootstrap5;{% endif %}
       }
     });
     requirejs([
