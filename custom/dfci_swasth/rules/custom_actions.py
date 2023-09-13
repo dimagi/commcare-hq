@@ -1,4 +1,4 @@
-xfrom corehq.apps.data_interfaces.models import CaseRuleActionResult
+from corehq.apps.data_interfaces.models import CaseRuleActionResult
 from corehq.apps.hqcase.utils import update_case, AUTO_UPDATE_XMLNS
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
@@ -52,6 +52,8 @@ def _get_case_updates(ccuser_caseload_case):
     counsellor_closed_case_load = _get_updated_counsellor_closed_case_load(ccuser_caseload_case)
 
     result = {}
+    # counsellor_load and counsellor_closed_case_load will always be present in the case
+    # If not present for some scenario, update should be skipped for it
     if counsellor_load is not None:
         result.update({PROP_COUNSELLOR_LOAD: counsellor_load})
     if counsellor_closed_case_load is not None:
