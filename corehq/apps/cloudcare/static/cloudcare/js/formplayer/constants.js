@@ -25,6 +25,6 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
         FORMAT_ADDRESS: "Address",
         FORMAT_ADDRESS_POPUP: "AddressPopup",
 
-        SMALL_SCREEN_WIDTH_PX: 768,
+        SMALL_SCREEN_WIDTH_PX: 992,
     };
 });

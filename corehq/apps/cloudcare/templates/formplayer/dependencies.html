@@ -55,6 +55,7 @@
   <script src="{% static 'cloudcare/js/form_entry/form_ui.js' %}"></script>
   <script src="{% static 'cloudcare/js/form_entry/web_form_session.js' %}"></script>
   <script src="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min.js' %}"></script>
+  <script src="{% static 'leaflet-fullscreen/dist/Leaflet.fullscreen.min.js' %}"></script>
 {% endcompress %}
 
 {% compress js %}
@@ -117,4 +118,9 @@
   rel="stylesheet"
   type="text/css"
   href="{% static 'calendars/dist/css/jquery.calendars.picker.css' %}"
+/>
+
+<link
+  rel="stylesheet"
+  href="{% static 'leaflet-fullscreen/dist/leaflet.fullscreen.css' %}"
 />
