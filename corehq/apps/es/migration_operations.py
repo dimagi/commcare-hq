@@ -45,7 +45,7 @@ class CreateIndex(BaseElasticOperation):
 
     serialization_expand_args = ["mapping", "analysis"]
 
-    def __init__(self, name, type_, mapping, analysis, settings_key, comment=None):
+    def __init__(self, name, type_, mapping, analysis, settings_key, comment=None, es_versions=[]):
         """CreateIndex operation.
 
         :param name: the name of the index to be created.
@@ -56,6 +56,8 @@ class CreateIndex(BaseElasticOperation):
             tuning settings.
         :param comment: Optional value to set on the index's
             ``mapping._meta.comment`` property.
+        :param es_versions: Optional (default []) Array of supported ES versions.
+            If specified, the mappings will only be applied on those ES versions.
         """
         super().__init__(self.run, self.reverse_run)
         self.name = name
@@ -64,6 +66,7 @@ class CreateIndex(BaseElasticOperation):
         self.analysis = analysis
         self.settings_key = settings_key
         self.comment = comment
+        self.es_versions = es_versions
 
     def deconstruct(self):
         kwargs = {}
@@ -128,16 +131,19 @@ class DeleteIndex(BaseElasticOperation):
 
     serialization_expand_args = ["reverse_params"]
 
-    def __init__(self, name, reverse_params=None):
+    def __init__(self, name, reverse_params=None, es_versions=[]):
         """DeleteIndex operation.
 
         :param name: the name of the index to be deleted.
         :param reverse_params: an iterable of four items containing ``(type,
             mapping, analysis, settings_key)`` for reversing the migration. If
             ``None`` (the default), the operation is irreversible.
+        :param es_versions: Optional (default []) Array of supported ES versions.
+            If specified, the mappings will only be applied on those ES versions.
         """
         super().__init__(self.run, self.reverse_run if reverse_params else None)
         self.name = name
+        self.es_versions = es_versions
         if reverse_params:
             type_, mapping, analysis, settings_key = reverse_params
             self.reverse_type = type_
@@ -210,7 +216,7 @@ class UpdateIndexMapping(BaseElasticOperation):
 
     serialization_expand_args = ["properties"]
 
-    def __init__(self, name, type_, properties, comment=None, print_diff=True):
+    def __init__(self, name, type_, properties, comment=None, print_diff=True, es_versions=[]):
         """UpdateIndexMapping operation.
 
         :param name: the name of the index.
@@ -223,6 +229,8 @@ class UpdateIndexMapping(BaseElasticOperation):
             retained.
         :param print_diff: Optional (default ``True``) set to ``False`` to
             disable printing the mapping diff.
+        :param es_versions: Optional (default []) Array of supported ES versions.
+            If specified, the mappings will only be applied on those ES versions.
         """
         super().__init__(self.run)
         self.name = name
@@ -231,6 +239,7 @@ class UpdateIndexMapping(BaseElasticOperation):
         self.comment = comment
         self.print_diff = print_diff
         self.stream = sys.stdout  # stream where the diff is printed
+        self.es_versions = es_versions
 
     def deconstruct(self):
         kwargs = {}
