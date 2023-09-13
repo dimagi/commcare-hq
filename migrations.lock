@@ -539,6 +539,7 @@ form_processor
  0092_auto_20200924_1753
  0093_rename_models (5 squashed migrations)
  0094_add_partial_index_xforms
+ 0095_remove_xforminstance_deleted_state
 formplayer_api
  0001_drop_old_tables
 generic_inbound
