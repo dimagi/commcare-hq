@@ -25,7 +25,6 @@ from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.sql_db.util import (
-    create_unique_index_name,
     get_db_alias_for_partitioned_doc,
     get_db_aliases_for_partitioned_query,
     paginate_query_across_partitioned_databases,
@@ -710,12 +709,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
             ('domain', 'user_id'),
         ]
         indexes = [
-            models.Index(fields=['xmlns']),
-            models.Index(fields=['deleted_on'],
-                         name=create_unique_index_name('form_processor',
-                                                       'xforminstance',
-                                                       ['deleted_on']),
-                         condition=models.Q(deleted_on__isnull=False))
+            models.Index(fields=['xmlns'])
         ]
 
 
