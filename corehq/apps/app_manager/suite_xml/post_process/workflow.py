@@ -842,7 +842,7 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
         keys = {el.key for el in self.query.data}
         data = [QueryData(key=el.key, ref=el.ref) for el in self.query.data if el.key in wanted]
         if "case_id" not in keys and self.next_datum:
-            if self.next_datum.is_instance:
+            if getattr(self.next_datum, "is_instance", False):
                 data.append(QueryData(key="case_id", ref=".", nodeset=self._get_multi_select_nodeset()))
             else:
                 data.append(QueryData(key="case_id", ref=session_var(self.source_id)))
