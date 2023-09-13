@@ -19,6 +19,7 @@ from corehq.apps.es.migration_operations import (
     UpdateIndexMapping,
     make_mapping_meta,
 )
+from corehq.apps.es.tests.test_client import patch_elastic_version
 from corehq.apps.es.tests.utils import es_test
 from corehq.util.es.elasticsearch import NotFoundError, RequestError
 
@@ -111,6 +112,24 @@ class TestCreateIndex(BaseCase):
         self.assertIndexMappingMatches(self.index, self.type, expected)
         self.assertIndexHasAnalysis(self.index, self.analysis)
         self.assertIndexHasTuningSettings(self.index, self.settings_key)
+
+    def test_index_creation_is_skipped_if_es_version_not_targetted(self):
+        migration = TestMigration(
+            CreateIndex(*self.create_index_args, es_versions=[5])
+        )
+        self.assertIndexDoesNotExist(self.index)
+        with patch_elastic_version(manager, "2.4.6"):
+            migration.apply()
+        self.assertIndexDoesNotExist(self.index)
+
+    def test_index_creation_if_es_version_is_targetted(self):
+        migration = TestMigration(
+            CreateIndex(*self.create_index_args, es_versions=[2, 5])
+        )
+        self.assertIndexDoesNotExist(self.index)
+        with patch_elastic_version(manager, "2.4.6"):
+            migration.apply()
+        self.assertIndexExists(self.index)
 
     def test_fails_if_index_exists(self):
         manager.index_create(self.index)
@@ -280,6 +299,19 @@ class TestCreateIndex(BaseCase):
             ),
         )
 
+    def test_deconstruct_with_es_versions(self):
+        args = ["test", "test", {}, {}, "test", "this is the comment", [5, 6]]
+
+        operation = CreateIndex(*args)
+        self.assertEqual(
+            operation.deconstruct(),
+            (
+                CreateIndex.__qualname__,
+                args[:-2],
+                {"comment": "this is the comment", "es_versions": [5, 6]},
+            ),
+        )
+
 
 @es_test
 class TestCreateIndexIfNotExists(BaseCase):
@@ -346,6 +378,22 @@ class TestDeleteIndex(BaseCase):
         manager.index_create(self.index)
         self.assertIndexExists(self.index)
         migration.apply()
+        self.assertIndexDoesNotExist(self.index)
+
+    def test_deletes_index_skipped_if_targetted_es_version_not_match(self):
+        migration = TestMigration(DeleteIndex(self.index, es_versions=[5]))
+        manager.index_create(self.index)
+        self.assertIndexExists(self.index)
+        with patch_elastic_version(manager, "2.4.6"):
+            migration.apply()
+        self.assertIndexExists(self.index)
+
+    def test_deletes_index_when_target_es_version_matches(self):
+        migration = TestMigration(DeleteIndex(self.index, es_versions=[2, 5]))
+        manager.index_create(self.index)
+        self.assertIndexExists(self.index)
+        with patch_elastic_version(manager, "2.4.6"):
+            migration.apply()
         self.assertIndexDoesNotExist(self.index)
 
     def test_fails_if_index_does_not_exist(self):
@@ -466,6 +514,37 @@ class TestUpdateIndexMapping(BaseCase):
         self.assertNotEqual(properties, new_properties)
         TestMigration(UpdateIndexMapping(self.index, self.type, new_properties)).apply()
         properties.update(new_properties)
+        self.assertEqual(
+            properties,
+            manager.index_get_mapping(self.index, self.type)["properties"],
+        )
+
+    def test_adds_new_properties_if_targeted_es_version_matches(self):
+        properties = manager.index_get_mapping(self.index, self.type)["properties"]
+        new_properties = {
+            "new_str_prop": {"type": "string"},
+            "new_int_prop": {"type": "integer"},
+        }
+        self.assertNotEqual(properties, new_properties)
+        with patch_elastic_version(manager, "2.4.6"):
+            TestMigration(UpdateIndexMapping(self.index, self.type, new_properties, es_versions=[2])).apply()
+        properties.update(new_properties)
+        self.assertEqual(
+            properties,
+            manager.index_get_mapping(self.index, self.type)["properties"],
+        )
+
+    def test_new_properties_not_added_if_targeted_es_version_not_matches(self):
+        properties = manager.index_get_mapping(self.index, self.type)["properties"]
+        new_properties = {
+            "new_str_prop": {"type": "string"},
+            "new_int_prop": {"type": "integer"},
+        }
+
+        self.assertNotEqual(properties, new_properties)
+        with patch_elastic_version(manager, "2.4.6"):
+            TestMigration(UpdateIndexMapping(self.index, self.type, new_properties, es_versions=[5])).apply()
+
         self.assertEqual(
             properties,
             manager.index_get_mapping(self.index, self.type)["properties"],
