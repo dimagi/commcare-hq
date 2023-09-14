@@ -112,7 +112,10 @@ class DetailContributor(SectionContributor):
                         if detail.case_tile_template:
                             helper = CaseTileHelper(self.app, module, detail, detail_id, detail_type,
                                 self.build_profile_id, detail_column_infos, self.entries_helper)
-                            elements.append(helper.build_case_tile_detail())
+
+                            d = helper.build_case_tile_detail()
+                            self._add_custom_variables(detail, d)
+                            elements.append(d)
                         else:
                             print_template_path = None
                             if detail.print_template:
@@ -240,11 +243,10 @@ class DetailContributor(SectionContributor):
                 return d
 
     def _add_custom_variables(self, detail, d):
-        custom_variables = detail.custom_variables
-        if custom_variables:
+        custom_variables_dict = detail.custom_variables_dict
+        if custom_variables_dict:
             custom_variable_elements = [
-                variable for variable in
-                etree.fromstring("<variables>{}</variables>".format(custom_variables))
+                etree.Element(name, function=function) for (name, function) in custom_variables_dict.items()
             ]
             d.variables.extend([
                 load_xmlobject_from_string(etree.tostring(e, encoding='utf-8'), xmlclass=DetailVariable)
