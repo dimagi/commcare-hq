@@ -370,6 +370,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             columnHeader: '.header-clickable',
             paginationGoText: '#goText',
             casesPerPageLimit: '.per-page-limit',
+            searchMoreButton: '#search-more',
         };
     };
 
@@ -380,6 +381,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.paginators': 'paginateAction',
             'click @ui.paginationGoButton': 'paginationGoAction',
             'click @ui.columnHeader': 'columnSortAction',
+            'click @ui.searchMoreButton': 'searchMoreAction',
             'keypress @ui.columnHeader': 'columnSortAction',
             'change @ui.casesPerPageLimit': 'onPerPageLimitChange',
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
@@ -428,7 +430,26 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         events: CaseListViewEvents(),
 
         handleSmallScreenChange: function (enabled) {
-            this.smallScreenEnabled = enabled;
+            const self = this;
+            self.smallScreenEnabled = enabled;
+            if (self.options.sidebarEnabled) {
+                self.positionStickyItems(enabled);
+            }
+        },
+
+        positionStickyItems: function (smallScreenEnabled) {
+            const $caseListHeader = $('#case-list-menu-header');
+            const $caseListMap = $('#module-case-list-map');
+            const stickyHeaderId = 'small-screen-sticky-header';
+            if (smallScreenEnabled) {
+                $caseListHeader.wrap(`<div class="sticky sticky-header" id="${stickyHeaderId}"></div>`);
+                $caseListMap.appendTo($(`#${stickyHeaderId}`));
+            } else {
+                if ($caseListHeader.parent()[0] === $(`#${stickyHeaderId}`)[0]) {
+                    $caseListHeader.unwrap();
+                }
+                $caseListMap.prependTo($('#module-case-list-container__results-container'));
+            }
         },
 
         caseListAction: function (e) {
@@ -445,6 +466,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             e.preventDefault();
             const searchText = $('#searchText').val();
             FormplayerFrontend.trigger("menu:search", searchText);
+        },
+
+        searchMoreAction: function () {
+            if (!$('#sidebar-region').hasClass('in')) {
+                $([document.documentElement, document.body]).animate({
+                    scrollTop: $('#content-container').offset().top - constants.BREADCRUMB_HEIGHT_PX,
+                }, 350);
+            }
         },
 
         searchTextKeyAction: function (event) {
@@ -555,6 +584,22 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             });
         },
 
+        getMapScrollOffset: function (addressMap) {
+            const $mapEl = $('#module-case-list-map');
+            const $stickyHeader = $('#small-screen-sticky-header');
+            let scrollTopOffset = parseInt(($mapEl).css('top'));
+            if (this.smallScreenEnabled) {
+                if ($stickyHeader[0]) {
+                    scrollTopOffset = parseInt($stickyHeader.css('top')) + $stickyHeader.outerHeight();
+                } else if (addressMap.isFullscreen()) {
+                    scrollTopOffset = constants.BREADCRUMB_HEIGHT_PX;
+                } else {
+                    scrollTopOffset += $mapEl.outerHeight();
+                }
+            }
+            return scrollTopOffset;
+        },
+
         loadMap: function () {
             const token = initialPageData.get("mapbox_access_token");
 
@@ -621,12 +666,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     markers.forEach(m => m.setIcon(locationIcon));
                                     marker.setIcon(selectedLocationIcon);
 
-                                    let scrollTopOffset = 47.125; // standard height of breadcrumbs with shadow
-                                    if (this.smallScreenEnabled && !addressMap.isFullscreen()) {
-                                        scrollTopOffset += addressMap.getSize().y;
-                                    }
                                     $([document.documentElement, document.body]).animate({
-                                        scrollTop: $(`#${rowId}`).offset().top - scrollTopOffset,
+                                        scrollTop: $(`#${rowId}`).offset().top - this.getMapScrollOffset(addressMap),
                                     }, 500);
 
                                     addressMap.panTo(markerCoordinates);
@@ -654,6 +695,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (self.showMap) {
                 self.loadMap();
             }
+            self.handleSmallScreenChange(self.smallScreenEnabled);
         },
 
         templateContext: function () {
@@ -844,7 +886,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (this.options.isMultiSelect) {
                 this.reconcileMultiSelectUI();
             }
-            this.handleSmallScreenChange(this.smallScreenEnabled);
         },
 
         onDestroy: function () {
@@ -899,13 +940,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 "role": "link",
                 "tabindex": "0",
+                "style": this.buildMaxWidth(),
             };
         },
         events: {
             "click": "crumbClick",
             "keydown": "crumbKeyAction",
         },
-
+        buildMaxWidth: function () {
+            // to avoid overflow, compute the max width in CSS based on number of breadcrumbs
+            const crumbCount = this.model.collection.length;
+            return `max-width: calc((100vw - ${constants.BREADCRUMB_WIDTH_OFFSET_PX}px) / ${crumbCount});`;
+        },
         crumbClick: function (e) {
             e.preventDefault();
             const crumbId = this.options.model.get('id');

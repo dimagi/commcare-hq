@@ -3,13 +3,25 @@
 }
 
 .sidebar-push {
-  margin-left: 310px;
+  @media (min-width: @screen-md-min) {
+    margin-left: 310px;
+  }
+}
+
+#search-more {
+  margin-top: 12px;
 }
 
 #sidebar-region {
   background: transparent;
-  width: 300px;
-  position: absolute;
+  @media (min-width: @screen-md-min) {
+    width: 300px;
+    position: absolute;
+  }
+  @media (max-width: @screen-sm-max) {
+    max-width: 600px;
+    margin: auto;
+  }
 
   table {
     table-layout: fixed;
