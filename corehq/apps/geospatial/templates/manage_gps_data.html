@@ -46,6 +46,18 @@
 
   <div class="tab-pane fade" id="tabs-users">
     {% include 'gps_capture.html' with data_type='user' %}
+      <div class="module-banner alert alert-info">
+        <span>
+          {% blocktrans %}
+            To create new Mobile Workers navigate to the Mobile Workers page under the Users tab.
+          {% endblocktrans %}
+          <a href="{% url 'mobile_workers' domain %}">
+            {% blocktrans %}
+            Navigate there.
+            {% endblocktrans %}
+          </a>
+        </span>
+      </div>
   </div>
 </div>
 <div id="geospatial-map" style="height: 500px"></div>
