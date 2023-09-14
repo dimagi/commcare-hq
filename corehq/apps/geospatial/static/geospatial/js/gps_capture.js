@@ -60,7 +60,7 @@ hqDefine("geospatial/js/gps_capture",[
         return self;
     };
 
-    var dataItemListModel = function () {
+    var dataItemListModel = function (dataType) {
         var self = {};
         self.dataItems = ko.observableArray([]);  // Can be cases or users
 
@@ -68,8 +68,7 @@ hqDefine("geospatial/js/gps_capture",[
         self.totalItems = ko.observable(0);
         self.query = ko.observable('');
 
-        self.dataType = initialPageData.get('data_type');
-
+        self.dataType = dataType
         self.showLoadingSpinner = ko.observable(true);
         self.showPaginationSpinner = ko.observable(false);
         self.hasError = ko.observable(false);
@@ -141,7 +140,8 @@ hqDefine("geospatial/js/gps_capture",[
     };
 
     $(function () {
-        $("#no-gps-list").koApplyBindings(dataItemListModel());
+        $("#no-gps-list-case").koApplyBindings(dataItemListModel('case'));
+        $("#no-gps-list-user").koApplyBindings(dataItemListModel('user'));
 
         // Global var
         var map;
