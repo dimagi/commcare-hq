@@ -1,6 +1,7 @@
 import json
 from contextlib import closing, contextmanager
 from io import BytesIO
+import uuid
 
 from django.conf import settings
 from django.contrib import messages
@@ -19,6 +20,7 @@ from django.utils.html import escape
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
+from corehq import toggles
 
 from couchexport.models import Format
 from dimagi.utils.dates import DateSpan
@@ -250,7 +252,26 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_values(self):
-        return get_filter_values(self.filters, self.request_dict, user=self.request_user)
+        report_filters = get_filter_values(self.filters, self.request_dict, user=self.request_user)
+        # Removing location from the filters for the locations that are not assigned to the current user.
+        if (toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(self.domain)
+                and not self.request_user.has_permission(self.domain, 'access_all_locations')):
+            location_key = None
+            user_location_ids = self.request_user.get_location_ids(self.domain)
+            user_filtered_locations = []
+            for k, v in report_filters.items():
+                if 'computed_owner_location' in k:
+                    location_key = k
+                    user_filtered_locations = [choice for choice in v if choice.value in user_location_ids]
+            if user_filtered_locations:
+                report_filters[location_key] = user_filtered_locations
+            elif location_key:
+                # Case where user is assigned a new dynamic location that is not present in report filters
+                # In this case, user should not see any data as this location will not be assigned
+                # to the user
+                empty_location = Choice(value=uuid.uuid4().hex, display=None)
+                report_filters[location_key] = [empty_location]
+        return report_filters
 
     @property
     @memoized
