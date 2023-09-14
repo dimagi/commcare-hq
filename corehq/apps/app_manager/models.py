@@ -1045,6 +1045,9 @@ class FormBase(DocumentSchema):
     # computed datums IDs that are allowed in endpoints
     function_datum_endpoints = StringListProperty()
 
+    def __repr__(self):
+        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
+
     @classmethod
     def wrap(cls, data):
         data.pop('validation_cache', '')
@@ -1824,6 +1827,14 @@ class DetailColumn(IndexedSchema):
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
 
+    grid_x = IntegerProperty(exclude_if_none=True)
+    grid_y = IntegerProperty(exclude_if_none=True)
+    width = IntegerProperty(exclude_if_none=True)
+    height = IntegerProperty(exclude_if_none=True)
+    horizontal_align = StringProperty(exclude_if_none=True)
+    vertical_align = StringProperty(exclude_if_none=True)
+    font_size = StringProperty(exclude_if_none=True)
+
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
     case_tile_field = StringProperty(exclude_if_none=True)
@@ -2246,6 +2257,9 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     def __init__(self, *args, **kwargs):
         super(ModuleBase, self).__init__(*args, **kwargs)
         self.assign_references()
+
+    def __repr__(self):
+        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
 
     @property
     def is_surveys(self):
@@ -4590,6 +4604,10 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     custom_assertions = SchemaListProperty(CustomAssertion)
 
     family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
+
+    def __repr__(self):
+        return (f"{self.doc_type}(id='{self._id}', domain='{self.domain}', "
+                f"name='{self.name}', copy_of={repr(self.copy_of)})")
 
     def has_modules(self):
         return len(self.get_modules()) > 0 and not self.is_remote_app()

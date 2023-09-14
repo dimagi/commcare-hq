@@ -1654,11 +1654,16 @@ class SoftwarePlanVersionForm(forms.Form):
         if errors:
             self._errors.setdefault('feature_rates', errors)
 
-        required_types = list(dict(FeatureType.CHOICES))
+        required_types = [FeatureType.USER, FeatureType.SMS]
+        all_types = list(dict(FeatureType.CHOICES))
         feature_types = [r.feature.feature_type for r in rate_instances]
-        if any([feature_types.count(t) != 1 for t in required_types]):
+        if any([feature_types.count(t) == 0 for t in required_types]):
             raise ValidationError(_(
-                "You must specify exactly one rate per feature type "
+                "You must specify a rate for SMS and USER feature type"
+            ))
+        if any([feature_types.count(t) > 1 for t in all_types]):
+            raise ValidationError(_(
+                "You can only specify one rate per feature type "
                 "(SMS, USER, etc.)"
             ))
 

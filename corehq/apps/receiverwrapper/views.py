@@ -1,4 +1,3 @@
-import inspect
 import os
 import logging
 
@@ -63,39 +62,27 @@ from tastypie.http import HttpTooManyRequests
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
-CACHE_EXPIRY_30_DAYS_IN_SECS = 30 * 24 * 60 * 60
+CACHE_EXPIRY_7_DAYS_IN_SECS = 7 * 24 * 60 * 60
 
 
-def _audit_request_auth_errors(user_id, request):
-    cache_key = f"form_submission_audit:{user_id}"
+def _verify_access(domain, user_id, request):
+    """Unless going through the API, users should have the access_mobile_endpoints permission"""
+    cache_key = f"form_submission_permissions_audit:{user_id}"
     if cache.get(cache_key):
-        # User is already logged once in last 30 days for incorrect access, so no need to log again
-        return []
+        # User is already logged once in last 7 days for incorrect access, so no need to log again
+        return
 
-    stack = inspect.stack()
-    function_names = [frame.function for frame in stack if not inspect.isbuiltin(frame.function)]
-
-    def invalid_user_permission():
-        if hasattr(request, 'user'):
-            return not request.user.has_perm('access_mobile_endpoints')
-        return True
-
-    if post_api.__name__ not in function_names and invalid_user_permission():
-        cache.set(cache_key, True, CACHE_EXPIRY_30_DAYS_IN_SECS)
-        return f"Request not made from {post_api.__name__} handler for user"
-
-    return []
+    if not request.couch_user.has_permission(domain, 'access_mobile_endpoints'):
+        cache.set(cache_key, True, CACHE_EXPIRY_7_DAYS_IN_SECS)
+        message = f"NoMobileEndpointsAccess: invalid request by {user_id} on {domain}"
+        notify_exception(request, message=message)
 
 
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
-                  auth_cls=AuthContext):
-    if authenticated:
-        request_error = _audit_request_auth_errors(user_id, request)
-        if request_error:
-            message = (f"Restricted access by user {request.user} with id {user_id} and app_id {app_id}. "
-                       f"Error details: {request_error}")
-            notify_exception(request, message=message)
+                  auth_cls=AuthContext, is_api=False):
+    if authenticated and not is_api:
+        _verify_access(domain, user_id, request)
 
     if rate_limit_submission(domain):
         return HttpTooManyRequests()
@@ -253,6 +240,7 @@ def post_api(request, domain):
         app_id=None,
         user_id=request.couch_user.get_id,
         authenticated=True,
+        is_api=True,
     )
 
 

@@ -132,6 +132,7 @@ class AbtExpressionSpec(JsonObject):
             "vectorlink-burkina-faso",
             "vectorlink-benin",
             "vectorlink-madagascar",
+            "pmievolve-madagascar",
             "vectorlink-mali",
         )
 

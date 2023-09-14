@@ -105,7 +105,7 @@ domain_specific = [
     url(r'^login/$', domain_login, name='domain_login'),
     url(r'^login/iframe/$', iframe_domain_login, name='iframe_domain_login'),
     url(r'^retreive_download/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
-        retrieve_download, {'template': 'hqwebapp/includes/file_download.html'},
+        retrieve_download, {'template': 'hqwebapp/includes/bootstrap3/file_download.html'},
         name='hq_soil_download'),
     url(r'^app/v1/(?P<app_id>[\w-]+)/(?P<endpoint_id>[\w_-]+)/$', session_endpoint, name='session_endpoint'),
     url(r'^app/v1/(?P<app_id>[\w-]+)/$', session_endpoint, name='session_endpoint'),

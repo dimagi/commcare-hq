@@ -13,7 +13,7 @@ hqDefine('reports/v2/js/datagrid', [
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
     'reports/v2/js/datagrid/binding_handlers',  // for custom ko bindingHandlers
-    'hqwebapp/js/knockout_bindings.ko',  // for modal bindings
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko',  // for modal bindings
 ], function (
     $,
     ko,

@@ -562,6 +562,7 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
 
 
 class TestSmsLineItem(BaseInvoiceTestCase):
+    is_using_test_plans = True
 
     @classmethod
     def setUpClass(cls):
@@ -654,7 +655,13 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         self.assertEqual(sms_line_item.subtotal, Decimal('0.0000'))
         self.assertEqual(sms_line_item.total, Decimal('0.0000'))
 
-    def test_multipart_over_limit(self):
+    def test_multipart_over_limit_and_part_of_the_billable_is_under_limit(self):
+        """
+        In this test, we particularly test the scenario that
+        half of the billable is within the limit, the remaining half exceeds the limit.
+        So it's crucial to use test plan in this test instead of default plan whose limit is 0.
+        """
+
         def _set_billable_date_sent_day(sms_billable, day):
             sms_billable.date_sent = datetime.date(
                 sms_billable.date_sent.year,

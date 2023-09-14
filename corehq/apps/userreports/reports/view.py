@@ -659,7 +659,7 @@ class DownloadUCRStatusView(BaseDomainView):
                 'next_url': reverse(ConfigurableReportView.slug, args=[self.domain, self.report_config_id]),
                 'next_url_text': _("Go back to report"),
             })
-            return render(request, 'hqwebapp/soil_status_full.html', context)
+            return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
         else:
             raise Http403()
 

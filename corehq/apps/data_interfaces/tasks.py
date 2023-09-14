@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional  # noqa: F401
 
 from django.conf import settings
 from django.core.cache import cache
@@ -259,7 +259,12 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
     DownloadBase.set_progress(task, 0, len(case_ids))
     user = CouchUser.get_by_user_id(user_id)
     submission_handler = SubmitCaseBlockHandler(
-        domain, None, None, user, None, throttle=True
+        domain,
+        import_results=None,
+        case_type=None,
+        user=user,
+        record_form_callback=None,
+        throttle=True,
     )
     for idx, case_id in enumerate(case_ids):
         submission_handler.add_caseblock(
@@ -289,6 +294,50 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
             "Reassign Cases Complete on {domain}- CommCare HQ",
             user.get_email(),
             render_to_string("data_interfaces/partials/case_reassign_complete_email.html", context),
+            text_content=text_content,
+        )
+
+    _send_email()
+    return {"messages": result}
+
+
+@task
+def bulk_case_copy_async(domain, user_id, owner_id, download_id, report_url, **kwargs):
+    from corehq.apps.hqcase.case_helper import CaseCopier
+    task = bulk_case_copy_async
+    case_ids = DownloadBase.get(download_id).get_content()
+    DownloadBase.set_progress(task, 0, len(case_ids))
+    user = CouchUser.get_by_user_id(user_id)
+
+    case_copier = CaseCopier(
+        domain,
+        to_owner=owner_id,
+        censor_data=kwargs.get('sensitive_properties', {}),
+    )
+    case_copier.copy_cases(case_ids, progress_task=task)
+
+    DownloadBase.set_progress(task, len(case_ids), len(case_ids))
+    result = case_copier.submission_handler.results.to_json()
+    result['success'] = True
+    result['case_count'] = len(case_ids)
+    result['report_url'] = report_url
+
+    def _send_email():
+        context = {
+            'case_count': len(case_ids),
+            'report_url': report_url,
+        }
+        text_content = """
+        {case_count} cases were copied. The list of cases that
+        were copied are <a href='{report_url}'>here</a>.
+        It's possible that in the report the owner_id is not yet
+        updated, you can open individual cases and confirm
+        the right case owner, the report gets updated with a slight delay.
+        """.format(**context)
+        send_HTML_email(
+            "Copy Cases Complete on {domain}- CommCare HQ",
+            user.get_email(),
+            render_to_string("data_interfaces/partials/case_copy_complete_email.html", context),
             text_content=text_content,
         )
 

@@ -28,7 +28,7 @@ from corehq.apps.case_search.const import (
     INDICES_PATH,
     REFERENCED_ID,
     RELEVANCE_SCORE,
-    SPECIAL_CASE_PROPERTIES_MAP,
+    SPECIAL_CASE_PROPERTIES,
     SYSTEM_PROPERTIES,
     VALUE,
 )
@@ -420,9 +420,10 @@ def wrap_case_search_hit(hit, include_score=False):
     `corehq.apps.es.case_search.ElasticCaseSearch._from_dict`.
 
     The "case_properties" list of key/value pairs is converted to a dict
-    and assigned to `case_json`. 'Secial' case properties are excluded
+    and assigned to `case_json`. 'Special' case properties are excluded
     from `case_json`, even if they were present in the original case's
-    dynamic properties.
+    dynamic properties, except of the COMMCARE_CASE_COPY_PROPERTY_NAME
+    property.
 
     All fields excluding "case_properties" and its contents are assigned
     as attributes on the case object if `CommCareCase` has a field
@@ -435,15 +436,15 @@ def wrap_case_search_hit(hit, include_score=False):
     :returns: A `CommCareCase` instance.
     """
     from corehq.form_processor.models import CommCareCase
+
     data = hit.get("_source", hit)
-    _SPECIAL_PROPERTIES = SPECIAL_CASE_PROPERTIES_MAP
     _VALUE = VALUE
     case = CommCareCase(
         case_id=data.get("_id", None),
         case_json={
             prop["key"]: prop[_VALUE]
             for prop in data.get(CASE_PROPERTIES_PATH, {})
-            if prop["key"] not in _SPECIAL_PROPERTIES
+            if prop["key"] not in SPECIAL_CASE_PROPERTIES
         },
         indices=data.get("indices", []),
     )

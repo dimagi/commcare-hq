@@ -101,6 +101,10 @@ accounting
  0079_add_web_user_feature
  0080_add_web_user_feature_in_other_models
  0081_billingaccount_bill_web_user
+ 0082_application_error_report_priv
+ 0083_data_dictionary_priv
+ 0084_copy_cases_priv
+ 0085_remove_free_50_sms
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -545,6 +549,7 @@ generic_inbound
 geospatial
  0001_create_geopolygon
  0002_geoconfig
+ 0003_auto_20230908_0927
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -610,6 +615,8 @@ linked_domain
  0020_auto_20211102_1501
  0021_alter_domainlinkhistory_model
  0022_alter_domainlinkhistory_model
+ 0023_alter_domainlinkhistory_model
+ 0024_alter_domainlinkhistory_model
 locations
  0001_initial
  0002_auto_20160420_2105
@@ -734,6 +741,7 @@ pillowtop
  0007_copy_xforms_checkpoint
 preindex
  0001_initial
+ 0002_initial
 products
  0001_initial
 project_limits
@@ -756,7 +764,7 @@ registry
 reminders
  0001_initial
 repeaters
- 0001_adjust_auth_field_format_squashed_0015_drop_connection_settings_fk (15 squashed migrations)
+ 0001_adjust_auth_field_format_squashed_0015_drop_connection_settings_fk
  0002_repeaters_db
 reports
  0001_initial
@@ -773,6 +781,7 @@ reports
  0012_tableaugroup_tableauuser
  0013_tableau_various_20221205
  0014_querystringhash
+ 0015_tableauserver_allowed_tableau_groups
 saved_reports
  0001_initial
  0002_scheduledreportlog

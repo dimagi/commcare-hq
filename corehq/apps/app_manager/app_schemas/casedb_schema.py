@@ -8,6 +8,8 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.util import is_usercase_in_use
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.privileges import DATA_DICTIONARY
 
 
 def get_casedb_schema(form):
@@ -28,7 +30,6 @@ def get_casedb_schema(form):
         parent_module = app.get_module_by_unique_id(parent_select.module_id)
         source = clean_trans(parent_module.name, app.langs)
         subsets.extend(_get_case_schema_subsets(app, parent_module.case_type, source=source))
-
 
     if is_usercase_in_use(app.domain):
         subsets.append({
@@ -75,7 +76,10 @@ def _get_case_schema_subsets(app, base_case_type, hashtag='#case/', source=None)
     builder = ParentCasePropertyBuilder.for_app(app, ['case_name'], include_parent_properties=False)
     related = builder.get_parent_type_map(None)
     map = builder.get_properties_by_case_type()
-    descriptions_dict = get_case_property_description_dict(app.domain)
+    if domain_has_privilege(app.domain, DATA_DICTIONARY):
+        descriptions_dict = get_case_property_description_dict(app.domain)
+    else:
+        descriptions_dict = {}
 
     # Generate hierarchy of case types, represented as a list of lists of strings:
     # [[base_case_type], [parent_type1, parent_type2...], [grandparent_type1, grandparent_type2...]]

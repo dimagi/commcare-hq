@@ -1,0 +1,20 @@
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+{% load hq_shared_tags %}
+{% load menu_tags %}
+
+{% block content %}
+  {% block page_breadcrumbs %}{% endblock %}
+  <div class="container-fluid">
+    <div id="hq-content">`
+      {% captureas page_title_block %}{% block page_title %}{% endblock page_title %}{% endcaptureas %}
+      {% if page_title_block %}
+        <div class="page-header" style="margin-top: 0;">
+          <h1 class="lead" style="font-size: 1.8em;">{{ page_title_block }}</h1>
+        </div>
+      {% else %}
+        {% block pre_page_content %}<div class="spacer"></div>{% endblock %}
+      {% endif %}
+      {% block page_content %}{% endblock page_content %}
+    </div>
+  </div>
+{% endblock content %}

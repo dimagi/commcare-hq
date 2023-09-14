@@ -10,7 +10,7 @@ from xml.sax.saxutils import escape
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable, TileGroup
+from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable, Text, TileGroup, Style
 from corehq.apps.app_manager.util import (
     module_offers_search,
     module_uses_inline_search,
@@ -29,6 +29,7 @@ class CaseTileTemplates(models.TextChoices):
     ONE_3X_TWO_4X_ONE_2X = ("one_3X_two_4X_one_2X", _("Three upper rows, four rows with two cells, two lower rows "
                                                     "and map"))
     ONE_TWO_TWO = ("one_two_two", _("Title row, second row with two cells, third row with two cells"))
+    ICON_TEXT_GRID = ("icon_text_grid", _("2 x 3 grid of image and text"))
 
 
 @dataclass
@@ -79,15 +80,37 @@ class CaseTileHelper(object):
         This method does so by injecting the appropriate strings into a template
         string.
         """
-        # Get template context
-        context = self._get_base_context()
-        for template_field in case_tile_template_config(self.detail.case_tile_template).fields:
-            column = self._get_matched_detail_column(template_field)
-            context[template_field] = self._get_column_context(column)
 
-        # Populate the template
-        detail_as_string = self._case_tile_template_string.format(**context)
-        detail = load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+        if self.detail.case_tile_template == 'custom':
+            from corehq.apps.app_manager.detail_screen import get_column_generator
+            title = Text(locale_id=id_strings.detail_title_locale(self.detail_type))
+            detail = Detail(id=self.detail_id, title=title)
+
+            for column_info in self.detail_column_infos:
+                # column_info is an instance of DetailColumnInfo named tuple.
+                style = Style(grid_x=column_info.column.grid_x, grid_y=column_info.column.grid_y,
+                              grid_height=column_info.column.height, grid_width=column_info.column.width,
+                              horz_align=column_info.column.horizontal_align,
+                              vert_align=column_info.column.vertical_align,
+                              font_size=column_info.column.font_size)
+                fields = get_column_generator(
+                    self.app, self.module, self.detail,
+                    detail_type=self.detail_type,
+                    style=style,
+                    *column_info
+                ).fields
+                for field in fields:
+                    detail.fields.append(field)
+        else:
+            # Get template context
+            context = self._get_base_context()
+            for template_field in case_tile_template_config(self.detail.case_tile_template).fields:
+                column = self._get_matched_detail_column(template_field)
+                context[template_field] = self._get_column_context(column)
+
+            # Populate the template
+            detail_as_string = self._case_tile_template_string.format(**context)
+            detail = load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
 
         # Case registration
         # The Person simple template already defines a registration action. Since it is used in production

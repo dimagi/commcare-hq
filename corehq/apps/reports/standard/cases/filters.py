@@ -5,6 +5,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy, gettext
 from django.utils.functional import lazy
 
+from corehq.apps.export.const import DEID_ID_TRANSFORM, DEID_DATE_TRANSFORM
+
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
@@ -20,12 +22,10 @@ from corehq.apps.reports.filters.base import (
     BaseSimpleFilter,
     BaseSingleOptionFilter,
 )
-from corehq import toggles, privileges
-
-# TODO: Replace with library method
+from corehq import privileges
 
 
-mark_safe_lazy = lazy(mark_safe, str)
+mark_safe_lazy = lazy(mark_safe, str)  # TODO: Replace with library method
 
 
 class CaseSearchFilter(BaseSimpleFilter):
@@ -138,15 +138,47 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     def get_value(cls, request, domain):
         value = super(CaseListExplorerColumns, cls).get_value(request, domain)
         ret = json.loads(value or "[]")
-
         # convert legacy list of strings to list of dicts
-        if ret and type(ret[0]) == str:
+        if ret and isinstance(ret[0], str):
             ret = [{
                 'name': prop_name,
                 'label': prop_name
             } for prop_name in ret]
 
         return ret
+
+
+class SensitiveCaseProperties(CaseListExplorerColumns):
+    slug = "sensitive_properties"
+    label = gettext_lazy("De-identify options")
+    template = "reports/filters/sensitive_columns.html"
+
+    @property
+    def filter_context(self):
+        context = super(SensitiveCaseProperties, self).filter_context
+        initial_values = self.get_value(self.request, self.domain)
+
+        context.update({
+            'initial_value': json.dumps(initial_values),
+            'column_suggestions': json.dumps(self.get_column_suggestions()),
+            'property_label_options': self.property_label_options
+        })
+        return context
+
+    @property
+    def property_label_options(self):
+        return [
+            {'type': DEID_ID_TRANSFORM, 'name': gettext_lazy('Sensitive ID')},
+            {'type': DEID_DATE_TRANSFORM, 'name': gettext_lazy('Sensitive Date')},
+        ]
+
+    def get_column_suggestions(self):
+        case_properties = get_flattened_case_properties(self.domain, include_parent_properties=False)
+        special_properties = [
+            {'name': prop, 'case_type': None, 'meta_type': 'info'}
+            for prop in ('name', 'case_name', 'external_id')
+        ]
+        return case_properties + special_properties
 
 
 def get_flattened_case_properties(domain, include_parent_properties=False):
@@ -156,7 +188,7 @@ def get_flattened_case_properties(domain, include_parent_properties=False):
     )
     property_counts = Counter(item for sublist in all_properties_by_type.values() for item in sublist)
 
-    if toggles.DATA_DICTIONARY.enabled(domain):
+    if domain_has_privilege(domain, privileges.DATA_DICTIONARY):
         prop_labels = get_case_property_label_dict(domain)
         all_properties = [
             {

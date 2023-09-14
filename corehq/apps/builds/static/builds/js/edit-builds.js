@@ -4,7 +4,7 @@ hqDefine('builds/js/edit-builds', [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/knockout_bindings.ko',
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko',
 ], function ($, _, ko, initialPageData) {
     var doc = initialPageData.get('doc');
 

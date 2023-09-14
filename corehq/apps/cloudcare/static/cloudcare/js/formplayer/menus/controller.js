@@ -144,6 +144,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     title: menuResponse.title,
                     description: menuResponse.description,
                     sidebarEnabled: true,
+                    disableDynamicSearch: true,
                 }).render()
             );
         } else {
@@ -157,8 +158,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 if (isFormEntry) {
                     menusUtils.showMenuDropdown(menuResponse.langs, initialPageData('lang_code_name_mapping'));
                 }
-                if (menuResponse.type === "entities"){
-                    menusUtils.showMenuDropdown()
+                if (menuResponse.type === "entities") {
+                    menusUtils.showMenuDropdown();
                 }
             }
         } else {

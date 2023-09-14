@@ -66,7 +66,7 @@ def flatten_field_dict(results, fields_property='fields'):
     field_dict = results.get(fields_property, {})
     for key, val in field_dict.items():
         new_val = val
-        if type(val) == list and len(val) == 1:
+        if type(val) is list and len(val) == 1:
             new_val = val[0]
         field_dict[key] = new_val
     return field_dict
@@ -102,7 +102,7 @@ def check_task_progress(task_id, just_once=False):
             task_details = manager.get_task(task_id=task_id)
         except TaskMissing:
             if not just_once:
-                return  # task completed
+                return  # task completed ES 2
             raise CommandError(f"Task with id {task_id} not found")
         except TaskError as err:
             raise CommandError(f"Fetching task failed: {err}")
@@ -110,8 +110,9 @@ def check_task_progress(task_id, just_once=False):
         status = task_details["status"]
         total = status["total"]
         if total:  # total can be 0 initially
-            created, updated, deleted = status["created"], status["updated"], status["deleted"]
-            progress = created + updated + deleted
+            created, updated = status["created"], status["updated"]
+            deleted, conflicts = status["deleted"], status["version_conflicts"]
+            progress = created + updated + deleted + conflicts
             progress_percent = progress / total * 100
 
             running_time_nanos = task_details["running_time_in_nanos"]
@@ -148,6 +149,8 @@ def check_task_progress(task_id, just_once=False):
                   f"(recent average = {_format_timedelta(remaining_time_relative)})")
         if just_once:
             return
+        if task_details.get("completed"):
+            return  # task completed ES 5
         time.sleep(TASK_POLL_DELAY)
 
 

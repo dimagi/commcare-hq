@@ -10,7 +10,6 @@ from django.utils.translation import gettext_lazy as _
 from django_prbac.models import Grant, Role, UserRole
 
 from corehq.const import USER_DATE_FORMAT
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 
 from corehq import privileges
@@ -140,6 +139,13 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     except AccountingError:
         pass
     return False
+
+
+def get_domains_with_privilege(privilege_slug):
+    return [
+        domain for domain in Domain.get_all_names()
+        if domain_has_privilege(domain, privilege_slug.slug)
+    ]
 
 
 @quickcache(['domain_name'], timeout=15 * 60)

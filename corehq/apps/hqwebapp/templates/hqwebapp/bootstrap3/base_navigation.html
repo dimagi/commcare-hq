@@ -8,7 +8,7 @@
 
 
 {% block pre_navigation_content %}
-  {% include "hqwebapp/partials/maintenance_alerts.html" %}
+  {% include "hqwebapp/partials/bootstrap3/maintenance_alerts.html" %}
   {% if show_trial_banner %}
     {% include "hqwebapp/partials/trial_banner.html" %}
   {% endif %}
@@ -134,9 +134,9 @@
 {% block modals %}
   {% if domain and not enterprise_mode %}
     {% if show_overdue_invoice_modal %}
-      {% include 'hqwebapp/downgrade_modal.html' %}
+      {% include 'hqwebapp/bootstrap3/downgrade_modal.html' %}
     {% elif show_prepaid_modal %}
-      {% include 'hqwebapp/prepaid_modal.html' %}
+      {% include 'hqwebapp/bootstrap3/prepaid_modal.html' %}
     {% endif %}
   {% endif %}
 {% endblock modals %}
