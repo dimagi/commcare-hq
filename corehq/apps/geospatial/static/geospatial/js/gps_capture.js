@@ -33,11 +33,11 @@ hqDefine("geospatial/js/gps_capture",[
         self.isLatValid = ko.observable(true);
         self.isLonValid = ko.observable(true);
 
-        self.setCoordinates = function(lat, lng) {
+        self.setCoordinates = function (lat, lng) {
             self.lat(lat.toString());
             self.lon(lng.toString());
             self.onValueChanged();
-        }
+        };
 
         self.onValueChanged = function () {
             self.hasUnsavedChanges(true);
@@ -82,12 +82,12 @@ hqDefine("geospatial/js/gps_capture",[
             return !self.showLoadingSpinner() && !self.hasError();
         });
 
-        self.captureLocationForItem = function(item) {
+        self.captureLocationForItem = function (item) {
             self.itemLocationBeingCapturedOnMap(item);
-        }
-        self.setCoordinates = function(lat, lng) {
+        };
+        self.setCoordinates = function (lat, lng) {
             self.itemLocationBeingCapturedOnMap().setCoordinates(lat, lng);
-        }
+        };
 
         self.goToPage = function (pageNumber) {
             self.dataItems.removeAll();
