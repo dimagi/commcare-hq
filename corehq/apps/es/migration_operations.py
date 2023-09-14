@@ -23,7 +23,7 @@ class BaseElasticOperation(RunPython):
     def reverse_run(self, *args, **kw):
         raise NotImplementedError(type(self).__name__)
 
-    def _is_mapping_incompatibe(self, mapping_es_major_versions):
+    def _should_skip_operation(self, mapping_es_major_versions):
         """
         The mappings should be applied on ES if running version of ES is same as the targetted es versions.
         :param mapping_es_major_version: an array consisting of all major versions that the mapping support
@@ -81,7 +81,7 @@ class CreateIndex(BaseElasticOperation):
         )
 
     def run(self, *args, **kw):
-        if self.es_versions and self._is_mapping_incompatibe(self.es_versions):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
             # skip running the operation if compatible ES versions are provided
             # and mapping is created for a differnt es version
             return
@@ -98,7 +98,7 @@ class CreateIndex(BaseElasticOperation):
         manager.index_configure_for_standard_ops(self.name)
 
     def reverse_run(self, *args, **kw):
-        if self.es_versions and self._is_mapping_incompatibe(self.es_versions):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
             return
         DeleteIndex(self.name).run(*args, **kw)
 
@@ -176,14 +176,14 @@ class DeleteIndex(BaseElasticOperation):
         )
 
     def run(self, *args, **kw):
-        if self.es_versions and self._is_mapping_incompatibe(self.es_versions):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
             return
         from corehq.apps.es.client import manager
         log.info("Deleting Elasticsearch index: %s" % self.name)
         manager.index_delete(self.name)
 
     def reverse_run(self, *args, **kw):
-        if self.es_versions and self._is_mapping_incompatibe(self.es_versions):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
             return
         create_kw = {
             "name": self.name,
@@ -268,7 +268,7 @@ class UpdateIndexMapping(BaseElasticOperation):
         )
 
     def run(self, *args, **kw):
-        if self.es_versions and self._is_mapping_incompatibe(self.es_versions):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
             return
         from corehq.apps.es.client import manager
         mapping = manager.index_get_mapping(self.name, self.type) or {}

@@ -37,7 +37,7 @@ class CreateIndexIfNotExists(CreateIndex):
 
     """
     def run(self, *args, **kwargs):
-        if self.es_versions and self._is_mapping_incompatibe(self.es_versions):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
             return
         from corehq.apps.es.client import manager
         if not manager.index_exists(self.name):
