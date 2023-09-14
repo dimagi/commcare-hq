@@ -153,11 +153,11 @@ hqDefine("geospatial/js/gps_capture",[
     var initMap = function (dataItemList) {
         'use strict';
 
-        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
+        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
 
         let centerCoordinates = [2.43333330, 9.750]; // should be domain specific
 
-        const map = new mapboxgl.Map({
+        const map = new mapboxgl.Map({  // eslint-disable-line no-undef
             container: 'geospatial-map', // container ID
             style: 'mapbox://styles/mapbox/streets-v12', // style URL
             center: centerCoordinates, // starting position [lng, lat]
