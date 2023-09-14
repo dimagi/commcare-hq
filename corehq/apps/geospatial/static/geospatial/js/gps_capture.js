@@ -33,6 +33,12 @@ hqDefine("geospatial/js/gps_capture",[
         self.isLatValid = ko.observable(true);
         self.isLonValid = ko.observable(true);
 
+        self.setCoordinates = function(lat, lng) {
+            self.lat(lat.toString());
+            self.lon(lng.toString());
+            self.onValueChanged();
+        }
+
         self.onValueChanged = function () {
             self.hasUnsavedChanges(true);
 
@@ -80,7 +86,7 @@ hqDefine("geospatial/js/gps_capture",[
             self.itemLocationBeingCapturedOnMap(item);
         }
         self.setCoordinates = function(lat, lng) {
-            //ToDo: Implement
+            self.itemLocationBeingCapturedOnMap().setCoordinates(lat, lng);
         }
 
         self.goToPage = function (pageNumber) {
