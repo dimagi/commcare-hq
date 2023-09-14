@@ -33,10 +33,6 @@ hqDefine("geospatial/js/gps_capture",[
         self.isLatValid = ko.observable(true);
         self.isLonValid = ko.observable(true);
 
-        self.onMapCaptureStart = function () {
-            // TODO: Implement this function
-        };
-
         self.onValueChanged = function () {
             self.hasUnsavedChanges(true);
 
@@ -66,6 +62,7 @@ hqDefine("geospatial/js/gps_capture",[
 
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.observable(0);
+        self.itemLocationBeingCapturedOnMap = ko.observable();
         self.query = ko.observable('');
 
         self.dataType = initialPageData.get('data_type');
@@ -78,6 +75,10 @@ hqDefine("geospatial/js/gps_capture",[
         self.showTable = ko.computed(function () {
             return !self.showLoadingSpinner() && !self.hasError();
         });
+
+        self.captureLocationForItem = function(item) {
+            self.itemLocationBeingCapturedOnMap(item);
+        }
 
         self.goToPage = function (pageNumber) {
             self.dataItems.removeAll();
