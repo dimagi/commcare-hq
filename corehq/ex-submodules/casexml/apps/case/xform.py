@@ -3,6 +3,8 @@ from itertools import groupby
 
 import itertools
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
+# HACK: We need this import to initialize signal receivers. This should be handled in a different manner.
+import casexml.apps.case.signals  # noqa: F401
 from casexml.apps.case.util import validate_phone_datetime, prune_previous_log
 from corehq import toggles
 from corehq.apps.users.util import SYSTEM_USER_ID
