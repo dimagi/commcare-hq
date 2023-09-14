@@ -310,6 +310,8 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
     }
 
 
+@require_GET
+@login_and_domain_required
 def get_users_with_gps(request, domain):
     location_prop_name = get_geo_user_property(domain)
     users = CommCareUser.by_domain(domain)
