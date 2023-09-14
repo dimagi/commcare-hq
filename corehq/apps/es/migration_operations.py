@@ -26,7 +26,7 @@ class BaseElasticOperation(RunPython):
     def _should_skip_operation(self, mapping_es_major_versions):
         """
         The mappings should be applied on ES if running version of ES is same as the targetted es versions.
-        :param mapping_es_major_version: an array consisting of all major versions that the mapping support
+        :param mapping_es_major_version: an list consisting of all major versions that the mapping support
         """
         from corehq.apps.es.client import manager
         current_es_major_version = manager.elastic_major_version
@@ -56,7 +56,7 @@ class CreateIndex(BaseElasticOperation):
             tuning settings.
         :param comment: Optional value to set on the index's
             ``mapping._meta.comment`` property.
-        :param es_versions: Optional (default []) Array of supported ES versions.
+        :param es_versions: Optional (default []) list of supported ES versions.
             If specified, the mappings will only be applied on those ES versions.
         """
         super().__init__(self.run, self.reverse_run)
@@ -146,7 +146,7 @@ class DeleteIndex(BaseElasticOperation):
         :param reverse_params: an iterable of four items containing ``(type,
             mapping, analysis, settings_key)`` for reversing the migration. If
             ``None`` (the default), the operation is irreversible.
-        :param es_versions: Optional (default []) Array of supported ES versions.
+        :param es_versions: Optional (default []) list of supported ES versions.
             If specified, the mappings will only be applied on those ES versions.
         """
         super().__init__(self.run, self.reverse_run if reverse_params else None)
@@ -242,7 +242,7 @@ class UpdateIndexMapping(BaseElasticOperation):
             retained.
         :param print_diff: Optional (default ``True``) set to ``False`` to
             disable printing the mapping diff.
-        :param es_versions: Optional (default []) Array of supported ES versions.
+        :param es_versions: Optional (default []) list of supported ES versions.
             If specified, the mappings will only be applied on those ES versions.
         """
         super().__init__(self.run)
