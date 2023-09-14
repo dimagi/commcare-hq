@@ -107,6 +107,18 @@ def cachebuster(url):
     return resource_versions.get(url, "")
 
 
+@quickcache(['couch_user.username'])
+def get_domain_links_for_dropdown(couch_user):
+    from corehq.apps.domain.views.base import get_domain_links
+    return get_domain_links(couch_user)
+
+
+@quickcache(['couch_user.username'])
+def has_enterprise_links(couch_user):
+    from corehq.apps.domain.views.base import get_enterprise_links
+    return bool(get_enterprise_links(couch_user))
+
+
 @register.simple_tag(takes_context=True)
 def domains_for_user(context, request, selected_domain=None):
     """
@@ -136,18 +148,6 @@ def domains_for_user(context, request, selected_domain=None):
             context, request
         )
     )
-
-
-@quickcache(['couch_user.username'])
-def get_domain_links_for_dropdown(couch_user):
-    from corehq.apps.domain.views.base import get_domain_links
-    return get_domain_links(couch_user)
-
-
-@quickcache(['couch_user.username'])
-def has_enterprise_links(couch_user):
-    from corehq.apps.domain.views.base import get_enterprise_links
-    return bool(get_enterprise_links(couch_user))
 
 
 @register.simple_tag
