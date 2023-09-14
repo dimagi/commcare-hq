@@ -32,7 +32,7 @@ from pillowtop.checkpoints.manager import (
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.processors.elastic import BulkElasticProcessor
 from pillowtop.reindexer.change_providers.case import (
     get_domain_case_change_provider,
 )
@@ -100,13 +100,9 @@ def _add_smart_types(dynamic_properties, domain, case_type):
                 prop['geopoint_value'] = None
 
 
-class CaseSearchPillowProcessor(ElasticProcessor):
+class CaseSearchPillowProcessor(BulkElasticProcessor):
 
-    def process_change(self, change):
-        assert isinstance(change, Change)
-        if self.change_filter_fn and self.change_filter_fn(change):
-            return
-
+    def _is_case_search_domain(self, change):
         if change.metadata is not None:
             # Comes from KafkaChangeFeed (i.e. running pillowtop)
             domain = change.metadata.domain
@@ -114,8 +110,11 @@ class CaseSearchPillowProcessor(ElasticProcessor):
             # comes from ChangeProvider (i.e reindexing)
             domain = change.get_document()['domain']
 
-        if domain and domain_needs_search_index(domain):
-            super(CaseSearchPillowProcessor, self).process_change(change)
+        return domain and domain_needs_search_index(domain)
+        
+    def process_changes_chunk(self, changes_chunk):
+        chunk = [change for change in changes_chunk if self._is_case_search_domain(change)]
+        return super(CaseSearchPillowProcessor, self).process_changes_chunk(chunk)
 
 
 def get_case_search_processor():
