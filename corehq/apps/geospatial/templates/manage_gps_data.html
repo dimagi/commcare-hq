@@ -34,6 +34,15 @@
 {% registerurl 'edit_commcare_user' domain '---' %}
 {% registerurl 'gps_capture' domain %}
 
+<div>
+  <span>
+    {% blocktrans %}
+      Use this page to manage GPS data associated with Cases or Mobile workers.
+    {% endblocktrans %}
+  </span>
+</div>
+<br>
+
 <ul class="nav nav-tabs">
   <li class="active"><a data-toggle="tab" href="#tabs-cases">{% trans 'Update Case Data' %}</a></li>
   <li><a data-toggle="tab" href="#tabs-users">{% trans 'Update Mobile Worker Data' %}</a></li>
