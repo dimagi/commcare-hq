@@ -31,7 +31,7 @@ class HQUserType(object):
     COMMTRACK = 4
     DEACTIVATED = 5
     WEB = 6
-    human_readable = [settings.COMMCARE_USER_TERM,
+    human_readable = [gettext_noop("Active Mobile Workers"),
                       gettext_noop("demo_user"),
                       gettext_noop("admin"),
                       gettext_noop("Unknown Users"),
@@ -45,12 +45,6 @@ class HQUserType(object):
     @classmethod
     def use_defaults(cls):
         return cls._get_manual_filterset(cls.included_defaults, cls.toggle_defaults)
-
-    @classmethod
-    def all_but_users(cls):
-        no_users = [True] * cls.count
-        no_users[cls.ACTIVE] = False
-        return cls._get_manual_filterset(cls.included_defaults, no_users)
 
     @classmethod
     def commtrack_defaults(cls):
