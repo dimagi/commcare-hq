@@ -2004,8 +2004,6 @@ class InvoiceBase(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
 
-    note = models.TextField(default='')
-
     objects = InvoiceBaseManager()
     api_objects = Manager()
 
@@ -2105,6 +2103,7 @@ class Invoice(InvoiceBase):
     to CreditAdjustments.
     """
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+    duplicate_invoice_id = models.IntegerField(null=True)
 
     class Meta(object):
         app_label = 'accounting'
