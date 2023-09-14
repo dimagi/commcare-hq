@@ -284,10 +284,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             return [{'id': url_id, 'text': text}
                     for url_id, text in self.get_default_selections()]
 
-        selected = (self.selected_static_options(selected_ids) +
-                    self._selected_user_entries(selected_ids) +
-                    self._selected_group_entries(selected_ids) +
-                    self._selected_location_entries(selected_ids))
+        selected = (self.selected_static_options(selected_ids)
+                    + self._selected_user_entries(selected_ids)
+                    + self._selected_group_entries(selected_ids)
+                    + self._selected_location_entries(selected_ids))
         return [
             {'id': entry[0], 'text': entry[1]} if len(entry) == 2 else
             {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} for entry in selected
