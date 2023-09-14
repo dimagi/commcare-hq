@@ -13,16 +13,13 @@ def rebuild_form_cases(sender, xform, *args, **kwargs):
         rebuild_case_from_forms(domain, case_id, detail)
 
 
-connected = False
+_connected = False
 
 
 def connect_signals():
-    global connected
-    if connected:
+    global _connected
+    if _connected:
         return
     xform_archived.connect(rebuild_form_cases)
     xform_unarchived.connect(rebuild_form_cases)
-    connected = True
-
-
-connect_signals()
+    _connected = True
