@@ -86,6 +86,9 @@ class ChoiceProvider(metaclass=ABCMeta):
 
     def get_choices_for_values(self, values, user):
         choices = set(self.get_choices_for_known_values(values, user))
+        if self.location_safe and not user.has_permission(self.domain, 'access_all_locations'):
+            return choices
+
         used_values = {value for value, _ in choices}
         for value in values:
             if value not in used_values:
@@ -344,14 +347,6 @@ class LocationChoiceProvider(ChainableChoiceProvider):
             else:
                 return loc.display_name
         return [Choice(loc.location_id, display(loc)) for loc in locations]
-
-    def get_sorted_choices_for_values(self, choices, user):
-        locations = SQLLocation.objects if self.show_all_locations else SQLLocation.active_objects
-        accessible_locations = (locations.accessible_to_user(self.domain, user)
-                                .filter(domain=self.domain)
-                                .values_list("location_id", flat=True))
-        accessible_choices = [c for c in choices if c in accessible_locations]
-        return super(LocationChoiceProvider, self).get_sorted_choices_for_values(accessible_choices, user)
 
 
 class UserChoiceProvider(ChainableChoiceProvider):
