@@ -149,7 +149,32 @@ hqDefine("geospatial/js/gps_capture",[
         return self;
     };
 
+    var initMap = function (centerCoordinates) {
+        'use strict';
+
+        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
+
+        if (!centerCoordinates) {
+            centerCoordinates = [2.43333330, 9.750]; // should be domain specific
+        }
+
+        const map = new mapboxgl.Map({
+            container: 'geospatial-map', // container ID
+            style: 'mapbox://styles/mapbox/streets-v12', // style URL
+            center: centerCoordinates, // starting position [lng, lat]
+            zoom: 6,
+            attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
+                         ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        });
+
+        map.on('click', (event) => {
+            console.log(`A click event has occurred at ${event.lngLat}`);
+        });
+        return map;
+    };
+
     $(function () {
         $("#no-gps-list").koApplyBindings(dataItemListModel());
+        initMap();
     });
 });
