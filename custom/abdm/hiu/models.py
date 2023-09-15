@@ -25,6 +25,7 @@ class HIUConsentRequest(models.Model):
     )
 
     user = models.ForeignKey(ABDMUser, on_delete=models.PROTECT, related_name='consent_requests')
+    # TODO Check if we dont need null in gateway_request_id
     gateway_request_id = models.UUIDField(null=True, unique=True)
     consent_request_id = models.UUIDField(null=True, unique=True)
     date_created = models.DateTimeField(auto_now_add=True)
@@ -71,7 +72,7 @@ class HIUHealthInformationRequest(models.Model):
         (STATUS_TRANSFERRED, 'Transferred'),
         (STATUS_FAILED, 'Failed'),
     ]
-
+    # TODO Add requesting user here, Check if we dont need null in gateway_request_id
     consent_artefact = models.ForeignKey(HIUConsentArtefact, to_field='artefact_id', on_delete=models.PROTECT,
                                          related_name='health_information_request')
     gateway_request_id = models.UUIDField(unique=True)

@@ -49,9 +49,32 @@ STATUS_DELIVERED = 'DELIVERED'
 STATUS_FAILED = 'FAILED'
 STATUS_ERRORED = 'ERRORED'
 
+STATUS_SUCCESS = 'SUCCESS'
 
 CRYPTO_ALGORITHM = 'ECDH'
 CURVE = 'Curve25519'
 AES_KEY_LENGTH = 32
 NONCE_LENGTH = 32
 HEALTH_INFORMATION_MEDIA_TYPE = 'application/fhir+json'
+
+
+class AuthFetchModesPurpose:
+    LINK = 'LINK'
+    KYC = 'KYC'
+    KYC_AND_LINK = 'KYC_AND_LINK'
+    CHOICES = [(LINK, 'Link'), (KYC, 'KYC'), (KYC_AND_LINK, 'KYC and Link')]
+
+
+class RequesterType:
+    HIP = 'HIP'
+    HIU = 'HIU'
+    CHOICES = [(HIP, 'Health Information Provider'), (HIU, 'Health Information User')]
+
+
+class AuthenticationMode:
+    MOBILE_OTP = 'MOBILE_OTP'
+    DIRECT = 'DIRECT'
+    AADHAAR_OTP = 'AADHAAR_OTP'
+    DEMOGRAPHICS = 'DEMOGRAPHICS'
+    CHOICES = [(MOBILE_OTP, 'SMS OTP'), (DIRECT, 'Direct'), (AADHAAR_OTP, 'Aadhar OTP'),
+               (DEMOGRAPHICS, 'Demographics')]

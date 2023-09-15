@@ -81,8 +81,43 @@ class ABDMServiceUnavailable(APIException):
 class ABDMGatewayError(APIException):
     status_code = 554
     default_detail = 'Error from Gateway'
+
+
+class ABDMGatewayCallbackTimeout(APIException):
+    status_code = 555
+    default_detail = 'Callback Response not received from Gateway within time. Please try again.'
     default_code = 'gateway_error'
 
 
 class ABDMConfigurationError(Exception):
     pass
+
+
+GATEWAY_ERROR_STATUS = 554
+GATEWAY_ERROR_MESSAGE = 'Error Received from Gateway'
+
+
+# TODO Remove earlier and yse this
+class ABDMGatewayError2(Exception):
+
+    def __init__(self, error):
+        self.error = error
+
+
+
+def generate_response_for_gateway_error(error):
+    # TODO Refine and Check possibility of error
+    data = {
+        'error': {
+            'code': error.get('code') if error else 554,
+            'message': GATEWAY_ERROR_MESSAGE,
+            'details': [
+                {
+                    "code": "gateway_error",
+                    "detail": error.get('message') if error else GATEWAY_ERROR_MESSAGE,
+                    "attr": None
+                }
+            ]
+        }
+    }
+    return Response(status=GATEWAY_ERROR_STATUS, data=data)

@@ -12,11 +12,13 @@ HIP_ERROR_MESSAGES = {
     3500: "Unknown error occurred",
     3503: "Gateway Service down",
     3554: "Error received from Gateway",
+    3555: "Gateway callback response timeout",
     3407: "Patient details not found",
     3416: "Consent Artefact Not Found",
     3417: "Invalid Consent Status",
     3418: "Consent has expired",
     3419: "Date range is not valid",
+    3420: "Care Contexts are already linked",
 }
 
 
