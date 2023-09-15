@@ -271,7 +271,7 @@ class TestCreateIndex(BaseCase):
             "top_level": True,
             "_meta": {"key": "value"},
         }
-        operation = CreateIndex(name, type_, mapping, analysis, settings_key, es_versions=[])
+        operation = CreateIndex(name, type_, mapping, analysis, settings_key)
         self.assertEqual(
             operation.deconstruct(),
             (
