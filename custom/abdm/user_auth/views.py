@@ -95,6 +95,9 @@ class AuthFetchModes(UserAuthBaseView):
             raise ABDMGatewayCallbackTimeout()
         if response_data.get('error'):
             raise ABDMGatewayError2(error=response_data['error'])
+        # Authentication Mode DIRECT is not yet supported.
+        if AuthenticationMode.DIRECT in response_data['auth']['modes']:
+            response_data['auth']['modes'].remove(AuthenticationMode.DIRECT)
         return Response(status=200, data=response_data["auth"])
 
 
@@ -158,9 +161,6 @@ class AuthInit(UserAuthBaseView):
             raise ABDMGatewayCallbackTimeout()
         if response_data.get('error'):
             raise ABDMGatewayError2(error=response_data['error'])
-        # Authentication Mode DIRECT is not yet supported.
-        if AuthenticationMode.DIRECT in response_data['auth']['modes']:
-            response_data['auth']['modes'].remove(AuthenticationMode.DIRECT)
         return Response(status=200, data=response_data["auth"])
 
 
