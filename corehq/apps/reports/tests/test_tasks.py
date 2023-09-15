@@ -3,9 +3,9 @@ from unittest.mock import patch
 from uuid import uuid4
 from zipfile import ZipFile
 
-from attrs import define, field
-
 from django.test import SimpleTestCase
+
+from attrs import define, field
 
 from corehq.apps.reports.tasks import (
     _get_question_id_for_attachment,
