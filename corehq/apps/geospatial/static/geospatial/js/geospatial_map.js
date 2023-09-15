@@ -10,7 +10,9 @@ hqDefine("geospatial/js/geospatial_map", [
     alert_user
 ) {
     const defaultMarkerColor = "#808080"; // Gray
+    const defaultUserMarkerColor = "#0e00ff"; // Blue
     const selectedMarkerColor = "#00FF00"; // Green
+    const selectedUserMarkerColor = "#0b940d"; // Dark Green
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
 
     function mapItemModel(dataId, dataItem, marker, markerColors) {
@@ -49,9 +51,15 @@ hqDefine("geospatial/js/geospatial_map", [
         var map;
 
         var caseModels = ko.observableArray([]);
+        var userModels = ko.observableArray([]);
         var selectedCases = ko.computed(function () {
             return caseModels().filter(function (currCase) {
                 return currCase.isSelected();
+            });
+        });
+        var selectedUsers = ko.computed(function () {
+            return userModels().filter(function (currUser) {
+                return currUser.isSelected();
             });
         });
 
@@ -61,6 +69,13 @@ hqDefine("geospatial/js/geospatial_map", [
                     currCase.isSelected(isMapItemInPolygon(polygonFeature, currCase.dataItem.coordinates));
                 }
             });
+            _.values(userModels()).filter(function (currUser) {
+                if (currUser.dataItem.coordinates) {
+                    currUser.isSelected(isMapItemInPolygon(polygonFeature, currUser.dataItem.coordinates));
+                }
+            });
+        }
+
         function isMapItemInPolygon(polygonFeature, coordinates) {
             // Might be 0 if a user deletes a point from a three-point polygon
             if (!polygonFeature.geometry.coordinates.length) {
@@ -169,6 +184,15 @@ hqDefine("geospatial/js/geospatial_map", [
                 caseModels([]);
             };
 
+            self.removeUserMarkers = function () {
+                _.each(userModels(), function (currUser) {
+                    if (currUser.marker) {
+                        currUser.marker.remove();
+                    }
+                });
+                userModels([]);
+            };
+
             self.addCaseMarkersToMap = function (rawCases) {
                 const caseColors = {
                     'default': defaultMarkerColor,
@@ -180,6 +204,21 @@ hqDefine("geospatial/js/geospatial_map", [
                     if (coordinates && coordinates.lat && coordinates.lng) {
                         const mapItemInstance = self.addMarker(caseId, element, caseColors);
                         caseModels.push(mapItemInstance);
+                    }
+                });
+            };
+
+            self.addUserMarkersToMap = function (rawUsers) {
+                const userColors = {
+                    'default': defaultUserMarkerColor,
+                    'selected': selectedUserMarkerColor,
+                };
+
+                _.forEach(rawUsers, function (element, userId) {
+                    const coordinates = element.coordinates;
+                    if (coordinates && coordinates.lat && coordinates.lng) {
+                        const mapItemInstance = self.addMarker(userId, element, userColors);
+                        userModels.push(mapItemInstance);
                     }
                 });
             };
