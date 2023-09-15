@@ -93,7 +93,7 @@
                             </div>
                         </td>
                         <td>
-                            <button type="button" class="btn btn-default" data-bind="event: {click: onMapCaptureStart}">
+                            <button type="button" class="btn btn-default" data-bind="event: {click: $root.captureLocationForItem.bind($data)}">
                                 {% trans "Capture on Map" %}
                             </button>
                             <button type="button" class="btn btn-primary" data-bind="enable: canSaveRow, event: {click: $root.saveDataRow.bind($data)}">
@@ -139,4 +139,10 @@
                                 showSpinner: showPaginationSpinner"></pagination>
         </div>
     </div>
+    <h3 data-bind="visible: itemLocationBeingCapturedOnMap">
+      <div data-bind="with: itemLocationBeingCapturedOnMap">
+          {% trans "Capturing location for:" %}
+          <span data-bind="text: name"></span>
+      </div>
+    </h3>
 </div>

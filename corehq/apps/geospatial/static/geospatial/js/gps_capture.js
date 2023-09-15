@@ -11,6 +11,13 @@ hqDefine("geospatial/js/gps_capture",[
     initialPageData
 ) {
     'use strict';
+    var MAP_CONTAINER_ID = "geospatial-map";
+    var dataListCaptureItem;
+
+    function setMapVisible(isVisible) {
+        if (isVisible) { $("#" + MAP_CONTAINER_ID).show(); }
+        else { $("#" + MAP_CONTAINER_ID).hide(); }
+    };
 
     var dataItemModel = function (options, dataType) {
         options = options || {};
@@ -33,8 +40,10 @@ hqDefine("geospatial/js/gps_capture",[
         self.isLatValid = ko.observable(true);
         self.isLonValid = ko.observable(true);
 
-        self.onMapCaptureStart = function () {
-            // TODO: Implement this function
+        self.setCoordinates = function (lat, lng) {
+            self.lat(lat.toString());
+            self.lon(lng.toString());
+            self.onValueChanged();
         };
 
         self.onValueChanged = function () {
@@ -66,9 +75,10 @@ hqDefine("geospatial/js/gps_capture",[
 
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.observable(0);
+        self.itemLocationBeingCapturedOnMap = ko.observable();
         self.query = ko.observable('');
 
-        self.dataType = dataType
+        self.dataType = dataType;
         self.showLoadingSpinner = ko.observable(true);
         self.showPaginationSpinner = ko.observable(false);
         self.hasError = ko.observable(false);
@@ -77,6 +87,15 @@ hqDefine("geospatial/js/gps_capture",[
         self.showTable = ko.computed(function () {
             return !self.showLoadingSpinner() && !self.hasError();
         });
+
+        self.captureLocationForItem = function (item) {
+            self.itemLocationBeingCapturedOnMap(item);
+            dataListCaptureItem = self;
+            setMapVisible(true);
+        };
+        self.setCoordinates = function (lat, lng) {
+            self.itemLocationBeingCapturedOnMap().setCoordinates(lat, lng);
+        };
 
         self.goToPage = function (pageNumber) {
             self.dataItems.removeAll();
@@ -129,6 +148,7 @@ hqDefine("geospatial/js/gps_capture",[
                 success: function () {
                     dataItem.hasUnsavedChanges(false);
                     self.isSubmissionSuccess(true);
+                    setMapVisible(false);
                 },
                 error: function () {
                     self.hasSubmissionError(true);
@@ -139,37 +159,33 @@ hqDefine("geospatial/js/gps_capture",[
         return self;
     };
 
+    var initMap = function () {
+        'use strict';
+
+        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
+
+        let centerCoordinates = [2.43333330, 9.750]; // should be domain specific
+
+        const map = new mapboxgl.Map({  // eslint-disable-line no-undef
+            container: MAP_CONTAINER_ID, // container ID
+            style: 'mapbox://styles/mapbox/streets-v12', // style URL
+            center: centerCoordinates, // starting position [lng, lat]
+            zoom: 6,
+            attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
+                         ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        });
+
+        map.on('click', (event) => {
+            dataListCaptureItem.setCoordinates(event.lngLat.lat, event.lngLat.lng);
+        });
+        setMapVisible(false);
+        return map;
+    };
+
     $(function () {
         $("#no-gps-list-case").koApplyBindings(dataItemListModel('case'));
         $("#no-gps-list-user").koApplyBindings(dataItemListModel('user'));
 
-        // Global var
-        var map;
-
-        var initMap = function (centerCoordinates) {
-            'use strict';
-
-            var self = {};
-            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
-
-            if (!centerCoordinates) {
-                centerCoordinates = [2.43333330, 9.750]; // should be domain specific
-            }
-
-            const map = new mapboxgl.Map({
-                container: 'geospatial-map', // container ID
-                style: 'mapbox://styles/mapbox/streets-v12', // style URL
-                center: centerCoordinates, // starting position [lng, lat]
-                zoom: 6,
-                attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
-                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-            });
-
-            map.on('click', (event) => {
-                console.log(`A click event has occurred at ${event.lngLat}`);
-            });
-            return self;
-        };
         initMap();
     });
 });
