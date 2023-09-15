@@ -44,7 +44,7 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_mail_async(self, subject, message, from_email, recipient_list,
-                    messaging_event_id=None, domain=None):
+                    messaging_event_id=None, domain: str = None):
     """ Call with send_mail_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -67,6 +67,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
     from dimagi.utils.django.email import (
         get_valid_recipients,
         mark_local_bounced_email,
+        get_connection,
     )
     filtered_recipient_list = get_valid_recipients(recipient_list, domain)
     bounced_recipients = list(set(recipient_list) - set(filtered_recipient_list))
@@ -85,6 +86,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
         headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
     if settings.SES_CONFIGURATION_SET is not None:
         headers[SES_CONFIGURATION_SET_HEADER] = settings.SES_CONFIGURATION_SET
+    connection = get_connection(domain)
 
     try:
         message = EmailMessage(
@@ -93,6 +95,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
             from_email=from_email,
             to=filtered_recipient_list,
             headers=headers,
+            connection=connection,
         )
         return message.send()
     except SMTPDataError as e:
