@@ -2,6 +2,7 @@ import json
 import jsonschema
 from requests.exceptions import HTTPError
 
+from django.conf import settings
 from django.core.paginator import Paginator
 from django.http import (
     HttpResponseRedirect,
@@ -214,7 +215,8 @@ class GPSCaptureView(BaseDomainView):
     def page_context(self):
         data_type = self.request.GET.get('data_type', 'case')
         return {
-            'data_type': data_type
+            'data_type': data_type,
+            'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
         }
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
