@@ -1139,19 +1139,6 @@ def summary_context(report):
     return {"summary_values": report.summary_values}
 
 
-class ProjectInspectionReportParamsMixin(object):
-
-    @property
-    def shared_pagination_GET_params(self):
-        # This was moved from ProjectInspectionReport so that it could be included in CaseReassignmentInterface too
-        # I tried a number of other inheritance schemes, but none of them worked because of the already
-        # complicated multiple-inheritance chain
-        # todo: group this kind of stuff with the field object in a comprehensive field refactor
-
-        return [dict(name='individual', value=self.individual),
-                dict(name='group', value=self.group_id),
-                dict(name='case_type', value=self.case_type),
-                dict(name='ufilter', value=[f.type for f in self.user_filter if f.show])]
 
 
 class PaginatedReportMixin(object):
@@ -1189,8 +1176,7 @@ class GetParamsMixin(object):
         return ret
 
 
-class ElasticProjectInspectionReport(GetParamsMixin, ProjectInspectionReportParamsMixin,
-                                     PaginatedReportMixin, GenericTabularReport):
+class ElasticProjectInspectionReport(GetParamsMixin, PaginatedReportMixin, GenericTabularReport):
     """
     Tabular report that provides framework for doing elasticsearch backed tabular reports.
 
