@@ -83,8 +83,8 @@ hqDefine("geospatial/js/geospatial_map", [
                 return false;
             }
             const coordinatesArr = [coordinates.lng, coordinates.lat];
-            const point = turf.point(coordinatesArr);
-            return turf.booleanPointInPolygon(point, polygonFeature.geometry);
+            const point = turf.point(coordinatesArr);  // eslint-disable-line no-undef
+            return turf.booleanPointInPolygon(point, polygonFeature.geometry);  // eslint-disable-line no-undef
         }
 
         var loadMapBox = function (centerCoordinates) {
@@ -98,7 +98,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 centerCoordinates = [-91.874, 42.76]; // should be domain specific
             }
 
-            const map = new mapboxgl.Map({
+            const map = new mapboxgl.Map({  // eslint-disable-line no-undef
                 container: 'geospatial-map', // container ID
                 style: 'mapbox://styles/mapbox/streets-v12', // style URL
                 center: centerCoordinates, // starting position [lng, lat]
@@ -107,7 +107,7 @@ hqDefine("geospatial/js/geospatial_map", [
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             });
 
-            const draw = new MapboxDraw({
+            const draw = new MapboxDraw({  // eslint-disable-line no-undef
                 // API: https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md
                 displayControlsDefault: false,
                 boxSelect: true, // enables box selection
@@ -155,7 +155,7 @@ hqDefine("geospatial/js/geospatial_map", [
             }
 
             // We should consider refactoring and splitting the below out to a new JS file
-            function moveMarkerToClickedCoordinate(coordinates) {
+            function moveMarkerToClickedCoordinate(coordinates) {  // eslint-disable-line no-unused-vars
                 if (clickedMarker !== null) {
                     clickedMarker.remove();
                 }
@@ -163,7 +163,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     // It's weird moving the marker around with the ploygon
                     return;
                 }
-                clickedMarker = new mapboxgl.Marker({color: "FF0000", draggable: true});
+                clickedMarker = new mapboxgl.Marker({color: "FF0000", draggable: true});  // eslint-disable-line no-undef
                 clickedMarker.setLngLat(coordinates);
                 clickedMarker.addTo(map);
             }
@@ -227,7 +227,7 @@ hqDefine("geospatial/js/geospatial_map", [
             self.addMarker = function (dataId, dataItem, colors) {
                 const coordinates = dataItem.coordinates;
                 // Create the marker
-                const marker = new mapboxgl.Marker({ color: colors.default, draggable: false });
+                const marker = new mapboxgl.Marker({ color: colors.default, draggable: false });  // eslint-disable-line no-undef
                 marker.setLngLat(coordinates);
 
                 // Add the marker to the map
@@ -236,7 +236,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 let popupDiv = document.createElement("div");
                 popupDiv.setAttribute("data-bind", "template: 'select-case'");
 
-                let popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })
+                let popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
                     .setLngLat(coordinates)
                     .setDOMContent(popupDiv);
 
@@ -270,7 +270,7 @@ hqDefine("geospatial/js/geospatial_map", [
             ko.applyBindings({'caseModels': caseModels, 'selectedCases': selectedCases}, $("#case-modals")[0]);
             // Handle click events here
             map.on('click', (event) => {
-                let coordinates = getCoordinates(event);
+                let coordinates = getCoordinates(event);  // eslint-disable-line no-unused-vars
             });
             return self;
         };
@@ -296,12 +296,12 @@ hqDefine("geospatial/js/geospatial_map", [
                             savedPolygon({
                                 name: name,
                                 id: ret.id,
-                                geo_json: data
+                                geo_json: data,
                             })
                         );
                         // redraw using mapControlsModelInstance
                         mapControlsModelInstance.selectedPolygon(ret.id);
-                    }
+                    },
                 });
             }
         };
@@ -334,7 +334,7 @@ hqDefine("geospatial/js/geospatial_map", [
             // On selection, add the polygon to the map
             self.selectedPolygon.subscribe(function (value) {
                 var polygonObj = self.savedPolygons().find(
-                    function (o) { return o.id == self.selectedPolygon(); }
+                    function (o) { return o.id === self.selectedPolygon(); }
                 );
                 // Clear existing polygon
                 if (self.activePolygon()) {
@@ -345,7 +345,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     // Add selected polygon
                     mapboxinstance.addSource(
                         String(polygonObj.id),
-                        {'type': 'geojson', 'data':polygonObj.geoJson}
+                        {'type': 'geojson', 'data': polygonObj.geoJson}
                     );
                     mapboxinstance.addLayer({
                         'id': String(polygonObj.id),
@@ -354,8 +354,8 @@ hqDefine("geospatial/js/geospatial_map", [
                         'layout': {},
                         'paint': {
                             'fill-color': '#0080ff',
-                            'fill-opacity': 0.5
-                        }
+                            'fill-opacity': 0.5,
+                        },
                     });
                     polygonObj.geoJson.features.forEach(
                         filterMapItemsInPolygon
@@ -385,17 +385,17 @@ hqDefine("geospatial/js/geospatial_map", [
                 self.btnSaveDisabled(!mapHasPolygons());
             });
 
-            self.exportGeoJson = function(){
+            self.exportGeoJson = function () {
                 var exportButton = $("#btnExportDrawnArea");
                 var selectedPolygon = self.savedPolygons().find(
-                    function (o) { return o.id == self.selectedPolygon(); }
+                    function (o) { return o.id === self.selectedPolygon(); }
                 );
                 if (selectedPolygon) {
                     var convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(selectedPolygon.geoJson));
                     exportButton.attr('href', 'data:' + convertedData);
                     exportButton.attr('download','data.geojson');
                 }
-            }
+            };
 
             return self;
         };
@@ -410,19 +410,19 @@ hqDefine("geospatial/js/geospatial_map", [
             }
 
             var $saveDrawnArea = $("#btnSaveDrawnArea");
-            $saveDrawnArea.click(function(e) {
+            $saveDrawnArea.click(function () {
                 if (map) {
                     saveGeoJson(map.getMapboxDrawInstance(), mapControlsModelInstance);
                 }
             });
 
             var $exportDrawnArea = $("#btnExportDrawnArea");
-            $exportDrawnArea.click(function(e) {
+            $exportDrawnArea.click(function () {
                 if (map) {
-                    mapControlsModelInstance.exportGeoJson()
+                    mapControlsModelInstance.exportGeoJson();
                 }
             });
-        };
+        }
 
         var missingGPSModel = function (cases, users) {
             this.casesWithoutGPS = ko.observable(cases);
@@ -549,7 +549,7 @@ hqDefine("geospatial/js/geospatial_map", [
             if (!isAfterDataLoad) {
                 return;
             }
-            isDataNeverFetched = true;
+
             showMapControls(true);
             // Hide the datatable rows but not the pagination bar
             $('.dataTables_scroll').hide();
