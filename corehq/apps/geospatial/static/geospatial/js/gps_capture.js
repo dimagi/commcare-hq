@@ -46,9 +46,18 @@ hqDefine("geospatial/js/gps_capture",[
             let latNum = parseFloat(self.lat());
             let lonNum = parseFloat(self.lon());
 
-            const latValid = (!isNaN(latNum) && latNum >= -90 && latNum <= 90) || !self.lat().length;
+            // parseFloat() ignores any trailing text (e.g. 15foobar becomes 15) so we need to check for length to catch
+            // and correctly validate such cases
+            const latValidLength = (latNum.toString().length === self.lat().length);
+            const lonValidLength = (lonNum.toString().length === self.lon().length);
+
+            const latValid = (
+                (!isNaN(latNum) && latValidLength && latNum >= -90 && latNum <= 90) || !self.lat().length
+            );
             self.isLatValid(latValid);
-            const lonValid = (!isNaN(lonNum) && lonNum >= -180 && lonNum <= 180) || !self.lon().length;
+            const lonValid = (
+                (!isNaN(lonNum) && lonValidLength && lonNum >= -180 && lonNum <= 180) || !self.lon().length
+            );
             self.isLonValid(lonValid);
         };
 
@@ -143,13 +152,13 @@ hqDefine("geospatial/js/gps_capture",[
     var initMap = function (centerCoordinates) {
         'use strict';
 
-        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
+        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
 
         if (!centerCoordinates) {
             centerCoordinates = [2.43333330, 9.750]; // should be domain specific
         }
 
-        const map = new mapboxgl.Map({
+        const map = new mapboxgl.Map({  // eslint-disable-line no-undef
             container: 'geospatial-map', // container ID
             style: 'mapbox://styles/mapbox/streets-v12', // style URL
             center: centerCoordinates, // starting position [lng, lat]
