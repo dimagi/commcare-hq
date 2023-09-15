@@ -44,6 +44,7 @@ hqDefine("geospatial/js/geospatial_map", [
         $("#geospatial-map").toggle(state);
         $("#case-buttons").toggle(state);
         $("#mapControls").toggle(state);
+        $("#user-filters-panel").toggle(state);
     }
 
     $(function () {
@@ -424,7 +425,77 @@ hqDefine("geospatial/js/geospatial_map", [
 
         var missingGPSModel = function(cases) {
             this.casesWithoutGPS = ko.observable(cases);
+        var userFiltersModel = function () {
+            var self = {};
+
+            self.shouldShowUsers = ko.observable(false);
+            self.hasFiltersChanged = ko.observable(false);  // Used to disable "Apply" button
+            self.showFilterMenu = ko.observable(true);
+            self.hasErrors = ko.observable(false);
+
+            self.loadUsers = function () {
+                map.removeUserMarkers();
+                self.hasErrors(false);
+                if (!self.shouldShowUsers()) {
+                    self.hasFiltersChanged(false);
+                    return;
+                }
+
+                $.ajax({
+                    method: 'GET',
+                    url: initialPageData.reverse('get_users_with_gps'),
+                    success: function (data) {
+                        self.hasFiltersChanged(false);
+
+                        const usersWithoutGPS = data.user_data.filter(function (item) {
+                            return item.gps_point === null || !item.gps_point.length;
+                        });
+                        missingGPSModelInstance.usersWithoutGPS(usersWithoutGPS);
+
+                        const usersWithGPS = data.user_data.filter(function (item) {
+                            return item.gps_point !== null && item.gps_point.length;
+                        });
+
+                        const userData = _.object(_.map(usersWithGPS, function (dataItem) {
+                            const gpsData = (dataItem.gps_point) ? dataItem.gps_point.split(' ') : [];
+                            const lat = parseFloat(gpsData[0]);
+                            const lng = parseFloat(gpsData[1]);
+
+                            const editUrl = initialPageData.reverse('edit_commcare_user', dataItem.id);
+                            const link = `<a class="ajax_dialog" href="${editUrl}" target="_blank">${dataItem.username}</a>`;
+
+                            return [dataItem.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link}];
+                        }));
+
+                        map.addUserMarkersToMap(userData, defaultUserMarkerColor);
+                    },
+                    error: function () {
+                        self.hasErrors(true);
+                    },
+                });
+            };
+
+            self.onFiltersChange = function () {
+                self.hasFiltersChanged(true);
+            };
+
+            self.toggleFilterMenu = function () {
+                self.showFilterMenu(!self.showFilterMenu());
+                const shouldShow = self.showFilterMenu() ? 'show' : 'hide';
+                $("#user-filters-panel .panel-body").collapse(shouldShow);
+            };
+
+            return self;
         };
+
+        function initUserFilters() {
+            const $userFiltersDiv = $("#user-filters-panel");
+            if ($userFiltersDiv.length) {
+                const userFiltersInstance = userFiltersModel();
+                $userFiltersDiv.koApplyBindings(userFiltersInstance);
+            }
+        }
+
         function loadCases(caseData) {
             map.removeCaseMarkers();
             var casesWithGPS = caseData.filter(function (item) {
@@ -452,11 +523,17 @@ hqDefine("geospatial/js/geospatial_map", [
         }
 
         $(document).ajaxComplete(function (event, xhr, settings) {
+            const isAfterUserLoad = settings.url.includes('geospatial/get_users_with_gps/');
+            if (isAfterUserLoad) {
+                return;
+            }
+
             const isAfterReportLoad = settings.url.includes('geospatial/async/case_management_map/');
             // This indicates clicking Apply button or initial page load
             if (isAfterReportLoad) {
                 map = loadMapBox();
                 initMapControls();
+                initUserFilters();
                 // Hide controls until data is displayed
                 showMapControls(false);
                 return;
