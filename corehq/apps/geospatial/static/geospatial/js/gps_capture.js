@@ -46,8 +46,8 @@ hqDefine("geospatial/js/gps_capture",[
             let latNum = parseFloat(self.lat());
             let lonNum = parseFloat(self.lon());
 
-            // If the text is a number followed by text (e.g. 15foobar) then parseFloat() will not show as NaN
-            // We need to make sure that there is no extra text after the number
+            // parseFloat() ignores any trailing text (e.g. 15foobar) so we need to check for length to catch
+            // and correctly validate such cases
             const latValidLength = (latNum.toString().length === self.lat().length);
             const lonValidLength = (lonNum.toString().length === self.lon().length);
 
