@@ -12,11 +12,7 @@ from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
-from corehq.apps.reports.generic import (
-    ElasticProjectInspectionReport,
-    GenericTabularReport,
-    ProjectInspectionReportParamsMixin,
-)
+from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import (
     DatespanMixin,
@@ -31,29 +27,6 @@ from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.const import MISSING_APP_ID
 from corehq.toggles import SUPPORT
-
-
-class ProjectInspectionReport(
-    ProjectInspectionReportParamsMixin,
-    GenericTabularReport,
-    ProjectReport,
-    ProjectReportParametersMixin
-):
-    """
-        Base class for this reporting section
-    """
-    exportable = False
-    asynchronous = False
-    ajax_pagination = True
-    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
-              'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
-
-    def get_user_link(self, user):
-        user_link = self.get_raw_user_link(user)
-        return self.table_cell(user.raw_username, user_link)
-
-    def get_raw_user_link(self, user):
-        raise NotImplementedError
 
 
 class SubmitHistoryMixin(ElasticProjectInspectionReport,
