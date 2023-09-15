@@ -341,8 +341,8 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                     'oneQuestionPerScreen': oneQuestionPerScreen,
                 }, q.entry.xformParams()),
                 function (resp) {
+                    self.updateXformAction(q);
                     q.formplayerProcessed = true;
-                    q.entry.xformAction = constants.ANSWER_MEDIA;
                     $.publish('session.reconcile', [resp, q]);
                     if (self.answerCallback !== undefined) {
                         self.answerCallback(self.session_id);
@@ -353,12 +353,18 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 },
                 constants.BLOCK_SUBMIT,
                 function () {
+                    self.updateXformAction(q);
                     q.formplayerProcessed = false;
-                    q.entry.xformAction = constants.ANSWER_MEDIA;
                     q.serverError(
                         gettext("We were unable to save this answer. Please try again later."));
                     q.pendingAnswer(constants.NO_PENDING_ANSWER);
                 });
+        };
+
+        self.updateXformAction = function (q) {
+            if (q.entry.xformAction === constants.CLEAR_ANSWER) {
+                q.entry.xformAction = q.entry.templateType === "file" ? constants.ANSWER_MEDIA : constants.ANSWER;
+            }
         };
 
         self.nextQuestion = function (opts) {
