@@ -1312,12 +1312,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             case constants.BINARY:
                 if (!toggles.toggleEnabled('WEB_APPS_UPLOAD_QUESTIONS')) {
                     // do nothing, fall through to unsupported
-                } else if (style === constants.SIGNATURE) {
-                    entry = new SignatureEntry(question, {});
-                    break;
                 } else {
                     switch (question.control()) {
                         case constants.CONTROL_IMAGE_CHOOSE:
+                            if (question.stylesContains(constants.SIGNATURE)) {
+                                entry = new SignatureEntry(question, {});
+                                break;
+                            }
                             entry = new ImageEntry(question, {});
                             break;
                         case constants.CONTROL_AUDIO_CAPTURE:
