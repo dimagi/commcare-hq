@@ -81,6 +81,59 @@
             <span data-bind="text: casesWithoutGPS().length"></span>
             &nbsp;{% trans "Cases Missing GPS Data" %}
         </a>
+        <a class="btn btn-default" target="_blank" href="{% url 'gps_capture' domain %}?data_type=user" data-bind="visible: usersWithoutGPS().length">
+            <span data-bind="text: usersWithoutGPS().length"></span>
+            &nbsp;{% trans "Users Missing GPS Data" %}
+        </a>
+    </div>
+
+    <div id="user-modals" class="pull-right">
+        <button class="btn btn-default" data-toggle="modal" data-target="#selected-user-list" data-bind="enable: selectedUsers().length">
+            <span data-bind="text: selectedUsers().length"></span>
+            &nbsp;{% trans "Selected Mobile Workers" %}
+        </button>
+        <div class="modal fade" id="selected-user-list">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span>
+                    <span class="sr-only">{% trans "Close" %}</span></button>
+                    <h4 class="modal-title">{% trans "Selected Mobile Workers" %}</h4>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-striped table-responsive">
+                        <thead><th>{% trans "Username" %}</th></thead>
+                        <tbody data-bind="foreach: selectedUsers">
+                            <tr><td data-bind="html: $data.dataItem.link"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-default" data-toggle="modal" data-target="#all-user-list">
+            <span data-bind="text: userModels().length"></span>
+            &nbsp;{% trans "Mobile Workers on Map" %}
+        </button>
+        <div class="modal fade" id="all-user-list">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span>
+                        <span class="sr-only">{% trans "Close" %}</span></button>
+                        <h4 class="modal-title">{% trans "All Mobile Workers on Map" %}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table table-striped table-responsive">
+                            <thead><th>{% trans "Username" %}</th></thead>
+                            <tbody data-bind="foreach: userModels">
+                                <tr><td data-bind="html: $data.dataItem.link"></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <div id="case-modals"  class="pull-right">
         <button class="btn btn-default" data-toggle="modal" data-target="#selected-case-list"

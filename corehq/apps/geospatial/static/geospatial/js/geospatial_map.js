@@ -266,6 +266,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 return mapItemInstance;
             };
 
+            ko.applyBindings({'userModels': userModels, 'selectedUsers': selectedUsers}, $("#user-modals")[0]);
             ko.applyBindings({'caseModels': caseModels, 'selectedCases': selectedCases}, $("#case-modals")[0]);
             // Handle click events here
             map.on('click', (event) => {
@@ -423,8 +424,12 @@ hqDefine("geospatial/js/geospatial_map", [
             });
         };
 
-        var missingGPSModel = function(cases) {
+        var missingGPSModel = function (cases, users) {
             this.casesWithoutGPS = ko.observable(cases);
+            this.usersWithoutGPS = ko.observable(users);
+        };
+        var missingGPSModelInstance = new missingGPSModel([], []);
+
         var userFiltersModel = function () {
             var self = {};
 
