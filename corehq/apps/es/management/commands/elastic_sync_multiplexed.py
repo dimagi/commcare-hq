@@ -292,7 +292,7 @@ class ESSyncUtil:
         """
         Remove the residual indices that are not used by HQ
         """
-        existing_indices = es_manager.get_indices()
+        existing_indices = es_manager.indices_info()
         known_indices = self._get_all_known_indices_name()
         for index_name in existing_indices.keys():
             if index_name not in known_indices:
