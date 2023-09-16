@@ -133,6 +133,15 @@ class TestGetDomainsToUpdateESFilter(TestCase):
 
         self.assertEqual(results, [])
 
+    @freeze_time('2020-01-10')
+    def test_inactive_domain_is_excluded(self):
+        self.index_domain('inactive-domain', active=False)
+
+        domains_filter = get_domains_to_update_es_filter()
+        results = DomainES().filter(domains_filter).fields(['_id', 'name']).run().hits
+
+        self.assertEqual(results, [])
+
     def index_domain(self, name, active=True, cp_last_updated=None):
         domain = create_domain(name, active)
         if cp_last_updated:
