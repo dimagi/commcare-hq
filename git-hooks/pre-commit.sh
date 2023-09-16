@@ -50,7 +50,8 @@ fi
 status=0
 git diff-index --check --cached $against --
 if [ $? != 0 ]; then status=1; fi
-pyfiles=($(git diff --staged --name-only | grep "\.py$"))
+# --diff-filter=d ignores deleted files
+pyfiles=($(git diff --staged --name-only --diff-filter=d| grep "\.py$"))
 if [ -n "$pyfiles" ]; then
     flake8 --show-source --config=.flake8 "${pyfiles[@]}"
 	if [ $? != 0 ]; then status=1; fi

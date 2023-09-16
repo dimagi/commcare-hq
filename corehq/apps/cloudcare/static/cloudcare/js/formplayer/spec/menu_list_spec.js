@@ -10,6 +10,8 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
                 "toggles_dict",
                 {
                     SPLIT_SCREEN_CASE_SEARCH: false,
+                    DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
+
                 }
             );
             sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });
