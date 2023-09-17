@@ -90,7 +90,7 @@ from corehq.util.view_utils import is_ajax, reverse
 from no_exceptions.exceptions import Http403
 
 
-def get_filter_values(filters, request_dict, user=None):
+def get_filter_values(filters, request_dict, user=None, domain=None):
     """
     Return a dictionary mapping filter ids to specified values
     :param filters: A list of corehq.apps.reports_core.filters.BaseFilter
@@ -100,7 +100,7 @@ def get_filter_values(filters, request_dict, user=None):
     """
     try:
         return {
-            filter.css_id: filter.get_value(request_dict, user)
+            filter.css_id: filter.get_value(request_dict, user, domain)
             for filter in filters
         }
     except FilterException as e:
@@ -252,26 +252,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_values(self):
-        report_filters = get_filter_values(self.filters, self.request_dict, user=self.request_user)
-        # Removing location from the filters for the locations that are not assigned to the current user.
-        if (toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(self.domain)
-                and not self.request_user.has_permission(self.domain, 'access_all_locations')):
-            location_key = None
-            user_location_ids = self.request_user.get_location_ids(self.domain)
-            user_filtered_locations = []
-            for k, v in report_filters.items():
-                if 'computed_owner_location' in k:
-                    location_key = k
-                    user_filtered_locations = [choice for choice in v if choice.value in user_location_ids]
-            if user_filtered_locations:
-                report_filters[location_key] = user_filtered_locations
-            elif location_key:
-                # Case where user is assigned a new dynamic location that is not present in report filters
-                # In this case, user should not see any data as this location will not be assigned
-                # to the user
-                empty_location = Choice(value=uuid.uuid4().hex, display=None)
-                report_filters[location_key] = [empty_location]
-        return report_filters
+        return get_filter_values(self.filters, self.request_dict, user=self.request_user, domain=self.domain)
 
     @property
     @memoized

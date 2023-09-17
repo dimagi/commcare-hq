@@ -135,6 +135,7 @@ from .forms import (
 from .lookup import ReportLookup, get_full_report_name
 from .models import TableauServer, TableauVisualization
 from .standard import ProjectReport, inspect
+from ..userreports.reports.util import report_has_location_filter
 
 DATE_FORMAT = "%Y-%m-%d %H:%M"
 
@@ -663,7 +664,6 @@ def soft_shift_to_server_timezone(report_notification):
     )
 
 
-#@location_safe
 @conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 class ScheduledReportsView(BaseProjectReportSectionView):
     urlname = 'edit_scheduled_report'
@@ -1126,7 +1126,7 @@ def _is_not_accessible(domain, config, couch_user):
     Returns True if request is restricted for the asked user and the report. Returns False otherwise.
     '''
     # Check if report is location safe
-    if any(["computed_owner_location" in report_filter for report_filter in config.filters.keys()]):
+    if report_has_location_filter(config.subreport_slug, domain):
         return False
     if not toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(domain):
         return False
