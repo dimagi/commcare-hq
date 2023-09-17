@@ -470,7 +470,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('events', 'Event', 'domain'),
     ModelDeletion('events', 'AttendanceTrackingConfig', 'domain'),
     ModelDeletion('geospatial', 'GeoConfig', 'domain'),
-    ModelDeletion('email', 'SQLEmailSMTPBackend', 'domain'),
+    ModelDeletion('email', 'EmailSMTPBackend', 'domain'),
     ModelDeletion('email', 'AWSBackend', 'domain'),
 ]
 
