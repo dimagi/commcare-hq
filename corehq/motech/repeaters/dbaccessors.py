@@ -183,9 +183,6 @@ def _iter_repeat_records_by_repeater(domain, repeater_id, chunk_size,
 
 
 def get_repeat_records_by_payload_id(domain, payload_id):
-    repeat_records = get_sql_repeat_records_by_payload_id(domain, payload_id)
-    if repeat_records:
-        return repeat_records
     return get_couch_repeat_records_by_payload_id(domain, payload_id)
 
 
