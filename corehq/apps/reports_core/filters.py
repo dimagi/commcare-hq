@@ -1,3 +1,4 @@
+import uuid
 from collections import namedtuple
 from datetime import datetime, time
 
@@ -8,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
+from corehq import toggles
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.locations.models import SQLLocation
@@ -39,11 +41,12 @@ class BaseFilter(object):
         self.name = name
         self.params = params or []
 
-    def get_value(self, request_params, user=None):
+    def get_value(self, request_params, user=None, domain=None):
         """
         Args:
             request_params: is a dict of request.GET or request.POST params
             user: couch-user object
+            domain: Domain object
 
         Retruns:
             selected or default filter value
@@ -55,9 +58,23 @@ class BaseFilter(object):
             kwargs.update(
                 {param.name: request_params[param.name] for param in self.params if param.name in request_params}
             )
-            return self.value(**kwargs)
+            choice_list = self.value(**kwargs)
         else:
-            return self.default_value(**kwargs)
+            choice_list = self.default_value(**kwargs)
+        if (user
+                and domain
+                and self.is_location_filter()
+                and toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(domain)):
+            user_location_ids = user.get_location_ids(domain)
+            if user_location_ids and not user.has_permission(domain, 'access_all_locations'):
+                filtered_choice_list = [choice for choice in choice_list if choice.value in user_location_ids]
+                if choice_list and not filtered_choice_list:
+                    # Case where none of user's current location are in filter location choices
+                    # In this case, user should not see any data as this new dynamic location will not be
+                    # assigned to the user
+                    filtered_choice_list = [Choice(value=uuid.uuid4().hex, display=None)]
+                return filtered_choice_list
+        return choice_list
 
     def all_required_params_are_in_context(self, context):
         return all(slug.name in context for slug in self.params if slug.required)
@@ -107,6 +124,14 @@ class BaseFilter(object):
         Override to supply additional context.
         """
         return {}
+
+    def is_location_filter(self):
+        """
+        Checks if a filter is location based. Returns True if it is location based, False otherwise.
+        """
+        return (getattr(getattr(self, 'choice_provider', None), 'location_safe', False)
+                or getattr(self, 'location_filter', False)
+                )
 
 
 class DatespanFilter(BaseFilter):

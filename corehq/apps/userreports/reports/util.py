@@ -25,11 +25,7 @@ def report_has_location_filter(config_id, domain):
     if not (config_id and domain):
         return False
     report, _ = get_report_config(config_id=config_id, domain=domain)
-    return any(
-        getattr(getattr(filter_, 'choice_provider', None), 'location_safe', False)
-        or getattr(filter_, 'location_filter', False)
-        for filter_ in report.ui_filters
-    )
+    return any(filter_.is_location_filter() for filter_ in report.ui_filters)
 
 
 class ReportExport(object):
