@@ -294,6 +294,7 @@ class ESSyncUtil:
         """
         existing_indices = es_manager.indices_info()
         known_indices = self._get_all_known_indices_name()
+        deleted_indices = []
         for index_name in sorted(existing_indices.keys()):
             if index_name not in known_indices:
                 print(f"Trying to delete residual index: {index_name}")
@@ -302,6 +303,11 @@ class ESSyncUtil:
                     raise CommandError(f"Input {user_confirmation} did not match index name {index_name}. "
                                        "Index deletion aborted")
                 es_manager.index_delete(index_name)
+                deleted_indices.append(index_name)
+        if deleted_indices:
+            print(f"Successfully Deleted {deleted_indices}")
+        else:
+            print("No residual indices found on the environment")
 
     def _get_all_known_indices_name(self):
         # get index name from CANONICAL_NAME_ADAPTER_MAP
