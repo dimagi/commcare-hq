@@ -294,7 +294,7 @@ class ESSyncUtil:
         """
         existing_indices = es_manager.indices_info()
         known_indices = self._get_all_known_indices_name()
-        for index_name in existing_indices.keys():
+        for index_name in sorted(existing_indices.keys()):
             if index_name not in known_indices:
                 print(f"Trying to delete residual index: {index_name}")
                 user_confirmation = input(f"Enter '{index_name}' to continue, any other key to cancel\n")
