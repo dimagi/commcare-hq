@@ -122,7 +122,7 @@ class ESSyncUtil:
         es_manager.index_set_replicas(secondary_adapter.index_name, tuning_settings['number_of_replicas'])
         es_manager.index_configure_for_standard_ops(secondary_adapter.index_name)
         self._wait_for_index_to_get_healthy(secondary_adapter.index_name)
-        es_manager.cluster_routing(enabled=True)
+        es_manager.cluster_routing(enabled=False)
 
     def _get_source_destination_doc_count(self, adapter):
         es_manager.index_refresh(adapter.primary.index_name)
