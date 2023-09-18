@@ -244,9 +244,9 @@ hqDefine("geospatial/js/gps_capture",[
 
     function TabListViewModel() {
         var self = {};
-        self.onclickAction = function() {
+        self.onclickAction = function () {
             resetMap();
-        }
+        };
         return self;
     }
 
