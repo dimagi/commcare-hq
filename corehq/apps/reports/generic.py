@@ -178,7 +178,7 @@ class GenericReportView(object):
         self.domain = normalize_domain_name(domain)
         self.context = base_context or {}
         self._update_initial_context()
-        self.is_rendered_as_email = False # setting this to true in email_response
+        self.is_rendered_as_email = False  # setting this to true in email_response
         self.is_rendered_as_export = False
         self.override_template = "reports/async/email_report.html"
 
@@ -216,7 +216,7 @@ class GenericReportView(object):
         """
             For unpickling a pickled report.
         """
-        logging = get_task_logger(__name__) # logging lis likely to happen within celery.
+        logging = get_task_logger(__name__)  # logging is likely to happen within celery.
         self.domain = state.get('domain')
         self.context = state.get('context', {})
 
@@ -242,7 +242,7 @@ class GenericReportView(object):
             request.couch_user = couch_user
         except Exception as e:
             logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
-                            (self.name, e))
+                          (self.name, e))
         self.request = request
         self._caching = True
         self.request_params = state.get('request_params')
@@ -478,7 +478,7 @@ class GenericReportView(object):
                     or self.request.couch_user.can_view_some_reports(self.domain)
                 ),
                 is_emailable=self.emailable,
-                is_export_all = self.exportable_all,
+                is_export_all=self.exportable_all,
                 is_printable=self.printable,
                 is_admin=self.is_admin_report,
                 special_notice=self.special_notice,
@@ -547,10 +547,10 @@ class GenericReportView(object):
         if hasattr(self, 'datespan'):
             self.context.update(datespan=self.datespan)
         if self.show_timezone_notice:
-            self.context.update(timezone=dict(
-                    now=datetime.datetime.now(tz=self.timezone),
-                    zone=self.timezone.zone
-                ))
+            self.context.update(timezone={
+                'now': datetime.datetime.now(tz=self.timezone),
+                'zone': self.timezone.zone,
+            })
         self.context.update(self._validate_context_dict(self.template_context))
 
     def update_report_context(self):
@@ -723,7 +723,7 @@ class GenericReportView(object):
                              ', '.join(cls.dispatcher.allowed_renderings()))
         url_args = [domain] if domain is not None else []
         if render_as is not None:
-            url_args.append(render_as+'/')
+            url_args.append(render_as + '/')
         if relative:
             return reverse(cls.dispatcher.name(), args=url_args + [cls.slug])
         return absolute_reverse(cls.dispatcher.name(), args=url_args + [cls.slug])
@@ -985,7 +985,7 @@ class GenericTabularReport(GenericReportView):
     def export_sheet_name(self):
         if self._export_sheet_name is None:
             override = self.override_export_sheet_name
-            self._export_sheet_name = override if isinstance(override, str) else self.name # unicode?
+            self._export_sheet_name = override if isinstance(override, str) else self.name
         return self._export_sheet_name
 
     @property
@@ -999,6 +999,7 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
+
         def _unformat_row(row):
             def _unformat_val(val):
                 if isinstance(val, dict):
@@ -1036,7 +1037,7 @@ class GenericTabularReport(GenericReportView):
             Don't override.
             Override the properties headers and rows instead of this.
         """
-        headers = self.headers # not all headers have been memoized
+        headers = self.headers  # not all headers have been memoized
         assert isinstance(headers, (DataTablesHeader, list))
         if isinstance(headers, list):
             raise DeprecationWarning("Property 'headers' should be a DataTablesHeader object, not a list.")
@@ -1137,8 +1138,6 @@ def summary_context(report):
     # will intentionally break if used with something that doesn't have
     # a summary_values attribute
     return {"summary_values": report.summary_values}
-
-
 
 
 class PaginatedReportMixin(object):
