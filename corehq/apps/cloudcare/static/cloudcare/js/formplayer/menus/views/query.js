@@ -200,6 +200,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.model = this.options.model;
             this.errorMessage = null;
             this._setItemset(this.model.attributes.itemsetChoices, this.model.attributes.itemsetChoicesKey);
+            this.dynamicSearchEnabled = false;
 
             // initialize with default values or with sticky values if either is present
             var value = decodeValue(this.model, this.model.get('value'))[1],
@@ -211,6 +212,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 value = stickyValue;
             }
             this.model.set('value', value);
+            this.dynamicSearchEnabled = this.options.parentView.dynamicSearchEnabled;
         },
 
         ui: {
