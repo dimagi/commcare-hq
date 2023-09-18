@@ -13,7 +13,7 @@ hqDefine("geospatial/js/gps_capture",[
     'use strict';
     const selectedMarkerColor = "#00FF00"; // Green
 
-    var MAP_CONTAINER_ID = "geospatial-map";
+    const MAP_CONTAINER_ID = "geospatial-map";
     var map;
     var selectedDataListItem;
     var coordinateCaptureMarker;
@@ -22,11 +22,10 @@ hqDefine("geospatial/js/gps_capture",[
         if (isVisible) {
             $("#" + MAP_CONTAINER_ID).show();
             centerMapWithMarker();
-        }
-        else {
+        } else {
             $("#" + MAP_CONTAINER_ID).hide();
         }
-    };
+    }
 
     function centerMapWithMarker() {
         if (selectedDataListItem) {
@@ -202,10 +201,10 @@ hqDefine("geospatial/js/gps_capture",[
         updateSelectedItemLonLat(lngLat.lng, lngLat.lat);
     }
 
-    function setMarkerAtLngLat(lon, lat, centerView) {
+    function setMarkerAtLngLat(lon, lat) {
         if (coordinateCaptureMarker) { coordinateCaptureMarker.remove(); }
 
-        coordinateCaptureMarker = new mapboxgl.Marker({
+        coordinateCaptureMarker = new mapboxgl.Marker({  // eslint-disable-line
             color: selectedMarkerColor,
             draggable: true,
         });
