@@ -43,9 +43,9 @@
 </div>
 <br>
 
-<ul class="nav nav-tabs">
-  <li class="active"><a data-toggle="tab" href="#tabs-cases">{% trans 'Update Case Data' %}</a></li>
-  <li><a data-toggle="tab" href="#tabs-users">{% trans 'Update Mobile Worker Data' %}</a></li>
+<ul id="tabs-list" class="nav nav-tabs">
+  <li data-bind="click: onclickAction" class="active"><a data-toggle="tab" href="#tabs-cases">{% trans 'Update Case Data' %}</a></li>
+  <li data-bind="click: onclickAction"><a data-toggle="tab" href="#tabs-users">{% trans 'Update Mobile Worker Data' %}</a></li>
 </ul>
 
 <div class="tab-content">

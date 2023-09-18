@@ -37,10 +37,15 @@ hqDefine("geospatial/js/gps_capture",[
         }
     }
 
-    function runSaveSuccessCallback() {
+    function collapseMap() {
         setMapVisible(false);
-        selectedDataListItem.itemLocationBeingCapturedOnMap(null);
-        coordinateCaptureMarker = undefined;
+        if (selectedDataListItem) {
+            selectedDataListItem.itemLocationBeingCapturedOnMap(null);
+        }
+        if (coordinateCaptureMarker) {
+            coordinateCaptureMarker.remove();
+            coordinateCaptureMarker = undefined;
+        }
     }
 
     var dataItemModel = function (options, dataType) {
@@ -181,7 +186,7 @@ hqDefine("geospatial/js/gps_capture",[
                 success: function () {
                     dataItem.hasUnsavedChanges(false);
                     self.isSubmissionSuccess(true);
-                    runSaveSuccessCallback();
+                    collapseMap();
                 },
                 error: function () {
                     self.hasSubmissionError(true);
@@ -237,7 +242,16 @@ hqDefine("geospatial/js/gps_capture",[
         return map;
     };
 
+    function TabListViewModel() {
+        var self = {};
+        self.onclickAction = function() {
+            collapseMap();
+        }
+        return self;
+    }
+
     $(function () {
+        $("#tabs-list").koApplyBindings(TabListViewModel());
         $("#no-gps-list-case").koApplyBindings(dataItemListModel('case'));
         $("#no-gps-list-user").koApplyBindings(dataItemListModel('user'));
 
