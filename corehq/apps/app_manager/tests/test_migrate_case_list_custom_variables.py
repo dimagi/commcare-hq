@@ -8,15 +8,18 @@ class CaseListCustomVariablesTests(SimpleTestCase):
     custom_variables_xml = "<xml1 function=\"if(true(), 'text text', '')\"/>\n<xml2 function=\"text\"/>"
     custom_variables_dict = {"xml1": "if(true(), 'text text', '')", "xml2": "text"}
 
+    def make_module(self, short_dict):
+        return {
+            "case_details": {
+                "short": short_dict,
+                "long": {}
+            }
+        }
+
     def make_app(self, short_dict):
         return {
             "modules": [
-                {
-                    "case_details": {
-                        "short": short_dict,
-                        "long": {}
-                    }
-                }
+                self.make_module(short_dict)
             ]
         }
 
@@ -62,6 +65,29 @@ class CaseListCustomVariablesTests(SimpleTestCase):
                 "custom_variables": CaseListCustomVariablesTests.custom_variables_xml,
                 "custom_variables_dict": CaseListCustomVariablesTests.custom_variables_dict
             })
+        )
+
+    def test_migrate_app_impl_multiple_modules(self):
+        app = {
+            "modules": [
+                self.make_module({"custom_variables": CaseListCustomVariablesTests.custom_variables_xml}),
+                self.make_module({})
+            ]
+        }
+
+        migrated_app = Command.migrate_app_impl(app, False)
+        self.assertIsNotNone(migrated_app)
+        self.assertEqual(
+            migrated_app,
+            {
+                "modules": [
+                    self.make_module({
+                        "custom_variables": CaseListCustomVariablesTests.custom_variables_xml,
+                        "custom_variables_dict": CaseListCustomVariablesTests.custom_variables_dict
+                    }),
+                    self.make_module({})
+                ]
+            }
         )
 
     def test_migrate_app_impl_no_change(self):

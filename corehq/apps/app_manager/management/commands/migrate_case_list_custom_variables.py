@@ -60,7 +60,7 @@ class Command(AppMigrationCommandBase):
                 short_detail, long_detail = detail_pair['short'], detail_pair['long']
                 app_was_changed_short = migrate_detail(short_detail)
                 app_was_changed_long = migrate_detail(long_detail)
-                app_was_changed = app_was_changed_short or app_was_changed_long
+                app_was_changed = app_was_changed or app_was_changed_short or app_was_changed_long
         if app_was_changed:
             return app
 
