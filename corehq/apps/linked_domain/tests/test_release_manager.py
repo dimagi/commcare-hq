@@ -6,7 +6,6 @@ from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
     MODEL_APP,
     MODEL_CASE_SEARCH,
-    MODEL_DATA_DICTIONARY,
     MODEL_DIALER_SETTINGS,
     MODEL_FLAGS,
     MODEL_HMAC_CALLOUT_SETTINGS,
@@ -95,17 +94,6 @@ class TestReleaseManager(BaseReleaseManagerTest):
         self._assert_release([
             self._linked_data_view_model(MODEL_CASE_SEARCH),
         ], error="Feature flag for Case Search Settings is not enabled")
-
-    @flag_enabled('DATA_DICTIONARY')
-    def test_data_dictionary_on(self):
-        self._assert_release([
-            self._linked_data_view_model(MODEL_DATA_DICTIONARY),
-        ])
-
-    def test_data_dictionary_off(self):
-        self._assert_release([
-            self._linked_data_view_model(MODEL_DATA_DICTIONARY),
-        ], error="Feature flag for Data Dictionary is not enabled")
 
     @flag_enabled('WIDGET_DIALER')
     def test_widget_dialer_on(self):

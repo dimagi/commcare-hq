@@ -2,7 +2,7 @@ hqDefine("reports/js/hq_report", [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/widgets', //multi-emails

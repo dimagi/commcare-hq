@@ -1364,6 +1364,30 @@ class Subscription(models.Model):
             if property_value is not None:
                 setattr(self, property_name, property_value)
 
+    def upgrade_plan_for_consistency(self, new_plan_version, upgrade_note, web_user):
+        """
+        Upgrade subscription for keeping consistency should only update the software plan,
+        but keep all other properties like service_type, pro_bono_status,etc ... the same
+        """
+
+        self.change_plan(
+            new_plan_version=new_plan_version,
+            note=upgrade_note,
+            web_user=web_user,
+            service_type=self.service_type,
+            pro_bono_status=self.pro_bono_status,
+            funding_source=self.funding_source,
+            internal_change=True,
+            do_not_invoice=self.do_not_invoice,
+            no_invoice_reason=self.no_invoice_reason,
+            do_not_email_invoice=self.do_not_email_invoice,
+            do_not_email_reminder=self.do_not_email_reminder,
+            auto_generate_credits=self.auto_generate_credits,
+            skip_invoicing_if_no_feature_charges=self.skip_invoicing_if_no_feature_charges,
+            skip_auto_downgrade=self.skip_auto_downgrade,
+            skip_auto_downgrade_reason=self.skip_auto_downgrade_reason,
+        )
+
     @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
@@ -2103,6 +2127,7 @@ class Invoice(InvoiceBase):
     to CreditAdjustments.
     """
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+    duplicate_invoice_id = models.IntegerField(null=True)
 
     class Meta(object):
         app_label = 'accounting'

@@ -1,0 +1,118 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends 'hqwebapp/bootstrap3/base_page.html' %}
++{% extends 'hqwebapp/bootstrap5/base_page.html' %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+@@ -8,13 +8,13 @@
+   {% initial_page_data 'alerts' alerts %}
+ 
+   <div>
+-    <div id="ko-alert-form" class="panel panel-default">
+-      <div class="panel-heading">
+-        <h3 class="panel-title">
++    <div id="ko-alert-form" class="card card-default">
++      <div class="card-header">
++        <h3 class="card-title">
+           {% trans 'Create Alert' %}
+         </h3>
+       </div>
+-      <div class="panel-body">
++      <div class="card-body">
+         <p>
+           {% blocktrans %}
+           Enter alert text here and preview in the table below. Links will be properly wrapped with anchor tags. Alerts
+@@ -30,10 +30,10 @@
+           {% csrf_token %}
+           <div class="form-group">
+             <label for="alert-text"
+-                   class="control-label col-sm-2">
++                   class="control-label col-md-2">
+               {% trans "Message" %}
+             </label>
+-            <div class="col-sm-8">
++            <div class="col-md-8">
+               <textarea name="alert_text"
+                         id="alert-text"
+                         class="form-control vertical-resize"
+@@ -44,10 +44,10 @@
+           </div>
+           <div class="form-group">
+             <label for="domains"
+-                   class="control-label col-sm-2">
++                   class="control-label col-md-2">
+               {% trans "Affected domains" %}
+             </label>
+-            <div class="col-sm-8">
++            <div class="col-md-8">
+               <textarea name="domains"
+                         id="domains"
+                         class="form-control vertical-resize"
+@@ -57,10 +57,10 @@
+           </div>
+           <div class="form-group">
+             <label for="start-time"
+-                   class="control-label col-sm-2">
++                   class="control-label col-md-2">
+               {% trans "Start time (optional)" %}
+             </label>
+-            <div class="col-sm-8">
++            <div class="col-md-8">
+               <input type="datetime-local"
+                      name="start_time"
+                      id="start-time"
+@@ -70,10 +70,10 @@
+           </div>
+           <div class="form-group">
+             <label for="end-time"
+-                   class="control-label col-sm-2">
++                   class="control-label col-md-2">
+               {% trans "End time (optional)" %}
+             </label>
+-            <div class="col-sm-8">
++            <div class="col-md-8">
+               <input type="datetime-local"
+                      name="end_time"
+                      id="end-time"
+@@ -83,10 +83,10 @@
+           </div>
+           <div class="form-group">
+             <label for="timezone"
+-                   class="control-label col-sm-2">
++                   class="control-label col-md-2">
+               {% trans "Time zone" %}
+             </label>
+-            <div class="col-sm-8">
++            <div class="col-md-8">
+               <select id="timezone"
+                       name="timezone"
+                       class="form-control hqwebapp-select2"
+@@ -110,13 +110,13 @@
+       </div>
+     </div>
+ 
+-    <div id="ko-alert-container" class="panel panel-default">
+-      <div class="panel-heading">
+-        <h3 class="panel-title">
++    <div id="ko-alert-container" class="card card-default">
++      <div class="card-header">
++        <h3 class="card-title">
+           {% trans "Available Alerts" %}
+         </h3>
+       </div>
+-      <div class="panel-body">
++      <div class="card-body">
+         <table class="table table-striped">
+           <thead>
+             <tr>
+@@ -171,7 +171,7 @@
+                     <span data-bind="hidden: !!start_time || !!end_time">{% trans "Activate Alert" %}</span>
+                   </button>
+                   <button type="submit"
+-                          class="btn btn-danger"
++                          class="btn btn-outline-danger"
+                           name="command"
+                           value="deactivate"
+                           data-bind="visible: active && !expired">

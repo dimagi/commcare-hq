@@ -11,6 +11,7 @@ from corehq.apps.es.aggregations import (
     ExtendedStatsAggregation,
     FilterAggregation,
     FiltersAggregation,
+    GeohashGridAggregation,
     MissingAggregation,
     NestedAggregation,
     RangeAggregation,
@@ -18,6 +19,7 @@ from corehq.apps.es.aggregations import (
     TermsAggregation,
     TopHitsAggregation,
 )
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.es_query import ESQuerySet, HQESQuery
 from corehq.apps.es.tests.utils import (
@@ -470,6 +472,40 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             HQESQuery('cases').aggregation(
                 TermsAggregation('name', 'name', 0).order('sort_field')
             )
+
+    def test_geohash_grid_aggregation(self):
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "term": {
+                                "domain.exact": "test-domain"
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": 0,
+            "aggs": {
+                "name": {
+                    "geohash_grid": {
+                        "field": "case_location",
+                        "precision": 6
+                    }
+                }
+            }
+        }
+        query = CaseSearchES().domain('test-domain').aggregation(
+            GeohashGridAggregation('name', 'case_location', 6)
+        )
+        self.checkQuery(query, json_output)
 
 
 @es_test(requires=[form_adapter], setup_class=True)

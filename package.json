@@ -23,7 +23,7 @@
         "bootstrap-switch": "3.3.2",
         "bootstrap-timepicker": "0.5.1",
         "bootstrap3-typeahead": "bassjobsen/Bootstrap-3-Typeahead#~3.1.1",
-        "bootstrap5": "npm:bootstrap@5.2.3",
+        "bootstrap5": "npm:bootstrap@5.3.1",
         "calendars": "kbwood/calendars#2.1.2",
         "clipboard": "1.5.15",
         "crypto-js": "4.0.0",

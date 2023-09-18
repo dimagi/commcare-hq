@@ -552,6 +552,39 @@ class DateHistogram(Aggregation):
             self.body['time_zone'] = timezone
 
 
+class GeohashGridAggregation(Aggregation):
+    """
+    A multi-bucket aggregation that groups ``geo_point`` and
+    ``geo_shape`` values into buckets that represent a grid.
+
+    `"Geohash grid aggregation" reference <https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html>`_
+    """  # noqa: E501
+    type = 'geohash_grid'
+    result_class = BucketResult
+
+    def __init__(self, name, field, precision):
+        """
+        Initialize a GeohashGridAggregation
+
+        :param name: The name of this aggregation
+        :param field: The case property that stores a geopoint
+        :param precision: A value between 1 and 12
+
+        High precision geohashes have a long string length and represent
+        cells that cover only a small area (similar to long-format ZIP
+        codes like "02139-4075").
+
+        Low precision geohashes have a short string length and represent
+        cells that each cover a large area (similar to short-format ZIP
+        codes like "02139").
+        """
+        self.name = name
+        self.body = {
+            'field': field,
+            'precision': precision,
+        }
+
+
 class NestedAggregation(Aggregation):
     """
     A special single bucket aggregation that enables aggregating nested documents.

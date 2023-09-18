@@ -1,0 +1,17 @@
+{% extends "soil/file_download.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block extrahead %}
+    <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" />
+    {% javascript_libraries %}
+    <script src="{% static 'jquery-migrate/jquery-migrate.min.js' %}"></script>
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <div class="col-md-12">
+        {{ block.super }}
+        <a href="{{ next_url }}" class="btn btn-primary">{% trans 'Go back' %}</a>
+    </div>
+{% endblock %}

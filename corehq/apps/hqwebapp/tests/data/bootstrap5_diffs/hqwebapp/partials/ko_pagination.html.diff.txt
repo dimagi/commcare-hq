@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -2,7 +2,7 @@
+ <!-- used by corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js -->
+ <script type="text/html" id="ko-pagination-template">
+   <div data-bind="css: { row: !inlinePageListOnly }">
+-    <div class="col-sm-5"
++    <div class="col-md-5"
+          data-bind="visible: !inlinePageListOnly,
+                     if: !inlinePageListOnly">
+       <div class="form-inline pagination-text">
+@@ -16,7 +16,7 @@
+         </span>
+       </div>
+     </div>
+-    <div data-bind="css: { 'col-sm-7 text-right': !inlinePageListOnly }">
++    <div data-bind="css: { 'col-md-7 text-end': !inlinePageListOnly }">
+       <ul class="pagination">
+         <li>
+           <a href="#"

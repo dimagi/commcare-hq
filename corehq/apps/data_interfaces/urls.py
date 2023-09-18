@@ -20,8 +20,8 @@ from corehq.apps.data_interfaces.views import (
     default,
     find_by_id,
     xform_management_job_poll,
-    BulkCaseReassignSatusView,
-    case_reassign_job_poll
+    BulkCaseActionSatusView,
+    case_action_job_poll
 )
 from corehq.apps.userreports.views import UCRExpressionListView, UCRExpressionEditView
 
@@ -40,10 +40,10 @@ edit_data_urls = [
     ),
     url(r'^xform_management/status/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         xform_management_job_poll, name='xform_management_job_poll'),
-    url(r'^case_reassign/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
-        BulkCaseReassignSatusView.as_view(), name=BulkCaseReassignSatusView.urlname),
-    url(r'^case_reassign/status/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
-        case_reassign_job_poll, name='case_reassign_job_poll'),
+    url(r'^case_action/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        BulkCaseActionSatusView.as_view(), name=BulkCaseActionSatusView.urlname),
+    url(r'^case_action/status/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        case_action_job_poll, name='case_action_job_poll'),
     url(r'^case_groups/$', CaseGroupListView.as_view(), name=CaseGroupListView.urlname),
     url(r'^case_groups/(?P<group_id>[\w-]+)/$',
         CaseGroupCaseManagementView.as_view(), name=CaseGroupCaseManagementView.urlname),

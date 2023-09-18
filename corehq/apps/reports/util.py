@@ -22,8 +22,7 @@ from celery.schedules import crontab
 from corehq.apps.celery import periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.const import USER_QUERY_LIMIT
-from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
+from corehq.apps.reports.const import USER_QUERY_LIMIT, HQ_TABLEAU_GROUP_NAME
 from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.models import TableauServer, TableauAPISession, TableauUser, TableauConnectedApp
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
@@ -41,6 +40,7 @@ from .analytics.esaccessors import (
     get_username_in_last_form_user_id_submitted,
 )
 from .models import HQUserType, TempCommCareUser
+from corehq.apps.es.case_search import CaseSearchES, case_property_missing
 
 
 def user_list(domain):
@@ -457,6 +457,13 @@ def get_all_tableau_groups(domain, session=None):
     return _group_json_to_tuples(group_json)
 
 
+def get_allowed_tableau_groups_for_domain(domain):
+    '''
+    Returns a list of the Tableau groups that have been approved in the project settings.
+    '''
+    return TableauServer.objects.get(domain=domain).allowed_tableau_groups
+
+
 def get_tableau_groups_for_user(domain, username):
     '''
     Returns a list of Tableau groups that the given user belongs to.
@@ -475,6 +482,14 @@ def _notify_tableau_exception(e, domain):
     })
 
 
+def get_matching_tableau_users_from_other_domains(user):
+    return list(TableauUser.objects.filter(
+        username=user.username,
+        server__server_name=user.server.server_name,
+        server__target_site=user.server.target_site,
+    ).exclude(server__domain=user.server.domain))
+
+
 @atomic
 def add_tableau_user(domain, username):
     '''
@@ -486,24 +501,37 @@ def add_tableau_user(domain, username):
     except TableauConnectedApp.DoesNotExist as e:
         _notify_tableau_exception(e, domain)
         return
-    user, created = _add_tableau_user_local(session, username)
-    if not created:
-        return
-    _add_tableau_user_remote(session, user)
+    user, created, matching_tableau_users_from_other_domains_exist = _add_tableau_user_local(session, username)
+    if created and not matching_tableau_users_from_other_domains_exist:
+        try:
+            _add_tableau_user_remote(session, user)
+        except TableauAPIError as e:
+            if e.code != 409017:  # This is the "user already added to site" code.
+                raise
 
 
 def _add_tableau_user_local(session, username, role=DEFAULT_TABLEAU_ROLE):
-    return TableauUser.objects.get_or_create(
+    user, created = TableauUser.objects.get_or_create(
         server=session.tableau_connected_app.server,
         username=username,
         role=role,
     )
 
+    # Copy information from matching TableauUsers on other domains if there are any
+    matching_tableau_users_from_other_domains = get_matching_tableau_users_from_other_domains(user)
+    if matching_tableau_users_from_other_domains:
+        user.tableau_user_id = matching_tableau_users_from_other_domains[0].tableau_user_id
+        user.role = matching_tableau_users_from_other_domains[0].role
+        user.save()
+
+    return (user, created, bool(matching_tableau_users_from_other_domains))
+
 
 def _add_tableau_user_remote(session, user, role=DEFAULT_TABLEAU_ROLE):
     new_id = session.create_user(tableau_username(user.username), role)
-    user.tableau_user_id = new_id
-    user.save()
+    for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
+        local_tableau_user.tableau_user_id = new_id
+        local_tableau_user.save()
     _add_user_to_HQ_group(session, user)
     return new_id
 
@@ -514,8 +542,12 @@ def delete_tableau_user(domain, username, session=None):
     Deletes the TableauUser object with the given username and removes it from the Tableau instance.
     '''
     session = session or TableauAPISession.create_session_for_domain(domain)
-    deleted_user_id = _delete_user_local(session, username)
-    _delete_user_remote(session, deleted_user_id)
+    if get_matching_tableau_users_from_other_domains(
+            TableauUser.objects.get(username=username, server__domain=domain)):
+        _delete_user_local(session, username)
+    else:
+        deleted_user_id = _delete_user_local(session, username)
+        _delete_user_remote(session, deleted_user_id)  # Only delete remotely if no other local TableauUsers exist
 
 
 def _delete_user_local(session, username):
@@ -542,15 +574,18 @@ def update_tableau_user(domain, username, role=None, groups=[], session=None):
         server=session.tableau_connected_app.server
     ).get(username=username)
     if role:
-        user.role = role
-    user.save()
-    _update_user_remote(session, user, groups)
+        for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
+            local_tableau_user.role = role
+            local_tableau_user.save()
+    _update_user_remote(session, user, domain, groups=groups)
 
 
-def _update_user_remote(session, user, groups=[]):
+def _update_user_remote(session, user, domain, groups=[]):
+    groups = list(filter(lambda group: group.name in get_allowed_tableau_groups_for_domain(domain), groups))
     new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(user.username))
-    user.tableau_user_id = new_id
-    user.save()
+    for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
+        local_tableau_user.tableau_user_id = new_id
+        local_tableau_user.save()
     # Add default group
     _add_user_to_HQ_group(session, user)
     for group in groups:
@@ -573,15 +608,20 @@ def _get_hq_group_id(session):
 
 @periodic_task(run_every=crontab(minute=0, hour='*/1'), queue='background_queue')
 def sync_all_tableau_users():
+    domains_grouped_by_server = defaultdict(list)  # Looks like {(server name, tableau site): [domains]...}
     for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
-        logger.info(f"Syncing Tableau users on domain: {domain}.")
+        server = TableauServer.objects.get(domain=domain)
+        server_details = (server.server_name, server.target_site)
+        domains_grouped_by_server[server_details].append(domain)
+    for list_of_domains_for_server in domains_grouped_by_server.values():
+        logger.info(f"Syncing Tableau users on domains: {list_of_domains_for_server}.")
         try:
-            sync_tableau_users_on_domain(domain)
+            sync_tableau_users_on_domains(list_of_domains_for_server)
         except (TableauAPIError, TableauConnectedApp.DoesNotExist) as e:
             _notify_tableau_exception(e, domain)
 
 
-def sync_tableau_users_on_domain(domain):
+def sync_tableau_users_on_domains(domains):
     def _sync_tableau_users_with_hq(session, domain):
         tableau_user_names = [tableau_user.username for tableau_user in TableauUser.objects.filter(
             server=TableauServer.objects.get(domain=domain)
@@ -596,7 +636,7 @@ def sync_tableau_users_on_domain(domain):
             if tableau_user_name not in web_users_names:
                 _delete_user_local(session, tableau_user_name)
 
-    def _sync_tableau_users_with_remote(session):
+    def _sync_tableau_users_with_remote(session, domains):
         # Setup
         def _get_HQ_group_users(session):
             remote_HQ_group_id = _get_hq_group_id(session)
@@ -608,11 +648,12 @@ def sync_tableau_users_on_domain(domain):
             return remote_HQ_group_users
 
         all_remote_users = {username.lower(): value for username, value in session.get_users_on_site().items()}
-        local_users = TableauUser.objects.filter(server=session.tableau_connected_app.server)
+        all_local_users = TableauUser.objects.filter(server__domain__in=domains)
+        distinct_local_users = all_local_users.distinct('username')
         remote_HQ_group_users = _get_HQ_group_users(session)
 
         # Add/delete/update remote users to match with local reality
-        for local_user in local_users:
+        for local_user in distinct_local_users:
             local_tableau_username = tableau_username(local_user.username).lower()
             if local_tableau_username not in all_remote_users:
                 _add_tableau_user_remote(session, local_user, local_user.role)
@@ -623,20 +664,28 @@ def sync_tableau_users_on_domain(domain):
                 _update_user_remote(
                     session,
                     local_user,
+                    domain,
                     groups=_group_json_to_tuples(session.get_groups_for_user_id(local_user.tableau_user_id))
                 )
 
         # Remove any remote users that don't exist locally
-        local_users_usernames = [tableau_username(user.username).lower() for user in local_users]
+        local_users_usernames = [tableau_username(user.username).lower() for user in distinct_local_users]
         for remote_user in remote_HQ_group_users:
             if remote_user['name'].lower() not in local_users_usernames:
                 _delete_user_remote(session, remote_user['id'])
 
-    session = TableauAPISession.create_session_for_domain(domain)
-    # Sync the web users on HQ with the TableauUser model
-    _sync_tableau_users_with_hq(session, domain)
+    for domain in domains:
+        # Sync the web users on HQ with the TableauUser model
+        _sync_tableau_users_with_hq(
+            TableauAPISession.create_session_for_domain(domain),
+            domain
+        )
+
     # Sync the TableauUser model with Tableau users on the remote Tableau instance
-    _sync_tableau_users_with_remote(session)
+    _sync_tableau_users_with_remote(
+        TableauAPISession.create_session_for_domain(domains[0]),  # Can use a session for any of the domains
+        domains
+    )
 
 
 def is_hq_user(tableau_username):
@@ -741,3 +790,17 @@ def import_tableau_users(domain, web_user_specs):
                                                                                     known_groups)
 
                 update_tableau_user(domain, username, role=tableau_role, groups=tableau_groups, session=session)
+
+
+def domain_copied_cases_by_owner(domain, owner_ids):
+    """
+    Returns all the cases on a domain belonging to a set of owners
+    where the cases have the COMMCARE_CASE_COPY_PROPERTY_NAME case
+    property.
+    """
+    from corehq.apps.hqcase.case_helper import CaseCopier
+    return CaseSearchES()\
+        .domain(domain)\
+        .owner(owner_ids)\
+        .NOT(case_property_missing(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME))\
+        .values_list('_id', flat=True)

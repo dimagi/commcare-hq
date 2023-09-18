@@ -4,7 +4,7 @@ hqDefine("reports/js/saved_reports_main", [
     'hqwebapp/js/initial_page_data',
     'reports/js/report_config_models',
     'reports/js/scheduled_reports_list',
-    'hqwebapp/js/knockout_bindings.ko', // modal binding
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // modal binding
 ], function (
     $,
     ko,

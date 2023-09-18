@@ -42,6 +42,17 @@
     a {
       color: @cc-brand-mid;
     }
+
+    .module-icon,
+    .webapp-markdown-output img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+
+    &:hover {
+      background-color: darken(@cc-bg, 5);
+      transition: background 0.6s;
+    }
   }
 
   .highlighted-case {
