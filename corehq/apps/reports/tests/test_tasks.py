@@ -144,6 +144,7 @@ class TestGetDomainsToUpdateESFilter(TestCase):
 
     def index_domain(self, name, active=True, cp_last_updated=None):
         domain = create_domain(name, active)
+        self.addCleanup(domain.delete)
         if cp_last_updated:
             domain.cp_last_updated = json_format_datetime(cp_last_updated)
         domain_adapter.index(domain, refresh=True)
