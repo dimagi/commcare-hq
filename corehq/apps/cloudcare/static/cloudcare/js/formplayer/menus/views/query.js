@@ -530,7 +530,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
-            if (self.dynamicSearchEnabled) {
+            if (self.dynamicSearchEnabled && (this.model.get('input') !== 'date')) {
                 self.updateSearchResults();
             }
         },
