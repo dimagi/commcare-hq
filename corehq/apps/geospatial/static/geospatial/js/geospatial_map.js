@@ -2,12 +2,10 @@ hqDefine("geospatial/js/geospatial_map", [
     "jquery",
     "hqwebapp/js/initial_page_data",
     "knockout",
-    "hqwebapp/js/bootstrap3/alert_user",
 ], function (
     $,
     initialPageData,
-    ko,
-    alert_user
+    ko
 ) {
     const defaultMarkerColor = "#808080"; // Gray
     const defaultUserMarkerColor = "#0e00ff"; // Blue
@@ -92,7 +90,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
             var self = {};
             let clickedMarker;
-            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
+            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
 
             if (!centerCoordinates) {
                 centerCoordinates = [-91.874, 42.76]; // should be domain specific
