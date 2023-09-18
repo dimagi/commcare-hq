@@ -11,13 +11,38 @@ hqDefine("geospatial/js/gps_capture",[
     initialPageData
 ) {
     'use strict';
+    const selectedMarkerColor = "#00FF00"; // Green
+
     var MAP_CONTAINER_ID = "geospatial-map";
-    var dataListCaptureItem;
+    var map;
+    var selectedDataListItem;
+    var coordinateCaptureMarker;
 
     function setMapVisible(isVisible) {
-        if (isVisible) { $("#" + MAP_CONTAINER_ID).show(); }
-        else { $("#" + MAP_CONTAINER_ID).hide(); }
+        if (isVisible) { 
+            $("#" + MAP_CONTAINER_ID).show();
+            centerMapWithMarker();
+        }
+        else { 
+            $("#" + MAP_CONTAINER_ID).hide();
+        }
     };
+
+    function centerMapWithMarker() {
+        if (selectedDataListItem) {
+            let dataItem = selectedDataListItem.itemLocationBeingCapturedOnMap();
+            if (dataItem.lon() && dataItem.lat()) {
+                map.setCenter([dataItem.lon(), dataItem.lat()]);
+                setMarkerAtLngLat(dataItem.lon(), dataItem.lat());
+            }
+        }
+    }
+
+    function runSaveSuccessCallback() {
+        setMapVisible(false);
+        selectedDataListItem.itemLocationBeingCapturedOnMap(null);
+        coordinateCaptureMarker = undefined;
+    }
 
     var dataItemModel = function (options, dataType) {
         options = options || {};
@@ -90,7 +115,7 @@ hqDefine("geospatial/js/gps_capture",[
 
         self.captureLocationForItem = function (item) {
             self.itemLocationBeingCapturedOnMap(item);
-            dataListCaptureItem = self;
+            selectedDataListItem = self;
             setMapVisible(true);
         };
         self.setCoordinates = function (lat, lng) {
@@ -148,7 +173,7 @@ hqDefine("geospatial/js/gps_capture",[
                 success: function () {
                     dataItem.hasUnsavedChanges(false);
                     self.isSubmissionSuccess(true);
-                    setMapVisible(false);
+                    runSaveSuccessCallback();
                 },
                 error: function () {
                     self.hasSubmissionError(true);
@@ -159,6 +184,27 @@ hqDefine("geospatial/js/gps_capture",[
         return self;
     };
 
+    function updateSelectedItemLonLat(lon, lat) {
+        selectedDataListItem.setCoordinates(lat, lon);
+    }
+
+    function onMarkerDragEnd() {
+        let lngLat = coordinateCaptureMarker.getLngLat();
+        updateSelectedItemLonLat(lngLat.lng, lngLat.lat);
+    }
+
+    function setMarkerAtLngLat(lon, lat, centerView) {
+        if (coordinateCaptureMarker) { coordinateCaptureMarker.remove(); }
+
+        coordinateCaptureMarker = new mapboxgl.Marker({
+            color: selectedMarkerColor,
+            draggable: true,
+        });
+        coordinateCaptureMarker.on('dragend', onMarkerDragEnd);
+        coordinateCaptureMarker.setLngLat([lon, lat]);
+        coordinateCaptureMarker.addTo(map);
+    }
+
     var initMap = function () {
         'use strict';
 
@@ -166,7 +212,7 @@ hqDefine("geospatial/js/gps_capture",[
 
         let centerCoordinates = [2.43333330, 9.750]; // should be domain specific
 
-        const map = new mapboxgl.Map({  // eslint-disable-line no-undef
+        map = new mapboxgl.Map({  // eslint-disable-line no-undef
             container: MAP_CONTAINER_ID, // container ID
             style: 'mapbox://styles/mapbox/streets-v12', // style URL
             center: centerCoordinates, // starting position [lng, lat]
@@ -176,7 +222,8 @@ hqDefine("geospatial/js/gps_capture",[
         });
 
         map.on('click', (event) => {
-            dataListCaptureItem.setCoordinates(event.lngLat.lat, event.lngLat.lng);
+            setMarkerAtLngLat(event.lngLat.lng, event.lngLat.lat);
+            updateSelectedItemLonLat(event.lngLat.lng, event.lngLat.lat);
         });
         setMapVisible(false);
         return map;
