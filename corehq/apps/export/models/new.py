@@ -3132,6 +3132,7 @@ def datasource_export_instance(config):
             selected=True,
         )
 
+    # table.name follows this format: ucr_{project space}_{table id}_{unique hash}
     unique_hash = table.name.split("_")[-1]
     sheet_name = adapter.table_id
     if len(sheet_name) > EXCEL_MAX_SHEET_NAME_LENGTH:
