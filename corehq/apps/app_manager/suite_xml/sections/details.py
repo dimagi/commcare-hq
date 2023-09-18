@@ -26,7 +26,6 @@ both its position and its case property, but a calculation would be called ``cas
 from collections import defaultdict, namedtuple
 
 from eulxml.xmlmap.core import load_xmlobject_from_string
-from lxml import etree
 from memoized import memoized
 
 from corehq import toggles
@@ -245,13 +244,9 @@ class DetailContributor(SectionContributor):
     def _add_custom_variables(self, detail, d):
         custom_variables_dict = detail.custom_variables_dict
         if custom_variables_dict:
-            custom_variable_elements = [
-                etree.Element(name, function=function) for (name, function) in custom_variables_dict.items()
-            ]
-            d.variables.extend([
-                load_xmlobject_from_string(etree.tostring(e, encoding='utf-8'), xmlclass=DetailVariable)
-                for e in custom_variable_elements
-            ])
+            d.variables.extend(
+                DetailVariable(name=name, function=function) for name, function in custom_variables_dict.items()
+            )
 
     def _get_detail_tab_nodeset(self, module, detail, tab):
         if not tab.has_nodeset:
