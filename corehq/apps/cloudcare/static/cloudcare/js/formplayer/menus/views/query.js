@@ -338,14 +338,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
-            this.notifyParentOfFieldChange(e);
             this.parentView.setStickyQueryInputs();
+            this.notifyParentOfFieldChange(e);
         },
 
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
-            this.notifyParentOfFieldChange(e);
             this.parentView.setStickyQueryInputs();
+            this.notifyParentOfFieldChange(e);
         },
 
         notifyParentOfFieldChange: function (e) {
