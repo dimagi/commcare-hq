@@ -397,6 +397,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         onRender: function () {
+            this.dynamicSearchEnabled = false;
             this._initializeSelect2Dropdown();
             this.ui.hqHelp.hqHelp();
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
@@ -440,6 +441,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (this.model.get('hidden') === 'true') {
                 this.$el.hide();
             }
+            this.dynamicSearchEnabled = this.options.parentView.dynamicSearchEnabled;
         },
 
     });
