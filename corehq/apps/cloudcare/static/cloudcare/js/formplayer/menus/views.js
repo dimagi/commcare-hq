@@ -625,6 +625,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     position: 'bottomright',
                 }).addTo(addressMap);
 
+                addressMap.on('fullscreenchange', function () {
+                    // sticky header interferes with fullscreen map; un-stick it if it exists
+                    if ($('#small-screen-sticky-header')[0]) {
+                        addressMap.isFullscreen()
+                            ? $('#small-screen-sticky-header').removeClass('sticky')
+                            : $('#small-screen-sticky-header').addClass('sticky');
+                    }
+                });
+
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
                     id: 'mapbox/streets-v11',
                     attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
