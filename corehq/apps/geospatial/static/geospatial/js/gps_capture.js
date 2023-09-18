@@ -19,11 +19,11 @@ hqDefine("geospatial/js/gps_capture",[
     var coordinateCaptureMarker;
 
     function setMapVisible(isVisible) {
-        if (isVisible) { 
+        if (isVisible) {
             $("#" + MAP_CONTAINER_ID).show();
             centerMapWithMarker();
         }
-        else { 
+        else {
             $("#" + MAP_CONTAINER_ID).hide();
         }
     };
@@ -80,9 +80,18 @@ hqDefine("geospatial/js/gps_capture",[
             let latNum = parseFloat(self.lat());
             let lonNum = parseFloat(self.lon());
 
-            const latValid = (!isNaN(latNum) && latNum >= -90 && latNum <= 90) || !self.lat().length;
+            // parseFloat() ignores any trailing text (e.g. 15foobar becomes 15) so we need to check for length to catch
+            // and correctly validate such cases
+            const latValidLength = (latNum.toString().length === self.lat().length);
+            const lonValidLength = (lonNum.toString().length === self.lon().length);
+
+            const latValid = (
+                (!isNaN(latNum) && latValidLength && latNum >= -90 && latNum <= 90) || !self.lat().length
+            );
             self.isLatValid(latValid);
-            const lonValid = (!isNaN(lonNum) && lonNum >= -180 && lonNum <= 180) || !self.lon().length;
+            const lonValid = (
+                (!isNaN(lonNum) && lonValidLength && lonNum >= -180 && lonNum <= 180) || !self.lon().length
+            );
             self.isLonValid(lonValid);
         };
 

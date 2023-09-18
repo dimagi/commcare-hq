@@ -308,3 +308,19 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
         'items': user_data,
         'total': paginator.count,
     }
+
+
+@require_GET
+@login_and_domain_required
+def get_users_with_gps(request, domain):
+    location_prop_name = get_geo_user_property(domain)
+    users = CommCareUser.by_domain(domain)
+    user_data = [
+        {
+            'id': user.user_id,
+            'username': user.raw_username,
+            'gps_point': user.pop_metadata(key=location_prop_name),
+        } for user in users
+    ]
+
+    return json_response({'user_data': user_data})
