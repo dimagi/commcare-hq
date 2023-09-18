@@ -243,3 +243,53 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(self.endpoint, data={'data_type': 'user', 'limit': 5, 'page': 1})
         self.assertEqual(response.json(), expected_output)
+
+
+class TestGetUsersWithGPS(BaseGeospatialViewClass):
+
+    urlname = 'get_users_with_gps'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.user_a = CommCareUser.create(
+            cls.domain,
+            username='UserA',
+            password='1234',
+            created_by=None,
+            created_via=None,
+            metadata={GPS_POINT_CASE_PROPERTY: '12.34 45.67'}
+        )
+        cls.user_b = CommCareUser.create(
+            cls.domain,
+            username='UserB',
+            password='1234',
+            created_by=None,
+            created_via=None
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user_a.delete(cls.domain, None)
+        cls.user_b.delete(cls.domain, None)
+        super().tearDownClass()
+
+    def test_get_users_with_gps(self):
+        expected_output = {
+            'user_data': [
+                {
+                    'id': self.user_a.user_id,
+                    'username': self.user_a.raw_username,
+                    'gps_point': '12.34 45.67',
+                },
+                {
+                    'id': self.user_b.user_id,
+                    'username': self.user_b.raw_username,
+                    'gps_point': None,
+                },
+            ],
+        }
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.json(), expected_output)

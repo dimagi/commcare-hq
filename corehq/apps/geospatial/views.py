@@ -2,6 +2,7 @@ import json
 import jsonschema
 from requests.exceptions import HTTPError
 
+from django.conf import settings
 from django.core.paginator import Paginator
 from django.http import (
     HttpResponseRedirect,
@@ -214,7 +215,8 @@ class GPSCaptureView(BaseDomainView):
     def page_context(self):
         data_type = self.request.GET.get('data_type', 'case')
         return {
-            'data_type': data_type
+            'data_type': data_type,
+            'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
         }
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
@@ -308,3 +310,19 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
         'items': user_data,
         'total': paginator.count,
     }
+
+
+@require_GET
+@login_and_domain_required
+def get_users_with_gps(request, domain):
+    location_prop_name = get_geo_user_property(domain)
+    users = CommCareUser.by_domain(domain)
+    user_data = [
+        {
+            'id': user.user_id,
+            'username': user.raw_username,
+            'gps_point': user.pop_metadata(key=location_prop_name),
+        } for user in users
+    ]
+
+    return json_response({'user_data': user_data})
