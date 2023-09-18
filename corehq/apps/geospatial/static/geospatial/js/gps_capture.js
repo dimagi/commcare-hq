@@ -38,7 +38,7 @@ hqDefine("geospatial/js/gps_capture",[
         }
     }
 
-    function collapseMap() {
+    function resetMap() {
         setMapVisible(false);
         if (selectedDataListItem) {
             selectedDataListItem.itemLocationBeingCapturedOnMap(null);
@@ -187,7 +187,7 @@ hqDefine("geospatial/js/gps_capture",[
                 success: function () {
                     dataItem.hasUnsavedChanges(false);
                     self.isSubmissionSuccess(true);
-                    collapseMap();
+                    resetMap();
                 },
                 error: function () {
                     self.hasSubmissionError(true);
@@ -246,7 +246,7 @@ hqDefine("geospatial/js/gps_capture",[
     function TabListViewModel() {
         var self = {};
         self.onclickAction = function() {
-            collapseMap();
+            resetMap();
         }
         return self;
     }
