@@ -383,6 +383,11 @@ class Command(BaseCommand):
         ```bash
         ./manage.py elastic_sync_multiplexed set_replicas <index_cname>
         ```
+
+    For deleting all the indices that are not used in HQ
+        ```bash
+        ./manage.py elastic_sync_multiplexed remove_residual_indices
+        ```
     """
 
     help = ("Reindex management command to sync Multiplexed HQ indices")
@@ -488,6 +493,10 @@ class Command(BaseCommand):
             help="""Cannonical Name of the index whose replicas are to be set"""
         )
 
+        # Delete residual indices
+        remove_residual_indices_cmd = subparsers.add_parser("remove_residual_indices")
+        remove_residual_indices_cmd.set_defaults(func=self.es_helper.remove_residual_indices)
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
@@ -509,3 +518,5 @@ class Command(BaseCommand):
             cmd_func(options['index_cname'])
         elif sub_cmd == 'set_replicas':
             cmd_func(options["index_cname"])
+        elif sub_cmd == 'remove_residual_indices':
+            cmd_func()
