@@ -200,6 +200,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.model = this.options.model;
             this.errorMessage = null;
             this._setItemset(this.model.attributes.itemsetChoices, this.model.attributes.itemsetChoicesKey);
+            this.dynamicSearchEnabled = false;
 
             // initialize with default values or with sticky values if either is present
             var value = decodeValue(this.model, this.model.get('value'))[1],
@@ -211,6 +212,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 value = stickyValue;
             }
             this.model.set('value', value);
+            this.dynamicSearchEnabled = this.options.parentView.dynamicSearchEnabled;
         },
 
         ui: {
@@ -338,14 +340,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
-            this.notifyParentOfFieldChange(e);
             this.parentView.setStickyQueryInputs();
+            this.notifyParentOfFieldChange(e);
         },
 
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
-            this.notifyParentOfFieldChange(e);
             this.parentView.setStickyQueryInputs();
+            this.notifyParentOfFieldChange(e);
         },
 
         notifyParentOfFieldChange: function (e) {
@@ -395,6 +397,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         onRender: function () {
+            this.dynamicSearchEnabled = false;
             this._initializeSelect2Dropdown();
             this.ui.hqHelp.hqHelp();
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
@@ -438,6 +441,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (this.model.get('hidden') === 'true') {
                 this.$el.hide();
             }
+            this.dynamicSearchEnabled = this.options.parentView.dynamicSearchEnabled;
         },
 
     });
