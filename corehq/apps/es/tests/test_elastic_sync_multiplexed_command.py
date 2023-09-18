@@ -204,6 +204,47 @@ class TestESSyncUtil(SimpleTestCase):
         ESSyncUtil().delete_index(HQ_APPS_INDEX_CANONICAL_NAME)
         self.assertFalse(manager.index_exists(app_adapter.index_name))
 
+    def test_remove_residual_indices(self):
+        util = ESSyncUtil()
+
+        # Create known HQ indices if they don't exist
+        existing_index_names = util._get_all_known_indices_name()
+        for index in existing_index_names:
+            # We are testing for actual index names, they might exist on local system
+            # So we testing if they exist first.
+            if not manager.index_exists(index):
+                manager.index_create(index)
+
+        # Create some residual indices
+        type_ = "test_doc"
+        mappings = {"properties": {"value": {"type": "string"}}}
+        settings = {
+            "number_of_replicas": "0",
+            "number_of shards": "1",
+        }
+        residual_index_names = ['closed_index', 'index_1', 'index_2']
+        for index in residual_index_names:
+            manager.index_create(index, {"mappings": {type_: mappings}, "settings": settings})
+
+        # Create a closed index too
+        manager._es.index(residual_index_names[0], doc_type=type_, body={'value': 'a test doc'}, id="1234")
+        manager.index_close(residual_index_names[0])
+
+        # Ensure all indices exists
+        for index in residual_index_names:
+            self.assertTrue(manager.index_exists(index))
+
+        with patch('builtins.input', side_effect=residual_index_names):
+            util.remove_residual_indices()
+
+        # Assert Residual indices are deleted
+        for index in residual_index_names:
+            self.assertFalse(manager.index_exists(index))
+
+        # Assert existing indices are not deleted
+        for index in existing_index_names:
+            self.assertTrue(manager.index_exists(index))
+
     def _setup_indexes(self, indexes):
         for index in indexes:
             manager.index_create(index)
