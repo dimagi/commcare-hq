@@ -3,8 +3,10 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
-from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
-from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
+from corehq.apps.case_search.const import (
+    GEOPOINT_VALUE,
+    SPECIAL_CASE_PROPERTIES_MAP,
+)
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (
@@ -116,7 +118,7 @@ class CaseSearchPillowTest(TestCase):
             {
                 'key': 'coords',
                 'value': '-33.8561 151.2152 0 0',
-                'geopoint_value': {'lat': -33.8561, 'lon': 151.2152},
+                GEOPOINT_VALUE: {'lat': -33.8561, 'lon': 151.2152},
             },
         )
         self.assertEqual(
@@ -124,13 +126,17 @@ class CaseSearchPillowTest(TestCase):
             {
                 'key': 'short_coords',
                 'value': '-33.8561 151.2152',
-                'geopoint_value': {'lat': -33.8561, 'lon': 151.2152},
+                GEOPOINT_VALUE: {'lat': -33.8561, 'lon': 151.2152},
             },
         )
         self.assertEqual(
             self._get_prop(es_case['case_properties'], 'other_coords'),
             # The value here isn't a valid geopoint
-            {'key': 'other_coords', 'value': '42 Wallaby Way', 'geopoint_value': None},
+            {
+                'key': 'other_coords',
+                'value': '42 Wallaby Way',
+                GEOPOINT_VALUE: None,
+            },
         )
         self.assertEqual(
             self._get_prop(es_case['case_properties'], 'not_coords'),

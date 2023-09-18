@@ -12,6 +12,10 @@ are available, and put 'em here if you end up using any of 'em.
 """
 import re
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from couchforms.geopoint import GeoPoint
+
 from .filters import date_range, range_filter
 
 MUST = "must"
@@ -183,6 +187,37 @@ def geo_distance(field, geopoint, **kwargs):
         'geo_distance': {
             field: geopoint.lat_lon,
             'distance': f"{distance}{unit}",
+        }
+    }
+
+
+def geo_bounding_box(
+    field,  # type: str
+    top_left,  # type: GeoPoint
+    bottom_right,  # type: GeoPoint
+):
+    """
+    Only return geopoints stored in ``field`` that are located within
+    the bounding box defined by GeoPoints ``top_left`` and
+    ``bottom_right``.
+
+    `"Geo-bounding box query" reference <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-geo-bounding-box-query.html>`_
+
+    :param field: The path to the case property geopoint value where
+        geopoints are stored
+    :param top_left: The GeoPoint of the top left of the bounding box,
+        a string in the format "latitude longitude" or "latitude
+        longitude altitude accuracy"
+    :param bottom_right: The GeoPoint of the bottom right of the
+        bounding box
+    :return: A filter dict
+    """  # noqa: E501
+    return {
+        'geo_bounding_box': {
+            field: {
+                'top_left': top_left.lat_lon,
+                'bottom_right': bottom_right.lat_lon,
+            }
         }
     }
 

@@ -1,35 +1,42 @@
 import uuid
 from datetime import date, datetime
-from unittest.mock import MagicMock, patch
-import pytz
+from decimal import Decimal
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 
+import pytz
+
 from couchforms.geopoint import GeoPoint
 
-from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
+from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.case_search.xpath_functions.comparison import adjust_input_date_by_timezone
+from corehq.apps.case_search.xpath_functions.comparison import (
+    adjust_input_date_by_timezone,
+)
 from corehq.apps.es import queries
-from corehq.apps.es.client import manager
 from corehq.apps.es.case_search import (
     CaseSearchES,
-    case_search_adapter,
-    case_property_starts_with,
+    case_property_geo_bounding_box,
     case_property_geo_distance,
     case_property_missing,
     case_property_query,
     case_property_range_query,
+    case_property_starts_with,
     case_property_text_query,
+    case_search_adapter,
     wrap_case_search_hit,
 )
+from corehq.apps.es.client import manager
 from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.util.test_utils import create_and_save_a_case, flag_enabled
+
+GEO_CASE_PROPERTY = 'gps_point'  # TODO: Fetch this value
 
 
 @es_test
@@ -260,7 +267,6 @@ class TestCaseSearchHitConversions(SimpleTestCase):
     def test_wrap_case_search_hit_include_score(self):
         case = wrap_case_search_hit(self.make_hit(), include_score=True)
         self.assertEqual(case.case_json[RELEVANCE_SCORE], "1.095")
-
 
     @staticmethod
     def make_hit():
@@ -525,6 +531,32 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
         ])
         res = CaseSearchES().domain(self.domain).set_query(
             case_property_geo_distance('coords', GeoPoint(-33.1, 151.8), kilometers=1000),
+        ).get_ids()
+        self.assertItemsEqual(res, ['c3', 'c4'])
+
+    # test setup:
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')  # reqd for adding geopoint_value
+    @patch('corehq.apps.geospatial.es.MAX_DOC_COUNT', 10)
+    @patch('corehq.pillows.case_search.get_gps_properties',
+           return_value={GEO_CASE_PROPERTY})
+    # patching to avoid unwanted code paths:
+    @patch('casexml.apps.phone.restore_caching.'
+           'get_loadtest_factor_for_restore_cache_key', return_value=1)
+    @patch('corehq.form_processor.submission_post.report_case_usage')
+    @patch('corehq.motech.repeaters.signals._create_repeat_records')
+    def test_geo_bounding_box_query(self, _a, _b, _c, _d):
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', GEO_CASE_PROPERTY: "42.373611 -71.110558 0 0"},
+            {'_id': 'c2', GEO_CASE_PROPERTY: "42 Wallaby Way"},
+            {'_id': 'c3', GEO_CASE_PROPERTY: "-33.856159 151.215256 0 0"},
+            {'_id': 'c4', GEO_CASE_PROPERTY: "-33.8373 151.225"},
+        ])
+        res = CaseSearchES().domain(self.domain).set_query(
+            case_property_geo_bounding_box(
+                'coords',
+                GeoPoint(Decimal('-33'), Decimal('152')),
+                GeoPoint(Decimal('-34'), Decimal('151')),
+            )
         ).get_ids()
         self.assertItemsEqual(res, ['c3', 'c4'])
 

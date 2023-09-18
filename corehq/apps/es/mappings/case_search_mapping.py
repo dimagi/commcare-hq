@@ -1,3 +1,4 @@
+from corehq.apps.case_search.const import GEOPOINT_VALUE
 from corehq.apps.es.client import Tombstone
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
@@ -52,7 +53,7 @@ CASE_SEARCH_MAPPING = {
                     },
                     "type": "text"
                 },
-                "geopoint_value": {
+                GEOPOINT_VALUE: {
                     "type": "geo_point"
                 }
             }

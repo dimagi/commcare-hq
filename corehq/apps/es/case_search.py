@@ -12,6 +12,7 @@ from corehq.apps.es import case_search as case_search_es
 
 from copy import deepcopy
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 from warnings import warn
 
 from django.utils.dateparse import parse_date, parse_datetime
@@ -19,10 +20,13 @@ from django.utils.translation import gettext
 
 from memoized import memoized
 
+if TYPE_CHECKING:
+    from couchforms.geopoint import GeoPoint
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,
+    GEOPOINT_VALUE,
     IDENTIFIER,
     INDEXED_ON,
     INDICES_PATH,
@@ -46,9 +50,10 @@ from .const import (
 from .index.analysis import PHONETIC_ANALYSIS
 from .index.settings import IndexSettingsKey
 
-PROPERTY_KEY = "{}.key.exact".format(CASE_PROPERTIES_PATH)
-PROPERTY_VALUE = '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE)
-PROPERTY_VALUE_EXACT = '{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE)
+PROPERTY_KEY = f'{CASE_PROPERTIES_PATH}.key.exact'
+PROPERTY_VALUE = f'{CASE_PROPERTIES_PATH}.{VALUE}'
+PROPERTY_VALUE_EXACT = f'{CASE_PROPERTIES_PATH}.{VALUE}.exact'
+PROPERTY_GEOPOINT_VALUE = f'{CASE_PROPERTIES_PATH}.{GEOPOINT_VALUE}'
 
 
 class CaseSearchES(CaseES):
@@ -387,7 +392,18 @@ def case_property_missing(case_property_name):
 def case_property_geo_distance(geopoint_property_name, geopoint, **kwargs):
     return _base_property_query(
         geopoint_property_name,
-        queries.geo_distance(f"{CASE_PROPERTIES_PATH}.geopoint_value", geopoint, **kwargs)
+        queries.geo_distance(PROPERTY_GEOPOINT_VALUE, geopoint, **kwargs)
+    )
+
+
+def case_property_geo_bounding_box(
+    geopoint_property_name,  # type: str
+    top_left,  # type: GeoPoint
+    bottom_right,  # type: GeoPoint
+):
+    return _base_property_query(
+        geopoint_property_name,
+        queries.geo_bounding_box(PROPERTY_GEOPOINT_VALUE, top_left, bottom_right)
     )
 
 

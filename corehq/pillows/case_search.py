@@ -13,7 +13,11 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaCheckpointEventHandler,
 )
 from corehq.apps.data_dictionary.util import get_gps_properties
-from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
+from corehq.apps.es.case_search import (
+    CaseSearchES,
+    case_search_adapter,
+    GEOPOINT_VALUE,
+)
 from corehq.apps.es.client import manager
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
@@ -87,6 +91,10 @@ def _get_case_properties(doc_dict):
     return base_case_properties + dynamic_properties
 
 
+# TODO: When all environments are migrated to ES 5:
+#       1. Drop this function
+#       2. Drop corehq.apps.es.case_search.const.GEOPOINT_VALUE
+#       3. Replace references to GEOPOINT_VALUE with VALUE
 def _add_smart_types(dynamic_properties, domain, case_type):
     # Properties are stored in a dict like {"key": "dob", "value": "1900-01-01"}
     # `value` is a multi-field property that duck types numeric and date values
@@ -95,9 +103,9 @@ def _add_smart_types(dynamic_properties, domain, case_type):
     for prop in dynamic_properties:
         if prop['key'] in gps_props:
             try:
-                prop['geopoint_value'] = GeoPoint.from_string(prop['value'], flexible=True).lat_lon
+                prop[GEOPOINT_VALUE] = GeoPoint.from_string(prop['value'], flexible=True).lat_lon
             except BadValueError:
-                prop['geopoint_value'] = None
+                prop[GEOPOINT_VALUE] = None
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):

@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 from unittest import TestCase
 
 from nose.tools import assert_equal, assert_raises
@@ -6,7 +7,7 @@ from nose.tools import assert_equal, assert_raises
 from couchforms.geopoint import GeoPoint
 
 from corehq.apps.es.es_query import HQESQuery
-from corehq.apps.es.queries import geo_distance, match
+from corehq.apps.es.queries import geo_bounding_box, geo_distance, match
 
 
 class TestQueries(TestCase):
@@ -87,3 +88,21 @@ def test_valid_geo_distance():
 def test_invalid_geo_distance():
     with assert_raises(ValueError):
         geo_distance('gps_location', GeoPoint(-33.1, 151.8), smoots=100)
+
+
+def test_geo_bounding_box():
+    assert_equal(
+        geo_bounding_box(
+            field='gps_point',
+            top_left=GeoPoint(Decimal('-33.0'), Decimal('152.0')),
+            bottom_right=GeoPoint(Decimal('-34.0'), Decimal('151.0')),
+        ),
+        {
+            'geo_bounding_box': {
+                'gps_point': {
+                    'top_left': {'lat': -33.0, 'lon': 152.0},
+                    'bottom_right': {'lat': -34.0, 'lon': 151.0}
+                }
+            }
+        }
+    )
