@@ -3130,13 +3130,21 @@ def datasource_export_instance(config):
             ),
             selected=True,
         )
+
+    max_sheet_name_length = 31
     unique_hash = table.name.split("_")[-1]
+    sheet_name = adapter.table_id
+    if len(sheet_name) > max_sheet_name_length:
+        sheet_name = f"{config.domain}_{unique_hash}"
+        if len(sheet_name) > max_sheet_name_length:
+            sheet_name = unique_hash
+
     return DataSourceExportInstance(
         name=config.display_name,
         domain=config.domain,
         tables=[
             TableConfiguration(
-                label=unique_hash,
+                label=sheet_name,
                 columns=[
                     get_export_column(col)
                     for col in config.columns_by_id.values()
