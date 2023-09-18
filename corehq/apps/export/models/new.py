@@ -3130,13 +3130,13 @@ def datasource_export_instance(config):
             ),
             selected=True,
         )
-
+    unique_hash = table.name.split("_")[-1]
     return DataSourceExportInstance(
         name=config.display_name,
         domain=config.domain,
         tables=[
             TableConfiguration(
-                label=table.name,
+                label=unique_hash,
                 columns=[
                     get_export_column(col)
                     for col in config.columns_by_id.values()
