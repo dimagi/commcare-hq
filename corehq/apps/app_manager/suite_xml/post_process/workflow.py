@@ -63,7 +63,12 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     StackQuery,
     QueryData,
 )
-from corehq.apps.app_manager.xpath import CaseIDXPath, XPath, session_var
+from corehq.apps.app_manager.xpath import (
+    CaseIDXPath,
+    XPath,
+    session_var,
+    SearchSelectedCasesInstanceXpath
+)
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
 from corehq.util.timer import time_method
 
@@ -837,12 +842,18 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
         keys = {el.key for el in self.query.data}
         data = [QueryData(key=el.key, ref=el.ref) for el in self.query.data if el.key in wanted]
         if "case_id" not in keys and self.next_datum:
-            data.append(QueryData(key="case_id", ref=session_var(self.source_id)))
+            if getattr(self.next_datum, "is_instance", False):
+                data.append(QueryData(key="case_id", ref=".", nodeset=self._get_multi_select_nodeset()))
+            else:
+                data.append(QueryData(key="case_id", ref=session_var(self.source_id)))
         url = self.query.url
         if self.is_case_search:
             # we don't need the full search results, just the case that's been selected
             url = url.replace('/phone/search/', '/phone/case_fixture/')
         return StackQuery(id=self.query.storage_instance, value=url, data=data)
+
+    def _get_multi_select_nodeset(self):
+        return SearchSelectedCasesInstanceXpath(self.source_id).instance()
 
     def __repr__(self):
         return (f"WorkflowQueryMeta("
