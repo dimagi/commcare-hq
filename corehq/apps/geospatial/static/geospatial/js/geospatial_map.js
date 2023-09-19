@@ -7,9 +7,9 @@ hqDefine("geospatial/js/geospatial_map", [
     initialPageData,
     ko
 ) {
-    const defaultMarkerColor = "#808080"; // Gray
+    const defaultCaseMarkerColor = "#808080"; // Gray
     const defaultUserMarkerColor = "#0e00ff"; // Blue
-    const selectedMarkerColor = "#00FF00"; // Green
+    const selectedCaseMarkerColor = "#00FF00"; // Green
     const selectedUserMarkerColor = "#0b940d"; // Dark Green
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
 
@@ -194,8 +194,8 @@ hqDefine("geospatial/js/geospatial_map", [
 
             self.addCaseMarkersToMap = function (rawCases) {
                 const caseColors = {
-                    'default': defaultMarkerColor,
-                    'selected': selectedMarkerColor,
+                    'default': defaultCaseMarkerColor,
+                    'selected': selectedCaseMarkerColor,
                 };
 
                 _.forEach(rawCases, function (element, caseId) {
