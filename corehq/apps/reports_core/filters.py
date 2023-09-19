@@ -1,4 +1,5 @@
 import uuid
+import logging
 from collections import namedtuple
 from datetime import datetime, time
 
@@ -23,6 +24,8 @@ from corehq.util.dates import get_quarter_date_range, iso_string_to_date
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
 REQUEST_USER_KEY = 'request_user'
+
+log = logging.getLogger(__name__)
 
 
 class BaseFilter(object):
@@ -65,14 +68,19 @@ class BaseFilter(object):
                 and domain
                 and self.is_location_filter()
                 and toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(domain)):
+            log.info("Filtering locations fot the user")
             user_location_ids = user.get_location_ids(domain)
+            log.info(f"user_location_ids {user_location_ids}")
+            log.info(f"choice_list {choice_list}")
             if user_location_ids and not user.has_permission(domain, 'access_all_locations'):
                 filtered_choice_list = [choice for choice in choice_list if choice.value in user_location_ids]
+                log.info(f"filtered_choice_list {filtered_choice_list}")
                 if not filtered_choice_list:
                     # Case where none of user's current location are in filter location choices
                     # In this case, user should not see any data as this new dynamic location will not be
                     # assigned to the user
                     filtered_choice_list = [Choice(value=uuid.uuid4().hex, display=None)]
+                    log.info(f"filtered_choice_list with all locations filtered{filtered_choice_list}")
                 return filtered_choice_list
         return choice_list
 
