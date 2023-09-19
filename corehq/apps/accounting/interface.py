@@ -307,7 +307,7 @@ class SubscriptionInterface(AddItemInterface):
                     ),
                     sort_key=subscription.account.name,
                 ),
-                subscription.plan_version.plan.name,
+                subscription.plan_version,
                 subscription.is_active,
                 subscription.salesforce_contract_id,
                 subscription.date_start,
@@ -712,10 +712,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
             except BillingContactInfo.DoesNotExist:
                 contact_info = BillingContactInfo()
 
-            plan_name = "{name} v{version}".format(
-                name=invoice.subscription.plan_version.plan.name,
-                version=invoice.subscription.plan_version.version,
-            )
+            plan_name = invoice.subscription.plan_version
             plan_href = reverse(EditSubscriptionView.urlname, args=[invoice.subscription.id])
             account_name = invoice.subscription.account.name
             account_href = reverse(ManageBillingAccountView.urlname, args=[invoice.subscription.account.id])
