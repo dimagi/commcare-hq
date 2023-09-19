@@ -185,9 +185,15 @@
         }
     ],
     "lastUpdatedByUserInfo": {
-        "uid": "nx8I1YIFu3a",
+        "uid": "aKQIBMcRlZF",
         "firstName": "Testy",
         "surname": "Tester",
         "username": "testy_tester"
-      }
+      },
+    "createdByUserInfo": {
+    "firstName": "LLAA",
+    "surname": "Commcare",
+    "uid": "aKQIBMcRlZF",
+    "username": "hmhb_commcare"
+    }
 }
