@@ -11,12 +11,17 @@ hqDefine("geospatial/js/gps_capture",[
     initialPageData
 ) {
     'use strict';
-    const selectedMarkerColor = "#00FF00"; // Green
+    const MAP_CONTAINER_ID = "geospatial-map";
 
-    var MAP_CONTAINER_ID = "geospatial-map";
     var map;
     var selectedDataListItem;
-    var coordinateCaptureMarker;
+    var mapMarker = new mapboxgl.Marker({  // eslint-disable-line no-undef
+        draggable: true,
+    });
+    mapMarker.on('dragend', function () {
+        let lngLat = mapMarker.getLngLat();
+        updateSelectedItemLonLat(lngLat.lng, lngLat.lat);
+    });
 
     function setMapVisible(isVisible) {
         if (isVisible) {
@@ -42,9 +47,8 @@ hqDefine("geospatial/js/gps_capture",[
         if (selectedDataListItem) {
             selectedDataListItem.itemLocationBeingCapturedOnMap(null);
         }
-        if (coordinateCaptureMarker) {
-            coordinateCaptureMarker.remove();
-            coordinateCaptureMarker = undefined;
+        if (mapMarker) {
+            mapMarker.remove();
         }
     }
 
@@ -197,25 +201,19 @@ hqDefine("geospatial/js/gps_capture",[
         return self;
     };
 
+    function setMarkerAtLngLat(lon, lat) {
+        mapMarker.remove();
+        mapMarker.setLngLat([lon, lat]);
+        mapMarker.addTo(map);
+    }
+
     function updateSelectedItemLonLat(lon, lat) {
         selectedDataListItem.setCoordinates(lat, lon);
     }
 
-    function onMarkerDragEnd() {
-        let lngLat = coordinateCaptureMarker.getLngLat();
-        updateSelectedItemLonLat(lngLat.lng, lngLat.lat);
-    }
-
-    function setMarkerAtLngLat(lon, lat) {
-        if (coordinateCaptureMarker) { coordinateCaptureMarker.remove(); }
-
-        coordinateCaptureMarker = new mapboxgl.Marker({  // eslint-disable-line no-undef
-            color: selectedMarkerColor,
-            draggable: true,
-        });
-        coordinateCaptureMarker.on('dragend', onMarkerDragEnd);
-        coordinateCaptureMarker.setLngLat([lon, lat]);
-        coordinateCaptureMarker.addTo(map);
+    function setPointOnMap(lon, lat) {
+        setMarkerAtLngLat(lon, lat);
+        updateSelectedItemLonLat(lon, lat);
     }
 
     var initMap = function () {
@@ -235,10 +233,10 @@ hqDefine("geospatial/js/gps_capture",[
         });
 
         map.on('click', (event) => {
-            setMarkerAtLngLat(event.lngLat.lng, event.lngLat.lat);
-            updateSelectedItemLonLat(event.lngLat.lng, event.lngLat.lat);
+            setPointOnMap(event.lngLat.lng, event.lngLat.lat);
         });
         setMapVisible(false);
+
         return map;
     };
 
