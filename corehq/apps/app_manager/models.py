@@ -1844,6 +1844,7 @@ class DetailColumn(IndexedSchema):
     filter_xpath = StringProperty(default="", exclude_if_none=True)
     time_ago_interval = FloatProperty(default=365.25)
     date_format = StringProperty(default="%d/%m/%y")
+    action_form_id = FormIdProperty('modules[*].case_list_form.form_id', default="", exclude_if_none=True)
 
     @property
     def enum_dict(self):
