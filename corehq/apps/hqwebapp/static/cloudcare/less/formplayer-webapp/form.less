@@ -39,6 +39,10 @@
   .panel-body {
     padding-left: @form-text-indent + 5px;
     padding-right: @form-text-indent + 5px;
+    @media (max-width: @screen-xs-max) {
+      padding-left: 0px;
+      padding-right: 0px;
+    }
   }
 
   .gr-header {
