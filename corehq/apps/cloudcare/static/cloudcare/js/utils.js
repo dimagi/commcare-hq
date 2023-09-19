@@ -352,7 +352,7 @@ hqDefine('cloudcare/js/utils', [
      *      });
      */
     var watchSmallScreenEnabled = function (callback) {
-        var shouldEnableSmallScreen = () => window.innerWidth <= constants.SMALL_SCREEN_WIDTH_PX;
+        var shouldEnableSmallScreen = () => window.innerWidth < constants.SMALL_SCREEN_WIDTH_PX;
         var smallScreenEnabled = shouldEnableSmallScreen();
 
         $(window).on("resize", () => {
