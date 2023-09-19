@@ -435,6 +435,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     newValue = start.format(dateFormat) + separator + end.format(dateFormat);
                 }
                 if (oldValue !== newValue) {
+                    console.log("dateRange change triggered 435");
                     $input.val(newValue).trigger('change');
                 }
             });
