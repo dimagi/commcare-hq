@@ -1253,7 +1253,8 @@ CACHE_AND_INDEX = StaticToggle(
     'REC: Enable the "Cache and Index" format option when choosing sort properties '
     'in the app builder',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?pageId=41484944',
 )
 
 CUSTOM_PROPERTIES = StaticToggle(
