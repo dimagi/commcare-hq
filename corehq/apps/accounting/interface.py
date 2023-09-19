@@ -370,8 +370,8 @@ class SubscriptionInterface(AddItemInterface):
         filter_created_by = CreatedSubAdjMethodFilter.get_value(
             self.request, self.domain)
         if (
-            filter_created_by is not None and
-            filter_created_by in [s[0] for s in SubscriptionAdjustmentMethod.CHOICES]
+            filter_created_by is not None
+            and filter_created_by in [s[0] for s in SubscriptionAdjustmentMethod.CHOICES]
         ):
             queryset = queryset.filter(
                 subscriptionadjustment__reason=SubscriptionAdjustmentReason.CREATE,
@@ -535,8 +535,8 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 WireInvoiceSummaryView, ManageBillingAccountView,
             )
             new_this_month = (
-                invoice.date_created.month == invoice.account.date_created.month and
-                invoice.date_created.year == invoice.account.date_created.year
+                invoice.date_created.month == invoice.account.date_created.month
+                and invoice.date_created.year == invoice.account.date_created.year
             )
             try:
                 contact_info = BillingContactInfo.objects.get(account=invoice.account)
@@ -702,8 +702,8 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 ManageBillingAccountView, EditSubscriptionView,
             )
             new_this_month = (
-                invoice.date_created.month == invoice.subscription.account.date_created.month and
-                invoice.date_created.year == invoice.subscription.account.date_created.year
+                invoice.date_created.month == invoice.subscription.account.date_created.month
+                and invoice.date_created.year == invoice.subscription.account.date_created.year
             )
             try:
                 contact_info = BillingContactInfo.objects.get(
@@ -994,8 +994,8 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
         def _invoice_to_row(invoice):
             from corehq.apps.accounting.views import ManageBillingAccountView
             new_this_month = (
-                invoice.date_created.month == invoice.account.date_created.month and
-                invoice.date_created.year == invoice.account.date_created.year
+                invoice.date_created.month == invoice.account.date_created.month
+                and invoice.date_created.year == invoice.account.date_created.year
             )
             try:
                 contact_info = BillingContactInfo.objects.get(
@@ -1486,9 +1486,9 @@ class CreditAdjustmentInterface(GenericTabularReport):
         domain = DomainFilter.get_value(self.request, self.domain)
         if domain is not None:
             queryset = queryset.filter(
-                Q(credit_line__subscription__subscriber__domain=domain) |
-                Q(invoice__subscription__subscriber__domain=domain) |
-                Q(
+                Q(credit_line__subscription__subscriber__domain=domain)
+                | Q(invoice__subscription__subscriber__domain=domain)
+                | Q(
                     credit_line__subscription__isnull=True,
                     invoice__isnull=True,
                     credit_line__account__created_by_domain=domain,
