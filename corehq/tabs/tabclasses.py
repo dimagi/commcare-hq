@@ -35,6 +35,7 @@ from corehq.apps.data_dictionary.views import DataDictionaryView
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
+from corehq.apps.email.views import DomainEmailGatewayListView, AddDomainEmailGatewayView, EditDomainEmailGatewayView
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
 from corehq.apps.events.models import AttendeeModel
@@ -1131,6 +1132,7 @@ class MessagingTab(UITab):
         '/a/{domain}/sms/',
         '/a/{domain}/reminders/',
         '/a/{domain}/data/edit/case_groups/',
+        '/a/{domain}/email/',
     )
 
     @property
@@ -1309,6 +1311,22 @@ class MessagingTab(UITab):
                     {
                         'title': _("Edit Gateway"),
                         'urlname': EditDomainGatewayView.urlname,
+                    },
+                ],
+            })
+
+        if toggles.CUSTOM_EMAIL_GATEWAY.enabled(self.domain) and self.couch_user.is_domain_admin():
+            settings_urls.append({
+                'title': _('Email Connectivity'),
+                'url': reverse(DomainEmailGatewayListView.urlname, args=[self.domain]),
+                'subpages': [
+                    {
+                        'title': _("Add Gateway"),
+                        'urlname': AddDomainEmailGatewayView.urlname,
+                    },
+                    {
+                        'title': _("Edit Gateway"),
+                        'urlname': EditDomainEmailGatewayView.urlname,
                     },
                 ],
             })
