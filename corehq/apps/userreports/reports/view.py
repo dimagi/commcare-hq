@@ -1,6 +1,7 @@
 import json
 from contextlib import closing, contextmanager
 from io import BytesIO
+import uuid
 
 from django.conf import settings
 from django.contrib import messages
@@ -19,6 +20,7 @@ from django.utils.html import escape
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
+from corehq import toggles
 
 from couchexport.models import Format
 from dimagi.utils.dates import DateSpan
@@ -88,7 +90,7 @@ from corehq.util.view_utils import is_ajax, reverse
 from no_exceptions.exceptions import Http403
 
 
-def get_filter_values(filters, request_dict, user=None):
+def get_filter_values(filters, request_dict, user=None, domain=None):
     """
     Return a dictionary mapping filter ids to specified values
     :param filters: A list of corehq.apps.reports_core.filters.BaseFilter
@@ -98,7 +100,7 @@ def get_filter_values(filters, request_dict, user=None):
     """
     try:
         return {
-            filter.css_id: filter.get_value(request_dict, user)
+            filter.css_id: filter.get_value(request_dict, user, domain)
             for filter in filters
         }
     except FilterException as e:
@@ -250,7 +252,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_values(self):
-        return get_filter_values(self.filters, self.request_dict, user=self.request_user)
+        return get_filter_values(self.filters, self.request_dict, user=self.request_user, domain=self.domain)
 
     @property
     @memoized
