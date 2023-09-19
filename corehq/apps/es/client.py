@@ -95,7 +95,7 @@ class ElasticManageAdapter(BaseAdapter):
         return False
 
     def get_indices(self, full_info=False):
-        """Return the cluster index information.
+        """Return the cluster index information of active indices.
 
         :param full_info: ``bool`` whether to return the full index info
                           (default ``False``)
@@ -244,8 +244,8 @@ class ElasticManageAdapter(BaseAdapter):
 
     def indices_info(self):
         """Retrieve meta information about all the indices in the cluster.
-
-        :returns: ``dict`` A dict with index name in keys and index meta information
+            This will also return the closed indices
+        :returns: ``dict`` A dict with index name in keys and index meta information.
         """
         indices_info = self._es.cat.indices(format='json', bytes='b')
         filtered_indices_info = {}
