@@ -1599,8 +1599,7 @@ def delete_form(request, domain, instance_id):
     form = safely_get_form(request, domain, instance_id)
     assert form.domain == domain
     if form.is_archived:
-        form.soft_delete()
-        form.save()
+        XFormInstance.objects.soft_delete_forms(domain, [instance_id])
         return HttpResponseRedirect(reverse('project_report_dispatcher',
                                             args=(domain, 'submit_history')))
     else:
