@@ -88,8 +88,8 @@ class CaseTileHelper(object):
             for column_info in self.detail_column_infos:
                 # column_info is an instance of DetailColumnInfo named tuple.
                 style = None
-                if column_info.column.grid_x is not None or column_info.column.grid_y is not None \
-                        or column_info.column.height is not None or column_info.column.width is not None:
+                if any(field is not None for field in [column_info.column.grid_x, column_info.column.grid_y,
+                                                       column_info.column.height, column_info.column.width]):
                     style = Style(grid_x=column_info.column.grid_x, grid_y=column_info.column.grid_y,
                                   grid_height=column_info.column.height, grid_width=column_info.column.width,
                                   horz_align=column_info.column.horizontal_align,
