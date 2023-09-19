@@ -2285,7 +2285,7 @@ class CustomerInvoice(InvoiceBase):
         constraints = [
             models.UniqueConstraint(
                 fields=['account', 'date_start', 'date_end'],
-                name='unique_invoice_per_account_period',
+                name='unique_customer_invoice_per_subscription_period',
                 condition=models.Q(is_hidden_to_ops=False)
             )
         ]
