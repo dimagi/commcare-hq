@@ -1,4 +1,4 @@
-####### Configuration for CommCareHQ Running in docker #######
+"""####### Configuration for CommCareHQ Running in docker #######"""
 
 
 import os
@@ -130,7 +130,8 @@ SHARED_DRIVE_ROOT = '/sharedfiles'
 
 BASE_ADDRESS = '{}:8000'.format(os.environ.get('HQ_PORT_8000_TCP_ADDR', 'localhost'))
 
-######## Email setup ########
+
+"""######## Email setup ########"""
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN = "notifications@dimagi.com"
 EMAIL_PASSWORD = "******"
@@ -138,7 +139,7 @@ EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-####### Bitly ########
+"""####### Bitly ########"""
 
 BITLY_OAUTH_TOKEN = None
 
