@@ -86,6 +86,9 @@ class ChoiceProvider(metaclass=ABCMeta):
 
     def get_choices_for_values(self, values, user):
         choices = set(self.get_choices_for_known_values(values, user))
+        if self.location_safe and not user.has_permission(self.domain, 'access_all_locations'):
+            return choices
+
         used_values = {value for value, _ in choices}
         for value in values:
             if value not in used_values:
@@ -138,6 +141,7 @@ class StaticChoiceProvider(ChoiceProvider):
 
     def default_value(self, user):
         return None
+
 
 class ChainableChoiceProvider(ChoiceProvider, metaclass=ABCMeta):
     @abstractmethod
