@@ -208,7 +208,7 @@ class TestESSyncUtil(SimpleTestCase):
         util = ESSyncUtil()
 
         # Create known HQ indices if they don't exist
-        existing_index_names = util._get_all_known_indices_name()
+        existing_index_names = util._get_all_known_index_names()
         for index in existing_index_names:
             # We are testing for actual index names, they might exist on local system
             # So we testing if they exist first.

@@ -293,7 +293,7 @@ class ESSyncUtil:
         Remove the residual indices that are not used by HQ
         """
         existing_indices = es_manager.indices_info()
-        known_indices = self._get_all_known_indices_name()
+        known_indices = self._get_all_known_index_names()
         deleted_indices = []
         for index_name in sorted(existing_indices.keys()):
             if index_name not in known_indices:
@@ -309,7 +309,7 @@ class ESSyncUtil:
         else:
             print("No residual indices found on the environment")
 
-    def _get_all_known_indices_name(self):
+    def _get_all_known_index_names(self):
         # get index name from CANONICAL_NAME_ADAPTER_MAP
         known_indices = set()
         for cname, adapter in CANONICAL_NAME_ADAPTER_MAP.items():
