@@ -45,6 +45,16 @@
     }
   }
 
+  .info {
+    .panel-body {
+      overflow-x: auto;
+      @media (max-width: @screen-xs-max) {
+        padding-left: @form-text-indent + 5px;
+        padding-right: @form-text-indent + 5px;
+      }
+    }
+  }
+
   .gr-header {
     .collapsible-icon-container {
       float: left;
