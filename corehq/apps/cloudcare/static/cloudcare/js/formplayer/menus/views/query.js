@@ -200,7 +200,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.model = this.options.model;
             this.errorMessage = null;
             this._setItemset(this.model.attributes.itemsetChoices, this.model.attributes.itemsetChoicesKey);
-            this.dynamicSearchEnabled = false;
 
             // initialize with default values or with sticky values if either is present
             var value = decodeValue(this.model, this.model.get('value'))[1],
@@ -212,7 +211,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 value = stickyValue;
             }
             this.model.set('value', value);
-            this.dynamicSearchEnabled = this.options.parentView.dynamicSearchEnabled;
         },
 
         ui: {
@@ -324,6 +322,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         changeQueryField: function (e) {
+            console.log("e in change QueryField");
+            console.log(e);
             if (this.model.get('input') === 'date') {
                 // Skip because dates get handled by changeDateQueryField
                 return;
@@ -341,21 +341,21 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 this.model.set('value', $(e.currentTarget).val());
             }
             this.parentView.setStickyQueryInputs();
-            this.notifyParentOfFieldChange(e);
+            this.notifyParentOfFieldChange(e, e.originalEvent.isTrusted || e.isTrigger);
         },
 
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
             this.parentView.setStickyQueryInputs();
-            this.notifyParentOfFieldChange(e);
+            this.notifyParentOfFieldChange(e, e.originalEvent.isTrusted || e.isTrigger);
         },
 
-        notifyParentOfFieldChange: function (e) {
+        notifyParentOfFieldChange: function (e, useDynamicSearch) {
             if (this.model.get('input') === 'address') {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
             }
-            this.parentView.notifyFieldChange(e, this);
+            this.parentView.notifyFieldChange(e, this, useDynamicSearch);
         },
 
         toggleBlankSearch: function (e) {
@@ -397,7 +397,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         onRender: function () {
-            this.dynamicSearchEnabled = false;
             this._initializeSelect2Dropdown();
             this.ui.hqHelp.hqHelp();
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
@@ -441,7 +440,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (this.model.get('hidden') === 'true') {
                 this.$el.hide();
             }
-            this.dynamicSearchEnabled = this.options.parentView.dynamicSearchEnabled;
         },
 
     });
@@ -503,7 +501,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return answers;
         },
 
-        notifyFieldChange: function (e, changedChildView) {
+        notifyFieldChange: function (e, changedChildView, useDynamicSearch) {
             e.preventDefault();
             var self = this;
             self.validateFieldChange(changedChildView).always(function (response) {
@@ -534,7 +532,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
-            if (self.dynamicSearchEnabled) {
+            if (self.dynamicSearchEnabled && useDynamicSearch) {
                 self.updateSearchResults();
             }
         },
