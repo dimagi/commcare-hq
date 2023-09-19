@@ -50,6 +50,13 @@ hqDefine("app_manager/js/details/utils", function () {
             });
         }
 
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CLICKABLE_ICON')) {
+            formats.push({
+            value: "clickable-icon",
+            label: gettext('Clickable Icon (Web Apps only)'),
+            });
+        }
+
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
             formats.push({
                 value: "picture",
