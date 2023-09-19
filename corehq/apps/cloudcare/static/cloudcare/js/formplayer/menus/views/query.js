@@ -347,7 +347,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
             this.parentView.setStickyQueryInputs();
-            this.notifyParentOfFieldChange(e, e.originalEvent.isTrusted || e.isTrigger);
+            var eventTrusted = e.originalEvent ? e.originalEvent.isTrusted : false;
+            this.notifyParentOfFieldChange(e, eventTrusted || e.isTrigger);
         },
 
         notifyParentOfFieldChange: function (e, useDynamicSearch) {
