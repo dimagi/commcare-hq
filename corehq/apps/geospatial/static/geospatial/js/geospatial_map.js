@@ -450,6 +450,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     success: function (data) {
                         self.hasFiltersChanged(false);
 
+                        // TODO: There is a lot of indexing happening here. This should be replaced with a mapping to make reading it more explicit
                         const usersWithoutGPS = data.user_data.filter(function (item) {
                             return item.gps_point === null || !item.gps_point.length;
                         });
