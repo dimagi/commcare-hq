@@ -1,3 +1,5 @@
+import json
+
 from corehq.apps.email.models import EmailSMTPBackend
 from corehq.messaging.emailbackends.aws.forms import AWSBackendForm
 
@@ -16,7 +18,7 @@ class AWSBackend(EmailSMTPBackend):
 
     @classmethod
     def get_available_extra_fields(cls):
-        return []
+        return ['use_tracking_headers']
 
     @classmethod
     def get_form_class(cls):
@@ -38,3 +40,6 @@ class AWSBackend(EmailSMTPBackend):
             result[k] = v
 
         self.extra_fields = result
+
+    def use_tracking_headers(self):
+        return json.loads(self.extra_fields).get("use_tracking_headers")
