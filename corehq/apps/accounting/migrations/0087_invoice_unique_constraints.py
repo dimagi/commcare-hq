@@ -17,6 +17,7 @@ DROP_CUSTOMER_INVOICE_INDEX_SQL = f"DROP INDEX CONCURRENTLY IF EXISTS {CUSTOMER_
 
 
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('accounting', '0086_add_duplicate_invoice_id_to_invoice_model'),
