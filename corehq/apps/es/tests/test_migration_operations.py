@@ -529,7 +529,7 @@ class TestUpdateIndexMapping(BaseCase):
     def test_adds_new_properties_if_targeted_es_version_matches(self):
         properties = manager.index_get_mapping(self.index, self.type)["properties"]
         new_properties = {
-            "new_str_prop": {"type": "string"},
+            "new_str_prop": {"type": "text"},
             "new_int_prop": {"type": "integer"},
         }
         self.assertNotEqual(properties, new_properties)
@@ -544,7 +544,7 @@ class TestUpdateIndexMapping(BaseCase):
     def test_new_properties_not_added_if_targeted_es_version_not_matches(self):
         properties = manager.index_get_mapping(self.index, self.type)["properties"]
         new_properties = {
-            "new_str_prop": {"type": "string"},
+            "new_str_prop": {"type": "text"},
             "new_int_prop": {"type": "integer"},
         }
 
