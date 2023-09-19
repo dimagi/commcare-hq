@@ -231,6 +231,17 @@ hqDefine("geospatial/js/gps_capture",[
             attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
                          ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         });
+        map.addControl(
+            new MapboxGeocoder({
+                accessToken: mapboxgl.accessToken,
+                mapboxgl: mapboxgl,
+                types: 'address',
+                proximity: centerCoordinates.toString(),  // bias results to this point
+                marker: false,
+            }).on('result', function (resultObject) {
+                setPointOnMap(resultObject.result.center[0], resultObject.result.center[1]);
+            })
+        );
 
         map.on('click', (event) => {
             setPointOnMap(event.lngLat.lng, event.lngLat.lat);
