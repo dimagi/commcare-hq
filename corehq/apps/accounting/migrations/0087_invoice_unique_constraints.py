@@ -28,9 +28,9 @@ class Migration(migrations.Migration):
             sql=CREATE_INVOICE_INDEX_SQL,
             reverse_sql=DROP_INVOICE_INDEX_SQL,
             state_operations=[
-                migrations.AddIndex(
+                migrations.AddConstraint(
                     model_name='invoice',
-                    index=models.Index(fields=INVOICE_TABLE_COLUMNS, name=INVOICE_TABLE_INDEX_NAME),
+                    constraint=models.UniqueConstraint(condition=models.Q(('is_hidden_to_ops', False), ('duplicate_invoice_id__isnull', True)), fields=('subscription', 'date_start', 'date_end'), name=INVOICE_TABLE_INDEX_NAME),
                 )
             ]
         ),
@@ -38,9 +38,9 @@ class Migration(migrations.Migration):
             sql=CREATE_CUSTOMER_INVOICE_INDEX_SQL,
             reverse_sql=DROP_CUSTOMER_INVOICE_INDEX_SQL,
             state_operations=[
-                migrations.AddIndex(
+                migrations.AddConstraint(
                     model_name='customerinvoice',
-                    index=models.Index(fields=CUSTOMER_INVOICE_TABLE_COLUMNS, name=CUSTOMER_INVOICE_TABLE_INDEX_NAME),
+                    constraint=models.UniqueConstraint(condition=models.Q(('is_hidden_to_ops', False)), fields=('account', 'date_start', 'date_end'), name=CUSTOMER_INVOICE_TABLE_INDEX_NAME),
                 )
             ]
         )

@@ -2135,8 +2135,7 @@ class Invoice(InvoiceBase):
             models.UniqueConstraint(
                 fields=['subscription', 'date_start', 'date_end'],
                 name='unique_invoice_per_subscription_period',
-                condition=models.Q(is_hidden_to_ops=False)
-            ),
+                condition=models.Q(('is_hidden_to_ops', False), ('duplicate_invoice_id__isnull', True))),
         ]
 
     def save(self, *args, **kwargs):
