@@ -183,5 +183,11 @@
             "attribute": "aKQIBMcRlZF",
             "value": "2021-06-03"
         }
-    ]
+    ],
+    "lastUpdatedByUserInfo": {
+        "uid": "nx8I1YIFu3a",
+        "firstName": "Testy",
+        "surname": "Tester",
+        "username": "testy_tester"
+      }
 }

@@ -1,5 +1,5 @@
 from schema import Optional as SchemaOptional
-from schema import Regex, Schema
+from schema import Regex
 
 from corehq.motech.dhis2.const import (
     DHIS2_EVENT_STATUSES,
@@ -180,6 +180,7 @@ def get_tracked_entity_schema() -> dict:
         SchemaOptional("storedBy"): str,
         SchemaOptional("trackedEntityInstance"): id_schema,
         "trackedEntityType": id_schema,
+        SchemaOptional("lastUpdatedByUserInfo"): get_user_info_schema(),
     }
 
 
