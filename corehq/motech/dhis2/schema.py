@@ -1,5 +1,5 @@
 from schema import Optional as SchemaOptional
-from schema import Regex
+from schema import Regex, Schema  # noqa: F401
 
 from corehq.motech.dhis2.const import (
     DHIS2_EVENT_STATUSES,
