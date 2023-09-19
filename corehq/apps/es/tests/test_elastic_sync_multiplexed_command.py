@@ -214,6 +214,7 @@ class TestESSyncUtil(SimpleTestCase):
             # So we testing if they exist first.
             if not manager.index_exists(index):
                 manager.index_create(index)
+                self.addCleanup(manager.index_delete, index)
 
         # Create some residual indices
         type_ = "test_doc"

@@ -312,9 +312,8 @@ class ESSyncUtil:
     def _get_all_known_index_names(self):
         # get index name from CANONICAL_NAME_ADAPTER_MAP
         known_indices = set()
-        for cname, adapter in CANONICAL_NAME_ADAPTER_MAP.items():
-            for idx in self._get_current_and_older_index_name(cname):
-                known_indices.add(idx)
+        for cname in CANONICAL_NAME_ADAPTER_MAP.keys():
+            known_indices.update(self._get_current_and_older_index_name(cname))
         return known_indices
 
 
