@@ -243,8 +243,7 @@ class ElasticManageAdapter(BaseAdapter):
         self._es.indices.refresh(",".join(indices), expand_wildcards="none")
 
     def indices_info(self):
-        """Retrieve meta information about all the indices in the cluster.
-            This will also return the closed indices
+        """Retrieve meta information about all the indices in the cluster. This will also return the closed indices
         :returns: ``dict`` A dict with index name in keys and index meta information.
         """
         indices_info = self._es.cat.indices(format='json', bytes='b')
