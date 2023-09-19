@@ -204,7 +204,49 @@ class TestESSyncUtil(SimpleTestCase):
         ESSyncUtil().delete_index(HQ_APPS_INDEX_CANONICAL_NAME)
         self.assertFalse(manager.index_exists(app_adapter.index_name))
 
-    def test_remove_residual_indices(self):
+    def test_remove_residual_indices_does_not_remove_known_indices(self):
+        util = ESSyncUtil()
+
+        # Create known HQ indices if they don't exist
+        existing_index_names = util._get_all_known_index_names()
+        for index in existing_index_names:
+            # We are testing for actual index names, they might exist on local system
+            # So we testing if they exist first.
+            if not manager.index_exists(index):
+                manager.index_create(index)
+                self.addCleanup(manager.index_delete, index)
+
+        util.remove_residual_indices()
+        for index in existing_index_names:
+            self.assertTrue(manager.index_exists(index))
+
+    def test_remove_residual_indices_remove_closed_indices(self):
+        util = ESSyncUtil()
+
+        # Create an index and close it
+        type_ = "test_doc"
+        mappings = {"properties": {"value": {"type": "string"}}}
+        settings = {
+            "number_of_replicas": "0",
+            "number_of shards": "1",
+        }
+        closed_index_name = 'closed_index'
+        manager.index_create(closed_index_name, {"mappings": {type_: mappings}, "settings": settings})
+
+        # Index a doc before closing it
+        manager._es.index(closed_index_name, doc_type=type_, body={'value': 'a test doc'}, id="1234", timeout='5m')
+        manager.index_close(closed_index_name)
+
+        # Ensure the closed index exist
+        self.assertTrue(manager.index_exists(closed_index_name))
+
+        with patch('builtins.input', return_value=closed_index_name):
+            util.remove_residual_indices()
+
+        # Assert Residual indices are deleted
+        self.assertFalse(manager.index_exists(closed_index_name))
+
+    def test_remove_residual_indices_removes_unknown_indices(self):
         util = ESSyncUtil()
 
         # Create known HQ indices if they don't exist
