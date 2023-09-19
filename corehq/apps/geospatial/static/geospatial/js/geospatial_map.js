@@ -470,7 +470,7 @@ hqDefine("geospatial/js/geospatial_map", [
                             return [dataItem.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link}];
                         }));
 
-                        map.addUserMarkersToMap(userData, defaultUserMarkerColor);
+                        map.addUserMarkersToMap(userData);
                     },
                     error: function () {
                         self.hasErrors(true);
@@ -510,7 +510,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     return [item[0], {'coordinates': item[1], 'link': item[2]}];
                 }
             }));
-            map.addCaseMarkersToMap(casesById, defaultMarkerColor);
+            map.addCaseMarkersToMap(casesById);
 
             var $missingCasesDiv = $("#missing-gps-cases");
             var casesWithoutGPS = caseData.filter(function (item) {
