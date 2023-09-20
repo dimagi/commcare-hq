@@ -85,3 +85,85 @@ class GeospatialConfigForm(forms.ModelForm):
                 )
             )
         )
+
+
+class ConfigureCaseGroupingForm(forms.ModelForm):
+
+    class Meta:
+        model = GeoConfig
+        fields = [
+            "selected_grouping_method",
+            "max_cases_per_group",
+            "min_cases_per_group",
+            "target_group_count",
+            "selected_disbursement_algorithm",
+        ]
+
+    selected_grouping_method = forms.ChoiceField(
+        label=_("Grouping method"),
+        help_text=_("Determines which parameter to use for grouping cases"),
+        required=False,
+        choices=GeoConfig.VALID_GROUPING_METHODS,
+    )
+    max_cases_per_group = forms.IntegerField(
+        label=_("Maximum group size"),
+        help_text=_("The minimum number of cases that can be in a group"),
+        required=False,
+        min_value=1,
+    )
+    min_cases_per_group = forms.IntegerField(
+        label=("Minimum group size"),
+        help_text=_("The maximum number of cases that can be in a group"),
+        required=False,
+        min_value=1,
+    )
+    target_group_count = forms.IntegerField(
+        label=_("Target group count"),
+        help_text=_("The desired number of groups. Cases will be divided equally to create this many groups"),
+        required=False,
+        min_value=1,
+    )
+    selected_disbursement_algorithm = forms.ChoiceField(
+        label=_("Disbursement algorithm"),
+        # TODO: Uncomment and add documentation link when confluence page for algorithms has been created
+        # help_text=format_html_lazy(
+        #     _('For more information on these algorithms please look at our '
+        #       '<a href="{}" target="_blank">support documentation</a>.'),
+        #     ''
+        # ),
+        choices=GeoConfig.VALID_DISBURSEMENT_ALGORITHMS,
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.add_layout(
+            crispy.Layout(
+                crispy.Fieldset(
+                    _('Case Grouping Parameters'),
+                    crispy.Field('selected_grouping_method', data_bind="value: selectedGroupMethod"),
+                    crispy.Div(
+                        crispy.Field('max_cases_per_group'),
+                        crispy.Field('min_cases_per_group'),
+                        data_bind='visible: isMinMaxGrouping',
+                    ),
+                    crispy.Div(
+                        crispy.Field('target_group_count'),
+                        data_bind='visible: isTargetGrouping',
+                    ),
+                ),
+                crispy.Fieldset(
+                    _('Algorithms'),
+                    crispy.Field('selected_disbursement_algorithm'),
+                ),
+                hqcrispy.FormActions(
+                    StrictButton(
+                        _('Save'),
+                        css_class='btn-primary disable-on-submit',
+                        type='submit'
+                    ),
+                )
+            )
+        )
