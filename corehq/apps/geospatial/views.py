@@ -15,8 +15,10 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
 import jsonschema
+from jsonobject.exceptions import BadValueError
 from requests.exceptions import HTTPError
 
+from couchforms.geopoint import GeoPoint
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.web import json_response
 
@@ -354,11 +356,43 @@ class CaseGroupingMapView(BaseDomainView):
 
 @toggles.GEOSPATIAL.required_decorator()
 def view_paginated_geohashes_json(request, domain, *args, **kwargs):
+    """
+    Returns a paginated list of geohashes in JSON format, along with
+    geohash precision and page data.
+
+    Requires GET params "tllat" and "tllon" for the top-left latitude
+    and longitude of a bounding box, and "brlat" and "brlon" for the
+    bottom-right.
+
+    Optional GET params "page", and "precision. If "page" is omitted,
+    page 1 will be returned. If "precision" is omitted it will be
+    calculated. For pagination to be consistent, use the same value for
+    precision as the current page.
+    """
+    try:
+        top_left = GeoPoint.from_string(
+            f'{request.GET["tllat"]} {request.GET["tllon"]}',
+            flexible=True,
+        )
+        bottom_right = GeoPoint.from_string(
+            f'{request.GET["brlat"]} {request.GET["brlon"]}',
+            flexible=True,
+        )
+    except (KeyError, BadValueError) as err:
+        return JsonResponse({
+            'error': str(err),
+            'message': _(
+                'Invalid or missing top-left and bottom-right coordinates'
+            ),
+        })
+
     case_property = get_geo_case_property(domain)
     precision = request.GET.get('precision')
     geohash_resultset = get_geohashes(
         domain,
         field=case_property,
+        top_left=top_left,
+        bottom_right=bottom_right,
         precision=precision,
     )
     paginator = Paginator(geohash_resultset, MAX_GEOHASH_DOC_COUNT)
@@ -377,5 +411,6 @@ def view_paginated_geohashes_json(request, domain, *args, **kwargs):
 
     return JsonResponse({
         'geohashes': page.object_list,
+        'precision': precision,
         'pages': page_numbers,
     })
