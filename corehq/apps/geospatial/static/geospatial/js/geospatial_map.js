@@ -443,6 +443,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 self.hasErrors(false);
                 if (!self.shouldShowUsers()) {
                     self.hasFiltersChanged(false);
+                    missingGPSModelInstance.usersWithoutGPS([]);
                     return;
                 }
 
