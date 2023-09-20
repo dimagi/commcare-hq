@@ -2,6 +2,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django import forms
 from corehq.apps.geospatial.models import GeoConfig
@@ -167,3 +168,23 @@ class ConfigureCaseGroupingForm(forms.ModelForm):
                 )
             )
         )
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        grouping_method = cleaned_data['selected_grouping_method']
+        if grouping_method == GeoConfig.MIN_MAX_GROUPING:
+            max_group_size = cleaned_data['max_cases_per_group']
+            min_group_size = cleaned_data['min_cases_per_group']
+            if not max_group_size:
+                raise ValidationError(_("Value for maximum group size required"))
+            if not min_group_size:
+                raise ValidationError(_("Value for minimum group size required"))
+            if min_group_size > max_group_size:
+                raise ValidationError(_(
+                    "Maximum group size should be greater than or equal to minimum group size"
+                ))
+        elif grouping_method == GeoConfig.TARGET_SIZE_GROUPING:
+            if not cleaned_data['target_group_count']:
+                raise ValidationError(_("Value for target group count required"))
+
+        return cleaned_data
