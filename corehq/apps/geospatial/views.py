@@ -128,6 +128,55 @@ class GeoPolygonView(BaseDomainView):
         })
 
 
+class BaseConfigView(BaseDomainView):
+    section_name = _("Geospatial")
+
+    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseConfigView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @property
+    def config(self):
+        try:
+            obj = GeoConfig.objects.get(domain=self.domain)
+        except GeoConfig.DoesNotExist:
+            obj = GeoConfig()
+            obj.domain = self.domain
+        return obj
+
+    @property
+    def config_form(self):
+        if self.request.method == 'POST':
+            return self.form_class(self.request.POST, instance=self.config)
+        return self.form_class(instance=self.config)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.config_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        form = self.config_form
+
+        if not form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        instance = form.save(commit=False)
+        instance.domain = self.domain
+        instance.save()
+
+        return self.get(request, *args, **kwargs)
+
+
 class GeospatialConfigPage(BaseDomainView):
     urlname = "geospatial_settings"
     template_name = "geospatial/settings.html"
