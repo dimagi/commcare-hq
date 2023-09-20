@@ -422,7 +422,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
             self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP');
-            self.smallScreenEnabled = cloudcareUtils.watchSmallScreenEnabled(self.handleSmallScreenChange.bind(self));
+            self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                self.handleSmallScreenChange(smallScreenEnabled);
+            });
+            self.smallScreenListener.listen();
         },
 
         ui: CaseListViewUI(),
@@ -707,6 +710,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             self.handleSmallScreenChange(self.smallScreenEnabled);
         },
 
+        onDestroy: function () {
+            this.smallScreenListener.stopListening();
+        },
+
         templateContext: function () {
             const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
@@ -898,6 +905,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         onDestroy: function () {
+            CaseTileListView.__super__.onDestroy.apply(this, arguments);
             $('#content-container').removeClass('full-width');
         },
     });
