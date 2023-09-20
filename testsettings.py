@@ -4,8 +4,11 @@ from warnings import filterwarnings
 import settingshelper as helper
 from settings import *  # noqa: F403
 
-if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
-    ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
+# Commenting out temporarily for tests
+# if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
+#     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
+
+ELASTICSEARCH_MAJOR_VERSION = 5
 
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
@@ -69,7 +72,7 @@ if "SKIP_TESTS_REQUIRING_EXTRA_SETUP" not in globals():
 
 CELERY_TASK_ALWAYS_EAGER = True
 # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
-_PILLOWTOPS = PILLOWTOPS
+_PILLOWTOPS = PILLOWTOPS # noqa F405
 PILLOWTOPS = {}
 
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
@@ -82,6 +85,7 @@ CACHE_REPORTS = True
 
 # Hide couchdb 'unclosed socket' warnings
 filterwarnings("ignore", r"unclosed.*socket.*raddr=\([^) ]* 5984\)", ResourceWarning)
+
 
 def _set_logging_levels(levels):
     import logging

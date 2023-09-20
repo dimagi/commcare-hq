@@ -892,6 +892,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
         self.file = ko.observable();
         self.extensionsMap = initialPageData.get("valid_multimedia_extensions_map");
+        self.onClear = function () {
+            self.file(null);
+            self.rawAnswer(constants.NO_ANSWER);
+            self.xformAction = constants.CLEAR_ANSWER;
+            self.question.onClear();
+        };
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
@@ -904,10 +910,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             }
             self.answer(newValue.replace(constants.FILE_PREFIX, ""));
         } else {
-            self.file(null);
-            self.answer(constants.NO_ANSWER);
-            self.rawAnswer(constants.NO_ANSWER);
-            self.question.error(null);
+            self.onClear();
         }
     };
     FileEntry.prototype.onAnswerChange = function (newValue) {

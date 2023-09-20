@@ -54,7 +54,7 @@ WHITELIST = [
     ),
     (
         # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
-        "elasticsearch2.connection.http_urllib3",
+        "elasticsearch5.connection.http_urllib3",
         "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
     ),
 

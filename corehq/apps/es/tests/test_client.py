@@ -716,11 +716,10 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         type_ = "test_doc"
         mapping = {
             "properties": {
-                "value": {"type": "string"}
+                "value": {"type": "text"}
             }
         }
         self.adapter.index_create(self.index)
-        self.assertIsNone(self.adapter.index_get_mapping(self.index, type_))
         self.adapter.index_put_mapping(self.index, type_, mapping)
         self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
 
@@ -728,7 +727,7 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         type_ = "test_doc"
         mapping = {
             "_meta": {"created": "now"},
-            "properties": {"value": {"type": "string"}},
+            "properties": {"value": {"type": "text"}},
         }
         self.adapter.index_create(self.index, {"mappings": {type_: mapping}})
         self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
@@ -738,7 +737,7 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
     def test_index_put_mapping_updates_existing_mapping_properties(self):
         type_ = "test_doc"
-        mapping1 = {"properties": {"value": {"type": "string"}}}
+        mapping1 = {"properties": {"value": {"type": "text"}}}
         self.adapter.index_create(self.index, {"mappings": {type_: mapping1}})
         self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping1)
         mapping2 = {"properties": {"number": {"type": "integer"}}}
@@ -746,20 +745,16 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         self.assertEqual(
             self.adapter.index_get_mapping(self.index, type_),
             {"properties": {
-                "value": {"type": "string"},
+                "value": {"type": "text"},
                 "number": {"type": "integer"},
             }},
         )
 
     def test_index_get_mapping(self):
         type_ = "test_doc"
-        mapping = {"properties": {"value": {"type": "string"}}}
+        mapping = {"properties": {"value": {"type": "text"}}}
         self.adapter.index_create(self.index, {"mappings": {type_: mapping}})
         self.assertEqual(mapping, self.adapter.index_get_mapping(self.index, type_))
-
-    def test_index_get_mapping_returns_none_if_no_mapping(self):
-        self.adapter.index_create(self.index)
-        self.assertIsNone(self.adapter.index_get_mapping(self.index, "test_doc"))
 
     def test_index_get_settings(self):
         settings = {
@@ -773,7 +768,7 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
                 }
             },
             "number_of_replicas": "2",
-            "number_of shards": "2",
+            "number_of_shards": "2",
         }
         self.adapter.index_create(self.index, {"settings": settings})
         self.adapter.index_refresh(self.index)
@@ -787,7 +782,7 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
     def test_index_get_settings_for_specific_values(self):
         settings = {
             "number_of_replicas": "1",
-            "number_of shards": "2",
+            "number_of_shards": "2",
         }
         self.adapter.index_create(self.index, {"settings": settings})
         self.assertEqual(

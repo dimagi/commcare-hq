@@ -592,7 +592,8 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
         from corehq.apps.domain.shortcuts import create_domain
         from corehq.apps.locations.models import LocationType, SQLLocation
 
-        create_domain(self.domain)
+        domain_obj = create_domain(self.domain)
+        self.addCleanup(domain_obj.delete)
 
         location_type_provice = LocationType(domain=self.domain, name='Province')
         location_type_provice.save()
@@ -1178,11 +1179,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         super(CaseRuleEndToEndTests, cls).setUpClass()
         cls.domain_object = Domain(name=cls.domain)
         cls.domain_object.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.domain_object.delete()
-        super(CaseRuleEndToEndTests, cls).tearDownClass()
+        cls.addClassCleanup(cls.domain_object.delete)
 
     def test_get_rules_from_domain(self):
         rule1 = _create_empty_rule(self.domain, case_type='person-1')
