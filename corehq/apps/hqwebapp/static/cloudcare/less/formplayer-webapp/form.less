@@ -39,6 +39,25 @@
   .panel-body {
     padding-left: @form-text-indent + 5px;
     padding-right: @form-text-indent + 5px;
+    // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
+    .row {
+      margin-left: 0px;
+      margin-right: 0px;
+    }
+    @media (max-width: @screen-xs-max) {
+      padding-left: 0px;
+      padding-right: 0px;
+    }
+  }
+
+  .info {
+    .panel-body {
+      overflow-x: auto;
+      @media (max-width: @screen-xs-max) {
+        padding-left: @form-text-indent + 5px;
+        padding-right: @form-text-indent + 5px;
+      }
+    }
   }
 
   .gr-header {

@@ -47,7 +47,10 @@ class DomainSubscriptionMixin(object):
 
     @classmethod
     def teardown_subscription(cls, domain):
-        SubscriptionAdjustment.objects.all().delete()
-        Subscription.visible_and_suppressed_objects.all().delete()
-        cls.__subscriptions[domain].delete()
-        cls.__accounts[domain].delete()
+        try:
+            SubscriptionAdjustment.objects.all().delete()
+            Subscription.visible_and_suppressed_objects.all().delete()
+            cls.__subscriptions[domain].delete()
+            cls.__accounts[domain].delete()
+        finally:
+            Subscription._get_active_subscription_by_domain.clear(Subscription, domain)

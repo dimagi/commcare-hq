@@ -250,6 +250,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             var self = this;
             $.unsubscribe([
                 'formplayer.' + constants.ANSWER,
+                'formplayer.' + constants.CLEAR_ANSWER,
                 'formplayer.' + constants.DELETE_REPEAT,
                 'formplayer.' + constants.NEW_REPEAT,
                 'formplayer.' + constants.EVALUATE_XPATH,
@@ -264,6 +265,9 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 self.submitForm(form);
             });
             $.subscribe('formplayer.' + constants.ANSWER, function (e, question) {
+                self.answerQuestion(question);
+            });
+            $.subscribe('formplayer.' + constants.CLEAR_ANSWER, function (e, question) {
                 self.answerQuestion(question);
             });
             $.subscribe('formplayer.' + constants.DELETE_REPEAT, function (e, group) {
@@ -321,7 +325,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         self.answerQuestion = function (q) {
             var self = this;
             var ix = formUI.getIx(q);
-            var answer = q.answer();
+            var answer = q.entry.xformAction === constants.CLEAR_ANSWER ? constants.NO_ANSWER : q.answer();
             var oneQuestionPerScreen = self.isOneQuestionPerScreen();
             var form = q.form();
 
@@ -337,6 +341,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                     'oneQuestionPerScreen': oneQuestionPerScreen,
                 }, q.entry.xformParams()),
                 function (resp) {
+                    self.updateXformAction(q);
                     q.formplayerProcessed = true;
                     $.publish('session.reconcile', [resp, q]);
                     if (self.answerCallback !== undefined) {
@@ -348,11 +353,18 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 },
                 constants.BLOCK_SUBMIT,
                 function () {
+                    self.updateXformAction(q);
                     q.formplayerProcessed = false;
                     q.serverError(
                         gettext("We were unable to save this answer. Please try again later."));
                     q.pendingAnswer(constants.NO_PENDING_ANSWER);
                 });
+        };
+
+        self.updateXformAction = function (q) {
+            if (q.entry.xformAction === constants.CLEAR_ANSWER) {
+                q.entry.xformAction = q.entry.templateType === "file" ? constants.ANSWER_MEDIA : constants.ANSWER;
+            }
         };
 
         self.nextQuestion = function (opts) {

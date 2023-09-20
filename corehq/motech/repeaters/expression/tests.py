@@ -25,7 +25,10 @@ class CaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
 
         cls.domain = 'test'
         cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(clear_plan_version_cache)
+        cls.addClassCleanup(cls.domain_obj.delete)
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
+        cls.addClassCleanup(cls.teardown_subscriptions)
 
         cls.factory = CaseFactory(cls.domain)
 
@@ -80,15 +83,6 @@ class CaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
         )
 
         cls.repeater.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.repeater.delete()
-        cls.connection.delete()
-        cls.teardown_subscriptions()
-        cls.domain_obj.delete()
-        clear_plan_version_cache()
-        super().tearDownClass()
 
     def tearDown(self):
         delete_all_repeat_records()
