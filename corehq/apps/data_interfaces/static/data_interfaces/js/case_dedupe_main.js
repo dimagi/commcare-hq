@@ -139,6 +139,25 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         return self;
     };
 
+    var PropertyToUpdate = function (name, valueType, value, propertyManager) {
+        var self = {};
+        self.name = ko.observable();
+        self.valueType = ko.observable(valueType);
+        self.value = ko.observable(value);
+
+        let prevValue = '';
+        self.name.subscribe(function (newValue) {
+            if (!newValue) {
+                return;
+            }
+
+            propertyManager.updatePropertyValue(newValue, prevValue);
+            prevValue = newValue;
+        });
+        self.name(name);
+        return self;
+    };
+
     var CaseDedupe = function (
         initialName,
         initialCaseType,
@@ -151,21 +170,9 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
     ) {
         var self = {};
         self.name = ko.observable(initialName);
-        self.caseType = ko.observable();
-        self.caseProperties = ko.observableArray();
+        self.caseType = ko.observable(initialCaseType);
         self.includeClosed = ko.observable(initialIncludeClosed);
-        self.propertyManager = PropertyManager(self.caseType, self.caseProperties, allCaseProperties);
-
-        // Create a separate property for this so that outside callers do not need
-        // to be aware of this class's structure. Also functions as making the variable read-only
-        self.availablePropertyMap = ko.pureComputed(function () {
-            return self.propertyManager.availablePropertyMap();
-        });
-
-        self.caseType(initialCaseType);
-
         self.caseTypeOptions = caseTypeOptions;
-
         self.matchType = ko.observable(initialMatchType);
         self.matchTypeText = ko.computed(function () {
             if (self.matchType() === "ANY") {
@@ -180,6 +187,15 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
             }
             return gettext("True when ALL of the case properties match");
         };
+
+        /* Case Properties */
+        self.caseProperties = ko.observableArray();
+        self.propertyManager = PropertyManager(self.caseType, self.caseProperties, allCaseProperties);
+        // Create a separate property for this so that outside callers do not need
+        // to be aware of this class's structure. Also functions as making the variable read-only
+        self.availablePropertyMap = ko.pureComputed(function () {
+            return self.propertyManager.availablePropertyMap();
+        });
 
         self.caseProperties(_.map(initialCaseProperties, function (name) {
             return CaseProperty(name, self.propertyManager);
@@ -197,26 +213,27 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         self.serializedCaseProperties = ko.computed(function () {
             return ko.toJSON(self.caseProperties);
         });
+        /* End Case Properties */
 
-        var propertyToUpdate = function (name, valueType, value) {
-            var self = {};
-            self.name = ko.observable(name);
-            self.valueType = ko.observable(valueType);
-            self.value = ko.observable(value);
-            return self;
-        };
-        self.propertiesToUpdate = ko.observableArray(_.map(initialPropertiesToUpdate, function (property) {
-            return propertyToUpdate(property.name, property.valueType, property.value);
+        /* Update Actions */
+        self.propertiesToUpdate = ko.observableArray();
+        self.actionManager = PropertyManager(self.caseType, self.propertiesToUpdate, allCaseProperties);
+        self.availableActionPropertyMap = ko.pureComputed(function () {
+            return self.actionManager.availablePropertyMap();
+        });
+        self.propertiesToUpdate(_.map(initialPropertiesToUpdate, function (property) {
+            return PropertyToUpdate(property.name, property.valueType, property.value, self.actionManager);
         }));
         self.removePropertyToUpdate = function (item) {
-            self.propertiesToUpdate.remove(item);
+            self.actionManager.removeProperty(item);
         };
         self.addPropertyToUpdate = function () {
-            self.propertiesToUpdate.push(propertyToUpdate('', 'EXACT', ''));
+            self.actionManager.addProperty(PropertyToUpdate('', 'EXACT', '', self.actionManager));
         };
         self.serializedPropertiesToUpdate = ko.computed(function () {
             return ko.toJSON(self.propertiesToUpdate);
         });
+        /* End Update Actions */
 
         return self;
     };
