@@ -2919,16 +2919,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
-#, fuzzy
-#| msgid "Please Select a Country Code"
 msgid "Please select one"
-msgstr "Sélectionnez un code pays"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
-#, fuzzy
-#| msgid "Please Select a Country Code"
 msgid "Please select one or more"
-msgstr "Sélectionnez un code pays"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
 msgid "Please check the following fields:"
@@ -3173,32 +3169,24 @@ msgid "Out of range of filter. Will not appear on page refresh."
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
-#, fuzzy
-#| msgid "Update"
 msgid "updated"
-msgstr "Mettre à jour"
+msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
-#, fuzzy
-#| msgid "Case Type"
 msgid "Case copied"
-msgstr "Type de Dossier"
+msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
-#, fuzzy
-#| msgid "Case Type"
 msgid "Cases copied"
-msgstr "Type de Dossier"
+msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
 msgid "Case Reassignment (via HQ)"
 msgstr "Réattribution de dossier (via HQ)"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
-#, fuzzy
-#| msgid "Search Countries..."
 msgid "Search for users"
-msgstr "Rechercher pays..."
+msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
 msgid "Search for users or groups"
