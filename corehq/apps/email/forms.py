@@ -7,10 +7,11 @@ from crispy_forms.layout import Div
 from django import forms
 from django.forms import CharField, ChoiceField
 from django.forms.forms import Form
+from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_noop
 
-from corehq.apps.email.models import EmailSMTPBackend
+from corehq.apps.email.models import EmailSMTPBackend, EmailSMTPSettings
 from corehq.apps.email.util import get_email_backend_classes
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
@@ -160,3 +161,39 @@ class BackendForm(Form):
             raise ValidationError(_("Name is already in use."))
 
         return value
+
+
+
+from django import forms
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms.layout import Layout, Field, ButtonHolder, Submit
+
+
+class EmailSMTPSettingsForm(forms.ModelForm):
+    class Meta:
+        model = EmailSMTPSettings
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+    @cached_property
+    def helper(self):
+        helper = hqcrispy.HQFormHelper()
+        helper.layout = crispy.Layout(
+            crispy.Field('username'),
+            crispy.Field('password'),
+            crispy.Field('server'),
+            crispy.Field('port'),
+            crispy.Field('from_email'),
+            Field('use_this_gateway'),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+            )
+        )
+        return helper

@@ -8,7 +8,7 @@ from memoized import memoized
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.email.forms import InitiateAddEmailBackendForm
+from corehq.apps.email.forms import InitiateAddEmailBackendForm, EmailSMTPSettingsForm
 from corehq.apps.email.models import EmailSMTPBackend
 from corehq.apps.email.util import get_email_backend_classes
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -327,3 +327,24 @@ class EditDomainEmailGatewayView(AddDomainEmailGatewayView):
     @property
     def page_url(self):
         return reverse(self.urlname, kwargs=self.kwargs)
+
+
+from django.views import View
+from django.shortcuts import render, redirect
+
+
+class EmailSMTPSettingsView(View):
+    template_name = 'email/email_settings.html'  # Create a corresponding HTML template
+
+    def get(self, request, *args, **kwargs):
+        form = EmailSMTPSettingsForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = EmailSMTPSettingsForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('success_view')  # Redirect to a success page
+        else:
+            return render(request, self.template_name, {'form': form})

@@ -148,3 +148,15 @@ class EmailSMTPBackend(models.Model):
         klass = backend_classes[api_id]
         result = klass.objects
         return result.get(pk=backend_id)
+
+
+from django.db import models
+
+
+class EmailSMTPSettings(models.Model):
+    username = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)
+    server = models.CharField(max_length=255)
+    port = models.IntegerField()
+    from_email = models.EmailField()
+    use_this_gateway = models.BooleanField()

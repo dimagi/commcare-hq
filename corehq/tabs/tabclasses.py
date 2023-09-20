@@ -1318,7 +1318,7 @@ class MessagingTab(UITab):
         if toggles.CUSTOM_EMAIL_GATEWAY.enabled(self.domain) and self.couch_user.is_domain_admin():
             settings_urls.append({
                 'title': _('Email Connectivity'),
-                'url': reverse(DomainEmailGatewayListView.urlname, args=[self.domain]),
+                'url': reverse('email_settings_view', args=[self.domain]),
                 'subpages': [
                     {
                         'title': _("Add Gateway"),
@@ -1419,7 +1419,7 @@ class MessagingTab(UITab):
         for title, urls in (
             (_("Messages"), self.messages_urls),
             (_("Data Collection and Reminders"), self.reminders_urls),
-            (_("CommCare Supply"), self.supply_urls),
+            #(_("CommCare Supply"), self.supply_urls),
             (_("Contacts"), self.contacts_urls),
             (_("Settings"), self.settings_urls),
             (_("WhatsApp Settings"), self.whatsapp_urls),

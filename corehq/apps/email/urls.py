@@ -1,6 +1,7 @@
 from django.conf.urls import re_path as url
 
-from corehq.apps.email.views import DomainEmailGatewayListView, AddDomainEmailGatewayView, EditDomainEmailGatewayView
+from corehq.apps.email.views import DomainEmailGatewayListView, AddDomainEmailGatewayView, EditDomainEmailGatewayView, \
+    EmailSMTPSettingsView
 from corehq.apps.email.views import default
 
 urlpatterns = [
@@ -12,4 +13,5 @@ urlpatterns = [
         EditDomainEmailGatewayView.as_view(), name=EditDomainEmailGatewayView.urlname
         ),
     url(r'^gateways/$', DomainEmailGatewayListView.as_view(), name=DomainEmailGatewayListView.urlname),
+    url(r'settings/', EmailSMTPSettingsView.as_view(), name='email_settings_view'),
 ]
