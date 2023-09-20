@@ -435,7 +435,7 @@ class AutoPayInvoicePaymentHandler(object):
             send_purchase_receipt.delay(
                 payment_record.id, domain, receipt_email_template, receipt_email_template_plaintext, context,
             )
-        except:
+        except Exception:
             self._handle_email_failure(payment_record.id)
 
     @staticmethod
