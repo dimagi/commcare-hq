@@ -26,7 +26,10 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.form_processor.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.geospatial.reports import CaseManagementMap
-from corehq.apps.geospatial.forms import GeospatialConfigForm
+from corehq.apps.geospatial.forms import (
+    GeospatialConfigForm,
+    ConfigureCaseGroupingForm
+)
 from corehq.util.view_utils import json_error
 from .routing_solvers.mapbox_optimize import (
     submit_routing_request,
@@ -246,6 +249,24 @@ class GPSCaptureView(BaseDomainView):
         return json_response({
             'status': 'success'
         })
+
+
+class ConfigureCaseGroupingView(BaseConfigView):
+    urlname = 'configure_case_grouping'
+    template_name = 'configure_case_grouping.html'
+
+    page_name = _('Configure Case Grouping')
+
+    form_class = ConfigureCaseGroupingForm
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'target_grouping_name': GeoConfig.TARGET_SIZE_GROUPING,
+            'min_max_grouping_name': GeoConfig.MIN_MAX_GROUPING,
+        })
+        return context
 
 
 @require_GET
