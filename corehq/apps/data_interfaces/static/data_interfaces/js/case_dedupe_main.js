@@ -123,7 +123,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         return self;
     };
 
-    var CaseProperty = function (name, propertyManager) {
+    const CaseProperty = function (name, propertyManager) {
         var self = {};
         self.name = ko.observable();
         let prevValue = '';
@@ -139,7 +139,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         return self;
     };
 
-    var PropertyToUpdate = function (name, valueType, value, propertyManager) {
+    const PropertyToUpdate = function (name, valueType, value, propertyManager) {
         var self = {};
         self.name = ko.observable();
         self.valueType = ko.observable(valueType);
@@ -158,7 +158,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         return self;
     };
 
-    var CaseDedupe = function (
+    const CaseDedupe = function (
         initialName,
         initialCaseType,
         caseTypeOptions,
@@ -175,17 +175,14 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         self.caseTypeOptions = caseTypeOptions;
         self.matchType = ko.observable(initialMatchType);
         self.matchTypeText = ko.computed(function () {
-            if (self.matchType() === "ANY") {
-                return gettext("OR");
-            }
-            return gettext("AND");
+            return (self.matchType() === 'ANY') ? gettext('OR') : gettext('AND');
         });
-        self.matchTypeOptions = ["ALL", "ANY"];
+        self.matchTypeOptions = ['ALL', 'ANY'];
         self.matchTypeOptionsText = function (item) {
-            if (item === "ANY") {
-                return gettext("True when ANY of the case properties match");
+            if (item === 'ANY') {
+                return gettext('True when ANY of the case properties match');
             }
-            return gettext("True when ALL of the case properties match");
+            return gettext('True when ALL of the case properties match');
         };
 
         /* Case Properties */
@@ -243,10 +240,10 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
 
         // This is a little hacky; it prevents the "multiple bindings to same
         // element" error.
-        var caseFilterElement = $("#caseFiltersForm");
+        const caseFilterElement = $("#caseFiltersForm");
         caseFilterElement.detach();
 
-        var caseDedupe = CaseDedupe(
+        const caseDedupe = CaseDedupe(
             initialPageData.get('name'),
             initialPageData.get('case_type'),
             initialPageData.get('case_types'),
