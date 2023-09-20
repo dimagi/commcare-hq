@@ -194,7 +194,7 @@ class GeospatialConfigPage(BaseDomainView):
 
 class GPSCaptureView(BaseDomainView):
     urlname = 'gps_capture'
-    template_name = 'gps_capture.html'
+    template_name = 'manage_gps_data.html'
 
     page_name = _("Manage GPS Data")
     section_name = _("Geospatial")
@@ -213,9 +213,7 @@ class GPSCaptureView(BaseDomainView):
 
     @property
     def page_context(self):
-        data_type = self.request.GET.get('data_type', 'case')
         return {
-            'data_type': data_type,
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
         }
 
