@@ -112,7 +112,11 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
 from corehq.apps.users.models import HqPermissions
-from corehq.apps.geospatial.views import GeospatialConfigPage, GPSCaptureView
+from corehq.apps.geospatial.views import (
+    GeospatialConfigPage,
+    GPSCaptureView,
+    ConfigureCaseGroupingView,
+)
 
 
 class ProjectReportsTab(UITab):
@@ -2573,6 +2577,10 @@ class GeospatialTab(UITab):
                 {
                     'title': _("Manage GPS Data"),
                     'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
+                },
+                {
+                    'title': _("Configure Case Grouping"),
+                    'url': reverse(ConfigureCaseGroupingView.urlname, args=(self.domain,)),
                 },
             ]),
         ]
