@@ -249,6 +249,9 @@ class ElasticManageAdapter(BaseAdapter):
         indices_info = self._es.cat.indices(format='json', bytes='b')
         filtered_indices_info = {}
         for info in indices_info:
+            if info['index'].startswith('.'):
+                # Elasticsearch system indices, ignore
+                continue
             filtered_indices_info[info['index']] = {
                 'health': info['health'],
                 'primary_shards': info['pri'],
