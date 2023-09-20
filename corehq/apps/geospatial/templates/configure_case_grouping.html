@@ -1,0 +1,28 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main 'geospatial/js/configure_case_grouping' %}
+
+{% block page_title %}
+    {{ current_page.page_name }}
+{% endblock page_title %}
+
+{% block page_content %}
+{% initial_page_data 'target_grouping_name' target_grouping_name %}
+{% initial_page_data 'min_max_grouping_name' min_max_grouping_name %}
+
+<p class="lead">
+    <p>
+        {% blocktrans %}
+            Configure the parameters for how cases are grouped together, and set the type of
+            algorithm used when doing disbursement on cases.
+        {% endblocktrans %}
+    </p>
+</p>
+
+<form id="configure-case-grouping-form" class="form-horizontal disable-on-submit" method="post">
+    {% crispy form %}
+</form>
+{% endblock %}
