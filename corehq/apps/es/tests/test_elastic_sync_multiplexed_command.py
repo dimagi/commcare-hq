@@ -228,7 +228,7 @@ class TestESSyncUtil(SimpleTestCase):
         mappings = {"properties": {"value": {"type": "string"}}}
         settings = {
             "number_of_replicas": "0",
-            "number_of shards": "1",
+            "number_of_shards": "1",
         }
         closed_index_name = 'closed_index'
         manager.index_create(closed_index_name, {"mappings": {type_: mappings}, "settings": settings})
@@ -263,7 +263,7 @@ class TestESSyncUtil(SimpleTestCase):
         mappings = {"properties": {"value": {"type": "string"}}}
         settings = {
             "number_of_replicas": "0",
-            "number_of shards": "1",
+            "number_of_shards": "1",
         }
         residual_index_names = ['closed_index', 'index_1', 'index_2']
         for index in residual_index_names:
