@@ -76,7 +76,9 @@ hqDefine("geospatial/js/geospatial_map", [
         }
 
         function isMapItemInPolygon(polygonFeature, coordinates) {
-            // Might be 0 if a user deletes a point from a three-point polygon
+            // Will be 0 if a user deletes a point from a three-point polygon,
+            // since mapbox will delete the entire polygon. turf.booleanPointInPolygon()
+            // does not expect this, and will raise a 'TypeError' exception.
             if (!polygonFeature.geometry.coordinates.length) {
                 return false;
             }
