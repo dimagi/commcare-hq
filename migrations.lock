@@ -105,6 +105,7 @@ accounting
  0083_data_dictionary_priv
  0084_copy_cases_priv
  0085_remove_free_50_sms
+ 0086_add_duplicate_invoice_id_to_invoice_model
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -537,6 +538,7 @@ form_processor
  0091_auto_20190603_2023
  0092_auto_20200924_1753
  0093_rename_models (5 squashed migrations)
+ 0094_add_partial_index_xforms
 formplayer_api
  0001_drop_old_tables
 generic_inbound
@@ -985,6 +987,7 @@ sql_accessors
  0066_drop_unused_function
  0067_livequery_sql
  0067_livequery_sql_include_deleted_indices
+ 0068_remove_deleted_state
 sql_proxy_accessors
  0001_initial
  0002_add_sync_functions
@@ -1035,6 +1038,7 @@ sql_proxy_accessors
  0047_remove_get_case_models_functions
  0048_get_ledger_values_for_cases_3
  0049_drop_unused_function
+ 0050_remove_deleted_state
 sql_proxy_standby_accessors
  0001_initial
 sso

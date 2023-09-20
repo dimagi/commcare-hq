@@ -101,15 +101,10 @@ class TestRepeatRecordDBAccessors(TestCase):
             empty,
             other_id,
         ]
+        cls.addClassCleanup(RepeatRecord.bulk_delete, cls.records)
 
         for record in cls.records:
             record.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        for record in cls.records:
-            record.delete()
-        super(TestRepeatRecordDBAccessors, cls).tearDownClass()
 
     def test_get_pending_repeat_record_count(self):
         count = get_pending_repeat_record_count(self.domain, self.repeater_id)
@@ -199,11 +194,7 @@ class TestOtherDBAccessors(TestCase):
             RepeatRecord(domain='c'),
         ]
         RepeatRecord.bulk_save(cls.records)
-
-    @classmethod
-    def tearDownClass(cls):
-        RepeatRecord.bulk_delete(cls.records)
-        super(TestOtherDBAccessors, cls).tearDownClass()
+        cls.addClassCleanup(RepeatRecord.bulk_delete, cls.records)
 
     def test_get_domains_that_have_repeat_records(self):
         self.assertEqual(get_domains_that_have_repeat_records(), ['a', 'b', 'c'])

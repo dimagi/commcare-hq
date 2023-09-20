@@ -33,8 +33,10 @@ hqDefine("geospatial/js/gps_capture",[
         self.isLatValid = ko.observable(true);
         self.isLonValid = ko.observable(true);
 
-        self.onMapCaptureStart = function () {
-            // TODO: Implement this function
+        self.setCoordinates = function (lat, lng) {
+            self.lat(lat.toString());
+            self.lon(lng.toString());
+            self.onValueChanged();
         };
 
         self.onValueChanged = function () {
@@ -46,9 +48,18 @@ hqDefine("geospatial/js/gps_capture",[
             let latNum = parseFloat(self.lat());
             let lonNum = parseFloat(self.lon());
 
-            const latValid = (!isNaN(latNum) && latNum >= -90 && latNum <= 90) || !self.lat().length;
+            // parseFloat() ignores any trailing text (e.g. 15foobar becomes 15) so we need to check for length to catch
+            // and correctly validate such cases
+            const latValidLength = (latNum.toString().length === self.lat().length);
+            const lonValidLength = (lonNum.toString().length === self.lon().length);
+
+            const latValid = (
+                (!isNaN(latNum) && latValidLength && latNum >= -90 && latNum <= 90) || !self.lat().length
+            );
             self.isLatValid(latValid);
-            const lonValid = (!isNaN(lonNum) && lonNum >= -180 && lonNum <= 180) || !self.lon().length;
+            const lonValid = (
+                (!isNaN(lonNum) && lonValidLength && lonNum >= -180 && lonNum <= 180) || !self.lon().length
+            );
             self.isLonValid(lonValid);
         };
 
@@ -66,6 +77,7 @@ hqDefine("geospatial/js/gps_capture",[
 
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.observable(0);
+        self.itemLocationBeingCapturedOnMap = ko.observable();
         self.query = ko.observable('');
 
         self.dataType = initialPageData.get('data_type');
@@ -78,6 +90,13 @@ hqDefine("geospatial/js/gps_capture",[
         self.showTable = ko.computed(function () {
             return !self.showLoadingSpinner() && !self.hasError();
         });
+
+        self.captureLocationForItem = function (item) {
+            self.itemLocationBeingCapturedOnMap(item);
+        };
+        self.setCoordinates = function (lat, lng) {
+            self.itemLocationBeingCapturedOnMap().setCoordinates(lat, lng);
+        };
 
         self.goToPage = function (pageNumber) {
             self.dataItems.removeAll();
@@ -140,16 +159,14 @@ hqDefine("geospatial/js/gps_capture",[
         return self;
     };
 
-    var initMap = function (centerCoordinates) {
+    var initMap = function (dataItemList) {
         'use strict';
 
-        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
+        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
 
-        if (!centerCoordinates) {
-            centerCoordinates = [2.43333330, 9.750]; // should be domain specific
-        }
+        let centerCoordinates = [2.43333330, 9.750]; // should be domain specific
 
-        const map = new mapboxgl.Map({
+        const map = new mapboxgl.Map({  // eslint-disable-line no-undef
             container: 'geospatial-map', // container ID
             style: 'mapbox://styles/mapbox/streets-v12', // style URL
             center: centerCoordinates, // starting position [lng, lat]
@@ -159,13 +176,14 @@ hqDefine("geospatial/js/gps_capture",[
         });
 
         map.on('click', (event) => {
-            console.log(`A click event has occurred at ${event.lngLat}`);
+            dataItemList.setCoordinates(event.lngLat.lat, event.lngLat.lng);
         });
         return map;
     };
 
     $(function () {
-        $("#no-gps-list").koApplyBindings(dataItemListModel());
-        initMap();
+        let dataItemList = dataItemListModel();
+        $("#no-gps-list").koApplyBindings(dataItemList);
+        initMap(dataItemList);
     });
 });
