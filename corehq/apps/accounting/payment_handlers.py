@@ -409,14 +409,15 @@ class AutoPayInvoicePaymentHandler(object):
                     autopay_card,
                     amount_in_dollars=amount,
                     description='Auto-payment for Invoice %s' % invoice.invoice_number,
+                    idempotency_key=invoice.id
                 )
+                payment_record.transaction_id = transaction_id
+                payment_record.save()
         except stripe.error.CardError as e:
             self._handle_card_declined(invoice, e)
         except payment_method.STRIPE_GENERIC_ERROR as e:
             self._handle_card_errors(invoice, e)
         else:
-            payment_record.transaction_id = transaction_id
-            payment_record.save()
             self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):

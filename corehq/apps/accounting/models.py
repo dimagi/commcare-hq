@@ -3774,7 +3774,7 @@ class StripePaymentMethod(PaymentMethod):
         """
         return 'auto_pay_{billing_account_id}'.format(billing_account_id=billing_account.id)
 
-    def create_charge(self, card, amount_in_dollars, description):
+    def create_charge(self, card, amount_in_dollars, description, idempotency_key):
         """ Charges a stripe card and returns a transaction id """
         amount_in_cents = int((amount_in_dollars * Decimal('100')).quantize(Decimal(10)))
         transaction_record = stripe.Charge.create(
@@ -3783,6 +3783,7 @@ class StripePaymentMethod(PaymentMethod):
             amount=amount_in_cents,
             currency=settings.DEFAULT_CURRENCY,
             description=description,
+            idempotency_key=idempotency_key
         )
         return transaction_record.id
 
