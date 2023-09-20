@@ -892,7 +892,14 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
         self.file = ko.observable();
         self.extensionsMap = initialPageData.get("valid_multimedia_extensions_map");
+        // Tracks whether file entry has already been cleared, preventing an additional failing request to Formplayer
+        self.cleared = false;
+
         self.onClear = function () {
+            if (self.cleared) {
+                return;
+            }
+            self.cleared = true;
             self.file(null);
             self.rawAnswer(constants.NO_ANSWER);
             self.xformAction = constants.CLEAR_ANSWER;
@@ -904,9 +911,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     FileEntry.prototype.onPreProcess = function (newValue) {
         var self = this;
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
-            // input has changed and validation will be checked
+            // Input has changed and validation will be checked
             if (newValue !== self.answer()) {
                 self.question.formplayerProcessed = false;
+                self.cleared = false;
             }
             self.answer(newValue.replace(constants.FILE_PREFIX, ""));
         } else {
