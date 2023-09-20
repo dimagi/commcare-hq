@@ -1246,7 +1246,7 @@ def osdd(request, template='osdd.xml'):
 class MaintenanceAlertsView(BasePageView):
     urlname = 'alerts'
     page_title = gettext_noop("Maintenance Alerts")
-    template_name = 'hqwebapp/bootstrap5/maintenance_alerts.html'
+    template_name = 'hqwebapp/maintenance_alerts.html'
 
     @method_decorator(use_bootstrap5)
     @method_decorator(require_superuser)
