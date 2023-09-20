@@ -14,7 +14,7 @@ hqDefine("geospatial/js/gps_capture",[
     const MAP_CONTAINER_ID = "geospatial-map";
 
     var map;
-    var selectedDataListItem;
+    var selectedDataListObject;
     var mapMarker = new mapboxgl.Marker({  // eslint-disable-line no-undef
         draggable: true,
     });
@@ -23,7 +23,7 @@ hqDefine("geospatial/js/gps_capture",[
         updateSelectedItemLonLat(lngLat.lng, lngLat.lat);
     });
 
-    function setMapVisible(isVisible) {
+    function toggleMapVisible(isVisible) {
         if (isVisible) {
             $("#" + MAP_CONTAINER_ID).show();
             centerMapWithMarker();
@@ -33,8 +33,8 @@ hqDefine("geospatial/js/gps_capture",[
     }
 
     function centerMapWithMarker() {
-        if (selectedDataListItem) {
-            let dataItem = selectedDataListItem.itemLocationBeingCapturedOnMap();
+        if (selectedDataListObject) {
+            let dataItem = selectedDataListObject.itemLocationBeingCapturedOnMap();
             if (dataItem.lon() && dataItem.lat()) {
                 map.setCenter([dataItem.lon(), dataItem.lat()]);
                 setMarkerAtLngLat(dataItem.lon(), dataItem.lat());
@@ -43,9 +43,9 @@ hqDefine("geospatial/js/gps_capture",[
     }
 
     function resetMap() {
-        setMapVisible(false);
-        if (selectedDataListItem) {
-            selectedDataListItem.itemLocationBeingCapturedOnMap(null);
+        toggleMapVisible(false);
+        if (selectedDataListObject) {
+            selectedDataListObject.itemLocationBeingCapturedOnMap(null);
         }
         if (mapMarker) {
             mapMarker.remove();
@@ -132,8 +132,8 @@ hqDefine("geospatial/js/gps_capture",[
 
         self.captureLocationForItem = function (item) {
             self.itemLocationBeingCapturedOnMap(item);
-            selectedDataListItem = self;
-            setMapVisible(true);
+            selectedDataListObject = self;
+            toggleMapVisible(true);
         };
         self.setCoordinates = function (lat, lng) {
             self.itemLocationBeingCapturedOnMap().setCoordinates(lat, lng);
@@ -208,10 +208,10 @@ hqDefine("geospatial/js/gps_capture",[
     }
 
     function updateSelectedItemLonLat(lon, lat) {
-        selectedDataListItem.setCoordinates(lat, lon);
+        selectedDataListObject.setCoordinates(lat, lon);
     }
 
-    function setPointOnMap(lon, lat) {
+    function updateGPSCoordinates(lon, lat) {
         setMarkerAtLngLat(lon, lat);
         updateSelectedItemLonLat(lon, lat);
     }
@@ -233,9 +233,9 @@ hqDefine("geospatial/js/gps_capture",[
         });
 
         map.on('click', (event) => {
-            setPointOnMap(event.lngLat.lng, event.lngLat.lat);
+            updateGPSCoordinates(event.lngLat.lng, event.lngLat.lat);
         });
-        setMapVisible(false);
+        toggleMapVisible(false);
 
         return map;
     };
