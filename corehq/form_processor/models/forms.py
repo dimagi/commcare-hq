@@ -640,7 +640,9 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         return None
 
     def soft_delete(self):
-        type(self).objects.soft_delete_forms(self.domain, [self.form_id])
+        deleted_on = datetime.utcnow()
+        type(self).objects.soft_delete_forms(self.domain, [self.form_id], deleted_on)
+        self.deleted_on = deleted_on
         self.state |= self.DELETED
 
     def to_json(self, include_attachments=False):
