@@ -399,11 +399,11 @@ hqDefine("geospatial/js/geospatial_map", [
             });
         }
 
-        var missingGPSModel = function (cases, users) {
-            this.casesWithoutGPS = ko.observable(cases);
-            this.usersWithoutGPS = ko.observable(users);
+        var missingGPSModel = function () {
+            this.casesWithoutGPS = ko.observable([]);
+            this.usersWithoutGPS = ko.observable([]);
         };
-        var missingGPSModelInstance = new missingGPSModel([], []);
+        var missingGPSModelInstance = new missingGPSModel();
 
         var userFiltersModel = function () {
             var self = {};
@@ -509,6 +509,8 @@ hqDefine("geospatial/js/geospatial_map", [
         }
 
         $(document).ajaxComplete(function (event, xhr, settings) {
+            // When mobile workers are loaded from the user filtering menu, ajaxComplete will be called again.
+            // We don't want to reload the map or cases when this happens, so simply return.
             const isAfterUserLoad = settings.url.includes('geospatial/get_users_with_gps/');
             if (isAfterUserLoad) {
                 return;
