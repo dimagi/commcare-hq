@@ -126,11 +126,11 @@ class ConfigureCaseGroupingForm(forms.ModelForm):
     )
     selected_disbursement_algorithm = forms.ChoiceField(
         label=_("Disbursement algorithm"),
-        # TODO: Uncomment and add documentation link when confluence page for algorithms has been created
+        # TODO: Uncomment once linked documentation becomes public (geospatial feature is GA'ed)
         # help_text=format_html_lazy(
         #     _('For more information on these algorithms please look at our '
         #       '<a href="{}" target="_blank">support documentation</a>.'),
-        #     ''
+        #     'https://confluence.dimagi.com/pages/viewpage.action?pageId=164694245'
         # ),
         choices=GeoConfig.VALID_DISBURSEMENT_ALGORITHMS,
         required=True,
