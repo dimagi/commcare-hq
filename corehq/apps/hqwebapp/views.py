@@ -135,6 +135,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
     return f'Traceback (most recent call last):\n{tb}{type.__name__}: {exc}'
 
 
+@use_bootstrap5
 def server_error(request, template_name='500.html', exception=None):
     """
     500 error handler.
@@ -176,6 +177,7 @@ def server_error(request, template_name='500.html', exception=None):
     ))
 
 
+@use_bootstrap5
 def not_found(request, template_name='404.html', exception=None):
     """
     404 error handler.
@@ -328,6 +330,7 @@ def server_up(req):
         return HttpResponse("success")
 
 
+@use_bootstrap5
 def _no_permissions_message(request, template_name="403.html", message=None):
     t = loader.get_template(template_name)
     return t.render(
@@ -340,6 +343,7 @@ def _no_permissions_message(request, template_name="403.html", message=None):
     )
 
 
+@use_bootstrap5
 def no_permissions(request, redirect_to=None, template_name="403.html", message=None, exception=None):
     """
     403 error handler.
@@ -347,10 +351,12 @@ def no_permissions(request, redirect_to=None, template_name="403.html", message=
     return HttpResponseForbidden(_no_permissions_message(request, template_name, message))
 
 
+@use_bootstrap5
 def no_permissions_exception(request, template_name="403.html", message=None):
     return Http403(_no_permissions_message(request, template_name, message))
 
 
+@use_bootstrap5
 def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
     t = loader.get_template(template_name)
     return HttpResponseForbidden(t.render(
