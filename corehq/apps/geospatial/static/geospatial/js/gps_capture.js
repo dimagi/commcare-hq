@@ -233,9 +233,9 @@ hqDefine("geospatial/js/gps_capture",[
         });
 
         map.addControl(
-            new MapboxGeocoder({
-                accessToken: mapboxgl.accessToken,
-                mapboxgl: mapboxgl,
+            new MapboxGeocoder({  // eslint-disable-line no-undef
+                accessToken: mapboxgl.accessToken,  // eslint-disable-line no-undef
+                mapboxgl: map,
                 types: 'address',
                 proximity: centerCoordinates.toString(),  // bias results to this point
                 marker: false,
