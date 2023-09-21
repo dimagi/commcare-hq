@@ -13,7 +13,6 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.callcenter.sync_usercase import (
     sync_call_center_user_case,
-    sync_usercase,
 )
 from corehq.apps.callcenter.utils import (
     DomainLite,
@@ -259,7 +258,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
         self.user.update_metadata({
             'completed_training': 'yes',
         })
-        sync_usercase(self.user, self.domain.name)
+        self.user.save()
         case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertEqual(case.dynamic_case_properties()['completed_training'], 'yes')
         self._check_update_matches(case, {'completed_training': 'yes'})

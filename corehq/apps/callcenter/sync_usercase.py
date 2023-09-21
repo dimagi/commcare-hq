@@ -234,12 +234,6 @@ def _call_center_location_owner(user, ancestor_level):
     return owner_id
 
 
-def sync_usercase(user, domain):
-    with CriticalSection(get_sync_lock_key(user._id, domain)):
-        domain_obj = Domain.get_by_name(domain)
-        _UserCaseHelper.commit(list(_iter_sync_usercase_helpers(user, domain_obj)))
-
-
 def _iter_sync_usercase_helpers(user, domain_obj):
     if user.is_web_user() and not USH_USERCASES_FOR_WEB_USERS.enabled(domain_obj.name):
         return
@@ -252,9 +246,9 @@ def _iter_sync_usercase_helpers(user, domain_obj):
         )
 
 
-def sync_usercases(user, domain):
+def sync_usercases(user, domain, sync_call_center=True):
     """
-    Each time a CommCareUser is saved this method gets called and creates or updates
+    Each time a user is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
 
     This is also called to create usercases when the usercase is used for the
@@ -264,7 +258,6 @@ def sync_usercases(user, domain):
     with CriticalSection(get_sync_lock_key(user._id, domain)):
         helpers = list(chain(
             _iter_sync_usercase_helpers(user, domain_obj),
-            _iter_call_center_case_helpers(user),
+            _iter_call_center_case_helpers(user) if sync_call_center else [],
         ))
-        if helpers:
-            _UserCaseHelper.commit(helpers)
+        _UserCaseHelper.commit(helpers)
