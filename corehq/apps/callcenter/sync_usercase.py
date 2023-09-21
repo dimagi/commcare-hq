@@ -185,11 +185,6 @@ def get_sync_lock_key(user_id, domain):
     return [f"sync_user_case_for_{user_id}_{domain}"]
 
 
-def sync_call_center_user_case(user, domain):
-    with CriticalSection(get_sync_lock_key(user._id, domain)):
-        _UserCaseHelper.commit(list(_iter_call_center_case_helpers(user)))
-
-
 def _iter_call_center_case_helpers(user):
     if user.is_web_user():
         return
