@@ -7,10 +7,15 @@ hqDefine("geospatial/js/geospatial_map", [
     initialPageData,
     ko
 ) {
-    const defaultCaseMarkerColor = "#808080"; // Gray
-    const defaultUserMarkerColor = "#0e00ff"; // Blue
-    const selectedCaseMarkerColor = "#00FF00"; // Green
-    const selectedUserMarkerColor = "#0b940d"; // Dark Green
+    const caseMarkerColors = {
+        'default': "#808080", // Gray
+        'selected': "#00FF00", // Green
+    };
+    const userMarkerColors = {
+        'default': "#0e00ff", // Blue
+        'selected': "#0b940d", // Dark Green
+    };
+
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
 
     function mapItemModel(dataId, dataItem, marker, markerColors) {
@@ -176,52 +181,22 @@ hqDefine("geospatial/js/geospatial_map", [
                 return map;
             };
 
-            self.removeCaseMarkers = function () {
-                _.each(caseModels(), function (currCase) {
-                    if (currCase.marker) {
-                        currCase.marker.remove();
-                    }
+            self.removeMarkersFromMap = function (itemArr) {
+                _.each(itemArr, function (currItem) {
+                    currItem.marker.remove();
                 });
-                caseModels([]);
             };
 
-            self.removeUserMarkers = function () {
-                _.each(userModels(), function (currUser) {
-                    if (currUser.marker) {
-                        currUser.marker.remove();
-                    }
-                });
-                userModels([]);
-            };
-
-            self.addCaseMarkersToMap = function (rawCases) {
-                const caseColors = {
-                    'default': defaultCaseMarkerColor,
-                    'selected': selectedCaseMarkerColor,
-                };
-
-                _.forEach(rawCases, function (element, caseId) {
-                    const coordinates = element.coordinates;
+            self.addMarkersToMap = function (itemArr, markerColours) {
+                let outArr = [];
+                _.forEach(itemArr, function (item, itemId) {
+                    const coordinates = item.coordinates;
                     if (coordinates && coordinates.lat && coordinates.lng) {
-                        const mapItemInstance = self.addMarker(caseId, element, caseColors);
-                        caseModels.push(mapItemInstance);
+                        const mapItem = self.addMarker(itemId, item, markerColours);
+                        outArr.push(mapItem);
                     }
                 });
-            };
-
-            self.addUserMarkersToMap = function (rawUsers) {
-                const userColors = {
-                    'default': defaultUserMarkerColor,
-                    'selected': selectedUserMarkerColor,
-                };
-
-                _.forEach(rawUsers, function (element, userId) {
-                    const coordinates = element.coordinates;
-                    if (coordinates && coordinates.lat && coordinates.lng) {
-                        const mapItemInstance = self.addMarker(userId, element, userColors);
-                        userModels.push(mapItemInstance);
-                    }
-                });
+                return outArr;
             };
 
             self.addMarker = function (dataId, dataItem, colors) {
@@ -439,7 +414,8 @@ hqDefine("geospatial/js/geospatial_map", [
             self.hasErrors = ko.observable(false);
 
             self.loadUsers = function () {
-                map.removeUserMarkers();
+                map.removeMarkersFromMap(userModels());
+                userModels([]);
                 self.hasErrors(false);
                 if (!self.shouldShowUsers()) {
                     self.hasFiltersChanged(false);
@@ -474,7 +450,8 @@ hqDefine("geospatial/js/geospatial_map", [
                             return [dataItem.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link}];
                         }));
 
-                        map.addUserMarkersToMap(userData);
+                        const userMapItems = map.addMarkersToMap(userData, userMarkerColors);
+                        userModels(userMapItems);
                     },
                     error: function () {
                         self.hasErrors(true);
@@ -504,7 +481,8 @@ hqDefine("geospatial/js/geospatial_map", [
         }
 
         function loadCases(caseData) {
-            map.removeCaseMarkers();
+            map.removeMarkersFromMap(caseModels());
+            caseModels([]);
             var casesWithGPS = caseData.filter(function (item) {
                 return item[1] !== null;
             });
@@ -514,7 +492,8 @@ hqDefine("geospatial/js/geospatial_map", [
                     return [item[0], {'coordinates': item[1], 'link': item[2]}];
                 }
             }));
-            map.addCaseMarkersToMap(casesById);
+            const caseMapItems = map.addMarkersToMap(casesById, caseMarkerColors);
+            caseModels(caseMapItems);
 
             var $missingCasesDiv = $("#missing-gps-cases");
             var casesWithoutGPS = caseData.filter(function (item) {
