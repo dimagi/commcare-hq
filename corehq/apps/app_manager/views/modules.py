@@ -217,6 +217,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
+        'auto_submitting_form_options': _auto_submitting_form_options(app, module, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'shadow_parent': _get_shadow_parent(app, module),
         'case_types': {m.case_type for m in app.modules if m.case_type},
@@ -513,6 +514,26 @@ def _case_list_form_options(app, module, lang=None):
                 'post_form_workflow': f.post_form_workflow,
                 'is_registration_form': False,
             } for f in followup_forms})
+    return {
+        'options': options,
+        'form': module.case_list_form,
+    }
+
+
+def _auto_submitting_form_options(app, module, lang=None):
+    options = OrderedDict()
+    reg_forms = [
+        form
+        for mod in app.get_modules()
+        for form in mod.get_forms() if form.is_auto_submitting_form()
+    ]
+    langs = None if lang is None else [lang]
+    options.update({f.unique_id: {
+        'name': trans(f.name, langs),
+        'post_form_workflow': f.post_form_workflow,
+        'is_registration_form': True,
+    } for f in reg_forms})
+
     return {
         'options': options,
         'form': module.case_list_form,

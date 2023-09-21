@@ -1294,6 +1294,14 @@ class FormBase(DocumentSchema):
         """
         raise NotImplementedError()
 
+    def is_auto_submitting_form(self):
+        """
+        Should return True if this form passes the following tests:
+         * Pragma-Submit-Automatically is set
+         * No question needs manual input
+        """
+        raise NotImplementedError()
+
     def uses_usercase(self):
         raise NotImplementedError()
 
@@ -1688,6 +1696,10 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     def is_registration_form(self, case_type=None):
         reg_actions = self.get_registration_actions(case_type)
         return len(reg_actions) == 1
+
+    def is_auto_submitting_form(self):
+        # self.get_questions()[0].
+        return True
 
     def uses_usercase(self):
         return actions_use_usercase(self.active_actions())

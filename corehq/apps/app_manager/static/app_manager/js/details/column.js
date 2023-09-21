@@ -12,6 +12,7 @@
  */
 hqDefine("app_manager/js/details/column", function () {
     const uiElement = hqImport('hqwebapp/js/bootstrap3/ui-element');
+    const initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
 
     return function (col, screen) {
         /*
@@ -260,6 +261,16 @@ hqDefine("app_manager/js/details/column", function () {
         }]).val(self.original.date_format);
         self.date_extra.ui.prepend($('<div/>').text(gettext(' Format ')));
 
+        const auto_submitting_form_options =
+            [{value: "-1", label: 'Select a form'}]
+                .concat(
+                Object.entries(initial_page_data('auto_submitting_form_options').options)
+                    .map(([form_id, values]) => ({ value: form_id, label: values.name }))
+            );
+        const selectedValue = self.original.action_form_id ? self.original.action_form_id: "-1"
+        self.action_form_extra = uiElement.select(auto_submitting_form_options)
+            .val(selectedValue);
+
         self.late_flag_extra = uiElement.input().val(self.original.late_flag.toString());
         self.late_flag_extra.ui.find('input').css('width', 'auto').css("display", "inline-block");
         self.late_flag_extra.ui.prepend($('<span>' + gettext(' Days late ') + '</span>'));
@@ -306,6 +317,7 @@ hqDefine("app_manager/js/details/column", function () {
             'format',
             'date_extra',
             'enum_extra',
+            'action_form_extra',
             'graph_extra',
             'late_flag_extra',
             'filter_xpath_extra',
@@ -331,6 +343,7 @@ hqDefine("app_manager/js/details/column", function () {
             if (self.format.ui.parent().length > 0) {
                 self.date_extra.ui.detach();
                 self.enum_extra.ui.detach();
+                self.action_form_extra.ui.detach();
                 self.graph_extra.ui.detach();
                 self.late_flag_extra.ui.detach();
                 self.filter_xpath_extra.ui.detach();
@@ -348,6 +361,17 @@ hqDefine("app_manager/js/details/column", function () {
                     self.enum_extra.values_are_icons(this.val() === 'enum-image');
                     self.enum_extra.keys_are_conditions(this.val() === 'conditional-enum');
                     self.format.ui.parent().append(self.enum_extra.ui);
+                } else if (this.val() === "clickable-icon") {
+                    self.enum_extra.values_are_icons(true);
+                    self.enum_extra.keys_are_conditions(true);
+                    self.format.ui.parent().append(self.enum_extra.ui);
+                    self.format.ui.parent().append(self.action_form_extra.ui);
+                    const action_form = self.action_form_extra.ui.find('select');
+                    action_form.change(function () {
+                        self.action_form_extra.value = action_form.val();
+                        fireChange();
+                    });
+                    self.action_form_extra.value = action_form.val();
                 } else if (this.val() === "graph") {
                     // Replace format select with edit button
                     var parent = self.format.ui.parent();
@@ -391,6 +415,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.format = self.format.val();
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
+            column.action_form_id = self.action_form_extra.val();
             column.grid_x = self.tileColumnStart();
             column.grid_y = self.tileRowStart();
             column.height = self.tileHeight();
