@@ -16,8 +16,8 @@
   <p>
     <a href='https://getbootstrap.com/docs/3.4/css/#checkboxes-and-radios' target='_blank'>Bootstrap documentation</a>
   </p>
-  {% include 'styleguide/example_html.html' with slug='lonely-checkbox' title='Checkbox alone' content=examples.lonely_checkbox %}
-  {% include 'styleguide/example_html.html' with slug='checkbox-in-form' title='Checkbox in form' content=examples.checkbox_in_form %}
+  {% include 'styleguide/bootstrap3/example_html.html' with slug='lonely-checkbox' title='Checkbox alone' content=examples.lonely_checkbox %}
+  {% include 'styleguide/bootstrap3/example_html.html' with slug='checkbox-in-form' title='Checkbox in form' content=examples.checkbox_in_form %}
 
   <h2>Crispy forms and checkboxes</h2>
   <p>
@@ -35,5 +35,5 @@
     When using a checkbox in a crispy form, if possible, use the default <code>crispy.Field</code> display,
     but place the checkbox after a related input, so it looks like an additional option on that field.
   </p>
-  {% include 'styleguide/_includes/molecules/checkboxes/checkboxes_form.html' with slug='basic-crispy' title='Crispy form with checkboxes' %}
+  {% include 'styleguide/bootstrap3/_includes/molecules/checkboxes/checkboxes_form.html' with slug='basic-crispy' title='Crispy form with checkboxes' %}
 </section>
