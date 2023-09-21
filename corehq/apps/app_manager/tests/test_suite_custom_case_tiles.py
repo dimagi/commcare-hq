@@ -92,3 +92,39 @@ class SuiteCustomCaseTilesTest(SimpleTestCase, SuiteMixin):
             app.create_suite(),
             "./detail[@id='m0_case_short']/field[1]"
         )
+
+    def test_custom_case_tile_empty_style(self, *args):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.case_tile_template = "custom"
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'a'},
+                model='case',
+                field='a',
+                format='plain'
+            ),
+        ]
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <field>
+                    <header>
+                        <text>
+                            <locale id="m0.case_short.case_a_1.header"/>
+                        </text>
+                    </header>
+                    <template>
+                        <text>
+                          <xpath function="a"/>
+                        </text>
+                    </template>
+                </field>
+            </partial>
+            """,
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/field[1]"
+        )

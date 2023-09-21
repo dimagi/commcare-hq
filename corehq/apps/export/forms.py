@@ -1115,4 +1115,7 @@ class DatasourceExportDownloadForm(forms.Form):
 
     @staticmethod
     def domain_datasources(domain):
-        return [(ds.data_source_id, ds.display_name) for ds in get_datasources_for_domain(domain)]
+        return [
+            (ds.data_source_id, ds.table_id)
+            for ds in get_datasources_for_domain(domain)
+        ]
