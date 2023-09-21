@@ -102,6 +102,7 @@ class ConfigureCaseGroupingForm(forms.ModelForm):
 
     selected_grouping_method = forms.ChoiceField(
         label=_("Grouping method"),
+        # TODO: Add relevant documentation link to help_text when geospatial feature is GA'ed
         help_text=_("Determines which parameter to use for grouping cases"),
         required=False,
         choices=GeoConfig.VALID_GROUPING_METHODS,
