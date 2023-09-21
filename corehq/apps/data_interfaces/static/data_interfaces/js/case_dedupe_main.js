@@ -19,6 +19,8 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
     PropertyManager exists to make sure that available properties are updated and unique.
     For example, if a case type contains A, B, and C properties, this class ensures
     that if C is selected, further options will only show A and B.
+    caseType is expectted to be an observable.
+    selectedProperties is expected to be an observableArray.
     */
     const PropertyManager = function (caseType, selectedProperties, initialPropertyMap) {
         const self = {};
