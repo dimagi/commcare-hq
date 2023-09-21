@@ -239,7 +239,7 @@ hqDefine("geospatial/js/gps_capture",[
                 proximity: centerCoordinates.toString(),  // bias results to this point
                 marker: false,
             }).on('result', function (resultObject) {
-                setPointOnMap(resultObject.result.center[0], resultObject.result.center[1]);
+                updateGPSCoordinates(resultObject.result.center[0], resultObject.result.center[1]);
             })
         );
 
