@@ -2439,6 +2439,13 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
     description='This can be used to create report builder reports that are location-safe.'
 )
 
+CUSTOM_EMAIL_GATEWAY = StaticToggle(
+    'custom_email_gateway',
+    'Allows user to define custom email gateway that can be used to send emails from HQ',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """

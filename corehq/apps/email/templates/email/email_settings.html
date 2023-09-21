@@ -1,0 +1,13 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block page_content %}
+
+  <h2>{% trans "Add Email Gateway Settings" %}</h2>
+  <div class="spacer"></div>
+
+  {% crispy form %}
+
+{% endblock %}
