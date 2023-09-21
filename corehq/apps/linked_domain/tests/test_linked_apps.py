@@ -23,7 +23,6 @@ from corehq.apps.app_manager.suite_xml.post_process.resources import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, get_simple_form, patch_validate_xform
 from corehq.apps.app_manager.views.utils import (
-    get_blank_form_xml,
     overwrite_app,
     update_linked_app,
 )
@@ -267,7 +266,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         self.assertEqual(linked_app.get_module(0).case_details.short.columns[0].action_form_id, '456')
         self.assertEqual(linked_app.get_module(0).case_details.long.columns[0].action_form_id, '456')
-
 
     def test_multi_master_form_attributes_and_media_versions(self, *args):
         '''
@@ -657,7 +655,6 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
             missing_media = _get_missing_multimedia(self.master_app_with_report_modules, old_multimedia_ids)
         self.assertEqual(missing_media, [])
 
-
     def test_add_domain_to_media(self):
         self.image.valid_domains.remove(self.master_app_with_report_modules.domain)
         self.image.save()
@@ -684,7 +681,8 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         remote_details = RemoteLinkDetails(
             'http://localhost:8000', 'user', 'key'
         )
-        data = b'this is a test: \255'  # Real data will be a binary multimedia file, so mock it with bytes, not unicode
+        # Real data will be a binary multimedia file, so mock it with bytes, not unicode
+        data = b'this is a test: \255'
         media_details = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         media_details['multimedia_id'] = uuid.uuid4().hex
         media_details['media_type'] = 'CommCareMultimedia'
@@ -728,6 +726,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(media_map_item.upstream_media_id, upstream_media_id)
         # multimedia_id matches local multimedia for local app references
         self.assertEqual(media_map_item.multimedia_id, local_media._id)
+
 
 def _mock_pull_remote_master(master_app, linked_app, report_map=None):
     master_source = convert_app_for_remote_linking(master_app)
