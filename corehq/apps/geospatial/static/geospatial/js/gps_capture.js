@@ -232,6 +232,18 @@ hqDefine("geospatial/js/gps_capture",[
                          ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         });
 
+        map.addControl(
+            new MapboxGeocoder({
+                accessToken: mapboxgl.accessToken,
+                mapboxgl: mapboxgl,
+                types: 'address',
+                proximity: centerCoordinates.toString(),  // bias results to this point
+                marker: false,
+            }).on('result', function (resultObject) {
+                updateGPSCoordinates(resultObject.result.center[0], resultObject.result.center[1]);
+            })
+        );
+
         map.on('click', (event) => {
             updateGPSCoordinates(event.lngLat.lng, event.lngLat.lat);
         });
