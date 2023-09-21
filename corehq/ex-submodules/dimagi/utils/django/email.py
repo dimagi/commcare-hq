@@ -1,7 +1,7 @@
 from smtplib import SMTPDataError, SMTPSenderRefused
 
 from django.conf import settings
-from django.core.mail import get_connection
+from django.core.mail import get_connection as django_get_connection
 from django.core.mail.message import EmailMultiAlternatives
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import gettext as _
@@ -168,3 +168,20 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                 bcc=bcc,
             )
             error_msg.send()
+
+
+def get_connection(domain: str = None):
+    from corehq.apps.email.models import EmailSMTPBackend
+    custom_backend = EmailSMTPBackend.get_domain_default_backend(domain)
+    if custom_backend:
+        backend = "django.core.mail.backends.smtp.EmailBackend"
+        backend_settings = {
+            'host': custom_backend.server,
+            'port': custom_backend.port,
+            'username': custom_backend.username,
+            'password': custom_backend.password,
+            'use_tls': True,
+        }
+        return django_get_connection(backend=backend, **backend_settings)
+    else:
+        return django_get_connection()
