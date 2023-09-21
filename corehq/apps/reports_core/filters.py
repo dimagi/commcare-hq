@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
+from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.userreports.reports.filters.values import LocationDrilldownFilterValue
 from dimagi.utils.dates import DateSpan
 
@@ -468,7 +469,7 @@ class LocationDrilldownFilter(BaseFilter):
         selected_loc_id = kwargs.get(self.name, None)
         request_user = kwargs.get(REQUEST_USER_KEY, None)
         if selected_loc_id:
-            if request_user and selected_loc_id in request_user.get_location_ids(self.domain):
+            if request_user and user_can_access_location_id(self.domain, request_user, selected_loc_id):
                 return self.valid_location_ids(selected_loc_id)
             else:
                 return LocationDrilldownFilterValue.SHOW_NONE
