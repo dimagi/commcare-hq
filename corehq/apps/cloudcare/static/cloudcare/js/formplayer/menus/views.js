@@ -630,10 +630,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
                 addressMap.on('fullscreenchange', function () {
                     // sticky header interferes with fullscreen map; un-stick it if it exists
-                    if ($('#small-screen-sticky-header')[0]) {
+                    const $stickyHeader = $('#small-screen-sticky-header');
+                    if ($stickyHeader[0]) {
                         addressMap.isFullscreen()
-                            ? $('#small-screen-sticky-header').removeClass('sticky')
-                            : $('#small-screen-sticky-header').addClass('sticky');
+                            ? $stickyHeader.removeClass('sticky')
+                            : $stickyHeader.addClass('sticky');
                     }
                 });
 
