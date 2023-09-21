@@ -355,7 +355,7 @@ class CaseGroupingMapView(BaseDomainView):
 
 
 @toggles.GEOSPATIAL.required_decorator()
-def view_paginated_geohashes_json(request, domain, *args, **kwargs):
+def get_paginated_geohashes(request, domain, *args, **kwargs):
     """
     Returns a paginated list of geohashes in JSON format, along with
     geohash precision and page data.
@@ -370,6 +370,12 @@ def view_paginated_geohashes_json(request, domain, *args, **kwargs):
     precision as the current page.
     """
     try:
+        # TODO: Support using a polygon instead of a bounding box.
+        # NOTE: Elasticsearch requires surrounding polygons to be
+        #   ordered counter-clockwise, and the last point must equal the
+        #   first point.
+        #   https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.6
+
         top_left = GeoPoint.from_string(
             f'{request.GET["tllat"]} {request.GET["tllon"]}',
             flexible=True,
@@ -388,6 +394,8 @@ def view_paginated_geohashes_json(request, domain, *args, **kwargs):
 
     case_property = get_geo_case_property(domain)
     precision = request.GET.get('precision')
+    # TODO: Complete,
+    #   --fixup feea241a140 "views.py: Bounding box is required for geohashes"
     geohash_resultset = get_geohashes(
         domain,
         field=case_property,

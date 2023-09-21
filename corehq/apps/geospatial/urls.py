@@ -8,9 +8,9 @@ from .views import (
     MapboxOptimizationV2,
     geospatial_default,
     get_paginated_cases_or_users_without_gps,
+    get_paginated_geohashes,
     get_users_with_gps,
     mapbox_routing_status,
-    view_paginated_geohashes_json,
 )
 
 urlpatterns = [
@@ -29,8 +29,8 @@ urlpatterns = [
         name='get_paginated_cases_or_users_without_gps'),
     url(r'^gps_capture/$', GPSCaptureView.as_view(), name=GPSCaptureView.urlname),
     url(r'^users/json/$', get_users_with_gps, name='get_users_with_gps'),
-    url(r'^geohashes_json/$', view_paginated_geohashes_json,
-        name='geohashes_json'),
+    url(r'^geohashes/json/$', get_paginated_geohashes,
+        name='get_paginated_geohashes'),
 
     CaseManagementMapDispatcher.url_pattern(),
     CaseGroupingMapDispatcher.url_pattern(),

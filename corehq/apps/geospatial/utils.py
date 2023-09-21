@@ -8,7 +8,8 @@ from corehq.apps.users.models import CommCareUser
 from .models import GeoConfig
 
 
-# TODO: quickcache
+# TODO: @quickcache(['domain'], timeout=24 * 60 * 60)
+#   See also corehq.apps.data_dictionary.util.get_gps_properties()
 def get_geo_case_property(domain):
     try:
         config = GeoConfig.objects.get(domain=domain)

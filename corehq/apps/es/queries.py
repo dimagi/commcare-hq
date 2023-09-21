@@ -215,8 +215,10 @@ def geo_bounding_box(
     return {
         'geo_bounding_box': {
             field: {
-                'top_left': top_left.lat_lon,
-                'bottom_right': bottom_right.lat_lon,
+                'top': top_left.latitude,
+                'left': top_left.longitude,
+                'bottom': bottom_right.latitude,
+                'right': bottom_right.longitude,
             }
         }
     }

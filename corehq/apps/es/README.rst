@@ -35,6 +35,7 @@ on a live index. In the future, the configuration settings (i.e. "live state")
 of that value should be removed from the CommCare HQ codebase entirely in order
 to decouple it from application logic.
 
+.. TODO: More details on indices here
 
 .. _creating-elasticsearch-index-migrations:
 
@@ -140,6 +141,9 @@ In practice, this might look like the following example:
    cchq <env> django-manage print_elastic_mappings smslogs_2020-01-28:sms --no-names > ./sms-live.py
    diff -u ./sms-live.py ./sms-in-code.py
 
+
+.. TODO: Why don't we use this to bring the code in line with Prod, and
+         then treat the code as authoritative?
 
 Elastic Index Tuning Configurations
 '''''''''''''''''''''''''''''''''''

@@ -150,6 +150,7 @@ class ESQuery(object):
                 }
             }
         }
+        # self._es_queryset = None  # TODO: You probably don't need this
 
     def clone(self):
         adapter = self.adapter
@@ -204,6 +205,21 @@ class ESQuery(object):
             start = sliced_or_int.start or 0
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
+
+    # def run(self):
+    #     """
+    #     Actually run the query.
+    #
+    #     Only runs the query once, so that ``__len__()`` and
+    #     ``__getitem__()`` don't run the same query twice. Returns an
+    #     ESQuerySet object.
+    #     """
+    #     if self._es_queryset is None:
+    #         self._es_queryset = ESQuerySet(
+    #             self.adapter.search(self.raw_query),
+    #             self.clone()
+    #         )
+    #     return self._es_queryset
 
     def run(self):
         """Actually run the query.  Returns an ESQuerySet object."""

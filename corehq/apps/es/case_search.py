@@ -67,6 +67,7 @@ class CaseSearchES(CaseES):
             external_id,
             indexed_on,
             case_property_missing,
+            # TODO: Add geoshape_filter here
         ] + super(CaseSearchES, self).builtin_filters
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
@@ -196,6 +197,7 @@ case_search_adapter = create_document_adapter(
 )
 
 
+# Here
 def case_property_filter(case_property_name, value):
     warn("Use the query versions of this function from the case_search module instead", DeprecationWarning)
     return filters.nested(

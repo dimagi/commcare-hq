@@ -15,6 +15,9 @@ Contributing:
 Additions to this file should be added to the ``builtin_filters`` method on
 either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 """
+from decimal import Decimal
+from typing import Any, Literal, TypedDict
+
 from .utils import es_format_datetime
 
 
@@ -162,3 +165,41 @@ def geo_bounding_box(field, top_left, bottom_right):
             }
         }
     }
+
+
+class GeoJSONGeometry(TypedDict):
+    type: Literal[
+        'Point',
+        'LineString',
+        'Polygon',
+        'MultiPoint',
+        'MultiLineString',
+        'MultiPolygon',
+    ]
+    coordinates: list[Decimal]
+
+
+def geoshape_filter(
+    shape: GeoJSONGeometry,
+    relation: Literal[
+        'intersects',
+        'disjoint',
+        'within',
+        'contains',
+    ] = 'intersects',
+) -> dict[str, Any]:
+    """
+    Filters cases by case properties indexed using the the geo_point
+    type.
+    
+    More info:
+    
+    * `The Geoshape query reference <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html>`_
+    * `The GeoJSON specification (RFC 7946) <https://datatracker.ietf.org/doc/html/rfc7946>`_
+
+    :param shape: A shape definition given in GeoJSON geometry format
+    :param relation: The relation between the shape and the case
+        property values.
+    :return: A filter definition
+    """  # noqa: E501
+    pass
