@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import simplejson
 from django.conf import settings
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from django.db.models import F, Max, Min, Q, Sum
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
@@ -222,18 +222,15 @@ class DomainInvoiceFactory(object):
             return community_ranges
 
     def _generate_invoice(self, subscription, invoice_start, invoice_end):
-        try:
-            invoice, is_new_invoice = Invoice.objects.get_or_create(
-                subscription=subscription,
-                date_start=invoice_start,
-                date_end=invoice_end,
-                is_hidden=subscription.do_not_invoice,
-            )
+        invoice, is_new_invoice = Invoice.objects.get_or_create(
+            subscription=subscription,
+            date_start=invoice_start,
+            date_end=invoice_end,
+            is_hidden=subscription.do_not_invoice,
+        )
 
-            if not is_new_invoice:
-                raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
-        except IntegrityError:
-            raise InvoiceAlreadyCreatedError("race condition")
+        if not is_new_invoice:
+            raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
 
         if subscription.subscriptionadjustment_set.count() == 0:
             # record that the subscription was created
@@ -390,16 +387,13 @@ class CustomerAccountInvoiceFactory(object):
             )
 
     def _generate_customer_invoice(self):
-        try:
-            invoice, is_new_invoice = CustomerInvoice.objects.get_or_create(
-                account=self.account,
-                date_start=self.date_start,
-                date_end=self.date_end
-            )
-            if not is_new_invoice:
-                raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
-        except IntegrityError:
-            raise InvoiceAlreadyCreatedError("race condition")
+        invoice, is_new_invoice = CustomerInvoice.objects.get_or_create(
+            account=self.account,
+            date_start=self.date_start,
+            date_end=self.date_end
+        )
+        if not is_new_invoice:
+            raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
 
         all_subscriptions = []
         for plan in self.subscriptions:
