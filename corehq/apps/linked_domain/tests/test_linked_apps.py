@@ -226,6 +226,12 @@ class TestLinkedApps(BaseLinkedAppsTest):
         master_form = list(self.master1.get_forms(bare=True))[0]
 
         add_xform_resource_overrides(self.linked_domain, self.linked_app.get_id, {master_form.unique_id: '123'})
+        self.addCleanup(
+            lambda: ResourceOverride.objects.filter(
+                domain=self.linked_domain, app_id=self.linked_app.get_id
+            ).delete()
+        )
+
         overwrite_app(self.linked_app, self.master1)
 
         self.assertEqual(
@@ -233,7 +239,35 @@ class TestLinkedApps(BaseLinkedAppsTest):
             self._get_form_ids_by_xmlns(LinkedApplication.get(self.linked_app._id))
         )
 
-        ResourceOverride.objects.filter(domain=self.linked_domain, app_id=self.linked_app.get_id).delete()
+    def test_overwrite_app_override_form_unique_ids_references(self):
+        m0 = self.master1.get_module(0)
+        f1 = m0.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
+        m0.case_details.short.columns[0].action_form_id = f1.unique_id
+        m0.case_details.long.columns[0].action_form_id = f1.unique_id
+
+        master_form = list(self.master1.get_forms(bare=True))[0]
+
+        add_xform_resource_overrides(self.linked_domain, self.linked_app.get_id, {
+            master_form.unique_id: '123',
+            f1.unique_id: '456'
+        })
+        self.addCleanup(
+            lambda: ResourceOverride.objects.filter(
+                domain=self.linked_domain, app_id=self.linked_app.get_id
+            ).delete()
+        )
+
+        overwrite_app(self.linked_app, self.master1)
+
+        linked_app = LinkedApplication.get(self.linked_app._id)
+        self.assertEqual(
+            {master_form.xmlns: '123', f1.xmlns: '456'},
+            self._get_form_ids_by_xmlns(linked_app)
+        )
+
+        self.assertEqual(linked_app.get_module(0).case_details.short.columns[0].action_form_id, '456')
+        self.assertEqual(linked_app.get_module(0).case_details.long.columns[0].action_form_id, '456')
+
 
     def test_multi_master_form_attributes_and_media_versions(self, *args):
         '''
