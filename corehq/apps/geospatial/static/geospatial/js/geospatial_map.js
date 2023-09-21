@@ -18,13 +18,13 @@ hqDefine("geospatial/js/geospatial_map", [
 
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
 
-    function mapItemModel(dataId, dataItem, marker, markerColors) {
+    function mapItemModel(itemId, itemData, marker, markerColors) {
         'use strict';
         var self = {};
-        self.dataId = dataId;
-        self.dataItem = dataItem;
+        self.itemId = itemId;
+        self.itemData = itemData;
         self.marker = marker;
-        self.selectCssId = "select" + dataId;
+        self.selectCssId = "select" + itemId;
         self.isSelected = ko.observable(false);
         self.markerColors = markerColors;
 
@@ -69,13 +69,13 @@ hqDefine("geospatial/js/geospatial_map", [
 
         function filterMapItemsInPolygon(polygonFeature) {
             _.values(caseModels()).filter(function (currCase) {
-                if (currCase.dataItem.coordinates) {
-                    currCase.isSelected(isMapItemInPolygon(polygonFeature, currCase.dataItem.coordinates));
+                if (currCase.itemData.coordinates) {
+                    currCase.isSelected(isMapItemInPolygon(polygonFeature, currCase.itemData.coordinates));
                 }
             });
             _.values(userModels()).filter(function (currUser) {
-                if (currUser.dataItem.coordinates) {
-                    currUser.isSelected(isMapItemInPolygon(polygonFeature, currUser.dataItem.coordinates));
+                if (currUser.itemData.coordinates) {
+                    currUser.isSelected(isMapItemInPolygon(polygonFeature, currUser.itemData.coordinates));
                 }
             });
         }
@@ -199,8 +199,8 @@ hqDefine("geospatial/js/geospatial_map", [
                 return outArr;
             };
 
-            self.addMarker = function (dataId, dataItem, colors) {
-                const coordinates = dataItem.coordinates;
+            self.addMarker = function (itemId, itemData, colors) {
+                const coordinates = itemData.coordinates;
                 // Create the marker
                 const marker = new mapboxgl.Marker({ color: colors.default, draggable: false });  // eslint-disable-line no-undef
                 marker.setLngLat(coordinates);
@@ -235,7 +235,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 addLeaveEvent(markerDiv, popupDiv);
                 addLeaveEvent(popupDiv, markerDiv);
 
-                const mapItemInstance = new mapItemModel(dataId, dataItem, marker, colors);
+                const mapItemInstance = new mapItemModel(itemId, itemData, marker, colors);
                 $(popupDiv).koApplyBindings(mapItemInstance);
 
                 return mapItemInstance;
@@ -439,15 +439,15 @@ hqDefine("geospatial/js/geospatial_map", [
                             return item.gps_point !== null && item.gps_point.length;
                         });
 
-                        const userData = _.object(_.map(usersWithGPS, function (dataItem) {
-                            const gpsData = (dataItem.gps_point) ? dataItem.gps_point.split(' ') : [];
+                        const userData = _.object(_.map(usersWithGPS, function (userData) {
+                            const gpsData = (userData.gps_point) ? userData.gps_point.split(' ') : [];
                             const lat = parseFloat(gpsData[0]);
                             const lng = parseFloat(gpsData[1]);
 
-                            const editUrl = initialPageData.reverse('edit_commcare_user', dataItem.id);
-                            const link = `<a class="ajax_dialog" href="${editUrl}" target="_blank">${dataItem.username}</a>`;
+                            const editUrl = initialPageData.reverse('edit_commcare_user', userData.id);
+                            const link = `<a class="ajax_dialog" href="${editUrl}" target="_blank">${userData.username}</a>`;
 
-                            return [dataItem.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link}];
+                            return [userData.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link}];
                         }));
 
                         const userMapItems = map.addMarkersToMap(userData, userMarkerColors);
