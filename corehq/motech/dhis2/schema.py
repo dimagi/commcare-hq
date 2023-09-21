@@ -168,6 +168,8 @@ def get_tracked_entity_schema() -> dict:
             SchemaOptional("storedBy"): str,
             SchemaOptional("trackedEntityInstance"): id_schema,
             SchemaOptional("trackedEntityType"): id_schema,
+            SchemaOptional("lastUpdatedByUserInfo"): user_info_schema,
+            SchemaOptional("createdByUserInfo"): user_info_schema
         }],
         SchemaOptional("featureType"): str,
         SchemaOptional("geometry"): geometry_schema,
