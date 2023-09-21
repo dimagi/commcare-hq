@@ -19,7 +19,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
     PropertyManager exists to make sure that available properties are updated and unique.
     For example, if a case type contains A, B, and C properties, this class ensures
     that if C is selected, further options will only show A and B.
-    caseType is expectted to be an observable.
+    caseType is expected to be an observable.
     selectedProperties is expected to be an observableArray.
     */
     const PropertyManager = function (caseType, selectedProperties, initialPropertyMap) {
@@ -112,14 +112,8 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         }
 
         function reserveProperties(propertyNames, currentProperties) {
-            propertyNames.forEach(function (propName) {
-                const foundIndex = currentProperties.indexOf(propName);
-                if (foundIndex !== -1) {
-                    currentProperties.splice(foundIndex, 1);
-                }
-            });
-
-            return currentProperties;
+            // make the specified propertyNames unavailable for future selection
+            return _.difference(currentProperties, propertyNames);
         }
 
         return self;
@@ -253,7 +247,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
             initialPageData.get('case_properties'),
             initialPageData.get('include_closed'),
             initialPageData.get('properties_to_update'),
-            initialPageData.get("all_case_properties")
+            initialPageData.get('all_case_properties')
         );
         $("#case-dedupe-rule-definition").koApplyBindings(caseDedupe);
 
