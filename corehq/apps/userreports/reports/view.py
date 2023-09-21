@@ -88,7 +88,7 @@ from corehq.util.view_utils import is_ajax, reverse
 from no_exceptions.exceptions import Http403
 
 
-def get_filter_values(filters, request_dict, user=None, domain=None):
+def get_filter_values(filters, request_dict, user=None):
     """
     Return a dictionary mapping filter ids to specified values
     :param filters: A list of corehq.apps.reports_core.filters.BaseFilter
@@ -98,7 +98,7 @@ def get_filter_values(filters, request_dict, user=None, domain=None):
     """
     try:
         return {
-            filter.css_id: filter.get_value(request_dict, user, domain)
+            filter.css_id: filter.get_value(request_dict, user)
             for filter in filters
         }
     except FilterException as e:
@@ -250,7 +250,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_values(self):
-        return get_filter_values(self.filters, self.request_dict, user=self.request_user, domain=self.domain)
+        return get_filter_values(self.filters, self.request_dict, user=self.request_user)
 
     @property
     @memoized
