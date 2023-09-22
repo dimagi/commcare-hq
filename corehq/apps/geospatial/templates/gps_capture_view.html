@@ -3,10 +3,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block page_title %}
-    {{ current_page.page_name }}
-{% endblock page_title %}
-
 {% block js %}{{ block.super }}
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
     {% compress js %}
@@ -25,15 +21,6 @@
 {% registerurl 'case_data' domain '---' %}
 {% registerurl 'edit_commcare_user' domain '---' %}
 {% registerurl 'gps_capture' domain %}
-
-<div>
-  <span>
-    {% blocktrans %}
-      Use this page to manage GPS data associated with Cases or Mobile workers.
-    {% endblocktrans %}
-  </span>
-</div>
-<br>
 
 <ul id="tabs-list" class="nav nav-tabs">
   <li data-bind="click: onclickAction" class="active"><a data-toggle="tab" href="#tabs-cases">{% trans 'Update Case Data' %}</a></li>
