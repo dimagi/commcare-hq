@@ -44,6 +44,7 @@ class ReportExport(object):
         self.filter_values = filter_values
 
     @property
+    @memoized
     def data_source(self):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         data_source = ConfigurableReportDataSource.from_spec(self.report_config, include_prefilters=True)
@@ -67,10 +68,12 @@ class ReportExport(object):
             for column in self.data_source.inner_columns if column.data_tables_column.visible
         ]]
 
+    @memoized
     def get_data(self):
         return list(self.data_source.get_data())
 
     @property
+    @memoized
     def total_rows(self):
         return [self.data_source.get_total_row()] if self.data_source.has_total_row else []
 
