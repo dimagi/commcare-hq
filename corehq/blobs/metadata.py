@@ -5,11 +5,14 @@ from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
     split_list_by_db_partition,
 )
-from corehq.util.metrics import metrics_counter
+from corehq.util.metrics import (
+    metrics_counter,
+    limit_domains,
+)
+
 from . import CODES
 
 from .models import BlobMeta
-
 
 
 class MetaDB(object):
@@ -232,4 +235,5 @@ def _utcnow():
 
 def _meta_tags(meta):
     type_ = CODES.name_of(meta.type_code, f'type_code_{meta.type_code}')
-    return {'type': type_}
+    domain_ = limit_domains(meta.domain)
+    return {'type': type_, 'domain': domain_}
