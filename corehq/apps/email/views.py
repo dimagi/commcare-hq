@@ -1,10 +1,7 @@
 from django.shortcuts import render, redirect
-from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.views import View
-from django.views.generic.edit import ProcessFormView
 
-from corehq.apps.domain.views import BaseDomainView, BaseProjectSettingsView
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.email.forms import EmailSMTPSettingsForm
 from corehq.apps.email.models import EmailSettings
 
