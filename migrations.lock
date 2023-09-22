@@ -382,8 +382,7 @@ domain_migration_flags
 dropbox
  0001_initial
 email
- 0001_email_settings (5 squashed migrations)
- 0002_alter_emailsettings_sns_secret
+ 0001_initial
 enterprise
  0001_initial
  0002_enterprisepermissions_account_unique
