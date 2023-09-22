@@ -4,8 +4,11 @@ from django.utils.translation import gettext_noop
 from django.utils.translation import gettext as _
 from jsonobject.exceptions import BadValueError
 
-from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
-from corehq.apps.reports.standard import ProjectReport
+from corehq.apps.geospatial.dispatchers import (
+    CaseManagementMapDispatcher,
+    GPSCaptureReportDispatcher,
+)
+from corehq.apps.reports.standard import GenericReportView, ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from couchforms.geopoint import GeoPoint
@@ -77,3 +80,32 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
                 display.case_link
             ])
         return cases
+
+
+class GPSCaptureReportView(GenericReportView):
+    fields = [
+        'corehq.apps.reports.filters.case_list.CaseListFilter',
+        'corehq.apps.reports.filters.select.CaseTypeFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+        'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
+    ]
+
+    name = gettext_noop("Manage GPS Data")
+    slug = "gps_capture_report"
+
+    base_template = "geospatial/gps_capture_base.html"
+    report_template_path = "manage_gps_data.html"
+
+    asynchronous = False
+    dispatcher = GPSCaptureReportDispatcher
+    section_name = gettext_noop("Geospatial")
+
+    @property
+    def template_context(self):
+        context = super(GPSCaptureReportView, self).template_context
+        context.update({
+            'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'data_type': self.request.GET.get('data_type', 'case')
+        })
+
+        return context

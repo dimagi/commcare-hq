@@ -3,10 +3,6 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% block page_title %}
-{{ current_page.title }}
-{% endblock %}
-
 {% block js %}{{ block.super }}
     {% compress js %}
         <script src="{% static 'geospatial/js/geospatial_map.js' %}"></script>

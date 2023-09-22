@@ -14,3 +14,13 @@ class CaseManagementMapDispatcher(ReportDispatcher):
     @cls_to_view_login_and_domain
     def dispatch(self, request, *args, **kwargs):
         return super(CaseManagementMapDispatcher, self).dispatch(request, *args, **kwargs)
+
+
+class GPSCaptureReportDispatcher(ReportDispatcher):
+    prefix = 'geospatial'
+    map_name = 'GEOSPATIAL_MAP'
+
+    @cls_to_view_login_and_domain
+    @toggles.GEOSPATIAL.required_decorator()
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)

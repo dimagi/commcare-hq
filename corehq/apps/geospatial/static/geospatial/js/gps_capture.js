@@ -144,6 +144,7 @@ hqDefine("geospatial/js/gps_capture",[
             self.hasError(false);
             self.showPaginationSpinner(true);
             self.showLoadingSpinner(true);
+            const data = new URLSearchParams(window.location.search);
             $.ajax({
                 method: 'GET',
                 url: initialPageData.reverse('get_paginated_cases_or_users_without_gps'),

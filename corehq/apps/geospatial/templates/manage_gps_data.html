@@ -1,4 +1,4 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "reports/tabular.html" %}
 {% load compress %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -7,35 +7,7 @@
     {{ current_page.page_name }}
 {% endblock page_title %}
 
-{% block js %}{{ block.super }}
-    <!-- Scripts for mapbox -->
-    <script src='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js'></script>
-    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.js'></script>
-    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
-    {% compress js %}
-        <script src="{% static 'geospatial/js/gps_capture.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
-
- {% block stylesheets %}
- {{ block.super }}
- <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css">
- <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css" type="text/css">
- <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
- {% endblock %}
-
-
-{% block additional_initial_page_data %}{{ block.super }}
-    {% initial_page_data "mapbox_access_token" mapbox_access_token %}
-{% endblock %}
-
-{% block page_content %}
-{% initial_page_data 'data_type' data_type %}
-{% registerurl 'get_paginated_cases_or_users_without_gps' domain %}
-{% registerurl 'case_data' domain '---' %}
-{% registerurl 'edit_commcare_user' domain '---' %}
-{% registerurl 'gps_capture' domain %}
-
+{% block reportcontent %}
 <div>
   <span>
     {% blocktrans %}
