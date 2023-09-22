@@ -1294,13 +1294,23 @@ class FormBase(DocumentSchema):
         """
         raise NotImplementedError()
 
-    def is_auto_submitting_form(self):
+    def is_auto_submitting_form(self, case_type=None):
         """
         Should return True if this form passes the following tests:
+         * Requires a case of the same type
          * Pragma-Submit-Automatically is set
          * No question needs manual input
         """
-        raise NotImplementedError()
+        if case_type is None:
+            return False
+
+        if self.get_module().case_type != case_type:
+            return False
+        if not self.requires_case():
+            return False
+
+        qs = self.get_questions([], include_triggers=True)
+        return any(['label_ref' in q and q['label_ref'] == 'Pragma-Submit-Automatically' for q in qs])
 
     def uses_usercase(self):
         raise NotImplementedError()
@@ -1696,10 +1706,6 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     def is_registration_form(self, case_type=None):
         reg_actions = self.get_registration_actions(case_type)
         return len(reg_actions) == 1
-
-    def is_auto_submitting_form(self):
-        # self.get_questions()[0].
-        return True
 
     def uses_usercase(self):
         return actions_use_usercase(self.active_actions())

@@ -525,7 +525,7 @@ def _auto_submitting_form_options(app, module, lang=None):
     reg_forms = [
         form
         for mod in app.get_modules()
-        for form in mod.get_forms() if form.is_auto_submitting_form()
+        for form in mod.get_forms() if form.is_auto_submitting_form(module.case_type)
     ]
     langs = None if lang is None else [lang]
     options.update({f.unique_id: {
