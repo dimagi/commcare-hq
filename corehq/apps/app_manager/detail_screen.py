@@ -1,6 +1,9 @@
 import re
 
+from django.utils.translation import gettext
+
 from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml import const
 from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.xpath import (
@@ -280,6 +283,10 @@ class FormattedDetailColumn(object):
         return self.evaluate_template(self.SORT_XPATH_FUNCTION)
 
     @property
+    def action(self):
+        return None
+
+    @property
     def fields(self):
         print_id = None
         if self.detail.print_template:
@@ -292,6 +299,7 @@ class FormattedDetailColumn(object):
                 template=self.template,
                 sort_node=self.sort_node,
                 print_id=print_id,
+                action=self.action,
             )
         elif self.sort_xpath_function and self.detail.display == 'short':
             yield sx.Field(
@@ -460,6 +468,22 @@ class EnumImage(Enum):
         if width == 0:
             return '13%'
         return str(width)
+
+    @property
+    def action(self):
+        if self.column.action_form_id and self.app.supports_detail_field_action:
+            action_form = self.app.get_form(self.column.action_form_id)
+            if not action_form.requires_case():
+                raise SuiteError(gettext("Action form must require case"))
+            if action_form.get_module().root_module_id:
+                raise SuiteError(gettext("Action form can not be a child module"))
+
+            action = sx.Action(stack=sx.Stack())
+            frame = sx.CreateFrame()
+            frame.add_command(XPath.string(id_strings.form_command(action_form)))
+            frame.add_datum(sx.StackDatum(id='case_id', value='current()/@case_id'))
+            action.stack.add_frame(frame)
+            return action
 
     def _xpath_template(self, type):
         return "if({key_as_condition}, {key_as_var_name}"

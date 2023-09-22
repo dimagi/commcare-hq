@@ -10,7 +10,9 @@ from corehq.apps.app_manager.models import (
     MappingItem,
     Module,
 )
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
+from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
@@ -296,4 +298,46 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             address_popup_template,
             suite,
             './detail[@id="m0_case_short"]/field[2]/template'
+        )
+
+    @flag_enabled('CASE_LIST_CLICKABLE_ICON')
+    def test_case_detail_icon_mapping_with_action(self, *args):
+        factory = AppFactory(domain='domain', name='Case list field actions', build_version='2.54.0')
+        m0, f0 = factory.new_basic_module("module1", "case")
+        factory.form_requires_case(f0)
+
+        f1 = factory.new_form(m0)
+        factory.form_requires_case(f1)
+
+        m0.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Starred'},
+                model='case',
+                field='starred',
+                format='enum-image',
+                enum=[
+                    MappingItem(key='1', value={'en': 'jr://icons/star-gold.png'}),
+                    MappingItem(key='0', value={'en': 'jr://icons/star-grey.png'}),
+                ],
+                action_form_id=f1.unique_id,
+            ),
+        ]
+
+        action_spec = """
+        <partial>
+          <action>
+            <stack>
+              <create>
+                <command value="'m0-f1'"/>
+                <datum id="case_id" value="current()/@case_id"/>
+              </create>
+            </stack>
+          </action>
+        </partial>
+        """
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            action_spec,
+            factory.app.create_suite(),
+            './detail[1]/field/action'
         )
