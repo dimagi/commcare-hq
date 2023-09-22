@@ -47,10 +47,10 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
             rebuildPropertyMap(currentProperties);
         };
 
-        self.updatePropertyValue = function (oldValue, newValue) {
+        self.updatePropertyValue = function (newValue, oldValue) {
             let currentProperties = self.availablePropertyMap()[self.caseType()];
-            currentProperties = reserveProperties([oldValue], currentProperties);
-            currentProperties = restoreProperty(newValue, currentProperties);
+            currentProperties = reserveProperties([newValue], currentProperties);
+            currentProperties = restoreProperty(oldValue, currentProperties);
 
             rebuildPropertyMap(currentProperties);
         };
