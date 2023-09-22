@@ -1,9 +1,9 @@
-{% extends 'styleguide/example.html' %}
+{% extends 'styleguide/bootstrap3/example.html' %}
 
 {% load crispy_forms_tags %}
 
 {% block demo %}
-  {% crispy checkboxes_form %}
+  {% crispy basic_crispy_form %}
 {% endblock demo %}
 
 {% block code %}
@@ -16,21 +16,22 @@ from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
 
 
-class CheckboxesForm(forms.Form):
-    send_email = forms.BooleanField(
-        label=gettext_lazy("This checkbox is badly aligned"),
-        required=False,
+class BasicCrispyForm(forms.Form):
+    first_name = forms.CharField(
+        label=gettext_lazy("First Name"),
     )
-    recipient = forms.CharField(
-        label=gettext_lazy("Email recipient"),
-    )
-    send_to_self = forms.BooleanField(
-        label=gettext_lazy("Also send to myself"),
-        required=False,
+    favorite_color = forms.ChoiceField(
+        label=gettext_lazy("Pick a Favorite Color"),
+        choices=(
+            ('red', gettext_lazy("Red")),
+            ('green', gettext_lazy("Green")),
+            ('blue', gettext_lazy("Blue")),
+            ('purple', gettext_lazy("Purple")),
+        ),
     )
 
     def __init__(self, *args, **kwargs):
-        super(CheckboxesForm, self).__init__(*args, **kwargs)
+        super(BasicCrispyForm, self).__init__(*args, **kwargs)
         self.helper = hqcrispy.HQFormHelper()
 
         self.helper.form_method = 'POST'
@@ -39,12 +40,8 @@ class CheckboxesForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
-                hqcrispy.B3MultiField(
-                    _("Send email when complete"),
-                    "send_email",
-                ),
-                crispy.Field('recipient'),
-                crispy.Field('send_to_self'),
+                crispy.Field('first_name'),
+                crispy.Field('favorite_color'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
