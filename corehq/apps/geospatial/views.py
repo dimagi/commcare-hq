@@ -17,6 +17,9 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 from dimagi.utils.web import json_response
 from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.modules import to_function
+
+from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
@@ -25,9 +28,11 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.form_processor.models import CommCareCase
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.geospatial.forms import GeospatialConfigForm
+from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import json_error
 from .routing_solvers.mapbox_optimize import (
     submit_routing_request,
@@ -200,6 +205,13 @@ class GPSCaptureView(BaseDomainView):
     page_name = _("Manage GPS Data")
     section_name = _("Geospatial")
 
+    fields = [
+        'corehq.apps.reports.filters.case_list.CaseListFilter',
+        'corehq.apps.reports.filters.select.CaseTypeFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+        'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
+    ]
+
     @use_datatables
     @use_jquery_ui
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
@@ -216,9 +228,47 @@ class GPSCaptureView(BaseDomainView):
 
     @property
     def page_context(self):
-        return {
+        page_context = {
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
         }
+        page_context.update(self._case_filters_context())
+        return page_context
+
+    def _case_filters_context(self):
+        # set up context for report filters template to be used for case filtering
+        return {
+            'report': {
+                'title': self.page_name,
+                'section_name': self.section_name,
+                'show_filters': True,
+            },
+            'report_filters': [
+                dict(field=f.render(), slug=f.slug) for f in self.filter_classes
+            ],
+            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
+        }
+
+    @property
+    @memoized
+    def filter_classes(self):
+        # copied from corehq.apps.reports.generic.GenericReportView.filter_classes
+        filters = []
+        fields = self.fields
+        for field in fields or []:
+            if isinstance(field, str):
+                klass = to_function(field, failhard=True)
+            else:
+                klass = field
+            filters.append(
+                klass(self.request, self.domain, self.timezone)
+            )
+        return filters
+
+    @property
+    @memoized
+    def timezone(self):
+        # copied from corehq.apps.reports.generic.GenericReportView.timezone
+        return get_timezone(self.request, self.domain)
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
     def post(self, request, *args, **kwargs):
