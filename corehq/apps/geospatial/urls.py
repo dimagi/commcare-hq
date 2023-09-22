@@ -35,5 +35,4 @@ urlpatterns = [
         name='get_paginated_geohashes'),
 
     CaseManagementMapDispatcher.url_pattern(),
-    CaseGroupingMapDispatcher.url_pattern(),
 ]

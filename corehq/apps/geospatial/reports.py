@@ -4,7 +4,9 @@ from django.utils.translation import gettext_noop
 from django.utils.translation import gettext as _
 from jsonobject.exceptions import BadValueError
 
-from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
+from corehq.apps.geospatial.dispatchers import (
+    CaseManagementMapDispatcher,
+)
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
@@ -13,32 +15,19 @@ from .models import GeoPolygon
 from .utils import get_geo_case_property
 
 
-class CaseManagementMap(ProjectReport, CaseListMixin):
-    name = gettext_noop("Case Management Map")
-    slug = "case_management_map"
-
-    base_template = "geospatial/map_visualization_base.html"
-    report_template_path = "map_visualization.html"
+class BaseCaseMap(ProjectReport, CaseListMixin):
+    section_name = gettext_noop("Geospatial")
 
     dispatcher = CaseManagementMapDispatcher
-    section_name = gettext_noop("Geospatial")
 
     @property
     def template_context(self):
         # Whatever is specified here can be accessed through initial_page_data
-        context = super(CaseManagementMap, self).template_context
+        context = super(BaseCaseMap, self).template_context
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
-            'saved_polygons': [
-                {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
-                for p in GeoPolygon.objects.filter(domain=self.domain).all()
-            ]
         })
-
         return context
-
-    def default_report_url(self):
-        return reverse('geospatial_default', args=[self.request.project.name])
 
     @property
     def headers(self):
@@ -77,3 +66,34 @@ class CaseManagementMap(ProjectReport, CaseListMixin):
                 display.case_link
             ])
         return cases
+
+
+class CaseManagementMap(BaseCaseMap):
+    name = gettext_noop("Case Management Map")
+    slug = "case_management_map"
+
+    base_template = "geospatial/map_visualization_base.html"
+    report_template_path = "map_visualization.html"
+
+    def default_report_url(self):
+        return reverse('geospatial_default', args=[self.request.project.name])
+
+    @property
+    def template_context(self):
+        context = super(CaseManagementMap, self).template_context
+        context.update({
+            'saved_polygons': [
+                {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
+                for p in GeoPolygon.objects.filter(domain=self.domain).all()
+            ]
+        })
+        return context
+
+
+class CaseGroupingReport(BaseCaseMap):
+    name = gettext_noop('Case Grouping')
+    slug = 'case_grouping_map'
+
+    # TODO: We need a separate base template
+    base_template = 'geospatial/map_visualization_base.html'
+    report_template_path = 'case_grouping_map.html'
