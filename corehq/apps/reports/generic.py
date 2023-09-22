@@ -478,7 +478,7 @@ class GenericReportView(object):
                     or self.request.couch_user.can_view_some_reports(self.domain)
                 ),
                 is_emailable=self.emailable,
-                is_export_all = self.exportable_all,
+                is_export_all=self.exportable_all,
                 is_printable=self.printable,
                 is_admin=self.is_admin_report,
                 special_notice=self.special_notice,
