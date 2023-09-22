@@ -743,7 +743,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        onDestroy: function () {
+        onBeforeDetach: function () {
             const self = this;
             self.smallScreenListener.stopListening();
             $(window).off('scroll', self.boundHandleScroll);
@@ -939,8 +939,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        onDestroy: function () {
-            CaseTileListView.__super__.onDestroy.apply(this, arguments);
+        onBeforeDetach: function () {
+            CaseTileListView.__super__.onBeforeDetach.apply(this, arguments);
             $('#content-container').removeClass('full-width');
         },
     });

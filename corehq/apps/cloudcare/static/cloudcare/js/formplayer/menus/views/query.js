@@ -695,7 +695,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.initGeocoders();
         },
 
-        onDestroy: function () {
+        onBeforeDetach: function () {
             this.smallScreenListener.stopListening();
         },
 
