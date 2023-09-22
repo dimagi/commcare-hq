@@ -711,16 +711,42 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        handleScroll: function () {
+            const self = this;
+            if (self.smallScreenEnabled) {
+                const $scrollButton = $('#scroll-to-bottom');
+                if (self.shouldShowScrollButton() && $scrollButton.is(':hidden')) {
+                    $scrollButton.fadeIn();
+                } else if (!self.shouldShowScrollButton() && !$scrollButton.is(':hidden')) {
+                    $scrollButton.fadeOut();
+                }
+            }
+        },
+
+        shouldShowScrollButton: function () {
+            const $pagination = $('.container .pagination-container');
+            const paginationOffscreen = $pagination[0]
+                ? $pagination.offset().top - $(window).scrollTop() > window.innerHeight : false;
+            return paginationOffscreen;
+        },
+
         onAttach() {
             const self = this;
             if (self.showMap) {
                 self.loadMap();
             }
             self.handleSmallScreenChange(self.smallScreenEnabled);
+            self.boundHandleScroll = self.handleScroll.bind(self);
+            $(window).on('scroll', self.boundHandleScroll);
+            if (self.shouldShowScrollButton()) {
+                $('#scroll-to-bottom').show();
+            }
         },
 
         onDestroy: function () {
-            this.smallScreenListener.stopListening();
+            const self = this;
+            self.smallScreenListener.stopListening();
+            $(window).off('scroll', self.boundHandleScroll);
         },
 
         templateContext: function () {
