@@ -1,5 +1,5 @@
 from django.test import TestCase
-from corehq.apps.email.models import EmailSettings
+
 from corehq.apps.email.forms import EmailSMTPSettingsForm
 
 
