@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from custom.abdm.const import HealthInformationType
 from custom.abdm.serializers import (
     GatewayErrorSerializer,
     GatewayRequestBaseSerializer,
@@ -18,6 +19,8 @@ class LinkCareContextSerializer(serializers.Serializer):
         referenceNumber = serializers.CharField()
         display = serializers.CharField()
         careContexts = serializers.ListField(child=CareContextSerializer(), min_length=1)
+        hiTypes = serializers.ListField(child=serializers.ChoiceField(
+            choices=HealthInformationType.CHOICES), required=False)
 
     accessToken = serializers.CharField()
     hip_id = serializers.CharField()

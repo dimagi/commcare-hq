@@ -84,6 +84,7 @@ class LinkCareContext(HIPBaseView):
                                                      )
         for care_context in request_data['patient']['careContexts']:
             HIPCareContext.objects.create(care_context_number=care_context['referenceNumber'],
+                                          health_info_types=care_context['hiTypes'],
                                           link_request=link_request)
         return link_request
 
