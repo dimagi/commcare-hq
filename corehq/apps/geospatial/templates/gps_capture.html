@@ -9,10 +9,6 @@
                 {% blocktrans %}
                     Mobile workers that do not have any associated GPS data.
                 {% endblocktrans %}
-            {% else %}
-                {% blocktrans %}
-                    Cases that do not have any associated GPS data.
-                {% endblocktrans %}
             {% endif %}
         </p>
     </p>
@@ -26,8 +22,6 @@
             <h3 class="panel-title">
                 {% if data_type == 'user' %}
                     {% trans 'Users without GPS Data' %}
-                {% else %}
-                    {% trans 'Cases without GPS Data' %}
                 {% endif %}
             </h3>
         </div>
