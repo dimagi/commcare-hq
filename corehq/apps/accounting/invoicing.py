@@ -222,7 +222,7 @@ class DomainInvoiceFactory(object):
             return community_ranges
 
     def _generate_invoice(self, subscription, invoice_start, invoice_end):
-        invoice, is_new_invoice = Invoice.objects.get_or_create(
+        invoice, is_new_invoice = Invoice.objects.create_or_get(
             subscription=subscription,
             date_start=invoice_start,
             date_end=invoice_end,

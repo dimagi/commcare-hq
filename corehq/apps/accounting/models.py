@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
@@ -2012,6 +2012,18 @@ class InvoiceBaseManager(models.Manager):
 
     def get_queryset(self):
         return super(InvoiceBaseManager, self).get_queryset().filter(is_hidden_to_ops=False)
+
+    def create_or_get(self, **kwargs):
+        """like get_or_create, but try create first"""
+        try:
+            with transaction.atomic(using=self.db):
+                return self.create(**kwargs), True
+        except IntegrityError:
+            try:
+                return self.get(**kwargs), False
+            except self.model.DoesNotExist:
+                pass
+            raise
 
 
 class InvoiceBase(models.Model):

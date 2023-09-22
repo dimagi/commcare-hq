@@ -1,8 +1,9 @@
+import random
+
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
-from corehq.apps.accounting.models import DomainUserHistory
+from corehq.apps.accounting.models import DomainUserHistory, Invoice
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from corehq.apps.accounting import utils
-import random
 from corehq.util.dates import get_previous_month_date_range
 
 
@@ -23,4 +24,10 @@ class UniqueConstraintTest(BaseInvoiceTestCase):
         invoice_factory.create_invoices()
         with self.assertLogs(level='ERROR') as log_cm:
             invoice_factory.create_invoices()
-            self.assertIn("[BILLING] Invoice already existed", log_cm.output[0])
+            self.assertIn("[BILLING] Invoice already existed", "\n".join(log_cm.output))
+
+        invoices = Invoice.objects.filter(
+            date_start=invoice_factory.date_start,
+            date_end=invoice_factory.date_end,
+        )
+        self.assertEqual(invoices.count(), 1)
