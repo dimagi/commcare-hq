@@ -58,3 +58,4 @@ class HIPCareContext(models.Model):
     care_context_number = models.CharField(max_length=255)
     link_request = models.ForeignKey(HIPLinkRequest, on_delete=models.PROTECT,
                                      related_name='care_contexts')
+    health_info_types = models.JSONField(default=list)
