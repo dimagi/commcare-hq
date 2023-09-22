@@ -24,8 +24,6 @@ class EmailSettings(models.Model):
 
     @plaintext_password.setter
     def plaintext_password(self, plaintext):
-        import ipdb
-        ipdb.set_trace()
         if plaintext != PASSWORD_PLACEHOLDER:
             ciphertext = b64_aes_encrypt(plaintext)
             self.password = f'${ALGO_AES}${ciphertext}'
