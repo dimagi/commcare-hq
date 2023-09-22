@@ -19,6 +19,7 @@ from dimagi.utils.web import json_response
 from dimagi.utils.couch.bulk import get_docs
 
 from corehq import toggles
+from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.es import CaseSearchES, UserES
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.data_dictionary.models import CaseProperty
@@ -199,6 +200,8 @@ class GPSCaptureView(BaseDomainView):
     page_name = _("Manage GPS Data")
     section_name = _("Geospatial")
 
+    @use_datatables
+    @use_jquery_ui
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
     def dispatch(self, *args, **kwargs):
         return super(GPSCaptureView, self).dispatch(*args, **kwargs)
