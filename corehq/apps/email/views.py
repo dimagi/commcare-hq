@@ -21,7 +21,7 @@ class EmailSMTPSettingsView(BaseDomainView):
             form = EmailSMTPSettingsForm(instance=email_settings)
         else:
             form = EmailSMTPSettingsForm()
-        return render(request, self.template_name, {'form': form})
+        return render(request, self.template_name, {'form': form, 'domain': self.domain})
 
     def post(self, request, *args, **kwargs):
         email_settings, _ = EmailSettings.objects.get_or_create(domain=self.domain)
@@ -33,11 +33,4 @@ class EmailSMTPSettingsView(BaseDomainView):
             form.save()
             return redirect(EmailSMTPSettingsView.urlname, domain=self.domain)
         else:
-            return render(request, self.template_name, {'form': form})
-
-    def section_url(self):
-        return reverse(self.urlname, args=(self.domain,))
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=(self.domain,))
+            return render(request, self.template_name, {'form': form, 'domain': self.domain})
