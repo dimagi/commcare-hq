@@ -327,26 +327,6 @@ def get_users_with_gps(request, domain):
     return json_response({'user_data': user_data})
 
 
-class CaseGroupingMapView(BaseDomainView):
-    urlname = 'case_grouping_map'
-    template_name = 'case_grouping_map.html'
-
-    page_name = _("Case Grouping Map")
-    section_name = _("Geospatial")
-
-    @method_decorator(toggles.GEOSPATIAL.required_decorator())
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
-
-    @property
-    def section_url(self):
-        return reverse(self.urlname, args=(self.domain,))
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=(self.domain,))
-
-
 @toggles.GEOSPATIAL.required_decorator()
 def get_paginated_geohashes(request, domain, *args, **kwargs):
     """

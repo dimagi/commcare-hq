@@ -14,13 +14,3 @@ class CaseManagementMapDispatcher(ReportDispatcher):
     @cls_to_view_login_and_domain
     def dispatch(self, request, *args, **kwargs):
         return super(CaseManagementMapDispatcher, self).dispatch(request, *args, **kwargs)
-
-
-@method_decorator(toggles.GEOSPATIAL.required_decorator(), name='dispatch')
-class CaseGroupingMapDispatcher(ReportDispatcher):
-    prefix = 'case_grouping_map'
-    map_name = 'CASE_GROUPING_MAP'
-
-    @cls_to_view_login_and_domain
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)

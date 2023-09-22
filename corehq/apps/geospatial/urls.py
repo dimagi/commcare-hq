@@ -2,7 +2,7 @@
 
 from django.conf.urls import re_path as url
 
-from .dispatchers import CaseGroupingMapDispatcher, CaseManagementMapDispatcher
+from .dispatchers import CaseManagementMapDispatcher
 from .views import (
     GeoPolygonView,
     GeospatialConfigPage,
