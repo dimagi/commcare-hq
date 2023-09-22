@@ -371,6 +371,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             paginationGoText: '#goText',
             casesPerPageLimit: '.per-page-limit',
             searchMoreButton: '#search-more',
+            scrollToBottomButton: '#scroll-to-bottom',
         };
     };
 
@@ -382,6 +383,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.paginationGoButton': 'paginationGoAction',
             'click @ui.columnHeader': 'columnSortAction',
             'click @ui.searchMoreButton': 'searchMoreAction',
+            'click @ui.scrollToBottomButton': 'scrollToBottom',
             'keypress @ui.columnHeader': 'columnSortAction',
             'change @ui.casesPerPageLimit': 'onPerPageLimitChange',
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
@@ -477,6 +479,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     scrollTop: $('#content-container').offset().top - constants.BREADCRUMB_HEIGHT_PX,
                 }, 350);
             }
+        },
+
+        scrollToBottom: function () {
+            $([document.documentElement, document.body]).animate({
+                scrollTop: $('.container .pagination-container').offset().top,
+            }, 500);
         },
 
         searchTextKeyAction: function (event) {

@@ -3,7 +3,9 @@
 
 <script type="text/template" id="case-view-list-template">
   <div class="module-case-list-container">
-
+    <button id="scroll-to-bottom" class="btn btn-lg btn-circle btn-primary hidden-md hidden-lg" type="button" aria-label="{% trans 'Scroll to bottom' %}">
+      <i class="fa fa-lg fa-arrow-down" aria-hidden="true"></i>
+    </button>
     <div class="page-header menu-header" id="case-list-menu-header">
       <% if (sidebarEnabled) {%>
         <button id="search-more" class="btn btn-primary visible-xs visible-sm pull-right" type="button"
