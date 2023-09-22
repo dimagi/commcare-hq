@@ -521,23 +521,17 @@ def _case_list_form_options(app, module, lang=None):
 
 
 def _auto_submitting_form_options(app, module, lang=None):
-    options = OrderedDict()
-    reg_forms = [
-        form
+    langs = None if lang is None else [lang]
+    forms = [
+        {
+            "form_id": form.unique_id,
+            "form_name": trans(form.name, langs),
+            "module_name": trans(mod.name, langs)
+        }
         for mod in app.get_modules()
         for form in mod.get_forms() if form.is_auto_submitting_form(module.case_type)
     ]
-    langs = None if lang is None else [lang]
-    options.update({f.unique_id: {
-        'name': trans(f.name, langs),
-        'post_form_workflow': f.post_form_workflow,
-        'is_registration_form': True,
-    } for f in reg_forms})
-
-    return {
-        'options': options,
-        'form': module.case_list_form,
-    }
+    return forms
 
 
 def get_parent_select_followup_forms(app, module):

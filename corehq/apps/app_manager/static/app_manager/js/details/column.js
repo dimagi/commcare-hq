@@ -261,14 +261,20 @@ hqDefine("app_manager/js/details/column", function () {
         }]).val(self.original.date_format);
         self.date_extra.ui.prepend($('<div/>').text(gettext(' Format ')));
 
+        const autoSubmittingFormOptions = [{value: "-1", label: 'Select a form'}]
+        let moduleName = ""
         const auto_submitting_form_options =
-            [{value: "-1", label: 'Select a form'}]
-                .concat(
-                Object.entries(initial_page_data('auto_submitting_form_options').options)
-                    .map(([form_id, values]) => ({ value: form_id, label: values.name }))
-            );
+            Object.entries(initial_page_data('auto_submitting_form_options'))
+        auto_submitting_form_options
+            .forEach(([_, form]) => {
+                if (form.module_name !== moduleName) {
+                    moduleName = form.module_name;
+                    autoSubmittingFormOptions.push({groupName: moduleName});
+                }
+                autoSubmittingFormOptions.push({value: form.form_id, label: form.form_name});
+            });
         const selectedValue = self.original.action_form_id ? self.original.action_form_id: "-1"
-        self.action_form_extra = uiElement.select(auto_submitting_form_options)
+        self.action_form_extra = uiElement.select(autoSubmittingFormOptions)
             .val(selectedValue);
 
         self.late_flag_extra = uiElement.input().val(self.original.late_flag.toString());
