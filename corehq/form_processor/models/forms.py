@@ -428,7 +428,6 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     DUPLICATE = 8
     ERROR = 16
     SUBMISSION_ERROR_LOG = 32
-    DELETED = 64
     STATES = (
         (NORMAL, 'normal'),
         (ARCHIVED, 'archived'),
@@ -436,7 +435,6 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         (DUPLICATE, 'duplicate'),
         (ERROR, 'error'),
         (SUBMISSION_ERROR_LOG, 'submission_error'),
-        (DELETED, 'deleted'),
     )
     DOC_TYPE_TO_STATE = {
         "XFormInstance": NORMAL,
