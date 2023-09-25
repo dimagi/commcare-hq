@@ -17,7 +17,7 @@ class Command(BaseCommand):
         def iter_all_ids():
             rows = paginate_query_across_partitioned_databases(
                 XFormInstance,
-                Q(deleted_on__isnull=True),
+                (Q(deleted_on__isnull=True) & Q(state__gte=old_deleted_state)),
                 values=['form_id'],
                 query_size=chunk_size,
             )
