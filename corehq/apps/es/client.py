@@ -243,14 +243,14 @@ class ElasticManageAdapter(BaseAdapter):
         self._es.indices.refresh(",".join(indices), expand_wildcards="none")
 
     def indices_info(self):
-        """Retrieve meta information about all the indices in the cluster. This will also return the closed indices
+        """Retrieve meta information about all the indices in the cluster. This will also return closed indices
         :returns: ``dict`` A dict with index name in keys and index meta information.
         """
         indices_info = self._es.cat.indices(format='json', bytes='b')
         filtered_indices_info = {}
         for info in indices_info:
             if info['index'].startswith('.'):
-                # Elasticsearch system indices, ignore
+                # Elasticsearch system index, ignore
                 continue
             filtered_indices_info[info['index']] = {
                 'health': info['health'],
