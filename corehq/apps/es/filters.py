@@ -15,6 +15,8 @@ Contributing:
 Additions to this file should be added to the ``builtin_filters`` method on
 either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 """
+from typing import TypedDict, Literal, Any
+
 from .utils import es_format_datetime
 
 
@@ -159,6 +161,69 @@ def geo_bounding_box(field, top_left, bottom_right):
             field: {
                 'top_left': top_left_geo.lat_lon,
                 'bottom_right': bottom_right_geo.lat_lon,
+            }
+        }
+    }
+
+
+class ElasticsearchGeoJSONGeometry(TypedDict):
+    """
+    A Geometry object represents points, curves, and surfaces in
+    coordinate space.
+
+    A GeoJSON Geometry object of any type other than
+    "GeometryCollection" has a member with the name "coordinates". The
+    value of the "coordinates" member is an array. The structure of the
+    elements in this array is determined by the type of geometry.
+
+    More info: `The GeoJSON specification (RFC 7946) <https://datatracker.ietf.org/doc/html/rfc7946>`_
+    """
+
+    # `ElasticsearchGeoJSONGeometry` uses Elasticsearch types, and
+    # extends GeoJSON to include Elasticsearch's "envelope" type.
+    type: Literal[
+        'point',
+        'multipoint',
+        'linestring',
+        'multilinestring',
+        'polygon',
+        'multipolygon',
+        # 'geometrycollection' is not implemented
+        'envelope',  # A bounding rectangle, or envelope
+    ]
+
+    # NOTE: In GeoJSON and Elasticsearch, the coordinate order is
+    #   longitude, latitude (X, Y), not latitude, longitude (Y, X).
+    coordinates: list[Any]
+
+
+def geo_shape(
+    field: str,
+    shape: ElasticsearchGeoJSONGeometry,
+    relation: Literal[
+        'intersects',
+        'disjoint',
+        'within',
+        'contains',
+    ] = 'intersects',
+) -> dict[str, Any]:
+    """
+    Filters cases by case properties indexed using the the geo_point
+    type.
+
+    More info: `The Geoshape query reference <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html>`_
+
+    :param field: The field where geopoints are stored
+    :param shape: A shape definition given in GeoJSON geometry format
+    :param relation: The relation between the shape and the case
+        property values.
+    :return: A filter definition
+    """  # noqa: E501
+    return {
+        "geo_shape": {
+            field: {
+                "shape": shape,
+                "relation": relation
             }
         }
     }

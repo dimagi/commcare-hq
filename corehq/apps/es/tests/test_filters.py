@@ -215,6 +215,50 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
             validate_query=False,  # Avoid creating an index just for this test
         )
 
+    def test_geo_shape(self):
+        shape = {
+            'type': 'envelope',
+            # NOTE: coordinate order is longitude, latitude (X, Y)
+            'coordinates': [[-74.1, 40.73], [-71.12, 40.01]]
+        }
+        query = CaseSearchES().filter(
+            filters.geo_shape('case_gps', shape)
+        )
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "geo_shape": {
+                                "case_gps": {
+                                    "shape": {
+                                        "type": "envelope",
+                                        "coordinates": [
+                                            [-74.1, 40.73],
+                                            [-71.12, 40.01]
+                                        ]
+                                    },
+                                    "relation": "intersects"
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        self.checkQuery(
+            query,
+            json_output,
+            validate_query=False,
+        )
+
 
 @es_test
 class TestSourceFiltering(ElasticTestMixin, SimpleTestCase):
