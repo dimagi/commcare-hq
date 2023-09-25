@@ -266,7 +266,7 @@ hqDefine("app_manager/js/details/column", function () {
         const autoSubmittingForms =
             Object.entries(initialPageData('auto_submitting_form_options'));
         autoSubmittingForms
-            .forEach(([_, form]) => {
+            .forEach(([, form]) => {
                 if (form.module_name !== moduleName) {
                     moduleName = form.module_name;
                     autoSubmittingFormOptions.push({groupName: moduleName});

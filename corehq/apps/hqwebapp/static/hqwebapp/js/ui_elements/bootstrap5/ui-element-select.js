@@ -11,9 +11,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-select', [
     var module = {};
 
     var Select = function (options) {
-        var that = this,
-            i,
-            option;
+        var that = this;
         hqMain.eventize(this);
         this.ui = $('<span/>');
         this.value = "";
@@ -58,7 +56,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-select', [
                 return this;
             }
         },
-        valLabel : function () {
+        valLabel: function () {
             return this.valueLabel;
         },
         setEdit: function (edit) {
