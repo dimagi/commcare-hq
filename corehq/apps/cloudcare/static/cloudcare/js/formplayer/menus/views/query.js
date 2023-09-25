@@ -157,12 +157,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     );
                     return true;
                 }
-                formEntryUtils.renderMapboxInput(
-                    inputId,
-                    geocoderItemCallback(id, model),
-                    geocoderOnClearCallback(id),
-                    initialPageData
-                );
+                formEntryUtils.renderMapboxInput({
+                    divId: inputId,
+                    itemCallback: geocoderItemCallback(id, model),
+                    clearCallBack: geocoderOnClearCallback(id),
+                    initialPageData: initialPageData
+                });
                 var divEl = $field.find('.mapboxgl-ctrl-geocoder');
                 divEl.css("max-width", "none");
                 divEl.css("width", "100%");
