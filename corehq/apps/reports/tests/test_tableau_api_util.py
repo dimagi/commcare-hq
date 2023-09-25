@@ -125,14 +125,12 @@ class TestTableauAPIUtil(TestTableauAPISession):
         self.assertTrue(TableauUser.objects.filter(username=delete_username, server__domain=self.domain))
 
     @mock.patch('corehq.apps.reports.models.requests.request')
-    def test_update_tableau_user(self, mock_request):
+    @mock.patch('corehq.apps.reports.util._update_user_remote')
+    def test_update_tableau_user(self, mock_update_user_remote, mock_request):
+        TableauServer.objects.filter(domain=self.domain).update(allowed_tableau_groups=['group3', 'group5',
+                                                                                        'group6'])
         mock_request.side_effect = (_mock_create_session_responses(self)
-        + [self.tableau_instance.delete_user_response(),
-            self.tableau_instance.create_user_response('pbeasley', 'Viewer'),
-            self.tableau_instance.get_group_response(HQ_TABLEAU_GROUP_NAME),
-            self.tableau_instance.add_user_to_group_response(),
-            self.tableau_instance.add_user_to_group_response(),
-            self.tableau_instance.add_user_to_group_response()])
+        + [self.tableau_instance.get_groups_for_user_id_response()])
         self.assertEqual(
             TableauUser.objects.get(username='pbeasley', server__domain=self.domain).role,
             'Explorer'
@@ -148,11 +146,35 @@ class TestTableauAPIUtil(TestTableauAPISession):
             TableauUser.objects.get(username='pbeasley', server__domain=self.domain).role,
             'Viewer'
         )
-        # User with matching username from another domain shoudl have role and user ID updated.
+        # User with matching username from another domain should have role updated.
         self.assertEqual(
             TableauUser.objects.get(username='pbeasley', server__domain=self.domain2).role,
             'Viewer'
         )
+        mock_update_user_remote.assert_called_once()
+        self.assertListEqual(sorted([TableauGroupTuple(name='group5', id='u908e'),
+                                     TableauGroupTuple(name='group1', id='1a2b3'),
+                                     TableauGroupTuple(name='group2', id='c4d5e')]),
+                             sorted(mock_update_user_remote.call_args.kwargs['groups']))
+
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_update_tableau_user_remote(self, mock_request):
+        mock_request.side_effect = (_mock_create_session_responses(self)
+        + [self.tableau_instance.get_groups_for_user_id_response(),
+            self.tableau_instance.delete_user_response(),
+            self.tableau_instance.create_user_response('pbeasley', 'Viewer'),
+            self.tableau_instance.get_group_response(HQ_TABLEAU_GROUP_NAME),
+            self.tableau_instance.add_user_to_group_response(),
+            self.tableau_instance.add_user_to_group_response(),
+            self.tableau_instance.add_user_to_group_response()])
+        self.assertEqual(
+            TableauUser.objects.get(username='pbeasley', server__domain=self.domain2).tableau_user_id,
+            'asdf'
+        )
+        update_tableau_user(self.domain, 'pbeasley', 'Viewer',
+            groups=[TableauGroupTuple(name='group4', id='d234u'), TableauGroupTuple(name='group5', id='u908e')]
+        )
+        # User with matching username from another domain should have ID updated.
         self.assertEqual(
             TableauUser.objects.get(username='pbeasley', server__domain=self.domain2).tableau_user_id,
             'gh23jk'
