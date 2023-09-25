@@ -134,6 +134,19 @@ ELASTICSEARCH_DEBUG_HOSTS = {
     'icds': '100.71.184.7',
 }
 
+# corehq/apps/es/index/settings.py sets the number of replicas for the
+# case_search index to 1. But dev environments only have one node, which
+# is already in use by the primary, and so the replica cannot be
+# assigned. The following overrides those settings. (We can't use the
+# constants defined in that file, because it will cause a circular
+# import.)
+ES_SETTINGS = {
+    'case_search': {
+        'number_of_replicas': 0,
+        'number_of_shards': 5,
+    }
+}
+
 FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
 
 # use console email by default
