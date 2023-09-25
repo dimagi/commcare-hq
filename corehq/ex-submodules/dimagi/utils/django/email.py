@@ -171,8 +171,8 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
 
 
 def get_connection(domain: str = None):
-    from corehq.apps.email.models import EmailSMTPBackend
-    custom_backend = EmailSMTPBackend.get_domain_default_backend(domain)
+    from corehq.apps.email.models import EmailSettings
+    custom_backend = EmailSettings.objects.filter(domain=domain)
     if custom_backend:
         backend = "django.core.mail.backends.smtp.EmailBackend"
         backend_settings = {
