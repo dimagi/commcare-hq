@@ -380,7 +380,7 @@ mdurl==0.1.2
     # via markdown-it-py
 msgpack==1.0.5
     # via cachecontrol
-munch==2.5.0
+munch==4.0.0
     # via fiona
 myst-parser==2.0.0
     # via -r docs-requirements.in
@@ -596,7 +596,6 @@ six==1.16.0
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
-    #   munch
     #   pyjwkest
     #   python-dateutil
     #   pyzxcvbn

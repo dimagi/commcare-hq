@@ -379,7 +379,7 @@ markupsafe==2.1.2
     #   werkzeug
 msgpack==1.0.5
     # via cachecontrol
-munch==2.5.0
+munch==4.0.0
     # via fiona
 nose==1.3.7
     # via
@@ -609,7 +609,6 @@ six==1.16.0
     #   jsonobject-couchdbkit
     #   jsonpath-ng
     #   mando
-    #   munch
     #   pyjwkest
     #   python-dateutil
     #   pyzxcvbn
