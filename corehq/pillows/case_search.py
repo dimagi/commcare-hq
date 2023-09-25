@@ -2,6 +2,7 @@ from django.core.mail import mail_admins
 from django.db import ProgrammingError
 
 from corehq.apps.case_search.const import (
+    GEOPOINT_VALUE,
     SPECIAL_CASE_PROPERTIES_MAP,
     VALUE,
 )
@@ -95,9 +96,10 @@ def _add_smart_types(dynamic_properties, domain, case_type):
     for prop in dynamic_properties:
         if prop['key'] in gps_props:
             try:
-                prop['geopoint_value'] = GeoPoint.from_string(prop['value'], flexible=True).lat_lon
+                geopoint = GeoPoint.from_string(prop[VALUE], flexible=True)
+                prop[GEOPOINT_VALUE] = geopoint.lat_lon
             except BadValueError:
-                prop['geopoint_value'] = None
+                prop[GEOPOINT_VALUE] = None
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
