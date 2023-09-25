@@ -84,7 +84,11 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-select', [
             this.$edit_view.html('');
             for (var i = 0; i < this.options.length; i += 1) {
                 var option = this.options[i];
-                $('<option/>').text(option.label).val(option.value).appendTo(this.$edit_view);
+                if ('groupName' in option) {
+                    $(`<optgroup label="${option.groupName}"/>`).appendTo(this.$edit_view);
+                } else {
+                    $('<option/>').text(option.label).val(option.value).appendTo(this.$edit_view);
+                }
             }
         },
     };

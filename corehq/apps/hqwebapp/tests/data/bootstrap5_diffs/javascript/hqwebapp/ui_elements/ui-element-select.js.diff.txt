@@ -10,3 +10,34 @@
  ], function (
      $,
      _,
+@@ -11,7 +11,9 @@
+     var module = {};
+ 
+     var Select = function (options) {
+-        var that = this;
++        var that = this,
++            i,
++            option;
+         hqMain.eventize(this);
+         this.ui = $('<span/>');
+         this.value = "";
+@@ -56,7 +58,7 @@
+                 return this;
+             }
+         },
+-        valLabel: function () {
++        valLabel : function () {
+             return this.valueLabel;
+         },
+         setEdit: function (edit) {
+@@ -80,8 +82,8 @@
+         setOptions: function (options) {
+             this.options = options.map(o => _.isString(o) ? {value: o, label: o} : o);
+             this.$edit_view.html('');
+-            for (let i = 0; i < this.options.length; i += 1) {
+-                const option = this.options[i];
++            for (var i = 0; i < this.options.length; i += 1) {
++                var option = this.options[i];
+                 if ('groupName' in option) {
+                     $(`<optgroup label="${option.groupName}"/>`).appendTo(this.$edit_view);
+                 } else {
