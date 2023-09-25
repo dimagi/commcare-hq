@@ -161,7 +161,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     divId: inputId,
                     itemCallback: geocoderItemCallback(id, model),
                     clearCallBack: geocoderOnClearCallback(id),
-                    initialPageData: initialPageData,
                     responseDataTypes: 'address,region,place,postcode'
                 });
                 var divEl = $field.find('.mapboxgl-ctrl-geocoder');

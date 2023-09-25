@@ -2,7 +2,8 @@
 hqDefine("cloudcare/js/form_entry/utils", function () {
     var errors = hqImport("cloudcare/js/form_entry/errors"),
         formEntryConst = hqImport("cloudcare/js/form_entry/const"),
-        toggles = hqImport("hqwebapp/js/toggles");
+        toggles = hqImport("hqwebapp/js/toggles"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var module = {
         resourceMap: undefined,
@@ -72,7 +73,6 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {(string|string[])} divId - Div ID for the Mapbox input
      * @param {function} itemCallback - function to call back after new search
      * @param {function} clearCallBack - function to call back after clearing the input
-     * @param {Object} initialPageData - initial_page_data object
      * @param {function|undefined} inputOnKeyDown - inputOnKeyDown function (optional)
      * @param {boolean} showGeolocationButton - show geolocation button. Defaults to false. (optional)
      * @param {boolean} geolocateOnLoad - geolocate the user's location on load. Defaults to false. (optional)
@@ -83,7 +83,6 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         divId,
         itemCallback,
         clearCallBack,
-        initialPageData,
         inputOnKeyDown,
         showGeolocationButton = false,
         geolocateOnLoad = false,
