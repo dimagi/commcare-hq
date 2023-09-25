@@ -16,7 +16,7 @@ asgiref==3.5.0
     # via django
 async-timeout==4.0.2
     # via redis
-attrs==21.4.0
+attrs==23.1.0
     # via
     #   -r base-requirements.in
     #   cattrs
