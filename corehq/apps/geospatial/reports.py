@@ -1,16 +1,17 @@
 from django.conf import settings
 from django.urls import reverse
-from django.utils.translation import gettext_noop
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
+
 from jsonobject.exceptions import BadValueError
 
-from corehq.apps.geospatial.dispatchers import (
-    CaseManagementMapDispatcher,
-)
+from couchforms.geopoint import GeoPoint
+
+from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
-from couchforms.geopoint import GeoPoint
+
 from .models import GeoPolygon
 from .utils import get_geo_case_property
 
@@ -31,7 +32,10 @@ class BaseCaseMap(ProjectReport, CaseListMixin):
 
     @property
     def headers(self):
-        from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+        from corehq.apps.reports.datatables import (
+            DataTablesColumn,
+            DataTablesHeader,
+        )
         headers = DataTablesHeader(
             DataTablesColumn(_("case_id"), prop_name="type.exact"),
             DataTablesColumn(_("GPS"), prop_name="type.exact"),
