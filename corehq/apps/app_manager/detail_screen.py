@@ -536,7 +536,7 @@ class Picture(FormattedDetailColumn):
 
 
 @register_format_type('clickable-icon')
-class ClickableIcon(FormattedDetailColumn):
+class ClickableIcon(EnumImage):
     template_form = 'clickable-icon'
 
 
