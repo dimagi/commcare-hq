@@ -370,7 +370,7 @@
         <h4 class="modal-title">{% trans 'Permanently Delete Form' %}</h4>
       </div>
       <div class="modal-body">
-        <form action="{% url "delete_form" domain instance.form_id %}" method="POST">{% csrf_token %}
+        <form action="{% url "soft_delete_form" domain instance.form_id %}" method="POST">{% csrf_token %}
           <p class="alert alert-warning">
             <i class="fa fa-exclamation-triangle"></i>
             {% blocktrans %}
