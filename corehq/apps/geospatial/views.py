@@ -15,7 +15,7 @@ from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, json_request
 from dimagi.utils.couch.bulk import get_docs
 
 from memoized import memoized
@@ -32,6 +32,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.reports.generic import get_filter_classes
+from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import json_error
 from .routing_solvers.mapbox_optimize import (
@@ -281,39 +282,56 @@ def get_paginated_cases_or_users_without_gps(request, domain):
     if case_or_user == 'user':
         data = _get_paginated_users_without_gps(domain, page, limit, query)
     else:
-        data = _get_paginated_cases_without_gps(domain, page, limit, query)
+        data = GetPaginatedCases(request, domain).get_paginated_cases_without_gps(domain, page, limit, query)
     return JsonResponse(data)
 
 
-def _get_paginated_cases_without_gps(domain, page, limit, query):
-    location_prop_name = get_geo_case_property(domain)
-    case_ids = (
-        CaseSearchES()
-        .domain(domain)
-        .is_closed(False)
-        .case_property_missing(location_prop_name)
-        .search_string_query(query, ['name'])
-        .sort('server_modified_on', desc=True)
-    ).get_ids()
+class GetPaginatedCases(CaseListMixin):
+    search_class = CaseSearchES
 
-    paginator = Paginator(case_ids, limit)
-    case_ids_page = list(paginator.get_page(page))
-    cases = CommCareCase.objects.get_cases(case_ids_page, domain, ordered=True)
-    case_data = []
-    for case_obj in cases:
-        lat, lon = get_lat_lon_from_dict(case_obj.case_json, location_prop_name)
-        case_data.append(
-            {
-                'id': case_obj.case_id,
-                'name': case_obj.name,
-                'lat': lat,
-                'lon': lon,
-            }
+    def __init__(self, request, domain, **kwargs):
+        # override super class corehq.apps.reports.generic.GenericReportView init method to
+        # avoid failures for missing expected properties for a report and keep only necessary properties
+        self.request = request
+        self.request_params = json_request(self.request.GET)
+        self.domain = domain
+
+    def _base_query(self):
+        # override CaseListMixin _base_query method to avoid pagination in ES and handle it later
+        return (
+            self.search_class()
+            .domain(self.domain)
         )
-    return {
-        'items': case_data,
-        'total': paginator.count,
-    }
+
+    def get_paginated_cases_without_gps(self, domain, page, limit, query):
+        cases_query = self._build_query()
+        location_prop_name = get_geo_case_property(domain)
+        cases_query = (
+            cases_query
+            .case_property_missing(location_prop_name)
+            .search_string_query(query, ['name'])
+            .sort('server_modified_on', desc=True)
+        )
+        case_ids = cases_query.get_ids()
+
+        paginator = Paginator(case_ids, limit)
+        case_ids_page = list(paginator.get_page(page))
+        cases = CommCareCase.objects.get_cases(case_ids_page, domain, ordered=True)
+        case_data = []
+        for case_obj in cases:
+            lat, lon = get_lat_lon_from_dict(case_obj.case_json, location_prop_name)
+            case_data.append(
+                {
+                    'id': case_obj.case_id,
+                    'name': case_obj.name,
+                    'lat': lat,
+                    'lon': lon,
+                }
+            )
+        return {
+            'items': case_data,
+            'total': paginator.count,
+        }
 
 
 def _get_paginated_users_without_gps(domain, page, limit, query):
