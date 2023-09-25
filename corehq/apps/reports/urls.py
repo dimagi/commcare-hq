@@ -46,7 +46,7 @@ from .views import (
     archive_form,
     case_form_data,
     delete_config,
-    delete_form,
+    soft_delete_form,
     delete_scheduled_report,
     download_form,
     edit_form,
@@ -122,7 +122,7 @@ urlpatterns = [
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/correct_data/$', edit_form, name='edit_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', archive_form, name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', unarchive_form, name='unarchive_form'),
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/delete/$', delete_form, name='delete_form'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/delete/$', soft_delete_form, name='soft_delete_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', resave_form_view, name='resave_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/attachment/(?P<attachment_id>.*)$', view_form_attachment),
 
