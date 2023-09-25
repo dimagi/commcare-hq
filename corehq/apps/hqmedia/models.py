@@ -15,7 +15,6 @@ from memoized import memoized
 from PIL import Image
 
 from dimagi.ext.couchdbkit import (
-    BooleanProperty,
     DateTimeProperty,
     DictProperty,
     Document,

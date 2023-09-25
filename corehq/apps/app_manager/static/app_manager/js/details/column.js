@@ -12,7 +12,7 @@
  */
 hqDefine("app_manager/js/details/column", function () {
     const uiElement = hqImport('hqwebapp/js/bootstrap3/ui-element');
-    const initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
+    const initialPageData = hqImport('hqwebapp/js/initial_page_data').get;
 
     return function (col, screen) {
         /*
@@ -261,11 +261,11 @@ hqDefine("app_manager/js/details/column", function () {
         }]).val(self.original.date_format);
         self.date_extra.ui.prepend($('<div/>').text(gettext(' Format ')));
 
-        const autoSubmittingFormOptions = [{value: "-1", label: 'Select a form'}]
-        let moduleName = ""
-        const auto_submitting_form_options =
-            Object.entries(initial_page_data('auto_submitting_form_options'))
-        auto_submitting_form_options
+        const autoSubmittingFormOptions = [{value: "-1", label: 'Select a form'}];
+        let moduleName = "";
+        const autoSubmittingForms =
+            Object.entries(initialPageData('auto_submitting_form_options'));
+        autoSubmittingForms
             .forEach(([_, form]) => {
                 if (form.module_name !== moduleName) {
                     moduleName = form.module_name;
@@ -273,7 +273,7 @@ hqDefine("app_manager/js/details/column", function () {
                 }
                 autoSubmittingFormOptions.push({value: form.form_id, label: form.form_name});
             });
-        const selectedValue = self.original.action_form_id ? self.original.action_form_id: "-1"
+        const selectedValue = self.original.action_form_id ? self.original.action_form_id : "-1";
         self.action_form_extra = uiElement.select(autoSubmittingFormOptions)
             .val(selectedValue);
 
@@ -372,12 +372,12 @@ hqDefine("app_manager/js/details/column", function () {
                     self.enum_extra.keys_are_conditions(true);
                     self.format.ui.parent().append(self.enum_extra.ui);
                     self.format.ui.parent().append(self.action_form_extra.ui);
-                    const action_form = self.action_form_extra.ui.find('select');
-                    action_form.change(function () {
-                        self.action_form_extra.value = action_form.val();
+                    const actionForm = self.action_form_extra.ui.find('select');
+                    actionForm.change(function () {
+                        self.action_form_extra.value = actionForm.val();
                         fireChange();
                     });
-                    self.action_form_extra.value = action_form.val();
+                    self.action_form_extra.value = actionForm.val();
                 } else if (this.val() === "graph") {
                     // Replace format select with edit button
                     var parent = self.format.ui.parent();
