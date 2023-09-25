@@ -182,16 +182,16 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                             }
                         },
                         {
-                            "geo_bounding_box": {
+                            "geo_shape": {
                                 "location": {
-                                    "top_left": {
-                                        "lat": 40.73,
-                                        "lon": -74.1
+                                    "shape": {
+                                        "type": "envelope",
+                                        "coordinates": [
+                                            [-74.1, 40.73],
+                                            [-71.12, 40.01]
+                                        ]
                                     },
-                                    "bottom_right": {
-                                        "lat": 40.01,
-                                        "lon": -71.12
-                                    }
+                                    "relation": "within"
                                 }
                             }
                         },
