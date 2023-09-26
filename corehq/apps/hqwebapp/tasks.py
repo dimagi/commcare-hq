@@ -67,7 +67,6 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
     from dimagi.utils.django.email import (
         get_valid_recipients,
         mark_local_bounced_email,
-        get_connection,
     )
     filtered_recipient_list = get_valid_recipients(recipient_list, domain)
     bounced_recipients = list(set(recipient_list) - set(filtered_recipient_list))
@@ -86,7 +85,6 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
         headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
     if settings.SES_CONFIGURATION_SET is not None:
         headers[SES_CONFIGURATION_SET_HEADER] = settings.SES_CONFIGURATION_SET
-    connection = get_connection(domain)
 
     try:
         message = EmailMessage(
@@ -95,7 +93,6 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
             from_email=from_email,
             to=filtered_recipient_list,
             headers=headers,
-            connection=connection,
         )
         return message.send()
     except SMTPDataError as e:

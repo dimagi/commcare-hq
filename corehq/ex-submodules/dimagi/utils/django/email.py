@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from smtplib import SMTPDataError, SMTPSenderRefused
 
 from django.conf import settings
@@ -170,18 +171,60 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             error_msg.send()
 
 
-def get_connection(domain: str = None):
+def getEmailConfiguration(domain: str, from_email: str = settings.DEFAULT_FROM_EMAIL):
     from corehq.apps.email.models import EmailSettings
-    custom_backend = EmailSettings.objects.filter(domain=domain)
-    if custom_backend:
-        backend = "django.core.mail.backends.smtp.EmailBackend"
+    try:
+        email_setting = EmailSettings.objects.get(domain=domain)
+        if email_setting.use_this_gateway:
+            return CustomEmailConfiguration(email_setting)
+        else:
+            return DefaultEmailConfiguration(from_email)
+    except EmailSettings.DoesNotExist:
+        return DefaultEmailConfiguration(from_email)
+
+
+class EmailConfigurationManager(ABC):
+    @property
+    @abstractmethod
+    def from_email(self):
+        pass
+
+    @property
+    @abstractmethod
+    def connection(self):
+        pass
+
+
+class DefaultEmailConfiguration(EmailConfigurationManager):
+    def __init__(self, from_email: str):
+        self._from_email: str = from_email
+
+    @property
+    def from_email(self) -> str:
+        return self._from_email
+
+    @property
+    def connection(self):
+        return django_get_connection()
+
+
+class CustomEmailConfiguration(EmailConfigurationManager):
+    def __init__(self, email_setting):
+        from corehq.apps.email.models import EmailSettings
+        self._email_setting: EmailSettings = email_setting
+
+    @property
+    def from_email(self) -> str:
+        return self._email_setting.from_email
+
+    @property
+    def connection(self):
         backend_settings = {
-            'host': custom_backend.server,
-            'port': custom_backend.port,
-            'username': custom_backend.username,
-            'password': custom_backend.password,
+            'host': self._email_setting.server,
+            'port': self._email_setting.port,
+            'username': self._email_setting.username,
+            'password': self._email_setting.plaintext_password,
             'use_tls': True,
         }
+        backend = "django.core.mail.backends.smtp.EmailBackend"
         return django_get_connection(backend=backend, **backend_settings)
-    else:
-        return django_get_connection()
