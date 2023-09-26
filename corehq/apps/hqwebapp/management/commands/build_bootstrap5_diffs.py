@@ -58,6 +58,7 @@ def get_bootstrap5_filepaths(full_diff_config):
             for filename_bootstrap3, filename_bootstrap5 in migrated_files:
                 diff_filename = get_diff_filename(filename_bootstrap3, filename_bootstrap5, file_type)
                 diff_filepath = COREHQ_BASE_DIR / DIFF_STORAGE_FOLDER / label / diff_filename
+                diff_filepath.parent.mkdir(parents=True, exist_ok=True)
                 bootstrap3_filepath = path_bootstrap3 / filename_bootstrap3
                 bootstrap5_filepath = path_bootstrap5 / filename_bootstrap5
 

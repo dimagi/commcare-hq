@@ -37,6 +37,8 @@ class CreateIndexIfNotExists(CreateIndex):
 
     """
     def run(self, *args, **kwargs):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
+            return
         from corehq.apps.es.client import manager
         if not manager.index_exists(self.name):
             return super().run(*args, **kwargs)
@@ -66,6 +68,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='hqapps',
+            es_versions=[2],
         ),
         CreateIndexIfNotExists(
             name=getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29"),
@@ -82,6 +85,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}, 'phonetic': {'filter': ['standard', 'lowercase', 'soundex'], 'tokenizer': 'standard'}},
             },
             settings_key='case_search',
+            es_versions=[2],
         ),
         CreateIndexIfNotExists(
             name='hqcases_2016-03-04',
@@ -96,6 +100,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='hqcases',
+            es_versions=[2],
         ),
         CreateIndexIfNotExists(
             name='hqdomains_2021-03-08',
@@ -111,6 +116,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'comma': {'pattern': '\\s*,\\s*', 'type': 'pattern'}, 'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='hqdomains',
+            es_versions=[2],
         ),
         CreateIndexIfNotExists(
             name=getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07"),
@@ -125,6 +131,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='xforms',
+            es_versions=[2],
         ),
         CreateIndexIfNotExists(
             name='hqgroups_2017-05-29',
@@ -139,6 +146,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='hqgroups',
+            es_versions=[2],
         ),
         CreateIndexIfNotExists(
             name='smslogs_2020-01-28',
@@ -154,6 +162,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='smslogs',
+            es_versions=[2],
         ),
         CreateIndexIfNotExists(
             name='hqusers_2017-09-07',
@@ -169,5 +178,6 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='hqusers',
+            es_versions=[2],
         ),
     ]

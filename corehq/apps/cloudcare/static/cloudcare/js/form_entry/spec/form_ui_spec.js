@@ -89,7 +89,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
                 ix: "1",
             });
             g0.children[0].children[0].style = styleObj;
-            g0.children[0].children[0].style = styleObj;
+            g0.children[0].children[1].style = styleObj;
             let q1 = fixtures.selectJSON({
                 style: styleObj,
                 ix: "2",
@@ -108,7 +108,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             // Expected structure (where gq signifies type "grouped-question-tile-row")
             assert.equal(form.children().length, 4); // [gq, g, gq, gq]
             assert.equal(form.children()[0].children().length, 1); // [q0]
-            assert.equal(form.children()[1].children()[0].children().length, 2); // [q(ix=2,3), q(ix=2,4)]
+            assert.equal(form.children()[1].children()[0].children()[0].children().length, 2); // [q(ix=2,3), q(ix=2,4)]
             assert.equal(form.children()[2].children().length, 2); // [q1, q2]
             assert.equal(form.children()[3].children().length, 1); // [q3]
         });

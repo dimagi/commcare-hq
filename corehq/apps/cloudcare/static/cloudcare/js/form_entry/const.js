@@ -36,6 +36,8 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         ETHIOPIAN: 'ethiopian',
         SIGNATURE: 'signature',
         PER_ROW: '-per-row',
+        TEXT_ALIGN_CENTER: 'text-align-center',
+        TEXT_ALIGN_RIGHT: 'text-align-right',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
@@ -59,6 +61,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         NEW_FORM: 'new-form',
         ANSWER: 'answer',
         ANSWER_MEDIA: 'answer_media',
+        CLEAR_ANSWER: 'clear_answer',
         CURRENT: 'current',
         EVALUATE_XPATH: 'evaluate-xpath',
         NEW_REPEAT: 'new-repeat',

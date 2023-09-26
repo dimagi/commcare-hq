@@ -210,7 +210,12 @@
             }
         ">
     <label class="caption control-label" data-bind="css: labelWidth, attr: {'for': entry.entryId}">
-      <div data-bind="css: {'row': help()}">
+      {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
+      <div data-bind="css: {
+          'row': help(),
+          'text-center': stylesContains('text-align-center'),
+          'text-right': stylesContains('text-align-right'),
+        }">
         <span class="webapp-markdown-output" tabindex="0"
               data-bind="
                 html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
@@ -281,7 +286,11 @@
   <!-- /ko -->
   <!-- ko if: datatype() === 'info' -->
   <div class="info panel panel-default">
-    <div class="panel-body">
+    {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
+    <div class="panel-body" data-bind="css: {
+        'text-center': stylesContains('text-align-center'),
+        'text-right': stylesContains('text-align-right'),
+      }">
       <span class="ix" data-bind="text: ixInfo($data)">></span>
       <span class="caption webapp-markdown-output"
             data-bind="
@@ -294,12 +303,12 @@
       >
       </div>
       <div class="widget-container controls" data-bind="css: controlWidth">
-      <!-- labels only deal with server errors, since there's no data type validation for the browser to do-->
-      <div class="text-danger error-message" data-bind="
-                visible: serverError,
-                text: serverError
-      "></div>
-    </div>
+        <!-- labels only deal with server errors, since there's no data type validation for the browser to do-->
+        <div class="text-danger error-message" data-bind="
+          visible: serverError,
+          text: serverError
+          "></div>
+      </div>
     </div>
   </div>
   <!-- /ko -->
@@ -444,6 +453,9 @@
         },
     "/>
   <span class="help-block type" aria-hidden="true" data-bind="text: helpText()"></span>
+  <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear">
+    {% trans "Clear" %}
+  </button>
 </script>
 
 <script type="text/html" id="address-entry-ko-template">

@@ -69,6 +69,9 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'hqwebapp/js/lib/modernizr': 'Modernizr',
                 'sinon/pkg/sinon': 'sinon',
             };
+            if (window.USE_BOOTSTRAP5) {
+                thirdPartyGlobals['es6!hqwebapp/js/bootstrap5_loader'] = 'bootstrap';
+            }
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
                 var dependency = dependencies[i];

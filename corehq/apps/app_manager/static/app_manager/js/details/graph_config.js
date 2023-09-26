@@ -61,7 +61,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
         };
 
         self.ui.koApplyBindings(self);
-        hqImport("hqwebapp/js/main").eventize(self);
+        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
 
         /**
          * Return an object representing this graph configuration that is suitable

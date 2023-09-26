@@ -30,11 +30,17 @@ class TestMigrationQuery(TestCase):
         )
         patcher2 = patch(
             ('corehq.apps.users.management.commands.add_data_dict_permissions'
-            '.DATA_DICTIONARY.get_enabled_domains'),
+             '.DATA_DICTIONARY.get_enabled_domains'),
+            return_value=[]
+        )
+        patcher3 = patch(
+            ('corehq.apps.users.management.commands.add_data_dict_permissions'
+             '.get_domains_with_privilege'),
             return_value=[self.domain]
         )
         patcher1.start()
         patcher2.start()
+        patcher3.start()
         self.role = UserRole(domain=self.domain, name="role1")
         self.role.save()
         self.addCleanup(self.role.delete)

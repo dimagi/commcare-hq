@@ -7,6 +7,7 @@
 
 {% block page_content %}
 {% initial_page_data 'config' config %}
+{% initial_page_data 'gps_case_props_deprecated_state' gps_case_props_deprecated_state %}
 
   <form id="geospatial-config-form" class="form-horizontal disable-on-submit" method="post">
     {% crispy form %}

@@ -29,6 +29,7 @@ class GeospatialConfigForm(forms.ModelForm):
     )
     case_location_property_name = forms.CharField(
         label=_("Fetch case location data from property"),
+        widget=forms.widgets.Select(choices=[]),
         required=True,
         help_text=_("The name of the case property storing the geo-location data of your cases."),
     )
@@ -45,7 +46,34 @@ class GeospatialConfigForm(forms.ModelForm):
                         'user_location_property_name',
                         data_bind="value: customUserFieldName"
                     ),
-                    crispy.Field('case_location_property_name', data_bind="value: geoCasePropertyName"),
+                    crispy.Field(
+                        'case_location_property_name',
+                        data_bind="options: geoCasePropOptions, "
+                                  "value: geoCasePropertyName, "
+                                  "event: {change: onGeoCasePropChange}"
+                    ),
+                    crispy.Div(
+                        crispy.HTML('%s' % _(
+                            'The currently used "{{ config.case_location_property_name }}" case property '
+                            'has been deprecated in the Data Dictionary. Please consider switching this '
+                            'to another property.')
+                        ),
+                        css_class='alert alert-warning',
+                        data_bind="visible: isCasePropDeprecated"
+                    ),
+                    crispy.Div(
+                        crispy.HTML('%s' % _(
+                            'The currently used "{{ config.case_location_property_name }}" case '
+                            'property may be associated with cases. Selecting a new case '
+                            'property will have the following effects:'
+                            '<ul><li>All cases using the old case property will no longer appear on maps.</li>'
+                            '<li>If the old case property is being used in an application, a new version would '
+                            'need to be released with the new case property for all users that capture '
+                            'location data.</li></ul>')
+                        ),
+                        css_class='alert alert-warning',
+                        data_bind="visible: hasGeoCasePropChanged"
+                    ),
                 ),
                 hqcrispy.FormActions(
                     StrictButton(

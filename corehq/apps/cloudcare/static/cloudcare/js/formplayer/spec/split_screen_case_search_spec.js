@@ -62,6 +62,7 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
 
                 assert.isTrue(stubs.regions['sidebar'].show.called);
                 assert.isTrue(stubs.regions['main'].show.called);
+                assert.isTrue(stubs.regions['breadcrumbMenuDropdown'].show.called);
             });
 
             it('should show sidebar and main regions with query type split screen case search', function () {

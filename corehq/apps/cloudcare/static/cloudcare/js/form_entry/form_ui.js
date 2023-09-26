@@ -135,7 +135,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             curr = curr.parent;
         }
         return curr;
-    };
+    }
 
     /**
      * Base abstract prototype for Repeat, Group, GroupedQuestionTileRow, and Form. Adds methods to
@@ -160,7 +160,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 return child.hasError();
             });
         });
-    };
+    }
 
     /**
      * Reconciles the JSON representation of a Container (Group, Repeat, Form) and renders it into
@@ -170,8 +170,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Container.prototype.fromJS = function (json) {
         var self = this;
 
-        if (!json.type){
-            Container.groupQuestions(json)
+        if (!json.type) {
+            Container.groupQuestions(json);
         }
 
         var mapping = {
@@ -191,7 +191,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             children: {
                 create: function (options) {
                     if (options.data.type === constants.GROUPED_QUESTION_TILE_ROW_TYPE) {
-                        return new GroupedQuestionTileRow(options.data, self)
+                        return new GroupedQuestionTileRow(options.data, self);
                     } else if (options.data.type === constants.QUESTION_TYPE) {
                         return new Question(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
@@ -268,7 +268,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 newChildren.push(currentGroup);
             }
             currentGroup.children.push(child);
-        };
+        }
 
         function resetCurrentGroup() {
             if (currentGroup) {
@@ -277,7 +277,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             }
             currentGroup = null;
             usedWidth = 0;
-        };
+        }
 
         for (let child of json.children) {
             if (child.type === constants.QUESTION_TYPE) {
@@ -287,7 +287,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     resetCurrentGroup();
                     usedWidth += questionTileWidth;
                 }
-                addToCurrentGroup(child)
+                addToCurrentGroup(child);
             } else if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
                 const newGroup = Container.groupQuestions(child);
                 newChildren.push(newGroup);
@@ -297,10 +297,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 resetCurrentGroup();
             }
         }
-        resetCurrentGroup()
+        resetCurrentGroup();
         json.children = newChildren;
         return json;
-    }
+    };
 
     /**
      * Represents the entire form. There is only one of these on a page.
@@ -338,7 +338,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 return true;
             }
 
-            let questions = getQuestions(self)
+            let questions = getQuestions(self);
             return _.every(questions, function (q) {
                 return (q.answer() === constants.NO_ANSWER && !q.required()) || q.answer() !== null;
             });
@@ -354,7 +354,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 return false;
             }
 
-            let questions = getQuestions(self)
+            let questions = getQuestions(self);
             var allValidAndNotPending = _.every(questions, function (q) {
                 return q.isValid() && !q.pendingAnswer();
             });
@@ -659,10 +659,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.parent = parent;
         Container.call(self, json);
 
-        self.required = ko.observable(0)
+        self.required = ko.observable(0);
         self.childrenRequired = ko.computed(function () {
             return _.find(self.children(), function (child) {
-                return child.required()
+                return child.required();
             });
         });
     }
@@ -746,6 +746,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }, self.throttle);
         self.onchange = self.triggerAnswer;
 
+        self.onClear = _.throttle(function () {
+            $.publish('formplayer.' + constants.CLEAR_ANSWER, self);
+        }, self.throttle);
+
         self.mediaSrc = function (resourceType) {
             if (!resourceType || !_.isFunction(formEntryUtils.resourceMap)) { return ''; }
             return formEntryUtils.resourceMap(resourceType);
@@ -809,13 +813,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Question.prototype.stylesContaining = function (pattern) {
         var self = this;
         var styleStr = (self.style) ? ko.utils.unwrapObservable(self.style.raw) : null;
-        return getMatchingStyles(pattern, styleStr)
+        return getMatchingStyles(pattern, styleStr);
     };
 
     /**
-     * Returns a boolean of whether the styles contain a pattern
-     * If a regex is provided, returns regex matches. If a string is provided
-     * an exact match is returned.
+     * Returns a boolean of whether the styles contain a pattern.
      * @param {Object} pattern - the regex or string used to find matching styles.
      */
     Question.prototype.stylesContains = function (pattern) {
@@ -823,7 +825,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     Question.prototype.setWidths = function () {
-        const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style)
+        const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
 
         if (columnWidth === constants.GRID_COLUMNS) {
             this.controlWidth = constants.CONTROL_WIDTH;
@@ -841,7 +843,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      * based on Bootstrap's 12 column grid system and returns the column width.
      * @param {Object} style - the appearance attributes
      */
-    Question.calculateColumnWidthForPerRowStyle= function(style) {
+    Question.calculateColumnWidthForPerRowStyle = function (style) {
         const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
         const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
         const matchingPerRowStyles = getMatchingStyles(perRowPattern, styleStr);
@@ -849,7 +851,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         const itemsPerRow = perRowStyle !== null ? parseInt(perRowStyle.split("-")[0], 10) : null;
 
         return itemsPerRow !== null ? Math.round(constants.GRID_COLUMNS / itemsPerRow) : constants.GRID_COLUMNS;
-      }
+    };
 
     return {
         getIx: getIx,

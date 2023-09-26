@@ -1,0 +1,9 @@
+{% load hq_shared_tags %}
+
+{% maintenance_alerts request as alerts %}
+{% for alert in alerts %}
+  <div class="alert alert-warning alert-maintenance hide" data-id="{{ alert.id }}">
+      <button class="btn-close" data-bs-dismiss="alert" aria-label="btn-close">&times;</button>
+      {{ alert.html }}
+  </div>
+{% endfor %}

@@ -765,6 +765,7 @@ AVAILABLE_CUSTOM_RULE_ACTIONS = {
         'custom.covid.rules.custom_actions.set_all_activity_complete_date_to_today',
     'GCC_SANGATH_SANITIZE_SESSIONS_PEER_RATING':
         'custom.gcc_sangath.rules.custom_actions.sanitize_session_peer_rating',
+    'DFCI_SWASTH_UPDATE_COUNSELLOR_LOAD': 'custom.dfci_swasth.rules.custom_actions.update_counsellor_load',
 }
 
 ####### auditcare parameters #######
@@ -1976,7 +1977,11 @@ DOMAIN_MODULE_MAP = {
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
     'kenya-vca': 'custom.abt',
+    'pmievolve-madagascar': 'custom.abt',
+    'pmievolve-malawi': 'custom.abt',
+    'pmievolve-mozambique': 'custom.abt',
     'pmievolve-rwanda': 'custom.abt',
+    'pmievolve-zambia': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',

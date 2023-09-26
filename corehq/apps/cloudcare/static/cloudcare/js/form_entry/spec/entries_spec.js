@@ -70,7 +70,7 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {
             var entry;
 
             questionJSON.datatype = constants.SELECT;
-            questionJSON.style = { raw: constants.MINIMAL };
+            questionJSON.style = { raw: constants.MINIMAL + " dummy" };
             questionJSON.choices = ['a', 'b'];
 
             entry = formUI.Question(questionJSON).entry;

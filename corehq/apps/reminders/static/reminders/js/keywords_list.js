@@ -3,7 +3,7 @@ hqDefine('reminders/js/keywords_list', [
     "knockout",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/multiselect_utils",
-    "hqwebapp/js/crud_paginated_list",
+    "hqwebapp/js/bootstrap3/crud_paginated_list",
 ], function ($, ko, initialPageData, multiselectUtils, CRUDPaginatedList) {
     $(function () {
         multiselectUtils.createFullMultiselectWidget('keyword-selector', {

@@ -1,9 +1,9 @@
 hqDefine("translations/js/translations", [
     'jquery',
     'underscore',
-    'hqwebapp/js/main',
-    'hqwebapp/js/ui_elements/ui-element-input',
-    'hqwebapp/js/ui_elements/ui-element-select',
+    'hqwebapp/js/bootstrap3/main',
+    'hqwebapp/js/ui_elements/bootstrap3/ui-element-input',
+    'hqwebapp/js/ui_elements/bootstrap3/ui-element-select',
 ], function (
     $,
     _,

@@ -865,7 +865,7 @@ class EditLocationView(BaseEditLocationView):
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = gettext_noop('Organization Structure Import Status')
-    template_name = 'hqwebapp/soil_status_full.html'
+    template_name = 'hqwebapp/bootstrap3/soil_status_full.html'
 
     @method_decorator(require_can_edit_locations)
     def dispatch(self, request, *args, **kwargs):
@@ -1062,7 +1062,7 @@ class DownloadLocationStatusView(BaseLocationView):
             'next_url': next_url,
             'next_url_text': next_url_text,
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

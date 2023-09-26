@@ -28,7 +28,7 @@
  }
  
  .btn-full-width {
-@@ -30,25 +9,25 @@
+@@ -30,25 +9,29 @@
  // Separated button groups in toolbars need more space between them,
  // since the buttons within the group have space between them
  .btn-toolbar > .btn-group-separated:not(:first-child) {
@@ -70,3 +70,7 @@
      }
 +  }
  }
++
++.btn-outline-danger:hover {
++  color: #ffffff;
++}

@@ -331,7 +331,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         });
 
         var $saveContainer = $("#settings-save-btn");
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved settings."),
             save: function () {
                 self.saveButton.ajax(self.saveOptions());

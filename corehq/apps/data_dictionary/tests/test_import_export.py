@@ -13,10 +13,12 @@ from corehq.apps.data_dictionary.views import (
     ExportDataDictionaryView, UploadDataDictionaryView, ALLOWED_VALUES_SHEET_SUFFIX)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
-from corehq.util.test_utils import flag_enabled, TestFileMixin
+from corehq.util.test_utils import TestFileMixin, privilege_enabled
+from corehq import privileges
+from corehq.util.test_utils import flag_enabled
 
 
-@flag_enabled('DATA_DICTIONARY')
+@privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryImportTest(TestCase, TestFileMixin):
     domain_name = uuid.uuid4().hex
     file_path = ('data',)
@@ -40,6 +42,7 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
         self.url = reverse(UploadDataDictionaryView.urlname, args=[self.domain_name])
         self.client.login(username='test', password='foobar')
 
+    @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
     def test_clean_import(self):
         fname = self.get_path('clean_data_dictionary', 'xlsx')
         with open(fname, 'rb') as dd_file:
@@ -64,6 +67,7 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
                             allowed_value=val, description=f'{val} description')
                         self.assertEqual(1, av_qs.count())
 
+    @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
     def test_broken_import(self):
         fname = self.get_path('broken_data_dictionary', 'xlsx')
         with open(fname, 'rb') as dd_file:
@@ -86,8 +90,25 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
         received_errors = {elem.text for elem in soup.find_all('li')}
         self.assertEqual(expected_errors, received_errors)
 
+    def test_import_with_warnings(self):
+        fname = self.get_path('clean_data_dictionary', 'xlsx')
+        with open(fname, 'rb') as dd_file:
+            response = self.client.post(self.url, {'bulk_upload_file': dd_file})
+        self.assertEqual(response.status_code, 200)
+        messages = list(response.context['messages'])
+        self.assertEqual(len(messages), 2)
+        soup = BeautifulSoup(str(messages[1]), features="lxml")
+        received_warnings = {elem.text for elem in soup.find_all('li')}
+        expected_warnings = {
+            'The multi-choice sheets (ending in "-vl") in the uploaded Excel file were ignored '
+            'during the import as they are an unsupported format in the Data Dictionary',
+            'The "Data Type" column values were ignored during the import as they are '
+            'an unsupported format in the Data Dictionary',
+        }
+        self.assertEqual(received_warnings, expected_warnings)
 
-@flag_enabled('DATA_DICTIONARY')
+
+@privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryExportTest(TestCase):
     domain_name = uuid.uuid4().hex
 
@@ -126,6 +147,7 @@ class DataDictionaryExportTest(TestCase):
         self.url = reverse(ExportDataDictionaryView.urlname, args=[self.domain_name])
         self.client.login(username='test', password='foobar')
 
+    @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
     def test_export(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -137,3 +159,15 @@ class DataDictionaryExportTest(TestCase):
             name = self.case_types[i].name
             self.assertEqual(name, workbook.sheetnames[i * 2])
             self.assertEqual(f'{name}{ALLOWED_VALUES_SHEET_SUFFIX}', workbook.sheetnames[i * 2 + 1])
+
+    def test_export_without_data_type(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        workbook = openpyxl.load_workbook(io.BytesIO(response.content), read_only=True)
+        self.assertEqual(len(workbook.sheetnames), len(self.case_types))
+        for i in range(len(self.case_types)):
+            name = self.case_types[i].name
+            self.assertEqual(name, workbook.sheetnames[i])
+            sheet = workbook[name]
+            for row in sheet.iter_rows(min_row=1, max_row=1, min_col=1):
+                self.assertTrue(len(row), 5)

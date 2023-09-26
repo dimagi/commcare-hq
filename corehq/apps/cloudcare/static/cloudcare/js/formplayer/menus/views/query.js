@@ -1,7 +1,7 @@
 /*global DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
-    // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
+    // 'hqwebapp/js/bootstrap3/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
         cloudcareUtils = hqImport("cloudcare/js/utils"),
@@ -10,7 +10,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        toggles = hqImport("hqwebapp/js/toggles");
 
     var separator = " to ",
         serverSeparator = "__",
@@ -372,12 +373,29 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.parentView.setStickyQueryInputs();
         },
 
-        onRender: function () {
+        _initializeSelect2Dropdown: function () {
+            let placeHolderText;
+            switch (this.model.get('input')) {
+                case 'select1':
+                    placeHolderText = gettext('Please select one');
+                    break;
+                case 'select':
+                    placeHolderText = gettext('Please select one or more');
+                    break;
+                default:
+                    placeHolderText = ' ';
+                    break;
+            }
+
             this.ui.valueDropdown.select2({
                 allowClear: true,
-                placeholder: " ",   // required for allowClear to work
+                placeholder: placeHolderText,   // required for allowClear to work
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
+        },
+
+        onRender: function () {
+            this._initializeSelect2Dropdown();
             this.ui.hqHelp.hqHelp();
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.daterangepicker({
@@ -438,6 +456,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             // only here to maintain backward compatibility and can be removed
             // once web apps fully transition using keys to convey select prompt selection.
             this.selectValuesByKeys = false;
+            this.dynamicSearchEnabled = options.disableDynamicSearch ? false :
+                (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
 
             for (let model of this.parentModel) {
                 if ("itemsetChoicesKey" in model.attributes) {
@@ -510,6 +530,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
+            if (self.dynamicSearchEnabled) {
+                self.updateSearchResults();
+            }
         },
 
         clearAction: function () {
@@ -518,12 +541,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 childView.clear();
             });
             self.setStickyQueryInputs();
+            if (self.dynamicSearchEnabled) {
+                self.updateSearchResults();
+            }
         },
 
         submitAction: function (e) {
             var self = this;
             e.preventDefault();
+            self.performSubmit();
+        },
 
+        performSubmit: function () {
+            var self = this;
             self.validateAllFields().done(function () {
                 FormplayerFrontend.trigger(
                     "menu:query",
@@ -532,6 +562,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     self.options.sidebarEnabled
                 );
             });
+        },
+
+        updateSearchResults: function () {
+            var self = this;
+            var invalidRequiredFields = [];
+            self.children.each(function (childView) {
+                if (childView.hasRequiredError()) {
+                    invalidRequiredFields.push(childView.model.get('text'));
+                }
+            });
+            if (invalidRequiredFields.length === 0) {
+                self.performSubmit();
+            }
         },
 
         validateFieldChange: function (changedChildView) {

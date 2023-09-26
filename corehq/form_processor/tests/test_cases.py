@@ -1,4 +1,5 @@
 import uuid
+from contextlib import contextmanager
 from datetime import datetime
 
 import attr
@@ -36,6 +37,31 @@ class BaseCaseManagerTest(TestCase):
             FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
             FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
         super(BaseCaseManagerTest, self).tearDown()
+
+    @contextmanager
+    def get_case_and_indices(self, mother_id, task_id):
+        case = _create_case()
+        mother_index = CommCareCaseIndex(
+            case=case,
+            identifier='parent',
+            referenced_type='mother',
+            referenced_id=mother_id,
+            relationship_id=CommCareCaseIndex.CHILD
+        )
+        case.track_create(mother_index)
+        task_index = CommCareCaseIndex(
+            case=case,
+            identifier='task',
+            referenced_type='task',
+            referenced_id=task_id,
+            relationship_id=CommCareCaseIndex.EXTENSION
+        )
+        case.track_create(task_index)
+        case.save(with_tracked_models=True)
+        try:
+            yield case, mother_index, task_index
+        except Exception:
+            pass
 
 
 @sharded
@@ -436,6 +462,35 @@ class TestCommCareCase(BaseCaseManagerTest):
         ))
         self.assertEqual(len(case.get_closing_transactions()), 2)
 
+    def test_get_index_map(self):
+        mother_id = uuid.uuid4().hex
+        task_id = uuid.uuid4().hex
+        with self.get_case_and_indices(
+            mother_id=mother_id,
+            task_id=task_id,
+        ) as (case, index1, index2):
+            index_map = case.get_index_map()
+            self.assertEqual(index_map, {
+                'parent': {
+                    'case_id': mother_id,
+                    'case_type': 'mother',
+                    'relationship': 'child',
+                },
+                'task': {
+                    'case_id': task_id,
+                    'case_type': 'task',
+                    'relationship': 'extension',
+                },
+            })
+
+    def test_get_index_map_reversed(self):
+        with self.get_case_and_indices(
+            mother_id=uuid.uuid4().hex,
+            task_id=uuid.uuid4().hex,
+        ) as (case, index1, index2):
+            index_map = case.get_index_map(reversed=True)
+            self.assertEqual(index_map, {})  # Nothing indexes `case`
+
 
 @sharded
 class TestCaseAttachmentManager(BaseCaseManagerTest):
@@ -511,28 +566,16 @@ class TestCaseAttachmentManager(BaseCaseManagerTest):
 class TestCommCareCaseIndexManager(BaseCaseManagerTest):
 
     def test_get_indices(self):
-        case = _create_case()
-        index1 = CommCareCaseIndex(
-            case=case,
-            identifier='parent',
-            referenced_type='mother',
-            referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndex.CHILD
-        )
-        case.track_create(index1)
-        index2 = CommCareCaseIndex(
-            case=case,
-            identifier='task',
-            referenced_type='task',
-            referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndex.EXTENSION
-        )
-        case.track_create(index2)
-        case.save(with_tracked_models=True)
-
-        indices = CommCareCaseIndex.objects.get_indices(case.domain, case.case_id)
-        indices.sort(key=lambda x: x.identifier)  # "parent" comes before "task"
-        self.assertEqual([index1, index2], indices)
+        with self.get_case_and_indices(
+            mother_id=uuid.uuid4().hex,
+            task_id=uuid.uuid4().hex,
+        ) as (case, index1, index2):
+            indices = CommCareCaseIndex.objects.get_indices(
+                case.domain,
+                case.case_id,
+            )
+            indices.sort(key=lambda x: x.identifier)  # "parent" comes before "task"
+            self.assertEqual([index1, index2], indices)
 
     def test_get_reverse_indices(self):
         referenced_case_id = uuid.uuid4().hex
@@ -543,53 +586,41 @@ class TestCommCareCaseIndexManager(BaseCaseManagerTest):
         self.assertEqual([index], indices)
 
     def test_get_all_reverse_indices_info(self):
-        # Create case and indexes
-        case = _create_case()
         referenced_id1 = uuid.uuid4().hex
         referenced_id2 = uuid.uuid4().hex
-        extension_index = CommCareCaseIndex(
-            case=case,
-            identifier="task",
-            referenced_type="task",
-            referenced_id=referenced_id1,
-            relationship_id=CommCareCaseIndex.EXTENSION
-        )
-        case.track_create(extension_index)
-        child_index = CommCareCaseIndex(
-            case=case,
-            identifier='parent',
-            referenced_type='mother',
-            referenced_id=referenced_id2,
-            relationship_id=CommCareCaseIndex.CHILD
-        )
-        case.track_create(child_index)
-        case.save(with_tracked_models=True)
+        with self.get_case_and_indices(
+            mother_id=referenced_id2,
+            task_id=referenced_id1,
+        ) as (case, child_index, extension_index):
 
-        # Create irrelevant case and index
-        _create_case_with_index(case.case_id)
+            # Create irrelevant case and index
+            _create_case_with_index(case.case_id)
 
-        # create index on deleted case
-        _create_case_with_index(referenced_id1, case_is_deleted=True)
+            # create index on deleted case
+            _create_case_with_index(referenced_id1, case_is_deleted=True)
 
-        self.assertEqual(
-            set(CommCareCaseIndex.objects.get_all_reverse_indices_info(DOMAIN, [referenced_id1, referenced_id2])),
-            {
-                CaseIndexInfo(
-                    case_id=case.case_id,
-                    identifier='task',
-                    referenced_id=referenced_id1,
-                    referenced_type='task',
-                    relationship=CommCareCaseIndex.EXTENSION,
-                ),
-                CaseIndexInfo(
-                    case_id=case.case_id,
-                    identifier='parent',
-                    referenced_id=referenced_id2,
-                    referenced_type='mother',
-                    relationship=CommCareCaseIndex.CHILD
-                ),
-            }
-        )
+            self.assertEqual(
+                set(CommCareCaseIndex.objects.get_all_reverse_indices_info(
+                    DOMAIN,
+                    [referenced_id1, referenced_id2],
+                )),
+                {
+                    CaseIndexInfo(
+                        case_id=case.case_id,
+                        identifier='task',
+                        referenced_id=referenced_id1,
+                        referenced_type='task',
+                        relationship=CommCareCaseIndex.EXTENSION,
+                    ),
+                    CaseIndexInfo(
+                        case_id=case.case_id,
+                        identifier='parent',
+                        referenced_id=referenced_id2,
+                        referenced_type='mother',
+                        relationship=CommCareCaseIndex.CHILD
+                    ),
+                }
+            )
 
     def test_get_extension_case_ids(self):
         # There are similar tests for get_extension_case_ids in the
