@@ -261,6 +261,7 @@ hqDefine("app_manager/js/details/column", function () {
         }]).val(self.original.date_format);
         self.date_extra.ui.prepend($('<div/>').text(gettext(' Format ')));
 
+        self.autoSubmittingFormLabel = $('<span>Form to submit on click:</span>')
         const autoSubmittingFormOptions = [{value: "-1", label: 'Select a form'}];
         let moduleName = "";
         const autoSubmittingForms =
@@ -349,6 +350,7 @@ hqDefine("app_manager/js/details/column", function () {
             if (self.format.ui.parent().length > 0) {
                 self.date_extra.ui.detach();
                 self.enum_extra.ui.detach();
+                self.autoSubmittingFormLabel.detach();
                 self.action_form_extra.ui.detach();
                 self.graph_extra.ui.detach();
                 self.late_flag_extra.ui.detach();
@@ -371,6 +373,7 @@ hqDefine("app_manager/js/details/column", function () {
                     self.enum_extra.values_are_icons(true);
                     self.enum_extra.keys_are_conditions(true);
                     self.format.ui.parent().append(self.enum_extra.ui);
+                    self.format.ui.parent().append(self.autoSubmittingFormLabel);
                     self.format.ui.parent().append(self.action_form_extra.ui);
                     const actionForm = self.action_form_extra.ui.find('select');
                     actionForm.change(function () {
@@ -421,7 +424,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.format = self.format.val();
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
-            column.action_form_id = self.action_form_extra.val();
+            column.action_form_id = self.action_form_extra.val() === "-1" ? null : self.action_form_extra.val();
             column.grid_x = self.tileColumnStart();
             column.grid_y = self.tileRowStart();
             column.height = self.tileHeight();
