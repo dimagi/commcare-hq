@@ -463,7 +463,9 @@ msgstr "Un nom est requis pour ce nouveau rôle."
 #: corehq/apps/events/views.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/geospatial/reports.py corehq/apps/locations/forms.py
+#: corehq/apps/geospatial/reports.py
+#: corehq/apps/geospatial/templates/gps_capture.html
+#: corehq/apps/locations/forms.py
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/templates/reminders/keyword.html
 #: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
@@ -2242,7 +2244,9 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/views.py corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/enterprise/enterprise.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/geospatial/templates/gps_capture.html
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/hqwebapp/forms.py corehq/apps/reports/filters/simple.py
@@ -3005,6 +3009,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/forms.py
+#: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
@@ -3413,78 +3418,96 @@ msgstr ""
 msgid "Preview Aggregate UCR"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "First name"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Last name"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 #: corehq/apps/cloudcare/templates/formplayer/users.html
 #: corehq/apps/dashboard/views.py corehq/apps/domain/forms.py
 #: corehq/tabs/tabclasses.py
 msgid "Organization"
 msgstr "Organisation"
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Professional email address"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "How should we contact you?"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Please Select"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Phone"
 msgstr "Téléphone"
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Skype"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "WhatsApp"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Google hangouts"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Preferred phone number"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Skype username"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Preferred WhatsApp number"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Preferred Language"
 msgstr "Langue Préférée"
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "English"
 msgstr "Anglais"
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "French"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Spanish"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
 "\n"
 "      By clicking this button, you agree to Dimagi's\n"
@@ -5878,6 +5901,7 @@ msgstr "Horaire de visites"
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
 #: corehq/apps/settings/views.py corehq/apps/sms/views.py
@@ -6225,7 +6249,6 @@ msgstr "Installer CommCare"
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_30_day_trial.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/get_demo_modals.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/ko_feedback.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/get_demo_modals.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_feedback.html
 #: corehq/apps/integration/templates/integration/base_cloudcare_template.html
 #: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
@@ -12308,20 +12331,20 @@ msgid "OK"
 msgstr "OK"
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Clear map"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Please wait while the map loads"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
 #: corehq/apps/cloudcare/templates/formplayer/query_view.html
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
 msgstr "Effacer"
+
+#: corehq/apps/cloudcare/templates/form_entry/templates.html
+msgid "Clear map"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/form_entry/templates.html
+msgid "Please wait while the map loads"
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
 msgid "Sort By"
@@ -13335,10 +13358,8 @@ msgid "Confirm"
 msgstr "Confirmer"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Show Deprecated Properties"
 msgid "Deprecate GPS property"
-msgstr "Afficher les propriétés obsolètes"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
@@ -14658,6 +14679,7 @@ msgid "You have no cases in your group."
 msgstr "Votre groupe ne contient aucun dossier."
 
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/geospatial/templates/gps_capture.html
 msgid "Loading cases..."
 msgstr "Chargement de dossiers..."
 
@@ -21794,6 +21816,142 @@ msgstr ""
 msgid "case_id"
 msgstr ""
 
+#: corehq/apps/geospatial/templates/gps_capture.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
+msgid ""
+"\n"
+"                    Mobile workers that do not have any associated GPS "
+"data.\n"
+"                "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
+msgid ""
+"\n"
+"                    Cases that do not have any associated GPS data.\n"
+"                "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid ""
+"\n"
+"            Changes have been saved successfully!\n"
+"        "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Users without GPS Data"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Cases without GPS Data"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Latitude"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+#, fuzzy
+#| msgid "Longest"
+msgid "Longitude"
+msgstr "Le plus long"
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Enter latitude..."
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                    Please upload any files relevant to "
+#| "your issue.\n"
+#| "                                    "
+msgid ""
+"\n"
+"                                        The value should be a number between "
+"-90 and 90\n"
+"                                    "
+msgstr ""
+"\n"
+"Veuillez charger tout document en relation avec ce problème."
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Enter longitude..."
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                    Please upload any files relevant to "
+#| "your issue.\n"
+#| "                                    "
+msgid ""
+"\n"
+"                                        The value should be a number between "
+"-180 and 180\n"
+"                                    "
+msgstr ""
+"\n"
+"Veuillez charger tout document en relation avec ce problème."
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+#, fuzzy
+#| msgid "Case Action Meta"
+msgid "Capture on Map"
+msgstr "Méta d'action de dossiers"
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+#, fuzzy
+#| msgid "Loading Users..."
+msgid "Loading users..."
+msgstr "Chargement Utilisateurs"
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid ""
+"\n"
+"                  <strong>There was an issue retrieving data from the server."
+"</strong>\n"
+"                  Please check your internet connection.\n"
+"                  If this problem continues, please\n"
+"                  <a href=\"#modalReportIssue\" data-toggle=\"modal\">report "
+"an issue</a>.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid ""
+"\n"
+"                  <strong>There was an issue submitting data to the server.</"
+"strong>\n"
+"                  Please check your internet connection.\n"
+"                  If this problem continues, please\n"
+"                  <a href=\"#modalReportIssue\" data-toggle=\"modal\">report "
+"an issue</a>.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+#, fuzzy
+#| msgid "Auto Capture Location"
+msgid "Capturing location for:"
+msgstr "Capture de localisation automatique "
+
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Filter by Saved Area"
 msgstr ""
@@ -21825,6 +21983,12 @@ msgstr ""
 #: corehq/apps/geospatial/views.py
 msgid "Configuration Settings"
 msgstr ""
+
+#: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Manage Project"
+msgid "Manage GPS Data"
+msgstr "Gérer le Projet"
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py

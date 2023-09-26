@@ -692,7 +692,7 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
 
 CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
     'case_list_custom_variables',
-    'Show text area for entering custom variables',
+    'Show editor for entering custom variables',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description='Defines custom variables that can be used in case list or detail calculations',
@@ -1260,7 +1260,8 @@ CACHE_AND_INDEX = StaticToggle(
     'REC: Enable the "Cache and Index" format option when choosing sort properties '
     'in the app builder',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?pageId=41484944',
 )
 
 CUSTOM_PROPERTIES = StaticToggle(

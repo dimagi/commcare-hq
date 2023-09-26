@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
 
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.extensions import extension_points
 from corehq.apps.enterprise.urls import \
     domain_specific as enterprise_domain_specific
@@ -138,9 +139,9 @@ urlpatterns = [
     url(r'^builds/', include('corehq.apps.builds.urls')),
     url(r'^downloads/temp/', include('soil.urls')),
     url(r'^styleguide/', include('corehq.apps.styleguide.urls')),
-    url(r'^500/$', TemplateView.as_view(template_name='500.html')),
-    url(r'^404/$', TemplateView.as_view(template_name='404.html')),
-    url(r'^403/$', TemplateView.as_view(template_name='403.html')),
+    url(r'^500/$', use_bootstrap5(TemplateView.as_view(template_name='500.html'))),
+    url(r'^404/$', use_bootstrap5(TemplateView.as_view(template_name='404.html'))),
+    url(r'^403/$', use_bootstrap5(TemplateView.as_view(template_name='403.html'))),
     url(r'^eula/$', redirect_to_dimagi('terms/')),
     url(r'^product_agreement/$', redirect_to_dimagi('terms/')),
     url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),
