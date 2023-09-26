@@ -322,6 +322,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         changeQueryField: function (e) {
+            console.log("e in change QueryField");
+            console.log(e);
             if (this.model.get('input') === 'date') {
                 // Skip because dates get handled by changeDateQueryField
                 return;
@@ -338,22 +340,23 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
-            this.notifyParentOfFieldChange(e);
             this.parentView.setStickyQueryInputs();
+            this.notifyParentOfFieldChange(e, e.originalEvent.isTrusted || e.isTrigger);
         },
 
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
-            this.notifyParentOfFieldChange(e);
             this.parentView.setStickyQueryInputs();
+            var eventTrusted = e.originalEvent ? e.originalEvent.isTrusted : false;
+            this.notifyParentOfFieldChange(e, eventTrusted || e.isTrigger);
         },
 
-        notifyParentOfFieldChange: function (e) {
+        notifyParentOfFieldChange: function (e, useDynamicSearch) {
             if (this.model.get('input') === 'address') {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
             }
-            this.parentView.notifyFieldChange(e, this);
+            this.parentView.notifyFieldChange(e, this, useDynamicSearch);
         },
 
         toggleBlankSearch: function (e) {
@@ -397,6 +400,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         onRender: function () {
             this._initializeSelect2Dropdown();
             this.ui.hqHelp.hqHelp();
+            console.log("in onRender");
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.daterangepicker({
                 locale: {
@@ -410,12 +414,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             let separatorChars = _.unique(separator).join("");
             this.ui.dateRange.attr("pattern", "^[\\d\\/\\-" + separatorChars + "]*$");
             this.ui.dateRange.on('cancel.daterangepicker', function () {
+                console.log("cancel.daterangepicker initDatePicker");
                 $(this).val('').trigger('change');
             });
             this.ui.dateRange.on('apply.daterangepicker', function (ev, picker) {
+                console.log("apply.daterangepicker initDatePicker");
                 $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
             });
             this.ui.dateRange.on('change', function () {
+                console.log("in onRender change function for dateRange");
                 // Validate free-text input
                 var start, end,
                     $input = $(this),
@@ -432,6 +439,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     newValue = start.format(dateFormat) + separator + end.format(dateFormat);
                 }
                 if (oldValue !== newValue) {
+                    console.log("dateRange change triggered 435");
                     $input.val(newValue).trigger('change');
                 }
             });
@@ -514,7 +522,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return answers;
         },
 
-        notifyFieldChange: function (e, changedChildView) {
+        notifyFieldChange: function (e, changedChildView, useDynamicSearch) {
             e.preventDefault();
             var self = this;
             self.validateFieldChange(changedChildView).always(function (response) {
@@ -545,7 +553,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
-            if (self.dynamicSearchEnabled) {
+            if (self.dynamicSearchEnabled && useDynamicSearch) {
                 self.updateSearchResults();
             }
         },
