@@ -29,6 +29,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.form_processor.models import CommCareCase
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.geospatial.filters import GPSDataFilter
 from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.reports.generic import get_filter_classes
@@ -211,6 +212,7 @@ class GPSCaptureView(BaseDomainView):
         'corehq.apps.reports.filters.select.CaseTypeFilter',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
         'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
+        'corehq.apps.geospatial.filters.GPSDataFilter',
     ]
 
     @use_datatables
@@ -304,11 +306,17 @@ class GetPaginatedCases(CaseListMixin):
         )
 
     def get_paginated_cases_without_gps(self, domain, page, limit, query):
+        show_cases_with_missing_gps_data = True
+
+        if GPSDataFilter(self.request, self.domain).show_all:
+            show_cases_with_missing_gps_data = False
+
         cases_query = self._build_query()
         location_prop_name = get_geo_case_property(domain)
+        if show_cases_with_missing_gps_data:
+            cases_query = cases_query.case_property_missing(location_prop_name)
         cases_query = (
             cases_query
-            .case_property_missing(location_prop_name)
             .search_string_query(query, ['name'])
             .sort('server_modified_on', desc=True)
         )
