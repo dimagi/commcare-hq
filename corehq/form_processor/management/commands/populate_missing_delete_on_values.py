@@ -2,7 +2,10 @@ from django.db.models import Q
 from django.core.management.base import BaseCommand
 
 from corehq.form_processor.models import XFormInstance
-from corehq.sql_db.util import paginate_query_across_partitioned_databases
+from corehq.sql_db.util import (
+    paginate_query_across_partitioned_databases,
+    split_list_by_db_partition,
+)
 
 from dimagi.utils.chunked import chunked
 
@@ -26,14 +29,15 @@ class Command(BaseCommand):
 
         form_ids = iter_all_ids()
         for chunk in chunked(form_ids, chunk_size, list):
-            with XFormInstance.get_plproxy_cursor() as cursor:
-                cursor.execute(
-                    """
-                    UPDATE form_processor_xforminstancesql
-                    SET deleted_on = server_modified_on
-                    WHERE form_id = ANY(%s)
-                        AND deleted_on IS NULL
-                        AND state & %s = %s
-                    """,
-                    [chunk, old_deleted_state, old_deleted_state]
-                )
+            for db, forms_by_db in split_list_by_db_partition(chunk):
+                with XFormInstance.get_cursor_for_partition_db(db) as cursor:
+                    cursor.execute(
+                        """
+                        UPDATE form_processor_xforminstancesql
+                        SET deleted_on = server_modified_on
+                        WHERE form_id = ANY(%s)
+                            AND deleted_on IS NULL
+                            AND state & %s = %s
+                        """,
+                        [forms_by_db, old_deleted_state, old_deleted_state]
+                    )
