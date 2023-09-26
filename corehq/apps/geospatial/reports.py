@@ -109,49 +109,50 @@ class CaseGroupingReport(BaseCaseMap):
     def _build_query(self):
         query = super()._build_query()
 
-        case_property = get_geo_case_property(self.domain)
-        shape = self._get_geojson_geometry()
-        relation = 'within' if shape['type'] == 'polygon' else 'intersects'
-        query.nested(
-            CASE_PROPERTIES_PATH,
-            filters.geo_shape(
-                field=case_property,
-                shape=shape,
-                relation=relation,
+        # NOTE: ASSUMES polygon is available in request.POST['feature']
+        if 'feature' in self.request.POST:
+            geojson = json.loads(self.request.POST['feature'])
+            case_property = get_geo_case_property(self.domain)
+            shape = geojson_to_es_geoshape(geojson)
+            relation = 'within' if shape['type'] == 'polygon' else 'intersects'
+            query.nested(
+                CASE_PROPERTIES_PATH,
+                filters.geo_shape(
+                    field=case_property,
+                    shape=shape,
+                    relation=relation,
+                )
             )
-        )
 
         # TODO: Aggregation
         #precision = self.request.GET.get('precision')
 
         return query
 
-    # TODO: ASSUMES GeoJSON Geometry is available in request.POST['feature']
-    def _get_geojson_geometry(self):
-        """
-        Expects a GeoJSON object in POST named "feature". This function
-        returns its GeoJSON Geometry dict, with "type" given as
-        an Elasticsearch type (i.e. in lowercase).
 
-        More info:
+def geojson_to_es_geoshape(geojson):
+    """
+    Given a GeoJSON dict, returns a GeoJSON Geometry dict, with "type"
+    given as an Elasticsearch type (i.e. in lowercase).
 
-        * `The GeoJSON specification (RFC 7946) <https://datatracker.ietf.org/doc/html/rfc7946>`_
-        * `Elasticsearch types <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/geo-shape.html#input-structure>`_
+    More info:
 
-        """  # noqa: E501
-        supported_types = (
-            'Point',
-            'LineString',
-            'Polygon',  # We expect this, but we get the others for free
-            'MultiPoint',
-            'MultiLineString',
-            'MultiPolygon',
-            # GeometryCollection is not supported
-        )
-        geo_json = json.loads(self.request.POST['feature'])
-        assert geo_json['geometry']['type'] in supported_types, \
-            f"{geo_json['geometry']['type']} is not a supported geometry type"
-        return {
-            'type': geo_json['geometry']['type'].lower(),
-            'coordinates': geo_json['geometry']['coordinates'],
-        }
+    * `The GeoJSON specification (RFC 7946) <https://datatracker.ietf.org/doc/html/rfc7946>`_
+    * `Elasticsearch types <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/geo-shape.html#input-structure>`_
+
+    """  # noqa: E501
+    supported_types = (
+        'Point',
+        'LineString',
+        'Polygon',  # We expect this, but we get the others for free
+        'MultiPoint',
+        'MultiLineString',
+        'MultiPolygon',
+        # GeometryCollection is not supported
+    )
+    assert geojson['geometry']['type'] in supported_types, \
+        f"{geojson['geometry']['type']} is not a supported geometry type"
+    return {
+        'type': geojson['geometry']['type'].lower(),
+        'coordinates': geojson['geometry']['coordinates'],
+    }
