@@ -95,7 +95,7 @@ class ElasticManageAdapter(BaseAdapter):
         return False
 
     def get_indices(self, full_info=False):
-        """Return the cluster index information.
+        """Return the cluster index information of active indices.
 
         :param full_info: ``bool`` whether to return the full index info
                           (default ``False``)
@@ -243,13 +243,15 @@ class ElasticManageAdapter(BaseAdapter):
         self._es.indices.refresh(",".join(indices), expand_wildcards="none")
 
     def indices_info(self):
-        """Retrieve meta information about all the indices in the cluster.
-
-        :returns: ``dict`` A dict with index name in keys and index meta information
+        """Retrieve meta information about all the indices in the cluster. This will also return closed indices
+        :returns: ``dict`` A dict with index name in keys and index meta information.
         """
         indices_info = self._es.cat.indices(format='json', bytes='b')
         filtered_indices_info = {}
         for info in indices_info:
+            if info['index'].startswith('.'):
+                # Elasticsearch system index, ignore
+                continue
             filtered_indices_info[info['index']] = {
                 'health': info['health'],
                 'primary_shards': info['pri'],
