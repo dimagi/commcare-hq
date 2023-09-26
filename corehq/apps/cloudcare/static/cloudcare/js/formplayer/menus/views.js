@@ -371,6 +371,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             paginationGoText: '#goText',
             casesPerPageLimit: '.per-page-limit',
             searchMoreButton: '#search-more',
+            scrollToBottomButton: '#scroll-to-bottom',
         };
     };
 
@@ -382,6 +383,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.paginationGoButton': 'paginationGoAction',
             'click @ui.columnHeader': 'columnSortAction',
             'click @ui.searchMoreButton': 'searchMoreAction',
+            'click @ui.scrollToBottomButton': 'scrollToBottom',
             'keypress @ui.columnHeader': 'columnSortAction',
             'change @ui.casesPerPageLimit': 'onPerPageLimitChange',
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
@@ -477,6 +479,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     scrollTop: $('#content-container').offset().top - constants.BREADCRUMB_HEIGHT_PX,
                 }, 350);
             }
+        },
+
+        scrollToBottom: function () {
+            $([document.documentElement, document.body]).animate({
+                scrollTop: $('.container .pagination-container').offset().top,
+            }, 500);
         },
 
         searchTextKeyAction: function (event) {
@@ -703,16 +711,42 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        handleScroll: function () {
+            const self = this;
+            if (self.smallScreenEnabled) {
+                const $scrollButton = $('#scroll-to-bottom');
+                if (self.shouldShowScrollButton() && $scrollButton.is(':hidden')) {
+                    $scrollButton.fadeIn();
+                } else if (!self.shouldShowScrollButton() && !$scrollButton.is(':hidden')) {
+                    $scrollButton.fadeOut();
+                }
+            }
+        },
+
+        shouldShowScrollButton: function () {
+            const $pagination = $('.container .pagination-container');
+            const paginationOffscreen = $pagination[0]
+                ? $pagination.offset().top - $(window).scrollTop() > window.innerHeight : false;
+            return paginationOffscreen;
+        },
+
         onAttach() {
             const self = this;
             if (self.showMap) {
                 self.loadMap();
             }
             self.handleSmallScreenChange(self.smallScreenEnabled);
+            self.boundHandleScroll = self.handleScroll.bind(self);
+            $(window).on('scroll', self.boundHandleScroll);
+            if (self.shouldShowScrollButton()) {
+                $('#scroll-to-bottom').show();
+            }
         },
 
-        onDestroy: function () {
-            this.smallScreenListener.stopListening();
+        onBeforeDetach: function () {
+            const self = this;
+            self.smallScreenListener.stopListening();
+            $(window).off('scroll', self.boundHandleScroll);
         },
 
         templateContext: function () {
@@ -905,8 +939,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        onDestroy: function () {
-            CaseTileListView.__super__.onDestroy.apply(this, arguments);
+        onBeforeDetach: function () {
+            CaseTileListView.__super__.onBeforeDetach.apply(this, arguments);
             $('#content-container').removeClass('full-width');
         },
     });
