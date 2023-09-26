@@ -422,7 +422,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
             self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP');
-            self.smallScreenEnabled = cloudcareUtils.watchSmallScreenEnabled(self.handleSmallScreenChange.bind(self));
+            self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                self.handleSmallScreenChange(smallScreenEnabled);
+            });
+            self.smallScreenListener.listen();
         },
 
         ui: CaseListViewUI(),
@@ -625,6 +628,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     position: 'bottomright',
                 }).addTo(addressMap);
 
+                addressMap.on('fullscreenchange', function () {
+                    // sticky header interferes with fullscreen map; un-stick it if it exists
+                    const $stickyHeader = $('#small-screen-sticky-header');
+                    if ($stickyHeader[0]) {
+                        addressMap.isFullscreen()
+                            ? $stickyHeader.removeClass('sticky')
+                            : $stickyHeader.addClass('sticky');
+                    }
+                });
+
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
                     id: 'mapbox/streets-v11',
                     attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
@@ -696,6 +709,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 self.loadMap();
             }
             self.handleSmallScreenChange(self.smallScreenEnabled);
+        },
+
+        onDestroy: function () {
+            this.smallScreenListener.stopListening();
         },
 
         templateContext: function () {
@@ -889,6 +906,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         onDestroy: function () {
+            CaseTileListView.__super__.onDestroy.apply(this, arguments);
             $('#content-container').removeClass('full-width');
         },
     });

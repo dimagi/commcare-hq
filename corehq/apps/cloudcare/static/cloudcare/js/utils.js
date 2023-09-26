@@ -345,23 +345,30 @@ hqDefine('cloudcare/js/utils', [
     /**
      *  Listen for screen size changes to enable or disable small screen functionality.
      *  Accepts a callback function that should take in the new value of smallScreenEnabled.
-     *  e.g.,
-     *      watchSmallScreenEnabled(enabled => {
-     *          this.smallScreenEnabled = enabled;
-     *          this.render();
-     *      });
+     *  Callback runs once initially, then every time the small screen threshold is passed.
+     *  Returns an object with two methods:
+     *      listen() initiates a jQuery event listener and runs callback once
+     *      stopListening() removes the jQuery event listener
      */
-    var watchSmallScreenEnabled = function (callback) {
-        var shouldEnableSmallScreen = () => window.innerWidth < constants.SMALL_SCREEN_WIDTH_PX;
-        var smallScreenEnabled = shouldEnableSmallScreen();
-
-        $(window).on("resize", () => {
-            if (smallScreenEnabled !== shouldEnableSmallScreen()) {
-                smallScreenEnabled = shouldEnableSmallScreen();
+    var smallScreenListener = function (callback) {
+        var smallScreenEnabled = window.innerWidth < constants.SMALL_SCREEN_WIDTH_PX;
+        var handleSmallScreenChange = () => {
+            var shouldEnableSmallScreen = window.innerWidth < constants.SMALL_SCREEN_WIDTH_PX;
+            if (smallScreenEnabled !== shouldEnableSmallScreen) {
+                smallScreenEnabled = shouldEnableSmallScreen;
                 callback(smallScreenEnabled);
             }
-        });
-        return smallScreenEnabled;
+        };
+
+        return {
+            listen: function () {
+                $(window).on('resize', handleSmallScreenChange);
+                callback(smallScreenEnabled);
+            },
+            stopListening: function () {
+                $(window).off('resize', handleSmallScreenChange);
+            },
+        };
     };
 
     return {
@@ -382,6 +389,6 @@ hqDefine('cloudcare/js/utils', [
         formplayerLoadingComplete: formplayerLoadingComplete,
         formplayerSyncComplete: formplayerSyncComplete,
         reportFormplayerErrorToHQ: reportFormplayerErrorToHQ,
-        watchSmallScreenEnabled: watchSmallScreenEnabled,
+        smallScreenListener: smallScreenListener,
     };
 });
