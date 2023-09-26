@@ -3,7 +3,7 @@ from uuid import uuid4
 from django.test import TestCase
 from django.urls import reverse
 
-from corehq.apps.es import case_search_adapter, user_adapter
+from corehq.apps.es import case_adapter, case_search_adapter, user_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.domain.shortcuts import create_domain
@@ -136,6 +136,7 @@ class GeoConfigViewTestClass(TestCase):
         self.assertEqual(config.user_location_property_name, 'some_other_name')
 
 
+@es_test(requires=[case_adapter], setup_class=True)
 class TestGPSCaptureView(BaseGeospatialViewClass):
 
     urlname = GPSCaptureView.urlname
