@@ -114,7 +114,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
     if settings.SES_CONFIGURATION_SET is not None:
         headers[SES_CONFIGURATION_SET_HEADER] = settings.SES_CONFIGURATION_SET
 
-    connection = get_connection()
+    connection = django_get_connection()
     msg = EmailMultiAlternatives(subject, text_content, email_from,
                                  filtered_recipients, headers=headers,
                                  connection=connection, cc=cc, bcc=bcc)
