@@ -123,7 +123,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         defer.reject();
                     },
                 };
-                var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
+                var casesPerPage = parseInt($.cookie("cases-per-page-limit"))
+                    || (window.innerWidth <= constants.SMALL_SCREEN_WIDTH_PX ? 5 : 10);
                 const data = {
                     "username": user.username,
                     "restoreAs": user.restoreAs,
