@@ -322,9 +322,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         changeQueryField: function (e) {
-            console.log("e in change QueryField");
-            console.log(e);
-            console.log(this.model.get('input'));
             if (this.model.get('input') === 'date') {
                 // Skip because dates get handled by changeDateQueryField
                 return;
@@ -348,12 +345,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
             this.parentView.setStickyQueryInputs();
-            var eventTrusted = e.originalEvent ? e.originalEvent.isTrusted : false;
-            this.notifyParentOfFieldChange(e, eventTrusted || e.isTrigger);
+            var useDymanicSearch = !(Date(this.model._previousAttributes.value) === Date($(e.currentTarget).val()));
+            this.notifyParentOfFieldChange(e, useDymanicSearch);
         },
 
         notifyParentOfFieldChange: function (e, useDynamicSearch) {
-            if (this.model.get('input') === 'address') {
+            if (this.model.get('input') === ('address')) {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
             }
@@ -401,13 +398,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         onRender: function () {
             this._initializeSelect2Dropdown();
             this.ui.hqHelp.hqHelp();
-            console.log("in onRender");
-            console.log("this.ui.date");
-            console.log(this.ui.date);
-            console.log("this.model.get('value')");
-            console.log(this.model.get('value'));
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
-            console.log("after initDatePicker called");
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,
@@ -416,20 +407,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 autoUpdateInput: false,
                 "autoApply": true,
             });
-            console.log("in onRender on 415");
             this.ui.dateRange.attr("placeholder", dateFormat + separator + dateFormat);
             let separatorChars = _.unique(separator).join("");
             this.ui.dateRange.attr("pattern", "^[\\d\\/\\-" + separatorChars + "]*$");
             this.ui.dateRange.on('cancel.daterangepicker', function () {
-                console.log("cancel.daterangepicker initDatePicker");
                 $(this).val('').trigger('change');
             });
             this.ui.dateRange.on('apply.daterangepicker', function (ev, picker) {
-                console.log("apply.daterangepicker initDatePicker");
                 $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
             });
             this.ui.dateRange.on('change', function () {
-                console.log("in onRender change function for dateRange");
                 // Validate free-text input
                 var start, end,
                     $input = $(this),
@@ -446,7 +433,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     newValue = start.format(dateFormat) + separator + end.format(dateFormat);
                 }
                 if (oldValue !== newValue) {
-                    console.log("dateRange change triggered 435");
                     $input.val(newValue).trigger('change');
                 }
             });

@@ -296,10 +296,6 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var initDatePicker = function ($el, selectedDate) {
-
-        console.log("in initDatePicker");
-        console.log($el);
-        console.log(selectedDate);
         if (!$el.length) {
             return;
         }
