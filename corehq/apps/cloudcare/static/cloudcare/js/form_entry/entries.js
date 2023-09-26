@@ -894,17 +894,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.extensionsMap = initialPageData.get("valid_multimedia_extensions_map");
         // Tracks whether file entry has already been cleared, preventing an additional failing request to Formplayer
         self.cleared = false;
-
-        self.onClear = function () {
-            if (self.cleared) {
-                return;
-            }
-            self.cleared = true;
-            self.file(null);
-            self.rawAnswer(constants.NO_ANSWER);
-            self.xformAction = constants.CLEAR_ANSWER;
-            self.question.onClear();
-        };
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
@@ -957,6 +946,17 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.question.error(null);
             self.question.onchange();
         }
+    };
+    FileEntry.prototype.onClear = function () {
+        var self = this;
+        if (self.cleared) {
+            return;
+        }
+        self.cleared = true;
+        self.file(null);
+        self.rawAnswer(constants.NO_ANSWER);
+        self.xformAction = constants.CLEAR_ANSWER;
+        self.question.onClear();
     };
 
     /**
@@ -1043,8 +1043,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.onClear = function () {
-            // TODO: Connect this to the imminent "clear" action on FileEntry
-            self.signaturePad.clear();
+            SignatureEntry.prototype.onClear.call(self);
+            self.signaturePad && self.signaturePad.clear();
         };
 
         self.resizeCanvas = function () {
