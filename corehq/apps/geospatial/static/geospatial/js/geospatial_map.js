@@ -487,6 +487,36 @@ hqDefine("geospatial/js/geospatial_map", [
             }
         }
 
+        // This function partitions case data into cases with and without GPS data
+        function partitionCaseData(caseData) {
+            const caseItemMapping = {
+                ID: 0,
+                COORDINATES: 1,
+                LINK: 2,
+            };
+
+            let caseDataPartitions = {
+                missingGPS: [],
+                withGPS: {},
+            };
+
+            for (const caseItem of caseData) {
+                const coordinates = caseItem[caseItemMapping.COORDINATES];
+                if (coordinates === null) {
+                    caseDataPartitions.missingGPS.push(
+                        {"link": caseItem[caseItemMapping.LINK]}
+                    );
+                } else {
+                    const caseId = caseItem[caseItemMapping.ID];
+                    caseDataPartitions.withGPS[caseId] = {
+                        'coordinates': coordinates,
+                        'link': caseItem[caseItemMapping.LINK],
+                    };
+                }
+            }
+            return caseDataPartitions;
+        }
+
         function loadCases(caseData) {
             map.removeMarkersFromMap(caseModels());
             caseModels([]);
