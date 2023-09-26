@@ -327,10 +327,10 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
         <partial>
           <action>
             <stack>
-              <create>
+              <push>
                 <command value="'m0-f1'"/>
                 <datum id="case_id" value="current()/@case_id"/>
-              </create>
+              </push>
             </stack>
           </action>
         </partial>
@@ -372,10 +372,10 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             <partial>
               <action>
                 <stack>
-                  <create>
+                  <push>
                     <command value="'m1-f1'"/>
                     <datum id="case_id_child_case" value="current()/@case_id"/>
-                  </create>
+                  </push>
                 </stack>
               </action>
             </partial>
@@ -420,11 +420,11 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
                 <partial>
                   <action>
                     <stack>
-                      <create>
+                      <push>
                         <command value="'m1-f1'"/>
                         <datum id="parent_id" value="instance('commcaresession')/session/data/parent_id"/>
                         <datum id="case_id" value="current()/@case_id"/>
-                      </create>
+                      </push>
                     </stack>
                   </action>
                 </partial>

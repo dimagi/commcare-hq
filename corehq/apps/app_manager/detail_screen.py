@@ -477,7 +477,7 @@ class EnumImage(Enum):
         if self.column.action_form_id and self.app.supports_detail_field_action:
             action_form = self.app.get_form(self.column.action_form_id)
             action = sx.Action(stack=sx.Stack())
-            frame = sx.CreateFrame()
+            frame = sx.PushFrame()
             frame.add_command(XPath.string(id_strings.form_command(action_form)))
 
             def map_source_to_target(source_meta, target_meta):
