@@ -45,12 +45,16 @@ hqDefine('data_interfaces/js/case_property_input', [
             self.valueObservable = params.valueObservable;
             self.disabled = initialPageData.get('read_only_mode') || false;
 
-            self.allCaseProperties = initialPageData.get("all_case_properties");
+            if ('allCaseProperties' in params) {
+                self.allCaseProperties = params.allCaseProperties;
+            } else {
+                self.allCaseProperties = ko.observable(initialPageData.get("all_case_properties"));
+            }
             self.casePropertyNames = ko.computed(function () {
-                if (!self.allCaseProperties) {
+                if (!self.allCaseProperties()) {
                     return [];
                 }
-                return self.allCaseProperties[self.caseTypeObservable()] || [];
+                return self.allCaseProperties()[self.caseTypeObservable()] || [];
             });
 
             self.showDropdown = privileges.hasPrivilege('data_dictionary');
