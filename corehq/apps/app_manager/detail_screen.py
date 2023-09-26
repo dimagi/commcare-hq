@@ -1,9 +1,6 @@
 import re
 
-from django.utils.translation import gettext
-
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml import const
 from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
@@ -479,11 +476,6 @@ class EnumImage(Enum):
     def action(self):
         if self.column.action_form_id and self.app.supports_detail_field_action:
             action_form = self.app.get_form(self.column.action_form_id)
-            if not action_form.requires_case():
-                raise SuiteError(gettext("Action form must require case"))
-            if action_form.get_module().root_module_id != self.module.root_module_id:
-                raise SuiteError(gettext("Action form must have the same parent module as the source form"))
-
             action = sx.Action(stack=sx.Stack())
             frame = sx.CreateFrame()
             frame.add_command(XPath.string(id_strings.form_command(action_form)))
