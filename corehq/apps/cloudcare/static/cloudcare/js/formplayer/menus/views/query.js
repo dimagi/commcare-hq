@@ -400,6 +400,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         onRender: function () {
             this._initializeSelect2Dropdown();
             this.ui.hqHelp.hqHelp();
+            console.log("in onRender");
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.daterangepicker({
                 locale: {
@@ -413,12 +414,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             let separatorChars = _.unique(separator).join("");
             this.ui.dateRange.attr("pattern", "^[\\d\\/\\-" + separatorChars + "]*$");
             this.ui.dateRange.on('cancel.daterangepicker', function () {
+                console.log("cancel.daterangepicker initDatePicker");
                 $(this).val('').trigger('change');
             });
             this.ui.dateRange.on('apply.daterangepicker', function (ev, picker) {
+                console.log("apply.daterangepicker initDatePicker");
                 $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
             });
             this.ui.dateRange.on('change', function () {
+                console.log("in onRender change function for dateRange");
                 // Validate free-text input
                 var start, end,
                     $input = $(this),
