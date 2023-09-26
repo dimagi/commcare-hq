@@ -286,7 +286,7 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
                 {
                     'id': self.user_b.user_id,
                     'username': self.user_b.raw_username,
-                    'gps_point': None,
+                    'gps_point': '',
                 },
             ],
         }

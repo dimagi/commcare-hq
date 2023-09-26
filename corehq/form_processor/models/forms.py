@@ -428,7 +428,6 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     DUPLICATE = 8
     ERROR = 16
     SUBMISSION_ERROR_LOG = 32
-    DELETED = 64
     STATES = (
         (NORMAL, 'normal'),
         (ARCHIVED, 'archived'),
@@ -436,7 +435,6 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         (DUPLICATE, 'duplicate'),
         (ERROR, 'error'),
         (SUBMISSION_ERROR_LOG, 'submission_error'),
-        (DELETED, 'deleted'),
     )
     DOC_TYPE_TO_STATE = {
         "XFormInstance": NORMAL,
@@ -638,8 +636,9 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         return None
 
     def soft_delete(self):
-        type(self).objects.soft_delete_forms(self.domain, [self.form_id])
-        self.deleted_on = datetime.utcnow()
+        deleted_on = datetime.utcnow()
+        type(self).objects.soft_delete_forms(self.domain, [self.form_id], deleted_on)
+        self.deleted_on = deleted_on
 
     def to_json(self, include_attachments=False):
         from ..serializers import XFormInstanceSerializer, lazy_serialize_form_attachments, \

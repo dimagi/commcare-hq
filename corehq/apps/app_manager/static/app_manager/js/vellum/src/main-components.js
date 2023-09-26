@@ -31114,28 +31114,28 @@ define('vellum/datasources',[
      */
     builders.dataNodes = function (that) {
         function wordWrap(inStr, maxLength) {
-          if (inStr.length <= maxLength) {
-            return inStr;
-          }
-          outStr = "";
-          bufferStr = inStr;
-          while(bufferStr.length > maxLength) {
-            outStr += bufferStr.slice(0, maxLength) + "\n";
-            bufferStr = bufferStr.slice(maxLength, bufferStr.length);
-          }
-          outStr += "\n" + bufferStr;
-          return outStr;
-        };
+            if (inStr.length <= maxLength) {
+                return inStr;
+            }
+            let outStr = "",
+                bufferStr = inStr;
+            while (bufferStr.length > maxLength) {
+                outStr += bufferStr.slice(0, maxLength) + "\n";
+                bufferStr = bufferStr.slice(maxLength, bufferStr.length);
+            }
+            outStr += "\n" + bufferStr;
+            return outStr;
+        }
 
         function insertWordBreaks(inStr, maxLength) {
-          let words = inStr.split(" ");
-          let outStr = "";
-          for (word of words) {
-            outStr += wordWrap(word, maxLength);
-            outStr += " ";
-          }
-          return outStr;
-        };
+            let words = inStr.split(" "),
+                outStr = "";
+            for (let word of words) {
+                outStr += wordWrap(word, maxLength);
+                outStr += " ";
+            }
+            return outStr.trim();
+        }
 
         function node(source, parentPath, info, index) {
             return function (item, id) {
@@ -95484,6 +95484,7 @@ define('vellum/commander',[
  * This plugin adds two new mug types:
  * - Learn Module
  * - Assessment Score
+ * - Delivery Unit
  */
 define('vellum/commcareConnect',[
     'jquery',
@@ -95509,6 +95510,20 @@ define('vellum/commcareConnect',[
                 "nodeID",
             ],
         },
+        logicSection = {
+            slug: "logic",
+            displayName: gettext("Logic"),
+            help: {
+                title: gettext("Logic"),
+                text: gettext("Use logic to control when questions are asked and what answers are valid. " +
+                    "You can add logic to display a question based on a previous answer, to make " +
+                    "the question required or ensure the answer is in a valid range."),
+                link: "https://confluence.dimagi.com/display/commcarepublic/Common+Logic+and+Calculations"
+            },
+            properties: [
+                'relevantAttr',
+            ]
+        },
         baseSpec = {
             xmlnsAttr: {
                 presence: "optional",
@@ -95523,32 +95538,36 @@ define('vellum/commcareConnect',[
             isTypeChangeable: false,
             isDataOnly: true,
             supportsDataNodeRole: true,
-            /**
-             * If true, the mug will write its values to the data node instead of
-             * using bind elements.
-             */
-            writeValuesToDataNode: false,
             getExtraDataAttributes: mug => ({
                 // allows the parser to know which mug to associate with this node
                 "vellum:role": mug.__className,
             }),
-            parseDataNode: () => {
-                // Extract values from the data node
-                // Return an empty list of child nodes since children are handled
-                // by this plugin directly.
+            parseDataNode: (mug, node) => {
+                let children = node.children(),
+                    mugConfig = mugConfigs[mug.__className];
+                if (children.length === 1) {
+                    let child = children[0];
+                    if (child.nodeName === mugConfig.rootName && child.getAttribute("xmlns") === CCC_XMLNS) {
+                        $(child).children().each((i, el) => {
+                            let childConfig = mugConfig.childNodes.find(child => child.id === el.nodeName);
+                            if (childConfig && childConfig.writeToData) {
+                                mug.p[el.nodeName] = $(el).text();
+                            }
+                        });
+                    }
+                }
                 return $([]);
             },
             dataChildFilter: (children, mug) => {
                 // called during write
                 // return a list nodes to add to the forms data node
-                let writeData = mug.options.writeValuesToDataNode;
-                children = mugConfigs[mug.__className].childNodes.map(childName => {
+                children = mugConfigs[mug.__className].childNodes.map(child => {
                     let p = {rawDataAttributes: null};
-                    if (writeData) {
-                        p.dataValue = mug.p[childName];
+                    if (child.writeToData) {
+                        p.dataValue = mug.p[child.id];
                     }
                     return new Tree.Node([], {
-                        getNodeID: () => childName,
+                        getNodeID: () => child.id,
                         p: p,
                         options: {
                             getExtraDataAttributes: () => {}
@@ -95571,31 +95590,17 @@ define('vellum/commcareConnect',[
             ConnectLearnModule: {
                 rootName: "module",
                 childNodes: [
-                    "name",
-                    "description",
-                    "time_estimate",
+                    {id: "name", writeToData: true},
+                    {id: "description", writeToData: true},
+                    {id: "time_estimate", writeToData: true},
                 ],
                 mugOptions: util.extend(baseMugOptions, {
                     typeName: 'Learn Module',
                     icon: 'fa fa-graduation-cap',
-                    writeValuesToDataNode: true,
                     init: mug => {
                         mug.p.name = "";
                         mug.p.description = "";
                         mug.p.time_estimate = "";
-                    },
-                    parseDataNode: (mug, node) => {
-                        let children = node.children(),
-                            mugConfig = mugConfigs[mug.__className];
-                        if (children.length === 1) {
-                            let child = children[0];
-                            if (child.nodeName === mugConfig.rootName && child.getAttribute("xmlns") === CCC_XMLNS) {
-                                $(child).children().each((i, el) => {
-                                    mug.p[el.nodeName] = $(el).text();
-                                });
-                            }
-                        }
-                        return $([]);
                     },
                     getBindList: () => [],
                     spec: util.extend(baseSpec, {
@@ -95624,7 +95629,7 @@ define('vellum/commcareConnect',[
                                 return val && val.match(/^\d+$/) ? "pass" : gettext("Must be an integer");
                             },
                             help: gettext('Estimated time to complete the module in hours.'),
-                        },
+                        }
                     })
                 }),
                 sections: [_.extend({}, baseSection, {
@@ -95639,7 +95644,7 @@ define('vellum/commcareConnect',[
             ConnectAssessment: {
                 rootName: "assessment",
                 childNodes: [
-                    "user_score",
+                    {id: "user_score"},
                 ],
                 mugOptions: util.extend(baseMugOptions, {
                     typeName: 'Assessment Score',
@@ -95650,12 +95655,16 @@ define('vellum/commcareConnect',[
                     getBindList: mug => {
                         // return list of bind elements to add to the form
                         let mugConfig = mugConfigs[mug.__className];
-                        return mugConfig.childNodes.map(childName => {
+                        let binds = [{
+                            nodeset: mug.hashtagPath,
+                            relevant: mug.p.relevantAttr,
+                        }];
+                        return binds.concat(mugConfig.childNodes.map(child => {
                             return {
-                                nodeset: `${mug.absolutePath}/${mugConfig.rootName}/${childName}`,
-                                calculate: mug.p[childName],
+                                nodeset: `${mug.absolutePath}/${mugConfig.rootName}/${child.id}`,
+                                calculate: mug.p[child.id],
                             };
-                        });
+                        }));
                     },
                     spec: util.extend(baseSpec, {
                         nodeID: {
@@ -95670,14 +95679,106 @@ define('vellum/commcareConnect',[
                             deserialize: mugs.deserializeXPath,
                             help: gettext('XPath expression for the users assessment score.'),
                         },
+                        relevantAttr: {
+                            visibility: 'visible',
+                            presence: 'optional',
+                            widget: widgets.xPath,
+                            xpathType: "bool",
+                            serialize: mugs.serializeXPath,
+                            deserialize: mugs.deserializeXPath,
+                            lstring: gettext('Display Condition')
+                        }
                     })
                 }),
-                sections: [_.extend({}, baseSection, {
-                    properties: [
-                        "nodeID",
-                        "user_score",
-                    ],
-                })],
+                sections: [
+                    _.extend({}, baseSection, {
+                        properties: [
+                            "nodeID",
+                            "user_score",
+                        ],
+                    }),
+                    _.clone(logicSection),
+                ],
+            },
+            ConnectDeliverUnit: {
+                rootName: "deliver",
+                childNodes: [
+                    {id: "name", writeToData: true},
+                    {id: "entity_id"},
+                    {id: "entity_name"},
+                ],
+                mugOptions: util.extend(baseMugOptions, {
+                    typeName: 'Deliver Unit',
+                    icon: 'fa fa-briefcase',
+                    init: mug => {
+                        mug.p.name = "";
+                        mug.p.entity_id = "";
+                        mug.p.entity_name = "";
+                    },
+                    getBindList: mug => {
+                        // return list of bind elements to add to the form
+                        let mugConfig = mugConfigs[mug.__className];
+                        let binds = [{
+                            nodeset: mug.hashtagPath,
+                            relevant: mug.p.relevantAttr,
+                        }];
+                        return binds.concat(mugConfig.childNodes.filter(child => !child.writeToData).map(child => {
+                            return {
+                                nodeset: `${mug.absolutePath}/${mugConfig.rootName}/${child.id}`,
+                                calculate: mug.p[child.id],
+                            };
+                        }));
+                    },
+                    spec: util.extend(baseSpec, {
+                        nodeID: {
+                            lstring: gettext('Delivery Unit ID'),
+                        },
+                        name: {
+                            lstring: gettext("Name"),
+                            visibility: 'visible',
+                            presence: 'required',
+                            widget: widgets.text,
+                        },
+                        entity_id: {
+                            lstring: gettext("Entity ID"),
+                            visibility: 'visible',
+                            presence: 'optional',
+                            widget: widgets.xPath,
+                            serialize: mugs.serializeXPath,
+                            deserialize: mugs.deserializeXPath,
+                            help: gettext('XPath expression for the entity ID associated with this Delivery Unit e.g. the case ID.'),
+                        },
+                        entity_name: {
+                            lstring: gettext("Entity Name"),
+                            visibility: 'visible',
+                            presence: 'optional',
+                            widget: widgets.xPath,
+                            serialize: mugs.serializeXPath,
+                            deserialize: mugs.deserializeXPath,
+                            help: gettext('XPath expression for the name of the entity associated with this Delivery Unit.'),
+                        },
+                        relevantAttr: {
+                            visibility: 'visible',
+                            presence: 'optional',
+                            widget: widgets.xPath,
+                            xpathType: "bool",
+                            serialize: mugs.serializeXPath,
+                            deserialize: mugs.deserializeXPath,
+                            lstring: gettext('Display Condition')
+                        }
+                    })
+                }),
+                sections: [
+                    _.extend({}, baseSection, {
+                        properties: [
+                            "nodeID",
+                            "name",
+                            "entity_id",
+                            "entity_name",
+                        ],
+                    }),
+                    _.clone(logicSection),
+                ],
             }
         };
 
@@ -95702,8 +95803,10 @@ define('vellum/commcareConnect',[
         parseBindElement: function (form, el, path) {
             let mug = form.getMugByPath(path);
             if (!mug) {
+                // check each mugConfig to see if this path matches
                 let matched = Object.entries(mugConfigs).some(([mugName, mugConfig]) => {
-                    let children = mugConfig.childNodes.join('|'),
+                    // construct regex to match any of the child nodes
+                    let children = mugConfig.childNodes.map(child => child.id).join('|'),
                         regex = new RegExp(`/${mugConfig.rootName}/(${children})`),
                         matchRet = path.match(regex);
                     if (matchRet && matchRet.length > 0) {
@@ -95716,6 +95819,11 @@ define('vellum/commcareConnect',[
                     }
                 });
                 if (matched) {
+                    return;
+                }
+            } else {
+                if (Object.hasOwn(mugConfigs, mug.__className)) {
+                    mug.p.relevantAttr = el.xmlAttr("relevant");
                     return;
                 }
             }

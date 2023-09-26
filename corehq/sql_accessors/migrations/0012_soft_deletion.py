@@ -1,11 +1,8 @@
 from django.db import migrations
 
-from corehq.form_processor.models import XFormInstance
 from corehq.sql_db.operations import RawSQLMigration
 
-migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
-    'FORM_STATE_DELETED': XFormInstance.DELETED
-})
+migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'))
 
 
 class Migration(migrations.Migration):
@@ -16,7 +13,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('soft_delete_cases.sql'),
-        migrator.get_migration('get_form_ids_for_user.sql'),
         migrations.RunSQL(
             "DROP FUNCTION IF EXISTS update_form_state(TEXT, INTEGER)",
             "SELECT 1"
