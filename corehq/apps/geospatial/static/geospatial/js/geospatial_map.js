@@ -517,32 +517,21 @@ hqDefine("geospatial/js/geospatial_map", [
             return caseDataPartitions;
         }
 
-        function loadCases(caseData) {
+        function loadCases(rawCaseData) {
             map.removeMarkersFromMap(caseModels());
             caseModels([]);
-            var casesWithGPS = caseData.filter(function (item) {
-                return item[1] !== null;
-            });
-            // Index by case_id
-            var casesById = _.object(_.map(casesWithGPS, function (item) {
-                if (item[1]) {
-                    return [item[0], {'coordinates': item[1], 'link': item[2]}];
-                }
-            }));
-            const caseMapItems = map.addMarkersToMap(casesById, caseMarkerColors);
+
+            const caseData = partitionCaseData(rawCaseData);
+            const caseMapItems = map.addMarkersToMap(caseData.withGPS, caseMarkerColors);
             caseModels(caseMapItems);
 
-            var $missingCasesDiv = $("#missing-gps-cases");
-            var casesWithoutGPS = caseData.filter(function (item) {
-                return item[1] === null;
-            });
-            casesWithoutGPS = _.map(casesWithoutGPS, function (item) {return {"link": item[2]};});
+            const $missingCasesDiv = $("#missing-gps-cases");
             // Don't re-apply if this is the next page of the pagination
             if (ko.dataFor($missingCasesDiv[0]) === undefined) {
                 $missingCasesDiv.koApplyBindings(missingGPSModelInstance);
-                missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
+                missingGPSModelInstance.casesWithoutGPS(caseData.missingGPS);
             }
-            missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
+            missingGPSModelInstance.casesWithoutGPS(caseData.missingGPS);
         }
 
         $(document).ajaxComplete(function (event, xhr, settings) {
