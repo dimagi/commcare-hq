@@ -38,7 +38,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      elasticsearch2:
+      elasticsearch5:
         condition: service_healthy
       kafka:
         condition: service_healthy

@@ -4,10 +4,12 @@ from couchforms.geopoint import GeoPoint
 
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.users.models import CommCareUser
+from corehq.util.quickcache import quickcache
 
 from .models import GeoConfig
 
 
+@quickcache(['domain'], timeout=24 * 60 * 60)
 def get_geo_case_property(domain):
     try:
         config = GeoConfig.objects.get(domain=domain)
@@ -16,6 +18,7 @@ def get_geo_case_property(domain):
     return config.case_location_property_name
 
 
+@quickcache(['domain'], timeout=24 * 60 * 60)
 def get_geo_user_property(domain):
     try:
         config = GeoConfig.objects.get(domain=domain)
