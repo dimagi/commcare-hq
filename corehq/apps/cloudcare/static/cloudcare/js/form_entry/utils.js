@@ -2,7 +2,8 @@
 hqDefine("cloudcare/js/form_entry/utils", function () {
     var errors = hqImport("cloudcare/js/form_entry/errors"),
         formEntryConst = hqImport("cloudcare/js/form_entry/const"),
-        toggles = hqImport("hqwebapp/js/toggles");
+        toggles = hqImport("hqwebapp/js/toggles"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var module = {
         resourceMap: undefined,
@@ -72,29 +73,29 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {(string|string[])} divId - Div ID for the Mapbox input
      * @param {function} itemCallback - function to call back after new search
      * @param {function} clearCallBack - function to call back after clearing the input
-     * @param {Object} initialPageData - initial_page_data object
      * @param {function|undefined} inputOnKeyDown - inputOnKeyDown function (optional)
      * @param {boolean} showGeolocationButton - show geolocation button. Defaults to false. (optional)
      * @param {boolean} geolocateOnLoad - geolocate the user's location on load. Defaults to false. (optional)
      * @param {boolean} setProximity - set proximity to user's location. Defaults to false. (optional)
-     */
-    module.renderMapboxInput = function (
+     * @param {string} responseDataTypes - set Mapbox's data type response https://docs.mapbox.com/api/search/geocoding/#data-types (optional)
+    */
+    module.renderMapboxInput = function ({
         divId,
         itemCallback,
         clearCallBack,
-        initialPageData,
         inputOnKeyDown,
         showGeolocationButton = false,
         geolocateOnLoad = false,
-        setProximity = false
-    ) {
+        setProximity = false,
+        responseDataTypes = 'address'
+    }) {
         showGeolocationButton = showGeolocationButton || toggles.toggleEnabled('GEOCODER_MY_LOCATION_BUTTON');
         geolocateOnLoad = geolocateOnLoad || toggles.toggleEnabled('GEOCODER_AUTOLOAD_USER_LOCATION');
         setProximity = setProximity || toggles.toggleEnabled('GEOCODER_USER_PROXIMITY');
         var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
             accessToken: initialPageData.get("mapbox_access_token"),
-            types: 'address',
+            types: responseDataTypes,
             enableEventLogging: false,
             enableGeolocation: showGeolocationButton,
         });
