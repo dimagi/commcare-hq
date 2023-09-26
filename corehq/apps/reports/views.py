@@ -135,7 +135,6 @@ from .forms import (
 from .lookup import ReportLookup, get_full_report_name
 from .models import TableauServer, TableauVisualization
 from .standard import ProjectReport, inspect
-from ..userreports.reports.util import report_has_location_filter
 
 DATE_FORMAT = "%Y-%m-%d %H:%M"
 
@@ -1082,14 +1081,10 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         return "", []
 
     for config in configs:
-        if _is_not_accessible(domain, config, couch_user):
-            content, excel_file = _("This project has restricted data access rules. \
-                                    Please contact your project administrator to be assigned access \
-                                    to data in this project."), []
-        else:
-            content, excel_file = config.get_report_content(lang,
-                                                            attach_excel=attach_excel,
-                                                            couch_user=couch_user)
+        content, excel_file = config.get_report_content(lang,
+                                                        attach_excel=attach_excel,
+                                                        couch_user=couch_user,
+                                                        subreport_slug=config.subreport_slug)
         if excel_file:
             excel_attachments.append({
                 'title': config.full_name + "." + format.extension,
@@ -1118,22 +1113,6 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "report_type": _("once off report") if once else _("scheduled report"),
     })
     return response.content.decode("utf-8"), excel_attachments
-
-
-def _is_not_accessible(domain, config, couch_user):
-    '''
-    Checks if request is location restricted for the asked report.
-    Returns True if request is restricted for the asked user and the report. Returns False otherwise.
-    '''
-    # Check if report is location safe
-    if report_has_location_filter(config.subreport_slug, domain):
-        return False
-    if not toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(domain):
-        return False
-    if (couch_user.get_location_ids(domain)
-            and not couch_user.has_permission(domain, 'access_all_locations')):
-        return True
-    return False
 
 
 def render_full_report_notification(request, content, email=None, report_notification=None):
