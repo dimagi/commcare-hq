@@ -489,7 +489,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
         // This function partitions case data into cases with and without GPS data
         function partitionCaseData(caseData) {
-            const caseItemMapping = {
+            const caseItem = {
                 ID: 0,
                 COORDINATES: 1,
                 LINK: 2,
@@ -500,17 +500,17 @@ hqDefine("geospatial/js/geospatial_map", [
                 withGPS: {},
             };
 
-            for (const caseItem of caseData) {
-                const coordinates = caseItem[caseItemMapping.COORDINATES];
+            for (const currCase of caseData) {
+                const coordinates = currCase[caseItem.COORDINATES];
                 if (coordinates === null) {
                     caseDataPartitions.missingGPS.push(
-                        {"link": caseItem[caseItemMapping.LINK]}
+                        {"link": currCase[caseItem.LINK]}
                     );
                 } else {
-                    const caseId = caseItem[caseItemMapping.ID];
+                    const caseId = currCase[caseItem.ID];
                     caseDataPartitions.withGPS[caseId] = {
                         'coordinates': coordinates,
-                        'link': caseItem[caseItemMapping.LINK],
+                        'link': currCase[caseItem.LINK],
                     };
                 }
             }
