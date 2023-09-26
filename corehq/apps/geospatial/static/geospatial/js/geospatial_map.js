@@ -454,29 +454,10 @@ hqDefine("geospatial/js/geospatial_map", [
                     url: initialPageData.reverse('get_users_with_gps'),
                     success: function (data) {
                         self.hasFiltersChanged(false);
+                        const userData = partitionUserData(data.user_data);
+                        missingGPSModelInstance.usersWithoutGPS(userData.missingGPS);
 
-                        // TODO: There is a lot of indexing happening here. This should be replaced with a mapping to make reading it more explicit
-                        const usersWithoutGPS = data.user_data.filter(function (item) {
-                            return item.gps_point === null || !item.gps_point.length;
-                        });
-                        missingGPSModelInstance.usersWithoutGPS(usersWithoutGPS);
-
-                        const usersWithGPS = data.user_data.filter(function (item) {
-                            return item.gps_point !== null && item.gps_point.length;
-                        });
-
-                        const userData = _.object(_.map(usersWithGPS, function (userData) {
-                            const gpsData = (userData.gps_point) ? userData.gps_point.split(' ') : [];
-                            const lat = parseFloat(gpsData[0]);
-                            const lng = parseFloat(gpsData[1]);
-
-                            const editUrl = initialPageData.reverse('edit_commcare_user', userData.id);
-                            const link = `<a class="ajax_dialog" href="${editUrl}" target="_blank">${userData.username}</a>`;
-
-                            return [userData.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link}];
-                        }));
-
-                        const userMapItems = map.addMarkersToMap(userData, userMarkerColors);
+                        const userMapItems = map.addMarkersToMap(userData.withGPS, userMarkerColors);
                         userModels(userMapItems);
                     },
                     error: function () {
