@@ -413,6 +413,32 @@ hqDefine("geospatial/js/geospatial_map", [
             self.showFilterMenu = ko.observable(true);
             self.hasErrors = ko.observable(false);
 
+            // This function partitions user data into users with and without GPS data
+            function partitionUserData(userData) {
+                const userDataPartitions = {
+                    missingGPS: [],
+                    withGPS: {},
+                };
+
+                for (const userItem of userData) {
+                    if (userItem.gps_point === null || !userItem.gps_point.length) {
+                        userDataPartitions.missingGPS.push(userItem);
+                    } else {
+                        const gpsData = userItem.gps_point.split(' ');
+                        const lat = parseFloat(gpsData[0]);
+                        const lng = parseFloat(gpsData[1]);
+
+                        const editUrl = initialPageData.reverse('edit_commcare_user', userItem.id);
+                        const link = `<a class="ajax_dialog" href="${editUrl}" target="_blank">${userItem.username}</a>`;
+                        userDataPartitions.withGPS[userItem.id] = {
+                            'coordinates': {'lat': lat, 'lng': lng},
+                            'link': link,
+                        };
+                    }
+                }
+                return userDataPartitions;
+            }
+
             self.loadUsers = function () {
                 map.removeMarkersFromMap(userModels());
                 userModels([]);
