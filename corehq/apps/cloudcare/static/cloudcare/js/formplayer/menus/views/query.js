@@ -324,6 +324,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         changeQueryField: function (e) {
             console.log("e in change QueryField");
             console.log(e);
+            console.log(this.model.get('input'));
             if (this.model.get('input') === 'date') {
                 // Skip because dates get handled by changeDateQueryField
                 return;
@@ -401,7 +402,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this._initializeSelect2Dropdown();
             this.ui.hqHelp.hqHelp();
             console.log("in onRender");
+            console.log("this.ui.date");
+            console.log(this.ui.date);
+            console.log("this.model.get('value')");
+            console.log(this.model.get('value'));
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
+            console.log("after initDatePicker called");
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,
@@ -410,6 +416,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 autoUpdateInput: false,
                 "autoApply": true,
             });
+            console.log("in onRender on 415");
             this.ui.dateRange.attr("placeholder", dateFormat + separator + dateFormat);
             let separatorChars = _.unique(separator).join("");
             this.ui.dateRange.attr("pattern", "^[\\d\\/\\-" + separatorChars + "]*$");
