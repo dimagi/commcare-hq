@@ -15,6 +15,7 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
     UsercaseXPath,
     XPath,
+    session_var,
 )
 from corehq.apps.hqmedia.models import CommCareMultimedia
 
@@ -488,6 +489,8 @@ class EnumImage(Enum):
             frame.add_command(XPath.string(id_strings.form_command(action_form)))
 
             def map_source_to_target(source_meta, target_meta):
+                if target_meta.from_parent or target_meta.case_type != self.module.case_type:
+                    return sx.StackDatum(id=target_meta.id, value=session_var(source_meta.id))
                 return sx.StackDatum(id=target_meta.id, value="current()/@case_id")
 
             datums = DetailContributor.get_datums_for_action(

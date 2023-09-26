@@ -386,3 +386,52 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             factory.app.create_suite(),
             './detail[3]/field/action'
         )
+
+    @flag_enabled('CASE_LIST_CLICKABLE_ICON')
+    def test_case_detail_icon_mapping_with_action_parent_select(self, *args):
+        factory = AppFactory(domain='domain', name='Case list field actions', build_version='2.54.0')
+        m0, f0 = factory.new_basic_module("module1", "case")
+        factory.form_requires_case(f0)
+
+        m1, f1 = factory.new_basic_module("module2", "child_case")
+        m1.parent_select.active = True
+        m1.parent_select.module_id = m0.unique_id
+
+        factory.form_requires_case(f1)
+
+        f2 = factory.new_form(m1)
+        factory.form_requires_case(f2)
+
+        m1.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Starred'},
+                model='case',
+                field='starred',
+                format='enum-image',
+                enum=[
+                    MappingItem(key='1', value={'en': 'jr://icons/star-gold.png'}),
+                    MappingItem(key='0', value={'en': 'jr://icons/star-grey.png'}),
+                ],
+                action_form_id=f2.unique_id,
+            ),
+        ]
+
+        action_spec = """
+                <partial>
+                  <action>
+                    <stack>
+                      <create>
+                        <command value="'m1-f1'"/>
+                        <datum id="parent_id" value="instance('commcaresession')/session/data/parent_id"/>
+                        <datum id="case_id" value="current()/@case_id"/>
+                      </create>
+                    </stack>
+                  </action>
+                </partial>
+                """
+
+        self.assertXmlPartialEqual(
+            action_spec,
+            factory.app.create_suite(),
+            './detail[3]/field/action'
+        )
