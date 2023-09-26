@@ -97,6 +97,7 @@ class CaseTileHelper(object):
                     self.app, self.module, self.detail,
                     detail_type=self.detail_type,
                     style=style,
+                    entries_helper=self.entries_helper,
                     *column_info
                 ).fields
                 for field in fields:
@@ -245,7 +246,9 @@ class CaseTileHelper(object):
             from corehq.apps.app_manager.detail_screen import get_column_generator
             fields = get_column_generator(
                 self.app, self.module, self.detail,
-                detail_type=self.detail_type, *column_info
+                detail_type=self.detail_type,
+                entries_helper=self.entries_helper,
+                *column_info
             ).fields
             for field in fields:
                 if field.sort_node:

@@ -6,6 +6,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml import const
 from corehq.apps.app_manager.suite_xml import xml_models as sx
+from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
 from corehq.apps.app_manager.xpath import (
     CaseXPath,
     CommCareSession,
@@ -30,10 +31,12 @@ CASE_PROPERTY_MAP = {
 
 
 def get_column_generator(app, module, detail, column, sort_element=None,
-                         order=None, detail_type=None, parent_tab_nodeset=None, style=None):
+                         order=None, detail_type=None, parent_tab_nodeset=None, style=None,
+                         entries_helper=None):
     cls = get_class_for_format(column.format)  # cls will be FormattedDetailColumn or a subclass of it
     return cls(app, module, detail, column, sort_element, order,
-               detail_type=detail_type, parent_tab_nodeset=parent_tab_nodeset, style=style)
+               detail_type=detail_type, parent_tab_nodeset=parent_tab_nodeset, style=style,
+               entries_helper=entries_helper)
 
 
 def get_class_for_format(slug):
@@ -98,7 +101,8 @@ class FormattedDetailColumn(object):
     SORT_TYPE = 'string'
 
     def __init__(self, app, module, detail, column, sort_element=None,
-                 order=None, detail_type=None, parent_tab_nodeset=None, style=None):
+                 order=None, detail_type=None, parent_tab_nodeset=None, style=None,
+                 entries_helper=None):
         self.app = app
         self.module = module
         self.detail = detail
@@ -109,6 +113,7 @@ class FormattedDetailColumn(object):
         self.id_strings = id_strings
         self.parent_tab_nodeset = parent_tab_nodeset
         self.style = style
+        self.entries_helper = entries_helper
 
     def has_sort_node_for_nodeset_column(self):
         return self.parent_tab_nodeset and self.detail.sort_nodeset_columns_for_detail()
@@ -481,7 +486,15 @@ class EnumImage(Enum):
             action = sx.Action(stack=sx.Stack())
             frame = sx.CreateFrame()
             frame.add_command(XPath.string(id_strings.form_command(action_form)))
-            frame.add_datum(sx.StackDatum(id='case_id', value='current()/@case_id'))
+
+            def map_source_to_target(source_meta, target_meta):
+                return sx.StackDatum(id=target_meta.id, value="current()/@case_id")
+
+            datums = DetailContributor.get_datums_for_action(
+                self.entries_helper, self.module, action_form, map_source_to_target
+            )
+            for datum in datums:
+                frame.add_datum(datum)
             action.stack.add_frame(frame)
             return action
 

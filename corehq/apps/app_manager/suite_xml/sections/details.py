@@ -211,7 +211,8 @@ class DetailContributor(SectionContributor):
                 # column_info is an instance of DetailColumnInfo named tuple.
                 fields = get_column_generator(
                     self.app, module, detail, parent_tab_nodeset=nodeset,
-                    detail_type=detail_type, *column_info
+                    detail_type=detail_type, entries_helper=self.entries_helper,
+                    *column_info
                 ).fields
                 for field in fields:
                     d.fields.append(field)
@@ -347,7 +348,7 @@ class DetailContributor(SectionContributor):
         return action
 
     @staticmethod
-    def get_datums_for_action(entries_helper, source_module, target_form):
+    def get_datums_for_action(entries_helper, source_module, target_form, source_target_mapper=None):
         target_form_dm = entries_helper.get_datums_meta_for_form_generic(target_form)
         source_form_dm = []
         if len(source_module.forms):
@@ -363,9 +364,12 @@ class DetailContributor(SectionContributor):
                 except ValueError:
                     pass
                 else:
-                    yield StackDatum(
-                        id=target_meta.id,
-                        value=session_var(source_dm.id))
+                    if source_target_mapper:
+                        yield source_target_mapper(source_dm, target_meta)
+                    else:
+                        yield StackDatum(
+                            id=target_meta.id,
+                            value=session_var(source_dm.id))
             else:
                 s_datum = target_meta.datum
                 yield StackDatum(id=s_datum.id, value=s_datum.function)
