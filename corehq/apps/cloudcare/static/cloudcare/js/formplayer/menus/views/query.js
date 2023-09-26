@@ -465,8 +465,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     break;
                 }
             }
-            this.smallScreenEnabled = cloudcareUtils.watchSmallScreenEnabled(this.handleSmallScreenChange.bind(this));
-            this.handleSmallScreenChange(this.smallScreenEnabled);
+            this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                this.handleSmallScreenChange(smallScreenEnabled);
+            });
+            this.smallScreenListener.listen();
         },
 
         templateContext: function () {
@@ -691,6 +693,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onAttach: function () {
             this.initGeocoders();
+        },
+
+        onBeforeDetach: function () {
+            this.smallScreenListener.stopListening();
         },
 
         initGeocoders: function () {

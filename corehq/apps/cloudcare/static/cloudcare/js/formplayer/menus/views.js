@@ -371,6 +371,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             paginationGoText: '#goText',
             casesPerPageLimit: '.per-page-limit',
             searchMoreButton: '#search-more',
+            scrollToBottomButton: '#scroll-to-bottom',
         };
     };
 
@@ -382,6 +383,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.paginationGoButton': 'paginationGoAction',
             'click @ui.columnHeader': 'columnSortAction',
             'click @ui.searchMoreButton': 'searchMoreAction',
+            'click @ui.scrollToBottomButton': 'scrollToBottom',
             'keypress @ui.columnHeader': 'columnSortAction',
             'change @ui.casesPerPageLimit': 'onPerPageLimitChange',
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
@@ -422,7 +424,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
             self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP');
-            self.smallScreenEnabled = cloudcareUtils.watchSmallScreenEnabled(self.handleSmallScreenChange.bind(self));
+            self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                self.handleSmallScreenChange(smallScreenEnabled);
+            });
+            self.smallScreenListener.listen();
         },
 
         ui: CaseListViewUI(),
@@ -474,6 +479,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     scrollTop: $('#content-container').offset().top - constants.BREADCRUMB_HEIGHT_PX,
                 }, 350);
             }
+        },
+
+        scrollToBottom: function () {
+            $([document.documentElement, document.body]).animate({
+                scrollTop: $('.container .pagination-container').offset().top,
+            }, 500);
         },
 
         searchTextKeyAction: function (event) {
@@ -625,6 +636,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     position: 'bottomright',
                 }).addTo(addressMap);
 
+                addressMap.on('fullscreenchange', function () {
+                    // sticky header interferes with fullscreen map; un-stick it if it exists
+                    const $stickyHeader = $('#small-screen-sticky-header');
+                    if ($stickyHeader[0]) {
+                        addressMap.isFullscreen()
+                            ? $stickyHeader.removeClass('sticky')
+                            : $stickyHeader.addClass('sticky');
+                    }
+                });
+
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
                     id: 'mapbox/streets-v11',
                     attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
@@ -690,12 +711,42 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        handleScroll: function () {
+            const self = this;
+            if (self.smallScreenEnabled) {
+                const $scrollButton = $('#scroll-to-bottom');
+                if (self.shouldShowScrollButton() && $scrollButton.is(':hidden')) {
+                    $scrollButton.fadeIn();
+                } else if (!self.shouldShowScrollButton() && !$scrollButton.is(':hidden')) {
+                    $scrollButton.fadeOut();
+                }
+            }
+        },
+
+        shouldShowScrollButton: function () {
+            const $pagination = $('.container .pagination-container');
+            const paginationOffscreen = $pagination[0]
+                ? $pagination.offset().top - $(window).scrollTop() > window.innerHeight : false;
+            return paginationOffscreen;
+        },
+
         onAttach() {
             const self = this;
             if (self.showMap) {
                 self.loadMap();
             }
             self.handleSmallScreenChange(self.smallScreenEnabled);
+            self.boundHandleScroll = self.handleScroll.bind(self);
+            $(window).on('scroll', self.boundHandleScroll);
+            if (self.shouldShowScrollButton()) {
+                $('#scroll-to-bottom').show();
+            }
+        },
+
+        onBeforeDetach: function () {
+            const self = this;
+            self.smallScreenListener.stopListening();
+            $(window).off('scroll', self.boundHandleScroll);
         },
 
         templateContext: function () {
@@ -888,7 +939,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        onDestroy: function () {
+        onBeforeDetach: function () {
+            CaseTileListView.__super__.onBeforeDetach.apply(this, arguments);
             $('#content-container').removeClass('full-width');
         },
     });
