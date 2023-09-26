@@ -60,10 +60,11 @@ class MetaDB(object):
         metrics_counter('commcare.blobs.added.count', tags=tags)
         metrics_counter('commcare.blobs.added.bytes', value=length, tags=tags)
         if meta.type_code == 3:
+            domain = limit_domains(meta.domain)
             metrics_counter('commcare.blobs.added.form_attachment.count',
-                            tags={'domain': limit_domains(meta.domain)})
+                            tags={'domain': domain})
             metrics_counter('commcare.blobs.added.form_attachment.bytes',
-                            value=length, tags={'domain': limit_domains(meta.domain)})
+                            value=length, tags={'domain': domain})
         if meta.expires_on is not None:
             metrics_counter('commcare.temp_blobs.count', tags=tags)
             metrics_counter('commcare.temp_blobs.bytes_added', value=length, tags=tags)
