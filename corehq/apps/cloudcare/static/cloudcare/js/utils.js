@@ -319,7 +319,12 @@ hqDefine('cloudcare/js/utils', [
 
         $el.on("focusout", $el.data("DateTimePicker").hide);
         $el.attr("placeholder", dateFormat);
-        $el.attr("pattern", "[0-9-\/]+");
+        try {
+            $el.attr("pattern", "[0-9-\/]+");
+        } catch (error) {
+            console.log($el);
+            console.error(error);
+        }
     };
 
     var initTimePicker = function ($el, selectedTime, timeFormat) {
