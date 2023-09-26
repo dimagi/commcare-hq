@@ -771,7 +771,7 @@ stack-data==0.1.4
     # via ipython
 stone==3.3.1
     # via dropbox
-stripe==4.1.0
+stripe==6.6.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
@@ -805,6 +805,7 @@ typing-extensions==4.1.1
     #   django-countries
     #   oic
     #   qrcode
+    #   stripe
 tzdata==2023.3
     # via pandas
 ua-parser==0.10.0
