@@ -1678,7 +1678,6 @@ MESSAGE_TAGS = {
     messages.ERROR: 'alert-danger',
 }
 
-COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
 
 DEFAULT_CURRENCY = "USD"
