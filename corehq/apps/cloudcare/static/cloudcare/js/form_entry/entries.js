@@ -298,13 +298,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 });
             }
 
-            formEntryUtils.renderMapboxInput(
-                self.entryId,
-                self.geocoderItemCallback,
-                self.geocoderOnClearCallback,
-                initialPageData,
-                self._inputOnKeyDown
-            );
+            formEntryUtils.renderMapboxInput({
+                divId: self.entryId,
+                itemCallback: self.geocoderItemCallback,
+                clearCallBack: self.geocoderOnClearCallback,
+                inputOnKeyDown: self._inputOnKeyDown
+            });
         };
 
         self._inputOnKeyDown = function (event) {
