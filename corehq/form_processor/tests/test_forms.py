@@ -374,6 +374,65 @@ class XFormInstanceManagerTest(TestCase):
         return form
 
 
+class TestHardDeleteFormsBeforeCutoff(TestCase):
+
+    def test_form_is_hard_deleted_if_deleted_on_is_before_cutoff(self):
+        form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
+
+        with self.assertRaises(XFormNotFound):
+            XFormInstance.objects.get_form(form.form_id)
+
+    def test_form_is_not_hard_deleted_if_deleted_on_is_cutoff(self):
+        form = create_form_for_test(self.domain, deleted_on=self.cutoff)
+
+        XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
+
+        fetched_form = XFormInstance.objects.get_form(form.form_id)
+        self.assertIsNotNone(fetched_form)
+
+    def test_form_is_not_hard_deleted_if_deleted_on_is_after_cutoff(self):
+        form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 31))
+
+        XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
+
+        fetched_form = XFormInstance.objects.get_form(form.form_id)
+        self.assertIsNotNone(fetched_form)
+
+    def test_form_is_not_hard_deleted_if_deleted_on_is_null(self):
+        form = create_form_for_test(self.domain, deleted_on=None)
+
+        XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
+
+        fetched_form = XFormInstance.objects.get_form(form.form_id)
+        self.assertIsNotNone(fetched_form)
+
+    def test_returns_deleted_counts(self):
+        expected_count = 5
+        for _ in range(expected_count):
+            create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        counts = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
+
+        self.assertEqual(counts, {'form_processor.XFormInstance': 5})
+
+    def test_nothing_is_deleted_if_dry_run_is_true(self):
+        form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        # dry_run defaults to True
+        counts = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff)
+
+        # should not raise XFormNotFound
+        XFormInstance.objects.get_form(form.form_id)
+        # still returns accurate count
+        self.assertEqual(counts, {'form_processor.XFormInstance': 1})
+
+    def setUp(self):
+        self.domain = 'test_hard_delete_forms_before_cutoff'
+        self.cutoff = datetime(2020, 1, 1, 12, 30)
+
+
 class DeleteAttachmentsFSDBTests(TestCase):
     def setUp(self):
         super(DeleteAttachmentsFSDBTests, self).setUp()
