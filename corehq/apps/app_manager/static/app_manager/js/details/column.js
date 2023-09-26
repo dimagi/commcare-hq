@@ -261,7 +261,7 @@ hqDefine("app_manager/js/details/column", function () {
         }]).val(self.original.date_format);
         self.date_extra.ui.prepend($('<div/>').text(gettext(' Format ')));
 
-        self.autoSubmittingFormLabel = $('<span>Form to submit on click:</span>')
+        self.autoSubmittingFormLabel = $('<span>Form to submit on click:</span>');
         const autoSubmittingFormOptions = [{value: "-1", label: 'Select a form'}];
         let moduleName = "";
         const autoSubmittingForms =
