@@ -59,6 +59,11 @@ class MetaDB(object):
         tags = _meta_tags(meta)
         metrics_counter('commcare.blobs.added.count', tags=tags)
         metrics_counter('commcare.blobs.added.bytes', value=length, tags=tags)
+        if meta.type_code == 3:
+            metrics_counter('commcare.blobs.added.form_attachment.count',
+                            tags={'domain': limit_domains(meta.domain)})
+            metrics_counter('commcare.blobs.added.form_attachment.bytes',
+                            value=length, tags={'domain': limit_domains(meta.domain)})
         if meta.expires_on is not None:
             metrics_counter('commcare.temp_blobs.count', tags=tags)
             metrics_counter('commcare.temp_blobs.bytes_added', value=length, tags=tags)
@@ -235,5 +240,4 @@ def _utcnow():
 
 def _meta_tags(meta):
     type_ = CODES.name_of(meta.type_code, f'type_code_{meta.type_code}')
-    domain_ = limit_domains(meta.domain)
-    return {'type': type_, 'domain': domain_}
+    return {'type': type_}
