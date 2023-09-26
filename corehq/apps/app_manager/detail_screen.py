@@ -480,8 +480,8 @@ class EnumImage(Enum):
             action_form = self.app.get_form(self.column.action_form_id)
             if not action_form.requires_case():
                 raise SuiteError(gettext("Action form must require case"))
-            if action_form.get_module().root_module_id:
-                raise SuiteError(gettext("Action form can not be a child module"))
+            if action_form.get_module().root_module_id != self.module.root_module_id:
+                raise SuiteError(gettext("Action form must have the same parent module as the source form"))
 
             action = sx.Action(stack=sx.Stack())
             frame = sx.CreateFrame()
