@@ -10,6 +10,7 @@ class GPSDataFilter(BaseSingleOptionFilter):
     slug = "gps_data"
     label = gettext_lazy("GPS Data")
     default_text = gettext_lazy("Missing")
+    help_text = gettext_lazy("Show cases that have missing GPS Data or All cases")
 
     @property
     def options(self):
