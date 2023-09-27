@@ -400,24 +400,21 @@ class AutoPayInvoicePaymentHandler(object):
             return
 
         try:
-            with transaction.atomic():
-                payment_record = PaymentRecord.create_record(payment_method, 'temp_transaction_id', amount)
-                invoice.pay_invoice(payment_record)
-                invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
-                invoice.account.save()
-                transaction_id = payment_method.create_charge(
-                    autopay_card,
-                    amount_in_dollars=amount,
-                    description='Auto-payment for Invoice %s' % invoice.invoice_number,
-                    idempotency_key=invoice.id
-                )
-                payment_record.transaction_id = transaction_id
-                payment_record.save()
+            transaction_id = payment_method.create_charge(
+                autopay_card,
+                amount_in_dollars=amount,
+                description='Auto-payment for Invoice %s' % invoice.invoice_number,
+                idempotency_key=invoice.id
+            )
         except stripe.error.CardError as e:
             self._handle_card_declined(invoice, e)
         except payment_method.STRIPE_GENERIC_ERROR as e:
             self._handle_card_errors(invoice, e)
         else:
+            payment_record = PaymentRecord.create_record(payment_method, transaction_id, amount)
+            invoice.pay_invoice(payment_record)
+            invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
+            invoice.account.save()
             self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):
