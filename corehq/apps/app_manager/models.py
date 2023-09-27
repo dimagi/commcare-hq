@@ -1987,7 +1987,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     persistent_case_context_xml = StringProperty(default='case_name')
 
     # Custom variables to add into the <variables /> node
-    custom_variables = StringProperty(exclude_if_none=True)
     custom_variables_dict = DictProperty(exclude_if_none=True)
 
     # Allow selection of mutiple cases. Only applies to 'short' details
