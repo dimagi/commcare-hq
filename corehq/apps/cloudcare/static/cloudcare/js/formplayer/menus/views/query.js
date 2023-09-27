@@ -465,6 +465,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     break;
                 }
             }
+            this.smallScreenEnabled = cloudcareUtils.watchSmallScreenEnabled(this.handleSmallScreenChange.bind(this));
+            this.handleSmallScreenChange(this.smallScreenEnabled);
         },
 
         templateContext: function () {
@@ -486,6 +488,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         events: {
             'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
+        },
+
+        handleSmallScreenChange: function (enabled) {
+            this.smallScreenEnabled = enabled;
+            if (this.options.sidebarEnabled) {
+                if (this.smallScreenEnabled) {
+                    $('#sidebar-region').addClass('collapse');
+                } else {
+                    $('#sidebar-region').removeClass('collapse');
+                }
+            }
         },
 
         getAnswers: function () {
@@ -561,6 +574,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     self.selectValuesByKeys,
                     self.options.sidebarEnabled
                 );
+                if (self.smallScreenEnabled && self.options.sidebarEnabled) {
+                    $('#sidebar-region').collapse('hide');
+                }
             });
         },
 
