@@ -41,11 +41,16 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     asynchronous = True
     search_class = case_es.CaseES
 
+    def _base_query(self):
+        return (
+            self.search_class()
+            .domain(self.domain)
+            .size(self.pagination.count)
+            .start(self.pagination.start)
+        )
+
     def _build_query(self):
-        query = (self.search_class()
-                 .domain(self.domain)
-                 .size(self.pagination.count)
-                 .start(self.pagination.start))
+        query = self._base_query()
         query.es_query['sort'] = self.get_sorting_block()
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
 

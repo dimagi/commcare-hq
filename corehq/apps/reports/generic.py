@@ -64,6 +64,20 @@ def _sanitize_col(col):
     return col
 
 
+def get_filter_classes(fields, request, domain, timezone):
+    filters = []
+    fields = fields
+    for field in fields or []:
+        if isinstance(field, str):
+            klass = to_function(field, failhard=True)
+        else:
+            klass = field
+        filters.append(
+            klass(request, domain, timezone)
+        )
+    return filters
+
+
 class GenericReportView(object):
     """
         A generic report structure for viewing a report
@@ -316,17 +330,7 @@ class GenericReportView(object):
     @property
     @memoized
     def filter_classes(self):
-        filters = []
-        fields = self.fields
-        for field in fields or []:
-            if isinstance(field, str):
-                klass = to_function(field, failhard=True)
-            else:
-                klass = field
-            filters.append(
-                klass(self.request, self.domain, self.timezone)
-            )
-        return filters
+        return get_filter_classes(self.fields, self.request, self.domain, self.timezone)
 
     @property
     @memoized
