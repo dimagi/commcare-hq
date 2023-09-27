@@ -17,7 +17,7 @@ def _recreate_xml(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('app_manager', '0027_add_case_tile_template_field'),
+        ('app_manager', '0028_case_list_custom_variable_xml_to_dict'),
     ]
 
     operations = [
