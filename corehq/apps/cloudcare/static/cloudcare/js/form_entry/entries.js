@@ -1,4 +1,4 @@
-/* globals moment, DOMPurify */
+/* globals moment, SignaturePad, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
         cloudcareUtils = hqImport("cloudcare/js/utils"),
@@ -893,17 +893,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.extensionsMap = initialPageData.get("valid_multimedia_extensions_map");
         // Tracks whether file entry has already been cleared, preventing an additional failing request to Formplayer
         self.cleared = false;
-
-        self.onClear = function () {
-            if (self.cleared) {
-                return;
-            }
-            self.cleared = true;
-            self.file(null);
-            self.rawAnswer(constants.NO_ANSWER);
-            self.xformAction = constants.CLEAR_ANSWER;
-            self.question.onClear();
-        };
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
@@ -957,6 +946,17 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.question.onchange();
         }
     };
+    FileEntry.prototype.onClear = function () {
+        var self = this;
+        if (self.cleared) {
+            return;
+        }
+        self.cleared = true;
+        self.file(null);
+        self.rawAnswer(constants.NO_ANSWER);
+        self.xformAction = constants.CLEAR_ANSWER;
+        self.question.onClear();
+    };
 
     /**
      * Represents an image upload.
@@ -1006,6 +1006,59 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     VideoEntry.prototype = Object.create(FileEntry.prototype);
     VideoEntry.prototype.constructor = FileEntry;
 
+    /**
+     * Represents a signature capture, which requires the user to draw a signature.
+     */
+    function SignatureEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.templateType = 'signature';
+        self.accept = 'image/*,.pdf';
+
+        self.afterRender = function () {
+            self.$input = $('#' + self.entryId);
+            self.$canvas = $('#' + self.entryId + '-canvas');
+            self.$wrapper = $('#' + self.entryId + '-wrapper');
+
+            self.signaturePad = new SignaturePad(self.$canvas[0]);
+            self.signaturePad.addEventListener('endStroke', () => { self.answerCanvasData(); });
+
+            new ResizeObserver(() => {
+                self.resizeCanvas();
+            }).observe(self.$wrapper[0]);
+
+            self.resizeCanvas();
+        };
+
+        self.answerCanvasData = function () {
+            self.$canvas[0].toBlob(blob => {
+                var filename = blob.size + '.png', // simple filename change for validation
+                    signatureFile = new File([blob], filename, {type: "image/png"}),
+                    list = new DataTransfer();
+                list.items.add(signatureFile);
+                self.$input[0].files = list.files;
+                self.rawAnswer(constants.FILE_PREFIX + filename);
+            });
+        };
+
+        self.onClear = function () {
+            SignatureEntry.prototype.onClear.call(self);
+            if (self.signaturePad) {self.signaturePad.clear();}
+        };
+
+        self.resizeCanvas = function () {
+            var aspectRatio = 4,
+                width = self.$wrapper.width() - 2; // otherwise misaligned by 2px
+            self.$canvas[0].width = width;
+            self.$canvas[0].height = width / aspectRatio;
+        };
+
+        self.helpText = function () {
+            return gettext("Draw signature");
+        };
+    }
+    SignatureEntry.prototype = Object.create(FileEntry.prototype);
+    SignatureEntry.prototype.constructor = FileEntry;
 
     function GeoPointEntry(question, options) {
         var self = this;
@@ -1273,6 +1326,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     switch (question.control()) {
                         case constants.CONTROL_IMAGE_CHOOSE:
                             if (question.stylesContains(constants.SIGNATURE)) {
+                                entry = new SignatureEntry(question, {});
                                 break;
                             }
                             entry = new ImageEntry(question, {});
@@ -1357,6 +1411,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         MultiDropdownEntry: MultiDropdownEntry,
         PhoneEntry: PhoneEntry,
         SingleSelectEntry: SingleSelectEntry,
+        SignatureEntry: SignatureEntry,
         TimeEntry: TimeEntry,
         UnsupportedEntry: UnsupportedEntry,
         VideoEntry: VideoEntry,
