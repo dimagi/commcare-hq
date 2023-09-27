@@ -400,6 +400,7 @@ class AutoPayInvoicePaymentHandler(object):
             return
 
         try:
+            log_accounting_info("[Autopay] Attempt to charge autopay invoice {} through Stripe".format(invoice.id))
             transaction_id = payment_method.create_charge(
                 autopay_card,
                 amount_in_dollars=amount,
