@@ -10,12 +10,19 @@ from jsonobject.exceptions import BadValueError
 from couchforms.geopoint import GeoPoint
 
 from corehq.apps.case_search.const import CASE_PROPERTIES_PATH
-from corehq.apps.es import filters
-from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
+from corehq.apps.es import CaseSearchES, filters
+from corehq.apps.es.aggregations import (
+    FilterAggregation,
+    GeohashGridAggregation,
+    NestedAggregation,
+)
+from corehq.apps.es.case_search import PROPERTY_GEOPOINT_VALUE, PROPERTY_KEY
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 
+from .dispatchers import CaseManagementMapDispatcher
+from .es import AGG_NAME, find_precision
 from .models import GeoPolygon
 from .utils import get_geo_case_property
 
@@ -101,6 +108,7 @@ class CaseManagementMap(BaseCaseMap):
 class CaseGroupingReport(BaseCaseMap):
     name = gettext_noop('Case Grouping')
     slug = 'case_grouping_map'
+    search_class = CaseSearchES
 
     # TODO: We need a separate base template
     base_template = 'geospatial/map_visualization_base.html'
@@ -108,11 +116,12 @@ class CaseGroupingReport(BaseCaseMap):
 
     def _build_query(self):
         query = super()._build_query()
+        case_property = get_geo_case_property(self.domain)
 
         # NOTE: ASSUMES polygon is available in request.POST['feature']
         if 'feature' in self.request.POST:
+            # Filter cases by a shape set by the user
             geojson = json.loads(self.request.POST['feature'])
-            case_property = get_geo_case_property(self.domain)
             shape = geojson_to_es_geoshape(geojson)
             relation = 'within' if shape['type'] == 'polygon' else 'intersects'
             query.nested(
@@ -124,9 +133,29 @@ class CaseGroupingReport(BaseCaseMap):
                 )
             )
 
-        # TODO: Aggregation
-        #precision = self.request.GET.get('precision')
+        # Apply geohash grid aggregation
+        if 'precision' in self.request.GET:
+            precision = self.request.GET['precision']
+        else:
+            precision = find_precision(query, case_property)
 
+        nested_agg = NestedAggregation('case_properties', CASE_PROPERTIES_PATH)
+        filter_agg = FilterAggregation(
+            'case_property',
+            filters.term(PROPERTY_KEY, case_property),
+        )
+        geohash_agg = GeohashGridAggregation(
+            AGG_NAME,
+            PROPERTY_GEOPOINT_VALUE,
+            precision,
+        )
+        query = query.aggregation(
+            nested_agg.aggregation(
+                filter_agg.aggregation(
+                    geohash_agg
+                )
+            )
+        )
         return query
 
 
