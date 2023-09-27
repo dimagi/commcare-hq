@@ -1008,7 +1008,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     VideoEntry.prototype.constructor = FileEntry;
 
     /**
-     * Represents a signature, which requires the user to draw a signature.
+     * Represents a signature capture, which requires the user to draw a signature.
      */
     function SignatureEntry(question, options) {
         var self = this;
@@ -1055,7 +1055,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.helpText = function () {
-            return gettext("Draw a signature");
+            return gettext("Draw signature");
         };
     }
     SignatureEntry.prototype = Object.create(FileEntry.prototype);
