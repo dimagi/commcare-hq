@@ -28,13 +28,12 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.util.view_utils import json_error
-from .es import get_geohashes
 from .routing_solvers.mapbox_optimize import (
     submit_routing_request,
     routing_status
 )
 
-from .const import MAX_GEOHASH_DOC_COUNT, POLYGON_COLLECTION_GEOJSON_SCHEMA
+from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA
 from .models import GeoPolygon, GeoConfig
 from .utils import (
     get_geo_case_property,
@@ -325,50 +324,3 @@ def get_users_with_gps(request, domain):
     ]
 
     return json_response({'user_data': user_data})
-
-
-@toggles.GEOSPATIAL.required_decorator()
-def get_paginated_geohashes(request, domain, *args, **kwargs):
-    """
-    Returns a paginated list of geohashes in JSON format, along with
-    geohash precision and page data.
-
-    Requires GET params "tllat" and "tllon" for the top-left latitude
-    and longitude of a bounding box, and "brlat" and "brlon" for the
-    bottom-right.
-
-    Optional GET params "page", and "precision. If "page" is omitted,
-    page 1 will be returned. If "precision" is omitted it will be
-    calculated. For pagination to be consistent, use the same value for
-    precision as the current page.
-    """
-    coords = request.GET.getlist('coords')
-    case_property = get_geo_case_property(domain)
-    precision = request.GET.get('precision')
-    # TODO: Complete,
-    #   --fixup feea241a140 "views.py: Bounding box is required for geohashes"
-    geohashes, precision = get_geohashes(
-        domain,
-        case_property=case_property,
-        coords=coords,
-        precision=precision,
-    )
-    paginator = Paginator(geohashes, MAX_GEOHASH_DOC_COUNT)
-    page_num = request.GET.get('page')
-    page = paginator.get_page(page_num)
-
-    page_numbers = {
-        'current': page.number
-    }
-    if page.has_previous():
-        page_numbers['first'] = 1
-        page_numbers['previous'] = page.previous_page_number()
-    if page.has_next():
-        page_numbers['next'] = page.next_page_number()
-        page_numbers['last'] = page.num_pages()
-
-    return JsonResponse({
-        'geohashes': page.object_list,
-        'precision': precision,
-        'pages': page_numbers,
-    })
