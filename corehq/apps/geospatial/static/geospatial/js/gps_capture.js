@@ -11,6 +11,46 @@ hqDefine("geospatial/js/gps_capture",[
     initialPageData
 ) {
     'use strict';
+    const MAP_CONTAINER_ID = "geospatial-map";
+
+    var map;
+    var selectedDataListObject;
+    var mapMarker = new mapboxgl.Marker({  // eslint-disable-line no-undef
+        draggable: true,
+    });
+    mapMarker.on('dragend', function () {
+        let lngLat = mapMarker.getLngLat();
+        updateSelectedItemLonLat(lngLat.lng, lngLat.lat);
+    });
+
+    function toggleMapVisible(isVisible) {
+        if (isVisible) {
+            $("#" + MAP_CONTAINER_ID).show();
+            centerMapWithMarker();
+        } else {
+            $("#" + MAP_CONTAINER_ID).hide();
+        }
+    }
+
+    function centerMapWithMarker() {
+        if (selectedDataListObject) {
+            let dataItem = selectedDataListObject.itemLocationBeingCapturedOnMap();
+            if (dataItem.lon() && dataItem.lat()) {
+                map.setCenter([dataItem.lon(), dataItem.lat()]);
+                setMarkerAtLngLat(dataItem.lon(), dataItem.lat());
+            }
+        }
+    }
+
+    function resetMap() {
+        toggleMapVisible(false);
+        if (selectedDataListObject) {
+            selectedDataListObject.itemLocationBeingCapturedOnMap(null);
+        }
+        if (mapMarker) {
+            mapMarker.remove();
+        }
+    }
 
     var dataItemModel = function (options, dataType) {
         options = options || {};
@@ -71,7 +111,7 @@ hqDefine("geospatial/js/gps_capture",[
         return self;
     };
 
-    var dataItemListModel = function () {
+    var dataItemListModel = function (dataType) {
         var self = {};
         self.dataItems = ko.observableArray([]);  // Can be cases or users
 
@@ -80,8 +120,7 @@ hqDefine("geospatial/js/gps_capture",[
         self.itemLocationBeingCapturedOnMap = ko.observable();
         self.query = ko.observable('');
 
-        self.dataType = initialPageData.get('data_type');
-
+        self.dataType = dataType;
         self.showLoadingSpinner = ko.observable(true);
         self.showPaginationSpinner = ko.observable(false);
         self.hasError = ko.observable(false);
@@ -93,6 +132,8 @@ hqDefine("geospatial/js/gps_capture",[
 
         self.captureLocationForItem = function (item) {
             self.itemLocationBeingCapturedOnMap(item);
+            selectedDataListObject = self;
+            toggleMapVisible(true);
         };
         self.setCoordinates = function (lat, lng) {
             self.itemLocationBeingCapturedOnMap().setCoordinates(lat, lng);
@@ -149,6 +190,7 @@ hqDefine("geospatial/js/gps_capture",[
                 success: function () {
                     dataItem.hasUnsavedChanges(false);
                     self.isSubmissionSuccess(true);
+                    resetMap();
                 },
                 error: function () {
                     self.hasSubmissionError(true);
@@ -159,15 +201,30 @@ hqDefine("geospatial/js/gps_capture",[
         return self;
     };
 
-    var initMap = function (dataItemList) {
+    function setMarkerAtLngLat(lon, lat) {
+        mapMarker.remove();
+        mapMarker.setLngLat([lon, lat]);
+        mapMarker.addTo(map);
+    }
+
+    function updateSelectedItemLonLat(lon, lat) {
+        selectedDataListObject.setCoordinates(lat, lon);
+    }
+
+    function updateGPSCoordinates(lon, lat) {
+        setMarkerAtLngLat(lon, lat);
+        updateSelectedItemLonLat(lon, lat);
+    }
+
+    var initMap = function () {
         'use strict';
 
         mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
 
         let centerCoordinates = [2.43333330, 9.750]; // should be domain specific
 
-        const map = new mapboxgl.Map({  // eslint-disable-line no-undef
-            container: 'geospatial-map', // container ID
+        map = new mapboxgl.Map({  // eslint-disable-line no-undef
+            container: MAP_CONTAINER_ID, // container ID
             style: 'mapbox://styles/mapbox/streets-v12', // style URL
             center: centerCoordinates, // starting position [lng, lat]
             zoom: 6,
@@ -175,15 +232,39 @@ hqDefine("geospatial/js/gps_capture",[
                          ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         });
 
+        map.addControl(
+            new MapboxGeocoder({  // eslint-disable-line no-undef
+                accessToken: mapboxgl.accessToken,  // eslint-disable-line no-undef
+                mapboxgl: map,
+                types: 'address',
+                proximity: centerCoordinates.toString(),  // bias results to this point
+                marker: false,
+            }).on('result', function (resultObject) {
+                updateGPSCoordinates(resultObject.result.center[0], resultObject.result.center[1]);
+            })
+        );
+
         map.on('click', (event) => {
-            dataItemList.setCoordinates(event.lngLat.lat, event.lngLat.lng);
+            updateGPSCoordinates(event.lngLat.lng, event.lngLat.lat);
         });
+        toggleMapVisible(false);
+
         return map;
     };
 
+    function TabListViewModel() {
+        var self = {};
+        self.onclickAction = function () {
+            resetMap();
+        };
+        return self;
+    }
+
     $(function () {
-        let dataItemList = dataItemListModel();
-        $("#no-gps-list").koApplyBindings(dataItemList);
-        initMap(dataItemList);
+        $("#tabs-list").koApplyBindings(TabListViewModel());
+        $("#no-gps-list-case").koApplyBindings(dataItemListModel('case'));
+        $("#no-gps-list-user").koApplyBindings(dataItemListModel('user'));
+
+        initMap();
     });
 });

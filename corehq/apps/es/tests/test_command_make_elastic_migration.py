@@ -116,7 +116,7 @@ class TestMakeElasticMigrationCommand(TestCase):
 
     def test_build_migration(self):
         creates = [(groups.group_adapter, "groups-custom")]
-        updates = [(groups.group_adapter, {"domain": {"type": "string"}})]
+        updates = [(groups.group_adapter, {"domain": {"type": "text"}})]
         deletes = ["trashme"]
         command = Command()
         command.empty = False
@@ -129,11 +129,11 @@ class TestMakeElasticMigrationCommand(TestCase):
         self.assertEqual(delete_op.name, "trashme")
         self.assertIsInstance(update_op, UpdateIndexMapping)
         self.assertEqual(update_op.name, groups.group_adapter.index_name)
-        self.assertEqual(update_op.properties, {"domain": {"type": "string"}})
+        self.assertEqual(update_op.properties, {"domain": {"type": "text"}})
 
     def test_build_migration_fails_for_multiple_operations_on_the_same_index(self):
         conflict_index = groups.group_adapter.index_name
-        updates = [(groups.group_adapter, {"domain": {"type": "string"}})]
+        updates = [(groups.group_adapter, {"domain": {"type": "text"}})]
         deletes = [conflict_index]
         command = Command()
         command.empty = False

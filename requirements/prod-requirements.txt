@@ -90,7 +90,7 @@ contextlib2==21.6.0
     # via schema
 crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
     # via -r base-requirements.in
-cryptography==41.0.3
+cryptography==41.0.4
     # via
     #   -r prod-requirements.in
     #   -r sso-requirements.in
@@ -312,7 +312,7 @@ httplib2==0.20.4
     #   google-auth-httplib2
 humanize==4.1.0
     # via flower
-idna==2.10
+idna==3.4
     # via
     #   -r prod-requirements.in
     #   requests
@@ -380,7 +380,7 @@ matplotlib-inline==0.1.3
     # via ipython
 msgpack==1.0.5
     # via cachecontrol
-munch==2.5.0
+munch==4.0.0
     # via fiona
 ndg-httpsclient==0.5.1
     # via -r prod-requirements.in
@@ -615,7 +615,6 @@ six==1.16.0
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
-    #   munch
     #   pyjwkest
     #   python-dateutil
     #   pyzxcvbn

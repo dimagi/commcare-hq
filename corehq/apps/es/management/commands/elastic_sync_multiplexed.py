@@ -288,6 +288,34 @@ class ESSyncUtil:
         self._prepare_index_for_normal_usage(adapter.secondary)
         logger.info(f"Successfully set replicas for index {adapter.secondary.index_name}")
 
+    def remove_residual_indices(self):
+        """
+        Remove the residual indices that are not used by HQ
+        """
+        existing_indices = es_manager.indices_info()
+        known_indices = self._get_all_known_index_names()
+        deleted_indices = []
+        for index_name in sorted(existing_indices.keys()):
+            if index_name not in known_indices:
+                print(f"Trying to delete residual index: {index_name}")
+                user_confirmation = input(f"Enter '{index_name}' to continue, any other key to cancel\n")
+                if user_confirmation != index_name:
+                    raise CommandError(f"Input {user_confirmation} did not match index name {index_name}. "
+                                       "Index deletion aborted")
+                es_manager.index_delete(index_name)
+                deleted_indices.append(index_name)
+        if deleted_indices:
+            print(f"Successfully Deleted {deleted_indices}")
+        else:
+            print("No residual indices found on the environment")
+
+    def _get_all_known_index_names(self):
+        # get index name from CANONICAL_NAME_ADAPTER_MAP
+        known_indices = set()
+        for cname in CANONICAL_NAME_ADAPTER_MAP.keys():
+            known_indices.update(self._get_current_and_older_index_name(cname))
+        return known_indices
+
 
 class Command(BaseCommand):
     """
@@ -353,6 +381,11 @@ class Command(BaseCommand):
     If replicas are not set during the time of reindex, they can be set on secondary index by
         ```bash
         ./manage.py elastic_sync_multiplexed set_replicas <index_cname>
+        ```
+
+    For deleting all the indices that are not used in HQ
+        ```bash
+        ./manage.py elastic_sync_multiplexed remove_residual_indices
         ```
     """
 
@@ -459,6 +492,10 @@ class Command(BaseCommand):
             help="""Cannonical Name of the index whose replicas are to be set"""
         )
 
+        # Delete residual indices
+        remove_residual_indices_cmd = subparsers.add_parser("remove_residual_indices")
+        remove_residual_indices_cmd.set_defaults(func=self.es_helper.remove_residual_indices)
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
@@ -480,3 +517,5 @@ class Command(BaseCommand):
             cmd_func(options['index_cname'])
         elif sub_cmd == 'set_replicas':
             cmd_func(options["index_cname"])
+        elif sub_cmd == 'remove_residual_indices':
+            cmd_func()
