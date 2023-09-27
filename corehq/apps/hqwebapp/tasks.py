@@ -5,6 +5,7 @@ from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
 from django.core.management import call_command
 from django.utils.translation import gettext as _
+from dimagi.utils.django.email import EmailConfigurationManager
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
@@ -43,8 +44,8 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
 
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_mail_async(self, subject, message, from_email, recipient_list,
-                    messaging_event_id=None, domain=None):
+def send_mail_async(self, subject, message, configuration: EmailConfigurationManager,
+                    recipient_list, messaging_event_id=None, domain: str = None):
     """ Call with send_mail_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -90,9 +91,10 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
         message = EmailMessage(
             subject=subject,
             body=message,
-            from_email=from_email,
+            from_email=configuration.from_email,
             to=filtered_recipient_list,
             headers=headers,
+            connection=configuration.connection
         )
         return message.send()
     except SMTPDataError as e:
