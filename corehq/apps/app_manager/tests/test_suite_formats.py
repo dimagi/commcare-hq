@@ -326,6 +326,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
         action_spec = """
         <partial>
           <action>
+            <display><text/></display>
             <stack>
               <push>
                 <command value="'m0-f1'"/>
@@ -371,6 +372,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
         action_spec = """
             <partial>
               <action>
+                <display><text/></display>
                 <stack>
                   <push>
                     <command value="'m1-f1'"/>
@@ -419,6 +421,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
         action_spec = """
                 <partial>
                   <action>
+                    <display><text/></display>
                     <stack>
                       <push>
                         <command value="'m1-f1'"/>
