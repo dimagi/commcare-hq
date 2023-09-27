@@ -3,12 +3,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "knockout",
     "underscore",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/main",
+    "hqwebapp/js/bootstrap3/main",
     "analytix/js/google",
-    "hqwebapp/js/ui_elements/ui-element-key-val-list",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list",
     "DOMPurify/dist/purify.min",
     "hqwebapp/js/toggles",
-    "hqwebapp/js/knockout_bindings.ko",
+    "hqwebapp/js/bootstrap3/knockout_bindings.ko",
     "data_interfaces/js/make_read_only",
     'hqwebapp/js/select2_knockout_bindings.ko',
     'knockout-sortable/build/knockout-sortable',
@@ -23,7 +23,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     DOMPurify,
     toggles
 ) {
-    var caseType = function (name, fhirResourceType, deprecated, moduleCount) {
+    var caseType = function (name, fhirResourceType, deprecated, moduleCount, geoCaseProp) {
         var self = {};
         self.name = name || gettext("No Name");
         self.deprecated = deprecated;
@@ -31,6 +31,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.url = "#" + name;
         self.fhirResourceType = ko.observable(fhirResourceType);
         self.groups = ko.observableArray();
+        self.geoCaseProp = geoCaseProp;
 
         self.init = function (groupData, changeSaveButton) {
             for (let group of groupData) {
@@ -40,9 +41,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 groupObj.toBeDeprecated.subscribe(changeSaveButton);
 
                 for (let prop of group.properties) {
+                    const isGeoCaseProp = (self.geoCaseProp === prop.name);
                     var propObj = propertyListItem(prop.name, prop.label, false, prop.group, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath);
+                        prop.removeFHIRResourcePropertyPath, isGeoCaseProp);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.label.subscribe(changeSaveButton);
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
@@ -87,7 +89,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     var propertyListItem = function (name, label, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath) {
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeoCaseProp) {
         var self = {};
         self.name = name;
         self.label = ko.observable(label);
@@ -100,6 +102,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.fhirResourcePropPath = ko.observable(fhirResourcePropPath);
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
+        self.isGeoCaseProp = isGeoCaseProp;
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
         let subTitle;
         if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
@@ -125,7 +128,19 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.deprecateProperty = function () {
-            self.deprecated(true);
+            if (toggles.toggleEnabled('GEOSPATIAL') && self.isGeoCaseProp) {
+                self.confirmGeospatialDeprecation();
+            } else {
+                self.deprecated(true);
+            }
+        };
+
+        self.confirmGeospatialDeprecation = function () {
+            const $modal = $("#deprecate-geospatial-prop-modal").modal('show');
+            $("#deprecate-geospatial-prop-btn").off('click').on('click', function () {
+                self.deprecated(true);
+                $modal.modal('hide');
+            });
         };
 
         self.restoreProperty = function () {
@@ -234,6 +249,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             caseTypeData.fhir_resource_type,
                             caseTypeData.is_deprecated,
                             caseTypeData.module_count,
+                            data.geo_case_property
                         );
                         caseTypeObj.init(caseTypeData.groups, changeSaveButton);
                         self.caseTypes.push(caseTypeObj);
@@ -295,14 +311,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 url: initialPageData.reverse('deprecate_or_restore_case_type', activeCaseType.name),
                 method: 'POST',
                 data: {
-                    'is_deprecated': shouldDeprecate
+                    'is_deprecated': shouldDeprecate,
                 },
                 success: function () {
                     window.location.reload(true);
                 },
-                error: function (error) {
+                error: function () {
                     $("#deprecate-case-type-error").show();
-                }
+                },
             });
         };
 
@@ -320,7 +336,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.saveButton.setState('saved');
         };
 
-        self.newPropertyNameUnique = ko.computed(function() {
+        self.newPropertyNameUnique = ko.computed(function () {
             if (!self.newPropertyName()) {
                 return true;
             }
@@ -335,7 +351,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return true;
         });
 
-        self.newGroupNameUnique = ko.computed(function() {
+        self.newGroupNameUnique = ko.computed(function () {
             if (!self.newGroupName()) {
                 return true;
             }
@@ -406,7 +422,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         // CREATE workflow
         self.name = ko.observable("").extend({
-            rateLimit: { method: "notifyWhenChangesStop", timeout: 400, }
+            rateLimit: { method: "notifyWhenChangesStop", timeout: 400 },
         });
 
         self.nameValid = ko.observable(false);

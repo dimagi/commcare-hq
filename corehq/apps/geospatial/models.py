@@ -6,7 +6,7 @@ from geopy.distance import great_circle
 from shapely.geometry import Point
 
 from .exceptions import InvalidCoordinate, InvalidDistributionParam
-from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 
 
 @dataclass
@@ -143,5 +143,19 @@ class GeoConfig(models.Model):
 
     domain = models.CharField(max_length=256, db_index=True, primary_key=True)
     location_data_source = models.CharField(max_length=126, default=CUSTOM_USER_PROPERTY)
-    user_location_property_name = models.CharField(max_length=256, default=GEO_POINT_CASE_PROPERTY)
-    case_location_property_name = models.CharField(max_length=256, default=GEO_POINT_CASE_PROPERTY)
+    user_location_property_name = models.CharField(max_length=256, default=GPS_POINT_CASE_PROPERTY)
+    case_location_property_name = models.CharField(max_length=256, default=GPS_POINT_CASE_PROPERTY)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._clear_caches()
+
+    def delete(self, *args, **kwargs):
+        self._clear_caches()
+        return super().delete(*args, **kwargs)
+
+    def _clear_caches(self):
+        from .utils import get_geo_case_property, get_geo_user_property
+
+        get_geo_case_property.clear(self.domain)
+        get_geo_user_property.clear(self.domain)

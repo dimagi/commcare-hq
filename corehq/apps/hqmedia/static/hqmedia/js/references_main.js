@@ -69,7 +69,7 @@ hqDefine("hqmedia/js/references_main", function () {
                 },
                 error: function () {
                     self.showPaginationSpinner(false);
-                    hqImport('hqwebapp/js/alert_user').alert_user(gettext("Error fetching multimedia, " +
+                    hqImport('hqwebapp/js/bootstrap3/alert_user').alert_user(gettext("Error fetching multimedia, " +
                         "please try again or report an issue if the problem persists."), 'danger');
                 },
             });

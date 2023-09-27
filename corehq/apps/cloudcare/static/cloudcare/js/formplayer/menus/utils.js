@@ -85,30 +85,30 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function (langs, langCodeNameMapping) {
-      var langModels,
-          langCollection;
+    var showMenuDropdown = function (langs, langCodeNameMapping) {
+        let langModels,
+            langCollection;
 
-      FormplayerFrontend.regions.addRegions({
-        formMenu: "#form-menu",
-      });
-
-      if (langs) {
-        langModels = _.map(langs, function (lang) {
-          var matchingLanguage = langCodeNameMapping[lang];
-          return {
-            lang_code: lang,
-            lang_label: matchingLanguage ? matchingLanguage : lang,
-          };
+        FormplayerFrontend.regions.addRegions({
+            breadcrumbMenuDropdown: "#breadcrumb__menu-dropdown",
         });
-        langCollection = new Backbone.Collection(langModels);
-      } else {
-        langCollection = null;
-      }
-      var formMenuView = views.FormMenuView({
-        collection: langCollection,
-      });
-      FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
+
+        if (langs && langs.length > 1) {
+            langModels = _.map(langs, function (lang) {
+            let matchingLanguage = langCodeNameMapping[lang];
+            return {
+                lang_code: lang,
+                lang_label: matchingLanguage ? matchingLanguage : lang,
+            };
+            });
+            langCollection = new Backbone.Collection(langModels);
+        } else {
+            langCollection = null;
+        }
+        let menuDropdownView = views.MenuDropdownView({
+            collection: langCollection,
+        });
+        FormplayerFrontend.regions.getRegion('breadcrumbMenuDropdown').show(menuDropdownView);
     };
 
 
@@ -208,7 +208,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         getCaseListView: getCaseListView,
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
-        showFormMenu: showFormMenu,
+        showMenuDropdown: showMenuDropdown,
         startOrStopLocationWatching: startOrStopLocationWatching,
     };
 });

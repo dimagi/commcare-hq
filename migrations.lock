@@ -98,6 +98,14 @@ accounting
  0076_location_owner_in_report_builder_priv
  0077_case_list_explorer_priv
  0078_revert_location_owner_in_report_builder_priv
+ 0079_add_web_user_feature
+ 0080_add_web_user_feature_in_other_models
+ 0081_billingaccount_bill_web_user
+ 0082_application_error_report_priv
+ 0083_data_dictionary_priv
+ 0084_copy_cases_priv
+ 0085_remove_free_50_sms
+ 0086_add_duplicate_invoice_id_to_invoice_model
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -145,6 +153,7 @@ app_manager
  0025_migrate_to_search_filter_flag
  0026_conditional_case_update_deleted_apps
  0027_add_case_tile_template_field
+ 0028_case_list_custom_variable_xml_to_dict
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -383,6 +392,7 @@ es
  0002_add_tombstones
  0003_add_assigned_location_ids
  0004_make_new_indexes
+ 0005_add_epoch_as_valid_date_to_forms
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -529,6 +539,8 @@ form_processor
  0091_auto_20190603_2023
  0092_auto_20200924_1753
  0093_rename_models (5 squashed migrations)
+ 0094_add_partial_index_xforms
+ 0095_remove_xforminstance_deleted_state
 formplayer_api
  0001_drop_old_tables
 generic_inbound
@@ -541,6 +553,7 @@ generic_inbound
 geospatial
  0001_create_geopolygon
  0002_geoconfig
+ 0003_auto_20230908_0927
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -606,6 +619,8 @@ linked_domain
  0020_auto_20211102_1501
  0021_alter_domainlinkhistory_model
  0022_alter_domainlinkhistory_model
+ 0023_alter_domainlinkhistory_model
+ 0024_alter_domainlinkhistory_model
 locations
  0001_initial
  0002_auto_20160420_2105
@@ -730,6 +745,7 @@ pillowtop
  0007_copy_xforms_checkpoint
 preindex
  0001_initial
+ 0002_initial
 products
  0001_initial
 project_limits
@@ -752,7 +768,7 @@ registry
 reminders
  0001_initial
 repeaters
- 0001_adjust_auth_field_format_squashed_0015_drop_connection_settings_fk (15 squashed migrations)
+ 0001_adjust_auth_field_format_squashed_0015_drop_connection_settings_fk
  0002_repeaters_db
 reports
  0001_initial
@@ -769,6 +785,7 @@ reports
  0012_tableaugroup_tableauuser
  0013_tableau_various_20221205
  0014_querystringhash
+ 0015_tableauserver_allowed_tableau_groups
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -972,6 +989,8 @@ sql_accessors
  0066_drop_unused_function
  0067_livequery_sql
  0067_livequery_sql_include_deleted_indices
+ 0068_remove_deleted_state
+ 0069_drop_DELETED_references_fn
 sql_proxy_accessors
  0001_initial
  0002_add_sync_functions
@@ -1022,6 +1041,8 @@ sql_proxy_accessors
  0047_remove_get_case_models_functions
  0048_get_ledger_values_for_cases_3
  0049_drop_unused_function
+ 0050_remove_deleted_state
+ 0051_drop_DELETED_references_fn
 sql_proxy_standby_accessors
  0001_initial
 sso

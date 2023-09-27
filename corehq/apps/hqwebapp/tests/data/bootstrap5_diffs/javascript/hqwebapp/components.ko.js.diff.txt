@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-hqDefine("hqwebapp/js/bootstrap3/components.ko", [
++hqDefine("hqwebapp/js/bootstrap5/components.ko", [
+     'jquery',
+     'knockout',
+     'underscore',
+@@ -6,7 +6,7 @@
+     'hqwebapp/js/components/pagination',
+     'hqwebapp/js/components/search_box',
+     'hqwebapp/js/components/select_toggle',
+-    'hqwebapp/js/components/bootstrap3/feedback',
++    'hqwebapp/js/components/bootstrap5/feedback',
+ ], function (
+     $,
+     ko,

@@ -69,6 +69,7 @@ from corehq.apps.export.const import (
     CASE_NAME_TRANSFORM,
     DEID_TRANSFORM_FUNCTIONS,
     EMPTY_VALUE,
+    EXCEL_MAX_SHEET_NAME_LENGTH,
     FORM_DATA_SCHEMA_VERSION,
     FORM_EXPORT,
     FORM_ID_TO_LINK,
@@ -118,6 +119,7 @@ from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.data_dictionary.util import get_deprecated_fields
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
+from corehq.apps.userreports.util import get_indicator_adapter
 
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
@@ -1368,6 +1370,11 @@ class SMSExportInstance(ExportInstance):
                 query = query.filter(filter.to_es_filter())
 
         return query
+
+
+class DataSourceExportInstance(ExportInstance):
+    type = 'datasource'
+    data_source_id = StringProperty()
 
 
 class ExportInstanceDefaults(object):
@@ -3108,3 +3115,42 @@ PARENT_CASE_TABLE = [PathNode(name='indices', is_repeat=True)]
 
 # Used to identify tables in a bulk case export
 ALL_CASE_TYPE_TABLE = PathNode(name=ALL_CASE_TYPE_EXPORT)
+
+
+def datasource_export_instance(config):
+    adapter = get_indicator_adapter(config)
+    table = adapter.get_table()
+
+    def get_export_column(column):
+        return ExportColumn(
+            label=column.id,
+            item=ExportItem(
+                path=[PathNode(name=column.id)],
+                label=column.id,
+                datatype=column.datatype,
+            ),
+            selected=True,
+        )
+
+    # table.name follows this format: ucr_{project space}_{table id}_{unique hash}
+    unique_hash = table.name.split("_")[-1]
+    sheet_name = adapter.table_id
+    if len(sheet_name) > EXCEL_MAX_SHEET_NAME_LENGTH:
+        sheet_name = f"{config.domain}_{unique_hash}"
+        if len(sheet_name) > EXCEL_MAX_SHEET_NAME_LENGTH:
+            sheet_name = unique_hash
+
+    return DataSourceExportInstance(
+        name=config.display_name,
+        domain=config.domain,
+        tables=[
+            TableConfiguration(
+                label=sheet_name,
+                columns=[
+                    get_export_column(col)
+                    for col in config.columns_by_id.values()
+                ],
+            )
+        ],
+        data_source_id=config.data_source_id,
+    )

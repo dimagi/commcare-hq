@@ -111,14 +111,20 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         };
 
-        self.get_short_odk_url = function () {
-            var urlType;
+        self.get_odk_url_type = function () {
             if (self.include_media()) {
-                urlType = savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL;
+                return savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL;
             } else {
-                urlType = savedAppModel.URL_TYPES.SHORT_ODK_URL;
+                return savedAppModel.URL_TYPES.SHORT_ODK_URL;
             }
-            if (!(ko.utils.unwrapObservable(self[urlType])) || self.build_profile()) {
+        };
+        self.short_odk_url_is_available = function () {
+            var urlType = self.get_odk_url_type();
+            return ko.utils.unwrapObservable(self[urlType]) && !self.build_profile();
+        };
+        self.get_short_odk_url = function () {
+            var urlType = self.get_odk_url_type();
+            if (!self.short_odk_url_is_available()) {
                 return self.generate_short_url(urlType);
             } else {
                 var data = ko.utils.unwrapObservable(self[urlType]);
@@ -193,7 +199,9 @@ hqDefine('app_manager/js/releases/releases', function () {
             hqImport('analytix/js/google').track.event('App Manager', 'Deploy Button', self.id());
             hqImport('analytix/js/kissmetrix').track.event('Clicked Deploy');
             $.post(releasesMain.reverse('hubspot_click_deploy'));
-            self.get_short_odk_url();
+            if (self.short_odk_url_is_available()) {
+                self.get_short_odk_url();
+            }
         };
 
         self.clickScan = function () {

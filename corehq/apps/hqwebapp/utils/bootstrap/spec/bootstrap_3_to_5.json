@@ -51,7 +51,8 @@
         "btn-danger": "btn-outline-danger",
         "btn-xs": "btn-sm",
         "navbar-default": "navbar-light",
-        "inline-block": "d-inline-block"
+        "inline-block": "d-inline-block",
+        "control-label": "form-label"
     },
     "numbered_css_renames": {
         "col-xl-<num>": "col-xxl-<num>",

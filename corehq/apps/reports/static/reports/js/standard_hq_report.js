@@ -41,7 +41,7 @@ hqDefine("reports/js/standard_hq_report", [
                     // Standard reports
                     var reportOptions = _.extend({}, initialPageData.get('js_options'), {
                         emailSuccessMessage: gettext('Report successfully emailed'),
-                        emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
+                        emailErrorMessage: gettext('An error occurred emailing your report. Please try again.'),
                     });
                     if (initialPageData.get('startdate')) {
                         reportOptions.datespan = {

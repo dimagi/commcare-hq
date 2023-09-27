@@ -99,6 +99,18 @@ class CaseListExplorer(CaseListReport):
             column = self.headers.header[column_id]
             try:
                 special_property = SPECIAL_CASE_PROPERTIES_MAP[column.prop_name]
+                if special_property.key == '@case_id':
+                    # This condition is added because ES 5 does not allow sorting on _id.
+                    #  When we will have case_id in root of the document, this should be removed.
+                    sort_order = 'desc' if descending else 'asc'
+                    query.es_query['sort'] = [{
+                        'case_properties.value.exact': {
+                            'order': sort_order,
+                            'nested_path': 'case_properties',
+                            'nested_filter': {'term': {"case_properties.key.exact": "@case_id"}},
+                        }
+                    }]
+                    return query
                 query = query.sort(special_property.sort_property, desc=descending)
             except KeyError:
                 query = query.sort_by_case_property(column.prop_name, desc=descending)

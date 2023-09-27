@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,43 +1,93 @@
+@@ -1,43 +1,94 @@
 -@import "_hq/includes/variables.less";
 -@import "_hq/includes/mixins.less";
  
@@ -48,6 +48,7 @@
 +@import "functions";
 +@import "commcarehq/variables";  // This comes before Bootstrap 5 variables to override the defaults
 +@import "variables";
++@import "variables-dark";
 +@import "commcarehq/variables_bootstrap3";  // Variables specific to B3-era Stylesheet
 +@import "maps";
 +@import "mixins";

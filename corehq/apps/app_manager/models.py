@@ -217,7 +217,7 @@ def jsonpath_update(datum_context, value):
 form_id_references = []
 
 
-def FormIdProperty(expression, **kwargs):
+def FormIdProperty(*expressions, **kwargs):
     """
     Create a StringProperty that references a form ID. This is necessary because
     form IDs change when apps are copied so we need to make sure we update
@@ -225,12 +225,12 @@ def FormIdProperty(expression, **kwargs):
     :param expression:  jsonpath expression that can be used to find the field
     :param kwargs:      arguments to be passed to the underlying StringProperty
     """
-    path_expression = parse(expression)
-    assert isinstance(path_expression, jsonpath.Child), "only child path expressions are supported"
-    field = path_expression.right
-    assert len(field.fields) == 1, 'path expression can only reference a single field'
-
-    form_id_references.append(path_expression)
+    for expression in expressions:
+        path_expression = parse(expression)
+        assert isinstance(path_expression, jsonpath.Child), "only child path expressions are supported"
+        field = path_expression.right
+        assert len(field.fields) == 1, 'path expression can only reference a single field'
+        form_id_references.append(path_expression)
     return StringProperty(**kwargs)
 
 
@@ -1045,6 +1045,9 @@ class FormBase(DocumentSchema):
     # computed datums IDs that are allowed in endpoints
     function_datum_endpoints = StringListProperty()
 
+    def __repr__(self):
+        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
+
     @classmethod
     def wrap(cls, data):
         data.pop('validation_cache', '')
@@ -1824,6 +1827,14 @@ class DetailColumn(IndexedSchema):
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
 
+    grid_x = IntegerProperty(exclude_if_none=True)
+    grid_y = IntegerProperty(exclude_if_none=True)
+    width = IntegerProperty(exclude_if_none=True)
+    height = IntegerProperty(exclude_if_none=True)
+    horizontal_align = StringProperty(exclude_if_none=True)
+    vertical_align = StringProperty(exclude_if_none=True)
+    font_size = StringProperty(exclude_if_none=True)
+
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
     case_tile_field = StringProperty(exclude_if_none=True)
@@ -1833,6 +1844,17 @@ class DetailColumn(IndexedSchema):
     filter_xpath = StringProperty(default="", exclude_if_none=True)
     time_ago_interval = FloatProperty(default=365.25)
     date_format = StringProperty(default="%d/%m/%y")
+    action_form_id = FormIdProperty(
+        # This should only be used by 'module.case_details.short'
+        # but adding in all possible reference here for safety
+        'modules[*].case_details.short.columns[*].action_form_id',
+        'modules[*].case_details.long.columns[*].action_form_id',
+        'modules[*].ref_details.short.columns[*].action_form_id',
+        'modules[*].ref_details.long.columns[*].action_form_id',
+        'modules[*].product_details.short.columns[*].action_form_id',
+        'modules[*].product_details.long.columns[*].action_form_id',
+        default="", exclude_if_none=True
+    )
 
     @property
     def enum_dict(self):
@@ -1948,6 +1970,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     # Custom variables to add into the <variables /> node
     custom_variables = StringProperty(exclude_if_none=True)
+    custom_variables_dict = DictProperty(exclude_if_none=True)
 
     # Allow selection of mutiple cases. Only applies to 'short' details
     multi_select = BooleanProperty(default=False)
@@ -2246,6 +2269,9 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     def __init__(self, *args, **kwargs):
         super(ModuleBase, self).__init__(*args, **kwargs)
         self.assign_references()
+
+    def __repr__(self):
+        return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
 
     @property
     def is_surveys(self):
@@ -4590,6 +4616,10 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     custom_assertions = SchemaListProperty(CustomAssertion)
 
     family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
+
+    def __repr__(self):
+        return (f"{self.doc_type}(id='{self._id}', domain='{self.domain}', "
+                f"name='{self.name}', copy_of={repr(self.copy_of)})")
 
     def has_modules(self):
         return len(self.get_modules()) > 0 and not self.is_remote_app()

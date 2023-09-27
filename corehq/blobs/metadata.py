@@ -5,11 +5,14 @@ from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
     split_list_by_db_partition,
 )
-from corehq.util.metrics import metrics_counter
+from corehq.util.metrics import (
+    metrics_counter,
+    limit_domains,
+)
+
 from . import CODES
 
 from .models import BlobMeta
-
 
 
 class MetaDB(object):
@@ -56,6 +59,12 @@ class MetaDB(object):
         tags = _meta_tags(meta)
         metrics_counter('commcare.blobs.added.count', tags=tags)
         metrics_counter('commcare.blobs.added.bytes', value=length, tags=tags)
+        if meta.type_code == 3:
+            domain = limit_domains(meta.domain)
+            metrics_counter('commcare.blobs.added.form_attachment.count',
+                            tags={'domain': domain})
+            metrics_counter('commcare.blobs.added.form_attachment.bytes',
+                            value=length, tags={'domain': domain})
         if meta.expires_on is not None:
             metrics_counter('commcare.temp_blobs.count', tags=tags)
             metrics_counter('commcare.temp_blobs.bytes_added', value=length, tags=tags)

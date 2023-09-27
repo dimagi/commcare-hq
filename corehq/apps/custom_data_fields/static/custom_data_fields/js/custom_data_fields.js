@@ -4,8 +4,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/ui_elements/ui-element-key-val-list',
-    'hqwebapp/js/knockout_bindings.ko',     // needed for sortable and jqueryElement bindings
+    'hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list',
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko',     // needed for sortable and jqueryElement bindings
 ], function (
     $,
     ko,

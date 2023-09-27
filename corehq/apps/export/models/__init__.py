@@ -1,3 +1,4 @@
+# flake8: noqa
 from .new import (
     CASE_HISTORY_TABLE,
     MAIN_TABLE,
@@ -41,6 +42,7 @@ from .new import (
     StockItem,
     TableConfiguration,
     UserDefinedExportColumn,
+    DataSourceExportInstance,
 )
 
 from .export_settings import (

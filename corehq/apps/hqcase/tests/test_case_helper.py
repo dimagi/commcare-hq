@@ -3,7 +3,6 @@ import uuid
 from contextlib import contextmanager
 
 from django.test import TestCase
-
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
@@ -315,11 +314,12 @@ class CaseHelperTests(TestCase):
 
 
 @contextmanager
-def get_mother_case():
+def get_mother_case(*args, **kwargs):
     factory = CaseFactory(DOMAIN)
     mother = factory.create_case(
         case_type='mother',
         case_name='Haumea',
+        **kwargs,
     )
     try:
         yield mother

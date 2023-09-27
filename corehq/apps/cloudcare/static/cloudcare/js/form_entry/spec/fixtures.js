@@ -156,6 +156,13 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
                             "answer": null,
                             "children": [],
                         },
+                        {
+                            "type": "question",
+                            "ix": "2,4",
+                            "datatype": "str",
+                            "answer": null,
+                            "children": [],
+                        },
                     ],
                 },
             ],

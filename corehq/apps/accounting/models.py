@@ -122,10 +122,12 @@ class InvoicingPlan(object):
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
+    WEB_USER = "Web User"
 
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
+        (WEB_USER, WEB_USER)
     )
 
 
@@ -423,6 +425,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         null=True,
         default=list
     )
+
+    bill_web_user = models.BooleanField(default=False)
 
     class Meta(object):
         app_label = 'accounting'
@@ -883,8 +887,8 @@ class SoftwarePlanVersion(models.Model):
 
     @property
     def version(self):
-        return (self.plan.softwareplanversion_set.count() -
-                self.plan.softwareplanversion_set.filter(
+        return (self.plan.softwareplanversion_set.count()
+                - self.plan.softwareplanversion_set.filter(
                     date_created__gt=self.date_created).count())
 
     @property
@@ -1359,6 +1363,30 @@ class Subscription(models.Model):
         for property_name, property_value in kwargs.items():
             if property_value is not None:
                 setattr(self, property_name, property_value)
+
+    def upgrade_plan_for_consistency(self, new_plan_version, upgrade_note, web_user):
+        """
+        Upgrade subscription for keeping consistency should only update the software plan,
+        but keep all other properties like service_type, pro_bono_status,etc ... the same
+        """
+
+        self.change_plan(
+            new_plan_version=new_plan_version,
+            note=upgrade_note,
+            web_user=web_user,
+            service_type=self.service_type,
+            pro_bono_status=self.pro_bono_status,
+            funding_source=self.funding_source,
+            internal_change=True,
+            do_not_invoice=self.do_not_invoice,
+            no_invoice_reason=self.no_invoice_reason,
+            do_not_email_invoice=self.do_not_email_invoice,
+            do_not_email_reminder=self.do_not_email_reminder,
+            auto_generate_credits=self.auto_generate_credits,
+            skip_invoicing_if_no_feature_charges=self.skip_invoicing_if_no_feature_charges,
+            skip_auto_downgrade=self.skip_auto_downgrade,
+            skip_auto_downgrade_reason=self.skip_auto_downgrade_reason,
+        )
 
     @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
@@ -1947,8 +1975,8 @@ class Subscription(models.Model):
             return False, None
         last_subscription = last_subscription.latest('date_created')
         return (
-            last_subscription.account.pk == account.pk and
-            last_subscription.plan_version.pk == plan_version.pk
+            last_subscription.account.pk == account.pk
+            and last_subscription.plan_version.pk == plan_version.pk
         ), last_subscription
 
     @property
@@ -2099,6 +2127,7 @@ class Invoice(InvoiceBase):
     to CreditAdjustments.
     """
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+    duplicate_invoice_id = models.IntegerField(null=True)
 
     class Meta(object):
         app_label = 'accounting'
@@ -2606,8 +2635,8 @@ class BillingRecord(BillingRecordBase):
     def should_send_email(self):
         subscription = self.invoice.subscription
         autogenerate = (subscription.auto_generate_credits and not self.invoice.balance)
-        small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
-                            subscription.service_type == SubscriptionType.IMPLEMENTATION)
+        small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD
+                            and subscription.service_type == SubscriptionType.IMPLEMENTATION)
         hidden = self.invoice.is_hidden
         do_not_email_invoice = self.invoice.subscription.do_not_email_invoice
         return not (autogenerate or small_contracted or hidden or do_not_email_invoice)
@@ -3462,8 +3491,8 @@ class CreditLine(models.Model):
         return cls.objects.filter(
             account=account, subscription__exact=None, is_active=True
         ).filter(
-            Q(is_product=True) |
-            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
+            Q(is_product=True)
+            | Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
 
     @classmethod
@@ -3481,8 +3510,8 @@ class CreditLine(models.Model):
     @classmethod
     def get_non_general_credits_by_subscription(cls, subscription):
         return cls.objects.filter(subscription=subscription, is_active=True).filter(
-            Q(is_product=True) |
-            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
+            Q(is_product=True)
+            | Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
 
     @classmethod

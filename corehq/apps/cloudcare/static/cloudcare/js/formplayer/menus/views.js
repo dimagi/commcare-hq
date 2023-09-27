@@ -537,7 +537,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
                     "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
-                hqRequire(["hqwebapp/js/alert_user"], function (alertUser) {
+                hqRequire(["hqwebapp/js/bootstrap3/alert_user"], function (alertUser) {
                     alertUser.alert_user(errorMessage, 'danger');
                 });
             }
@@ -947,13 +947,33 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    const FormMenuView = Marionette.CollectionView.extend({
-        template: _.template($("#form-menu-template").html() || ""),
+    const printBehavior = Marionette.Behavior.extend({
+        ui: {
+            selectPrint: ".print-button",
+        },
+        events: {
+            "keydown @ui.selectPrint": "printKeyAction",
+            "click @ui.selectPrint": "print",
+        },
+        printKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.print();
+            }
+        },
+        print: function () {
+            window.print();
+        },
+    });
+
+    const MenuDropdownView = Marionette.CollectionView.extend({
+        template: _.template($("#menu-dropdown-template").html() || ""),
         childView: LanguageOptionView,
         childViewContainer: 'ul',
         ui: {
-            dropdownMenu: "#form-menu-dropdown",
-            selectPrint: "#print-header.dropdown-header",
+            dropdownMenu: "#menu-dropdown",
+        },
+        behaviors: {
+            print: printBehavior,
         },
         childViewOptions: function () {
             return {
@@ -968,22 +988,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         events: {
             "keydown": "expandDropdown",
-            "keydown @ui.selectPrint": "printKeyAction",
-            "click @ui.selectPrint": "print",
         },
         expandDropdown: function (e) {
             if (e.keyCode === 13 || e.keyCode === 32) {
                 e.preventDefault();
                 $(this.ui.dropdownMenu).toggleClass("open");
             }
-        },
-        printKeyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.print();
-            }
-        },
-        print: function () {
-            window.print();
         },
     });
 
@@ -1079,8 +1089,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         BreadcrumbListView: function (options) {
             return new BreadcrumbListView(options);
         },
-        FormMenuView: function (options) {
-            return new FormMenuView(options);
+        MenuDropdownView: function (options) {
+            return new MenuDropdownView(options);
         },
         CaseDetailFooterView: function (options) {
             return new CaseDetailFooterView(options);

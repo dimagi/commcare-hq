@@ -1,11 +1,10 @@
+import dataclasses
+import functools
 import json
 from base64 import b64decode, b64encode
 from collections import namedtuple
-import dataclasses
-from dataclasses import dataclass, InitVar
+from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
-import functools
-import pytz
 from urllib.parse import urlencode
 
 from django.conf.urls import re_path as url
@@ -13,13 +12,22 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
 from django.db.models.functions import TruncDate
-
-from django.http import Http404, HttpResponse, HttpResponseNotFound, JsonResponse, QueryDict
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    HttpResponseBadRequest,
+    JsonResponse,
+    QueryDict,
+)
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
+from django.views.decorators.csrf import csrf_exempt
 
+import pytz
 from memoized import memoized_property
 from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
@@ -29,11 +37,14 @@ from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
+
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.cors import add_cors_headers_to_response
+from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.api.odata.serializers import (
     ODataCaseSerializer,
     ODataFormSerializer,
@@ -48,16 +59,23 @@ from corehq.apps.api.resources.auth import (
     ODataAuthentication,
     RequirePermissionAuthentication,
 )
-from corehq.apps.auditcare.models import NavigationEventAudit
-from corehq.apps.api.resources.meta import AdminResourceMeta, CustomResourceMeta
+from corehq.apps.api.resources.messaging_event.utils import get_request_params
+from corehq.apps.api.resources.meta import (
+    AdminResourceMeta,
+    CustomResourceMeta,
+)
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import (
-    get_obj,
     django_date_filter,
+    get_obj,
     make_date_filter,
     parse_str_to_date,
+    cursor_based_query_for_datasource
 )
 from corehq.apps.app_manager.models import Application
+from corehq.apps.auditcare.models import NavigationEventAudit
+from corehq.apps.case_importer.views import require_can_edit_data
+from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
@@ -77,6 +95,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
+    get_datasource_config,
     report_config_id_is_static,
 )
 from corehq.apps.userreports.reports.data_source import (
@@ -88,6 +107,7 @@ from corehq.apps.userreports.reports.view import (
 )
 from corehq.apps.userreports.util import (
     get_configurable_and_static_reports,
+    get_indicator_adapter,
     get_report_config_or_not_found,
 )
 from corehq.apps.users.dbaccessors import (
@@ -96,16 +116,19 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.apps.users.models import (
     CommCareUser,
+    ConnectIDUserLink,
     CouchUser,
     HqPermissions,
     WebUser,
 )
-from corehq.apps.users.util import raw_username, generate_mobile_username
+from corehq.apps.users.util import generate_mobile_username, raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
 from corehq.util.timer import TimingContext
 
+from ..exceptions import UpdateUserException
+from ..user_updates import update
 from . import (
     CorsResourceMixin,
     CouchResourceMixin,
@@ -114,11 +137,11 @@ from . import (
     v0_1,
     v0_4,
 )
-from .pagination import DoesNothingPaginator, NoCountingPaginator
-from ..exceptions import UpdateUserException
-from ..user_updates import update
+from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
+
 
 MOCK_BULK_USER_ES = None
+EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 200
 
 
 def user_es_call(domain, q, fields, size, start_at):
@@ -232,11 +255,17 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         except ValidationError as e:
             raise BadRequest(e.message)
 
+        if not (bundle.data.get('password') or bundle.data.get('connect_username')):
+            raise BadRequest(_('Password or connect username required'))
+
+        if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
+            raise BadRequest(_("You don't have permission to use connect_username field"))
+
         try:
             bundle.obj = CommCareUser.create(
                 domain=kwargs['domain'],
                 username=username,
-                password=bundle.data['password'],
+                password=bundle.data.get('password'),
                 created_by=bundle.request.couch_user,
                 created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
@@ -258,6 +287,12 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             else:
                 django_user.delete()
             raise
+        if bundle.data.get('connect_username'):
+            ConnectIDUserLink.objects.create(
+                domain=bundle.request.domain,
+                connectid_username=bundle.data['connect_username'],
+                commcare_user=bundle.obj.get_django_user()
+            )
         return bundle
 
     def obj_update(self, bundle, **kwargs):
@@ -1295,3 +1330,36 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
                 filter_obj = cls.COMPOUND_FILTERS[param_field_name](qualifier, val)
                 compound_filter &= Q(**filter_obj)
         return compound_filter
+
+
+@csrf_exempt
+@allow_cors(['GET'])
+@api_auth()
+@require_can_edit_data
+@requires_privilege_with_fallback(privileges.API_ACCESS)
+@api_throttle
+def get_ucr_data(request, domain):
+    if not toggles.EXPORT_DATA_SOURCE_DATA.enabled(domain):
+        return HttpResponseForbidden()
+    try:
+        if request.method == 'GET':
+            config_id = request.GET.get("data_source_id")
+            if not config_id:
+                return HttpResponseBadRequest("Missing data_source_id parameter")
+            return get_datasource_data(request, config_id, domain)
+        return JsonResponse({'error': "Request method not allowed"}, status=405)
+    except BadRequest as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+def get_datasource_data(request, config_id, domain):
+    """Fetch data of the datasource specified by `config_id` in a paginated manner"""
+    config, _ = get_datasource_config(config_id, domain)
+    datasource_adapter = get_indicator_adapter(config, load_source='export_data_source')
+    request_params = get_request_params(request).params
+    request_params["limit"] = request.GET.dict().get("limit", EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT)
+    if int(request_params["limit"]) > EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT:
+        request_params["limit"] = EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT
+    query = cursor_based_query_for_datasource(request_params, datasource_adapter)
+    data = response_for_cursor_based_pagination(request, query, request_params, datasource_adapter)
+    return JsonResponse(data)

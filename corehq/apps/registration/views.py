@@ -34,7 +34,7 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
-from corehq.apps.domain.exceptions import NameUnavailableException
+from corehq.apps.domain.exceptions import NameUnavailableException, ErrorInitializingDomain
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
@@ -181,6 +181,13 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 return {
                     'errors': {
                         'project name unavailable': [],
+                    }
+                }
+            except ErrorInitializingDomain as e:
+                logging.error(f"Unable to initialize domain during new user signup: {str(e)}")
+                return {
+                    'errors': {
+                        'temporary system issue': [],
                     }
                 }
             return {
@@ -385,6 +392,16 @@ class RegisterDomainView(TemplateView):
             context.update({
                 'current_page': {'page_name': _('Oops!')},
                 'error_msg': _('Project name already taken - please try another'),
+                'show_homepage_link': 1
+            })
+            return render(request, 'error.html', context)
+        except ErrorInitializingDomain as e:
+            logging.error(f"Error initializing domain in RegisterDomainView: {str(e)}")
+            context.update({
+                'current_page': {'page_name': _('Oops!')},
+                'error_msg': _('We encountered a temporary system issue. '
+                               'Please try again in a few minutes. '
+                               'If the issue persists, please contact support.'),
                 'show_homepage_link': 1
             })
             return render(request, 'error.html', context)
