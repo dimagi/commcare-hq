@@ -1,54 +1,55 @@
 import json
-import jsonschema
-from requests.exceptions import HTTPError
 
 from django.conf import settings
 from django.core.paginator import Paginator
+from django.forms.models import model_to_dict
 from django.http import (
-    HttpResponseRedirect,
     Http404,
     HttpResponseBadRequest,
+    HttpResponseRedirect,
     JsonResponse,
 )
-from django.forms.models import model_to_dict
-from django.utils.decorators import method_decorator
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
-from dimagi.utils.web import json_response, json_request
-from dimagi.utils.couch.bulk import get_docs
 
+import jsonschema
 from memoized import memoized
+from requests.exceptions import HTTPError
+
+from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.web import json_request, json_response
 
 from corehq import toggles
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
-from corehq.apps.es import CaseSearchES, UserES
-from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.data_dictionary.models import CaseProperty
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.form_processor.models import CommCareCase
-from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.es import CaseSearchES, UserES
 from corehq.apps.geospatial.filters import GPSDataFilter
-from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.geospatial.forms import GeospatialConfigForm
+from corehq.apps.geospatial.reports import CaseManagementMap
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
+from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import json_error
-from .routing_solvers.mapbox_optimize import (
-    submit_routing_request,
-    routing_status
-)
 
 from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA
-from .models import GeoPolygon, GeoConfig
+from .models import GeoConfig, GeoPolygon
+from .routing_solvers.mapbox_optimize import (
+    routing_status,
+    submit_routing_request,
+)
 from .utils import (
     get_geo_case_property,
     get_geo_user_property,
+    get_lat_lon_from_dict,
     set_case_gps_property,
     set_user_gps_property,
-    get_lat_lon_from_dict,
 )
 
 
