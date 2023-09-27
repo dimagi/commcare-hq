@@ -1044,7 +1044,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         self.onClear = function () {
             SignatureEntry.prototype.onClear.call(self);
-            self.signaturePad && self.signaturePad.clear();
+            if (self.signaturePad) {self.signaturePad.clear();}
         };
 
         self.resizeCanvas = function () {
