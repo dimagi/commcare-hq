@@ -893,17 +893,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.extensionsMap = initialPageData.get("valid_multimedia_extensions_map");
         // Tracks whether file entry has already been cleared, preventing an additional failing request to Formplayer
         self.cleared = false;
-
-        self.onClear = function () {
-            if (self.cleared) {
-                return;
-            }
-            self.cleared = true;
-            self.file(null);
-            self.rawAnswer(constants.NO_ANSWER);
-            self.xformAction = constants.CLEAR_ANSWER;
-            self.question.onClear();
-        };
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
@@ -957,6 +946,17 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.question.onchange();
         }
     };
+    FileEntry.prototype.onClear = function () {
+        var self = this;
+        if (self.cleared) {
+            return;
+        }
+        self.cleared = true;
+        self.file(null);
+        self.rawAnswer(constants.NO_ANSWER);
+        self.xformAction = constants.CLEAR_ANSWER;
+        self.question.onClear();
+    };
 
     /**
      * Represents an image upload.
@@ -1007,7 +1007,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     VideoEntry.prototype.constructor = FileEntry;
 
     /**
-     * Represents a signature, which requires the user to draw a signature.
+     * Represents a signature capture, which requires the user to draw a signature.
      */
     function SignatureEntry(question, options) {
         var self = this;
@@ -1042,8 +1042,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.onClear = function () {
-            // TODO: Connect this to the imminent "clear" action on FileEntry
-            self.signaturePad.clear();
+            SignatureEntry.prototype.onClear.call(self);
+            self.signaturePad && self.signaturePad.clear();
         };
 
         self.resizeCanvas = function () {
@@ -1054,7 +1054,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.helpText = function () {
-            return gettext("Draw a signature");
+            return gettext("Draw signature");
         };
     }
     SignatureEntry.prototype = Object.create(FileEntry.prototype);
