@@ -306,14 +306,14 @@ class GetPaginatedCases(CaseListMixin):
         )
 
     def get_paginated_cases_without_gps(self, domain, page, limit, query):
-        show_cases_with_missing_gps_data = True
+        show_cases_with_missing_gps_data_only = True
 
         if GPSDataFilter(self.request, self.domain).show_all:
-            show_cases_with_missing_gps_data = False
+            show_cases_with_missing_gps_data_only = False
 
         cases_query = self._build_query()
         location_prop_name = get_geo_case_property(domain)
-        if show_cases_with_missing_gps_data:
+        if show_cases_with_missing_gps_data_only:
             cases_query = cases_query.case_property_missing(location_prop_name)
         cases_query = (
             cases_query
