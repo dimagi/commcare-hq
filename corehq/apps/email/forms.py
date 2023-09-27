@@ -20,15 +20,17 @@ class EmailSMTPSettingsForm(forms.ModelForm):
         widget=forms.PasswordInput(render_value=True),
     )
 
-    server = forms.CharField(
+    server = forms.URLField(
         label=_('Server'),
         required=True,
-        help_text=_('e.g. "smtp.example.com"'),
+        help_text=_('e.g. "https://smtp.example.com"'),
     )
 
     port = forms.IntegerField(
         label=_("Port"),
-        required=True
+        required=True,
+        min_value=1,
+        max_value=65535,
     )
 
     from_email = forms.EmailField(
@@ -112,31 +114,6 @@ class EmailSMTPSettingsForm(forms.ModelForm):
             )
         )
         return helper
-
-    def clean_port(self):
-        port = self.cleaned_data.get('port')
-        if port is None:
-            raise forms.ValidationError("Port is a mandatory field.")
-        if port is not None and (port < 1 or port > 65535):
-            raise forms.ValidationError("Port must be a valid integer between 1 and 65535.")
-        return port
-
-    def clean_from_email(self):
-        from_email = self.cleaned_data.get('from_email')
-        if not from_email:
-            raise forms.ValidationError("Sender's email address is a mandatory field.")
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", from_email):
-            raise forms.ValidationError("Enter a valid email address.")
-        return from_email
-
-    def clean_server(self):
-        server = self.cleaned_data.get('server')
-        if not server:
-            raise forms.ValidationError("Server is a mandatory field.")
-        # Validate that the server follows the format smtp.example.com
-        if not re.match(r'^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', server):
-            raise forms.ValidationError("Server should be in the format 'smtp.example.com'.")
-        return server
 
     def save(self, commit=True):
         self.instance.plaintext_password = self.cleaned_data['plaintext_password']
