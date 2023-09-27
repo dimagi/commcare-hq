@@ -577,11 +577,20 @@ def update_tableau_user(domain, username, role=None, groups=[], session=None):
         for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
             local_tableau_user.role = role
             local_tableau_user.save()
-    _update_user_remote(session, user, domain, groups=groups)
+
+    # Group management
+    allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(domain)
+    existing_groups = _group_json_to_tuples(session.get_groups_for_user_id(user.tableau_user_id))
+    edited_groups_list = list(filter(lambda group: group.name in allowed_groups_for_domain, groups))
+    other_groups = [group for group in existing_groups if group.name not in allowed_groups_for_domain]
+    # The list of groups for the user should be a combination of those edited by the web admin and the existing
+    # groups the user belongs to that are not editable on that domain.
+    new_groups = edited_groups_list + other_groups
+
+    _update_user_remote(session, user, groups=new_groups)
 
 
-def _update_user_remote(session, user, domain, groups=[]):
-    groups = list(filter(lambda group: group.name in get_allowed_tableau_groups_for_domain(domain), groups))
+def _update_user_remote(session, user, groups=[]):
     new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(user.username))
     for local_tableau_user in [user] + get_matching_tableau_users_from_other_domains(user):
         local_tableau_user.tableau_user_id = new_id
@@ -664,7 +673,6 @@ def sync_tableau_users_on_domains(domains):
                 _update_user_remote(
                     session,
                     local_user,
-                    domain,
                     groups=_group_json_to_tuples(session.get_groups_for_user_id(local_user.tableau_user_id))
                 )
 
