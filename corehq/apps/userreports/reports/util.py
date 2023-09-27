@@ -26,8 +26,8 @@ def report_has_location_filter(config_id, domain):
         return False
     report, _ = get_report_config(config_id=config_id, domain=domain)
     return any(
-        getattr(getattr(filter_, 'choice_provider', None), 'location_safe', False) or
-        getattr(filter_, 'location_filter', False)
+        getattr(getattr(filter_, 'choice_provider', None), 'location_safe', False)
+        or getattr(filter_, 'location_filter', False)
         for filter_ in report.ui_filters
     )
 
@@ -49,6 +49,7 @@ class ReportExport(object):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         data_source = ConfigurableReportDataSource.from_spec(self.report_config, include_prefilters=True)
         data_source.lang = self.lang
+
         data_source.set_filter_values(self.filter_values)
         data_source.set_order_by([(o['field'], o['order']) for o in self.report_config.sort_expression])
         return data_source
