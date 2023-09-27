@@ -314,7 +314,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
                 header={'en': 'Starred'},
                 model='case',
                 field='starred',
-                format='enum-image',
+                format='clickable-icon',
                 enum=[
                     MappingItem(key='1', value={'en': 'jr://icons/star-gold.png'}),
                     MappingItem(key='0', value={'en': 'jr://icons/star-grey.png'}),
@@ -359,7 +359,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
                 header={'en': 'Starred'},
                 model='case',
                 field='starred',
-                format='enum-image',
+                format='clickable-icon',
                 enum=[
                     MappingItem(key='1', value={'en': 'jr://icons/star-gold.png'}),
                     MappingItem(key='0', value={'en': 'jr://icons/star-grey.png'}),
@@ -407,7 +407,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
                 header={'en': 'Starred'},
                 model='case',
                 field='starred',
-                format='enum-image',
+                format='clickable-icon',
                 enum=[
                     MappingItem(key='1', value={'en': 'jr://icons/star-gold.png'}),
                     MappingItem(key='0', value={'en': 'jr://icons/star-grey.png'}),
@@ -434,4 +434,56 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             action_spec,
             factory.app.create_suite(),
             './detail[3]/field/action'
+        )
+
+    @flag_enabled('CASE_LIST_CLICKABLE_ICON')
+    def test_case_detail_clickable_icon(self, *args):
+        factory = AppFactory(domain='domain', name='Case list field actions', build_version='2.54.0')
+        m0, f0 = factory.new_basic_module("module1", "case")
+        factory.form_requires_case(f0)
+
+        m1, f1 = factory.new_basic_module("module2", "child_case")
+        m1.parent_select.active = True
+        m1.parent_select.module_id = m0.unique_id
+
+        factory.form_requires_case(f1)
+
+        f2 = factory.new_form(m1)
+        factory.form_requires_case(f2)
+
+        m1.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Starred'},
+                model='case',
+                field='starred',
+                format='enum-image',
+                enum=[
+                    MappingItem(key='1', value={'en': 'jr://icons/star-gold.png'}),
+                    MappingItem(key='0', value={'en': 'jr://icons/star-grey.png'}),
+                ],
+                action_form_id=f2.unique_id,
+            ),
+        ]
+
+        action_spec = """
+            <partial>
+                <template form="image" width="13%">
+                    <text>
+                        <xpath function="if(starred = '1', $k1, if(starred = '0', $k0, ''))">
+                            <variable name="k0">
+                                <locale id="m1.case_short.case_starred_1.enum.k0"/>
+                            </variable>
+                            <variable name="k1">
+                                <locale id="m1.case_short.case_starred_1.enum.k1"/>
+                            </variable>
+                        </xpath>
+                    </text>
+                </template>
+            </partial>
+            """
+
+        self.assertXmlPartialEqual(
+            action_spec,
+            factory.app.create_suite(),
+            './detail[3]/field/template'
         )

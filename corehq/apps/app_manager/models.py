@@ -1294,6 +1294,24 @@ class FormBase(DocumentSchema):
         """
         raise NotImplementedError()
 
+    def is_auto_submitting_form(self, case_type=None):
+        """
+        Should return True if this form passes the following tests:
+         * Requires a case of the same type
+         * Pragma-Submit-Automatically is set
+         * No question needs manual input
+        """
+        if case_type is None:
+            return False
+
+        if self.get_module().case_type != case_type:
+            return False
+        if not self.requires_case():
+            return False
+
+        qs = self.get_questions([], include_triggers=True)
+        return any(['label_ref' in q and q['label_ref'] == 'Pragma-Submit-Automatically' for q in qs])
+
     def uses_usercase(self):
         raise NotImplementedError()
 

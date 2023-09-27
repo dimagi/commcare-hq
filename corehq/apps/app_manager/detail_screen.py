@@ -567,6 +567,11 @@ class Picture(FormattedDetailColumn):
     template_form = 'image'
 
 
+@register_format_type('clickable-icon')
+class ClickableIcon(EnumImage):
+    template_form = 'clickable-icon'
+
+
 @register_format_type('audio')
 class Audio(FormattedDetailColumn):
     template_form = 'audio'
