@@ -40,7 +40,7 @@ jobs:
       env:
         TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       if: env.TOKEN != ''
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3
       with:
         username: dimagi
         password: ${{ secrets.DOCKERHUB_TOKEN }}
