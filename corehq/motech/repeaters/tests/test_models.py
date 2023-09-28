@@ -261,7 +261,7 @@ class FormatResponseTests(SimpleTestCase):
 
     def test_non_response(self):
         resp = ResponseMock()
-        self.assertIsNone(format_response(resp))
+        self.assertEqual(format_response(resp), '')
 
     def test_no_text(self):
         resp = ResponseMock()

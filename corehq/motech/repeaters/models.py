@@ -69,7 +69,7 @@ import traceback
 import uuid
 import warnings
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.db import models
@@ -1124,14 +1124,6 @@ class RepeatRecord(Document):
                 self.add_attempt(attempt)
                 self.save()
 
-    @staticmethod
-    def _format_response(response):
-        if not is_response(response):
-            return None
-        response_body = getattr(response, "text", "")[:MAX_REQUEST_LOG_LENGTH]
-        return '{}: {}.\n{}'.format(
-            response.status_code, response.reason, response_body)
-
     def handle_success(self, response):
         """
         Log success in Datadog and return a success RepeatRecordAttempt.
@@ -1155,7 +1147,7 @@ class RepeatRecord(Document):
             cancelled=(response.status_code == 204),
             datetime=now,
             failure_reason=None,
-            success_response=self._format_response(response),
+            success_response=format_response(response),
             next_check=None,
             succeeded=True,
             info=self.get_attempt_info(),
@@ -1164,7 +1156,7 @@ class RepeatRecord(Document):
     def handle_failure(self, response):
         """Do something with the response if the repeater fails
         """
-        return self._make_failure_attempt(self._format_response(response), response)
+        return self._make_failure_attempt(format_response(response), response)
 
     def handle_exception(self, exception):
         """handle internal exceptions
@@ -1509,9 +1501,9 @@ def has_failed(record):
     return record.state in (RECORD_FAILURE_STATE, RECORD_CANCELLED_STATE)
 
 
-def format_response(response) -> Optional[str]:
+def format_response(response):
     if not is_response(response):
-        return None
+        return ''
     response_text = getattr(response, "text", "")[:MAX_REQUEST_LOG_LENGTH]
     if response_text:
         return f'{response.status_code}: {response.reason}\n{response_text}'

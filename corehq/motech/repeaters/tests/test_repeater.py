@@ -52,6 +52,7 @@ from corehq.motech.repeaters.models import (
     ShortFormRepeater,
     UserRepeater,
     _get_retry_interval,
+    format_response,
 )
 from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator,
@@ -1230,8 +1231,8 @@ class FormatResponseTests(SimpleTestCase):
             reason='OK',
             content=b'3.6 roentgen. Not great. Not terrible.'
         )
-        formatted = RepeatRecord._format_response(response)
-        self.assertEqual(formatted, '200: OK.\n3.6 roentgen. Not great. Not terrible.')
+        formatted = format_response(response)
+        self.assertEqual(formatted, '200: OK\n3.6 roentgen. Not great. Not terrible.')
 
     def test_encoding_is_not_ascii(self):
         response = Response(
@@ -1241,13 +1242,13 @@ class FormatResponseTests(SimpleTestCase):
                     b'\xd5\xa8 \xe3\xe5\xe1\xa0\xf5\xd4\xd6',
             encoding='cp855'
         )
-        formatted = RepeatRecord._format_response(response)
-        self.assertEqual(formatted, '200: OK.\n3,6 рентгена Не хорошо. Не страшно')
+        formatted = format_response(response)
+        self.assertEqual(formatted, '200: OK\n3,6 рентгена Не хорошо. Не страшно')
 
     def test_content_is_None(self):
         response = Response(500, 'The core is exposed')
-        formatted = RepeatRecord._format_response(response)
-        self.assertEqual(formatted, '500: The core is exposed.\n')
+        formatted = format_response(response)
+        self.assertEqual(formatted, '500: The core is exposed')
 
 
 class TestGetRetryInterval(SimpleTestCase):
