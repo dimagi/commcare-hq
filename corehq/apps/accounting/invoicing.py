@@ -222,12 +222,24 @@ class DomainInvoiceFactory(object):
             return community_ranges
 
     def _generate_invoice(self, subscription, invoice_start, invoice_end):
-        invoice, is_new_invoice = Invoice.objects.create_or_get(
-            subscription=subscription,
-            date_start=invoice_start,
-            date_end=invoice_end,
-            is_hidden=subscription.do_not_invoice,
-        )
+        # use create_or_get when is_hidden_to_ops is False to utilize unique index on Invoice
+        # so our test will make sure the unique index prevent race condition
+        # use get_or_create when is_hidden_to_ops is True
+        # because our index is partial index cannot prevent duplicates in this case
+        if subscription.do_not_invoice:
+            invoice, is_new_invoice = Invoice.objects.get_or_create(
+                subscription=subscription,
+                date_start=invoice_start,
+                date_end=invoice_end,
+                is_hidden=subscription.do_not_invoice,
+            )
+        else:
+            invoice, is_new_invoice = Invoice.objects.create_or_get(
+                subscription=subscription,
+                date_start=invoice_start,
+                date_end=invoice_end,
+                is_hidden=subscription.do_not_invoice,
+            )
 
         if not is_new_invoice:
             raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
