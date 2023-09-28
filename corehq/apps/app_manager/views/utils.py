@@ -636,7 +636,7 @@ def set_shadow_module_and_form_session_endpoint(
     if len(duplicate_ids) > 0:
         duplicates = ", ".join([f"'{d}'" for d in duplicate_ids])
         raise AppMisconfigurationError(_(
-            f"Session endpoint IDs must be unique. {duplicates} are used multiple times"
+            f"Session endpoint IDs must be unique. The following id(s) are used multiple times: {duplicates}"
         ).format(duplicates=duplicates))
 
     shadow_module.session_endpoint_id = raw_endpoint_id
