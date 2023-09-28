@@ -13,13 +13,11 @@ def backwards(apps, schema_editor):
 def replace_property_value(old_value, new_value):
     actions = CaseDeduplicationActionDefinition.objects.filter(case_properties__contains=[old_value])
     for action in actions:
-        props = action.case_properties
-        try:
-            value_index = props.index(old_value)
-        except ValueError:
-            # Should never happen, but ignore these errors
-            continue
-        props[value_index] = new_value
+        action.case_properties = [
+            new_value if value == old_value else value
+            for value in action.case_properties
+        ]
+
         action.save()
 
 

@@ -370,9 +370,9 @@ class CaseUpdate(object):
     def get_normalized_update_property_names(self):
         changed_properties = set()
         if self.creates_case():
-            changed_properties.update(set(self.get_create_action().raw_block.keys()))
+            changed_properties.update(self.get_create_action().raw_block.keys())
         if self.updates_case():
-            changed_properties.update(set(self.get_update_action().raw_block.keys()))
+            changed_properties.update(self.get_update_action().raw_block.keys())
 
         property_map = \
             CaseCreateAction.V1_PROPERTY_MAPPING if self.version == V1 else CaseCreateAction.V2_PROPERTY_MAPPING
