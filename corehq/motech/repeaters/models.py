@@ -929,7 +929,7 @@ class RepeatRecord(Document):
     @memoized
     def repeater(self):
         try:
-            return Repeater.objects.get(repeater_id=self.repeater_id)
+            return Repeater.all_objects.get(repeater_id=self.repeater_id)
         except Repeater.DoesNotExist:
             return None
 
