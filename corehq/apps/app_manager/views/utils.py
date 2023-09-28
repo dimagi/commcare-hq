@@ -605,7 +605,7 @@ def get_cleaned_and_deduplicated_session_endpoint_id(module_or_form, raw_endpoin
     cleaned_id = get_cleaned_session_endpoint_id(raw_endpoint_id)
 
     if cleaned_id:
-        duplicate_ids = _duplicate_endpoint_ids(cleaned_id, [], None, app)
+        duplicate_ids = _duplicate_endpoint_ids(cleaned_id, [], module_or_form.unique_id, app)
         if len(duplicate_ids) > 0:
             duplicates = ", ".join([f"'{d}'" for d in duplicate_ids])
             raise AppMisconfigurationError(_(
@@ -651,7 +651,7 @@ def set_case_list_session_endpoint(module, raw_endpoint_id, app):
     module.case_list_session_endpoint_id = cleaned_id
 
 
-def _duplicate_endpoint_ids(new_session_endpoint_id, new_form_session_endpoint_ids, module_id, app):
+def _duplicate_endpoint_ids(new_session_endpoint_id, new_form_session_endpoint_ids, module_or_form_id, app):
     all_endpoint_ids = []
 
     def append_endpoint(endpoint_id):
@@ -663,14 +663,16 @@ def _duplicate_endpoint_ids(new_session_endpoint_id, new_form_session_endpoint_i
         append_endpoint(endpoint)
 
     for module in app.modules:
-        if module.unique_id != module_id:
+        if module.unique_id != module_or_form_id:
             append_endpoint(module.session_endpoint_id)
             if module.module_type != "shadow":
                 for form in module.get_suite_forms():
-                    append_endpoint(form.session_endpoint_id)
+                    if form.unique_id != module_or_form_id:
+                        append_endpoint(form.session_endpoint_id)
             else:
                 for m in module.form_session_endpoints:
-                    append_endpoint(m.session_endpoint_id)
+                    if form.unique_id != module_or_form_id:
+                        append_endpoint(m.session_endpoint_id)
 
     duplicates = [k for k, v in Counter(all_endpoint_ids).items() if v > 1]
 
