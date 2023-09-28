@@ -1,6 +1,6 @@
 import uuid
 from contextlib import contextmanager
-from datetime import timedelta
+from datetime import datetime, timedelta
 from unittest.mock import patch, Mock
 from uuid import uuid4
 
@@ -497,3 +497,62 @@ class TestFormRepeaterAllowedToForward(RepeaterTestCase):
         ]
         payload = Mock(xmlns='http://openrosa.org/formdesigner/def456')
         self.assertFalse(self.repeater.allowed_to_forward(payload))
+
+
+class TestCouchRepeatRecordMethods(TestCase):
+
+    def test_repeater_returns_active_repeater(self):
+        repeater = Repeater.objects.create(
+            domain=self.domain,
+            connection_settings=self.conn_settings,
+            is_deleted=False
+        )
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=repeater.repeater_id
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertIsNotNone(repeat_record.repeater)
+
+    def test_repeater_returns_deleted_repeater(self):
+        repeater = Repeater.objects.create(
+            domain=self.domain,
+            connection_settings=self.conn_settings,
+            is_deleted=True
+        )
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=repeater.repeater_id
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertIsNotNone(repeat_record.repeater)
+
+    def test_repeater_returns_none_if_not_found(self):
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id='def456'
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertIsNone(repeat_record.repeater)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'repeat-record-tests'
+        cls.conn_settings = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            name='To Be Deleted',
+            url="http://localhost/api/"
+        )
