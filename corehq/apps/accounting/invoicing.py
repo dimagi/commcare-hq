@@ -399,7 +399,8 @@ class CustomerAccountInvoiceFactory(object):
             )
 
     def _generate_customer_invoice(self):
-        invoice, is_new_invoice = CustomerInvoice.objects.get_or_create(
+        # We have unique index on account, date_start and date_end
+        invoice, is_new_invoice = CustomerInvoice.objects.create_or_get(
             account=self.account,
             date_start=self.date_start,
             date_end=self.date_end

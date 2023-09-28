@@ -1,13 +1,16 @@
 import random
+from corehq.apps.accounting import tasks
 
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
-from corehq.apps.accounting.models import DomainUserHistory, Invoice
+from corehq.apps.accounting.models import DomainUserHistory, Invoice, CustomerInvoice
+from corehq.apps.accounting.tasks import calculate_users_in_all_domains
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
+from corehq.apps.accounting.tests.test_customer_invoicing import BaseCustomerInvoiceCase
 from corehq.apps.accounting import utils
 from corehq.util.dates import get_previous_month_date_range
 
 
-class UniqueConstraintTest(BaseInvoiceTestCase):
+class UniqueConstraintInvoiceTest(BaseInvoiceTestCase):
 
     def test_unique_constraint_prevents_duplicate_invoice(self):
         invoice_date = utils.months_from_date(self.subscription.date_start,
@@ -31,3 +34,16 @@ class UniqueConstraintTest(BaseInvoiceTestCase):
             date_end=invoice_factory.date_end,
         )
         self.assertEqual(invoices.count(), 1)
+
+
+class UniqueConstraintCustomerInvoiceTest(BaseCustomerInvoiceCase):
+    def test_unique_constraint_prevents_duplicate_customer_invoice(self):
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(3, self.subscription_length))
+        calculate_users_in_all_domains(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
+        with self.assertLogs(level='ERROR') as log_cm:
+            tasks.generate_invoices_based_on_date(invoice_date)
+            self.assertIn("[BILLING] Invoice already existed", "\n".join(log_cm.output))
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
