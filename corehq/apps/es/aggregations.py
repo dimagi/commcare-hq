@@ -557,7 +557,7 @@ class GeohashGridAggregation(Aggregation):
     A multi-bucket aggregation that groups ``geo_point`` and
     ``geo_shape`` values into buckets that represent a grid.
 
-    `"Geohash grid aggregation" reference <https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html>`_
+    More info: `Geohash grid aggregation <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-geohashgrid-aggregation.html>`_
     """  # noqa: E501
     type = 'geohash_grid'
     result_class = BucketResult
@@ -578,6 +578,7 @@ class GeohashGridAggregation(Aggregation):
         cells that each cover a large area (similar to short-format ZIP
         codes like "02139").
         """
+        assert 1 <= precision <= 12
         self.name = name
         self.body = {
             'field': field,

@@ -1,5 +1,3 @@
-# urls.py
-
 from django.conf.urls import re_path as url
 
 from .dispatchers import CaseManagementMapDispatcher
