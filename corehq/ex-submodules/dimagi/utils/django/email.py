@@ -194,6 +194,11 @@ class EmailConfigurationManager(ABC):
     def connection(self):
         pass
 
+    @property
+    @abstractmethod
+    def SES_configuration_set(self):
+        pass
+
 
 class DefaultEmailConfiguration(EmailConfigurationManager):
     def __init__(self, from_email: str):
@@ -206,6 +211,10 @@ class DefaultEmailConfiguration(EmailConfigurationManager):
     @property
     def connection(self):
         return django_get_connection()
+
+    @property
+    def SES_configuration_set(self):
+        return settings.SES_CONFIGURATION_SET
 
 
 class CustomEmailConfiguration(EmailConfigurationManager):
@@ -228,3 +237,7 @@ class CustomEmailConfiguration(EmailConfigurationManager):
         }
         backend = "django.core.mail.backends.smtp.EmailBackend"
         return django_get_connection(backend=backend, **backend_settings)
+
+    @property
+    def SES_configuration_set(self):
+        return self._email_setting.ses_config_set_name

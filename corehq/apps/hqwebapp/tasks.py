@@ -84,8 +84,8 @@ def send_mail_async(self, subject, message, configuration: EmailConfigurationMan
 
     if messaging_event_id is not None:
         headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
-    if settings.SES_CONFIGURATION_SET is not None:
-        headers[SES_CONFIGURATION_SET_HEADER] = settings.SES_CONFIGURATION_SET
+    if configuration.SES_configuration_set is not None:
+        headers[SES_CONFIGURATION_SET_HEADER] = configuration.SES_configuration_set
 
     try:
         message = EmailMessage(
