@@ -29,7 +29,7 @@ jobs:
       DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
       REUSE_DB: true  # do not drop databases on completion to save time
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     - name: Docker info
@@ -55,7 +55,7 @@ jobs:
       env:
         TOKEN: ${{ secrets.CODECOV_TOKEN }}
       if: env.TOKEN != ''
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: coverage.xml
