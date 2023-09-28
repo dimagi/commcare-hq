@@ -225,7 +225,9 @@ class DomainInvoiceFactory(object):
         # use create_or_get when is_hidden_to_ops is False to utilize unique index on Invoice
         # so our test will make sure the unique index prevent race condition
         # use get_or_create when is_hidden_to_ops is True
-        # because our index is partial index cannot prevent duplicates in this case
+        # because our index is partial index cannot prevent duplicates in this case.
+        # Note that there is a race condition in get_or_create that can result in
+        # duplicate invoices.
         if subscription.do_not_invoice:
             invoice, is_new_invoice = Invoice.objects.get_or_create(
                 subscription=subscription,
