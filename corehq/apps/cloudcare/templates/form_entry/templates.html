@@ -455,6 +455,31 @@
   <span class="help-block type" aria-hidden="true" data-bind="text: helpText()"></span>
 </script>
 
+<script type="text/html" id="signature-entry-ko-template">
+  <span class="help-block type sr-only" data-bind="text: helpText()"></span>
+  <div data-bind="attr: { id: entryId + '-wrapper' }">
+    <canvas data-bind="
+        attr: {
+            id: entryId + '-canvas',
+            'aria-required': $parent.required() ? 'true' : 'false',
+        },
+      "
+      style="border: 1px solid #ccc; border-radius: 4px;"/>
+    </canvas>
+  </div>
+  <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear">
+    {% trans "Clear" %}
+  </button>
+  <input type="file" class="hidden" data-bind="
+      value: $data.rawAnswer,
+      attr: {
+          id: entryId,
+          accept: accept,
+      },
+    "/>
+  <span class="help-block type" aria-hidden="true" data-bind="text: helpText()"></span>
+</script>
+
 <script type="text/html" id="address-entry-ko-template">
   <!-- ARIA live region for highlighted geocoder values, populated via javascript -->
   <div role="region" aria-live="polite" class="sr-only" data-bind="attr: { id: entryId+'-sr' }"></div>
