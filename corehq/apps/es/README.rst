@@ -288,10 +288,6 @@ Reindex Procedure Details
    - *(Optional)* If the reindex involves other meta-index changes (shards,
      mappings, etc), also update those configurations at this time.
 
-     **Note** Currently the Adapter will not support reindexing on specific
-     environments but it would be compatible to accommodate it in future. This
-     support will be added once we get to V5 of ES.
-
    - Configure ``create_document_adapter`` to return an instance of
      ``ElasticMultiplexAdapter`` by passing in ``secondary`` index name.
 
@@ -315,24 +311,22 @@ Reindex Procedure Details
      (secondary) index will automatically and immediately begin receiving
      document writes. Document reads will always come from the primary index.
 
-2. Execute a management command to sync and verify the secondary index from the
-   primary.
+2. Execute the following management command to sync and verify the secondary
+   index from the primary.
 
-   **Note**: This command is not yet implemented.
+    ``./manage.py elastic_sync_multiplexed start <index_cname>``
 
    This management command is idempotent and performs four operations in serial.
    If any of the operations complete with unexpected results, the command will
    abort with an error.
 
-   1. Executes a Elastic ``reindex`` request with parameters to populate the
+   1. Executes an Elastic ``reindex`` request with parameters to populate the
       secondary index from the primary, configured to not overwrite existing
       documents in the target (secondary) index.
    2. Polls the reindex task progress, blocking until complete.
 
-      **Note**: the reindex API also supports a "blocking" mode which may be
-      advantageous due to limitations in Elasticsearch 2.4's Task API. As such,
-      this step **2.** might be removed in favor of a blocking reindex during
-      the 2.4 --> 5.x upgrade.
+      **Note**: the reindex API also supports a "blocking" mode which we are not
+      using because it times out for larger indexes.
 
    3. Performs a cleanup operation on the secondary index to remove tombstone
       documents.
