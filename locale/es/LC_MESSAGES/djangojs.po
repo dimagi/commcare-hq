@@ -346,6 +346,10 @@ msgid "Manually configure Case Tiles"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Edit Custom Variables"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "You have unsaved detail screen configurations."
 msgstr "Tiene configuraciones de detalle de pantalla sin guardar"
 
@@ -3617,13 +3621,11 @@ msgid ""
 "problem persists."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/500.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/500.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
 msgid "This is Danny, one of our best developers."
 msgstr "Este es Danny, uno de nuestros mejores desarrolladores."
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/500.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/500.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
 msgid ""
 "Danny is pretty sad that you had to encounter this issue. He's making sure "
 "it gets fixed as soon as possible."

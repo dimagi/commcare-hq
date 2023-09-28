@@ -298,13 +298,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 });
             }
 
-            formEntryUtils.renderMapboxInput(
-                self.entryId,
-                self.geocoderItemCallback,
-                self.geocoderOnClearCallback,
-                initialPageData,
-                self._inputOnKeyDown
-            );
+            formEntryUtils.renderMapboxInput({
+                divId: self.entryId,
+                itemCallback: self.geocoderItemCallback,
+                clearCallBack: self.geocoderOnClearCallback,
+                inputOnKeyDown: self._inputOnKeyDown
+            });
         };
 
         self._inputOnKeyDown = function (event) {
@@ -892,22 +891,22 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
         self.file = ko.observable();
         self.extensionsMap = initialPageData.get("valid_multimedia_extensions_map");
+        // Tracks whether file entry has already been cleared, preventing an additional failing request to Formplayer
+        self.cleared = false;
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
     FileEntry.prototype.onPreProcess = function (newValue) {
         var self = this;
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
-            // input has changed and validation will be checked
+            // Input has changed and validation will be checked
             if (newValue !== self.answer()) {
                 self.question.formplayerProcessed = false;
+                self.cleared = false;
             }
             self.answer(newValue.replace(constants.FILE_PREFIX, ""));
         } else {
-            self.file(null);
-            self.answer(constants.NO_ANSWER);
-            self.rawAnswer(constants.NO_ANSWER);
-            self.question.error(null);
+            self.onClear();
         }
     };
     FileEntry.prototype.onAnswerChange = function (newValue) {
@@ -946,6 +945,17 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.question.error(null);
             self.question.onchange();
         }
+    };
+    FileEntry.prototype.onClear = function () {
+        var self = this;
+        if (self.cleared) {
+            return;
+        }
+        self.cleared = true;
+        self.file(null);
+        self.rawAnswer(constants.NO_ANSWER);
+        self.xformAction = constants.CLEAR_ANSWER;
+        self.question.onClear();
     };
 
     /**
@@ -997,7 +1007,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     VideoEntry.prototype.constructor = FileEntry;
 
     /**
-     * Represents a signature, which requires the user to draw a signature.
+     * Represents a signature capture, which requires the user to draw a signature.
      */
     function SignatureEntry(question, options) {
         var self = this;
@@ -1032,8 +1042,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.onClear = function () {
-            // TODO: Connect this to the imminent "clear" action on FileEntry
-            self.signaturePad.clear();
+            SignatureEntry.prototype.onClear.call(self);
+            if (self.signaturePad) {self.signaturePad.clear();}
         };
 
         self.resizeCanvas = function () {
@@ -1044,7 +1054,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.helpText = function () {
-            return gettext("Draw a signature");
+            return gettext("Draw signature");
         };
     }
     SignatureEntry.prototype = Object.create(FileEntry.prototype);

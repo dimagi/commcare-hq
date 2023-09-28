@@ -16,7 +16,6 @@ from corehq.apps.app_manager.util import (
     module_uses_inline_search,
 )
 
-
 TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
 
 
@@ -27,7 +26,7 @@ class CaseTileTemplates(models.TextChoices):
     ONE_TWO_ONE_ONE = ("one_two_one_one", _("Title row, second row with two cells, third and "
                                             "fourth rows, and map"))
     ONE_3X_TWO_4X_ONE_2X = ("one_3X_two_4X_one_2X", _("Three upper rows, four rows with two cells, two lower rows "
-                                                    "and map"))
+                                                      "and map"))
     ONE_TWO_TWO = ("one_two_two", _("Title row, second row with two cells, third row with two cells"))
     ICON_TEXT_GRID = ("icon_text_grid", _("2 x 3 grid of image and text"))
 
@@ -88,15 +87,19 @@ class CaseTileHelper(object):
 
             for column_info in self.detail_column_infos:
                 # column_info is an instance of DetailColumnInfo named tuple.
-                style = Style(grid_x=column_info.column.grid_x, grid_y=column_info.column.grid_y,
-                              grid_height=column_info.column.height, grid_width=column_info.column.width,
-                              horz_align=column_info.column.horizontal_align,
-                              vert_align=column_info.column.vertical_align,
-                              font_size=column_info.column.font_size)
+                style = None
+                if any(field is not None for field in [column_info.column.grid_x, column_info.column.grid_y,
+                                                       column_info.column.height, column_info.column.width]):
+                    style = Style(grid_x=column_info.column.grid_x, grid_y=column_info.column.grid_y,
+                                  grid_height=column_info.column.height, grid_width=column_info.column.width,
+                                  horz_align=column_info.column.horizontal_align,
+                                  vert_align=column_info.column.vertical_align,
+                                  font_size=column_info.column.font_size)
                 fields = get_column_generator(
                     self.app, self.module, self.detail,
                     detail_type=self.detail_type,
                     style=style,
+                    entries_helper=self.entries_helper,
                     *column_info
                 ).fields
                 for field in fields:
@@ -245,7 +248,9 @@ class CaseTileHelper(object):
             from corehq.apps.app_manager.detail_screen import get_column_generator
             fields = get_column_generator(
                 self.app, self.module, self.detail,
-                detail_type=self.detail_type, *column_info
+                detail_type=self.detail_type,
+                entries_helper=self.entries_helper,
+                *column_info
             ).fields
             for field in fields:
                 if field.sort_node:

@@ -439,7 +439,9 @@ msgstr "Se requiere un nombre para este nuevo rol."
 #: corehq/apps/events/views.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/geospatial/reports.py corehq/apps/locations/forms.py
+#: corehq/apps/geospatial/reports.py
+#: corehq/apps/geospatial/templates/gps_capture.html
+#: corehq/apps/locations/forms.py
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/templates/reminders/keyword.html
 #: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
@@ -474,8 +476,7 @@ msgid "Company / Organization"
 msgstr "Empresa/Organización"
 
 #: corehq/apps/accounting/forms.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 #: corehq/apps/reminders/forms.py corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/sms.py corehq/ex-submodules/phonelog/reports.py
 #: corehq/messaging/scheduling/forms.py
@@ -2227,7 +2228,10 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/views.py corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/enterprise/enterprise.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/geospatial/templates/gps_capture.html
+#: corehq/apps/geospatial/templates/map_visualization.html
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/hqwebapp/forms.py corehq/apps/reports/filters/simple.py
@@ -2989,6 +2993,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/forms.py
+#: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
@@ -3120,6 +3125,7 @@ msgid "Generating Report..."
 msgstr "Generando Reporte..."
 
 #: corehq/apps/accounting/templates/accounting/report_filter_actions.html
+#: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/reports/templates/reports/partials/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
@@ -3395,78 +3401,96 @@ msgstr ""
 msgid "Preview Aggregate UCR"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "First name"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Last name"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 #: corehq/apps/cloudcare/templates/formplayer/users.html
 #: corehq/apps/dashboard/views.py corehq/apps/domain/forms.py
 #: corehq/tabs/tabclasses.py
 msgid "Organization"
 msgstr "Organización"
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Professional email address"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "How should we contact you?"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Please Select"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Phone"
 msgstr "Teléfono"
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Skype"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "WhatsApp"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Google hangouts"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Preferred phone number"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Skype username"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Preferred WhatsApp number"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Preferred Language"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "English"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "French"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "Spanish"
 msgstr ""
 
-#: corehq/apps/analytics/templates/analytics/forms/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
 "\n"
 "      By clicking this button, you agree to Dimagi's\n"
@@ -4332,8 +4356,7 @@ msgid "In Test"
 msgstr "De Prueba"
 
 #: corehq/apps/app_manager/models.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 #: corehq/apps/settings/views.py
 msgid "Created"
 msgstr ""
@@ -5965,6 +5988,7 @@ msgstr "Agenda de Visitas"
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
 #: corehq/apps/settings/views.py corehq/apps/sms/views.py
@@ -6305,7 +6329,6 @@ msgstr "Instale CommCare"
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_30_day_trial.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/get_demo_modals.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/ko_feedback.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/get_demo_modals.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_feedback.html
 #: corehq/apps/integration/templates/integration/base_cloudcare_template.html
 #: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
@@ -7036,6 +7059,39 @@ msgid ""
 "search property\n"
 "                <code>%(property)s</code> that references an invalid "
 "instance.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
+"list property\n"
+"                that references a missing form: "
+"<code>%(column.header|trans:langs)s</code>.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
+"list property\n"
+"                that references form with a different case type: "
+"<code>%(column.header|trans:langs)s</code>.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
+"list property\n"
+"                that references form with a different parent module: "
+"<code>%(column.header|trans:langs)s</code>.\n"
 "              "
 msgstr ""
 
@@ -12395,20 +12451,20 @@ msgid "OK"
 msgstr "SÍ"
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Clear map"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Please wait while the map loads"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
 #: corehq/apps/cloudcare/templates/formplayer/query_view.html
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
 msgstr "Borrar"
+
+#: corehq/apps/cloudcare/templates/form_entry/templates.html
+msgid "Clear map"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/form_entry/templates.html
+msgid "Please wait while the map loads"
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
 msgid "Sort By"
@@ -13423,10 +13479,8 @@ msgid "Confirm"
 msgstr "Confirmar"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Show Deprecated Properties"
 msgid "Deprecate GPS property"
-msgstr "Mostrar Propiedades Obsoletas"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid ""
@@ -14745,6 +14799,7 @@ msgid "You have no cases in your group."
 msgstr "No tiene casos en su grupo."
 
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/geospatial/templates/gps_capture.html
 msgid "Loading cases..."
 msgstr "Cargando casos..."
 
@@ -21875,6 +21930,172 @@ msgstr ""
 msgid "case_id"
 msgstr ""
 
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid ""
+"\n"
+"                    Mobile workers that do not have any associated GPS "
+"data.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid ""
+"\n"
+"                    Cases that do not have any associated GPS data.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid ""
+"\n"
+"            Changes have been saved successfully!\n"
+"        "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Users without GPS Data"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Cases without GPS Data"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Latitude"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Longitude"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Enter latitude..."
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid ""
+"\n"
+"                                        The value should be a number between "
+"-90 and 90\n"
+"                                    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Enter longitude..."
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid ""
+"\n"
+"                                        The value should be a number between "
+"-180 and 180\n"
+"                                    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Capture on Map"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Loading users..."
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid ""
+"\n"
+"                  <strong>There was an issue retrieving data from the server."
+"</strong>\n"
+"                  Please check your internet connection.\n"
+"                  If this problem continues, please\n"
+"                  <a href=\"#modalReportIssue\" data-toggle=\"modal\">report "
+"an issue</a>.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid ""
+"\n"
+"                  <strong>There was an issue submitting data to the server.</"
+"strong>\n"
+"                  Please check your internet connection.\n"
+"                  If this problem continues, please\n"
+"                  <a href=\"#modalReportIssue\" data-toggle=\"modal\">report "
+"an issue</a>.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Capturing location for:"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/manage_gps_data.html
+msgid ""
+"\n"
+"      Use this page to manage GPS data associated with Cases or Mobile "
+"workers.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/manage_gps_data.html
+#, fuzzy
+#| msgid "Update Data"
+msgid "Update Case Data"
+msgstr "Actualizar Datos"
+
+#: corehq/apps/geospatial/templates/manage_gps_data.html
+#, fuzzy
+#| msgid "Create Mobile Worker"
+msgid "Update Mobile Worker Data"
+msgstr "Crear Usuario Móvil"
+
+#: corehq/apps/geospatial/templates/manage_gps_data.html
+msgid ""
+"\n"
+"            To create new Mobile Workers navigate to the Mobile Workers page "
+"under the Users tab.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/manage_gps_data.html
+msgid ""
+"\n"
+"            Navigate there.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid "Mobile Workers"
+msgid "Mobile Worker Filters"
+msgstr "Usuarios Móviles"
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid ""
+"\n"
+"                <strong>There was an issue retrieving mobile workers from "
+"the server.</strong>\n"
+"                If this problem continues, please\n"
+"                <a href=\"#modalReportIssue\" data-toggle=\"modal\">report "
+"an issue</a>.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid "Mobile Workers only"
+msgid "Show mobile workers on the map"
+msgstr "Solo Usuarios Móviles"
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
+msgid "Hide Filter Options"
+msgstr "Ocultar Opciones de Filtro"
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
+msgid "Show Filter Options"
+msgstr "Mostrar Opciones de Filtro"
+
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Filter by Saved Area"
 msgstr ""
@@ -21892,6 +22113,28 @@ msgid "Cases Missing GPS Data"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Users Missing GPS Data"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid "Select Mobile Worker"
+msgid "Selected Mobile Workers"
+msgstr "Seleccione Usuario Móvil"
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid "Mobile Workers only"
+msgid "Mobile Workers on Map"
+msgstr "Solo Usuarios Móviles"
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid "All Mobile Workers"
+msgid "All Mobile Workers on Map"
+msgstr "Todos los Usuarios Móviles"
+
+#: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Selected Cases"
 msgstr ""
 
@@ -21905,6 +22148,10 @@ msgstr ""
 
 #: corehq/apps/geospatial/views.py
 msgid "Configuration Settings"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py corehq/tabs/tabclasses.py
+msgid "Manage GPS Data"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
@@ -23519,7 +23766,7 @@ msgstr "¿Es su primera vez aquí?"
 msgid ""
 "\n"
 "              Try refreshing. Often the problem is temporary and the page "
-"will succeed if you try again.<br><br>\n"
+"will succeed if you try again.\n"
 "            "
 msgstr ""
 
@@ -23710,90 +23957,6 @@ msgid ""
 "\n"
 "          You may close this window and return to your work. Thank you.\n"
 "        "
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "Create Alert"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid ""
-"\n"
-"          Enter alert text here and preview in the table below. Links will "
-"be properly wrapped with anchor tags. Alerts\n"
-"          will become public when the \"activate alert\" button is pressed, "
-"or during the chosen timeframe after the\n"
-"          \"schedule alert\" button has been pressed. Multiple alerts may be "
-"shown to users at a time, and the most\n"
-"          recently modified alert will be displayed on top.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "Affected domains"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "Start time (optional)"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "End time (optional)"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "Time zone"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "Preview Alert"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "Available Alerts"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "Scheduled start"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "Scheduled end"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "Activate or De-activate"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "Schedule Alert"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "Activate Alert"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "De-activate Alert"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/maintenance_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/maintenance_alerts.html
-msgid "Alert Expired"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
@@ -24417,6 +24580,75 @@ msgid ""
 "                              Do not upload a file containing individually "
 "identifiable data.\n"
 "                          "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Create Alert"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid ""
+"\n"
+"          Enter alert text here and preview in the table below. Links will "
+"be properly wrapped with anchor tags. Alerts\n"
+"          will become public when the \"activate alert\" button is pressed, "
+"or during the chosen timeframe after the\n"
+"          \"schedule alert\" button has been pressed. Multiple alerts may be "
+"shown to users at a time, and the most\n"
+"          recently modified alert will be displayed on top.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Affected domains"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Start time (optional)"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "End time (optional)"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Time zone"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Preview Alert"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Available Alerts"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Scheduled start"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Scheduled end"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Activate or De-activate"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Schedule Alert"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Activate Alert"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "De-activate Alert"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Alert Expired"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/no_permission.html
@@ -31787,14 +32019,6 @@ msgstr "para"
 #: corehq/apps/reports/templates/reports/standard/base_template.html
 msgid "Notice"
 msgstr "Aviso"
-
-#: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
-msgid "Show Filter Options"
-msgstr "Mostrar Opciones de Filtro"
-
-#: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
-msgid "Hide Filter Options"
-msgstr "Ocultar Opciones de Filtro"
 
 #: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
 msgid "Filter Options"

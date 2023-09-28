@@ -1,11 +1,13 @@
 from contextlib import contextmanager
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from shapely.geometry import Point
 
+from ..const import GPS_POINT_CASE_PROPERTY
 from ..exceptions import InvalidCoordinate, InvalidDistributionParam
-from ..models import GeoObject, Objective, ObjectiveAllocator
+from ..models import GeoConfig, GeoObject, Objective, ObjectiveAllocator
+from ..utils import get_geo_case_property
 
 
 class TestGeoObject(SimpleTestCase):
@@ -122,3 +124,30 @@ class TestObjectiveAllocator(SimpleTestCase):
 
         self.assertEqual(len(unassigned), 1)
         self.assertEqual(unassigned[0], self.far_objective_id)
+
+
+class TestGeoConfig(TestCase):
+
+    domain = 'test-geo-config'
+    geo_property = 'gps_location'
+
+    def test_geo_config(self):
+        case_property = get_geo_case_property(self.domain)
+        self.assertEqual(case_property, GPS_POINT_CASE_PROPERTY)
+        with self.get_geo_config():
+            case_property = get_geo_case_property(self.domain)
+            self.assertEqual(case_property, self.geo_property)
+        case_property = get_geo_case_property(self.domain)
+        self.assertEqual(case_property, GPS_POINT_CASE_PROPERTY)
+
+    @contextmanager
+    def get_geo_config(self):
+        conf = GeoConfig(
+            domain=self.domain,
+            case_location_property_name=self.geo_property,
+        )
+        conf.save()
+        try:
+            yield conf
+        finally:
+            conf.delete()

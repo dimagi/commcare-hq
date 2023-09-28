@@ -36,6 +36,7 @@ class TestGetGeoProperty(TestCase):
             user_location_property_name=user_geo_property,
         )
         config.save()
+        self.addCleanup(config.delete)
 
         self.assertEqual(get_geo_case_property(self.DOMAIN), case_geo_property)
         self.assertEqual(get_geo_user_property(self.DOMAIN), user_geo_property)

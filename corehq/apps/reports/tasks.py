@@ -124,21 +124,25 @@ def summarize_user_counts(commcare_users_by_domain, n):
 
 def get_domains_to_update_es_filter():
     """
-    Returns ES filter to filter domains that are never updated or
-        domains that haven't been updated since a week or domains that
-        have been updated within last week but have new form submissions
-        in the last day.
+    Returns ES filter to obtain domains that are active, and meet one or more
+    of the following criteria:
+     - never had calculated properties updated
+     - calculated properties was updated over one week ago
+     - new form submissions within the last day
     """
     last_week = datetime.utcnow() - timedelta(days=7)
     more_than_a_week_ago = filters.date_range('cp_last_updated', lt=last_week)
-    less_than_a_week_ago = filters.date_range('cp_last_updated', gte=last_week)
     not_updated = filters.missing('cp_last_updated')
     domains_submitted_today = (FormES().submitted(gte=datetime.utcnow() - timedelta(days=1))
         .terms_aggregation('domain.exact', 'domain').size(0).run().aggregations.domain.keys)
-    return filters.OR(
-        not_updated,
-        more_than_a_week_ago,
-        filters.AND(less_than_a_week_ago, filters.term('name', domains_submitted_today))
+    is_domain_active = filters.term('is_active', True)
+    return filters.AND(
+        is_domain_active,
+        filters.OR(
+            not_updated,
+            more_than_a_week_ago,
+            filters.term('name', domains_submitted_today)
+        )
     )
 
 

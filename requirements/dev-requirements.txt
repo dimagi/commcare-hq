@@ -20,7 +20,7 @@ asttokens==2.0.5
     # via stack-data
 async-timeout==4.0.2
     # via redis
-attrs==21.4.0
+attrs==23.1.0
     # via
     #   -r base-requirements.in
     #   cattrs
@@ -106,7 +106,7 @@ coverage==7.1.0
     # via -r test-requirements.in
 crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
     # via -r base-requirements.in
-cryptography==41.0.3
+cryptography==41.0.4
     # via
     #   -r sso-requirements.in
     #   jwcrypto
@@ -273,9 +273,7 @@ flaky==3.7.0
 freezegun==1.1.0
     # via -r test-requirements.in
 future==0.18.3
-    # via
-    #   pyjwkest
-    #   radon
+    # via pyjwkest
 geographiclib==2.0
     # via geopy
 geopandas==0.12.2
@@ -357,7 +355,7 @@ httplib2==0.20.4
     # via
     #   google-api-python-client
     #   google-auth-httplib2
-idna==2.10
+idna==3.4
     # via requests
 imagesize==1.4.1
     # via sphinx
@@ -444,7 +442,7 @@ mdurl==0.1.2
     # via markdown-it-py
 msgpack==1.0.5
     # via cachecontrol
-munch==2.5.0
+munch==4.0.0
     # via fiona
 myst-parser==2.0.0
     # via -r docs-requirements.in
@@ -630,7 +628,7 @@ qrcode==7.4.2
     #   django-two-factor-auth
 quickcache==0.5.4
     # via -r base-requirements.in
-radon==5.1.0
+radon==6.0.1
     # via -r test-requirements.in
 rcssmin==1.1.0
     # via django-compressor
@@ -717,7 +715,6 @@ six==1.16.0
     #   jsonobject-couchdbkit
     #   jsonpath-ng
     #   mando
-    #   munch
     #   pyjwkest
     #   python-dateutil
     #   pyzxcvbn

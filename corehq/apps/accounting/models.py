@@ -2127,6 +2127,7 @@ class Invoice(InvoiceBase):
     to CreditAdjustments.
     """
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+    duplicate_invoice_id = models.IntegerField(null=True)
 
     class Meta(object):
         app_label = 'accounting'

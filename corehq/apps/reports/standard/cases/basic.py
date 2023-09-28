@@ -1,7 +1,6 @@
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from corehq.util.es.elasticsearch import TransportError
 from memoized import memoized
 
 from corehq.apps.es import cases as case_es
@@ -12,7 +11,10 @@ from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
-from corehq.apps.reports.standard import ProjectReportParametersMixin
+from corehq.apps.reports.standard import (
+    ProjectReport,
+    ProjectReportParametersMixin,
+)
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
     all_project_data_filter,
@@ -20,8 +22,8 @@ from corehq.apps.reports.standard.cases.utils import (
     get_case_owners,
     query_location_restricted_cases,
 )
-from corehq.apps.reports.standard.inspect import ProjectInspectionReport
 from corehq.elastic import ESError
+from corehq.util.es.elasticsearch import TransportError
 
 from .data_sources import CaseDisplayES
 
@@ -140,7 +142,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
 
 @location_safe
-class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
+class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
 
     # note that this class is not true to the spirit of ReportDataSource; the whole
     # point is the decouple generating the raw report data from the report view/django

@@ -21,7 +21,6 @@ from django.views import View
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
 from looseversion import LooseVersion
-from lxml import etree
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -217,6 +216,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
+        'auto_submitting_form_options': _auto_submitting_form_options(app, module, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'shadow_parent': _get_shadow_parent(app, module),
         'case_types': {m.case_type for m in app.modules if m.case_type},
@@ -517,6 +517,20 @@ def _case_list_form_options(app, module, lang=None):
         'options': options,
         'form': module.case_list_form,
     }
+
+
+def _auto_submitting_form_options(app, module, lang=None):
+    langs = None if lang is None else [lang]
+    forms = [
+        {
+            "form_id": form.unique_id,
+            "form_name": trans(form.name, langs),
+            "module_name": trans(mod.name, langs)
+        }
+        for mod in app.get_modules()
+        for form in mod.get_forms() if form.is_auto_submitting_form(module.case_type)
+    ]
+    return forms
 
 
 def get_parent_select_followup_forms(app, module):
@@ -1168,9 +1182,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     sort_elements = params.get('sort_elements', None)
     print_template = params.get('printTemplate', None)
     search_properties = params.get("search_properties")
-    custom_variables = {
-        'short': params.get("short_custom_variables", None),
-        'long': params.get("long_custom_variables", None)
+    custom_variables_dict = {
+        'short': params.get("short_custom_variables_dict", None),
+        'long': params.get("long_custom_variables_dict", None)
     }
 
     app = get_app(domain, app_id)
@@ -1205,23 +1219,10 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
 
-    if custom_variables['short'] is not None:
-        try:
-            etree.fromstring("<variables>{}</variables>".format(custom_variables['short']))
-        except etree.XMLSyntaxError as error:
-            return HttpResponseBadRequest(
-                "There was an issue with your custom variables: {}".format(error)
-            )
-        detail.short.custom_variables = custom_variables['short']
-
-    if custom_variables['long'] is not None:
-        try:
-            etree.fromstring("<variables>{}</variables>".format(custom_variables['long']))
-        except etree.XMLSyntaxError as error:
-            return HttpResponseBadRequest(
-                "There was an issue with your custom variables: {}".format(error)
-            )
-        detail.long.custom_variables = custom_variables['long']
+    if custom_variables_dict['short'] is not None:
+        detail.short.custom_variables_dict = custom_variables_dict['short']
+    if custom_variables_dict['long'] is not None:
+        detail.long.custom_variables_dict = custom_variables_dict['long']
 
     if sort_elements is not None:
         # Attempt to map new elements to old so we don't lose translations

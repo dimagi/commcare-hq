@@ -90,7 +90,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
             var resource = currentApp.get('multimedia_map')[resourcePath];
             if (!resource) {
-                console.warn('Unable to find resource ' + resourcePath + 'in multimedia map');
+                console.warn('Unable to find resource ' + resourcePath + ' in multimedia map');
                 return;
             }
             var id = resource.multimedia_id;

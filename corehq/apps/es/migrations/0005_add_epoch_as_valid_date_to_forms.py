@@ -40,5 +40,6 @@ class Migration(migrations.Migration):
                 'xmlns': {'fields': {'exact': {'index': 'not_analyzed', 'type': 'string'}}, 'type': 'string'},
                 '__is_tombstone__': {'type': 'boolean'},
             },
+            es_versions=[2],
         ),
     ]
