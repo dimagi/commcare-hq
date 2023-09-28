@@ -604,10 +604,13 @@ def get_cleaned_session_endpoint_id(raw_endpoint_id):
 def get_cleaned_and_deduplicated_session_endpoint_id(module_or_form, raw_endpoint_id, app):
     cleaned_id = get_cleaned_session_endpoint_id(raw_endpoint_id)
 
-    if _is_duplicate_endpoint_id(cleaned_id, module_or_form.session_endpoint_id, app):
-        raise AppMisconfigurationError(_(
-            "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
-        ).format(endpoint_id=cleaned_id))
+    if cleaned_id:
+        duplicate_ids = _duplicate_endpoint_ids(cleaned_id, [], None, app)
+        if len(duplicate_ids) > 0:
+            duplicates = ", ".join([f"'{d}'" for d in duplicate_ids])
+            raise AppMisconfigurationError(_(
+                "Session endpoint IDs must be unique. The following id(s) are used multiple times: {duplicates}"
+            ).format(duplicates=duplicates))
     return cleaned_id
 
 
@@ -646,14 +649,6 @@ def set_shadow_module_and_form_session_endpoint(
 def set_case_list_session_endpoint(module, raw_endpoint_id, app):
     cleaned_id = get_cleaned_and_deduplicated_session_endpoint_id(module, raw_endpoint_id, app)
     module.case_list_session_endpoint_id = cleaned_id
-
-
-def _is_duplicate_endpoint_id(new_id, old_id, app):
-    if not new_id or new_id == old_id:
-        return False
-
-    duplicates = _duplicate_endpoint_ids(new_id, [], None, app)
-    return len(duplicates) > 0
 
 
 def _duplicate_endpoint_ids(new_session_endpoint_id, new_form_session_endpoint_ids, module_id, app):
