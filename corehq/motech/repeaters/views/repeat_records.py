@@ -306,7 +306,13 @@ class RepeatRecordView(View):
     def get(self, request, domain):
         record_id = request.GET.get('record_id')
         record = self.get_record_or_404(domain, record_id)
-        content_type = record.repeater.generator.content_type
+        repeater = record.repeater
+        if not repeater:
+            return JsonResponse({
+                'error': 'Repeater with id {} could not be found'.format(
+                    record.repeater_id)
+            }, status=404)
+        content_type = repeater.generator.content_type
         try:
             payload = record.get_payload()
         except XFormNotFound:
