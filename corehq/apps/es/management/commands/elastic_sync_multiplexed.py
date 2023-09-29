@@ -42,7 +42,7 @@ class ESSyncUtil:
         self.es = get_client()
 
     def start_reindex(self, cname, reindex_batch_size=1000,
-                      purge_ids=False, requests_per_second=None, with_no_replicas=False):
+                      purge_ids=False, requests_per_second=None):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -536,8 +536,7 @@ class Command(BaseCommand):
         if sub_cmd == 'start':
             cmd_func(
                 options['index_cname'], options['batch_size'],
-                options['purge_ids'], options['requests_per_second'],
-                options['with_no_replicas']
+                options['purge_ids'], options['requests_per_second']
             )
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
