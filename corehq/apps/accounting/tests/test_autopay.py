@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.core import mail
 
 from unittest import mock
@@ -137,15 +138,21 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
 
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(Charge, 'create')
-    @mock.patch.object(PaymentRecord, 'create_record')
-    def test_when_create_record_fails_stripe_is_not_charged(self, fake_create_record, fake_create, fake_customer):
-        fake_create_record.side_effect = Exception
+    def test_double_charge_is_prevented_and_only_one_payment_record_created(self, fake_charge, fake_customer):
         self._create_autopay_method(fake_customer)
-
         self.original_outbox_length = len(mail.outbox)
+        fake_charge.return_value = StripeObject(id='transaction_id')
         self._run_autopay()
-        self.assertFalse(fake_create.called)
-        self._assert_no_side_effects()
+        # Add balance to the same invoice so it gets paid again
+        invoice = Invoice.objects.get(subscription=self.subscription)
+        invoice.balance = Decimal('1000.0000')
+        invoice.save()
+        # Run autopay again to test no double charge
+        with self.assertLogs(level='ERROR') as log_cm:
+            self._run_autopay()
+            self.assertIn("[BILLING] [Autopay] Attempt to double charge invoice", "\n".join(log_cm.output))
+        self.assertEqual(len(PaymentRecord.objects.all()), 1)
+        self.assertEqual(len(mail.outbox), self.original_outbox_length + 1)
 
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(Charge, 'create')
