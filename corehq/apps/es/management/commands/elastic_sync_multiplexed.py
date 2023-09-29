@@ -73,18 +73,6 @@ class ESSyncUtil:
         check_task_progress(task_id)
 
         print("\n\n")
-        self.perform_cleanup(adapter)
-
-        if not with_no_replicas:
-            logger.info("Preparing Index for normal use")
-            self._prepare_index_for_normal_usage(adapter.secondary)
-            print("\n\n")
-        else:
-            logger.info(f"Replicas are not being set for index {destination_index}")
-            logger.info("You can manually set them by running")
-            print("\n\n")
-            print(f"\t./manage.py elastic_sync_multiplexed set_replicas {cname}")
-            print("\n\n")
 
         self.display_source_destination_doc_count(adapter)
 
@@ -393,7 +381,7 @@ class Command(BaseCommand):
         ./manage.py elastic_sync_multiplexed copy_checkpoints <index_cname>
         ```
 
-    If replicas are not set during the time of reindex, they can be set on secondary index by
+    After reindex is successful the following command can be run to set replicas on secondary index
         ```bash
         ./manage.py elastic_sync_multiplexed set_replicas <index_cname>
         ```
@@ -449,13 +437,6 @@ class Command(BaseCommand):
             type=int,
             help="""throttles rate at which reindex issues batches of
                     index operations by padding each batch with a wait time"""
-        )
-
-        start_cmd.add_argument(
-            "--with-no-replicas",
-            action="store_true",
-            default=False,
-            help="Replica shards will not be created for the destination index during reindex."
         )
 
         # Get ReIndex Process Status
