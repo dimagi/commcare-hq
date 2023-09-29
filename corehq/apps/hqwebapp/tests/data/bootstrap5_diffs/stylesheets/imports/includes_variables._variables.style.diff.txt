@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,120 +1,122 @@
+@@ -1,120 +1,121 @@
 -@import "@{b3-import-variables}";
 +// Grid Containers
 +// we will want to adapt the defaults in a full redesign
