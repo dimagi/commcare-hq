@@ -113,7 +113,8 @@ class ESSyncUtil:
         is_index_healthy = self._wait_for_index_to_get_healthy(secondary_adapter.index_name)
         if not is_index_healthy:
             logger.info(f"""Index {secondary_adapter.index_name} did not become healthy within timeout.
-                        Replica shards are still assigning. You can check status manually.""")
+                        Replica shards are still assigning. You can check status manually by running
+                        ./manage.py elastic_sync_multiplexed display_shard_info""")
             return
         logger.info("All replicas successfully assigned. Index is prepared for normal usage.")
 
@@ -323,6 +324,16 @@ class ESSyncUtil:
             known_indices.update(self._get_current_and_older_index_name(cname))
         return known_indices
 
+    def display_shard_info(self):
+        # Print the status of the shards in Elasticsearch cluster
+        cluster_status = es_manager.cluster_health()
+        print(f"Cluster Status: {cluster_status['status']}")
+        print(f"Active Shards Count: {cluster_status['active_shards']}")
+        print(f"Initializing Shards: {cluster_status['initializing_shards']}")
+        print(f"Unassigned Shards Count: {cluster_status['unassigned_shards']}")
+        print(f"Relocating Shards: {cluster_status['relocating_shards']}")
+        print(f"Active Shard Percentage: {int(cluster_status['active_shards_percent_as_number'])}%")
+
 
 class Command(BaseCommand):
     """
@@ -398,6 +409,11 @@ class Command(BaseCommand):
     For getting current count of both the indices
         ```bash
         /manage.py elastic_sync_multiplexed display_doc_counts <index_cname>
+        ```
+
+    For getting current shard allocation status for the cluster
+        ```bash
+        /manage.py elastic_sync_multiplexed display_shard_info
         ```
     """
 
@@ -510,6 +526,10 @@ class Command(BaseCommand):
             help="""Cannonical Name of the index whose replicas are to be set"""
         )
 
+        # Print shard status
+        display_shard_info_cmd = subparsers.add_parser("display_shard_info")
+        display_shard_info_cmd.set_defaults(func=self.es_helper.display_shard_info)
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
@@ -531,5 +551,5 @@ class Command(BaseCommand):
             cmd_func(options['index_cname'])
         elif sub_cmd == 'set_replicas':
             cmd_func(options["index_cname"])
-        elif sub_cmd == 'remove_residual_indices':
+        elif sub_cmd in ['remove_residual_indices', 'display_shard_info']:
             cmd_func()
