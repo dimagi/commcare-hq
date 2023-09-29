@@ -35,6 +35,7 @@ from corehq.apps.data_dictionary.views import DataDictionaryView
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
+from corehq.apps.domain.views.settings import ManageDomainAlertsView
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
 from corehq.apps.events.models import AttendeeModel
@@ -1996,10 +1997,16 @@ def _get_administration_section(domain):
             'url': reverse(RecoveryMeasuresHistory.urlname, args=[domain])
         })
 
-    administration.append({
-        'title': _(FeaturePreviewsView.page_title),
-        'url': reverse(FeaturePreviewsView.urlname, args=[domain])
-    })
+    administration.extend([
+        {
+            'title': _(FeaturePreviewsView.page_title),
+            'url': reverse(FeaturePreviewsView.urlname, args=[domain])
+        },
+        {
+            'title': _(ManageDomainAlertsView.page_title),
+            'url': reverse(ManageDomainAlertsView.urlname, args=[domain])
+        }
+    ])
 
     if toggles.TRANSFER_DOMAIN.enabled(domain):
         administration.append({

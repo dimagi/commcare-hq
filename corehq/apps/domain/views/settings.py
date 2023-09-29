@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+from functools import cached_property
 
 from django.conf import settings
 from django.contrib import messages
@@ -41,6 +42,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import (
     USE_LOCATION_CHOICE,
     USE_PARENT_LOCATION_CHOICE,
+    DomainAlertForm,
     DomainGlobalSettingsForm,
     DomainMetadataForm,
     PrivacySecurityForm,
@@ -517,3 +519,30 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
     page_title = gettext_lazy("Manage Mobile Workers")
     template_name = 'enterprise/manage_mobile_workers.html'
     urlname = 'domain_manage_mobile_workers'
+
+
+class ManageDomainAlertsView(BaseAdminProjectSettingsView):
+    template_name = 'domain/admin/manage_alerts.html'
+    urlname = 'domain_manage_alerts'
+    page_title = gettext_lazy("Manage Project Alerts")
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.form
+        }
+
+    @cached_property
+    def form(self):
+        if self.request.method == 'POST':
+            return DomainAlertForm(self.request.POST)
+        return DomainAlertForm()
+
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            # ToDo: save the alert
+            messages.success(request, _("Alert saved!"))
+            return HttpResponseRedirect(self.page_url)
+        else:
+            messages.error(request, _("There was an error saving your alert. Please try again!"))
+            return self.get(request, *args, **kwargs)
