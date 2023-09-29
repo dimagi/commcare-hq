@@ -1,5 +1,6 @@
 import logging
 import time
+import gevent
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -125,10 +126,24 @@ class ESSyncUtil:
         es_manager.cluster_routing(enabled=True)
 
     def _get_source_destination_doc_count(self, adapter):
+        """
+        Displays source and destination index doc count. In order to ensure that count is most accurate
+            - Both source and destination indices are refreshed.
+            - Tombstones are removed from both the indices.
+            - Count query is issued in parallel to try to avoid unequal counts in high frequency write indices.
+            There are still chances that count may be off by few docs.
+        """
         es_manager.index_refresh(adapter.primary.index_name)
         es_manager.index_refresh(adapter.secondary.index_name)
-        primary_count = adapter.count({})
-        secondary_count = adapter.secondary.count({})
+
+        self.perform_cleanup(adapter)
+
+        greenlets = gevent.joinall([
+            gevent.spawn(adapter.count, {}),
+            gevent.spawn(adapter.secondary.count, {})
+        ])
+        primary_count, secondary_count = [g.get() for g in greenlets]
+
         print(f"Doc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
         print(f"Doc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
 
