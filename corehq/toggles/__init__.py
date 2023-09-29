@@ -726,6 +726,13 @@ CASE_LIST_MAP = StaticToggle(
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
+CASE_LIST_CLICKABLE_ICON = StaticToggle(
+    'case_list_clickable_icon',
+    'USH: Allow use of clickable icons in the case list in Web Apps to trigger auto submitting forms',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
     'show_persist_case_context_setting',
     'Allow toggling the persistent case context tile',
@@ -1686,14 +1693,6 @@ SESSION_ENDPOINTS = StaticToggle(
     [NAMESPACE_DOMAIN],
     description='Support external Android apps calling in to an endpoint in a '
                 'CommCare app. (Used by the Reminders App)',
-)
-
-CASE_LIST_CLICKABLE_ICON = StaticToggle(
-    'case_list_clickable_icon',
-    'USH: Allow use of clickable icons in the case list in Web Apps to trigger auto submitting forms',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    parent_toggles=[SESSION_ENDPOINTS]
 )
 
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
