@@ -86,7 +86,7 @@ class ESSyncUtil:
             print(f"\t./manage.py elastic_sync_multiplexed set_replicas {cname}")
             print("\n\n")
 
-        self._get_source_destination_doc_count(adapter)
+        self.display_source_destination_doc_count(adapter)
 
         logger.info(f"Verify this reindex process from elasticsearch logs using task id - {task_id}")
         print("\n\n")
@@ -125,7 +125,7 @@ class ESSyncUtil:
         self._wait_for_index_to_get_healthy(secondary_adapter.index_name)
         es_manager.cluster_routing(enabled=True)
 
-    def _get_source_destination_doc_count(self, adapter):
+    def display_source_destination_doc_count(self, adapter):
         """
         Displays source and destination index doc count. In order to ensure that count is most accurate
             - Both source and destination indices are refreshed.
@@ -144,8 +144,8 @@ class ESSyncUtil:
         ])
         primary_count, secondary_count = [g.get() for g in greenlets]
 
-        print(f"Doc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
-        print(f"Doc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
+        print(f"\nDoc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
+        print(f"\nDoc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
 
     def perform_cleanup(self, adapter):
         logger.info("Performing required cleanup!")
@@ -402,6 +402,11 @@ class Command(BaseCommand):
         ```bash
         ./manage.py elastic_sync_multiplexed remove_residual_indices
         ```
+
+    For getting current count of both the indices
+        ```bash
+        /manage.py elastic_sync_multiplexed display_doc_counts <index_cname>
+        ```
     """
 
     help = ("Reindex management command to sync Multiplexed HQ indices")
@@ -511,6 +516,15 @@ class Command(BaseCommand):
         remove_residual_indices_cmd = subparsers.add_parser("remove_residual_indices")
         remove_residual_indices_cmd.set_defaults(func=self.es_helper.remove_residual_indices)
 
+        # Get count of docs in primary and secondary index
+        display_doc_count_cmd = subparsers.add_parser("display_doc_counts")
+        display_doc_count_cmd.set_defaults(func=self.es_helper.display_source_destination_doc_count)
+        display_doc_count_cmd.add_argument(
+            'index_cname',
+            choices=INDEXES,
+            help="""Cannonical Name of the index whose replicas are to be set"""
+        )
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
@@ -522,7 +536,7 @@ class Command(BaseCommand):
             )
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
-        elif sub_cmd == 'cleanup':
+        elif sub_cmd == 'cleanup' or sub_cmd == 'display_doc_counts':
             cmd_func(doc_adapter_from_cname(options['index_cname']))
         elif sub_cmd == 'cancel' or sub_cmd == 'status':
             cmd_func(options['task_id'])
