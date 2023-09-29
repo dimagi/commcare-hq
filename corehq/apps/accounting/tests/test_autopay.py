@@ -50,7 +50,8 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         cls.autopay_account = cls.account
         cls.autopay_account.created_by_domain = cls.domain
         cls.autopay_account.save()
-        cls.autopay_user_email = generator.create_arbitrary_web_user_name()
+        web_user = generator.arbitrary_user(domain_name=cls.domain.name, is_active=True, is_webuser=True)
+        cls.autopay_user_email = web_user.email
         cls.fake_card = FakeStripeCard()
         cls.fake_stripe_customer = FakeStripeCustomer(cards=[cls.fake_card])
         cls.autopay_account.update_autopay_user(cls.autopay_user_email, cls.domain)
