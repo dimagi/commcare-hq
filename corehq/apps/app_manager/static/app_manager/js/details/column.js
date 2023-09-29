@@ -261,7 +261,7 @@ hqDefine("app_manager/js/details/column", function () {
         }]).val(self.original.date_format);
         self.date_extra.ui.prepend($('<div/>').text(gettext(' Format ')));
 
-        self.autoSubmittingFormLabel = $('<span>Form to submit on click:</span>');
+        self.endpointActionLabel = $('<span>Form to submit on click:</span>');
         const formEndpointOptions = [{value: "-1", label: 'Select a form endpoint'}];
         let moduleName = "";
         const formEndpoints = Object.entries(initialPageData('form_endpoint_options'));
@@ -348,7 +348,7 @@ hqDefine("app_manager/js/details/column", function () {
             if (self.format.ui.parent().length > 0) {
                 self.date_extra.ui.detach();
                 self.enum_extra.ui.detach();
-                self.autoSubmittingFormLabel.detach();
+                self.endpointActionLabel.detach();
                 self.action_form_extra.ui.detach();
                 self.graph_extra.ui.detach();
                 self.late_flag_extra.ui.detach();
@@ -371,7 +371,7 @@ hqDefine("app_manager/js/details/column", function () {
                     self.enum_extra.values_are_icons(true);
                     self.enum_extra.keys_are_conditions(true);
                     self.format.ui.parent().append(self.enum_extra.ui);
-                    self.format.ui.parent().append(self.autoSubmittingFormLabel);
+                    self.format.ui.parent().append(self.endpointActionLabel);
                     self.format.ui.parent().append(self.action_form_extra.ui);
                     const actionForm = self.action_form_extra.ui.find('select');
                     actionForm.change(function () {
