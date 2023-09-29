@@ -504,25 +504,10 @@
                 <a href="{{ module_url }}">{{ module_name }}</a> has a case search property
                 <code>{{ property }}</code> that references an invalid instance.
               {% endblocktrans %}
-            {% case "case list field action form missing" %}
+            {% case "case list field action endpoint missing" %}
               {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
                 <a href="{{ module_url }}">{{ module_name }}</a> has a case list property
-                that references a missing form: <code>{{ column.header|trans:langs }}</code>.
-              {% endblocktrans %}
-            {% case "case list field action form must require case" %}
-              {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
-                <a href="{{ module_url }}">{{ module_name }}</a> has a case list property
-                that references form with a different case type: <code>{{ column.header|trans:langs }}</code>.
-              {% endblocktrans %}
-            {% case "case list field action form must have same root module" %}
-              {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
-                <a href="{{ module_url }}">{{ module_name }}</a> has a case list property
-                that references form with a different parent module: <code>{{ column.header|trans:langs }}</code>.
-              {% endblocktrans %}
-            {% case "case list field action form must have same case type" %}
-              {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
-                <a href="{{ module_url }}">{{ module_name }}</a> has a case list property
-                that references form with a different case type: <code>{{ column.header|trans:langs }}</code>.
+                that references a missing form endpoint: <code>{{ column.header|trans:langs }}</code>.
               {% endblocktrans %}
             {% case "error" %}
               Details: {{ error.message }}
