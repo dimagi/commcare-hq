@@ -825,13 +825,6 @@ class LocalizedAction(ActionMixin, TextOrDisplay):
     pass
 
 
-class EndpointAction(XmlObject):
-    ROOT_NAME = 'endpoint_action'
-
-    endpoint_id = StringField('@endpoint_id')
-    background = StringField('@background')
-
-
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
     ORDER = ('style', 'header', 'template', 'sort_node')

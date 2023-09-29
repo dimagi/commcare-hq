@@ -3,6 +3,7 @@ import re
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import const
 from corehq.apps.app_manager.suite_xml import xml_models as sx
+from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
 from corehq.apps.app_manager.xpath import (
     CaseXPath,
     CommCareSession,
@@ -11,6 +12,7 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
     UsercaseXPath,
     XPath,
+    session_var,
 )
 from corehq.apps.hqmedia.models import CommCareMultimedia
 
@@ -472,8 +474,24 @@ class EnumImage(Enum):
 
     @property
     def action(self):
-        if self.column.endpoint_action_id and self.app.supports_detail_field_action:
-            return sx.EndpointAction(endpoint_id=self.column.endpoint_action_id, background="true")
+        if self.column.action_form_id and self.app.supports_detail_field_action:
+            action_form = self.app.get_form(self.column.action_form_id)
+            action = sx.Action(stack=sx.Stack(), display=sx.Display(text=sx.Text()))
+            frame = sx.PushFrame()
+            frame.add_command(XPath.string(id_strings.form_command(action_form)))
+
+            def map_source_to_target(source_meta, target_meta):
+                if target_meta.from_parent or target_meta.case_type != self.module.case_type:
+                    return sx.StackDatum(id=target_meta.id, value=session_var(source_meta.id))
+                return sx.StackDatum(id=target_meta.id, value="current()/@case_id")
+
+            datums = DetailContributor.get_datums_for_action(
+                self.entries_helper, self.module, action_form, map_source_to_target
+            )
+            for datum in datums:
+                frame.add_datum(datum)
+            action.stack.add_frame(frame)
+            return action
 
     def _xpath_template(self, type):
         return "if({key_as_condition}, {key_as_var_name}"

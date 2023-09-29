@@ -1862,7 +1862,17 @@ class DetailColumn(IndexedSchema):
     filter_xpath = StringProperty(default="", exclude_if_none=True)
     time_ago_interval = FloatProperty(default=365.25)
     date_format = StringProperty(default="%d/%m/%y")
-    action_endpoint_id = FormIdProperty(default="", exclude_if_none=True)
+    action_form_id = FormIdProperty(
+        # This should only be used by 'module.case_details.short'
+        # but adding in all possible reference here for safety
+        'modules[*].case_details.short.columns[*].action_form_id',
+        'modules[*].case_details.long.columns[*].action_form_id',
+        'modules[*].ref_details.short.columns[*].action_form_id',
+        'modules[*].ref_details.long.columns[*].action_form_id',
+        'modules[*].product_details.short.columns[*].action_form_id',
+        'modules[*].product_details.long.columns[*].action_form_id',
+        default="", exclude_if_none=True
+    )
 
     @property
     def enum_dict(self):
