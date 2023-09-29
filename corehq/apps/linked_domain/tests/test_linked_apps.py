@@ -15,7 +15,6 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     ReportModule,
     import_app,
-    FormLink,
 )
 from corehq.apps.app_manager.suite_xml.post_process.resources import (
     ResourceOverride,
@@ -241,11 +240,11 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     def test_overwrite_app_override_form_unique_ids_references(self):
         m0 = self.master1.get_module(0)
-        master_form = list(self.master1.get_forms(bare=True))[0]
         f1 = m0.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
-        f1.form_links = [
-            FormLink(xpath="true()", form_id=master_form.unique_id, form_module_id=m0.unique_id),
-        ]
+        m0.case_details.short.columns[0].action_form_id = f1.unique_id
+        m0.case_details.long.columns[0].action_form_id = f1.unique_id
+
+        master_form = list(self.master1.get_forms(bare=True))[0]
 
         add_xform_resource_overrides(self.linked_domain, self.linked_app.get_id, {
             master_form.unique_id: '123',
@@ -265,7 +264,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
             self._get_form_ids_by_xmlns(linked_app)
         )
 
-        self.assertEqual(linked_app.get_module(0).get_form(1).form_links[0].form_id, '123')
+        self.assertEqual(linked_app.get_module(0).case_details.short.columns[0].action_form_id, '456')
+        self.assertEqual(linked_app.get_module(0).case_details.long.columns[0].action_form_id, '456')
 
     def test_multi_master_form_attributes_and_media_versions(self, *args):
         '''
