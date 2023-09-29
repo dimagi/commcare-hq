@@ -216,7 +216,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
-        'form_endpoint_options': _form_endpoint_options(app, module, lang),
+        'auto_submitting_form_options': _auto_submitting_form_options(app, module, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'shadow_parent': _get_shadow_parent(app, module),
         'case_types': {m.case_type for m in app.modules if m.case_type},
@@ -519,16 +519,16 @@ def _case_list_form_options(app, module, lang=None):
     }
 
 
-def _form_endpoint_options(app, module, lang=None):
+def _auto_submitting_form_options(app, module, lang=None):
     langs = None if lang is None else [lang]
     forms = [
         {
-            "id": form.session_endpoint_id,
+            "form_id": form.unique_id,
             "form_name": trans(form.name, langs),
             "module_name": trans(mod.name, langs)
         }
         for mod in app.get_modules()
-        for form in mod.get_forms() if form.session_endpoint_id and form.is_auto_submitting_form(module.case_type)
+        for form in mod.get_forms() if form.is_auto_submitting_form(module.case_type)
     ]
     return forms
 
