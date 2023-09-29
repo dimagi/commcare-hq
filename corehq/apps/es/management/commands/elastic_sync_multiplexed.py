@@ -99,7 +99,7 @@ class ESSyncUtil:
             health = es_manager.cluster_health(index=index_name)
             status = health["status"]
             if status == "green":
-                break
+                return True
 
             print(f"\tWaiting for index status to be green. Current status: '{status}'")
             time.sleep(min(2 ** i, 30))
@@ -110,7 +110,12 @@ class ESSyncUtil:
         logger.info(f"Setting replica count to {tuning_settings['number_of_replicas']}")
         es_manager.index_set_replicas(secondary_adapter.index_name, tuning_settings['number_of_replicas'])
         es_manager.index_configure_for_standard_ops(secondary_adapter.index_name)
-        self._wait_for_index_to_get_healthy(secondary_adapter.index_name)
+        is_index_healthy = self._wait_for_index_to_get_healthy(secondary_adapter.index_name)
+        if not is_index_healthy:
+            logger.info(f"""Index {secondary_adapter.index_name} did not become healthy within timeout.
+                        Replica shards are still assigning. You can check status manually.""")
+            return
+        logger.info("All replicas successfully assigned. Index is prepared for normal usage.")
         es_manager.cluster_routing(enabled=True)
 
     def display_source_destination_doc_count(self, adapter):
