@@ -55,21 +55,21 @@ class ESSyncUtil:
         self._prepare_index_for_reindex(destination_index)
 
         logger.info("Starting ReIndex process")
-        task_info = es_manager.reindex(
+        task_id = es_manager.reindex(
             source_index, destination_index,
             batch_size=reindex_batch_size, purge_ids=purge_ids,
             requests_per_second=requests_per_second
         )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
-        task_id = task_info.split(':')[1]
+        task_number = task_id.split(':')[1]
         print("\n\n\n")
         logger.info("-----------------IMPORTANT-----------------")
-        logger.info(f"TASK ID - {task_id}")
+        logger.info(f"TASK NUMBER - {task_number}")
         logger.info("-------------------------------------------")
-        logger.info("Save this Task Id, You will need it later for verifying your reindex process")
+        logger.info("Save this Task Number, You will need it later for verifying your reindex process")
         print("\n\n\n")
         # This would display progress untill reindex process is completed
-        check_task_progress(task_info)
+        check_task_progress(task_id)
 
         print("\n\n")
         self.perform_cleanup(adapter)
@@ -92,7 +92,7 @@ class ESSyncUtil:
         logger.info("You can use commcare-cloud to extract reindex logs from cluster")
         print("\n\t"
             + f"cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "
-            + f"\"grep '{task_id}.*ReindexResponse' /opt/data/elasticsearch*/logs/*.log\""
+            + f"\"grep '{task_number}.*ReindexResponse' /opt/data/elasticsearch*/logs/*.log\""
             + "\n\n")
 
     def _get_source_destination_indexes(self, adapter):
