@@ -1862,7 +1862,7 @@ class DetailColumn(IndexedSchema):
     filter_xpath = StringProperty(default="", exclude_if_none=True)
     time_ago_interval = FloatProperty(default=365.25)
     date_format = StringProperty(default="%d/%m/%y")
-    action_endpoint_id = FormIdProperty(default="", exclude_if_none=True)
+    endpoint_action_id = FormIdProperty(default="", exclude_if_none=True)
 
     @property
     def enum_dict(self):
