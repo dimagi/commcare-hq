@@ -116,7 +116,6 @@ class ESSyncUtil:
                         Replica shards are still assigning. You can check status manually.""")
             return
         logger.info("All replicas successfully assigned. Index is prepared for normal usage.")
-        es_manager.cluster_routing(enabled=True)
 
     def display_source_destination_doc_count(self, adapter):
         """
