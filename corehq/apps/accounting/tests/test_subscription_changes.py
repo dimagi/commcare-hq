@@ -107,7 +107,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             self.web_users.append(web_user)
 
             commcare_user = generator.arbitrary_user(
-                domain=self.domain.name)
+                domain_name=self.domain.name)
             commcare_user.set_role(self.domain.name, role.get_qualified_id())
             commcare_user.save()
             self.commcare_users.append(commcare_user)
