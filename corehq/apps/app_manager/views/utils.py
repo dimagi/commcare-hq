@@ -665,14 +665,14 @@ def _duplicate_endpoint_ids(new_session_endpoint_id, new_form_session_endpoint_i
     for module in app.modules:
         if module.unique_id != module_or_form_id:
             append_endpoint(module.session_endpoint_id)
-            if module.module_type != "shadow":
-                for form in module.get_suite_forms():
-                    if form.unique_id != module_or_form_id:
-                        append_endpoint(form.session_endpoint_id)
-            else:
-                for m in module.form_session_endpoints:
-                    if form.unique_id != module_or_form_id:
-                        append_endpoint(m.session_endpoint_id)
+        if module.module_type != "shadow":
+            for form in module.get_suite_forms():
+                if form.unique_id != module_or_form_id:
+                    append_endpoint(form.session_endpoint_id)
+        else:
+            for m in module.form_session_endpoints:
+                if form.unique_id != module_or_form_id:
+                    append_endpoint(m.session_endpoint_id)
 
     duplicates = [k for k, v in Counter(all_endpoint_ids).items() if v > 1]
 
