@@ -62,7 +62,7 @@ hqDefine("app_manager/js/details/column", function () {
         });
         self.tileHeight = ko.observable(self.original.height || 1);
         self.tileHeightOptions = ko.computed(function () {
-            return _.range(1, 5 - (self.tileRowStart() || 1));
+            return _.range(1, self.tileRowMax() + 1 - (self.tileRowStart() || 1));
         });
         self.horizontalAlign = ko.observable(self.original.horizontal_align || 'left');
         self.horizontalAlignOptions = ['left', 'center', 'right'];
