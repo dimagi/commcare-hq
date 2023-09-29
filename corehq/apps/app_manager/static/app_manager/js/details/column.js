@@ -262,20 +262,18 @@ hqDefine("app_manager/js/details/column", function () {
         self.date_extra.ui.prepend($('<div/>').text(gettext(' Format ')));
 
         self.autoSubmittingFormLabel = $('<span>Form to submit on click:</span>');
-        const autoSubmittingFormOptions = [{value: "-1", label: 'Select a form'}];
+        const formEndpointOptions = [{value: "-1", label: 'Select a form endpoint'}];
         let moduleName = "";
-        const autoSubmittingForms =
-            Object.entries(initialPageData('auto_submitting_form_options'));
-        autoSubmittingForms
-            .forEach(([, form]) => {
-                if (form.module_name !== moduleName) {
-                    moduleName = form.module_name;
-                    autoSubmittingFormOptions.push({groupName: moduleName});
-                }
-                autoSubmittingFormOptions.push({value: form.form_id, label: form.form_name});
-            });
-        const selectedValue = self.original.action_form_id ? self.original.action_form_id : "-1";
-        self.action_form_extra = uiElement.select(autoSubmittingFormOptions)
+        const formEndpoints = Object.entries(initialPageData('form_endpoint_options'));
+        formEndpoints.forEach(([, endpoint]) => {
+            if (endpoint.module_name !== moduleName) {
+                moduleName = endpoint.module_name;
+                formEndpointOptions.push({groupName: moduleName});
+            }
+            formEndpointOptions.push({value: endpoint.id, label: endpoint.form_name});
+        });
+        const selectedValue = self.original.endpoint_aciont_id ? self.original.endpoint_aciont_id : "-1";
+        self.action_form_extra = uiElement.select(formEndpointOptions)
             .val(selectedValue);
 
         self.late_flag_extra = uiElement.input().val(self.original.late_flag.toString());
@@ -424,7 +422,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.format = self.format.val();
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
-            column.action_form_id = self.action_form_extra.val() === "-1" ? null : self.action_form_extra.val();
+            column.endpoint_action_id = self.action_form_extra.val() === "-1" ? null : self.action_form_extra.val();
             column.grid_x = self.tileColumnStart();
             column.grid_y = self.tileRowStart();
             column.height = self.tileHeight();
