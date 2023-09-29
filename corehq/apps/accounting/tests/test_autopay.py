@@ -26,6 +26,7 @@ from corehq.apps.accounting.tests.generator import (
     FakeStripeCustomer,
 )
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
+from django.db import transaction
 
 
 class TestBillingAutoPay(BaseInvoiceTestCase):
@@ -149,7 +150,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         invoice.balance = Decimal('1000.0000')
         invoice.save()
         # Run autopay again to test no double charge
-        with self.assertLogs(level='ERROR') as log_cm:
+        with transaction.atomic(), self.assertLogs(level='ERROR') as log_cm:
             self._run_autopay()
             self.assertIn("[BILLING] [Autopay] Attempt to double charge invoice", "\n".join(log_cm.output))
         self.assertEqual(len(PaymentRecord.objects.all()), 1)
