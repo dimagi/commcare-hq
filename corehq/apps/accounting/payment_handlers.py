@@ -405,7 +405,7 @@ class AutoPayInvoicePaymentHandler(object):
                 autopay_card,
                 amount_in_dollars=amount,
                 description='Auto-payment for Invoice %s' % invoice.invoice_number,
-                idempotency_key=invoice.id
+                idempotency_key=f"{invoice.invoice_number}_{amount}"
             )
         except stripe.error.CardError as e:
             self._handle_card_declined(invoice, e)
