@@ -134,17 +134,29 @@ ELASTICSEARCH_DEBUG_HOSTS = {
     'icds': '100.71.184.7',
 }
 
-# corehq/apps/es/index/settings.py sets the number of replicas for the
-# case_search index to 1. But dev environments only have one node, which
-# is already in use by the primary, and so the replica cannot be
-# assigned. The following overrides those settings. (We can't use the
-# constants defined in that file, because it will cause a circular
-# import.)
+# The default settings for Elasticsearch replicas and shards are managed
+# in `corehq/apps/es/index/settings.py`. These values are not
+# appropriate for dev environments, where there is only one node and so
+# replicas can't be allocated, and where indexed data is unlikely to
+# exceed 20GB, which is the recommended size per shard. The following
+# sets minimum values for all Elasticsearch indices:
 ES_SETTINGS = {
-    'case_search': {
+    'default': {
         'number_of_replicas': 0,
-        'number_of_shards': 5,
-    }
+        'number_of_shards': 1,
+    },
+
+    # If the space used by a shard is more than 20GB then you can
+    # increase the number of shards for a specific index
+    # (e.g. "case_search") by uncommenting and adapting the following:
+    #
+    # 'case_search': {
+    #     'number_of_replicas': 0,
+    #     'number_of_shards': 2,
+    # }
+    #
+    # [elasticsearch-head](https://github.com/mobz/elasticsearch-head)
+    # can show you how much space an index is using.
 }
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
