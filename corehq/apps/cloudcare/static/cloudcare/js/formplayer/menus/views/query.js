@@ -344,7 +344,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
-            var useDymanicSearch = !(Date(this.model._previousAttributes.value) === Date($(e.currentTarget).val()));
+            if (this.dynamicSearchEnabled) {
+                var useDymanicSearch = !(Date(this.model._previousAttributes.value) === Date($(e.currentTarget).val()));
+            }
             this.notifyParentOfFieldChange(e, useDymanicSearch);
             this.parentView.setStickyQueryInputs();
         },
