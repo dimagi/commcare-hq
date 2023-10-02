@@ -16,6 +16,11 @@ class EmailSettings(models.Model):
     sns_secret = models.CharField(max_length=100)
     ses_config_set_name = models.CharField(max_length=100)
 
+    def __str__(self):
+        fields = vars(self)
+        field_str = ", ".join([f"{field}: {value}" for field, value in fields.items() if not field.startswith("_")])
+        return f"<EmailSettings> - {field_str}"
+
     @property
     def plaintext_password(self):
         if self.password.startswith(f'${ALGO_AES}$'):

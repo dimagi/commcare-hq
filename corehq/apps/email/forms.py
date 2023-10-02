@@ -52,6 +52,7 @@ class EmailSMTPSettingsForm(forms.ModelForm):
     sns_secret = forms.CharField(
         label=_("SNS Endpoint Secret"),
         required=False,
+        disabled=True,
         help_text=_("Applicable only when gateway is Amazon's SES and "
                     "tracking headers are enabled. This secret "
                     "is used in the AWS SNS settings.")

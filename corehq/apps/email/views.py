@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django import forms
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -29,8 +29,11 @@ class EmailSMTPSettingsView(BaseDomainView):
 
         if email_settings:
             form = EmailSMTPSettingsForm(instance=email_settings)
+            if email_settings.use_tracking_headers is False:
+                form.fields['sns_secret'].widget = forms.HiddenInput()
         else:
             form = EmailSMTPSettingsForm()
+
         return render(request, self.template_name, {
             'form': form,
             'domain': self.domain,
@@ -45,6 +48,9 @@ class EmailSMTPSettingsView(BaseDomainView):
 
         if form.is_valid():
             form.instance.domain = self.domain
+            if form.instance.use_tracking_headers and not form.instance.sns_secret:
+                form.instance.sns_secret = "secret"
+
             form.save()
             return redirect(EmailSMTPSettingsView.urlname, domain=self.domain)
         else:
