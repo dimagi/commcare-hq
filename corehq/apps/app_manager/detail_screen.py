@@ -3,6 +3,7 @@ import re
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import const
 from corehq.apps.app_manager.suite_xml import xml_models as sx
+from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
 from corehq.apps.app_manager.xpath import (
     CaseXPath,
     CommCareSession,
@@ -11,6 +12,7 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
     UsercaseXPath,
     XPath,
+    session_var,
 )
 from corehq.apps.hqmedia.models import CommCareMultimedia
 
@@ -27,10 +29,12 @@ CASE_PROPERTY_MAP = {
 
 
 def get_column_generator(app, module, detail, column, sort_element=None,
-                         order=None, detail_type=None, parent_tab_nodeset=None, style=None):
+                         order=None, detail_type=None, parent_tab_nodeset=None, style=None,
+                         entries_helper=None):
     cls = get_class_for_format(column.format)  # cls will be FormattedDetailColumn or a subclass of it
     return cls(app, module, detail, column, sort_element, order,
-               detail_type=detail_type, parent_tab_nodeset=parent_tab_nodeset, style=style)
+               detail_type=detail_type, parent_tab_nodeset=parent_tab_nodeset, style=style,
+               entries_helper=entries_helper)
 
 
 def get_class_for_format(slug):
@@ -95,7 +99,8 @@ class FormattedDetailColumn(object):
     SORT_TYPE = 'string'
 
     def __init__(self, app, module, detail, column, sort_element=None,
-                 order=None, detail_type=None, parent_tab_nodeset=None, style=None):
+                 order=None, detail_type=None, parent_tab_nodeset=None, style=None,
+                 entries_helper=None):
         self.app = app
         self.module = module
         self.detail = detail
@@ -106,6 +111,7 @@ class FormattedDetailColumn(object):
         self.id_strings = id_strings
         self.parent_tab_nodeset = parent_tab_nodeset
         self.style = style
+        self.entries_helper = entries_helper
 
     def has_sort_node_for_nodeset_column(self):
         return self.parent_tab_nodeset and self.detail.sort_nodeset_columns_for_detail()
@@ -280,6 +286,10 @@ class FormattedDetailColumn(object):
         return self.evaluate_template(self.SORT_XPATH_FUNCTION)
 
     @property
+    def action(self):
+        return None
+
+    @property
     def fields(self):
         print_id = None
         if self.detail.print_template:
@@ -292,6 +302,7 @@ class FormattedDetailColumn(object):
                 template=self.template,
                 sort_node=self.sort_node,
                 print_id=print_id,
+                action=self.action,
             )
         elif self.sort_xpath_function and self.detail.display == 'short':
             yield sx.Field(
@@ -461,6 +472,27 @@ class EnumImage(Enum):
             return '13%'
         return str(width)
 
+    @property
+    def action(self):
+        if self.column.action_form_id and self.app.supports_detail_field_action:
+            action_form = self.app.get_form(self.column.action_form_id)
+            action = sx.Action(stack=sx.Stack(), display=sx.Display(text=sx.Text()))
+            frame = sx.PushFrame()
+            frame.add_command(XPath.string(id_strings.form_command(action_form)))
+
+            def map_source_to_target(source_meta, target_meta):
+                if target_meta.from_parent or target_meta.case_type != self.module.case_type:
+                    return sx.StackDatum(id=target_meta.id, value=session_var(source_meta.id))
+                return sx.StackDatum(id=target_meta.id, value="current()/@case_id")
+
+            datums = DetailContributor.get_datums_for_action(
+                self.entries_helper, self.module, action_form, map_source_to_target
+            )
+            for datum in datums:
+                frame.add_datum(datum)
+            action.stack.add_frame(frame)
+            return action
+
     def _xpath_template(self, type):
         return "if({key_as_condition}, {key_as_var_name}"
 
@@ -533,6 +565,11 @@ class AddressPopup(HideShortColumn):
 @register_format_type('picture')
 class Picture(FormattedDetailColumn):
     template_form = 'image'
+
+
+@register_format_type('clickable-icon')
+class ClickableIcon(EnumImage):
+    template_form = 'clickable-icon'
 
 
 @register_format_type('audio')

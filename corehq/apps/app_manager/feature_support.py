@@ -234,3 +234,10 @@ class CommCareFeatureSupportMixin(object):
             toggles.CASE_LIST_TILE.enabled(self.domain)
             and self._require_minimum_version('2.54')
         )
+
+    @property
+    def supports_detail_field_action(self):
+        return (
+            toggles.CASE_LIST_CLICKABLE_ICON.enabled(self.domain)
+            and self._require_minimum_version('2.54')
+        )

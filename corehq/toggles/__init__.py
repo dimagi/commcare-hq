@@ -692,7 +692,7 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
 
 CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
     'case_list_custom_variables',
-    'Show text area for entering custom variables',
+    'Show editor for entering custom variables',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description='Defines custom variables that can be used in case list or detail calculations',
@@ -724,6 +724,13 @@ CASE_LIST_MAP = StaticToggle(
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
+)
+
+CASE_LIST_CLICKABLE_ICON = StaticToggle(
+    'case_list_clickable_icon',
+    'USH: Allow use of clickable icons in the case list in Web Apps to trigger auto submitting forms',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
 )
 
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
@@ -2437,6 +2444,15 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',  # noqa: E501
     description='This can be used to create report builder reports that are location-safe.'
+)
+
+LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
+    'location_restricted_scheduled_reports',
+    'Allows access to report scheduling views for location restricted users',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Provides access to views for resport scheduling '
+                'such as schedule creation and deletion.'
 )
 
 

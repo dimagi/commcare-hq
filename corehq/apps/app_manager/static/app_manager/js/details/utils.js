@@ -45,8 +45,15 @@ hqDefine("app_manager/js/details/utils", function () {
 
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_MAP')) {
             formats.push({
-            value: "address-popup",
-            label: gettext('Address Popup (Web Apps only)'),
+                value: "address-popup",
+                label: gettext('Address Popup (Web Apps only)'),
+            });
+        }
+
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CLICKABLE_ICON')) {
+            formats.push({
+                value: "clickable-icon",
+                label: gettext('Clickable Icon (Web Apps only)'),
             });
         }
 

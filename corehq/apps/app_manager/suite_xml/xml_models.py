@@ -804,32 +804,6 @@ class Response(XmlObject):
     key = StringField("@key")
 
 
-class Field(OrderedXmlObject):
-    ROOT_NAME = 'field'
-    ORDER = ('style', 'header', 'template', 'sort_node')
-
-    sort = StringField('@sort')
-    print_id = StringField('@print-id')
-    style = NodeField('style', Style)
-    header = NodeField('header', Header)
-    template = NodeField('template', Template)
-    sort_node = NodeField('sort', Sort)
-    background = NodeField('background/text', Text)
-
-
-class Lookup(OrderedXmlObject):
-    ROOT_NAME = 'lookup'
-    ORDER = ('auto_launch', 'extras', 'responses', 'field')
-
-    name = StringField("@name")
-    auto_launch = BooleanField("@auto_launch")
-    action = StringField("@action", required=True)
-    image = StringField("@image")
-    extras = NodeListField('extra', Extra)
-    responses = NodeListField('response', Response)
-    field = NodeField('field', Field)
-
-
 class ActionMixin(OrderedXmlObject):
     ROOT_NAME = 'action'
     ORDER = ('display', 'stack')
@@ -849,6 +823,33 @@ class Action(ActionMixin):
 class LocalizedAction(ActionMixin, TextOrDisplay):
     """ For CC >= 2.21 """
     pass
+
+
+class Field(OrderedXmlObject):
+    ROOT_NAME = 'field'
+    ORDER = ('style', 'header', 'template', 'sort_node')
+
+    sort = StringField('@sort')
+    print_id = StringField('@print-id')
+    style = NodeField('style', Style)
+    header = NodeField('header', Header)
+    template = NodeField('template', Template)
+    sort_node = NodeField('sort', Sort)
+    background = NodeField('background/text', Text)
+    action = NodeField('action', Action)
+
+
+class Lookup(OrderedXmlObject):
+    ROOT_NAME = 'lookup'
+    ORDER = ('auto_launch', 'extras', 'responses', 'field')
+
+    name = StringField("@name")
+    auto_launch = BooleanField("@auto_launch")
+    action = StringField("@action", required=True)
+    image = StringField("@image")
+    extras = NodeListField('extra', Extra)
+    responses = NodeListField('response', Response)
+    field = NodeField('field', Field)
 
 
 class DetailVariable(XmlObject):
