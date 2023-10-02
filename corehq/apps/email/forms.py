@@ -52,11 +52,18 @@ class EmailSMTPSettingsForm(forms.ModelForm):
     )
 
     sns_secret = forms.CharField(
-        label=_("SNS endpoint secret"),
+        label=_("SNS Endpoint Secret"),
         required=False,
         help_text=_("Applicable only when gateway is Amazon's SES and "
                     "tracking headers are enabled. This secret "
                     "is used in the AWS SNS settings.")
+    )
+
+    ses_config_set_name = forms.CharField(
+        label=_("SES Configuration Set Name"),
+        required=False,
+        help_text=_("Applicable only when gateway is Amazon's SES and "
+                    "tracking headers are enabled.")
     )
 
     class Meta:
@@ -69,7 +76,8 @@ class EmailSMTPSettingsForm(forms.ModelForm):
             'from_email',
             'use_this_gateway',
             'use_tracking_headers',
-            'sns_secret'
+            'sns_secret',
+            'ses_config_set_name',
         ]
 
     def __init__(self, *args, **kwargs):
@@ -93,6 +101,7 @@ class EmailSMTPSettingsForm(forms.ModelForm):
             crispy.Field('from_email'),
             twbscrispy.PrependedText('use_tracking_headers', ''),
             crispy.Field('sns_secret'),
+            crispy.Field('ses_config_set_name'),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Save"),

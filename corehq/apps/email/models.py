@@ -14,6 +14,7 @@ class EmailSettings(models.Model):
     use_this_gateway = models.BooleanField(default=False)
     use_tracking_headers = models.BooleanField(default=False)
     sns_secret = models.CharField(max_length=100)
+    ses_config_set_name = models.CharField(max_length=100)
 
     @property
     def plaintext_password(self):
