@@ -175,7 +175,7 @@ class SoftwarePlanVisibility(object):
         (INTERNAL, "INTERNAL - Dimagi must create subscription"),
         (TRIAL, "TRIAL- This is a Trial Plan"),
         (ARCHIVED, "ARCHIVED - hidden from subscription change forms"),
-        (ANNUAL, "ANNUAL - public plans that on annual pricing")
+        (ANNUAL, "ANNUAL - public plans that on annual pricing"),
     )
 
 
