@@ -651,14 +651,6 @@ def set_case_list_session_endpoint(module, raw_endpoint_id, app):
     module.case_list_session_endpoint_id = cleaned_id
 
 
-def _is_duplicate_endpoint_id(new_id, old_id, app):
-    if not new_id or new_id == old_id:
-        return False
-
-    duplicates = _duplicate_endpoint_ids(new_id, [], None, app)
-    return len(duplicates) > 0
-
-
 def _duplicate_endpoint_ids(new_session_endpoint_id, new_form_session_endpoint_ids, module_or_form_id, app):
     all_endpoint_ids = []
 
