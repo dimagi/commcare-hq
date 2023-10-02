@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 
 from django.db import connection, transaction
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
 
 from testil import tempdir
@@ -16,11 +16,24 @@ from dimagi.utils.parsing import json_format_datetime
 from .. import models
 from ..dbaccessors import delete_all_repeat_records
 from ..management.commands.populate_repeatrecords import Command, get_state
-from ..models import ConnectionSettings, RepeatRecord, SQLRepeatRecord
+from ..models import (
+    ConnectionSettings,
+    RepeatRecord,
+    SQLRepeatRecord,
+    SQLRepeatRecordAttempt,
+)
 
 REPEATER_ID_1 = "5c739aaa0cb44a24a71933616258f3b6"
 REPEATER_ID_2 = "64b6bf1758ed4f2a8944d6f34c2811c2"
 REPEATER_ID_3 = "123b7a7008b447a4a0de61f6077a0353"
+
+
+class TestRepeatRecordModel(SimpleTestCase):
+
+    def test_set_state_does_not_overwrite_failure_reason(self):
+        rec = RepeatRecord(failure_reason="Mildew that should not go away")
+        rec.state = models.State.Fail
+        self.assertEqual(rec.failure_reason, "Mildew that should not go away")
 
 
 class BaseRepeatRecordCouchToSQLTest(TestCase):
@@ -54,12 +67,40 @@ class BaseRepeatRecordCouchToSQLTest(TestCase):
             repeater = self.repeater1
         now = datetime.utcnow().replace(microsecond=0)
         payload_id = uuid4().hex
+        first_attempt = datetime.utcnow() - timedelta(minutes=10)
+        second_attempt = datetime.utcnow() - timedelta(minutes=8)
         obj = SQLRepeatRecord(repeater_id=repeater.id, registered_at=now, **data())
+        obj._prefetched_objects_cache = {"attempt_set": [
+            SQLRepeatRecordAttempt(
+                state=models.State.Fail,
+                message="something bad happened",
+                traceback="the parrot has left the building",
+                created_at=first_attempt,
+            ),
+            SQLRepeatRecordAttempt(
+                state=models.State.Success,
+                message="polly wants a cracker",
+                created_at=second_attempt,
+            ),
+        ]}
         doc = RepeatRecord.wrap(data(
             doc_type="RepeatRecord",
             repeater_type='Echo',
             repeater_id=repeater.repeater_id,
             registered_on=json_format_datetime(now),
+            attempts=[
+                {
+                    "datetime": first_attempt.isoformat() + "Z",
+                    "failure_reason": "something bad happened",
+                    "next_check": second_attempt.isoformat() + "Z",
+                },
+                {
+                    "datetime": second_attempt.isoformat() + "Z",
+                    "success_response": "polly wants a cracker",
+                    "succeeded": True,
+                },
+            ],
+            overall_tries=2,
         ))
         if unwrap_doc:
             doc = doc.to_json()
@@ -98,10 +139,10 @@ class TestRepeatRecordCouchToSQLDiff(BaseRepeatRecordCouchToSQLTest):
 
     def test_diff_state(self):
         doc, obj = self.create_repeat_record()
-        obj.state = models.State.Cancelled
+        obj.state = models.State.Empty
         self.assertEqual(
             self.diff(doc, obj),
-            ["state: couch value <State.Pending: 1> != sql value <State.Cancelled: 8>"],
+            ["state: couch value <State.Pending: 1> != sql value <State.Empty: 16>"],
         )
 
     def test_diff_registered_at(self):
@@ -122,6 +163,34 @@ class TestRepeatRecordCouchToSQLDiff(BaseRepeatRecordCouchToSQLTest):
             self.diff(doc, obj),
             [f"next_check: couch value {doc['next_check']!r} "
              f"!= sql value {json_format_datetime(hour_hence)!r}"],
+        )
+
+    def test_diff_failure_reason(self):
+        doc, obj = self.create_repeat_record()
+        doc["failure_reason"] = "polly didn't get a cracker"
+        obj.state = models.State.Fail
+        self.assertEqual(
+            self.diff(doc, obj),
+            [
+                'failure_reason: couch value "polly didn\'t get a cracker" '
+                '!= sql value \'polly wants a cracker\'',
+            ],
+        )
+
+    def test_diff_attempts(self):
+        doc, obj = self.create_repeat_record()
+        doc["attempts"][0]["succeeded"] = True
+        doc["attempts"][0]["failure_reason"] = None
+        doc["attempts"][1]["datetime"] = "2020-01-01T00:00:00.000000Z"
+        couch_datetime = repr(datetime(2020, 1, 1, 0, 0))
+        sql_created_at = repr(obj.attempts[1].created_at)
+        self.assertEqual(
+            self.diff(doc, obj),
+            [
+                "attempts[0].state: couch value <State.Success: 4> != sql value <State.Fail: 2>",
+                "attempts[0].message: couch value None != sql value 'something bad happened'",
+                f"attempts[1].created_at: couch value {couch_datetime} != sql value {sql_created_at}",
+            ],
         )
 
     def diff(self, doc, obj):
@@ -151,13 +220,18 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         obj.state = models.State.Fail
         obj.registered_at = hour_hence
         obj.next_check = hour_hence
+        del obj.attempts[1]
         obj.save()
         doc = self.db.get(obj._migration_couch_id)
         self.assertEqual(doc['payload_id'], payload_id)
         self.assertEqual(doc['repeater_id'], self.repeater2.repeater_id)
+        self.assertEqual(doc['failure_reason'], "something bad happened")
         self.assertEqual(get_state(doc), models.State.Fail)
         self.assertEqual(doc['registered_on'], json_format_datetime(hour_hence))
         self.assertEqual(doc['next_check'], json_format_datetime(hour_hence))
+        self.assertEqual(doc['attempts'][0]["succeeded"], False)
+        self.assertEqual(doc['attempts'][0]["failure_reason"], "something bad happened")
+        self.assertEqual(doc['overall_tries'], 1)
 
     def test_sync_to_sql(self):
         doc, obj = self.create_repeat_record(unwrap_doc=False)
@@ -173,6 +247,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         doc.failure_reason = "something happened"
         doc.registered_on = hour_hence
         doc.next_check = hour_hence
+        del doc.attempts[0]
         doc.save()
         obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
         self.assertEqual(obj.payload_id, payload_id)
@@ -180,6 +255,23 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         self.assertEqual(obj.state, models.State.Fail)
         self.assertEqual(obj.registered_at, hour_hence)
         self.assertEqual(obj.next_check, hour_hence)
+        self.assertEqual(obj.attempts[0].state, models.State.Success)
+        self.assertEqual(len(obj.attempts), 1)
+
+    def test_repeater_syncs_attempt_to_couch_on_sql_record_add_attempt(self):
+        doc, obj = self.create_repeat_record(unwrap_doc=False)
+        doc.attempts.pop()
+        assert len(doc.attempts) == 1, doc.attempts
+        obj._prefetched_objects_cache["attempt_set"].pop()
+        doc.save()
+        obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
+        self.assertEqual(self.diff(doc.to_json(), obj), [])
+
+        obj.add_success_attempt(True)
+        doc = self.db.get(obj._migration_couch_id)
+        self.assertEqual(len(doc["attempts"]), 2, doc["attempts"])
+        self.assertEqual(doc["attempts"][-1]["succeeded"], True)
+        self.assertFalse(doc["attempts"][-1]["success_response"])
 
     def test_migration(self):
         @property
@@ -202,8 +294,9 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         doc.save()
         doc.payload_id = payload_id = uuid4().hex
         doc.repeater_id = REPEATER_ID_2
-        doc.failure_reason = "something happened"
+        doc.failure_reason = "something bad happened"
         doc.registered_on = datetime.utcnow() + timedelta(hours=1)
+        del doc.attempts[1]
         doc.save(sync_to_sql=False)
 
         with templog() as log:
@@ -212,7 +305,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
             self.assertIn(f"payload_id: couch value {payload_id!r} != sql value {obj.payload_id!r}\n", log.content)
             self.assertIn(
                 f"repeater_id: couch value '{REPEATER_ID_2}' != sql value '{REPEATER_ID_1}'\n", log.content)
-            self.assertIn("state: couch value 'FAIL' != sql value 'PENDING'\n", log.content)
+            self.assertIn("state: couch value <State.Fail: 2> != sql value 1\n", log.content)
             self.assertIn("registered_at: couch value '", log.content)
 
             call_command('populate_repeatrecords', fixup_diffs=log.path)

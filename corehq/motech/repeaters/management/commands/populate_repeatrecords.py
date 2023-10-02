@@ -1,4 +1,4 @@
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 from corehq.util.couch_helpers import paginate_view
@@ -54,6 +54,23 @@ class Command(PopulateSQLCommand):
             "next_check",
             couch["next_check"],
             json_format_datetime(sql.next_check) if sql.next_check else sql.next_check,
+        ))
+        diffs.append(cls.diff_value(
+            "failure_reason",
+            couch["failure_reason"] or '',
+            sql.failure_reason,
+        ))
+
+        def transform(couch_attempts):
+            for attempt in couch_attempts:
+                yield {f: trans(attempt) for f, trans in transforms.items()}
+
+        transforms = ATTEMPT_TRANSFORMS
+        diffs.extend(cls.diff_lists(
+            "attempts",
+            list(transform(couch["attempts"])),
+            sql.attempts,
+            transforms,
         ))
         return diffs
 
@@ -136,3 +153,10 @@ def get_state(doc):
     if doc['failure_reason']:
         return State.Fail
     return State.Pending
+
+
+ATTEMPT_TRANSFORMS = {
+    "state": get_state,
+    "message": (lambda doc: doc["success_response"] if doc["succeeded"] else doc["failure_reason"]),
+    "created_at": (lambda doc: string_to_utc_datetime(doc["datetime"])),
+}

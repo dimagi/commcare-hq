@@ -95,7 +95,7 @@ from dimagi.ext.couchdbkit import (
     ListProperty,
     StringProperty,
 )
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
+from dimagi.utils.couch.migration import SubModelSpec, SyncCouchToSQLMixin, SyncSQLToCouchMixin
 from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.parsing import json_format_datetime
 
@@ -980,6 +980,10 @@ class RepeatRecordAttempt(DocumentSchema):
         # Used by .../case/partials/repeat_records.html
         return self.datetime
 
+    @created_at.setter
+    def created_at(self, value):
+        self.datetime = value
+
 
 class RepeaterIdProperty(StringProperty):
 
@@ -1018,6 +1022,17 @@ class RepeatRecord(SyncCouchToSQLMixin, Document):
     def _migration_sync_to_sql(self, sql_object, save=True):
         sql_object.repeater_id = uuid.UUID(self.repeater_id)
         return super()._migration_sync_to_sql(sql_object, save=save)
+
+    @classmethod
+    def _migration_get_submodels(cls):
+        return [SubModelSpec(
+            "attempt_set",
+            SQLRepeatRecordAttempt,
+            ["state", "message", "created_at"],
+            "attempts",
+            RepeatRecordAttempt,
+            ["state", "message", "created_at"],
+        )]
 
     @classmethod
     def _migration_get_sql_model_class(cls):
@@ -1334,7 +1349,15 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
 
     @classmethod
     def _migration_get_fields(cls):
-        return ["domain", "payload_id", "registered_at", "next_check", "state"]
+        return [
+            "domain",
+            "payload_id",
+            "registered_at",
+            "next_check",
+            "state",
+            "failure_reason",
+            "overall_tries",
+        ]
 
     def _migration_sync_to_couch(self, couch_object, save=True):
         couch_object.repeater_id = self.repeater.repeater_id
@@ -1460,6 +1483,10 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
         # prefetched attempts, if available.
         attempts = list(self.attempts)
         return attempts[-1].message if attempts else ''
+
+    @property
+    def overall_tries(self):
+        return self.num_attempts
 
 
 class SQLRepeatRecordAttempt(models.Model):
