@@ -74,23 +74,11 @@ class EmailSMTPSettingsForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         if kwargs.get('instance'):
-            # `plaintext_password` is not a database field, and so
-            # super().__init__() will not update `initial` with it. We
-            # need to do that here.
-            #
-            # We use PASSWORD_PLACEHOLDER to avoid telling the user what
-            # the password is, but still indicating that it has been
-            # set. (The password is only changed if its value is not
-            # PASSWORD_PLACEHOLDER.)
+            # `plaintext_password` is not a database field, so we
+            # need to update it in 'initial' here.
             password = kwargs['instance'].plaintext_password
-            if 'initial' in kwargs:
-                kwargs['initial'].update({
-                    'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
-                })
-            else:
-                kwargs['initial'] = {
-                    'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
-                }
+            kwargs.setdefault('initial', {})
+            kwargs['initial'].update({'plaintext_password': PASSWORD_PLACEHOLDER if password else ''})
         super().__init__(*args, **kwargs)
 
     @cached_property
