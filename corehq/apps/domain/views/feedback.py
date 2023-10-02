@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.tasks import send_mail_async
 
+from dimagi.utils.django.email import DefaultEmailConfiguration
 
 @login_and_domain_required
 @require_POST
@@ -32,10 +33,11 @@ def submit_feedback(request, domain):
         rating=rating,
         additional_feedback=additional_feedback,
     )
+    email_configuration = DefaultEmailConfiguration(settings.DEFAULT_FROM_EMAIL)
     send_mail_async.delay(
         '{} Feedback Received'.format(feature_name),
         message,
-        settings.DEFAULT_FROM_EMAIL,
+        email_configuration,
         [settings.FEEDBACK_EMAIL],
     )
     return HttpResponse(json.dumps({
