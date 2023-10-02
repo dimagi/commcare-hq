@@ -63,12 +63,14 @@ hqDefine('data_interfaces/js/case_property_input', [
                     data-bind="value: valueObservable, autocompleteSelect2: casePropertyNames"\
             ></select>\
           <!-- /ko -->\
+          <!-- ko ifnot: showDropdown -->\
           <input type="text"\
                  required\
                  class="textinput form-control"\
-                 data-bind="visible: !showDropdown, value: valueObservable, disable: disabled,\
+                 data-bind="value: valueObservable, disable: disabled,\
                  attr: { placeholder: placeholder }"\
           />\
+          <!-- /ko -->\
         </div>',
     };
 
