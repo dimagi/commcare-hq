@@ -1,7 +1,7 @@
 hqDefine('email/js/email_settings', [
     "jquery",
 ], function ($) {
-    $(document).ready(function() {
+    $(document).ready(function () {
         var saveButton = $('button[type="submit"]');
         var formModified = false;
 

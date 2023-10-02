@@ -1,11 +1,11 @@
-from django.http import HttpResponseRedirect
+from django.shortcuts import render, redirect
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext as _, gettext_lazy
+from django.utils.translation import gettext_lazy
 
 from corehq import toggles
-from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.email.forms import EmailSMTPSettingsForm
 from corehq.apps.email.models import EmailSettings

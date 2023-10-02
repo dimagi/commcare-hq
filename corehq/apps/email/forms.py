@@ -1,5 +1,3 @@
-import re
-
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from django import forms
