@@ -25,6 +25,7 @@ from corehq.apps.hqwebapp.async_handler import (
     BaseAsyncHandler,
 )
 from corehq.apps.hqwebapp.encoders import LazyEncoder
+from django.db.models import OuterRef, Subquery
 
 
 class BaseRateAsyncHandler(BaseAsyncHandler):
@@ -212,9 +213,29 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
     @property
     def plan_version_response(self):
         edition = self.data.get('additionalData[edition]')
-        plan_versions = SoftwarePlanVersion.objects.filter(
-            plan__edition=edition
-        )
+        visibility = self.data.get('additionalData[visibility]')
+        most_recent_version = self.data.get('additionalData[most_recent_version]')
+        if most_recent_version == 'True':
+            latest_versions_dates = SoftwarePlanVersion.objects.filter(
+                plan=OuterRef('pk'),
+                plan__edition=edition,
+                plan__visibility=visibility
+            ).order_by('-date_created').values('date_created')[:1]
+            latest_versions = SoftwarePlan.objects.filter(
+                edition=edition,
+                visibility=visibility
+            ).annotate(
+                latest_version_date=Subquery(latest_versions_dates)
+            ).values('id', 'name', 'latest_version_date')
+            plan_versions = SoftwarePlanVersion.objects.filter(
+                plan__in=[item['id'] for item in latest_versions],
+                date_created__in=[item['latest_version_date'] for item in latest_versions]
+            )
+        else:
+            plan_versions = SoftwarePlanVersion.objects.filter(
+                plan__edition=edition,
+                plan__visibility=visibility
+            )
         if self.search_string:
             plan_versions = plan_versions.filter(
                 plan__name__icontains=self.search_string)
