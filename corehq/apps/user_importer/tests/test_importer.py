@@ -2032,6 +2032,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def _mock_update_user_responses(self, username):
         return [
+            self.tableau_instance.get_groups_for_user_id_response(),
             self.tableau_instance.delete_user_response(),
             self.tableau_instance.create_user_response(username, None),
             self.tableau_instance.get_group_response(HQ_TABLEAU_GROUP_NAME),
