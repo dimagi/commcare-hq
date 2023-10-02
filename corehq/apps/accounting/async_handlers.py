@@ -411,8 +411,8 @@ class BillingContactInfoAsyncHandler(BaseSingleOptionFilterAsyncHandler):
             first_name='', last_name='').order_by('first_name', 'last_name')
         if self.search_string:
             query = query.filter(
-                Q(first_name__istartswith=self.search_string) |
-                Q(last_name__istartswith=self.search_string)
+                Q(first_name__istartswith=self.search_string)
+                | Q(last_name__istartswith=self.search_string)
             )
         return query
 
