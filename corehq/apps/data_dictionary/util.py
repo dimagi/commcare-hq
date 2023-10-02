@@ -219,9 +219,9 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         prop.description = description
 
     if group:
-        prop.group_obj, created = CasePropertyGroup.objects.get_or_create(name=group, case_type=prop.case_type)
+        prop.group, created = CasePropertyGroup.objects.get_or_create(name=group, case_type=prop.case_type)
     else:
-        prop.group_obj = None
+        prop.group = None
 
     if deprecated is not None:
         prop.deprecated = deprecated

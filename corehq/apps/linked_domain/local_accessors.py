@@ -116,9 +116,9 @@ def get_data_dictionary(domain):
 
             if not group:
                 group = {"properties": {}}
-                if property.group_obj:
-                    group["description"] = property.group_obj.description
-                    group["index"] = property.group_obj.index
+                if property.group:
+                    group["description"] = property.group.description
+                    group["index"] = property.group.index
                 case_type["groups"][property.group_name] = group
 
             group["properties"][property.name] = {

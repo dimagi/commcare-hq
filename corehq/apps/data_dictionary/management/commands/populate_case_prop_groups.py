@@ -28,10 +28,10 @@ def populate_case_prop_groups(domain):
 
     for case_prop in case_props:
         group, created = CasePropertyGroup.objects.get_or_create(
-            name=case_prop.group_obj.name,
+            name=case_prop.group.name,
             case_type=case_prop.case_type
         )
-        case_prop.group_obj = group
+        case_prop.group = group
         case_prop.save()
 
 
@@ -45,7 +45,7 @@ def remove_out_of_sync_prop_and_groups(domain):
         print("Reset group for: {} in case_type: {}, domain: {}".format(
             prop.name, prop.case_type.name, domain
         ))
-        prop.group_obj = None
+        prop.group = None
         prop.save()
 
     # Remove groups which dont have any properties

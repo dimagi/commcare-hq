@@ -174,7 +174,7 @@ class UpdateCasePropertyViewTest(TestCase):
     def test_update_with_group_name(self):
         prop = self._get_property()
         self.assertEqual(prop.group, '')
-        self.assertIsNone(prop.group_obj)
+        self.assertIsNone(prop.group)
         post_data = {
             "groups": '[{"id": 1, "caseType": "caseType", "name": "group", "description": ""}]',
             "properties": '[{"caseType": "caseType", "name": "property", "group": "group"}]'
@@ -183,13 +183,13 @@ class UpdateCasePropertyViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         prop = self._get_property()
         self.assertEqual(prop.group, 'group')
-        self.assertIsNotNone(prop.group_obj)
+        self.assertIsNotNone(prop.group)
 
     def test_update_with_no_group_name(self):
         prop = self._get_property()
         group = CasePropertyGroup.objects.filter(case_type=self.case_type_obj, name='group').first()
         prop.group = group.name
-        prop.group_obj = group
+        prop.group = group
         prop.save()
         post_data = {
             "groups": '[]',
@@ -199,7 +199,7 @@ class UpdateCasePropertyViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         prop = self._get_property()
         self.assertEqual(prop.group, '')
-        self.assertIsNone(prop.group_obj)
+        self.assertIsNone(prop.group)
 
 
 @privilege_enabled(privileges.DATA_DICTIONARY)

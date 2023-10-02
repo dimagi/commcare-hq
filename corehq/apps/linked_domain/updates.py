@@ -588,7 +588,7 @@ def update_data_dictionary(domain_link, is_pull=False, overwrite=False):
                 case_property_obj.data_type = case_property_desc['data_type']
                 if group_name:
                     case_property_obj.group = group_name
-                    case_property_obj.group_obj = group_obj
+                    case_property_obj.group = group_obj
                 case_property_obj.save()
 
 
