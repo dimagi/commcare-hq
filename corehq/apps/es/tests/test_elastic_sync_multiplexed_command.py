@@ -90,6 +90,10 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
         super().setUpClass()
         cls.adapter = mutiplexed_adapter_with_overriden_settings()
 
+    def tearDown(self) -> None:
+        manager.cluster_routing(enabled=True)
+        return super().tearDown()
+
     def test_invalid_index_canonical_raises(self):
         with self.assertRaises(CommandError):
             call_command(COMMAND_NAME, 'start', 'random_alias')
