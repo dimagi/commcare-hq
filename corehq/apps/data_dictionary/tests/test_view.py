@@ -31,7 +31,10 @@ class UpdateCasePropertyViewTest(TestCase):
         cls.case_type_obj = CaseType(name='caseType', domain=cls.domain_name)
         cls.case_type_obj.save()
         CaseProperty(case_type=cls.case_type_obj, name='property').save()
-        CasePropertyGroup(case_type=cls.case_type_obj, name='group').save()
+
+        group_obj = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
+        group_obj.id = 1
+        group_obj.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -182,7 +185,7 @@ class UpdateCasePropertyViewTest(TestCase):
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 200)
         prop = self._get_property()
-        self.assertEqual(prop.group, 'group')
+        self.assertEqual(prop.group_obj.name, 'group')
         self.assertIsNotNone(prop.group_obj)
 
     def test_update_with_no_group_name(self):

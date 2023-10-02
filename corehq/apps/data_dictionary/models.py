@@ -163,9 +163,7 @@ class CaseProperty(models.Model):
 
     @property
     def group_name(self):
-        if self.group_obj:
-            return self.group_obj.name
-        return self.group
+        return self.group_obj.name
 
 
 class CasePropertyAllowedValue(models.Model):
