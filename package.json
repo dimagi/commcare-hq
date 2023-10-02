@@ -6,8 +6,8 @@
     "private": true,
     "dependencies": {
         "@babel/standalone": "^7.21.4",
-        "@mapbox/mapbox-gl-geocoder": "5.0.1",
         "@mapbox/mapbox-gl-draw": "1.4.1",
+        "@mapbox/mapbox-gl-geocoder": "5.0.1",
         "At.js": "millerdev/At.js#master",
         "Caret.js": "INTELOGIE/Caret.js#0.3.1",
         "DOMPurify": "npm:dompurify#2.3.6",
@@ -63,6 +63,7 @@
         "leaflet": "0.7.7",
         "leaflet-fullscreen": "^1.0.2",
         "less": "3.10.3",
+        "mapbox.js": "3.3.1",
         "marionette.approuter": "^1.0.2",
         "marionette.templatecache": "^1.0.0",
         "markdown-it": "12.3.2",
