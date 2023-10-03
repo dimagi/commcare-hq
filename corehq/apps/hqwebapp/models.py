@@ -24,7 +24,7 @@ class GaTracker(namedtuple('GaTracking', 'category action label')):
         return super(GaTracker, cls).__new__(cls, category, action, label)
 
 
-class MaintenanceAlert(models.Model):
+class CommCareHQAlert(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=False)
@@ -48,8 +48,8 @@ class MaintenanceAlert(models.Model):
             self.text, self.active, ", ".join(self.domains) if self.domains else "All Domains")
 
     def save(self, *args, **kwargs):
-        MaintenanceAlert.get_active_alerts.clear(MaintenanceAlert)
-        super(MaintenanceAlert, self).save(*args, **kwargs)
+        CommCareHQAlert.get_active_alerts.clear(CommCareHQAlert)
+        super(CommCareHQAlert, self).save(*args, **kwargs)
 
     @classmethod
     @quickcache([], timeout=1 * 60)

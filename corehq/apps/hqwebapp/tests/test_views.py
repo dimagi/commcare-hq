@@ -4,7 +4,7 @@ from django.urls import reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_views import BaseAutocompleteTest
-from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.apps.hqwebapp.models import CommCareHQAlert
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 
@@ -149,12 +149,12 @@ class TestMaintenanceAlertsView(TestCase):
             'timezone': 'US/Eastern'
         }
         self.client.post(reverse('create_alert'), params)
-        return MaintenanceAlert.objects.latest('created')
+        return CommCareHQAlert.objects.latest('created')
 
     def test_create_alert(self):
         self.client.login(username=self.user.username, password='***')
         self.client.post(reverse('create_alert'), {'alert_text': "Maintenance alert"})
-        alert = MaintenanceAlert.objects.latest('created')
+        alert = CommCareHQAlert.objects.latest('created')
 
         self.assertEqual(
             repr(alert),
@@ -180,13 +180,13 @@ class TestMaintenanceAlertsView(TestCase):
     def test_post_commands(self):
         self.client.login(username=self.user.username, password='***')
         self.client.post(reverse('create_alert'), {'alert_text': "Maintenance alert"})
-        alert = MaintenanceAlert.objects.latest('created')
+        alert = CommCareHQAlert.objects.latest('created')
         self.assertFalse(alert.active)
 
         self.client.post(reverse('alerts'), {'command': 'activate', 'alert_id': alert.id})
-        alert = MaintenanceAlert.objects.get(id=alert.id)
+        alert = CommCareHQAlert.objects.get(id=alert.id)
         self.assertTrue(alert.active)
 
         self.client.post(reverse('alerts'), {'command': 'deactivate', 'alert_id': alert.id})
-        alert = MaintenanceAlert.objects.get(id=alert.id)
+        alert = CommCareHQAlert.objects.get(id=alert.id)
         self.assertFalse(alert.active)

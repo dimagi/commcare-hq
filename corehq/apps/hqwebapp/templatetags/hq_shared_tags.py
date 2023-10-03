@@ -24,7 +24,7 @@ from dimagi.utils.web import json_handler
 
 from corehq import privileges
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException, TemplateTagJSONException
-from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.apps.hqwebapp.models import CommCareHQAlert
 from corehq.motech.utils import pformat_json
 
 register = template.Library()
@@ -390,7 +390,7 @@ def chevron(value):
 
 @register.simple_tag
 def maintenance_alerts(request):
-    active_alerts = MaintenanceAlert.get_active_alerts()
+    active_alerts = CommCareHQAlert.get_active_alerts()
     domain = getattr(request, 'domain', None)
     return [
         alert for alert in active_alerts
