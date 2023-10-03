@@ -51,6 +51,7 @@ from corehq.apps.domain.forms import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.models import CommCareHQAlert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -540,7 +541,11 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
-            # ToDo: save the alert
+            CommCareHQAlert.objects.create(
+                created_by_domain=self.domain,
+                domains=[self.domain],
+                text=self.form.cleaned_data['text']
+            )
             messages.success(request, _("Alert saved!"))
             return HttpResponseRedirect(self.page_url)
         else:

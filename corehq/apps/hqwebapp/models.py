@@ -35,6 +35,7 @@ class CommCareHQAlert(models.Model):
 
     text = models.TextField()
     domains = ArrayField(models.CharField(max_length=126), null=True)
+    created_by_domain = models.CharField(max_length=255, null=True, db_index=True)
 
     class Meta(object):
         app_label = 'hqwebapp'
