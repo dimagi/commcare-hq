@@ -118,7 +118,7 @@
       <% if (styles[index].displayFormat === 'Image') { %>
         <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
       <% } else if (styles[index].displayFormat === 'ClickableIcon') { %>
-        <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
+        <td class="module-case-list-column"><img class="module-icon btn" src="<%- resolveUri(datum) %>"/></td>
       <% } else if (styles[index].displayFormat === 'Markdown') { %>
         <td class="module-case-list-column webapp-markdown-output"><%= renderMarkdown(datum) %></td>
       <% } else if (styles[index].displayFormat === 'Graph') { %>
