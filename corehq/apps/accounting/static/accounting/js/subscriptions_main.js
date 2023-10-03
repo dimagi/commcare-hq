@@ -10,9 +10,9 @@ hqDefine('accounting/js/subscriptions_main', [
 ) {
     $(function () {
         var asyncSelect2Handler = widgets.asyncSelect2Handler;
-        var new_plan_version = asyncSelect2Handler('new_plan_version');
-        new_plan_version.init();
-        new_plan_version.getAdditionalData = function () {
+        var newPlanVersion = asyncSelect2Handler('new_plan_version');
+        newPlanVersion.init();
+        newPlanVersion.getAdditionalData = function () {
             return {
                 'edition': $('#id_new_plan_edition').val(),
                 'visibility': $('#id_new_plan_visibility').val(),
