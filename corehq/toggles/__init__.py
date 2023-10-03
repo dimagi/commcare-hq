@@ -2455,6 +2455,13 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
                 'such as schedule creation and deletion.'
 )
 
+CUSTOM_EMAIL_GATEWAY = StaticToggle(
+    'custom_email_gateway',
+    'Allows user to define custom email gateway that can be used to send emails from HQ',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
