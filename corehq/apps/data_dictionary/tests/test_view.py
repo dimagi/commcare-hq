@@ -32,9 +32,9 @@ class UpdateCasePropertyViewTest(TestCase):
         cls.case_type_obj.save()
         CaseProperty(case_type=cls.case_type_obj, name='property').save()
 
-        group_obj = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
-        group_obj.id = 1
-        group_obj.save()
+        group = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
+        group.id = 1
+        group.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -333,13 +333,13 @@ class DataDictionaryJsonTest(TestCase):
         cls.couch_user.save()
         cls.case_type_obj = CaseType(name='caseType', domain=cls.domain_name)
         cls.case_type_obj.save()
-        cls.case_prop_group_obj = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
-        cls.case_prop_group_obj.save()
+        cls.case_prop_group = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
+        cls.case_prop_group.save()
         cls.case_prop_obj = CaseProperty(
             case_type=cls.case_type_obj,
             name='property',
             data_type='number',
-            group_obj=cls.case_prop_group_obj
+            group=cls.case_prop_group
         )
         cls.case_prop_obj.save()
         cls.client = Client()
@@ -370,7 +370,7 @@ class DataDictionaryJsonTest(TestCase):
                     "fhir_resource_type": None,
                     "groups": [
                         {
-                            "id": self.case_prop_group_obj.id,
+                            "id": self.case_prop_group.id,
                             "name": "group",
                             "description": "",
                             "deprecated": False,
