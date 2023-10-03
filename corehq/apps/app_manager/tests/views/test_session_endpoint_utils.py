@@ -17,7 +17,7 @@ from corehq.apps.app_manager.views.utils import (
 from corehq.apps.app_manager.exceptions import AppMisconfigurationError
 
 
-class TestUtils(SimpleTestCase):
+class TestSessionEndpointUtils(SimpleTestCase):
     new_endpoint = "abc"
 
     normal_module_session_endpoint_id = "nmsei"
