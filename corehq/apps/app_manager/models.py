@@ -2173,6 +2173,7 @@ class CaseSearch(DocumentSchema):
     custom_related_case_property = StringProperty(exclude_if_none=True)
 
     inline_search = BooleanProperty(default=False)
+    instance_name = StringProperty(exclude_if_none=True)  # only applicable to inline_search
 
     @property
     def case_session_var(self):
