@@ -1,3 +1,4 @@
+from uuid import uuid4
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.models import (
@@ -247,3 +248,16 @@ class TestSessionEndpointUtils(SimpleTestCase):
                 app
             )
         )
+
+    def test_no_duplicates_in_other_places(self):
+        app, module, _, _ = self.create_fixtures()
+        module.forms.append(Form(
+            unique_id=str(uuid4()),
+            # this endpoint ID conflicts with the other form
+            session_endpoint_id=self.form_session_endpoint_id,
+        ))
+        # no meaningful change to `module`, but the duplicates should be caught
+        duplicates = _duplicate_endpoint_ids(
+            module.session_endpoint_id, [], module.unique_id, app
+        )
+        self.assertEqual(duplicates, [self.form_session_endpoint_id])
