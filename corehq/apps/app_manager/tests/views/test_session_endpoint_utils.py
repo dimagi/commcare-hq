@@ -54,7 +54,7 @@ class TestSessionEndpointUtils(SimpleTestCase):
 
         return app, normal_module, shadow_module, form
 
-    def _is_duplicate_endpoint_id(new_id, old_id, app):
+    def _is_duplicate_endpoint_id(self, new_id, old_id, app):
         if not new_id or new_id == old_id:
             return False
 
