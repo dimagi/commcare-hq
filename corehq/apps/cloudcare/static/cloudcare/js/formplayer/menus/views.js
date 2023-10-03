@@ -181,7 +181,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const heightPercentage = 100 / numColumns;
             heightString = heightPercentage + "cqw";
         } else {
-            heightString = "auto";
+            heightString = "min-content";
         }
 
         const model = {

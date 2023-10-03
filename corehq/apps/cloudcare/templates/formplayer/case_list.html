@@ -220,8 +220,8 @@
 <script type="text/template" id="cell-grid-style-template">
   .<%- model.prefix %>-cell-grid-style {
   display: grid;
-  grid-template-columns: repeat(<%- model.numColumns %>, 1fr) min-content 5px;
-  grid-template-rows: repeat(<%- model.numRows %>, <%- model.heightString %>) min-content 5px;
+  grid-template-columns: repeat(<%- model.numColumns %>, 1fr);
+  grid-template-rows: repeat(<%- model.numRows %>, <%- model.heightString %>);
   background-color: transparent;
   color: #685c53;
   justify-items: left;
