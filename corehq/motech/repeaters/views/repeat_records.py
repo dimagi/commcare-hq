@@ -142,7 +142,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
         return [
             r for r in get_repeat_records_by_payload_id(self.domain, self.payload_id)
             if (not self.repeater_id or r.repeater_id == self.repeater_id)
-               and (not self.state or r.state == self.state)
+            and (not self.state or r.state == self.state)
         ]
 
     @property
