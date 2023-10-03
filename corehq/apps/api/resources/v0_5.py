@@ -141,7 +141,7 @@ from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_
 
 
 MOCK_BULK_USER_ES = None
-EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 10000
+EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 20000
 
 
 def user_es_call(domain, q, fields, size, start_at):
