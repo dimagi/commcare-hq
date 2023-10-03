@@ -33,16 +33,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
             write: function (value) {
                 if (value === undefined) {
                     self.nodeset(null);
-                }
-                else {
+                } else {
                     self.instance_id(value);
                     var itemList = _.filter(get('js_options').item_lists, function (item) {
                         return item.id === value;
                     });
                     if (itemList && itemList.length === 1) {
                         self.nodeset(itemsetValue(itemList[0]));
-                    }
-                    else {
+                    } else {
                         self.nodeset(null);
                     }
                 }
@@ -56,8 +54,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 return true;
             }
             var itemLists = _.map(get('js_options').item_lists, function (item) {
-                    return itemsetValue(item);
-                });
+                return itemsetValue(item);
+            });
             if (self.nodeset().split("/").length === 0) {
                 return false;
             }
@@ -113,8 +111,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
                 return 'fixture';
-            }
-            else {
+            } else {
                 return appearance;
             }
         });
@@ -127,8 +124,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     'tableLabel': gettext("Mobile UCR Report"),
                     'selectLabel': gettext("Select a Report..."),
                 };
-            }
-            else {
+            } else {
                 return {
                     'labelPlaceholder': 'name',
                     'valuePlaceholder': 'id',
@@ -202,7 +198,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         options.description = options.description[lang] || "";
         var mapping = {
             'additional_registry_cases': {
-                create: function(options) {
+                create: function (options) {
                     return additionalRegistryCaseModel(options.data, saveButton);
                 },
             },
