@@ -423,6 +423,8 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
         couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
         if couch_user:
             response.set_cookie(settings.LANGUAGE_COOKIE_NAME, couch_user.language)
+            # reset cookie to an empty list on login to show domain alerts again
+            response.set_cookie('viewed_domain_alerts', [])
             activate(couch_user.language)
 
     return response
