@@ -9,6 +9,8 @@ from corehq.apps.styleguide.views import (
 )
 from corehq.apps.styleguide.views.docs import default
 
+from corehq.apps.styleguide.views import bootstrap5
+
 doc_urlpatterns = [
     url(r'^$', default, name='sg_examples_default'),
     url(r'^simple_crispy/',
@@ -26,4 +28,5 @@ urlpatterns = [
     url(r'^pages/$', PagesStyleGuideView.as_view(),
         name=PagesStyleGuideView.urlname),
     url(r'^docs/', include(doc_urlpatterns)),
+    url(r'^b5/$', bootstrap5.styleguide_home, name="styleguide_home_b5"),
 ]
