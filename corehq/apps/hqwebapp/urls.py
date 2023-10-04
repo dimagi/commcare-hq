@@ -91,6 +91,8 @@ urlpatterns = [
     url(r'^relogin/iframe/$', domain_login_new_window, name='domain_login_new_window'),
     url(r'^relogin/sso/$', iframe_sso_login_pending, name='iframe_sso_login_pending'),
     url(r'^log_email_event/(?P<secret>[\w]+)/?$', log_email_event, name='log_email_event'),
+    url(r'^log_email_event/(?P<secret>[\w]+)/(?P<domain>[\w\.:-]+)/?$', log_email_event,
+        name='log_domain_email_event'),
     url(
         r'^oauth/applications/register/',
         OauthApplicationRegistration.as_view(),
