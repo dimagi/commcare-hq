@@ -1,0 +1,121 @@
+@import "functions";
+@import "commcarehq/variables";
+@import "variables";
+@import "variables-dark";
+
+// Layout structure inspired by Bootstrap's 5.3 docs page
+
+.sg-gutter {
+  --bs-gutter-x: 3rem;
+}
+
+.sg-layout {
+  display: grid;
+  grid-template-areas: "sidebar main";
+  grid-template-columns: 1fr 5fr;
+  gap: 1.5rem;
+  font-size: 1rem;
+}
+
+.sg-sidebar {
+  grid-area: sidebar;
+
+  @media (min-width: 992px) {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 5rem;
+    display: block !important;
+    height: calc(100vh - 6rem);
+    padding-left: 0.25rem;
+    margin-left: -0.25rem;
+    overflow-y: auto;
+  }
+}
+
+.sg-main {
+  grid-area: main;
+
+  grid-template-areas:
+    "intro toc"
+    "content toc";
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 4fr 1fr;
+
+  @media (min-width: 768px) {
+    display: grid;
+    gap: inherit;
+  }
+}
+
+.sg-title {
+  font-size: 3rem;
+}
+
+.sg-lead {
+  font-size: 1.5rem;
+}
+
+.sg-intro {
+  grid-area: intro;
+}
+
+.sg-toc {
+  grid-area: toc;
+  font-size: 1rem;
+
+  @media (min-width: 992px) {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 5rem;
+    right: 0;
+    z-index: 2;
+    height: calc(100vh - 7rem);
+    overflow-y: auto;
+  }
+
+}
+
+.sg-toc nav {
+  font-size: 0.875rem;
+
+  ul {
+    padding-left: 0;
+    margin-bottom: 0;
+    list-style: none;
+
+    ul {
+      padding-left: 1rem;
+    }
+  }
+
+  a {
+    display: block;
+    padding: 0.125rem 0 0.125rem 0.75rem;
+    text-decoration: none;
+    border-left: 0.125rem solid transparent;
+
+    &.active {
+      font-weight: 500;
+      border-left-color: $color-purple-dark;
+    }
+  }
+
+}
+
+.sg-content {
+  grid-area: content;
+  min-width: 1px;
+}
+.sg-links-link {
+  padding: 3px 10px;
+  display: block;
+
+  &.active {
+    font-weight: 600;
+  }
+
+  &.active,
+  &:hover {
+    background-color: $cc-brand-hi;
+  }
+}
