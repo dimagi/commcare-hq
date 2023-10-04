@@ -18,6 +18,7 @@ def get_navigation_context(current_page):
                 name="Atoms",
                 pages=[
                     Page("Accessibility", 'styleguide_atoms_accessibility_b5'),
+                    Page("Typography", 'styleguide_atoms_typography_b5'),
                 ],
             ),
         ],
