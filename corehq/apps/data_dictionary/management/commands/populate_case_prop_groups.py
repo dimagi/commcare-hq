@@ -28,7 +28,7 @@ def populate_case_prop_groups(domain):
 
     for case_prop in case_props:
         group, created = CasePropertyGroup.objects.get_or_create(
-            name=case_prop.group_obj.name,
+            name=case_prop.group_name,
             case_type=case_prop.case_type
         )
         case_prop.group_obj = group
