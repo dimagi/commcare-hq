@@ -267,6 +267,26 @@ class TestProcessRepeatRecord(TestCase):
         self.assertEqual(self.mock_fire.call_count, 1)
         self.assertEqual(self.mock_postpone_by.call_count, 0)
 
+    def test_paused_and_deleted_repeater_does_not_fire_or_postpone(self):
+        paused_and_deleted_repeater = Repeater.objects.create(
+            domain=self.domain,
+            connection_settings=self.conn_settings,
+            is_paused=True,
+            is_deleted=True,
+        )
+
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=paused_and_deleted_repeater.repeater_id,
+        )
+
+        _process_repeat_record(repeat_record)
+
+        self.assertEqual(self.mock_fire.call_count, 0)
+        self.assertEqual(self.mock_postpone_by.call_count, 0)
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()

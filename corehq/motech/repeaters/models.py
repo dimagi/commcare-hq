@@ -424,7 +424,6 @@ class Repeater(RepeaterSuperProxy):
         self.save()
 
     def retire(self):
-        self.is_paused = False
         self.is_deleted = True
         self.save()
 
