@@ -201,7 +201,6 @@ class UpdateCasePropertyViewTest(TestCase):
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 200)
         prop = self._get_property()
-        self.assertEqual(prop.group, '')
         self.assertIsNone(prop.group)
 
 
