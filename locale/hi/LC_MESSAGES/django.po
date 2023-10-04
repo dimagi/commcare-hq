@@ -25,7 +25,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/linked_domain/filters.py
+#: corehq/apps/geospatial/filters.py corehq/apps/linked_domain/filters.py
 #: corehq/apps/reports/filters/commtrack.py
 #: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
@@ -10525,13 +10525,9 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/utils.py
 #, python-brace-format
-msgid "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
-msgstr ""
-
-#: corehq/apps/app_manager/views/utils.py
-#, python-brace-format
 msgid ""
-"Session endpoint IDs must be unique. {duplicates} are used multiple times"
+"Session endpoint IDs must be unique. The following id(s) are used multiple "
+"times: {duplicates}"
 msgstr ""
 
 #: corehq/apps/app_manager/views/utils.py
@@ -21040,6 +21036,19 @@ msgstr ""
 msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
+#: corehq/apps/geospatial/filters.py
+msgid "GPS Data"
+msgstr ""
+
+#: corehq/apps/geospatial/filters.py
+#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+msgid "Missing"
+msgstr ""
+
+#: corehq/apps/geospatial/filters.py
+msgid "Show cases that have missing GPS Data or All cases"
+msgstr ""
+
 #: corehq/apps/geospatial/forms.py
 msgid "Custom user field"
 msgstr ""
@@ -21112,23 +21121,12 @@ msgstr ""
 #: corehq/apps/geospatial/templates/gps_capture.html
 msgid ""
 "\n"
-"                    Cases that do not have any associated GPS data.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid ""
-"\n"
 "            Changes have been saved successfully!\n"
 "        "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
 msgid "Users without GPS Data"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Cases without GPS Data"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
@@ -21199,23 +21197,15 @@ msgstr ""
 msgid "Capturing location for:"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/manage_gps_data.html
-msgid ""
-"\n"
-"      Use this page to manage GPS data associated with Cases or Mobile "
-"workers.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/manage_gps_data.html
+#: corehq/apps/geospatial/templates/gps_capture_view.html
 msgid "Update Case Data"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/manage_gps_data.html
+#: corehq/apps/geospatial/templates/gps_capture_view.html
 msgid "Update Mobile Worker Data"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/manage_gps_data.html
+#: corehq/apps/geospatial/templates/gps_capture_view.html
 msgid ""
 "\n"
 "            To create new Mobile Workers navigate to the Mobile Workers page "
@@ -21223,7 +21213,7 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/manage_gps_data.html
+#: corehq/apps/geospatial/templates/gps_capture_view.html
 msgid ""
 "\n"
 "            Navigate there.\n"
@@ -22428,10 +22418,6 @@ msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 msgid "Path in Application"
-msgstr ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Missing"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
@@ -27943,6 +27929,7 @@ msgid "Both Mobile Workers and Cases"
 msgstr ""
 
 #: corehq/apps/reminders/forms.py
+#: corehq/apps/reports/templates/reports/filters/filter_users.html
 msgid "Mobile Workers Only"
 msgstr ""
 
@@ -28628,10 +28615,6 @@ msgid "%s & Others"
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py
-msgid "[Active Mobile Workers]"
-msgstr ""
-
-#: corehq/apps/reports/filters/users.py
 msgid ""
 "When searching by location, put your location name in quotes to show only "
 "exact matches. To more easily find a location, you may specify multiple "
@@ -28649,14 +28632,6 @@ msgid ""
 "<i class=\"fa fa-info-circle\"></i> See <a href=\"https://confluence.dimagi."
 "com/display/commcarepublic/Report+and+Export+Filters\" target=\"_blank\"> "
 "Filter Definitions</a>."
-msgstr ""
-
-#: corehq/apps/reports/filters/users.py
-msgid "[Deactivated Mobile Workers]"
-msgstr ""
-
-#: corehq/apps/reports/filters/users.py
-msgid "[Web Users]"
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py
@@ -28815,6 +28790,10 @@ msgstr ""
 
 #: corehq/apps/reports/generic.py
 msgid "This report has been deprecated."
+msgstr ""
+
+#: corehq/apps/reports/models.py
+msgid "Active Mobile Workers"
 msgstr ""
 
 #: corehq/apps/reports/models.py
@@ -29925,11 +29904,6 @@ msgstr ""
 #: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html
 #, python-format
 msgid "This report's timezone is %(timezone)s."
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/filters/filter_users.html
-#: corehq/apps/users/templates/users/roles_and_permissions.html
-msgid "Only"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
@@ -31240,6 +31214,15 @@ msgstr ""
 
 #: corehq/apps/saved_reports/models.py
 msgid "Unsupported Report"
+msgstr ""
+
+#: corehq/apps/saved_reports/models.py
+msgid ""
+"This project has restricted data access "
+"rules.                                                  Please contact your "
+"project administrator to be assigned "
+"access                                                  to data in this "
+"project."
 msgstr ""
 
 #: corehq/apps/saved_reports/models.py
@@ -38074,6 +38057,10 @@ msgstr ""
 msgid ""
 "This is the default role for all Mobile Workers that do not have a role "
 "assigned."
+msgstr ""
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Only"
 msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
