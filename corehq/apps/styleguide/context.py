@@ -13,6 +13,12 @@ def get_navigation_context(current_page):
                 pages=[
                     Page("Introduction", 'styleguide_home_b5'),
                 ],
-            )
+            ),
+            NavigationGroup(
+                name="Atoms",
+                pages=[
+                    Page("Accessibility", 'styleguide_atoms_accessibility_b5'),
+                ],
+            ),
         ],
     }
