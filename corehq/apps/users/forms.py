@@ -1571,9 +1571,13 @@ class CommCareUserFormSet(object):
                 and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
 
     def update_user(self):
-        metadata_updated, profile_updated = self.user_form.existing_user.update_metadata(
-            self.custom_data.get_data_to_save())
-        return self.user_form.update_user(metadata_updated=metadata_updated, profile_updated=profile_updated)
+        user = self.user_form.existing_user
+        old_profile_id = user.metadata.get(PROFILE_SLUG)
+        changed = user.update_metadata(self.custom_data.get_data_to_save())
+        return self.user_form.update_user(
+            metadata_updated=changed,
+            profile_updated=old_profile_id != user.metadata.get(PROFILE_SLUG),
+        )
 
 
 class UserFilterForm(forms.Form):

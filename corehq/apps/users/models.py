@@ -1681,9 +1681,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def update_metadata(self, data):
         from corehq.apps.custom_data_fields.models import PROFILE_SLUG
-
         new_data = {**self.user_data, **data}
-        old_profile_id = self.user_data.get(PROFILE_SLUG)
 
         profile = self.get_user_data_profile(new_data.get(PROFILE_SLUG))
         if profile:
@@ -1693,10 +1691,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             for key in profile.fields.keys():
                 new_data.pop(key, None)
 
-        profile_updated = old_profile_id != new_data.get(PROFILE_SLUG)
         metadata_updated = new_data != self.user_data
         self.user_data = new_data
-        return metadata_updated, profile_updated
+        return metadata_updated
 
     def pop_metadata(self, key, default=None):
         return self.user_data.pop(key, default)
