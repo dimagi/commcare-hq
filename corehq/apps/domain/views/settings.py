@@ -548,7 +548,17 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
         return DomainAlertForm()
 
     def post(self, request, *args, **kwargs):
-        if self.form.is_valid():
+        command = request.POST.get('command')
+        if command:
+            alert_id = request.POST.get('alert_id')
+            if alert_id:
+                success = self._update_alert(alert_id, command)
+                if success:
+                    messages.success(request, _("Alert updated!"))
+                else:
+                    messages.error(request, _("Could not update alert. Please try again!"))
+                return HttpResponseRedirect(self.page_url)
+        elif self.form.is_valid():
             CommCareHQAlert.objects.create(
                 created_by_domain=self.domain,
                 domains=[self.domain],
@@ -559,3 +569,19 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
         else:
             messages.error(request, _("There was an error saving your alert. Please try again!"))
             return self.get(request, *args, **kwargs)
+
+    def _update_alert(self, alert_id, command):
+        try:
+            alert = CommCareHQAlert.objects.get(
+                created_by_domain=self.domain,
+                id=alert_id
+            )
+        except CommCareHQAlert.DoesNotExist:
+            return False
+        else:
+            if command == 'activate':
+                alert.active = True
+            elif command == 'deactivate':
+                alert.active = False
+            alert.save(update_fields=['active'])
+            return True

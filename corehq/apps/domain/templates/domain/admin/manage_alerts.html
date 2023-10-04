@@ -33,8 +33,27 @@
               <div class="alert alert-warning"
                    data-bind="html: html"></div>
             </td>
-<!--        ToDo: Add ability to activate/deactivate-->
             <td>
+              <form method="post">
+                {% csrf_token %}
+                <input name="alert_id"
+                       type="hidden"
+                       data-bind="value: id">
+                <button type="submit"
+                        class="btn btn-primary"
+                        name="command"
+                        value="activate"
+                        data-bind="visible: !active">
+                  <span>{% trans "Activate Alert" %}</span>
+                </button>
+                <button type="submit"
+                        class="btn btn-outline-danger"
+                        name="command"
+                        value="deactivate"
+                        data-bind="visible: active">
+                  {% trans "De-activate Alert" %}
+                </button>
+              </form>
             </td>
           </tr>
         </tbody>
