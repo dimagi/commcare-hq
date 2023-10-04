@@ -530,7 +530,15 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         return {
-            'form': self.form
+            'form': self.form,
+            'alerts': [
+                {
+                    'active': alert.active,
+                    'html': alert.html,
+                    'id': alert.id
+                }
+                for alert in CommCareHQAlert.objects.filter(created_by_domain=self.domain)
+            ]
         }
 
     @cached_property
