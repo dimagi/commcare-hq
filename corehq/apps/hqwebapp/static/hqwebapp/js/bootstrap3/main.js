@@ -412,25 +412,22 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
             var viewedDomainAlertsCookie = 'viewed_domain_alerts';
             var viewedDomainAlerts = $.cookie(viewedDomainAlertsCookie) ? JSON.parse($.cookie(viewedDomainAlertsCookie)) : [];
 
+            var setUpAlert = function(alert, alertList, alertCookieName) {
+                var id = $(alert).data('id');
+                if (!alertList.includes(id)) {
+                    $(alert).removeClass('hide');
+                    $(alert).on('click', '.close', function () {
+                        alertList.push(id);
+                        $.cookie(alertCookieName, JSON.stringify(alertList), { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
+                    });
+                }
+            }
             _.each($maintenance,
                 function (alert) {
-                    var id = $(alert).data('id');
                     if($(alert).data('created-by-domain')) {
-                        if (!viewedDomainAlerts.includes(id)) {
-                            $(alert).removeClass('hide');
-                            $(alert).on('click', '.close', function () {
-                                viewedDomainAlerts.push(id);
-                                $.cookie(viewedDomainAlertsCookie, JSON.stringify(viewedDomainAlerts), { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
-                            });
-                        }
+                        setUpAlert(alert, viewedDomainAlerts, viewedDomainAlertsCookie);
                     } else {
-                        if (!closedAlerts.includes(id)) {
-                            $(alert).removeClass('hide');
-                            $(alert).on('click', '.close', function () {
-                                closedAlerts.push(id);
-                                $.cookie(alertCookie, JSON.stringify(closedAlerts), { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
-                            });
-                        }
+                        setUpAlert(alert, closedAlerts, alertCookie);
                     }
                 }
             );
