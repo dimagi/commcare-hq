@@ -23,7 +23,7 @@ class Command(BaseCommand):
 
 
 def populate_case_prop_groups(domain):
-    filter_kwargs = {"case_type__domain": domain, "group_obj__isnull": True}
+    filter_kwargs = {"case_type__domain": domain, "group__isnull": True}
     case_props = CaseProperty.objects.exclude(group__exact="").filter(**filter_kwargs)
 
     for case_prop in case_props:
@@ -38,8 +38,8 @@ def populate_case_prop_groups(domain):
 def remove_out_of_sync_prop_and_groups(domain):
     # Reset properties that a different value in group column than in group object name.
     properties_out_of_sync = (CaseProperty.objects
-                            .filter(case_type__domain=domain, group_obj__isnull=False)
-                            .filter(~Q(group_obj__name=F('group'))))
+                            .filter(case_type__domain=domain, group__isnull=False)
+                            .filter(~Q(group__name=F('group'))))
     print("Reset out of sync groups for {} properties".format(len(properties_out_of_sync)))
     for prop in properties_out_of_sync:
         print("Reset group for: {} in case_type: {}, domain: {}".format(
