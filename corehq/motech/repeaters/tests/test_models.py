@@ -547,6 +547,67 @@ class TestCouchRepeatRecordMethods(TestCase):
 
         self.assertIsNone(repeat_record.repeater)
 
+    def test_exceeded_max_retries_returns_false_if_fewer_tries_than_possible(self):
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=self.repeater.repeater_id,
+            failure_reason='test',
+            overall_tries=0,
+            max_possible_tries=1
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertFalse(repeat_record.exceeded_max_retries)
+
+    def test_exceeded_max_retries_returns_true_if_equal(self):
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=self.repeater.repeater_id,
+            failure_reason='test',
+            overall_tries=1,
+            max_possible_tries=1
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertTrue(repeat_record.exceeded_max_retries)
+
+    def test_exceeded_max_retries_returns_true_if_more_tries_than_possible(
+            self):
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=self.repeater.repeater_id,
+            failure_reason='test',
+            overall_tries=2,
+            max_possible_tries=1
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertTrue(repeat_record.exceeded_max_retries)
+
+    def test_exceeded_max_retries_returns_false_if_not_failure_state(
+            self):
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=self.repeater.repeater_id,
+            overall_tries=2,
+            max_possible_tries=1
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertFalse(repeat_record.exceeded_max_retries)
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -555,4 +616,8 @@ class TestCouchRepeatRecordMethods(TestCase):
             domain=cls.domain,
             name='To Be Deleted',
             url="http://localhost/api/"
+        )
+        cls.repeater = Repeater.objects.create(
+            domain=cls.domain,
+            connection_settings=cls.conn_settings,
         )

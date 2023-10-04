@@ -958,6 +958,11 @@ class RepeatRecord(Document):
             state = RECORD_FAILURE_STATE
         return state
 
+    @property
+    def exceeded_max_retries(self):
+        return (self.state == RECORD_FAILURE_STATE and self.overall_tries
+                >= self.max_possible_tries)
+
     @classmethod
     def all(cls, domain=None, due_before=None, limit=None):
         json_now = json_format_datetime(due_before or datetime.utcnow())

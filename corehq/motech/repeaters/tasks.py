@@ -173,13 +173,11 @@ def _process_repeat_record(repeat_record):
         repeat_record.cancel()
         repeat_record.save()
 
-    if (
-        repeat_record.state == RECORD_FAILURE_STATE and
-        repeat_record.overall_tries >= repeat_record.max_possible_tries
-    ):
+    if repeat_record.exceeded_max_retries:
         repeat_record.cancel()
         repeat_record.save()
         return
+
     if repeat_record.cancelled:
         return
 
