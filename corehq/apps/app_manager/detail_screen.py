@@ -300,7 +300,7 @@ class FormattedDetailColumn(object):
                 template=self.template,
                 sort_node=self.sort_node,
                 print_id=print_id,
-                action=self.action,
+                endpoint_action=self.action,
             )
         elif self.sort_xpath_function and self.detail.display == 'short':
             yield sx.Field(

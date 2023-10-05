@@ -843,7 +843,7 @@ class Field(OrderedXmlObject):
     template = NodeField('template', Template)
     sort_node = NodeField('sort', Sort)
     background = NodeField('background/text', Text)
-    action = NodeField('action', Action)
+    endpoint_action = NodeField('endpoint_action', EndpointAction)
 
 
 class Lookup(OrderedXmlObject):
