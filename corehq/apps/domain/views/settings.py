@@ -522,6 +522,7 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
     urlname = 'domain_manage_mobile_workers'
 
 
+@method_decorator(toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator(), name='dispatch')
 class ManageDomainAlertsView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/manage_alerts.html'
     urlname = 'domain_manage_alerts'

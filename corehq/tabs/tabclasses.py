@@ -1997,16 +1997,16 @@ def _get_administration_section(domain):
             'url': reverse(RecoveryMeasuresHistory.urlname, args=[domain])
         })
 
-    administration.extend([
-        {
-            'title': _(FeaturePreviewsView.page_title),
-            'url': reverse(FeaturePreviewsView.urlname, args=[domain])
-        },
-        {
+    administration.append({
+        'title': _(FeaturePreviewsView.page_title),
+        'url': reverse(FeaturePreviewsView.urlname, args=[domain])
+    })
+
+    if toggles.CUSTOM_DOMAIN_BANNER_ALERTS.enabled(domain):
+        administration.append({
             'title': _(ManageDomainAlertsView.page_title),
             'url': reverse(ManageDomainAlertsView.urlname, args=[domain])
-        }
-    ])
+        })
 
     if toggles.TRANSFER_DOMAIN.enabled(domain):
         administration.append({
