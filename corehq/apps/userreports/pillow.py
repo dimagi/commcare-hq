@@ -248,17 +248,30 @@ class ConfigurableReportTableManager(UcrTableManager):
         self.table_adapters_by_domain = defaultdict(list)
 
         for config in configs:
-            adapter = _get_indicator_adapter_for_pillow(config)
-            # protects against couch returning DataSourceConfiguration-Deleted docs
-            if adapter.table_exists:
-                self.table_adapters_by_domain[config.domain].append(adapter)
+            self.table_adapters_by_domain[config.domain].append(
+                _get_indicator_adapter_for_pillow(config)
+            )
 
     @property
     def relevant_domains(self):
         return set(self.table_adapters_by_domain)
 
     def get_adapters(self, domain):
-        return list(self.table_adapters_by_domain.get(domain, []))
+        adapters = []
+        missing_adapters = []
+        for adapter in list(self.table_adapters_by_domain.get(domain, [])):
+            # protects against couch returning DataSourceConfiguration-Deleted docs
+            if adapter.table_exists:
+                adapters.append(adapter)
+            else:
+                missing_adapters.append(adapter)
+
+        if missing_adapters:
+            pillow_logging.warning(
+                f"Attempting to reference UCRs that no longer exist for "
+                f"{domain}:\n\t{missing_adapters}")
+
+        return adapters
 
     def get_all_adapters(self):
         return [
