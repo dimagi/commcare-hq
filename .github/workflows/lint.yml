@@ -28,7 +28,7 @@ jobs:
             **/*.py
 
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         if: ${{ steps.changed-files.outputs.all_changed_files }}
         with:
           python-version: 3.9
