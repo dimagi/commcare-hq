@@ -41,23 +41,7 @@ def find_precision(query, case_property):
 
 def get_max_doc_count(query, case_property, precision):
     query = query.clone()
-    nested_agg = NestedAggregation('case_properties', CASE_PROPERTIES_PATH)
-    filter_agg = FilterAggregation(
-        'case_property',
-        filters.term(PROPERTY_KEY, case_property),
-    )
-    geohash_agg = GeohashGridAggregation(
-        AGG_NAME,
-        PROPERTY_GEOPOINT_VALUE,
-        precision,
-    )
-    query = query.aggregation(
-        nested_agg.aggregation(
-            filter_agg.aggregation(
-                geohash_agg
-            )
-        )
-    )
+    query = apply_geohash_agg(query, case_property, precision)
     queryset = query.run()
     # queryset.raw should include something similar to the following.
     # The length of the bucket "key" value will be determined by the
@@ -95,6 +79,26 @@ def get_max_doc_count(query, case_property, precision):
         ['buckets']
     )
     return max(bucket['doc_count'] for bucket in buckets) if buckets else 0
+
+
+def apply_geohash_agg(query, case_property, precision):
+    nested_agg = NestedAggregation('case_properties', CASE_PROPERTIES_PATH)
+    filter_agg = FilterAggregation(
+        'case_property',
+        filters.term(PROPERTY_KEY, case_property),
+    )
+    geohash_agg = GeohashGridAggregation(
+        AGG_NAME,
+        PROPERTY_GEOPOINT_VALUE,
+        precision,
+    )
+    return query.aggregation(
+        nested_agg.aggregation(
+            filter_agg.aggregation(
+                geohash_agg
+            )
+        )
+    )
 
 
 def mid(lower: int, upper: int) -> int:

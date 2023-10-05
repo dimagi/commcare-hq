@@ -11,18 +11,12 @@ from couchforms.geopoint import GeoPoint
 
 from corehq.apps.case_search.const import CASE_PROPERTIES_PATH
 from corehq.apps.es import CaseSearchES, filters
-from corehq.apps.es.aggregations import (
-    FilterAggregation,
-    GeohashGridAggregation,
-    NestedAggregation,
-)
-from corehq.apps.es.case_search import PROPERTY_GEOPOINT_VALUE, PROPERTY_KEY
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 
 from .dispatchers import CaseManagementMapDispatcher
-from .es import AGG_NAME, find_precision
+from .es import apply_geohash_agg, find_precision
 from .models import GeoPolygon
 from .utils import get_geo_case_property
 
@@ -139,23 +133,7 @@ class CaseGroupingReport(BaseCaseMap):
         else:
             precision = find_precision(query, case_property)
 
-        nested_agg = NestedAggregation('case_properties', CASE_PROPERTIES_PATH)
-        filter_agg = FilterAggregation(
-            'case_property',
-            filters.term(PROPERTY_KEY, case_property),
-        )
-        geohash_agg = GeohashGridAggregation(
-            AGG_NAME,
-            PROPERTY_GEOPOINT_VALUE,
-            precision,
-        )
-        query = query.aggregation(
-            nested_agg.aggregation(
-                filter_agg.aggregation(
-                    geohash_agg
-                )
-            )
-        )
+        query = apply_geohash_agg(query, case_property, precision)
         return query
 
 
