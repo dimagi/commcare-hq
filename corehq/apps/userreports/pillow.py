@@ -248,9 +248,10 @@ class ConfigurableReportTableManager(UcrTableManager):
         self.table_adapters_by_domain = defaultdict(list)
 
         for config in configs:
-            self.table_adapters_by_domain[config.domain].append(
-                _get_indicator_adapter_for_pillow(config)
-            )
+            adapter = _get_indicator_adapter_for_pillow(config)
+            # protects against couch returning DataSourceConfiguration-Deleted docs
+            if adapter.table_exists:
+                self.table_adapters_by_domain[config.domain].append(adapter)
 
     @property
     def relevant_domains(self):
