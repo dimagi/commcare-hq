@@ -272,7 +272,7 @@ hqDefine("app_manager/js/details/column", function () {
             }
             formEndpointOptions.push({value: endpoint.id, label: endpoint.form_name});
         });
-        const selectedValue = self.original.endpoint_aciont_id ? self.original.endpoint_aciont_id : "-1";
+        const selectedValue = self.original.endpoint_action_id ? self.original.endpoint_action_id : "-1";
         self.action_form_extra = uiElement.select(formEndpointOptions)
             .val(selectedValue);
 

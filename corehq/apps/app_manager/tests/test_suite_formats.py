@@ -319,7 +319,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
                     MappingItem(key='1', value={'en': 'jr://icons/star-gold.png'}),
                     MappingItem(key='0', value={'en': 'jr://icons/star-grey.png'}),
                 ],
-                endpoint_aciont_id="auto_submit_form_endpoint",
+                endpoint_action_id="auto_submit_form_endpoint",
             ),
         ]
 
@@ -332,7 +332,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             action_spec,
             factory.app.create_suite(),
-            './detail[1]/field/endpoint_action'
+            './detail[@id="m0_case_short"]/field/endpoint_action'
         )
 
     @flag_enabled('CASE_LIST_CLICKABLE_ICON')
@@ -360,7 +360,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
                     MappingItem(key='1', value={'en': 'jr://icons/star-gold.png'}),
                     MappingItem(key='0', value={'en': 'jr://icons/star-grey.png'}),
                 ],
-                endpoint_aciont_id="auto_submit_form_endpoint",
+                endpoint_action_id="auto_submit_form_endpoint",
             ),
         ]
 
