@@ -1258,7 +1258,7 @@ class MaintenanceAlertsView(BasePageView):
     @method_decorator(require_superuser)
     def post(self, request):
         from corehq.apps.hqwebapp.models import CommCareHQAlert
-        ma = CommCareHQAlert.objects.get(id=request.POST.get('alert_id'))
+        ma = CommCareHQAlert.objects.get(id=request.POST.get('alert_id'), created_by_domain=None)
         command = request.POST.get('command')
         if command == 'activate':
             ma.active = True
@@ -1284,7 +1284,7 @@ class MaintenanceAlertsView(BasePageView):
                 'expired': alert.end_time and alert.end_time < now,
                 'id': alert.id,
                 'domains': ", ".join(alert.domains) if alert.domains else "All domains",
-            } for alert in CommCareHQAlert.objects.order_by('-active', '-created')[:20]]
+            } for alert in CommCareHQAlert.objects.filter(created_by_domain__isnull=True).order_by('-active', '-created')[:20]]
         }
 
     @property
