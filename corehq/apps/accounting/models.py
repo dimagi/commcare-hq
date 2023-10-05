@@ -168,10 +168,14 @@ class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
     TRIAL = "TRIAL"
+    ANNUAL = "ANNUAL"
+    ARCHIVED = "ARCHIVED"
     CHOICES = (
-        (PUBLIC, "Anyone can subscribe"),
-        (INTERNAL, "Dimagi must create subscription"),
-        (TRIAL, "This is a Trial Plan"),
+        (PUBLIC, "PUBLIC - Anyone can subscribe"),
+        (INTERNAL, "INTERNAL - Dimagi must create subscription"),
+        (TRIAL, "TRIAL- This is a Trial Plan"),
+        (ARCHIVED, "ARCHIVED - hidden from subscription change forms"),
+        (ANNUAL, "ANNUAL - public plans that on annual pricing"),
     )
 
 
