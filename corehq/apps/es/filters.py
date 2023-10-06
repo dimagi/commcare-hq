@@ -162,7 +162,7 @@ def geo_bounding_box(field, top_left, bottom_right):
     return geo_shape(field, shape, relation='within')
 
 
-def geo_shape(field, shape, relation):
+def geo_shape(field, shape, relation='intersects'):
     """
     Filters cases by case properties indexed using the the geo_point
     type.
