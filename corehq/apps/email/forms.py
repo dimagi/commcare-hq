@@ -91,6 +91,7 @@ class EmailSMTPSettingsForm(forms.ModelForm):
     @cached_property
     def helper(self):
         helper = hqcrispy.HQFormHelper()
+        helper.form_id = "email_settings_form"
         helper.layout = crispy.Layout(
             twbscrispy.PrependedText('use_this_gateway', ''),
             crispy.Field('username'),
@@ -103,9 +104,10 @@ class EmailSMTPSettingsForm(forms.ModelForm):
             crispy.Field('ses_config_set_name'),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Save"),
+                    _("Saved"),
                     type="submit",
-                    css_class="btn btn-primary",
+                    css_class="btn-primary disable-on-submit",
+                    data_bind="text: buttonText, disable: !isFormChanged",
                 ),
             )
         )
