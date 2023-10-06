@@ -106,23 +106,23 @@ class CaseActionBase(object):
 
     @classmethod
     def from_v1(cls, block):
-        mapping = {const.CASE_TAG_TYPE_ID: "type",
-                   const.CASE_TAG_NAME: "name",
-                   const.CASE_TAG_EXTERNAL_ID: "external_id",
-                   const.CASE_TAG_USER_ID: "user_id",
-                   const.CASE_TAG_OWNER_ID: "owner_id",
-                   const.CASE_TAG_DATE_OPENED: "opened_on"}
+        mapping = {const.CASE_TAG_TYPE_ID: const.CASE_UI_TYPE,
+                   const.CASE_TAG_NAME: const.CASE_UI_NAME,
+                   const.CASE_TAG_EXTERNAL_ID: const.CASE_UI_EXTERNAL_ID,
+                   const.CASE_TAG_USER_ID: const.CASE_UI_USER_ID,
+                   const.CASE_TAG_OWNER_ID: const.CASE_UI_OWNER_ID,
+                   const.CASE_TAG_DATE_OPENED: const.CASE_UI_OPENED_ON}
         return cls._from_block_and_mapping(block, mapping)
 
     @classmethod
     def from_v2(cls, block):
         # the only difference is the place where "type" is stored
-        mapping = {const.CASE_TAG_TYPE: "type",
-                   const.CASE_TAG_NAME: "name",
-                   const.CASE_TAG_EXTERNAL_ID: "external_id",
-                   const.CASE_TAG_USER_ID: "user_id",
-                   const.CASE_TAG_OWNER_ID: "owner_id",
-                   const.CASE_TAG_DATE_OPENED: "opened_on"}
+        mapping = {const.CASE_TAG_TYPE: const.CASE_UI_TYPE,
+                   const.CASE_TAG_NAME: const.CASE_UI_NAME,
+                   const.CASE_TAG_EXTERNAL_ID: const.CASE_UI_EXTERNAL_ID,
+                   const.CASE_TAG_USER_ID: const.CASE_UI_USER_ID,
+                   const.CASE_TAG_OWNER_ID: const.CASE_UI_OWNER_ID,
+                   const.CASE_TAG_DATE_OPENED: const.CASE_UI_OPENED_ON}
         return cls._from_block_and_mapping(block, mapping)
 
 
@@ -343,7 +343,7 @@ class CaseUpdate(object):
         # filters the actions, assumes exactly 0 or 1 match.
         filtered = list(filter(func, self.actions))
         if filtered:
-            assert(len(filtered) == 1)
+            assert len(filtered) == 1
             return filtered[0]
 
     def get_create_action(self):
