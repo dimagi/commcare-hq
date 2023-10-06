@@ -4,6 +4,8 @@ from corehq.apps.styleguide.context import (
     get_navigation_context,
     get_interaction_colors,
     get_neutral_colors,
+    get_common_icons,
+    get_custom_icons,
 )
 
 
@@ -28,3 +30,12 @@ def styleguide_atoms_colors(request):
         'neutral': get_neutral_colors(),
     })
     return render(request, 'styleguide/bootstrap5/atoms/colors.html', context)
+
+
+def styleguide_atoms_icons(request):
+    context = get_navigation_context("styleguide_atoms_icons_b5")
+    context.update({
+        'common_icons': get_common_icons(),
+        'custom_icons': get_custom_icons(),
+    })
+    return render(request, 'styleguide/bootstrap5/atoms/icons.html', context)
