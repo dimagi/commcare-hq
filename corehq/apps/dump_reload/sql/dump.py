@@ -218,6 +218,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('events.Event', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('events.AttendanceTrackingConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('geospatial.GeoConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('hqwebapp.CommCareHQAlert', SimpleFilter('created_by_domain')),
 ]]
 
 
