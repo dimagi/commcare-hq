@@ -2531,6 +2531,10 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             for domain in self.get_domains():
                 sync_web_user_usercases_if_applicable(self, domain)
 
+    def get_user_data(self, domain):
+        from .user_data import UserData
+        return UserData(self.user_data, domain)  # this is not properly scoped to domain
+
     def add_to_assigned_locations(self, domain, location):
         membership = self.get_domain_membership(domain)
 

@@ -104,14 +104,19 @@ class TestUserMetadata(TestCase):
                 'start': 'never',
             })
 
-    def test_web_users_dont_have_profiles(self):  # yet!
+    def test_web_users(self):
+        # This behavior is bad - data isn't fully scoped to domain
         web_user = WebUser.create(None, "imogen", "*****", None, None)
         self.addCleanup(web_user.delete, self.domain, deleted_by=None)
-        self.assertEqual(web_user.metadata, {
-            'commcare_project': None,
+        user_data = web_user.get_user_data(self.domain)
+        self.assertEqual(user_data.to_dict(), {'commcare_project':  self.domain})
+
+        user_data['start'] = 'sometimes'
+        self.assertEqual(web_user.get_user_data(self.domain).to_dict(), {
+            'commcare_project': self.domain,
+            'start': 'sometimes',
         })
-        web_user.update_metadata({PROFILE_SLUG: self.profile_id})
-        self.assertEqual(web_user.metadata, {
-            'commcare_project': None,
-            PROFILE_SLUG: self.profile_id,
+        self.assertEqual(web_user.get_user_data('ANOTHER_DOMAIN').to_dict(), {
+            'commcare_project': 'ANOTHER_DOMAIN',
+            'start': 'sometimes',  # whoops, domain 1 affects other domains!
         })
