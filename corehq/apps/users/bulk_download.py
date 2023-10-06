@@ -96,16 +96,12 @@ def get_phone_numbers(user_data):
 def make_mobile_user_dict(user, group_names, location_cache, domain, fields_definition, deactivation_triggers):
     model_data = {}
     uncategorized_data = {}
-    model_data, uncategorized_data = (
-        fields_definition.get_model_and_uncategorized(user.metadata)
-    )
+    user_data = user.get_user_data(domain)
+    model_data, uncategorized_data = fields_definition.get_model_and_uncategorized(user_data.to_dict())
+    profile_name = (user_data.profile.name
+                    if user_data.profile and domain_has_privilege(domain, privileges.APP_USER_PROFILES)
+                    else "")
     role = user.get_role(domain)
-    profile = None
-    if PROFILE_SLUG in user.metadata and domain_has_privilege(domain, privileges.APP_USER_PROFILES):
-        try:
-            profile = CustomDataFieldsProfile.objects.get(id=user.metadata[PROFILE_SLUG])
-        except CustomDataFieldsProfile.DoesNotExist:
-            profile = None
     activity = user.reporting_metadata
     location_codes = get_location_codes(location_cache, user.location_id, user.assigned_location_ids)
 
@@ -127,7 +123,7 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
         'location_code': location_codes,
         'role': role.name if role else '',
         'domain': domain,
-        'user_profile': profile.name if profile else '',
+        'user_profile': profile_name,
         'registered_on (read only)': _format_date(user.created_on),
         'last_submission (read only)': _format_date(activity.last_submission_for_user.submission_date),
         'last_sync (read only)': activity.last_sync_for_user.sync_date,

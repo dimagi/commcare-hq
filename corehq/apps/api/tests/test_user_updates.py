@@ -106,9 +106,9 @@ class TestUpdateUserMethods(TestCase):
         self.assertEqual(self.user.default_phone_number, '50253311399')
 
     def test_update_user_data_succeeds(self):
-        self.user.update_metadata({'custom_data': "initial custom data"})
+        self.user.get_user_data(self.domain)['custom_data'] = "initial custom data"
         update(self.user, 'user_data', {'custom_data': 'updated custom data'})
-        self.assertEqual(self.user.metadata["custom_data"], "updated custom data")
+        self.assertEqual(self.user.get_user_data(self.domain)["custom_data"], "updated custom data")
 
     def test_update_user_data_raises_exception_if_profile_conflict(self):
         profile_id = self._setup_profile()

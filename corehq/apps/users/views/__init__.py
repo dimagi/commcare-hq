@@ -791,7 +791,7 @@ def paginate_enterprise_users(request, domain):
             'inactiveMobileCount': len(mobile_users[web_user.username]) - loginAsUserCount,
         })
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
-            profile = mobile_user.get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
+            profile = mobile_user.get_user_data(domain).profile
             users.append({
                 **_format_enterprise_user(mobile_user.domain, mobile_user),
                 'profile': profile.name if profile else None,

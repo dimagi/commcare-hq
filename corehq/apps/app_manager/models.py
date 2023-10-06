@@ -3412,7 +3412,8 @@ class CustomDataAutoFilter(ReportAppFilter):
 
     def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
-        return Choice(value=user.metadata[self.custom_data_property], display=None)
+        user_data = user.get_user_data(getattr(user, 'current_domain', user.domain))
+        return Choice(value=user_data[self.custom_data_property], display=None)
 
 
 class StaticChoiceFilter(ReportAppFilter):

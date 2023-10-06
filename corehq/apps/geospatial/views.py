@@ -383,7 +383,7 @@ def get_users_with_gps(request, domain):
         {
             'id': user.user_id,
             'username': user.raw_username,
-            'gps_point': user.metadata.get(location_prop_name, ''),
+            'gps_point': user.get_user_data(domain).get(location_prop_name, ''),
         } for user in users
     ]
 
