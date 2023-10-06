@@ -67,5 +67,5 @@ jobs:
 
       - uses: sibiraj-s/action-eslint@v3
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           annotations: true
