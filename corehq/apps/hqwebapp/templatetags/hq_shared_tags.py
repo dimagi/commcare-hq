@@ -389,7 +389,7 @@ def chevron(value):
 
 
 @register.simple_tag
-def maintenance_alerts(request):
+def commcarehq_alerts(request):
     active_alerts = CommCareHQAlert.get_active_alerts()
     domain = getattr(request, 'domain', None)
     return [
