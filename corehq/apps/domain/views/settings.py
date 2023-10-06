@@ -556,14 +556,12 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
             if alert_id:
                 if command == 'delete':
                     self._delete_alert(alert_id)
-                    return HttpResponseRedirect(self.page_url)
                 else:
                     success = self._update_alert(alert_id, command)
                     if success:
                         messages.success(request, _("Alert updated!"))
                     else:
                         messages.error(request, _("Could not update alert. Please try again!"))
-                    return HttpResponseRedirect(self.page_url)
         elif self.form.is_valid():
             CommCareHQAlert.objects.create(
                 created_by_domain=self.domain,
@@ -572,10 +570,10 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
                 created_by_user=self.request.couch_user.username,
             )
             messages.success(request, _("Alert saved!"))
-            return HttpResponseRedirect(self.page_url)
         else:
             messages.error(request, _("There was an error saving your alert. Please try again!"))
             return self.get(request, *args, **kwargs)
+        return HttpResponseRedirect(self.page_url)
 
     def _update_alert(self, alert_id, command):
         alert = self._load_alert(alert_id)
