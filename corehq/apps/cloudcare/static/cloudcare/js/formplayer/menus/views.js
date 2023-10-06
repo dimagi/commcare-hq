@@ -213,10 +213,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
+            clickIcon: ".module-icon.btn",
             selectRow: ".select-row-checkbox",
         },
 
         events: {
+            "click @ui.clickIcon": "iconClick",
             "click": "rowClick",
             "keydown": "rowKeyAction",
             'click @ui.selectRow': 'selectRowAction',
@@ -241,6 +243,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 "tabindex": "0",
                 "id": `row-${modelId}`,
             };
+        },
+
+        iconClick: function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            if (!e.target.className.includes('disabled')) {
+                let appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
+                let user = FormplayerFrontend.getChannel().request('currentUser');
+                let domain = user.domain;
+                let prefix = user.formplayer_url;
+                // Todo: get case id
+                // Todo: get url_template and populate
+                // Todo: show spinner and disable button, e.target.className += " disabled";
+                // Todo: trigger smartlink
+            }
         },
 
         rowClick: function (e) {
