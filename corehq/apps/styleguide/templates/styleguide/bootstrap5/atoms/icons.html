@@ -1,0 +1,227 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Icons</h1>
+  <p class="sg-lead">
+    Visual communication can be essential in scanning and understanding for populations whose first language
+    may not be English.  Please be sympathetic with the goal of cohesion and don’t use an icon for a purpose it
+    was not intended for.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#custom-icons">Custom Icons</a></li>
+      <li>
+        <a href="#creating-new-icons">Creating New Icons</a>
+        <ul>
+          <li><a href="#saving-edited-glyphs">Saving the Edited Glyphs File</a></li>
+          <li><a href="#prepping-cross-browser">Prepping for Cross Browser Compatibility</a></li>
+          <li><a href="#adding-glyph-to-stylesheet">Adding to the Stylesheet</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">
+    Overview
+  </h2>
+  <p>
+    Consistent iconography in any user interface is critical to creating
+    a product that is highly accessible across all different levels of
+    literacy. Icons may need to be localized for different cultures and languages.
+  </p>
+  <p>
+    Good icons use <strong>simple, graphic shapes</strong> so they can be understood even at a small size.
+    They have little detail. They are as <strong>universal</strong> as possible, consistent with other
+    platforms.
+  </p>
+  <h2 id="primary-vs-secondary" class="pt-4">
+    Primary vs Secondary Icons
+  </h2>
+  <p>
+    Primary icons are used for <strong>navigation</strong> or <strong>interaction</strong>.
+    Primary icons are interactive, they change the surround environment or data. They likely don’t need to be coupled with text.
+  </p>
+  <p>
+    Secondary icons <strong>provide clarity</strong>.
+    Secondary icons are used <strong>before</strong> text to communicate topical information.
+  </p>
+  <p>
+    Most of HQ's icons come from
+    <a href="https://fontawesome.com/v4.7.0/cheatsheet/">FontAwesome</a>.
+    All icons in FontAwesome are already built into HQ.
+    Other icons have been custom created for HQ.
+  </p>
+  {% include 'styleguide/bootstrap5/atoms/partials/icon_set.html' with prefix="fa" icons=common_icons %}
+
+  <h2 id="custom-icons" class="pt-4">
+    Custom Icons
+  </h2>
+  <p>
+    HQ has its own set of icons custom created to communicate HQ-specific concepts. The majority of these icons
+    are found in App Builder and Form Designer.
+  </p>
+  {% include 'styleguide/bootstrap5/atoms/partials/icon_set.html' with prefix="fcc" icons=custom_icons %}
+
+  <h2 id="creating-new-icons" class="pt-4">
+    Creating New Icons
+  </h2>
+  <p>
+    If a suitable icon doesn't exist in FontAwesome or HQ's custom set,
+    another great resource for icons is the
+    <a href="http://thenounproject.com/">Noun Project</a>.
+    Typically, once a Noun Project icon is chosen,
+    it is best practice to add that icon as a glyph in the CommCare HQ font.
+  </p>
+  <p>
+    On a Mac, the best program to edit this font is
+    <a href="http://www.glyphsapp.com/">Glyphs</a>. You should open the
+    <code>CommCareHQFont.glyphs</code> file in Glyphs and add your fonts to an available
+    private unicode space.
+  </p>
+  <p>
+    Glyphs has a great article on
+    <a href="http://www.glyphsapp.com/tutorials/creating-an-icon-webfont">creating an icon webfont</a>.
+    If you are adding a new glyph, this is a must-read. Below are some
+    highlights of the process.
+  </p>
+  <div class="card text-bg-light mb-4">
+    <div class="card-body">
+      <div class="d-flex">
+        <div class="p-3 align-self-center">
+          <img width="200" src="{% static 'styleguide/bootstrap3/images/font_docs/vector_version.png' %}" />
+        </div>
+        <div class="p-3 flex-fill">
+          <h4 class="card-title">Edit the icon in a vector graphics program first</h4>
+          <p>
+            Open the svg or eps file in either Adobe Illustrator or Inkscape and
+            make any fine edits necessary to make the icon fit the style of
+            the rest of the icons available to the CommCare HQ Font.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card text-bg-light pt-2 px-2 mb-4">
+    <div class="card-body">
+      <div class="d-flex">
+        <div class="p-3 align-self-center">
+          <img width="200" src="{% static 'styleguide/bootstrap3/images/font_docs/glyphs_overview.png' %}" />
+        </div>
+        <div class="p-3 flex-fill">
+          <h4 class="card-title">Create a new private domain glyph in the CommCare HQ Font</h4>
+          <p>
+            Open <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/_fonts/commcarehq_font" target="_blank">CommCareHQFont.glyphs</a>
+            in Glyph.app and follow the steps in the
+            <a href="http://www.glyphsapp.com/tutorials/creating-an-icon-webfont">tutorial</a>
+            to add a new glyph in the private domain. Make sure the unicode
+            address you've chosen does not overlap with any existing glyphs or
+            public domain characters.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card text-bg-light pt-2 px-2 mb-4">
+    <div class="card-body">
+      <div class="d-flex">
+        <div class="p-3 align-self-center">
+          <img width="200" src="{% static 'styleguide/bootstrap3/images/font_docs/glyphs_character.png' %}" />
+        </div>
+        <div class="p-3 flex-fill">
+          <h4 class="card-title">Edit the New Glyph</h4>
+          <p>
+            Copy your vector graphic into the Glyphs glyph editor. Resize as necessary
+            so that the glyph is large enough to fit in with the rest of the HQ fonts.
+            Make sure that the <code>L</code> and <code>R</code> values in the glyph info
+            are never negative (ideally they are both 0).
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card text-bg-light pt-2 px-2 mb-4">
+    <div class="card-body">
+      <div class="d-flex">
+        <div class="p-3 align-self-center">
+          <img width="200" src="{% static 'styleguide/bootstrap3/images/font_docs/glyphs_compare.png' %}" />
+        </div>
+        <div class="p-3 flex-fill">
+          <h4 class="card-title">Check the Glyph's Scale and Width</h4>
+          <p>
+            A good way of checking whether your new glyph is sized properly
+            is to look at it in the Glyphs overview pane and compare it to the
+            existing glyphs in the font. Make sure that the baseline (bottom of the
+            glyph) looks natural and that the scale and height of glyph fit with
+            the rest of the glyphs in the font.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <h3 id="saving-edited-glyphs" class="pt-4">
+    Saving the Edited Glyphs File
+  </h3>
+  <p>
+    Once you've added your new glyph, you will need to export your font
+    to <code>*.otf</code>. Check <code>Use Production glyph names</code> and
+    <code>Remove Overlap</code>.
+  </p>
+  <p>
+    Update: <code>Remove Overlap</code> caused the bottom half of the
+    CommCare flower to be removed. Un-checking that setting seemed to
+    generate better results. YMMV
+  </p>
+  <p>
+    Save the final <code>*.otf</code> font to
+    <code>corehq/apps/hqwebapp/static/hqwebapp/font/CommCareHQFont-Regular.otf</code>.
+  </p>
+  <h3 id="prepping-cross-browser" class="pt-4">
+    Prepping for Cross Browser Compatibility
+  </h3>
+  <p>
+    To make the font universally readable across most browsers, you'll need
+    to have an <code>eot</code>, <code>svg</code>, <code>ttf</code>,
+    and <code>woff</code> version of it. Use the
+    <a href="http://www.fontsquirrel.com/tools/webfont-generator">Font Squirrel Webfont Generator</a>
+    to do this.
+  </p>
+  <p>
+    Here are some screenshots of settings for the font generator in
+    <strong>Expert Mode</strong>:
+  </p>
+  <p>
+    <img alt="settings" width="100%" src="{% static 'styleguide/bootstrap3/images/font_docs/font_squirrel_settings.jpg' %}" /><br />
+    NOTE: unlike in this settings image, select <strong>No Subsetting</strong>.
+    Otherwise the private use glyphs will be removed
+    (<a href="http://graphicdesign.stackexchange.com/a/17426">source</a>).
+  </p>
+  <p>
+    Copy the resulting <code>eot</code>, <code>svg</code>, <code>ttf</code>,
+    and <code>woff</code> files to <code>corehq/apps/style/static/style/font/</code>
+    when you are done.
+  </p>
+  <h3 id="adding-glyph-to-stylesheet" class="pt-4">
+    Adding the New Glyph to the Stylesheet
+  </h3>
+  <p>
+    Add a reference to the icon's font unicode value as a variable in
+    <code>corehq/apps/style/static/hqwebapp/less/font-commcare/variables.less</code>.
+  </p>
+  <p>
+    Add the <code>:before</code> styling for the class of the icon in
+    <code>corehq/apps/style/static/hqwebapp/less/font-commcare/icons.less</code>.
+  </p>
+  <p>
+    Use your new icon! <i class="fcc fcc-fd-signature"></i>
+    <code>&lt;i class="fcc fcc-fd-signature"&gt;&lt;/i&gt;</code>
+  </p>
+{% endblock content %}
