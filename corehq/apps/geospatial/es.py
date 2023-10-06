@@ -101,7 +101,7 @@ def apply_geohash_agg(query, case_property, precision):
     )
 
 
-def mid(lower: int, upper: int) -> int:
+def mid(lower, upper):
     """
     Returns the integer midpoint between ``lower`` and ``upper``.
 
