@@ -11,7 +11,6 @@ from urllib.parse import urlparse
 from oauth2_provider.models import get_application_model
 
 import httpagentparser
-import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -157,7 +156,7 @@ def server_error(request, template_name='500.html', exception=None):
 
     traceback_text = format_traceback_the_way_python_does(type, exc, tb)
     traceback_key = uuid.uuid4().hex
-    cache.cache.set(traceback_key, traceback_text, 60*60)
+    cache.cache.set(traceback_key, traceback_text, 60 * 60)
 
     if settings.UNIT_TESTING:
         # Explicitly don't render the 500 page during unit tests to prevent
@@ -648,8 +647,10 @@ def debug_notify(request):
     try:
         0 // 0
     except ZeroDivisionError:
-        notify_exception(request,
-            "If you want to achieve a 500-style email-out but don't want the user to see a 500, use notify_exception(request[, message])")
+        notify_exception(
+            request,
+            "If you want to achieve a 500-style email-out but don't want the user to see a 500, "
+            "use notify_exception(request[, message])")
     return HttpResponse("Email should have been sent")
 
 
@@ -1271,6 +1272,9 @@ class MaintenanceAlertsView(BasePageView):
     def page_context(self):
         from corehq.apps.hqwebapp.models import CommCareHQAlert
         now = datetime.utcnow()
+        alerts = CommCareHQAlert.objects.filter(
+            created_by_domain__isnull=True
+        ).order_by('-active', '-created')[:20]
         return {
             'timezones': pytz.common_timezones,
             'alerts': [{
@@ -1284,7 +1288,7 @@ class MaintenanceAlertsView(BasePageView):
                 'expired': alert.end_time and alert.end_time < now,
                 'id': alert.id,
                 'domains': ", ".join(alert.domains) if alert.domains else "All domains",
-            } for alert in CommCareHQAlert.objects.filter(created_by_domain__isnull=True).order_by('-active', '-created')[:20]]
+            } for alert in alerts]
         }
 
     @property

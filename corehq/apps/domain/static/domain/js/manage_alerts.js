@@ -4,7 +4,7 @@ hqDefine("domain/js/manage_alerts",[
 ], function ($, initialPageData) {
     $(function () {
         $('#ko-alert-container').koApplyBindings({
-            'alerts': initialPageData.get('alerts')
+            'alerts': initialPageData.get('alerts'),
         });
     });
 });

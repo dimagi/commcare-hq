@@ -417,7 +417,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
             var viewedDomainAlertsCookie = 'viewed_domain_alerts';
             var viewedDomainAlerts = $.cookie(viewedDomainAlertsCookie) ? JSON.parse($.cookie(viewedDomainAlertsCookie)) : [];
 
-            var setUpAlert = function(alert, alertList, alertCookieName) {
+            var setUpAlert = function (alert, alertList, alertCookieName) {
                 var id = $(alert).data('id');
                 if (!alertList.includes(id)) {
                     $(alert).removeClass('hide');
@@ -426,10 +426,10 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
                         $.cookie(alertCookieName, JSON.stringify(alertList), { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
                     });
                 }
-            }
+            };
             _.each($maintenance,
                 function (alert) {
-                    if($(alert).data('created-by-domain')) {
+                    if ($(alert).data('created-by-domain')) {
                         setUpAlert(alert, viewedDomainAlerts, viewedDomainAlertsCookie);
                     } else {
                         setUpAlert(alert, closedAlerts, alertCookie);
