@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from django import template
 from django.conf import settings
+from django.db import ProgrammingError
 from django.http import QueryDict
 from django.template import NodeList, TemplateSyntaxError, loader_tags
 from django.template.base import (
@@ -390,7 +391,10 @@ def chevron(value):
 
 @register.simple_tag
 def maintenance_alerts(request):
-    active_alerts = MaintenanceAlert.get_active_alerts()
+    try:
+        active_alerts = MaintenanceAlert.get_active_alerts()
+    except ProgrammingError:
+        return []
     domain = getattr(request, 'domain', None)
     return [
         alert for alert in active_alerts
