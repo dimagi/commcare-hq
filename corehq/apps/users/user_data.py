@@ -56,7 +56,9 @@ class UserData:
 
     def __setitem__(self, key, value):
         if key in self._provided_by_system:
-            raise ValueError(f"{key} cannot be set directly")
+            raise ValueError(f"'{key}' cannot be set directly")
+        if key == PROFILE_SLUG:
+            del self.profile
         self._local_to_user[key] = value
 
     def update(self, data):
@@ -66,4 +68,6 @@ class UserData:
     def __delitem__(self, key):
         if key in self._provided_by_system:
             raise ValueError(f"{key} cannot be deleted")
+        if key == PROFILE_SLUG:
+            del self.profile
         del self._local_to_user[key]
