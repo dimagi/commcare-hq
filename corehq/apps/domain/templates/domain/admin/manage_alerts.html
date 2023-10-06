@@ -22,6 +22,9 @@
               {% trans "Message" %}
             </th>
             <th>
+              {% trans "Added By" %}
+            </th>
+            <th>
               {% trans "Activate or De-activate" %}
             </th>
           </tr>
@@ -32,6 +35,8 @@
             <td>
               <div class="alert alert-warning"
                    data-bind="html: html"></div>
+            </td>
+            <td data-bind="text: created_by_user">
             </td>
             <td>
               <form method="post">

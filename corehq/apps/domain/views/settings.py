@@ -536,7 +536,8 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
                 {
                     'active': alert.active,
                     'html': alert.html,
-                    'id': alert.id
+                    'id': alert.id,
+                    'created_by_user': alert.created_by_user,
                 }
                 for alert in CommCareHQAlert.objects.filter(created_by_domain=self.domain)
             ]
@@ -563,7 +564,8 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
             CommCareHQAlert.objects.create(
                 created_by_domain=self.domain,
                 domains=[self.domain],
-                text=self.form.cleaned_data['text']
+                text=self.form.cleaned_data['text'],
+                created_by_user=self.request.couch_user.username,
             )
             messages.success(request, _("Alert saved!"))
             return HttpResponseRedirect(self.page_url)

@@ -1314,7 +1314,8 @@ def create_alert(request):
     ).server_time().done() if end_time else None
 
     CommCareHQAlert(active=False, text=alert_text, domains=domains,
-                    start_time=start_time, end_time=end_time, timezone=timezone).save()
+                    start_time=start_time, end_time=end_time, timezone=timezone,
+                    created_by_user=request.couch_user.username).save()
     return HttpResponseRedirect(reverse('alerts'))
 
 

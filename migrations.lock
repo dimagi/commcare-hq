@@ -589,6 +589,7 @@ hqwebapp
  0010_maintenancealert_scheduling
  0011_rename_maintenancealert_commcarehqalert
  0012_commcarehqalert_created_by_domain
+ 0013_commcarehqalert_created_by_user
 integration
  0001_initial
  0002_dialersettings
