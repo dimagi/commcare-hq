@@ -552,28 +552,26 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
     def post(self, request, *args, **kwargs):
         command = request.POST.get('command')
         if command:
-            alert_id = request.POST.get('alert_id')
-            if alert_id:
-                if command == 'delete':
-                    self._delete_alert(alert_id)
-                else:
-                    success = self._update_alert(alert_id, command)
-                    if success:
-                        messages.success(request, _("Alert updated!"))
-                    else:
-                        messages.error(request, _("Could not update alert. Please try again!"))
+            self._apply_command(request, command)
         elif self.form.is_valid():
-            CommCareHQAlert.objects.create(
-                created_by_domain=self.domain,
-                domains=[self.domain],
-                text=self.form.cleaned_data['text'],
-                created_by_user=self.request.couch_user.username,
-            )
+            self._create_alert()
             messages.success(request, _("Alert saved!"))
         else:
             messages.error(request, _("There was an error saving your alert. Please try again!"))
             return self.get(request, *args, **kwargs)
         return HttpResponseRedirect(self.page_url)
+
+    def _apply_command(self, request, command):
+        alert_id = request.POST.get('alert_id')
+        if alert_id:
+            if command == 'delete':
+                self._delete_alert(alert_id)
+            else:
+                success = self._update_alert(alert_id, command)
+                if success:
+                    messages.success(request, _("Alert updated!"))
+                else:
+                    messages.error(request, _("Could not update alert. Please try again!"))
 
     def _update_alert(self, alert_id, command):
         alert = self._load_alert(alert_id)
@@ -598,3 +596,11 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
         alert = self._load_alert(alert_id)
         if alert:
             alert.delete()
+
+    def _create_alert(self):
+        CommCareHQAlert.objects.create(
+            created_by_domain=self.domain,
+            domains=[self.domain],
+            text=self.form.cleaned_data['text'],
+            created_by_user=self.request.couch_user.username,
+        )
