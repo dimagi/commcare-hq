@@ -109,8 +109,8 @@ def get_data_dictionary(domain):
         }
         case_properties = (CaseProperty.objects
                         .filter(case_type=case_type_obj)
-                        .prefetch_related("group_obj")
-                        .order_by("group_obj__name"))
+                        .prefetch_related("group")
+                        .order_by("group__name"))
         for property in case_properties:
             group = case_type["groups"].get(property.group_name)
 

@@ -176,7 +176,6 @@ class UpdateCasePropertyViewTest(TestCase):
 
     def test_update_with_group_name(self):
         prop = self._get_property()
-        self.assertEqual(prop.group, '')
         self.assertIsNone(prop.group)
         post_data = {
             "groups": '[{"id": 1, "caseType": "caseType", "name": "group", "description": ""}]',
@@ -191,7 +190,6 @@ class UpdateCasePropertyViewTest(TestCase):
     def test_update_with_no_group_name(self):
         prop = self._get_property()
         group = CasePropertyGroup.objects.filter(case_type=self.case_type_obj, name='group').first()
-        prop.group = group.name
         prop.group = group
         prop.save()
         post_data = {
@@ -332,7 +330,7 @@ class DataDictionaryJsonTest(TestCase):
         cls.couch_user.save()
         cls.case_type_obj = CaseType(name='caseType', domain=cls.domain_name)
         cls.case_type_obj.save()
-        cls.case_prop_group= CasePropertyGroup(case_type=cls.case_type_obj, name='group')
+        cls.case_prop_group = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
         cls.case_prop_group.save()
         cls.case_prop_obj = CaseProperty(
             case_type=cls.case_type_obj,

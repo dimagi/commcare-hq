@@ -295,7 +295,7 @@ def _get_dd_props_by_group(domain, case_type):
             case_type__domain=domain,
             case_type__name=case_type,
             deprecated=False,
-    ).select_related('group_obj').order_by('group_obj__index', 'index'):
+    ).select_related('group').order_by('group__index', 'index'):
         ret[prop.group_name].append(prop)
 
     uncategorized = ret.pop('', None)

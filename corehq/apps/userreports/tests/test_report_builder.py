@@ -180,7 +180,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         case_type_for_registry = CaseType(domain=self.domain, name='registry_prop', fully_generated=True)
         case_type_for_registry.save()
         CaseProperty(case_type=case_type_for_registry, name='registry_property',
-                     deprecated=False, data_type='plain', group='').save()
+                     deprecated=False, data_type='plain', group=None).save()
         user = create_user("admin", "123")
         registry = create_registry_for_test(user, self.domain, invitations=[
             Invitation('foo', accepted=True), Invitation('user-reports', accepted=True),
