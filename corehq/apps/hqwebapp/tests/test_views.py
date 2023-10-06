@@ -158,7 +158,7 @@ class TestMaintenanceAlertsView(TestCase):
 
         self.assertEqual(
             repr(alert),
-            "MaintenanceAlert(text='Maintenance alert', active='False', domains='All Domains')"
+            "CommCareHQAlert(text='Maintenance alert', active='False', domains='All Domains')"
         )
 
     def test_create_converts_to_utc(self):

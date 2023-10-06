@@ -4,7 +4,7 @@ from django.test import TestCase
 from ..models import CommCareHQAlert, UserAccessLog, UserAgent
 
 
-class TestMaintenanceAlerts(TestCase):
+class TestCommCareHQAlerts(TestCase):
     def test_creates_alert(self):
         kwargs = {'text': "Maintenance alert"}
         alert = CommCareHQAlert.objects.create(**kwargs)
@@ -17,7 +17,7 @@ class TestMaintenanceAlerts(TestCase):
         self.assertEqual(alert.timezone, 'UTC')
         self.assertEqual(
             repr(alert),
-            "MaintenanceAlert(text='Maintenance alert', active='False', domains='All Domains')"
+            "CommCareHQAlert(text='Maintenance alert', active='False', domains='All Domains')"
         )
 
     def test_wraps_alert_links(self):
