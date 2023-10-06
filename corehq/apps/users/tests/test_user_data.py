@@ -29,25 +29,25 @@ class TestUserMetadata(TestCase):
             CommCareUser.create(self.domain, 'martha', 'bmfa', None, None, user_data={'country': 'Canada'})
 
     def test_metadata(self):
-        metadata = self.user.metadata
-        self.assertEqual(metadata, {'commcare_project': self.domain})
-        metadata.update({
+        user_data = self.user.get_user_data(self.domain)
+        self.assertEqual(user_data['commcare_project'], self.domain)
+        user_data.update({
             'cruise': 'control',
             'this': 'road',
         })
-        self.user.update_metadata(metadata)
-        self.assertEqual(self.user.metadata, {
+        # Normally you shouldn't use `user.user_data` directly - I'm demonstrating that it's updated
+        self.assertEqual(self.user.user_data, {
             'commcare_project': self.domain,
             'cruise': 'control',
             'this': 'road',
         })
-        self.user.pop_metadata('cruise')
-        self.assertEqual(self.user.metadata, {
+        del user_data['cruise']
+        self.assertEqual(self.user.user_data, {
             'commcare_project': self.domain,
             'this': 'road',
         })
-        self.user.update_metadata({'this': 'field'})
-        self.assertEqual(self.user.metadata, {
+        user_data.update({'this': 'field'})
+        self.assertEqual(self.user.user_data, {
             'commcare_project': self.domain,
             'this': 'field',
         })

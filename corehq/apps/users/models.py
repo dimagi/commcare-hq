@@ -1669,6 +1669,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         return super(CommCareUser, cls).wrap(data)
 
+    def get_user_data(self, domain):
+        from .user_data import UserData
+        return UserData(self.user_data, domain)
+
     @property
     def metadata(self):
         from corehq.apps.custom_data_fields.models import PROFILE_SLUG
