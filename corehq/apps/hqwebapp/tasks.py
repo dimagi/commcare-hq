@@ -20,7 +20,6 @@ from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.email_event_utils import get_bounced_system_emails
 from corehq.util.log import send_HTML_email
 from corehq.util.metrics import metrics_track_errors
-from corehq.util.metrics.const import MPM_MAX
 from corehq.util.models import TransientBounceEmail
 
 
