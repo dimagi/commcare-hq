@@ -554,12 +554,16 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
         if command:
             alert_id = request.POST.get('alert_id')
             if alert_id:
-                success = self._update_alert(alert_id, command)
-                if success:
-                    messages.success(request, _("Alert updated!"))
+                if command == 'delete':
+                    self._delete_alert(alert_id)
+                    return HttpResponseRedirect(self.page_url)
                 else:
-                    messages.error(request, _("Could not update alert. Please try again!"))
-                return HttpResponseRedirect(self.page_url)
+                    success = self._update_alert(alert_id, command)
+                    if success:
+                        messages.success(request, _("Alert updated!"))
+                    else:
+                        messages.error(request, _("Could not update alert. Please try again!"))
+                    return HttpResponseRedirect(self.page_url)
         elif self.form.is_valid():
             CommCareHQAlert.objects.create(
                 created_by_domain=self.domain,
@@ -574,17 +578,25 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
             return self.get(request, *args, **kwargs)
 
     def _update_alert(self, alert_id, command):
-        try:
-            alert = CommCareHQAlert.objects.get(
-                created_by_domain=self.domain,
-                id=alert_id
-            )
-        except CommCareHQAlert.DoesNotExist:
-            return False
-        else:
+        alert = self._load_alert(alert_id)
+        if alert:
             if command == 'activate':
                 alert.active = True
             elif command == 'deactivate':
                 alert.active = False
             alert.save(update_fields=['active'])
             return True
+
+    def _load_alert(self, alert_id):
+        try:
+            return CommCareHQAlert.objects.get(
+                created_by_domain=self.domain,
+                id=alert_id
+            )
+        except CommCareHQAlert.DoesNotExist:
+            return None
+
+    def _delete_alert(self, alert_id):
+        alert = self._load_alert(alert_id)
+        if alert:
+            alert.delete()

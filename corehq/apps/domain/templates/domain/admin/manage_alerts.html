@@ -27,6 +27,9 @@
             <th>
               {% trans "Activate or De-activate" %}
             </th>
+            <th>
+              {% trans "Delete" %}
+            </th>
           </tr>
         </thead>
         {% if alerts %}
@@ -57,6 +60,20 @@
                         value="deactivate"
                         data-bind="visible: active">
                   {% trans "De-activate Alert" %}
+                </button>
+              </form>
+            </td>
+            <td>
+              <form method="post">
+                {% csrf_token %}
+                <input name="alert_id"
+                       type="hidden"
+                       data-bind="value: id">
+                <button type="submit"
+                      class="btn btn-danger"
+                      name="command"
+                      value="delete">
+                  {% trans "Delete" %}
                 </button>
               </form>
             </td>
