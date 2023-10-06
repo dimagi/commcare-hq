@@ -12,7 +12,6 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 class TestUserMetadata(TestCase):
     domain = 'test-user-metadata'
-    conflict_message = "metadata properties conflict with profile: start"
 
     @classmethod
     def setUpTestData(cls):
@@ -69,37 +68,38 @@ class TestUserMetadata(TestCase):
 
     def test_add_and_remove_profile(self):
         # Custom user data profiles get their data added to metadata automatically for mobile users
-        self.user.update_metadata({PROFILE_SLUG: self.profile_id})
-        self.assertEqual(self.user.metadata, {
+        user_data = self.user.get_user_data(self.domain)
+        user_data[PROFILE_SLUG] = self.profile_id
+        self.assertEqual(self.user.get_user_data(self.domain).to_dict(), {
             'commcare_project': self.domain,
             PROFILE_SLUG: self.profile_id,
             'start': 'sometimes',
         })
 
         # Remove profile should remove it and related fields
-        self.user.pop_metadata(PROFILE_SLUG)
-        self.assertEqual(self.user.metadata, {
+        del user_data[PROFILE_SLUG]
+        self.assertEqual(self.user.get_user_data(self.domain).to_dict(), {
             'commcare_project': self.domain,
         })
 
     def test_profile_conflicts_with_data(self):
-        self.user.update_metadata({
+        user_data = self.user.get_user_data(self.domain)
+        user_data.update({
             'start': 'never',
             'end': 'yesterday',
         })
-        with self.assertRaisesMessage(ValueError, self.conflict_message):
-            self.user.update_metadata({
-                PROFILE_SLUG: self.profile_id,
-            })
+        with self.assertRaisesMessage(ValueError, "Profile conflicts with existing data"):
+            user_data[PROFILE_SLUG] = self.profile_id
 
     def test_data_conflicts_with_profile(self):
-        self.user.update_metadata({PROFILE_SLUG: self.profile_id})
-        with self.assertRaisesMessage(ValueError, self.conflict_message):
-            self.user.update_metadata({'start': 'never'})
+        user_data = self.user.get_user_data(self.domain)
+        user_data[PROFILE_SLUG] = self.profile_id
+        with self.assertRaisesMessage(ValueError, "'start' cannot be set directly"):
+            user_data.update({'start': 'never'})
 
     def test_profile_and_data_conflict(self):
-        with self.assertRaisesMessage(ValueError, self.conflict_message):
-            self.user.update_metadata({
+        with self.assertRaisesMessage(ValueError, "'start' cannot be set directly"):
+            self.user.get_user_data(self.domain).update({
                 PROFILE_SLUG: self.profile_id,
                 'start': 'never',
             })

@@ -11,8 +11,11 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 class UserData:
     def __init__(self, raw_user_data, domain):
         self._local_to_user = raw_user_data
-        self.profile_id = raw_user_data.get(PROFILE_SLUG)
         self.domain = domain
+
+    @property
+    def profile_id(self):
+        return self._local_to_user.get(PROFILE_SLUG)
 
     @property
     def _provided_by_system(self):
@@ -33,11 +36,14 @@ class UserData:
     @cached_property
     def profile(self):
         if self.profile_id:
-            return CustomDataFieldsProfile.objects.get(
-                id=self.profile_id,
-                definition__domain=self.domain,
-                definition__field_type=UserFieldsView.field_type,
-            )
+            return self._get_profile(self.profile_id)
+
+    def _get_profile(self, profile_id):
+        return CustomDataFieldsProfile.objects.get(
+            id=profile_id,
+            definition__domain=self.domain,
+            definition__field_type=UserFieldsView.field_type,
+        )
 
     def items(self):
         return self.to_dict().items()
@@ -58,6 +64,9 @@ class UserData:
         if key in self._provided_by_system:
             raise ValueError(f"'{key}' cannot be set directly")
         if key == PROFILE_SLUG:
+            new_profile = self._get_profile(value)
+            if set(new_profile.fields).intersection(set(self._local_to_user)):
+                raise ValueError(f"Profile conflicts with existing data")
             del self.profile
         self._local_to_user[key] = value
 
