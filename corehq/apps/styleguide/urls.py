@@ -35,4 +35,6 @@ urlpatterns = [
         name="styleguide_atoms_typography_b5"),
     url(r'^b5/atoms/colors/$', bootstrap5.styleguide_atoms_colors,
         name="styleguide_atoms_colors_b5"),
+    url(r'^b5/atoms/icons/$', bootstrap5.styleguide_atoms_icons,
+        name="styleguide_atoms_icons_b5"),
 ]
