@@ -35,7 +35,6 @@ def test_find_precision():
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
-@flag_enabled('USH_CASE_CLAIM_UPDATES')
 class TestGetMaxDocCount(TestCase):
     # See https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-geohashgrid-aggregation.html#_simple_low_precision_request
     # and https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-geohashgrid-aggregation.html#_high_precision_requests
@@ -44,7 +43,8 @@ class TestGetMaxDocCount(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        case_search_es_setup(DOMAIN, cls._get_case_blocks())
+        with flag_enabled('USH_CASE_CLAIM_UPDATES'):
+            case_search_es_setup(DOMAIN, cls._get_case_blocks())
 
     @staticmethod
     def _get_case_blocks():
