@@ -1,0 +1,73 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Colors</h1>
+  <p class="sg-lead">
+    Use color for <strong>communication</strong> over <strong>decoration</strong>.
+    Use of color should be purposeful, accessible, and help focus attention to what matters most.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li>
+        <a href="#color-communication">Colors for Communication</a>
+        <ul>
+          <li><a href="#interaction-attention">Interaction and Attention</a></li>
+          <li><a href="#neutral">Neutral, Text and Backgrounds</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="color-communication">
+    Colors for Communication
+  </h2>
+  <p>
+    We strive to establish recognizable patterns to guide users through the UI.
+    CommCare uses similar palettes on both the mobile and server side.
+  </p>
+  <p>
+    When combining colors, use light text on a dark or medium background
+    and dark text on a light background. We make use of Bootstrap 5's
+    <code>$min-contrast-ratio</code> setting at a value of
+    3 to automatically determine when to show dark or light text on a background when using
+    the <code>text-bg-<$color></code> class on an element.
+  </p>
+  <p>
+    As described in <a href="{% url 'styleguide_atoms_accessibility_b5' %}">Accessibility</a>,
+    many people are affected by various types of <strong>color blindness</strong>.
+    It is important to make sure that colors are <em>never</em> the source
+    of critical information. Also, when colors are used to compare information
+    (legend of a bar or line chart) it is important that the colors used
+    can be differentiated by people with each type of color blindness, and when color separation is
+    not easily possible, distinguishable patterns are used in their place.
+  </p>
+
+  <h3 id="interaction-attention" class="pt-4">
+    Interaction and Attention
+  </h3>
+  <p>
+    For specific usage (with different shades), please refer to things like Buttons and Alerts in the
+    Molecules section. This is intended for quick reference and to convey big-picture ideas.
+  </p>
+  <div class="row">
+    {% for swatch in interaction %}
+      {% include 'styleguide/bootstrap5/atoms/partials/swatch.html' %}
+    {% endfor %}
+  </div>
+
+  <h3 id="neutral" class="pt-4">
+    Neutral Colors, Text and Backgrounds
+  </h3>
+  <div class="row">
+    {% for swatch in neutral %}
+      {% include 'styleguide/bootstrap5/atoms/partials/swatch.html' %}
+    {% endfor %}
+  </div>
+{% endblock content %}
