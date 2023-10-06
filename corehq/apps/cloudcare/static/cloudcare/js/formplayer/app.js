@@ -216,6 +216,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         });
         data.onsubmit = function (resp) {
             if (resp.status === "success") {
+                // todo: check if background true and stop redirect
                 var $alert;
                 if (resp.submitResponseMessage) {
                     var markdowner = window.markdownit(),
