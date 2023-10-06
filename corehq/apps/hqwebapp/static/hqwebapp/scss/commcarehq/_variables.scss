@@ -1,3 +1,4 @@
+
 // Grid Containers
 // we will want to adapt the defaults in a full redesign
 $container-max-widths: (
@@ -42,9 +43,6 @@ $dropdown-font-size: 12px;
 
 // Badges
 $badge-border-radius: .25em;
-
-
-// Custom colors we created (in Bootstrap 3 stylesheets)
 
 // Main background & text
 $cc-bg:     #f2f2f1;
@@ -106,16 +104,44 @@ $cc-dark-warm-accent-hi:  #ffe3c2;
 $cc-dark-warm-accent-mid: #ff8400;
 $cc-dark-warm-accent-low: #994f00;
 
+// Grays from default stylesheet — needed for reference
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+$gray-600: #6c757d;
+$gray-800: #343a40;
 
-////// Bootstrap 5 Color Overrides
-$primary:   #5c6ac5;
-$success:   $cc-att-pos-mid;
-$info:      $cc-light-cool-accent-mid;
-$danger:    $cc-att-neg-mid;
+// Base color overrides
+$blue: #5D70D2;
+$green: #3FA12A;
+$red: #E73C27;
+$teal: #01A2A9;
+$yellow: #EEAE00;
 
-$body-color: $cc-text;
+// for determining when to show black or white text on top of color
+$min-contrast-ratio: 3;
 
-$link-color: $cc-brand-mid;
-$link-hover-color: $cc-brand-low;
+// Theme Colors
+$primary:   $blue;
+$secondary: $gray-600;
+$success:   $green;
+$danger:    $red;
+$info:      $teal;
+$warning:   $yellow;
+$light:     $gray-100;
+$dark:      $gray-800;
 
-$link-hover-color: $cc-brand-low;
+$theme-colors: (
+  "primary":    $primary,
+  "success":    $success,
+  "info":       $info,
+  "warning":    $warning,
+  "danger":     $danger,
+  "dark":       $dark,
+  "secondary":  $secondary,
+  "light":      $light,
+);
+
+$body-color: $dark;
+$link-color: darken($primary, 10);
+$link-hover-color: darken($primary, 50);
+$border-color: $gray-200;
