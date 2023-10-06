@@ -834,7 +834,7 @@ class EndpointAction(XmlObject):
 
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
-    ORDER = ('style', 'header', 'template', 'sort_node')
+    ORDER = ('style', 'header', 'template', 'endpoint_action', 'sort_node')
 
     sort = StringField('@sort')
     print_id = StringField('@print-id')
