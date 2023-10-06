@@ -1701,18 +1701,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_user_data_profile(self, profile_id):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
-        if not profile_id:
-            return None
-
-        try:
-            profile = CustomDataFieldsProfile.objects.get(id=profile_id)
-        except CustomDataFieldsProfile.DoesNotExist:
-            raise ValueError("Could not find profile with id {}".format(profile_id))
-        if profile.definition.domain != self.domain:
-            raise ValueError("Could not find profile with id {}".format(profile_id))
-        if profile.definition.field_type != UserFieldsView.field_type:
-            raise ValueError("Could not find profile with id {}".format(profile_id))
-        return profile
+        if profile_id:
+            return CustomDataFieldsProfile.objects.get(
+                id=profile_id,
+                definition__domain=self.domain,
+                definition__field_type=UserFieldsView.field_type,
+            )
 
     def _is_demo_user_cached_value_is_stale(self):
         from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers

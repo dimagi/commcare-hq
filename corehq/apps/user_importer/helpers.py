@@ -1,11 +1,13 @@
-from corehq.apps.users.models import DeactivateMobileWorkerTrigger
 from dimagi.utils.parsing import string_to_boolean
 
-from corehq.apps.custom_data_fields.models import PROFILE_SLUG
+from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
+    CustomDataFieldsProfile,
+)
 from corehq.apps.user_importer.exceptions import UserUploadError
-
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.model_log import UserModelAction
+from corehq.apps.users.models import DeactivateMobileWorkerTrigger
 from corehq.apps.users.util import log_user_change
 
 
@@ -202,6 +204,8 @@ class CommCareUserImporter(BaseUserImporter):
                 self.user.pop_metadata(key)
         try:
             self.user.update_metadata(data)
+        except CustomDataFieldsProfile.DoesNotExist:
+            raise UserUploadError(f"Could not find profile with id {data.get(PROFILE_SLUG)}")
         except ValueError as e:
             raise UserUploadError(str(e))
         if uncategorized_data:
@@ -234,7 +238,7 @@ class CommCareUserImporter(BaseUserImporter):
         from corehq.apps.user_importer.importer import (
             check_modified_user_loc,
             find_location_id,
-            get_location_from_site_code
+            get_location_from_site_code,
         )
 
         location_ids = find_location_id(location_codes, domain_info.location_cache)
@@ -349,7 +353,7 @@ class WebUserImporter(BaseUserImporter):
         from corehq.apps.user_importer.importer import (
             check_modified_user_loc,
             find_location_id,
-            get_location_from_site_code
+            get_location_from_site_code,
         )
 
         location_ids = find_location_id(location_codes, domain_info.location_cache)
