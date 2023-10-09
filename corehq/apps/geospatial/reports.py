@@ -105,8 +105,7 @@ class CaseGroupingReport(BaseCaseMap):
     slug = 'case_grouping_map'
     search_class = CaseSearchES
 
-    # TODO: We need a separate base template
-    base_template = 'geospatial/map_visualization_base.html'
+    base_template = 'geospatial/case_grouping_map_base.html'
     report_template_path = 'case_grouping_map.html'
 
     def _build_query(self):
