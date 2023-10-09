@@ -133,6 +133,19 @@ class TestUserDataModel(SimpleTestCase):
         with self.assertRaisesMessage(UserDataError, "Profile conflicts with existing data"):
             user_data[PROFILE_SLUG] = 'blues'
 
+    def test_profile_conflicts_with_blank_existing_data(self):
+        user_data = UserData({'favorite_color': ''}, self.domain)
+        user_data[PROFILE_SLUG] = 'blues'
+        self.assertEqual(user_data['favorite_color'], 'blue')
+
+    def test_avoid_conflict_by_blanking_out(self):
+        user_data = UserData({'favorite_color': 'purple'}, self.domain)
+        user_data.update({
+            PROFILE_SLUG: 'blues',
+            'favorite_color': '',
+        })
+        self.assertEqual(user_data['favorite_color'], 'blue')
+
     def test_data_conflicts_with_profile(self):
         user_data = UserData({PROFILE_SLUG: 'blues'}, self.domain)
         with self.assertRaisesMessage(UserDataError, "'favorite_color' cannot be set directly"):

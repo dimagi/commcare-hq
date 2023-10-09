@@ -74,18 +74,24 @@ class UserData:
             raise UserDataError(f"'{key}' cannot be set directly")
         if key == PROFILE_SLUG:
             new_profile = self._get_profile(value)
-            if set(new_profile.fields).intersection(set(self._local_to_user)):
-                raise UserDataError(f"Profile conflicts with existing data")
+            non_empty_existing_fields = {k for k, v in self._local_to_user.items() if v}
+            if set(new_profile.fields).intersection(non_empty_existing_fields):
+                raise UserDataError("Profile conflicts with existing data")
             del self.profile
         self._local_to_user[key] = value
 
     def update(self, data):
         original = self.to_dict()
-        # set profile first to identify conflicts properly
+        # first set blank items, to remove potential profile conflicts
+        for k, v in data.items():
+            if k != PROFILE_SLUG and not v:
+                self[k] = v
+        # then set profile
         if PROFILE_SLUG in data:
             self[PROFILE_SLUG] = data[PROFILE_SLUG]
+        # finally add remaining
         for k, v in data.items():
-            if k != PROFILE_SLUG:
+            if k != PROFILE_SLUG and v:
                 self[k] = v
         return original != self.to_dict()
 

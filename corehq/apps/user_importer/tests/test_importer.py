@@ -706,6 +706,41 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "metadata properties conflict with profile: mode")
 
+    def test_profile_cant_overwrite_existing_data(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'mode': 'major'})],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        # This fails because it would silently overwrite the existing "mode"
+        rows = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(user_id=self.user.get_id, user_profile=self.profile.name)],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )['messages']['rows']
+        self.assertEqual(rows[0]['flag'], "metadata properties conflict with profile: mode")
+
+        # This succeeds because it explicitly blanks out "mode"
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(user_id=self.user.get_id, user_profile=self.profile.name, data={'mode': ''})],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        self.assert_user_data_equals({
+            'commcare_project': 'mydomain',
+            'mode': 'minor',
+            PROFILE_SLUG: self.profile.id,
+        })
+
     def test_user_data_profile_unknown(self):
         rows = import_users_and_groups(
             self.domain.name,
