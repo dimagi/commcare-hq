@@ -36,14 +36,6 @@ class GroupGenerationCache(GenerationCache):
     ]
 
 
-class UserRoleGenerationCache(GenerationCache):
-    generation_key = '#gen#user_role#'
-    doc_types = ['UserRole']
-    views = [
-        'users/roles_by_domain'
-    ]
-
-
 class ReportGenerationCache(GenerationCache):
     generation_key = '#gen#reports#'
     doc_types = ['ReportConfig', 'ReportNotification']
