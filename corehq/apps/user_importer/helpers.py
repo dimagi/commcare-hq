@@ -193,6 +193,8 @@ class CommCareUserImporter(BaseUserImporter):
     def update_user_data(self, data, uncategorized_data, profile_name, domain_info):
         # Add in existing data. Don't use metadata - we don't want to add profile-controlled fields.
         current_profile_id = self.user.user_data.get(PROFILE_SLUG)
+        if PROFILE_SLUG in data:
+            raise UserUploadError(f"You cannot set {PROFILE_SLUG} directly")
 
         for key, value in self.user.user_data.items():
             if key not in data:
@@ -204,8 +206,6 @@ class CommCareUserImporter(BaseUserImporter):
                 self.user.pop_metadata(key)
         try:
             self.user.update_metadata(data)
-        except CustomDataFieldsProfile.DoesNotExist:
-            raise UserUploadError(f"Could not find profile with id {data.get(PROFILE_SLUG)}")
         except ValueError as e:
             raise UserUploadError(str(e))
         if uncategorized_data:
