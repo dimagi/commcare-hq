@@ -3,7 +3,6 @@ hqDefine("geospatial/js/case_grouping_map",[
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
-    "hqwebapp/js/bootstrap3/components.ko", // for pagination
 ], function (
     $,
     ko,
