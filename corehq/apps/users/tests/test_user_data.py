@@ -159,3 +159,8 @@ class TestUserDataModel(SimpleTestCase):
             'favorite_color': 'purple', # this is compatible with the new profile, but not the old
             PROFILE_SLUG: 'others',
         })
+
+    def test_ignore_noop_conflicts_with_profile(self):
+        user_data = UserData({PROFILE_SLUG: 'blues',}, self.domain)
+        # this key is in the profile, but the values are the same
+        user_data['favorite_color'] = 'blue'

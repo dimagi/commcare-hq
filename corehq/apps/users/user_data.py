@@ -62,6 +62,8 @@ class UserData:
 
     def __setitem__(self, key, value):
         if key in self._provided_by_system:
+            if value == self._provided_by_system[key]:
+                return
             raise ValueError(f"'{key}' cannot be set directly")
         if key == PROFILE_SLUG:
             new_profile = self._get_profile(value)
