@@ -5,15 +5,6 @@ from django.urls import reverse
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.form_processor.tests.utils import create_case
-from corehq.form_processor.models import CommCareCase
-from corehq.apps.users.models import WebUser, CommCareUser
-from corehq.apps.geospatial.views import (
-    GeospatialConfigPage,
-    GPSCaptureView,
-)
-from corehq.apps.geospatial.models import GeoConfig
-from corehq.util.test_utils import flag_enabled
 from corehq.apps.es import case_adapter, case_search_adapter, user_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
