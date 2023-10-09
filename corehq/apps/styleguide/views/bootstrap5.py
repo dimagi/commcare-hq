@@ -13,6 +13,11 @@ def styleguide_home(request):
     return render(request, 'styleguide/bootstrap5/home.html', get_navigation_context("styleguide_home_b5"))
 
 
+def styleguide_code_guidelines(request):
+    return render(request, 'styleguide/bootstrap5/code_guidelines.html',
+                  get_navigation_context("styleguide_code_guidelines_b5"))
+
+
 def styleguide_atoms_accessibility(request):
     return render(request, 'styleguide/bootstrap5/atoms/accessibility.html',
                   get_navigation_context("styleguide_atoms_accessibility_b5"))
