@@ -213,8 +213,8 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
     def plan_version_response(self):
         edition = self.data.get('additionalData[edition]')
         visibility = self.data.get('additionalData[visibility]')
-        most_recent_version = self.data.get('additionalData[most_recent_version]')
-        if most_recent_version == 'True':
+        is_most_recent_version = self.data.get('additionalData[most_recent_version]') == 'True'
+        if is_most_recent_version:
             plan_versions = SoftwarePlanVersion.get_most_recent_version(edition, visibility)
         else:
             plan_versions = SoftwarePlanVersion.objects.filter(
