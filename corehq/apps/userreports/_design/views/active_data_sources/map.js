@@ -6,3 +6,5 @@ function (doc) {
         ], null);
     }
 }
+
+// forcing view to be reindex - Graham Oct 4th 2023
