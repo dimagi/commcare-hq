@@ -10,7 +10,16 @@ hqDefine("geospatial/js/case_grouping_map",[
     _,
     initialPageData
 ) {
-    'use strict';
+
+    function caseModel(caseId, coordiantes, caseLink) {
+        'use strict';
+        var self = {};
+        self.caseId = caseId;
+        self.coordinates = coordiantes;
+        self.caseLink = caseLink;
+
+        return self;
+    }
 
     $(function () {
         $(document).ajaxComplete(function (event, xhr, settings) {
