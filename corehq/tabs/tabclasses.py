@@ -115,7 +115,6 @@ from corehq.apps.users.models import HqPermissions
 from corehq.apps.geospatial.views import (
     GeospatialConfigPage,
     GPSCaptureView,
-    ConfigureCaseGroupingView,
 )
 
 
@@ -2577,10 +2576,6 @@ class GeospatialTab(UITab):
                 {
                     'title': _("Manage GPS Data"),
                     'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
-                },
-                {
-                    'title': _("Configure Case Grouping"),
-                    'url': reverse(ConfigureCaseGroupingView.urlname, args=(self.domain,)),
                 },
             ]),
         ]

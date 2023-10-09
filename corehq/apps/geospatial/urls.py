@@ -10,7 +10,6 @@ from .views import (
     mapbox_routing_status,
     GeospatialConfigPage,
     get_users_with_gps,
-    ConfigureCaseGroupingView,
 )
 
 
@@ -23,8 +22,6 @@ urlpatterns = [
     url(r'^mapbox_routing_status/(?P<poll_id>[\w-]+)/',
         mapbox_routing_status,
         name="mapbox_routing_status"),
-    url(r'^settings/case_grouping/$', ConfigureCaseGroupingView.as_view(),
-        name=ConfigureCaseGroupingView.urlname),
     url(r'^settings/$', GeospatialConfigPage.as_view(), name=GeospatialConfigPage.urlname),
     url(r'^gps_capture/json/$', get_paginated_cases_or_users_without_gps,
         name='get_paginated_cases_or_users_without_gps'),
