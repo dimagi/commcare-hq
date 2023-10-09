@@ -858,7 +858,7 @@ class ChangeSubscriptionForm(forms.Form):
     )
     most_recent_version = forms.ChoiceField(
         label=gettext_lazy("Most Recent Version"), initial="True",
-        choices=(("True", "True"), ("False", "False"))
+        choices=(("True", "Show Most Recent Version"), ("False", "Show All Versions"))
     )
     new_plan_version = forms.CharField(
         label=gettext_lazy("New Software Plan"),
