@@ -59,5 +59,8 @@ class UserReportsDataSourceCache(GenerationCache):
     generation_key = '#gen#userreports#datasource#'
     doc_types = ['DataSourceConfiguration']
     views = [
+        'userreports/active_data_sources',
         'userreports/data_sources_by_build_info',
+        'userreports/data_sources_by_last_modified',
+        'userreports/report_configs_by_data_source',
     ]
