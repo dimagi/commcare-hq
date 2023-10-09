@@ -601,7 +601,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 commcare_user_importer.update_role('none')
 
             if web_user_username:
-                user.update_metadata({'login_as_user': web_user_username})
+                user.get_user_data(domain)['login_as_user'] = web_user_username
 
             user.save()
             log = commcare_user_importer.save_log()

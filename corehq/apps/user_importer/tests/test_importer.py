@@ -704,7 +704,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], "metadata properties conflict with profile: mode")
+        self.assertEqual(rows[0]['flag'], "'mode' cannot be set directly")
 
     def test_profile_cant_overwrite_existing_data(self):
         import_users_and_groups(
@@ -724,7 +724,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], "metadata properties conflict with profile: mode")
+        self.assertEqual(rows[0]['flag'], "Profile conflicts with existing data")
 
         # This succeeds because it explicitly blanks out "mode"
         import_users_and_groups(

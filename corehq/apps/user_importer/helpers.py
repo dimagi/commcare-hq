@@ -191,29 +191,23 @@ class CommCareUserImporter(BaseUserImporter):
         self.logger.add_changes({'first_name': self.user.first_name, 'last_name': self.user.last_name})
 
     def update_user_data(self, data, uncategorized_data, profile_name, domain_info):
-        # Add in existing data. Don't use metadata - we don't want to add profile-controlled fields.
-        current_profile_id = self.user.user_data.get(PROFILE_SLUG)
+        from corehq.apps.users.user_data import UserDataError
+        user_data = self.user.get_user_data(self.user_domain)
+        old_profile_id = user_data.profile_id
         if PROFILE_SLUG in data:
             raise UserUploadError(f"You cannot set {PROFILE_SLUG} directly")
-
-        for key, value in self.user.user_data.items():
-            if key not in data:
-                data[key] = value
         if profile_name:
             profile_obj = domain_info.profiles_by_name[profile_name]
             data[PROFILE_SLUG] = profile_obj.id
-            for key in profile_obj.fields.keys():
-                self.user.pop_metadata(key)
-        try:
-            self.user.update_metadata(data)
-        except ValueError as e:
-            raise UserUploadError(str(e))
-        if uncategorized_data:
-            self.user.update_metadata(uncategorized_data)
 
-        new_profile_id = self.user.user_data.get(PROFILE_SLUG)
-        if new_profile_id and new_profile_id != current_profile_id:
-            self.logger.add_info(UserChangeMessage.profile_info(new_profile_id, profile_name))
+        try:
+            user_data.update(data)
+            user_data.update(uncategorized_data)
+        except UserDataError as e:
+            raise UserUploadError(str(e))
+
+        if user_data.profile_id and user_data.profile_id != old_profile_id:
+            self.logger.add_info(UserChangeMessage.profile_info(user_data.profile_id, profile_name))
 
     def update_language(self, language):
         self.user.language = language
