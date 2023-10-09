@@ -115,7 +115,7 @@ class TestUpdateUserMethods(TestCase):
         with self.assertRaises(UpdateUserException) as cm:
             update(self.user, 'user_data', {PROFILE_SLUG: profile_id, 'conflicting_field': 'no'})
 
-        self.assertEqual(cm.exception.message, 'metadata properties conflict with profile: conflicting_field')
+        self.assertEqual(cm.exception.message, "'conflicting_field' cannot be set directly")
 
     def test_update_groups_succeeds(self):
         group = Group({"name": "test", "domain": self.user.domain})
