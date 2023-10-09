@@ -20,4 +20,5 @@ class UserReportsDataSourceCache(GenerationCache):
         'userreports/data_sources_by_build_info',
         'userreports/data_sources_by_last_modified',
         'userreports/report_configs_by_data_source',
+        'userreports/report_configs_by_domain',
     ]
