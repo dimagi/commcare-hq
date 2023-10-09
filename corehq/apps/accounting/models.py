@@ -892,7 +892,7 @@ class SoftwarePlanVersion(models.Model):
 
     @classmethod
     def get_most_recent_version(cls, edition, visibility):
-        latest_versions_dates = cls.objects.filter(
+        latest_versions_date = cls.objects.filter(
             plan=OuterRef('pk'),
             plan__edition=edition,
             plan__visibility=visibility
@@ -902,7 +902,7 @@ class SoftwarePlanVersion(models.Model):
             edition=edition,
             visibility=visibility
         ).annotate(
-            latest_version_date=Subquery(latest_versions_dates)
+            latest_version_date=Subquery(latest_versions_date)
         ).values('id', 'name', 'latest_version_date')
 
         return cls.objects.filter(
