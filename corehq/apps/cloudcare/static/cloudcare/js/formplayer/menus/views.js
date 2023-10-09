@@ -213,10 +213,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
+            clickIcon: ".module-icon.btn",
             selectRow: ".select-row-checkbox",
         },
 
         events: {
+            "click @ui.clickIcon": "iconClick",
             "click": "rowClick",
             "keydown": "rowKeyAction",
             'click @ui.selectRow': 'selectRowAction',
@@ -241,6 +243,40 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 "tabindex": "0",
                 "id": `row-${modelId}`,
             };
+        },
+
+        iconClick: function (e) {
+            e.stopImmediatePropagation();
+            if (!e.target.className.includes('disabled')) {
+                const origin = window.location.origin;
+                const user = FormplayerFrontend.getChannel().request('currentUser');
+                let appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
+                const domain = user.domain;
+                const caseId = this.model.get('id');
+                const urlTemplate = this.options.endpointActions[1]['urlTemplate'];
+                const actionUrl = origin + urlTemplate
+                    .replace("{domain}", domain)
+                    .replace("{appid}", appId)
+                    .replace("{case_id}", caseId);
+                this.iconSmartLink(e, actionUrl);
+            }
+        },
+
+        iconSmartLink: function (e, url) {
+            e.target.className += " disabled";
+            self.processing = true;
+            return $.ajax({
+                type: "POST",
+                url: url,
+                success: function (resp) {
+                    FormplayerFrontend.trigger('showSuccess', gettext('Action was successful'));
+                    e.target.classList.remove("disabled");
+                },error: function (error) {
+                    FormplayerFrontend.trigger('showError', gettext(error.errorMessage));
+                },
+            }).fail(function () {
+
+            });
         },
 
         rowClick: function (e) {
@@ -401,6 +437,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
+                endpointActions: this.options.endpointActions
             };
         },
 
