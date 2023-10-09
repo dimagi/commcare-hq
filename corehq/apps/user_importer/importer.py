@@ -537,7 +537,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
         location_codes = row.get('location_code', []) if 'location_code' in row else None
         location_codes = format_location_codes(location_codes)
         role = row.get('role', None)
-        profile = row.get('user_profile', None)
+        profile_name = row.get('user_profile', None)
         web_user_username = row.get('web_user')
         phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
 
@@ -581,7 +581,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             if name:
                 commcare_user_importer.update_name(name)
 
-            commcare_user_importer.update_user_data(data, uncategorized_data, profile, domain_info)
+            commcare_user_importer.update_user_data(data, uncategorized_data, profile_name, domain_info)
 
             if update_deactivate_after_date:
                 commcare_user_importer.update_deactivate_after(deactivate_after)

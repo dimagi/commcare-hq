@@ -190,15 +190,15 @@ class CommCareUserImporter(BaseUserImporter):
         self.user.set_full_name(str(name))
         self.logger.add_changes({'first_name': self.user.first_name, 'last_name': self.user.last_name})
 
-    def update_user_data(self, data, uncategorized_data, profile, domain_info):
+    def update_user_data(self, data, uncategorized_data, profile_name, domain_info):
         # Add in existing data. Don't use metadata - we don't want to add profile-controlled fields.
         current_profile_id = self.user.user_data.get(PROFILE_SLUG)
 
         for key, value in self.user.user_data.items():
             if key not in data:
                 data[key] = value
-        if profile:
-            profile_obj = domain_info.profiles_by_name[profile]
+        if profile_name:
+            profile_obj = domain_info.profiles_by_name[profile_name]
             data[PROFILE_SLUG] = profile_obj.id
             for key in profile_obj.fields.keys():
                 self.user.pop_metadata(key)
