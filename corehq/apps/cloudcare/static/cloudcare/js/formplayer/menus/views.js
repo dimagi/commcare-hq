@@ -248,8 +248,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         iconClick: function (e) {
             e.stopImmediatePropagation();
             const origin = window.location.origin;
+            const currentUrlToObject = formplayerUtils.currentUrlToObject();
             const user = FormplayerFrontend.getChannel().request('currentUser');
-            let appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
+            const appId = currentUrlToObject.copyOf;
             const domain = user.domain;
             const caseId = this.model.get('id');
             const urlTemplate = this.options.endpointActions[1]['urlTemplate'];
