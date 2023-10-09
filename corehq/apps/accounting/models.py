@@ -74,6 +74,7 @@ from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
+from django.db.models import OuterRef, Subquery
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -888,6 +889,26 @@ class SoftwarePlanVersion(models.Model):
     def save(self, *args, **kwargs):
         super(SoftwarePlanVersion, self).save(*args, **kwargs)
         SoftwarePlan.get_version.clear(self.plan)
+
+    @classmethod
+    def get_most_recent_version(cls, edition, visibility):
+        latest_versions_date = cls.objects.filter(
+            plan=OuterRef('pk'),
+            plan__edition=edition,
+            plan__visibility=visibility
+        ).order_by('-date_created').values('date_created')[:1]
+
+        latest_versions = SoftwarePlan.objects.filter(
+            edition=edition,
+            visibility=visibility
+        ).annotate(
+            latest_version_date=Subquery(latest_versions_date)
+        ).values('id', 'name', 'latest_version_date')
+
+        return cls.objects.filter(
+            plan__in=[item['id'] for item in latest_versions],
+            date_created__in=[item['latest_version_date'] for item in latest_versions]
+        )
 
     @property
     def version(self):
