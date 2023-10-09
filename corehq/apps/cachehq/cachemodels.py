@@ -48,10 +48,10 @@ class ReportGenerationCache(GenerationCache):
     generation_key = '#gen#reports#'
     doc_types = ['ReportConfig', 'ReportNotification']
     views = [
+        "reportconfig/all_notifications",
         'reportconfig/configs_by_domain',
         'reportconfig/notifications_by_config',
         "reportconfig/user_notifications",
-        "reportconfig/daily_notifications",
     ]
 
 
