@@ -2,25 +2,33 @@
 DetailContributor
 -----------------
 
-Details represent the configuration for case lists and case details. The reuse of the word "Detail" here is
-unfortunate. Details **can** be used for other purposes, such as the ``referral_detail``, but 99% of the time
-they're used for case list/detail.
+Details represent the configuration for case lists and case details. The
+reuse of the word "Detail" here is unfortunate. Details **can** be used
+for other purposes, such as the ``referral_detail``, but 99% of the
+time they're used for case list/detail.
 
-The case list is the "short" detail and the case detail is the "long" detail. A handful of configurations are only
-supported for one of these, e.g., actions only get added to the short detail.
+The case list is the "short" detail and the case detail is the "long"
+detail. A handful of configurations are only supported for one of
+these, e.g., actions only get added to the short detail.
 
-The detail element can be nested. HQ never nests short details, but it nests long details to produce tabbed case
-details. Each tab has its own ``<detail>`` element.
+The detail element can be nested. HQ never nests short details, but it
+nests long details to produce tabbed case details. Each tab has its own
+``<detail>`` element.
 
-The bulk of detail configuration is in the display properties, called "fields" and sometimes "columns" in the code.
-Each field has a good deal of configuration, and the code transforms them into named tuples while processing them.
-Each field has a format, one of about a dozen options. Formats are typically either UI-based, such as formatting a
-phone number to display as a link, or calculation-based, such as configuring a property to display differently when
-it's "late", i.e., is too far past some reference date.
+The bulk of detail configuration is in the display properties,
+called "fields" and sometimes "columns" in the code. Each field has a
+good deal of configuration, and the code transforms them into named
+tuples while processing them. Each field has a format, one of about a
+dozen options. Formats are typically either UI-based, such as
+formatting a phone number to display as a link, or calculation-based,
+such as configuring a property to display differently when it's "late",
+i.e., is too far past some reference date.
 
-Most fields map to a particular case property, with the exception of calculated properties. These calculated
-properties are identified only by number. A typical field might be called ``case_dob_1`` in the suite, indicating
-both its position and its case property, but a calculation would be called ``case_calculated_property_1``.
+Most fields map to a particular case property, with the exception of
+calculated properties. These calculated properties are identified only
+by number. A typical field might be called ``case_dob_1`` in the suite,
+indicating both its position and its case property, but a calculation
+would be called ``case_calculated_property_1``.
 
 """
 from collections import defaultdict, namedtuple
