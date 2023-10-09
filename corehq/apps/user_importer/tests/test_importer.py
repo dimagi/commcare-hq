@@ -558,7 +558,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 'Bb'})
 
-        # Clear user_data
+        # set user data to blank
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(data={'key': ''}, user_id=self.user._id)],
@@ -567,18 +567,18 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain'})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': ''})
 
         # Allow falsy but non-blank values
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(data={'play_count': 0}, user_id=self.user._id)],
+            [self._get_spec(data={'key': 0}, user_id=self.user._id)],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
             False
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'play_count': 0})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 0})
 
     def test_uncategorized_data(self):
         # Set data
@@ -602,38 +602,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             False
         )
         self.assert_user_data_equals({'commcare_project': 'mydomain', 'tempo': 'andante'})
-
-        # Clear user data
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(uncategorized_data={'tempo': ''}, user_id=self.user._id)],
-            [],
-            self.uploading_user.get_id,
-            self.upload_record.pk,
-            False
-        )
-        self.assert_user_data_equals({'commcare_project': 'mydomain'})
-
-    def test_uncategorized_data_clear(self):
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(data={'tempo': 'andante'})],
-            [],
-            self.uploading_user.get_id,
-            self.upload_record.pk,
-            False
-        )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'tempo': 'andante'})
-
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(data={'tempo': ''}, user_id=self.user._id)],
-            [],
-            self.uploading_user.get_id,
-            self.upload_record.pk,
-            False
-        )
-        self.assert_user_data_equals({'commcare_project': 'mydomain'})
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_user_data_ignore_system_fields(self):

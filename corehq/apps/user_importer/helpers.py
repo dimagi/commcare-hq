@@ -211,12 +211,6 @@ class CommCareUserImporter(BaseUserImporter):
         if uncategorized_data:
             self.user.update_metadata(uncategorized_data)
 
-        # Clear blank user data so that it can be purged by remove_unused_custom_fields_from_users_task
-        for key in dict(data, **uncategorized_data):
-            value = self.user.metadata[key]
-            if value is None or value == '':
-                self.user.pop_metadata(key)
-
         new_profile_id = self.user.user_data.get(PROFILE_SLUG)
         if new_profile_id and new_profile_id != current_profile_id:
             self.logger.add_info(UserChangeMessage.profile_info(new_profile_id, profile_name))
