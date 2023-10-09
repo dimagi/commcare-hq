@@ -8,6 +8,10 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 
+class UserDataError(Exception):
+    ...
+
+
 class UserData:
     def __init__(self, raw_user_data, domain):
         self._local_to_user = raw_user_data
@@ -39,11 +43,14 @@ class UserData:
             return self._get_profile(self.profile_id)
 
     def _get_profile(self, profile_id):
-        return CustomDataFieldsProfile.objects.get(
-            id=profile_id,
-            definition__domain=self.domain,
-            definition__field_type=UserFieldsView.field_type,
-        )
+        try:
+            return CustomDataFieldsProfile.objects.get(
+                id=profile_id,
+                definition__domain=self.domain,
+                definition__field_type=UserFieldsView.field_type,
+            )
+        except CustomDataFieldsProfile.DoesNotExist as e:
+            raise UserDataError("User data profile not found") from e
 
     def items(self):
         return self.to_dict().items()
@@ -64,11 +71,11 @@ class UserData:
         if key in self._provided_by_system:
             if value == self._provided_by_system[key]:
                 return
-            raise ValueError(f"'{key}' cannot be set directly")
+            raise UserDataError(f"'{key}' cannot be set directly")
         if key == PROFILE_SLUG:
             new_profile = self._get_profile(value)
             if set(new_profile.fields).intersection(set(self._local_to_user)):
-                raise ValueError(f"Profile conflicts with existing data")
+                raise UserDataError(f"Profile conflicts with existing data")
             del self.profile
         self._local_to_user[key] = value
 
@@ -84,7 +91,7 @@ class UserData:
 
     def __delitem__(self, key):
         if key in self._provided_by_system:
-            raise ValueError(f"{key} cannot be deleted")
+            raise UserDataError(f"{key} cannot be deleted")
         if key == PROFILE_SLUG:
             del self.profile
         del self._local_to_user[key]

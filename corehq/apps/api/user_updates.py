@@ -11,6 +11,7 @@ from corehq.apps.sms.util import strip_plus
 from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models_role import UserRole
+from corehq.apps.users.user_data import UserDataError
 
 
 def update(user, field, value, user_change_logger=None):
@@ -111,7 +112,7 @@ def _update_user_data(user, new_user_data, user_change_logger):
     # update user data, log if metadata and user_data differ (which is a bug)
     try:
         changed = user.get_user_data(user.domain).update(new_user_data)
-    except ValueError as e:
+    except UserDataError as e:
         raise UpdateUserException(str(e))
 
     if user_change_logger and changed:

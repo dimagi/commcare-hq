@@ -114,8 +114,12 @@ class TestUpdateUserMethods(TestCase):
         profile_id = self._setup_profile()
         with self.assertRaises(UpdateUserException) as cm:
             update(self.user, 'user_data', {PROFILE_SLUG: profile_id, 'conflicting_field': 'no'})
-
         self.assertEqual(cm.exception.message, "'conflicting_field' cannot be set directly")
+
+    def test_profile_not_found(self):
+        with self.assertRaises(UpdateUserException) as cm:
+            update(self.user, 'user_data', {PROFILE_SLUG: 123456})
+        self.assertEqual(cm.exception.message, "User data profile not found")
 
     def test_update_groups_succeeds(self):
         group = Group({"name": "test", "domain": self.user.domain})

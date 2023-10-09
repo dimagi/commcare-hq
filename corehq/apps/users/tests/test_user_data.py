@@ -9,7 +9,7 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.apps.users.user_data import UserData
+from corehq.apps.users.user_data import UserData, UserDataError
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 
@@ -130,17 +130,17 @@ class TestUserDataModel(SimpleTestCase):
 
     def test_profile_conflicts_with_data(self):
         user_data = UserData({'favorite_color': 'purple'}, self.domain)
-        with self.assertRaisesMessage(ValueError, "Profile conflicts with existing data"):
+        with self.assertRaisesMessage(UserDataError, "Profile conflicts with existing data"):
             user_data[PROFILE_SLUG] = 'blues'
 
     def test_data_conflicts_with_profile(self):
         user_data = UserData({PROFILE_SLUG: 'blues'}, self.domain)
-        with self.assertRaisesMessage(ValueError, "'favorite_color' cannot be set directly"):
+        with self.assertRaisesMessage(UserDataError, "'favorite_color' cannot be set directly"):
             user_data['favorite_color'] = 'purple'
 
     def test_profile_and_data_conflict(self):
         user_data = UserData({}, self.domain)
-        with self.assertRaisesMessage(ValueError, "'favorite_color' cannot be set directly"):
+        with self.assertRaisesMessage(UserDataError, "'favorite_color' cannot be set directly"):
             user_data.update({
                 PROFILE_SLUG: 'blues',
                 'favorite_color': 'purple',
