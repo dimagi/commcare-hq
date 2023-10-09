@@ -71,8 +71,14 @@ class UserData:
         self._local_to_user[key] = value
 
     def update(self, data):
+        original = self.to_dict()
+        # set profile first to identify conflicts properly
+        if PROFILE_SLUG in data:
+            self[PROFILE_SLUG] = data[PROFILE_SLUG]
         for k, v in data.items():
-            self[k] = v
+            if k != PROFILE_SLUG:
+                self[k] = v
+        return original != self.to_dict()
 
     def __delitem__(self, key):
         if key in self._provided_by_system:

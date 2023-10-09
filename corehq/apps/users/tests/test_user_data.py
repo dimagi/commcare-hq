@@ -145,3 +145,17 @@ class TestUserDataModel(SimpleTestCase):
                 PROFILE_SLUG: 'blues',
                 'favorite_color': 'purple',
             })
+
+    def test_update_shows_changed(self):
+        user_data = UserData({}, self.domain)
+        changed = user_data.update({'favorite_color': 'purple'})
+        self.assertTrue(changed)
+        changed = user_data.update({'favorite_color': 'purple'})
+        self.assertFalse(changed)
+
+    def test_update_order_irrelevant(self):
+        user_data = UserData({PROFILE_SLUG: 'blues',}, self.domain)
+        user_data.update({
+            'favorite_color': 'purple', # this is compatible with the new profile, but not the old
+            PROFILE_SLUG: 'others',
+        })
