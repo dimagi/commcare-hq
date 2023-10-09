@@ -672,7 +672,7 @@ unidecode==1.2.0
     # via pyphonetics
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.15
+urllib3==1.26.17
     # via
     #   botocore
     #   elasticsearch2
