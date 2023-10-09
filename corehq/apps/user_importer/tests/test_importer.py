@@ -692,50 +692,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         change_messages = UserChangeMessage.profile_info(self.profile.id, self.profile.name)
         self.assertDictEqual(user_history.change_messages, change_messages)
 
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(
-                data={'key': 'F#'},
-                user_profile='',  # this doesn't actually unset the profile
-                password="skyfall",
-                user_id=self.user.get_id)],
-            [],
-            self.uploading_user.get_id,
-            self.upload_record.pk,
-            False
-        )
-
-        user_history = UserHistory.objects.get(
-            user_id=self.user.get_id, changed_by=self.uploading_user.get_id,
-            action=UserModelAction.UPDATE.value)
-
-        change_messages = UserChangeMessage.password_reset()
-        self.assertDictEqual(user_history.change_messages, change_messages)
-
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(
-                data={'key': 'F#'},
-                user_profile=self.profile.name,
-                password="******",
-                user_id=self.user.get_id)],
-            [],
-            self.uploading_user.get_id,
-            self.upload_record.pk,
-            False
-        )
-
-        # since the profile never got unset, the above doesn't actually change it back.
-        # This test also checks password management stuff for some reason -
-        # will address in the next commit
-
-        # user_history = UserHistory.objects.filter(
-        #     user_id=self.user.get_id, changed_by=self.uploading_user.get_id,
-        #     action=UserModelAction.UPDATE.value
-        # ).last()
-        # change_messages = UserChangeMessage.profile_info(self.profile.id, self.profile.name)
-        # self.assertDictEqual(user_history.change_messages, change_messages)
-
     def test_user_data_profile_redundant(self):
         import_users_and_groups(
             self.domain.name,
