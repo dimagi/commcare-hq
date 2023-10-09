@@ -3,9 +3,7 @@ from uuid import uuid4
 from django.test import TestCase
 from django.urls import reverse
 
-from corehq.apps.es import case_search_adapter, user_adapter
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.tests.utils import create_case
 from corehq.form_processor.models import CommCareCase
@@ -16,7 +14,15 @@ from corehq.apps.geospatial.views import (
 )
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.util.test_utils import flag_enabled
+from corehq.apps.es import case_adapter, case_search_adapter, user_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.geospatial.models import GeoConfig
+from corehq.apps.geospatial.views import GeospatialConfigPage, GPSCaptureView
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.tests.utils import create_case
+from corehq.util.test_utils import flag_enabled
 
 
 class BaseGeospatialViewClass(TestCase):
@@ -165,6 +171,7 @@ class GeoConfigViewTestClass(TestCase):
         self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.RADIAL_ALGORITHM)
 
 
+@es_test(requires=[case_adapter], setup_class=True)
 class TestGPSCaptureView(BaseGeospatialViewClass):
 
     urlname = GPSCaptureView.urlname
@@ -315,7 +322,7 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
                 {
                     'id': self.user_b.user_id,
                     'username': self.user_b.raw_username,
-                    'gps_point': None,
+                    'gps_point': '',
                 },
             ],
         }

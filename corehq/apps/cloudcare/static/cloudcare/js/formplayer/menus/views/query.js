@@ -157,12 +157,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     );
                     return true;
                 }
-                formEntryUtils.renderMapboxInput(
-                    inputId,
-                    geocoderItemCallback(id, model),
-                    geocoderOnClearCallback(id),
-                    initialPageData
-                );
+                formEntryUtils.renderMapboxInput({
+                    divId: inputId,
+                    itemCallback: geocoderItemCallback(id, model),
+                    clearCallBack: geocoderOnClearCallback(id),
+                    responseDataTypes: 'address,region,place,postcode'
+                });
                 var divEl = $field.find('.mapboxgl-ctrl-geocoder');
                 divEl.css("max-width", "none");
                 divEl.css("width", "100%");
@@ -465,6 +465,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     break;
                 }
             }
+            this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                this.handleSmallScreenChange(smallScreenEnabled);
+            });
+            this.smallScreenListener.listen();
         },
 
         templateContext: function () {
@@ -486,6 +490,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         events: {
             'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
+        },
+
+        handleSmallScreenChange: function (enabled) {
+            this.smallScreenEnabled = enabled;
+            if (this.options.sidebarEnabled) {
+                if (this.smallScreenEnabled) {
+                    $('#sidebar-region').addClass('collapse');
+                } else {
+                    $('#sidebar-region').removeClass('collapse');
+                }
+            }
         },
 
         getAnswers: function () {
@@ -561,6 +576,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     self.selectValuesByKeys,
                     self.options.sidebarEnabled
                 );
+                if (self.smallScreenEnabled && self.options.sidebarEnabled) {
+                    $('#sidebar-region').collapse('hide');
+                }
             });
         },
 
@@ -675,6 +693,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onAttach: function () {
             this.initGeocoders();
+        },
+
+        onBeforeDetach: function () {
+            this.smallScreenListener.stopListening();
         },
 
         initGeocoders: function () {

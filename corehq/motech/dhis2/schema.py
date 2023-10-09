@@ -1,5 +1,5 @@
 from schema import Optional as SchemaOptional
-from schema import Regex, Schema
+from schema import Regex, Schema  # noqa: F401
 
 from corehq.motech.dhis2.const import (
     DHIS2_EVENT_STATUSES,
@@ -138,6 +138,7 @@ def get_tracked_entity_schema() -> dict:
     note_schema = get_note_schema()
     relationship_schema = get_relationship_schema()
     program_owner_schema = get_program_owner_schema()
+    user_info_schema = get_user_info_schema()
     return {
         SchemaOptional("attributes"): [attribute_schema],
         SchemaOptional("created"): datetime_schema,
@@ -167,6 +168,8 @@ def get_tracked_entity_schema() -> dict:
             SchemaOptional("storedBy"): str,
             SchemaOptional("trackedEntityInstance"): id_schema,
             SchemaOptional("trackedEntityType"): id_schema,
+            SchemaOptional("lastUpdatedByUserInfo"): user_info_schema,
+            SchemaOptional("createdByUserInfo"): user_info_schema
         }],
         SchemaOptional("featureType"): str,
         SchemaOptional("geometry"): geometry_schema,
@@ -180,6 +183,8 @@ def get_tracked_entity_schema() -> dict:
         SchemaOptional("storedBy"): str,
         SchemaOptional("trackedEntityInstance"): id_schema,
         "trackedEntityType": id_schema,
+        SchemaOptional("lastUpdatedByUserInfo"): user_info_schema,
+        SchemaOptional("createdByUserInfo"): user_info_schema
     }
 
 

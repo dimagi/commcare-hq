@@ -16,18 +16,18 @@ def styleguide_default(request):
 
 
 class MainStyleGuideView(TemplateView):
-    template_name = 'styleguide/home.html'
+    template_name = 'styleguide/bootstrap3/home.html'
     urlname = 'styleguide_home'
 
 
 class BaseStyleGuideArticleView(TemplateView):
-    template_name = 'styleguide/base_section.html'
+    template_name = 'styleguide/bootstrap3/base_section.html'
 
     @property
     def sections(self):
         """This will be inserted into the page context's sections variable
         as a list of strings following the format
-        'styleguide/_includes/<section>.html'
+        'styleguide/bootstrap3/_includes/<section>.html'
         Make sure you create the corresponding template in the styleguide app.
 
         :return: List of the sections in order. Usually organized by
@@ -38,7 +38,7 @@ class BaseStyleGuideArticleView(TemplateView):
     @property
     def navigation_name(self):
         """This will be inserted into the page context under
-        styleguide/_includes/nav/<navigation_name>.html. Make sure
+        styleguide/bootstrap3/_includes/nav/<navigation_name>.html. Make sure
         you create the corresponding template in the styleguide app
         when you add this.
         :return: a string that is the name of the navigation section
@@ -48,9 +48,9 @@ class BaseStyleGuideArticleView(TemplateView):
     @property
     def section_context(self):
         return {
-            'sections': ['styleguide/_includes/%s.html' % s
+            'sections': ['styleguide/bootstrap3/_includes/%s.html' % s
                          for s in self.sections],
-            'navigation': ('styleguide/_includes/nav/%s.html'
+            'navigation': ('styleguide/bootstrap3/_includes/nav/%s.html'
                            % self.navigation_name),
         }
 
@@ -63,7 +63,8 @@ class BaseStyleGuideArticleView(TemplateView):
         return {}
 
     def example(self, filename):
-        examples = os.path.join(os.path.dirname(__file__), '..', 'templates', 'styleguide', 'examples')
+        examples = os.path.join(os.path.dirname(__file__),
+                                '..', 'templates', 'styleguide', 'bootstrap3', 'examples')
         with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
             return content.read()
 

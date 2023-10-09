@@ -32,7 +32,7 @@ class SimpleCrispyFormSGExample(BaseSGTab):
     title = gettext_noop("Simple Crispy Form")
     view = DefaultSimpleCrispyFormSectionView.urlname
 
-    url_prefix_formats = ('/styleguide/docs/simple_crispy/',)
+    url_prefix_formats = ('/styleguide/bootstrap3/docs/simple_crispy/',)
 
     @property
     @memoized
@@ -67,7 +67,7 @@ class SGExampleTab(BaseSGTab):
     title = gettext_noop("Style Guide")
     view = 'corehq.apps.styleguide.views.docs.default'
 
-    url_prefix_formats = ('/styleguide/docs/',)
+    url_prefix_formats = ('/styleguide/bootstrap3/docs/',)
 
     @property
     def dropdown_items(self):

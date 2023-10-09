@@ -150,18 +150,6 @@ class SyncCouchToSQLMixin(object):
         if save:
             sql_object.save(sync_to_couch=False)
 
-    @classmethod
-    def _migration_bulk_sync_to_sql(cls, couch_docs, **kw):
-        sql_class = cls._migration_get_sql_model_class()
-        id_name = sql_class._migration_couch_id_name
-        new_sql_docs = []
-        for doc in couch_docs:
-            assert doc._id, doc
-            obj = sql_class(**{id_name: doc._id})
-            doc._migration_sync_to_sql(obj, save=False)
-            new_sql_docs.append(obj)
-        sql_class.objects.bulk_create(new_sql_docs, **kw)
-
     def _migration_sync_submodels_to_sql(self, sql_object):
         """Migrate submodels from the Couch model to the SQL model. This is called
         as part of ``_migration_sync_to_sql``"""
@@ -182,8 +170,7 @@ class SyncCouchToSQLMixin(object):
         self._migration_sync_to_sql(sql_object)
         return sql_object
 
-    def save(self, *args, **kwargs):
-        sync_to_sql = kwargs.pop('sync_to_sql', True)
+    def save(self, *args, sync_to_sql=True, **kwargs):
         super(SyncCouchToSQLMixin, self).save(*args, **kwargs)
         if sync_to_sql:
             try:
@@ -197,8 +184,7 @@ class SyncCouchToSQLMixin(object):
                     message='Could not sync %s SQL object from %s %s' % (sql_class_name,
                         couch_class_name, self._id))
 
-    def delete(self, *args, **kwargs):
-        sync_to_sql = kwargs.pop('sync_to_sql', True)
+    def delete(self, sync_to_sql=True, *args, **kwargs):
         if sync_to_sql:
             sql_object = self._migration_get_sql_object()
             if sql_object is not None:
@@ -236,7 +222,7 @@ class SyncSQLToCouchMixin(object):
         Should return a list of SubModelSpec tuples, one for each SchemaListProperty
         in the couch class. Should be identical in the couch and sql mixins.
         """
-        return []
+        return cls._migration_get_couch_model_class()._migration_get_submodels()
 
     @classmethod
     def _migration_get_custom_sql_to_couch_functions(cls):
@@ -300,8 +286,7 @@ class SyncSQLToCouchMixin(object):
         couch_object = self._migration_get_or_create_couch_object()
         self._migration_sync_to_couch(couch_object)
 
-    def save(self, *args, **kwargs):
-        sync_to_couch = kwargs.pop('sync_to_couch', True)
+    def save(self, *args, sync_to_couch=True, **kwargs):
         super(SyncSQLToCouchMixin, self).save(*args, **kwargs)
         if sync_to_couch and sync_to_couch_enabled(self.__class__):
             try:
@@ -315,8 +300,7 @@ class SyncSQLToCouchMixin(object):
                     message='Could not sync %s Couch object from %s %s' % (couch_class_name,
                         sql_class_name, self.pk))
 
-    def delete(self, *args, **kwargs):
-        sync_to_couch = kwargs.pop('sync_to_couch', True)
+    def delete(self, *args, sync_to_couch=True, **kwargs):
         if sync_to_couch and sync_to_couch_enabled(self.__class__):
             couch_object = self._migration_get_couch_object()
             if couch_object is not None:

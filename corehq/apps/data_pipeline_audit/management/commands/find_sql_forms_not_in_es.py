@@ -10,7 +10,7 @@ description here: https://github.com/dimagi/commcare-hq/pull/22477
 import sys
 
 from django.core.management.base import BaseCommand
-from django.db.models import F, Q
+from django.db.models import Q
 from django.db.models.functions import Greatest
 
 from corehq.util.argparse_types import date_type
@@ -64,12 +64,7 @@ def iter_form_ids_by_last_modified(start_datetime, end_datetime):
     return paginate_query_across_partitioned_databases(
         XFormInstance,
         (Q(last_modified__gt=start_datetime, last_modified__lt=end_datetime)
-         & Q(state=F('state').bitand(XFormInstance.DELETED)
-             + F('state').bitand(XFormInstance.DEPRECATED)
-             + F('state').bitand(XFormInstance.DUPLICATE)
-             + F('state').bitand(XFormInstance.ERROR)
-             + F('state').bitand(XFormInstance.SUBMISSION_ERROR_LOG)
-             + F('state'))),
+         & Q(state__in=[XFormInstance.NORMAL, XFormInstance.ARCHIVED])),
         annotate=annotate,
         values=['form_id'],
         load_source='find_sql_forms_not_in_es'

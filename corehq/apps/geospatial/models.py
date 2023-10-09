@@ -173,3 +173,17 @@ class GeoConfig(models.Model):
         default=ROAD_NETWORK_ALGORITHM,
         max_length=50
     )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._clear_caches()
+
+    def delete(self, *args, **kwargs):
+        self._clear_caches()
+        return super().delete(*args, **kwargs)
+
+    def _clear_caches(self):
+        from .utils import get_geo_case_property, get_geo_user_property
+
+        get_geo_case_property.clear(self.domain)
+        get_geo_user_property.clear(self.domain)

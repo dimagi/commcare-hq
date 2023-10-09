@@ -340,6 +340,8 @@ class ModuleBaseValidator(object):
 
         errors.extend(self.validate_search_config())
 
+        errors.extend(self.validate_case_list_field_actions())
+
         if self.module.root_module_id:
             root_module = self.app.get_module_by_unique_id(self.module.root_module_id)
             if root_module and module_uses_inline_search(root_module):
@@ -533,6 +535,21 @@ class ModuleBaseValidator(object):
                             'property': prop.name,
                             'message': _('This feature is compatible with only version 2 of Mobile UCR'),
                         }
+
+    def validate_case_list_field_actions(self):
+        if hasattr(self.module, 'case_details'):
+            columns = [column for column in self.module.case_details.short.columns if column.endpoint_action_id]
+            form_endpoints = {
+                form.session_endpoint_id for form in self.app.get_forms() if form.session_endpoint_id
+            }
+
+            for column in columns:
+                if column.endpoint_action_id not in form_endpoints:
+                    yield {
+                        'type': 'case list field action endpoint missing',
+                        'module': self.get_module_info(),
+                        'column': column,
+                    }
 
 
 class ModuleDetailValidatorMixin(object):

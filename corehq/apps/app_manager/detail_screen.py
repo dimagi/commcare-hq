@@ -27,10 +27,12 @@ CASE_PROPERTY_MAP = {
 
 
 def get_column_generator(app, module, detail, column, sort_element=None,
-                         order=None, detail_type=None, parent_tab_nodeset=None, style=None):
+                         order=None, detail_type=None, parent_tab_nodeset=None, style=None,
+                         entries_helper=None):
     cls = get_class_for_format(column.format)  # cls will be FormattedDetailColumn or a subclass of it
     return cls(app, module, detail, column, sort_element, order,
-               detail_type=detail_type, parent_tab_nodeset=parent_tab_nodeset, style=style)
+               detail_type=detail_type, parent_tab_nodeset=parent_tab_nodeset, style=style,
+               entries_helper=entries_helper)
 
 
 def get_class_for_format(slug):
@@ -95,7 +97,8 @@ class FormattedDetailColumn(object):
     SORT_TYPE = 'string'
 
     def __init__(self, app, module, detail, column, sort_element=None,
-                 order=None, detail_type=None, parent_tab_nodeset=None, style=None):
+                 order=None, detail_type=None, parent_tab_nodeset=None, style=None,
+                 entries_helper=None):
         self.app = app
         self.module = module
         self.detail = detail
@@ -106,6 +109,7 @@ class FormattedDetailColumn(object):
         self.id_strings = id_strings
         self.parent_tab_nodeset = parent_tab_nodeset
         self.style = style
+        self.entries_helper = entries_helper
 
     def has_sort_node_for_nodeset_column(self):
         return self.parent_tab_nodeset and self.detail.sort_nodeset_columns_for_detail()
@@ -280,6 +284,10 @@ class FormattedDetailColumn(object):
         return self.evaluate_template(self.SORT_XPATH_FUNCTION)
 
     @property
+    def action(self):
+        return None
+
+    @property
     def fields(self):
         print_id = None
         if self.detail.print_template:
@@ -292,6 +300,7 @@ class FormattedDetailColumn(object):
                 template=self.template,
                 sort_node=self.sort_node,
                 print_id=print_id,
+                endpoint_action=self.action,
             )
         elif self.sort_xpath_function and self.detail.display == 'short':
             yield sx.Field(
@@ -461,6 +470,11 @@ class EnumImage(Enum):
             return '13%'
         return str(width)
 
+    @property
+    def action(self):
+        if self.column.endpoint_action_id and self.app.supports_detail_field_action:
+            return sx.EndpointAction(endpoint_id=self.column.endpoint_action_id, background="true")
+
     def _xpath_template(self, type):
         return "if({key_as_condition}, {key_as_var_name}"
 
@@ -533,6 +547,11 @@ class AddressPopup(HideShortColumn):
 @register_format_type('picture')
 class Picture(FormattedDetailColumn):
     template_form = 'image'
+
+
+@register_format_type('clickable-icon')
+class ClickableIcon(EnumImage):
+    template_form = 'clickable-icon'
 
 
 @register_format_type('audio')

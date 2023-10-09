@@ -26,7 +26,6 @@ both its position and its case property, but a calculation would be called ``cas
 from collections import defaultdict, namedtuple
 
 from eulxml.xmlmap.core import load_xmlobject_from_string
-from lxml import etree
 from memoized import memoized
 
 from corehq import toggles
@@ -112,7 +111,10 @@ class DetailContributor(SectionContributor):
                         if detail.case_tile_template:
                             helper = CaseTileHelper(self.app, module, detail, detail_id, detail_type,
                                 self.build_profile_id, detail_column_infos, self.entries_helper)
-                            elements.append(helper.build_case_tile_detail())
+
+                            d = helper.build_case_tile_detail()
+                            self._add_custom_variables(detail, d)
+                            elements.append(d)
                         else:
                             print_template_path = None
                             if detail.print_template:
@@ -211,7 +213,8 @@ class DetailContributor(SectionContributor):
                 # column_info is an instance of DetailColumnInfo named tuple.
                 fields = get_column_generator(
                     self.app, module, detail, parent_tab_nodeset=nodeset,
-                    detail_type=detail_type, *column_info
+                    detail_type=detail_type, entries_helper=self.entries_helper,
+                    *column_info
                 ).fields
                 for field in fields:
                     d.fields.append(field)
@@ -240,16 +243,11 @@ class DetailContributor(SectionContributor):
                 return d
 
     def _add_custom_variables(self, detail, d):
-        custom_variables = detail.custom_variables
-        if custom_variables:
-            custom_variable_elements = [
-                variable for variable in
-                etree.fromstring("<variables>{}</variables>".format(custom_variables))
-            ]
-            d.variables.extend([
-                load_xmlobject_from_string(etree.tostring(e, encoding='utf-8'), xmlclass=DetailVariable)
-                for e in custom_variable_elements
-            ])
+        custom_variables_dict = detail.custom_variables_dict
+        if custom_variables_dict:
+            d.variables.extend(
+                DetailVariable(name=name, function=function) for name, function in custom_variables_dict.items()
+            )
 
     def _get_detail_tab_nodeset(self, module, detail, tab):
         if not tab.has_nodeset:
@@ -339,11 +337,19 @@ class DetailContributor(SectionContributor):
 
         frame = PushFrame()
         frame.add_command(XPath.string(id_strings.form_command(form)))
+        for datum in DetailContributor.get_datums_for_action(entries_helper, module, form):
+            frame.add_datum(datum)
 
-        target_form_dm = entries_helper.get_datums_meta_for_form_generic(form)
+        frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
+        action.stack.add_frame(frame)
+        return action
+
+    @staticmethod
+    def get_datums_for_action(entries_helper, source_module, target_form):
+        target_form_dm = entries_helper.get_datums_meta_for_form_generic(target_form)
         source_form_dm = []
-        if len(module.forms):
-            source_form_dm = entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
+        if len(source_module.forms):
+            source_form_dm = entries_helper.get_datums_meta_for_form_generic(source_module.get_form(0))
         for target_meta in target_form_dm:
             if target_meta.requires_selection:
                 # This is true for registration forms where the case being created is a subcase
@@ -355,17 +361,12 @@ class DetailContributor(SectionContributor):
                 except ValueError:
                     pass
                 else:
-                    frame.add_datum(StackDatum(
+                    yield StackDatum(
                         id=target_meta.id,
                         value=session_var(source_dm.id))
-                    )
             else:
                 s_datum = target_meta.datum
-                frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
-
-        frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
-        action.stack.add_frame(frame)
-        return action
+                yield StackDatum(id=s_datum.id, value=s_datum.function)
 
     @staticmethod
     def get_case_search_action(module, build_profile_id, detail_id):
