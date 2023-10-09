@@ -247,19 +247,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         iconClick: function (e) {
             e.stopImmediatePropagation();
-            if (!e.target.className.includes('disabled')) {
-                const origin = window.location.origin;
-                const user = FormplayerFrontend.getChannel().request('currentUser');
-                let appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
-                const domain = user.domain;
-                const caseId = this.model.get('id');
-                const urlTemplate = this.options.endpointActions[1]['urlTemplate'];
-                const actionUrl = origin + urlTemplate
-                    .replace("{domain}", domain)
-                    .replace("{appid}", appId)
-                    .replace("{case_id}", caseId);
-                this.iconSmartLink(e, actionUrl);
-            }
+            const origin = window.location.origin;
+            const user = FormplayerFrontend.getChannel().request('currentUser');
+            let appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
+            const domain = user.domain;
+            const caseId = this.model.get('id');
+            const urlTemplate = this.options.endpointActions[1]['urlTemplate'];
+            const actionUrl = origin + urlTemplate
+                .replace("{domain}", domain)
+                .replace("{appid}", appId)
+                .replace("{case_id}", caseId);
+            this.iconSmartLink(e, actionUrl);
         },
 
         iconSmartLink: function (e, url) {
