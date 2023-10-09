@@ -1,4 +1,6 @@
-from django.test import TestCase
+from unittest.mock import patch
+
+from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
@@ -7,6 +9,7 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.user_data import UserData
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 
@@ -42,7 +45,7 @@ class TestUserMetadata(TestCase):
         with self.assertRaisesMessage(ValueError, message):
             CommCareUser.create(self.domain, 'martha', 'bmfa', None, None, user_data={'country': 'Canada'})
 
-    def test_metadata(self):
+    def test_user_data_accessor(self):
         user_data = self.user.get_user_data(self.domain)
         self.assertEqual(user_data['commcare_project'], self.domain)
         user_data.update({
@@ -66,44 +69,6 @@ class TestUserMetadata(TestCase):
             'this': 'field',
         })
 
-    def test_add_and_remove_profile(self):
-        # Custom user data profiles get their data added to metadata automatically for mobile users
-        user_data = self.user.get_user_data(self.domain)
-        user_data[PROFILE_SLUG] = self.profile_id
-        self.assertEqual(self.user.get_user_data(self.domain).to_dict(), {
-            'commcare_project': self.domain,
-            PROFILE_SLUG: self.profile_id,
-            'start': 'sometimes',
-        })
-
-        # Remove profile should remove it and related fields
-        del user_data[PROFILE_SLUG]
-        self.assertEqual(self.user.get_user_data(self.domain).to_dict(), {
-            'commcare_project': self.domain,
-        })
-
-    def test_profile_conflicts_with_data(self):
-        user_data = self.user.get_user_data(self.domain)
-        user_data.update({
-            'start': 'never',
-            'end': 'yesterday',
-        })
-        with self.assertRaisesMessage(ValueError, "Profile conflicts with existing data"):
-            user_data[PROFILE_SLUG] = self.profile_id
-
-    def test_data_conflicts_with_profile(self):
-        user_data = self.user.get_user_data(self.domain)
-        user_data[PROFILE_SLUG] = self.profile_id
-        with self.assertRaisesMessage(ValueError, "'start' cannot be set directly"):
-            user_data.update({'start': 'never'})
-
-    def test_profile_and_data_conflict(self):
-        with self.assertRaisesMessage(ValueError, "'start' cannot be set directly"):
-            self.user.get_user_data(self.domain).update({
-                PROFILE_SLUG: self.profile_id,
-                'start': 'never',
-            })
-
     def test_web_users(self):
         # This behavior is bad - data isn't fully scoped to domain
         web_user = WebUser.create(None, "imogen", "*****", None, None)
@@ -120,3 +85,63 @@ class TestUserMetadata(TestCase):
             'commcare_project': 'ANOTHER_DOMAIN',
             'start': 'sometimes',  # whoops, domain 1 affects other domains!
         })
+
+
+def _get_profile(self, profile_id):
+    if profile_id == 'blues':
+        return CustomDataFieldsProfile(
+            id=profile_id,
+            name='blues',
+            fields={'favorite_color': 'blue'},
+        )
+    return CustomDataFieldsProfile(
+        id=profile_id,
+        name='others',
+        fields={},
+    )
+
+
+@patch('corehq.apps.users.user_data.UserData._get_profile', new=_get_profile)
+class TestUserDataModel(SimpleTestCase):
+    domain = 'test-user-data-model'
+
+    def test_add_and_remove_profile(self):
+        # Custom user data profiles get their data added to metadata automatically for mobile users
+        user_data = UserData({'yearbook_quote': 'Not all who wander are lost.'}, self.domain)
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'yearbook_quote': 'Not all who wander are lost.',
+        })
+
+        user_data[PROFILE_SLUG] = 'blues'
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': 'blues',
+            'favorite_color': 'blue',  # provided by the profile
+            'yearbook_quote': 'Not all who wander are lost.',
+        })
+
+        # Remove profile should remove it and related fields
+        del user_data[PROFILE_SLUG]
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'yearbook_quote': 'Not all who wander are lost.',
+        })
+
+    def test_profile_conflicts_with_data(self):
+        user_data = UserData({'favorite_color': 'purple'}, self.domain)
+        with self.assertRaisesMessage(ValueError, "Profile conflicts with existing data"):
+            user_data[PROFILE_SLUG] = 'blues'
+
+    def test_data_conflicts_with_profile(self):
+        user_data = UserData({PROFILE_SLUG: 'blues'}, self.domain)
+        with self.assertRaisesMessage(ValueError, "'favorite_color' cannot be set directly"):
+            user_data['favorite_color'] = 'purple'
+
+    def test_profile_and_data_conflict(self):
+        user_data = UserData({}, self.domain)
+        with self.assertRaisesMessage(ValueError, "'favorite_color' cannot be set directly"):
+            user_data.update({
+                PROFILE_SLUG: 'blues',
+                'favorite_color': 'purple',
+            })
