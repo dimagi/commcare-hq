@@ -248,17 +248,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         iconClick: function (e) {
             e.stopImmediatePropagation();
             const origin = window.location.origin;
-            const currentUrlToObject = formplayerUtils.currentUrlToObject();
             const user = FormplayerFrontend.getChannel().request('currentUser');
-            const appId = currentUrlToObject.copyOf;
+            const appId = formplayerUtils.currentUrlToObject().appId;
+            const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
+            // Confirms we are getting the app id, not build id
+            const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"]
             const domain = user.domain;
             const caseId = this.model.get('id');
             const urlTemplate = this.options.endpointActions[1]['urlTemplate'];
             const actionUrl = origin + urlTemplate
                 .replace("{domain}", domain)
-                .replace("{appid}", appId)
+                .replace("{appid}", currentAppId)
                 .replace("{case_id}", caseId);
-            this.iconSmartLink(e, actionUrl);
+            e.target.className += " disabled";
+            document.location = actionUrl;
         },
 
         iconSmartLink: function (e, url) {
