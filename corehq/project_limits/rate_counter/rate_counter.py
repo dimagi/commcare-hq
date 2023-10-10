@@ -72,7 +72,7 @@ class SlidingWindowRateCounter(AbstractRateCounter):
         """Calculates the time (in seconds) left in the current grain"""
         timestamp = time.time()
         progress_in_current_grain = (timestamp % self.grain_duration) / self.grain_duration
-        progress_left_in_grain = (1 - progress_in_current_grain)
+        progress_left_in_grain = 1 - progress_in_current_grain
         return progress_left_in_grain * self.grain_duration
 
     def increment(self, scope, delta=1, timestamp=None):
