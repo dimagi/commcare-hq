@@ -520,7 +520,7 @@ class SubscriptionForm(forms.Form):
         choices=SoftwarePlanVisibility.CHOICES,
     )
     most_recent_version = forms.ChoiceField(
-        label=gettext_lazy("Most Recent Version"), initial="True",
+        label=gettext_lazy("Version"), initial="True",
         choices=(("True", "Show Most Recent Version"), ("False", "Show All Versions"))
     )
     plan_version = forms.IntegerField(
@@ -622,8 +622,10 @@ class SubscriptionForm(forms.Form):
                 'plan_visibility',
                 self.fields['plan_visibility'].initial
             )
-            self.fields['most_recent_version'].initial = (subscription.plan_version.plan.get_version()
-                                                        == subscription.plan_version)
+            is_most_recent_version = subscription.plan_version.plan.get_version() == subscription.plan_version
+            most_recent_version_text = ("is most recent version" if is_most_recent_version
+                                        else "not most recent version")
+            self.fields['most_recent_version'].initial = most_recent_version_text
             most_recent_version_field = hqcrispy.B3TextField(
                 'most_recent_version',
                 self.fields['most_recent_version'].initial
@@ -884,7 +886,7 @@ class ChangeSubscriptionForm(forms.Form):
         choices=SoftwarePlanVisibility.CHOICES,
     )
     most_recent_version = forms.ChoiceField(
-        label=gettext_lazy("Most Recent Version"), initial="True",
+        label=gettext_lazy("Version"), initial="True",
         choices=(("True", "Show Most Recent Version"), ("False", "Show All Versions"))
     )
     new_plan_version = forms.CharField(
