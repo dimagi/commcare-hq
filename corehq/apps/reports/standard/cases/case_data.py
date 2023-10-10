@@ -250,16 +250,16 @@ class CaseDataView(BaseProjectReportSectionView):
             "repeat_records": repeat_records,
         }
         if dynamic_data:
-            dd_properties_tables = _get_dd_tables(self.domain, self.case_instance.type,
-                                                    dynamic_data, timezone)
-            context['dd_properties_tables'] = dd_properties_tables
+            case_property_tables = _get_case_property_tables(
+                self.domain, self.case_instance.type, dynamic_data, timezone)
+            context['case_property_tables'] = case_property_tables
             context['show_expand_collapse_buttons'] = len(
-                [table.get('name') for table in dd_properties_tables if table.get('name') is not None]) > 1
+                [table.get('name') for table in case_property_tables if table.get('name') is not None]) > 1
         context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
         return context
 
 
-def _get_dd_tables(domain, case_type, dynamic_data, timezone):
+def _get_case_property_tables(domain, case_type, dynamic_data, timezone):
     if domain_has_privilege(domain, privileges.DATA_DICTIONARY):
         dd_props_by_group = list(_get_dd_props_by_group(domain, case_type))
     else:
@@ -271,7 +271,7 @@ def _get_dd_tables(domain, case_type, dynamic_data, timezone):
         for group, props in dd_props_by_group
     ]
     props_in_dd = set(prop.name for _, prop_group in dd_props_by_group
-                    for prop in prop_group)
+                      for prop in prop_group)
     unrecognized = set(dynamic_data.keys()) - props_in_dd - {'case_name'}
     if unrecognized:
         header = _('Unrecognized') if tables else None
