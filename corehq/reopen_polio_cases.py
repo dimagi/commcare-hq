@@ -33,6 +33,7 @@ def process_chunk(case_ids):
     processed_cloned_case_ids = []
     for case_obj in CommCareCase.objects.iter_cases(case_ids, domain=DOMAIN):
         case_props = case_obj.case_json
+        case_props['old_case_id'] = case_obj.case_id
         clone_case_id = uuid.uuid4().hex
         cases_to_create.append(
             CaseBlock(
