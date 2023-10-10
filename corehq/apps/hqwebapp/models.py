@@ -8,6 +8,7 @@ from django.db.models import Q
 import architect
 from oauth2_provider.settings import APPLICATION_MODEL
 
+from corehq.sql_db.fields import CharIdField
 from corehq.util.markup import mark_up_urls
 from corehq.util.models import ForeignValue, foreign_init
 from corehq.util.quickcache import quickcache
@@ -35,8 +36,8 @@ class CommCareHQAlert(models.Model):
 
     text = models.TextField()
     domains = ArrayField(models.CharField(max_length=126), null=True)
-    created_by_domain = models.CharField(max_length=255, null=True, db_index=True)
-    created_by_user = models.CharField(max_length=128, null=True)
+    created_by_domain = CharIdField(max_length=255, null=True, db_index=True)
+    created_by_user = CharIdField(max_length=128, null=True)
 
     class Meta(object):
         app_label = 'hqwebapp'
