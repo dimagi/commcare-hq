@@ -57,6 +57,7 @@ class CommCareHQAlert(models.Model):
     @classmethod
     @quickcache([], timeout=1 * 60)
     def get_active_alerts(cls):
+        # return active HQ alerts
         now = datetime.utcnow()
         active_alerts = cls.objects.filter(
             Q(active=True),
