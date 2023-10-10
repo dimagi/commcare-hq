@@ -712,10 +712,15 @@ class SubscriptionForm(forms.Form):
                 crispy.Div(*transfer_fields),
                 start_date_field,
                 end_date_field,
-                plan_edition_field,
-                plan_visibility_field,
-                most_recent_version_field,
-                plan_version_field,
+                crispy.Div(
+                    crispy.HTML('<h4 style="margin-bottom: 20px;">%s</h4>'
+                            % _("Software Plan"),),
+                    plan_edition_field,
+                    plan_visibility_field,
+                    most_recent_version_field,
+                    plan_version_field,
+                    css_class="well",
+                ),
                 domain_field,
                 'salesforce_contract_id',
                 hqcrispy.B3MultiField(
@@ -921,13 +926,18 @@ class ChangeSubscriptionForm(forms.Form):
             crispy.Fieldset(
                 "Change Subscription",
                 crispy.Field('new_date_end', css_class="date-picker"),
-                'new_plan_edition',
-                'new_plan_visibility',
-                'most_recent_version',
-                crispy.Field(
-                    'new_plan_version', css_class="input-xxlarge",
-                    placeholder="Search for Software Plan",
-                    style="width: 100%;"
+                crispy.Div(
+                    crispy.HTML('<h4 style="margin-bottom: 20px;">%s</h4>'
+                            % _("Software Plan"),),
+                    'new_plan_edition',
+                    'new_plan_visibility',
+                    'most_recent_version',
+                    crispy.Field(
+                        'new_plan_version', css_class="input-xxlarge",
+                        placeholder="Search for Software Plan",
+                        style="width: 100%;"
+                    ),
+                    css_class="well",
                 ),
                 'service_type',
                 'pro_bono_status',
