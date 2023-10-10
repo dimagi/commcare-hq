@@ -40,6 +40,7 @@ class CommCareHQAlert(models.Model):
 
     class Meta(object):
         app_label = 'hqwebapp'
+        db_table = 'hqwebapp_maintenancealert'
 
     @property
     def html(self):
