@@ -46,7 +46,7 @@ def process_chunk(rows):
         processed_case_ids.add(case_obj.case_id)
     submit_case_blocks(cases_to_create, DOMAIN, device_id='system')
     
-    skipped_case_ids = set(case_ids) - set()
+    skipped_case_ids = set(case_ids) - processed_case_ids
     return skipped_case_ids
 
 
