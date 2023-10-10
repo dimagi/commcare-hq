@@ -296,9 +296,9 @@ def _get_dd_props_by_group(domain, case_type):
             case_type__name=case_type,
             deprecated=False,
     ).select_related('group_obj').order_by('group_obj__index', 'index'):
-        ret[prop.group_name].append(prop)
+        ret[prop.group_name or None].append(prop)
 
-    uncategorized = ret.pop('', None)
+    uncategorized = ret.pop(None, None)
     for group, props in ret.items():
         yield group, props
 
