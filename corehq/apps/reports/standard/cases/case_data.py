@@ -277,7 +277,7 @@ def _get_dd_tables(domain, case_type, dynamic_data, timezone):
     ]
     props_in_dd = set(prop.name for _, prop_group in dd_props_by_group
                       for prop in prop_group)
-    unrecognized = set(dynamic_data.keys()) - props_in_dd
+    unrecognized = set(dynamic_data.keys()) - props_in_dd - {'case_name'}
     if unrecognized:
         tables.append((_('Unrecognized'), _table_definition([
             (p, None, None) for p in unrecognized
