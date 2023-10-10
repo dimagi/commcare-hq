@@ -268,7 +268,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             e.target.className += " disabled";
             self.processing = true;
             return $.ajax({
-                type: "POST",
+                type: "GET",
                 url: url,
                 success: function (resp) {
                     FormplayerFrontend.trigger('showSuccess', gettext('Action was successful'));
