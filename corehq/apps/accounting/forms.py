@@ -515,6 +515,14 @@ class SubscriptionForm(forms.Form):
         label=gettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
+    plan_visibility = forms.ChoiceField(
+        label=gettext_lazy("Visibility"), initial=SoftwarePlanVisibility.PUBLIC,
+        choices=SoftwarePlanVisibility.CHOICES,
+    )
+    most_recent_version = forms.ChoiceField(
+        label=gettext_lazy("Most Recent Version"), initial="True",
+        choices=(("True", "Show Most Recent Version"), ("False", "Show All Versions"))
+    )
     plan_version = forms.IntegerField(
         label=gettext_lazy("Software Plan"),
         widget=forms.Select(choices=[]),
@@ -609,7 +617,17 @@ class SubscriptionForm(forms.Form):
                 'plan_edition',
                 self.fields['plan_edition'].initial
             )
-
+            self.fields['plan_visibility'].initial = subscription.plan_version.plan.visibility
+            plan_visibility_field = hqcrispy.B3TextField(
+                'plan_visibility',
+                self.fields['plan_visibility'].initial
+            )
+            self.fields['most_recent_version'].initial = (subscription.plan_version.plan.get_version()
+                                                        == subscription.plan_version)
+            most_recent_version_field = hqcrispy.B3TextField(
+                'most_recent_version',
+                self.fields['most_recent_version'].initial
+            )
             self.fields['domain'].choices = [
                 (subscription.subscriber.domain, subscription.subscriber.domain)
             ]
@@ -666,6 +684,8 @@ class SubscriptionForm(forms.Form):
                 placeholder="Search for Project Space"
             )
             plan_edition_field = crispy.Field('plan_edition')
+            plan_visibility_field = crispy.Field('plan_visibility')
+            most_recent_version_field = crispy.Field('most_recent_version')
             plan_version_field = crispy.Field(
                 'plan_version', css_class="input-xxlarge",
                 placeholder="Search for Software Plan"
@@ -693,6 +713,8 @@ class SubscriptionForm(forms.Form):
                 start_date_field,
                 end_date_field,
                 plan_edition_field,
+                plan_visibility_field,
+                most_recent_version_field,
                 plan_version_field,
                 domain_field,
                 'salesforce_contract_id',
@@ -852,6 +874,14 @@ class ChangeSubscriptionForm(forms.Form):
         label=gettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
+    new_plan_visibility = forms.ChoiceField(
+        label=gettext_lazy("Visibility"), initial=SoftwarePlanVisibility.PUBLIC,
+        choices=SoftwarePlanVisibility.CHOICES,
+    )
+    most_recent_version = forms.ChoiceField(
+        label=gettext_lazy("Most Recent Version"), initial="True",
+        choices=(("True", "Show Most Recent Version"), ("False", "Show All Versions"))
+    )
     new_plan_version = forms.CharField(
         label=gettext_lazy("New Software Plan"),
         widget=forms.Select(choices=[]),
@@ -892,6 +922,8 @@ class ChangeSubscriptionForm(forms.Form):
                 "Change Subscription",
                 crispy.Field('new_date_end', css_class="date-picker"),
                 'new_plan_edition',
+                'new_plan_visibility',
+                'most_recent_version',
                 crispy.Field(
                     'new_plan_version', css_class="input-xxlarge",
                     placeholder="Search for Software Plan",
