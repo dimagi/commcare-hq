@@ -64,7 +64,8 @@ def process_batch():
         total_fail_count = 0
         total_skip_count = 0
         for rows in chunked(reader, CHUNK_SIZE):
-            print(f"Processing chunk {current_chunk} ({CHUNK_SIZE * (current_chunk - 1)}-{len(rows)})")
+            start_count = CHUNK_SIZE * (current_chunk - 1)
+            print(f"Processing chunk {current_chunk} ({start_count + 1}-{start_count + len(case_ids)})")
             try:
                 skipped_case_ids = process_chunk(rows)
                 if len(skipped_case_ids):
