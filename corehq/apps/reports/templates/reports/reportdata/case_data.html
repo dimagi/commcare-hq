@@ -72,9 +72,7 @@
             <div class="tab-content">
               <div class="tab-pane" id="properties">
                 <div class="row-fluid">
-                  {% if dynamic_properties_table %}
-                    {% include "reports/partials/case_property_table.html" with rows=dynamic_properties_table %}
-                  {% elif dd_properties_tables %}
+                  {% if dd_properties_tables %}
                     {% if show_expand_collapse_buttons %}
                       <div class="pull-right btn-grp" role="group">
                         <button class="btn btn-sm btn-default" type="button" id="expand-all-accordion-btn">Expand All</button>

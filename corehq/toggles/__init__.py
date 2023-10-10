@@ -1591,14 +1591,6 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     ),
 )
 
-DD_CASE_DATA = StaticToggle(
-    'dd_case_data',
-    'Data Dictionary Case Data Page',
-    TAG_INTERNAL,
-    [NAMESPACE_USER],
-    description='Experimental: render the case data page in accordance with the data dictionary',
-)
-
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
