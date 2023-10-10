@@ -891,17 +891,29 @@ class SoftwarePlanVersion(models.Model):
         SoftwarePlan.get_version.clear(self.plan)
 
     @classmethod
-    def get_most_recent_version(cls, edition, visibility):
-        latest_versions_date = cls.objects.filter(
-            plan=OuterRef('pk'),
-            plan__edition=edition,
-            plan__visibility=visibility
+    def get_most_recent_version(cls, edition=None, visibility=None):
+        # Start with all objects
+        plan_versions_query = cls.objects.all()
+
+        # Apply filters conditionally
+        if edition:
+            plan_versions_query = plan_versions_query.filter(plan__edition=edition)
+        if visibility:
+            plan_versions_query = plan_versions_query.filter(plan__visibility=visibility)
+
+        latest_versions_date = plan_versions_query.filter(
+            plan=OuterRef('pk')
         ).order_by('-date_created').values('date_created')[:1]
 
-        latest_versions = SoftwarePlan.objects.filter(
-            edition=edition,
-            visibility=visibility
-        ).annotate(
+        software_plans_query = SoftwarePlan.objects.all()
+
+        # Apply filters conditionally for SoftwarePlan
+        if edition:
+            software_plans_query = software_plans_query.filter(edition=edition)
+        if visibility:
+            software_plans_query = software_plans_query.filter(visibility=visibility)
+
+        latest_versions = software_plans_query.annotate(
             latest_version_date=Subquery(latest_versions_date)
         ).values('id', 'name', 'latest_version_date')
 
