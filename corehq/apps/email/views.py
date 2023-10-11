@@ -1,3 +1,5 @@
+from secrets import token_urlsafe
+
 from django import forms
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -33,6 +35,7 @@ class EmailSMTPSettingsView(BaseDomainView):
                 form.fields['sns_secret'].widget = forms.HiddenInput()
         else:
             form = EmailSMTPSettingsForm()
+            form.fields['sns_secret'].widget = forms.HiddenInput()
 
         return render(request, self.template_name, {
             'form': form,
@@ -49,7 +52,7 @@ class EmailSMTPSettingsView(BaseDomainView):
         if form.is_valid():
             form.instance.domain = self.domain
             if form.instance.use_tracking_headers and not form.instance.sns_secret:
-                form.instance.sns_secret = "secret"
+                form.instance.sns_secret = token_urlsafe(16)
 
             form.save()
             return redirect(EmailSMTPSettingsView.urlname, domain=self.domain)
