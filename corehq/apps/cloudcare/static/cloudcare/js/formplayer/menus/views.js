@@ -285,7 +285,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         showMoreAction: function (e) {
-            console.log("show more");
             const arrow = $(e.currentTarget).find("i");
             const tileContent = $(e.currentTarget).prev();
             if (arrow.hasClass("fa-angle-double-down")) {
@@ -317,9 +316,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
 
-        onAttach: function(e) {
+        onAttach: function() {
             const self = this;
-            if (self.smallScreenEnabled) {
+            if (self.isMultiSelect && self.smallScreenEnabled) {
                 const height = $(self.el).height()
                 if (height > 150) {
                     const tileContent = $(self.el).find('.tile-content');
