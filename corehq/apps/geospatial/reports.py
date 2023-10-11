@@ -32,6 +32,7 @@ class BaseCaseMap(ProjectReport, CaseListMixin):
         context = super(BaseCaseMap, self).template_context
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'case_row_order': {val.html: idx for idx, val in enumerate(self.headers)},
         })
         return context
 
@@ -43,8 +44,8 @@ class BaseCaseMap(ProjectReport, CaseListMixin):
         )
         headers = DataTablesHeader(
             DataTablesColumn(_("case_id"), prop_name="type.exact"),
-            DataTablesColumn(_("GPS"), prop_name="type.exact"),
-            DataTablesColumn(_("Name"), prop_name="name.exact", css_class="case-name-link"),
+            DataTablesColumn(_("gps_point"), prop_name="type.exact"),
+            DataTablesColumn(_("link"), prop_name="name.exact", css_class="case-name-link"),
         )
         headers.custom_sort = [[2, 'desc']]
         return headers
@@ -104,8 +105,7 @@ class CaseGroupingReport(BaseCaseMap):
     slug = 'case_grouping_map'
     search_class = CaseSearchES
 
-    # TODO: We need a separate base template
-    base_template = 'geospatial/map_visualization_base.html'
+    base_template = 'geospatial/case_grouping_map_base.html'
     report_template_path = 'case_grouping_map.html'
 
     def _build_query(self):
