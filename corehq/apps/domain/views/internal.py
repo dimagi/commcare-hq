@@ -19,6 +19,7 @@ from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.domain.utils import log_domain_changes
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
 from dimagi.utils.web import get_ip, json_request, json_response
+from dimagi.utils.django.email import DefaultEmailConfiguration
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -206,9 +207,10 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
                     can_use_data_old=old_attrs.can_use_data,
                     can_use_data_new=self.domain_object.internal.can_use_data,
                 )
+                email_configuration = DefaultEmailConfiguration(settings.DEFAULT_FROM_EMAIL)
                 send_mail_async.delay(
                     'Custom EULA or data use flags changed for {}'.format(self.domain),
-                    message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL]
+                    message, email_configuration, [settings.EULA_CHANGE_EMAIL]
                 )
 
             messages.success(request,
