@@ -4,6 +4,14 @@
 {% load hq_shared_tags %}
 
 {% block reportcontent %}
+<div class="row panel" id="export-controls">
+  <div class="controls col-sm-2 col-md-2 col-lg-2">
+    <button class="btn-default form-control" data-bind="click: handleExportCSV">
+      {% trans "Export Groups" %}
+    </button>
+  </div>
+</div>
+
 <div class="panel-body-datatable">
     {% block reporttable %}
       {% if report.needs_filters %}
