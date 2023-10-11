@@ -571,12 +571,11 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
 
             if command == 'delete':
                 alert.delete()
+            elif command in ['activate', 'deactivate']:
+                self._update_alert(alert, command)
+                messages.success(request, _("Alert updated!"))
             else:
-                success = self._update_alert(alert, command)
-                if success:
-                    messages.success(request, _("Alert updated!"))
-                else:
-                    messages.error(request, _("Could not update alert. Please try again!"))
+                messages.error(request, _("Unexpected update received. Alert not updated!"))
 
     @staticmethod
     def _update_alert(alert, command):
@@ -585,7 +584,6 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
         elif command == 'deactivate':
             alert.active = False
         alert.save(update_fields=['active'])
-        return True
 
     def _load_alert(self, alert_id):
         try:
