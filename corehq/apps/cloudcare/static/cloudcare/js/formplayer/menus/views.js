@@ -181,7 +181,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const heightPercentage = 100 / numColumns;
             heightString = heightPercentage + "cqw";
         } else {
-            heightString = "auto";
+            heightString = "min-content";
         }
 
         const model = {
@@ -370,6 +370,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             columnHeader: '.header-clickable',
             paginationGoText: '#goText',
             casesPerPageLimit: '.per-page-limit',
+            searchMoreButton: '#search-more',
+            scrollToBottomButton: '#scroll-to-bottom',
         };
     };
 
@@ -380,6 +382,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.paginators': 'paginateAction',
             'click @ui.paginationGoButton': 'paginationGoAction',
             'click @ui.columnHeader': 'columnSortAction',
+            'click @ui.searchMoreButton': 'searchMoreAction',
+            'click @ui.scrollToBottomButton': 'scrollToBottom',
             'keypress @ui.columnHeader': 'columnSortAction',
             'change @ui.casesPerPageLimit': 'onPerPageLimitChange',
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
@@ -420,12 +424,38 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
 
             self.showMap = addressFieldPresent && !appPreview && !self.hasNoItems && toggles.toggleEnabled('CASE_LIST_MAP');
-            self.smallScreenEnabled = cloudcareUtils.watchSmallScreenEnabled(enabled => self.smallScreenEnabled = enabled);
+            self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                self.handleSmallScreenChange(smallScreenEnabled);
+            });
+            self.smallScreenListener.listen();
         },
 
         ui: CaseListViewUI(),
 
         events: CaseListViewEvents(),
+
+        handleSmallScreenChange: function (enabled) {
+            const self = this;
+            self.smallScreenEnabled = enabled;
+            if (self.options.sidebarEnabled) {
+                self.positionStickyItems(enabled);
+            }
+        },
+
+        positionStickyItems: function (smallScreenEnabled) {
+            const $caseListHeader = $('#case-list-menu-header');
+            const $caseListMap = $('#module-case-list-map');
+            const stickyHeaderId = 'small-screen-sticky-header';
+            if (smallScreenEnabled) {
+                $caseListHeader.wrap(`<div class="sticky sticky-header" id="${stickyHeaderId}"></div>`);
+                $caseListMap.appendTo($(`#${stickyHeaderId}`));
+            } else {
+                if ($caseListHeader.parent()[0] === $(`#${stickyHeaderId}`)[0]) {
+                    $caseListHeader.unwrap();
+                }
+                $caseListMap.prependTo($('#module-case-list-container__results-container'));
+            }
+        },
 
         caseListAction: function (e) {
             const index = $(e.currentTarget).data().index,
@@ -441,6 +471,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             e.preventDefault();
             const searchText = $('#searchText').val();
             FormplayerFrontend.trigger("menu:search", searchText);
+        },
+
+        searchMoreAction: function () {
+            if (!$('#sidebar-region').hasClass('in')) {
+                $([document.documentElement, document.body]).animate({
+                    scrollTop: $('#content-container').offset().top - constants.BREADCRUMB_HEIGHT_PX,
+                }, 350);
+            }
+        },
+
+        scrollToBottom: function () {
+            $([document.documentElement, document.body]).animate({
+                scrollTop: $('.container .pagination-container').offset().top,
+            }, 500);
         },
 
         searchTextKeyAction: function (event) {
@@ -543,21 +587,28 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        columnStyle: function () {
-            const self = this;
-            if (self.showMap) {
-                return "display: grid;grid-template-columns: [tiles] 7fr [map] 5fr;grid-template-rows: auto";
-            } else {
-                return "display: grid;grid-template-columns: [tiles] 100%;grid-template-rows: auto";
-            }
-        },
-
         fontAwesomeIcon: function (iconName) {
             return L.divIcon({
                 html: `<i class='fa ${iconName} fa-4x'></i>`,
                 iconSize: [12, 12],
                 className: 'marker-pin',
             });
+        },
+
+        getMapScrollOffset: function (addressMap) {
+            const $mapEl = $('#module-case-list-map');
+            const $stickyHeader = $('#small-screen-sticky-header');
+            let scrollTopOffset = parseInt(($mapEl).css('top'));
+            if (this.smallScreenEnabled) {
+                if ($stickyHeader[0]) {
+                    scrollTopOffset = parseInt($stickyHeader.css('top')) + $stickyHeader.outerHeight();
+                } else if (addressMap.isFullscreen()) {
+                    scrollTopOffset = constants.BREADCRUMB_HEIGHT_PX;
+                } else {
+                    scrollTopOffset += $mapEl.outerHeight();
+                }
+            }
+            return scrollTopOffset;
         },
 
         loadMap: function () {
@@ -579,6 +630,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 L.control.zoom({
                     position: 'bottomright',
                 }).addTo(addressMap);
+
+                L.control.fullscreen({
+                    pseudoFullscreen: true,
+                    position: 'bottomright',
+                }).addTo(addressMap);
+
+                addressMap.on('fullscreenchange', function () {
+                    // sticky header interferes with fullscreen map; un-stick it if it exists
+                    const $stickyHeader = $('#small-screen-sticky-header');
+                    if ($stickyHeader[0]) {
+                        addressMap.isFullscreen()
+                            ? $stickyHeader.removeClass('sticky')
+                            : $stickyHeader.addClass('sticky');
+                    }
+                });
 
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + token, {
                     id: 'mapbox/streets-v11',
@@ -622,8 +688,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     marker.setIcon(selectedLocationIcon);
 
                                     $([document.documentElement, document.body]).animate({
-                                        // -50 Stay clear of the breadcrumbs
-                                        scrollTop: $(`#${rowId}`).offset().top - 50,
+                                        scrollTop: $(`#${rowId}`).offset().top - this.getMapScrollOffset(addressMap),
                                     }, 500);
 
                                     addressMap.panTo(markerCoordinates);
@@ -646,16 +711,47 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        handleScroll: function () {
+            const self = this;
+            if (self.smallScreenEnabled) {
+                const $scrollButton = $('#scroll-to-bottom');
+                if (self.shouldShowScrollButton() && $scrollButton.is(':hidden')) {
+                    $scrollButton.fadeIn();
+                } else if (!self.shouldShowScrollButton() && !$scrollButton.is(':hidden')) {
+                    $scrollButton.fadeOut();
+                }
+            }
+        },
+
+        shouldShowScrollButton: function () {
+            const $pagination = $('.container .pagination-container');
+            const paginationOffscreen = $pagination[0]
+                ? $pagination.offset().top - $(window).scrollTop() > window.innerHeight : false;
+            return paginationOffscreen;
+        },
+
         onAttach() {
             const self = this;
             if (self.showMap) {
                 self.loadMap();
             }
+            self.handleSmallScreenChange(self.smallScreenEnabled);
+            self.boundHandleScroll = self.handleScroll.bind(self);
+            $(window).on('scroll', self.boundHandleScroll);
+            if (self.shouldShowScrollButton()) {
+                $('#scroll-to-bottom').show();
+            }
+        },
+
+        onBeforeDetach: function () {
+            const self = this;
+            self.smallScreenListener.stopListening();
+            $(window).off('scroll', self.boundHandleScroll);
         },
 
         templateContext: function () {
             const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
-            const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
+            const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
             const boldSortedCharIcon = (header) => {
                 const headerWords = header.trim().split(' ');
                 const lastChar = headerWords.pop();
@@ -680,7 +776,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 currentPage: this.options.currentPage,
                 endPage: paginateItems.endPage,
                 pageCount: paginateItems.pageCount,
-                rowRange: [10, 25, 50, 100],
+                rowRange: [5, 10, 25, 50, 100],
                 limit: casesPerPage,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
@@ -692,7 +788,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
                 showMap: this.showMap,
-                columnStyle: this.columnStyle(),
                 sidebarEnabled: this.options.sidebarEnabled,
                 smallScreenEnabled: this.smallScreenEnabled,
                 triggerEmptyCaseList: this.options.triggerEmptyCaseList,
@@ -808,6 +903,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             registerContinueListener(this, options);
         },
 
+        handleSmallScreenChange: function (enabled) {
+            CaseTileListView.__super__.handleSmallScreenChange.apply(this, arguments);
+            if (enabled) {
+                $('#content-container').addClass('full-width');
+            } else if (!this.options.sidebarEnabled) {
+                $('#content-container').removeClass('full-width');
+            }
+        },
+
         childViewOptions: function () {
             const dict = CaseTileListView.__super__.childViewOptions.apply(this, arguments);
             dict.prefix = 'list';
@@ -833,6 +937,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (this.options.isMultiSelect) {
                 this.reconcileMultiSelectUI();
             }
+        },
+
+        onBeforeDetach: function () {
+            CaseTileListView.__super__.onBeforeDetach.apply(this, arguments);
+            $('#content-container').removeClass('full-width');
         },
     });
 
@@ -883,13 +992,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 "role": "link",
                 "tabindex": "0",
+                "style": this.buildMaxWidth(),
             };
         },
         events: {
             "click": "crumbClick",
             "keydown": "crumbKeyAction",
         },
-
+        buildMaxWidth: function () {
+            // to avoid overflow, compute the max width in CSS based on number of breadcrumbs
+            const crumbCount = this.model.collection.length;
+            return `max-width: calc((100vw - ${constants.BREADCRUMB_WIDTH_OFFSET_PX}px) / ${crumbCount});`;
+        },
         crumbClick: function (e) {
             e.preventDefault();
             const crumbId = this.options.model.get('id');

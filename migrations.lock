@@ -106,6 +106,8 @@ accounting
  0084_copy_cases_priv
  0085_remove_free_50_sms
  0086_add_duplicate_invoice_id_to_invoice_model
+ 0087_invoice_unique_constraints
+ 0088_add_new_softwareplan_visibility
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -556,6 +558,7 @@ geospatial
  0001_create_geopolygon
  0002_geoconfig
  0003_auto_20230908_0927
+ 0004_auto_20230920_0821
 hqadmin
  0001_initial
  0002_vcmmigrationaudit

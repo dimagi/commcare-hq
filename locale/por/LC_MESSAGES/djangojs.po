@@ -343,6 +343,10 @@ msgid "Manually configure Case Tiles"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Edit Custom Variables"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "You have unsaved detail screen configurations."
 msgstr ""
 
@@ -452,6 +456,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Address Popup (Web Apps only)"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Clickable Icon (Web Apps only)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
@@ -2718,6 +2726,10 @@ msgid "Upload video file"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Draw signature"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Map layer not configured."
 msgstr ""
 
@@ -3479,13 +3491,11 @@ msgid ""
 "problem persists."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/500.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/500.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
 msgid "This is Danny, one of our best developers."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/500.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/500.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
 msgid ""
 "Danny is pretty sad that you had to encounter this issue. He's making sure "
 "it gets fixed as soon as possible."

@@ -22,13 +22,13 @@ jobs:
 
       - name: Check changed py files
         id: changed-files
-        uses: tj-actions/changed-files@v24
+        uses: tj-actions/changed-files@v39
         with:
           files: |
             **/*.py
 
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         if: ${{ steps.changed-files.outputs.all_changed_files }}
         with:
           python-version: 3.9
@@ -65,7 +65,7 @@ jobs:
       - name: Install Node.js dependencies
         run: yarn install --frozen-lockfile
 
-      - uses: sibiraj-s/action-eslint@v2
+      - uses: sibiraj-s/action-eslint@v3
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           annotations: true

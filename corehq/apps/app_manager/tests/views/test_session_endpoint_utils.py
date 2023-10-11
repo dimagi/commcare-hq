@@ -1,3 +1,4 @@
+from uuid import uuid4
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.models import (
@@ -8,7 +9,7 @@ from corehq.apps.app_manager.models import (
     ShadowModule
 )
 from corehq.apps.app_manager.views.utils import (
-    _is_duplicate_endpoint_id,
+    _duplicate_endpoint_ids,
     get_cleaned_session_endpoint_id,
     get_cleaned_and_deduplicated_session_endpoint_id,
     set_shadow_module_and_form_session_endpoint
@@ -17,7 +18,7 @@ from corehq.apps.app_manager.views.utils import (
 from corehq.apps.app_manager.exceptions import AppMisconfigurationError
 
 
-class TestUtils(SimpleTestCase):
+class TestSessionEndpointUtils(SimpleTestCase):
     new_endpoint = "abc"
 
     normal_module_session_endpoint_id = "nmsei"
@@ -54,27 +55,34 @@ class TestUtils(SimpleTestCase):
 
         return app, normal_module, shadow_module, form
 
+    def _is_duplicate_endpoint_id(self, new_id, old_id, app):
+        if not new_id or new_id == old_id:
+            return False
+
+        duplicates = _duplicate_endpoint_ids(new_id, [], None, app)
+        return len(duplicates) > 0
+
     def test_is_duplicate_endpoint_id_no_change_false(self):
         app, _, _, _ = self.create_fixtures()
-        is_duplicate = _is_duplicate_endpoint_id(
+        is_duplicate = self._is_duplicate_endpoint_id(
             self.normal_module_session_endpoint_id, self.normal_module_session_endpoint_id, app)
         self.assertFalse(is_duplicate)
 
     def test_is_duplicate_endpoint_id_same_as_other_module_false(self):
         app, _, _, _ = self.create_fixtures()
-        is_duplicate = _is_duplicate_endpoint_id(
+        is_duplicate = self._is_duplicate_endpoint_id(
             self.shadow_module_session_endpoint_id, self.normal_module_session_endpoint_id, app)
         self.assertTrue(is_duplicate)
 
     def test_is_duplicate_endpoint_id_same_as_form_false(self):
         app, _, _, _ = self.create_fixtures()
-        is_duplicate = _is_duplicate_endpoint_id(
+        is_duplicate = self._is_duplicate_endpoint_id(
             self.form_session_endpoint_id, self.normal_module_session_endpoint_id, app)
         self.assertTrue(is_duplicate)
 
     def test_is_duplicate_endpoint_id_same_as_shadow_form_false(self):
         app, _, _, _ = self.create_fixtures()
-        is_duplicate = _is_duplicate_endpoint_id(
+        is_duplicate = self._is_duplicate_endpoint_id(
             self.shadow_form_session_endpoint_id, self.normal_module_session_endpoint_id, app)
         self.assertTrue(is_duplicate)
 
@@ -240,3 +248,16 @@ class TestUtils(SimpleTestCase):
                 app
             )
         )
+
+    def test_no_duplicates_in_other_places(self):
+        app, module, _, _ = self.create_fixtures()
+        module.forms.append(Form(
+            unique_id=str(uuid4()),
+            # this endpoint ID conflicts with the other form
+            session_endpoint_id=self.form_session_endpoint_id,
+        ))
+        # no meaningful change to `module`, but the duplicates should be caught
+        duplicates = _duplicate_endpoint_ids(
+            module.session_endpoint_id, [], module.unique_id, app
+        )
+        self.assertEqual(duplicates, [self.form_session_endpoint_id])
