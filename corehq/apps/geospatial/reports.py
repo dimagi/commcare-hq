@@ -150,6 +150,7 @@ class CaseGroupingReport(BaseCaseMapReport):
         geo_point = case_obj.case_json.get(geo_case_property)
         return geo_point
 
+
 def geojson_to_es_geoshape(geojson):
     """
     Given a GeoJSON dict, returns a GeoJSON Geometry dict, with "type"
