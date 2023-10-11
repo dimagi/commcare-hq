@@ -1,6 +1,7 @@
 import copy
 import csv
 import io
+import re
 from collections import defaultdict
 from datetime import datetime
 
@@ -307,12 +308,17 @@ def _table_definition(props):
         "layout": list(chunked([
             DisplayConfig(
                 expr=prop_name,
-                name=label or prop_name,
+                name=_add_line_break_opportunities(label or prop_name),
                 description=description,
                 has_history=True
             ) for prop_name, label, description in props
         ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
     }
+
+
+def _add_line_break_opportunities(name):
+    # Add zero-width space after dashes and underscores for better looking word breaks
+    return re.sub(r"([_-])", "\\1\u200B", name)
 
 
 def form_to_json(domain, form, timezone):
