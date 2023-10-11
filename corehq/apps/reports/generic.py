@@ -41,10 +41,17 @@ from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.util import DatatablesParams
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
+
+
+_soft_assert_html_safe = soft_assert(
+    to='@'.join(('nhooper', 'dimagi.com')),
+    exponential_backoff=True,
+)
 
 
 def _sanitize_rows(rows):
@@ -59,8 +66,10 @@ def _sanitize_col(col):
     if isinstance(col, str):
         return conditional_escape(col)
 
-    # HACK: dictionaries make it here. The dictionaries I've seen have an 'html' key
-    # which I expect to be sanitized already, but there is no guaranteee
+    _soft_assert_html_safe(
+        isinstance(col, dict) and 'html' in col,
+        f'Potentially passing HTML-unsafe value {col!r} in report',
+    )
     return col
 
 
