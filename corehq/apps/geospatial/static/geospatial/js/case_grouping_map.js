@@ -17,6 +17,11 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.coordinates = coordiantes;
         self.caseLink = caseLink;
 
+        // TODO: Group ID needs to be set
+        self.groupId = null;
+
+        return self;
+    }
         return self;
     }
 
