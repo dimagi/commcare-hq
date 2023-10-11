@@ -22,6 +22,50 @@ hqDefine("geospatial/js/case_grouping_map",[
 
         return self;
     }
+
+    function exportModel() {
+        var self = {};
+
+        self.casesToExport = ko.observableArray([]);
+
+        self.handleExportCSV = function () {
+            const casesToExport = _.map(self.casesToExport(), function (caseItem) {
+                const coordinates = (caseItem.coordinates) ? `${caseItem.coordinates.lng} ${caseItem.coordinates.lat}` : "";
+                return {
+                    'groupId': caseItem.groupId,
+                    'caseId': caseItem.caseId,
+                    'coordinates': coordinates,
+                };
+            });
+            exportToCsv(casesToExport);
+        };
+
+        // If list of propertiesToInclude is not given, will export all properties of objects in itemsArr
+        function exportToCsv(itemsArr, includeHeaders = true) {
+            if (!itemsArr.length) {
+                return;
+            }
+
+            let csvStr = "";
+            if (includeHeaders) {
+                csvStr = Object.keys(itemsArr[0]).join(",");
+                csvStr += "\n";
+            }
+
+            _.forEach(itemsArr, function (itemRow) {
+                csvStr += Object.keys(itemRow).map(key => itemRow[key]).join(",");
+                csvStr += "\n";
+            });
+
+            // Download CSV file
+            const hiddenElement = document.createElement('a');
+            hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csvStr);
+            hiddenElement.target = '_blank';
+            hiddenElement.download = `cases_by_group (created on ${getTodayDate()}).csv`;
+            hiddenElement.click();
+            hiddenElement.remove();
+        }
+
         return self;
     }
 
