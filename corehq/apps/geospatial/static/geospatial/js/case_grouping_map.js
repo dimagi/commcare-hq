@@ -79,6 +79,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     $(function () {
         let caseModels = [];
+        const exportModelInstance = new exportModel();
 
         // Parses a case row (which is an array of column values) to an object, using caseRowOrder as the order of the columns
         function parseCaseItem(caseItem, caseRowOrder) {
@@ -98,9 +99,16 @@ hqDefine("geospatial/js/case_grouping_map",[
                 const caseModelInstance = new caseModel(caseObj.case_id, caseObj.gps_point, caseObj.link);
                 caseModels.push(caseModelInstance);
             }
+            exportModelInstance.casesToExport(caseModels);
         }
 
         $(document).ajaxComplete(function (event, xhr, settings) {
+            const isAfterReportLoad = settings.url.includes('geospatial/async/case_grouping_map/');
+            if (isAfterReportLoad) {
+                $("#export-controls").koApplyBindings(exportModelInstance);
+                return;
+            }
+
             const isAfterDataLoad = settings.url.includes('geospatial/json/case_grouping_map/');
             if (!isAfterDataLoad) {
                 return;
