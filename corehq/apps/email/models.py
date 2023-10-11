@@ -18,7 +18,7 @@ class EmailSettings(models.Model):
 
     def __str__(self):
         fields = vars(self)
-        field_str = ", ".join([f"{field}: {value}" for field, value in fields.items() if not field.startswith("_")])
+        field_str = ", ".join([f"{key}: {value}" for key, value in fields.items() if not key.startswith("_")])
         return f"<EmailSettings> - {field_str}"
 
     @property

@@ -107,7 +107,7 @@ class EmailSMTPSettingsForm(forms.ModelForm):
                     _("Saved"),
                     type="submit",
                     css_class="btn-primary disable-on-submit",
-                    data_bind="text: buttonText, disable: !isFormChanged",
+                    data_bind="text: buttonText, enable: isFormChanged",
                 ),
             )
         )
