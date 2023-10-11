@@ -52,8 +52,9 @@ class CommCareHQAlert(models.Model):
             self.text, self.active, ", ".join(self.domains) if self.domains else "All Domains")
 
     def save(self, *args, **kwargs):
-        CommCareHQAlert.get_active_alerts.clear(CommCareHQAlert)
-        super(CommCareHQAlert, self).save(*args, **kwargs)
+        cls = type(self)
+        cls.get_active_alerts.clear(cls)
+        super().save(*args, **kwargs)
 
     @classmethod
     @quickcache([], timeout=1 * 60)
