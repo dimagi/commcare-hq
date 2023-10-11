@@ -22,7 +22,7 @@ from .models import GeoPolygon
 from .utils import get_geo_case_property
 
 
-class BaseCaseMap(ProjectReport, CaseListMixin):
+class BaseCaseMapReport(ProjectReport, CaseListMixin):
     section_name = gettext_noop("Geospatial")
 
     dispatcher = CaseManagementMapDispatcher
@@ -30,7 +30,7 @@ class BaseCaseMap(ProjectReport, CaseListMixin):
     @property
     def template_context(self):
         # Whatever is specified here can be accessed through initial_page_data
-        context = super(BaseCaseMap, self).template_context
+        context = super(BaseCaseMapReport, self).template_context
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'case_row_order': {val.html: idx for idx, val in enumerate(self.headers)},
@@ -82,7 +82,7 @@ class BaseCaseMap(ProjectReport, CaseListMixin):
         return cases
 
 
-class CaseManagementMap(BaseCaseMap):
+class CaseManagementMap(BaseCaseMapReport):
     name = gettext_noop("Case Management Map")
     slug = "case_management_map"
 
@@ -108,7 +108,7 @@ class CaseManagementMap(BaseCaseMap):
         return context
 
 
-class CaseGroupingReport(BaseCaseMap):
+class CaseGroupingReport(BaseCaseMapReport):
     name = gettext_noop('Case Grouping')
     slug = 'case_grouping_map'
     search_class = CaseSearchES
