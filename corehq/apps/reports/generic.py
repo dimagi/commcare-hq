@@ -13,14 +13,13 @@ from django.http import (
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch
+from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
-from django.utils.html import conditional_escape
 
 from celery.utils.log import get_task_logger
 from memoized import memoized
 
-from corehq.util.timezones.utils import get_timezone
 from couchexport.export import export_from_tables, get_writer
 from couchexport.shortcuts import export_response
 from dimagi.utils.modules import to_function
@@ -42,6 +41,7 @@ from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.util import DatatablesParams
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
+from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
