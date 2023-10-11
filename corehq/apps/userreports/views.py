@@ -38,6 +38,7 @@ from dimagi.utils.couch.undo import (
     soft_delete,
     undo_delete,
 )
+from dimagi.utils.django.email import DefaultEmailConfiguration
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from no_exceptions.exceptions import HttpException
@@ -423,6 +424,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
     def post(self, request, domain, *args, **kwargs):
         self.domain_object.requested_report_builder_subscription.append(request.user.username)
         self.domain_object.save()
+        email_configuration = DefaultEmailConfiguration(settings.DEFAULT_FROM_EMAIL)
         send_mail_async.delay(
             "Report Builder Subscription Request: {}".format(domain),
             "User {} in the {} domain has requested a report builder subscription."
@@ -431,7 +433,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
                 domain,
                 self.plan_name
             ),
-            settings.DEFAULT_FROM_EMAIL,
+            email_configuration,
             [settings.SALES_EMAIL],
         )
         update_hubspot_properties.delay(request.couch_user.get_id, {'report_builder_subscription_request': 'yes'})
