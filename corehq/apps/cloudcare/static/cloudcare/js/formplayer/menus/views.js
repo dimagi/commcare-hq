@@ -316,10 +316,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
 
-        onAttach: function() {
+        onAttach: function () {
             const self = this;
             if (self.isMultiSelect && self.smallScreenEnabled) {
-                const height = $(self.el).height()
+                const height = $(self.el).height();
                 if (height > 150) {
                     const tileContent = $(self.el).find('.tile-content');
                     tileContent.addClass('collapsed-tile');
