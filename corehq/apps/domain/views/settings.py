@@ -564,24 +564,28 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
     def _apply_command(self, request, command):
         alert_id = request.POST.get('alert_id')
         if alert_id:
+            alert = self._load_alert(alert_id)
+            if not alert:
+                messages.error(request, _("Alert not found!"))
+                return
+
             if command == 'delete':
-                self._delete_alert(alert_id)
+                alert.delete()
             else:
-                success = self._update_alert(alert_id, command)
+                success = self._update_alert(alert, command)
                 if success:
                     messages.success(request, _("Alert updated!"))
                 else:
                     messages.error(request, _("Could not update alert. Please try again!"))
 
-    def _update_alert(self, alert_id, command):
-        alert = self._load_alert(alert_id)
-        if alert:
-            if command == 'activate':
-                alert.active = True
-            elif command == 'deactivate':
-                alert.active = False
-            alert.save(update_fields=['active'])
-            return True
+    @staticmethod
+    def _update_alert(alert, command):
+        if command == 'activate':
+            alert.active = True
+        elif command == 'deactivate':
+            alert.active = False
+        alert.save(update_fields=['active'])
+        return True
 
     def _load_alert(self, alert_id):
         try:
@@ -591,11 +595,6 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
             )
         except CommCareHQAlert.DoesNotExist:
             return None
-
-    def _delete_alert(self, alert_id):
-        alert = self._load_alert(alert_id)
-        if alert:
-            alert.delete()
 
     def _create_alert(self):
         CommCareHQAlert.objects.create(
