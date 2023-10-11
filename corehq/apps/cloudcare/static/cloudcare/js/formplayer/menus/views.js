@@ -234,6 +234,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     self.ui.selectRow.prop("checked", action === constants.MULTI_SELECT_ADD);
                 }
             });
+            self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                self.smallScreenEnabled = smallScreenEnabled;
+            });
+            self.smallScreenListener.listen();
         },
 
         className: "formplayer-request case-row",
@@ -310,21 +314,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
-                overflows: true,
-                overflowClass: '',
-                // overflowClass: 'collapsed-tile',
             };
         },
 
         onAttach: function(e) {
             const self = this;
-            const height = $(self.el).height()
-            console.log(`attaching tile:  ${height}`);
-            if (height > 150) {
-                const tileContent = $(self.el).find('.tile-content');
-                tileContent.addClass('collapsed-tile');
-                console.log(`added class collapsed-tile`);
-                $(self.el).append(`<div class="show-more"><i class="fa fa-angle-double-down"></i></div>`)
+            if (self.smallScreenEnabled) {
+                const height = $(self.el).height()
+                if (height > 150) {
+                    const tileContent = $(self.el).find('.tile-content');
+                    tileContent.addClass('collapsed-tile');
+                    $(self.el).append(`<div class="show-more"><i class="fa fa-angle-double-down"></i></div>`);
+                }
             }
         },
     });
