@@ -11,6 +11,7 @@ from couchforms.geopoint import GeoPoint
 
 from corehq.apps.case_search.const import CASE_PROPERTIES_PATH
 from corehq.apps.es import CaseSearchES, filters
+from corehq.apps.es.case_search import wrap_case_search_hit
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
@@ -50,11 +51,14 @@ class BaseCaseMap(ProjectReport, CaseListMixin):
         headers.custom_sort = [[2, 'desc']]
         return headers
 
+    def _get_geo_point(self, case):
+        return NotImplementedError()
+
     @property
     def rows(self):
 
         def _get_geo_location(case):
-            geo_point = case.get(get_geo_case_property(case.get('domain')))
+            geo_point = self._get_geo_point(case)
             if not geo_point:
                 return
 
@@ -87,6 +91,10 @@ class CaseManagementMap(BaseCaseMap):
 
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
+
+    def _get_geo_point(self, case):
+        geo_point = case.get(get_geo_case_property(case.get('domain')))
+        return geo_point
 
     @property
     def template_context(self):
@@ -136,6 +144,11 @@ class CaseGroupingReport(BaseCaseMap):
         query = apply_geohash_agg(query, case_property, precision)
         return query
 
+    def _get_geo_point(self, case):
+        case_obj = wrap_case_search_hit(case)
+        geo_case_property = get_geo_case_property(case_obj.domain)
+        geo_point = case_obj.case_json.get(geo_case_property)
+        return geo_point
 
 def geojson_to_es_geoshape(geojson):
     """
