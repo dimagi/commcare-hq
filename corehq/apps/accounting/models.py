@@ -891,11 +891,13 @@ class SoftwarePlanVersion(models.Model):
         SoftwarePlan.get_version.clear(self.plan)
 
     @staticmethod
-    def filter_version_query(query, edition=None, visibility=None):
+    def filter_version_query(query, edition=None, visibility=None, is_plan_query=False):
+        prefix = "plan__" if not is_plan_query else ""
+
         if edition:
-            query = query.filter(plan__edition=edition)
+            query = query.filter(**{f"{prefix}edition": edition})
         if visibility:
-            query = query.filter(plan__visibility=visibility)
+            query = query.filter(**{f"{prefix}visibility": visibility})
         return query
 
     @classmethod
@@ -908,7 +910,8 @@ class SoftwarePlanVersion(models.Model):
         ).order_by('-date_created').values('date_created')[:1]
 
         software_plans_query = SoftwarePlan.objects.all()
-        software_plans_query = cls.filter_version_query(software_plans_query, edition, visibility)
+        software_plans_query = cls.filter_version_query(software_plans_query, edition, visibility,
+                                                        is_plan_query=True)
 
         latest_versions = software_plans_query.annotate(
             latest_version_date=Subquery(latest_versions_date)
