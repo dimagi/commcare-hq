@@ -256,7 +256,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 e.target.classList.contains("select-row-checkbox") ||               // multiselect select all
                 $(e.target).is('a') ||                                              // actual link, as in markdown
                 e.target.classList.contains('show-more') ||
-                e.target.parent.classList.contains('show-more')
+                $(e.target).parent().hasClass('show-more')
             )) {
                 e.preventDefault();
                 let modelId = this.model.get('id');
@@ -286,15 +286,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         showMoreAction: function (e) {
             const arrow = $(e.currentTarget).find("i");
-            const tileContent = $(e.currentTarget).prev();
+            const tileContent = $(e.currentTarget).siblings('.collapsible-tile-content');
             if (arrow.hasClass("fa-angle-double-down")) {
                 arrow.removeClass("fa-angle-double-down");
                 arrow.addClass("fa-angle-double-up");
-                tileContent.removeClass("collapsed-tile");
+                tileContent.removeClass("collapsed-tile-content");
             } else {
                 arrow.removeClass("fa-angle-double-up");
                 arrow.addClass("fa-angle-double-down");
-                tileContent.addClass("collapsed-tile");
+                tileContent.addClass("collapsed-tile-content");
             }
 
         },
@@ -318,12 +318,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         onAttach: function () {
             const self = this;
-            if (self.isMultiSelect && self.smallScreenEnabled) {
+            // if (self.isMultiSelect && self.smallScreenEnabled)
+            {
                 const height = $(self.el).height();
                 if (height > 150) {
-                    const tileContent = $(self.el).find('.tile-content');
-                    tileContent.addClass('collapsed-tile');
-                    $(self.el).append(`<div class="show-more"><i class="fa fa-angle-double-down"></i></div>`);
+                    const tileContent = $(self.el).find('> .collapsible-tile-content');
+                    if (tileContent.length) {
+                        tileContent.addClass('collapsed-tile-content');
+                        $(self.el).append(`<div class="show-more"><i class="fa fa-angle-double-down"></i></div>`);
+                    }
                 }
             }
         },

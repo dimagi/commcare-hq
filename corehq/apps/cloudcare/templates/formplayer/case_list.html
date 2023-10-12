@@ -145,7 +145,7 @@
       </div>
     <% } %>
 
-  <div class="<%- prefix %>-cell-grid-style tile-content">
+  <div class="<%- prefix %>-cell-grid-style collapsible-tile-content">
     <% _.each(data, function(datum, index) { %>
     <div class="<%- prefix %>-grid-style-<%- index %> box">
       <% if (styles[index].displayFormat === 'Image') {
@@ -169,7 +169,7 @@
     </div>
   <% } %>
 
-  <div class="group-data">
+  <div class="group-data collapsible-tile-content">
     <div class="<%- prefix %>-cell-grid-style">
       <% for (let [index, datum] of Object.entries(indexedHeaderData)) { %>
         <div class="<%- prefix %>-grid-style-<%- index %> box" >
