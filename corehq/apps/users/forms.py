@@ -1561,7 +1561,7 @@ class CommCareUserFormSet(object):
         return CustomDataEditor(
             domain=self.domain,
             field_view=UserFieldsView,
-            existing_custom_data=self.editable_user.metadata,
+            existing_custom_data=self.editable_user.get_user_data(self.domain).to_dict(),
             post_dict=self.data,
             ko_model="custom_fields",
         )
@@ -1571,12 +1571,12 @@ class CommCareUserFormSet(object):
                 and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
 
     def update_user(self):
-        user = self.user_form.existing_user
-        old_profile_id = user.metadata.get(PROFILE_SLUG)
-        changed = user.update_metadata(self.custom_data.get_data_to_save())
+        user_data = self.user_form.existing_user.get_user_data(self.domain)
+        old_profile_id = user_data.profile_id
+        changed = user_data.update(self.custom_data.get_data_to_save())
         return self.user_form.update_user(
             metadata_updated=changed,
-            profile_updated=old_profile_id != user.metadata.get(PROFILE_SLUG),
+            profile_updated=old_profile_id != user_data.profile_id,
         )
 
 
