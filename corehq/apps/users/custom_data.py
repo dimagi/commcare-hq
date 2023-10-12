@@ -14,8 +14,9 @@ def remove_unused_custom_fields_from_users(domain):
     for user in get_all_commcare_users_by_domain(domain):
         keys_to_delete = _get_invalid_user_data_fields(user, configured_field_keys)
         if keys_to_delete:
+            user_data = user.get_user_data(domain)
             for key in keys_to_delete:
-                user.pop_metadata(key)
+                del user_data[key]
             user.save()
 
 
