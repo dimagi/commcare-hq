@@ -1063,7 +1063,7 @@ class HardDeleteFormsAndCasesInDomainTests(TestCase):
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.deleted_domain.name)), 0)
 
     def test_soft_deleted_forms_are_deleted(self):
-        create_form_for_test(self.deleted_domain.name, state=XFormInstance.DELETED)
+        create_form_for_test(self.deleted_domain.name, deleted_on=datetime.now())
         call_command('hard_delete_forms_and_cases_in_domain', self.deleted_domain.name, noinput=True)
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.deleted_domain.name)), 0)
 

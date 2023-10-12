@@ -59,20 +59,7 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
         return false; // let default handler run
     };
 
-    var oldHide = $.fn.popover.Constructor.prototype.hide;
-
-    $.fn.popover.Constructor.prototype.hide = function () {
-        if (this.options.trigger === "hover" && this.tip().is(":hover")) {
-            var that = this;
-            setTimeout(function () {
-                return that.hide.apply(that, arguments);
-            }, that.options.delay.hide);
-            return;
-        }
-        oldHide.apply(this, arguments);
-    };
-
-    $.fn.hqHelp = function () {
+    $.fn.hqHelp = function (opts) {
         var self = this;
         self.each(function (i) {
             var $self = $(self),
@@ -85,6 +72,9 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
                 container: 'body',
                 sanitize: false,
             };
+            if (opts) {
+                options = _.extend(options, opts);
+            }
             if (!$link.data('content')) {
                 options.content = function () {
                     return $('#popover_content_wrapper').html();
@@ -101,6 +91,11 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
                 event.preventDefault();
             });
         });
+    };
+
+    $.fn.changeButtonState = function (state) {
+        $(this).text($(this).data(state + '-text'));
+        return this;
     };
 
     $.fn.addSpinnerToButton = function () {

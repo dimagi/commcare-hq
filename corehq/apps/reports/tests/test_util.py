@@ -1,9 +1,10 @@
 from unittest.mock import patch, Mock
 from datetime import datetime
 import pytz
+import uuid
 
 from django.core.cache import cache
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from testil import eq
 from freezegun import freeze_time
@@ -17,6 +18,12 @@ from corehq.util.test_utils import get_form_ready_to_save
 from corehq.apps.reports.standard.cases.utils import get_user_type
 from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es import case_search_adapter
+from corehq.form_processor.models import CommCareCase
+from corehq.apps.reports.util import domain_copied_cases_by_owner
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.hqcase.case_helper import CaseCopier
 
 DOMAIN = 'test_domain'
 USER_ID = "5bc1315c-da6f-466d-a7c4-4580bc84a7b9"
@@ -139,3 +146,56 @@ def reset_cache(form_id, value=None):
         cache.delete(key)
     else:
         cache.set(key, value, 5)
+
+
+@es_test(requires=[case_search_adapter])
+class TestDomainCopiedCasesByOwner(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super()
+        cls.user = CommCareUser.create(DOMAIN, 'user', 'password', None, None)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete(deleted_by_domain=None, deleted_by=None)
+        super()
+
+    def test_no_copied_cases_for_owner(self):
+        self.assertEqual(domain_copied_cases_by_owner(DOMAIN, self.user.user_id), [])
+
+    def test_user_have_no_copied_cases(self):
+        _ = self._send_case_to_es(
+            domain=DOMAIN,
+            owner_id=self.user.user_id,
+        )
+        self.assertEqual(domain_copied_cases_by_owner(DOMAIN, self.user.user_id), [])
+
+    def test_user_have_copied_cases(self):
+        case = self._send_case_to_es(
+            domain=DOMAIN,
+            owner_id=self.user.user_id,
+            is_copy=True,
+        )
+        self.assertEqual(domain_copied_cases_by_owner(DOMAIN, self.user.user_id), [case.case_id])
+
+    def _send_case_to_es(
+        self,
+        domain=None,
+        owner_id=None,
+        is_copy=False,
+    ):
+        case_json = {}
+        if is_copy:
+            case_json[CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME] = 'case_id'
+
+        case = CommCareCase(
+            case_id=uuid.uuid4().hex,
+            domain=domain,
+            owner_id=owner_id,
+            type='case_type',
+            case_json=case_json,
+        )
+
+        case_search_adapter.index(case, refresh=True)
+        return case

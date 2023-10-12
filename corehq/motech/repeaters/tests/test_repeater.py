@@ -114,16 +114,12 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
         )
 
         cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(clear_plan_version_cache)
+        cls.addClassCleanup(cls.domain_obj.delete)
 
         # DATA_FORWARDING is on PRO and above
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.teardown_subscriptions()
-        cls.domain_obj.delete()
-        clear_plan_version_cache()
-        super().tearDownClass()
+        cls.addClassCleanup(cls.teardown_subscriptions)
 
     @classmethod
     def post_xml(cls, xml, domain_name):
@@ -1126,17 +1122,6 @@ class TestRepeaterDeleted(BaseRepeaterTest):
         super().tearDown()
 
     def test_trigger_when_deleted(self):
-        self.repeater.retire()
-
-        with patch.object(RepeatRecord, 'fire') as mock_fire:
-            self.repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
-            self.repeat_record = reloaded(self.repeat_record)
-            _process_repeat_record(self.repeat_record)
-            self.assertEqual(mock_fire.call_count, 0)
-            self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
-
-    def test_paused_then_deleted(self):
-        self.repeater.pause()
         self.repeater.retire()
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:

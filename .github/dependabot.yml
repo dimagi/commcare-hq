@@ -32,3 +32,10 @@ updates:
       update-types:
         - "version-update:semver-patch"
         - "version-update:semver-minor"
+
+- package-ecosystem: "github-actions"
+  directory: "/"
+  schedule:
+    interval: weekly
+  labels:
+  - product/invisible

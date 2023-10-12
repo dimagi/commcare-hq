@@ -3,8 +3,16 @@
 
 <script type="text/template" id="case-view-list-template">
   <div class="module-case-list-container">
-
+    <button id="scroll-to-bottom" class="btn btn-lg btn-circle btn-primary hidden-md hidden-lg" type="button" aria-label="{% trans 'Scroll to bottom' %}" style="display: none;">
+      <i class="fa fa-lg fa-arrow-down" aria-hidden="true"></i>
+    </button>
     <div class="page-header menu-header" id="case-list-menu-header">
+      <% if (sidebarEnabled) {%>
+        <button id="search-more" class="btn btn-primary visible-xs visible-sm pull-right" type="button"
+          data-toggle="collapse" data-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
+          {% trans "Refine search" %}
+        </button>
+      <% } %>
       <% if (title.length > 0) {%>
       <h1  aria-label="<%- title %>" tabindex="0" class="page-title"><%- title %></h1>
       <% } %>
@@ -25,8 +33,11 @@
     </div>
     <% } %>
 
-    <div id="module-case-list-container__results-container" style="<%- columnStyle %>">
-      <div id="module-case-list-column-next-to-map">
+    <div id="module-case-list-container__results-container" class="row row-no-gutters">
+      <% if (showMap) { %>
+        <div id="module-case-list-map" class="sticky sticky-map col-md-5 col-md-push-9<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
+      <% } %>
+      <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
         <% if (useTiles) { %>
           <% if (hasNoItems) { %>
             {% include 'formplayer/no_items_text.html' %}
@@ -82,9 +93,6 @@
         </div>
         <% } %>
       </div>
-      <% if (showMap) { %>
-        <div id="module-case-list-map" class="map <% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
-      <% } %>
     </div>
     <% if (actions || isMultiSelect) { %>
     <div class="case-list-actions">
@@ -117,6 +125,8 @@
     <% if (!(styles[index].widthHint === 0)) { %>
       <% if (styles[index].displayFormat === 'Image') { %>
         <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
+      <% } else if (styles[index].displayFormat === 'ClickableIcon') { %>
+        <td class="module-case-list-column"><img class="module-icon btn" src="<%- resolveUri(datum) %>"/></td>
       <% } else if (styles[index].displayFormat === 'Markdown') { %>
         <td class="module-case-list-column webapp-markdown-output"><%= renderMarkdown(datum) %></td>
       <% } else if (styles[index].displayFormat === 'Graph') { %>
@@ -140,7 +150,7 @@
     <div class="<%- prefix %>-grid-style-<%- index %> box">
       <% if (styles[index].displayFormat === 'Image') {
       if(resolveUri(datum)) { %>
-      <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+      <img class="module-icon" src="<%- resolveUri(datum) %>"/>
       <% } %>
       <% } else if(styles[index].widthHint === 0) { %>
       <div style="display:none;"><%- datum %></div>
@@ -212,8 +222,8 @@
 <script type="text/template" id="cell-grid-style-template">
   .<%- model.prefix %>-cell-grid-style {
   display: grid;
-  grid-template-columns: repeat(<%- model.numColumns %>, 1fr) min-content 5px;
-  grid-template-rows: repeat(<%- model.numRows %>, <%- model.heightString %>) min-content 5px;
+  grid-template-columns: repeat(<%- model.numColumns %>, 1fr);
+  grid-template-rows: repeat(<%- model.numRows %>, <%- model.heightString %>);
   background-color: transparent;
   color: #685c53;
   justify-items: left;

@@ -207,19 +207,22 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     if not name:
         return gettext('Case property must have a name')
 
-    prop = CaseProperty.get_or_create(
-        name=name, case_type=case_type, domain=domain
-    )
+    try:
+        prop = CaseProperty.get_or_create(
+            name=name, case_type=case_type, domain=domain
+        )
+    except ValueError as e:
+        return str(e)
+
     prop.data_type = data_type if data_type else ""
     if description is not None:
         prop.description = description
-    if group is not None:
-        prop.group = group
-        # Allow properties to have no group
-        if group:
-            prop.group_obj, created = CasePropertyGroup.objects.get_or_create(name=group, case_type=prop.case_type)
-        else:
-            prop.group_obj = None
+
+    if group:
+        prop.group_obj, created = CasePropertyGroup.objects.get_or_create(name=group, case_type=prop.case_type)
+    else:
+        prop.group_obj = None
+
     if deprecated is not None:
         prop.deprecated = deprecated
     if label is not None:

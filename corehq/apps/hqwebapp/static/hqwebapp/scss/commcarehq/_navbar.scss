@@ -6,9 +6,12 @@
   min-height: $navbar-height;
 
   .navbar-brand {
+    padding-top: 11px;
     line-height: 17px;
-    height: $navbar-height - 4px;
+    height: $navbar-height - 6px;
     display: inline-block;
+    margin-left: -1px;
+    margin-right: 3px;
 
     // Standard HQ logo
     // Custom domain logos use an actual image
@@ -30,8 +33,9 @@
   }
 
   &.navbar-expand-lg .navbar-nav .nav-link {
-    padding: 21px 15px;
+    padding: 21px 15px 20px;
     line-height: 19.5px;
+    color: $gray-light;
   }
 
   &.navbar-expand-lg .navbar-nav li:not(.active) > .nav-link:focus,
@@ -64,6 +68,7 @@
 .nav-settings-bar {
   margin-left: auto;
   order: 2;
+  padding-right: 8px;
 }
 
 @media(max-width: 1057px) {
@@ -131,7 +136,7 @@
   .dimagi-logo svg {
     height: 22px;
     width: 50px;
-    top: 3px;
+    top: 2px;
     position: relative;
     display: inline-block;
   }

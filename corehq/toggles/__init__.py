@@ -692,7 +692,7 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
 
 CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
     'case_list_custom_variables',
-    'Show text area for entering custom variables',
+    'Show editor for entering custom variables',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description='Defines custom variables that can be used in case list or detail calculations',
@@ -705,6 +705,16 @@ CASE_LIST_TILE = StaticToggle(
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
+)
+
+CASE_LIST_TILE_CUSTOM = StaticToggle(
+    'case_list_tile_custom',
+    'USH: Configure custom case list tile',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?'
+              'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
+    parent_toggles=[CASE_LIST_TILE],
 )
 
 CASE_LIST_MAP = StaticToggle(
@@ -1040,6 +1050,16 @@ SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
+DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
+    'dynamically_update_search_results',
+    "In case search with split screen case search enabled, search results update when a search field is updated"
+    " without requiring the user to manually press a button to search.",
+    TAG_CUSTOM,
+    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
+)
+
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
     'usercases_for_web_users',
     "USH: Enable the creation of usercases for web users.",
@@ -1233,7 +1253,8 @@ CACHE_AND_INDEX = StaticToggle(
     'REC: Enable the "Cache and Index" format option when choosing sort properties '
     'in the app builder',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?pageId=41484944',
 )
 
 CUSTOM_PROPERTIES = StaticToggle(
@@ -1398,7 +1419,7 @@ SMS_LOG_CHANGES = StaticToggle(
 EXPORT_DATA_SOURCE_DATA = StaticToggle(
     'export_data_source_data',
     'Add Export Data Source Data page',
-    TAG_SOLUTIONS_OPEN,
+    TAG_CUSTOM,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
     description="Add the Export Data Source Data page to the Data tab",
 )
@@ -1667,6 +1688,14 @@ SESSION_ENDPOINTS = StaticToggle(
                 'CommCare app. (Used by the Reminders App)',
 )
 
+CASE_LIST_CLICKABLE_ICON = StaticToggle(
+    'case_list_clickable_icon',
+    'USH: Allow use of clickable icons in the case list in Web Apps to trigger auto submitting forms',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    parent_toggles=[SESSION_ENDPOINTS]
+)
+
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'sumologic_logs',
     'Send logs to sumologic',
@@ -1774,6 +1803,13 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'Do not show modal on mobile that mobile hq experience is bad',
     TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+COPY_CASES = StaticToggle(
+    'copy_cases',
+    'Enable users to copy cases between mobile workers',
+    TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DASHBOARD_REACH_REPORT = StaticToggle(
@@ -2409,6 +2445,15 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',  # noqa: E501
     description='This can be used to create report builder reports that are location-safe.'
+)
+
+LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
+    'location_restricted_scheduled_reports',
+    'Allows access to report scheduling views for location restricted users',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Provides access to views for resport scheduling '
+                'such as schedule creation and deletion.'
 )
 
 

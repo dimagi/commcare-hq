@@ -76,7 +76,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
-from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.decorators import waf_allow, use_bootstrap5
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.encoders import LazyEncoder
@@ -89,6 +89,7 @@ from corehq.apps.hqwebapp.forms import (
 from corehq.apps.hqwebapp.models import HQOauthApplication
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.users.event_handlers import handle_email_invite_message
@@ -134,6 +135,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
     return f'Traceback (most recent call last):\n{tb}{type.__name__}: {exc}'
 
 
+@use_bootstrap5
 def server_error(request, template_name='500.html', exception=None):
     """
     500 error handler.
@@ -175,6 +177,7 @@ def server_error(request, template_name='500.html', exception=None):
     ))
 
 
+@use_bootstrap5
 def not_found(request, template_name='404.html', exception=None):
     """
     404 error handler.
@@ -327,6 +330,7 @@ def server_up(req):
         return HttpResponse("success")
 
 
+@use_bootstrap5
 def _no_permissions_message(request, template_name="403.html", message=None):
     t = loader.get_template(template_name)
     return t.render(
@@ -339,6 +343,7 @@ def _no_permissions_message(request, template_name="403.html", message=None):
     )
 
 
+@use_bootstrap5
 def no_permissions(request, redirect_to=None, template_name="403.html", message=None, exception=None):
     """
     403 error handler.
@@ -346,10 +351,12 @@ def no_permissions(request, redirect_to=None, template_name="403.html", message=
     return HttpResponseForbidden(_no_permissions_message(request, template_name, message))
 
 
+@use_bootstrap5
 def no_permissions_exception(request, template_name="403.html", message=None):
     return Http403(_no_permissions_message(request, template_name, message))
 
 
+@use_bootstrap5
 def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
     t = loader.get_template(template_name)
     return HttpResponseForbidden(t.render(
@@ -841,14 +848,16 @@ def render_static(request, template, page_name):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "hqwebapp/bootstrap3/blank.html",
+    return render(request, f"hqwebapp/{get_bootstrap_version()}/blank.html",
                   {'tmpl': template, 'page_name': page_name})
 
 
+@use_bootstrap5
 def apache_license(request):
     return render_static(request, "apache_license.html", _("Apache License"))
 
 
+@use_bootstrap5
 def bsd_license(request):
     return render_static(request, "bsd_license.html", _("BSD License"))
 
@@ -1237,8 +1246,9 @@ def osdd(request, template='osdd.xml'):
 class MaintenanceAlertsView(BasePageView):
     urlname = 'alerts'
     page_title = gettext_noop("Maintenance Alerts")
-    template_name = 'hqwebapp/bootstrap3/maintenance_alerts.html'
+    template_name = 'hqwebapp/maintenance_alerts.html'
 
+    @method_decorator(use_bootstrap5)
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(MaintenanceAlertsView, self).dispatch(request, *args, **kwargs)

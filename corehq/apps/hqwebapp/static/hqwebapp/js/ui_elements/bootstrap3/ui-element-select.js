@@ -11,9 +11,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-select', [
     var module = {};
 
     var Select = function (options) {
-        var that = this,
-            i,
-            option;
+        var that = this;
         hqMain.eventize(this);
         this.ui = $('<span/>');
         this.value = "";
@@ -58,7 +56,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-select', [
                 return this;
             }
         },
-        valLabel : function () {
+        valLabel: function () {
             return this.valueLabel;
         },
         setEdit: function (edit) {
@@ -82,9 +80,13 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-select', [
         setOptions: function (options) {
             this.options = options.map(o => _.isString(o) ? {value: o, label: o} : o);
             this.$edit_view.html('');
-            for (var i = 0; i < this.options.length; i += 1) {
-                var option = this.options[i];
-                $('<option/>').text(option.label).val(option.value).appendTo(this.$edit_view);
+            for (let i = 0; i < this.options.length; i += 1) {
+                const option = this.options[i];
+                if ('groupName' in option) {
+                    $(`<optgroup label="${option.groupName}"/>`).appendTo(this.$edit_view);
+                } else {
+                    $('<option/>').text(option.label).val(option.value).appendTo(this.$edit_view);
+                }
             }
         },
     };

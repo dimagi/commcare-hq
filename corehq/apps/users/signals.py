@@ -42,6 +42,12 @@ def sync_user_phone_numbers(sender, couch_user, **kwargs):
     sms_sync_user_phone_numbers.delay(couch_user.get_id)
 
 
+def remove_test_cases(sender, couch_user, **kwargs):
+    from corehq.apps.users.tasks import remove_users_test_cases
+    if not couch_user.is_web_user() and not couch_user.is_active:
+        remove_users_test_cases.delay(couch_user.domain, [couch_user.user_id])
+
+
 # This gets called by UsersAppConfig when the module is set up
 def connect_user_signals():
     from django.contrib.auth.models import User
@@ -51,3 +57,4 @@ def connect_user_signals():
     couch_user_post_save.connect(sync_user_phone_numbers, dispatch_uid="sync_user_phone_numbers")
     commcare_user_post_save.connect(apply_correct_demo_mode,
                                     dispatch_uid='apply_correct_demo_mode')
+    commcare_user_post_save.connect(remove_test_cases, dispatch_uid='remove_test_cases')

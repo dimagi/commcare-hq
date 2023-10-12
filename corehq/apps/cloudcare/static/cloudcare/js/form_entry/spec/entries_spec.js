@@ -70,7 +70,7 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {
             var entry;
 
             questionJSON.datatype = constants.SELECT;
-            questionJSON.style = { raw: constants.MINIMAL };
+            questionJSON.style = { raw: constants.MINIMAL + " dummy" };
             questionJSON.choices = ['a', 'b'];
 
             entry = formUI.Question(questionJSON).entry;
@@ -502,7 +502,17 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {
             assert.isTrue(entry instanceof entries.VideoEntry);
         });
 
-        it('Should return UnsuportedEntry when binary question has an unsupported control', function () {
+        it('Should return SignatureEntry', function () {
+            var entry;
+            questionJSON.datatype = constants.BINARY;
+            questionJSON.control = constants.CONTROL_IMAGE_CHOOSE;
+            questionJSON.style = { raw: constants.SIGNATURE };
+
+            entry = formUI.Question(questionJSON).entry;
+            assert.isTrue(entry instanceof entries.SignatureEntry);
+        });
+
+        it('Should return UnsupportedEntry when binary question has an unsupported control', function () {
             var entry;
             questionJSON.datatype = constants.BINARY;
             questionJSON.control = constants.CONTROL_UPLOAD;

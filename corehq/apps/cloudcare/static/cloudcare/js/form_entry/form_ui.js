@@ -208,7 +208,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                         // There is a request in progress, check if the answer has changed since the request
                         // was made. For file questions, it is most unlikely that the answer will change while the request
                         // is in progress, so we just ignore the value.
-                        if (options.target.entry.templateType === "file" || formEntryUtils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
+                        if (options.target.entry.templateType === "file"
+                            || options.target.entry.templateType === "signature"
+                            || formEntryUtils.answersEqual(options.data.answer, options.target.pendingAnswer())
+                        ) {
                             // We can now mark it as not dirty
                             options.target.pendingAnswer(constants.NO_PENDING_ANSWER);
                         } else {
@@ -745,6 +748,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             $.publish('formplayer.' + constants.ANSWER, self);
         }, self.throttle);
         self.onchange = self.triggerAnswer;
+
+        self.onClear = _.throttle(function () {
+            $.publish('formplayer.' + constants.CLEAR_ANSWER, self);
+        }, self.throttle);
 
         self.mediaSrc = function (resourceType) {
             if (!resourceType || !_.isFunction(formEntryUtils.resourceMap)) { return ''; }

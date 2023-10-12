@@ -1,3 +1,4 @@
+from uuid import uuid4
 from datetime import datetime
 
 from django.conf import settings
@@ -93,7 +94,9 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
 
 # rate limit to two bulk saves per second so cloudant has time to reindex
 @task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True)
-def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
+def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date=None):
+    if not deletion_date:
+        deletion_date = datetime.utcnow()
     from corehq.apps.data_interfaces.tasks import delete_duplicates_for_cases
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.messaging.scheduling.tasks import (
@@ -389,3 +392,11 @@ def apply_correct_demo_mode_to_loadtest_user(commcare_user_id):
             user.is_loadtest_user = False  # This change gets saved by
             # turn_off_demo_mode()
             turn_off_demo_mode(user)
+
+
+@task(queue='background_queue')
+def remove_users_test_cases(domain, owner_ids):
+    from corehq.apps.reports.util import domain_copied_cases_by_owner
+
+    test_case_ids = domain_copied_cases_by_owner(domain, owner_ids)
+    tag_cases_as_deleted_and_remove_indices(domain, test_case_ids, uuid4().hex)

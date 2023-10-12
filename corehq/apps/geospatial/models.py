@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext as _
 from dataclasses import dataclass
 
 import geopandas as gpd
@@ -6,7 +7,7 @@ from geopy.distance import great_circle
 from shapely.geometry import Point
 
 from .exceptions import InvalidCoordinate, InvalidDistributionParam
-from corehq.apps.geospatial.const import GEO_POINT_CASE_PROPERTY
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 
 
 @dataclass
@@ -135,13 +136,54 @@ class GeoConfig(models.Model):
 
     CUSTOM_USER_PROPERTY = 'custom_user_property'
     ASSIGNED_LOCATION = 'assigned_location'
+    RADIAL_ALGORITHM = 'radial_algorithm'
+    ROAD_NETWORK_ALGORITHM = 'road_network_algorithm'
+    MIN_MAX_GROUPING = 'min_max_grouping'
+    TARGET_SIZE_GROUPING = 'target_size_grouping'
 
     VALID_LOCATION_SOURCES = [
         CUSTOM_USER_PROPERTY,
         ASSIGNED_LOCATION,
     ]
+    VALID_DISBURSEMENT_ALGORITHMS = [
+        (RADIAL_ALGORITHM, _('Radial Algorithm')),
+        (ROAD_NETWORK_ALGORITHM, _('Road Network Algorithm')),
+    ]
+    VALID_GROUPING_METHODS = [
+        (MIN_MAX_GROUPING, _('Min/Max Grouping')),
+        (TARGET_SIZE_GROUPING, _('Target Size Grouping')),
+    ]
 
     domain = models.CharField(max_length=256, db_index=True, primary_key=True)
     location_data_source = models.CharField(max_length=126, default=CUSTOM_USER_PROPERTY)
-    user_location_property_name = models.CharField(max_length=256, default=GEO_POINT_CASE_PROPERTY)
-    case_location_property_name = models.CharField(max_length=256, default=GEO_POINT_CASE_PROPERTY)
+    user_location_property_name = models.CharField(max_length=256, default=GPS_POINT_CASE_PROPERTY)
+    case_location_property_name = models.CharField(max_length=256, default=GPS_POINT_CASE_PROPERTY)
+
+    selected_grouping_method = models.CharField(
+        choices=VALID_GROUPING_METHODS,
+        default=MIN_MAX_GROUPING,
+        max_length=50
+    )
+    max_cases_per_group = models.IntegerField(null=True)
+    min_cases_per_group = models.IntegerField(null=True)
+    target_group_count = models.IntegerField(null=True)
+
+    selected_disbursement_algorithm = models.CharField(
+        choices=VALID_DISBURSEMENT_ALGORITHMS,
+        default=ROAD_NETWORK_ALGORITHM,
+        max_length=50
+    )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._clear_caches()
+
+    def delete(self, *args, **kwargs):
+        self._clear_caches()
+        return super().delete(*args, **kwargs)
+
+    def _clear_caches(self):
+        from .utils import get_geo_case_property, get_geo_user_property
+
+        get_geo_case_property.clear(self.domain)
+        get_geo_user_property.clear(self.domain)

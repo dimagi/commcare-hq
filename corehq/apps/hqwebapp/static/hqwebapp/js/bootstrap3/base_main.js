@@ -7,7 +7,7 @@ hqDefine("hqwebapp/js/bootstrap3/base_main", [
     'hqwebapp/js/bootstrap3/sticky_tabs',
     'hqwebapp/js/bootstrap3/main',
     'hqwebapp/js/bootstrap3/inactivity',
-    'notifications/js/notifications_service_main',
+    'notifications/js/bootstrap3/notifications_service_main',
     'analytix/js/appcues',
     'analytix/js/drift',
     'analytix/js/google',

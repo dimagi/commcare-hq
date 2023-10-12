@@ -30,18 +30,12 @@
             <h3>Elasticsearch Doc:</h3>
             <pre>{{ es_doc }}</pre>
           </div>
-          <div class="col-xs-6">
-            <h3>Couch/SQL Doc:</h3>
-            <pre>{{ couch_info.doc|default:"NOT FOUND" }}</pre>
-          </div>
         </div>
       {% endfor %}
-      {% if not found_indices %}
-        <div class="col-xs-6">
-          <h3>Couch/SQL Doc:</h3>
-          <pre>{{ couch_info.doc|default:"NOT FOUND" }}</pre>
-        </div>
-      {% endif %}
+      <div class="col-xs-6">
+        <h3>Couch/SQL Doc:</h3>
+        <pre>{{ couch_info.doc|default:"NOT FOUND" }}</pre>
+      </div>
     {% endif %}
   </div>
 {% endblock content %}

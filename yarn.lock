@@ -72,6 +72,11 @@
   resolved "https://registry.yarnpkg.com/@isaacs/string-locale-compare/-/string-locale-compare-1.1.0.tgz#291c227e93fd407a96ecd59879a35809120e432b"
   integrity sha512-SQ7Kzhh9+D+ZW9MA0zkYv3VXhIDNx+LzM6EJ+/65I3QY+enU6Itte7E5XX7EWrqLW2FN4n06GWzBnPoC3th2aQ==
 
+"@mapbox/corslite@0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@mapbox/corslite/-/corslite-0.0.7.tgz#29f5b6a188ba946e514bdf0b6401ed4fbe13a39e"
+  integrity sha512-w/uS474VFjmqQ7fFWIMZINQM1BAQxDLuoJaZZIPES1BmeYpCtlh9MtbFxKGGDAsfvut8/HircIsVvEYRjQ+iMg==
+
 "@mapbox/extent@0.4.0":
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/@mapbox/extent/-/extent-0.4.0.tgz#3e591f32e1f0c3981c864239f7b0ac06e610f8a9"
@@ -173,6 +178,11 @@
   integrity sha512-z9Sl7NYzsEIrAza658H92mc0OvpBjQwjp7Snv4xREKhsCMat7m1IKdWJMjQ5opiPYa0veMf7kCaSd1yx55AhmQ==
   dependencies:
     meow "^6.1.1"
+
+"@mapbox/sanitize-caja@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@mapbox/sanitize-caja/-/sanitize-caja-0.1.4.tgz#1b3ca8220d132b76b1219b65f9a719fbefe35837"
+  integrity sha512-yY8xW95/8NpR9PP26cm/Bm/d/GXIU/VQURLJH+tTQYkp2LsgoFbnb2yn85W7H2aZh0ATXLNuFfQ9HujqsSGfBA==
 
 "@npmcli/arborist@^5.6.3":
   version "5.6.3"
@@ -806,10 +816,10 @@ bootstrap3-typeahead@bassjobsen/Bootstrap-3-Typeahead#~3.1.1:
   version "3.1.1"
   resolved "https://codeload.github.com/bassjobsen/Bootstrap-3-Typeahead/tar.gz/c65c829fe8411f6eadb88415d09c1e85bb4603d0"
 
-"bootstrap5@npm:bootstrap@5.2.3":
-  version "5.2.3"
-  resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-5.2.3.tgz#54739f4414de121b9785c5da3c87b37ff008322b"
-  integrity sha512-cEKPM+fwb3cT8NzQZYEu4HilJ3anCrWqh3CHAok1p9jXqMPsPTBhU25fBckEJHJ/p+tTxTFTsFQGM+gaHpi3QQ==
+"bootstrap5@npm:bootstrap@5.3.1":
+  version "5.3.1"
+  resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-5.3.1.tgz#8ca07040ad15d7f75891d1504cf14c5dedfb1cfe"
+  integrity sha512-jzwza3Yagduci2x0rr9MeFSORjcHpt0lRZukZPZQJT1Dth5qzV7XcgGqYzi39KGAVYR8QEDVoO0ubFKOxzMG+g==
 
 bootstrap@3.4.1, bootstrap@^3.3:
   version "3.4.1"
@@ -2112,9 +2122,9 @@ get-caller-file@^2.0.1, get-caller-file@^2.0.5:
   integrity sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==
 
 get-func-name@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/get-func-name/-/get-func-name-2.0.0.tgz#ead774abee72e20409433a066366023dd6887a41"
-  integrity sha1-6td0q+5y4gQJQzoGY2YCPdaIekE=
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/get-func-name/-/get-func-name-2.0.2.tgz#0d7cf20cd13fda808669ffa88f4ffc7a3943fc41"
+  integrity sha512-8vXOvuE167CtIc3OyItco7N/dpRtBbYOsPsXCz7X/PMnlGjYjSGuZJgM1Y7mmew7BKf9BqvLX2tnOVy1BBUsxQ==
 
 get-intrinsic@^1.0.2:
   version "1.1.3"
@@ -3083,10 +3093,20 @@ knockout@3.5.1:
   resolved "https://registry.yarnpkg.com/knockout/-/knockout-3.5.1.tgz#62c81e81843bea2008fd23c575edd9ca978e75cf"
   integrity sha512-wRJ9I4az0QcsH7A4v4l0enUpkS++MBx0BnL/68KaLzJg7x1qmbjSlwEoCNol7KTYZ+pmtI7Eh2J0Nu6/2Z5J/Q==
 
+leaflet-fullscreen@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/leaflet-fullscreen/-/leaflet-fullscreen-1.0.2.tgz#09c61c4bac45f63b2ee126afd87e5cd97650fc1b"
+  integrity sha512-1Yxm8RZg6KlKX25+hbP2H/wnOAphH7hFcvuADJFb4QZTN7uOSN9Hsci5EZpow8vtNej9OGzu59Jxmn+0qKOO9Q==
+
 leaflet@0.7.7:
   version "0.7.7"
   resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-0.7.7.tgz#1e352ba54e63d076451fa363c900890cb2cf75ee"
   integrity sha1-HjUrpU5j0HZFH6NjyQCJDLLPde4=
+
+leaflet@1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.4.0.tgz#d5f56eeb2aa32787c24011e8be4c77e362ae171b"
+  integrity sha512-x9j9tGY1+PDLN9pcWTx9/y6C5nezoTMB8BLK5jTakx+H7bPlnbCHfi9Hjg+Qt36sgDz/cb9lrSpNQXmk45Tvhw==
 
 less@3.10.3:
   version "3.10.3"
@@ -3420,6 +3440,16 @@ map-obj@^4.0.0:
   resolved "https://registry.yarnpkg.com/map-obj/-/map-obj-4.1.0.tgz#b91221b542734b9f14256c0132c897c5d7256fd5"
   integrity sha512-glc9y00wgtwcDmp7GaE/0b0OnxpNJsVf3ael/An6Fe2Q51LLwN1er6sdomLRzz5h0+yMpiYLhWYF5R7HeqVd4g==
 
+mapbox.js@3.3.1:
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/mapbox.js/-/mapbox.js-3.3.1.tgz#342e7230e3ae5d3da3a2f10d6f2ed409ea32a20e"
+  integrity sha512-Vbco0r4DlQ4TOPZoj7Vl+rgZGie7ZWe3JL43fLzCnH3tC2AevqUFl5+mY8W+rwtd1oVsgfnNbIt4ZY4d9KkvBw==
+  dependencies:
+    "@mapbox/corslite" "0.0.7"
+    "@mapbox/sanitize-caja" "^0.1.4"
+    leaflet "1.4.0"
+    mustache "3.0.1"
+
 marionette.approuter@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/marionette.approuter/-/marionette.approuter-1.0.2.tgz#bd45b801762fea4ec5caa9505640413596cc432c"
@@ -3749,6 +3779,11 @@ multiselect@0.9.12:
   integrity sha1-0VU26YbdagApsWDWYTvO34Hkx+0=
   dependencies:
     jquery ">= 1.7.1"
+
+mustache@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/mustache/-/mustache-3.0.1.tgz#873855f23aa8a95b150fb96d9836edbc5a1d248a"
+  integrity sha512-jFI/4UVRsRYdUbuDTKT7KzfOp7FiD5WzYmmwNwXyUVypC0xjoTL78Fqc0jHUPIvvGD+6DQSPHIt1NE7D1ArsqA==
 
 mute-stream@~0.0.4:
   version "0.0.8"
@@ -4964,6 +4999,11 @@ signal-exit@^3.0.7:
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.7.tgz#a9a1767f8af84155114eaabd73f99273c8f59ad9"
   integrity sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==
 
+signature_pad@^4.1.6:
+  version "4.1.6"
+  resolved "https://registry.yarnpkg.com/signature_pad/-/signature_pad-4.1.6.tgz#5778531cce2e1a43207d50bb3fc332de02583609"
+  integrity sha512-eoZB8qFPfCs7o00weajp5roNnE2gY2kTNjZsh805L8V+lYPagxoZi9qrBFS3A6sgbVq++ukdzgruK7tuv3JFXQ==
+
 sinon@2.3.2:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/sinon/-/sinon-2.3.2.tgz#c43a9c570f32baac1159505cfeed19108855df89"
@@ -5725,7 +5765,7 @@ wide-align@^1.1.5:
   dependencies:
     string-width "^1.0.2 || 2 || 3 || 4"
 
-word-wrap@^1.2.3, "word-wrap@npm:@aashutoshrathi/word-wrap@1.2.5", word-wrap@~1.2.3:
+word-wrap@^1.2.3, word-wrap@~1.2.3:
   version "1.2.5"
   resolved "https://registry.yarnpkg.com/@aashutoshrathi/word-wrap/-/word-wrap-1.2.5.tgz#383aeebd5c176c320d6364fb869669559bbdbac9"
   integrity sha512-plhoNEfSVdHMKXQyAxvH0Zyv3/4NL8r6pwgMQdmHR2vBUXn2t74PN2pBRppqKUa6RMT0yldyvOHG5Dbjwy2mBQ==

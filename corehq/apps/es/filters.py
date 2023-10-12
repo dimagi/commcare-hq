@@ -26,6 +26,10 @@ def prefix(field, value):
     return {"prefix": {field: value}}
 
 
+def wildcard(field, value):
+    return {"wildcard": {field: value}}
+
+
 def term(field, value):
     """
     Filter docs by a field
@@ -128,3 +132,55 @@ def nested(path, filter_):
 
 def regexp(field, regex):
     return {"regexp": {field: regex}}
+
+
+def geo_bounding_box(field, top_left, bottom_right):
+    """
+    Only return geopoints stored in ``field`` that are located within
+    the bounding box defined by GeoPoints ``top_left`` and
+    ``bottom_right``.
+
+    :param field: The field where geopoints are stored
+    :param top_left: The GeoPoint of the top left of the bounding box,
+        a string in the format "latitude longitude" or "latitude
+        longitude altitude accuracy"
+    :param bottom_right: The GeoPoint of the bottom right of the
+        bounding box
+    :return: A filter dict
+    """  # noqa: E501
+    from couchforms.geopoint import GeoPoint
+
+    top_left_geo = GeoPoint.from_string(top_left, flexible=True)
+    bottom_right_geo = GeoPoint.from_string(bottom_right, flexible=True)
+    shape = {
+        'type': 'envelope',
+        'coordinates': [
+            [float(top_left_geo.longitude), float(top_left_geo.latitude)],
+            [float(bottom_right_geo.longitude), float(bottom_right_geo.latitude)]
+        ]
+    }
+    return geo_shape(field, shape, relation='within')
+
+
+def geo_shape(field, shape, relation='intersects'):
+    """
+    Filters cases by case properties indexed using the the geo_point
+    type.
+
+    More info: `The Geoshape query reference <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html>`_
+
+    :param field: The field where geopoints are stored
+    :param shape: A shape definition given in GeoJSON geometry format.
+        More info: `The GeoJSON specification (RFC 7946) <https://datatracker.ietf.org/doc/html/rfc7946>`_
+    :param relation: The relation between the shape and the case
+        property values.
+    :return: A filter definition
+    """  # noqa: E501
+    return {
+        "geo_shape": {
+            field: {
+                "shape": shape,
+                "relation": relation
+            }
+        }
+    }

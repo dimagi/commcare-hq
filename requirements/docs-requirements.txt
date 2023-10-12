@@ -4,6 +4,8 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
+absl-py==1.4.0
+    # via ortools
 alabaster==0.7.12
     # via sphinx
 alembic==1.7.7
@@ -16,7 +18,7 @@ asgiref==3.5.0
     # via django
 async-timeout==4.0.2
     # via redis
-attrs==21.4.0
+attrs==23.1.0
     # via
     #   -r base-requirements.in
     #   cattrs
@@ -86,7 +88,7 @@ contextlib2==21.6.0
     # via schema
 crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
     # via -r base-requirements.in
-cryptography==41.0.3
+cryptography==41.0.4
     # via
     #   jwcrypto
     #   oic
@@ -238,7 +240,7 @@ geopandas==0.12.2
     # via -r base-requirements.in
 geopy==2.3.0
     # via -r base-requirements.in
-gevent==21.8.0
+gevent==23.9.1
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -283,7 +285,7 @@ googleapis-common-protos==1.59.0
     # via
     #   google-api-core
     #   grpcio-status
-greenlet==1.1.2
+greenlet==2.0.2
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -296,6 +298,8 @@ grpcio-status==1.54.2
     # via google-api-core
 gunicorn==20.0.4
     # via -r base-requirements.in
+haversine==2.8.0
+    # via -r base-requirements.in
 hiredis==2.0.0
     # via -r base-requirements.in
 hl7apy==1.3.4
@@ -306,7 +310,7 @@ httplib2==0.20.4
     # via
     #   google-api-python-client
     #   google-auth-httplib2
-idna==2.10
+idna==3.4
     # via requests
 imagesize==1.4.1
     # via sphinx
@@ -376,12 +380,13 @@ mdurl==0.1.2
     # via markdown-it-py
 msgpack==1.0.5
     # via cachecontrol
-munch==2.5.0
+munch==4.0.0
     # via fiona
 myst-parser==2.0.0
     # via -r docs-requirements.in
 numpy==1.24.3
     # via
+    #   ortools
     #   pandas
     #   shapely
 oauthlib==3.1.0
@@ -396,6 +401,8 @@ openpyxl==3.0.9
     #   commcaretranslationchecker
 opentelemetry-api==1.18.0
     # via ddtrace
+ortools==9.7.2996
+    # via -r base-requirements.in
 packaging==23.0
     # via
     #   -r base-requirements.in
@@ -408,7 +415,7 @@ phonenumberslite==8.12.48
     # via -r base-requirements.in
 pickle5==0.0.11
     # via -r base-requirements.in
-pillow==9.3.0
+pillow==10.0.1
     # via
     #   -r base-requirements.in
     #   reportlab
@@ -427,7 +434,7 @@ prompt-toolkit==3.0.36
     # via click-repl
 proto-plus==1.22.2
     # via google-cloud-firestore
-protobuf==4.23.1
+protobuf==4.24.2
     # via
     #   ddsketch
     #   ddtrace
@@ -435,6 +442,7 @@ protobuf==4.23.1
     #   google-cloud-firestore
     #   googleapis-common-protos
     #   grpcio-status
+    #   ortools
     #   proto-plus
 psycogreen==1.0.2
     # via -r base-requirements.in
@@ -588,7 +596,6 @@ six==1.16.0
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
-    #   munch
     #   pyjwkest
     #   python-dateutil
     #   pyzxcvbn
@@ -666,7 +673,7 @@ unidecode==1.2.0
     # via pyphonetics
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.12
+urllib3==1.26.17
     # via
     #   -r docs-requirements.in
     #   botocore
@@ -706,7 +713,6 @@ zope-interface==5.4.0
 setuptools==67.3.2
     # via
     #   django-websocket-redis
-    #   gevent
     #   gunicorn
     #   opentelemetry-api
     #   zope-event

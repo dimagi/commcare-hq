@@ -2,6 +2,39 @@
   background: transparent;
 }
 
+.sticky {
+  position: sticky !important;
+  z-index: 1; // keep sticky elements on top of case list
+  &-header {
+    top: 32px; // header scrolls excess padding under breadcrumbs
+  }
+  &-map {
+    top: 46px; // map sits directly against breadcrumbs
+  }
+}
+
+// override leaflet-fullscreen styles to fix icon alignment in mapbox.js
+.leaflet-touch {
+  .leaflet-control-fullscreen a {
+    background-position: 0px 0px !important;
+  }
+  &.leaflet-fullscreen-on .leaflet-control-fullscreen a {
+    background-position: 0px -26px !important;
+  }
+}
+
+.btn-circle {
+  border-radius: 50%;
+  aspect-ratio: 1;
+}
+
+#scroll-to-bottom {
+  position: fixed;
+  z-index: @zindex-formplayer-scroll-to-bottom;
+  bottom: 45px;
+  left: calc(100vw - 80px);
+}
+
 #menu-region .module-menu-container,
 #menu-region .module-case-list-container {
   background-color: white;
@@ -14,8 +47,10 @@
 
   #module-case-list-map {
     height: calc(~"100vh - 65px");
-    position: sticky !important; // Has to be important so the leaflet code does not set it to relative
-    top: 50px; // based on the height of the crumbs bar
+
+    @media (max-width: @screen-sm-max) {
+      height: 25vh;
+    }
 
     .marker-pin {
       text-align: center;
@@ -27,11 +62,6 @@
     }
   }
 
-  #module-case-list-column-next-to-map {
-    // Horizontal scroll bar on table will disappear without this.
-    overflow-x: scroll;
-  }
-
   .list-cell-wrapper-style {
     border: 1px solid white;
     border-collapse: collapse;
@@ -41,6 +71,17 @@
 
     a {
       color: @cc-brand-mid;
+    }
+
+    .module-icon,
+    .webapp-markdown-output img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+
+    &:hover {
+      background-color: darken(@cc-bg, 5);
+      transition: background 0.6s;
     }
   }
 

@@ -134,6 +134,7 @@ advanced_v0 = pro_v1 + [
     privileges.LOCATION_SAFE_CASE_IMPORTS,
     privileges.FILTERED_BULK_USER_DOWNLOAD,
     privileges.DATA_DICTIONARY,
+    privileges.CASE_COPY,
 ]
 
 enterprise_v0 = advanced_v0 + [

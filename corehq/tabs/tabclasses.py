@@ -112,7 +112,10 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
 from corehq.apps.users.models import HqPermissions
-from corehq.apps.geospatial.views import GeospatialConfigPage
+from corehq.apps.geospatial.views import (
+    GeospatialConfigPage,
+    GPSCaptureView,
+)
 
 
 class ProjectReportsTab(UITab):
@@ -641,7 +644,7 @@ class ProjectDataTab(UITab):
             self.domain,
             get_permission_name(HqPermissions.view_data_dict)
         )
-        return toggles.DATA_DICTIONARY.enabled(self.domain) and has_view_data_dict_permission
+        return domain_has_privilege(self.domain, privileges.DATA_DICTIONARY) and has_view_data_dict_permission
 
     def _get_export_data_views(self):
         export_data_views = []
@@ -2569,6 +2572,10 @@ class GeospatialTab(UITab):
                 {
                     'title': _("Configure geospatial settings"),
                     'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
+                },
+                {
+                    'title': _("Manage GPS Data"),
+                    'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
                 },
             ]),
         ]

@@ -17,7 +17,7 @@ For new templates, I propose following these conventions:
 
 The `name.json` metadata file contains the following properties:
 
-* `slug` is the value saved to `Detail.case_tile_template`
+* `slug` is the value saved to `Detail.case_tile_template`. "custom" is a reserved value.
 * `filename` is a file in this directory containing the detail's XML definition
 * `has_map` if the template has hidden fields to support map configurations
 * `fields` is a list of strings, which names the fields in the template and is used to populate the "Case Tile Mapping" dropdowns in the case list config
