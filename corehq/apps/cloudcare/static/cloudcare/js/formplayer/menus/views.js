@@ -318,8 +318,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         onAttach: function () {
             const self = this;
-            // if (self.isMultiSelect && self.smallScreenEnabled)
-            {
+            if (self.isMultiSelect && self.smallScreenEnabled) {
                 const height = $(self.el).height();
                 if (height > 150) {
                     const tileContent = $(self.el).find('> .collapsible-tile-content');
