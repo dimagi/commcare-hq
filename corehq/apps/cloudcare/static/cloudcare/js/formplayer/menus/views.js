@@ -255,7 +255,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"]
             const domain = user.domain;
             const caseId = this.model.get('id');
-            const urlTemplate = this.options.endpointActions[1]['urlTemplate'];
+            const fieldIndex = $(e.currentTarget).parent().index();
+            const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
             const actionUrl = origin + urlTemplate
                 .replace("{domain}", domain)
                 .replace("{appid}", currentAppId)
