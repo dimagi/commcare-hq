@@ -184,3 +184,16 @@ def geo_shape(field, points_list):
             },
         },
     )
+
+
+def geo_grid(field, geohash):
+    """
+    Filters cases by the geohash grid cell in which they are located.
+    """
+    return {
+        "geo_grid": {
+            field: {
+                "geohash": geohash
+            }
+        }
+    }
