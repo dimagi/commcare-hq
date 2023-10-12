@@ -937,7 +937,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     language = StringProperty()
     subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
-    user_data = DictProperty()      # use metadata property instead of accessing this directly
+    user_data = DictProperty()      # use get_user_data object instead of accessing this directly
     # This should not be set directly but using set_location method only
     location_id = StringProperty()
     assigned_location_ids = StringListProperty()
@@ -1120,13 +1120,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             COMMCARE_PROJECT
         )
 
-        session_data = self.metadata
+        session_data = self.get_user_data(domain).to_dict()
 
         if self.is_commcare_user() and self.is_demo_user:
             session_data[COMMCARE_USER_TYPE_KEY] = COMMCARE_USER_TYPE_DEMO
-
-        if COMMCARE_PROJECT not in session_data:
-            session_data[COMMCARE_PROJECT] = domain
 
         session_data.update({
             f'{SYSTEM_PREFIX}_first_name': self.first_name,
@@ -1448,7 +1445,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             raise ValueError("Do not access user_data directly, pass metadata argument to create.")
         metadata = metadata or {}
         metadata.update({'commcare_project': domain})
-        couch_user.update_metadata(metadata)
+        couch_user.get_user_data(domain).update(metadata)
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
@@ -1799,7 +1796,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         # metadata can't be set until domain is present
         if 'user_data' in kwargs:
             raise ValueError("Do not access user_data directly, pass metadata argument to create.")
-        commcare_user.update_metadata(metadata or {})
+        commcare_user.get_user_data(domain).update(metadata or {})
 
         if location:
             commcare_user.set_location(location, commit=False)
@@ -2063,7 +2060,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 return
             self.assigned_location_ids.append(location.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(location.location_id)
-            self.update_metadata({'commcare_location_ids': user_location_data(self.assigned_location_ids)})
+            user_data = self.get_user_data(self.domain)
+            user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
             if commit:
                 self.save()
         else:
@@ -2085,31 +2083,25 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not location.location_id:
             raise AssertionError("You can't set an unsaved location")
 
-        self.update_metadata({'commcare_location_id': location.location_id})
+        user_data = self.get_user_data(self.domain)
+        user_data['commcare_location_id'] = location.location_id
 
         if not location.location_type_object.administrative:
             # just need to trigger a get or create to make sure
             # this exists, otherwise things blow up
             sp = SupplyInterface(self.domain).get_or_create_by_location(location)
-
-            self.update_metadata({
-                'commtrack-supply-point': sp.case_id
-            })
+            user_data['commtrack-supply-point'] = sp.case_id
 
         self.create_location_delegates([location])
 
-        self.update_metadata({
-            'commcare_primary_case_sharing_id':
-            location.location_id
-        })
-
+        user_data['commcare_primary_case_sharing_id'] = location.location_id
         self.update_fixture_status(UserLookupTableType.LOCATION)
         self.location_id = location.location_id
         self.get_domain_membership(self.domain).location_id = location.location_id
         if self.location_id not in self.assigned_location_ids:
             self.assigned_location_ids.append(self.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(self.location_id)
-            self.update_metadata({'commcare_location_ids': user_location_data(self.assigned_location_ids)})
+            user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
         self.get_sql_location.reset_cache(self)
         if commit:
             self.save()
@@ -2129,18 +2121,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if old_primary_location_id:
             self._remove_location_from_user(old_primary_location_id)
 
+        user_data = self.get_user_data(self.domain)
         if self.assigned_location_ids:
-            self.update_metadata({'commcare_location_ids': user_location_data(self.assigned_location_ids)})
-        elif self.metadata.get('commcare_location_ids'):
-            self.pop_metadata('commcare_location_ids')
+            user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
+        elif user_data.get('commcare_location_ids', None):
+            del user_data['commcare_location_ids']
 
         if self.assigned_location_ids and fall_back_to_next:
             new_primary_location_id = self.assigned_location_ids[0]
             self.set_location(SQLLocation.objects.get(location_id=new_primary_location_id))
         else:
-            self.pop_metadata('commcare_location_id', None)
-            self.pop_metadata('commtrack-supply-point', None)
-            self.pop_metadata('commcare_primary_case_sharing_id', None)
+            user_data.pop('commcare_location_id', None)
+            user_data.pop('commtrack-supply-point', None)
+            user_data.pop('commcare_primary_case_sharing_id', None)
             self.location_id = None
             self.clear_location_delegates()
             self.update_fixture_status(UserLookupTableType.LOCATION)
@@ -2162,10 +2155,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             self._remove_location_from_user(location_id)
 
+            user_data = self.get_user_data(self.domain)
             if self.assigned_location_ids:
-                self.update_metadata({'commcare_location_ids': user_location_data(self.assigned_location_ids)})
+                user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
             else:
-                self.pop_metadata('commcare_location_ids')
+                user_data.pop('commcare_location_ids', None)
             self.save()
 
     def _remove_location_from_user(self, location_id):
@@ -2197,12 +2191,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.assigned_location_ids = location_ids
         self.get_domain_membership(self.domain).assigned_location_ids = location_ids
+        user_data = self.get_user_data(self.domain)
         if location_ids:
-            self.update_metadata({
-                'commcare_location_ids': user_location_data(location_ids)
-            })
+            user_data['commcare_location_ids'] = user_location_data(location_ids)
         else:
-            self.pop_metadata('commcare_location_ids', None)
+            user_data.pop('commcare_location_ids', None)
 
         # try to set primary-location if not set already
         if not self.location_id and location_ids:
