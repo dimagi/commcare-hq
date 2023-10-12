@@ -191,3 +191,18 @@ class TestUserDataModel(SimpleTestCase):
             PROFILE_SLUG: None,
             'favorite_color': '',
         })
+
+    def test_delitem(self):
+        user_data = UserData({'yearbook_quote': 'something random'}, self.domain)
+        del user_data['yearbook_quote']
+        self.assertNotIn('yearbook_quote', user_data.to_dict())
+
+    def test_popitem(self):
+        user_data = UserData({'yearbook_quote': 'something random'}, self.domain)
+        res = user_data.pop('yearbook_quote')
+        self.assertEqual(res, 'something random')
+        self.assertNotIn('yearbook_quote', user_data.to_dict())
+
+        self.assertEqual(user_data.pop('yearbook_quote', 'MISSING'), 'MISSING')
+        with self.assertRaises(KeyError):
+            user_data.pop('yearbook_quote')

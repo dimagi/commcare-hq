@@ -104,3 +104,16 @@ class UserData:
         if key == PROFILE_SLUG:
             del self.profile
         del self._local_to_user[key]
+
+    def pop(self, key, default=...):
+        try:
+            ret = self._local_to_user[key]
+        except KeyError as e:
+            if key in self._provided_by_system:
+                raise UserDataError(f"{key} cannot be deleted") from e
+            if default != ...:
+                return default
+            raise e
+        else:
+            del self._local_to_user[key]
+            return ret
