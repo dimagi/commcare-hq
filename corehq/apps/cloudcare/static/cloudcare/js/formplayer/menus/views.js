@@ -208,6 +208,23 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         return caseListLayout;
     };
 
+    const getMapScrollOffset = function (addressMap, smallScreenEnabled) {
+        const $mapEl = $('#module-case-list-map');
+        const $stickyHeader = $('#small-screen-sticky-header');
+        let scrollTopOffset = parseInt(($mapEl).css('top'));
+        if (smallScreenEnabled) {
+            if ($stickyHeader[0]) {
+                scrollTopOffset = parseInt($stickyHeader.css('top')) + $stickyHeader.outerHeight();
+            } else if (addressMap.isFullscreen()) {
+                scrollTopOffset = constants.BREADCRUMB_HEIGHT_PX;
+            } else {
+                scrollTopOffset += $mapEl.outerHeight();
+            }
+        }
+        return scrollTopOffset;
+    };
+
+
     const CaseView = Marionette.View.extend({
         tagName: "tr",
         template: _.template($("#case-view-item-template").html() || ""),
@@ -295,6 +312,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 arrow.removeClass("fa-angle-double-up");
                 arrow.addClass("fa-angle-double-down");
                 tileContent.addClass("collapsed-tile-content");
+                const offset = getMapScrollOffset({isFullscreen: () => false}, this.smallScreenEnabled);
+                $(window).scrollTop($(e.currentTarget).parent().offset().top - offset);
             }
 
         },
@@ -318,7 +337,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         onAttach: function () {
             const self = this;
-            if (self.isMultiSelect && self.smallScreenEnabled) {
+            // if (self.isMultiSelect && self.smallScreenEnabled) {
+            {
                 const height = $(self.el).height();
                 if (height > 150) {
                     const tileContent = $(self.el).find('> .collapsible-tile-content');
@@ -633,22 +653,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             });
         },
 
-        getMapScrollOffset: function (addressMap) {
-            const $mapEl = $('#module-case-list-map');
-            const $stickyHeader = $('#small-screen-sticky-header');
-            let scrollTopOffset = parseInt(($mapEl).css('top'));
-            if (this.smallScreenEnabled) {
-                if ($stickyHeader[0]) {
-                    scrollTopOffset = parseInt($stickyHeader.css('top')) + $stickyHeader.outerHeight();
-                } else if (addressMap.isFullscreen()) {
-                    scrollTopOffset = constants.BREADCRUMB_HEIGHT_PX;
-                } else {
-                    scrollTopOffset += $mapEl.outerHeight();
-                }
-            }
-            return scrollTopOffset;
-        },
-
         loadMap: function () {
             const token = initialPageData.get("mapbox_access_token");
 
@@ -726,7 +730,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     marker.setIcon(selectedLocationIcon);
 
                                     $([document.documentElement, document.body]).animate({
-                                        scrollTop: $(`#${rowId}`).offset().top - this.getMapScrollOffset(addressMap),
+                                        scrollTop: $(`#${rowId}`).offset().top - getMapScrollOffset(addressMap, this.smallScreenEnabled),
                                     }, 500);
 
                                     addressMap.panTo(markerCoordinates);
