@@ -287,7 +287,7 @@ class TestUpdateUserMethodsLogChanges(TestCase):
         self.assertNotIn('phone_numbers', self.user_change_logger.change_messages.keys())
 
     def test_update_user_data_logs_change(self):
-        self.user.update_metadata({'custom_data': "initial custom data"})
+        self.user.get_user_data(self.domain)['custom_data'] = "initial custom data"
 
         update(self.user,
                'user_data',
@@ -297,7 +297,7 @@ class TestUpdateUserMethodsLogChanges(TestCase):
         self.assertIn('user_data', self.user_change_logger.fields_changed.keys())
 
     def test_update_user_data_does_not_log_no_change(self):
-        self.user.update_metadata({'custom_data': "unchanged custom data"})
+        self.user.get_user_data(self.domain)['custom_data'] = "unchanged custom data"
         update(self.user, 'user_data', {'custom_data': 'unchanged custom data'})
         self.assertNotIn('user_data', self.user_change_logger.fields_changed.keys())
 

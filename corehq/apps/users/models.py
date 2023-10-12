@@ -1003,13 +1003,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def metadata(self):
         return self.user_data
 
-    def update_metadata(self, data):
-        self.user_data.update(data)
-        return True
-
-    def pop_metadata(self, key, default=None):
-        return self.user_data.pop(key, default)
-
     @property
     def two_factor_disabled(self):
         return (
@@ -1679,25 +1672,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if profile:
             data.update(profile.fields)
         return data
-
-    def update_metadata(self, data):
-        from corehq.apps.custom_data_fields.models import PROFILE_SLUG
-        new_data = {**self.user_data, **data}
-
-        profile = self.get_user_data_profile(new_data.get(PROFILE_SLUG))
-        if profile:
-            overlap = {k for k, v in profile.fields.items() if new_data.get(k) and v != new_data[k]}
-            if overlap:
-                raise ValueError("metadata properties conflict with profile: {}".format(", ".join(overlap)))
-            for key in profile.fields.keys():
-                new_data.pop(key, None)
-
-        metadata_updated = new_data != self.user_data
-        self.user_data = new_data
-        return metadata_updated
-
-    def pop_metadata(self, key, default=None):
-        return self.user_data.pop(key, default)
 
     def get_user_data_profile(self, profile_id):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
