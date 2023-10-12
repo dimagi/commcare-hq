@@ -1000,10 +1000,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         )
 
     @property
-    def metadata(self):
-        return self.user_data
-
-    @property
     def two_factor_disabled(self):
         return (
             self.two_factor_auth_disabled_until
@@ -1662,16 +1658,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_user_data(self, domain):
         from .user_data import UserData
         return UserData(self.user_data, domain)
-
-    @property
-    def metadata(self):
-        from corehq.apps.custom_data_fields.models import PROFILE_SLUG
-        data = self.to_json().get('user_data', {})
-        profile_id = data.get(PROFILE_SLUG)
-        profile = self.get_user_data_profile(profile_id)
-        if profile:
-            data.update(profile.fields)
-        return data
 
     def get_user_data_profile(self, profile_id):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
