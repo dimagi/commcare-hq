@@ -50,6 +50,7 @@ def get_max_doc_count(query, case_property, precision):
     #
     #     'aggregations': {
     #         'case_properties': {
+    #             'doc_count': 66,
     #             'case_property': {
     #                 'doc_count': 6,
     #                 'geohashes': {
@@ -70,6 +71,11 @@ def get_max_doc_count(query, case_property, precision):
     #                 }
     #             }
     #         }
+    #     },
+    #     'hits': {
+    #         'hits': [],
+    #         'max_score': 0.0,
+    #         'total': 6
     #     }
     buckets = (
         queryset.raw['aggregations']
@@ -99,6 +105,44 @@ def apply_geohash_agg(query, case_property, precision):
             )
         )
     )
+
+
+def get_bucket_keys_for_page(es_results, skip, limit):
+    """
+    Returns the keys of the buckets that this page spans, and the number
+    of cases to be skipped in the first bucket.
+
+    For example, if there are 3 buckets containing 1, 2 and 3 cases
+    respectively, and ``skip`` is 2 and ``limit`` is 2, then we want the
+    second and third buckets, and we want to skip the first case in the
+    second bucket.
+    """
+    buckets = (
+        es_results['aggregations']
+        ['case_properties']
+        ['case_property']
+        [AGG_NAME]
+        ['buckets']
+    )
+    if not buckets:
+        return [], 0
+
+    count = 0
+    bucket_keys = []
+    for bucket in buckets:
+        if count == 0 and skip >= bucket['doc_count']:
+            # Skip this bucket
+            skip -= bucket['doc_count']
+            continue
+        if count < limit:
+            bucket_keys.append(bucket['key'])
+            if count == 0:
+                # First bucket. Skip `skip`
+                count = bucket['doc_count'] - skip
+            else:
+                count += bucket['doc_count']
+        if count >= limit:
+            return bucket_keys, skip
 
 
 def mid(lower, upper):
