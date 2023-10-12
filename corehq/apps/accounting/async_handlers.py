@@ -212,12 +212,20 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
     @property
     def plan_version_response(self):
         edition = self.data.get('additionalData[edition]')
-        plan_versions = SoftwarePlanVersion.objects.filter(
-            plan__edition=edition
-        )
+        visibility = self.data.get('additionalData[visibility]')
+        is_most_recent_version = self.data.get('additionalData[most_recent_version]') == 'True'
+        if is_most_recent_version:
+            plan_versions = SoftwarePlanVersion.get_most_recent_version(edition, visibility)
+        else:
+            plan_versions = SoftwarePlanVersion.objects.all()
+            if edition:
+                plan_versions = plan_versions.filter(plan__edition=edition)
+            if visibility:
+                plan_versions = plan_versions.filter(plan__visibility=visibility)
+
         if self.search_string:
-            plan_versions = plan_versions.filter(
-                plan__name__icontains=self.search_string)
+            plan_versions = plan_versions.filter(plan__name__icontains=self.search_string)
+
         return [(p.id, str(p)) for p in plan_versions.order_by('plan__name')]
 
     @property
@@ -411,8 +419,8 @@ class BillingContactInfoAsyncHandler(BaseSingleOptionFilterAsyncHandler):
             first_name='', last_name='').order_by('first_name', 'last_name')
         if self.search_string:
             query = query.filter(
-                Q(first_name__istartswith=self.search_string) |
-                Q(last_name__istartswith=self.search_string)
+                Q(first_name__istartswith=self.search_string)
+                | Q(last_name__istartswith=self.search_string)
             )
         return query
 
