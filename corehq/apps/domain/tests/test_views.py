@@ -177,6 +177,16 @@ class TestManageDomainAlertsView(TestCase):
         self.assertEqual(response.status_code, 200)
 
     @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    def test_apply_command_with_missing_alert_id(self):
+        with self.assertRaisesMessage(AssertionError, 'Missing alert ID'):
+            self.client.post(
+                self.url,
+                data={
+                    'command': 'activate',
+                },
+            )
+
+    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
     def test_apply_command_with_missing_alert(self):
         response = self.client.post(
             self.url,

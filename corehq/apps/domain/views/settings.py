@@ -563,19 +563,19 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
 
     def _apply_command(self, request, command):
         alert_id = request.POST.get('alert_id')
-        if alert_id:
-            alert = self._load_alert(alert_id)
-            if not alert:
-                messages.error(request, _("Alert not found!"))
-                return
+        assert alert_id, 'Missing alert ID'
+        alert = self._load_alert(alert_id)
+        if not alert:
+            messages.error(request, _("Alert not found!"))
+            return
 
-            if command == 'delete':
-                alert.delete()
-            elif command in ['activate', 'deactivate']:
-                self._update_alert(alert, command)
-                messages.success(request, _("Alert updated!"))
-            else:
-                messages.error(request, _("Unexpected update received. Alert not updated!"))
+        if command == 'delete':
+            alert.delete()
+        elif command in ['activate', 'deactivate']:
+            self._update_alert(alert, command)
+            messages.success(request, _("Alert updated!"))
+        else:
+            messages.error(request, _("Unexpected update received. Alert not updated!"))
 
     @staticmethod
     def _update_alert(alert, command):
