@@ -94,11 +94,13 @@ def _get_profile(self, profile_id):
             name='blues',
             fields={'favorite_color': 'blue'},
         )
-    return CustomDataFieldsProfile(
-        id=profile_id,
-        name='others',
-        fields={},
-    )
+    if profile_id == 'others':
+        return CustomDataFieldsProfile(
+            id=profile_id,
+            name='others',
+            fields={},
+        )
+    raise CustomDataFieldsProfile.DoesNotExist()
 
 
 @patch('corehq.apps.users.user_data.UserData._get_profile', new=_get_profile)
@@ -177,3 +179,8 @@ class TestUserDataModel(SimpleTestCase):
         user_data = UserData({PROFILE_SLUG: 'blues',}, self.domain)
         # this key is in the profile, but the values are the same
         user_data['favorite_color'] = 'blue'
+
+    def test_remove_profile(self):
+        user_data = UserData({PROFILE_SLUG: 'blues'}, self.domain)
+        user_data.update({PROFILE_SLUG: None})
+        self.assertEqual(user_data.profile_id, None)

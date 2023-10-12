@@ -73,6 +73,9 @@ class UserData:
                 return
             raise UserDataError(f"'{key}' cannot be set directly")
         if key == PROFILE_SLUG:
+            if not value:
+                del self._local_to_user[PROFILE_SLUG]
+                return
             new_profile = self._get_profile(value)
             non_empty_existing_fields = {k for k, v in self._local_to_user.items() if v}
             if set(new_profile.fields).intersection(non_empty_existing_fields):
