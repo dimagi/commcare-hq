@@ -349,7 +349,7 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
         UserES()
         .domain(domain)
         .mobile_users()
-        .missing_or_empty_metadata_property(location_prop_name)
+        .missing_or_empty_user_data_property(location_prop_name)
         .search_string_query(query, ['username'])
         .sort('created_on', desc=True)
     )
