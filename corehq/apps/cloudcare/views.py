@@ -118,24 +118,6 @@ class FormplayerMain(View):
         apps = sorted(apps, key=lambda app: app['name'].lower())
         return apps
 
-    def exceeds_mobile_ucr_threshold(self, domain):
-        """
-        """
-        # for testing
-        if domain == 'gherceg':
-            return True
-
-        if not toggles.MOBILE_UCR.enabled(domain):
-            return False
-        apps = get_apps_in_domain(domain, include_remote=False)
-        report_configs = [
-            report_config
-            for app in apps
-            for module in app.get_report_modules()
-            for report_config in module.report_configs
-        ]
-        return len(report_configs) > settings.MOBILE_UCR_MAX_COUNT
-
     @staticmethod
     def get_restore_as_user(request, domain):
         """
@@ -226,7 +208,7 @@ class FormplayerMain(View):
             "has_geocoder_privs": has_geocoder_privs(domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
             "lang_code_name_mapping": lang_code_name_mapping,
-            "exceeds_mobile_ucr_threshold": self.exceeds_mobile_ucr_threshold(domain),
+            "exceeds_mobile_ucr_threshold": exceeds_mobile_ucr_threshold(domain),
         }
 
         return set_cookie(
@@ -320,6 +302,7 @@ class PreviewAppView(TemplateView):
             "integrations": integration_contexts(request.domain),
             "has_geocoder_privs": has_geocoder_privs(request.domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
+            "exceeds_mobile_ucr_threshold": exceeds_mobile_ucr_threshold(request.domain),
         })
 
 
@@ -328,6 +311,25 @@ def has_geocoder_privs(domain):
         toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
         and domain_has_privilege(domain, privileges.GEOCODER)
     )
+
+
+def exceeds_mobile_ucr_threshold(domain):
+    """
+    """
+    # for testing
+    if domain == 'gherceg':
+        return True
+
+    if not toggles.MOBILE_UCR.enabled(domain):
+        return False
+    apps = get_apps_in_domain(domain, include_remote=False)
+    report_configs = [
+        report_config
+        for app in apps
+        for module in app.get_report_modules()
+        for report_config in module.report_configs
+    ]
+    return len(report_configs) > settings.MOBILE_UCR_MAX_COUNT
 
 
 @location_safe
