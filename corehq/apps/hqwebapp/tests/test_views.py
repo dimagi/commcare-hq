@@ -190,3 +190,38 @@ class TestMaintenanceAlertsView(TestCase):
         self.client.post(reverse('alerts'), {'command': 'deactivate', 'alert_id': alert.id})
         alert = CommCareHQAlert.objects.get(id=alert.id)
         self.assertFalse(alert.active)
+
+    def test_view_access_to_global_alerts_only(self):
+        global_alert = CommCareHQAlert.objects.create(text='Test!', domains=['test1', 'test2'])
+        self.addCleanup(global_alert.delete)
+
+        domain_alert = CommCareHQAlert.objects.create(created_by_domain='dummy_domain')
+        self.addCleanup(domain_alert.delete)
+        assert domain_alert.pk
+
+        self.client.login(username=self.user.username, password='***')
+        response = self.client.get(reverse('alerts'))
+
+        self.assertListEqual(
+            response.context['alerts'],
+            [{
+                'active': False,
+                'created': str(global_alert.created),
+                'domains': 'test1, test2',
+                'end_time': None,
+                'expired': None,
+                'html': 'Test!',
+                'id': global_alert.id,
+                'start_time': None
+
+            }]
+        )
+
+    def test_update_restricted_to_global_alerts(self):
+        domain_alert = CommCareHQAlert.objects.create(created_by_domain='dummy_domain')
+        self.addCleanup(domain_alert.delete)
+
+        self.client.login(username=self.user.username, password='***')
+        with self.assertRaisesMessage(CommCareHQAlert.DoesNotExist,
+                                      'CommCareHQAlert matching query does not exist'):
+            self.client.post(reverse('alerts'), {'command': 'activate', 'alert_id': domain_alert.id})
