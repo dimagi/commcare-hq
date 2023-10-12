@@ -17,7 +17,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 
 from .dispatchers import CaseManagementMapDispatcher
-from .es import apply_geohash_agg, find_precision
+from .es import apply_geohash_agg, find_precision, get_bucket_keys_for_page
 from .models import GeoPolygon
 from .utils import get_geo_case_property
 
@@ -54,32 +54,16 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin):
     def _get_geo_point(self, case):
         return NotImplementedError()
 
-    @property
-    def rows(self):
+    def _get_geo_location(self, case):
+        geo_point = self._get_geo_point(case)
+        if not geo_point:
+            return
 
-        def _get_geo_location(case):
-            geo_point = self._get_geo_point(case)
-            if not geo_point:
-                return
-
-            try:
-                geo_point = GeoPoint.from_string(geo_point, flexible=True)
-                return {"lat": geo_point.latitude, "lng": geo_point.longitude}
-            except BadValueError:
-                return None
-
-        cases = []
-        for row in self.es_results['hits'].get('hits', []):
-            display = CaseDisplayES(
-                self.get_case(row), self.timezone, self.individual
-            )
-            coordinates = _get_geo_location(self.get_case(row))
-            cases.append([
-                display.case_id,
-                coordinates,
-                display.case_link
-            ])
-        return cases
+        try:
+            geo_point = GeoPoint.from_string(geo_point, flexible=True)
+            return {"lat": geo_point.latitude, "lng": geo_point.longitude}
+        except BadValueError:
+            return None
 
 
 class CaseManagementMap(BaseCaseMapReport):
@@ -107,6 +91,21 @@ class CaseManagementMap(BaseCaseMapReport):
         })
         return context
 
+    @property
+    def rows(self):
+        cases = []
+        for row in self.es_results['hits'].get('hits', []):
+            display = CaseDisplayES(
+                self.get_case(row), self.timezone, self.individual
+            )
+            coordinates = self._get_geo_location(self.get_case(row))
+            cases.append([
+                display.case_id,
+                coordinates,
+                display.case_link
+            ])
+        return cases
+
 
 class CaseGroupingReport(BaseCaseMapReport):
     name = gettext_noop('Case Grouping')
@@ -116,39 +115,147 @@ class CaseGroupingReport(BaseCaseMapReport):
     base_template = 'geospatial/case_grouping_map_base.html'
     report_template_path = 'case_grouping_map.html'
 
-    def _build_query(self):
-        query = super()._build_query()
-        case_property = get_geo_case_property(self.domain)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        # NOTE: ASSUMES polygon is available in request.POST['feature']
-        if 'feature' in self.request.POST:
-            # Filter cases by a shape set by the user
-            geojson = json.loads(self.request.POST['feature'])
+        # geohash grid precision, set by self._aggregate_query(), read
+        # by self.shared_pagination_GET_params()
+        self._precision = None
+
+    def _base_query(self):
+        # Overrides super()._base_query() to not implement pagination
+        # here. It is done later, in self.rows()
+        return self.search_class().domain(self.domain)
+
+    def _build_query(self):
+        """
+        Returns a filtered, unaggregated, unpaginated ESQuery.
+
+        This allows it to be used by `total_cases()`.
+        """
+        query = super()._build_query()
+        return self._filter_query(query)
+
+    def _filter_query(self, query, additional_filters=None):
+        """
+        Adds ``additional_filters`` to ``query``. If a user-defined
+        polygon (or other GeoShape) is passed in the "feature" GET
+        param, adds that as a filter to ``query``.
+        """
+        # NOTE: Expects GeoShape in request.GET['feature']
+        if self.request.GET.get('feature'):
+            case_property = get_geo_case_property(self.domain)
+            geojson = json.loads(self.request.GET['feature'])
             shape = geojson_to_es_geoshape(geojson)
             relation = 'within' if shape['type'] == 'polygon' else 'intersects'
-            query.nested(
-                CASE_PROPERTIES_PATH,
-                filters.geo_shape(
+            if additional_filters:
+                additional_filters.append(filters.geo_shape(
                     field=case_property,
                     shape=shape,
                     relation=relation,
+                ))
+            else:
+                query.nested(
+                    CASE_PROPERTIES_PATH,
+                    filters.geo_shape(
+                        field=case_property,
+                        shape=shape,
+                        relation=relation,
+                    )
                 )
+        if additional_filters:
+            query.nested(
+                CASE_PROPERTIES_PATH,
+                additional_filters
             )
-
-        # Apply geohash grid aggregation
-        if 'precision' in self.request.GET:
-            precision = self.request.GET['precision']
-        else:
-            precision = find_precision(query, case_property)
-
-        query = apply_geohash_agg(query, case_property, precision)
         return query
+
+    def _aggregate_query(self, query):
+        """
+        Returns ``query`` with geohash grid aggregation applied.
+
+        Also determines ``self._precision`` if it is not set.
+        """
+        case_property = get_geo_case_property(self.domain)
+
+        if self.request.GET.get('precision'):
+            self._precision = int(self.request.GET['precision'])
+        else:
+            # TODO: What is the best way to send this value to the
+            #       browser, for the browser to pass it back as a GET
+            #       param across page requests?
+            self._precision = find_precision(query, case_property)
+
+        return apply_geohash_agg(query, case_property, self._precision)
 
     def _get_geo_point(self, case):
         case_obj = wrap_case_search_hit(case)
         geo_case_property = get_geo_case_property(case_obj.domain)
         geo_point = case_obj.case_json.get(geo_case_property)
         return geo_point
+
+    @property
+    def rows(self):
+        """
+        Returns paginated cases
+        """
+        # Pagination uses a three-step process:
+        # 1. Cases are filtered by `self._build_query()`
+        # 2. The filtered cases are aggregated into buckets by
+        #    `self._aggregate_query()`.
+        # 3. The cases of the selected page may span buckets. The page's
+        #    buckets are calculated, and their cases are fetched.
+        query = self._build_query()
+        query = self._aggregate_query(query)
+        es_results = query.run().raw
+        if es_results is None:
+            return []
+        bucket_keys, skip = get_bucket_keys_for_page(
+            es_results,
+            self.pagination.start,
+            self.pagination.count,
+        )
+        if not bucket_keys:
+            return []
+
+        # We now have everything we need to build the query that will
+        # return the cases for this page.
+        case_property = get_geo_case_property(self.domain)
+        cases = []
+        for geohash in bucket_keys:
+            # We fetch each bucket separately to maintain case sequence.
+            # TODO: Can we OR the geo_grid filters and sort by geohash?
+            query = super()._build_query()
+            query_filters = [filters.geo_grid(
+                field=case_property,
+                geohash=geohash,
+            )]
+            self._filter_query(query, additional_filters=query_filters)
+            es_results = query.run().raw
+
+            for row in es_results['hits'].get('hits', []):
+                if skip > 0:
+                    skip -= 1
+                    continue
+                display = CaseDisplayES(
+                    self.get_case(row), self.timezone, self.individual
+                )
+                coordinates = self._get_geo_location(self.get_case(row))
+                cases.append([
+                    display.case_id,
+                    coordinates,
+                    display.case_link
+                ])
+        return cases
+
+    @property
+    def shared_pagination_GET_params(self):
+        shared_params = super().shared_pagination_GET_params
+        shared_params.extend([
+            {'name': 'feature', 'value': self.request.GET.get('feature')},
+            {'name': 'precision', 'value': self._precision},
+        ])
+        return shared_params
 
 
 def geojson_to_es_geoshape(geojson):
