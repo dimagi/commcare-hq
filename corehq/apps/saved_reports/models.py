@@ -375,6 +375,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         if couch_user is None:
             couch_user = self.owner
 
+        logging.info(f"checking subreport_slug {subreport_slug}")
+        logging.info(f"report_has_location_filter {report_has_location_filter(subreport_slug, self.domain)}")
+        logging.info(f"couch_user.has_permission(self.domain, 'access_all_locations') {couch_user.has_permission(self.domain, 'access_all_locations')}")
+        logging.info(f"couch_user.get_location_ids(self.domain) {couch_user.get_location_ids(self.domain)}")
+
         if ((not toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(self.domain)
                 or not report_has_location_filter(subreport_slug, self.domain)
                 or not couch_user.get_location_ids(self.domain))
