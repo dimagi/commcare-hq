@@ -184,3 +184,10 @@ class TestUserDataModel(SimpleTestCase):
         user_data = UserData({PROFILE_SLUG: 'blues'}, self.domain)
         user_data.update({PROFILE_SLUG: None})
         self.assertEqual(user_data.profile_id, None)
+
+    def test_remove_profile_and_clear(self):
+        user_data = UserData({PROFILE_SLUG: 'blues',}, self.domain)
+        user_data.update({
+            PROFILE_SLUG: None,
+            'favorite_color': '',
+        })

@@ -73,29 +73,29 @@ class UserData:
                 return
             raise UserDataError(f"'{key}' cannot be set directly")
         if key == PROFILE_SLUG:
+            del self.profile
             if not value:
-                del self._local_to_user[PROFILE_SLUG]
+                self._local_to_user.pop(PROFILE_SLUG, None)
                 return
             new_profile = self._get_profile(value)
             non_empty_existing_fields = {k for k, v in self._local_to_user.items() if v}
             if set(new_profile.fields).intersection(non_empty_existing_fields):
                 raise UserDataError("Profile conflicts with existing data")
-            del self.profile
         self._local_to_user[key] = value
 
     def update(self, data):
+        # There are order-specific conflicts that can arise when setting values
+        # individually - this method is a monolithic action whose final state
+        # should be consistent
         original = self.to_dict()
-        # first set blank items, to remove potential profile conflicts
-        for k, v in data.items():
-            if k != PROFILE_SLUG and not v:
-                self[k] = v
-        # then set profile
+        for k in data:
+            self._local_to_user.pop(k, None)
         if PROFILE_SLUG in data:
             self[PROFILE_SLUG] = data[PROFILE_SLUG]
-        # finally add remaining
         for k, v in data.items():
-            if k != PROFILE_SLUG and v:
-                self[k] = v
+            if k != PROFILE_SLUG:
+                if v or k not in self._provided_by_system:
+                    self[k] = v
         return original != self.to_dict()
 
     def __delitem__(self, key):
