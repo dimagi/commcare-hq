@@ -259,6 +259,38 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
             validate_query=False,
         )
 
+    def test_geo_grid(self):
+        query = CaseSearchES().filter(
+            filters.geo_grid('location', 'u0')
+        )
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "geo_grid": {
+                                "location": {
+                                    "geohash": "u0"
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        self.checkQuery(
+            query,
+            json_output,
+            validate_query=False,
+        )
+
 
 @es_test
 class TestSourceFiltering(ElasticTestMixin, SimpleTestCase):
