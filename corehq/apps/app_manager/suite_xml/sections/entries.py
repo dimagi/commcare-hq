@@ -244,6 +244,7 @@ class EntriesHelper(object):
 
     def add_post_to_entry(self, form, module, e):
         from ..post_process.remote_requests import (
+            QuerySessionXPath,
             RemoteRequestFactory,
             RESULTS_INSTANCE_INLINE
         )
@@ -254,6 +255,11 @@ class EntriesHelper(object):
             None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
             exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
         e.post = remote_request_factory.build_remote_request_post()
+        if hasattr(module, 'parent_select') and module.parent_select.active:
+            data = QueryData(key='case_id')
+            data.ref = QuerySessionXPath('parent_id').instance()
+            data.exclude = CaseIDXPath(data.ref).case().count().neq(0)
+            e.post.data.append(data)
 
     def entry_for_module(self, module):
         # avoid circular dependency
