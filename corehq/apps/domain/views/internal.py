@@ -208,7 +208,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
                 )
                 send_mail_async.delay(
                     'Custom EULA or data use flags changed for {}'.format(self.domain),
-                    message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL]
+                    message, [settings.EULA_CHANGE_EMAIL]
                 )
 
             messages.success(request,
