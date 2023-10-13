@@ -656,10 +656,13 @@ class EntriesHelper(object):
         """
         from ..post_process.remote_requests import (
             RESULTS_INSTANCE,
+            RESULTS_INSTANCE_BASE,
             RESULTS_INSTANCE_INLINE,
             RemoteRequestFactory,
         )
         storage_instance = RESULTS_INSTANCE_INLINE if uses_inline_search else RESULTS_INSTANCE
+        if module.search_config.instance_name:
+            storage_instance = f'{RESULTS_INSTANCE_BASE}{module.search_config.instance_name}'
         factory = RemoteRequestFactory(None, module, [], storage_instance=storage_instance)
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
