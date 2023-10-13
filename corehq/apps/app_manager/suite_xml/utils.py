@@ -6,12 +6,6 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.suite_xml.xml_models import Suite
 
-from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-    RESULTS_INSTANCE,
-    RESULTS_INSTANCE_INLINE,
-    RESULTS_INSTANCE_BASE
-)
-
 
 def get_select_chain(app, module, include_self=True):
     return [
@@ -128,6 +122,13 @@ def get_ordered_case_types(case_type, additional_case_types=None):
 
 
 def is_valid_results_instance_name(app, instance_name):
+    # avoid circular import
+    from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+        RESULTS_INSTANCE,
+        RESULTS_INSTANCE_INLINE,
+        RESULTS_INSTANCE_BASE
+    )
+
     valid_instance_names = {RESULTS_INSTANCE, RESULTS_INSTANCE_INLINE}
     valid_instance_names.update(f'{RESULTS_INSTANCE_BASE}{module.search_config.instance_name}'
                                 for module in app.get_modules())
