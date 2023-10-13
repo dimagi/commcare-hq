@@ -10,7 +10,7 @@ from corehq.apps.userreports.models import UCRExpression
 class TestUCRExpressionTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.object_under_test = UCRExpression.objects.create(
+        cls.object_under_test = UCRExpression(
             name='create_sport',
             domain='test',
             expression_type=UCR_NAMED_EXPRESSION,
@@ -34,8 +34,8 @@ class TestUCRExpressionTest(TestCase):
         test = ObjectTest(
             content_object=self.object_under_test,
             context_factory=ContextFactoryChoices.raw,
-            input={'raw_json': {'name': 'cricket', 'is_team_sport': True}},
-            expected={'raw_json': {'case_type': 'sport', 'case_name': 'cricket', 'is_team_sport': True}}
+            input={'name': 'cricket', 'is_team_sport': True},
+            expected={'case_type': 'sport', 'case_name': 'cricket', 'is_team_sport': True}
         )
         self.assertTrue(execute_object_test(test))
 
@@ -43,8 +43,26 @@ class TestUCRExpressionTest(TestCase):
         test = ObjectTest(
             content_object=self.object_under_test,
             context_factory=ContextFactoryChoices.raw,
-            input={'raw_json': {'name': 'cricket', 'is_team_sport': True}},
-            expected={'raw_json': {'case_type': 'sport', 'case_name': 'cricket'}}
+            input={'name': 'cricket', 'is_team_sport': True},
+            expected={'case_type': 'sport', 'case_name': 'cricket'}
         )
         with self.assertRaises(ObjectTestAssertionError):
             execute_object_test(test)
+
+    def test_simple_raw_expect_string(self):
+        expression = UCRExpression(
+            name='get_name',
+            domain='test',
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={
+                'type': 'jsonpath',
+                'jsonpath': "name"
+            },
+        )
+        test = ObjectTest(
+            content_object=expression,
+            context_factory=ContextFactoryChoices.raw,
+            input={'name': 'cricket'},
+            expected='cricket',
+        )
+        self.assertTrue(execute_object_test(test))

@@ -13,22 +13,11 @@ class BaseTestRunner:
     def __init__(self, object_under_test, test_context, expected):
         self.object_under_test = object_under_test
         self.test_context = test_context
-        self.raw_expected = expected
-
-    @property
-    def expected(self):
-        form = self.form_class(self.raw_expected)
-        if form.is_valid():
-            return self.get_expected_from_cleaned_data(form.cleaned_data)
-        else:
-            raise Exception(form.errors)
-
-    def get_expected_from_cleaned_data(self, cleaned_data):
-        return cleaned_data["raw_json"]
+        self.expected = expected
 
     def assertExpectation(self, result):
         if result != self.expected:
-            raise ObjectTestAssertionError(self.get_failure_message(result, self.expected))
+            raise ObjectTestAssertionError(result, self.expected, self.get_failure_message(result, self.expected))
         return True
 
     def get_failure_message(self, actual, expected):
@@ -38,11 +27,11 @@ class BaseTestRunner:
         diff = difflib.unified_diff(
             expected_norm.splitlines(keepends=True),
             actual_norm.splitlines(keepends=True),
-            fromfile='want.{}'.format("json"),
-            tofile='got.{}'.format("json")
+            fromfile='got.{}'.format("json"),
+            tofile='want.{}'.format("json")
         )
         for line in diff:
-            message += line
+            message += f"    {line}\n"
         return message
 
 
