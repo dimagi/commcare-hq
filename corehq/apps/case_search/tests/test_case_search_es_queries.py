@@ -408,3 +408,53 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             expected,
             validate_query=False
         )
+
+    def test_add_custom_sort_properties(self):
+        criteria = {
+            "commcare_sort": "name,-date_of_birth:date"
+        }
+        expected = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"terms": {"domain.exact": [DOMAIN]}},
+                        {"terms": {"type.exact": ["case_type"]}},
+                        {"term": {"closed": False}},
+                        {"match_all": {}}
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+        "sort": [
+            {
+                "case_properties.value.exact": {
+                    "order": "asc",
+                    "nested_path": "case_properties",
+                    "nested_filter": {
+                        "term": {
+                            "case_properties.key.exact": "name"
+                        }
+                    }
+                }
+            },
+            {
+                "case_properties.value.date": {
+                    "order": "desc",
+                    "nested_path": "case_properties",
+                    "nested_filter": {
+                        "term": {
+                            "case_properties.key.exact": "date_of_birth"
+                        }
+                    }
+                }
+            }
+        ],
+            "size": CASE_SEARCH_MAX_RESULTS
+        }
+
+        self.checkQuery(
+            get_case_search_query(DOMAIN, ['case_type'], criteria),
+            expected
+        )
