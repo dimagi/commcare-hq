@@ -71,10 +71,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     function getTodayDate() {
         const todayDate = new Date();
-        const day = String(todayDate.getDate()).padStart(2, '0');
-        const month = String(todayDate.getMonth() + 1).padStart(2, '0');  // January is 0
-        const year = todayDate.getFullYear();
-        return `${year}-${month}-${day}`;
+        return todayDate.toLocaleDateString();
     }
 
     $(function () {
