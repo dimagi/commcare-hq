@@ -900,7 +900,8 @@ OAUTH2_PROVIDER = {
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
         'reports:view': 'Allow users to view and download all report data',
-        'mobile_access': 'Allow access to mobile sync and submit endpoints'
+        'mobile_access': 'Allow access to mobile sync and submit endpoints',
+        'sync': '(Deprecated, do not use) Allow access to mobile endpoints',
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
@@ -1678,7 +1679,6 @@ MESSAGE_TAGS = {
     messages.ERROR: 'alert-danger',
 }
 
-COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
 
 DEFAULT_CURRENCY = "USD"
@@ -2092,3 +2092,5 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
+
+PERMANENT_DELETION_WINDOW = 30  # days

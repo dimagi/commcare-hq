@@ -146,7 +146,8 @@ def check_task_progress(task_id, just_once=False):
                   f"Elapsed time: {_format_timedelta(run_time)}. "
                   f"Estimated remaining time: "
                   f"(average since start = {_format_timedelta(remaining_time_absolute)}) "
-                  f"(recent average = {_format_timedelta(remaining_time_relative)})")
+                  f"(recent average = {_format_timedelta(remaining_time_relative)})  "
+                  f"Task ID: {task_id}")
         if just_once:
             return
         if task_details.get("completed"):

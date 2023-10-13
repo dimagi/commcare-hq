@@ -140,8 +140,6 @@ def geo_bounding_box(field, top_left, bottom_right):
     the bounding box defined by GeoPoints ``top_left`` and
     ``bottom_right``.
 
-    `"Geo-bounding box query" reference <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-geo-bounding-box-query.html>`_
-
     :param field: The field where geopoints are stored
     :param top_left: The GeoPoint of the top left of the bounding box,
         a string in the format "latitude longitude" or "latitude
@@ -154,11 +152,35 @@ def geo_bounding_box(field, top_left, bottom_right):
 
     top_left_geo = GeoPoint.from_string(top_left, flexible=True)
     bottom_right_geo = GeoPoint.from_string(bottom_right, flexible=True)
+    shape = {
+        'type': 'envelope',
+        'coordinates': [
+            [float(top_left_geo.longitude), float(top_left_geo.latitude)],
+            [float(bottom_right_geo.longitude), float(bottom_right_geo.latitude)]
+        ]
+    }
+    return geo_shape(field, shape, relation='within')
+
+
+def geo_shape(field, shape, relation='intersects'):
+    """
+    Filters cases by case properties indexed using the the geo_point
+    type.
+
+    More info: `The Geoshape query reference <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html>`_
+
+    :param field: The field where geopoints are stored
+    :param shape: A shape definition given in GeoJSON geometry format.
+        More info: `The GeoJSON specification (RFC 7946) <https://datatracker.ietf.org/doc/html/rfc7946>`_
+    :param relation: The relation between the shape and the case
+        property values.
+    :return: A filter definition
+    """  # noqa: E501
     return {
-        'geo_bounding_box': {
+        "geo_shape": {
             field: {
-                'top_left': top_left_geo.lat_lon,
-                'bottom_right': bottom_right_geo.lat_lon,
+                "shape": shape,
+                "relation": relation
             }
         }
     }

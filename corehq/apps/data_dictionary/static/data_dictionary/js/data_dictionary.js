@@ -42,7 +42,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
                 for (let prop of group.properties) {
                     const isGeoCaseProp = (self.geoCaseProp === prop.name);
-                    var propObj = propertyListItem(prop.name, prop.label, false, prop.group, self.name, prop.data_type,
+                    var propObj = propertyListItem(prop.name, prop.label, false, group.name, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
                         prop.removeFHIRResourcePropertyPath, isGeoCaseProp);
                     propObj.description.subscribe(changeSaveButton);

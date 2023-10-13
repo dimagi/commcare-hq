@@ -21,13 +21,13 @@ logger = get_task_logger(__name__)
 
 @task(queue='background_queue', ignore_result=True)
 def create_usercases(domain_name):
-    from corehq.apps.callcenter.sync_usercase import sync_usercase
+    from corehq.apps.callcenter.sync_usercase import sync_usercases
     if USH_USERCASES_FOR_WEB_USERS.enabled(domain_name):
         users = CouchUser.by_domain(domain_name)
     else:
         users = CommCareUser.by_domain(domain_name)
     for user in users:
-        sync_usercase(user, domain_name)
+        sync_usercases(user, domain_name, sync_call_center=False)
 
 
 def autogenerate_build(app, username):

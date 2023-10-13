@@ -396,7 +396,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onRender: function () {
             this._initializeSelect2Dropdown();
-            this.ui.hqHelp.hqHelp();
+            this.ui.hqHelp.hqHelp({
+                placement: () => {
+                    if (this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled) {
+                        return 'auto bottom';
+                    } else {
+                        return 'auto right';
+                    }
+                },
+            });
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.daterangepicker({
                 locale: {
@@ -465,6 +473,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     break;
                 }
             }
+            this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                this.handleSmallScreenChange(smallScreenEnabled);
+            });
+            this.smallScreenListener.listen();
         },
 
         templateContext: function () {
@@ -486,6 +498,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         events: {
             'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
+        },
+
+        handleSmallScreenChange: function (enabled) {
+            this.smallScreenEnabled = enabled;
+            if (this.options.sidebarEnabled) {
+                if (this.smallScreenEnabled) {
+                    $('#sidebar-region').addClass('collapse');
+                } else {
+                    $('#sidebar-region').removeClass('collapse');
+                }
+            }
         },
 
         getAnswers: function () {
@@ -561,6 +584,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     self.selectValuesByKeys,
                     self.options.sidebarEnabled
                 );
+                if (self.smallScreenEnabled && self.options.sidebarEnabled) {
+                    $('#sidebar-region').collapse('hide');
+                }
             });
         },
 
@@ -675,6 +701,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onAttach: function () {
             this.initGeocoders();
+        },
+
+        onBeforeDetach: function () {
+            this.smallScreenListener.stopListening();
         },
 
         initGeocoders: function () {

@@ -280,7 +280,7 @@ geopandas==0.12.2
     # via -r base-requirements.in
 geopy==2.3.0
     # via -r base-requirements.in
-gevent==21.8.0
+gevent==23.9.1
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -330,7 +330,7 @@ googleapis-common-protos==1.59.0
     # via
     #   google-api-core
     #   grpcio-status
-greenlet==1.1.2
+greenlet==2.0.2
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -813,7 +813,7 @@ unidecode==1.2.0
     # via pyphonetics
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.12
+urllib3==1.26.17
     # via
     #   -r docs-requirements.in
     #   botocore
@@ -865,7 +865,6 @@ pip==23.0.1
 setuptools==67.3.2
     # via
     #   django-websocket-redis
-    #   gevent
     #   gunicorn
     #   opentelemetry-api
     #   pip-tools
