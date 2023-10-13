@@ -13,7 +13,6 @@ import jsonfield as old_jsonfield
 from memoized import memoized
 
 from dimagi.utils.modules import to_function
-from dimagi.utils.django.email import getEmailConfiguration
 
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_is_on_trial

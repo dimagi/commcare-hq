@@ -171,7 +171,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             error_msg.send()
 
 
-def getEmailConfiguration(domain: str, from_email: str = settings.DEFAULT_FROM_EMAIL):
+def get_email_configuration(domain: str, from_email: str = settings.DEFAULT_FROM_EMAIL):
     from corehq.apps.email.models import EmailSettings
     try:
         email_setting = EmailSettings.objects.get(domain=domain, use_this_gateway=True)
