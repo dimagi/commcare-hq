@@ -610,7 +610,6 @@ msgstr ""
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-#: custom/abt/reports/late_pmt.py
 msgid "Phone Number"
 msgstr "Número de Teléfono "
 
@@ -635,7 +634,7 @@ msgid "Postal Code"
 msgstr "Código Postal"
 
 #: corehq/apps/accounting/models.py custom/abt/reports/filters.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Country"
 msgstr "País"
 
@@ -2252,7 +2251,7 @@ msgstr ""
 #: corehq/messaging/smsbackends/start_enterprise/forms.py
 #: corehq/messaging/smsbackends/trumpia/forms.py
 #: corehq/messaging/smsbackends/unicel/forms.py corehq/motech/openmrs/forms.py
-#: custom/abt/reports/filters.py custom/abt/reports/late_pmt.py
+#: custom/abt/reports/filters.py
 msgid "Username"
 msgstr "Nombre de Usuario"
 
@@ -6307,6 +6306,7 @@ msgstr "Instale CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
+#: corehq/apps/cloudcare/templates/formplayer/query_view.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
 #: corehq/apps/domain/templates/domain/confirm_plan.html
@@ -7068,29 +7068,7 @@ msgid ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
 "list property\n"
-"                that references a missing form: "
-"<code>%(column.header|trans:langs)s</code>.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
-"list property\n"
-"                that references form with a different case type: "
-"<code>%(column.header|trans:langs)s</code>.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
-"list property\n"
-"                that references form with a different parent module: "
+"                that references a missing form endpoint: "
 "<code>%(column.header|trans:langs)s</code>.\n"
 "              "
 msgstr ""
@@ -12460,6 +12438,14 @@ msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid "Please wait while the map loads"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html
+msgid "Scroll to bottom"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html
+msgid "Refine search"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
@@ -21866,10 +21852,8 @@ msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
 #: corehq/apps/geospatial/filters.py
-#, fuzzy
-#| msgid "Send Data"
 msgid "GPS Data"
-msgstr "Enviar Datos"
+msgstr ""
 
 #: corehq/apps/geospatial/filters.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
@@ -21908,6 +21892,44 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "Group Deleted"
+msgid "Grouping method"
+msgstr "Grupo Eliminado"
+
+#: corehq/apps/geospatial/forms.py
+msgid "Determines which parameter to use for grouping cases"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Maximum group size"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "The maximum number of cases that can be in a group"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "The minimum number of cases that can be in a group"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "Create Your Account"
+msgid "Target group count"
+msgstr "Crear Su Cuenta"
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The desired number of groups. Cases will be divided equally to create this "
+"many groups"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Disbursement algorithm"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
 msgid "Configure Geospatial Settings"
 msgstr ""
 
@@ -21928,8 +21950,47 @@ msgid ""
 "case property for all users that capture location data.</li></ul>"
 msgstr ""
 
-#: corehq/apps/geospatial/reports.py
-msgid "Case Management Map"
+#: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "Search Parameters"
+msgid "Case Grouping Parameters"
+msgstr "Parámetros de Búsqueda"
+
+#: corehq/apps/geospatial/forms.py
+msgid "Algorithms"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Value for maximum group size required"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Value for minimum group size required"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"Maximum group size should be greater than or equal to minimum group size"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Value for target group count required"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Radial Algorithm"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Road Network Algorithm"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Min/Max Grouping"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Target Size Grouping"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py corehq/apps/geospatial/views.py
@@ -21940,6 +22001,16 @@ msgstr ""
 #: corehq/apps/geospatial/reports.py
 msgid "case_id"
 msgstr ""
+
+#: corehq/apps/geospatial/reports.py
+msgid "Case Management Map"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py
+#, fuzzy
+#| msgid "Case Group"
+msgid "Case Grouping"
+msgstr "Grupo de Casos"
 
 #: corehq/apps/geospatial/templates/gps_capture.html
 msgid ""
@@ -29894,10 +29965,8 @@ msgid "This report has been deprecated."
 msgstr ""
 
 #: corehq/apps/reports/models.py
-#, fuzzy
-#| msgid "Show Active Mobile Workers"
 msgid "Active Mobile Workers"
-msgstr "Mostrar Usuarios Móviles Activos"
+msgstr ""
 
 #: corehq/apps/reports/models.py
 msgid "demo_user"
@@ -44216,40 +44285,31 @@ msgid "Uploaded file does not contian any sheets."
 msgstr ""
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Level 1"
 msgstr ""
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Level 2"
 msgstr ""
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Level 3"
 msgstr ""
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Level 4"
 msgstr ""
 
-#: custom/abt/reports/filters.py custom/abt/reports/late_pmt.py
-#: custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/filters.py custom/abt/reports/late_pmt_2020.py
 msgid "Submission Status"
 msgstr ""
 
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Missing Report Date"
-msgstr ""
-
-#: custom/abt/reports/late_pmt.py
-msgid "No PMT data Submitted"
-msgstr ""
-
-#: custom/abt/reports/late_pmt.py
-msgid "Incorrect PMT data Submitted"
 msgstr ""
 
 #: custom/abt/reports/late_pmt_2020.py
