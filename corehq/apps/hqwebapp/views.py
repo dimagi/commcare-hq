@@ -11,7 +11,6 @@ from urllib.parse import urlparse
 from oauth2_provider.models import get_application_model
 
 import httpagentparser
-import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -158,7 +157,7 @@ def server_error(request, template_name='500.html', exception=None):
 
     traceback_text = format_traceback_the_way_python_does(type, exc, tb)
     traceback_key = uuid.uuid4().hex
-    cache.cache.set(traceback_key, traceback_text, 60*60)
+    cache.cache.set(traceback_key, traceback_text, 60 * 60)
 
     if settings.UNIT_TESTING:
         # Explicitly don't render the 500 page during unit tests to prevent

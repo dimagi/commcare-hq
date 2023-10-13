@@ -2,7 +2,6 @@ import datetime
 import functools
 import json
 import os
-import re
 import tempfile
 from collections import OrderedDict, namedtuple
 
