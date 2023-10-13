@@ -20,20 +20,20 @@ class TestUserES(TestCase):
         cls.domain_obj = create_domain(cls.domain)
 
         with sync_users_to_es():
-            cls._create_mobile_worker('stark', metadata={'sigil': 'direwolf', 'seat': 'Winterfell'})
-            cls._create_mobile_worker('lannister', metadata={'sigil': 'lion', 'seat': 'Casterly Rock'})
-            cls._create_mobile_worker('targaryen', metadata={'sigil': 'dragon', 'false_sigil': 'direwolf'})
+            cls._create_mobile_worker('stark', user_data={'sigil': 'direwolf', 'seat': 'Winterfell'})
+            cls._create_mobile_worker('lannister', user_data={'sigil': 'lion', 'seat': 'Casterly Rock'})
+            cls._create_mobile_worker('targaryen', user_data={'sigil': 'dragon', 'false_sigil': 'direwolf'})
         manager.index_refresh(user_adapter.index_name)
 
     @classmethod
-    def _create_mobile_worker(cls, username, metadata):
+    def _create_mobile_worker(cls, username, user_data):
         CommCareUser.create(
             domain=cls.domain,
             username=username,
             password="*****",
             created_by=None,
             created_via=None,
-            metadata=metadata,
+            user_data=user_data,
         )
 
     @classmethod

@@ -32,9 +32,7 @@ def create_restore_user(
             created_by=None,
             created_via=None,
             first_name=first_name,
-            metadata={
-                'something': 'arbitrary'
-            }
+            user_data={'something': 'arbitrary'},
         )
     )
     if phone_number:

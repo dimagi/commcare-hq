@@ -1409,7 +1409,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               first_name='', last_name='', metadata=None, **kwargs):
+               first_name='', last_name='', **kwargs):
         try:
             django_user = User.objects.using(router.db_for_write(User)).get(username=username)
         except User.DoesNotExist:
@@ -1430,11 +1430,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         else:
             couch_user.created_on = datetime.utcnow()
 
-        if 'user_data' in kwargs:
-            raise ValueError("Do not access user_data directly, pass metadata argument to create.")
-        metadata = metadata or {}
-        metadata.update({'commcare_project': domain})
-        couch_user.get_user_data(domain).update(metadata)
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
@@ -1729,11 +1724,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                location=None,
                commit=True,
                is_account_confirmed=True,
-               metadata=None,
+               metadata=None,  # TODO remove
+               user_data=None,
                **kwargs):
         """
         Main entry point into creating a CommCareUser (mobile worker).
         """
+        if metadata is not None:
+            raise ValueError("Use user_data, not metadata")
         uuid = uuid or uuid4().hex
         # if the account is not confirmed, also set is_active false so they can't login
         if 'is_active' not in kwargs:
@@ -1742,7 +1740,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             assert not kwargs['is_active'], \
                 "it's illegal to create a user with is_active=True and is_account_confirmed=False"
         commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via,
-                                                        email, uuid, date, metadata=None, **kwargs)
+                                                        email, uuid, date, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
 
@@ -1753,10 +1751,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.registering_device_id = device_id
         commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
-        # metadata can't be set until domain is present
-        if 'user_data' in kwargs:
-            raise ValueError("Do not access user_data directly, pass metadata argument to create.")
-        commcare_user.get_user_data(domain).update(metadata or {})
+        if user_data:
+            commcare_user.get_user_data(domain).update(user_data)
 
         if location:
             commcare_user.set_location(location, commit=False)
@@ -2390,11 +2386,15 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               metadata=None, by_domain_required_for_log=True, **kwargs):
+               metadata=None, user_data=None, by_domain_required_for_log=True, **kwargs):
+        if metadata is not None:
+            raise ValueError("Use user_data, not metadata")
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
-                                              date, metadata=metadata, **kwargs)
+                                              date, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
+        if user_data:
+            web_user.get_user_data(domain).update(user_data)
         web_user.save()
         web_user.log_user_create(domain, created_by, created_via,
                                  by_domain_required_for_log=by_domain_required_for_log)

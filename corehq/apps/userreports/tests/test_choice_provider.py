@@ -426,11 +426,11 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
 
 
 @es_test(requires=[user_adapter], setup_class=True)
-class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
+class UserUserDataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     domain = 'user-meta-choice-provider'
 
     @classmethod
-    def make_web_user(cls, email, domain=None, metadata=None):
+    def make_web_user(cls, email, domain=None, user_data=None):
         domain = domain or cls.domain
         user = WebUser.create(
             domain=domain,
@@ -438,13 +438,13 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             password="*****",
             created_by=None,
             created_via=None,
-            metadata=metadata,
+            user_data=user_data,
         )
         return user
 
     @classmethod
     def setUpClass(cls):
-        super(UserMetadataChoiceProviderTest, cls).setUpClass()
+        super().setUpClass()
         report = ReportConfiguration(domain=cls.domain)
         cls.domain_obj = create_domain(cls.domain)
 
@@ -452,12 +452,12 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             cls.web_user = cls.make_web_user('ned@stark.com')
             cls.users = [
                 cls.make_mobile_worker('stark',
-                    metadata={'sigil': 'direwolf', 'seat': 'Winterfell', 'login_as_user': 'arya@faceless.com'}),
+                    user_data={'sigil': 'direwolf', 'seat': 'Winterfell', 'login_as_user': 'arya@faceless.com'}),
                 cls.web_user,
-                cls.make_mobile_worker('lannister', metadata={'sigil': 'lion', 'seat': 'Casterly Rock'}),
-                cls.make_mobile_worker('targaryen', metadata={'sigil': 'dragon', 'false_sigil': 'direwolf'}),
+                cls.make_mobile_worker('lannister', user_data={'sigil': 'lion', 'seat': 'Casterly Rock'}),
+                cls.make_mobile_worker('targaryen', user_data={'sigil': 'dragon', 'false_sigil': 'direwolf'}),
                 # test that docs in other domains are filtered out
-                cls.make_mobile_worker('Sauron', metadata={'sigil': 'eye',
+                cls.make_mobile_worker('Sauron', user_data={'sigil': 'eye',
                                        'seat': 'Mordor'}, domain='some-other-domain-lotr'),
             ]
         manager.index_refresh(user_adapter.index_name)
@@ -474,14 +474,14 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         cls.static_choice_provider = StaticChoiceProvider(choices)
 
     @classmethod
-    def make_mobile_worker(cls, username, domain=None, metadata=None):
+    def make_mobile_worker(cls, username, domain=None, user_data=None):
         user = CommCareUser.create(
             domain=domain or cls.domain,
             username=normalize_username(username),
             password="*****",
             created_by=None,
             created_via=None,
-            metadata=metadata,
+            user_data=user_data,
         )
         return user
 

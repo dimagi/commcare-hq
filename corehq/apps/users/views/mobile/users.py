@@ -839,7 +839,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             device_id="Generated from HQ",
             first_name=first_name,
             last_name=last_name,
-            metadata=self.custom_data.get_data_to_save(),
+            user_data=self.custom_data.get_data_to_save(),
             is_account_confirmed=is_account_confirmed,
             location=SQLLocation.objects.get(domain=self.domain, location_id=location_id) if location_id else None,
             role_id=role_id
@@ -1067,7 +1067,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 created_via=USER_CHANGE_VIA_WEB,
                 phone_number=phone_number,
                 device_id="Generated from HQ",
-                metadata=self.custom_data.get_data_to_save(),
+                user_data=self.custom_data.get_data_to_save(),
             )
 
             if 'location_id' in request.GET:
