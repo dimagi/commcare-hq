@@ -50,7 +50,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             self.descriptionDict = params.propertyDescriptions;
 
-            self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+            self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
                 unsavedMessage: gettext("You have unchanged case settings"),
                 save: function () {
                     var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
@@ -85,7 +85,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 },
             });
 
-            self.saveUsercaseButton = hqImport("hqwebapp/js/main").initSaveButton({
+            self.saveUsercaseButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
                 unsavedMessage: gettext("You have unchanged user properties settings"),
                 save: function () {
                     var actions = JSON.stringify(_(self.actions).extend(

@@ -23,10 +23,9 @@ from django_prbac.utils import has_privilege
 from dimagi.utils.web import json_handler
 
 from corehq import privileges
-from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
+from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException, TemplateTagJSONException
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.motech.utils import pformat_json
-from corehq.util.soft_assert import soft_assert
 
 register = template.Library()
 
@@ -39,16 +38,14 @@ def JSON(obj):
     try:
         return escape_script_tags(json.dumps(obj, default=json_handler))
     except TypeError as e:
-        msg = ("Unserializable data was sent to the `|JSON` template tag.  "
-               "If DEBUG is off, Django will silently swallow this error.  "
+        msg = ("Unserializable data was sent to a template tag that expectes JSON. "
                "{}".format(str(e)))
-        soft_assert(notify_admins=True)(False, msg)
-        raise e
+        raise TemplateTagJSONException(msg)
 
 
 def escape_script_tags(unsafe_str):
     # seriously: http://stackoverflow.com/a/1068548/8207
-    return unsafe_str.replace('</script>', '<" + "/script>')
+    return unsafe_str.replace('</script>', '<\\/script>')
 
 
 @register.filter
@@ -133,14 +130,13 @@ def domains_for_user(context, request, selected_domain=None):
         'domain_links': domain_links,
         'show_all_projects_link': show_all_projects_link,
     }
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
     return mark_safe(  # nosec: render_to_string should have already handled escaping
-        render_to_string('hqwebapp/includes/domain_list_dropdown.html', context, request)
+        render_to_string(
+            f"hqwebapp/includes/{get_bootstrap_version()}/domain_list_dropdown.html",
+            context, request
+        )
     )
-
-
-@register.simple_tag
-def commcare_user():
-    return _(settings.COMMCARE_USER_TERM)
 
 
 # This is taken from https://code.djangoproject.com/ticket/15583
@@ -393,20 +389,14 @@ def chevron(value):
 
 
 @register.simple_tag
-def maintenance_alert(request, dismissable=True):
-    alert = MaintenanceAlert.get_latest_alert()
-    if alert and (not alert.domains or getattr(request, 'domain', None) in alert.domains):
-        return format_html(
-            '<div class="alert alert-warning alert-maintenance{}" data-id="{}">{}{}</div>',
-            ' hide' if dismissable else '',
-            alert.id,
-            mark_safe(  # nosec: no user input
-                '<button class="close" data-dismiss="alert" aria-label="close">&times;</button>'
-            ) if dismissable else '',
-            alert.html
-        )
-    else:
-        return ''
+def maintenance_alerts(request):
+    active_alerts = MaintenanceAlert.get_active_alerts()
+    domain = getattr(request, 'domain', None)
+    return [
+        alert for alert in active_alerts
+        if (not alert.domains
+            or domain in alert.domains)
+    ]
 
 
 @register.simple_tag
@@ -595,10 +585,19 @@ def _create_page_data(parser, token, node_slug):
     value = parser.compile_filter(split_contents[2])
 
     class FakeNode(template.Node):
+        # must mock token or error handling code will fail and not reveal real error
+        token = Token(TokenType.TEXT, '', (0, 0), 0)
+
         def render(self, context):
             resolved = value.resolve(context)
+            try:
+                resolved_json = html_attr(resolved)
+            except TemplateTagJSONException as e:
+                msg = ("Error in initial page data key '{}'. "
+                       "{}".format(name, str(e)))
+                raise TemplateTagJSONException(msg)
             return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
-                    .format(name, html_attr(resolved)))
+                    .format(name, resolved_json))
 
     nodelist = NodeList([FakeNode()])
 
@@ -685,6 +684,7 @@ def javascript_libraries(context, **kwargs):
         'analytics': kwargs.pop('analytics', False),
         'hq': kwargs.pop('hq', False),
         'helpers': kwargs.pop('helpers', False),
+        'use_bootstrap5': kwargs.pop('use_bootstrap5', False),
     }
 
 
@@ -703,8 +703,17 @@ def breadcrumbs(page, section, parents=None):
     :return:
     """
 
-    return render_to_string('hqwebapp/partials/breadcrumbs.html', {
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
+    return render_to_string(f"hqwebapp/partials/{get_bootstrap_version()}/breadcrumbs.html", {
         'page': page,
         'section': section,
         'parents': parents or [],
     })
+
+
+@register.filter
+def request_has_privilege(request, privilege_name):
+    from corehq.apps.accounting.utils import domain_has_privilege
+    from corehq import privileges
+    privilege = _get_obj_from_name_or_instance(privileges, privilege_name)
+    return domain_has_privilege(request.domain, privilege)

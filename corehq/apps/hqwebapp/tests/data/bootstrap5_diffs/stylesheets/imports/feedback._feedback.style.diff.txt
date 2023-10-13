@@ -1,0 +1,37 @@
+--- 
++++ 
+@@ -24,28 +24,28 @@
+   }
+ 
+   .rate-bad {
+-    color: @cc-att-neg-mid;
++    color: $cc-att-neg-mid;
+ 
+     &.selected {
+-      background-color: @cc-att-neg-mid;
++      background-color: $cc-att-neg-mid;
+       color: white;
+     }
+   }
+ 
+   .rate-ok {
+-    color: @cc-dark-warm-accent-mid;
++    color: $cc-dark-warm-accent-mid;
+ 
+     &.selected {
+-      background-color: @cc-dark-warm-accent-mid;
++      background-color: $cc-dark-warm-accent-mid;
+       color: white;
+     }
+   }
+ 
+   .rate-good {
+-    color: @cc-att-pos-mid;
++    color: $cc-att-pos-mid;
+ 
+     &.selected {
+-      background-color: @cc-att-pos-mid;
++      background-color: $cc-att-pos-mid;
+       color: white;
+     }
+   }

@@ -4,7 +4,6 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
-    'hqwebapp/js/toggles',
     'translations/js/app_translations',
 ], function (
     $,
@@ -12,7 +11,6 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
     _,
     initialPageData,
     assertProperties,
-    toggles
 ) {
     'use strict';
     $(function () {
@@ -28,16 +26,6 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
             self.appName = details.app_name;
             self.version = details.version;
             self.profileName = details.profile_name;
-            var showHostedCCZLink = toggles.toggleEnabled('MANAGE_CCZ_HOSTING');
-            if (showHostedCCZLink) {
-                self.hostedCCZLink = (
-                    initialPageData.reverse('manage_hosted_ccz') +
-                    "?app_id=" + details.app_id + "&version=" + details.version +
-                    "&profile_id=" + details.build_profile_id
-                );
-            } else {
-                self.hostedCCZLink = null;
-            }
             self.domId = "restriction_" + self.id;
             self.errorMessage = ko.observable();
             self.ajaxInProgress = ko.observable(false);

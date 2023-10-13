@@ -138,7 +138,7 @@ applications (e-commerce, portals).
 CDN for HQ
 ~~~~~~~~~~
 
-CommCareHQ uses a CloudFront as CDN to deliver its staticfiles.
+CommCare HQ uses a CloudFront as CDN to deliver its staticfiles.
 CloudFront is configured in the `Amazon
 Console <https://us-west-2.console.aws.amazon.com/console/home>`__. You
 can find credentials in the dimagi shared keypass under AWS Dev Account.

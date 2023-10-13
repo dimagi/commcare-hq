@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from django.utils.dateparse import parse_date
 from django.utils.translation import gettext as _
@@ -24,11 +25,11 @@ def date(node, context):
 
     arg = unwrap_value(arg, context)
 
-    parsed_date = _value_to_date(node, arg)
+    parsed_date = value_to_date(node, arg)
     return parsed_date.strftime(ISO_DATE_FORMAT)
 
 
-def _value_to_date(node, value):
+def value_to_date(node, value):
     if isinstance(value, int):
         parsed_date = datetime.date(1970, 1, 1) + datetime.timedelta(days=value)
     elif isinstance(value, str):
@@ -68,7 +69,7 @@ def date_add(node, context):
     confirm_args_count(node, 3)
 
     date_arg = unwrap_value(node.args[0], context)
-    date_value = _value_to_date(node, date_arg)
+    date_value = value_to_date(node, date_arg)
 
     interval_type = unwrap_value(node.args[1], context)
     interval_types = ("days", "weeks", "months", "years")
@@ -109,3 +110,11 @@ def date_add(node, context):
         raise XPathFunctionException(str(e), serialize(node))
 
     return result.strftime(ISO_DATE_FORMAT)
+
+
+def unwrap_list(node, context):
+    assert node.name == 'unwrap-list'
+    confirm_args_count(node, 1)
+
+    value = node.args[0]
+    return json.loads(value)

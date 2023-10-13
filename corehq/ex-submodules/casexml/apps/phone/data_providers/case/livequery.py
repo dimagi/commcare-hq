@@ -118,12 +118,16 @@ def get_case_hierarchy(domain, cases):
     assert domains == {domain}, "All cases must belong to the same domain"
 
     case_ids = {case.case_id for case in cases}
+    new_cases = get_all_related_live_cases(domain, case_ids)
 
+    return cases + new_cases
+
+
+def get_all_related_live_cases(domain, case_ids):
     all_case_ids, indices = get_live_case_ids_and_indices(domain, case_ids, TimingContext())
     new_case_ids = list(all_case_ids - case_ids)
     new_cases = PrefetchIndexCaseAccessor(domain, indices).get_cases(new_case_ids)
-
-    return cases + new_cases
+    return new_cases
 
 
 def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
@@ -201,7 +205,6 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
             return IGNORE  # unexpected, don't process duplicate index twice
         seen_ix[sub_id].add(ix_key)
         seen_ix[ref_id].add(ix_key)
-        indices[sub_id].append(index)
         debug("%s --%s--> %s", sub_id, relationship, ref_id)
         if sub_id in live_ids:
             # ref has a live child or extension
@@ -262,6 +265,15 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
                 case_ids.remove(case_id)
         open_ids.update(case_ids)
 
+    def populate_indices(related):
+        # add all indices to `indices` so that they are included in the
+        # restore
+        for index in related:
+            indices[index.case_id].append(index)
+
+    def filter_deleted_indices(related):
+        return [index for index in related if index.referenced_id]
+
     IGNORE = object()
     debug = logging.getLogger(__name__).debug
 
@@ -271,7 +283,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     extensions_by_host = defaultdict(set)  # host_id -> (open) extension_ids
     hosts_by_extension = defaultdict(set)  # (open) extension_id -> host_ids
     parents_by_child = defaultdict(set)    # child_id -> parent_ids
-    indices = defaultdict(list)  # case_id -> list of CommCareCaseIndex-like
+    indices = defaultdict(list)  # case_id -> list of CommCareCaseIndex-like, used as a cache for later
     seen_ix = defaultdict(set)   # case_id -> set of '<index.case_id> <index.identifier>'
 
     next_ids = all_ids = set(owned_ids)
@@ -284,9 +296,12 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
             related = get_related_indices(list(next_ids), exclude)
             if not related:
                 break
-            update_open_and_deleted_ids(related)
+
+            populate_indices(related)
+            related_not_deleted = filter_deleted_indices(related)
+            update_open_and_deleted_ids(related_not_deleted)
             next_ids = {classify(index, next_ids)
-                        for index in related
+                        for index in related_not_deleted
                         if index.referenced_id not in deleted_ids
                         and index.case_id not in deleted_ids}
             next_ids.discard(IGNORE)

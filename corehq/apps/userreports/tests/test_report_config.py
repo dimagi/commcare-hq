@@ -1,13 +1,11 @@
 from unittest.mock import MagicMock, patch
+
 from django.test import SimpleTestCase, TestCase
 
 from jsonobject.exceptions import BadValueError
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.userreports.dbaccessors import (
-    delete_all_report_configs,
-    get_all_report_configs,
-)
+from corehq.apps.userreports.dbaccessors import get_all_report_configs
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
@@ -33,9 +31,6 @@ class ReportConfigurationTest(SimpleTestCase):
         self.assertEqual('user-reports', self.config.domain)
         self.assertEqual('CommBugz', self.config.title)
         self.assertEqual('12345', self.config.config_id)
-
-    def test_sample_config_is_valid(self):
-        self.config.validate()
 
     def test_duplicate_filter_slugs(self):
         spec = self.config._doc
@@ -157,53 +152,48 @@ class ReportConfigurationTest(SimpleTestCase):
         wrapped.validate()
 
 
-class ReportConfigurationDbTest(TestCase):
+class ReportConfigurationDBAccessorsTests(TestCase):
 
-    def setUp(self):
-        super(ReportConfigurationDbTest, self).setUp()
-        domain_foo = Domain(name='foo')
-        domain_foo.save()
-        domain_bar = Domain(name='bar')
-        domain_bar.save()
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_foo = Domain(name='foo')
+        cls.domain_foo.save()
+        cls.addClassCleanup(cls.domain_foo.delete)
 
-        # TODO - handle cleanup appropriately so this isn't needed
-        delete_all_report_configs()
+        cls.domain_bar = Domain(name='bar')
+        cls.domain_bar.save()
+        cls.addClassCleanup(cls.domain_bar.delete)
 
-        ReportConfiguration(domain=domain_foo.name, config_id='foo1').save()
-        ReportConfiguration(domain=domain_foo.name, config_id='foo2').save()
-        ReportConfiguration(domain=domain_bar.name, config_id='bar1').save()
+        for name, config_id in [(cls.domain_foo.name, 'foo1'),
+                                (cls.domain_foo.name, 'foo2'),
+                                (cls.domain_bar.name, 'bar1')]:
+            config = ReportConfiguration(domain=name, config_id=config_id)
+            config.save()
+            cls.addClassCleanup(config.delete)
 
-    def tearDown(self):
-        for config in DataSourceConfiguration.all():
-            config.delete()
-        delete_all_report_configs()
-        for domain in Domain.get_all():
-            domain.delete()
-        super(ReportConfigurationDbTest, self).tearDown()
-
-    def test_get_by_domain(self):
+    def test_by_domain_returns_relevant_report_configs(self):
         results = ReportConfiguration.by_domain('foo')
-        self.assertEqual(2, len(results))
-        for item in results:
-            self.assertTrue(item.config_id in ('foo1', 'foo2'))
+        self.assertEqual(len(results), 2)
+        self.assertEqual({r.config_id for r in results}, {'foo1', 'foo2'})
 
+    def test_by_domain_returns_empty(self):
         results = ReportConfiguration.by_domain('not-foo')
-        self.assertEqual(0, len(results))
+        self.assertEqual(results, [])
 
-    def test_get_all(self):
-        self.assertEqual(3, len(list(get_all_report_configs())))
+    def test_get_all_report_configs_returns_expected_result(self):
+        results = list(get_all_report_configs())
+        self.assertEqual(len(results), 3)
+        self.assertEqual({r.config_id for r in results},
+                         {'foo1', 'foo2', 'bar1'})
 
-    def test_domain_is_required(self):
+    def test_create_requires_domain(self):
         with self.assertRaises(BadValueError):
             ReportConfiguration(config_id='foo').save()
 
-    def test_config_id_is_required(self):
+    def test_create_requires_config_id(self):
         with self.assertRaises(BadValueError):
             ReportConfiguration(domain='foo').save()
-
-    def test_sample_config_is_valid(self):
-        config = get_sample_report_config()
-        config.validate()
 
 
 class ReportTranslationTest(TestCase):
@@ -212,15 +202,16 @@ class ReportTranslationTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(ReportTranslationTest, cls).setUpClass()
-        delete_all_report_configs()
+        super().setUpClass()
         data_source = DataSourceConfiguration(
             domain=cls.DOMAIN,
             table_id="foo",
             referenced_doc_type="CommCareCase",
         )
         data_source.save()
-        ReportConfiguration(
+        cls.addClassCleanup(data_source.delete)
+
+        cls.report = ReportConfiguration(
             domain=cls.DOMAIN,
             config_id=data_source._id,
             columns=[
@@ -239,19 +230,10 @@ class ReportTranslationTest(TestCase):
                     "display": {"en": "Name", "fra": "Nom"},
                 },
             ]
-        ).save()
-
-    @classmethod
-    def tearDownClass(cls):
-        for config in DataSourceConfiguration.all():
-            config.delete()
-        delete_all_report_configs()
-        super(ReportTranslationTest, cls).tearDownClass()
-
-    def setUp(self):
-        super(ReportTranslationTest, self).setUp()
-        report = ReportConfiguration.by_domain(self.DOMAIN)[0]
-        self.report_source = ConfigurableReportDataSource.from_spec(report)
+        )
+        cls.report.save()
+        cls.addClassCleanup(cls.report.delete)
+        cls.report_source = ConfigurableReportDataSource.from_spec(cls.report)
 
     def test_column_string_display_value(self):
         self.assertEqual(self.report_source.columns[0].header, "My Column")

@@ -17,7 +17,6 @@ from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.reports.util import ReportExport
 from corehq.apps.userreports.reports.view import CustomConfigurableReport
 from corehq.apps.userreports.util import get_table_name
-from corehq.util.soft_assert import soft_assert
 from custom.utils.utils import clean_IN_filter_value
 
 # Copied from custom/abt/reports/data_sources/supervisory.json

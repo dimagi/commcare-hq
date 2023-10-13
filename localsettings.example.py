@@ -86,7 +86,7 @@ MAPS_LAYERS = {
     },
 }
 
-LOCAL_APPS = (
+LOCAL_APPS += (
 #    'debug_toolbar',   # Adds a retractable panel to every page giving profiling & debugging info
 )
 

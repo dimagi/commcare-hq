@@ -3,12 +3,13 @@ from datetime import datetime
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models import Q
 
 import architect
 from oauth2_provider.settings import APPLICATION_MODEL
 
 from corehq.util.markup import mark_up_urls
-from corehq.util.models import ForeignValue, foreign_value_init
+from corehq.util.models import ForeignValue, foreign_init
 from corehq.util.quickcache import quickcache
 
 PageInfoContext = namedtuple('PageInfoContext', 'title url')
@@ -28,6 +29,10 @@ class MaintenanceAlert(models.Model):
     modified = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=False)
 
+    start_time = models.DateTimeField(null=True)
+    end_time = models.DateTimeField(null=True)
+    timezone = models.CharField(max_length=32, default='UTC')
+
     text = models.TextField()
     domains = ArrayField(models.CharField(max_length=126), null=True)
 
@@ -43,17 +48,19 @@ class MaintenanceAlert(models.Model):
             self.text, self.active, ", ".join(self.domains) if self.domains else "All Domains")
 
     def save(self, *args, **kwargs):
-        MaintenanceAlert.get_latest_alert.clear(MaintenanceAlert)
+        MaintenanceAlert.get_active_alerts.clear(MaintenanceAlert)
         super(MaintenanceAlert, self).save(*args, **kwargs)
 
     @classmethod
-    @quickcache([], timeout=60 * 60)
-    def get_latest_alert(cls):
-        active_alerts = cls.objects.filter(active=True).order_by('-modified')
-        if active_alerts:
-            return active_alerts[0]
-        else:
-            return ''
+    @quickcache([], timeout=1 * 60)
+    def get_active_alerts(cls):
+        now = datetime.utcnow()
+        active_alerts = cls.objects.filter(
+            Q(active=True),
+            Q(start_time__lte=now) | Q(start_time__isnull=True),
+            Q(end_time__gt=now) | Q(end_time__isnull=True)
+        )
+        return active_alerts.order_by('-modified')
 
 
 class UserAgent(models.Model):
@@ -63,7 +70,7 @@ class UserAgent(models.Model):
 
 
 @architect.install('partition', type='range', subtype='date', constraint='month', column='timestamp')
-@foreign_value_init
+@foreign_init
 class UserAccessLog(models.Model):
     TYPE_LOGIN = 'login'
     TYPE_LOGOUT = 'logout'

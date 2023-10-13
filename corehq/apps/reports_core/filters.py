@@ -8,6 +8,8 @@ from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
+from corehq.apps.locations.permissions import user_can_access_location_id
+from corehq.apps.userreports.reports.filters.values import LocationDrilldownFilterValue
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.locations.models import SQLLocation
@@ -454,6 +456,7 @@ class LocationDrilldownFilter(BaseFilter):
             'locations': load_locs_json(self.domain, selected_loc_id=loc_id, user=request_user),
             'loc_url': self.api_root,
             'max_drilldown_levels': self.max_drilldown_levels,
+            'auto_drill': 'false',
         }
 
     def valid_location_ids(self, location_id):
@@ -464,16 +467,19 @@ class LocationDrilldownFilter(BaseFilter):
 
     def value(self, **kwargs):
         selected_loc_id = kwargs.get(self.name, None)
+        request_user = kwargs.get(REQUEST_USER_KEY, None)
         if selected_loc_id:
-            return self.valid_location_ids(selected_loc_id)
+            if request_user and user_can_access_location_id(self.domain, request_user, selected_loc_id):
+                return self.valid_location_ids(selected_loc_id)
+            else:
+                return LocationDrilldownFilterValue.SHOW_NONE
         else:
-            return self.default_value(kwargs.get(REQUEST_USER_KEY, None))
+            return self.default_value(request_user)
 
     def default_value(self, request_user=None):
         # Returns list of visible locations for the user if user is assigned to a location
         #   or special value of SHOW_ALL or SHOW_NONE depending whether
         #   user can access all locations or not respectively
-        from corehq.apps.userreports.reports.filters.values import LocationDrilldownFilterValue
         if request_user:
             user_location_id = self.user_location_id(request_user)
             if request_user.has_permission(self.domain, 'access_all_locations'):

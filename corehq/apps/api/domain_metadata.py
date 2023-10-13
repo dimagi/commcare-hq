@@ -8,8 +8,7 @@ from dimagi.utils.dates import force_to_datetime
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import CouchResourceMixin, HqBaseResource
-from corehq.apps.api.resources.auth import AdminAuthentication
-from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.resources.meta import AdminResourceMeta
 from corehq.apps.api.serializers import XFormInstanceSerializer
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
@@ -110,8 +109,7 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
 
             return DomainQuerySetAdapter(DomainES().last_modified(**params).sort('last_modified'))
 
-    class Meta(CustomResourceMeta):
-        authentication = AdminAuthentication()
+    class Meta(AdminResourceMeta):
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         object_class = Domain
@@ -121,8 +119,7 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
 
 class MaltResource(ModelResource):
 
-    class Meta(CustomResourceMeta):
-        authentication = AdminAuthentication()
+    class Meta(AdminResourceMeta):
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         queryset = MALTRow.objects.all().order_by('pk')
@@ -139,8 +136,7 @@ class MaltResource(ModelResource):
 
 class GIRResource(ModelResource):
 
-    class Meta(CustomResourceMeta):
-        authentication = AdminAuthentication()
+    class Meta(AdminResourceMeta):
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         queryset = GIRRow.objects.all().order_by('pk')

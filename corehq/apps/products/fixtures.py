@@ -1,4 +1,4 @@
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 
 from casexml.apps.phone.fixtures import FixtureProvider
 

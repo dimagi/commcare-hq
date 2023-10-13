@@ -68,6 +68,10 @@ standard_v1 = community_v2 + [
     privileges.DAILY_SAVED_EXPORT,
     privileges.ZAPIER_INTEGRATION,
     privileges.PRACTICE_MOBILE_WORKERS,
+    privileges.FORM_LINK_WORKFLOW,
+    privileges.PHONE_APK_HEARTBEAT,
+    privileges.FORM_CASE_IDS_CASE_IMPORTER,
+    privileges.EXPORT_MULTISORT,
 ]
 
 
@@ -100,6 +104,11 @@ pro_v1 = standard_v1 + [
     privileges.CHILD_CASES,
     privileges.LITE_RELEASE_MANAGEMENT,
     privileges.LOADTEST_USERS,
+    privileges.DATA_FILE_DOWNLOAD,
+    privileges.ATTENDANCE_TRACKING,
+    privileges.REGEX_FIELD_VALIDATION,
+    privileges.EXPORT_OWNERSHIP,
+    privileges.CASE_LIST_EXPLORER,
 ]
 
 
@@ -121,10 +130,16 @@ advanced_v0 = pro_v1 + [
     privileges.ADVANCED_DOMAIN_SECURITY,
     privileges.ODATA_FEED,
     privileges.APP_USER_PROFILES,
+    privileges.VIEW_APP_DIFF,
+    privileges.LOCATION_SAFE_CASE_IMPORTS,
+    privileges.FILTERED_BULK_USER_DOWNLOAD,
+    privileges.DATA_DICTIONARY,
+    privileges.CASE_COPY,
 ]
 
 enterprise_v0 = advanced_v0 + [
     privileges.GEOCODER,
     privileges.DEFAULT_EXPORT_SETTINGS,
     privileges.RELEASE_MANAGEMENT,
+    privileges.APPLICATION_ERROR_REPORT,
 ]

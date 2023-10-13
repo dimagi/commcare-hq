@@ -17,12 +17,14 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import (
     CommCareUser,
+    ConnectIDUserLink,
     UserHistory,
     UserRole,
     WebUser,
@@ -33,20 +35,14 @@ from corehq.apps.users.role_utils import (
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
-from corehq.elastic import send_to_elasticsearch
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.elastic import reset_es_index
 from corehq.util.es.testing import sync_users_to_es
+from corehq.util.test_utils import flag_enabled
 
-from ..resources.v0_5 import (
-    BadRequest,
-    CommCareUserResource,
-    UserDomainsResource,
-)
+from ..resources.v0_5 import BadRequest, UserDomainsResource
 from .utils import APIResourceTest
 
 
-@es_test
+@es_test(requires=[user_adapter], setup_class=True)
 class TestCommCareUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_5.CommCareUserResource
@@ -56,7 +52,6 @@ class TestCommCareUserResource(APIResourceTest):
 
     @classmethod
     def setUpClass(cls):
-        reset_es_index(USER_INDEX_INFO)
         super().setUpClass()
         cls.definition = CustomDataFieldsDefinition(domain=cls.domain.name,
                                                     field_type=UserFieldsView.field_type)
@@ -98,6 +93,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(api_users[0], {
             'default_phone_number': None,
             'email': '',
+            'eulas': '[]',
             'first_name': '',
             'groups': [],
             'id': backend_id,
@@ -123,6 +119,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(api_user, {
             'default_phone_number': None,
             'email': '',
+            'eulas': '[]',
             'first_name': '',
             'groups': [],
             'id': backend_id,
@@ -164,7 +161,6 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 201)
         [user_back] = CommCareUser.by_domain(self.domain.name)
         self.addCleanup(user_back.delete, self.domain.name, deleted_by=None)
-        self.addCleanup(lambda: send_to_elasticsearch('users', user_back.to_json(), delete=True))
 
         # tests username is normalized before saving
         self.assertEqual(user_back.username, "jdoe@qwerty.commcarehq.org")
@@ -175,6 +171,58 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.get_group_ids()[0], group._id)
         self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
         self.assertEqual(user_back.default_phone_number, "50253311399")
+
+    @flag_enabled('COMMCARE_CONNECT')
+    def test_create_connect_user_no_password(self):
+        user_json = {
+            "username": "ccc",
+            "connect_username": "ccc_user",
+        }
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user = CommCareUser.get_by_username("ccc@qwerty.commcarehq.org")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        django_user = user.get_django_user()
+        user_link = ConnectIDUserLink.objects.get(commcare_user=django_user)
+        self.addCleanup(user_link.delete)
+        self.assertEqual(user_link.domain, self.domain.name)
+        self.assertEqual(user_link.connectid_username, "ccc_user")
+
+    @flag_enabled('COMMCARE_CONNECT')
+    def test_create_connect_user_with_password(self):
+        user_json = {
+            "username": "ccc",
+            "connect_username": "ccc_user",
+            "password": "abc123",
+        }
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user = CommCareUser.get_by_username("ccc@qwerty.commcarehq.org")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        django_user = user.get_django_user()
+        user_link = ConnectIDUserLink.objects.get(commcare_user=django_user)
+        self.addCleanup(user_link.delete)
+        self.assertEqual(user_link.domain, self.domain.name)
+        self.assertEqual(user_link.connectid_username, "ccc_user")
+
+    def test_create_connect_user_no_flag(self):
+        user_json = {
+            "username": "ccc",
+            "connect_username": "ccc_user",
+        }
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 400)
 
     def test_bad_request_if_username_already_exists(self):
         # create user with same username first
@@ -383,6 +431,12 @@ class TestWebUserResource(APIResourceTest):
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 2)
 
+        response = self._assert_auth_get_resource('%s?limit=1' % (self.list_endpoint))
+        self.assertEqual(response.status_code, 200)
+        response_json = json.loads(response.content)
+        self.assertEqual(len(response_json['objects']), 1)
+        self.assertEqual(response_json['meta']['next'], "?limit=1&offset=1")
+
         # username filter
         response = self._assert_auth_get_resource('%s?web_username=%s' % (self.list_endpoint, 'anotherguy'))
         self.assertEqual(response.status_code, 200)
@@ -506,15 +560,10 @@ class TestBulkUserAPI(APIResourceTest):
         self.assertEqual(response.status_code, 200)
 
 
-@es_test
+@es_test(requires=[user_adapter])
 class TestIdentityResource(APIResourceTest):
     resource = v0_5.IdentityResource
     api_name = 'v0.5'
-
-    @classmethod
-    def setUpClass(cls):
-        reset_es_index(USER_INDEX_INFO)
-        super().setUpClass()
 
     @classmethod
     def _get_list_endpoint(cls):

@@ -67,7 +67,11 @@
     jQuery UI, if included, needs to appear before bootstrap's JavaScript;
     otherwise the two tooltip widgets and two button widgets conflict.
 {% endcomment %}
-<script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+{% if use_bootstrap5 %}
+  <script src="{% static "bootstrap5/dist/js/bootstrap.bundle.min.js" %}"></script>
+{% else %}
+  <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+{% endif %}
 
 {% comment %}
     Required for inline edit widget. Also used by cloudcare.
@@ -99,25 +103,48 @@
     <script src="{% static 'knockout/build/output/knockout-latest.js' %}"></script>{# already minified #}
 
     {% if hq %}
+      {% if use_bootstrap5 %}
         {% compress js %}
-            <script src="{% static 'hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/knockout_bindings.ko.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/components/inline_edit.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/components/pagination.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/components/search_box.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/components/select_toggle.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/components/feedback.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/components.ko.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/knockout_bindings.ko.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/inline_edit.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/pagination.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/search_box.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/select_toggle.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/bootstrap5/feedback.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/components.ko.js' %}"></script>
         {% endcompress %}
+      {% else %}
+        {% compress js %}
+          <script src="{% static 'hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap3/knockout_bindings.ko.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/inline_edit.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/pagination.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/search_box.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/select_toggle.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/bootstrap3/feedback.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap3/components.ko.js' %}"></script>
+        {% endcompress %}
+      {% endif %}
     {% endif %}
 {% endif %}
 
 {% if hq %}
+  {% if use_bootstrap5 %}
     {% compress js %}
-        <script src="{% static 'hqwebapp/js/assert_properties.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/sticky_tabs.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/inactivity.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/bootstrap5/sticky_tabs.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/assert_properties.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/bootstrap5/hq.helpers.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/bootstrap5/inactivity.js' %}"></script>
     {% endcompress %}
+  {% else %}
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/bootstrap3/sticky_tabs.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/assert_properties.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/bootstrap3/hq.helpers.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/bootstrap3/inactivity.js' %}"></script>
+    {% endcompress %}
+  {% endif %}
 {% endif %}

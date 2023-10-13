@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from django.utils.translation import gettext_noop
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 
 FORM_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.ExcelExportReport'
@@ -52,10 +52,13 @@ def can_upload_data_files(domain, couch_user):
 
 
 def _has_data_file_permission(domain, couch_user, read_only=True):
-    if not toggles.DATA_FILE_DOWNLOAD.enabled(domain):
+    if not domain_has_privilege(domain, privileges.DATA_FILE_DOWNLOAD):
         return False
 
-    return couch_user.can_edit_file_dropzone() or (read_only and couch_user.can_view_file_dropzone())
+    return (
+        couch_user.can_edit_file_dropzone()
+        or (read_only and couch_user.can_view_file_dropzone())
+    )
 
 
 def can_view_sms_exports(couch_user, domain):

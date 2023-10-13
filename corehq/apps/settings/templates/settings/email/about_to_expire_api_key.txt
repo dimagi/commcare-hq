@@ -1,0 +1,8 @@
+{% load i18n %}
+{% blocktrans %}
+Your api key "{{ key_name }}" (last used: {{ last_used }}) will expire on {{ expiration_date }}.
+Go to {{ url }} to generate a new key if needed.
+
+Thanks,
+CommCare HQ
+{% endblocktrans %}

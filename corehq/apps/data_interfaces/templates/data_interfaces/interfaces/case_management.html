@@ -5,8 +5,23 @@
 {% block reportcontent %}
   <div id="data-interfaces-reassign-cases">
     <div class="row">
-      <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selectedCases">
-        <label for="reassign_owner_select" class="inline">{% trans 'Reassign selected cases to' %} </label>
+      <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: onSubmit, caseActionForm: selectedCases">
+        <label for="reassign_owner_select" class="inline">
+          {% blocktrans %}
+          <!-- ko if: selectAllMatches -->
+            {{ action_text }} {{total_cases}} selected cases to
+          <!-- /ko -->
+          <!-- ko ifnot: selectAllMatches -->
+            {{ action_text }} <span data-bind="text: selectedCount"></span> selected cases to
+          <!-- /ko -->
+          {% endblocktrans %}
+        </label>
+        <div class="checkbox" style="float:right">
+          <label>
+            <input type="checkbox" data-bind="checked: selectAllMatches" />
+            {% trans 'Select all' %} {{total_cases}} cases
+          </label>
+        </div>
         <span data-bind="visible: shouldShowOwners">
           <select name="reassign_owner"
                   id="reassign_owner_select"
@@ -18,11 +33,11 @@
         </span>
         <button type="submit"
                 data-bind="hqbSubmitReady: isSubmitEnabled, visible: isSubmitEnabled"
-                class="btn btn-default disabled">{% trans 'Reassign' %}</button>
+                class="btn btn-default disabled">{{ action_text }}</button>
         <button type="button"
                 disabled="disabled"
                 data-bind="visible: !isSubmitEnabled()"
-                class="btn btn-default">{% trans 'Reassign' %}</button>
+                class="btn btn-default">{{ action_text }}</button>
       </form>
     </div>
     {{ block.super }}
@@ -35,7 +50,11 @@
       <div class="modal-content">
         <div class="modal-header">
           <a class="close" data-dismiss="modal">&times;</a>
+          {% if action == "copy" %}
+          <h3>{% trans 'Case Copy' %}</h3>
+          {% else %}
           <h3>{% trans 'Case Reassignment' %}</h3>
+          {% endif %}
         </div>
         <div class="modal-body">
           --

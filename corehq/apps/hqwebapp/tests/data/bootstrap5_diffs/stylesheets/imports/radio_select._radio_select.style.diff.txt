@@ -1,0 +1,99 @@
+--- 
++++ 
+@@ -11,7 +11,7 @@
+   width: 100%;
+   cursor: pointer;
+   background-color: white;
+-  border-radius: @input-border-radius;
++  border-radius: $input-border-radius;
+   position: relative;
+ }
+ 
+@@ -36,7 +36,7 @@
+ 
+ .radio-select_options {
+   background-color: white;
+-  border-radius: @input-border-radius;
++  border-radius: $input-border-radius;
+ }
+ 
+ .radio-select {
+@@ -54,10 +54,10 @@
+       font-family: FontAwesome;
+       position: absolute;
+       top: 0;
+-      line-height: @input-height-base;
++      line-height: $input-height;
+       right: 0;
+-      color: @cc-neutral-mid;
+-      font-size: @font-size-base;
++      color: $cc-neutral-mid;
++      font-size: $font-size-base;
+       transform: translate(-80%, -10%);
+       pointer-events: none;
+       z-index: 2;
+@@ -106,7 +106,7 @@
+ .radio-select {
+   &_items {
+     width: 100%;
+-    padding-top:  @input-height-base;
++    padding-top:  $input-height;
+   }
+   &_input {
+     display: none;
+@@ -116,9 +116,9 @@
+     transition: all 250ms cubic-bezier(.4,.25,.3,1);
+     display: block;
+     height: 0;
+-    line-height:  @input-height-base;
++    line-height:  $input-height;
+     overflow: hidden;
+-    color: @cc-text;
++    color: $cc-text;
+     cursor: pointer;
+     padding-left: 10px;
+     margin-bottom: 0;
+@@ -136,22 +136,22 @@
+     + .radio-select_closeLabel {
+       display: block;
+       + .radio-select_options {
+-        margin-top: @input-height-base - 2px;
++        margin-top: calc($input-height - 2px);
+         padding-top: 5px;
+         padding-bottom: 5px;
+         border-top-left-radius: 0;
+         border-top-right-radius: 0;
+ 
+         .radio-select_label {
+-          height:  @input-height-base;
++          height:  $input-height;
+           &:hover {
+-            background-color: @cc-bg;
++            background-color: $cc-bg;
+           }
+         }
+         .radio-select_label:last-child {
+           &:hover {
+-            border-bottom-left-radius: @input-border-radius;
+-            border-bottom-right-radius: @input-border-radius;
++            border-bottom-left-radius: $input-border-radius;
++            border-bottom-right-radius: $input-border-radius;
+           }
+         }
+         + .radio-select_expandLabel {
+@@ -161,7 +161,7 @@
+     }
+   }
+   &_input:checked + .radio-select_label {
+-    height:  @input-height-base;
++    height:  $input-height;
+   }
+ }
+ 
+@@ -169,5 +169,5 @@
+ .radio-select_expand,
+ .radio-select_expandLabel,
+ .radio-select_label-placeholder {
+-  height: @input-height-base;
++  height: $input-height;
+ }

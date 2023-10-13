@@ -121,13 +121,13 @@ def _delete_hubspot_contact(vid, retry_num=0):
     if retry_num > 0:
         time.sleep(10)  # wait 10 seconds if this is another retry attempt
 
-    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key:
+    access_token = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', None)
+    if access_token:
         try:
             req = requests.delete(
                 f'https://api.hubapi.com/contacts/v1/contact/vid/{vid}',
-                params={
-                    'hapikey': api_key,
+                headers={
+                    'authorization': 'Bearer %s' % access_token,
                 }
             )
             if req.status_code == 404:
@@ -163,13 +163,15 @@ def _get_contacts_from_hubspot(list_of_emails, retry_num=0, record_metrics=True)
     if retry_num > 0:
         time.sleep(10)  # wait 10 seconds if this is another retry attempt
 
-    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key:
+    access_token = settings.ANALYTICS_IDS.get('HUBSPOT_ACCESS_TOKEN', None)
+    if access_token:
         try:
             req = requests.get(
                 "https://api.hubapi.com/contacts/v1/contact/emails/batch/",
+                headers={
+                    'authorization': 'Bearer %s' % access_token,
+                },
                 params={
-                    'hapikey': api_key,
                     'email': list_of_emails,
                 },
             )

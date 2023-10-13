@@ -1,10 +1,10 @@
 /*
  * Component to input for a case property.
  *
- * If the data dictionary is turned on, this input will be a select2
+ * If the domain has the data dictionary privilege, this input will be a select2
  * populated with case properties from the data dictionary. It will not
  * include system properties such as case name or date opened.
- * If the data dictionary is not turned on, the input will be a text input.
+ * If the domain does not have the data dictionary privilege, the input will be a text input.
  *
  * Required parameters
  * - caseTypeObservable: observable storing the relevant case type, necessary so
@@ -28,14 +28,14 @@ hqDefine('data_interfaces/js/case_property_input', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/toggles',
+    'hqwebapp/js/privileges',
     'hqwebapp/js/select2_knockout_bindings.ko',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    toggles
+    privileges
 ) {
     var component = {
         viewModel: function (params) {
@@ -43,16 +43,21 @@ hqDefine('data_interfaces/js/case_property_input', [
 
             self.caseTypeObservable = params.caseTypeObservable;
             self.valueObservable = params.valueObservable;
+            self.disabled = initialPageData.get('read_only_mode') || false;
 
-            self.allCaseProperties = initialPageData.get("all_case_properties");
+            if ('allCaseProperties' in params) {
+                self.allCaseProperties = params.allCaseProperties;
+            } else {
+                self.allCaseProperties = ko.observable(initialPageData.get("all_case_properties"));
+            }
             self.casePropertyNames = ko.computed(function () {
-                if (!self.allCaseProperties) {
+                if (!self.allCaseProperties()) {
                     return [];
                 }
-                return self.allCaseProperties[self.caseTypeObservable()] || [];
+                return self.allCaseProperties()[self.caseTypeObservable()] || [];
             });
 
-            self.showDropdown = toggles.toggleEnabled("DATA_DICTIONARY") && !!self.allCaseProperties;
+            self.showDropdown = privileges.hasPrivilege('data_dictionary');
             self.placeholder = gettext("case property name");
         },
         template: '<div>\
@@ -62,11 +67,14 @@ hqDefine('data_interfaces/js/case_property_input', [
                     data-bind="value: valueObservable, autocompleteSelect2: casePropertyNames"\
             ></select>\
           <!-- /ko -->\
+          <!-- ko ifnot: showDropdown -->\
           <input type="text"\
                  required\
                  class="textinput form-control"\
-                 data-bind="visible: !showDropdown, value: valueObservable, attr: { placeholder: placeholder }"\
+                 data-bind="value: valueObservable, disable: disabled,\
+                 attr: { placeholder: placeholder }"\
           />\
+          <!-- /ko -->\
         </div>',
     };
 

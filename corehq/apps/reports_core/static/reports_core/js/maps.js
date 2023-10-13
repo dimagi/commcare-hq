@@ -27,6 +27,7 @@ hqDefine('reports_core/js/maps', function () {
                 layers: [streets],
                 // remove attribution control to duplicate "Leaflet" attribute
                 attributionControl: false,
+                zoomControl: false,
             }).setView([0, 0], 3);
 
             var baseMaps = {};
@@ -43,6 +44,10 @@ hqDefine('reports_core/js/maps', function () {
             // scale is now placed on the bottom right because it is easier to layout with the attributes than with the wordmark
             L.control.attribution({position: 'bottomright'}).addAttribution('&copy; <a href="http://www.mapbox.com/about/maps/">MapBox</a> | &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>').addTo(privates.map);
             L.control.scale({position: 'bottomright'}).addTo(privates.map);
+
+            L.control.zoom({
+                position: 'bottomright'
+            }).addTo(privates.map);
             $('#zoomtofit').css('display', 'block');
         } else {
             if (privates.map.activeOverlay) {

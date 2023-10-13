@@ -1,18 +1,21 @@
 import uuid
 from datetime import date, datetime
 from unittest.mock import MagicMock, patch
+import pytz
 
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 
 from couchforms.geopoint import GeoPoint
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
 from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.xpath_functions.comparison import adjust_input_date_by_timezone
 from corehq.apps.es import queries
+from corehq.apps.es.client import manager
 from corehq.apps.es.case_search import (
     CaseSearchES,
+    case_search_adapter,
     case_property_starts_with,
     case_property_geo_distance,
     case_property_missing,
@@ -23,15 +26,9 @@ from corehq.apps.es.case_search import (
 )
 from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
-from corehq.elastic import get_es_new
 from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
-from corehq.pillows.mappings.case_search_mapping import (
-    CASE_SEARCH_INDEX,
-    CASE_SEARCH_INDEX_INFO,
-)
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import create_and_save_a_case, flag_enabled
 
 
@@ -264,9 +261,6 @@ class TestCaseSearchHitConversions(SimpleTestCase):
         case = wrap_case_search_hit(self.make_hit(), include_score=True)
         self.assertEqual(case.case_json[RELEVANCE_SCORE], "1.095")
 
-    def test_wrap_case_search_hit_is_related_case(self):
-        case = wrap_case_search_hit(self.make_hit(), is_related_case=True)
-        self.assertEqual(case.case_json[IS_RELATED_CASE], 'true')
 
     @staticmethod
     def make_hit():
@@ -321,7 +315,7 @@ class TestCaseSearchHitConversions(SimpleTestCase):
         }
 
 
-@es_test
+@es_test(requires=[case_search_adapter])
 class BaseCaseSearchTest(TestCase):
 
     def setUp(self):
@@ -329,15 +323,6 @@ class BaseCaseSearchTest(TestCase):
         self.case_type = 'person'
         super(BaseCaseSearchTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
-        self.elasticsearch = get_es_new()
-        ensure_index_deleted(CASE_SEARCH_INDEX)
-
-        # Bootstrap ES
-        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
-
-    def tearDown(self):
-        ensure_index_deleted(CASE_SEARCH_INDEX)
-        super(BaseCaseSearchTest, self).tearDown()
 
     def _make_case(self, domain, case_properties, index=None):
         # make a case
@@ -355,10 +340,8 @@ class BaseCaseSearchTest(TestCase):
         for case in input_cases:
             index = case.pop('index', None)
             self._make_case(domain, case, index=index)
-        with patch('corehq.pillows.case_search.domains_needing_search_index',
-                   MagicMock(return_value=[domain])):
-            CaseSearchReindexerFactory(domain=domain).build().reindex()
-        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
+        CaseSearchReindexerFactory(domain=domain).build().reindex()
+        manager.index_refresh(case_search_adapter.index_name)
 
     def _assert_query_runs_correctly(self, domain, input_cases, query, xpath_query, output):
         self._bootstrap_cases_in_es_for_domain(domain, input_cases)
@@ -562,3 +545,89 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             "starts-with(ssn, '100')",
             ['c5', 'c6', 'c2']
         )
+
+
+class TestForwardTimezoneAdjustment(TestCase):
+
+    def setUp(self):
+        self.timezone = pytz.timezone('Asia/Seoul')  # UTC+0900
+        super(TestForwardTimezoneAdjustment, self).setUp()
+
+    def test_user_input_forward_timezone_adjustment_1(self):
+        """Scenario 1:
+        User input: last_modified < "2023-06-04"
+        A case with last_modified displayed as 2023-06-04 is actually 2023-06-03T20:00:00 in ES
+        Input modified to be last_modified < "2023-06-03T15:00:00" to exclude above case"""
+        # user input: last_modified < '2023-06-04'
+        self.assertEqual(datetime(2023, 6, 3, 15, 0, 0),
+                         adjust_input_date_by_timezone(date(2023, 6, 4), self.timezone, '<'))
+
+    def test_user_input_forward_timezone_adjustment_2(self):
+        """Scenario 2:
+        User input: last_modified > "2023-06-04"
+        A case with last_modified displayed as 2023-06-05 is actually 2023-06-04T20:00:00 in ES
+        Input modified to be last_modified > "2023-06-04T15:00:00" to include above case"""
+        # user input: last_modified > '2023-06-04'
+        self.assertEqual(datetime(2023, 6, 4, 15, 0, 0),
+                         adjust_input_date_by_timezone(date(2023, 6, 4), self.timezone, '>'))
+
+    def test_user_input_forward_timezone_adjustment_3(self):
+        """Scenario 3:
+        User input: last_modified <= "2023-06-04"
+        A case with last_modified displayed as 2023-06-05 is actually 2023-06-04T20:00:00 in ES
+        Input modified to be last_modified <= "2023-06-04T15:00:00" to exclude above case"""
+        # user input: last_modified <= '2023-06-04'
+        self.assertEqual(datetime(2023, 6, 4, 15, 0, 0),
+                         adjust_input_date_by_timezone(date(2023, 6, 4), self.timezone, '<='))
+
+    def test_user_input_forward_timezone_adjustment_4(self):
+        """Scenario 4:
+        User input: last_modified >= "2023-06-04"
+        A case with last_modified displayed as 2023-06-04 is actually 2023-06-03T20:00:00 in ES
+        Input modified to be last_modified >= "2023-06-03T15:00:00" to include above case"""
+        # user input: last_modified >= '2023-06-04'
+        self.assertEqual(datetime(2023, 6, 3, 15, 0, 0),
+                         adjust_input_date_by_timezone(date(2023, 6, 4), self.timezone, '>='))
+
+
+class TestBackwardTimezoneAdjustment(TestCase):
+
+    def setUp(self):
+        self.timezone = pytz.timezone('US/Hawaii')  # UTC-1000
+        super(TestBackwardTimezoneAdjustment, self).setUp()
+
+    def test_user_input_backwards_timezone_adjustment_1(self):
+        """Scenario 1:
+        User input = last_modified > "2023-06-03"
+        A case with last_modified displayed as 2023-06-03 is actually 2023-06-04T05:00:00 in ES
+        Input modified to be last_modified > "2023-06-04T10:00:00" to exclude above case"""
+        # user input: last_modified > '2023-06-03'
+        self.assertEqual(datetime(2023, 6, 4, 10, 0, 0),
+                         adjust_input_date_by_timezone(date(2023, 6, 3), self.timezone, '>'))
+
+    def test_user_input_backwards_timezone_adjustment_2(self):
+        """Scenario 2:
+        User input = last_modified < "2023-06-03"
+        A case with last_modified displayed as 2023-06-02 is actually 2023-06-03T05:00:00 in ES
+        Input modified to be last_modified > "2023-06-03T10:00:00" to include above case"""
+        # user input: last_modified > '2023-06-03'
+        self.assertEqual(datetime(2023, 6, 3, 10, 0, 0),
+                         adjust_input_date_by_timezone(date(2023, 6, 3), self.timezone, '<'))
+
+    def test_user_input_backwards_timezone_adjustment_3(self):
+        """Scenario 3:
+        User input = last_modified >= "2023-06-03"
+        A case with last_modified displayed as 2023-06-02 is actually 2023-06-03T05:00:00 in ES
+        Input modified to be last_modified > "2023-06-03T10:00:00" to exclude above case"""
+        # user input: last_modified <= '2023-06-03'
+        self.assertEqual(datetime(2023, 6, 3, 10, 0, 0),
+                         adjust_input_date_by_timezone(date(2023, 6, 3), self.timezone, '>='))
+
+    def test_user_input_backwards_timezone_adjustment_4(self):
+        """Scenario 4:
+        User input = last_modified <= "2023-06-03"
+        A case with last_modified displayed as 2023-06-03 is actually 2023-06-04T05:00:00 in ES
+        Input modified to be last_modified >= "2023-06-04T10:00:00" to include above case"""
+        # user input: last_modified >= '2023-06-04'
+        self.assertEqual(datetime(2023, 6, 4, 10, 0, 0),
+                         adjust_input_date_by_timezone(date(2023, 6, 3), self.timezone, '<='))

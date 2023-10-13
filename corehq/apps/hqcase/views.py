@@ -6,6 +6,7 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
+from django.core.exceptions import PermissionDenied
 
 from soil import DownloadBase
 
@@ -17,13 +18,15 @@ from corehq.apps.domain.decorators import (
     require_superuser_or_contractor,
 )
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from corehq.apps.es.case_search import ElasticCaseSearch
+from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.toggles import CASE_API_V0_6
 from corehq.util.es.elasticsearch import NotFoundError
 from corehq.util.view_utils import reverse
+from corehq.apps.locations.permissions import user_can_access_case
+from corehq.apps.locations.permissions import location_safe
 
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
 from .api.get_list import get_list
@@ -82,12 +85,13 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET', 'POST', 'PUT'])
-@api_auth
+@api_auth(allow_creds_in_data=False)
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
 @CASE_API_V0_6.required_decorator()
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
+@location_safe
 def case_api(request, domain, case_id=None):
     if request.method == 'GET' and case_id:
         return _handle_get(request, case_id)
@@ -103,7 +107,7 @@ def case_api(request, domain, case_id=None):
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET', 'POST'])
-@api_auth
+@api_auth(allow_creds_in_data=False)
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
 @CASE_API_V0_6.required_decorator()
@@ -121,7 +125,7 @@ def _handle_get(request, case_id):
 
 def _get_bulk_cases(request, case_ids=None, external_ids=None):
     try:
-        res = get_bulk(request.domain, case_ids, external_ids)
+        res = get_bulk(request.domain, request.couch_user, case_ids, external_ids)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -130,11 +134,15 @@ def _get_bulk_cases(request, case_ids=None, external_ids=None):
 
 def _get_single_case(request, case_id):
     try:
-        case = ElasticCaseSearch().get(case_id)
+        case = case_search_adapter.get(case_id)
         if case['domain'] != request.domain:
             raise NotFoundError()
+        if not user_can_access_case(request.domain, request.couch_user, case, es_case=True):
+            raise PermissionDenied()
     except NotFoundError:
         return JsonResponse({'error': f"Case '{case_id}' not found"}, status=404)
+    except PermissionDenied:
+        return JsonResponse({'error': f"Insufficent permission for Case '{case_id}'"}, status=403)
     return JsonResponse(serialize_es_case(case))
 
 
@@ -154,7 +162,7 @@ def _handle_bulk_fetch(request):
 
 def _handle_list_view(request):
     try:
-        res = get_list(request.domain, request.GET.dict())
+        res = get_list(request.domain, request.couch_user, request.GET)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -180,6 +188,8 @@ def _handle_case_update(request, is_creation, case_id=None):
             device_id=request.META.get('HTTP_USER_AGENT'),
             is_creation=is_creation,
         )
+    except PermissionDenied as e:
+        return JsonResponse({'error': str(e)}, status=403)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except SubmissionError as e:

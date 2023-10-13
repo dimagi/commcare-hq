@@ -1,26 +1,25 @@
 import uuid
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase
 
-from unittest.mock import MagicMock, patch
-
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-# Also, you need to patch the path to the function in the file where the signal
-# handler uses it, not where it's actually defined.  That's quite a gotcha.
-from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.reports.analytics.esaccessors import get_user_stubs
+from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
-from corehq.elastic import doc_exists_in_es, get_es_new
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.es.elasticsearch import ConnectionError
+from corehq.apps.es.users import user_adapter
+from corehq.apps.reports.analytics.esaccessors import get_user_stubs
 from corehq.util.es.testing import sync_users_to_es
-from corehq.util.test_utils import mock_out_couch, trap_extra_setup
+from corehq.util.test_utils import mock_out_couch
 
 from ..models import CommCareUser, WebUser
+from ..signals import update_user_in_es
 
 # Note that you can't directly patch the signal handler, as that code has
 # already been called.  It's easier to patch something that the handler calls.
+
+# Also, you need to patch the path to the function in the file where the signal
+# handler uses it, not where it's actually defined.  That's quite a gotcha.
 
 
 @mock_out_couch()
@@ -33,10 +32,9 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.analytics.signals.update_hubspot_properties.delay')
     @patch('corehq.apps.callcenter.tasks.sync_usercases')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
-    @patch('corehq.apps.users.signals.send_to_elasticsearch')
-    @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
-    def test_commcareuser_save(self, _, send_to_es, invalidate,
-                               sync_usercases, update_hubspot_properties):
+    @patch('corehq.apps.users.signals._update_user_in_es')
+    def test_commcareuser_save(self, send_to_es, invalidate, sync_usercases,
+                               update_hubspot_properties):
         CommCareUser(username='test').save()
 
         self.assertTrue(send_to_es.called)
@@ -47,10 +45,9 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.analytics.signals.update_hubspot_properties.delay')
     @patch('corehq.apps.callcenter.tasks.sync_usercases')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
-    @patch('corehq.apps.users.signals.send_to_elasticsearch')
-    @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
-    def test_webuser_save(self, _, send_to_es, invalidate,
-                          sync_usercases, update_hubspot_properties):
+    @patch('corehq.apps.users.signals._update_user_in_es')
+    def test_webuser_save(self, send_to_es, invalidate, sync_usercases,
+                          update_hubspot_properties):
         WebUser().save()
 
         self.assertTrue(send_to_es.called)
@@ -64,18 +61,8 @@ class TestUserSignals(SimpleTestCase):
 @patch('corehq.apps.analytics.signals.update_hubspot_properties')
 @patch('corehq.apps.callcenter.tasks.sync_usercases')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
-@patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
-@es_test
+@es_test(requires=[user_adapter], setup_class=True)
 class TestUserSyncToEs(SimpleTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestUserSyncToEs, cls).setUpClass()
-
-        # create the index
-        cls.es = get_es_new()
-        with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
 
     @sync_users_to_es()
     def test_sync_to_es_create_update_delete(self, *mocks):
@@ -100,11 +87,11 @@ class TestUserSyncToEs(SimpleTestCase):
         # simulate retire without needing couch
         user.base_doc += DELETED_SUFFIX
         user.save()
-        self.es.indices.refresh(USER_INDEX_INFO.index)
-        self.assertFalse(doc_exists_in_es(USER_INDEX_INFO, user._id))
+        manager.index_refresh(user_adapter.index_name)
+        self.assertFalse(user_adapter.exists(user._id))
 
     def check_user(self, user):
-        self.es.indices.refresh(USER_INDEX_INFO.index)
+        manager.index_refresh(user_adapter.index_name)
         results = get_user_stubs([user._id])
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], {
@@ -118,3 +105,33 @@ class TestUserSyncToEs(SimpleTestCase):
             'location_id': 'location1',
             '__group_ids': []
         })
+
+
+@es_test(requires=[user_adapter])
+class TestElasticSyncPatch(SimpleTestCase):
+
+    class MockUser:
+        user_id = "ab12"
+
+        def to_be_deleted(self):
+            return False
+
+        def to_json(self):
+            return {"_id": self.user_id, "username": "test"}
+
+    def test_user_sync_is_disabled_by_default_during_unittests(self):
+        user = self.MockUser()
+        self.assertFalse(user_adapter.exists(user.user_id))
+        update_user_in_es(None, user)
+        self.assertFalse(user_adapter.exists(user.user_id))
+
+    @sync_users_to_es()
+    def test_user_sync_is_enabled_with_decorator(self):
+        def simple_doc(user):
+            user_json = user.to_json()
+            return (user_json.pop('_id'), user_json)
+        user = self.MockUser()
+        self.assertFalse(user_adapter.exists(user.user_id))
+        with patch.object(user_adapter, 'from_python', simple_doc):
+            update_user_in_es(None, user)
+        self.assertTrue(user_adapter.exists(user.user_id))

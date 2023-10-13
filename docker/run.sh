@@ -31,6 +31,11 @@ function setup {
 
     rm *.log || true
 
+    if [ -n "$GITHUB_ACTIONS" ]; then
+        # create the artifacts dir with container-write ownership
+        install -dm0755 -o cchq -g cchq ./artifacts
+    fi
+
     pip-sync requirements/test-requirements.txt
     pip check  # make sure there are no incompatibilities in test-requirements.txt
     python_preheat  # preheat the python libs
@@ -53,8 +58,6 @@ function setup {
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
         yarn install --progress=false --frozen-lockfile
     fi
-
-    /mnt/wait.sh
 }
 
 function python_preheat {
@@ -96,7 +99,7 @@ function run_tests {
             logdo sh -c "mount | grep 'on /mnt/'"
             logdo id
             logdo pwd
-            logdo ls -ld . .. corehq manage.py node_modules staticfiles docker/wait.sh
+            logdo ls -ld . .. corehq manage.py node_modules staticfiles
             if logdo df -hP .; then
                 upone=..
             else
@@ -134,11 +137,12 @@ function run_tests {
         argv_str=$(printf ' %q' "$TEST" "$@")
         su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
         log_group_end  # only log group end on success (notice: `set -e`)
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-prod-entrypoints.sh
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-serializer-pickle-files.sh
-        [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/track-dependency-status.sh
+        if [ "$TEST" == "python-sharded-and-javascript" ]; then
+            su cchq -c scripts/test-prod-entrypoints.sh
+            scripts/test-make-requirements.sh
+            scripts/test-serializer-pickle-files.sh
+            su cchq -c scripts/test-django-migrations.sh
+        fi
         delta=$(($(date +%s) - $now))
 
         send_timing_metric_to_datadog "tests" $delta
@@ -195,10 +199,21 @@ function _run_tests {
         fi
     }
 
+    function _wait_for_runserver {
+        began=$(date +%s)
+        while ! { exec 6<>/dev/tcp/127.0.0.1/8000; } 2>/dev/null; do
+            if [ $(($(date +%s) - $began)) -gt 90 ]; then
+                logmsg ERROR "timed out (90 sec) waiting for 127.0.0.1:8000"
+                exit 1
+            fi
+            sleep 1
+        done
+    }
+
     function _test_javascript {
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
-        /mnt/wait.sh 127.0.0.1:8000
+        _wait_for_runserver
         logmsg INFO "grunt test ${js_test_args[*]}"
         grunt test "${js_test_args[@]}"
     }
@@ -301,9 +316,6 @@ else
     fi
     # Own the new dirs after the overlay is mounted.
     chown cchq:cchq commcare-hq lib/{overlay,node_modules,staticfiles}
-    # Replace the existing symlink (links to RO mount, cchq may not have read/x)
-    # with one that points at the overlay mount.
-    ln -sf commcare-hq/docker/wait.sh wait.sh
 fi
 # New state of /mnt (depending on value of DOCKER_HQ_OVERLAY):
 #
@@ -344,9 +356,11 @@ fi
 #       │   └── staticfiles -> /mnt/lib/staticfiles
 #       └── staticfiles
 
-mkdir -p lib/sharedfiles
+mkdir -p lib/sharedfiles /home/cchq
 ln -sf /mnt/lib/sharedfiles /sharedfiles
-chown cchq:cchq lib/sharedfiles
+chown cchq:cchq lib/sharedfiles /home/cchq
+su cchq -c "/usr/bin/git config --global --add safe.directory /mnt/commcare-hq-ro"
+/usr/bin/git config --global --add safe.directory /mnt/commcare-hq-ro
 
 cd commcare-hq
 ln -sf docker/localsettings.py localsettings.py

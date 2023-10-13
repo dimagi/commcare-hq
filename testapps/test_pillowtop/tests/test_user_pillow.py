@@ -1,49 +1,37 @@
-from corehq.apps.change_feed import data_sources
-from corehq.apps.change_feed import topics
+from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES
+from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new
 from corehq.form_processor.change_publishers import change_meta_from_sql_form
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.user import get_user_pillow_old
 from corehq.pillows.xform import get_xform_pillow
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import get_form_ready_to_save
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from .base import BasePillowTestCase
-
 
 TEST_DOMAIN = 'user-pillow-test'
 
 
-@es_test
+@es_test(requires=[user_adapter])
 class UserPillowTestBase(BasePillowTestCase):
     def setUp(self):
         super(UserPillowTestBase, self).setUp()
-        self.index_info = USER_INDEX_INFO
-        self.elasticsearch = get_es_new()
         delete_all_users()
-        ensure_index_deleted(self.index_info.index)
-        initialize_index_and_mapping(self.elasticsearch, self.index_info)
 
     @classmethod
     def setUpClass(cls):
         super(UserPillowTestBase, cls).setUpClass()
         create_domain(TEST_DOMAIN)
-
-    def tearDown(self):
-        ensure_index_deleted(self.index_info.index)
-        super(UserPillowTestBase, self).tearDown()
 
 
 @es_test
@@ -64,7 +52,7 @@ class UserPillowTest(UserPillowTestBase):
         # send to elasticsearch
         pillow = get_user_pillow_old(skip_ucr=True)
         pillow.process_changes(since=since, forever=False)
-        self.elasticsearch.indices.refresh(self.index_info.index)
+        manager.index_refresh(user_adapter.index_name)
         self.assertEqual(0, UserES().run().total)
 
     def _make_and_test_user_kafka_pillow(self, username):
@@ -78,7 +66,7 @@ class UserPillowTest(UserPillowTestBase):
         # send to elasticsearch
         pillow = get_user_pillow_old()
         pillow.process_changes(since=since, forever=False)
-        self.elasticsearch.indices.refresh(self.index_info.index)
+        manager.index_refresh(user_adapter.index_name)
         self._verify_user_in_es(username)
         return user
 
@@ -107,7 +95,7 @@ class UnknownUserPillowTest(UserPillowTestBase):
         # send to elasticsearch
         pillow = get_xform_pillow()
         pillow.process_changes(since=since, forever=False)
-        self.elasticsearch.indices.refresh(self.index_info.index)
+        manager.index_refresh(user_adapter.index_name)
 
         # the default query doesn't include unknown users so should have no results
         self.assertEqual(0, UserES().run().total)

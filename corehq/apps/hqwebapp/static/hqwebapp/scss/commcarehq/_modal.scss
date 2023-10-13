@@ -1,0 +1,127 @@
+.modal-body {
+    legend {
+        border-bottom: 1px solid $cc-bg;
+        font-size: 14px;
+        font-weight: 500;
+        border-bottom: 1px solid $cc-bg;
+        margin-bottom: 20px;
+        padding: 10px 0;
+    }
+}
+
+.modal-title {
+    font-size: 16px;
+}
+
+.modal-header, .modal-footer {
+    border-width: 0;
+}
+
+// Modal that takes up virtually the entire screen, with a variable amount of padding around it
+@mixin absolute-center-modal($spacing) {
+    .modal-dialog {
+        position: absolute;
+        top: $spacing;
+        bottom: $spacing;
+        left: $spacing;
+        right: $spacing;
+        margin: 0;
+        width: auto;
+
+        .modal-content {
+            position: absolute;
+            top: $spacing;
+            bottom: $spacing;
+            left: $spacing;
+            right: $spacing;
+
+            // These styles, along with the body/header/footer ones below,
+            // allow the body to scroll vertically while the header and footer stay fixed
+            display: flex;
+            flex: auto;
+            flex-direction: column;
+
+            .modal-body {
+                overflow-y: auto;
+                flex-grow: 1;
+            }
+
+            .modal-header, .modal-footer {
+                flex-grow: 0;
+            }
+        }
+    }
+}
+
+.full-screen-modal {
+    @include absolute-center-modal(20px);
+}
+
+.full-screen-no-background-modal {
+    @include absolute-center-modal(0);
+
+    .modal-dialog {
+        .modal-content {
+            border-radius: 0;
+            border: 0;
+
+            .modal-body .video-container {
+                margin: 15px auto;
+                float: none;
+            }
+        }
+    }
+}
+
+// Modal that has some kind of control (pagination, search box, etc.) in header or footer
+.modal-header.with-controls, .modal-footer.with-controls {
+    h4 {
+        margin-top: 3px;    // vertically align better with controls, which are taller than plain text
+    }
+
+    .close {
+        margin-left: 10px;
+    }
+
+    .nav-pills {
+        display: inline-block;
+        vertical-align: middle;
+
+        a {
+            padding: 6px 9px;
+        }
+    }
+
+    .pagination {
+        margin: 0;
+    }
+}
+
+
+.modal-primary {
+    .modal-header {
+        border-bottom: 4px solid $cc-brand-low;
+    }
+
+    .modal-content {
+        color: white;
+        background-color: $cc-brand-mid;
+    }
+
+    .close {
+        color: white;
+        opacity: 1.0;
+    }
+}
+
+.modal-force-show {
+    display: block;
+    opacity: 1.0;
+
+    .modal-dialog {
+        -webkit-transform: translate(0, 0) !important;
+        -ms-transform: translate(0, 0) !important;
+        -o-transform: translate(0, 0) !important;
+        transform: translate(0, 0) !important;
+    }
+}

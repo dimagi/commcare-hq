@@ -5,7 +5,7 @@ from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.es import CaseES, CaseSearchES
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
-    domains_needing_search_index,
+    domain_needs_search_index,
 )
 from corehq.toggles import ECD_MIGRATED_DOMAINS, NAMESPACE_DOMAIN
 
@@ -49,17 +49,13 @@ class Command(BaseCommand):
         ).all()
         return [sub.subscriber.domain for sub in relevant_subs]
 
-    @staticmethod
-    def _migrated_domains():
-        return domains_needing_search_index()
-
     def _get_domain_lists(self):
-        migrated = self._migrated_domains()
+        migrated = []
         remaining = []
 
         for domain in self._domains_in_explore_case_data_beta():
-            if domain in migrated:
-                pass
+            if domain_needs_search_index(domain):
+                migrated.append(domain)
             else:
                 remaining.append(domain)
         return remaining, migrated
@@ -115,7 +111,6 @@ class Command(BaseCommand):
     def migrate_domain(self, domain):
         self.stdout.write('Migrating {}...\n'.format(domain))
         ECD_MIGRATED_DOMAINS.set(domain, True, NAMESPACE_DOMAIN)
-        domains_needing_search_index.clear()
         CaseSearchReindexerFactory(domain=domain).build().reindex()
         self.stdout.write('Done...\n\n')
 

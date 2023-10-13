@@ -2,11 +2,7 @@ import doctest
 
 from nose.tools import assert_equal, assert_true
 
-from corehq.apps.fixtures.models import (
-    FieldList,
-    FixtureDataItem,
-    FixtureItemField,
-)
+from corehq.apps.fixtures.models import Field, LookupTableRow
 from custom.abt.reports import fixture_utils
 from custom.abt.reports.fixture_utils import (
     dict_values_in,
@@ -33,40 +29,29 @@ def test_dict_values_in_value_none():
 
 
 def test_fixture_data_item_to_dict():
-    data_item = FixtureDataItem(
+    data_item = LookupTableRow(
         domain='test-domain',
-        data_type_id='123456',
         fields={
-            'id': FieldList(
-                doc_type='FieldList',
-                field_list=[
-                    FixtureItemField(
-                        doc_type='FixtureItemField',
-                        field_value='789abc',
-                        properties={}
-                    )
-                ]
-            ),
-            'name': FieldList(
-                doc_type='FieldList',
-                field_list=[
-                    FixtureItemField(
-                        doc_type='FixtureItemField',
-                        field_value='John',
-                        properties={'lang': 'en'}
-                    ),
-                    FixtureItemField(
-                        doc_type='FixtureItemField',
-                        field_value='Jan',
-                        properties={'lang': 'nld'}
-                    ),
-                    FixtureItemField(
-                        doc_type='FixtureItemField',
-                        field_value='Jean',
-                        properties={'lang': 'fra'}
-                    ),
-                ]
-            )
+            'id': [
+                Field(
+                    value='789abc',
+                    properties={}
+                )
+            ],
+            'name': [
+                Field(
+                    value='John',
+                    properties={'lang': 'en'}
+                ),
+                Field(
+                    value='Jan',
+                    properties={'lang': 'nld'}
+                ),
+                Field(
+                    value='Jean',
+                    properties={'lang': 'fra'}
+                ),
+            ]
         }
     )
     dict_ = fixture_data_item_to_dict(data_item)
@@ -77,19 +62,9 @@ def test_fixture_data_item_to_dict():
 
 
 def test_empty_fixture_data_item_to_dict():
-    data_item = FixtureDataItem(
+    data_item = LookupTableRow(
         domain='test-domain',
-        data_type_id='123456',
-        fields={
-            'id': FieldList(
-                doc_type='FieldList',
-                field_list=[]
-            ),
-            'name': FieldList(
-                doc_type='FieldList',
-                field_list=[]
-            )
-        }
+        fields={'id': [], 'name': []}
     )
     dict_ = fixture_data_item_to_dict(data_item)
     assert_equal(dict_, {

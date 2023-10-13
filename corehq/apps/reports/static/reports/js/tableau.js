@@ -11,6 +11,7 @@ hqDefine("reports/js/tableau", function () {
                 validate_hostname: initialPageData.get("validate_hostname"),
                 server_name: initialPageData.get("server_address"),
                 target_site: initialPageData.get("target_site"),
+                viz_id: initialPageData.get("viz_id"),
             },
             dataType: 'json',
             success: function (data) {

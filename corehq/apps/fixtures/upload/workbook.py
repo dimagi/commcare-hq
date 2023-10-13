@@ -1,10 +1,8 @@
-from uuid import uuid4
 from weakref import WeakKeyDictionary
 
 from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.fixtures.exceptions import FixtureUploadError
-from corehq.apps.fixtures.models import FixtureTypeField
 from corehq.apps.fixtures.upload.const import DELETE_HEADER, INVALID, MULTIPLE
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.utils import is_identifier_invalid
@@ -15,11 +13,12 @@ from corehq.util.workbook_json.excel import (
 from corehq.util.workbook_json.excel import get_workbook as excel_get_workbook
 
 from ..models import (
-    FieldList,
-    FixtureDataItem,
-    FixtureDataType,
-    FixtureItemField,
-    FixtureOwnership,
+    Field,
+    LookupTable,
+    LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
+    TypeField,
 )
 
 
@@ -117,8 +116,7 @@ class _FixtureWorkbook(object):
             if sheet.delete:
                 yield Deleted(sheet.table_id)
                 continue
-            table = FixtureDataType(
-                _id=uuid4().hex,
+            table = LookupTable(
                 domain=domain,
                 tag=sheet.table_id,
                 is_global=sheet.is_global,
@@ -138,12 +136,11 @@ class _FixtureWorkbook(object):
                     yield Deleted(uid)
                 continue
             sort_key = max(sort_keys.get(uid, i), sort_key + 1)
-            item = FixtureDataItem(
-                _id=uuid4().hex,
+            item = LookupTableRow(
                 domain=data_type.domain,
-                data_type_id=data_type._id,
+                table_id=data_type.id,
                 fields={
-                    field.field_name: _process_item_field(field, di)
+                    field.name: _process_item_field(field, di)
                     for field in type_fields
                 },
                 item_attributes=di.get('property', {}),
@@ -164,9 +161,11 @@ class _FixtureWorkbook(object):
             yield item
 
     def get_key(self, obj):
+        if isinstance(obj, LookupTableRowOwner):
+            return None
         return self.item_keys.get(obj)
 
-    def iter_ownerships(self, row, data_item_id, owner_ids_map, errors):
+    def iter_ownerships(self, row, row_id, owner_ids_map, errors):
         ownerships = self.ownership[row]
         if not ownerships:
             return
@@ -177,10 +176,10 @@ class _FixtureWorkbook(object):
                     key = (owner_id, owner_type)
                     errors.append(self.ownership_errors[key] % {'name': name})
                     continue
-                yield FixtureOwnership(
+                yield LookupTableRowOwner(
                     domain=row.domain,
-                    data_item_id=data_item_id,
-                    owner_type=owner_type,
+                    row_id=row_id,
+                    owner_type=OwnerType.from_string(owner_type),
                     owner_id=owner_id,
                 )
 
@@ -270,10 +269,10 @@ class _FixtureTableDefinition(object):
                 raise FixtureUploadError([message])
 
         fields = [
-            FixtureTypeField(
-                field_name=field,
-                properties=_get_field_properties('field {count}'.format(count=i + 1)),
-                is_indexed=_get_field_is_indexed('field {count}'.format(count=i + 1)),
+            TypeField(
+                name=field,
+                properties=_get_field_properties(f'field {i + 1}'),
+                is_indexed=_get_field_is_indexed(f'field {i + 1}'),
             ) for i, field in enumerate(field_names)
         ]
 
@@ -297,22 +296,20 @@ def _process_item_field(field, data_item):
     Returns FieldList
     """
     if not field.properties:
-        return FieldList(
-            field_list=[FixtureItemField(
-                # str to cast ints and multi-language strings
-                field_value=str(data_item['field'][field.field_name]),
-                properties={}
-            )]
-        )
+        return [Field(
+            # str to cast ints and multi-language strings
+            value=str(data_item['field'][field.name]),
+            properties={}
+        )]
 
     field_list = []
-    field_prop_combos = data_item['field'][field.field_name]
+    field_prop_combos = data_item['field'][field.name]
     prop_combo_len = len(field_prop_combos)
-    prop_dict = data_item[field.field_name]
+    prop_dict = data_item[field.name]
     for x in range(0, prop_combo_len):
-        fix_item_field = FixtureItemField(
-            field_value=str(field_prop_combos[x]),
+        fix_item_field = Field(
+            value=str(field_prop_combos[x]),
             properties={prop: str(prop_dict[prop][x]) for prop in prop_dict}
         )
         field_list.append(fix_item_field)
-    return FieldList(field_list=field_list)
+    return field_list

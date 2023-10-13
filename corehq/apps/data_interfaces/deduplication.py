@@ -154,6 +154,7 @@ def backfill_deduplicate_rule(domain, rule):
             started_on=now,
             status=DomainCaseRuleRun.STATUS_RUNNING,
             case_type=rule.case_type,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
         )
         action = CaseDeduplicationActionDefinition.from_rule(rule)
         case_iterator = AutomaticUpdateRule.iter_cases(
@@ -170,10 +171,9 @@ def backfill_deduplicate_rule(domain, rule):
         )
     finally:
         progress_helper.set_rule_complete()
-        AutomaticUpdateRule.objects.filter(pk=rule.pk).update(
-            locked_for_editing=False,
-            last_run=now,
-        )
+        rule.last_run = now
+        rule.locked_for_editing = False
+        rule.save(update_fields=['last_run', 'locked_for_editing'])
 
 
 def get_dedupe_xmlns(rule):

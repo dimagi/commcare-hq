@@ -22,6 +22,10 @@ from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import parse_date
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.hqcase.case_helper import CaseCopier
+from corehq.form_processor.models import CommCareCase
+
+CASE_COPY_PROPERTY = CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME
 
 
 class CaseDisplayBase:
@@ -116,9 +120,11 @@ class CaseDisplayBase:
         url = self.case_detail_url
         if url:
             return format_html(
-                "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>",
+                "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>{}",
                 self.case_detail_url,
-                self.case_name_display)
+                self.case_name_display,
+                additional_case_label(self.case),
+            )
         else:
             return "%s (bad ID format)" % self.case_name
 
@@ -374,8 +380,10 @@ class CaseDisplaySQL(CaseDisplayBase):
 class SafeCaseDisplay(object):
     """Show formatted properties if they are used in XML, otherwise show the property directly from the case
     """
-    def __init__(self, case, timezone, override_user_id=None):
+    def __init__(self, case, timezone=None, override_user_id=None):
         self.case = case
+        if timezone is None:
+            timezone = pytz.UTC
         self.display = CaseDisplaySQL(self.case, timezone, override_user_id)
 
     def get(self, name):
@@ -396,7 +404,22 @@ class SafeCaseDisplay(object):
             link = absolute_reverse('case_data', args=[self.case.domain, self.case.case_id])
         except NoReverseMatch:
             return _("No link found")
+
         return format_html(
-            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>",
+            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>{}",
             link,
-            _("View Case"))
+            _("View Case"),
+            additional_case_label(self.case),
+        )
+
+
+def additional_case_label(case):
+    copy_label = format_html(
+        '&nbsp;<span class="label label-info" title="0">{}</span>',
+        _("Copied case"),
+    )
+    if isinstance(case, CommCareCase) and case.get_case_property(CASE_COPY_PROPERTY):
+        return copy_label
+    if not isinstance(case, CommCareCase) and case.get(CASE_COPY_PROPERTY):
+        return copy_label
+    return ''

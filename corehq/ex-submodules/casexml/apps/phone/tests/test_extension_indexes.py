@@ -35,15 +35,24 @@ def test_generator(skip=False, **test):
             self.skipTest(skip)
         self.build_case_structures(test)
         desired_cases = set(test.get('outcome', []))
-        undesired_cases = {case
-            for case in self.get_all_case_names(test)
-            if case not in desired_cases}
+        undesired_cases = self.get_all_case_names(test) - desired_cases
+
         sync_log = self.device.last_sync.get_log()
-        self.assertEqual(sync_log.case_ids_on_phone, set(desired_cases))
+        self.assertEqual(
+            desired_cases, sync_log.case_ids_on_phone,
+            f'\nExpected: {desired_cases}\nActual: {sync_log.case_ids_on_phone}'
+        )
+
         sync = self.device.sync(restore_id='')
-        self.assertEqual(desired_cases, set(sync.cases))
-        self.assertFalse(undesired_cases & set(sync.cases),
-            "\nunexpected: %r\nactual: %r" % (undesired_cases, set(sync.cases)))
+        sync_cases = set(sync.cases)
+        self.assertEqual(
+            desired_cases, sync_cases,
+            f'\nExpected: {desired_cases}\nActual: {sync_cases}'
+        )
+        self.assertFalse(
+            undesired_cases & sync_cases,
+            f'\nExpected missing: {undesired_cases}\nNot missing: {sync_cases}'
+        )
 
     test_func.__name__ = get_test_name(test["name"])
     return test_func
@@ -123,14 +132,13 @@ class IndexTreeTest(BaseSyncTest, metaclass=TestSequenceMeta):
     """
 
     def get_all_case_names(self, test):
-        case_names = set([])
-
-        case_names |= set([subcase for subcases in test.get('subcases', []) for subcase in subcases])
-        case_names |= set([extension for extensions in test.get('extensions', []) for extension in extensions])
-        case_names |= set(test.get('owned', []))
-        case_names |= set(test.get('closed', []))
-        case_names |= set(test.get('outcome', []))
-        return case_names
+        return set(
+            [c for cc in test.get('subcases', []) for c in cc]
+            + [e for ee in test.get('extensions', []) for e in ee]
+            + test.get('owned', [])
+            + test.get('closed', [])
+            + test.get('outcome', [])
+        )
 
     def build_case_structures(self, test):
         case_structures = []

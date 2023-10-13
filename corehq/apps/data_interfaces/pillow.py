@@ -26,6 +26,9 @@ class CaseDeduplicationProcessor(PillowProcessor):
         if not CASE_DEDUPE.enabled(domain):
             return
 
+        if change.deleted:
+            return
+
         if is_dedupe_xmlns(change.get_document().get('xmlns')):
             return
 

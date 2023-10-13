@@ -7,3 +7,4 @@ class UserModelAction(Enum):
     CREATE = UserHistory.CREATE
     UPDATE = UserHistory.UPDATE
     DELETE = UserHistory.DELETE
+    CLEAR = UserHistory.CLEAR

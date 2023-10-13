@@ -1,9 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from corehq.apps.data_dictionary.util import (
-    OldExportsEnabledException,
-    generate_data_dictionary,
-)
+from corehq.apps.data_dictionary.util import generate_data_dictionary
 from corehq.apps.domain.models import Domain
 from corehq.util.log import with_progress_bar
 
@@ -22,7 +19,7 @@ class Command(BaseCommand):
         for domain in with_progress_bar(domains):
             try:
                 generate_data_dictionary(domain)
-            except OldExportsEnabledException:
+            except Exception:
                 failed_domains.append(domain)
         print('--- Failed Domains ---')
         for domain in failed_domains:

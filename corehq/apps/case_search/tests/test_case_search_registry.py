@@ -18,13 +18,15 @@ from corehq.apps.case_search.models import (
     criteria_dict_to_criteria_list,
 )
 from corehq.apps.case_search.utils import (
-    _get_registry_visible_domains,
+    _get_helper,
     get_case_search_results,
+    get_primary_case_search_results,
+    get_and_tag_related_cases,
 )
 from corehq.apps.domain.shortcuts import create_user
+from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
-    case_search_es_teardown,
     es_test,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
@@ -34,6 +36,7 @@ from corehq.apps.registry.tests.utils import (
     create_registry_for_test,
 )
 from corehq.apps.users.models import HqPermissions
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
 def case(name, type_, properties):
@@ -86,7 +89,7 @@ patch_get_app_cached = mock.patch('corehq.apps.case_search.utils.get_app_cached'
                                   lambda domain, _: get_app_with_case_search(domain))
 
 
-@es_test
+@es_test(requires=[case_search_adapter], setup_class=True)
 @mock.patch.object(DataRegistryHelper, '_check_user_has_access', new=mock.Mock())
 class TestCaseSearchRegistry(TestCase):
 
@@ -148,7 +151,7 @@ class TestCaseSearchRegistry(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        case_search_es_teardown()
+        FormProcessorTestUtils.delete_all_cases()
         super().tearDownClass()
 
     def _run_query(self, domain, case_types, criteria_dict, registry_slug):
@@ -305,6 +308,19 @@ class TestCaseSearchRegistry(TestCase):
             for case in results
         ])
 
+    def test_primary_cases_not_included_with_related_cases(self):
+        with patch_get_app_cached:
+            registry_helper = _get_helper(None, self.domain_1, ["creative_work"], self.registry_slug)
+            primary_cases = get_primary_case_search_results(registry_helper, self.domain_1, ["creative_work"],
+                                                            [SearchCriteria("name", "Jane Eyre")])
+            related_cases = registry_helper.get_all_related_live_cases(primary_cases)
+
+            self.assertItemsEqual([
+                ("Charlotte Brontë", "creator", self.domain_2),
+            ], [
+                (case.name, case.type, case.domain)
+                for case in related_cases
+            ])
 
 class TestCaseSearchRegistryPermissions(TestCase):
     @classmethod
@@ -336,11 +352,10 @@ class TestCaseSearchRegistryPermissions(TestCase):
     def _get_registry_visible_domains(self, permissions):
         mock_role = mock.Mock(permissions=permissions)
         mock_user = mock.Mock(get_role=mock.Mock(return_value=mock_role))
-        return set(
-            _get_registry_visible_domains(
+        helper = _get_helper(
                 mock_user,
                 self.domain,
                 ["herb"],
                 self.registry_slug,
             )
-        )
+        return set(helper.query_domains)

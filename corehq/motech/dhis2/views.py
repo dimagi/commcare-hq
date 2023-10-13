@@ -371,23 +371,24 @@ def send_dataset_now(request, domain, pk):
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
 def config_dhis2_repeater(request, domain, repeater_id):
-    repeater = Dhis2Repeater.get(repeater_id)
+    repeater = Dhis2Repeater.objects.get(repeater_id=repeater_id)
     assert repeater.domain == domain, f'"{repeater.domain}" != "{domain}"'
 
     if request.method == 'POST':
         form = Dhis2ConfigForm(data=request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
+            # wrapping here to ensure schema validation and filling in defaults
+            cleaned_form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
+            # saving back dicts to sql tables
+            repeater.dhis2_config['form_configs'] = [config.to_json() for config in cleaned_form_configs]
             repeater.save()
             return JsonResponse({'success': _('DHIS2 Anonymous Events configuration saved')})
         else:
             errors = [err for errlist in form.errors.values() for err in errlist]
             return JsonResponse({'errors': errors}, status=400)
     else:
-        form_configs = json.dumps([
-            form_config.to_json() for form_config in repeater.dhis2_config.form_configs
-        ])
+        form_configs = json.dumps(repeater.dhis2_config['form_configs'])
     return render(request, 'dhis2/dhis2_events_config.html', {
         'domain': domain,
         'repeater_id': repeater_id,
@@ -398,7 +399,7 @@ def config_dhis2_repeater(request, domain, repeater_id):
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
 def config_dhis2_entity_repeater(request, domain, repeater_id):
-    repeater = Dhis2EntityRepeater.get(repeater_id)
+    repeater = Dhis2EntityRepeater.objects.get(repeater_id=repeater_id)
     assert repeater.domain == domain
     if request.method == 'POST':
         errors = []
@@ -420,15 +421,12 @@ def config_dhis2_entity_repeater(request, domain, repeater_id):
         else:
             repeater.dhis2_entity_config = Dhis2EntityConfig.wrap({
                 "case_configs": case_configs
-            })
+            }).to_json()
             repeater.save()
             return JsonResponse({'success': _('DHIS2 Tracked Entity configuration saved')})
 
     else:
-        case_configs = [
-            case_config.to_json()
-            for case_config in repeater.dhis2_entity_config.case_configs
-        ]
+        case_configs = repeater.dhis2_entity_config.get('case_configs', [])
     return render(request, 'dhis2/dhis2_entity_config.html', {
         'domain': domain,
         'repeater_id': repeater_id,

@@ -43,7 +43,6 @@ class AllDocsTest(TestCase):
             {get_db(None).uri: ['main_db_doc_all-docs-domain1'],
              get_db('users').uri: ['users_db_doc_all-docs-domain1'],
              get_db('meta').uri: [],
-             get_db('fixtures').uri: [],
              get_db('domains').uri: [],
              get_db('apps').uri: []}
         )

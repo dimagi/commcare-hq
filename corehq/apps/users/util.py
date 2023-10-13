@@ -44,19 +44,20 @@ USER_FIELDS_TO_IGNORE_FOR_HISTORY = [
 ]
 
 
-def generate_mobile_username(username, domain):
+def generate_mobile_username(username, domain, is_unique=True):
     """
     Returns the email formatted mobile username if successfully generated
     Handles exceptions raised by .validation.validate_mobile_username with user facing messages
     Any additional validation should live in .validation.validate_mobile_username
     :param username: accepts both incomplete ('example-user') or complete ('example-user@domain.commcarehq.org')
     :param domain: required str, domain name
+    :param is_unique: if true then username should not already exist
     :return: str, email formatted mobile username
     Example use: generate_mobile_username('username', 'domain') -> 'username@domain.commcarehq.org'
     """
     from .validation import validate_mobile_username
     username = get_complete_mobile_username(username, domain)
-    validate_mobile_username(username, domain)
+    validate_mobile_username(username, domain, is_unique)
     return username
 
 
@@ -79,7 +80,8 @@ def cc_user_domain(domain):
 
 
 def format_username(username, domain):
-    return "%s@%s" % (str(username or '').lower(), cc_user_domain(domain))
+    username = re.sub(r'\s+', '.', str(username or '')).lower()
+    return "%s@%s" % (username, cc_user_domain(domain))
 
 
 def normalize_username(username, domain=None):
@@ -257,7 +259,8 @@ def user_location_data(location_ids):
     return ' '.join(location_ids)
 
 
-def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, save=True):
+def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, fcm_token=None,
+                       fcm_token_timestamp=None, save=True):
     from corehq.apps.users.models import CommCareUser
 
     updated = False
@@ -268,6 +271,8 @@ def update_device_meta(user, device_id, commcare_version=None, device_app_meta=N
                 device_id,
                 commcare_version=commcare_version,
                 device_app_meta=device_app_meta,
+                fcm_token=fcm_token,
+                fcm_token_timestamp=fcm_token_timestamp
             )
             if save and updated:
                 user.save(fire_signals=False)

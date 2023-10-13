@@ -5,8 +5,8 @@ hqDefine('app_manager/js/app_manager_utils', [
     $,
     _
 ) {
-    var get_bitly_to_phonetic_dict = function () {
-        var nato_phonetic = {
+    var getBitlyToPhoneticDict = function () {
+        var natoPhonetic = {
             "A": "Alpha",
             "B": "Bravo",
             "C": "Charlie",
@@ -34,7 +34,7 @@ hqDefine('app_manager/js/app_manager_utils', [
             "Y": "Yankee",
             "Z": "Zulu",
         };
-        var bitly_to_phonetic = {
+        var bitlyToPhonetic = {
             '0': 'zero',
             '1': 'one',
             '2': 'two',
@@ -46,30 +46,30 @@ hqDefine('app_manager/js/app_manager_utils', [
             '8': 'eight',
             '9': 'nine',
         };
-        bitly_to_phonetic = _(bitly_to_phonetic).extend(_.object(_(nato_phonetic).map(function (v, k) {
+        bitlyToPhonetic = _(bitlyToPhonetic).extend(_.object(_(natoPhonetic).map(function (v, k) {
             return [k.toLowerCase(), v.toLowerCase()];
         })));
-        bitly_to_phonetic = _(bitly_to_phonetic).extend(_.object(_(nato_phonetic).map(function (v, k) {
+        bitlyToPhonetic = _(bitlyToPhonetic).extend(_.object(_(natoPhonetic).map(function (v, k) {
             return [k.toUpperCase(), v.toUpperCase()];
         })));
-        return bitly_to_phonetic;
+        return bitlyToPhonetic;
     };
 
-    var bitly_to_phonetic;
-    var bitly_nato_phonetic = function (bitly_url) {
+    var bitlyToPhonetic;
+    var bitlyNatoPhonetic = function (bitlyUrl) {
         /**
          * We use this method to explicitly spell out the bitly code for
          * users who have trouble reading the letters (esp. 1 and l, O and 0)
          */
         'use strict';
-        if (bitly_to_phonetic === undefined) {
-            bitly_to_phonetic = get_bitly_to_phonetic_dict();
+        if (bitlyToPhonetic === undefined) {
+            bitlyToPhonetic = getBitlyToPhoneticDict();
         }
-        if (bitly_url) {
-            var bitly_code = bitly_url.replace('http://bit.ly/', '');
+        if (bitlyUrl) {
+            var bitlyCode = bitlyUrl.replace('http://bit.ly/', '');
             var phonetics = [];
-            for (var i = 0; i < bitly_code.length; i++) {
-                phonetics.push(bitly_to_phonetic[bitly_code[i]] || 'symbol');
+            for (var i = 0; i < bitlyCode.length; i++) {
+                phonetics.push(bitlyToPhonetic[bitlyCode[i]] || 'symbol');
             }
             return phonetics.join(' ');
         }
@@ -97,7 +97,7 @@ hqDefine('app_manager/js/app_manager_utils', [
     };
 
     return {
-        bitly_nato_phonetic: bitly_nato_phonetic,
+        bitlyNatoPhonetic: bitlyNatoPhonetic,
         handleAjaxAppChange: handleAjaxAppChange,
     };
 });

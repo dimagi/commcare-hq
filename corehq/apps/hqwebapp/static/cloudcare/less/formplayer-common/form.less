@@ -7,10 +7,14 @@
   outline: 0;
 }
 
-.help-text-trigger, .unsupported-question-type-trigger {
+.unsupported-question-type-trigger {
   float: right;
   margin-bottom: 5px;
   margin-left: 5px;
+}
+
+.help-text-trigger {
+  padding: 0;
 }
 
 .atwho-view:after {
@@ -33,4 +37,9 @@ legend {
   > .caption {
     display: none;
   }
+}
+
+.gr.repetition:not(:first-child) {
+    border-top: @cc-neutral-hi solid 1px;
+    padding-top: 20px;
 }

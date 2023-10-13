@@ -25,7 +25,6 @@ services:
     extends:
       file: hq-compose.yml
       service: couch
-    command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
     ports:
       - "5984:5984"
 
@@ -45,7 +44,7 @@ services:
       ES_CLUSTER_NAME: ES_CLUSTER_NAME
       ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     ports:
-      - "9200:9200"
+      - "9205:9200"
 
   elasticsearch5:
     extends:
@@ -56,14 +55,12 @@ services:
       ES_CLUSTER_NAME: ${ES_CLUSTER_NAME}
       ES_JAVA_OPTS: "-Xms750m -Xmx750m -Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     ports:
-      - "9205:9200"
+      - "9200:9200"
 
   kafka:
     extends:
       file: hq-compose.yml
       service: kafka
-    environment:
-      KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_ADVERTISED_HOST_NAME}
     ports:
       - "9092:9092"
 
@@ -80,3 +77,4 @@ services:
       service: minio
     ports:
       - "9980:9980"
+      - "9981:9981"

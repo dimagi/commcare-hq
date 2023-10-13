@@ -7,12 +7,12 @@ from functools import wraps
 from django.conf import settings
 
 import requests
-from celery.task import task
 
-from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.celery import task
 from corehq.util.global_request import get_request
+from corehq.util.metrics import metrics_counter
 
 
 def handle_uncaught_exceptions(mail_admins=True):
@@ -24,7 +24,7 @@ def handle_uncaught_exceptions(mail_admins=True):
         def _handle_exceptions(*args, **kwargs):
             try:
                 return fn(*args, **kwargs)
-            except Exception as e:
+            except Exception:
                 msg = "Uncaught exception from {}.{}".format(fn.__module__, fn.__name__)
                 if mail_admins:
                     notify_exception(get_request(), msg)

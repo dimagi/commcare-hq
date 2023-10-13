@@ -4,7 +4,6 @@ from django.contrib import messages
 from django.template.defaultfilters import linebreaksbr
 from django.utils.translation import gettext as _
 
-import ghdiff
 from CommcareTranslationChecker import validate_workbook
 from CommcareTranslationChecker.exceptions import FatalError
 
@@ -19,6 +18,7 @@ from corehq.apps.translations.app_translations.upload_form import (
 from corehq.apps.translations.app_translations.upload_module import (
     BulkAppTranslationModuleUpdater,
 )
+from corehq.util import ghdiff
 from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
     get_bulk_app_sheet_headers,

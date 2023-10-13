@@ -25,3 +25,17 @@ class LessFilter(CompilerFilter):
         content = super(LessFilter, self).input(**kwargs)
         # process absolute file paths
         return CssAbsoluteFilter(content).input(**kwargs)
+
+
+class SassFilter(CompilerFilter):
+
+    def __init__(self, content, attrs, **kwargs):
+        super(SassFilter, self).__init__(content,
+                                         command='sass {infile} {outfile} '
+                                                 '--load-path=node_modules/bootstrap5/scss',
+                                         **kwargs)
+
+    def input(self, **kwargs):
+        content = super(SassFilter, self).input(**kwargs)
+        # process absolute file paths
+        return CssAbsoluteFilter(content).input(**kwargs)

@@ -1,7 +1,7 @@
 import logging
 from contextlib import contextmanager
 from threading import Lock, RLock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import attr
 
@@ -56,12 +56,32 @@ def reentrant_redis_locks():
     assert not locks, f"unreleased {locks.values()}"
 
 
+@contextmanager
+def real_redis_client():
+    global _mock_redis_client
+    try:
+        _mock_redis_client = False
+        yield
+    finally:
+        _mock_redis_client = True
+
+
+_mock_redis_client = True
+
+
 @attr.s
 class TestRedisClient:
     lock = attr.ib()
 
     def __call__(self):
         return self
+
+    @property
+    def client(self):
+        if _mock_redis_client:
+            return MagicMock()
+        from dimagi.utils.couch.cache.cache_core import get_redis_client
+        return get_redis_client().client
 
 
 @attr.s

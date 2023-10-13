@@ -30,6 +30,7 @@ from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
 )
+from django.utils.html import format_html
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
@@ -773,13 +774,9 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @property
     def help_text(self):
-        return _("""
-            For information on Conditional Alerts, see the
-            <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts">
-                Conditional Alerts
-            </a>
-            help page.
-        """)
+        help_url = 'https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts'
+        link = format_html('<a target="_blank" href="{}">{}</a>', help_url, _("Conditional Alerts"))
+        return format_html(_('For information on Conditional Alerts, see the {} help page.'), link)
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_jquery_ui
@@ -928,11 +925,11 @@ class EditConditionalAlertView(CreateConditionalAlertView):
 
     @property
     def help_text(self):
-        return super().help_text + _("""
-            <br>
-            Editing a conditional alert will cause it to process each case of the alert's case type.
-            This may take some time.
-        """)
+        return format_html('{}<br>{}',
+            super().help_text,
+            _("Editing a conditional alert will cause it to process each case of the alert's case type. "
+              "This may take some time.")
+        )
 
     @property
     def rule_id(self):

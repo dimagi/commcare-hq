@@ -13,9 +13,11 @@ from corehq.util.quickcache import quickcache
 class IdentityProviderType:
     AZURE_AD = 'azure_ad'
     ONE_LOGIN = 'one_login'
+    OKTA = 'okta'
     CHOICES = (
         (AZURE_AD, "Azure AD"),
         (ONE_LOGIN, "One Login"),
+        (OKTA, "Okta"),
     )
 
 
@@ -35,6 +37,7 @@ class IdentityProviderProtocol:
             ),
             cls.OIDC: (
                 (IdentityProviderType.ONE_LOGIN, "One Login"),
+                (IdentityProviderType.OKTA, "Okta"),
             )
         }
 

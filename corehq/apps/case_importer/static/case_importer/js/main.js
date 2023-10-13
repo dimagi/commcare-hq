@@ -41,11 +41,39 @@ hqDefine("case_importer/js/main", [
         }
     };
 
+    var behaviorForOptionsPage = function () {
+        var $caseType = $('#case_type');
+        if (!$caseType.length) {
+            // We're not on the Case Options page
+            return;
+        }
+
+        $('#field_form').submit(function () {
+            $('[disabled]').each(function () {
+                $(this).prop('disabled', false);
+            });
+
+            return true;
+        });
+    };
+
     var behaviorForExcelMappingPage = function () {
         var excelFields = initialPageData.get('excel_fields');
         var caseFieldSpecs = initialPageData.get('case_field_specs');
         if (!excelFields && !caseFieldSpecs) {
             // We're not on the excel mapping page
+            return;
+        }
+
+        $('#field_form').submit(function () {
+            $('[disabled]').each(function () {
+                $(this).prop('disabled', false);
+            });
+
+            return true;
+        });
+
+        if (initialPageData.get('is_bulk_import')) {
             return;
         }
 
@@ -63,14 +91,6 @@ hqDefine("case_importer/js/main", [
             if (value !== originalValue) {
                 $(this).val(value);
             }
-        });
-
-        $('#field_form').submit(function () {
-            $('[disabled]').each(function () {
-                $(this).prop('disabled', false);
-            });
-
-            return true;
         });
 
         $('#autofill').click(function () {
@@ -91,6 +111,7 @@ hqDefine("case_importer/js/main", [
         });
 
         behaviorForUploadPage();
+        behaviorForOptionsPage();
         behaviorForExcelMappingPage();
     });
 });

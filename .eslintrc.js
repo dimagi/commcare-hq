@@ -1,3 +1,4 @@
+/* global module */
 // http://eslint.org/
 module.exports = {
     "extends": "eslint:recommended",
@@ -47,7 +48,7 @@ module.exports = {
         "curly": ["error"],
         "eqeqeq": ["error"],
         "func-call-spacing": ["error"],
-        "indent": ["warn", 4, {"SwitchCase":1, "FunctionDeclaration": {"parameters": "first"}}],
+        "indent": ["warn", 4, {"SwitchCase": 1, "FunctionDeclaration": {"parameters": "first"}}],
         "linebreak-style": ["error", "unix"],
         "key-spacing": ["error"],
         "keyword-spacing": ["error"],
@@ -64,5 +65,6 @@ module.exports = {
         "space-before-blocks": ["error"],
         "space-in-parens": ["error", "never"],
         "space-infix-ops": ["error"],   // match flake8 E225
-    }
+    },
+    "ignorePatterns": ["**/vellum/src/*.js"],
 };

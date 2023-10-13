@@ -2,13 +2,14 @@
 
 hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     var slugs = {
         SET_LANG: 'lang',
         SET_DISPLAY: 'display',
         CLEAR_USER_DATA: 'clear-user-data',
         BREAK_LOCKS: 'break-locks',
+        SYNC: 'sync',
     };
 
     /**
@@ -28,7 +29,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
         },
         onLanguageChange: function (e) {
             this.currentUser.displayOptions.language = $(e.currentTarget).val();
-            Util.saveDisplayOptions(this.currentUser.displayOptions);
+            Utils.saveDisplayOptions(this.currentUser.displayOptions);
         },
         templateContext: function () {
             var appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
@@ -64,7 +65,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
         },
         onChangeOneQuestionPerScreen: function (e, switchValue) {
             this.currentUser.displayOptions.oneQuestionPerScreen = switchValue;
-            Util.saveDisplayOptions(this.currentUser.displayOptions);
+            Utils.saveDisplayOptions(this.currentUser.displayOptions);
         },
     });
 
@@ -112,6 +113,25 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
         },
     });
 
+    /**
+     * Sync button
+     * The feature flag HIDE_SYNC_BUTTON moves the sync button here
+     */
+    var SyncView = Marionette.View.extend({
+        template: _.template($("#sync-setting-template").html() || ""),
+        tagName: 'tr',
+        ui: {
+            sync: '.js-sync',
+        },
+        events: {
+            'click @ui.sync': 'onClickSync',
+        },
+        onClickSync: function (e) {
+            FormplayerFrontend.trigger('sync');
+            $(e.currentTarget).prop('disabled', true);
+        },
+    });
+
     var SettingsView = Marionette.CollectionView.extend({
         childViewContainer: 'tbody',
         childView: function (item) {
@@ -123,6 +143,8 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
                 return ClearUserDataView;
             } else if (item.get('slug') === slugs.BREAK_LOCKS) {
                 return BreakLocksView;
+            } else if (item.get('slug') === slugs.SYNC) {
+                return SyncView;
             }
         },
         ui: {

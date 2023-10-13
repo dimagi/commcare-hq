@@ -14,6 +14,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
+from corehq.util.test_utils import flag_enabled
 
 
 class EnterprisePermissionsTest(TestCase):
@@ -29,6 +30,7 @@ class EnterprisePermissionsTest(TestCase):
 
         # Set up users
         cls.master_role = UserRole.create("state", "role1", permissions=HqPermissions(
+            access_api=True,
             view_web_users=True,
             edit_web_users=False,
             view_groups=True,
@@ -86,6 +88,7 @@ class EnterprisePermissionsTest(TestCase):
         self.assertFalse(self.web_user_admin.has_permission(domain, "view_groups"))
         self.assertFalse(self.web_user_admin.has_permission(domain, "edit_groups"))
 
+    @flag_enabled('API_THROTTLE_WHITELIST')
     def test_api_call(self):
         url = reverse('api_dispatch_list', kwargs={
             'domain': 'county',

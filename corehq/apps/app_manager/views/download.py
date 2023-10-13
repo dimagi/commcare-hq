@@ -34,8 +34,7 @@ from corehq.apps.app_manager.util import (
     add_odk_profile_after_build,
     get_latest_enabled_versions_per_profile,
 )
-from corehq.apps.app_manager.views.utils import back_to_main, get_langs
-from corehq.apps.builds.jadjar import convert_XML_To_J2ME
+from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.toggles import toggles_enabled_for_request
@@ -179,8 +178,6 @@ def download_file(request, domain, app_id, path):
 
     content_type_map = {
         'ccpr': 'commcare/profile',
-        'jad': 'text/vnd.sun.j2me.app-descriptor',
-        'jar': 'application/java-archive',
         'xml': 'application/xml',
         'txt': 'text/plain',
     }
@@ -240,8 +237,6 @@ def download_file(request, domain, app_id, path):
             else:
                 raise
             payload = request.app.fetch_attachment(full_path)
-        if path in ['profile.xml', 'media_profile.xml']:
-            payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)
         if path in ['profile.ccpr', 'media_profile.ccpr'] and request.app.last_released:
             last_released = request.app.last_released.replace(microsecond=0)    # mobile doesn't want microseconds

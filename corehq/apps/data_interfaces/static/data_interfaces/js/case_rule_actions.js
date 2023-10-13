@@ -1,9 +1,11 @@
 hqDefine("data_interfaces/js/case_rule_actions", [
     'jquery',
     'knockout',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
-    ko
+    ko,
+    initialPageData
 ) {
     var CaseRuleActions = function (initial, caseTypeObservable) {
         'use strict';
@@ -89,6 +91,12 @@ hqDefine("data_interfaces/js/case_rule_actions", [
 
         self.removeAction = function () {
             self.actions.remove(this);
+        };
+
+        self.disableActionField = function () {
+            if (initialPageData.get('read_only_mode')) {
+                $('.main-form :input').prop('disabled', true);
+            }
         };
 
         self.loadInitial = function () {

@@ -22,16 +22,20 @@ of all unknown users, web users, and demo users on a domain.
 
     owner_ids = query.get_ids()
 """
-from copy import deepcopy
 
 from . import filters, queries
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_USERS_INDEX_CANONICAL_NAME,
+    HQ_USERS_INDEX_NAME,
+    HQ_USERS_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .index.settings import IndexSettingsKey
 
 
 class UserES(HQESQuery):
-    index = 'users'
+    index = HQ_USERS_INDEX_CANONICAL_NAME
     default_filters = {
         'not_deleted': filters.term("base_doc", "couchuser"),
         'active': filters.term("is_active", True),
@@ -55,6 +59,7 @@ class UserES(HQESQuery):
             is_active,
             username,
             metadata,
+            missing_or_empty_metadata_property,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -68,16 +73,54 @@ class UserES(HQESQuery):
 
 class ElasticUser(ElasticDocumentAdapter):
 
-    _index_name = "hqusers_2017-09-07"
-    type = "user"
+    settings_key = IndexSettingsKey.USERS
+    canonical_name = HQ_USERS_INDEX_CANONICAL_NAME
+
+    @property
+    def model_cls(self):
+        from corehq.apps.users.models import CouchUser
+        return CouchUser
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.user_mapping import USER_MAPPING
+        return USER_MAPPING
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    def _from_dict(self, user_dict):
+        """
+        Takes a user dict and applies required transfomation to make it suitable for ES.
+
+        :param user: an instance ``dict`` which is result of ``CouchUser.to_json()``
+        """
+        from corehq.apps.groups.dbaccessors import (
+            get_group_id_name_map_by_user,
+        )
+
+        if user_dict['doc_type'] == 'CommCareUser' and '@' in user_dict['username']:
+            user_dict['base_username'] = user_dict['username'].split("@")[0]
+        else:
+            user_dict['base_username'] = user_dict['username']
+
+        results = get_group_id_name_map_by_user(user_dict['_id'])
+        user_dict['__group_ids'] = [res.id for res in results]
+        user_dict['__group_names'] = [res.name for res in results]
+        user_dict['user_data_es'] = []
+        if 'user_data' in user_dict:
+            user_obj = self.model_cls.wrap_correctly(user_dict)
+            for key, value in user_obj.metadata.items():
+                user_dict['user_data_es'].append({
+                    'key': key,
+                    'value': value,
+                })
+        return super()._from_dict(user_dict)
+
+
+user_adapter = create_document_adapter(
+    ElasticUser,
+    HQ_USERS_INDEX_NAME,
+    "user",
+    secondary=HQ_USERS_SECONDARY_INDEX_NAME,
+)
 
 
 def domain(domain, allow_enterprise=False):
@@ -200,4 +243,41 @@ def metadata(key, value):
             filters.term(field='user_data_es.key', value=key),
             queries.match(field='user_data_es.value', search_string=value),
         )
+    )
+
+
+def _missing_metadata_property(property_name):
+    """
+    A metadata property doesn't exist.
+    """
+    return filters.NOT(
+        queries.nested(
+            'user_data_es',
+            filters.term(field='user_data_es.key', value=property_name),
+        )
+    )
+
+
+def _missing_metadata_value(property_name):
+    """
+    A metadata property exists but has an empty string value.
+    """
+    return queries.nested(
+        'user_data_es',
+        filters.AND(
+            filters.term('user_data_es.key', property_name),
+            filters.NOT(
+                filters.wildcard(field='user_data_es.value', value='*')
+            )
+        )
+    )
+
+
+def missing_or_empty_metadata_property(property_name):
+    """
+    A metadata property doesn't exist, or does exist but has an empty string value.
+    """
+    return filters.OR(
+        _missing_metadata_property(property_name),
+        _missing_metadata_value(property_name),
     )

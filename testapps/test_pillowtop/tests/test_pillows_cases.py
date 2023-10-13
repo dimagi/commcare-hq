@@ -2,8 +2,8 @@ from django.test import TestCase
 
 from casexml.apps.case.xform import extract_case_blocks
 
-from corehq.pillows.case import transform_case_for_elasticsearch
-from corehq.pillows.xform import transform_xform_for_elasticsearch
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
 from corehq.util.test_utils import softer_assert
 
 XFORM_MULTI_CASES = {
@@ -299,7 +299,7 @@ class TestPillows(TestCase):
         Test that xform pillow can process and cleanup a single xform with a case submission
         """
         xform = XFORM_SINGLE_CASE
-        changed = transform_xform_for_elasticsearch(xform)
+        changed = form_adapter.to_json(xform)
 
         self.assertIsNone(changed['form']['case'].get('@date_modified'))
         self.assertIsNotNone(xform['form']['case']['@date_modified'])
@@ -310,7 +310,7 @@ class TestPillows(TestCase):
         Test that xform pillow can process and cleanup a single xform with a list of cases in it
         """
         xform = XFORM_MULTI_CASES
-        changed = transform_xform_for_elasticsearch(xform)
+        changed = form_adapter.to_json(xform)
 
         changed_cases = extract_case_blocks(changed)
         orig_cases = extract_case_blocks(xform)
@@ -325,8 +325,8 @@ class TestPillows(TestCase):
         case_owner_id = CASE_WITH_OWNER_ID
         case_no_owner_id = CASE_NO_OWNER_ID
 
-        changed_with_owner_id = transform_case_for_elasticsearch(case_owner_id)
-        changed_with_no_owner_id = transform_case_for_elasticsearch(case_no_owner_id)
+        changed_with_owner_id = case_adapter.to_json(case_owner_id)
+        changed_with_no_owner_id = case_adapter.to_json(case_no_owner_id)
 
         self.assertEqual(changed_with_owner_id.get("owner_id"), "testuser")
         self.assertEqual(changed_with_no_owner_id.get("owner_id"), "testuser")

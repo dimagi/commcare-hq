@@ -1,0 +1,21 @@
+{% load i18n %}
+{% if at_capacity %}
+  <p>
+    {% blocktrans %}
+      Please note that you have reached {{ user_count }} mobile users, the maximum user limit included in your plan.
+      Your user limit represents all mobile users that are not currently deactivated
+      (see <a href="{{ url }}">here</a> for more). If you exceed the number of mobile users
+      included in your plan, you will be charged as per the terms of plan.
+    {% endblocktrans %}
+  </p>
+{% else %}
+  <p>
+    {% blocktrans %}
+      Please note that you have utilised 90% of the user limit included in your plan.
+      Your project currently has {{ user_count }} mobile users out of {{ plan_limit }} included in your plan.
+      Your user limit represents all mobile users that are not currently deactivated
+      (see <a href="{{ url }}">here</a> for more). If you exceed the number of mobile users
+      included in your plan, you will be charged as per the terms of plan.
+    {% endblocktrans %}
+  </p>
+{% endif %}

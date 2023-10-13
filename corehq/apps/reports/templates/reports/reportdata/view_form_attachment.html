@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width">
+  </head>
+  <body style="background: black;">
+    {% if is_image %}
+      <img src="{{ download_url }}">
+    {% else %}
+      <video controls {% if disable_download %} controlsList="nodownload" {% endif %} autoplay name="{{ content_name }}" style="top: 10%; left: 10%; position: absolute;">
+        <source src="{{ download_url }}">
+      </video>
+    {% endif %}
+  </body>
+</html>

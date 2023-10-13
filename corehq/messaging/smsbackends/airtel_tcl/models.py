@@ -101,7 +101,8 @@ class AirtelTCLBackend(SQLSMSBackend):
             'dataSet': [msg_info],
         }
 
-    def get_url(self):
+    @property
+    def url(self):
         return 'https://%s/BULK_API/InstantJsonPush' % self.config.host_and_port
 
     @staticmethod
@@ -123,7 +124,7 @@ class AirtelTCLBackend(SQLSMSBackend):
             msg_obj.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
             return
 
-        url = self.get_url()
+        url = self.url
         verify_sms_url(url, msg_obj, backend=self)
 
         response = requests.post(

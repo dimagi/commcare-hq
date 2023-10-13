@@ -116,13 +116,13 @@ in addition to:
     This shows up as the root name on the section breadcrumbs.
 
 `template_name`
-    Your template should extend `hqwebapp/base_section.html`
+    Your template should extend `hqwebapp/bootstrap3/base_section.html`
 
     It might look something like:
 
     .. code-block:: html
 
-        {% extends 'hqwebapp/base_section.html' %}
+        {% extends 'hqwebapp/bootstrap3/base_section.html' %}
 
         {% block js %}{{ block.super }}
             {# some javascript imports #}

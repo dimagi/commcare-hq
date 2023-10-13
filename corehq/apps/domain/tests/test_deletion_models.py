@@ -49,11 +49,13 @@ IGNORE_MODELS = {
     'blobs.BlobMeta',
     'blobs.BlobMigrationState',
     'blobs.DeletedBlobMeta',
+    'cleanup.DeletedCouchDoc',
     'domain.DomainAuditRecordEntry',
     'domain.ProjectLimit',
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',
     'export.DefaultExportSettings',
+    'field_audit.AuditEvent',
     'fixtures.UserLookupTableStatus',
     'fixtures.LookupTableRow',          # handled by cascading delete
     'fixtures.LookupTableRowOwner',     # handled by cascading delete

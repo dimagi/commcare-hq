@@ -102,6 +102,8 @@ class ConfigurableReportTableManagerDbTest(TestCase):
     def test_table_adapters(self):
         data_source_1 = get_sample_data_source()
         ds_1_domain = data_source_1.domain
+        data_source_1.save()
+
         table_manager = ConfigurableReportTableManager([MockDataSourceProvider({
             ds_1_domain: [data_source_1]
         })])

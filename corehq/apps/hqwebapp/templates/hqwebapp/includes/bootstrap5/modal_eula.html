@@ -1,0 +1,39 @@
+{% load i18n %}
+<div class="modal fade" id="eulaModal" style="z-index: 2147483548;"><!-- This is ridiculous, needed for Appcues -->
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">{% trans "CommCare HQ Terms" %}</h4>
+            </div>
+            <div class="modal-body">
+                {% blocktrans %}
+                    On May 25, 2018 our new
+                    <a href="http://www.dimagi.com/terms/latest/privacy/" target="_blank">
+                            Privacy Policy, Terms of Service, Business Agreement, and Acceptable Use Policy
+                    </a>
+                    (collectively, "Terms") went into effect. We made these updates to clarify our terms and address
+                    some new privacy laws in Europe. The spirit of our previous terms remains unchanged and,
+                    as always, you are the owner of your data.
+                    <a href="https://confluence.dimagi.com/display/commcarepublic/CommCare+Notices" target="_blank">Click here</a> to learn more.
+
+                    <br><br>
+
+                    Click on the 'I Agree' button to let us know that you agree to our new Terms. If you do not
+                    agree to our new Terms, you may choose to stop using our services. Before doing so, however,
+                    please get in touch with us at <a href="mailto:{{ PRIVACY_EMAIL }}">{{ PRIVACY_EMAIL }}</a>.
+                    We're here to answer any questions you have. Again, our updates are intended to reflect the
+                    spirit of our previous terms.
+
+                    <br><br>
+
+                    Thank you,
+                    <br><br>
+                    - The Dimagi Team
+                {% endblocktrans %}
+            </div>
+            <div class="modal-footer">
+                <button id="eula-agree" type="submit" class="btn btn-primary">{% trans 'I Agree' %}</button>
+            </div>
+        </div>
+    </div>
+</div>

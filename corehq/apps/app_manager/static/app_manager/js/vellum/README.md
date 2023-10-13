@@ -1,7 +1,7 @@
 Vellum
 ======
 
-[![Build Status](https://travis-ci.com/dimagi/Vellum.svg?branch=master)](https://travis-ci.com/dimagi/Vellum)
+![build status](https://github.com/dimagi/vellum/actions/workflows/tests.yml/badge.svg)
 
 Vellum is a JavaRosa [XForm](http://en.wikipedia.org/wiki/XForms) designer used
 in [CommCare HQ](http://github.com/dimagi/commcare-hq).
@@ -33,6 +33,7 @@ intuitive items first.
   [JSTree](https://www.jstree.com/plugins/) plugin system. Many very important
   components are implemented as plugins, so just because something is a plugin
   does not mean it is a second-rate feature.
+  For more details on plugins, see [PLUGIN_DEVELOPMENT.md](PLUGIN_DEVELOPMENT.md).
 
 Usage
 -----
@@ -90,10 +91,18 @@ Vellum targets modern browsers.  IE8 and earlier are not supported.
 Tests
 -----
 
-Make sure everything is up to date:
+### Prerequisites
+
+Make sure you have Node.js 14.x installed and are using `node 14.x` in your working directory (tip: manage multiple versions of node.js with nvm)
+
+Make sure you have `npm 7.x` installed (`npm install npm@7`)
+
+### Running Tests
+
+Make sure everything is up-to-date:
 
 ```
-$ yarn upgrade
+$ yarn install --frozen-lockfile
 ```
 
 Test in a browser:
@@ -115,7 +124,12 @@ or to run a specific test:
 ./test "Name of specific test"
 ```
 
-a block like the following:
+or pass a regex to run multiple tests:
+```
+./test "SaveToCase"  # run all tests with 'SaveToCase' in the name
+```
+
+A block like the following:
 ```
 describe('the test', () => ...
   describe('with this condition', () => ...

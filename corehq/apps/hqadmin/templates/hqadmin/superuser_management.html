@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
@@ -6,40 +6,28 @@
   <div class="row">
     <div class="col-xs-12">
       <h2>{{ current_page.title }}</h2>
-      <p class="help-block">
-        {% if offboarding %}
-          {% translate "Please type comma or new-line separated email addresses from the official list of current employees." %}
-        {% else %}
-          {% translate "Please type comma or new-line separated email addresses of users to grant/revoke superuser privileges." %}
-        {% endif %}
-      </p>
-      {% crispy form %}
+        <p class="help-block">
+          {% if not can_toggle_status %}
+            {% translate "You do not have permission to change superuser and staff status." %}
+          {% else %}
+            {% translate "Please type comma or new-line separated email addresses of users to grant/revoke superuser privileges." %}
+          {% endif %}
+        </p>
+      {% if can_toggle_status %}
+        {% crispy form %}
+      {% endif %}
     </div>
   </div>
   <div class="row">
     <div class="col-xs-12">
-      {% if validation_errors %}
-        <h4> {% translate "The following users do not exist on this site and so do not need to be offboarded." %} </h4>
-          {% for user in validation_errors %}
-            {{ user }} <br>
-          {% endfor %}
-      {% endif %}
-      {% if not offboarding %}
-        <h2>{% translate "All superusers and staff users" %}</h2>
-        <a class="btn btn-primary" href="{% url "superuser_table" %}" target="_blank"><i class="fa fa-download"></i> Download</a>
-        <div class="spacer"></div>
-      {% else %}
-        <h2> {{ table_title }}</h2>
-      {% endif %}
+      <h2>{% translate "All superusers and staff users" %}</h2>
+      <a class="btn btn-primary" href="{% url "superuser_table" %}" target="_blank"><i class="fa fa-download"></i> Download</a>
       <table class="table">
         <tr>
           <th>{% translate "Username" %}</th>
           <th>{% translate "Developer" %}</th>
           <th>{% translate "Superuser" %}</th>
-          {% if offboarding %}
-            <th>{% translate "Accounting Admin" %}</th>
-            <th>{% translate "Active" %}</th>
-          {% endif %}
+          <th>{% translate "Can assign Superuser" %}</th>
           <th>{% translate "Two Factor Enabled" %}</th>
         </tr>
         {% for user in users %}
@@ -47,10 +35,7 @@
             <td>{{ user.username }}</td>
             <td>{% if user.is_staff %}<i class="fa fa-check"></i>{% endif %}</td>
             <td>{% if user.is_superuser %}<i class="fa fa-check"></i>{% endif %}</td>
-            {% if offboarding %}
-              <td>{% if user.is_accounting_admin %}<i class="fa fa-check"></i>{% endif %}</td>
-              <td>{% if user.is_active %}<i class="fa fa-check"></i>{% endif %}</td>
-            {% endif %}
+            <td>{% if user.can_assign_superuser %}<i class="fa fa-check"></i>{% endif %}</td>
             <td>{% if user.two_factor_enabled %}<i class="fa fa-check"></i>{% endif %}</td>
           </tr>
         {% endfor %}
@@ -60,7 +45,6 @@
   <style>
     ul {
       list-style-type: none;
-      margin-left: -15px;
     }
   </style>
 {% endblock %}

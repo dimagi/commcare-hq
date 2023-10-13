@@ -15,6 +15,7 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     ReportModule,
     import_app,
+    FormLink,
 )
 from corehq.apps.app_manager.suite_xml.post_process.resources import (
     ResourceOverride,
@@ -23,7 +24,6 @@ from corehq.apps.app_manager.suite_xml.post_process.resources import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, get_simple_form, patch_validate_xform
 from corehq.apps.app_manager.views.utils import (
-    get_blank_form_xml,
     overwrite_app,
     update_linked_app,
 )
@@ -226,6 +226,12 @@ class TestLinkedApps(BaseLinkedAppsTest):
         master_form = list(self.master1.get_forms(bare=True))[0]
 
         add_xform_resource_overrides(self.linked_domain, self.linked_app.get_id, {master_form.unique_id: '123'})
+        self.addCleanup(
+            lambda: ResourceOverride.objects.filter(
+                domain=self.linked_domain, app_id=self.linked_app.get_id
+            ).delete()
+        )
+
         overwrite_app(self.linked_app, self.master1)
 
         self.assertEqual(
@@ -233,7 +239,33 @@ class TestLinkedApps(BaseLinkedAppsTest):
             self._get_form_ids_by_xmlns(LinkedApplication.get(self.linked_app._id))
         )
 
-        ResourceOverride.objects.filter(domain=self.linked_domain, app_id=self.linked_app.get_id).delete()
+    def test_overwrite_app_override_form_unique_ids_references(self):
+        m0 = self.master1.get_module(0)
+        master_form = list(self.master1.get_forms(bare=True))[0]
+        f1 = m0.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
+        f1.form_links = [
+            FormLink(xpath="true()", form_id=master_form.unique_id, form_module_id=m0.unique_id),
+        ]
+
+        add_xform_resource_overrides(self.linked_domain, self.linked_app.get_id, {
+            master_form.unique_id: '123',
+            f1.unique_id: '456'
+        })
+        self.addCleanup(
+            lambda: ResourceOverride.objects.filter(
+                domain=self.linked_domain, app_id=self.linked_app.get_id
+            ).delete()
+        )
+
+        overwrite_app(self.linked_app, self.master1)
+
+        linked_app = LinkedApplication.get(self.linked_app._id)
+        self.assertEqual(
+            {master_form.xmlns: '123', f1.xmlns: '456'},
+            self._get_form_ids_by_xmlns(linked_app)
+        )
+
+        self.assertEqual(linked_app.get_module(0).get_form(1).form_links[0].form_id, '123')
 
     def test_multi_master_form_attributes_and_media_versions(self, *args):
         '''
@@ -599,6 +631,30 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         media_item = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         self.assertEqual(missing_media, [('case_list_image.jpg', media_item)])
 
+        # media exists based on old ids
+        old_multimedia_ids = set([media_item.multimedia_id])
+        with patch('corehq.apps.hqmedia.models.CommCareMultimedia.get', side_effect=ResourceNotFound):
+            missing_media = _get_missing_multimedia(self.master_app_with_report_modules, old_multimedia_ids)
+        self.assertEqual(missing_media, [])
+
+        # mock id for multimedia saved locally
+        local_media_id = uuid.uuid4().hex
+        old_multimedia_ids = set([local_media_id])
+
+        # media is not yet saved to app based on old ids
+        with patch('corehq.apps.hqmedia.models.CommCareMultimedia.get', side_effect=ResourceNotFound):
+            missing_media = _get_missing_multimedia(self.master_app_with_report_modules, old_multimedia_ids)
+        self.assertEqual(missing_media, [('case_list_image.jpg', media_item)])
+
+        # update multimedia map as in fetch_remote_media
+        media_item.upstream_media_id = media_item.multimedia_id
+        media_item.multimedia_id = local_media_id
+
+        # media is no longer missing based on old ids
+        with patch('corehq.apps.hqmedia.models.CommCareMultimedia.get', side_effect=ResourceNotFound):
+            missing_media = _get_missing_multimedia(self.master_app_with_report_modules, old_multimedia_ids)
+        self.assertEqual(missing_media, [])
+
     def test_add_domain_to_media(self):
         self.image.valid_domains.remove(self.master_app_with_report_modules.domain)
         self.image.save()
@@ -625,7 +681,8 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         remote_details = RemoteLinkDetails(
             'http://localhost:8000', 'user', 'key'
         )
-        data = b'this is a test: \255'  # Real data will be a binary multimedia file, so mock it with bytes, not unicode
+        # Real data will be a binary multimedia file, so mock it with bytes, not unicode
+        data = b'this is a test: \255'
         media_details = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         media_details['multimedia_id'] = uuid.uuid4().hex
         media_details['media_type'] = 'CommCareMultimedia'
@@ -637,6 +694,38 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         self.addCleanup(media.delete)
         content = media.fetch_attachment(list(media.blobs.keys())[0])
         self.assertEqual(data, content)
+
+    def test_fetch_missing_media_already_exists(self):
+        image_path = 'jr://file/commcare/case_list_image.jpg'
+        self.master_app_with_report_modules.get_module(0).set_icon('en', image_path)
+        self.master_app_with_report_modules.create_mapping(self.image, image_path, save=False)
+
+        remote_details = RemoteLinkDetails(
+            'http://localhost:8000', 'user', 'key'
+        )
+        data = b'this is a test: \255'
+
+        # local copy of multimedia
+        local_media = CommCareMultimedia.get_by_data(data)
+        local_media.attach_data(data, original_filename='test.jpg')
+        self.addCleanup(local_media.delete)
+
+        # multimedia map item of a just-pulled app
+        media_map_item = list(self.master_app_with_report_modules.multimedia_map.values())[0]
+        media_map_item.multimedia_id = uuid.uuid4().hex
+        media_map_item.media_type = 'CommCareMultimedia'
+        # save the id to compare because it will get updated
+        upstream_media_id = str(media_map_item.multimedia_id)
+
+        # fetch remote multimedia with the same data as local multimedia
+        with patch('corehq.apps.linked_domain.remote_accessors._fetch_remote_media_content') as mock:
+            mock.return_value = data
+            fetch_remote_media('domain', [('case_list_image.jpg', media_map_item)], remote_details)
+
+        # upstream_id matches original upstream id for future pulls
+        self.assertEqual(media_map_item.upstream_media_id, upstream_media_id)
+        # multimedia_id matches local multimedia for local app references
+        self.assertEqual(media_map_item.multimedia_id, local_media._id)
 
 
 def _mock_pull_remote_master(master_app, linked_app, report_map=None):

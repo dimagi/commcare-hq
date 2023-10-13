@@ -637,7 +637,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         # create an irrelevent child and close the parent
         child_id = uuid.uuid4().hex
         self.device.post_changes([
-            CaseStructure(case_id=parent_id, attrs={'close': True, 'owner_id': CaseBlock.undefined}),
+            CaseStructure(case_id=parent_id, attrs={'close': True}),
             CaseStructure(
                 case_id=child_id,
                 attrs={

@@ -2,10 +2,6 @@ class ESError(Exception):
     pass
 
 
-class ESRegistryError(ESError):
-    pass
-
-
 class ESShardFailure(ESError):
     pass
 
@@ -18,4 +14,16 @@ class TaskError(ESError):
 
 
 class TaskMissing(TaskError):
+    pass
+
+
+class IndexNotMultiplexedException(Exception):
+    pass
+
+
+class IndexMultiplexedException(Exception):
+    pass
+
+
+class IndexAlreadySwappedException(Exception):
     pass

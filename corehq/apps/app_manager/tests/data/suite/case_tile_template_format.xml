@@ -1,0 +1,7 @@
+<partial>
+    <template form="address">
+        <text>          &lt;b&gt;d &lt;/b&gt;
+            <xpath function="d"></xpath>
+        </text>
+    </template>
+</partial>

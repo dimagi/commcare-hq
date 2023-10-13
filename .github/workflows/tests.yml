@@ -5,12 +5,16 @@ on:
     - master
     - hotfix-deploy
     - ap/sql-repeater/phase-2
+    - mjr/erm-update-rules
+    - mjr/erm-fixtures
+    - mjr/erm-custom-roles
+    - mjr/erm-roles
   schedule:
     # see corehq/apps/hqadmin/management/commands/static_analysis.py
     - cron: '47 12 * * *'
 jobs:
   tests:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -25,15 +29,18 @@ jobs:
       DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
       REUSE_DB: true  # do not drop databases on completion to save time
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     - name: Docker info
       run: |
         docker version
-        docker-compose version
+        docker compose version
     - name: Docker login
-      uses: docker/login-action@v1
+      env:
+        TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      if: env.TOKEN != ''
+      uses: docker/login-action@v3
       with:
         username: dimagi
         password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -42,9 +49,13 @@ jobs:
         TEST: ${{ matrix.TEST }}
         NOSE_DIVIDED_WE_RUN: ${{ matrix.NOSE_DIVIDED_WE_RUN }}
         JS_SETUP: yes
+        KAFKA_HOSTNAME: kafka
       run: scripts/docker test --noinput --stop -v --divided-we-run=${{ matrix.NOSE_DIVIDED_WE_RUN }} --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
     - name: "Codecov upload"
-      uses: codecov/codecov-action@v2
+      env:
+        TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      if: env.TOKEN != ''
+      uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: coverage.xml

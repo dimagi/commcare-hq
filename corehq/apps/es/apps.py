@@ -2,14 +2,23 @@
 AppES
 -----
 """
+from datetime import datetime
+
+from dimagi.utils.parsing import json_format_datetime
+
 from . import filters, queries
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_APPS_INDEX_CANONICAL_NAME,
+    HQ_APPS_INDEX_NAME,
+    HQ_APPS_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .index.settings import IndexSettingsKey
 
 
 class AppES(HQESQuery):
-    index = 'apps'
+    index = HQ_APPS_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -25,16 +34,30 @@ class AppES(HQESQuery):
 
 class ElasticApp(ElasticDocumentAdapter):
 
-    _index_name = "hqapps_2020-02-26"
-    type = "app"
+    settings_key = IndexSettingsKey.APPS
+    canonical_name = HQ_APPS_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.app_mapping import APP_MAPPING
+        return APP_MAPPING
 
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    @property
+    def model_cls(self):
+        from corehq.apps.app_manager.models import ApplicationBase
+        return ApplicationBase
+
+    def _from_dict(self, app_dict):
+        app_dict['@indexed_on'] = json_format_datetime(datetime.utcnow())
+        return super()._from_dict(app_dict)
+
+
+app_adapter = create_document_adapter(
+    ElasticApp,
+    HQ_APPS_INDEX_NAME,
+    "app",
+    secondary=HQ_APPS_SECONDARY_INDEX_NAME,
+)
 
 
 def build_comment(comment):

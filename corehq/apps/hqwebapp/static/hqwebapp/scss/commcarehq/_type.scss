@@ -1,0 +1,92 @@
+.text-hq-copyright {
+  margin: 6px 0;
+  line-height: 15px;
+  font-size: 11px;
+}
+
+.text-hq-nav-header {
+  margin-top: 17px;
+  padding: 9px 20px 0;
+  font-size: $font-size-base;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: $cc-brand-mid;
+}
+
+/*
+https://css-tricks.com/snippets/css/prevent-long-urls-from-breaking-out-of-container/
+*/
+.dont-break-out {
+  /* These are technically the same, but use both */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+
+  -ms-word-break: break-all;
+  /* This is the dangerous one in WebKit, as it breaks things wherever */
+  word-break: break-all;
+  /* Instead use this non-standard one: */
+  word-break: break-word;
+
+  /* Adds a hyphen where the word breaks, if supported (No Blink) */
+  -ms-hyphens: auto;
+  -moz-hyphens: auto;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+
+}
+
+.noselect {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+code {
+  color: $cc-text;
+  background: $cc-bg;
+  border: 1px solid darken($cc-bg, 30%);
+}
+
+.no-border {
+  border: 0;
+}
+
+.page-edit-header {
+  margin: 8px 0;
+}
+
+.page-edit-header .page-edit-title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 500;
+
+  .read-write .form-group {
+    margin-top: 2px;
+    margin-bottom: 10px;
+  }
+  .inline-edit-icon {
+    font-size: 1.5rem;
+  }
+}
+.page-edit-header .page-edit-description {
+  margin-top: -8px;
+
+  .read-write .form-group {
+    margin-top: 18px;
+  }
+  .inline-edit-icon {
+    font-size: 1.2rem;
+  }
+}
+
+.mobile-ux-lead {
+  font-size: 1.8em;
+  line-height: 1.2em;
+}
+
+a {
+    cursor: pointer;
+}

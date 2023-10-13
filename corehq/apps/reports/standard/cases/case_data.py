@@ -1,8 +1,8 @@
 import copy
 import csv
 import io
+from collections import defaultdict
 from datetime import datetime
-from functools import partial
 
 from django.contrib import messages
 from django.http import (
@@ -34,12 +34,14 @@ from casexml.apps.case.views import get_wrapped_case
 from casexml.apps.case.xml import V2
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
+from dimagi.utils.chunked import chunked
 from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
+from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.export.models import CaseExportDataSchema
@@ -50,6 +52,10 @@ from corehq.apps.hqcase.utils import (
     submit_case_blocks,
 )
 from corehq.apps.hqwebapp.decorators import use_datatables
+from corehq.apps.hqwebapp.templatetags.proptable_tags import (
+    DisplayConfig,
+    get_table_as_rows,
+)
 from corehq.apps.locations.permissions import (
     location_restricted_exception,
     location_safe,
@@ -81,8 +87,10 @@ from corehq.motech.repeaters.views.repeat_record_display import (
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, get_case_or_404, reverse
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
 
 from .basic import CaseListReport
+from .utils import get_user_type
 
 # Number of columns in case property history popup
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
@@ -176,12 +184,10 @@ class CaseDataView(BaseProjectReportSectionView):
                 "To fix this you can archive the other forms listed here."
             ))
 
-        from corehq.apps.hqwebapp.templatetags.proptable_tags import get_tables_as_rows, get_default_definition
         wrapped_case = get_wrapped_case(self.case_instance)
         timezone = get_timezone_for_user(self.request.couch_user, self.domain)
         # Get correct timezone for the current date: https://github.com/dimagi/commcare-hq/pull/5324
         timezone = timezone.localize(datetime.utcnow()).tzinfo
-        _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
         show_transaction_export = toggles.COMMTRACK.enabled(self.request.user.username)
 
         def _get_case_url(case_id):
@@ -189,28 +195,12 @@ class CaseDataView(BaseProjectReportSectionView):
 
         data = copy.deepcopy(wrapped_case.to_full_dict())
         display = wrapped_case.get_display_config()
-        default_properties = _get_tables_as_rows(data, display)
+        default_properties = get_table_as_rows(data, display, timezone)
         dynamic_data = wrapped_case.dynamic_properties()
 
-        for section in display:
-            for row in section['layout']:
-                for item in row:
-                    dynamic_data.pop(item.expr, None)
-
-        if dynamic_data:
-            dynamic_keys = sorted(dynamic_data.keys())
-            definition = get_default_definition(
-                dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
-
-            dynamic_properties = _get_tables_as_rows(
-                dynamic_data,
-                definition,
-            )
-        else:
-            dynamic_properties = None
-
-        the_time_is_now = datetime.utcnow()
-        tz_abbrev = timezone.localize(the_time_is_now).tzname()
+        for row in display['layout']:
+            for item in row:
+                dynamic_data.pop(item.expr, None)
 
         product_name_by_id = {
             product['product_id']: product['name']
@@ -246,20 +236,87 @@ class CaseDataView(BaseProjectReportSectionView):
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
             "can_edit_data": can_edit_data,
             "is_usercase": self.case_instance.type == USERCASE_TYPE,
+            "is_case_type_deprecated": is_case_type_deprecated(self.domain, self.case_instance.type),
 
             "default_properties_as_table": default_properties,
             "dynamic_properties": dynamic_data,
-            "dynamic_properties_as_table": dynamic_properties,
             "show_properties_edit": show_properties_edit,
             "timezone": timezone,
-            "tz_abbrev": tz_abbrev,
+            "tz_abbrev": timezone.zone,
             "ledgers": ledger_map,
             "show_transaction_export": show_transaction_export,
             "xform_api_url": reverse('single_case_forms', args=[self.domain, self.case_id]),
             "repeat_records": repeat_records,
         }
+        if dynamic_data:
+            if toggles.DD_CASE_DATA.enabled_for_request(self.request):
+                dd_properties_tables = _get_dd_tables(self.domain, self.case_instance.type,
+                                                      dynamic_data, timezone)
+                context['dd_properties_tables'] = dd_properties_tables
+                context['show_expand_collapse_buttons'] = len(
+                    [table.get('name') for table in dd_properties_tables if table.get('name') is not None]) > 1
+            else:
+                definition = {
+                    "layout": list(chunked([
+                        DisplayConfig(expr=prop, has_history=True)
+                        for prop in sorted(dynamic_data.keys())
+                    ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
+                }
+                context['dynamic_properties_table'] = get_table_as_rows(dynamic_data, definition, timezone)
         context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
         return context
+
+
+def _get_dd_tables(domain, case_type, dynamic_data, timezone):
+    dd_props_by_group = list(_get_dd_props_by_group(domain, case_type))
+    tables = [
+        (group, _table_definition([
+            (p.name, p.label, p.description) for p in props
+        ]))
+        for group, props in dd_props_by_group
+    ]
+    props_in_dd = set(prop.name for _, prop_group in dd_props_by_group
+                      for prop in prop_group)
+    unrecognized = set(dynamic_data.keys()) - props_in_dd
+    if unrecognized:
+        tables.append((_('Unrecognized'), _table_definition([
+            (p, None, None) for p in unrecognized
+        ])))
+
+    return [{
+        'name': name,
+        'rows': get_table_as_rows(dynamic_data, definition, timezone),
+    } for name, definition in tables]
+
+
+def _get_dd_props_by_group(domain, case_type):
+    ret = defaultdict(list)
+    for prop in CaseProperty.objects.filter(
+            case_type__domain=domain,
+            case_type__name=case_type,
+            deprecated=False,
+    ).select_related('group_obj').order_by('group_obj__index', 'index'):
+        ret[prop.group_name].append(prop)
+
+    uncategorized = ret.pop('', None)
+    for group, props in ret.items():
+        yield group, props
+
+    if uncategorized:
+        yield _('Uncategorized') if ret else None, uncategorized
+
+
+def _table_definition(props):
+    return {
+        "layout": list(chunked([
+            DisplayConfig(
+                expr=prop_name,
+                name=label or prop_name,
+                description=description,
+                has_history=True
+            ) for prop_name, label, description in props
+        ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
+    }
 
 
 def form_to_json(domain, form, timezone):
@@ -280,6 +337,7 @@ def form_to_json(domain, form, timezone):
             "username": form.metadata.username if form.metadata else '',
         },
         'readable_name': form_name,
+        'user_type': get_user_type(form, domain),
     }
 
 
@@ -403,7 +461,7 @@ def case_property_names(request, domain, case_id):
         item.path[-1].name for item in property_schema.items
         if not is_occurrence_deleted(item.last_occurrences, last_app_ids) and '/' not in item.path[-1].name
     }
-    all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES)
+    all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES) | {"case_name"}
     # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
     if case.external_id:
         all_property_names.add('external_id')

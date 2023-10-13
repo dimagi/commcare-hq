@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.tests.utils import get_sample_data_source
+from corehq.tests.locks import real_redis_client
 
 
 class DataSourceResumeBuildTest(SimpleTestCase):
@@ -10,7 +11,8 @@ class DataSourceResumeBuildTest(SimpleTestCase):
     def setUpClass(cls):
         super(DataSourceResumeBuildTest, cls).setUpClass()
         cls._data_source = get_sample_data_source()
-        cls._resume_helper = DataSourceResumeHelper(cls._data_source)
+        with real_redis_client():
+            cls._resume_helper = DataSourceResumeHelper(cls._data_source)
 
     def setUp(self):
         super(DataSourceResumeBuildTest, self).setUp()

@@ -1,0 +1,183 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load timezone_tags %}
+
+{% block page_content %}
+
+{% captureas status_css %}
+  {% case log.status 'success' %} success
+  {% case 'filtered' %} default
+  {% case 'reverted' %} warning
+  {% case 'error' 'validation-failed' %} danger
+  {% else %} default
+  {% endcase %}
+{% endcaptureas %}
+
+<h1>{{ current_page.title }}</h1>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">{% trans "Metadata" %}</h3>
+  </div>
+  <div class="panel-body">
+    <table class="table table-bordered">
+      <tbody>
+        <tr>
+          <th>API</th>
+          <td>
+            <a href="{% url 'configurable_api_edit' domain log.api_id %}">{{ log.api.name }}</a>
+          </td>
+        </tr>
+        <tr>
+          <th>status</th>
+          <td>
+            <span class="label label-{{ status_css.strip }}">
+              {{ log.get_status_display }}
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <th>timestamp</th>
+          <td>{% utc_to_timezone log.timestamp timezone %}</td>
+        </tr>
+        <tr>
+          <th>username</th>
+          <td>{{ log.username }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">{% trans "Request Details" %}</h3>
+  </div>
+  <div class="panel-body">
+    <table class="table table-bordered">
+      <tbody>
+        <tr>
+          <th>request_method</th>
+          <td>{{ log.request_method }}</td>
+        </tr>
+        <tr>
+          <th>request_query</th>
+          <td>{{ log.request_query }}</td>
+        </tr>
+        <tr>
+          <th>request_body</th>
+          <td>{{ log.request_body }}</td>
+        </tr>
+        <tr>
+          <th>request_headers</th>
+          <td>
+            <dl class="dl-horizontal">
+            {% for key, value in log.request_headers.items|dictsort:0 %}
+              <dt>{{ key }}</dt>
+              <dd>{{ value }}</dd>
+            {% endfor %}
+            </dl>
+          </td>
+        </tr>
+        <tr>
+          <th>request_ip</th>
+          <td>{{ log.request_ip }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">{% trans "Response Details" %}</h3>
+  </div>
+  <div class="panel-body">
+    <table class="table table-bordered">
+      <tbody>
+        <tr>
+          <th>response_status</th>
+          <td>{{ log.response_status }}</td>
+        </tr>
+        <tr>
+          <th>attempts</th>
+          <td>{{ log.attempts }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">{% trans "Processing Attempts" %}</h3>
+  </div>
+  <div class="panel-body">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>timestamp</th>
+          <th>is_retry</th>
+          <th>response_status</th>
+          <th>raw_response</th>
+          <th>xform_id</th>
+          <th>case_ids</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for attempt in log.processingattempt_set.all %}
+        <tr>
+          <td>{% utc_to_timezone attempt.timestamp timezone %}</td>
+          <td>{{ attempt.is_retry }}</td>
+          <td>{{ attempt.response_status }}</td>
+          <td><code>{{ attempt.raw_response }}</code></td>
+          <td>
+            {% if attempt.xform_id %}
+              <a href="{% url 'render_form_data' domain attempt.xform_id %}">{{ attempt.xform_id }}</a>
+            {% else %}
+              ---
+            {% endif %}
+          </td>
+          <td>
+            <ul class="list-unstyled">
+            {% for case_id in attempt.case_ids %}
+              <li>
+                <a href="{% url 'case_data' domain case_id %}">{{ case_id }}</a>
+              </li>
+            {% empty %}
+              ---
+            {% endfor %}
+            </ul>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="form-actions">
+  {% if log.status != 'success' %}
+    <form action="{% url 'retry_api_request' domain log.id %}" method="post" class="pull-left">{% csrf_token %}
+      <button type="submit" class="btn btn-default disable-on-submit" >
+        <i class="fa fa-repeat"></i>
+        {% trans 'Retry' %}
+      </button>
+    </form>
+  {% elif log.status == 'success' %}
+    <form action="{% url 'revert_api_request' domain log.id %}" method="post" class="pull-left">{% csrf_token %}
+      <button type="submit" class="btn btn-danger disable-on-submit" >
+        <i class="fa fa-undo"></i>
+        {% trans 'Revert' %}
+      </button>
+      <span class="hq-help-template"
+            data-title="{% trans 'Reverting API Requests' %}"
+            data-content="{% blocktrans %}Reverts actions performed in this request and archives any associated forms.{% endblocktrans %}">
+      </span>
+    </form>
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -294,6 +294,8 @@ def _get_vellum_plugins(domain, form, module):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
+    if toggles.COMMCARE_CONNECT.enabled(domain):
+        vellum_plugins.append("commcareConnect")
 
     form_uses_case = (
         (module and module.case_type and form.requires_case())

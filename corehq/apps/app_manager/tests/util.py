@@ -99,9 +99,7 @@ class SuiteMixin(TestXmlMixin):
 
 
 def add_build(version, build_number):
-    path = os.path.join(os.path.dirname(__file__), "jadjar")
-    jad_path = os.path.join(path, 'CommCare_%s_%s.zip' % (version, build_number))
-    return CommCareBuild.create_from_zip(jad_path, version, build_number)
+    return CommCareBuild.create_without_artifacts(version, build_number)
 
 
 @nottest
@@ -145,6 +143,17 @@ def patch_get_xform_resource_overrides():
 
 def patch_validate_xform():
     return mock.patch('corehq.apps.app_manager.models.validate_xform', lambda _: None)
+
+
+def case_search_sync_cases_on_form_entry_enabled_for_domain():
+    """
+    Decorate test methods with case_search_sync_cases_on_form_entry_enabled_for_domain() to override
+    default False for unit tests.
+    """
+    return mock.patch(
+        "corehq.apps.app_manager.suite_xml.sections.entries."
+        "case_search_sync_cases_on_form_entry_enabled_for_domain", return_value=True
+    )
 
 
 @unit_testing_only

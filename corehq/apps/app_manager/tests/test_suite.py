@@ -15,8 +15,8 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     patch_get_xform_resource_overrides,
+    case_search_sync_cases_on_form_entry_enabled_for_domain
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.userreports.models import ReportConfiguration
@@ -236,12 +236,14 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
         module, form = factory.new_basic_module('m0', 'case1')
         factory.form_requires_case(form, 'case')
         short_custom_variables = "<variable function='true()' /><foo function='bar'/>"
+        short_custom_variables_dict = {"variable": "true()", "foo": "bar"}
         long_custom_variables = (
             '<bar function="true()" />'
             '<baz function="instance(\'locations\')/locations/location[0]"/>'
         )
-        module.case_details.short.custom_variables = short_custom_variables
-        module.case_details.long.custom_variables = long_custom_variables
+        long_custom_variables_dict = {"bar": "true()", "baz": "instance(\'locations\')/locations/location[0]"}
+        module.case_details.short.custom_variables_dict = short_custom_variables_dict
+        module.case_details.long.custom_variables_dict = long_custom_variables_dict
         suite = factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
@@ -263,7 +265,34 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
                 <instance id="casedb" src="jr://instance/casedb"/>
                 <instance id="locations" src="jr://fixture/locations"/>
             </partial>
-            """.format(short_variables=short_custom_variables, long_variables=long_custom_variables),
+            """,
             suite,
             "entry[1]/instance"
         )
+
+    def test_sync_cases_on_form_entry_disabled(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        form.requires = 'case'
+
+        module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+        )
+        module.assign_references()
+        self.assertXmlDoesNotHaveXpath(factory.app.create_suite(), "./entry/post")
+
+    @case_search_sync_cases_on_form_entry_enabled_for_domain()
+    def test_sync_cases_on_form_entry_enabled(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        form.requires = 'case'
+
+        module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+        )
+        module.assign_references()
+        self.assertXmlHasXpath(factory.app.create_suite(), "./entry/post")

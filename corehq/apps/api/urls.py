@@ -81,6 +81,7 @@ API_LIST = (
         v0_5.ODataFormResource,
         LookupTableResource,
         LookupTableItemResource,
+        v0_5.NavigationEventAuditResource,
     )),
     ((0, 6), (
         locations.v0_6.LocationResource,
@@ -133,6 +134,7 @@ def api_url_patterns():
               name="api_form_attachment")
 
     yield path('case/custom/<slug:api_id>/', generic_inbound_api, name="generic_inbound_api")
+    yield url(r'v0.5/ucr/', v0_5.get_ucr_data, name="api_get_ucr_data")
 
 
 urlpatterns = list(api_url_patterns())

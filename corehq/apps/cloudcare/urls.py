@@ -9,14 +9,12 @@ from corehq.apps.cloudcare.views import (
     PreviewAppView,
     ReadableQuestions,
     default,
-    form_context,
     report_formplayer_error,
+    report_sentry_error
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
 
 app_urls = [
-    url(r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/context/$',
-        form_context, name='cloudcare_form_context'),
     url(r'^v2/$', FormplayerMain.as_view(), name=FormplayerMain.urlname),
     url(r'^v2/preview/$', FormplayerMainPreview.as_view(), name=FormplayerMainPreview.urlname),
     url(
@@ -26,6 +24,7 @@ app_urls = [
     ),
     url(r'^preview_app/(?P<app_id>[\w-]+)/$', PreviewAppView.as_view(), name=PreviewAppView.urlname),
     url(r'^report_formplayer_error', report_formplayer_error, name='report_formplayer_error'),
+    url(r'^report_sentry_error', report_sentry_error, name='report_sentry_error'),
 ]
 
 api_urls = [
@@ -50,3 +49,4 @@ urlpatterns = [
 
 waf_allow('XSS_BODY', hard_code_pattern=r'^/formplayer/validate_form$')
 waf_allow('XSS_BODY', hard_code_pattern=r'^/formplayer/new-form$')
+waf_allow('XSS_BODY', hard_code_pattern=r'^/formplayer/answer_media$')

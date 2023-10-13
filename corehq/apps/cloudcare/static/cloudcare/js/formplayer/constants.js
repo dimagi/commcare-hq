@@ -14,9 +14,21 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
             GRID: 'grid',
             LIST: 'list',
         },
-        DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE: 20,
+        ALLOWED_FIELD_ALIGNMENTS: ['start', 'end', 'center', 'left', 'right'],
+
+        DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE: 10,
 
         MULTI_SELECT_ADD: 'add',
         MULTI_SELECT_REMOVE: 'remove',
+        MULTI_SELECT_MAX_SELECT_VALUE: 100,
+
+        FORMAT_ADDRESS: "Address",
+        FORMAT_ADDRESS_POPUP: "AddressPopup",
+        FORMAT_CLICKABLE_ICON: "ClickableIcon",
+
+        SMALL_SCREEN_WIDTH_PX: 992,
+
+        BREADCRUMB_HEIGHT_PX: 46.125,
+        BREADCRUMB_WIDTH_OFFSET_PX: 106.5, // unavailable breadcrumb space i.e. padding, home and hamburger icons
     };
 });

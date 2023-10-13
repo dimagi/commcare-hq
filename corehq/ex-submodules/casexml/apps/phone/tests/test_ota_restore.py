@@ -1,8 +1,10 @@
 import os
+import uuid
 from datetime import date
 
 from django.test import TestCase
 
+from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 from casexml.apps.case import const as case_const
@@ -21,8 +23,7 @@ from casexml.apps.phone.tests.utils import (
     create_restore_user,
     deprecated_generate_restore_payload,
 )
-from casexml.apps.phone.utils import get_restore_config
-from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+from casexml.apps.phone.utils import get_restore_config, MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
@@ -64,17 +65,15 @@ class SimpleOtaRestoreTest(TestCase):
 
         def assertRegistrationData(key, val):
             if val is None:
-                template = '<data key="{prefix}_{key}"/>'
+                expected = f'<data key="{key}"/>'
             else:
-                template = '<data key="{prefix}_{key}">{val}</data>'
-            self.assertIn(
-                template.format(prefix=SYSTEM_PREFIX, key=key, val=val),
-                payload,
-            )
+                expected = f'<data key="{key}">{val}</data>'
+            self.assertIn(expected, payload)
 
-        assertRegistrationData("first_name", "mclovin")
-        assertRegistrationData("last_name", None)
-        assertRegistrationData("phone_number", "555555")
+        assertRegistrationData("commcare_first_name", "mclovin")
+        assertRegistrationData("commcare_last_name", None)
+        assertRegistrationData("commcare_phone_number", "555555")
+        assertRegistrationData("commcare_user_type", "commcare")
 
 
 class BaseOtaRestoreTest(TestCase, TestFileMixin):
@@ -318,6 +317,65 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         # ghetto
         self.assertIn('<dateattr somedate="2012-01-01">', restore_payload)
         self.assertIn('<stringattr somestring="i am a string">', restore_payload)
+
+    def testRestoreDeletedIndex(self):
+        device = MockDevice(self.project, self.restore_user)
+        parent_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
+        device.case_factory.post_case_blocks([
+            CaseBlock(
+                create=True,
+                case_id=parent_id,
+                case_type='parent',
+                case_name='parent',
+                user_id=self.restore_user.user_id,
+                owner_id=self.restore_user.user_id,
+            ).as_text(),
+            CaseBlock(
+                create=True,
+                case_id=case_id,
+                case_type='test_case_type',
+                case_name='test case name',
+                user_id=self.restore_user.user_id,
+                owner_id=self.restore_user.user_id,
+                date_modified='2022-09-29',
+                date_opened='2022-09-29',
+                index={'parent': ('mother', parent_id)}
+            ).as_text()
+        ])
+        device.sync()
+
+        device.case_factory.post_case_blocks([
+            CaseBlock(
+                case_id=case_id,
+                date_modified='2022-09-29',
+                index={'parent': ('mother', '')}
+            ).as_text()
+        ])
+        expected_case_block = f"""
+        <fixture id="user-groups" user_id="{self.restore_user.user_id}">
+          <groups/>
+        </fixture>
+        <case xmlns="http://commcarehq.org/case/transaction/v2"
+            case_id="{case_id}"
+            date_modified="2022-09-29T00:00:00.000000Z"
+            user_id="{self.restore_user.user_id}">
+            <update>
+                <case_type>test_case_type</case_type>
+                <case_name>test case name</case_name>
+                <owner_id>{self.restore_user.user_id}</owner_id>
+                <date_opened>2022-09-29</date_opened>
+            </update>
+            <index>
+              <parent case_type="mother"/>
+            </index>
+        </case>"""
+        sync = device.sync()
+        check_xml_line_by_line(
+            self,
+            dummy_restore_xml(sync.restore_id, case_xml=expected_case_block, user=self.restore_user),
+            sync.payload
+        )
 
 
 class WebUserOtaRestoreTest(OtaRestoreTest):

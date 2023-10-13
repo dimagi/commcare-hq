@@ -36,7 +36,7 @@ appropriate.
           "fra": {"hello": "bonjour"},
       }
 
-      def dumb_gettext(str):
+      def naive_gettext(str):
           return TRANSLATIONS[get_language()][str] or str
 
 Concrete Examples
@@ -253,6 +253,34 @@ This is most often the case in CommCare with forms.
 .. code-block:: django
 
     {% crispy form _("Specify New Password") %}
+
+Tagging strings in JavaScript
+-----------------------------
+
+Happily, Django also has support for translations in JavaScript.
+
+JavaScript has a ``gettext`` function that works exactly the same as in python:
+
+.. code-block:: javascript
+
+    gettext("Welcome to CommCare HQ")
+
+``gettext`` is available globally in HQ, coming from `django.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/django.js>`__
+which is available via the `base RequireJS setup
+<https://github.com/dimagi/commcare-hq/blob/f922211689b39240fcf16efe36d9dc13382977b8/corehq/apps/hqwebapp/templates/hqwebapp/partials/requirejs.html#L28>`__,
+so it doesn't need to be added as a dependency to modules that use it.
+
+For translations with interpolated variables, use Underscore's `_.template <https://underscorejs.org/#template>`__
+function similarly to python's string formatting, calling ``gettext`` on the template and __then__ interpolating
+variables:
+
+.. code-block:: javascript
+
+    _.template(gettext("Hello, <%- name %>, it is <%- day %>."))({
+        name: firstName,
+        day: today,
+    })
+
 
 Keeping translations up to date
 -------------------------------

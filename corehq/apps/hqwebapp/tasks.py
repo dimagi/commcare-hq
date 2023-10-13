@@ -8,17 +8,20 @@ from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from celery.task import task, periodic_task
 
+from dimagi.utils.django.email import (
+    COMMCARE_MESSAGE_ID_HEADER,
+    SES_CONFIGURATION_SET_HEADER,
+)
+from dimagi.utils.logging import notify_exception
+
+from corehq.apps.celery import periodic_task, task
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.email_event_utils import get_bounced_system_emails
+from corehq.util.log import send_HTML_email
 from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.models import TransientBounceEmail
-from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER, SES_CONFIGURATION_SET_HEADER
-from dimagi.utils.logging import notify_exception
-
-from corehq.util.log import send_HTML_email
 
 
 def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
@@ -61,7 +64,10 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
     recipient_list = [_f for _f in recipient_list if _f]
 
     # todo deal with recipients marked as bounced
-    from dimagi.utils.django.email import get_valid_recipients, mark_local_bounced_email
+    from dimagi.utils.django.email import (
+        get_valid_recipients,
+        mark_local_bounced_email,
+    )
     filtered_recipient_list = get_valid_recipients(recipient_list, domain)
     bounced_recipients = list(set(recipient_list) - set(filtered_recipient_list))
     if bounced_recipients and messaging_event_id:
@@ -238,7 +244,7 @@ def clean_expired_transient_emails():
 
 def get_maintenance_alert_active():
     from corehq.apps.hqwebapp.models import MaintenanceAlert
-    return 1 if MaintenanceAlert.get_latest_alert() else 0
+    return 1 if MaintenanceAlert.get_active_alerts() else 0
 
 
 metrics_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,

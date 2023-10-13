@@ -4,13 +4,11 @@ from textwrap import dedent
 
 from django.core.management.base import BaseCommand
 
+from corehq.apps.es.client import manager
+from corehq.apps.es.transient_util import doc_adapter_from_cname
+from corehq.apps.es.utils import mapping_sort_key
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
-from corehq.pillows.mappings.const import NULL_VALUE
-from corehq.pillows.mappings.utils import (
-    fetch_elastic_mapping,
-    mapping_sort_key,
-)
+from corehq.apps.es.mappings.const import NULL_VALUE
 
 from .utils import print_formatted
 
@@ -47,25 +45,30 @@ class Command(BaseCommand):
             help="write output to %(metavar)s rather than STDOUT")
         parser.add_argument("--no-names", action="store_true", default=False,
             help="do not replace special values with names")
-        parser.add_argument("--from-elastic", action="store_true", default=False,
-            help="pull mappings from elastic index instead of code definitions")
         parser.add_argument("-t", "--transforms", metavar="TRANSFORMS", default="",
             help=f"perform transforms on the mapping, chain multiple by "
                  f"providing a comma-delimited list (options: "
                  f"{', '.join(sorted(ALL_TRANSFORMS))}), default is no transforms")
-        parser.add_argument("cname", metavar="INDEX", choices=sorted(CANONICAL_NAME_INFO_MAP),
-            help="print mapping for %(metavar)s")
+        parser.add_argument("mapping_ident", metavar="ID", help=(
+            "Print the mapping for %(metavar)s. To print the mapping from "
+            "code, specify an index canonical name (e.g. 'cases', 'sms', etc). "
+            "To print the mapping fetched from Elasticsearch, specify a "
+            "colon-delimited index name and index '_type' (e.g. "
+            "'hqcases_2016-03-04:case', 'smslogs_2020-01-28:sms', etc)."
+        ))
 
-    def handle(self, cname, **options):
+    def handle(self, mapping_ident, **options):
         if options["no_names"]:
             namespace = {}
         else:
             namespace = MAPPING_SPECIAL_VALUES
-        index_info = CANONICAL_NAME_INFO_MAP[cname]
-        if options["from_elastic"]:
-            mapping = fetch_elastic_mapping(index_info.alias, index_info.type)
+        try:
+            adapter = doc_adapter_from_cname(mapping_ident)
+        except KeyError:
+            index_name, x, type_ = mapping_ident.partition(":")
+            mapping = manager.index_get_mapping(index_name, type_) or {}
         else:
-            mapping = index_info.mapping
+            mapping = adapter.mapping
         for key in (k.strip() for k in options["transforms"].split(",")):
             if key:
                 self.stderr.write(f"applying transform: {key}\n", style_func=lambda x: x)
@@ -118,6 +121,55 @@ def transform_multi_field(mapping, key=None):
         return mapping
 
 
+def transform_string_to_text_and_keyword(mapping, key=None):
+    """
+    ``string`` fields have been replaced by ``text`` and ``keyword`` fields.
+    The string keyword should be replaced in following manner.
+
+        string + not_analyzed => keyword
+        string => text
+
+    See - https://www.elastic.co/guide/en/elasticsearch/reference/5.0/breaking_50_mapping_changes.html#breaking_50_mapping_changes  # noqa E501
+
+    Tranforms-
+    a)  "name": {
+            "index": "not_analyzed",
+            "type": "string"
+        }
+        To:
+        "name": {
+            "type": "keyword"
+        }
+
+
+    b)   "address": {
+            "type": "string"
+        }
+        To:
+        "address": {
+            "type": "text"
+        }
+    """
+    if isinstance(mapping, dict):
+        if mapping.get("type") == "string":
+            mapping = mapping.copy()
+            if key is None:
+                raise ValueError(f"'string' property {key!r} is missing "
+                                 f"the 'default' field: {mapping}")
+            if mapping.get("index") == "not_analyzed":
+                mapping["type"] = "keyword"
+            else:
+                mapping["type"] = "text"
+            if mapping.get("index"):
+                del mapping["index"]
+        return {k: transform_string_to_text_and_keyword(v, k) for k, v in mapping.items()}
+    elif isinstance(mapping, (tuple, list, set)):
+        return [transform_string_to_text_and_keyword(v) for v in mapping]
+    else:
+        return mapping
+
+
 ALL_TRANSFORMS = {
     "multi_field": transform_multi_field,
+    "string": transform_string_to_text_and_keyword
 }

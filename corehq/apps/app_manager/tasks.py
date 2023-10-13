@@ -1,6 +1,6 @@
 from django.utils.translation import gettext as _
 
-from celery.task import task
+from corehq.apps.celery import task
 from celery.utils.log import get_task_logger
 
 from corehq.apps.app_manager.dbaccessors import (
@@ -8,7 +8,10 @@ from corehq.apps.app_manager.dbaccessors import (
     get_auto_generated_built_apps,
     get_latest_build_id,
 )
-from corehq.apps.app_manager.exceptions import SavedAppBuildException, AppValidationError
+from corehq.apps.app_manager.exceptions import (
+    AppValidationError,
+    SavedAppBuildException,
+)
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 from corehq.util.decorators import serial_task
@@ -18,13 +21,13 @@ logger = get_task_logger(__name__)
 
 @task(queue='background_queue', ignore_result=True)
 def create_usercases(domain_name):
-    from corehq.apps.callcenter.sync_usercase import sync_usercase
+    from corehq.apps.callcenter.sync_usercase import sync_usercases
     if USH_USERCASES_FOR_WEB_USERS.enabled(domain_name):
         users = CouchUser.by_domain(domain_name)
     else:
         users = CommCareUser.by_domain(domain_name)
     for user in users:
-        sync_usercase(user, domain_name)
+        sync_usercases(user, domain_name, sync_call_center=False)
 
 
 def autogenerate_build(app, username):
@@ -78,7 +81,9 @@ def prune_auto_generated_builds(domain, app_id):
 
 @task(queue='background_queue', ignore_result=True)
 def update_linked_app_and_notify_task(domain, app_id, master_app_id, user_id, email):
-    from corehq.apps.app_manager.views.utils import update_linked_app_and_notify
+    from corehq.apps.app_manager.views.utils import (
+        update_linked_app_and_notify,
+    )
     update_linked_app_and_notify(domain, app_id, master_app_id, user_id, email)
 
 

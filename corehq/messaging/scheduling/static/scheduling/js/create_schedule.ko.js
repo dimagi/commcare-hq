@@ -84,6 +84,8 @@ hqDefine("scheduling/js/create_schedule.ko", [
         );
 
         self.survey_reminder_intervals_enabled = ko.observable(initial_values.survey_reminder_intervals_enabled);
+        self.fcm_message_type = ko.observable(initial_values.fcm_message_type);
+
     };
 
     var EventAndContentViewModel = function (initial_values) {

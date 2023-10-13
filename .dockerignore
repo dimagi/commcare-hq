@@ -1,4 +1,8 @@
-*
-!requirements
-!requirements-python3
-!package.json
+**/__pycache__/
+sharedfiles/
+staticfiles/
+.*
+*.log
+application.properties
+formplayer.jar
+localsettings.py

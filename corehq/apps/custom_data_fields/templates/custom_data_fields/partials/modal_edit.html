@@ -1,0 +1,26 @@
+{% load i18n %}
+
+<div class="modal fade" id="edit-warning-modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h3 class="modal-title">
+                    <i class="fa fa-link"></i>
+                    Unlock Linked Fields?
+                </h3>
+            </div>
+            <div class="modal-body">
+                <p>Linked Fields are fields that are controlled by a separate project space linked to this project.
+                    Click here to learn more.</p>
+                <p>Changes made to Linked Fields may be overwritten by the next updates from the linked project space,
+                    and may also affect solutions on this project space.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal" data-bind="click: $root.toggleLinkedLock">{% trans "Unlock" %}</button>
+            </div>
+        </div>
+    </div>
+</div>

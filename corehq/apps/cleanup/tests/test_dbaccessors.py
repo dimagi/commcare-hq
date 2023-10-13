@@ -1,7 +1,5 @@
 from django.test import TestCase
 
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.cleanup.dbaccessors import (
     find_es_docs_for_deleted_domains,
     find_sql_cases_for_deleted_domains,
@@ -10,22 +8,17 @@ from corehq.apps.cleanup.dbaccessors import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import FormES
+from corehq.apps.es.apps import app_adapter
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import create_case, create_form_for_test
-from corehq.pillows.mappings import (
-    APP_INDEX_INFO,
-    CASE_INDEX_INFO,
-    CASE_SEARCH_INDEX_INFO,
-    GROUP_INDEX_INFO,
-    USER_INDEX_INFO,
-    XFORM_INDEX_INFO,
-)
-from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import ensure_index_deleted, reset_es_index
 
 
 class TestFindSQLFormsForDeletedDomains(TestCase):
@@ -82,14 +75,19 @@ class TestFindSQLCasesForDeletedDomains(TestCase):
         cls.addClassCleanup(cls.deleted_domain.delete)
 
 
-@es_test
+@es_test(
+    requires=[
+        form_adapter, case_adapter, group_adapter,
+        user_adapter, case_search_adapter, app_adapter
+    ],
+    setup_class=True
+)
 class TestFindESDocsForDeletedDomains(TestCase):
 
     def test_deleted_domain_with_es_data_is_flagged(self):
         form = create_form_for_test(self.deleted_domain.name)
-        send_to_elasticsearch('forms', transform_xform_for_elasticsearch(form.to_json()))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
-
+        form_adapter.index(form, refresh=True)
+        self.addCleanup(form_adapter.delete, form.form_id)
         counts_by_domain = find_es_docs_for_deleted_domains()
 
         es_doc_counts = counts_by_domain[self.deleted_domain.name]
@@ -97,17 +95,16 @@ class TestFindESDocsForDeletedDomains(TestCase):
 
     def test_missing_domain_with_es_data_is_not_flagged(self):
         form = create_form_for_test('missing-domain')
-        send_to_elasticsearch('forms', transform_xform_for_elasticsearch(form.to_json()))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        form_adapter.index(form, refresh=True)
+        self.addCleanup(form_adapter.delete, form.form_id)
 
         counts_by_domain = find_es_docs_for_deleted_domains()
-
         self.assertTrue('missing-domain' not in counts_by_domain)
 
     def test_active_domain_with_es_data_is_not_flagged(self):
         form = create_form_for_test(self.active_domain.name)
-        send_to_elasticsearch('forms', transform_xform_for_elasticsearch(form.to_json()))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        form_adapter.index(form, refresh=True)
+        self.addCleanup(form_adapter.delete, form.form_id)
 
         counts_by_domain = find_es_docs_for_deleted_domains()
 
@@ -122,19 +119,6 @@ class TestFindESDocsForDeletedDomains(TestCase):
         cls.addClassCleanup(cls.active_domain.delete)
         cls.addClassCleanup(cls.deleted_domain.delete)
 
-    def setUp(self):
-        super().setUp()
-        self._setup_es()
-
-    def _setup_es(self):
-        self.es = get_es_new()
-        es_indices = [XFORM_INDEX_INFO, CASE_INDEX_INFO, CASE_SEARCH_INDEX_INFO, APP_INDEX_INFO, GROUP_INDEX_INFO,
-                      USER_INDEX_INFO]
-        for index in es_indices:
-            reset_es_index(index)
-            initialize_index_and_mapping(self.es, index)
-            self.addCleanup(ensure_index_deleted, index.index)
-
 
 class TestFindUCRTablesForDeletedDomains(TestCase):
 
@@ -142,6 +126,7 @@ class TestFindUCRTablesForDeletedDomains(TestCase):
         config = self._create_data_source_config(self.deleted_domain.name)
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(adapter.drop_table)
 
         counts_by_domain = find_ucr_tables_for_deleted_domains()
 
@@ -151,6 +136,7 @@ class TestFindUCRTablesForDeletedDomains(TestCase):
         config = self._create_data_source_config('missing-domain')
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(adapter.drop_table)
 
         counts_by_domain = find_ucr_tables_for_deleted_domains()
 
@@ -160,6 +146,7 @@ class TestFindUCRTablesForDeletedDomains(TestCase):
         config = self._create_data_source_config(self.active_domain.name)
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(adapter.drop_table)
 
         counts_by_domain = find_ucr_tables_for_deleted_domains()
 

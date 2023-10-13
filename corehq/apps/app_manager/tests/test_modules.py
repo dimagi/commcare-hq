@@ -20,8 +20,12 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     ReportModule,
 )
-from corehq.apps.app_manager.views.modules import _update_search_properties
+from corehq.apps.app_manager.views.modules import (
+    _get_fixture_columns_by_type,
+    _update_search_properties,
+)
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
+from corehq.apps.fixtures.models import LookupTable, TypeField
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
 
@@ -101,6 +105,16 @@ class ModuleTests(SimpleTestCase):
             "test": "false()",
             "text": {"en": "you shall not pass"},
         }])
+
+    def test_get_fixture_columns_by_type(self):
+        table = LookupTable(
+            domain="module-domain",
+            tag="duck",
+            fields=[TypeField(name="wing")]
+        )
+        with patch.object(LookupTable.objects, "by_domain", lambda domain: [table]):
+            result = _get_fixture_columns_by_type("module-domain")
+            self.assertEqual(result, {"duck": ["wing"]})
 
 
 class AdvancedModuleTests(SimpleTestCase):
@@ -209,7 +223,8 @@ class ReportModuleTests(SimpleTestCase):
 
     @flag_enabled('MOBILE_UCR')
     @patch('dimagi.ext.couchdbkit.Document.get_db')
-    def test_purge_report_from_mobile_ucr(self, get_db):
+    @patch('corehq.motech.repeaters.models.AppStructureRepeater.objects.by_domain')
+    def test_purge_report_from_mobile_ucr(self, repeater_patch, get_db):
         report_config = ReportConfiguration(domain='domain', config_id='foo1')
         report_config._id = "my_report_config"
 

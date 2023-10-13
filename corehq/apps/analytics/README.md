@@ -44,7 +44,7 @@ Used primarily by product team.
 
 No server component, just [google.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/google.js). We track events using `<module>.track.click` and `<module>.track.event`. We also use the default tracking (page views, etc.). Google has a few tracking options; we use their [gtag.js](https://developers.google.com/analytics/devguides/collection/gtagjs/).
 
-You can also add the `.track-usage-link` class to a link to track it in Google Analytics if it includes `hqwebapp/js/main.js`.
+You can also add the `.track-usage-link` class to a link to track it in Google Analytics if it includes `hqwebapp/js/bootstrap3/main.js`.
 
 ### Kissmetrics
 
@@ -88,7 +88,7 @@ Any changes to user properties related to the registration forms should be made 
 
 #### Testing
 
-To start testing, run Celery and update `HUBSPOT_API_KEY` and `HUBSPOT_ID` in `settings.ANALYTICS_IDS`. Hubspot provides a public demo portal with API access for testing. The credentials for this are available on their [API overview page](http://developers.hubspot.com/docs/overview). If you need to test using our production portal the credentials can be found in dimagi_shared keepass. Let marketing know before testing on production portal and clean up after the testing is finished
+To start testing, run Celery and update `HUBSPOT_ACCESS_TOKEN` and `HUBSPOT_ID` in `settings.ANALYTICS_IDS`. Hubspot provides a public demo portal with API access for testing. The credentials for this are available on their [API overview page](http://developers.hubspot.com/docs/overview). If you need to test using our production portal the credentials can be found in dimagi_shared keepass. Let marketing know before testing on production portal and clean up after the testing is finished
 
 When troubleshooting in Hubspot's portal, it's often useful to create lists based on key events.
 

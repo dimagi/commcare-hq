@@ -2,6 +2,8 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
+from corehq.apps.locations.permissions import can_edit_form_location, user_can_access_case
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.util import raw_username
 from corehq.form_processor.models import XFormInstance
 from dimagi.ext.jsonobject import BooleanProperty, JsonObject, StringProperty
@@ -21,6 +23,14 @@ class DocInfo(JsonObject):
     link = StringProperty()
     type_display = StringProperty()
     is_deleted = BooleanProperty()
+
+    def user_has_permissions(self, domain, user, doc):
+        if self.type == "XFormInstance":
+            return _check_form_permissions(domain, user, doc)
+        elif self.type == "CommCareCase":
+            return _check_case_permissions(domain, user, doc)
+        else:
+            return False
 
 
 def get_doc_info_by_id(domain, id):
@@ -277,3 +287,21 @@ def get_object_url(domain, doc_type, doc_id):
         return get_webuser_url(domain, doc_id)
 
     return None
+
+
+def _check_form_permissions(domain, user, form):
+    return (
+        user.has_permission(
+            domain, HqPermissions.view_report, "corehq.apps.reports.standard.inspect.SubmitHistory"
+        )
+        and can_edit_form_location(domain, user, form)
+    )
+
+
+def _check_case_permissions(domain, user, case):
+    return (
+        user.has_permission(
+            domain, HqPermissions.view_report, "corehq.apps.reports.standard.cases.basic.CaseListReport"
+        )
+        and user_can_access_case(domain, user, case)
+    )

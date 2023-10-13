@@ -6,37 +6,29 @@ from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.parsing import json_format_datetime
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.api.resources import v0_3, v0_4
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCase
-from corehq.pillows.case import transform_case_for_elasticsearch
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.util.elastic import reset_es_index
 
 from .utils import APIResourceTest, FakeFormESView
 
 
-@es_test
+@es_test(requires=[case_adapter])
 class TestCommCareCaseResource(APIResourceTest):
     resource = v0_4.CommCareCaseResource
     case_ids = []
-
-    def setUp(self):
-        self.es = get_es_new()
-        reset_es_index(CASE_INDEX_INFO)
-        initialize_index_and_mapping(self.es, CASE_INDEX_INFO)
 
     def _setup_case(self, cases=None):
 
         modify_date = datetime.utcnow()
 
         cases = cases or [(None, None)]
+        backend_cases = []
         for owner_id, case_id in cases:
             kwargs = {}
             if owner_id:
@@ -49,11 +41,9 @@ class TestCommCareCaseResource(APIResourceTest):
                 **kwargs
             )
             backend_case.save()
+            backend_cases.append(backend_case)
 
-            translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
-
-            send_to_elasticsearch('cases', translated_doc)
-        self.es.indices.refresh(CASE_INDEX_INFO.index)
+        case_adapter.bulk_index(backend_cases, refresh=True)
         return backend_case
 
     def test_get_list(self):
@@ -136,9 +126,7 @@ class TestCommCareCaseResource(APIResourceTest):
 
         self.addCleanup(child_case.delete)
         self.addCleanup(parent_case.delete)
-        send_to_elasticsearch('cases', transform_case_for_elasticsearch(parent_case.to_json()))
-        send_to_elasticsearch('cases', transform_case_for_elasticsearch(child_case.to_json()))
-        self.es.indices.refresh(CASE_INDEX_INFO.index)
+        case_adapter.bulk_index([parent_case, child_case], refresh=True)
 
         # Fetch the child case through the API
 

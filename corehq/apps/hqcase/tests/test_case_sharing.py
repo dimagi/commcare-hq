@@ -64,10 +64,10 @@ class CaseSharingTest(TestCase):
 
         def check_has_block(case_block, should_have, should_not_have, line_by_line=True):
             for user in should_have:
-                deprecated_check_user_has_case(self, user.to_ota_restore_user(),
+                deprecated_check_user_has_case(self, user.to_ota_restore_user(user.domain),
                     case_block, line_by_line=line_by_line)
             for user in should_not_have:
-                deprecated_check_user_has_case(self, user.to_ota_restore_user(),
+                deprecated_check_user_has_case(self, user.to_ota_restore_user(user.domain),
                     case_block, should_have=False, line_by_line=line_by_line)
 
         create_and_test(
@@ -123,9 +123,10 @@ class CaseSharingTest(TestCase):
 
     def get_update_block(self, case_id, owner_id=None, update=None):
         update = update or {}
+        kwargs = {'owner_id': owner_id} if owner_id else {}
         case_block = CaseBlock.deprecated_init(
             case_id=case_id,
             update=update,
-            owner_id=owner_id or CaseBlock.undefined,
+            **kwargs,
         ).as_text()
         return case_block

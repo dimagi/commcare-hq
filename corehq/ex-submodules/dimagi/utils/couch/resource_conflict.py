@@ -7,8 +7,12 @@ class RetryResourceError(Exception):
     def __init__(self, fn, attempts):
         self.fn = fn
         self.attempts = attempts
+
     def __str__(self):
-        return repr("Tried function `%s` %s time(s) and conflicted every time." % (self.fn.__name__, self.attempts))
+        return repr(
+            f"Tried function `{self.fn.__name__}` {self.attempts} time(s) and "
+            "conflicted every time."
+        )
 
 
 def retry_resource(n):

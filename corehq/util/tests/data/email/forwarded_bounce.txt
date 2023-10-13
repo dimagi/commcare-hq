@@ -41,7 +41,7 @@ Hey,
 This is a bounced message.
 
 Thanks!
-CommCareHQ
+CommCare HQ
 
 --===============8059403940475160788==
 Content-Type: text/html; charset="utf-8"

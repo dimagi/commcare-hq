@@ -24,7 +24,7 @@
       <th class="col-md-4">{% trans "Details" %}</th>
       <th class="col-md-3">{% trans "Comment" %}</th>
       <th class="col-md-2">{% trans "File" %}</th>
-      {% if request|toggle_enabled:"FORM_CASE_IDS_CASE_IMPORTER" %}
+      {% if request|request_has_privilege:"FORM_CASE_IDS_CASE_IMPORTER" or couch_user.is_superuser %}
         <th>{% trans "Form IDs" %}</th>
         <th>{% trans "Case IDs" %}</th>
       {% endif %}
@@ -103,7 +103,7 @@
         <!--/ko-->
         <!--/ko-->
       </td>
-      {% if request|toggle_enabled:"FORM_CASE_IDS_CASE_IMPORTER" %}
+      {% if request|request_has_privilege:"FORM_CASE_IDS_CASE_IMPORTER" or couch_user.is_superuser %}
         <td>
           <a data-bind="attr: {href: formIdsUrl()}" target="_blank">
             <i class="fa fa-download"></i>

@@ -1,0 +1,75 @@
+.controls-multiple {
+  .select2, .select2-container {
+    margin-left: 10px;
+    margin-bottom: 3px;
+  }
+
+  .form-group {
+    margin-bottom: 0;
+  }
+
+  .form-inline .form-group {
+    margin: 0 10px 5px 0;
+  }
+}
+
+// Static width for select2 widgets, which otherwise grow too large on form view's case management tab
+@mixin case-config-select2s($width) {
+    .select2-container {
+        width: $width;
+    }
+
+    // This needs a static width so that text-overflow: ellipsis will work in Firefox.
+    // Unusually specific selector to override select2's width: auto rule.
+    > .select2-choice > .select2-chosen {
+        width: $width - 35px;
+    }
+}
+
+@mixin property-descriptions($width) {
+    width: $width;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+}
+
+#case-config-ko, #usercase-config-ko {
+    $select2Width: 210px;
+
+    @include case-config-select2s($select2Width);
+
+    .property-description {
+       @include property-descriptions($select2Width);
+    }
+
+    .wide-select2s {
+      $wideWidth: $select2Width * 1.5;
+       @include case-config-select2s($wideWidth);
+      .property-description {
+         @include property-descriptions($wideWidth);
+      }
+    }
+}
+
+// hack to fix issues with placeholder not showing up fully
+// !important is necessary because this is overriding an inline style set by select2 javascript
+.select2-container {
+    width: 100% !important;
+
+    .select2-search-field {
+        width: 100% !important;
+    }
+
+    .select2-input {
+        width: 100% !important;
+    }
+}
+
+.select2-container.select2-container-active > .select2-choice {
+  box-shadow: 0 0 10px $cc-brand-mid;
+}
+
+.select2-selection__placeholder {
+  color: $gray-base !important;
+}

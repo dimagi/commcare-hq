@@ -1,26 +1,18 @@
 import json
 
 from corehq.apps.api.resources import v0_5
+from corehq.apps.es.groups import group_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
-from corehq.elastic import send_to_elasticsearch, get_es_new
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from .utils import APIResourceTest
 
 
+@es_test(requires=[group_adapter], setup_class=True)
 class TestGroupResource(APIResourceTest):
 
     resource = v0_5.GroupResource
     api_name = 'v0.5'
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestGroupResource, cls).setUpClass()
-        cls.es = get_es_new()
-        ensure_index_deleted(GROUP_INDEX_INFO.index)
-        initialize_index_and_mapping(cls.es, GROUP_INDEX_INFO)
 
     def test_get_list(self):
 
@@ -134,7 +126,6 @@ class TestGroupResource(APIResourceTest):
         group.save()
         self.addCleanup(group.delete)
         if send_to_es:
-            send_to_elasticsearch('groups', group.to_json())
-            self.addCleanup(lambda: send_to_elasticsearch('groups', group.to_json(), delete=True))
-            self.es.indices.refresh(GROUP_INDEX_INFO.index)
+            group_adapter.index(group, refresh=True)
+            self.addCleanup(group_adapter.delete, group._id)
         return group

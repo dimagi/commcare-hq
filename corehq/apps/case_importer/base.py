@@ -7,11 +7,12 @@ from corehq.apps.case_importer.tracking.dbaccessors import (
 from corehq.apps.data_interfaces.interfaces import DataInterface
 from corehq.apps.data_interfaces.views import DataInterfaceSection
 from corehq.apps.locations.permissions import conditionally_location_safe
-from corehq.toggles import LOCATION_SAFE_CASE_IMPORTS
+from corehq.privileges import LOCATION_SAFE_CASE_IMPORTS
+from corehq.apps.accounting.utils import domain_has_privilege
 
 
 def location_safe_case_imports_enabled(view_func, request, *args, **kwargs):
-    return LOCATION_SAFE_CASE_IMPORTS.enabled(kwargs['domain'])
+    return domain_has_privilege(kwargs['domain'], LOCATION_SAFE_CASE_IMPORTS)
 
 
 @conditionally_location_safe(location_safe_case_imports_enabled)

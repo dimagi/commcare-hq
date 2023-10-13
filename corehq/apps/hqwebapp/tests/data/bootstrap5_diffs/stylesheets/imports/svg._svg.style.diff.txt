@@ -1,0 +1,10 @@
+--- 
++++ 
+@@ -4,6 +4,6 @@
+   margin: 0 auto;
+   display: block;
+   path {
+-    fill: @cc-brand-low;
++    fill: $cc-brand-low;
+   }
+ }

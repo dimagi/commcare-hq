@@ -1,14 +1,18 @@
 from couchdbkit.exceptions import ResourceNotFound
-# http://www.gevent.org/gevent.monkey.html#module-gevent.monkey
-from gevent import monkey; monkey.patch_all()
-import sys
-import gevent
-from gevent.pool import Pool
-from django.core.management.base import BaseCommand
 
-from django.conf import settings
+# https://www.gevent.org/api/gevent.monkey.html#use-as-a-module
+from gevent import monkey
+monkey.patch_all()
+
+import sys  # noqa: E402
+import gevent  # noqa: E402
+from gevent.pool import Pool  # noqa: E402
+from django.core.management.base import BaseCommand  # noqa: E402
+
+from django.conf import settings  # noqa: E402
 setattr(settings, 'COUCHDB_TIMEOUT', 999999)
-from couchdbkit.ext.django.loading import get_db
+
+from couchdbkit.ext.django.loading import get_db  # noqa: E402
 
 DESIGN_DOC_VIEW = '_all_docs'
 DESIGN_SK = "_design"
@@ -65,7 +69,12 @@ class Command(BaseCommand):
         for app in unique_dbs:
             try:
                 db = get_db(app)
-                design_docs = db.view(DESIGN_DOC_VIEW, startkey=DESIGN_SK, endkey=DESIGN_EK, include_docs=True).all()
+                design_docs = db.view(
+                    DESIGN_DOC_VIEW,
+                    startkey=DESIGN_SK,
+                    endkey=DESIGN_EK,
+                    include_docs=True
+                ).all()
                 for res in design_docs:
                     design_doc = res['doc']
                     design_doc_name = design_doc['_id'].split('/')[-1]  # _design/app_name

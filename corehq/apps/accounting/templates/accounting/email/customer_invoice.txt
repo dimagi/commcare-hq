@@ -30,12 +30,12 @@ Total Balance: {{ total_balance }}
     {% if can_view_statement %}
         {% blocktrans %}
         To view the full billing statement, log into your project space on
-        CommCareHQ and navigate to Billing Statements at {{ statements_url }}
+        CommCare HQ and navigate to Billing Statements at {{ statements_url }}
         {% endblocktrans %}
     {% else %}
         {% blocktrans %}
         Your project's administrator can view the full billing statement by
-        logging into your project space on CommCareHQ and navigating to
+        logging into your project space on CommCare HQ and navigating to
         Billing Statements at {{ statements_url }}
         {% endblocktrans %}
     {% endif %}
@@ -64,12 +64,12 @@ Total Balance: {{ total_balance }}
     {% if can_view_statement %}
         {% blocktrans %}
         To view and pay invoices, you can log into your project space on
-        CommCareHQ and navigate to Billing Statements at {{ statements_url }}
+        CommCare HQ and navigate to Billing Statements at {{ statements_url }}
         {% endblocktrans %}
     {% else %}
         {% blocktrans %}
         To view and pay invoices, your project's administrator can log into your project space on
-        CommCareHQ and navigate to Billing Statements at {{ statements_url }}
+        CommCare HQ and navigate to Billing Statements at {{ statements_url }}
         {% endblocktrans %}
     {% endif %}
 {% endif %}

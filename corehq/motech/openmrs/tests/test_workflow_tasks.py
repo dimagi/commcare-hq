@@ -23,7 +23,7 @@ def test_concept_directions():
         }
     }
     form_config_dict = get_form_config_dict()
-    form_config = OpenmrsFormConfig.wrap(form_config_dict)
+    form_config = form_config_dict
     info = CaseTriggerInfo(
         domain="test-domain",
         case_id="c0ffee",
@@ -66,7 +66,7 @@ def test_start_stop_datetime_export():
     )
     task = get_task(info, form_json, form_config_dict)
     start_datetime, stop_datetime = task._get_start_stop_datetime(
-        OpenmrsFormConfig.wrap(form_config_dict)
+        form_config_dict
     )
     eq(start_datetime, "2018-01-01T12:00:00.000+0000")
     eq(stop_datetime, "2018-01-02T11:59:59.000+0000")
@@ -99,17 +99,17 @@ def test_start_stop_datetime_import():
 class GetValuesForConceptTests(SimpleTestCase):
 
     def test_get_values_for_all_concepts(self):
-        form_config = OpenmrsFormConfig.wrap({
+        form_config = {
             "openmrs_observations": [{
                 "concept": ALL_CONCEPTS
             }]
-        })
+        }
         info = CaseTriggerInfo(domain="test-domain", case_id="c0ffee")
         values_for_concept = get_values_for_concept(form_config, info)
         self.assertEqual(values_for_concept, {})
 
     def test_get_values_for_different_concepts(self):
-        form_config = OpenmrsFormConfig.wrap({
+        form_config = {
             "openmrs_observations": [
                 {
                     "concept": "123456",
@@ -124,7 +124,7 @@ class GetValuesForConceptTests(SimpleTestCase):
                     "value": {"form_question": "/data/symptoms/diarrhea"}
                 },
             ]
-        })
+        }
         info = CaseTriggerInfo(
             domain="test-domain",
             case_id="c0ffee",
@@ -142,7 +142,7 @@ class GetValuesForConceptTests(SimpleTestCase):
         })
 
     def test_get_values_for_the_same_concept(self):
-        form_config = OpenmrsFormConfig.wrap({
+        form_config = {
             "openmrs_observations": [
                 {
                     "concept": "123456",
@@ -157,7 +157,7 @@ class GetValuesForConceptTests(SimpleTestCase):
                     "value": {"form_question": "/data/symptoms/diarrhea"}
                 },
             ]
-        })
+        }
         info = CaseTriggerInfo(
             domain="test-domain",
             case_id="c0ffee",
@@ -171,7 +171,7 @@ class GetValuesForConceptTests(SimpleTestCase):
         self.assertEqual(values_for_concept, {"123456": [True, True, True]})
 
     def test_get_values_for_import_concept(self):
-        form_config = OpenmrsFormConfig.wrap({
+        form_config = {
             "openmrs_observations": [{
                 "concept": "123456",
                 "value": {
@@ -179,7 +179,7 @@ class GetValuesForConceptTests(SimpleTestCase):
                     "direction": "in",
                 }
             }]
-        })
+        }
         info = CaseTriggerInfo(domain="test-domain", case_id="c0ffee")
         values_for_concept = get_values_for_concept(form_config, info)
         self.assertEqual(values_for_concept, {})
@@ -243,6 +243,6 @@ def get_task(info, form_json, form_config_dict):
         openmrs_config=OpenmrsConfig.wrap({
             "case_config": {},
             "form_configs": [form_config_dict],
-        }),
+        }).to_json(),
         person_uuid="test-person_uuid",
     )

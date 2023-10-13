@@ -215,7 +215,7 @@ class FlattenExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
        {
            "type": "flatten",
            "items_expression": {},
-   }
+       }
     """
     type = TypeProperty('flatten')
     items_expression = DefaultProperty(required=True)

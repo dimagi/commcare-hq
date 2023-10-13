@@ -57,7 +57,7 @@
     <script src="{% static 'app_manager/js/modules/shadow_module_settings.js' %}"></script>
   {% endcompress %}
 
-  {% include 'hqwebapp/partials/key_value_mapping.html' %}
+  {% include 'hqwebapp/partials/bootstrap3/key_value_mapping.html' %}
   {% include 'app_manager/partials/modules/graph_configuration_modal.html' %}
 {% endblock %}
 
@@ -72,6 +72,7 @@
   {% initial_page_data 'js_options' js_options %}
   {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
   {% initial_page_data 'case_list_form_options' case_list_form_options %}
+  {% initial_page_data 'form_endpoint_options' form_endpoint_options %}
   {% initial_page_data 'case_list_form_not_allowed_reasons' case_list_form_not_allowed_reasons %}
   {% initial_page_data 'case_type' module.case_type %}
   {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
@@ -150,14 +151,32 @@
   </div>
 
   <script type="text/html" id="module-forms-template">
-    <div class="checkbox">
-      <label>
-        <input name="incl_form_ids"
-               type="checkbox"
-               data-bind="value: uniqueId, checked: $parent.includedFormIds"/>
-        <span data-bind="text: name"></span>
-      </label>
-    </div>
+    <tr>
+      <td>
+        <div class="checkbox">
+          <label>
+            <input name="incl_form_ids"
+                   type="checkbox"
+                   data-bind="value: uniqueId, checked: $parent.includedFormIds"/>
+            <span data-bind="text: name"></span>
+          </label>
+        </div>
+      </td>
+
+      {% if session_endpoints_enabled %}
+        <td>
+          <div class="checkbox">
+            <label>
+              <input
+                class="form-control"
+                name="form_session_endpoint_ids"
+                placeholder="{% trans "Session Endpoint Id" %}"
+                data-bind="textInput: sessionEndpointId"/>
+            </label>
+          </div>
+        </td>
+      {% endif %}
+    </tr>
   </script>
 
   <script type="text/html" id="module-case-detail-tab-nodeset-template">
@@ -183,8 +202,3 @@
     {% endwith %}
   {% endif %}
 {% endblock modals %}
-
-{% block breadcrumbs %}
-  {{ block.super }}
-  {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
-{% endblock %}

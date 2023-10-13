@@ -51,3 +51,10 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
                 if not has_privilege(request, privileges.DATA_CLEANUP):
                     return False
         return request.couch_user.can_edit_data(domain)
+
+
+class BulkEditDataInterfaceDispatcher(EditDataInterfaceDispatcher):
+
+    @classmethod
+    def allowed_renderings(cls):
+        return super(BulkEditDataInterfaceDispatcher, cls).allowed_renderings() + ['bulk']

@@ -18,7 +18,7 @@ from corehq.apps.case_importer.util import (
     get_spreadsheet,
     open_spreadsheet_download_ref,
 )
-
+from corehq.apps.case_importer.const import ALL_CASE_TYPE_IMPORT
 
 class CaseUpload(object):
 
@@ -62,10 +62,10 @@ class CaseUpload(object):
             raise ImporterFileNotFound('file not found in cache')
         open_spreadsheet_download_ref(tempfile)
 
-    def get_spreadsheet(self):
-        return get_spreadsheet(self.get_tempfile())
+    def get_spreadsheet(self, worksheet_index=0):
+        return get_spreadsheet(self.get_tempfile(), worksheet_index)
 
-    def trigger_upload(self, domain, config, comment=None):
+    def trigger_upload(self, domain, config_list, comment=None, is_bulk=False):
         """
         Save a CaseUploadRecord and trigger a task that runs the upload
 
@@ -77,14 +77,20 @@ class CaseUpload(object):
         with open(self.get_tempfile(), 'rb') as f:
             case_upload_file_meta = persistent_file_store.write_file(f, original_filename, domain)
 
-        task = bulk_import_async.delay(config.to_json(), domain, self.upload_id)
+        config_list_json = [c.to_json() for c in config_list]
+        task = bulk_import_async.delay(config_list_json, domain, self.upload_id)
+        case_type = config_list[0].case_type
+        if is_bulk:
+            case_type = ALL_CASE_TYPE_IMPORT
+
         CaseUploadRecord(
             domain=domain,
             comment=comment,
             upload_id=self.upload_id,
             task_id=task.task_id,
-            couch_user_id=config.couch_user_id,
-            case_type=config.case_type,
+            couch_user_id=config_list[0].couch_user_id,  # Will be the same for all configs in a bulk import,
+                                                         # so we can use the first one in the list.
+            case_type=case_type,
             upload_file_meta=case_upload_file_meta,
         ).save()
 

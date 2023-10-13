@@ -1,0 +1,27 @@
+{%  extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load compress %}
+{% load hq_shared_tags %}
+
+{% requirejs_main 'export/js/datasource_export' %}
+
+{% block page_title %}
+{% trans "Export Data Source Data" %}
+{% endblock %}
+
+{% block page_content %}
+  <p>
+    {% blocktrans %}
+    Generate a query file for the Data Export Tool from any of the project's data sources.
+    {% endblocktrans %}
+  </p>
+  <div id="datasources_export_id" class="form form-horizontal">
+    <div data-bind='hidden: haveDatasources'>
+      {% blocktrans %}
+      The project has no data sources configured.
+      {% endblocktrans %}
+    </div>
+    {% crispy form %}
+  </div>
+{% endblock %}

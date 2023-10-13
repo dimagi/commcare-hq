@@ -69,7 +69,7 @@
           <locale id="m0.case_short.case_calculated_property_1.header"/>
         </text>
       </header>
-      <template>
+      <template form="plain">
         <text>
           &lt;b&gt; &lt;/b&gt;
           <xpath function="if(today() - date(dob) &gt; 30, concat(name, ' (', int((today() - date(dob)) div 30.25), ' Mois)'), concat(name, ' (',int(today() - date(dob)), ' Jours)'))">
@@ -94,7 +94,7 @@
           <locale id="m0.case_short.case_town_2.header"/>
         </text>
       </header>
-      <template>
+      <template form="plain">
         <text>
           &lt;b&gt;Town: &lt;/b&gt;
           <xpath function="town">
@@ -119,7 +119,7 @@
           <locale id="m0.case_short.case_sex_4.header"/>
         </text>
       </header>
-      <template>
+      <template form="enum">
         <text>
           &lt;b&gt; &lt;/b&gt;
           <xpath function="replace(join(' ', if(selected(sex, 'male'), $kmale, ''), if(selected(sex, 'female'), $kfemale, '')), '\s+', ' ')">
@@ -139,10 +139,10 @@
        </style>
       <header>
         <text>
-          <locale id="m0.case_short.case_calculated_property_1.header"/>
+          <locale id="m0.case_short.case_mother_name_3.header"/>
         </text>
       </header>
-      <template>
+      <template form="plain">
         <text>
           &lt;b&gt;Mother's name: &lt;/b&gt;
           <xpath function="mother_name">
@@ -164,10 +164,10 @@
        </style>
       <header>
         <text>
-          <locale id="m0.case_short.case_calculated_property_1.header"/>
+          <locale id="m0.case_short.case_calculated_property_5.header"/>
         </text>
       </header>
-      <template>
+      <template form="plain">
         <text>&lt;b&gt; &lt;/b&gt; <xpath function="format-date(date(dob), &quot;%e/%n/%Y&quot;)"/></text>
       </template>
     </field>

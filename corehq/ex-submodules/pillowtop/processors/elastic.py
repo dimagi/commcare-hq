@@ -1,16 +1,8 @@
+import logging
 import math
 import time
 
 from django.conf import settings
-
-from corehq.util.es.elasticsearch import (
-    ConflictError,
-    ConnectionError,
-    NotFoundError,
-    RequestError,
-)
-from corehq.util.es.interface import ElasticsearchInterface
-from corehq.util.metrics import metrics_histogram_timer
 
 from pillowtop.exceptions import BulkDocException, PillowtopIndexingError
 from pillowtop.logger import pillow_logging
@@ -23,7 +15,17 @@ from pillowtop.utils import (
     get_errors_with_ids,
 )
 
+from corehq.util.es.elasticsearch import (
+    ConflictError,
+    ConnectionError,
+    NotFoundError,
+    RequestError,
+)
+from corehq.util.metrics import metrics_histogram_timer
+
 from .interface import BulkPillowProcessor, PillowProcessor
+
+logger = logging.getLogger(__name__)
 
 
 def identity(x):
@@ -51,19 +53,15 @@ class ElasticProcessor(PillowProcessor):
       - ES
     """
 
-    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None, change_filter_fn=None):
+    def __init__(self, adapter, doc_filter_fn=None, change_filter_fn=None):
+        self.adapter = adapter
         self.change_filter_fn = change_filter_fn or noop_filter
         self.doc_filter_fn = doc_filter_fn or noop_filter
-        self.elasticsearch = elasticsearch
-        self.es_interface = ElasticsearchInterface(self.elasticsearch)
-        self.index_info = index_info
-        self.doc_transform_fn = doc_prep_fn or identity
-
-    def es_getter(self):
-        return self.elasticsearch
 
     def process_change(self, change):
-        from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+        from corehq.apps.change_feed.document_types import (
+            get_doc_meta_object_from_document,
+        )
 
         if self.change_filter_fn and self.change_filter_fn(change):
             return
@@ -71,11 +69,21 @@ class ElasticProcessor(PillowProcessor):
         if change.deleted and change.id:
             doc = change.get_document()
             if doc and doc.get('doc_type'):
+                logger.info(
+                    f'[process_change] Attempting to delete doc {change.id}')
                 current_meta = get_doc_meta_object_from_document(doc)
                 if current_meta.is_deletion:
                     self._delete_doc_if_exists(change.id)
+                    logger.info(
+                        f"[process_change] Deleted doc {change.id}")
+                else:
+                    logger.info(
+                        f"[process_change] Not deleting doc {change.id} "
+                        "because current_meta.is_deletion is false")
             else:
                 self._delete_doc_if_exists(change.id)
+                logger.info(
+                    f"[process_change] Deleted doc {change.id}")
             return
 
         with self._datadog_timing('extract'):
@@ -92,26 +100,19 @@ class ElasticProcessor(PillowProcessor):
                 self._delete_doc_if_exists(change.id)
                 return
 
-            # prepare doc for es
-            doc_ready_to_save = self.doc_transform_fn(doc)
-
         # send it across
         with self._datadog_timing('load'):
             send_to_elasticsearch(
-                index_info=self.index_info,
-                doc_type=self.index_info.type,
                 doc_id=change.id,
-                es_getter=self.es_getter,
+                adapter=self.adapter,
                 name='ElasticProcessor',
-                data=doc_ready_to_save,
+                data=doc,
             )
 
     def _delete_doc_if_exists(self, doc_id):
         send_to_elasticsearch(
-            index_info=self.index_info,
-            doc_type=self.index_info.type,
             doc_id=doc_id,
-            es_getter=self.es_getter,
+            adapter=self.adapter,
             name='ElasticProcessor',
             delete=True
         )
@@ -122,7 +123,7 @@ class ElasticProcessor(PillowProcessor):
             timing_buckets=(.03, .1, .3, 1, 3, 10),
             tags={
                 'action': step,
-                'index': self.index_info.alias,
+                'index': self.adapter.index_name,
             })
 
 
@@ -140,6 +141,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
     """
 
     def process_changes_chunk(self, changes_chunk):
+        logger.info('Processing chunk of changes in BulkElasticProcessor')
         if self.change_filter_fn:
             changes_chunk = [
                 change for change in changes_chunk
@@ -159,19 +161,15 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
             error_collector = ErrorCollector()
             es_actions = build_bulk_payload(
                 list(changes_to_process.values()),
-                self.doc_transform_fn,
                 error_collector,
             )
             error_changes = error_collector.errors
 
         try:
             with self._datadog_timing('bulk_load'):
-                _, errors = self.es_interface.bulk_ops(
-                    self.index_info.alias,
-                    self.index_info.type,
+                _, errors = self.adapter.bulk(
                     es_actions,
-                    raise_on_error=False,
-                    raise_on_exception=False,
+                    raise_errors=False,
                 )
         except Exception as e:
             pillow_logging.exception("Elastic bulk error: %s", e)
@@ -184,8 +182,8 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
         return retry_changes, error_changes
 
 
-def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=None,
-                          delete=False, es_merge_update=False):
+def send_to_elasticsearch(adapter, doc_id, name,
+                        data=None, delete=False, es_merge_update=False):
     """
     More fault tolerant es.put method
     kwargs:
@@ -193,33 +191,29 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
             which merges existing ES doc and current update. If this is set to False, the doc will be replaced
 
     """
-    alias = index_info.alias
     data = data if data is not None else {}
     current_tries = 0
-    es_interface = _get_es_interface(es_getter)
     retries = _retries()
     propagate_failure = _propagate_failure()
     while current_tries < retries:
         try:
             if delete:
-                es_interface.delete_doc(alias, doc_type, doc_id)
+                adapter.delete(doc_id)
             else:
                 if es_merge_update:
                     # The `retry_on_conflict` param is only valid on `update`
                     # requests. ES <5.x was lenient of its presence on `index`
                     # requests, ES >=5.x is not.
-                    params = {'retry_on_conflict': 2}
-                    es_interface.update_doc_fields(alias, doc_type, doc_id,
-                                                   fields=data, params=params)
+                    adapter.update(doc_id, fields=data, retry_on_conflict=2)
                 else:
                     # use the same index API to create or update doc
-                    es_interface.index_doc(alias, doc_type, doc_id, doc=data)
+                    adapter.index(data)
             break
         except ConnectionError:
             current_tries += 1
             if current_tries == retries:
                 message = "[%s] Max retry error on %s/%s/%s"
-                args = (name, alias, doc_type, doc_id)
+                args = (name, adapter.index_name, adapter.type, doc_id)
                 if propagate_failure:
                     raise PillowtopIndexingError(message % args)
                 else:
@@ -230,7 +224,7 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
             _sleep_between_retries(current_tries)
         except RequestError:
             message = "[%s] put_robust error: %s/%s/%s"
-            args = (name, alias, doc_type, doc_id)
+            args = (name, adapter.index_name, adapter.type, doc_id)
             if propagate_failure:
                 raise PillowtopIndexingError(message % args)
             else:
@@ -252,7 +246,3 @@ def _retries():
 
 def _sleep_between_retries(current_tries):
     time.sleep(math.pow(RETRY_INTERVAL, current_tries))
-
-
-def _get_es_interface(es_getter):
-    return ElasticsearchInterface(es_getter())

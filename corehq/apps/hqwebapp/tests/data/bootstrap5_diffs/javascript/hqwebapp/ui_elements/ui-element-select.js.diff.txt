@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+-hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-select', [
++hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-select', [
+     'jquery',
+     'underscore',
+-    'hqwebapp/js/bootstrap3/main',
++    'hqwebapp/js/bootstrap5/main',
+ ], function (
+     $,
+     _,
+@@ -80,8 +80,8 @@
+         setOptions: function (options) {
+             this.options = options.map(o => _.isString(o) ? {value: o, label: o} : o);
+             this.$edit_view.html('');
+-            for (let i = 0; i < this.options.length; i += 1) {
+-                const option = this.options[i];
++            for (var i = 0; i < this.options.length; i += 1) {
++                var option = this.options[i];
+                 if ('groupName' in option) {
+                     $(`<optgroup label="${option.groupName}"/>`).appendTo(this.$edit_view);
+                 } else {

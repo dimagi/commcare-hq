@@ -25,7 +25,6 @@ from corehq.util.test_utils import flag_enabled
 
 
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
-@patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
 @patch_get_xform_resource_overrides()
 class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'case_list_form')

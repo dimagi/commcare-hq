@@ -2,9 +2,9 @@ from collections import namedtuple
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
-from corehq.elastic import send_to_elasticsearch
 from corehq.apps.es import UserES
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.apps.es.users import user_adapter
+from corehq.apps.es.groups import group_adapter
 from corehq.pillows.group import get_group_to_elasticsearch_processor
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
@@ -39,7 +39,7 @@ def get_group_to_user_pillow(pillow_id='GroupToUserPillow', num_processes=1, pro
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'GroupToUserPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, [topics.GROUP])
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, user_adapter.index_name, [topics.GROUP])
     processor = GroupsToUsersProcessor()
     change_feed = KafkaChangeFeed(
         topics=[topics.GROUP], client_id='groups-to-users', num_processes=num_processes, process_num=process_num
@@ -69,7 +69,7 @@ def get_group_pillow(pillow_id='group-pillow', num_processes=1, process_num=0, *
         topics=[topics.GROUP], client_id='groups-to-users', num_processes=num_processes, process_num=process_num
     )
     checkpoint_id = "{}-{}-{}".format(
-        pillow_id, USER_INDEX, to_group_es_processor.index_info.index)
+        pillow_id, user_adapter.index_name, group_adapter.index_name)
     checkpoint = KafkaPillowCheckpoint(checkpoint_id, [topics.GROUP])
     return ConstructedPillow(
         name=pillow_id,
@@ -96,8 +96,7 @@ def remove_group_from_users(group_doc):
             made_changes = True
         if made_changes:
             doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
-            doc["_id"] = user_source.user_id
-            send_to_elasticsearch('users', doc, es_merge_update=True)
+            user_adapter.update(user_source.user_id, doc)
 
 
 def update_es_user_with_groups(group_doc):
@@ -106,17 +105,14 @@ def update_es_user_with_groups(group_doc):
             user_source.group_ids.add(group_doc["_id"])
             user_source.group_names.add(group_doc["name"])
             doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
-            doc["_id"] = user_source.user_id
-            send_to_elasticsearch('users', doc, es_merge_update=True)
+            user_adapter.update(user_source.user_id, doc)
 
     for user_source in stream_user_sources(group_doc.get("removed_users", [])):
         if group_doc["name"] in user_source.group_names or group_doc["_id"] in user_source.group_ids:
             user_source.group_ids.remove(group_doc["_id"])
             user_source.group_names.remove(group_doc["name"])
             doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
-            doc["_id"] = user_source.user_id
-            send_to_elasticsearch('users', doc, es_merge_update=True)
-
+            user_adapter.update(user_source.user_id, doc)
 
 
 UserSource = namedtuple('UserSource', ['user_id', 'group_ids', 'group_names'])

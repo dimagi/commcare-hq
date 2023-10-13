@@ -1,8 +1,12 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% requirejs_main "case_importer/js/main" %}
+
+{% block page_title %}
+  {{ current_page.title }}
+{% endblock %}
 
 {% block page_content %}
   {% registerurl 'case_importer_uploads' domain %}

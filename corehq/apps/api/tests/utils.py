@@ -13,7 +13,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import HQApiKey, WebUser
+from corehq.apps.users.models import Document, HQApiKey, WebUser
 from corehq.util.test_utils import PatchMeta, flag_enabled
 
 
@@ -76,6 +76,8 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
 
         Role.get_cache().clear()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        cls.addClassCleanup(Subscription._get_active_subscription_by_domain.clear, Subscription, cls.domain.name)
+        cls.addClassCleanup(cls.domain.delete)
         cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
@@ -83,8 +85,12 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
                                   email='rudoph@example.com', first_name='rudolph', last_name='commcare')
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
+        # cls.user.delete(...) fails with InterfaceError: connection already closed
+        # The SQL user is cleaned up the test transaction, so just delete the Couch object.
+        cls.addClassCleanup(Document.delete, cls.user)
 
-        cls.account = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by="automated-test")[0]
+        cls.account = BillingAccount.get_or_create_account_by_domain(
+            cls.domain.name, created_by="automated-test")[0]
         plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
         cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan)
         cls.subscription.is_active = True
@@ -98,17 +104,6 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
                 kwargs=dict(domain=cls.domain.name,
                             api_name=cls.api_name,
                             resource_name=cls.resource._meta.resource_name))
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.api_key.delete()
-        cls.user.delete(cls.domain.name, deleted_by=None)
-
-        for domain in Domain.get_all():
-            Subscription._get_active_subscription_by_domain.clear(Subscription, domain.name)
-            domain.delete()
-
-        super(APIResourceTest, cls).tearDownClass()
 
     def single_endpoint(self, id):
         return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,

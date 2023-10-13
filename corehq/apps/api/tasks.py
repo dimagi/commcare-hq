@@ -1,7 +1,7 @@
 import time
 
 from celery.schedules import crontab
-from celery.task.base import periodic_task
+from corehq.apps.celery import periodic_task
 from tastypie.models import ApiAccess
 
 

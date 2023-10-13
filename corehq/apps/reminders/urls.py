@@ -5,6 +5,8 @@ from corehq.apps.reminders.views import (
     AddStructuredKeywordView,
     EditNormalKeywordView,
     EditStructuredKeywordView,
+    ViewNormalKeywordView,
+    ViewStructuredKeywordView,
     KeywordsListView,
 )
 
@@ -14,9 +16,14 @@ urlpatterns = [
         name=AddStructuredKeywordView.urlname),
     url(r'^keywords/normal/add/$', AddNormalKeywordView.as_view(),
         name=AddNormalKeywordView.urlname),
+    url(r'^keywords/structured/view/(?P<keyword_id>[\w-]+)/$',
+        ViewStructuredKeywordView.as_view(),
+        name=ViewStructuredKeywordView.urlname),
     url(r'^keywords/structured/edit/(?P<keyword_id>[\w-]+)/$',
         EditStructuredKeywordView.as_view(),
         name=EditStructuredKeywordView.urlname),
+    url(r'^keywords/normal/view/(?P<keyword_id>[\w-]+)/$',
+        ViewNormalKeywordView.as_view(), name=ViewNormalKeywordView.urlname),
     url(r'^keywords/normal/edit/(?P<keyword_id>[\w-]+)/$',
         EditNormalKeywordView.as_view(), name=EditNormalKeywordView.urlname),
 ]

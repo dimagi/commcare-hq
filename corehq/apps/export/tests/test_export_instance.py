@@ -7,7 +7,7 @@ from unittest import mock
 from couchexport.models import Format
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.const import PROPERTY_TAG_CASE
+from corehq.apps.export.const import PROPERTY_TAG_CASE, ALL_CASE_TYPE_EXPORT
 from corehq.apps.export.models import (
     MAIN_TABLE,
     CaseExportDataSchema,
@@ -201,6 +201,10 @@ class TestFormExportInstanceGeneration(SimpleTestCase):
     'corehq.apps.export.models.new.Domain.get_by_name',
     return_value=Domain(commtrack_enabled=False),
 )
+@mock.patch(
+    'corehq.apps.export.models.new.get_deprecated_fields',
+    return_value={}
+)
 class TestCaseExportInstanceGeneration(SimpleTestCase):
 
     @classmethod
@@ -217,6 +221,26 @@ class TestCaseExportInstanceGeneration(SimpleTestCase):
                             label='p1',
                             last_occurrences={},
                         ),
+                    ],
+                    last_occurrences={cls.app_id: 3},
+                ),
+            ],
+        )
+
+        cls.bulk_group_schema_path = [
+            PathNode(name='case_type'),
+            PathNode(name=ALL_CASE_TYPE_EXPORT)
+        ]
+        cls.bulk_schema = CaseExportDataSchema(
+            group_schemas=[
+                ExportGroupSchema(
+                    path=cls.bulk_group_schema_path,
+                    items=[
+                        ScalarItem(
+                            path=[PathNode(name='p2')],
+                            label='p2',
+                            last_occurrences={},
+                        )
                     ],
                     last_occurrences={cls.app_id: 3},
                 ),
@@ -251,7 +275,7 @@ class TestCaseExportInstanceGeneration(SimpleTestCase):
 
             return CaseExportInstance.generate_instance_from_schema(schema, saved_export=saved_export)
 
-    def test_generate_instance_from_schema(self, _):
+    def test_generate_instance_from_schema(self, _, __):
         instance = self._generate_instance({self.app_id: 3}, self.schema)
 
         self.assertEqual(len(instance.tables), 1)
@@ -261,6 +285,14 @@ class TestCaseExportInstanceGeneration(SimpleTestCase):
         instance = self._generate_instance({self.app_id: 3}, self.new_schema, instance)
         self.assertEqual(len(instance.tables), 1)
         self.assertEqual(len(instance.tables[0].columns), 21)
+
+    def test_generate_instance_from_bulk_schema(self, _, __):
+        instance = self._generate_instance({self.app_id: 3}, self.bulk_schema)
+
+        instance_table = instance.tables[0]
+        self.assertEqual(instance_table.path, self.bulk_group_schema_path)
+        self.assertEqual(instance_table.label, self.bulk_group_schema_path[0].name)
+        self.assertEqual(instance_table.selected, True)
 
 
 @mock.patch(

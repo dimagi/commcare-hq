@@ -10,12 +10,11 @@ from corehq.apps.users.analytics import (
     update_analytics_indexes,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.elastic import reset_es_index
 
 
-@es_test
+@es_test(requires=[user_adapter], setup_class=True)
 class UserAnalyticsTest(TestCase):
 
     @classmethod
@@ -54,7 +53,6 @@ class UserAnalyticsTest(TestCase):
             created_by=None,
             created_via=None,
         )
-        reset_es_index(USER_INDEX_INFO)
         update_analytics_indexes()
 
     @classmethod

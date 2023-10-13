@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-The data warehouse was intended to house data for all CommCareHQ reports.
+The data warehouse was intended to house data for all CommCare HQ reports.
 The warehouse would replace Elasticsearch in almost all contexts that it is currently used.
 The migration began in 2017 with the Application Status report and the effort
 to move the report to the warehouse and ensure it is stable, performs well and

@@ -2,22 +2,26 @@ import json
 import re
 from base64 import b64encode
 from io import BytesIO
+from datetime import datetime
 
+import pytz
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 
+import langcodes
 import qrcode
 from memoized import memoized
 from two_factor.models import PhoneDevice
-from two_factor.utils import default_device, backup_phones
+from two_factor.utils import backup_phones, default_device
 from two_factor.views import (
     BackupTokensView,
     DisableView,
@@ -28,25 +32,27 @@ from two_factor.views import (
     SetupView,
 )
 
-from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.domain.forms import clean_password
-from corehq.apps.domain.models import Domain
-from corehq.apps.sso.models import IdentityProvider
-from corehq.apps.sso.utils.request_helpers import is_request_using_sso
-from corehq.apps.hqwebapp.views import not_found
 from dimagi.utils.web import json_response
 
-import langcodes
+from corehq import toggles
 from corehq.apps.domain.decorators import (
+    active_domains_required,
     login_and_domain_required,
     login_required,
     require_superuser,
     two_factor_exempt,
 )
-from corehq import toggles
+from corehq.apps.domain.extension_points import has_custom_clean_password
+from corehq.apps.domain.forms import clean_password
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import sign
-from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
+from corehq.apps.hqwebapp.views import (
+    BaseSectionPageView,
+    CRUDPaginatedViewMixin,
+    not_found,
+)
 from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.forms import (
     HQApiKeyForm,
@@ -58,16 +64,19 @@ from corehq.apps.settings.forms import (
     HQTOTPDeviceForm,
     HQTwoFactorMethodForm,
 )
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.models import HQApiKey
 from corehq.apps.users.forms import AddPhoneNumberForm
+from corehq.apps.users.models import HQApiKey
 from corehq.apps.users.util import log_user_change
-from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.const import USER_CHANGE_VIA_WEB, USER_DATETIME_FORMAT
 from corehq.mobile_flags import (
     ADVANCED_SETTINGS_ACCESS,
     MULTIPLE_APPS_UNLIMITED,
 )
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import ServerTime
 
 
 @login_and_domain_required
@@ -87,8 +96,8 @@ def redirect_domain_settings(request, domain, old_url=""):
 
 @require_superuser
 def project_id_mapping(request, domain):
-    from corehq.apps.users.models import CommCareUser
     from corehq.apps.groups.models import Group
+    from corehq.apps.users.models import CommCareUser
 
     users = CommCareUser.by_domain(domain)
     groups = Group.by_domain(domain)
@@ -364,6 +373,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     template_name = 'two_factor/profile/profile.html'
     page_title = gettext_lazy("Two Factor Authentication")
 
+    @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
@@ -404,6 +414,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
         ('validation', HQDeviceValidationForm),
     )
 
+    @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
@@ -617,9 +628,39 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     template_name = "settings/user_api_keys.html"
 
+    @use_jquery_ui  # for datepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super(ApiKeyView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def allowed_actions(self):
+        return [
+            'create',
+            'delete',
+            'paginate',
+            'activate',
+            'deactivate',
+        ]
+
+    @property
+    def activate_response(self):
+        return self._set_is_active_response(is_active=True)
+
+    @property
+    def deactivate_response(self):
+        return self._set_is_active_response(is_active=False)
+
+    def _set_is_active_response(self, is_active):
+        key_id = self.parameters.get('id')
+        api_key = self.base_query.get(pk=key_id)
+        api_key.is_active = is_active
+        api_key.deactivated_on = None if is_active else timezone.now()
+        api_key.save()
+        return {'success': True, 'itemData': self._to_json(api_key)}
+
     @property
     def base_query(self):
-        return HQApiKey.objects.filter(user=self.request.user)
+        return HQApiKey.all_objects.filter(user=self.request.user)
 
     @property
     def total(self):
@@ -633,8 +674,17 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             _("Project"),
             _("IP Allowlist"),
             _("Created"),
-            _("Delete"),
+            _("Last Used"),
+            _("Expiration Date"),
+            _("Status"),
+            _("Actions"),
         ]
+
+    def _to_user_time(self, value):
+        return (ServerTime(value)
+                .user_time(pytz.timezone(self.request.couch_user.get_time_zone()))
+                .done()
+                .strftime(USER_DATETIME_FORMAT)) if value else '-'
 
     @property
     def page_context(self):
@@ -643,21 +693,40 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     @property
     def paginated_list(self):
         for api_key in self.base_query.order_by('-created').all()[self.skip:self.skip + self.limit]:
-            redacted_key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
             yield {
-                "itemData": {
-                    "id": api_key.id,
-                    "name": api_key.name,
-                    "key": redacted_key,
-                    "domain": api_key.domain or _('All Projects'),
-                    "ip_allowlist": (
-                        ", ".join(api_key.ip_allowlist)
-                        if api_key.ip_allowlist else _("All IP Addresses")
-                    ),
-                    "created": api_key.created.strftime('%Y-%m-%d %H:%M:%S'),
-                },
+                "itemData": self._to_json(api_key),
                 "template": "base-user-api-key-template",
             }
+
+    def _to_json(self, api_key, redacted=True):
+        if redacted:
+            key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
+        else:
+            copy_msg = _("Copy this in a secure place. It will not be shown again.")
+            key = f"{api_key.key} ({copy_msg})",
+
+        if api_key.expiration_date and api_key.expiration_date < datetime.now():
+            status = "expired"
+        elif api_key.is_active:
+            status = "active"
+        else:
+            status = "inactive"
+        return {
+            "id": api_key.id,
+            "name": api_key.name,
+            "key": key,
+            "domain": api_key.domain or _('All Projects'),
+            "ip_allowlist": (
+                ", ".join(api_key.ip_allowlist)
+                if api_key.ip_allowlist else _("All IP Addresses")
+            ),
+            "created": self._to_user_time(api_key.created),
+            "last_used": self._to_user_time(api_key.last_used),
+            "expiration_date": self._to_user_time(api_key.expiration_date),
+            "status": status,
+            "deactivated_on": self._to_user_time(api_key.deactivated_on),
+            "is_active": api_key.is_active,
+        }
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
@@ -674,21 +743,13 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             new_api_key = create_form.create_key(self.request.user)
         except DuplicateApiKeyName:
             return {'error': _(f"Api Key with name \"{create_form.cleaned_data['name']}\" already exists.")}
-        copy_key_message = _("Copy this in a secure place. It will not be shown again.")
         return {
-            'itemData': {
-                'id': new_api_key.id,
-                'name': new_api_key.name,
-                'key': f"{new_api_key.key} ({copy_key_message})",
-                "domain": new_api_key.domain or _('All Projects'),
-                'ip_allowlist': new_api_key.ip_allowlist,
-                'created': new_api_key.created.isoformat()
-            },
+            'itemData': self._to_json(new_api_key, redacted=False),
             'template': 'new-user-api-key-template',
         }
 
     def get_deleted_item_data(self, item_id):
-        deleted_key = HQApiKey.objects.get(id=item_id)
+        deleted_key = self.base_query.get(id=item_id)
         deleted_key.delete()
         return {
             'itemData': {

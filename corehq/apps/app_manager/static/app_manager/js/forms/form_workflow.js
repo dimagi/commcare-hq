@@ -41,11 +41,11 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
 
         var uniqueIds = _.pluck(self.forms,  'uniqueId');
         self.formLinks = ko.observableArray(_.map(_.filter(options.formLinks, function (link) {
-            return _.intersection(uniqueIds, [link.form_id, link.module_unique_id]).length;
+            return uniqueIds.indexOf(link.uniqueId) >= 0;
         }), function (link) {
             return new FormWorkflow.FormLink(
                 link.xpath,
-                link.form_id || link.module_unique_id,
+                link.uniqueId,
                 self,
                 link.datums
             );
@@ -147,6 +147,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         self.datums = ko.observableArray();
         self.manualDatums = ko.observable(false);
         self.datumsFetched = ko.observable(false);
+        self.datumsError = ko.observable(false);
         self.serializedDatums = ko.observable('');
 
         self.get_form_by_id = function (form_id) {
@@ -182,8 +183,9 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         };
 
         // initialize
-        self.autoLink(self.get_form_by_id(self.formId()).autoLink);
-        self.allowManualLinking(self.get_form_by_id(self.formId()).allowManualLinking);
+        let form = self.get_form_by_id(self.formId());
+        self.autoLink(form ? form.autoLink : false);
+        self.allowManualLinking(form ? form.allowManualLinking : false);
         self.datums(self.wrap_datums(datums));
         self.manualDatums(self.datums().length && self.autoLink());
         self.showLinkDatums = ko.computed(function () {
@@ -191,8 +193,9 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         });
 
         self.formId.subscribe(function (form_id) {
-            self.autoLink(self.get_form_by_id(form_id).autoLink);
-            self.allowManualLinking(self.get_form_by_id(form_id).allowManualLinking);
+            let form = self.get_form_by_id(form_id);
+            self.autoLink(form ? form.autoLink : false);
+            self.allowManualLinking(form ? form.allowManualLinking : false);
             self.datumsFetched(false);
             self.datums([]);
             self.serializedDatums('');
@@ -206,7 +209,10 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
                     self.datums(self.wrap_datums(data));
                 },
                 "json"
-            );
+            ).fail(function () {
+                self.datumsFetched(false);
+                self.datumsError(true);
+            });
         };
 
         self.errors = ko.computed(function () {

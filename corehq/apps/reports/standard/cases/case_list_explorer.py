@@ -7,6 +7,7 @@ from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES_MAP,
+    DOCS_LINK_CASE_LIST_EXPLORER,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
@@ -24,7 +25,6 @@ from corehq.apps.reports.standard.cases.filters import (
     CaseListExplorerColumns,
     XPathCaseSearchFilter,
 )
-from corehq.elastic import iter_es_docs_from_query
 from corehq.util.metrics import metrics_histogram_timer
 
 
@@ -33,6 +33,8 @@ class CaseListExplorer(CaseListReport):
     name = _('Case List Explorer')
     slug = 'case_list_explorer'
     search_class = CaseSearchES
+    description = _("Use Case List Explorer to run deep searches on your cases by case properties.  ")
+    documentation_link = DOCS_LINK_CASE_LIST_EXPLORER
 
     exportable = True
     exportable_all = True
@@ -97,6 +99,18 @@ class CaseListExplorer(CaseListReport):
             column = self.headers.header[column_id]
             try:
                 special_property = SPECIAL_CASE_PROPERTIES_MAP[column.prop_name]
+                if special_property.key == '@case_id':
+                    # This condition is added because ES 5 does not allow sorting on _id.
+                    #  When we will have case_id in root of the document, this should be removed.
+                    sort_order = 'desc' if descending else 'asc'
+                    query.es_query['sort'] = [{
+                        'case_properties.value.exact': {
+                            'order': sort_order,
+                            'nested_path': 'case_properties',
+                            'nested_filter': {'term': {"case_properties.key.exact": "@case_id"}},
+                        }
+                    }]
+                    return query
                 query = query.sort(special_property.sort_property, desc=descending)
             except KeyError:
                 query = query.sort_by_case_property(column.prop_name, desc=descending)
@@ -133,8 +147,8 @@ class CaseListExplorer(CaseListReport):
 
         return persistent_cols + [
             DataTablesColumn(
-                column,
-                prop_name=column,
+                column["label"],
+                prop_name=column["name"],
                 sortable=column not in CASE_COMPUTED_METADATA,
             )
             for column in CaseListExplorerColumns.get_value(self.request, self.domain)
@@ -161,7 +175,8 @@ class CaseListExplorer(CaseListReport):
 
     @property
     def get_all_rows(self):
-        data = (wrap_case_search_hit(r) for r in iter_es_docs_from_query(self._build_query(sort=False)))
+        query = self._build_query(sort=False)
+        data = (wrap_case_search_hit(r) for r in query.scroll_ids_to_disk_and_iter_docs())
         return self._get_rows(data)
 
     def _get_rows(self, data):

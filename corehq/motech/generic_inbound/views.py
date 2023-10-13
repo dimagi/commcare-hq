@@ -1,30 +1,52 @@
+import uuid
+
 from django.contrib import messages
-from django.http import Http404, JsonResponse
-from django.shortcuts import redirect
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext as _, gettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from memoized import memoized
 
-from corehq import toggles
-from corehq.apps.api.decorators import api_throttle
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
-from corehq.apps.hqcase.api.core import UserError, SubmissionError, serialize_case
-from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
+from corehq.apps.userreports.models import UCRExpression
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
 from corehq.motech.generic_inbound.forms import (
+    ApiValidationFormSet,
     ConfigurableAPICreateForm,
     ConfigurableAPIUpdateForm,
 )
-from corehq.motech.generic_inbound.models import ConfigurableAPI
-from corehq.motech.generic_inbound.utils import get_context_from_request
+from corehq.motech.generic_inbound.models import (
+    ConfigurableAPI,
+    RequestLog,
+)
+from corehq.motech.generic_inbound.reports import ApiLogDetailView
+from corehq.motech.generic_inbound.utils import (
+    ApiRequest,
+    archive_api_request,
+    reprocess_api_request,
+    log_api_request,
+    process_api_request
+)
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
 
 
+def can_administer_generic_inbound(view_fn):
+    return toggles.GENERIC_INBOUND_API.required_decorator()(
+        require_permission(HqPermissions.edit_motech)(view_fn)
+    )
+
+
+@method_decorator(can_administer_generic_inbound, name='dispatch')
 class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("Inbound API Configurations")
     urlname = "configurable_api_list"
@@ -85,7 +107,7 @@ class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         }
 
 
-@method_decorator(toggles.GENERIC_INBOUND_API.required_decorator(), name='dispatch')
+@method_decorator(can_administer_generic_inbound, name='dispatch')
 class ConfigurableAPIEditView(BaseProjectSettingsView):
     page_title = gettext_lazy("Edit API Configuration")
     urlname = "configurable_api_edit"
@@ -99,7 +121,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
     @memoized
     def api(self):
         try:
-            return ConfigurableAPI.objects.get(id=self.api_id)
+            return ConfigurableAPI.objects.get(domain=self.domain, id=self.api_id)
         except ConfigurableAPI.DoesNotExist:
             raise Http404
 
@@ -116,79 +138,71 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
     def main_context(self):
         main_context = super(ConfigurableAPIEditView, self).main_context
 
+        filter_expressions = [
+            {"id": expr.id, "label": str(expr)}
+            for expr in UCRExpression.objects.get_filters_for_domain(self.domain)
+        ]
         main_context.update({
             "form": self.get_form(),
             "api_model": self.api,
+            "filter_expressions": filter_expressions,
+            "validations": [
+                validation.to_json()
+                for validation in self.api.validations.all()
+            ],
             "page_title": self.page_title
         })
         return main_context
 
     def post(self, request, domain, **kwargs):
         form = self.get_form()
-        if form.is_valid():
+        validation_formset = ApiValidationFormSet(self.request.POST, instance=self.api)
+        if form.is_valid() and validation_formset.is_valid():
             form.save()
+            validation_formset.save()
             messages.success(request, _("API Configuration updated successfully."))
             return redirect(self.urlname, self.domain, self.api_id)
+
+        if not validation_formset.is_valid():
+            messages.error(request, _("There is an error in your data API validations"))
         return self.get(request, self.domain, **kwargs)
 
 
 @json_error
-@api_auth
+@csrf_exempt
+@allow_cors(list(RequestLog.RequestMethod))
+@require_http_methods(list(RequestLog.RequestMethod))
+@api_auth(allow_creds_in_data=False)
+@requires_privilege_with_fallback(privileges.API_ACCESS)
+@require_permission(HqPermissions.edit_data)
+@require_permission(HqPermissions.access_api)
 @api_throttle
-@require_http_methods(["POST"])
 def generic_inbound_api(request, domain, api_id):
     try:
         api = ConfigurableAPI.objects.get(url_key=api_id, domain=domain)
     except ConfigurableAPI.DoesNotExist:
         raise Http404
 
-    try:
-        context = get_context_from_request(request)
-    except GenericInboundUserError as e:
-        return JsonResponse({'error': str(e)}, status=400)
+    request_id = uuid.uuid4().hex
 
-    try:
-        response = _execute_case_api(
-            request.domain,
-            request.couch_user,
-            request.META.get('HTTP_USER_AGENT'),
-            context,
-            api
-        )
-    except BadSpecError as e:
-        return JsonResponse({'error': str(e)}, status=500)
-    except UserError as e:
-        return JsonResponse({'error': str(e)}, status=400)
-    except SubmissionError as e:
-        return JsonResponse({
-            'error': str(e),
-            'form_id': e.form_id,
-        }, status=400)
+    def get_request_data():
+        return ApiRequest.from_request(request, request_id=request_id)
 
-    return JsonResponse(response)
+    response = process_api_request(api, request_id, get_request_data)
+
+    log_api_request(request_id, api, request, response)
+    return response.get_http_response()
 
 
-def _execute_case_api(domain, couch_user, device_id, context, api_model):
-    data = api_model.parsed_expression(context.root_doc, context)
+@can_administer_generic_inbound
+def retry_api_request(request, domain, log_id):
+    request_log = get_object_or_404(RequestLog, domain=domain, id=log_id)
+    reprocess_api_request(request_log)
+    return redirect(ApiLogDetailView.urlname, domain, log_id)
 
-    if not isinstance(data, list):
-        # the bulk API always requires a list
-        data = [data]
 
-    xform, case_or_cases = handle_case_update(
-        domain=domain,
-        data=data,
-        user=couch_user,
-        device_id=device_id,
-        is_creation=None,
-    )
-
-    if isinstance(case_or_cases, list):
-        return {
-            'form_id': xform.form_id,
-            'cases': [serialize_case(case) for case in case_or_cases],
-        }
-    return {
-        'form_id': xform.form_id,
-        'case': serialize_case(case_or_cases),
-    }
+@can_administer_generic_inbound
+def revert_api_request(request, domain, log_id):
+    request_log = get_object_or_404(RequestLog, domain=domain, id=log_id)
+    archive_api_request(request_log, request.couch_user._id)
+    return redirect(ApiLogDetailView.urlname, domain, log_id)

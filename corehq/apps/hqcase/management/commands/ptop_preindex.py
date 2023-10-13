@@ -1,4 +1,3 @@
-# http://www.gevent.org/gevent.monkey.html#module-gevent.monkey
 from datetime import datetime
 
 from django.conf import settings
@@ -6,7 +5,6 @@ from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 
 import gevent
-from gevent import monkey
 
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
     DomainReindexerFactory,
@@ -19,23 +17,12 @@ from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
     SmsReindexerFactory,
     AppReindexerFactory,
 )
-from corehq.elastic import get_es_new
+from corehq.apps.es.client import manager
 from corehq.pillows.user import add_demo_user_to_user_index
 from corehq.pillows.utils import get_all_expected_es_indices
 from corehq.util.log import get_traceback_string
-from pillowtop.es_utils import (
-    XFORM_HQ_INDEX_NAME,
-    CASE_HQ_INDEX_NAME,
-    USER_HQ_INDEX_NAME,
-    DOMAIN_HQ_INDEX_NAME,
-    APP_HQ_INDEX_NAME,
-    GROUP_HQ_INDEX_NAME,
-    SMS_HQ_INDEX_NAME,
-    CASE_SEARCH_HQ_INDEX_NAME,
-)
+from corehq.apps.es.index.settings import IndexSettingsKey
 from pillowtop.reindexer.reindexer import ReindexerFactory
-
-monkey.patch_all()
 
 
 def get_reindex_commands(hq_index_name):
@@ -44,19 +31,19 @@ def get_reindex_commands(hq_index_name):
 
     :param hq_index_name: ``str`` name of the Elastic index alias"""
     pillow_command_map = {
-        DOMAIN_HQ_INDEX_NAME: [DomainReindexerFactory],
-        CASE_HQ_INDEX_NAME: [SqlCaseReindexerFactory],
-        XFORM_HQ_INDEX_NAME: [SqlFormReindexerFactory],
+        IndexSettingsKey.DOMAINS: [DomainReindexerFactory],
+        IndexSettingsKey.CASES: [SqlCaseReindexerFactory],
+        IndexSettingsKey.FORMS: [SqlFormReindexerFactory],
         # groupstousers indexing must happen after all users are indexed
-        USER_HQ_INDEX_NAME: [
+        IndexSettingsKey.USERS: [
             UserReindexerFactory,
             add_demo_user_to_user_index,
             GroupToUserReindexerFactory,
         ],
-        APP_HQ_INDEX_NAME: [AppReindexerFactory],
-        GROUP_HQ_INDEX_NAME: [GroupReindexerFactory],
-        CASE_SEARCH_HQ_INDEX_NAME: [CaseSearchReindexerFactory],
-        SMS_HQ_INDEX_NAME: [SmsReindexerFactory],
+        IndexSettingsKey.APPS: [AppReindexerFactory],
+        IndexSettingsKey.GROUPS: [GroupReindexerFactory],
+        IndexSettingsKey.CASE_SEARCH: [CaseSearchReindexerFactory],
+        IndexSettingsKey.SMS: [SmsReindexerFactory],
     }
     return pillow_command_map.get(hq_index_name, [])
 
@@ -97,13 +84,15 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         runs = []
-        all_es_indices = list(get_all_expected_es_indices())
-        es = get_es_new()
+        all_es_index_adapters = list(get_all_expected_es_indices())
 
         if options['reset']:
-            indices_needing_reindex = all_es_indices
+            indices_needing_reindex = all_es_index_adapters
         else:
-            indices_needing_reindex = [info for info in all_es_indices if not es.indices.exists(info.index)]
+            indices_needing_reindex = [
+                adapter for adapter in all_es_index_adapters
+                if not manager.index_exists(adapter.index_name)
+            ]
             if not indices_needing_reindex:
                 print('Nothing needs to be reindexed')
                 return
@@ -125,20 +114,20 @@ class Command(BaseCommand):
 
         mail_admins("Pillow preindexing starting", preindex_message)
         start = datetime.utcnow()
-        for index_info in indices_needing_reindex:
+        for adapter in indices_needing_reindex:
             # loop through pillows once before running greenlets
             # to fail hard on misconfigured pillows
-            reindex_commands = get_reindex_commands(index_info.hq_index_name)
+            reindex_commands = get_reindex_commands(adapter.settings_key)
             if not reindex_commands:
                 raise Exception(
                     "Error, pillow [%s] is not configured "
                     "with its own management command reindex command "
-                    "- it needs one" % index_info.hq_index_name
+                    "- it needs one" % adapter.settings_key
                 )
 
-        for index_info in indices_needing_reindex:
-            print(index_info.hq_index_name)
-            g = gevent.spawn(do_reindex, index_info.hq_index_name, options['reset'])
+        for adapter in indices_needing_reindex:
+            print(adapter.settings_key)
+            g = gevent.spawn(do_reindex, adapter.settings_key, options['reset'])
             runs.append(g)
 
         if len(indices_needing_reindex) > 0:

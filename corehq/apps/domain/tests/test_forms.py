@@ -27,12 +27,6 @@ class PrivacySecurityFormTests(SimpleTestCase):
             'disable_mobile_login_lockout'
         ])
 
-    @patch.object(forms.RESTRICT_MOBILE_ACCESS, 'enabled', return_value=True)
-    def test_restrict_mobile_access_toggle(self, mock_toggle):
-        form = self.create_form()
-        visible_field_names = self.get_visible_fields(form)
-        self.assertIn('restrict_mobile_access', visible_field_names)
-
     @patch.object(forms.HIPAA_COMPLIANCE_CHECKBOX, 'enabled', return_value=True)
     def test_hippa_compliance_toggle(self, mock_toggle):
         form = self.create_form()
@@ -197,3 +191,26 @@ class TestDomainGlobalSettingsForm(TestCase):
         OperatorCallLimitSettings.objects.all().delete()
         SMSAccountConfirmationSettings.objects.all().delete()
         super().tearDown()
+
+
+class TestAppReleaseModeSettingForm(TestCase):
+
+    def setUp(self) -> None:
+        domain = Domain.generate_name('test_domain')
+        self.domain_obj = Domain(name=domain)
+        self.domain_obj.save()
+
+    def test_release_mode_settings_visible_and_saved_without_error(self):
+        # Create form
+        data = {
+            "hr_name": "foo",
+            "project_description": "sample",
+            "default_timezone": "UTC",
+        }
+        form = DomainGlobalSettingsForm(data, domain=self.domain_obj)
+
+        self.assertTrue('release_mode_visibility' in form.fields)
+
+        form.full_clean()
+        saved = form.save(Mock(), self.domain_obj)
+        self.assertEqual(True, saved)  # No error during form save

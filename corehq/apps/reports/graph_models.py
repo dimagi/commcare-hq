@@ -43,11 +43,14 @@ class MultiBarChart(Chart):
         reduceXTicks: True to reduce the number of X ticks
         rotateLabels: Degrees to rotate X-Axis labels e.g. -45
         tooltips: True to show tooltips
-        tooltipFormat: Seperator text bw x,y values in tooltipContent e.g." in ", " on  "
+        tooltipFormat: Seperator text bw x,y values in tooltipContent
+                       e.g." in ", " on  "
         stacked: True to make default view stacked, False for grouped
         staggerLabels: True to stagger the X-Axis labels.
-        groupSpacing: Used to adjust amount of space between X-Axis groups. Value between 0 and 1.
-        forceY: Used to force values into the Y scale domain. Useful to ensure max / min scales. Must be list of numbers
+        groupSpacing: Used to adjust amount of space between X-Axis
+                      groups. Value between 0 and 1.
+        forceY: Used to force values into the Y scale domain. Useful to
+                ensure max / min scales. Must be list of numbers
         translateLabelsX: Pixels to move X-Axis labels in X direction
         translateLabelsY: Pixels to move X-Axis labels in Y direction
 
@@ -111,8 +114,9 @@ class MultiBarChart(Chart):
 class PieChart(Chart):
     """
     :param title: The chart title
-    "param key: The name of the dataset
-    "param values: List of dicts each with 'label' and 'value' keys e.g. [{'label': 'One', 'value': 1}, ...]
+    :param key: The name of the dataset
+    :param values: List of dicts each with 'label' and 'value' keys
+                   e.g. [{'label': 'One', 'value': 1}, ...]
 
     Class fields:
         marginTop: Top Margin in pixels
@@ -127,7 +131,8 @@ class PieChart(Chart):
     template_partial = 'reports/partials/graphs/pie_chart.html'
 
     def __init__(self, title, key, values, color=None):
-        if not color: color = []
+        if not color:
+            color = []
         self.title = title
         self.data = [dict(key=key, values=values)]
         self.marginTop = 30

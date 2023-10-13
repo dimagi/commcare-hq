@@ -1,0 +1,90 @@
+scss_files: 'assets/style/**/*.css.scss'
+
+linters:
+  BorderZero:
+    enabled: false
+  Indentation:
+    severity: warning
+    width: 2
+  StringQuotes:
+    enabled: true
+  UrlQuotes:
+    enabled: true
+  BangFormat:
+    enabled: true
+  ColorKeyword:
+    enabled: false
+  ColorVariable:
+    enabled: true
+  Comment:
+    enabled: true
+  DebugStatement:
+    enabled: true
+  DeclarationOrder:
+    enabled: true
+  DuplicateProperty:
+    enabled: true
+  ElsePlacement:
+    enabled: true
+  EmptyLineBetweenBlocks:
+    enabled: true
+  EmptyRule:
+    enabled: true
+  FinalNewline:
+    enabled: true
+  HexLength:
+    style: long
+  HexValidation:
+    enabled: true
+  ImportPath:
+    enabled: true
+  LengthVariable:
+    enabled: false
+  MergeableSelector:
+    enabled: true
+  NameFormat:
+    enabled: true
+  NestingDepth:
+    enabled: true
+    max_depth: 3
+  PlaceholderInExtend:
+    enabled: true
+  PrivateNamingConvention:
+    enabled: true
+  PropertySpelling:
+    enabled: true
+  PropertySortOrder:
+    enabled: true
+  PropertyCount:
+    enabled: true
+  PropertyUnits:
+    enabled: true
+    properties:
+      border: ['px']
+      margin: ['px', '%']
+      font-size: ['px', '%', 'em']
+      line-height: ['px']
+  PseudoElement:
+    enabled: true
+  QualifyingElement:
+    enabled: false
+  SelectorDepth:
+    enabled: true
+  SelectorFormat:
+    enabled: true
+    convention: hyphenated_lowercase
+  SingleLinePerProperty:
+    enabled: true
+  Shorthand:
+    enabled: true
+    allowed_shorthands: [1, 2, 3, 4]
+  SingleLinePerSelector:
+    enabled: true
+  SpaceAfterComma:
+    enabled: true
+  SpaceAfterComment:
+    enabled: true
+  SpaceAfterPropertyColon:
+    enabled: true
+  SpaceAfterPropertyName:
+    enabled: true

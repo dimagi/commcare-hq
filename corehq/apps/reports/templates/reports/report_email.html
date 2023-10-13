@@ -16,7 +16,7 @@
   </style>
 </head>
 <body>
-  {{ email_content|safe }}
+  {{ email_content }}
   <br><hr />
   {% if unsub_link %}
     <a href="{{ unsub_link }}">{% trans 'Unsubscribe from this report' %}</a>.

@@ -3,6 +3,7 @@ from copy import copy
 
 from jsonobject.api import re_date
 
+from corehq.util.metrics import metrics_counter
 from dimagi.utils.parsing import json_format_datetime
 from corehq.util.dates import iso_string_to_datetime
 
@@ -11,7 +12,11 @@ def scrub_meta(xform):
     if not hasattr(xform, 'form'):
         return
 
-    scrub_form_meta(xform.form_id, xform.form)
+    found_old = scrub_form_meta(xform.form_id, xform.form)
+    if found_old:
+        metrics_counter('commcare.xform_submissions.old_metadata', tags={
+            'domain': xform.domain,
+        })
 
 
 def scrub_form_meta(form_id, form_data):

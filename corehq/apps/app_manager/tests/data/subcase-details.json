@@ -1,717 +1,722 @@
 {
-    "_attachments": {
-        "230ad09641d8517d6abb8f562fe0139643e0f4a3.xml": "",
-        "4db54c9d0d7bfff635f6be34107969c757e06cff.xml": "",
-        "538d23121fba3a4a039fa1071ea9ecc6e4ab50e6.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>Birth</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/9AE3F6A0-346C-4E70-BF22-F2DB6F1254F7\" uiVersion=\"1\" version=\"1\" name=\"Birth\">\n\t\t\t\t\t<question1 />\n\t\t\t\t\t<child_name />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/question1\" />\n\t\t\t<bind nodeset=\"/data/child_name\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"mother_alive-label\">\n\t\t\t\t\t\t<value>Is the mother alive?</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"question1-yes-label\">\n\t\t\t\t\t\t<value>Yes</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"question1-no-label\">\n\t\t\t\t\t\t<value>No</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"child_name-label\">\n\t\t\t\t\t\t<value>Child Name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<select1 ref=\"/data/question1\">\n\t\t\t<label ref=\"jr:itext('mother_alive-label')\" />\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('question1-yes-label')\" />\n\t\t\t\t<value>yes</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('question1-no-label')\" />\n\t\t\t\t<value>no</value>\n\t\t\t</item>\n\t\t</select1>\n\t\t<input ref=\"/data/child_name\">\n\t\t\t<label ref=\"jr:itext('child_name-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>",
-        "dfcf8c2345eb59b6bd2a97d3f3fb26e06384e1f0.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/EE1B3C3F-1F56-4CFF-AC17-0E940CDA319C\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<question1 />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/question1\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"question1-label\">\n\t\t\t\t\t\t<value>question1</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/question1\">\n\t\t\t<label ref=\"jr:itext('question1-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>",
-        "e2a8d5278f67e88093d58ae2b8636ae8ead0ed39.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>Register</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/08BD410C-7F70-49D0-8603-E4E9521CFFBB\" uiVersion=\"1\" version=\"1\" name=\"Register\">\n\t\t\t\t\t<parent_name />\n\t\t\t\t\t<parent_age1 />\n\t\t\t\t\t<child_name />\n\t\t\t\t\t<child_age1 />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/parent_name\" type=\"xsd:string\" />\n\t\t\t<bind nodeset=\"/data/parent_age1\" type=\"xsd:int\" />\n\t\t\t<bind nodeset=\"/data/child_name\" type=\"xsd:string\" />\n\t\t\t<bind nodeset=\"/data/child_age1\" type=\"xsd:int\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"parent_name-label\">\n\t\t\t\t\t\t<value>Parent Name</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"parent_age1-label\">\n\t\t\t\t\t\t<value>Parent Age</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"child_name-label\">\n\t\t\t\t\t\t<value>Child Name</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"child_age1-label\">\n\t\t\t\t\t\t<value>Child Age</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/parent_name\">\n\t\t\t<label ref=\"jr:itext('parent_name-label')\" />\n\t\t</input>\n\t\t<input ref=\"/data/parent_age1\">\n\t\t\t<label ref=\"jr:itext('parent_age1-label')\" />\n\t\t</input>\n\t\t<input ref=\"/data/child_name\">\n\t\t\t<label ref=\"jr:itext('child_name-label')\" />\n\t\t</input>\n\t\t<input ref=\"/data/child_age1\">\n\t\t\t<label ref=\"jr:itext('child_age1-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>",
-        "f8fa4da51f0e1dae3b0327cef96e15d38db1892a.xml": "",
-        "fff4f8c2d3a8f5fa57488def9f503f3edd2480cc.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>See Child</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/E9150118-F8F7-489E-92AF-8F739E7D2297\" uiVersion=\"1\" version=\"1\" name=\"See Child\">\n\t\t\t\t\t<nothing />\n\t\t\t\t\t<question4 />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/nothing\" />\n\t\t\t<bind nodeset=\"/data/question4\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"nothing-label\">\n\t\t\t\t\t\t<value>This form doesn't do anything</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"question4-label\">\n\t\t\t\t\t\t<value>question4</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<trigger ref=\"/data/nothing\">\n\t\t\t<label ref=\"jr:itext('nothing-label')\" />\n\t\t</trigger>\n\t\t<input ref=\"/data/question4\">\n\t\t\t<label ref=\"jr:itext('question4-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>"
-    },
-    "admin_password": null,
-    "admin_password_charset": "n",
-    "application_version": "2.0",
-    "attribution_notes": null,
-    "build_comment": null,
-    "build_langs": [
-        "en"
-    ],
-    "build_signed": true,
-    "build_spec": {
-        "build_number": null,
-        "doc_type": "BuildSpec",
-        "latest": true,
-        "version": "2.0.0"
-    },
-    "built_on": null,
-    "built_with": {
-        "build_number": null,
-        "datetime": null,
-        "doc_type": "BuildRecord",
-        "latest": null,
-        "signed": true,
-        "version": null
-    },
-    "cached_properties": {},
-    "case_sharing": false,
-    "cloudcare_enabled": false,
-    "comment_from": null,
-    "copy_history": [],
-    "deployment_date": null,
-    "description": null,
-    "doc_type": "Application",
-    "force_http": false,
-    "is_released": false,
-    "langs": [
-        "en"
-    ],
-    "modules": [
+  "_attachments": {
+    "230ad09641d8517d6abb8f562fe0139643e0f4a3.xml": "",
+    "4db54c9d0d7bfff635f6be34107969c757e06cff.xml": "",
+    "538d23121fba3a4a039fa1071ea9ecc6e4ab50e6.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>Birth</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/9AE3F6A0-346C-4E70-BF22-F2DB6F1254F7\" uiVersion=\"1\" version=\"1\" name=\"Birth\">\n\t\t\t\t\t<question1 />\n\t\t\t\t\t<child_name />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/question1\" />\n\t\t\t<bind nodeset=\"/data/child_name\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"mother_alive-label\">\n\t\t\t\t\t\t<value>Is the mother alive?</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"question1-yes-label\">\n\t\t\t\t\t\t<value>Yes</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"question1-no-label\">\n\t\t\t\t\t\t<value>No</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"child_name-label\">\n\t\t\t\t\t\t<value>Child Name</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<select1 ref=\"/data/question1\">\n\t\t\t<label ref=\"jr:itext('mother_alive-label')\" />\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('question1-yes-label')\" />\n\t\t\t\t<value>yes</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('question1-no-label')\" />\n\t\t\t\t<value>no</value>\n\t\t\t</item>\n\t\t</select1>\n\t\t<input ref=\"/data/child_name\">\n\t\t\t<label ref=\"jr:itext('child_name-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>",
+    "dfcf8c2345eb59b6bd2a97d3f3fb26e06384e1f0.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>New Form</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/EE1B3C3F-1F56-4CFF-AC17-0E940CDA319C\" uiVersion=\"1\" version=\"1\" name=\"New Form\">\n\t\t\t\t\t<question1 />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/question1\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"question1-label\">\n\t\t\t\t\t\t<value>question1</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/question1\">\n\t\t\t<label ref=\"jr:itext('question1-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>",
+    "e2a8d5278f67e88093d58ae2b8636ae8ead0ed39.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>Register</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/08BD410C-7F70-49D0-8603-E4E9521CFFBB\" uiVersion=\"1\" version=\"1\" name=\"Register\">\n\t\t\t\t\t<parent_name />\n\t\t\t\t\t<parent_age1 />\n\t\t\t\t\t<child_name />\n\t\t\t\t\t<child_age1 />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/parent_name\" type=\"xsd:string\" />\n\t\t\t<bind nodeset=\"/data/parent_age1\" type=\"xsd:int\" />\n\t\t\t<bind nodeset=\"/data/child_name\" type=\"xsd:string\" />\n\t\t\t<bind nodeset=\"/data/child_age1\" type=\"xsd:int\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"parent_name-label\">\n\t\t\t\t\t\t<value>Parent Name</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"parent_age1-label\">\n\t\t\t\t\t\t<value>Parent Age</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"child_name-label\">\n\t\t\t\t\t\t<value>Child Name</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"child_age1-label\">\n\t\t\t\t\t\t<value>Child Age</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/parent_name\">\n\t\t\t<label ref=\"jr:itext('parent_name-label')\" />\n\t\t</input>\n\t\t<input ref=\"/data/parent_age1\">\n\t\t\t<label ref=\"jr:itext('parent_age1-label')\" />\n\t\t</input>\n\t\t<input ref=\"/data/child_name\">\n\t\t\t<label ref=\"jr:itext('child_name-label')\" />\n\t\t</input>\n\t\t<input ref=\"/data/child_age1\">\n\t\t\t<label ref=\"jr:itext('child_age1-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>",
+    "f8fa4da51f0e1dae3b0327cef96e15d38db1892a.xml": "",
+    "fff4f8c2d3a8f5fa57488def9f503f3edd2480cc.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n\t<h:head>\n\t\t<h:title>See Child</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/E9150118-F8F7-489E-92AF-8F739E7D2297\" uiVersion=\"1\" version=\"1\" name=\"See Child\">\n\t\t\t\t\t<nothing />\n\t\t\t\t\t<question4 />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/nothing\" />\n\t\t\t<bind nodeset=\"/data/question4\" type=\"xsd:string\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"nothing-label\">\n\t\t\t\t\t\t<value>This form doesn't do anything</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"question4-label\">\n\t\t\t\t\t\t<value>question4</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<trigger ref=\"/data/nothing\">\n\t\t\t<label ref=\"jr:itext('nothing-label')\" />\n\t\t</trigger>\n\t\t<input ref=\"/data/question4\">\n\t\t\t<label ref=\"jr:itext('question4-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>"
+  },
+  "admin_password": null,
+  "admin_password_charset": "n",
+  "application_version": "2.0",
+  "attribution_notes": null,
+  "build_comment": null,
+  "build_signed": true,
+  "build_spec": {
+    "build_number": null,
+    "doc_type": "BuildSpec",
+    "latest": true,
+    "version": "2.0.0"
+  },
+  "built_on": null,
+  "built_with": {
+    "build_number": null,
+    "datetime": null,
+    "doc_type": "BuildRecord",
+    "latest": null,
+    "signed": true,
+    "version": null
+  },
+  "cached_properties": {},
+  "case_sharing": false,
+  "cloudcare_enabled": false,
+  "comment_from": null,
+  "copy_history": [],
+  "deployment_date": null,
+  "description": null,
+  "doc_type": "Application",
+  "force_http": false,
+  "is_released": false,
+  "langs": [
+    "en"
+  ],
+  "modules": [
+    {
+      "case_label": {
+        "en": "Cases"
+      },
+      "case_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
+      },
+      "case_type": "pregnancy_u",
+      "doc_type": "Module",
+      "forms": [
         {
-            "case_label": {
-                "en": "Cases"
-            },
-            "case_list": {
-                "doc_type": "CaseList",
-                "label": {},
-                "show": false
-            },
-            "case_type": "pregnancy_u",
-            "details": [
-                {
-                    "columns": [
-                        {
-                            "advanced": "",
-                            "enum": {},
-                            "field": "date-opened",
-                            "filter_xpath": "",
-                            "format": "plain",
-                            "header": {
-                                "en": "Date"
-                            },
-                            "late_flag": 30,
-                            "model": "case",
-                            "time_ago_interval": 365.25
-                        }
-                    ],
-                    "doc_type": "Detail",
-                    "type": "case_short"
-                },
-                {
-                    "columns": [],
-                    "doc_type": "Detail",
-                    "type": "case_long"
-                },
-                {
-                    "columns": [],
-                    "doc_type": "Detail",
-                    "type": "ref_short"
-                },
-                {
-                    "columns": [],
-                    "doc_type": "Detail",
-                    "type": "ref_long"
-                }
-            ],
-            "doc_type": "Module",
-            "forms": [
-                {
-                    "actions": {
-                        "case_preload": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "PreloadAction",
-                            "preload": {}
-                        },
-                        "close_case": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "FormAction"
-                        },
-                        "close_referral": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "FormAction"
-                        },
-                        "open_case": {
-                            "condition": {
-                                "answer": null,
-                                "question": null,
-                                "type": "always"
-                            },
-                            "external_id": null,
-                            "name_path": "/data/parent_name"
-                        },
-                        "open_referral": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "OpenReferralAction",
-                            "followup_date": null,
-                            "name_path": null
-                        },
-                        "referral_preload": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "PreloadAction",
-                            "preload": {}
-                        },
-                        "subcases": [
-                            {
-                                "case_name": "/data/child_name",
-                                "case_properties": {
-                                    "age": "/data/child_age"
-                                },
-                                "case_type": "child",
-                                "condition": {
-                                    "answer": null,
-                                    "question": null,
-                                    "type": "always"
-                                },
-                                "repeat_context": null
-                            }
-                        ],
-                        "update_case": {
-                            "condition": {
-                                "answer": null,
-                                "question": null,
-                                "type": "always"
-                            },
-                            "update": {
-                              "age": {
-                                "question_path": "/data/parent_age",
-                                "update_mode": "always"
-                              },
-                              "only_parent_has_this": {
-                                "question_path": "/data/parent_age",
-                                "update_mode": "always"
-                              }
-                            }
-                        },
-                        "update_referral": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "UpdateReferralAction",
-                            "followup_date": null
-                        }
-                    },
-                    "doc_type": "Form",
-                    "form_filter": "",
-                    "media_audio": null,
-                    "media_image": null,
-                    "name": {
-                        "en": "Register"
-                    },
-                    "requires": "none",
-                    "show_count": false,
-                    "unique_id": "e2a8d5278f67e88093d58ae2b8636ae8ead0ed39",
-                    "version": null,
-                    "xmlns": "http://openrosa.org/formdesigner/08BD410C-7F70-49D0-8603-E4E9521CFFBB"
-                },
-                {
-                    "actions": {
-                        "case_preload": {
-                            "condition": {
-                                "answer": null,
-                                "question": null,
-                                "type": "never"
-                            },
-                            "preload": {}
-                        },
-                        "close_case": {
-                            "condition": {
-                                "answer": "no",
-                                "question": "/data/question1",
-                                "type": "if"
-                            }
-                        },
-                        "close_referral": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "FormAction"
-                        },
-                        "open_case": {
-                            "condition": {
-                                "answer": null,
-                                "question": null,
-                                "type": "never"
-                            },
-                            "external_id": null,
-                            "name_path": null
-                        },
-                        "open_referral": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "OpenReferralAction",
-                            "followup_date": null,
-                            "name_path": null
-                        },
-                        "referral_preload": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "PreloadAction",
-                            "preload": {}
-                        },
-                        "subcases": [],
-                        "update_case": {
-                            "condition": {
-                                "answer": null,
-                                "question": null,
-                                "type": "never"
-                            },
-                            "update": {}
-                        },
-                        "update_referral": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "UpdateReferralAction",
-                            "followup_date": null
-                        }
-                    },
-                    "doc_type": "Form",
-                    "form_filter": "",
-                    "media_audio": null,
-                    "media_image": null,
-                    "name": {
-                        "en": "Birth"
-                    },
-                    "requires": "case",
-                    "show_count": false,
-                    "unique_id": "538d23121fba3a4a039fa1071ea9ecc6e4ab50e6",
-                    "version": null,
-                    "xmlns": "http://openrosa.org/formdesigner/9AE3F6A0-346C-4E70-BF22-F2DB6F1254F7"
-                }
-            ],
-            "media_audio": null,
-            "media_image": null,
-            "name": {
-                "en": "Parent"
-            },
-            "put_in_root": false,
-            "referral_label": {
-                "en": "Referrals"
-            },
-            "referral_list": {
-                "doc_type": "CaseList",
-                "label": {},
-                "show": false
-            },
-            "task_list": {
-                "doc_type": "CaseList",
-                "label": {},
-                "show": false
-            },
-            "unique_id": "m1"
-        },
-        {
-            "case_label": {
-                "en": "Cases"
-            },
-            "case_list": {
-                "doc_type": "CaseList",
-                "label": {
-                    "en": "Children"
-                },
-                "show": true
-            },
-            "case_type": "child",
-            "details": [
-                {
-                    "columns": [
-                        {
-                            "advanced": "",
-                            "enum": {},
-                            "field": "parent/name",
-                            "filter_xpath": "",
-                            "format": "plain",
-                            "header": {
-                                "en": "Parent Name"
-                            },
-                            "late_flag": 30,
-                            "model": "case",
-                            "time_ago_interval": 365.25
-                        },
-                        {
-                            "advanced": "",
-                            "enum": {},
-                            "field": "parent/age",
-                            "filter_xpath": "",
-                            "format": "plain",
-                            "header": {
-                                "en": "Parent Age"
-                            },
-                            "late_flag": 30,
-                            "model": "case",
-                            "time_ago_interval": 365.25
-                        },
-                        {
-                            "advanced": "",
-                            "enum": {},
-                            "field": "parent/only_parent_has_this",
-                            "filter_xpath": "",
-                            "format": "plain",
-                            "header": {
-                                "en": "Parent Only Parent Has This"
-                            },
-                            "late_flag": 30,
-                            "model": "case",
-                            "time_ago_interval": 365.25
-                        }
-                    ],
-                    "doc_type": "Detail",
-                    "type": "case_short"
-                },
-                {
-                    "columns": [
-                        {
-                            "advanced": "",
-                            "enum": {},
-                            "field": "parent/name",
-                            "filter_xpath": "",
-                            "format": "plain",
-                            "header": {
-                                "en": "Parent Name"
-                            },
-                            "late_flag": 30,
-                            "model": "case",
-                            "time_ago_interval": 365.25
-                        },
-                        {
-                            "advanced": "",
-                            "enum": {},
-                            "field": "parent/age",
-                            "filter_xpath": "",
-                            "format": "plain",
-                            "header": {
-                                "en": "Parent Age"
-                            },
-                            "late_flag": 30,
-                            "model": "case",
-                            "time_ago_interval": 365.25
-                        },
-                        {
-                            "advanced": "",
-                            "enum": {},
-                            "field": "name",
-                            "filter_xpath": "",
-                            "format": "plain",
-                            "header": {
-                                "en": "Name"
-                            },
-                            "late_flag": 30,
-                            "model": "case",
-                            "time_ago_interval": 365.25
-                        },
-                        {
-                            "advanced": "",
-                            "enum": {},
-                            "field": "age",
-                            "filter_xpath": "",
-                            "format": "plain",
-                            "header": {
-                                "en": "Age"
-                            },
-                            "late_flag": 30,
-                            "model": "case",
-                            "time_ago_interval": 365.25
-                        },
-                        {
-                            "advanced": "",
-                            "enum": {},
-                            "field": "parent/only_parent_has_this",
-                            "filter_xpath": "",
-                            "format": "plain",
-                            "header": {
-                                "en": "Parent Only Parent Has This"
-                            },
-                            "late_flag": 30,
-                            "model": "case",
-                            "time_ago_interval": 365.25
-                        }
-                    ],
-                    "doc_type": "Detail",
-                    "type": "case_long"
-                },
-                {
-                    "columns": [],
-                    "doc_type": "Detail",
-                    "type": "ref_short"
-                },
-                {
-                    "columns": [],
-                    "doc_type": "Detail",
-                    "type": "ref_long"
-                }
-            ],
-            "doc_type": "Module",
-            "forms": [
-                {
-                    "actions": {
-                        "case_preload": {
-                            "condition": {
-                                "answer": null,
-                                "question": null,
-                                "type": "never"
-                            },
-                            "preload": {}
-                        },
-                        "close_case": {
-                            "condition": {
-                                "answer": null,
-                                "question": null,
-                                "type": "never"
-                            }
-                        },
-                        "close_referral": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "FormAction"
-                        },
-                        "open_case": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "OpenCaseAction",
-                            "external_id": null,
-                            "name_path": null
-                        },
-                        "open_referral": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "OpenReferralAction",
-                            "followup_date": null,
-                            "name_path": null
-                        },
-                        "referral_preload": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "PreloadAction",
-                            "preload": {}
-                        },
-                        "subcases": [],
-                        "update_case": {
-                            "condition": {
-                                "answer": null,
-                                "question": null,
-                                "type": "never"
-                            },
-                            "update": {}
-                        },
-                        "update_referral": {
-                            "condition": {
-                                "answer": null,
-                                "doc_type": "FormActionCondition",
-                                "question": null,
-                                "type": "never"
-                            },
-                            "doc_type": "UpdateReferralAction",
-                            "followup_date": null
-                        }
-                    },
-                    "doc_type": "Form",
-                    "form_filter": "",
-                    "media_audio": null,
-                    "media_image": null,
-                    "name": {
-                        "en": "See Child"
-                    },
-                    "requires": "case",
-                    "show_count": false,
-                    "unique_id": "fff4f8c2d3a8f5fa57488def9f503f3edd2480cc",
-                    "version": null,
-                    "xmlns": "http://openrosa.org/formdesigner/E9150118-F8F7-489E-92AF-8F739E7D2297"
-                }
-            ],
-            "media_audio": null,
-            "media_image": null,
-            "name": {
-                "en": "Child"
-            },
-            "put_in_root": false,
-            "referral_label": {
-                "en": "Referrals"
-            },
-            "referral_list": {
-                "doc_type": "CaseList",
-                "label": {},
-                "show": false
-            },
-            "task_list": {
-                "doc_type": "CaseList",
-                "label": {},
-                "show": false
-            },
-            "unique_id": "m2"
-        }
-    ],
-    "multimedia_map": {},
-    "name": "Subcase Details",
-    "phone_model": null,
-    "platform": "nokia/s40",
-    "profile": {
-        "features": {
-            "sense": "false",
-            "users": "true"
-        },
-        "properties": {
-            "ViewStyle": "v_chatterbox",
-            "cc-autosync-freq": "freq-weekly",
-            "cc-autoup-freq": "freq-never",
-            "cc-content-valid": "no",
-            "cc-entry-mode": "cc-entry-quick",
-            "cc-review-days": "7",
-            "cc-send-procedure": "cc-send-http",
-            "cc-send-unsent": null,
-            "cc-user-mode": "cc-u-normal",
-            "extra_key_action": "cycle",
-            "log_prop_daily": "log_never",
-            "log_prop_weekly": "log_short",
-            "logenabled": "Enabled",
-            "loose_media": "no",
-            "password_format": "n",
-            "purge-freq": "0",
-            "restore-tolerance": "loose",
-            "server-tether": "sync",
-            "user_reg_server": "required"
-        }
-    },
-    "recipients": "",
-    "short_description": null,
-    "show_user_registration": false,
-    "success_message": {
-        "en": ""
-    },
-    "text_input": "roman",
-    "translations": {},
-    "use_custom_suite": false,
-    "user_registration": {
-        "actions": {
+          "actions": {
             "case_preload": {
-                "condition": {
-                    "answer": null,
-                    "doc_type": "FormActionCondition",
-                    "question": null,
-                    "type": "never"
-                },
-                "doc_type": "PreloadAction",
-                "preload": {}
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "PreloadAction",
+              "preload": {}
             },
             "close_case": {
-                "condition": {
-                    "answer": null,
-                    "doc_type": "FormActionCondition",
-                    "question": null,
-                    "type": "never"
-                },
-                "doc_type": "FormAction"
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "FormAction"
             },
             "close_referral": {
-                "condition": {
-                    "answer": null,
-                    "doc_type": "FormActionCondition",
-                    "question": null,
-                    "type": "never"
-                },
-                "doc_type": "FormAction"
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "FormAction"
             },
-            "doc_type": "FormActions",
             "open_case": {
-                "condition": {
-                    "answer": null,
-                    "doc_type": "FormActionCondition",
-                    "question": null,
-                    "type": "never"
-                },
-                "doc_type": "OpenCaseAction",
-                "external_id": null,
-                "name_path": null
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "always"
+              },
+              "external_id": null,
+              "name_update": {
+                "name_update": "/data/parent_name"
+              }
             },
             "open_referral": {
-                "condition": {
-                    "answer": null,
-                    "doc_type": "FormActionCondition",
-                    "question": null,
-                    "type": "never"
-                },
-                "doc_type": "OpenReferralAction",
-                "followup_date": null,
-                "name_path": null
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "OpenReferralAction",
+              "followup_date": null,
+              "name_path": null
             },
             "referral_preload": {
-                "condition": {
-                    "answer": null,
-                    "doc_type": "FormActionCondition",
-                    "question": null,
-                    "type": "never"
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "PreloadAction",
+              "preload": {}
+            },
+            "subcases": [
+              {
+                "name_update": {
+                  "question_path": "/data/child_name"
                 },
-                "doc_type": "PreloadAction",
-                "preload": {}
+                "case_properties": {
+                  "age": {
+                    "question_path": "/data/child_age"
+                  }
+                },
+                "case_type": "child",
+                "condition": {
+                  "answer": null,
+                  "question": null,
+                  "type": "always"
+                },
+                "repeat_context": null
+              }
+            ],
+            "update_case": {
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "always"
+              },
+              "update": {
+                "age": {
+                  "question_path": "/data/parent_age",
+                  "update_mode": "always"
+                },
+                "only_parent_has_this": {
+                  "question_path": "/data/parent_age",
+                  "update_mode": "always"
+                }
+              }
+            },
+            "update_referral": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "UpdateReferralAction",
+              "followup_date": null
+            }
+          },
+          "doc_type": "Form",
+          "form_filter": "",
+          "media_audio": null,
+          "media_image": null,
+          "name": {
+            "en": "Register"
+          },
+          "requires": "none",
+          "show_count": false,
+          "unique_id": "e2a8d5278f67e88093d58ae2b8636ae8ead0ed39",
+          "version": null,
+          "xmlns": "http://openrosa.org/formdesigner/08BD410C-7F70-49D0-8603-E4E9521CFFBB"
+        },
+        {
+          "actions": {
+            "case_preload": {
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "never"
+              },
+              "preload": {}
+            },
+            "close_case": {
+              "condition": {
+                "answer": "no",
+                "question": "/data/question1",
+                "type": "if"
+              }
+            },
+            "close_referral": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "FormAction"
+            },
+            "open_case": {
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "never"
+              },
+              "external_id": null,
+              "name_update": null
+            },
+            "open_referral": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "OpenReferralAction",
+              "followup_date": null,
+              "name_path": null
+            },
+            "referral_preload": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "PreloadAction",
+              "preload": {}
             },
             "subcases": [],
             "update_case": {
-                "condition": {
-                    "answer": null,
-                    "doc_type": "FormActionCondition",
-                    "question": null,
-                    "type": "never"
-                },
-                "doc_type": "UpdateCaseAction",
-                "update": {}
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "never"
+              },
+              "update": {}
             },
             "update_referral": {
-                "condition": {
-                    "answer": null,
-                    "doc_type": "FormActionCondition",
-                    "question": null,
-                    "type": "never"
-                },
-                "doc_type": "UpdateReferralAction",
-                "followup_date": null
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "UpdateReferralAction",
+              "followup_date": null
             }
+          },
+          "doc_type": "Form",
+          "form_filter": "",
+          "media_audio": null,
+          "media_image": null,
+          "name": {
+            "en": "Birth"
+          },
+          "requires": "case",
+          "show_count": false,
+          "unique_id": "538d23121fba3a4a039fa1071ea9ecc6e4ab50e6",
+          "version": null,
+          "xmlns": "http://openrosa.org/formdesigner/9AE3F6A0-346C-4E70-BF22-F2DB6F1254F7"
+        }
+      ],
+      "media_audio": null,
+      "media_image": null,
+      "name": {
+        "en": "Parent"
+      },
+      "put_in_root": false,
+      "referral_label": {
+        "en": "Referrals"
+      },
+      "referral_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
+      },
+      "task_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
+      },
+      "unique_id": "m1",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "date-opened",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Date"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "type": "case_short"
         },
-        "data_paths": {},
-        "doc_type": "UserRegistrationForm",
-        "name": {},
-        "password_path": "password",
-        "requires": "none",
-        "show_count": false,
-        "unique_id": "f4d25a2d22370c23322b9bb86b09cd57bd32b37f",
-        "username_path": "username",
-        "version": null,
-        "xmlns": null
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "case_long"
+        }
+      },
+      "ref_details": {
+        "short": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "ref_short"
+        },
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "ref_long"
+        }
+      }
     },
-    "user_type": null
+    {
+      "case_label": {
+        "en": "Cases"
+      },
+      "case_list": {
+        "doc_type": "CaseList",
+        "label": {
+          "en": "Children"
+        },
+        "show": true
+      },
+      "case_type": "child",
+      "doc_type": "Module",
+      "forms": [
+        {
+          "actions": {
+            "case_preload": {
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "never"
+              },
+              "preload": {}
+            },
+            "close_case": {
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "close_referral": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "FormAction"
+            },
+            "open_case": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "OpenCaseAction",
+              "external_id": null,
+              "name_update": null
+            },
+            "open_referral": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "OpenReferralAction",
+              "followup_date": null,
+              "name_path": null
+            },
+            "referral_preload": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "PreloadAction",
+              "preload": {}
+            },
+            "subcases": [],
+            "update_case": {
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "never"
+              },
+              "update": {}
+            },
+            "update_referral": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "UpdateReferralAction",
+              "followup_date": null
+            }
+          },
+          "doc_type": "Form",
+          "form_filter": "",
+          "media_audio": null,
+          "media_image": null,
+          "name": {
+            "en": "See Child"
+          },
+          "requires": "case",
+          "show_count": false,
+          "unique_id": "fff4f8c2d3a8f5fa57488def9f503f3edd2480cc",
+          "version": null,
+          "xmlns": "http://openrosa.org/formdesigner/E9150118-F8F7-489E-92AF-8F739E7D2297"
+        }
+      ],
+      "media_audio": null,
+      "media_image": null,
+      "name": {
+        "en": "Child"
+      },
+      "put_in_root": false,
+      "referral_label": {
+        "en": "Referrals"
+      },
+      "referral_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
+      },
+      "task_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
+      },
+      "unique_id": "m2",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "parent/name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Parent Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "parent/age",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Parent Age"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "parent/only_parent_has_this",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Parent Only Parent Has This"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "type": "case_short"
+        },
+        "long": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "parent/name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Parent Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "parent/age",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Parent Age"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "age",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Age"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "parent/only_parent_has_this",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Parent Only Parent Has This"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "type": "case_long"
+        }
+      },
+      "ref_details": {
+        "short": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "ref_short"
+        },
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "ref_long"
+        }
+      }
+    }
+  ],
+  "multimedia_map": {},
+  "name": "Subcase Details",
+  "phone_model": null,
+  "profile": {
+    "features": {
+      "users": "true"
+    },
+    "properties": {
+      "cc-autosync-freq": "freq-weekly",
+      "cc-autoup-freq": "freq-never",
+      "cc-content-valid": "no",
+      "cc-review-days": "7",
+      "log_prop_daily": "log_never",
+      "log_prop_weekly": "log_short",
+      "logenabled": "Enabled",
+      "loose_media": "no",
+      "purge-freq": "0",
+      "restore-tolerance": "loose",
+      "user_reg_server": "required"
+    }
+  },
+  "recipients": "",
+  "short_description": null,
+  "show_user_registration": false,
+  "success_message": {
+    "en": ""
+  },
+  "translations": {},
+  "use_custom_suite": false,
+  "user_registration": {
+    "actions": {
+      "case_preload": {
+        "condition": {
+          "answer": null,
+          "doc_type": "FormActionCondition",
+          "question": null,
+          "type": "never"
+        },
+        "doc_type": "PreloadAction",
+        "preload": {}
+      },
+      "close_case": {
+        "condition": {
+          "answer": null,
+          "doc_type": "FormActionCondition",
+          "question": null,
+          "type": "never"
+        },
+        "doc_type": "FormAction"
+      },
+      "close_referral": {
+        "condition": {
+          "answer": null,
+          "doc_type": "FormActionCondition",
+          "question": null,
+          "type": "never"
+        },
+        "doc_type": "FormAction"
+      },
+      "doc_type": "FormActions",
+      "open_case": {
+        "condition": {
+          "answer": null,
+          "doc_type": "FormActionCondition",
+          "question": null,
+          "type": "never"
+        },
+        "doc_type": "OpenCaseAction",
+        "external_id": null,
+        "name_update": null
+      },
+      "open_referral": {
+        "condition": {
+          "answer": null,
+          "doc_type": "FormActionCondition",
+          "question": null,
+          "type": "never"
+        },
+        "doc_type": "OpenReferralAction",
+        "followup_date": null,
+        "name_path": null
+      },
+      "referral_preload": {
+        "condition": {
+          "answer": null,
+          "doc_type": "FormActionCondition",
+          "question": null,
+          "type": "never"
+        },
+        "doc_type": "PreloadAction",
+        "preload": {}
+      },
+      "subcases": [],
+      "update_case": {
+        "condition": {
+          "answer": null,
+          "doc_type": "FormActionCondition",
+          "question": null,
+          "type": "never"
+        },
+        "doc_type": "UpdateCaseAction",
+        "update": {}
+      },
+      "update_referral": {
+        "condition": {
+          "answer": null,
+          "doc_type": "FormActionCondition",
+          "question": null,
+          "type": "never"
+        },
+        "doc_type": "UpdateReferralAction",
+        "followup_date": null
+      }
+    },
+    "data_paths": {},
+    "doc_type": "UserRegistrationForm",
+    "name": {},
+    "password_path": "password",
+    "requires": "none",
+    "show_count": false,
+    "unique_id": "f4d25a2d22370c23322b9bb86b09cd57bd32b37f",
+    "username_path": "username",
+    "version": null,
+    "xmlns": null
+  },
+  "user_type": null
 }

@@ -208,21 +208,26 @@ class RelyingPartyDetailsForm(forms.Form):
         self.idp = identity_provider
         super().__init__(*args, **kwargs)
 
+        if self.idp.idp_type == IdentityProviderType.OKTA:
+            self.fields['redirect_uris'].label = gettext("Sign-in redirect URIs ")
+            self.fields['logout_redirect_uris'].label = gettext("Sign-out redirect URIs")
+            self.fields['login_url'].label = gettext("Initiate login URI")
+
     @property
     def application_details_fields(self):
+        login_url = url_helpers.get_oidc_login_url(self.idp)
+        auth_url = url_helpers.get_oidc_auth_url(self.idp)
+        logout_url = url_helpers.get_oidc_logout_url(self.idp)
+        if self.idp.idp_type == IdentityProviderType.OKTA:
+            return [
+                hqcrispy.B3TextField('redirect_uris', auth_url),
+                hqcrispy.B3TextField('logout_redirect_uris', logout_url),
+                hqcrispy.B3TextField('login_url', login_url),
+            ]
         return [
-            hqcrispy.B3TextField(
-                'login_url',
-                url_helpers.get_oidc_login_url(self.idp),
-            ),
-            hqcrispy.B3TextField(
-                'redirect_uris',
-                url_helpers.get_oidc_auth_url(self.idp),
-            ),
-            hqcrispy.B3TextField(
-                'logout_redirect_uris',
-                url_helpers.get_oidc_logout_url(self.idp),
-            ),
+            hqcrispy.B3TextField('login_url', login_url),
+            hqcrispy.B3TextField('redirect_uris', auth_url),
+            hqcrispy.B3TextField('logout_redirect_uris', logout_url),
         ]
 
 
@@ -409,7 +414,6 @@ class EditIdentityProviderAdminForm(forms.Form):
                 crispy.Div(*sp_details_form.service_provider_fields),
                 crispy.Div(*sp_details_form.token_encryption_fields),
             )
-            protocol_notice = current_protocol_name
         else:
             rp_details_form = RelyingPartyDetailsForm(identity_provider)
             self.fields.update(rp_details_form.fields)
@@ -417,13 +421,6 @@ class EditIdentityProviderAdminForm(forms.Form):
                 _('Relying Party Settings'),
                 'slug',
                 crispy.Div(*rp_details_form.application_details_fields),
-            )
-            # todo remove when OIDC is active
-            protocol_notice = format_html(
-                "{}<p class='alert alert-warning'>"
-                "<strong>Please Note that OIDC support is still in development!</strong><br/> "
-                "Do not make any Identity Providers live on production.</p>",
-                current_protocol_name
             )
 
         from corehq.apps.accounting.views import ManageBillingAccountView
@@ -448,7 +445,6 @@ class EditIdentityProviderAdminForm(forms.Form):
                 crispy.Div(
                     crispy.Fieldset(
                         _('Primary Configuration'),
-                        protocol_notice,
                         hqcrispy.B3TextField(
                             'owner',
                             format_html(
@@ -459,7 +455,7 @@ class EditIdentityProviderAdminForm(forms.Form):
                         ),
                         hqcrispy.B3TextField(
                             'protocol',
-                            protocol_notice
+                            current_protocol_name
                         ),
                         hqcrispy.B3TextField(
                             'idp_type',
@@ -823,7 +819,10 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         rp_details_form = RelyingPartyDetailsForm(identity_provider)
         self.fields.update(rp_details_form.fields)
 
-        self.fields['entity_id'].label = _("Issuer URL")
+        if self.idp.idp_type == IdentityProviderType.ONE_LOGIN:
+            self.fields['entity_id'].label = _("Issuer URL")
+        elif self.idp.idp_type == IdentityProviderType.OKTA:
+            self.fields['entity_id'].label = _("Issuer URI")
 
         if self.idp.client_secret:
             client_secret_toggles = crispy.Div(

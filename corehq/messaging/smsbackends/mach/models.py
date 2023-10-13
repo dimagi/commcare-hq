@@ -15,6 +15,8 @@ class SyniverseException(Exception):
 
 class SQLMachBackend(SQLSMSBackend):
 
+    url = MACH_URL
+
     class Meta(object):
         app_label = 'sms'
         proxy = True
@@ -98,7 +100,7 @@ class SQLMachBackend(SQLSMSBackend):
         except UnicodeEncodeError:
             params['msg'] = binascii.hexlify(msg.text.encode('utf-16-be'))
             params['encoding'] = 'ucs'
-        url = '%s?%s' % (MACH_URL, urllib.parse.urlencode(params))
+        url = '%s?%s' % (self.url, urllib.parse.urlencode(params))
         resp = urllib.request.urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read().decode('utf-8')
         self.handle_response(msg, resp)
         return resp

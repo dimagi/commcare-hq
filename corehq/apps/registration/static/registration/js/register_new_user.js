@@ -29,20 +29,6 @@ hqDefine('registration/js/register_new_user', [
         $('#registration-choose-plan-container').fadeIn();
     });
 
-    $('#book-a-time-btn').click(function () {
-        $('#start-trial-modal-header').text(gettext("Choose a time for your CommCare trial setup"));
-        $('#choose-callback-options').addClass('hidden');
-        $('#get-trial-cta-calendar-content').toggleClass('hidden');
-
-        // Causes the Schedule Once form to populate the element
-        // #SOIDIV_commcaretrialform as soon as it loads. Once it's
-        // loaded this does not leave the page. 
-        $.getScript('//cdn.scheduleonce.com/mergedjs/so.js')
-            .done(function () {
-                kissmetrics.track.event("Get Trial Workflow - Loaded Booking Options");
-            });
-    });
-
     kissmetrics.whenReadyAlways(function () {
 
         $('#js-start-trial').click(function () {

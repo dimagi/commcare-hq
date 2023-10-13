@@ -1,0 +1,2 @@
+class AttendeeTrackedException(Exception):
+    pass

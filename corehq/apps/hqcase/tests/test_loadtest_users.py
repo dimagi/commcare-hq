@@ -10,7 +10,6 @@ from casexml.apps.case.tests.util import (
     extract_caseblocks_from_xml,
 )
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.models import loadtest_users_enabled
 from casexml.apps.phone.restore import (
     RestoreConfig,
     RestoreParams,
@@ -53,16 +52,13 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
         cls.domain.delete()
         super(LoadtestUserTest, cls).tearDownClass()
 
-    def test_loadtest_users_enabled(self):
-        self.assertTrue(loadtest_users_enabled(DOMAIN))
-
     def test_no_factor_set(self):
         self.user.loadtest_factor = None
         self.user.save()
         case = self.factory.create_case()
         restore_config = RestoreConfig(
             project=self.domain,
-            restore_user=self.user.to_ota_restore_user(),
+            restore_user=self.user.to_ota_restore_user(self.domain.name),
             params=RestoreParams(version=V2)
         )
         payload_string = restore_config.get_payload().as_string()
@@ -77,7 +73,7 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
         case2 = self.factory.create_case(case_name='case2')
         restore_config = RestoreConfig(
             project=self.domain,
-            restore_user=self.user.to_ota_restore_user(),
+            restore_user=self.user.to_ota_restore_user(self.domain.name),
             params=RestoreParams(version=V2),
         )
         payload_string = restore_config.get_payload().as_string()
@@ -104,7 +100,7 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
         )
         restore_config = RestoreConfig(
             project=self.domain,
-            restore_user=self.user.to_ota_restore_user(),
+            restore_user=self.user.to_ota_restore_user(self.domain.name),
             params=RestoreParams(version=V2)
         )
         payload_string = restore_config.get_payload().as_string()

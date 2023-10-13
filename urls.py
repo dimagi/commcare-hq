@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
 
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.extensions import extension_points
 from corehq.apps.enterprise.urls import \
     domain_specific as enterprise_domain_specific
@@ -70,6 +71,7 @@ domain_specific = [
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
+    url(r'^geospatial/', include('corehq.apps.geospatial.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
     url(r'^up_nrhm/', include('custom.up_nrhm.urls')),
@@ -81,7 +83,7 @@ domain_specific = [
     url(r'^', include('corehq.motech.fhir.urls')),
     url(r'^openmrs/', include('corehq.motech.openmrs.urls')),
     url(r'^_base_template/$', login_and_domain_required(
-        lambda request, domain: render(request, 'hqwebapp/base_navigation.html', {'domain': domain})
+        lambda request, domain: render(request, 'hqwebapp/bootstrap3/base_navigation.html', {'domain': domain})
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
     url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
@@ -137,9 +139,9 @@ urlpatterns = [
     url(r'^builds/', include('corehq.apps.builds.urls')),
     url(r'^downloads/temp/', include('soil.urls')),
     url(r'^styleguide/', include('corehq.apps.styleguide.urls')),
-    url(r'^500/$', TemplateView.as_view(template_name='500.html')),
-    url(r'^404/$', TemplateView.as_view(template_name='404.html')),
-    url(r'^403/$', TemplateView.as_view(template_name='403.html')),
+    url(r'^500/$', use_bootstrap5(TemplateView.as_view(template_name='500.html'))),
+    url(r'^404/$', use_bootstrap5(TemplateView.as_view(template_name='404.html'))),
+    url(r'^403/$', use_bootstrap5(TemplateView.as_view(template_name='403.html'))),
     url(r'^eula/$', redirect_to_dimagi('terms/')),
     url(r'^product_agreement/$', redirect_to_dimagi('terms/')),
     url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),

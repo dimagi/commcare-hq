@@ -19,6 +19,7 @@ def main():
         GeventCommand('run_blob_migration'),
         GeventCommand('check_blob_logs'),
         GeventCommand('preindex_everything'),
+        GeventCommand('migrate'),
         GeventCommand('migrate_multi'),
         GeventCommand('prime_views'),
         GeventCommand('ptop_preindex'),
@@ -29,7 +30,9 @@ def main():
         GeventCommand('run_aggregation_query'),
         GeventCommand('send_pillow_retry_queue_through_pillows'),
         GeventCommand('run_all_management_command'),
-        GeventCommand('copy_events_to_sql', http_adapter_pool_size=32)
+        GeventCommand('copy_events_to_sql', http_adapter_pool_size=32),
+        GeventCommand('verify_ssl_connections'),
+        GeventCommand('elastic_sync_multiplexed'),
     )
     _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 
@@ -114,27 +117,6 @@ def _set_source_root(source_root):
 
 def run_patches():
     patch_jsonfield()
-    patch_celery_task()
-
-
-def patch_celery_task():
-    from django.utils.functional import cached_property
-
-    class TaskModule:
-        __all__ = ["task", "periodic_task"]
-
-        @cached_property
-        def task(self):
-            from corehq.apps.celery.shared_task import task
-            return task
-
-        @cached_property
-        def periodic_task(self):
-            from corehq.apps.celery.periodic import periodic_task
-            return periodic_task
-
-    sys.modules["celery.task"] = TaskModule()
-    sys.modules["celery.task.base"] = TaskModule()
 
 
 def patch_jsonfield():

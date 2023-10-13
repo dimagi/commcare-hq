@@ -109,7 +109,8 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
         DataSource = to_function(params['report'])
 
-        assert issubclass(DataSource, ReportDataSource), '[%s] does not implement the ReportDataSource API!' % params['report']
+        assert issubclass(DataSource, ReportDataSource), \
+            f"[{params['report']}] does not implement the ReportDataSource API!"
 
         return DataSource(config).get_data()
 

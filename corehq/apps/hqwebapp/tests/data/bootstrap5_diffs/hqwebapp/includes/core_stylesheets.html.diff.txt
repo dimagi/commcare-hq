@@ -1,0 +1,35 @@
+--- 
++++ 
+@@ -2,20 +2,16 @@
+ {% load hq_shared_tags %}
+ 
+ {% compress css %}
+-    <link type="text/less"
+-          rel="stylesheet"
+-          media="all"
+-          href="{% static 'hqwebapp/less/bootstrap.less' %}" />
+-    <link type="text/less"
+-          rel="stylesheet"
+-          media="all"
+-          href="{% static 'font-awesome/less/font-awesome.less' %}" />
+-    <link type="text/less"
+-          rel="stylesheet"
+-          media="all"
+-          href="{% static 'hqwebapp/less/font-commcare.less' %}" />
+-    <link type="text/less"
+-          rel="stylesheet"
+-          media="all"
+-          href="{% static 'hqwebapp/less/style.less' %}" />
++  <link type="text/less"
++        rel="stylesheet"
++        media="all"
++        href="{% static 'font-awesome/less/font-awesome.less' %}" />
++  <link type="text/less"
++        rel="stylesheet"
++        media="all"
++        href="{% static 'hqwebapp/less/font-commcare.less' %}" />
++  <link type="text/scss"
++        rel="stylesheet"
++        media="all"
++        href="{% static 'hqwebapp/scss/commcarehq.scss' %}" />
+ {% endcompress %}

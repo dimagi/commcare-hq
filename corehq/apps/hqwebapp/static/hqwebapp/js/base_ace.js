@@ -3,20 +3,21 @@ hqDefine('hqwebapp/js/base_ace', [
     'underscore',
     'knockout',
     'ace-builds/src-min-noconflict/ace',
-    'ace-builds/src-min-noconflict/mode-json',
-    'ace-builds/src-min-noconflict/mode-xml',
-    'ace-builds/src-min-noconflict/ext-searchbox',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     _,
     ko,
     ace,
-    jsonMode,  // eslint-disable-line no-unused-vars
-    xmlMode,   // eslint-disable-line no-unused-vars
-    searchBox  // eslint-disable-line no-unused-vars
+    initialPageData
 ) {
-
+    var self = {};
     self.editor = [];
+
+    ace.config.set('basePath', initialPageData.get('ace_base_path'));
+    ace.require("ace/mode/json");
+    ace.require("ace/mode/xml");
+    ace.require("ace/ext/searchbox");
 
     var initAceEditor = function (element, mode, options, value) {
         var defaultOptions = {

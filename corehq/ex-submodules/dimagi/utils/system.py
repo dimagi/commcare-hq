@@ -15,7 +15,7 @@ def shell_exec(cmd, cwd=None):
     note: common directories will be automatically added to the syspath"""
     try:
         return shell_exec_checked(cmd, cwd)
-    except ShellCommandError as e:
+    except ShellCommandError:
         logging.exception('error executing command [%s]' % cmd)
         return None
 

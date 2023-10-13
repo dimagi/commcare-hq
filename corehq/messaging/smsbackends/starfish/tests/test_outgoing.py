@@ -17,7 +17,7 @@ class TestStarfishBackend(SimpleTestCase):
         )
         msg.save = lambda: None  # prevent db access in SimpleTestCase
         with requests_mock.Mocker() as mock:
-            mock.get(StarfishBackend.get_url(), **kwargs)
+            mock.get(StarfishBackend.url, **kwargs)
             StarfishBackend().send(msg)
         return msg
 

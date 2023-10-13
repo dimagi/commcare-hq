@@ -22,6 +22,7 @@ class GetTaskStatusTest(SimpleTestCase):
         )), TaskStatus(
             result=None,
             error=None,
+            exception=None,
             state=STATES.missing,
             progress=TaskProgress(
                 current=None,
@@ -48,6 +49,7 @@ class GetTaskStatusTest(SimpleTestCase):
         )), TaskStatus(
             result=None,
             error=None,
+            exception=None,
             state=STATES.started,
             progress=TaskProgress(
                 current=17076,

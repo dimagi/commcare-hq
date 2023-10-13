@@ -1,12 +1,12 @@
 from collections import defaultdict, namedtuple
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.conf import settings
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
-from corehq.apps.data_dictionary.util import get_data_dict_case_types
+from corehq.apps.data_dictionary.util import get_data_dict_case_types, get_data_dict_deprecated_case_types
 from corehq.apps.es import (
     CaseES,
     CaseSearchES,
@@ -633,7 +633,7 @@ def get_case_search_types_for_domain_es(domain):
     return get_case_types_for_domain_es(domain, True)
 
 
-def get_case_types_for_domain(domain):
+def get_case_types_for_domain(domain, include_deprecated=False):
     """
     Returns case types for which there is at least one existing case and any
     defined in the data dictionary, which includes those referenced in an app
@@ -641,4 +641,8 @@ def get_case_types_for_domain(domain):
     """
     es_types = get_case_types_for_domain_es(domain)
     data_dict_types = get_data_dict_case_types(domain)
-    return es_types | data_dict_types
+    all_case_types = es_types | data_dict_types
+    if not include_deprecated:
+        deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+        all_case_types -= deprecated_case_types
+    return all_case_types

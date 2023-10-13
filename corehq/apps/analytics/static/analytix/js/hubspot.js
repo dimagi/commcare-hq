@@ -43,12 +43,11 @@ hqDefine('analytix/js/hubspot', [
     });
 
     /**
-     * Activates the Hubspot Request Demo form and loads a Schedule Once Calendar
-     * Widget for auto-booking an appointment as soon as the form is submitted.
+     * Activates the Hubspot Request Demo form
      */
     _utils.loadDemoForm = function () {
         let isTrial = _get('isDemoTrial'),
-            isVariant = _get('demoABv2').version === 'variant',
+            isVariant = _get('demoABv2') && _get('demoABv2').version === 'variant',
             $modal = $('#cta-form-get-demo'),
             $form = $('#get-demo-cta-form-content'),
             hasInteractedWithForm = false,
@@ -67,44 +66,13 @@ hqDefine('analytix/js/hubspot', [
             showPreferredLanguage: false,
             useWhatsApp: false,
             useGoogleHangouts: true,
-            nextButtonText: gettext("Book a Time"),
+            nextButtonText: gettext("Submit Request"),
             phoneNumberSelector: $form.find('input[name="phone"]'),
             submitCallbackFn: function () {
-                $('#get-demo-cta-calendar-content').fadeIn();
-                $('#get-demo-cta-form-content').addClass('hidden');
+                $('#get-demo-cta-success').fadeIn();
+                $('#get-demo-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration
 
                 kissmetrics.track.event("Demo Workflow - Contact Info Received");
-
-                // Causes the Schedule Once form to populate the element
-                // #SOIDIV_commcaredemoform as soon as it loads. Once it's
-                // loaded this does not leave the page.
-
-                $.getScript('//cdn.scheduleonce.com/mergedjs/so.js')
-                    .done(function () {
-                        kissmetrics.track.event("Demo Workflow - Loaded Booking Options");
-                        setTimeout(function () {
-                            // This is a bit of a hack, but the only way to detect if
-                            // the Schedule Once Form was submitted on our side.
-                            // The style attribute changes when the form is successfully
-                            // submitted.
-                            let lastKnownHeight = 0,
-                                observer = new MutationObserver(function (mutations) {
-                                    mutations.forEach(function () {
-                                        var newHeight = $('#SOI_commcaredemoform').height();
-                                        if (newHeight < lastKnownHeight) {
-                                            var coreUrl = document.location.href.split('?')[0];
-                                            kissmetrics.track.event("Demo Workflow - Demo Scheduled");
-                                            $('#cta-form-get-demo').off('hide.bs.modal');
-                                            window.history.pushState({}, document.title, coreUrl);
-                                        }
-                                        lastKnownHeight = newHeight;
-                                    });
-                                });
-                            // target is the the iframe containing the schedule once form
-                            let target = document.getElementById('SOI_commcaredemoform');
-                            observer.observe(target, { attributes: true, attributeFilter: ['style'] });
-                        }, 3000);
-                    });
             },
         });
         if ($form.length) {
@@ -127,8 +95,7 @@ hqDefine('analytix/js/hubspot', [
     };
 
     /**
-     * Activates the Hubspot Request Trial form and loads a Schedule Once Calendar
-     * Widget for auto-booking an appointment as soon as the form is submitted.
+     * Activates the Hubspot Request Trial form
      */
     _utils.loadTrialForm = function () {
         let $modal = $('#cta-form-start-trial'),
@@ -150,12 +117,9 @@ hqDefine('analytix/js/hubspot', [
             phoneNumberSelector: $form.find('input[name="phone"]'),
             submitCallbackFn: function () {
                 kissmetrics.track.event("Get Trial Workflow - Contact Info Received");
-                // This nastiness is required for Schedule Once to auto-fill
-                // required fields. Sending snark++ the way of the S.O. devs...
 
-                // on form submitted?
-                $('#choose-callback-options').toggleClass('hidden');
-                $('#get-trial-cta-form-content').addClass('hidden');
+                $('#choose-callback-options').toggleClass('hidden').toggleClass('d-none'); // todo after bootstrap 5 migration
+                $('#get-trial-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration
                 $('#start-trial-modal-header').text(gettext("Your trial request has been received!"));
             },
         });

@@ -35,7 +35,7 @@ DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 # Setting to declare always_enabled/always_disabled toggle states for domains
 #   declaring toggles here avoids toggle lookups from cache for all requests.
 #   Example format
-#   STATIC_TOGGLES_STATES = {
+#   STATIC_TOGGLE_STATES = {
 #     'toggle_slug': {
 #         'always_enabled': ['domain1', 'domain2],
 #         'always_disabled': ['domain4', 'domain3],
@@ -170,6 +170,7 @@ MIDDLEWARE = [
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
     # middleware that adds cookies must come before SecureCookiesMiddleware
     'corehq.middleware.SecureCookiesMiddleware',
+    'field_audit.middleware.FieldAuditMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -189,6 +190,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'corehq.apps.domain.auth.ApiKeyFallbackBackend',
     'corehq.apps.sso.backends.SsoBackend',
+    'corehq.apps.domain.auth.ConnectIDAuthBackend'
 ]
 
 PASSWORD_HASHERS = (
@@ -220,6 +222,8 @@ DEFAULT_APPS = (
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
+    'crispy_bootstrap3to5',
+    'field_audit',
     'gunicorn',
     'compressor',
     'tastypie',
@@ -238,11 +242,13 @@ SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
 
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
-CRISPY_ALLOWED_TEMPLATE_PACKS = (
-    'bootstrap',
-    'bootstrap3',
-)
+CRISPY_TEMPLATE_PACK = 'bootstrap3to5'
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3to5"
+
+FIELD_AUDIT_AUDITORS = [
+    "corehq.apps.users.auditors.HQAuditor",
+    "field_audit.auditors.SystemUserAuditor",
+]
 
 HQ_APPS = (
     'django_digest',
@@ -283,7 +289,7 @@ HQ_APPS = (
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
     'corehq.sql_proxy_standby_accessors',
-    'corehq.pillows.app_config.PillowsAppConfig',
+    'corehq.pillows',
     'couchforms',
     'couchexport',
     'dimagi.utils',
@@ -307,6 +313,8 @@ HQ_APPS = (
     'corehq.apps.groups',
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
+    'corehq.apps.events',
+    'corehq.apps.geospatial',
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
@@ -390,6 +398,7 @@ HQ_APPS = (
     'custom.onse',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
+    'custom.hmhb',
 
     'custom.ccqa',
 
@@ -441,7 +450,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "hqwebapp/base_navigation.html"
+BASE_TEMPLATE = "hqwebapp/bootstrap3/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -517,12 +526,6 @@ USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
 
 
 BASE_ADDRESS = 'localhost:8000'
-J2ME_ADDRESS = ''
-
-# Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
-# Should include the protocol.
-# If this is None, get_url_base() will be used
-CLOUDCARE_BASE_URL = None
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -763,6 +766,7 @@ AVAILABLE_CUSTOM_RULE_ACTIONS = {
         'custom.covid.rules.custom_actions.set_all_activity_complete_date_to_today',
     'GCC_SANGATH_SANITIZE_SESSIONS_PEER_RATING':
         'custom.gcc_sangath.rules.custom_actions.sanitize_session_peer_rating',
+    'DFCI_SWASTH_UPDATE_COUNSELLOR_LOAD': 'custom.dfci_swasth.rules.custom_actions.update_counsellor_load',
 }
 
 ####### auditcare parameters #######
@@ -775,7 +779,7 @@ AUDIT_ADMIN_VIEWS = False
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
     'KISSMETRICS_KEY': '',
-    'HUBSPOT_API_KEY': '',
+    'HUBSPOT_ACCESS_TOKEN': '',
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
     'DRIFT_ID': '',
@@ -853,6 +857,30 @@ ELASTICSEARCH_MAJOR_VERSION = 2
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
+# The variables should be used while reindexing an index.
+# When the variables are set to true the data will be written to both primary and secondary indexes.
+
+ES_APPS_INDEX_MULTIPLEXED = False
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
+ES_CASES_INDEX_MULTIPLEXED = False
+ES_DOMAINS_INDEX_MULTIPLEXED = False
+ES_FORMS_INDEX_MULTIPLEXED = False
+ES_GROUPS_INDEX_MULTIPLEXED = False
+ES_SMS_INDEX_MULTIPLEXED = False
+ES_USERS_INDEX_MULTIPLEXED = False
+
+
+# Setting the variable to True would mean that the primary index would become secondary and vice-versa
+# This should only be set to True after successfully running and verifying migration command on a particular index. 
+ES_APPS_INDEX_SWAPPED = False
+ES_CASE_SEARCH_INDEX_SWAPPED = False
+ES_CASES_INDEX_SWAPPED = False
+ES_DOMAINS_INDEX_SWAPPED = False
+ES_FORMS_INDEX_SWAPPED = False
+ES_GROUPS_INDEX_SWAPPED = False
+ES_SMS_INDEX_SWAPPED = False
+ES_USERS_INDEX_SWAPPED = False
+
 BITLY_OAUTH_TOKEN = None
 
 OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
@@ -873,6 +901,8 @@ OAUTH2_PROVIDER = {
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
         'reports:view': 'Allow users to view and download all report data',
+        'mobile_access': 'Allow access to mobile sync and submit endpoints',
+        'sync': '(Deprecated, do not use) Allow access to mobile endpoints',
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
@@ -898,6 +928,7 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 # Django Compressor
 COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
+    ('text/scss', 'corehq.apps.hqwebapp.precompilers.SassFilter'),
 )
 # if not overwritten in localsettings, these will be replaced by the value they return
 # using the local DEBUG value (which we don't have access to here yet)
@@ -917,6 +948,8 @@ LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
+
+BOOTSTRAP_MIGRATION_LOGS_DIR = None
 
 USER_AGENTS_CACHE = 'default'
 
@@ -1024,6 +1057,14 @@ SENTRY_PROJECT_SLUG = 'commcarehq'
 SENTRY_API_KEY = None
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
+# 10MB max upload size - applied to specific views
+# consider migrating to `DATA_UPLOAD_MAX_MEMORY_SIZE` which is universally applied
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+
+# Size limit on attachment other than the xml form.
+MAX_UPLOAD_SIZE_ATTACHMENT = 15 * 1024 * 1024
+
 # Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
@@ -1037,8 +1078,6 @@ ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 
-UCR_COMPARISONS = {}
-
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 RULE_UPDATE_HOUR = 0
 
@@ -1050,22 +1089,8 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
-ELASTIC_ADAPTER_SETTINGS = {
-    "ElasticCase": {
-        # Set to True to remove the `actions` and `xform_id` fields from the
-        # Elastic "hqcases_..." index. These fields contribute high load to the
-        # shard databases.
-        "DROP_FORM_FIELDS": False,
-    },
-    "ElasticForm": {
-        # TODO: document what this is for
-        "DISABLE_ALL": False,
-    },
-}
-
-# TODO: remove these Elastic settings:
-ES_SETTINGS = None  # [do not use] legacy mechanism for tests
-CASE_ES_DROP_FORM_FIELDS = ELASTIC_ADAPTER_SETTINGS["ElasticCase"]["DROP_FORM_FIELDS"]
+# used to override low-level index settings (number_of_replicas, number_of_shards, etc)
+ES_SETTINGS = None
 
 PHI_API_KEY = None
 PHI_PASSWORD = None
@@ -1094,15 +1119,14 @@ OTP_STATIC_THROTTLE_FACTOR = 0
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
 RATE_LIMIT_SUBMISSIONS = False
 
+DATA_UPLOAD_MAX_NUMBER_FILES = None
+
 # If set to a positive number, exports requested more than this many seconds ago
 # without the email option will be quickly rejected.
 # This is useful for load-shedding in times of crisis.
 STALE_EXPORT_THRESHOLD = None
 
 REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
-# Use an experimental partitioning algorithm
-# that adds messages to the partition with the fewest unprocessed messages
-USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
 LOCAL_CUSTOM_DB_ROUTING = {}
 
@@ -1120,6 +1144,12 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 # to help in performance, avoid use of phone entries in an environment that does not need them
 # so HQ does not try to keep them up to date
 USE_PHONE_ENTRIES = True
+COMMCARE_ANALYTICS_HOST = ""
+
+# FCM Server creds used for sending FCM Push Notifications
+FCM_CREDS = None
+
+CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1165,6 +1195,12 @@ if callable(COMPRESS_OFFLINE):
 # Should you someday need to do so, use the lambda/if callable pattern above
 SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = SECURE_COOKIES = not DEBUG
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
+
+# This is commented because it is not required now. We don't need to instrument all the services rn on staging.
+# The below lines can be uncommented when we need to turn on app level tracing on any env.
+# if SERVER_ENVIRONMENT == 'staging':
+#     from ddtrace import patch_all
+#     patch_all()
 
 
 if UNIT_TESTING:
@@ -1231,13 +1267,16 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
-                'corehq.util.context_processors.banners',
+                'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
                 'corehq.util.context_processors.status_page',
+                'corehq.util.context_processors.sentry',
+                'corehq.util.context_processors.bootstrap5',
+                'corehq.util.context_processors.js_privileges',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1250,7 +1289,7 @@ TEMPLATES = [
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
@@ -1411,7 +1450,7 @@ LOGGING = {
         'celery.task': {
             'handlers': ['file'],
             'level': 'INFO',
-            'propagate': True
+            'propagate': False
         },
         'pillowtop': {
             'handlers': ['pillowtop'],
@@ -1513,7 +1552,6 @@ COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 # Couch database name suffixes
 USERS_GROUPS_DB = 'users'
-FIXTURES_DB = 'fixtures'
 DOMAINS_DB = 'domains'
 APPS_DB = 'apps'
 META_DB = 'meta'
@@ -1566,7 +1604,6 @@ COUCHDB_APPS = [
 
     # custom reports
     'accounting',
-    ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
@@ -1576,9 +1613,6 @@ COUCHDB_APPS = [
     # users and groups
     ('groups', USERS_GROUPS_DB),
     ('users', USERS_GROUPS_DB),
-
-    # fixtures
-    ('fixtures', FIXTURES_DB),
 
     # domains
     ('domain', DOMAINS_DB),
@@ -1590,7 +1624,7 @@ COUCHDB_APPS = [
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
-    [USERS_GROUPS_DB, FIXTURES_DB, DOMAINS_DB, APPS_DB],
+    [USERS_GROUPS_DB, DOMAINS_DB, APPS_DB],
     UNIT_TESTING
 )
 COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url
@@ -1646,7 +1680,6 @@ MESSAGE_TAGS = {
     messages.ERROR: 'alert-danger',
 }
 
-COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
 
 DEFAULT_CURRENCY = "USD"
@@ -1945,6 +1978,11 @@ DOMAIN_MODULE_MAP = {
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
     'kenya-vca': 'custom.abt',
+    'pmievolve-madagascar': 'custom.abt',
+    'pmievolve-malawi': 'custom.abt',
+    'pmievolve-mozambique': 'custom.abt',
+    'pmievolve-rwanda': 'custom.abt',
+    'pmievolve-zambia': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',
@@ -1997,15 +2035,6 @@ if 'locmem' not in CACHES:
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
 
-# Make django_redis use pickle.DEFAULT_PROTOCOL by default.
-# Remove after upgrading django_redis to a version that does that.
-# See also corehq.tests.test_pickle.test_django_redis_protocol
-from pickle import DEFAULT_PROTOCOL as _protocol
-for _value in CACHES.values():
-    if _value.get("BACKEND", "").startswith("django_redis"):
-        _value.setdefault("OPTIONS", {}).setdefault("PICKLE_VERSION", _protocol)
-del _value, _protocol
-
 
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
@@ -2037,10 +2066,11 @@ if not SENTRY_DSN:
             SENTRY_QUERY_URL is not longer needed.
             """), DeprecationWarning)
 
+COMMCARE_RELEASE = helper.get_release_name(BASE_DIR, SERVER_ENVIRONMENT)
 if SENTRY_DSN:
     if 'SENTRY_QUERY_URL' not in globals():
         SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
-    helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
+    helper.configure_sentry(SERVER_ENVIRONMENT, SENTRY_DSN, COMMCARE_RELEASE)
     SENTRY_CONFIGURED = True
 else:
     SENTRY_CONFIGURED = False
@@ -2063,3 +2093,5 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
+
+PERMANENT_DELETION_WINDOW = 30  # days

@@ -44,7 +44,7 @@
           <table id="report_table_{{ report.slug }}" class="table table-striped datatable" width="100%" {% if pagination.filter %} data-filter="true"{% endif %}>
             <thead>
             {%  if report_table.headers.complex %}
-              {{ report_table.headers.render_html|safe }}
+              {{ report_table.headers.render_html }}
             {% else %}
               {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
               <tr>
@@ -82,7 +82,7 @@
               <tfoot>
               <tr>
                 {% for col in report_table.total_row %}
-                  <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
+                  <td>{% if col.html != None %}{{ col.html }}{% else %}{{ col }}{% endif %}</td>
                 {% endfor %}
               </tr>
               </tfoot>
@@ -93,7 +93,7 @@
                 <tr>
                   {% for col in stats %}
                     {% if forloop.counter0 == 0 %}<th>{% else %}<td{% if col.css_class %} class="{{ col.css_class }}"{% endif %}>{% endif %}
-                  {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
+                  {% if col.html != None %}{{ col.html }}{% else %}{{ col }}{% endif %}
                     {% if forloop.counter0 == 0 %}</th>{% else %}</td>{% endif %}
                   {% endfor %}
                 </tr>

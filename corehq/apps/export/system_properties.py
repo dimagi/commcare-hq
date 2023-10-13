@@ -227,7 +227,7 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
             transform=USERNAME_TRANSFORM,
         ),
         help_text=_('The HQ user who submitted the form. This will be the same as username '
-                    'unless the form was submitted via Login As.'),
+                    'unless the form was submitted via Log In As.'),
         selected=True,
     ),
 ]

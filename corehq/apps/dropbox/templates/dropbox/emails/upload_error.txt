@@ -7,5 +7,5 @@ Something went wrong when uploading your file {{ path }} to dropbox:
 
 {% blocktrans %}
 Thanks,
-CommCareHQ Team
+CommCare HQ Team
 {% endblocktrans %}

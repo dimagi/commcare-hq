@@ -267,7 +267,7 @@
     <stack>
       <create>
         <command value="'m6'"/>
-        <command value="'m7'"/>
+        <command value="'m7.m6'"/>
         <command value="'m7-f0'"/>
         <datum id="case_id_new_patient_0" value="uuid()"/>
       </create>

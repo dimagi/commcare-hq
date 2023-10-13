@@ -4,7 +4,7 @@ hqDefine('case_importer/js/import_history', [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/components.ko',
+    'hqwebapp/js/bootstrap3/components.ko',
 ], function (
     $,
     ko,

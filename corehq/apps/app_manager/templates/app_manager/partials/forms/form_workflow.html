@@ -12,7 +12,8 @@
     <div class="form-group" data-bind="css: {'has-error': hasError, 'has-warning': hasWarning}">
       <select name="post_form_workflow" class="form-control" data-bind="
                 optstr: workflowOptions(),
-                value: workflow
+                value: workflow,
+                staticSelect2: {},
                 "></select>
       <div data-bind="visible: hasError" class="help-block">
         {% trans "This is an unknown value, possibly a deleted form. Please change this value." %}
@@ -48,7 +49,8 @@
           <select name="post_form_workflow_fallback" class="form-control" data-bind="
                         optstr: workflowFallbackOptions(),
                         value: workflowfallback,
-                        optionsCaption: 'Choose a fallback option...'
+                        optionsCaption: gettext('Choose a fallback option...'),
+                        staticSelect2: {},
                     "></select>
         </div>
       </div>
@@ -81,7 +83,8 @@
                   optionsText: 'name',
                   optionsValue: 'uniqueId',
                   optionsCaption: $parent.displayUnknownForm.call($parent, formLink),
-                  value: formLink.formId
+                  value: formLink.formId,
+                  staticSelect2: {},
                   "></select>
         <div data-bind="visible: formLink.allowManualLinking()">
           <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
@@ -110,6 +113,9 @@
           </div>
           <div class="help-block" data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0 && !formLink.autoLink()">
             {% trans "No additional linking required." %}
+          </div>
+          <div class="text-danger" data-bind="visible: formLink.datumsError()">
+            {% trans "Error fetching link data." %}
           </div>
         </div>
       </div>

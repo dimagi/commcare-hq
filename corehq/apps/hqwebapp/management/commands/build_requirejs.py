@@ -19,7 +19,7 @@ from corehq.apps.hqwebapp.management.commands.resource_static import \
     Command as ResourceStaticCommand
 from corehq.util.log import with_progress_bar
 
-logger = logging.getLogger('__name__')
+logger = logging.getLogger(__name__)
 ROOT_DIR = settings.FILEPATH
 BUILD_JS_FILENAME = "staticfiles/build.js"
 BUILD_TXT_FILENAME = "staticfiles/build.txt"
@@ -38,8 +38,12 @@ class Command(ResourceStaticCommand):
                  'Does not allow you to mimic CDN.')
         parser.add_argument('--no_optimize', action='store_true',
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
+        parser.add_argument('--bootstrap_version',
+                            default="bootstrap3",
+                            help="Specify bootstrap3 or bootstrap5 (bootstrap3 is default)")
 
     def handle(self, **options):
+        bootstrap_version = options.get('bootstrap_version')
         logger.setLevel('DEBUG')
 
         local = options['local']
@@ -55,20 +59,21 @@ class Command(ResourceStaticCommand):
         if (not resource_versions):
             raise ResourceVersionsNotFoundException()
 
-        config, local_js_dirs = _r_js(local=local, verbose=verbose)
+        config, local_js_dirs = _r_js(local=local, verbose=verbose, bootstrap_version=bootstrap_version)
         if optimize:
             _minify(config, verbose=verbose)
 
         if local:
             _copy_modules_back_into_corehq(config, local_js_dirs)
 
-        filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js', 'requirejs_config.js')
-        resource_versions["hqwebapp/js/requirejs_config.js"] = self.get_hash(filename)
+        filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js',
+                                bootstrap_version, 'requirejs_config.js')
+        resource_versions[f"hqwebapp/js/{bootstrap_version}/requirejs_config.js"] = self.get_hash(filename)
         if local:
             dest = os.path.join(ROOT_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
-                                'hqwebapp', 'js', 'requirejs_config.js')
+                                'hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
             copyfile(filename, dest)
-            logger.info("Copied updated requirejs_config.js back into {}".format(_relative(dest)))
+            logger.info(f"Copied updated {bootstrap_version}/requirejs_config.js back into {_relative(dest)}")
 
         # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
         for module in config['modules']:
@@ -122,12 +127,15 @@ def _confirm_or_exit():
         exit()
 
 
-def _r_js(local=False, verbose=False):
+def _r_js(local=False, verbose=False, bootstrap_version=None):
     '''
     Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
     and the bundle config output by the build.
     '''
-    with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yml'), 'r') as f:
+    bootstrap_version = bootstrap_version or 'bootstrap3'
+    is_bootstrap5 = bootstrap_version == 'bootstrap5'
+    with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml',
+                           bootstrap_version, 'requirejs.yml'), 'r') as f:
         config = yaml.safe_load(f)
 
     config['logLevel'] = 0 if verbose else 2  # TRACE or WARN
@@ -136,14 +144,28 @@ def _r_js(local=False, verbose=False):
 
     html_files, local_js_dirs = _get_html_files_and_local_js_dirs(local)
 
+    # These applications are in the process of undergoing a Bootstrap 5 migration. The format is as follows...
+    # "<bundle directory>": [<files to exclude from bootstrap 3 build>]
+    split_bundles = {
+        "hqwebapp/js": ['hqwebapp/js/500'],
+    }
+
     # For each directory, add an optimized "module" entry including all of the main modules in that dir.
     # For each of these entries, r.js will create an optimized bundle of these main modules and all their
     # dependencies
     dirs_to_js_modules = _get_main_js_modules_by_dir(html_files)
     for directory, mains in dirs_to_js_modules.items():
+        if is_bootstrap5 and directory not in split_bundles:
+            continue
+        if not is_bootstrap5 and directory in split_bundles:
+            mains = mains.difference(split_bundles[directory])
         config['modules'].append({
-            'name': os.path.join(directory, "bundle"),
-            'exclude': ['hqwebapp/js/common', 'hqwebapp/js/base_main'],
+            'name': (os.path.join(directory, "bootstrap5.bundle") if is_bootstrap5
+                     else os.path.join(directory, "bundle")),
+            'exclude': [
+                f'hqwebapp/js/{bootstrap_version}/common',
+                f'hqwebapp/js/{bootstrap_version}/base_main',
+            ],
             'include': sorted(mains),
             'create': True,
         })
@@ -213,7 +235,8 @@ def _get_main_js_modules_by_dir(html_files):
                 main = match.group(1)
                 directory = match.group(2)
                 if os.path.exists(os.path.join(ROOT_DIR, 'staticfiles', main + '.js')):
-                    dirs[directory].add(main)
+                    if not re.search(r'/spec/', main):
+                        dirs[directory].add(main)
     return dirs
 
 

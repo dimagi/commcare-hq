@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+from datetime import datetime
 
 from django.test import TestCase
 
@@ -32,7 +33,7 @@ from corehq.apps.app_manager.tests.util import (
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.apps import load_app_from_slug
 from corehq.apps.app_manager.views.utils import update_linked_app
-from corehq.apps.builds.models import BuildSpec
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.applications import link_app
 from corehq.apps.userreports.tests.utils import get_sample_report_config
@@ -115,6 +116,21 @@ class AppManagerTest(TestCase, TestXmlMixin):
         for module in self.app.get_modules():
             self.assertEqual(len(module.forms), 3)
 
+    def test_undo_delete_app_removes_deleted_couch_doc_record(self):
+        rec = self.app.delete_app()
+        self.app.save()
+        obj = DeletedCouchDoc.objects.create(
+            doc_id=self.app._id,
+            doc_type=self.app.doc_type,
+            deleted_on=datetime.utcnow(),
+        )
+        assert obj.doc_type.endswith("-Deleted"), obj.doc_type
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
+        rec.undo()
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(**params)
+
     def testDeleteForm(self):
         self.app.delete_form(self.app.modules[0].unique_id,
                              self.app.modules[0].forms[0].unique_id)
@@ -122,9 +138,27 @@ class AppManagerTest(TestCase, TestXmlMixin):
         for module, i in zip(self.app.get_modules(), [2, 3, 3]):
             self.assertEqual(len(module.forms), i)
 
+    def test_undo_delete_form_removes_deleted_couch_doc_record(self):
+        form = self.app.modules[0].forms[0]
+        rec = self.app.delete_form(self.app.modules[0].unique_id, form.unique_id)
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
+        rec.undo()
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(**params)
+
     def testDeleteModule(self):
         self.app.delete_module(self.app.modules[0].unique_id)
         self.assertEqual(len(self.app.modules), 2)
+
+    def test_undo_delete_module_removes_deleted_couch_doc_record(self):
+        module = self.app.modules[0]
+        rec = self.app.delete_module(module.unique_id)
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
+        rec.undo()
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(**params)
 
     def assertModuleOrder(self, actual_modules, expected_modules):
         self.assertEqual([m.name['en'] for m in actual_modules],

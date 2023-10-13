@@ -35,11 +35,11 @@ Why?
 
 The purpose of the ``OptionValue`` class is to allow arbitrary
 properties on Django models and their subclasses to be stored in a
-JSON field. You can find examples in ``SQLCaseRepeater``, which has
+JSON field. You can find examples in ``CaseRepeater``, which has
 options "version", "white_listed_case_types" and "black_listed_users",
-and its subclass ``SQLDhis2EntityRepeater``, which has an additional
+and its subclass ``Dhis2EntityRepeater``, which has an additional
 option, "dhis2_entity_config". Values for all of these options are
-persisted by their base class, ``SQLRepeater.options``, defined as
+persisted by their base class, ``Repeater.options``, defined as
 ``JSONField(default=dict)``.
 
 """

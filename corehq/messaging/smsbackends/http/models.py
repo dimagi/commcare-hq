@@ -50,6 +50,10 @@ class SQLHttpBackend(SQLSMSBackend):
     def get_form_class(cls):
         return HttpBackendForm
 
+    @property
+    def url(self):
+        return self.config.url
+
     def send(self, msg, *args, **kwargs):
         config = self.config
         if config.additional_params:

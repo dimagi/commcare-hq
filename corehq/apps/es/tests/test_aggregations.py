@@ -1,26 +1,25 @@
 import uuid
-from copy import deepcopy
 from datetime import datetime
 
 from django.test.testcases import SimpleTestCase
 
 from corehq.apps.es import FormES, filters
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.aggregations import (
     AggregationRange,
-    AggregationTerm,
     DateHistogram,
     ExtendedStatsAggregation,
     FilterAggregation,
     FiltersAggregation,
+    GeohashGridAggregation,
     MissingAggregation,
     NestedAggregation,
-    NestedTermAggregationsHelper,
     RangeAggregation,
     StatsAggregation,
-    SumAggregation,
     TermsAggregation,
     TopHitsAggregation,
 )
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.es_query import ESQuerySet, HQESQuery
 from corehq.apps.es.tests.utils import (
@@ -28,8 +27,6 @@ from corehq.apps.es.tests.utils import (
     es_test,
     populate_es_index,
 )
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
 
 
 @es_test
@@ -85,8 +82,8 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 FilterAggregation('closed', filters.term('closed', True))
             ),
             FiltersAggregation('total_by_status')
-                .add_filter('closed', filters.term('closed', True))
-                .add_filter('open', filters.term('closed', False))
+            .add_filter('closed', filters.term('closed', True))
+            .add_filter('open', filters.term('closed', False))
         ])
         self.checkQuery(query, json_output)
 
@@ -106,7 +103,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 }
             }
         }
-        queryset = ESQuerySet(raw_result, deepcopy(query))
+        queryset = ESQuerySet(raw_result, query.clone())
         self.assertEqual(queryset.aggregations.closed.doc_count, 1)
         self.assertEqual(queryset.aggregations.open.doc_count, 2)
 
@@ -162,7 +159,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 }
             },
         }
-        queryset = ESQuerySet(raw_result, deepcopy(query))
+        queryset = ESQuerySet(raw_result, query.clone())
         self.assertEqual(queryset.aggregations.users.buckets.user1.key, 'user1')
         self.assertEqual(queryset.aggregations.users.buckets.user1.doc_count, 2)
         self.assertEqual(queryset.aggregations.users.buckets.user1.closed.doc_count, 0)
@@ -388,8 +385,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     "buckets": [{
                         "key": 1454284800000,
                         "doc_count": 8
-                    },
-                    {
+                    }, {
                         "key": 1464284800000,
                         "doc_count": 3
                     }]
@@ -466,8 +462,53 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         )
         self.checkQuery(query, json_output)
 
+    def test_terms_aggregation_does_not_accept_zero_size(self):
+        error_message = "Aggregation size must be greater than 0"
+        with self.assertRaisesMessage(AssertionError, error_message):
+            HQESQuery('cases').aggregation(
+                TermsAggregation('name', 'name').order('sort_field').size(0)
+            )
+        with self.assertRaisesMessage(AssertionError, error_message):
+            HQESQuery('cases').aggregation(
+                TermsAggregation('name', 'name', 0).order('sort_field')
+            )
 
-@es_test
+    def test_geohash_grid_aggregation(self):
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "term": {
+                                "domain.exact": "test-domain"
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": 0,
+            "aggs": {
+                "name": {
+                    "geohash_grid": {
+                        "field": "case_location",
+                        "precision": 6
+                    }
+                }
+            }
+        }
+        query = CaseSearchES().domain('test-domain').aggregation(
+            GeohashGridAggregation('name', 'case_location', 6)
+        )
+        self.checkQuery(query, json_output)
+
+
+@es_test(requires=[form_adapter], setup_class=True)
 class TestDateHistogram(SimpleTestCase):
     domain = str(uuid.uuid4())
 
@@ -478,6 +519,7 @@ class TestDateHistogram(SimpleTestCase):
             '_id': str(uuid.uuid4()),
             'domain': cls.domain,
             'received_on': datetime.fromisoformat(d),
+            'form': {},
         } for d in [
             '2021-12-09',
             '2022-01-01',
@@ -501,7 +543,6 @@ class TestDateHistogram(SimpleTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(XFORM_INDEX_INFO.index)
         super().tearDownClass()
 
     def _run_aggregation(self, aggregation):

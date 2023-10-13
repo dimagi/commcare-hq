@@ -13,7 +13,7 @@ from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import transaction
 from django.forms.fields import (
     BooleanField,
@@ -96,30 +96,38 @@ from corehq.apps.callcenter.views import (
 from corehq.apps.domain.auth import get_active_users_by_email
 from corehq.apps.domain.extension_points import validate_password_rules
 from corehq.apps.domain.models import (
-    RESTRICTED_UCR_EXPRESSIONS,
     AREA_CHOICES,
     BUSINESS_UNITS,
     DATA_DICT,
     LOGO_ATTACHMENT,
+    RESTRICTED_UCR_EXPRESSIONS,
     SUB_AREA_CHOICES,
-    SMSAccountConfirmationSettings,
+    AllowedUCRExpressionSettings,
+    AppReleaseModeSetting,
     OperatorCallLimitSettings,
+    SMSAccountConfirmationSettings,
     TransferDomainRequest,
     all_restricted_ucr_expressions,
-    AllowedUCRExpressionSettings
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, GeoCoderInput
+from corehq.apps.hqwebapp.widgets import (
+    BootstrapCheckboxInput,
+    GeoCoderInput,
+    Select2Ajax,
+)
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
-from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
-    SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS, TWO_STAGE_USER_PROVISIONING_BY_SMS
+from corehq.toggles import (
+    HIPAA_COMPLIANCE_CHECKBOX,
+    MOBILE_UCR,
+    SECURE_SESSION_TIMEOUT,
+    TWO_STAGE_USER_PROVISIONING_BY_SMS,
+)
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: Use library method
 
@@ -330,9 +338,11 @@ class DomainGlobalSettingsForm(forms.Form):
     logo = ImageField(
         label=gettext_lazy("Custom Logo"),
         required=False,
-        help_text=gettext_lazy("Upload a custom image to display instead of the "
-                    "CommCare HQ logo.  It will be automatically resized to "
-                    "a height of 32 pixels.")
+        help_text=gettext_lazy(
+            "Upload a custom image to display instead of the "
+            "CommCare HQ logo.  It will be automatically resized to "
+            "a height of 32 pixels. Upload size limit is {size_limit} MB."
+        ).format(size_limit=f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}")
     )
     delete_logo = BooleanField(
         label=gettext_lazy("Delete Logo"),
@@ -413,6 +423,32 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=gettext_lazy("Name of the project to be used in SMS sent for account confirmation to users.")
     )
 
+    release_mode_visibility = BooleanField(
+        label=gettext_lazy("Enable Release Mode"),
+        required=False,
+        help_text=gettext_lazy(
+            """
+            Check this box to enable release mode setting on the app release page.
+            Enabled setting restricts user to directly mark a version 'released'
+            and allows users to do so only when they are in 'Release Mode' on the
+            release page of applications.
+            """
+        )
+    )
+
+    orphan_case_alerts_warning = BooleanField(
+        label=gettext_lazy("Show Orphan Case Alerts on Mobile Worker Edit Page"),
+        required=False,
+        help_text=gettext_lazy(
+            """
+            Displays a warning message on the mobile worker location edit page
+            about locations that owns cases and only have one assigned mobile worker.
+            This helps prevent situations where cases are being orphaned by moving
+            the only assigned mobile worker out of the location owning that cases.
+            """
+        )
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -421,6 +457,8 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
         self.helper[6] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[14] = twbscrispy.PrependedText('release_mode_visibility', '')
+        self.helper[15] = twbscrispy.PrependedText('orphan_case_alerts_warning', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -455,6 +493,8 @@ class DomainGlobalSettingsForm(forms.Form):
 
         self._handle_call_limit_visibility()
         self._handle_account_confirmation_by_sms_settings()
+        self._handle_release_mode_setting_value()
+        self._handle_orphan_case_alerts_setting_value()
 
     def _handle_account_confirmation_by_sms_settings(self):
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
@@ -483,6 +523,13 @@ class DomainGlobalSettingsForm(forms.Form):
             OperatorCallLimitSettings.CALL_LIMIT_MAXIMUM
         )
 
+    def _handle_release_mode_setting_value(self):
+        self.fields['release_mode_visibility'].initial = AppReleaseModeSetting.get_settings(
+            domain=self.domain).is_visible
+
+    def _handle_orphan_case_alerts_setting_value(self):
+        self.fields['orphan_case_alerts_warning'].initial = self.project.orphan_case_alerts_warning
+
     def _add_range_validation_to_integer_input(self, settings_name, min_value, max_value):
         setting = self.fields.get(settings_name)
         min_validator = MinValueValidator(min_value)
@@ -501,6 +548,17 @@ class DomainGlobalSettingsForm(forms.Form):
             return data
         return json.loads(data or '{}')
 
+    def clean_logo(self):
+        logo = self.cleaned_data['logo']
+        if self.can_use_custom_logo and logo:
+            if logo.size > settings.MAX_UPLOAD_SIZE_ATTACHMENT:
+                raise ValidationError(
+                    _("Logo exceeds {} MB size limit").format(
+                        f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}"
+                    )
+                )
+        return logo
+
     def clean_confirmation_link_expiry(self):
         data = self.cleaned_data['confirmation_link_expiry']
         return DomainGlobalSettingsForm.validate_integer_value(data, "Confirmation link expiry")
@@ -508,6 +566,12 @@ class DomainGlobalSettingsForm(forms.Form):
     def clean_operator_call_limit(self):
         data = self.cleaned_data['operator_call_limit']
         return DomainGlobalSettingsForm.validate_integer_value(data, "Operator call limit")
+
+    def clean_release_mode_visibility(self):
+        data = self.cleaned_data['release_mode_visibility']
+        if data not in [True, False]:
+            raise forms.ValidationError(_("Release Mode Visibility should be a boolean."))
+        return data
 
     @staticmethod
     def validate_integer_value(value, value_name):
@@ -589,6 +653,15 @@ class DomainGlobalSettingsForm(forms.Form):
             settings.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
             settings.save()
 
+    def _save_release_mode_setting(self, domain):
+        setting_obj = AppReleaseModeSetting.get_settings(domain=domain.name)
+        if self.cleaned_data.get("release_mode_visibility") != setting_obj.is_visible:
+            setting_obj.is_visible = self.cleaned_data.get("release_mode_visibility")
+            setting_obj.save()
+
+    def _save_orphan_case_alerts_setting(self, domain):
+        domain.orphan_case_alerts_warning = self.cleaned_data.get("orphan_case_alerts_warning", False)
+
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
@@ -605,6 +678,8 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
         self._save_account_confirmation_settings(domain)
+        self._save_release_mode_setting(domain)
+        self._save_orphan_case_alerts_setting(domain)
         domain.save()
         return True
 
@@ -723,19 +798,6 @@ class PrivacySecurityForm(forms.Form):
         label=gettext_lazy("Disable Google Analytics"),
         required=False,
     )
-    # Enabled by a specific feature flag:
-    # https://confluence.dimagi.com/display/saas/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints
-    restrict_mobile_access = BooleanField(
-        label=gettext_lazy("Restrict Mobile Endpoint Access"),
-        required=False,
-        help_text=mark_safe_lazy(gettext_lazy(
-            "When this setting is turned on, the Roles and Permissions page will display a new "
-            "\"Mobile App Access\" option under \"Other Settings.\" With this permission disabled, "
-            "the user account will be unable to login or sync from a mobile application, and will only "
-            "be able to use apps via the Web Apps interface."
-            "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'> "
-            "Read more about restricting mobile endpoint access here.</a>")),
-    )
     disable_mobile_login_lockout = BooleanField(
         label=gettext_lazy("Disable Mobile Worker Lockout"),
         required=False,
@@ -749,8 +811,6 @@ class PrivacySecurityForm(forms.Form):
         super(PrivacySecurityForm, self).__init__(*args, **kwargs)
 
         excluded_fields = []
-        if not RESTRICT_MOBILE_ACCESS.enabled(domain):
-            excluded_fields.append('restrict_mobile_access')
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
             excluded_fields.append('ga_opt_out')
             excluded_fields.append('strong_mobile_passwords')
@@ -800,9 +860,6 @@ class PrivacySecurityForm(forms.Form):
         domain_obj.secure_submissions = secure_submissions
         domain_obj.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
         domain_obj.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
-        if RESTRICT_MOBILE_ACCESS.enabled(domain_obj.name):
-            domain_obj.restrict_mobile_access = self.cleaned_data.get('restrict_mobile_access', False)
-
         domain_obj.disable_mobile_login_lockout = self.cleaned_data.get('disable_mobile_login_lockout', False)
 
         domain_obj.save()

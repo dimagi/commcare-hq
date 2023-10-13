@@ -1,10 +1,12 @@
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from memoized import memoized
+from soil.util import expose_cached_download
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es
@@ -19,7 +21,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
 from corehq.util.timezones.utils import parse_date
-from .dispatcher import EditDataInterfaceDispatcher
+from .dispatcher import EditDataInterfaceDispatcher, BulkEditDataInterfaceDispatcher
 
 
 class DataInterface(GenericReportView):
@@ -35,19 +37,38 @@ class DataInterface(GenericReportView):
         return reverse('data_interfaces_default', args=[self.request.project.name])
 
 
+class BulkDataInterface(DataInterface):
+    dispatcher = BulkEditDataInterfaceDispatcher
+
+
 @location_safe
-class CaseReassignmentInterface(CaseListMixin, DataInterface):
+class CaseReassignmentInterface(CaseListMixin, BulkDataInterface):
     name = gettext_noop("Reassign Cases")
     slug = "reassign_cases"
     report_template_path = 'data_interfaces/interfaces/case_management.html'
+    action = "reassign"
+    action_text = gettext_lazy("Reassign")
 
     @property
     @memoized
     def es_results(self):
+        return self._es_query.run().raw
+
+    @property
+    def _es_query(self):
         query = self._build_query()
         # FB 183468: Don't allow user cases to be reassigned
-        query = query.NOT(case_es.case_type(USERCASE_TYPE))
-        return query.run().raw
+        return query.NOT(case_es.case_type(USERCASE_TYPE))
+
+    @property
+    def template_context(self):
+        context = super(CaseReassignmentInterface, self).template_context
+        context.update({
+            "total_cases": self.total_records,
+            "action": self.action,
+            "action_text": self.action_text,
+        })
+        return context
 
     @property
     @memoized
@@ -90,6 +111,110 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
                 display.owner_display,
                 naturaltime(parse_date(es_case['modified_on'])),
             ]
+
+    @property
+    def bulk_response(self):
+        if self.request.method != 'POST':
+            return HttpResponseBadRequest()
+        owner_id = self.request_params.get('new_owner_id', None)
+        if not owner_id:
+            return HttpResponseBadRequest(
+                _("An owner_id needs to be specified to bulk reassign cases")
+            )
+
+        # If we use self.es_results we're limited to the pagination set on the
+        # UI by the user
+        es_results = self._es_query\
+            .size(self.total_records)\
+            .run().raw
+
+        case_ids = [
+            self.get_case(row)['_id']
+            for row in es_results['hits'].get('hits', [])
+        ]
+        task_ref = expose_cached_download(
+            payload=case_ids, expiry=60 * 60, file_extension=None
+        )
+        task = self.bulk_async_task().delay(
+            self.domain,
+            self.request.couch_user.get_id,
+            owner_id,
+            task_ref.download_id,
+            self.request.META['HTTP_REFERER'],
+            **self.additional_bulk_action_params,
+        )
+        task_ref.set_task(task)
+        return HttpResponseRedirect(
+            self.bulk_url(task_ref.download_id)
+        )
+
+    def bulk_url(self, download_id):
+        from .views import BulkCaseActionSatusView
+        return reverse(
+            BulkCaseActionSatusView.urlname,
+            args=[self.domain, download_id]
+        ) + f'?action={self.action}'
+
+    @staticmethod
+    def bulk_async_task():
+        from .tasks import bulk_case_reassign_async
+        return bulk_case_reassign_async
+
+    @property
+    def additional_bulk_action_params(self):
+        return {}
+
+
+@location_safe
+class CaseCopyInterface(CaseReassignmentInterface):
+    name = gettext_noop("Copy Cases")
+    slug = "copy_cases"
+    report_template_path = 'data_interfaces/interfaces/case_management.html'
+    action = "copy"
+    action_text = gettext_lazy("Copy")
+
+    @property
+    @memoized
+    def es_results(self):
+        query = self._build_query()
+        owner_id = self.request.GET.get('individual')
+        if owner_id:
+            query = query.owner(owner_id)
+
+        return query.run().raw
+
+    @property
+    def template_context(self):
+        context = super(CaseCopyInterface, self).template_context
+        context.update({
+            "action": self.action,
+            "action_text": self.action_text,
+        })
+        return context
+
+    @property
+    def fields(self):
+        return [
+            'corehq.apps.reports.filters.users.SelectMobileWorkerFilter',
+            'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
+            'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
+            'corehq.apps.reports.standard.cases.filters.SensitiveCaseProperties',
+        ]
+
+    @staticmethod
+    def bulk_async_task():
+        from .tasks import bulk_case_copy_async
+        return bulk_case_copy_async
+
+    @property
+    def additional_bulk_action_params(self):
+        return {
+            'sensitive_properties': self._parse_sensitive_props(self.request_params['sensitive_properties']),
+        }
+
+    @staticmethod
+    def _parse_sensitive_props(props):
+        return {p['name']: p['label'] for p in props if p['name']}
 
 
 class FormManagementMode(object):

@@ -19,7 +19,7 @@ class Command(BaseCommand):
             print("then stop them")
 
         kafka_command = (
-            "./kafka-topics.sh --alter --zookeeper <zk IP>:2181 --partitions={} --topic={}"
+            "./kafka-topics.sh --alter --bootstrap-server <kafka IP>:9092 --partitions={} --topic={}"
             .format(num_partitions, topic)
         )
         print(

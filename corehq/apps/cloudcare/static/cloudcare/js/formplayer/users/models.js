@@ -1,6 +1,8 @@
 /*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/users/models", function () {
+    var kissmetrics = hqImport("analytix/js/kissmetrix");
+
     var User = Backbone.Model.extend();
     var CurrentUser = Backbone.Model.extend({
         initialize: function () {
@@ -23,7 +25,7 @@ hqDefine("cloudcare/js/formplayer/users/models", function () {
         },
 
         trackVersionChange: function (model) {
-            hqImport('analytix/js/kissmetrix').track.event(
+            kissmetrics.track.event(
                 '[app-preview] App version changed',
                 {
                     previousVersion: model.previous('versionInfo'),

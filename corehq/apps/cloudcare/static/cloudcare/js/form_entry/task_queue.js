@@ -12,8 +12,7 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
         self.inProgress = undefined;
 
         self.execute = function () {
-            var task,
-                idx;
+            var task;
             task = self.queue.shift();
             if (!task) {
                 self.inProgress = undefined;

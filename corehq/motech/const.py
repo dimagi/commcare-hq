@@ -6,15 +6,36 @@ BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
 BEARER_AUTH = "bearer"
+APIKEY_AUTH = "api_key"
 OAUTH2_PWD = "oauth2_pwd"
 OAUTH2_CLIENT = "oauth2_client"
 AUTH_TYPES = (
     (BASIC_AUTH, "HTTP Basic"),
     (DIGEST_AUTH, "HTTP Digest"),
-    (BEARER_AUTH, "Bearer Token"),
     (OAUTH1, "OAuth1"),
+
+    # https://oauth.net/2/grant-types/client-credentials/
+    # https://www.rfc-editor.org/rfc/rfc6749#section-4.4
+    (OAUTH2_CLIENT, "OAuth 2.0 Client Credentials Grant"),
+
+    # aka "Resource Owner Password Credentials" grant type
+    # Considered legacy
+    # > ... should only be used when ... other authorization grant types
+    # > are not available
+    # https://oauth.net/2/grant-types/password/
+    # https://www.rfc-editor.org/rfc/rfc6749#section-1.3.3
     (OAUTH2_PWD, "OAuth 2.0 Password Grant"),
-    (OAUTH2_CLIENT, "OAuth 2.0 Client Grant"),
+
+    # This is not a grant type / authentication flow. It is a type of
+    # access token. HQ implements this option by requesting a new token
+    # before every API request. Users probably want to choose "OAuth 2.0
+    # Client Credentials Grant" instead.
+    # https://oauth.net/2/bearer-tokens/
+    # https://www.rfc-editor.org/rfc/rfc6750
+    (BEARER_AUTH, "Bearer Token"),
+
+    # Simple auth scheme that places the key in the request header.
+    (APIKEY_AUTH, "API Key"),
 )
 AUTH_TYPES_REQUIRE_USERNAME = (
     BASIC_AUTH,
@@ -108,3 +129,5 @@ DIRECTIONS = (
     DIRECTION_EXPORT,
     DIRECTION_BOTH,
 )
+
+MAX_REQUEST_LOG_LENGTH = 1024 * 1024

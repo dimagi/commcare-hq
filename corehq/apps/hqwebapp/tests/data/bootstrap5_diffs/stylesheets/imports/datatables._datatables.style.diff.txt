@@ -1,0 +1,52 @@
+--- 
++++ 
+@@ -9,10 +9,10 @@
+ 
+ .datatable thead th,
+ .dataTable thead th {
+-  background-color: desaturate(@cc-brand-low, 50%);
++  background-color: desaturate($cc-brand-low, 50%);
+   color: #ffffff;
+   &:nth-child(odd) {
+-    background-color: lighten(desaturate(@cc-brand-low, 50%), 10%);
++    background-color: lighten(desaturate($cc-brand-low, 50%), 10%);
+   }
+ }
+ 
+@@ -20,7 +20,7 @@
+ .datatable tfoot th,
+ .dataTable tfoot td,
+ .dataTable tfoot th{
+-  background-color: lighten(desaturate(@cc-brand-low, 60%), 10%);
++  background-color: lighten(desaturate($cc-brand-low, 60%), 10%);
+   color: #ffffff;
+   padding: 8px;
+ }
+@@ -49,13 +49,13 @@
+   }
+   &.headerSortDesc,
+   &.headerSortAsc {
+-    background-color: @cc-brand-mid;
++    background-color: $cc-brand-mid;
+   }
+ }
+ 
+ .datatable .sorting_1,
+ .dataTable .sorting_1 {
+-  background-color: @cc-bg;
++  background-color: $cc-bg;
+ }
+ 
+ .panel-body-datatable {
+@@ -94,9 +94,9 @@
+ }
+ 
+ .dataTable td.text-red {
+-  color: @cc-att-neg-mid;
++  color: $cc-att-neg-mid;
+ }
+ 
+ .dataTable td.text-green {
+-  color: @cc-att-pos-mid;
++  color: $cc-att-pos-mid;
+ }

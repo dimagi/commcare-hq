@@ -25,6 +25,7 @@ RATE_LIMITED_EXCEPTIONS = {
 
     'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
 
+    'kombu.connection.OperationalError': 'rabbitmq',
     'socket.error': 'rabbitmq',
 
     'redis.exceptions.ConnectionError': 'redis',
@@ -54,10 +55,10 @@ RATE_LIMIT_BY_PACKAGE = {
 def _get_rate_limit_key(exc_info):
     exc_type, value, tb = exc_info
     exc_name = '%s.%s' % (exc_type.__module__, exc_type.__name__)
-    if exc_type.__name__ in RATE_LIMITED_EXCEPTIONS:
-        return RATE_LIMITED_EXCEPTIONS[exc_type.__name__]
-    elif exc_name in RATE_LIMITED_EXCEPTIONS:
+    if exc_name in RATE_LIMITED_EXCEPTIONS:
         return RATE_LIMITED_EXCEPTIONS[exc_name]
+    elif exc_type.__name__ in RATE_LIMITED_EXCEPTIONS:
+        return RATE_LIMITED_EXCEPTIONS[exc_type.__name__]
 
     if exc_name in RATE_LIMIT_BY_PACKAGE:
         # not super happy with this approach but want to be able to

@@ -15,7 +15,9 @@ from .sql_reports import combine_indicator
 
 DOMAIN = "test"
 
-unity = lambda x: x
+
+def unity(x):
+    return x
 
 
 class UserDataSource(SqlData):

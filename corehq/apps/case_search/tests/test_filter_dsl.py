@@ -2,10 +2,11 @@ from django.test import SimpleTestCase, TestCase
 
 from eulxml.xpath import parse as parse_xpath
 from freezegun import freeze_time
+import pytz
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from couchforms.geopoint import GeoPoint
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.case_search.filter_dsl import (
@@ -16,15 +17,11 @@ from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_geo_distance,
     case_property_query,
+    case_search_adapter,
 )
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
-from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.pillows.case_search import transform_case_for_elasticsearch
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.es.elasticsearch import ConnectionError
-from corehq.util.test_utils import trap_extra_setup
+
 
 @es_test
 class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
@@ -63,6 +60,78 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
             }
         }
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @patch("corehq.apps.case_search.xpath_functions.comparison.get_timezone_for_domain",
+           return_value=pytz.timezone('America/Los_Angeles'))
+    def test_simple_filter_with_date(self, mock_get_timezone):
+        parsed = parse_xpath("dob = '2023-06-03'")
+
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "bool": {
+                                    "filter": (
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "dob"
+                                            }
+                                        },
+                                        {
+                                            "term": {
+                                                "case_properties.value.exact": "2023-06-03"
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        }
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        mock_get_timezone.assert_not_called()
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @patch("corehq.apps.case_search.xpath_functions.comparison.get_timezone_for_domain",
+           return_value=pytz.timezone('America/Los_Angeles'))
+    def test_datetime_special_case_property_equality_comparison(self, mock_get_timezone):
+        parsed = parse_xpath("last_modified='2023-01-10'")
+
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "last_modified"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.date": {
+                                    "gte": "2023-01-10T08:00:00",
+                                    "lt": "2023-01-11T08:00:00"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        mock_get_timezone.assert_called_once()
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_not_filter(self):
@@ -669,17 +738,14 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         built_filter = build_filter_from_ast(parsed, context)
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
-@es_test
+
+@es_test(requires=[case_search_adapter], setup_class=True)
 class TestFilterDslLookups(ElasticTestMixin, TestCase):
     maxDiff = None
 
     @classmethod
     def setUpClass(cls):
         super(TestFilterDslLookups, cls).setUpClass()
-        with trap_extra_setup(ConnectionError):
-            cls.es = get_es_new()
-            initialize_index_and_mapping(cls.es, CASE_SEARCH_INDEX_INFO)
-
         cls.child_case1_id = 'margaery'
         cls.child_case2_id = 'loras'
         cls.parent_case_id = 'mace'
@@ -755,13 +821,11 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             walk_related=False,
         )
         for case in factory.create_or_update_cases([child_case1, child_case2]):
-            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
-        cls.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+            case_search_adapter.index(case, refresh=True)
 
     @classmethod
     def tearDownClass(self):
         FormProcessorTestUtils.delete_all_cases()
-        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
         super(TestFilterDslLookups, self).tearDownClass()
 
     def test_parent_lookups(self):

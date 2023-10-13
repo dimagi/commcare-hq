@@ -12,6 +12,42 @@ hqDefine('repeaters/js/repeat_record_report', function () {
             $(this).nextAll('.record-attempt').toggle();
             e.preventDefault();
         });
+        $('#report-content').on('click', '.view-attempts-btn', function () {
+            const recordId = $(this).data().recordId;
+
+            // Clear out previous error message banner, if it exists
+            $(`#${recordId}.attempt-error`).remove();
+
+            let $attemptTable = $(`#${recordId}.attempt-row`);
+            if ($attemptTable.length) {
+                // There should only be one table per record
+                $($attemptTable[0]).toggle();
+                return;
+            }
+
+            const $row = $(this).closest('tr');
+            $.get({
+                url: initialPageData.reverse("repeat_record"),
+                data: { record_id: recordId },
+                success: function (data) {
+                    // User might have clicked to fetch attempts while previous fetch is busy,
+                    // so skip if one already exists
+                    $attemptTable = $(`#${recordId}.attempt-row`);
+                    if (!$attemptTable.length) {
+                        $row.after(data.attempts);
+                    }
+                },
+                error: function (data) {
+                    const defaultText = gettext('Failed to fetch attempts');
+                    const errorMessage = data.responseJSON ? data.responseJSON.error : null;
+                    $row.after(
+                        `<tr id="${recordId}" class="attempt-error"><td colspan="10">
+                            <div class="alert alert-danger">${errorMessage || defaultText}</div>
+                        </td></tr>`
+                    );
+                },
+            });
+        });
         var editor = null;
         $('#view-record-payload-modal').on('shown.bs.modal', function (event) {
             var recordData = $(event.relatedTarget).data(),

@@ -1,0 +1,57 @@
+.ace_editor.ace_autocomplete {
+  font-family: @font-family-sans-serif !important;
+  font-size: 12px !important;
+  line-height: 28px !important;
+  color: #1c2126;
+
+  .ace_layer.ace_text-layer {
+    padding: 0 !important;
+  }
+
+  .ace_line {
+    border-bottom: 1px solid #DDD;
+    margin: 0 !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+
+    .ace_completion-meta {
+      padding: .2em .6em .3em;
+      font-size: 75%;
+      font-weight: 700;
+      line-height: 1;
+      color: @label-color;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: top;
+      border-radius: .25em;
+      display: inline-block;
+      margin: 7px !important;
+      opacity: 1.0 !important;
+
+      .label-variant(@label-default-bg);
+    }
+
+    .ace_completion-highlight {
+      font-weight: bold;
+      color: @cc-brand-mid;
+    }
+  }
+  .ace_active-line {
+    background-color: @cc-brand-mid !important;
+  }
+  .ace_line-hover {
+    border: none !important;
+    background-color: @cc-brand-hi !important;
+  }
+  .ace_line.ace_selected {
+    color: #ffffff;
+    .ace_completion-highlight {
+      color: #ffffff;
+      font-weight: bold;
+    }
+  }
+}
+
+textarea.ace_text-input {
+  resize: vertical !important;
+}

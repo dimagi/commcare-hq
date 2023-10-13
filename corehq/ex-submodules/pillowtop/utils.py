@@ -222,13 +222,10 @@ class ErrorCollector(object):
         self.errors.append(error)
 
 
-def build_bulk_payload(changes, doc_transform=None, error_collector=None):
+def build_bulk_payload(changes, error_collector=None):
     """Process a set of changes, returning a list of BulkActionItem objects.
 
     :param changes: iterable of changes to process in Elasticsearch
-    :param doc_transform: optional function used to serialize documents into the
-                          correct format for indexing into Elasticsearch
-                          (documents are indexed as-is if not specified)
     :param error_collector: optional ``ErrorCollector`` instance used to store
                             any any document fetch or transform exceptions
                             (exceptions raised if not provided)
@@ -238,9 +235,6 @@ def build_bulk_payload(changes, doc_transform=None, error_collector=None):
     #       perform this task in the future)
     from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
 
-    if doc_transform is None:
-        def doc_transform(doc):
-            return doc
     payload = []
 
     def _is_deleted(change):
@@ -256,7 +250,6 @@ def build_bulk_payload(changes, doc_transform=None, error_collector=None):
         elif not change.deleted:
             try:
                 doc = change.get_document()
-                doc = doc_transform(doc)
                 payload.append(BulkActionItem.index(doc))
             except Exception as e:
                 if not error_collector:

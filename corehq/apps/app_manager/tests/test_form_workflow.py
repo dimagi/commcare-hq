@@ -31,6 +31,18 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
+            FormLink(xpath="(today() - dob) &lt; 7", form_id=m1f0.unique_id, form_module_id=m1.unique_id)
+        ]
+        self.assertXmlPartialEqual(self.get_xml('form_link_basic_form'), factory.app.create_suite(), "./entry[1]")
+
+    def test_basic_form_legacy_form_link_data(self, *args):
+        """Test that FormLink objects without the `form_module_id` field still work"""
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('m0', 'frog')
+        m1, m1f0 = factory.new_basic_module('m1', 'frog')
+
+        m0f0.post_form_workflow = WORKFLOW_FORM
+        m0f0.form_links = [
             FormLink(xpath="(today() - dob) &lt; 7", form_id=m1f0.unique_id)
         ]
         self.assertXmlPartialEqual(self.get_xml('form_link_basic_form'), factory.app.create_suite(), "./entry[1]")
@@ -73,7 +85,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath="(today() - dob) > 7", form_id=m1f0.unique_id)
+            FormLink(xpath="(today() - dob) > 7", form_id=m1f0.unique_id, form_module_id=m1.unique_id)
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_update_case'), factory.app.create_suite(), "./entry[1]")
@@ -87,7 +99,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath='true()', form_id=m1f0.unique_id)
+            FormLink(xpath='true()', form_id=m1f0.unique_id, form_module_id=m1.unique_id)
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_create_update_case'), factory.app.create_suite(), "./entry[1]")
@@ -104,8 +116,8 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath="a = 1", form_id=m1f0.unique_id),
-            FormLink(xpath="a = 2", form_id=m1f1.unique_id)
+            FormLink(xpath="a = 1", form_id=m1f0.unique_id, form_module_id=m1.unique_id),
+            FormLink(xpath="a = 2", form_id=m1f1.unique_id, form_module_id=m1.unique_id)
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_multiple'), factory.app.create_suite(), "./entry[1]")
@@ -125,12 +137,12 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath="true()", form_id=m1f0.unique_id),
+            FormLink(xpath="true()", form_id=m1f0.unique_id, form_module_id=m1.unique_id),
         ]
 
         m1f0.post_form_workflow = WORKFLOW_FORM
         m1f0.form_links = [
-            FormLink(xpath="true()", form_id=m2f0.unique_id),
+            FormLink(xpath="true()", form_id=m2f0.unique_id, form_module_id=m2.unique_id),
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), factory.app.create_suite(), "./entry")
@@ -264,14 +276,14 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath="true()", form_id=m1f0.unique_id, datums=[
+            FormLink(xpath="true()", form_id=m1f0.unique_id, form_module_id=m1.unique_id, datums=[
                 FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id_new_child_0")
             ]),
         ]
 
         m1f0.post_form_workflow = WORKFLOW_FORM
         m1f0.form_links = [
-            FormLink(xpath="true()", form_id=m2f0.unique_id, datums=[
+            FormLink(xpath="true()", form_id=m2f0.unique_id, form_module_id=m2.unique_id, datums=[
                 FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id"),
                 FormDatum(name='case_id_load_visit_0', xpath="instance('commcaresession')/session/data/case_id_new_visit_0"),
             ]),
@@ -294,7 +306,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
-            FormLink(xpath="true()", form_id=m1f0.unique_id, datums=[
+            FormLink(xpath="true()", form_id=m1f0.unique_id, form_module_id=m1.unique_id, datums=[
                 FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id_new_child_0")
             ]),
         ]
@@ -303,12 +315,12 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         condition_for_xpath = "instance('casedb')/casedb/case[@case_id = " \
                               "instance('commcaresession')/session/data/case_id]/prop = 'value'"
         m1f0.form_links = [
-            FormLink(xpath="true()", form_id=m2f0.unique_id, datums=[
+            FormLink(xpath="true()", form_id=m2f0.unique_id, form_module_id=m2.unique_id, datums=[
                 FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id"),
                 FormDatum(name='case_id_load_visit_0',
                           xpath="instance('commcaresession')/session/data/case_id_new_visit_0"),
             ]),
-            FormLink(xpath=condition_for_xpath, form_id=m2f0.unique_id, datums=[
+            FormLink(xpath=condition_for_xpath, form_id=m2f0.unique_id, form_module_id=m2.unique_id, datums=[
                 FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id"),
                 FormDatum(name='case_id_load_visit_0',
                           xpath="instance('commcaresession')/session/data/case_id_new_visit_0"),
@@ -360,7 +372,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         m1f0.post_form_workflow = WORKFLOW_FORM
         m1f0.form_links = [
-            FormLink(xpath="true()", form_id=m2f0.unique_id, datums=[
+            FormLink(xpath="true()", form_id=m2f0.unique_id, form_module_id=m2.unique_id, datums=[
                 FormDatum(name='case_id_load_episode_0', xpath="instance('commcaresession')/session/data/case_id_new_episode_0")
             ]),
         ]
@@ -460,7 +472,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         # link to child -> edit child
         m2f0.post_form_workflow = WORKFLOW_FORM
         m2f0.form_links = [
-            FormLink(xpath="true()", form_id=m1f0.unique_id),
+            FormLink(xpath="true()", form_id=m1f0.unique_id, form_module_id=m1.unique_id),
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_child_modules'), factory.app.create_suite(), "./entry[3]")
@@ -483,14 +495,73 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         m1f0.post_form_workflow = WORKFLOW_FORM
         m1f0.form_links = [
-            FormLink(xpath="true()", form_id=m1f1.unique_id),
+            FormLink(xpath="true()", form_id=m1f1.unique_id, form_module_id=m1.unique_id),
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_submodule'), factory.app.create_suite(), "./entry")
 
-    def test_form_links_other_child_module(self):
-        # This test demonstrates current behavior that I believe to be flawed
+    def test_form_links_within_shadow_module(self):
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('parent', 'mother')
+        factory.new_shadow_module('shadow_module', m0, with_form=False)
 
+        m0f0.post_form_workflow = WORKFLOW_FORM
+        m0f0.form_links = [FormLink(xpath='true()', form_id=m0f0.unique_id, form_module_id=m0.unique_id)]
+
+        suite_xml = factory.app.create_suite()
+
+        # In m0, the regular module, EOF nav goes back to m0
+        expected = """
+        <partial>
+            <stack>
+                <create if="true()">
+                    <command value="'m0'"/>
+                    <command value="'m0-f0'"/>
+                </create>
+            </stack>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite_xml, "./entry[1]/stack")
+
+        # In m1, the shadow module, EOF nav uses the shadow module
+        expected = """
+        <partial>
+            <stack>
+                <create if="true()">
+                    <command value="'m1'"/>
+                    <command value="'m1-f0'"/>
+                </create>
+            </stack>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite_xml, "./entry[2]/stack")
+
+    def test_form_links_to_shadow_module(self):
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('parent', 'mother')
+        m1, m1f0 = factory.new_basic_module('other', 'mother')
+        m2 = factory.new_shadow_module('shadow_module', m1, with_form=False)
+
+        #link from m0-f0 to m1-f0 (in the shadow module)
+        m0f0.post_form_workflow = WORKFLOW_FORM
+        m0f0.form_links = [FormLink(xpath='true()', form_id=m1f0.unique_id, form_module_id=m2.unique_id)]
+
+        suite_xml = factory.app.create_suite()
+
+        # In m0, the regular module, EOF nav goes back to m0
+        expected = """
+        <partial>
+            <stack>
+                <create if="true()">
+                    <command value="'m2'"/>
+                    <command value="'m2-f0'"/>
+                </create>
+            </stack>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite_xml, "./entry[1]/stack")
+
+    def test_form_links_other_child_module(self):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('parent', 'mother')
         factory.form_opens_case(m0f0)
@@ -499,11 +570,11 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         m0f1 = factory.new_form(m0)
         m0f1.post_form_workflow = WORKFLOW_FORM
-        m0f1.form_links = [FormLink(xpath='true()', form_id=m1f0.unique_id)]
+        m0f1.form_links = [FormLink(xpath='true()', form_id=m1f0.unique_id, form_module_id=m1.unique_id)]
 
         m2, m2f0 = factory.new_basic_module('other_module', 'baby')
         m2f0.post_form_workflow = WORKFLOW_FORM
-        m2f0.form_links = [FormLink(xpath='true()', form_id=m1f0.unique_id)]
+        m2f0.form_links = [FormLink(xpath='true()', form_id=m1f0.unique_id, form_module_id=m1.unique_id)]
         suite_xml = factory.app.create_suite()
 
         # m0f1 links to m1f0, a form in its child module. Here's the stack for that:
@@ -537,6 +608,62 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         </partial>
         """
         self.assertXmlPartialEqual(expected, suite_xml, "./entry[4]/stack")
+
+    def test_form_links_other_child_module_manual_linking(self):
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('parent', 'mother')
+        factory.form_requires_case(m0f0)
+        m1, m1f0 = factory.new_basic_module('child', 'baby', parent_module=m0)
+        factory.form_requires_case(m1f0)
+
+        m2, m2f0 = factory.new_basic_module('other_module', 'baby')
+        factory.form_opens_case(m2f0, 'baby')
+        m2f0.post_form_workflow = WORKFLOW_FORM
+        m2f0.form_links = [FormLink(
+            xpath='true()', form_id=m1f0.unique_id, form_module_id=m1.unique_id,
+        )]
+        suite_xml = factory.app.create_suite()
+
+        # m2f0 links to m1f0 (child of m0-f0) - automatic linking
+        expected = """
+        <partial>
+          <stack>
+            <create if="true()">
+              <command value="'m0'"/>
+              <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+              <command value="'m1'"/>
+              <datum id="case_id_baby" value="instance('commcaresession')/session/data/case_id_new_baby_0"/>
+              <command value="'m1-f0'"/>
+            </create>
+          </stack>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite_xml, "./entry[3]/stack")
+
+        # set manual links
+        m2f0.form_links = [FormLink(
+            xpath='true()', form_id=m1f0.unique_id, form_module_id=m1.unique_id,
+            datums=[
+                FormDatum(name="case_id", xpath="xpath1"),
+                FormDatum(name="case_id_baby", xpath="xpath2"),
+            ]
+        )]
+
+        suite_xml = factory.app.create_suite()
+        expected = """
+        <partial>
+          <stack>
+            <create if="true()">
+              <command value="'m0'"/>
+              <datum id="case_id" value="xpath1"/>
+              <command value="'m1'"/>
+              <datum id="case_id_baby" value="xpath2"/>
+              <command value="'m1-f0'"/>
+            </create>
+          </stack>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite_xml, "./entry[3]/stack")
 
     def _build_workflow_app(self, mode):
         factory = AppFactory(build_version='2.9.0')

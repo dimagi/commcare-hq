@@ -22,4 +22,4 @@ def get_available_modules_for_case_list_configuration(app, module):
 def get_available_modules_for_case_tile_configuration(app, exclude_module):
     valid_modules = get_available_modules_for_case_list_configuration(app, exclude_module)
     return [m for m in valid_modules
-            if m.case_details.short.use_case_tiles or m.case_details.short.custom_xml]
+            if m.case_details.short.case_tile_template or m.case_details.short.custom_xml]
