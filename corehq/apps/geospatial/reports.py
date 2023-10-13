@@ -27,6 +27,8 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin):
 
     dispatcher = CaseManagementMapDispatcher
 
+    search_class = CaseSearchES
+
     @property
     def template_context(self):
         # Whatever is specified here can be accessed through initial_page_data
@@ -51,15 +53,13 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin):
         headers.custom_sort = [[2, 'desc']]
         return headers
 
-    def _get_geo_point(self, case, geo_case_property):
-        return NotImplementedError()
-
     @property
     def rows(self):
         geo_case_property = get_geo_case_property(self.domain)
 
         def _get_geo_location(case):
-            geo_point = self._get_geo_point(case, geo_case_property)
+            case_obj = wrap_case_search_hit(case)
+            geo_point = case_obj.get_case_property(geo_case_property)
             if not geo_point:
                 return
 
@@ -93,10 +93,6 @@ class CaseManagementMap(BaseCaseMapReport):
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
 
-    def _get_geo_point(self, case, geo_case_property):
-        geo_point = case.get(geo_case_property)
-        return geo_point
-
     @property
     def template_context(self):
         context = super(CaseManagementMap, self).template_context
@@ -112,7 +108,6 @@ class CaseManagementMap(BaseCaseMapReport):
 class CaseGroupingReport(BaseCaseMapReport):
     name = gettext_noop('Case Grouping')
     slug = 'case_grouping_map'
-    search_class = CaseSearchES
 
     base_template = 'geospatial/case_grouping_map_base.html'
     report_template_path = 'case_grouping_map.html'
@@ -144,11 +139,6 @@ class CaseGroupingReport(BaseCaseMapReport):
 
         query = apply_geohash_agg(query, case_property, precision)
         return query
-
-    def _get_geo_point(self, case, geo_case_property):
-        case_obj = wrap_case_search_hit(case)
-        geo_point = case_obj.get_case_property(geo_case_property)
-        return geo_point
 
 
 def geojson_to_es_geoshape(geojson):
