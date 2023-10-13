@@ -237,4 +237,4 @@ class CustomEmailConfiguration(EmailConfigurationManager):
 
     @property
     def SES_configuration_set(self):
-        return self._email_setting.ses_config_set_name
+        return self._email_setting.ses_config_set_name if self._email_setting.use_tracking_headers else None

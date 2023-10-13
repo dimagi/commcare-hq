@@ -1349,7 +1349,7 @@ def log_email_event(request, secret, domain=None):
     # From Amazon SNS:
     # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
     email_setting = EmailSettings.objects.filter(domain=domain).first() if domain else None
-    if (email_setting and email_setting.use_this_gateway):
+    if (email_setting and email_setting.use_this_gateway and email_setting.use_tracking_headers):
         SNS_email_event_secret = email_setting.sns_secret
     else:
         SNS_email_event_secret = settings.SNS_EMAIL_EVENT_SECRET
