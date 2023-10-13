@@ -153,6 +153,8 @@ class RemoteRequestFactory(object):
                 data.exclude = self._get_multi_select_exclude()
         else:
             data.ref = QuerySessionXPath(self.case_session_var).instance()
+            if not self.exclude_relevant:
+                data.exclude = CaseIDXPath(data.ref).case().count().neq(0)
         return data
 
     def _get_multi_select_nodeset(self):
