@@ -356,6 +356,10 @@
                 Details: {{ details }}
                 <a href="{{ module_url }}">{{ module_name }}</a>
               {% endblocktrans %}
+            {% case "non-unique instance name" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+              The case list in <a href="{{ module_url }}">{{ module_name }}</a> does not use a unique "search input instance name".
+              {% endblocktrans %}
             {% case "case search instance used in casedb case details" %}
               {% blocktrans with module_name=error.module.name|trans:langs property=error.column.field_property details=error.details %}
                 Case List uses an instance that is only available for case search <code>{{ property }}</code>.
