@@ -179,6 +179,18 @@ hqDefine("app_manager/js/details/case_claim", function () {
         return self;
     };
 
+    var customSortPropertyModel = function (options, saveButton) {
+        options = _.defaults(options, {
+            property_name: '',
+            sort_type: '',
+            direction: '',
+        });
+        var self = ko.mapping.fromJS(options);
+
+        subscribeToSave(self, ['property_name', 'sort_type', 'direction'], saveButton);
+        return self;
+    };
+
     var additionalRegistryCaseModel = function (xpath, saveButton) {
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -313,11 +325,12 @@ hqDefine("app_manager/js/details/case_claim", function () {
         return appearance;
     };
 
-    var searchViewModel = function (searchProperties, defaultProperties, searchConfigOptions, lang, saveButton, searchFilterObservable) {
+    var searchViewModel = function (searchProperties, defaultProperties, customSortProperties, searchConfigOptions, lang, saveButton, searchFilterObservable) {
         var self = {};
 
         self.searchConfig = searchConfigModel(searchConfigOptions, lang, searchFilterObservable, saveButton);
         self.default_properties = ko.observableArray();
+        self.custom_sort_properties = ko.observableArray();
 
         // searchProperties is a list of CaseSearchProperty objects
         var wrappedSearchProperties = _.map(searchProperties, function (searchProperty) {
@@ -400,12 +413,35 @@ hqDefine("app_manager/js/details/case_claim", function () {
             );
         };
 
+        self.addCustomSortProperty = function () {
+            self.custom_sort_properties.push(customSortPropertyModel({}, saveButton));
+        };
+        self.removeCustomSortProperty = function (property) {
+            self.custom_sort_properties.remove(property);
+        };
+        self._getCustomSortProperties = function () {
+            return _.map(
+                _.filter(
+                    self.custom_sort_properties(),
+                    // Skip properties where property is blank
+                    function (p) { return p.property_name().length > 0; }
+                ),
+                function (prop) { return ko.mapping.toJS(prop); }
+            );
+        };
+
         if (defaultProperties.length > 0) {
             self.default_properties(_.map(defaultProperties, function (p) {
                 return defaultPropertyModel(p, saveButton);
             }));
         } else {
             self.addDefaultProperty();
+        }
+
+        if (customSortProperties.length > 0) {
+            self.custom_sort_properties(_.map(customSortProperties, function (p) {
+                return customSortPropertyModel(p, saveButton);
+            }));
         }
 
         self.commonProperties = ko.computed(function () {
@@ -434,11 +470,11 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return _.extend({
                 properties: self._getProperties(),
                 default_properties: self._getDefaultProperties(),
+                custom_sort_properties: self._getCustomSortProperties(),
             }, self.searchConfig.serialize());
         };
 
-        subscribeToSave(self, ['search_properties', 'default_properties'], saveButton);
-
+        subscribeToSave(self, ['search_properties', 'default_properties', 'custom_sort_properties'], saveButton);
         return self;
     };
 
