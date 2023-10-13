@@ -5,7 +5,7 @@ from django.db.models import TextChoices
 from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.hqwebapp.crispy import HQFormHelper
-from corehq.apps.object_testing.models import ObjectTest
+from corehq.apps.object_testing.models import ObjectTest, ContextFactoryChoices
 from corehq.apps.userreports.models import UCRExpression
 
 
@@ -53,12 +53,17 @@ class ObjectTestCreateForm(forms.Form):
             domain=self.domain,
             name=self.cleaned_data['name'],
             description=self.cleaned_data['description'],
+            content_type=content_type,
             content_object=test_obj
         )
 
 
 class ObjectTestUpdateForm(ObjectTestCreateForm):
     fieldset_title = _('Update Test')
+
+    context_factory = forms.ChoiceField(choices=ContextFactoryChoices.choices)
+    input = forms.JSONField()
+    expected = forms.JSONField()
 
     def __init__(self, request, instance, *args, **kwargs):
         self.instance = instance
@@ -67,8 +72,24 @@ class ObjectTestUpdateForm(ObjectTestCreateForm):
             'description': instance.description,
             'test_model_type': instance.content_type.model,
             'test_model_id': instance.object_id,
+            'context_factory': instance.context_factory,
+            'input': instance.input,
+            'expected': instance.expected,
         }
         super().__init__(request, *args, **kwargs)
 
     def add_to_helper(self):
         self.helper.form_tag = False
+
+    def save(self):
+        content_type = ContentType.objects.get(model=self.cleaned_data['test_model_type'])
+        test_obj = content_type.get_object_for_this_type(id=self.cleaned_data['test_model_id'])
+        self.instance.name = self.cleaned_data['name']
+        self.instance.description = self.cleaned_data['description']
+        self.instance.content_type = content_type
+        self.instance.content_object = test_obj
+        self.instance.context_factory = self.cleaned_data['context_factory']
+        self.instance.input = self.cleaned_data['input']
+        self.instance.expected = self.cleaned_data['expected']
+        self.instance.save()
+        return self.instance
