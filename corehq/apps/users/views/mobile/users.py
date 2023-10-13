@@ -1384,7 +1384,6 @@ class ClearCommCareUsers(DeleteCommCareUsers):
         from corehq.apps.users.model_log import UserModelAction
         from corehq.apps.hqwebapp.tasks import send_mail_async
         from django.conf import settings
-        from dimagi.utils.django.email import DefaultEmailConfiguration
 
 
         cleared_count = 0
@@ -1405,11 +1404,9 @@ class ClearCommCareUsers(DeleteCommCareUsers):
         if cleared_count:
             messages.success(request, f"{cleared_count} user(s) cleared.")
 
-        email_configuration = DefaultEmailConfiguration(settings.DEFAULT_FROM_EMAIL)
         send_mail_async.delay(
             subject=f"Mobile Worker Clearing Complete - {self.domain}",
             message=f"The mobile workers have been cleared successfully for the project '{self.domain}'.",
-            configuration=email_configuration,
             recipient_list=[self.request.couch_user.get_email()],
         )
 

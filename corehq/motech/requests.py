@@ -8,7 +8,6 @@ from django.utils.translation import gettext as _
 from requests import HTTPError
 from requests.structures import CaseInsensitiveDict
 
-from dimagi.utils.django.email import DefaultEmailConfiguration
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -210,11 +209,9 @@ class Requests(object):
               'for remote connections. If necessary, please provide an '
               'alternate address.').format(connection_settings_url),
         ])
-        email_configuration = DefaultEmailConfiguration(settings.DEFAULT_FROM_EMAIL)
         send_mail_async.delay(
             _('MOTECH Error'),
             '\r\n'.join(message_lines),
-            configuration=email_configuration,
             recipient_list=self.notify_addresses,
         )
 

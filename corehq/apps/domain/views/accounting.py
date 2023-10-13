@@ -32,7 +32,6 @@ from memoized import memoized
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.utils.downgrade import can_domain_unpause
 from dimagi.utils.web import json_response
-from dimagi.utils.django.email import DefaultEmailConfiguration
 
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -1492,12 +1491,11 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             new_plan=self.request.POST.get('new_plan', 'unknown'),
             note=self.request.POST.get('downgrade_email_note', 'none')
         )
-        email_configuration = DefaultEmailConfiguration(settings.DEFAULT_FROM_EMAIL)
         send_mail_async.delay(
             '{}Subscription downgrade for {}'.format(
                 '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
                 self.request.domain
-            ), message, email_configuration, [settings.GROWTH_EMAIL]
+            ), message, [settings.GROWTH_EMAIL]
         )
 
     def send_keep_subscription_email(self):
@@ -1509,12 +1507,11 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             old_plan=self.request.POST.get('old_plan', 'unknown'),
         )
 
-        email_configuration = DefaultEmailConfiguration(settings.DEFAULT_FROM_EMAIL)
         send_mail_async.delay(
             '{}Subscription kept for {}'.format(
                 '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
                 self.request.domain
-            ), message, email_configuration, [settings.GROWTH_EMAIL]
+            ), message, [settings.GROWTH_EMAIL]
         )
 
 
@@ -1683,12 +1680,11 @@ class EmailOnDowngradeView(View):
             note=request.POST.get('note', 'none'),
         )
 
-        email_configuration = DefaultEmailConfiguration(settings.DEFAULT_FROM_EMAIL)
         send_mail_async.delay(
             '{}Subscription downgrade for {}'.format(
                 '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
                 request.domain
-            ), message, email_configuration, [settings.GROWTH_EMAIL]
+            ), message, [settings.GROWTH_EMAIL]
         )
         return json_response({'success': True})
 
@@ -1819,13 +1815,11 @@ def pause_subscription(request, domain):
                 note=_get_downgrade_or_pause_note(request, True),
             )
 
-            email_configuration = DefaultEmailConfiguration(settings.DEFAULT_FROM_EMAIL)
             send_mail_async.delay(
                 "{}Subscription pausing for {}".format(
                     '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
                     domain,
-                ), pause_message, email_configuration,
-                [settings.GROWTH_EMAIL]
+                ), pause_message, [settings.GROWTH_EMAIL]
             )
 
             if current_subscription.is_below_minimum_subscription:

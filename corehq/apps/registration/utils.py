@@ -13,7 +13,6 @@ from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
-from dimagi.utils.django.email import DefaultEmailConfiguration
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_static_url_prefix
@@ -257,10 +256,9 @@ You can view the %s here: %s""" % (
         get_url_base() + "/%s/%s/" % ("o" if entity_type == "org" else "a", entity_name))
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
-        email_configuration = DefaultEmailConfiguration(settings.SERVER_EMAIL)
         send_mail_async.delay(
             "New %s: %s" % (entity_texts[0], entity_name),
-            message, email_configuration, recipients
+            message, recipients, from_email=settings.SERVER_EMAIL
         )
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)

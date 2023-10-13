@@ -74,15 +74,12 @@ def soft_assert(to=None, notify_admins=False,
 
     def send_to_recipients(subject, message):
         from corehq.apps.hqwebapp.tasks import send_mail_async
-        from dimagi.utils.django.email import DefaultEmailConfiguration
 
-        email_configuration = DefaultEmailConfiguration(settings.DEFAULT_FROM_EMAIL)
         send_mail_async.delay(
             # this prefix is automatically added in mail_admins
             # but not send mail
             subject=settings.EMAIL_SUBJECT_PREFIX + subject,
             message=message,
-            configuration=email_configuration,
             recipient_list=to,
         )
 
