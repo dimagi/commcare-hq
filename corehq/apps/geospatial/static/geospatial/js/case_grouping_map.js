@@ -29,6 +29,10 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.casesToExport = ko.observableArray([]);
 
         self.downloadCSV = function () {
+            if (!self.casesToExport().length) {
+                return;
+            }
+
             const casesToExport = _.map(self.casesToExport(), function (caseItem) {
                 const coordinates = (caseItem.coordinates) ? `${caseItem.coordinates.lng} ${caseItem.coordinates.lat}` : "";
                 return {
@@ -37,21 +41,14 @@ hqDefine("geospatial/js/case_grouping_map",[
                     'coordinates': coordinates,
                 };
             });
-            exportToCsv(casesToExport);
-        };
-
-        function exportToCsv(itemsArr, includeHeaders = true) {
-            if (!itemsArr.length) {
-                return;
-            }
 
             let csvStr = "";
-            if (includeHeaders) {
-                csvStr = Object.keys(itemsArr[0]).join(",");
-                csvStr += "\n";
-            }
 
-            _.forEach(itemsArr, function (itemRow) {
+            // Write headers first
+            csvStr = Object.keys(casesToExport[0]).join(",");
+            csvStr += "\n";
+
+            _.forEach(casesToExport, function (itemRow) {
                 csvStr += Object.keys(itemRow).map(key => itemRow[key]).join(",");
                 csvStr += "\n";
             });
@@ -63,7 +60,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             hiddenElement.download = `Grouped Cases (${getTodayDate()}).csv`;
             hiddenElement.click();
             hiddenElement.remove();
-        }
+        };
 
         return self;
     }
