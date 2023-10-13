@@ -115,6 +115,7 @@ from corehq.apps.app_manager.suite_xml.generator import (
 )
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
     RESULTS_INSTANCE,
+    RESULTS_INSTANCE_BASE,
     RESULTS_INSTANCE_INLINE,
 )
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -2009,7 +2010,10 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         value_is_the_default = self.instance_name == 'casedb'
         if value_is_the_default:
             if module_uses_inline_search(module):
-                return RESULTS_INSTANCE_INLINE
+                if module.search_config.instance_name:
+                    return f'{RESULTS_INSTANCE_BASE}{module.search_config.instance_name}'
+                else:
+                    return RESULTS_INSTANCE_INLINE
             elif module_loads_registry_case(module):
                 return RESULTS_INSTANCE
         return self.instance_name
@@ -2162,6 +2166,7 @@ class CaseSearch(DocumentSchema):
     custom_related_case_property = StringProperty(exclude_if_none=True)
 
     inline_search = BooleanProperty(default=False)
+    instance_name = StringProperty(exclude_if_none=True)  # only applicable to inline_search
 
     @property
     def case_session_var(self):
