@@ -20,6 +20,7 @@ from corehq.apps.case_search.filter_dsl import (
 )
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    CASE_SEARCH_SORT_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
@@ -103,6 +104,7 @@ def _get_helper(couch_user, domain, case_types, registry_slug):
         else:
             helper = _RegistryQueryHelper(domain, couch_user, registry_helper)
     return helper
+
 
 class _QueryHelper:
     def __init__(self, domain):
@@ -205,9 +207,22 @@ class CaseSearchQueryBuilder:
         elif criteria.key == COMMCARE_PROJECT:
             if not criteria.is_empty:
                 return search_es.filter(filters.domain(criteria.value))
+        elif criteria.key == CASE_SEARCH_SORT_KEY:
+            return search_es.sort_by_case_properties(self._parse_custom_sort_properties(criteria.value))
         elif criteria.key not in UNSEARCHABLE_KEYS:
             return search_es.add_query(self._get_case_property_query(criteria), queries.MUST)
         return search_es
+
+    def _parse_custom_sort_properties(self, sort_properties):
+        parsed_sort_properties = []
+        for sort_property in sort_properties.split(','):
+            parsed_property = {}
+            parts = sort_property.lstrip('+-').split(':')
+            parsed_property['property_name'] = parts[0]
+            parsed_property['sort_type'] = parts[1] if len(parts) > 1 else 'exact'
+            parsed_property['is_descending'] = sort_property.startswith('-')
+            parsed_sort_properties.append(parsed_property)
+        return parsed_sort_properties
 
     def _get_daterange_query(self, criteria):
         startdate, enddate = criteria.get_date_range()
@@ -310,7 +325,6 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
     for case in results:
         _tag_is_related_case(case)
     return results
-
 
 
 def get_related_cases_result(helper, app, case_types, source_cases, include_all_related_cases):
@@ -444,6 +458,7 @@ def get_expanded_case_results(helper, custom_related_case_property, cases):
 def _get_case_search_cases(helper, case_ids):
     results = helper.get_base_queryset().case_ids(case_ids).run().hits
     return [helper.wrap_case(result) for result in results]
+
 
 # Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
 def _tag_is_related_case(case):

@@ -17,6 +17,7 @@ CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
 CASE_SEARCH_CASE_TYPE_KEY = "case_type"
 CASE_SEARCH_INDEX_KEY_PREFIX = "indices."
+CASE_SEARCH_SORT_KEY = "commcare_sort"
 
 # These use the `x_commcare_` prefix to distinguish them from 'filter' keys
 # This is a purely aesthetic distinction and not functional
@@ -118,7 +119,6 @@ class SearchCriteria:
                 _("Multiple values are only supported for simple text and range searches"),
                 self.key
             )
-
 
     def _validate_daterange(self):
         if not self.is_daterange:
