@@ -521,18 +521,22 @@ class ModuleBaseValidator(object):
                             'message': _('This feature is compatible with only version 2 of Mobile UCR'),
                         }
             if module_uses_inline_search(self.module):
-                for comparison_module in self.app.get_modules():
-                    if (comparison_module.unique_id != self.module.unique_id
-                            and module_uses_inline_search(comparison_module)):
-                        comparison_search_config = getattr(comparison_module, 'search_config', None)
-                        comparison_instance_name = comparison_search_config.instance_name
-                        if comparison_instance_name == search_config.instance_name:
-                            yield {
-                                "type": "non-unique instance name",
-                                "message": f'The instance "{comparison_instance_name}" is not unique',
-                                "module": self.get_module_info(),
-                                "details": comparison_instance_name
-                            }
+                other_search_configs = set(
+                    getattr(comparison_module, 'search_config', None)
+                    for comparison_module in self.app.get_modules()
+                    if (comparison_module.unique_id != self.module.unique_id)
+                    and module_uses_inline_search(comparison_module)
+                )
+                has_repeated_instance_name = any(other_search_config.instance_name == search_config.instance_name
+                                            for other_search_config in other_search_configs
+                                            if other_search_config is not None)
+                if has_repeated_instance_name:
+                    yield {
+                        "type": "non-unique instance name",
+                        "message": f'The instance "{search_config.instance_name}" is not unique',
+                        "module": self.get_module_info(),
+                        "details": search_config.instance_name
+                    }
 
     def validate_case_list_field_actions(self):
         if hasattr(self.module, 'case_details'):
