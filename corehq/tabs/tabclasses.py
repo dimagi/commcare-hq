@@ -1995,6 +1995,7 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
         ManageDomainMobileWorkersView,
+        ManageDomainAlertsView,
         RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -2011,6 +2012,12 @@ def _get_administration_section(domain):
         'title': _(FeaturePreviewsView.page_title),
         'url': reverse(FeaturePreviewsView.urlname, args=[domain])
     })
+
+    if toggles.CUSTOM_DOMAIN_BANNER_ALERTS.enabled(domain):
+        administration.append({
+            'title': _(ManageDomainAlertsView.page_title),
+            'url': reverse(ManageDomainAlertsView.urlname, args=[domain])
+        })
 
     if toggles.TRANSFER_DOMAIN.enabled(domain):
         administration.append({

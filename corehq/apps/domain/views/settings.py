@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+from functools import cached_property
 
 from django.conf import settings
 from django.contrib import messages
@@ -41,6 +42,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import (
     USE_LOCATION_CHOICE,
     USE_PARENT_LOCATION_CHOICE,
+    DomainAlertForm,
     DomainGlobalSettingsForm,
     DomainMetadataForm,
     PrivacySecurityForm,
@@ -49,6 +51,7 @@ from corehq.apps.domain.forms import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.models import CommCareHQAlert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -517,3 +520,84 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
     page_title = gettext_lazy("Manage Mobile Workers")
     template_name = 'enterprise/manage_mobile_workers.html'
     urlname = 'domain_manage_mobile_workers'
+
+
+@method_decorator(toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator(), name='dispatch')
+class ManageDomainAlertsView(BaseAdminProjectSettingsView):
+    template_name = 'domain/admin/manage_alerts.html'
+    urlname = 'domain_manage_alerts'
+    page_title = gettext_lazy("Manage Project Alerts")
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.form,
+            'alerts': [
+                {
+                    'active': alert.active,
+                    'html': alert.html,
+                    'id': alert.id,
+                    'created_by_user': alert.created_by_user,
+                }
+                for alert in CommCareHQAlert.objects.filter(created_by_domain=self.domain)
+            ]
+        }
+
+    @cached_property
+    def form(self):
+        if self.request.method == 'POST':
+            return DomainAlertForm(self.request.POST)
+        return DomainAlertForm()
+
+    def post(self, request, *args, **kwargs):
+        command = request.POST.get('command')
+        if command:
+            self._apply_command(request, command)
+        elif self.form.is_valid():
+            self._create_alert()
+            messages.success(request, _("Alert saved!"))
+        else:
+            messages.error(request, _("There was an error saving your alert. Please try again!"))
+            return self.get(request, *args, **kwargs)
+        return HttpResponseRedirect(self.page_url)
+
+    def _apply_command(self, request, command):
+        alert_id = request.POST.get('alert_id')
+        assert alert_id, 'Missing alert ID'
+        alert = self._load_alert(alert_id)
+        if not alert:
+            messages.error(request, _("Alert not found!"))
+            return
+
+        if command == 'delete':
+            alert.delete()
+        elif command in ['activate', 'deactivate']:
+            self._update_alert(alert, command)
+            messages.success(request, _("Alert updated!"))
+        else:
+            messages.error(request, _("Unexpected update received. Alert not updated!"))
+
+    @staticmethod
+    def _update_alert(alert, command):
+        if command == 'activate':
+            alert.active = True
+        elif command == 'deactivate':
+            alert.active = False
+        alert.save(update_fields=['active'])
+
+    def _load_alert(self, alert_id):
+        try:
+            return CommCareHQAlert.objects.get(
+                created_by_domain=self.domain,
+                id=alert_id
+            )
+        except CommCareHQAlert.DoesNotExist:
+            return None
+
+    def _create_alert(self):
+        CommCareHQAlert.objects.create(
+            created_by_domain=self.domain,
+            domains=[self.domain],
+            text=self.form.cleaned_data['text'],
+            created_by_user=self.request.couch_user.username,
+        )
