@@ -116,13 +116,6 @@ class CaseGroupingReport(BaseCaseMapReport):
     base_template = 'geospatial/case_grouping_map_base.html'
     report_template_path = 'case_grouping_map.html'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # geohash grid precision, set by self._aggregate_query(), read
-        # by self.shared_pagination_GET_params()
-        self._precision = None
-
     def _base_query(self):
         # Overrides super()._base_query() to not implement pagination
         # here. It is done later, in self.rows()
@@ -169,17 +162,10 @@ class CaseGroupingReport(BaseCaseMapReport):
     def _aggregate_query(self, query):
         """
         Returns ``query`` with geohash grid aggregation applied.
-
-        Also determines ``self._precision`` if it is not set.
         """
         case_property = get_geo_case_property(self.domain)
-
-        if self.request.GET.get('precision'):
-            self._precision = int(self.request.GET['precision'])
-        else:
-            self._precision = find_precision(query, case_property)
-
-        return apply_geohash_agg(query, case_property, self._precision)
+        precision = find_precision(query, case_property)
+        return apply_geohash_agg(query, case_property, precision)
 
     def _get_geo_point(self, case):
         case_obj = wrap_case_search_hit(case)
@@ -238,10 +224,9 @@ class CaseGroupingReport(BaseCaseMapReport):
     @property
     def shared_pagination_GET_params(self):
         shared_params = super().shared_pagination_GET_params
-        shared_params.extend([
+        shared_params.append(
             {'name': 'feature', 'value': self.request.GET.get('feature')},
-            {'name': 'precision', 'value': self._precision},
-        ])
+        )
         return shared_params
 
     # quickcache uses shared_pagination_GET_params as part of its key
