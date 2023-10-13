@@ -241,7 +241,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
     @flag_enabled('USH_SEARCH_FILTER')
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite', lambda _: None)
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite',
+           lambda _: None)
     def test_duplicate_remote_request(self):
         """
         Adding a second search config should not affect the initial one.

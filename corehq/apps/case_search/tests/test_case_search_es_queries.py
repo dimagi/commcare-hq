@@ -190,7 +190,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                                                                 },
                                                                 {
                                                                     "term": {
-                                                                        "case_properties.value.exact": "this should be"
+                                                                        "case_properties.value.exact": "this should be"  # noqa: E501
                                                                     }
                                                                 }
                                                             ]
@@ -220,7 +220,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                                                                 },
                                                                 {
                                                                     "term": {
-                                                                        "case_properties.value.exact": "this word should not be gone"
+                                                                        "case_properties.value.exact": "this word should not be gone"  # noqa: E501
                                                                     }
                                                                 }
                                                             ]
@@ -256,87 +256,87 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             ('_xpath_query', ["name='Frodo Baggins'", "home='Hobbiton'"]),
         ])
         expected = {
-                    "query": {
-                        "bool": {
-                            "filter": [
-                                {"terms": {"domain.exact": [DOMAIN]}},
-                                {"terms": {"type.exact": ["case_type"]}},
-                                {"term": {"closed": False}},
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "name"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.value.exact": "Frodo Baggins"
-                                                                    }
-                                                                }
-                                                            ]
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"terms": {"domain.exact": [DOMAIN]}},
+                        {"terms": {"type.exact": ["case_type"]}},
+                        {"term": {"closed": False}},
+                        {
+                            "nested": {
+                                "path": "case_properties",
+                                "query": {
+                                    "bool": {
+                                        "filter": [
+                                            {
+                                                "bool": {
+                                                    "filter": [
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key.exact": "name"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "Frodo Baggins"
+                                                            }
                                                         }
-                                                    }
-                                                ],
-                                                "must": {
-                                                    "match_all": {}
+                                                    ]
                                                 }
                                             }
+                                        ],
+                                        "must": {
+                                            "match_all": {}
                                         }
                                     }
-                                },
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "home"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.value.exact": "Hobbiton"
-                                                                    }
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                ],
-                                                "must": {
-                                                    "match_all": {}
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "match_all": {}
                                 }
-                            ],
-                            "must": {
-                                "match_all": {}
                             }
+                        },
+                        {
+                            "nested": {
+                                "path": "case_properties",
+                                "query": {
+                                    "bool": {
+                                        "filter": [
+                                            {
+                                                "bool": {
+                                                    "filter": [
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key.exact": "home"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "Hobbiton"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ],
+                                        "must": {
+                                            "match_all": {}
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
                         }
-                    },
-                    "sort": [
-                        "_score",
-                        "_doc"
                     ],
-                    "size": CASE_SEARCH_MAX_RESULTS
+                    "must": {
+                        "match_all": {}
+                    }
                 }
+            },
+            "sort": [
+                "_score",
+                "_doc"
+            ],
+            "size": CASE_SEARCH_MAX_RESULTS
+        }
         self.checkQuery(
             get_case_search_query(DOMAIN, ['case_type'], criteria),
             expected,
@@ -427,30 +427,30 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                     }
                 }
             },
-        "sort": [
-            {
-                "case_properties.value.exact": {
-                    "order": "asc",
-                    "nested_path": "case_properties",
-                    "nested_filter": {
-                        "term": {
-                            "case_properties.key.exact": "name"
+            "sort": [
+                {
+                    "case_properties.value.exact": {
+                        "order": "asc",
+                        "nested_path": "case_properties",
+                        "nested_filter": {
+                            "term": {
+                                "case_properties.key.exact": "name"
+                            }
+                        }
+                    }
+                },
+                {
+                    "case_properties.value.date": {
+                        "order": "desc",
+                        "nested_path": "case_properties",
+                        "nested_filter": {
+                            "term": {
+                                "case_properties.key.exact": "date_of_birth"
+                            }
                         }
                     }
                 }
-            },
-            {
-                "case_properties.value.date": {
-                    "order": "desc",
-                    "nested_path": "case_properties",
-                    "nested_filter": {
-                        "term": {
-                            "case_properties.key.exact": "date_of_birth"
-                        }
-                    }
-                }
-            }
-        ],
+            ],
             "size": CASE_SEARCH_MAX_RESULTS
         }
 

@@ -1,8 +1,7 @@
-/* global Uint8Array */
 hqDefine("app_manager/js/details/case_claim", function () {
     var get = hqImport('hqwebapp/js/initial_page_data').get,
         generateSemiRandomId = function () {
-        // https://stackoverflow.com/a/2117523
+            // https://stackoverflow.com/a/2117523
             return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, function (c) {
                 return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
             });
@@ -41,8 +40,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     });
                     if (itemList && itemList.length === 1) {
                         self.nodeset(itemsetValue(itemList[0]));
-                    }
-                    else {
+                    } else {
                         self.nodeset(null);
                     }
                 }
@@ -56,8 +54,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 return true;
             }
             var itemLists = _.map(get('js_options').item_lists, function (item) {
-                    return itemsetValue(item);
-                });
+                return itemsetValue(item);
+            });
             if (self.nodeset().split("/").length === 0) {
                 return false;
             }
@@ -113,8 +111,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
                 return 'fixture';
-            }
-            else {
+            } else {
                 return appearance;
             }
         });
@@ -127,8 +124,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     'tableLabel': gettext("Mobile UCR Report"),
                     'selectLabel': gettext("Select a Report..."),
                 };
-            }
-            else {
+            } else {
                 return {
                     'labelPlaceholder': 'name',
                     'valuePlaceholder': 'id',
@@ -214,7 +210,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         options.description = options.description[lang] || "";
         var mapping = {
             'additional_registry_cases': {
-                create: function(options) {
+                create: function (options) {
                     return additionalRegistryCaseModel(options.data, saveButton);
                 },
             },
@@ -290,7 +286,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.serialize = function () {
             var data = ko.mapping.toJS(self);
-            data.additional_registry_cases = data.data_registry_workflow === "load_case" ?  _.pluck(data.additional_registry_cases, 'caseIdXpath') : [];
+            data.additional_registry_cases = data.data_registry_workflow === "load_case" ? _.pluck(data.additional_registry_cases, 'caseIdXpath') : [];
             _.each(['search_label', 'search_again_label'], function (label) {
                 _.each(['image', 'audio'], function (media) {
                     var key = label + "_" + media,
