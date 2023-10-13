@@ -1,0 +1,15 @@
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block stylesheets %}{{ block.super }}
+  <link rel="stylesheet"
+        media="all"
+        href="{% static 'styleguide/bootstrap3/css/pycco-syntax.css' %}" />
+{% endblock %}
+
+{% block page_content %}
+  {% block doc_content %}
+  {% endblock doc_content %}
+{% endblock %}

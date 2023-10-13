@@ -1,3 +1,14 @@
+// Grid Containers
+// we will want to adapt the defaults in a full redesign
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px,
+  xxl: 1160px
+);
+
+
 // Typography Overrides
 $font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 $font-size-base: .75rem; // approx 12px
@@ -100,7 +111,6 @@ $cc-dark-warm-accent-low: #994f00;
 $primary:   #5c6ac5;
 $success:   $cc-att-pos-mid;
 $info:      $cc-light-cool-accent-mid;
-$warning:   $cc-dark-warm-accent-mid;
 $danger:    $cc-att-neg-mid;
 
 $body-color: $cc-text;

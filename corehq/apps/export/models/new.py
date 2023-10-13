@@ -69,6 +69,7 @@ from corehq.apps.export.const import (
     CASE_NAME_TRANSFORM,
     DEID_TRANSFORM_FUNCTIONS,
     EMPTY_VALUE,
+    EXCEL_MAX_SHEET_NAME_LENGTH,
     FORM_DATA_SCHEMA_VERSION,
     FORM_EXPORT,
     FORM_ID_TO_LINK,
@@ -3131,12 +3132,20 @@ def datasource_export_instance(config):
             selected=True,
         )
 
+    # table.name follows this format: ucr_{project space}_{table id}_{unique hash}
+    unique_hash = table.name.split("_")[-1]
+    sheet_name = adapter.table_id
+    if len(sheet_name) > EXCEL_MAX_SHEET_NAME_LENGTH:
+        sheet_name = f"{config.domain}_{unique_hash}"
+        if len(sheet_name) > EXCEL_MAX_SHEET_NAME_LENGTH:
+            sheet_name = unique_hash
+
     return DataSourceExportInstance(
         name=config.display_name,
         domain=config.domain,
         tables=[
             TableConfiguration(
-                label=table.name,
+                label=sheet_name,
                 columns=[
                     get_export_column(col)
                     for col in config.columns_by_id.values()

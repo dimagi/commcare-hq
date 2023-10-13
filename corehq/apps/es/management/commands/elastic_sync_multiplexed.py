@@ -1,5 +1,6 @@
 import logging
 import time
+import gevent
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -41,7 +42,7 @@ class ESSyncUtil:
         self.es = get_client()
 
     def start_reindex(self, cname, reindex_batch_size=1000,
-                      purge_ids=False, requests_per_second=None, with_no_replicas=False):
+                      purge_ids=False, requests_per_second=None):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -55,44 +56,32 @@ class ESSyncUtil:
         self._prepare_index_for_reindex(destination_index)
 
         logger.info("Starting ReIndex process")
-        task_info = es_manager.reindex(
+        task_id = es_manager.reindex(
             source_index, destination_index,
             batch_size=reindex_batch_size, purge_ids=purge_ids,
             requests_per_second=requests_per_second
         )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
-        task_id = task_info.split(':')[1]
+        task_number = task_id.split(':')[1]
         print("\n\n\n")
         logger.info("-----------------IMPORTANT-----------------")
-        logger.info(f"TASK ID - {task_id}")
+        logger.info(f"TASK NUMBER - {task_number}")
         logger.info("-------------------------------------------")
-        logger.info("Save this Task Id, You will need it later for verifying your reindex process")
+        logger.info("Save this Task Number, You will need it later for verifying your reindex process")
         print("\n\n\n")
         # This would display progress untill reindex process is completed
-        check_task_progress(task_info)
+        check_task_progress(task_id)
 
         print("\n\n")
-        self.perform_cleanup(adapter)
 
-        if not with_no_replicas:
-            logger.info("Preparing Index for normal use")
-            self._prepare_index_for_normal_usage(adapter.secondary)
-            print("\n\n")
-        else:
-            logger.info(f"Replicas are not being set for index {destination_index}")
-            logger.info("You can manually set them by running")
-            print("\n\n")
-            print(f"\t./manage.py elastic_sync_multiplexed set_replicas {cname}")
-            print("\n\n")
-
-        self._get_source_destination_doc_count(adapter)
+        self.display_source_destination_doc_count(adapter)
 
         logger.info(f"Verify this reindex process from elasticsearch logs using task id - {task_id}")
         print("\n\n")
         logger.info("You can use commcare-cloud to extract reindex logs from cluster")
         print("\n\t"
             + f"cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "
-            + f"\"grep '{task_id}.*ReindexResponse' /opt/data/elasticsearch*/logs/*.log\""
+            + f"\"grep '{task_number}.*ReindexResponse' /opt/data/elasticsearch*/logs/*.log\""
             + "\n\n")
 
     def _get_source_destination_indexes(self, adapter):
@@ -110,7 +99,7 @@ class ESSyncUtil:
             health = es_manager.cluster_health(index=index_name)
             status = health["status"]
             if status == "green":
-                break
+                return True
 
             print(f"\tWaiting for index status to be green. Current status: '{status}'")
             time.sleep(min(2 ** i, 30))
@@ -121,16 +110,35 @@ class ESSyncUtil:
         logger.info(f"Setting replica count to {tuning_settings['number_of_replicas']}")
         es_manager.index_set_replicas(secondary_adapter.index_name, tuning_settings['number_of_replicas'])
         es_manager.index_configure_for_standard_ops(secondary_adapter.index_name)
-        self._wait_for_index_to_get_healthy(secondary_adapter.index_name)
-        es_manager.cluster_routing(enabled=True)
+        is_index_healthy = self._wait_for_index_to_get_healthy(secondary_adapter.index_name)
+        if not is_index_healthy:
+            logger.info(f"""Index {secondary_adapter.index_name} did not become healthy within timeout.
+                        Replica shards are still assigning. You can check status manually by running
+                        ./manage.py elastic_sync_multiplexed display_shard_info""")
+            return
+        logger.info("All replicas successfully assigned. Index is prepared for normal usage.")
 
-    def _get_source_destination_doc_count(self, adapter):
+    def display_source_destination_doc_count(self, adapter):
+        """
+        Displays source and destination index doc count. In order to ensure that count is most accurate
+            - Both source and destination indices are refreshed.
+            - Tombstones are removed from both the indices.
+            - Count query is issued in parallel to try to avoid unequal counts in high frequency write indices.
+            There are still chances that count may be off by few docs.
+        """
         es_manager.index_refresh(adapter.primary.index_name)
         es_manager.index_refresh(adapter.secondary.index_name)
-        primary_count = adapter.count({})
-        secondary_count = adapter.secondary.count({})
-        print(f"Doc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
-        print(f"Doc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
+
+        self.perform_cleanup(adapter)
+
+        greenlets = gevent.joinall([
+            gevent.spawn(adapter.count, {}),
+            gevent.spawn(adapter.secondary.count, {})
+        ])
+        primary_count, secondary_count = [g.get() for g in greenlets]
+
+        print(f"\nDoc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
+        print(f"\nDoc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
 
     def perform_cleanup(self, adapter):
         logger.info("Performing required cleanup!")
@@ -288,6 +296,44 @@ class ESSyncUtil:
         self._prepare_index_for_normal_usage(adapter.secondary)
         logger.info(f"Successfully set replicas for index {adapter.secondary.index_name}")
 
+    def remove_residual_indices(self):
+        """
+        Remove the residual indices that are not used by HQ
+        """
+        existing_indices = es_manager.indices_info()
+        known_indices = self._get_all_known_index_names()
+        deleted_indices = []
+        for index_name in sorted(existing_indices.keys()):
+            if index_name not in known_indices:
+                print(f"Trying to delete residual index: {index_name}")
+                user_confirmation = input(f"Enter '{index_name}' to continue, any other key to cancel\n")
+                if user_confirmation != index_name:
+                    raise CommandError(f"Input {user_confirmation} did not match index name {index_name}. "
+                                       "Index deletion aborted")
+                es_manager.index_delete(index_name)
+                deleted_indices.append(index_name)
+        if deleted_indices:
+            print(f"Successfully Deleted {deleted_indices}")
+        else:
+            print("No residual indices found on the environment")
+
+    def _get_all_known_index_names(self):
+        # get index name from CANONICAL_NAME_ADAPTER_MAP
+        known_indices = set()
+        for cname in CANONICAL_NAME_ADAPTER_MAP.keys():
+            known_indices.update(self._get_current_and_older_index_name(cname))
+        return known_indices
+
+    def display_shard_info(self):
+        # Print the status of the shards in Elasticsearch cluster
+        cluster_status = es_manager.cluster_health()
+        print(f"Cluster Status: {cluster_status['status']}")
+        print(f"Active Shards Count: {cluster_status['active_shards']}")
+        print(f"Initializing Shards: {cluster_status['initializing_shards']}")
+        print(f"Unassigned Shards Count: {cluster_status['unassigned_shards']}")
+        print(f"Relocating Shards: {cluster_status['relocating_shards']}")
+        print(f"Active Shard Percentage: {int(cluster_status['active_shards_percent_as_number'])}%")
+
 
 class Command(BaseCommand):
     """
@@ -350,9 +396,24 @@ class Command(BaseCommand):
         ./manage.py elastic_sync_multiplexed copy_checkpoints <index_cname>
         ```
 
-    If replicas are not set during the time of reindex, they can be set on secondary index by
+    After reindex is successful the following command can be run to set replicas on secondary index
         ```bash
         ./manage.py elastic_sync_multiplexed set_replicas <index_cname>
+        ```
+
+    For deleting all the indices that are not used in HQ
+        ```bash
+        ./manage.py elastic_sync_multiplexed remove_residual_indices
+        ```
+
+    For getting current count of both the indices
+        ```bash
+        /manage.py elastic_sync_multiplexed display_doc_counts <index_cname>
+        ```
+
+    For getting current shard allocation status for the cluster
+        ```bash
+        /manage.py elastic_sync_multiplexed display_shard_info
         ```
     """
 
@@ -396,13 +457,6 @@ class Command(BaseCommand):
             type=int,
             help="""throttles rate at which reindex issues batches of
                     index operations by padding each batch with a wait time"""
-        )
-
-        start_cmd.add_argument(
-            "--with-no-replicas",
-            action="store_true",
-            default=False,
-            help="Replica shards will not be created for the destination index during reindex."
         )
 
         # Get ReIndex Process Status
@@ -459,18 +513,34 @@ class Command(BaseCommand):
             help="""Cannonical Name of the index whose replicas are to be set"""
         )
 
+        # Delete residual indices
+        remove_residual_indices_cmd = subparsers.add_parser("remove_residual_indices")
+        remove_residual_indices_cmd.set_defaults(func=self.es_helper.remove_residual_indices)
+
+        # Get count of docs in primary and secondary index
+        display_doc_count_cmd = subparsers.add_parser("display_doc_counts")
+        display_doc_count_cmd.set_defaults(func=self.es_helper.display_source_destination_doc_count)
+        display_doc_count_cmd.add_argument(
+            'index_cname',
+            choices=INDEXES,
+            help="""Cannonical Name of the index whose replicas are to be set"""
+        )
+
+        # Print shard status
+        display_shard_info_cmd = subparsers.add_parser("display_shard_info")
+        display_shard_info_cmd.set_defaults(func=self.es_helper.display_shard_info)
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
         if sub_cmd == 'start':
             cmd_func(
                 options['index_cname'], options['batch_size'],
-                options['purge_ids'], options['requests_per_second'],
-                options['with_no_replicas']
+                options['purge_ids'], options['requests_per_second']
             )
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
-        elif sub_cmd == 'cleanup':
+        elif sub_cmd == 'cleanup' or sub_cmd == 'display_doc_counts':
             cmd_func(doc_adapter_from_cname(options['index_cname']))
         elif sub_cmd == 'cancel' or sub_cmd == 'status':
             cmd_func(options['task_id'])
@@ -480,3 +550,5 @@ class Command(BaseCommand):
             cmd_func(options['index_cname'])
         elif sub_cmd == 'set_replicas':
             cmd_func(options["index_cname"])
+        elif sub_cmd in ['remove_residual_indices', 'display_shard_info']:
+            cmd_func()

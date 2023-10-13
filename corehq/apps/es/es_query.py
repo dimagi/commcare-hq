@@ -182,6 +182,7 @@ class ESQuery(object):
             filters.doc_id,
             filters.nested,
             filters.regexp,
+            filters.wildcard,
         ]
 
     def __getattr__(self, attr):
@@ -383,7 +384,7 @@ class ESQuery(object):
         elif self._source is not None:
             self.es_query['_source'] = self._source
         if self.uses_aggregations():
-            self.es_query['size'] = 0
+            self.es_query['size'] = 0  # Just return the aggs, not the hits
             self.es_query['aggs'] = {
                 agg.name: agg.assemble()
                 for agg in self._aggregations

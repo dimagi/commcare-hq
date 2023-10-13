@@ -116,7 +116,6 @@ from corehq.motech.requests import simple_request
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import ForeignObject, foreign_init
-from corehq.util.quickcache import quickcache
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
@@ -425,7 +424,6 @@ class Repeater(RepeaterSuperProxy):
         self.save()
 
     def retire(self):
-        self.is_paused = False
         self.is_deleted = True
         self.save()
 
@@ -936,7 +934,7 @@ class RepeatRecord(Document):
 
     def is_repeater_deleted(self):
         try:
-            return Repeater.all_objects.get(repeater_id=self.repeater_id).is_deleted
+            return Repeater.all_objects.values_list("is_deleted", flat=True).get(repeater_id=self.repeater_id)
         except Repeater.DoesNotExist:
             return True
 
@@ -958,6 +956,11 @@ class RepeatRecord(Document):
         elif self.failure_reason:
             state = RECORD_FAILURE_STATE
         return state
+
+    @property
+    def exceeded_max_retries(self):
+        return (self.state == RECORD_FAILURE_STATE and self.overall_tries
+                >= self.max_possible_tries)
 
     @classmethod
     def all(cls, domain=None, due_before=None, limit=None):
@@ -1446,15 +1449,8 @@ def is_response(duck):
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
 
 
-@quickcache(['domain'], timeout=5 * 60)
 def are_repeat_records_migrated(domain) -> bool:
-    """
-    Returns True if ``domain`` has SQLRepeatRecords.
-
-    .. note:: Succeeded and cancelled RepeatRecords may not have been
-              migrated to SQLRepeatRecords.
-    """
-    return SQLRepeatRecord.objects.filter(domain=domain).exists()
+    return False
 
 
 def domain_can_forward(domain):

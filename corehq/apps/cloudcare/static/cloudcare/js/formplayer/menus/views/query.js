@@ -10,7 +10,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        toggles = hqImport("hqwebapp/js/toggles");
 
     var separator = " to ",
         serverSeparator = "__",
@@ -156,12 +157,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     );
                     return true;
                 }
-                formEntryUtils.renderMapboxInput(
-                    inputId,
-                    geocoderItemCallback(id, model),
-                    geocoderOnClearCallback(id),
-                    initialPageData
-                );
+                formEntryUtils.renderMapboxInput({
+                    divId: inputId,
+                    itemCallback: geocoderItemCallback(id, model),
+                    clearCallBack: geocoderOnClearCallback(id),
+                    responseDataTypes: 'address,region,place,postcode'
+                });
                 var divEl = $field.find('.mapboxgl-ctrl-geocoder');
                 divEl.css("max-width", "none");
                 divEl.css("width", "100%");
@@ -395,7 +396,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onRender: function () {
             this._initializeSelect2Dropdown();
-            this.ui.hqHelp.hqHelp();
+            this.ui.hqHelp.hqHelp({
+                placement: () => {
+                    if (this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled) {
+                        return 'auto bottom';
+                    } else {
+                        return 'auto right';
+                    }
+                },
+            });
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.daterangepicker({
                 locale: {
@@ -455,6 +464,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             // only here to maintain backward compatibility and can be removed
             // once web apps fully transition using keys to convey select prompt selection.
             this.selectValuesByKeys = false;
+            this.dynamicSearchEnabled = options.disableDynamicSearch ? false :
+                (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
 
             for (let model of this.parentModel) {
                 if ("itemsetChoicesKey" in model.attributes) {
@@ -462,6 +473,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     break;
                 }
             }
+            this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                this.handleSmallScreenChange(smallScreenEnabled);
+            });
+            this.smallScreenListener.listen();
         },
 
         templateContext: function () {
@@ -483,6 +498,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         events: {
             'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
+        },
+
+        handleSmallScreenChange: function (enabled) {
+            this.smallScreenEnabled = enabled;
+            if (this.options.sidebarEnabled) {
+                if (this.smallScreenEnabled) {
+                    $('#sidebar-region').addClass('collapse');
+                } else {
+                    $('#sidebar-region').removeClass('collapse');
+                }
+            }
         },
 
         getAnswers: function () {
@@ -527,6 +553,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
+            if (self.dynamicSearchEnabled) {
+                self.updateSearchResults();
+            }
         },
 
         clearAction: function () {
@@ -535,12 +564,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 childView.clear();
             });
             self.setStickyQueryInputs();
+            if (self.dynamicSearchEnabled) {
+                self.updateSearchResults();
+            }
         },
 
         submitAction: function (e) {
             var self = this;
             e.preventDefault();
+            self.performSubmit();
+        },
 
+        performSubmit: function () {
+            var self = this;
             self.validateAllFields().done(function () {
                 FormplayerFrontend.trigger(
                     "menu:query",
@@ -548,7 +584,23 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     self.selectValuesByKeys,
                     self.options.sidebarEnabled
                 );
+                if (self.smallScreenEnabled && self.options.sidebarEnabled) {
+                    $('#sidebar-region').collapse('hide');
+                }
             });
+        },
+
+        updateSearchResults: function () {
+            var self = this;
+            var invalidRequiredFields = [];
+            self.children.each(function (childView) {
+                if (childView.hasRequiredError()) {
+                    invalidRequiredFields.push(childView.model.get('text'));
+                }
+            });
+            if (invalidRequiredFields.length === 0) {
+                self.performSubmit();
+            }
         },
 
         validateFieldChange: function (changedChildView) {
@@ -649,6 +701,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onAttach: function () {
             this.initGeocoders();
+        },
+
+        onBeforeDetach: function () {
+            this.smallScreenListener.stopListening();
         },
 
         initGeocoders: function () {

@@ -40,54 +40,53 @@
     sudo python3 -m pip install virtualenvwrapper
     ```
 
-- Java (JDK 8)
+- Java (JDK 17)
 
   We recommend using `sdkman` as a Java environment manager. `jenv` is also an option, though more involved.
 
     - Example setup using `sdkman`:
 
-      1. [Install sdkman](https://sdkman.io/install)
+        1. [Install sdkman](https://sdkman.io/install)
 
-      2. List available java versions to file one that matches Java (JDK 8)
-         ```sh
-         sdk list java
-         ```
-         Look for Java 8 in the list and install, eg:
-         ```sh
-         sdk install java 8.0.322-zulu
-         ```
+        2. List available java versions to file one that matches Java (JDK 17)
+           ```sh
+           sdk list java | grep 17
+           ```
+           Look for Java 17 in the list and install, eg:
+           ```sh
+           sdk install java 17.0.8-zulu
+           ```
 
     - Example setup using `jenv`:
 
-      1. Download and install [Java SE Development Kit 8][oracle_jdk8] from oracle.com downloads page.
-         (requires signing in with an Oracle account to download).
-      2. Install `jenv`
+        1. Download and install [Java SE Development Kit 17][oracle_jdk17] from oracle.com downloads page.
 
-          ```sh
-          brew install jenv
-          ```
+        2. Install `jenv`
 
-      3. Configure your shell (Bash folks use `~/.bashrc` instead of `~/.zshrc` below):
+            ```sh
+            brew install jenv
+            ```
 
-          ```sh
-          echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.zshrc
-          echo 'eval "$(jenv init -)"' >> ~/.zshrc
-          ```
+        3. Configure your shell (Bash folks use `~/.bashrc` instead of `~/.zshrc` below):
 
-      4. Add JDK 8 to `jenv`:
+            ```sh
+            echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.zshrc
+            echo 'eval "$(jenv init -)"' >> ~/.zshrc
+            ```
 
-          ```sh
-          jenv add $(/usr/libexec/java_home -v 1.8)
-          ```
+        4. Add JDK 17 to `jenv`:
 
-      5. Verify `jenv` config:
+            ```sh
+            jenv add $(/usr/libexec/java_home)
+            ```
 
-          ```sh
-          jenv doctor
-          ```
+        5. Verify `jenv` config:
 
-  [oracle_jdk8]: https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html
+            ```sh
+            jenv doctor
+            ```
 
+  [oracle_jdk17]: https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
 
 ## Issues Installing `requirements/requirements.txt`
 
@@ -162,7 +161,7 @@ Note: `kafka` will be very cranky on start up. You might have to restart it if y
 First, ensure that you have Java 8 running. `java -version` should output something like `openjdk version "1.8.0_322"`.
 Use `sdkman` or `jenv` to manage your local java versions.
 
-Download the `tar` file for [elasticsearch 2.4.6](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-6)
+Download the `tar` file for [elasticsearch 5.6.16](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.16.tar.gz)
 
 Un-tar and put the folder somewhere you can find it. Take note of tha path (`pwd`) and add the following to your `~/.zshrc`:
 
@@ -180,7 +179,7 @@ Now that you have Elasticsearch running you will need to install the necessary p
 1. Install the plugin
 
     ```shell
-    $ plugin install analysis-phonetic
+    $ elasticsearch-plugin install analysis-phonetic
     ```
 
     (If the `plugin` command is not found you will need to use the full path `<es home>/bin/plugin`).
@@ -191,7 +190,7 @@ Now that you have Elasticsearch running you will need to install the necessary p
 
     ```shell
     $ curl "localhost:9200/_cat/plugins?s=component&h=component,version"
-    analysis-phonetic 2.4.6
+    analysis-phonetic 5.6.16
     ```
 
 

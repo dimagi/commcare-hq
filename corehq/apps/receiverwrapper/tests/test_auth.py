@@ -266,7 +266,7 @@ class _AuthTestsBothBackends(object):
         token_model.objects.create(
             user=self.user.get_django_user(),
             token='mytoken',
-            scope='mobile_access',
+            scope='sync',
             expires=one_hour
         )
         expected_auth_context = {

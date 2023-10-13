@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyGroup, CasePropertyAllowedValue, CaseType
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.users.models import WebUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
 
@@ -30,7 +31,10 @@ class UpdateCasePropertyViewTest(TestCase):
         cls.case_type_obj = CaseType(name='caseType', domain=cls.domain_name)
         cls.case_type_obj.save()
         CaseProperty(case_type=cls.case_type_obj, name='property').save()
-        CasePropertyGroup(case_type=cls.case_type_obj, name='group').save()
+
+        group_obj = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
+        group_obj.id = 1
+        group_obj.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -181,7 +185,7 @@ class UpdateCasePropertyViewTest(TestCase):
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 200)
         prop = self._get_property()
-        self.assertEqual(prop.group, 'group')
+        self.assertEqual(prop.group_obj.name, 'group')
         self.assertIsNotNone(prop.group_obj)
 
     def test_update_with_no_group_name(self):
@@ -197,7 +201,6 @@ class UpdateCasePropertyViewTest(TestCase):
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 200)
         prop = self._get_property()
-        self.assertEqual(prop.group, '')
         self.assertIsNone(prop.group_obj)
 
 
@@ -269,17 +272,17 @@ class TestDeprecateOrRestoreCaseTypeView(TestCase):
         CaseProperty(case_type=cls.case_type_obj, name='property').save()
         CasePropertyGroup(case_type=cls.case_type_obj, name='group').save()
 
+    def setUp(self):
+        self.endpoint = reverse(self.urlname, args=(self.domain, self.case_type_obj.name))
+        self.client = Client()
+        self.client.login(username='test', password='foobar')
+
     @classmethod
     def tearDownClass(cls):
         cls.case_type_obj.delete()
         cls.admin_webuser.delete(cls.domain, None)
         cls.domain_obj.delete()
         return super().tearDownClass()
-
-    def setUp(self):
-        self.endpoint = reverse(self.urlname, args=(self.domain, self.case_type_obj.name))
-        self.client = Client()
-        self.client.login(username='test', password='foobar')
 
     def _update_deprecate_state(self, is_deprecated):
         case_type_obj = CaseType.objects.get(name=self.case_type_name)
@@ -388,6 +391,7 @@ class DataDictionaryJsonTest(TestCase):
                     "module_count": 0,
                     "properties": [],
                 }
-            ]
+            ],
+            "geo_case_property": GPS_POINT_CASE_PROPERTY,
         }
         self.assertEqual(response.json(), expected_response)

@@ -339,6 +339,10 @@ msgid "Manually configure Case Tiles"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "Edit Custom Variables"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "You have unsaved detail screen configurations."
 msgstr ""
 
@@ -448,6 +452,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Address Popup (Web Apps only)"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Clickable Icon (Web Apps only)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
@@ -2713,6 +2721,10 @@ msgid "Upload video file"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Draw signature"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Map layer not configured."
 msgstr ""
 
@@ -2880,6 +2892,14 @@ msgstr ""
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
 "Geocoder privilege"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please select one"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please select one or more"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
@@ -3121,7 +3141,27 @@ msgid "True when ALL of the case properties match"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+msgid "Out of range of filter. Will not appear on page refresh."
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+msgid "updated"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+msgid "Case copied"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+msgid "Cases copied"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
 msgid "Case Reassignment (via HQ)"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
+msgid "Search for users"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
@@ -3446,13 +3486,11 @@ msgid ""
 "problem persists."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/500.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/500.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
 msgid "This is Danny, one of our best developers."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/500.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/500.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
 msgid ""
 "Danny is pretty sad that you had to encounter this issue. He's making sure "
 "it gets fixed as soon as possible."

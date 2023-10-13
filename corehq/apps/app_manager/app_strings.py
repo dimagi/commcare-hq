@@ -149,7 +149,7 @@ def _create_module_details_app_strings(module, langs):
                 clean_trans(column.header, langs)
             )
 
-            if column.format in ('enum', 'enum-image', 'conditional-enum'):
+            if column.format in ('enum', 'enum-image', 'conditional-enum', 'clickable-icon'):
                 for item in column.enum:
                     yield (
                         id_strings.detail_column_enum_variable(
@@ -390,7 +390,7 @@ def _create_case_search_app_strings(
             if audio:
                 yield id_strings.case_search_again_audio_locale(module), audio
         else:
-            yield(
+            yield (
                 id_strings.case_search_title_translation(module),
                 clean_trans(CaseSearch.title_label.default(), langs)
             )

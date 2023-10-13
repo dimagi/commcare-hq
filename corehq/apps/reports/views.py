@@ -87,7 +87,8 @@ from corehq.apps.reports.formdetails.readable import (
     get_data_cleaning_data,
     get_readable_data_for_submission,
 )
-from corehq.apps.reports.models import QueryStringHash
+from corehq.apps.reports.models import QueryStringHash, TableauConnectedApp
+from corehq.apps.reports.util import get_all_tableau_groups, TableauAPIError
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.saved_reports.tasks import (
     send_delayed_report,
@@ -114,7 +115,7 @@ from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.utils.xform import resave_form
 from corehq.motech.generic_inbound.utils import revert_api_request_from_form
 from corehq.tabs.tabclasses import ProjectReportsTab
-from corehq.toggles import VIEW_FORM_ATTACHMENT
+from corehq.toggles import VIEW_FORM_ATTACHMENT, TABLEAU_USER_SYNCING
 from corehq.util import cmp
 from corehq.util.couch import get_document_or_404
 from corehq.util.download import get_download_response
@@ -134,7 +135,7 @@ from .forms import (
     UpdateTableauVisualizationForm,
 )
 from .lookup import ReportLookup, get_full_report_name
-from .models import TableauServer, TableauVisualization
+from .models import TableauVisualization
 from .standard import ProjectReport, inspect
 
 DATE_FORMAT = "%Y-%m-%d %H:%M"
@@ -167,7 +168,6 @@ def _can_view_form_attachment():
         def _inner(request, domain, *args, **kwargs):
             if VIEW_FORM_ATTACHMENT.enabled(domain):
                 return view_func(request, domain, *args, **kwargs)
-
             try:
                 response = require_form_view_permission(view_func)(request, domain, *args, **kwargs)
             except PermissionDenied:
@@ -181,7 +181,12 @@ def _can_view_form_attachment():
 can_view_form_attachment = _can_view_form_attachment()
 
 
+def location_restricted_scheduled_reports_enabled(request, *args, **kwargs):
+    return toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(kwargs.get('domain'))
+
+
 @login_and_domain_required
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 def reports_home(request, domain):
     if user_can_view_reports(request.project, request.couch_user):
         return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
@@ -210,7 +215,7 @@ class BaseProjectReportSectionView(BaseDomainView):
         return reverse('reports_home', args=(self.domain, ))
 
 
-@location_safe
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
     page_title = gettext_noop("My Saved Reports")
@@ -228,7 +233,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     @property
     def good_configs(self):
-        all_configs = ReportConfig.by_domain_and_owner(self.domain, self.request.couch_user._id)
+        all_configs = ReportConfig.by_domain_and_owner(self.domain, self.request.couch_user._id, stale=False)
         good_configs = []
         for config in all_configs:
             if config.is_configurable_report and not config.configurable_report:
@@ -569,6 +574,7 @@ def _can_email_report(report_slug, request, dispatcher_class, domain):
 
 @login_and_domain_required
 @require_http_methods(['DELETE'])
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 def delete_config(request, domain, config_id):
     ReportConfig.shared_on_domain.clear(ReportConfig, domain)
 
@@ -672,6 +678,7 @@ def soft_shift_to_server_timezone(report_notification):
     )
 
 
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 class ScheduledReportsView(BaseProjectReportSectionView):
     urlname = 'edit_scheduled_report'
     page_title = _("Scheduled Report")
@@ -926,6 +933,7 @@ class ReportNotificationUnsubscribeView(TemplateView):
 
 @login_and_domain_required
 @require_POST
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 def delete_scheduled_report(request, domain, scheduled_report_id):
     user = request.couch_user
     delete_count = request.POST.get("bulkDeleteCount")
@@ -977,6 +985,7 @@ def _can_delete_scheduled_report(report, user, domain):
 
 
 @login_and_domain_required
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 def send_test_scheduled_report(request, domain, scheduled_report_id):
     if not _can_send_test_report(scheduled_report_id, request.couch_user, domain):
         raise Http404()
@@ -1087,7 +1096,10 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         return "", []
 
     for config in configs:
-        content, excel_file = config.get_report_content(lang, attach_excel=attach_excel, couch_user=couch_user)
+        content, excel_file = config.get_report_content(lang,
+                                                        attach_excel=attach_excel,
+                                                        couch_user=couch_user,
+                                                        subreport_slug=config.subreport_slug)
         if excel_file:
             excel_attachments.append({
                 'title': config.full_name + "." + format.extension,
@@ -1145,6 +1157,7 @@ def render_full_report_notification(request, content, email=None, report_notific
 
 
 @login_and_domain_required
+@conditionally_location_safe(location_restricted_scheduled_reports_enabled)
 def view_scheduled_report(request, domain, scheduled_report_id):
     report_text = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
     return render_full_report_notification(request, report_text)
@@ -1594,12 +1607,11 @@ def archive_form(request, domain, instance_id):
 @require_permission(HqPermissions.edit_data)
 @require_POST
 @location_safe
-def delete_form(request, domain, instance_id):
+def soft_delete_form(request, domain, instance_id):
     form = safely_get_form(request, domain, instance_id)
     assert form.domain == domain
     if form.is_archived:
         form.soft_delete()
-        form.save()
         return HttpResponseRedirect(reverse('project_report_dispatcher',
                                             args=(domain, 'submit_history')))
     else:
@@ -1823,14 +1835,32 @@ class TableauServerView(BaseProjectReportSectionView):
     def tableau_server_form(self):
         data = self.request.POST if self.request.method == 'POST' else None
         return TableauServerForm(
-            data, domain=self.domain
+            data, domain=self.domain, user_syncing_config=self.get_user_syncing_config()
         )
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['domain'] = self.domain
-        kwargs['initial'] = TableauServer.objects.get_or_create(domain=self.domain)
-        return kwargs
+    def get_user_syncing_config(self):
+        '''
+        returns a dict --
+            {
+                'user_syncing_enabled': Bool; is FF enabled
+                'all_tableau_groups': List or None; all tableau groups on linked Tableau site
+                'server_reachable': Bool or None; could Tableau Server be reached
+            }
+        '''
+        user_syncing_config = {}
+        user_syncing_config['user_syncing_enabled'] = TABLEAU_USER_SYNCING.enabled(self.domain)
+        if user_syncing_config['user_syncing_enabled']:
+            if TableauConnectedApp.is_server_setup(self.domain):
+                try:
+                    user_syncing_config['all_tableau_groups'] = get_all_tableau_groups(self.domain)
+                    user_syncing_config['server_reachable'] = True
+                except TableauAPIError:
+                    messages.warning(self.request, _("""Cannot reach Tableau Server right now, allowed Tableau
+                                                        groups cannot be edited."""))
+            else:
+                messages.warning(self.request, _("""Tableau Server is not configured yet, allowed Tableau groups
+                                                    cannot be edited."""))
+        return user_syncing_config
 
     @property
     def page_context(self):

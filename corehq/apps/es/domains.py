@@ -12,7 +12,7 @@ DomainES
              .size(0))
 """
 
-from django_countries import Countries
+from django_countries import countries
 
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
@@ -78,12 +78,13 @@ class ElasticDomain(ElasticDocumentAdapter):
 
         sub = Subscription.visible_objects.filter(subscriber__domain=domain_dict['name'], is_active=True)
         domain_dict['deployment'] = domain_dict.get('deployment') or {}
-        countries = domain_dict['deployment'].get('countries', [])
+        domain_countries = domain_dict['deployment'].get('countries', [])
         domain_dict['deployment']['countries'] = []
         if sub:
             domain_dict['subscription'] = sub[0].plan_version.plan.edition
-        for country in countries:
-            domain_dict['deployment']['countries'].append(Countries[country].upper())
+        countries_map = dict(countries)
+        for country in domain_countries:
+            domain_dict['deployment']['countries'].append(countries_map[country].upper())
         return super()._from_dict(domain_dict)
 
 

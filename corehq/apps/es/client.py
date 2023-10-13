@@ -95,7 +95,7 @@ class ElasticManageAdapter(BaseAdapter):
         return False
 
     def get_indices(self, full_info=False):
-        """Return the cluster index information.
+        """Return the cluster index information of active indices.
 
         :param full_info: ``bool`` whether to return the full index info
                           (default ``False``)
@@ -110,7 +110,9 @@ class ElasticManageAdapter(BaseAdapter):
         :returns: ``dict`` with format ``{<alias>: [<index>, ...], ...}``
         """
         aliases = {}
-        for index, alias_info in self._es.indices.get_aliases().items():
+        aliases_obj = (self._es.indices.get_aliases()
+                       if self.elastic_major_version == 2 else self._es.indices.get_alias())
+        for index, alias_info in aliases_obj.items():
             for alias in alias_info.get("aliases", {}):
                 aliases.setdefault(alias, []).append(index)
         return aliases
@@ -149,9 +151,15 @@ class ElasticManageAdapter(BaseAdapter):
         :returns: ``dict`` of task details
         :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)
         """
-        # NOTE: elasticsearch5 python library doesn't support `task_id` as a
-        # kwarg for the `tasks.list()` method, and uses `tasks.get()` for that
-        # instead.
+        if self.elastic_major_version == 5:
+            try:
+                task_details = self._es.tasks.get(task_id=task_id)
+                task_info = task_details['task']
+                task_info['completed'] = task_details['completed']
+            except NotFoundError as e:
+                # unknown task id provided
+                raise TaskMissing(e)
+            return task_info
         return self._parse_task_result(self._es.tasks.list(task_id=task_id,
                                                            detailed=True))
 
@@ -235,13 +243,15 @@ class ElasticManageAdapter(BaseAdapter):
         self._es.indices.refresh(",".join(indices), expand_wildcards="none")
 
     def indices_info(self):
-        """Retrieve meta information about all the indices in the cluster.
-
-        :returns: ``dict`` A dict with index name in keys and index meta information
+        """Retrieve meta information about all the indices in the cluster. This will also return closed indices
+        :returns: ``dict`` A dict with index name in keys and index meta information.
         """
         indices_info = self._es.cat.indices(format='json', bytes='b')
         filtered_indices_info = {}
         for info in indices_info:
+            if info['index'].startswith('.'):
+                # Elasticsearch system index, ignore
+                continue
             filtered_indices_info[info['index']] = {
                 'health': info['health'],
                 'primary_shards': info['pri'],

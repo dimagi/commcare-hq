@@ -53,6 +53,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     langs: self.langs,
                     properties: self.properties,
                     saveUrl: self.saveUrl,
+                    moduleId: self.module_id,
                     columnKey: columnType,
                     childCaseTypes: spec.childCaseTypes,
                     fixtures: _.keys(spec.fixture_columns_by_type),
@@ -77,11 +78,11 @@ hqDefine('app_manager/js/details/screen_config', function () {
         const calculatedColName = (index) => `_cc_calculated_${index}`;
         const calculatedColLabel = (index, col) => {
             return _.template(gettext('<%- name %> (Calculated Property #<%- index %>)'))({
-                name: col.header.val(), index: index + 1
+                name: col.header.val(), index: index + 1,
             });
-        }
+        };
 
-        function bindCalculatedPropsWithSortCols () {
+        function bindCalculatedPropsWithSortCols() {
             // This links the calculated properties in the case list with the options available for sorting.
             // Updates to the calculated properties are propagated to the sort rows.
 
@@ -92,7 +93,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     let index = self.shortScreen.columns.indexOf(col),
                         label = calculatedColLabel(index, col);
                     return {value: calculatedColName(index), label: label};
-                })
+                });
             self.sortProperties.push(...calculatedCols);
 
             // propagate changes in calculated columns to the sort properties
@@ -107,7 +108,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     const colLabel = calculatedColLabel(change.index, change.value);
                     if (change.status === "edited") {
                         let prop = sortProps.find(p => {
-                            return p.value === colValue
+                            return p.value === colValue;
                         });
                         if (prop) {
                             prop.label = colLabel;
