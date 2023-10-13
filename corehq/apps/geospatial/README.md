@@ -62,15 +62,8 @@ GeoHash Grid Aggregation buckets look like this:
 In this example, "key" is a GeoHash of length 3, and "doc_count" gives
 the number of documents in each bucket, or GeoHash grid cell.
 
-For `CaseGroupingReport`, buckets can have up to 10,000 cases each. But
-they could also have much less than that. If the user requests, say, 50
-rows per page, and the page that the user is looking at has fewer than
-50 cases left in the current bucket, then page will need to include
-cases from the next bucket.
-
-The report uses the GeoHash and document counts from the list of
-buckets, like the example above, to determine the buckets and cases to
-include in each page.
+For `CaseGroupingReport`, buckets are pages. So pagination simply flips
+from one bucket to the next.
 
 
 Setting Up Test Data

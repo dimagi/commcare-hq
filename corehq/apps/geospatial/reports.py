@@ -18,12 +18,7 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.util.quickcache import quickcache
 
 from .dispatchers import CaseManagementMapDispatcher
-from .es import (
-    AGG_NAME,
-    apply_geohash_agg,
-    find_precision,
-    get_bucket_keys_for_page,
-)
+from .es import AGG_NAME, apply_geohash_agg, find_precision
 from .models import GeoPolygon
 from .utils import get_geo_case_property
 
@@ -201,42 +196,44 @@ class CaseGroupingReport(BaseCaseMapReport):
             self.domain,
             self.shared_pagination_GET_params,
         )
-        bucket_keys, skip = get_bucket_keys_for_page(
-            buckets,
-            self.pagination.start,
-            self.pagination.count,
-        )
-        if not bucket_keys:
+        if not buckets:
             return []
-
-        # We now have everything we need to build the query that will
-        # return the cases for this page.
-        case_property = get_geo_case_property(self.domain)
+        # Ignore self.pagination.count. It is always treated as 1.
+        geohash = buckets[self.pagination.start]['key']
+        query_filters = [filters.geo_grid(
+            field=get_geo_case_property(self.domain),
+            geohash=geohash,
+        )]
         cases = []
-        for geohash in bucket_keys:
-            # We fetch each bucket separately to maintain case sequence.
-            query = super()._build_query()
-            query_filters = [filters.geo_grid(
-                field=case_property,
-                geohash=geohash,
-            )]
-            self._filter_query(query, additional_filters=query_filters)
-            es_results = query.run().raw
+        query = super()._build_query()
+        self._filter_query(query, additional_filters=query_filters)
+        es_results = query.run().raw
 
-            for row in es_results['hits'].get('hits', []):
-                if skip > 0:
-                    skip -= 1
-                    continue
-                display = CaseDisplayES(
-                    self.get_case(row), self.timezone, self.individual
-                )
-                coordinates = self._get_geo_location(self.get_case(row))
-                cases.append([
-                    display.case_id,
-                    coordinates,
-                    display.case_link
-                ])
+        for row in es_results['hits'].get('hits', []):
+            display = CaseDisplayES(
+                self.get_case(row), self.timezone, self.individual
+            )
+            coordinates = self._get_geo_location(self.get_case(row))
+            cases.append([
+                display.case_id,
+                coordinates,
+                display.case_link
+            ])
         return cases
+
+    @property
+    def total_records(self):
+        """
+        Returns the number of buckets.
+
+        Pagination count is always treated as 1, so the total number of
+        records == the number of pages == the number of buckets.
+        """
+        buckets = self._get_buckets(
+            self.domain,
+            self.shared_pagination_GET_params,
+        )
+        return len(buckets)
 
     @property
     def shared_pagination_GET_params(self):

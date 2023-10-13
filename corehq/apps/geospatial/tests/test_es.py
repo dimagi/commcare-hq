@@ -12,11 +12,7 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import case_search_es_setup, es_test
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
-from corehq.apps.geospatial.es import (
-    find_precision,
-    get_bucket_keys_for_page,
-    get_max_doc_count,
-)
+from corehq.apps.geospatial.es import find_precision, get_max_doc_count
 from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.util.test_utils import flag_enabled
 
@@ -78,29 +74,6 @@ class TestGetMaxDocCount(TestCase):
         precision = 3
         max_doc_count = get_max_doc_count(query, case_property, precision)
         self.assertEqual(max_doc_count, 3)
-
-
-def test_get_bucket_keys_for_page():
-    buckets = [
-        {"key": "u17", "doc_count": 1},
-        {"key": "u09", "doc_count": 2},
-        {"key": "u15", "doc_count": 3}
-    ]
-    bucket_keys, skip = get_bucket_keys_for_page(
-        buckets,
-        skip=0,
-        limit=2,
-    )
-    assert_equal(bucket_keys, ['u17', 'u09'])
-    assert_equal(skip, 0)
-
-    bucket_keys, skip = get_bucket_keys_for_page(
-        buckets,
-        skip=2,
-        limit=2,
-    )
-    assert_equal(bucket_keys, ['u09', 'u15'])
-    assert_equal(skip, 1)
 
 
 def test_doctests():
