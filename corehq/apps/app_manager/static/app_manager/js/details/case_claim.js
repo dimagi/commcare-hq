@@ -32,8 +32,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             write: function (value) {
                 if (value === undefined) {
                     self.nodeset(null);
-                }
-                else {
+                } else {
                     self.instance_id(value);
                     var itemList = _.filter(get('js_options').item_lists, function (item) {
                         return item.id === value;
@@ -305,8 +304,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         // init with blank string to avoid triggering save button
         var appearance = searchProperty.appearance || "";
         if (searchProperty.input_ === "select1" || searchProperty.input_ === "select") {
-            var instance_id = searchProperty.itemset.instance_id;
-            if (instance_id !== null && instance_id.includes("commcare-reports")) {
+            var instanceId = searchProperty.itemset.instance_id;
+            if (instanceId !== null && instanceId.includes("commcare-reports")) {
                 appearance = "report_fixture";
             } else {
                 appearance = "lookup_table_fixture";
