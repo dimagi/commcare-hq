@@ -75,10 +75,12 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
+from corehq.apps.app_manager.suite_xml.utils import is_valid_results_instance_name
 from corehq.apps.app_manager.util import (
     module_offers_search,
     module_uses_inline_search,
 )
+
 from corehq.util.timer import time_method
 
 
@@ -356,7 +358,9 @@ def search_input_instances(app, instance_name):
         src = f'jr://instance/search-input/{query_datum_id}'
     except ValueError:
         src = 'jr://instance/search-input'  # legacy instance
-    return Instance(id=instance_name, src=src)
+    if is_valid_results_instance_name(app, query_datum_id):
+        return Instance(id=instance_name, src=src)
+    return None
 
 
 @register_factory('selected_cases')
@@ -366,7 +370,9 @@ def selected_cases_instances(app, instance_name):
 
 @register_factory('results')
 def remote_instances(app, instance_name):
-    return Instance(id=instance_name, src=f'jr://instance/remote/{instance_name}')
+    if is_valid_results_instance_name(app, instance_name):
+        return Instance(id=instance_name, src=f'jr://instance/remote/{instance_name}')
+    return None
 
 
 @register_factory('commcare')
