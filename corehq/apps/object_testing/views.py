@@ -63,7 +63,7 @@ class ObjectTestListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             'id': obj.id,
             'name': obj.name,
             'description': obj.description,
-            "edit_url": reverse("object_test:edit", args=[self.domain, obj.id])
+            "edit_url": reverse("object_test:edit", args=[self.domain, obj.id]) if obj.id else None
         }
 
     def get_create_form(self, is_blank=False):
