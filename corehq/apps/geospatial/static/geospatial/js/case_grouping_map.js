@@ -60,7 +60,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             const hiddenElement = document.createElement('a');
             hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csvStr);
             hiddenElement.target = '_blank';
-            hiddenElement.download = `cases_by_group (created on ${getTodayDate()}).csv`;
+            hiddenElement.download = `Grouped Cases (${getTodayDate()}).csv`;
             hiddenElement.click();
             hiddenElement.remove();
         }
