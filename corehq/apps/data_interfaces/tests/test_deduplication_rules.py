@@ -14,6 +14,7 @@ from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.tests.utils import es_test
 from django.contrib.messages import get_messages
 from django.contrib.messages.storage import default_storage
+from corehq.util.test_utils import flag_enabled, flag_disabled
 
 
 @es_test(requires=[case_adapter], setup_class=True)
@@ -68,6 +69,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
         self.assertEqual(action.case_properties, ['email'])
         self.assertEqual(action.properties_to_update, [])
 
+    @flag_enabled('GATE_DEDUPE_ACTIONS')
     def test_create_rule_with_actions(self):
         request = self._create_creation_request(
             properties_to_update=[{'name': 'level', 'valueType': 'EXACT', 'value': 'test'}]
@@ -105,6 +107,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
             'Deduplication rule not saved due to the following issues: '
             '<ul><li>Matching case properties must be unique</li></ul>')
 
+    @flag_enabled('GATE_DEDUPE_ACTIONS')
     @patch.object(dedupe_views.DataInterfaceSection, 'get')
     def test_duplicate_updating_properties_fails(self, *args):
         request = self._create_creation_request(
@@ -123,6 +126,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
             'Deduplication rule not saved due to the following issues: '
             '<ul><li>Action case properties must be unique</li></ul>')
 
+    @flag_enabled('GATE_DEDUPE_ACTIONS')
     @patch.object(dedupe_views.DataInterfaceSection, 'get')
     def test_updating_reserved_property_fails(self, *args):
         request = self._create_creation_request(
@@ -138,6 +142,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
             'Deduplication rule not saved due to the following issues: '
             '<ul><li>You cannot update reserved property: name</li></ul>')
 
+    @flag_enabled('GATE_DEDUPE_ACTIONS')
     @patch.object(dedupe_views.DataInterfaceSection, 'get')
     def test_updating_match_property_fails(self, *args):
         request = self._create_creation_request(
@@ -153,6 +158,19 @@ class DeduplicationRuleCreateViewTest(TestCase):
         self.assertEqual(list(get_messages(request))[0].message,
             'Deduplication rule not saved due to the following issues: '
             '<ul><li>You cannot update properties that are used to match a duplicate.</li></ul>')
+
+    @flag_disabled('GATE_DEDUPE_ACTIONS')
+    def test_creating_rule_with_actions_but_no_toggle_ignores_actions(self, *args):
+        request = self._create_creation_request(
+            properties_to_update=[{"name": "level", "valueType": "EXACT", "value": "test"}]
+        )
+
+        self.view.post(request)
+
+        rule = AutomaticUpdateRule.objects.get(
+            domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+        action = rule.caseruleaction_set.get().case_deduplication_action_definition
+        self.assertEqual(action.properties_to_update, [])
 
     def _create_creation_request(self,
         name='TestRule',
@@ -171,7 +189,8 @@ class DeduplicationRuleCreateViewTest(TestCase):
             'case-filter-location_filter_definition': json.dumps([])
         }
 
-        params['properties_to_update'] = json.dumps(properties_to_update or [])
+        if properties_to_update:
+            params['properties_to_update'] = json.dumps(properties_to_update)
 
         request = RequestFactory().post('dummy_url', params)
         request.domain = self.domain
@@ -247,6 +266,20 @@ class DeduplicationRuleEditViewTest(TestCase):
         self.assertEqual(list(get_messages(request))[0].message,
             'Rule TestRule2 was updated, and has been queued for backfilling')
 
+    @flag_disabled('GATE_DEDUPE_ACTIONS')
+    def test_rule_with_actions_loses_actions_when_updated_with_the_toggle_disabled(self):
+        rule = self._create_rule(
+            name='TestRule1',
+            properties_to_update=[{"name": "level", "value_type": "EXACT", "value": "test"}]
+        )
+        view = self._create_view(rule)
+        request = self._create_update_request(rule, name='TestRule2', actions_enabled=False)
+
+        view.post(request)
+        updatedRule = AutomaticUpdateRule.objects.get(id=rule.id)
+        action = updatedRule.caseruleaction_set.get().case_deduplication_action_definition
+        self.assertEqual(action.properties_to_update, [])
+
     def _create_view(self, rule):
         view = DeduplicationRuleEditView()
         view.args = []
@@ -284,6 +317,7 @@ class DeduplicationRuleEditViewTest(TestCase):
         case_properties=None,
         match_type=None,
         properties_to_update=None,
+        actions_enabled=True
     ):
         action = CaseDeduplicationActionDefinition.from_rule(rule)
         params = {
@@ -292,11 +326,13 @@ class DeduplicationRuleEditViewTest(TestCase):
             'match_type': match_type or action.match_type,
             'case_properties': json.dumps(
                 self._transform_case_properties(case_properties or action.case_properties)),
-            'properties_to_update': json.dumps(
-                self._transform_update_properties(properties_to_update or action.properties_to_update)),
             'case-filter-property_match_definitions': json.dumps([]),
             'case-filter-location_filter_definition': json.dumps([])
         }
+
+        if actions_enabled:
+            params['properties_to_update'] = json.dumps(
+                self._transform_update_properties(properties_to_update or action.properties_to_update))
 
         request = RequestFactory().post('dummy_url', params)
         request.domain = self.domain
