@@ -40,7 +40,6 @@ hqDefine("geospatial/js/case_grouping_map",[
             exportToCsv(casesToExport);
         };
 
-        // If list of propertiesToInclude is not given, will export all properties of objects in itemsArr
         function exportToCsv(itemsArr, includeHeaders = true) {
             if (!itemsArr.length) {
                 return;
