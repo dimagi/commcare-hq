@@ -147,7 +147,7 @@ class CaseGroupingReport(BaseCaseMapReport):
     def _get_geo_point(self, case):
         case_obj = wrap_case_search_hit(case)
         geo_case_property = get_geo_case_property(case_obj.domain)
-        geo_point = case_obj.case_json.get(geo_case_property)
+        geo_point = case_obj.get_case_property(geo_case_property)
         return geo_point
 
 
