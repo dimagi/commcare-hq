@@ -12,11 +12,14 @@ from corehq.apps.object_testing.forms import (
     ObjectTestCreateForm,
     ObjectTestUpdateForm,
 )
+from corehq.apps.object_testing.framework.exceptions import ObjectTestAssertionError
+from corehq.apps.object_testing.framework.main import execute_object_test
 from corehq.apps.object_testing.models import ObjectTest
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.util import reverse
 
 
+@method_decorator(toggles.UCR_EXPRESSION_REGISTRY.required_decorator(), name='dispatch')
 class ObjectTestListView(BaseProjectDataView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("Object Testing")
     urlname = "object_test:list"
@@ -84,7 +87,7 @@ class ObjectTestListView(BaseProjectDataView, CRUDPaginatedViewMixin):
         }
 
 
-@method_decorator(toggles.GENERIC_INBOUND_API.required_decorator(), name='dispatch')
+@method_decorator(toggles.UCR_EXPRESSION_REGISTRY.required_decorator(), name='dispatch')
 class ObjectTestEditView(BaseProjectDataView):
     page_title = gettext_lazy("Test")
     urlname = "object_test:edit"
@@ -124,7 +127,12 @@ class ObjectTestEditView(BaseProjectDataView):
 
     def post(self, request, domain, **kwargs):
         if "execute" in self.request.POST:
-            messages.info(request, "Test execution not implemented yet.")
+            try:
+                execute_object_test(self.object_test)
+            except ObjectTestAssertionError as e:
+                messages.error(request, str(e))
+            else:
+                messages.info(request, "Success")
             return redirect(self.urlname, self.domain, self.test_id)
         else:
             form = self.get_form()
