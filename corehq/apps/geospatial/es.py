@@ -107,7 +107,7 @@ def apply_geohash_agg(query, case_property, precision):
     )
 
 
-def get_bucket_keys_for_page(es_results, skip, limit):
+def get_bucket_keys_for_page(buckets, skip, limit):
     """
     Returns the keys of the buckets that this page spans, and the number
     of cases to be skipped in the first bucket.
@@ -117,13 +117,6 @@ def get_bucket_keys_for_page(es_results, skip, limit):
     second and third buckets, and we want to skip the first case in the
     second bucket.
     """
-    buckets = (
-        es_results['aggregations']
-        ['case_properties']
-        ['case_property']
-        [AGG_NAME]
-        ['buckets']
-    )
     if not buckets:
         return [], 0
 

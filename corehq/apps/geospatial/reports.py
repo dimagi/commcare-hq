@@ -15,9 +15,15 @@ from corehq.apps.es.case_search import wrap_case_search_hit
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
+from corehq.util.quickcache import quickcache
 
 from .dispatchers import CaseManagementMapDispatcher
-from .es import apply_geohash_agg, find_precision, get_bucket_keys_for_page
+from .es import (
+    AGG_NAME,
+    apply_geohash_agg,
+    find_precision,
+    get_bucket_keys_for_page,
+)
 from .models import GeoPolygon
 from .utils import get_geo_case_property
 
@@ -181,9 +187,6 @@ class CaseGroupingReport(BaseCaseMapReport):
         if self.request.GET.get('precision'):
             self._precision = int(self.request.GET['precision'])
         else:
-            # TODO: What is the best way to send this value to the
-            #       browser, for the browser to pass it back as a GET
-            #       param across page requests?
             self._precision = find_precision(query, case_property)
 
         return apply_geohash_agg(query, case_property, self._precision)
@@ -199,19 +202,12 @@ class CaseGroupingReport(BaseCaseMapReport):
         """
         Returns paginated cases
         """
-        # Pagination uses a three-step process:
-        # 1. Cases are filtered by `self._build_query()`
-        # 2. The filtered cases are aggregated into buckets by
-        #    `self._aggregate_query()`.
-        # 3. The cases of the selected page may span buckets. The page's
-        #    buckets are calculated, and their cases are fetched.
-        query = self._build_query()
-        query = self._aggregate_query(query)
-        es_results = query.run().raw
-        if es_results is None:
-            return []
+        buckets = self._get_buckets(
+            self.domain,
+            self.shared_pagination_GET_params,
+        )
         bucket_keys, skip = get_bucket_keys_for_page(
-            es_results,
+            buckets,
             self.pagination.start,
             self.pagination.count,
         )
@@ -224,7 +220,6 @@ class CaseGroupingReport(BaseCaseMapReport):
         cases = []
         for geohash in bucket_keys:
             # We fetch each bucket separately to maintain case sequence.
-            # TODO: Can we OR the geo_grid filters and sort by geohash?
             query = super()._build_query()
             query_filters = [filters.geo_grid(
                 field=case_property,
@@ -256,6 +251,24 @@ class CaseGroupingReport(BaseCaseMapReport):
             {'name': 'precision', 'value': self._precision},
         ])
         return shared_params
+
+    # quickcache uses shared_pagination_GET_params as part of its key
+    # because those determine the results of `query`
+    @quickcache(['self.domain', 'self.shared_pagination_GET_params'],
+                timeout=15 * 60)
+    def _get_buckets(self):
+        query = self._build_query()
+        query = self._aggregate_query(query)
+        es_results = query.run().raw
+        if es_results is None:
+            return []
+        return (
+            es_results['aggregations']
+            ['case_properties']
+            ['case_property']
+            [AGG_NAME]
+            ['buckets']
+        )
 
 
 def geojson_to_es_geoshape(geojson):

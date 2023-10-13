@@ -81,34 +81,13 @@ class TestGetMaxDocCount(TestCase):
 
 
 def test_get_bucket_keys_for_page():
-    es_results = {
-        'aggregations': {
-            'case_properties': {
-                'doc_count': 66,
-                'case_property': {
-                    'doc_count': 6,
-                    'geohashes': {
-                        'buckets': [
-                            {
-                                "key": "u17",
-                                "doc_count": 1
-                            },
-                            {
-                                "key": "u09",
-                                "doc_count": 2
-                            },
-                            {
-                                "key": "u15",
-                                "doc_count": 3
-                            }
-                        ]
-                    }
-                }
-            }
-        }
-    }
+    buckets = [
+        {"key": "u17", "doc_count": 1},
+        {"key": "u09", "doc_count": 2},
+        {"key": "u15", "doc_count": 3}
+    ]
     bucket_keys, skip = get_bucket_keys_for_page(
-        es_results,
+        buckets,
         skip=0,
         limit=2,
     )
@@ -116,7 +95,7 @@ def test_get_bucket_keys_for_page():
     assert_equal(skip, 0)
 
     bucket_keys, skip = get_bucket_keys_for_page(
-        es_results,
+        buckets,
         skip=2,
         limit=2,
     )
