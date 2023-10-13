@@ -74,12 +74,8 @@ from corehq.apps.app_manager.exceptions import (
     UnknownInstanceError,
 )
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
-from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-    RESULTS_INSTANCE,
-    RESULTS_INSTANCE_INLINE,
-    RESULTS_INSTANCE_BASE
-)
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
+from corehq.apps.app_manager.suite_xml.utils import is_valid_results_instance_name
 from corehq.apps.app_manager.util import (
     module_offers_search,
     module_uses_inline_search,
@@ -362,11 +358,7 @@ def search_input_instances(app, instance_name):
         src = f'jr://instance/search-input/{query_datum_id}'
     except ValueError:
         src = 'jr://instance/search-input'  # legacy instance
-
-    valid_query_datum_id = {RESULTS_INSTANCE, RESULTS_INSTANCE_INLINE}
-    valid_query_datum_id.update(f'{RESULTS_INSTANCE_BASE}{module.search_config.instance_name}'
-                                for module in app.get_modules())
-    if query_datum_id in valid_query_datum_id:
+    if is_valid_results_instance_name(app, query_datum_id):
         return Instance(id=instance_name, src=src)
     return None
 
@@ -378,11 +370,7 @@ def selected_cases_instances(app, instance_name):
 
 @register_factory('results')
 def remote_instances(app, instance_name):
-    valid_instance_names = {RESULTS_INSTANCE, RESULTS_INSTANCE_INLINE}
-    valid_instance_names.update(f'{RESULTS_INSTANCE_BASE}{module.search_config.instance_name}'
-                                for module in app.get_modules())
-
-    if instance_name in valid_instance_names:
+    if is_valid_results_instance_name(app, instance_name):
         return Instance(id=instance_name, src=f'jr://instance/remote/{instance_name}')
     return None
 
