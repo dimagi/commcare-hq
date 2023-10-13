@@ -144,36 +144,31 @@ class CaseGroupingReport(BaseCaseMapReport):
 
     def _filter_query(self, query, additional_filters=None):
         """
-        Adds ``additional_filters`` to ``query``. If a user-defined
-        polygon (or other GeoShape) is passed in the "feature" GET
-        param, adds that as a filter to ``query``.
+        If a user-defined polygon (or other GeoShape) is passed in the
+        "feature" GET param, adds that as a filter to ``query``.
+
+        If ``additional_filters`` is set, adds those to ``query``.
+
+        It is possible that both, either one, or none are set. If none
+        are set, ``query`` is returned unchanged.
         """
+        filters_ = [] if additional_filters is None else additional_filters
         # NOTE: Expects GeoShape in request.GET['feature']
         if self.request.GET.get('feature'):
             case_property = get_geo_case_property(self.domain)
             geojson = json.loads(self.request.GET['feature'])
             shape = geojson_to_es_geoshape(geojson)
             relation = 'within' if shape['type'] == 'polygon' else 'intersects'
-            if additional_filters:
-                additional_filters.append(filters.geo_shape(
-                    field=case_property,
-                    shape=shape,
-                    relation=relation,
-                ))
-            else:
-                query.nested(
-                    CASE_PROPERTIES_PATH,
-                    filters.geo_shape(
-                        field=case_property,
-                        shape=shape,
-                        relation=relation,
-                    )
-                )
-        if additional_filters:
-            query.nested(
-                CASE_PROPERTIES_PATH,
-                additional_filters
-            )
+            filters_.append(filters.geo_shape(
+                field=case_property,
+                shape=shape,
+                relation=relation,
+            ))
+
+        if len(filters_) == 1:
+            query.nested(CASE_PROPERTIES_PATH, filters_[0])
+        elif len(filters_) > 1:
+            query.nested(CASE_PROPERTIES_PATH, filters_)
         return query
 
     def _aggregate_query(self, query):
