@@ -520,17 +520,19 @@ class ModuleBaseValidator(object):
                             'property': prop.name,
                             'message': _('This feature is compatible with only version 2 of Mobile UCR'),
                         }
-            for comparison_module in self.app.get_modules():
-                if comparison_module.unique_id == self.module.unique_id:
-                    continue
-                comparison_instance_name = comparison_module.search_config.instance_name
-                if comparison_instance_name == search_config.instance_name:
-                    yield{
-                        "type": "non-unique instance name",
-                        "message": f'The instance "{comparison_instance_name}" is not unique',
-                        "module": self.get_module_info(),
-                        "details": comparison_instance_name
-                    }
+            if module_uses_inline_search(self.module):
+                for comparison_module in self.app.get_modules():
+                    if (comparison_module.unique_id != self.module.unique_id
+                            and module_uses_inline_search(comparison_module)):
+                        comparison_search_config = getattr(comparison_module, 'search_config', None)
+                        comparison_instance_name = comparison_search_config.instance_name
+                        if comparison_instance_name == search_config.instance_name:
+                            yield {
+                                "type": "non-unique instance name",
+                                "message": f'The instance "{comparison_instance_name}" is not unique',
+                                "module": self.get_module_info(),
+                                "details": comparison_instance_name
+                            }
 
     def validate_case_list_field_actions(self):
         if hasattr(self.module, 'case_details'):
