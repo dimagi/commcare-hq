@@ -210,7 +210,7 @@ class OAuth2ClientGrantManager(AuthManager):
             # Used by OAuth2Session
             self.last_token = token
 
-        if not self.last_token:
+        if not self.last_token or self.last_token.get('refresh_token') is None:
             client = BackendApplicationClient(client_id=self.client_id)
             session = OAuth2Session(client=client)
             self.last_token = session.fetch_token(
@@ -281,7 +281,7 @@ class OAuth2PasswordGrantManager(AuthManager):
             # Used by OAuth2Session
             self.last_token = token
 
-        if not self.last_token:
+        if not self.last_token or self.last_token.get('refresh_token') is None:
             client = LegacyApplicationClient(client_id=self.client_id)
             session = OAuth2Session(client=client)
             if self.pass_credentials_in_header:
