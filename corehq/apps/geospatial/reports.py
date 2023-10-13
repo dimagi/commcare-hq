@@ -51,14 +51,15 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin):
         headers.custom_sort = [[2, 'desc']]
         return headers
 
-    def _get_geo_point(self, case):
+    def _get_geo_point(self, case, geo_case_property):
         return NotImplementedError()
 
     @property
     def rows(self):
+        geo_case_property = get_geo_case_property(self.domain)
 
         def _get_geo_location(case):
-            geo_point = self._get_geo_point(case)
+            geo_point = self._get_geo_point(case, geo_case_property)
             if not geo_point:
                 return
 
@@ -92,8 +93,8 @@ class CaseManagementMap(BaseCaseMapReport):
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
 
-    def _get_geo_point(self, case):
-        geo_point = case.get(get_geo_case_property(case.get('domain')))
+    def _get_geo_point(self, case, geo_case_property):
+        geo_point = case.get(geo_case_property)
         return geo_point
 
     @property
@@ -144,9 +145,8 @@ class CaseGroupingReport(BaseCaseMapReport):
         query = apply_geohash_agg(query, case_property, precision)
         return query
 
-    def _get_geo_point(self, case):
+    def _get_geo_point(self, case, geo_case_property):
         case_obj = wrap_case_search_hit(case)
-        geo_case_property = get_geo_case_property(case_obj.domain)
         geo_point = case_obj.get_case_property(geo_case_property)
         return geo_point
 
