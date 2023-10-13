@@ -5,16 +5,6 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             FormplayerFrontEnd = hqImport("cloudcare/js/formplayer/app"),
             sentry = hqImport("cloudcare/js/sentry");
 
-        if (initialPageData("exceeds_mobile_ucr_threshold")) {
-            FormplayerFrontEnd.trigger(
-                'showError',
-                gettext("You have the MOBILE_UCR feature flag enabled, and have exceeded the maximum limit of 300 user configurable reports.")
-            );
-            // disable everything
-            $('#content-container').find("*").prop('disabled', true);
-            return;
-        }
-
         sentry.initSentry();
 
         window.MAPBOX_ACCESS_TOKEN = initialPageData('mapbox_access_token'); // maps api is loaded on-demand
@@ -69,6 +59,15 @@ hqDefine("cloudcare/js/formplayer/main", function () {
                 $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
             }
         });
+
+        if (initialPageData("exceeds_mobile_ucr_threshold")) {
+            FormplayerFrontEnd.trigger(
+                'showError',
+                gettext("You have the MOBILE_UCR feature flag enabled, and have exceeded the maximum limit of 300 user configurable reports.")
+            );
+
+            $(".formplayer-request").addClass('formplayer-requester-disabled');
+        }
 
     });
 });
