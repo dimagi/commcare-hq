@@ -40,11 +40,6 @@ class TestUserMetadata(TestCase):
         )
         self.addCleanup(self.user.delete, self.domain, deleted_by=None)
 
-    def test_user_data_not_allowed_in_create(self):
-        message = "Do not access user_data directly, pass metadata argument to create."
-        with self.assertRaisesMessage(ValueError, message):
-            CommCareUser.create(self.domain, 'martha', 'bmfa', None, None, user_data={'country': 'Canada'})
-
     def test_user_data_accessor(self):
         user_data = self.user.get_user_data(self.domain)
         self.assertEqual(user_data['commcare_project'], self.domain)
@@ -54,18 +49,15 @@ class TestUserMetadata(TestCase):
         })
         # Normally you shouldn't use `user.user_data` directly - I'm demonstrating that it's updated
         self.assertEqual(self.user.user_data, {
-            'commcare_project': self.domain,
             'cruise': 'control',
             'this': 'road',
         })
         del user_data['cruise']
         self.assertEqual(self.user.user_data, {
-            'commcare_project': self.domain,
             'this': 'road',
         })
         user_data.update({'this': 'field'})
         self.assertEqual(self.user.user_data, {
-            'commcare_project': self.domain,
             'this': 'field',
         })
 

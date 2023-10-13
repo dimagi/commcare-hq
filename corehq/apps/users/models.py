@@ -1106,7 +1106,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             SYSTEM_PREFIX,
             COMMCARE_USER_TYPE_KEY,
             COMMCARE_USER_TYPE_DEMO,
-            COMMCARE_PROJECT
         )
 
         session_data = self.get_user_data(domain).to_dict()
@@ -1645,9 +1644,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             data['domain_membership'] = DomainMembership(
                 domain=data.get('domain', ""), role_id=role_id
             ).to_json()
-        if not data.get('user_data', {}).get('commcare_project'):
-            data['user_data'] = dict(data['user_data'], **{'commcare_project': data['domain']})
-
         return super(CommCareUser, cls).wrap(data)
 
     def get_user_data(self, domain):
