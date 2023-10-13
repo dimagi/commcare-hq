@@ -4,6 +4,17 @@ hqDefine("cloudcare/js/preview_app/main", function () {
         sentry = hqImport("cloudcare/js/sentry");
 
     $(function () {
+
+        if (initialPageData.get("exceeds_mobile_ucr_threshold")) {
+            previewApp.trigger(
+                'showError',
+                gettext("You have the MOBILE_UCR feature flag enabled, and have exceeded the maximum limit of 300 user configurable reports.")
+            );
+            // disable everything
+            $('#single-app-view').find("*").prop('disabled', true);
+            return;
+        }
+
         sentry.initSentry();
 
         window.MAPBOX_ACCESS_TOKEN = initialPageData.get('mapbox_access_token'); // maps api is loaded on-demand
@@ -30,5 +41,6 @@ hqDefine("cloudcare/js/preview_app/main", function () {
             var scrollWidth = $(sc).prop('offsetWidth') - $(sc).prop('clientWidth');
             $(sc).addClass('has-scrollbar-' + scrollWidth);
         });
+
     });
 });
