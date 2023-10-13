@@ -242,6 +242,19 @@ class EntriesHelper(object):
         )
         return (using_inline_search or sync_on_form_entry) and not loads_registry_case
 
+    def add_post_to_entry(self, form, module, e):
+        from ..post_process.remote_requests import (
+            RemoteRequestFactory,
+            RESULTS_INSTANCE_INLINE
+        )
+        case_session_var = self.get_case_session_var_for_form(form)
+        storage_instance = RESULTS_INSTANCE_INLINE if module_uses_inline_search(module) \
+            else 'casedb'
+        remote_request_factory = RemoteRequestFactory(
+            None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
+            exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
+        e.post = remote_request_factory.build_remote_request_post()
+
     def entry_for_module(self, module):
         # avoid circular dependency
         from corehq.apps.app_manager.models import AdvancedModule, Module
@@ -254,17 +267,7 @@ class EntriesHelper(object):
                 from ..features.mobile_ucr import get_report_context_tile_datum
                 e.datums.append(get_report_context_tile_datum())
             if form.requires_case() and self.include_post_in_entry(module.get_or_create_unique_id()):
-                case_session_var = self.get_case_session_var_for_form(form)
-                from ..post_process.remote_requests import (
-                    RESULTS_INSTANCE_INLINE,
-                    RemoteRequestFactory,
-                )
-                storage_instance = RESULTS_INSTANCE_INLINE if module_uses_inline_search(module) \
-                    else 'casedb'
-                remote_request_factory = RemoteRequestFactory(
-                    None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
-                    exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
-                e.post = remote_request_factory.build_remote_request_post()
+                self.add_post_to_entry(form, module, e)
 
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
