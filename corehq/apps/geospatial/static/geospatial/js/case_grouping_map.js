@@ -28,7 +28,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
         self.casesToExport = ko.observableArray([]);
 
-        self.handleExportCSV = function () {
+        self.downloadCSV = function () {
             const casesToExport = _.map(self.casesToExport(), function (caseItem) {
                 const coordinates = (caseItem.coordinates) ? `${caseItem.coordinates.lng} ${caseItem.coordinates.lat}` : "";
                 return {
