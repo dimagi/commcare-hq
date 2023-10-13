@@ -419,21 +419,6 @@ class ModuleBaseValidator(object):
                 'type': 'invalid parent select id',
                 'module': self.get_module_info(),
             })
-        else:
-            module_id = self.module.parent_select.module_id
-            parent_select_module = self.module.get_app().get_module_by_unique_id(module_id)
-            if parent_select_module and module_uses_inline_search(parent_select_module):
-                errors.append({
-                    'type': 'parent select is inline search module',
-                    'module': self.get_module_info(),
-                })
-
-        if module_uses_inline_search(self.module):
-            if self.module.parent_select.relationship:
-                errors.append({
-                    'type': 'inline search parent select relationship',
-                    'module': self.get_module_info(),
-                })
 
         return errors
 

@@ -199,18 +199,6 @@
                 uses "Display only forms" and is also configured with
                 "make search input available after search". This workflow is unsupported.
               {% endblocktrans %}
-            {% case "parent select is inline search module" %}
-              {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                uses parent case selection but parent case list is using
-                "make search input available after search". This workflow is unsupported.
-              {% endblocktrans %}
-            {% case "inline search parent select relationship" %}
-              {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                uses parent case selection and is configured with
-                "make search input available after search". This workflow is unsupported.
-              {% endblocktrans %}
             {% case "circular case hierarchy" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 The case hierarchy for <a href="{{ module_url }}">{{ module_name }}</a> contains a circular reference.
