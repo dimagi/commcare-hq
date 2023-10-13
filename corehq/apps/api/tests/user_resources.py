@@ -283,9 +283,10 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(modified.email, "tlast@example.org")
         self.assertEqual(modified.language, "pol")
         self.assertEqual(modified.get_group_ids()[0], group._id)
-        self.assertEqual(modified.metadata["chw_id"], "13/43/DFA")
-        self.assertEqual(modified.metadata[PROFILE_SLUG], self.profile.id)
-        self.assertEqual(modified.metadata["imaginary"], "yes")
+        user_data = modified.get_user_data(self.domain.name)
+        self.assertEqual(user_data["chw_id"], "13/43/DFA")
+        self.assertEqual(user_data[PROFILE_SLUG], self.profile.id)
+        self.assertEqual(user_data["imaginary"], "yes")
         self.assertEqual(modified.default_phone_number, "50253311399")
 
         # test user history audit

@@ -42,20 +42,20 @@ class TestUserES(TestCase):
         cls.domain_obj.delete()
         super().tearDownClass()
 
-    def test_basic_metadata_query(self):
-        direwolf_families = UserES().metadata('sigil', 'direwolf').values_list('username', flat=True)
+    def test_basic_user_data_query(self):
+        direwolf_families = UserES().user_data('sigil', 'direwolf').values_list('username', flat=True)
         self.assertEqual(direwolf_families, ['stark'])
 
-    def test_chained_metadata_queries_where_both_match(self):
+    def test_chained_user_data_queries_where_both_match(self):
         direwolf_families = (UserES()
-                             .metadata('sigil', 'direwolf')
-                             .metadata('seat', 'Winterfell')
+                             .user_data('sigil', 'direwolf')
+                             .user_data('seat', 'Winterfell')
                              .values_list('username', flat=True))
         self.assertEqual(direwolf_families, ['stark'])
 
-    def test_chained_metadata_queries_with_only_one_match(self):
+    def test_chained_user_data_queries_with_only_one_match(self):
         direwolf_families = (UserES()
-                             .metadata('sigil', 'direwolf')
-                             .metadata('seat', 'Casterly Rock')
+                             .user_data('sigil', 'direwolf')
+                             .user_data('seat', 'Casterly Rock')
                              .values_list('username', flat=True))
         self.assertEqual(direwolf_families, [])
