@@ -88,6 +88,7 @@ from corehq.util.view_utils import absolute_reverse
 
 # The name of the instance where search results are stored
 RESULTS_INSTANCE = 'results'
+RESULTS_INSTANCE_BASE = f'{RESULTS_INSTANCE}:'
 RESULTS_INSTANCE_INLINE = 'results:inline'
 
 # The name of the instance where search results are stored when querying a data registry
@@ -152,6 +153,8 @@ class RemoteRequestFactory(object):
                 data.exclude = self._get_multi_select_exclude()
         else:
             data.ref = QuerySessionXPath(self.case_session_var).instance()
+            if not self.exclude_relevant:
+                data.exclude = CaseIDXPath(data.ref).case().count().neq(0)
         return data
 
     def _get_multi_select_nodeset(self):
