@@ -69,7 +69,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
         self.assertEqual(action.case_properties, ['email'])
         self.assertEqual(action.properties_to_update, [])
 
-    @flag_enabled('GATE_DEDUPE_ACTIONS')
+    @flag_enabled('CASE_DEDUPE')
     def test_create_rule_with_actions(self):
         request = self._create_creation_request(
             properties_to_update=[{'name': 'level', 'valueType': 'EXACT', 'value': 'test'}]
@@ -107,7 +107,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
             'Deduplication rule not saved due to the following issues: '
             '<ul><li>Matching case properties must be unique</li></ul>')
 
-    @flag_enabled('GATE_DEDUPE_ACTIONS')
+    @flag_enabled('CASE_DEDUPE')
     @patch.object(dedupe_views.DataInterfaceSection, 'get')
     def test_duplicate_updating_properties_fails(self, *args):
         request = self._create_creation_request(
@@ -126,7 +126,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
             'Deduplication rule not saved due to the following issues: '
             '<ul><li>Action case properties must be unique</li></ul>')
 
-    @flag_enabled('GATE_DEDUPE_ACTIONS')
+    @flag_enabled('CASE_DEDUPE')
     @patch.object(dedupe_views.DataInterfaceSection, 'get')
     def test_updating_reserved_property_fails(self, *args):
         request = self._create_creation_request(
@@ -142,7 +142,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
             'Deduplication rule not saved due to the following issues: '
             '<ul><li>You cannot update reserved property: name</li></ul>')
 
-    @flag_enabled('GATE_DEDUPE_ACTIONS')
+    @flag_enabled('CASE_DEDUPE')
     @patch.object(dedupe_views.DataInterfaceSection, 'get')
     def test_updating_match_property_fails(self, *args):
         request = self._create_creation_request(
@@ -159,7 +159,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
             'Deduplication rule not saved due to the following issues: '
             '<ul><li>You cannot update properties that are used to match a duplicate.</li></ul>')
 
-    @flag_disabled('GATE_DEDUPE_ACTIONS')
+    @flag_disabled('CASE_DEDUPE')
     def test_creating_rule_with_actions_but_no_toggle_ignores_actions(self, *args):
         request = self._create_creation_request(
             properties_to_update=[{"name": "level", "valueType": "EXACT", "value": "test"}]
@@ -266,7 +266,7 @@ class DeduplicationRuleEditViewTest(TestCase):
         self.assertEqual(list(get_messages(request))[0].message,
             'Rule TestRule2 was updated, and has been queued for backfilling')
 
-    @flag_disabled('GATE_DEDUPE_ACTIONS')
+    @flag_disabled('CASE_DEDUPE')
     def test_rule_with_actions_loses_actions_when_updated_with_the_toggle_disabled(self):
         rule = self._create_rule(
             name='TestRule1',

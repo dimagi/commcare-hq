@@ -1454,13 +1454,6 @@ CASE_DEDUPE = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
 )
 
-GATE_DEDUPE_ACTIONS = StaticToggle(
-    'gate_dedupe_actions',
-    'Gate Deduplication Actions (Temporary)',
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN],
-)
-
 LEGACY_SYNC_SUPPORT = StaticToggle(
     'legacy_sync_support',
     "Support mobile sync bugs in older projects (2.9 and below).",

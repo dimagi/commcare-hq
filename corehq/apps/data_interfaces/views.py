@@ -1159,7 +1159,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             },
             'case_types': sorted(list(get_case_types_for_domain(self.domain))),
             'criteria_form': self.case_filter_form,
-            'allow_actions': toggles.GATE_DEDUPE_ACTIONS.enabled(self.domain),
+            'allow_actions': toggles.CASE_DEDUPE.enabled(self.domain),
         })
         return context
 
@@ -1244,7 +1244,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             "include_closed": request.POST.get("include_closed") == "on",
             "properties_to_update": [],
         }
-        if toggles.GATE_DEDUPE_ACTIONS.enabled(self.domain):
+        if toggles.CASE_DEDUPE.enabled(self.domain):
             action_params["properties_to_update"] = [
                 {"name": prop["name"], "value_type": prop["valueType"], "value": prop["value"]}
                 for prop in json.loads(request.POST.get("properties_to_update"))
@@ -1268,7 +1268,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         if len(set(case_properties)) != len(case_properties):
             errors.append(_("Matching case properties must be unique"))
 
-        if toggles.GATE_DEDUPE_ACTIONS.enabled(self.domain):
+        if toggles.CASE_DEDUPE.enabled(self.domain):
             update_properties = [prop['name'] for prop in action_params['properties_to_update']]
             update_properties_set = set(update_properties)
             reserved_properties = set(prop.replace("@", "") for prop in SPECIAL_CASE_PROPERTIES)
@@ -1345,7 +1345,7 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
             "criteria_form": self.case_filter_form,
         })
 
-        if toggles.GATE_DEDUPE_ACTIONS.enabled(self.domain):
+        if toggles.CASE_DEDUPE.enabled(self.domain):
             context["properties_to_update"] = [
                 {"name": prop["name"], "valueType": prop["value_type"], "value": prop["value"]}
                 for prop in self.dedupe_action.properties_to_update
