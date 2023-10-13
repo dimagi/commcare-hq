@@ -726,13 +726,6 @@ CASE_LIST_MAP = StaticToggle(
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
-CASE_LIST_CLICKABLE_ICON = StaticToggle(
-    'case_list_clickable_icon',
-    'USH: Allow use of clickable icons in the case list in Web Apps to trigger auto submitting forms',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
     'show_persist_case_context_setting',
     'Allow toggling the persistent case context tile',
@@ -1695,6 +1688,14 @@ SESSION_ENDPOINTS = StaticToggle(
                 'CommCare app. (Used by the Reminders App)',
 )
 
+CASE_LIST_CLICKABLE_ICON = StaticToggle(
+    'case_list_clickable_icon',
+    'USH: Allow use of clickable icons in the case list in Web Apps to trigger auto submitting forms',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    parent_toggles=[SESSION_ENDPOINTS]
+)
+
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'sumologic_logs',
     'Send logs to sumologic',
@@ -2453,6 +2454,13 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Provides access to views for resport scheduling '
                 'such as schedule creation and deletion.'
+)
+
+CUSTOM_EMAIL_GATEWAY = StaticToggle(
+    'custom_email_gateway',
+    'Allows user to define custom email gateway that can be used to send emails from HQ',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )
 
 

@@ -424,7 +424,6 @@ class Repeater(RepeaterSuperProxy):
         self.save()
 
     def retire(self):
-        self.is_paused = False
         self.is_deleted = True
         self.save()
 
@@ -957,6 +956,11 @@ class RepeatRecord(Document):
         elif self.failure_reason:
             state = RECORD_FAILURE_STATE
         return state
+
+    @property
+    def exceeded_max_retries(self):
+        return (self.state == RECORD_FAILURE_STATE and self.overall_tries
+                >= self.max_possible_tries)
 
     @classmethod
     def all(cls, domain=None, due_before=None, limit=None):
