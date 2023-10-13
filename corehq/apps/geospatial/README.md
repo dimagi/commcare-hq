@@ -25,6 +25,54 @@ Mainly, these are:
    to meet the target number of groups.
 
 
+CaseGroupingReport pagination
+-----------------------------
+
+The `CaseGroupingReport` class uses Elasticsearch
+[GeoHash Grid Aggregation][1] to group cases into buckets.
+
+Elasticsearch [bucket aggregations][2] create buckets of documents,
+where each bucket corresponds to a property that determines whether a
+document falls into that bucket.
+
+The buckets of GeoHash Grid Aggregation are cells in a grid. Each cell
+has a GeoHash, which is like a ZIP code or a postal code, in that it
+represents a geographical area. If a document's GeoPoint is in a
+GeoHash's geographical area, then Elasticsearch places it in the
+corresponding bucket. For more information on GeoHash grid cells, see
+the Elasticsearch docs on [GeoHash cell dimensions][3].
+
+GeoHash Grid Aggregation buckets look like this:
+```
+[
+    {
+        "key": "u17",
+        "doc_count": 3
+    },
+    {
+        "key": "u09",
+        "doc_count": 2
+    },
+    {
+        "key": "u15",
+        "doc_count": 1
+    }
+]
+```
+In this example, "key" is a GeoHash of length 3, and "doc_count" gives
+the number of documents in each bucket, or GeoHash grid cell.
+
+For `CaseGroupingReport`, buckets can have up to 10,000 cases each. But
+they could also have much less than that. If the user requests, say, 50
+rows per page, and the page that the user is looking at has fewer than
+50 cases left in the current bucket, then page will need to include
+cases from the next bucket.
+
+The report uses the GeoHash and document counts from the list of
+buckets, like the example above, to determine the buckets and cases to
+include in each page.
+
+
 Setting Up Test Data
 --------------------
 
@@ -48,4 +96,10 @@ for cases with the following columns
    worker username here. Remove column if not using.
 
 For Dimagi devs looking for bulk data, you could use any of the Excel
-sheets available in [SC-3051](https://dimagi-dev.atlassian.net/browse/SC-3051).
+sheets available in Jira ticket [SC-3051][4].
+
+
+[1]: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-geohashgrid-aggregation.html
+[2]: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket.html
+[3]: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-geohashgrid-aggregation.html#_cell_dimensions_at_the_equator
+[4]: https://dimagi-dev.atlassian.net/browse/SC-3051
