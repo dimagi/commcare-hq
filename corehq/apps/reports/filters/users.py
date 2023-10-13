@@ -151,16 +151,10 @@ class EmwfUtils(object):
     @property
     @memoized
     def static_options(self):
-        static_options = [("t__0", _("[Active Mobile Workers]"))]
-
-        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
+        types = ['ACTIVE', 'DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
-        for t in types:
-            user_type = getattr(HQUserType, t)
-            static_options.append(self.user_type_tuple(user_type))
-
-        return static_options
+        return [self.user_type_tuple(getattr(HQUserType, t)) for t in types]
 
     def _group_to_choice_tuple(self, group):
         return self.reporting_group_tuple(group)
@@ -274,7 +268,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if not self.request.can_access_all_locations:
             return self._get_assigned_locations_default()
 
-        defaults = [('t__0', _("[Active Mobile Workers]")), ('t__5', _("[Deactivated Mobile Workers]"))]
+        defaults = [
+            self.utils.user_type_tuple(HQUserType.ACTIVE),
+            self.utils.user_type_tuple(HQUserType.DEACTIVATED),
+        ]
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
@@ -287,10 +284,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             return [{'id': url_id, 'text': text}
                     for url_id, text in self.get_default_selections()]
 
-        selected = (self.selected_static_options(selected_ids) +
-                    self._selected_user_entries(selected_ids) +
-                    self._selected_group_entries(selected_ids) +
-                    self._selected_location_entries(selected_ids))
+        selected = (self.selected_static_options(selected_ids)
+                    + self._selected_user_entries(selected_ids)
+                    + self._selected_group_entries(selected_ids)
+                    + self._selected_location_entries(selected_ids))
         return [
             {'id': entry[0], 'text': entry[1]} if len(entry) == 2 else
             {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} for entry in selected
@@ -445,7 +442,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     @property
     def options(self):
-        return [('t__0', _("[Active Mobile Workers]"))]
+        return [self.utils.user_type_tuple(HQUserType.ACTIVE)]
 
     @classmethod
     def for_user(cls, user_id):
@@ -487,9 +484,9 @@ class EnterpriseUserFilter(ExpandedMobileWorkerFilter):
 
     def get_default_selections(self):
         return [
-            ('t__0', _("[Active Mobile Workers]")),
-            ('t__5', _("[Deactivated Mobile Workers]")),
-            ('t__6', _("[Web Users]"))
+            self.utils.user_type_tuple(HQUserType.ACTIVE),
+            self.utils.user_type_tuple(HQUserType.DEACTIVATED),
+            self.utils.user_type_tuple(HQUserType.WEB),
         ]
 
     @property
@@ -522,7 +519,7 @@ class ChangedByUserFilter(EnterpriseUserFilter):
     label = gettext_lazy("Modified by User(s)")
 
     def get_default_selections(self):
-        return [('t__6', _("[Web Users]"))]
+        return [self.utils.user_type_tuple(HQUserType.WEB)]
 
 
 class UserPropertyFilter(BaseSingleOptionFilter):

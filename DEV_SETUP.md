@@ -424,7 +424,7 @@ needs of most developers.
     ```sh
     ./scripts/docker up -d
     # Optionally, start only specific containers.
-    ./scripts/docker up -d postgres couch redis elasticsearch2 zookeeper kafka minio formplayer
+    ./scripts/docker up -d postgres couch redis elasticsearch5 zookeeper kafka minio formplayer
     ```
 
    **Mac OS:** Note that you will encounter many issues at this stage.

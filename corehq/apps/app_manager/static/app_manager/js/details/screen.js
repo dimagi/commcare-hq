@@ -12,14 +12,15 @@
  * @param options
  */
 hqDefine("app_manager/js/details/screen", function () {
-    var Utils = hqImport('app_manager/js/details/utils'),
-        ColumnModel = hqImport("app_manager/js/details/column");
+    const Utils = hqImport('app_manager/js/details/utils'),
+        ColumnModel = hqImport("app_manager/js/details/column"),
+        uiMapList = hqImport("hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list");
 
-    var getPropertyTitle = function (property) {
+    const getPropertyTitle = function (property) {
         // Strip "<prefix>:" before converting to title case.
         // This is aimed at prefixes like ledger: and attachment:
         property = property || '';
-        var i = property.indexOf(":");
+        const i = property.indexOf(":");
         return Utils.toTitleCase(property.substring(i + 1));
     };
 
@@ -28,6 +29,7 @@ hqDefine("app_manager/js/details/screen", function () {
         var i,
             columns;
         hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
+        self.moduleId = options.moduleId;
         self.type = spec.type;
         self.saveUrl = options.saveUrl;
         self.config = config;
@@ -119,11 +121,16 @@ hqDefine("app_manager/js/details/screen", function () {
 
         self.customVariablesViewModel = {
             enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
-            xml: ko.observable(detail.custom_variables || ""),
+            dict: detail.custom_variables_dict || {},
         };
-        self.customVariablesViewModel.xml.subscribe(function () {
+        const customDataEditor = uiMapList.new(`${ self.moduleId }-${self.columnKey}`, gettext("Edit Custom Variables"));
+        customDataEditor.val(self.customVariablesViewModel.dict);
+        customDataEditor.on("change", function () {
+            self.customVariablesViewModel.dict = this.val();
             self.fireChange();
         });
+        $(`#custom-variables-editor-${self.columnKey}`).append(customDataEditor.ui);
+
         self.multiSelectEnabled = ko.observable(detail.multi_select);
         self.multiSelectEnabled.subscribe(function () {
             self.autoSelectEnabled(self.multiSelectEnabled() && self.autoSelectEnabled());
@@ -614,7 +621,7 @@ hqDefine("app_manager/js/details/screen", function () {
             if (self.containsCustomXMLConfiguration) {
                 data.custom_xml = self.config.customXMLViewModel.xml();
             }
-            data[self.columnKey + '_custom_variables'] = self.customVariablesViewModel.xml();
+            data[self.columnKey + '_custom_variables_dict'] = JSON.stringify(self.customVariablesViewModel.dict);
             data.multi_select = self.multiSelectEnabled();
             data.auto_select = self.autoSelectEnabled();
             data.max_select_value = self.maxSelectValue();

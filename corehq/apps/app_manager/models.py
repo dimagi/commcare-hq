@@ -217,7 +217,7 @@ def jsonpath_update(datum_context, value):
 form_id_references = []
 
 
-def FormIdProperty(expression, **kwargs):
+def FormIdProperty(*expressions, **kwargs):
     """
     Create a StringProperty that references a form ID. This is necessary because
     form IDs change when apps are copied so we need to make sure we update
@@ -225,12 +225,12 @@ def FormIdProperty(expression, **kwargs):
     :param expression:  jsonpath expression that can be used to find the field
     :param kwargs:      arguments to be passed to the underlying StringProperty
     """
-    path_expression = parse(expression)
-    assert isinstance(path_expression, jsonpath.Child), "only child path expressions are supported"
-    field = path_expression.right
-    assert len(field.fields) == 1, 'path expression can only reference a single field'
-
-    form_id_references.append(path_expression)
+    for expression in expressions:
+        path_expression = parse(expression)
+        assert isinstance(path_expression, jsonpath.Child), "only child path expressions are supported"
+        field = path_expression.right
+        assert len(field.fields) == 1, 'path expression can only reference a single field'
+        form_id_references.append(path_expression)
     return StringProperty(**kwargs)
 
 
@@ -1294,6 +1294,24 @@ class FormBase(DocumentSchema):
         """
         raise NotImplementedError()
 
+    def is_auto_submitting_form(self, case_type=None):
+        """
+        Should return True if this form passes the following tests:
+         * Requires a case of the same type
+         * Pragma-Submit-Automatically is set
+         * No question needs manual input
+        """
+        if case_type is None:
+            return False
+
+        if self.get_module().case_type != case_type:
+            return False
+        if not self.requires_case():
+            return False
+
+        qs = self.get_questions([], include_triggers=True)
+        return any(['label_ref' in q and q['label_ref'] == 'Pragma-Submit-Automatically' for q in qs])
+
     def uses_usercase(self):
         raise NotImplementedError()
 
@@ -1844,6 +1862,7 @@ class DetailColumn(IndexedSchema):
     filter_xpath = StringProperty(default="", exclude_if_none=True)
     time_ago_interval = FloatProperty(default=365.25)
     date_format = StringProperty(default="%d/%m/%y")
+    endpoint_action_id = FormIdProperty(default="", exclude_if_none=True)
 
     @property
     def enum_dict(self):
@@ -1958,7 +1977,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     persistent_case_context_xml = StringProperty(default='case_name')
 
     # Custom variables to add into the <variables /> node
-    custom_variables = StringProperty(exclude_if_none=True)
+    custom_variables_dict = DictProperty(exclude_if_none=True)
 
     # Allow selection of mutiple cases. Only applies to 'short' details
     multi_select = BooleanProperty(default=False)

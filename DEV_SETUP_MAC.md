@@ -161,7 +161,7 @@ Note: `kafka` will be very cranky on start up. You might have to restart it if y
 First, ensure that you have Java 8 running. `java -version` should output something like `openjdk version "1.8.0_322"`.
 Use `sdkman` or `jenv` to manage your local java versions.
 
-Download the `tar` file for [elasticsearch 2.4.6](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-6)
+Download the `tar` file for [elasticsearch 5.6.16](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.16.tar.gz)
 
 Un-tar and put the folder somewhere you can find it. Take note of tha path (`pwd`) and add the following to your `~/.zshrc`:
 
@@ -179,7 +179,7 @@ Now that you have Elasticsearch running you will need to install the necessary p
 1. Install the plugin
 
     ```shell
-    $ plugin install analysis-phonetic
+    $ elasticsearch-plugin install analysis-phonetic
     ```
 
     (If the `plugin` command is not found you will need to use the full path `<es home>/bin/plugin`).
@@ -190,7 +190,7 @@ Now that you have Elasticsearch running you will need to install the necessary p
 
     ```shell
     $ curl "localhost:9200/_cat/plugins?s=component&h=component,version"
-    analysis-phonetic 2.4.6
+    analysis-phonetic 5.6.16
     ```
 
 

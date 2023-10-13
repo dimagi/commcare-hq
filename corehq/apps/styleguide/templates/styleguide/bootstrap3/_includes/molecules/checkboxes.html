@@ -1,0 +1,39 @@
+<section class="hq-styleguide-article">
+  <header class="page-header">
+    <h1 id="molecules-checkboxes">Checkboxes</h1>
+  </header>
+  <p class="lead">
+    HQ typically doesn't use checkboxes to select options from a list, but we do frequently use
+    single checkboxes for true/false values, usually whether a setting should be on or off.
+  </p>
+  <h2>HTML markup for checkboxes</h2>
+  <p>
+    Checkboxes get wrapped in a <code>.checkbox</code> div that aligns them properly with their label.
+    Checkboxes that appear in larger forms can use the form's
+    standard <code>.control-label</code> as a label but also often have additional help text that appears
+    in the checkbox's own label element.
+  </p>
+  <p>
+    <a href='https://getbootstrap.com/docs/3.4/css/#checkboxes-and-radios' target='_blank'>Bootstrap documentation</a>
+  </p>
+  {% include 'styleguide/bootstrap3/example_html.html' with slug='lonely-checkbox' title='Checkbox alone' content=examples.lonely_checkbox %}
+  {% include 'styleguide/bootstrap3/example_html.html' with slug='checkbox-in-form' title='Checkbox in form' content=examples.checkbox_in_form %}
+
+  <h2>Crispy forms and checkboxes</h2>
+  <p>
+    Checkboxes in <a href='{% url 'styleguide_organisms' %}#organisms-forms' target='_blank'>crispy forms</a>
+    can be challenging to style. Checkboxes are the default representation for a <code>BooleanField</code>, but
+    they're displayed with the label to the right of the checkbox, instead of using a
+    <code>.control-label</code> on the left as for other fields.
+  </p>
+  <p>
+    To get a label to appear on the left, checkboxes are sometimes displayed as a single-element
+    <code>B3MultiField</code>, a custom field used in HQ to display multiple fields under the same left-hand
+    label. However, this causes the checkbox itself to be mis-aligned with the other form fields.
+  </p>
+  <p>
+    When using a checkbox in a crispy form, if possible, use the default <code>crispy.Field</code> display,
+    but place the checkbox after a related input, so it looks like an additional option on that field.
+  </p>
+  {% include 'styleguide/bootstrap3/_includes/molecules/checkboxes/checkboxes_form.html' with slug='basic-crispy' title='Crispy form with checkboxes' %}
+</section>

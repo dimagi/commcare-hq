@@ -1,0 +1,87 @@
+{% extends 'styleguide/bootstrap3/base_doc.html' %}
+
+{% block doc_content %}
+    <div class="row">
+        <div class="col-lg-4"></div>
+        <div class="col-lg-8"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">messages</span>
+<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponseRedirect</span>
+<span class="kn">from</span> <span class="nn">django.utils.decorators</span> <span class="kn">import</span> <span class="n">method_decorator</span>
+<span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">gettext_noop</span><span class="p">,</span> <span class="n">gettext</span> <span class="k">as</span> <span class="n">_</span>
+<span class="kn">from</span> <span class="nn">corehq.apps.domain.decorators</span> <span class="kn">import</span> <span class="n">login_required</span>
+<span class="kn">from</span> <span class="nn">corehq.apps.style.views</span> <span class="kn">import</span> <span class="n">BaseSectionPageView</span>
+<span class="kn">from</span> <span class="nn">corehq.apps.styleguide.examples.simple_crispy_form.forms</span> <span class="kn">import</span> <span class="n">ExampleUserLoginForm</span>
+<span class="kn">from</span> <span class="nn">memoized</span> <span class="kn">import</span> <span class="n">memoized</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"></div>
+        <div class="col-lg-8"><div class="highlight"><pre><span class="k">class</span> <span class="nc">BaseSimpleCrispyFormSectionView</span><span class="p">(</span><span class="n">BaseSectionPageView</span><span class="p">):</span>
+    <span class="n">section_name</span> <span class="o">=</span> <span class="n">gettext_noop</span><span class="p">(</span><span class="s">&quot;Simple Crispy Form Example&quot;</span><span class="p">)</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"></div>
+        <div class="col-lg-8"><div class="highlight"><pre>    <span class="k">def</span> <span class="nf">section_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span><span class="n">DefaultSimpleCrispyFormSectionView</span><span class="o">.</span><span class="n">urlname</span><span class="p">)</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"></div>
+        <div class="col-lg-8"><div class="highlight"><pre>    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">page_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">urlname</span><span class="p">)</span>
+
+    <span class="nd">@method_decorator</span><span class="p">(</span><span class="n">login_required</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">BaseSimpleCrispyFormSectionView</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">DefaultSimpleCrispyFormSectionView</span><span class="p">(</span><span class="n">BaseSimpleCrispyFormSectionView</span><span class="p">):</span>
+    <span class="n">urlname</span> <span class="o">=</span> <span class="s">&#39;ex_simple_crispy_forms_default&#39;</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"><p>decide what to serve based on request</p></div>
+        <div class="col-lg-8"><div class="highlight"><pre>        <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="n">SimpleCrispyFormView</span><span class="o">.</span><span class="n">urlname</span><span class="p">))</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"><p>This shows example usage for crispy forms in an HQ template view.</p></div>
+        <div class="col-lg-8"><div class="highlight"><pre><span class="k">class</span> <span class="nc">SimpleCrispyFormView</span><span class="p">(</span><span class="n">BaseSimpleCrispyFormSectionView</span><span class="p">):</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"></div>
+        <div class="col-lg-8"><div class="highlight"><pre>    <span class="n">page_title</span> <span class="o">=</span> <span class="n">gettext_noop</span><span class="p">(</span><span class="s">&quot;Register a New User&quot;</span><span class="p">)</span>
+    <span class="n">urlname</span> <span class="o">=</span> <span class="s">&#39;ex_simple_crispy_forms&#39;</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s">&#39;styleguide/bootstrap3/examples/simple_crispy_form/base.html&#39;</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"></div>
+        <div class="col-lg-8"><div class="highlight"><pre>    <span class="nd">@property</span>
+    <span class="nd">@memoized</span>
+    <span class="k">def</span> <span class="nf">simple_crispy_form</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">initial_data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;POST&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ExampleUserLoginForm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="n">initial_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ExampleUserLoginForm</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="n">initial_data</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">page_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s">&#39;simple_crispy_form&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">simple_crispy_form</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">simple_crispy_form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"><p>do something to process the data
+It's always best practice to give some sort of feedback to the
+user that the form was successfully processed.</p></div>
+        <div class="col-lg-8"><div class="highlight"><pre>            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span>
+                <span class="n">_</span><span class="p">(</span><span class="s">&quot;Form processed successfully.&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">page_url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+</pre></div></div>
+    </div>
+{% endblock doc_content %}

@@ -23,10 +23,10 @@
 -        oldHide.apply(this, arguments);
 -    };
 -
-     $.fn.hqHelp = function () {
+     $.fn.hqHelp = function (opts) {
          var self = this;
          self.each(function (i) {
-@@ -101,6 +88,11 @@
+@@ -104,6 +91,11 @@
                  event.preventDefault();
              });
          });

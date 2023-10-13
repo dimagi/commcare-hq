@@ -193,6 +193,25 @@ class XFormInstanceManager(RequireDBManager):
             )
         return result
 
+    def hard_delete_forms_before_cutoff(self, cutoff, dry_run=True):
+        """
+        Permanently deletes forms with deleted_on set to a datetime earlier than
+        the specified cutoff datetime
+        :param cutoff: datetime used to obtain the forms to be hard deleted
+        :param dry_run: if True, no changes will be committed to the database
+        and this method is effectively read-only
+        :return: dictionary of count of deleted objects per table
+        """
+        counts = {}
+        for db_name in get_db_aliases_for_partitioned_query():
+            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
+            if dry_run:
+                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
+            else:
+                deleted_counts = queryset.delete()[1]
+            counts.update(deleted_counts)
+        return counts
+
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
         if xmlns:
@@ -428,7 +447,6 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     DUPLICATE = 8
     ERROR = 16
     SUBMISSION_ERROR_LOG = 32
-    DELETED = 64
     STATES = (
         (NORMAL, 'normal'),
         (ARCHIVED, 'archived'),
@@ -436,7 +454,6 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         (DUPLICATE, 'duplicate'),
         (ERROR, 'error'),
         (SUBMISSION_ERROR_LOG, 'submission_error'),
-        (DELETED, 'deleted'),
     )
     DOC_TYPE_TO_STATE = {
         "XFormInstance": NORMAL,
@@ -638,8 +655,9 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         return None
 
     def soft_delete(self):
-        type(self).objects.soft_delete_forms(self.domain, [self.form_id])
-        self.deleted_on = datetime.utcnow()
+        deleted_on = datetime.utcnow()
+        type(self).objects.soft_delete_forms(self.domain, [self.form_id], deleted_on)
+        self.deleted_on = deleted_on
 
     def to_json(self, include_attachments=False):
         from ..serializers import XFormInstanceSerializer, lazy_serialize_form_attachments, \

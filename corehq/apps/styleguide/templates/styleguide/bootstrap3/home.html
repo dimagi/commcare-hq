@@ -1,0 +1,74 @@
+{% extends 'styleguide/bootstrap3/base.html' %}
+
+{% block content %}
+  <div class="container">
+    <h1>CommCare HQ Style Guide</h1>
+    <p class="lead">
+      This is a communication and reference tool. It can be used to help make decisions that have already been thoughtfully made.
+      By taking similar, simiplifed base patterns, often called "atoms", we can build cohesive "molecules" and
+      then more complex "organisms." This keeps code cleaner and lighter while also keeping things simpler for our users to understand.
+    </p>
+    <p>
+      Why all the biology-related terminology? It comes from the notion of <a href='http://atomicdesign.bradfrost.com/chapter-2/' target="_blank">atomic design</a>.
+      Atomic design relates design to the hierarchies and building processes of the natural world.
+      It uses five stages: atoms, molecules, organisms, templates, and pages.
+      HQ doesn't follow this methodology, but the rough ideas can still make for a useful framework.
+    </p>
+    <p>
+      Some general principles to keep in mind:
+    <ul>
+      <li>
+        Consider multiple designs. Just the practice of making yourself consider alternatives can lead to
+        better designs and stronger design rationale.
+      </li>
+      <li>
+        Group related information together and visually emphasize content according to its importance.
+        If you were to step back and squint at your feature, or if you couldn't read the text, how well
+        could you guess what to read first and what to click?
+      </li>
+      <li>
+        How much effort does a user have to expend on your design?
+        Consider both the effort to understand it in the first place, and then the effort to use it on an ongoing basis.
+      </li>
+    </ul>
+    </p>
+
+    <h2>Atoms</h2>
+    <ul>
+      <li>Accessibility: what is it and why does it matter?</li>
+      <li>Typography: what fonts do we use and why?</li>
+      <li>Colors: why use one color or another?</li>
+      <li>Icons: how do you find an icon that enhances your content?</li>
+      <li>Code Guidelines: how does one write good CSS/LESS?</li>
+    </ul>
+    <p><a href="{% url 'styleguide_atoms' %}">Read about atoms in HQ</a></p>
+
+    <h2>Molecules</h2>
+    <ul>
+      <li>Buttons</li>
+      <li>Selections</li>
+      <li>Checkboxes</li>
+      <li>Modals</li>
+      <li>Pagination</li>
+      <li>Searching and Filtering</li>
+      <li>Inline Editing</li>
+      <li>Feedback</li>
+    </ul>
+    <p><a href="{% url 'styleguide_molecules' %}">Read about molecules in HQ</a></p>
+
+    <h2>Organisms</h2>
+    <ul>
+      <li>Forms</li>
+      <li>Tables</li>
+    </ul>
+    <p><a href="{% url 'styleguide_organisms' %}">Read about organisms in HQ</a></p>
+
+    <h2>Templates and Pages</h2>
+    <ul>
+      <li>Navigation</li>
+      <li>Class-Based Views</li>
+      <li>Functional Views</li>
+    </ul>
+    <p><a href="{% url 'styleguide_pages' %}">Read about templates and pages in HQ</a></p>
+  </div>
+{% endblock content %}

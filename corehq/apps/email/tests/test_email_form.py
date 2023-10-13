@@ -25,7 +25,6 @@ class EmailSMTPSettingsFormTests(TestCase):
 
         # Valid port number
         form = EmailSMTPSettingsForm(data=form_data)
-        print(form.errors)
         self.assertTrue(form.is_valid())
 
         # Invalid port number, less than lower bound

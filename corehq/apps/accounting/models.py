@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
@@ -168,10 +168,14 @@ class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
     TRIAL = "TRIAL"
+    ANNUAL = "ANNUAL"
+    ARCHIVED = "ARCHIVED"
     CHOICES = (
-        (PUBLIC, "Anyone can subscribe"),
-        (INTERNAL, "Dimagi must create subscription"),
-        (TRIAL, "This is a Trial Plan"),
+        (PUBLIC, "PUBLIC - Anyone can subscribe"),
+        (INTERNAL, "INTERNAL - Dimagi must create subscription"),
+        (TRIAL, "TRIAL- This is a Trial Plan"),
+        (ARCHIVED, "ARCHIVED - hidden from subscription change forms"),
+        (ANNUAL, "ANNUAL - public plans that on annual pricing"),
     )
 
 
@@ -2013,6 +2017,18 @@ class InvoiceBaseManager(models.Manager):
     def get_queryset(self):
         return super(InvoiceBaseManager, self).get_queryset().filter(is_hidden_to_ops=False)
 
+    def create_or_get(self, **kwargs):
+        """like get_or_create, but try create first"""
+        try:
+            with transaction.atomic(using=self.db):
+                return self.create(**kwargs), True
+        except IntegrityError:
+            try:
+                return self.get(**kwargs), False
+            except self.model.DoesNotExist:
+                pass
+            raise
+
 
 class InvoiceBase(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
@@ -2131,6 +2147,12 @@ class Invoice(InvoiceBase):
 
     class Meta(object):
         app_label = 'accounting'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['subscription', 'date_start', 'date_end'],
+                name='unique_invoice_per_subscription_period',
+                condition=models.Q(('is_hidden_to_ops', False), ('duplicate_invoice_id__isnull', True))),
+        ]
 
     def save(self, *args, **kwargs):
         from corehq.apps.accounting.mixins import get_overdue_invoice
@@ -2276,6 +2298,13 @@ class CustomerInvoice(InvoiceBase):
 
     class Meta(object):
         app_label = 'accounting'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['account', 'date_start', 'date_end'],
+                name='unique_customer_invoice_per_subscription_period',
+                condition=models.Q(is_hidden_to_ops=False)
+            )
+        ]
 
     @property
     def is_customer_invoice(self):
@@ -3774,7 +3803,7 @@ class StripePaymentMethod(PaymentMethod):
         """
         return 'auto_pay_{billing_account_id}'.format(billing_account_id=billing_account.id)
 
-    def create_charge(self, card, amount_in_dollars, description):
+    def create_charge(self, card, amount_in_dollars, description, idempotency_key=None):
         """ Charges a stripe card and returns a transaction id """
         amount_in_cents = int((amount_in_dollars * Decimal('100')).quantize(Decimal(10)))
         transaction_record = stripe.Charge.create(
@@ -3783,6 +3812,7 @@ class StripePaymentMethod(PaymentMethod):
             amount=amount_in_cents,
             currency=settings.DEFAULT_CURRENCY,
             description=description,
+            idempotency_key=idempotency_key
         )
         return transaction_record.id
 

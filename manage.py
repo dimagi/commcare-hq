@@ -32,6 +32,7 @@ def main():
         GeventCommand('run_all_management_command'),
         GeventCommand('copy_events_to_sql', http_adapter_pool_size=32),
         GeventCommand('verify_ssl_connections'),
+        GeventCommand('elastic_sync_multiplexed'),
     )
     _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 

@@ -1,20 +1,17 @@
-from django.http import HttpResponseRedirect
+from secrets import token_urlsafe
+
+from django import forms
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from corehq import toggles
-from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.email.forms import EmailSMTPSettingsForm
 from corehq.apps.email.models import EmailSettings
-
-
-@login_and_domain_required
-def default(request, domain):
-    from corehq.messaging.scheduling.views import MessagingDashboardView
-    return HttpResponseRedirect(reverse(MessagingDashboardView.urlname, args=[domain]))
+from corehq.messaging.scheduling.views import MessagingDashboardView
 
 
 @method_decorator(domain_admin_required, name='dispatch')
@@ -22,20 +19,24 @@ def default(request, domain):
 class EmailSMTPSettingsView(BaseDomainView):
     template_name = 'email/email_settings.html'
     urlname = 'email_gateway_settings'
-    page_title = _('Email Settings')
-    section_name = _('Messaging')
+    page_title = gettext_lazy('Email Settings')
+    section_name = gettext_lazy('Messaging')
 
     @property
     def section_url(self):
-        return reverse("email_default", args=[self.domain])
+        return reverse(MessagingDashboardView.urlname, args=[self.domain])
 
     def get(self, request, *args, **kwargs):
         email_settings = EmailSettings.objects.filter(domain=self.domain).first()
 
         if email_settings:
             form = EmailSMTPSettingsForm(instance=email_settings)
+            if email_settings.use_tracking_headers is False:
+                form.fields['sns_secret'].widget = forms.HiddenInput()
         else:
             form = EmailSMTPSettingsForm()
+            form.fields['sns_secret'].widget = forms.HiddenInput()
+
         return render(request, self.template_name, {
             'form': form,
             'domain': self.domain,
@@ -50,6 +51,9 @@ class EmailSMTPSettingsView(BaseDomainView):
 
         if form.is_valid():
             form.instance.domain = self.domain
+            if form.instance.use_tracking_headers and not form.instance.sns_secret:
+                form.instance.sns_secret = token_urlsafe(16)
+
             form.save()
             return redirect(EmailSMTPSettingsView.urlname, domain=self.domain)
         else:

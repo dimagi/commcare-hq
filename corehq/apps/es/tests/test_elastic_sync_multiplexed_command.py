@@ -90,6 +90,10 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
         super().setUpClass()
         cls.adapter = mutiplexed_adapter_with_overriden_settings()
 
+    def tearDown(self) -> None:
+        manager.cluster_routing(enabled=True)
+        return super().tearDown()
+
     def test_invalid_index_canonical_raises(self):
         with self.assertRaises(CommandError):
             call_command(COMMAND_NAME, 'start', 'random_alias')
@@ -203,6 +207,90 @@ class TestESSyncUtil(SimpleTestCase):
 
         ESSyncUtil().delete_index(HQ_APPS_INDEX_CANONICAL_NAME)
         self.assertFalse(manager.index_exists(app_adapter.index_name))
+
+    def test_remove_residual_indices_does_not_remove_known_indices(self):
+        util = ESSyncUtil()
+
+        # Create known HQ indices if they don't exist
+        existing_index_names = util._get_all_known_index_names()
+        for index in existing_index_names:
+            # We are testing for actual index names, they might exist on local system
+            # So we testing if they exist first.
+            if not manager.index_exists(index):
+                manager.index_create(index)
+                self.addCleanup(manager.index_delete, index)
+
+        util.remove_residual_indices()
+        for index in existing_index_names:
+            self.assertTrue(manager.index_exists(index))
+
+    def test_remove_residual_indices_remove_closed_indices(self):
+        util = ESSyncUtil()
+
+        # Create an index and close it
+        type_ = "test_doc"
+        mappings = {"properties": {"value": {"type": "string"}}}
+        settings = {
+            "number_of_replicas": "0",
+            "number_of_shards": "1",
+        }
+        closed_index_name = 'closed_index'
+        manager.index_create(closed_index_name, {"mappings": {type_: mappings}, "settings": settings})
+
+        # Index a doc before closing it
+        manager._es.index(closed_index_name, doc_type=type_, body={'value': 'a test doc'}, id="1234", timeout='5m')
+        manager.index_close(closed_index_name)
+
+        # Ensure the closed index exist
+        self.assertTrue(manager.index_exists(closed_index_name))
+
+        with patch('builtins.input', return_value=closed_index_name):
+            util.remove_residual_indices()
+
+        # Assert Residual indices are deleted
+        self.assertFalse(manager.index_exists(closed_index_name))
+
+    def test_remove_residual_indices_removes_unknown_indices(self):
+        util = ESSyncUtil()
+
+        # Create known HQ indices if they don't exist
+        existing_index_names = util._get_all_known_index_names()
+        for index in existing_index_names:
+            # We are testing for actual index names, they might exist on local system
+            # So we testing if they exist first.
+            if not manager.index_exists(index):
+                manager.index_create(index)
+                self.addCleanup(manager.index_delete, index)
+
+        # Create some residual indices
+        type_ = "test_doc"
+        mappings = {"properties": {"value": {"type": "string"}}}
+        settings = {
+            "number_of_replicas": "0",
+            "number_of_shards": "1",
+        }
+        residual_index_names = ['closed_index', 'index_1', 'index_2']
+        for index in residual_index_names:
+            manager.index_create(index, {"mappings": {type_: mappings}, "settings": settings})
+
+        # Create a closed index too
+        manager._es.index(residual_index_names[0], doc_type=type_, body={'value': 'a test doc'}, id="1234")
+        manager.index_close(residual_index_names[0])
+
+        # Ensure all indices exists
+        for index in residual_index_names:
+            self.assertTrue(manager.index_exists(index))
+
+        with patch('builtins.input', side_effect=residual_index_names):
+            util.remove_residual_indices()
+
+        # Assert Residual indices are deleted
+        for index in residual_index_names:
+            self.assertFalse(manager.index_exists(index))
+
+        # Assert existing indices are not deleted
+        for index in existing_index_names:
+            self.assertTrue(manager.index_exists(index))
 
     def _setup_indexes(self, indexes):
         for index in indexes:
