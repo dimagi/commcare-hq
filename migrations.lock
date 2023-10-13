@@ -191,6 +191,8 @@ blobs
  0011_blobmeta_compressed
  0012_rename_indexes
  0013_drop_icds_cas_index
+captcha
+ 0001_initial
 case_importer
  0001_initial
  0002_auto_20161206_1937
@@ -688,6 +690,8 @@ oauth_integrations
  0002_livegooglesheetschedule
  0003_livegooglesheetrefreshstatus
  0004_auto_20220304_1139
+object_testing
+ 0001_initial
 ota
  0001_initial
  0002_alter_db_index

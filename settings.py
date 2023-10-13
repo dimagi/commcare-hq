@@ -276,6 +276,7 @@ HQ_APPS = (
     'corehq.apps.integration',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
+    'corehq.apps.object_testing',
     'corehq.apps.products',
     'corehq.apps.programs',
     'corehq.apps.registry.app_config.RegistryAppConfig',

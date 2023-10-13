@@ -626,6 +626,7 @@ class ProjectDataTab(UITab):
 
         if toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
             from corehq.apps.userreports.views import UCRExpressionListView
+            from corehq.apps.object_testing.views import ObjectTestListView
             items.append(
                 [
                     _("Data Manipulation"),
@@ -633,6 +634,10 @@ class ProjectDataTab(UITab):
                         {
                             "title": _("Filters and Expressions"),
                             "url": reverse(UCRExpressionListView.urlname, args=[self.domain]),
+                        },
+                        {
+                            'title': ObjectTestListView.page_title,
+                            'url': reverse(ObjectTestListView.urlname, args=[self.domain])
                         },
                     ]
                 ]

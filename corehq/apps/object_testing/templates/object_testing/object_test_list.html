@@ -1,0 +1,69 @@
+{% extends 'hqwebapp/bootstrap3/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block page_title %}{{ current_page.title }}{% endblock %}
+
+{% requirejs_main "hqwebapp/js/bootstrap3/crud_paginated_list_init" %}
+
+{% block pagination_templates %}
+  <script type="text/html" id="base-object-test-template">
+    <td>
+      <a data-bind="text: name, attr: {href: edit_url}"></a>
+    </td>
+    <td data-bind="text: description"></td>
+    <td> <!-- actions -->
+      <button type="button"
+              data-toggle="modal"
+              data-bind="
+                        attr: {
+                            'data-target': '#delete-test-' + id
+                        }
+                    "
+              class="btn btn-danger">
+        <i class="fa fa-remove"></i> {% translate "Delete" %}
+      </button>
+
+      <div class="modal fade"
+           data-bind="
+                    attr: {
+                        id: 'delete-test-' + id
+                    }
+                 ">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h3>
+                {% translate "Delete" %} <strong data-bind="text: name"></strong>?
+              </h3>
+            </div>
+            <div class="modal-body">
+              <p class="lead">
+                {% translate "Yes, delete the test named" %} <strong data-bind="text: name"></strong>.
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button type="button"
+                      class="btn btn-default"
+                      data-dismiss="modal">
+                Cancel
+              </button>
+              <button type="button"
+                      class="btn btn-danger delete-item-confirm"
+                      data-loading-text="Deleting Test...">
+                <i class="fa fa-remove"></i> {% translate "Delete Test" %}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </td>
+  </script>
+
+  <script type="text/html" id="delete-object-test-template">
+    <td data-bind="text: name"></td>
+    <td data-bind="text: description"></td>
+    <td></td>
+  </script>
+{% endblock %}
