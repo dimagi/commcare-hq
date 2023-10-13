@@ -167,7 +167,7 @@ class UserInvitationView(object):
                     if allow_invite_email_only and \
                             request.POST.get("email").lower() != invitation.email.lower():
                         messages.error(request, _("You can only sign up with the email "
-                                                  "address your invitation was send to."))
+                                                  "address your invitation was sent to."))
                         return HttpResponseRedirect(reverse("login"))
 
                     user = activate_new_user_via_reg_form(
