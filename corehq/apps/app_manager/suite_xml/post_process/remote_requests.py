@@ -210,7 +210,7 @@ class RemoteRequestFactory(object):
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
                 default_search=self.module.search_config.default_search,
-                dynamic_search=self.app.split_screen_dynamic_search,
+                dynamic_search=self.app.split_screen_dynamic_search and not self.module.is_auto_select(),
             )
         ]
 

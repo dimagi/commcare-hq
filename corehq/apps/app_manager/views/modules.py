@@ -1355,7 +1355,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 custom_related_case_property=search_properties.get('custom_related_case_property', ""),
                 inline_search=search_properties.get('inline_search', False),
                 include_all_related_cases=search_properties.get('include_all_related_cases', False),
-                dynamic_search=app.split_screen_dynamic_search,
+                dynamic_search=app.split_screen_dynamic_search and not module.is_auto_select(),
             )
 
     resp = {}
