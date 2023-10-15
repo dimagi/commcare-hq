@@ -149,8 +149,6 @@ class TestManageDomainAlertsView(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain_alert.delete()
-        cls.other_domain_alert.delete()
         cls.user.delete(cls.domain_name, deleted_by=None)
         cls.domain.delete()
         super().tearDownClass()
@@ -215,7 +213,6 @@ class TestManageDomainAlertsView(TestCase):
     @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
     def test_apply_command_with_valid_command(self):
         alert = self._create_alert_for_domain(self.domain, "New Alert!", self.username)
-        self.addCleanup(alert.delete)
 
         self.assertFalse(alert.active)
 
