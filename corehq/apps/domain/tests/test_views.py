@@ -123,6 +123,7 @@ class TestManageDomainAlertsView(TestCase):
         cls.domain_name = 'gotham'
         cls.domain = Domain(name=cls.domain_name, is_active=True)
         cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
 
         cls.other_domain_name = 'krypton'
 
@@ -130,6 +131,7 @@ class TestManageDomainAlertsView(TestCase):
         cls.password = '*******'
         cls.user = WebUser.create(cls.domain_name, cls.username, cls.password,
                                   created_by=None, created_via=None, is_admin=True)
+        cls.addClassCleanup(cls.user.delete, deleted_by_domain=cls.domain_name, deleted_by=None)
 
         cls.domain_alert = cls._create_alert_for_domain(cls.domain_name, 'Test Alert 1!', cls.username)
         cls.other_domain_alert = cls._create_alert_for_domain(cls.other_domain_name, 'Test Alert 2!', cls.username)
@@ -146,12 +148,6 @@ class TestManageDomainAlertsView(TestCase):
             created_by_domain=domain,
             created_by_user=username
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain_name, deleted_by=None)
-        cls.domain.delete()
-        super().tearDownClass()
 
     def setUp(self):
         self.client = Client()
