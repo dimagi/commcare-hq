@@ -47,10 +47,6 @@ class CommCareHQAlert(models.Model):
     def html(self):
         return mark_up_urls(self.text)
 
-    def __repr__(self):
-        return "CommCareHQAlert(text='{}', active='{}', domains='{}')".format(
-            self.text, self.active, ", ".join(self.domains) if self.domains else "All Domains")
-
     def save(self, *args, **kwargs):
         cls = type(self)
         cls.get_active_alerts.clear(cls)

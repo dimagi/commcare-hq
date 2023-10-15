@@ -158,13 +158,13 @@ class TestMaintenanceAlertsView(TestCase):
 
     def test_create_alert(self):
         self.client.login(username=self.user.username, password='***')
-        self.client.post(reverse('create_alert'), {'alert_text': "Maintenance alert"})
-        alert = CommCareHQAlert.objects.latest('created')
+        self.assertEqual(CommCareHQAlert.objects.count(), 0)
 
-        self.assertEqual(
-            repr(alert),
-            "CommCareHQAlert(text='Maintenance alert', active='False', domains='All Domains')"
-        )
+        self.client.post(reverse('create_alert'), {'alert_text': "Maintenance alert"})
+        alert = CommCareHQAlert.objects.first()
+
+        self.assertEqual(alert.text, 'Maintenance alert')
+        self.assertIsNone(alert.domains)
 
     def test_create_converts_to_utc(self):
         alert = self._alert_with_timezone()

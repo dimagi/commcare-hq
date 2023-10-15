@@ -15,10 +15,6 @@ class TestCommCareHQAlerts(TestCase):
         self.assertEqual(alert.end_time, None)
         self.assertEqual(alert.domains, None)
         self.assertEqual(alert.timezone, 'UTC')
-        self.assertEqual(
-            repr(alert),
-            "CommCareHQAlert(text='Maintenance alert', active='False', domains='All Domains')"
-        )
 
     def test_wraps_alert_links(self):
         kwargs = {'text': "Link to www.commcare.org"}
