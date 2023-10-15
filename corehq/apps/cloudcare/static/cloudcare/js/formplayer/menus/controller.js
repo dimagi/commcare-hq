@@ -134,6 +134,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     collection: queryCollection,
                     title: menuResponse.title,
                     description: menuResponse.description,
+                    hasDynamicSearch: menuResponse.hasDynamicSearch,
                     sidebarEnabled: true,
                 }).render()
             );
@@ -143,8 +144,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     collection: menuResponse,
                     title: menuResponse.title,
                     description: menuResponse.description,
+                    hasDynamicSearch: menuResponse.hasDynamicSearch,
                     sidebarEnabled: true,
-                    disableDynamicSearch: true,
                 }).render()
             );
         } else {
