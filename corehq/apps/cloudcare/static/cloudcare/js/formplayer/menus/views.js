@@ -208,12 +208,30 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         return caseListLayout;
     };
 
+    const getScrollTopOffset = function (smallScreenEnabled, mapIsFullscreen = false) {
+        const $mapEl = $('#module-case-list-map');
+        const $stickyHeader = $('#small-screen-sticky-header');
+        let scrollTopOffset = parseInt(($mapEl).css('top'));
+        if (smallScreenEnabled) {
+            if ($stickyHeader[0]) {
+                scrollTopOffset = parseInt($stickyHeader.css('top')) + $stickyHeader.outerHeight();
+            } else if (mapIsFullscreen) {
+                scrollTopOffset = constants.BREADCRUMB_HEIGHT_PX;
+            } else {
+                scrollTopOffset += $mapEl.outerHeight();
+            }
+        }
+        return scrollTopOffset;
+    };
+
+
     const CaseView = Marionette.View.extend({
         tagName: "tr",
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
             selectRow: ".select-row-checkbox",
+            showMore: ".show-more",
         },
 
         events: {
@@ -221,6 +239,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             "keydown": "rowKeyAction",
             'click @ui.selectRow': 'selectRowAction',
             'keypress @ui.selectRow': 'selectRowAction',
+            'click @ui.showMore': 'showMoreAction',
+            'keypress @ui.showMore': 'showMoreAction',
         },
 
         initialize: function () {
@@ -231,6 +251,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     self.ui.selectRow.prop("checked", action === constants.MULTI_SELECT_ADD);
                 }
             });
+            self.smallScreenEnabled = cloudcareUtils.smallScreenIsEnabled();
         },
 
         className: "formplayer-request case-row",
@@ -247,7 +268,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (!(
                 e.target.classList.contains('module-case-list-column-checkbox') ||  // multiselect checkbox
                 e.target.classList.contains("select-row-checkbox") ||               // multiselect select all
-                $(e.target).is('a')                                                 // actual link, as in markdown
+                $(e.target).is('a') ||                                              // actual link, as in markdown
+                e.target.classList.contains('show-more') ||
+                $(e.target).parent().hasClass('show-more')
             )) {
                 e.preventDefault();
                 let modelId = this.model.get('id');
@@ -275,6 +298,23 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("multiSelect:updateCases", action, [this.model.get('id')]);
         },
 
+        showMoreAction: function (e) {
+            const arrow = $(e.currentTarget).find("i");
+            const tileContent = $(e.currentTarget).siblings('.collapsible-tile-content');
+            if (tileContent.hasClass("collapsed-tile-content")) {
+                arrow.removeClass("fa-angle-double-down");
+                arrow.addClass("fa-angle-double-up");
+                tileContent.removeClass("collapsed-tile-content");
+            } else {
+                arrow.removeClass("fa-angle-double-up");
+                arrow.addClass("fa-angle-double-down");
+                tileContent.addClass("collapsed-tile-content");
+                const offset = getScrollTopOffset(this.smallScreenEnabled);
+                $(window).scrollTop($(e.currentTarget).parent().offset().top - offset);
+            }
+
+        },
+
         isChecked: function () {
             return this.ui.selectRow.prop("checked");
         },
@@ -290,6 +330,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
             };
+        },
+
+        onAttach: function () {
+            const self = this;
+            if (self.isMultiSelect && self.smallScreenEnabled) {
+                const height = $(self.el).height();
+                if (height > constants.COLLAPSIBLE_TILE_MAX_HEIGHT) {
+                    const tileContent = $(self.el).find('> .collapsible-tile-content');
+                    if (tileContent.length) {
+                        tileContent.addClass('collapsed-tile-content');
+                        $(self.el).append(`<div class="show-more"><i class="fa fa-angle-double-down"></i></div>`);
+                    }
+                }
+            }
         },
     });
 
@@ -595,22 +649,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             });
         },
 
-        getMapScrollOffset: function (addressMap) {
-            const $mapEl = $('#module-case-list-map');
-            const $stickyHeader = $('#small-screen-sticky-header');
-            let scrollTopOffset = parseInt(($mapEl).css('top'));
-            if (this.smallScreenEnabled) {
-                if ($stickyHeader[0]) {
-                    scrollTopOffset = parseInt($stickyHeader.css('top')) + $stickyHeader.outerHeight();
-                } else if (addressMap.isFullscreen()) {
-                    scrollTopOffset = constants.BREADCRUMB_HEIGHT_PX;
-                } else {
-                    scrollTopOffset += $mapEl.outerHeight();
-                }
-            }
-            return scrollTopOffset;
-        },
-
         loadMap: function () {
             const token = initialPageData.get("mapbox_access_token");
 
@@ -687,8 +725,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     markers.forEach(m => m.setIcon(locationIcon));
                                     marker.setIcon(selectedLocationIcon);
 
+                                    const offset = getScrollTopOffset(this.smallScreenEnabled, addressMap.isFullscreen());
                                     $([document.documentElement, document.body]).animate({
-                                        scrollTop: $(`#${rowId}`).offset().top - this.getMapScrollOffset(addressMap),
+                                        scrollTop: $(`#${rowId}`).offset().top - offset,
                                     }, 500);
 
                                     addressMap.panTo(markerCoordinates);
