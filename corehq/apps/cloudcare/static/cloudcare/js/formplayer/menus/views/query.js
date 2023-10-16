@@ -351,7 +351,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentView.setStickyQueryInputs();
         },
 
-        notifyParentOfFieldChange: function (e, useDynamicSearch=false) {
+        notifyParentOfFieldChange: function (e, useDynamicSearch = false) {
             if (this.model.get('input') === 'address') {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
