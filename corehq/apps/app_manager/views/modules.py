@@ -51,6 +51,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     CaseListForm,
     CaseSearch,
+    CaseSearchCustomSortProperty,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DeleteModuleRecord,
@@ -249,6 +250,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                     module.search_config.properties if module_offers_search(module) else [],
                 'default_properties':
                     module.search_config.default_properties if module_offers_search(module) else [],
+                'custom_sort_properties':
+                    module.search_config.custom_sort_properties if module_offers_search(module) else [],
                 'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
                 'default_search': module.search_config.default_search if module_offers_search(module) else False,
                 'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
@@ -1348,6 +1351,10 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 default_properties=[
                     DefaultCaseSearchProperty.wrap(p)
                     for p in search_properties.get('default_properties')
+                ],
+                custom_sort_properties=[
+                    CaseSearchCustomSortProperty.wrap(p)
+                    for p in search_properties.get('custom_sort_properties')
                 ],
                 data_registry=data_registry_slug,
                 data_registry_workflow=data_registry_workflow,
