@@ -198,3 +198,22 @@ class TestUserDataModel(SimpleTestCase):
         self.assertEqual(user_data.pop('yearbook_quote', 'MISSING'), 'MISSING')
         with self.assertRaises(KeyError):
             user_data.pop('yearbook_quote')
+
+    def test_remove_unrecognized(self):
+        user_data = UserData({
+            'in_schema': 'true',
+            'not_in_schema': 'true',
+            'commcare_location_id': '123',
+        }, self.domain)
+        changed = user_data.remove_unrecognized({'in_schema', 'in_schema_not_doc'})
+        self.assertTrue(changed)
+        self.assertEqual(user_data.raw, {'in_schema': 'true', 'commcare_location_id': '123'})
+
+    def test_remove_unrecognized_empty_field(self):
+        user_data = UserData({}, self.domain)
+        changed = user_data.remove_unrecognized(set())
+        self.assertFalse(changed)
+        self.assertEqual(user_data.raw, {})
+        changed = user_data.remove_unrecognized({'a', 'b'})
+        self.assertFalse(changed)
+        self.assertEqual(user_data.raw, {})

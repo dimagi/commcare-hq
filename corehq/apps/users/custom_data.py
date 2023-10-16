@@ -1,5 +1,4 @@
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
-from corehq.apps.custom_data_fields.models import is_system_key
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
 
 
@@ -10,15 +9,9 @@ def remove_unused_custom_fields_from_users(domain):
     from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
     fields_definition = CustomDataFieldsDefinition.get(domain, CUSTOM_USER_DATA_FIELD_TYPE)
     assert fields_definition, 'remove_unused_custom_fields_from_users called without a valid definition'
-    configured_field_keys = set([f.slug for f in fields_definition.get_fields()])
+    schema_fields = {f.slug for f in fields_definition.get_fields()}
     for user in get_all_commcare_users_by_domain(domain):
-        keys_to_delete = _get_invalid_user_data_fields(user, configured_field_keys)
-        if keys_to_delete:
-            user_data = user.get_user_data(domain)
-            for key in keys_to_delete:
-                del user_data[key]
+        user_data = user.get_user_data(domain)
+        changed = user_data.remove_unrecognized(schema_fields)
+        if changed:
             user.save()
-
-
-def _get_invalid_user_data_fields(user, configured_field_keys):
-    return [key for key in user.user_data if not is_system_key(key) and not key in configured_field_keys]

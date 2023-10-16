@@ -3,9 +3,13 @@ from django.utils.functional import cached_property
 from corehq.apps.custom_data_fields.models import (
     COMMCARE_PROJECT,
     PROFILE_SLUG,
+    CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
+    is_system_key,
 )
-from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.apps.users.views.mobile.custom_data_fields import (
+    CUSTOM_USER_DATA_FIELD_TYPE,
+)
 
 
 class UserDataError(Exception):
@@ -52,10 +56,18 @@ class UserData:
             return CustomDataFieldsProfile.objects.get(
                 id=profile_id,
                 definition__domain=self.domain,
-                definition__field_type=UserFieldsView.field_type,
+                definition__field_type=CUSTOM_USER_DATA_FIELD_TYPE,
             )
         except CustomDataFieldsProfile.DoesNotExist as e:
             raise UserDataError("User data profile not found") from e
+
+    def remove_unrecognized(self, schema_fields):
+        changed = False
+        for k in list(self._local_to_user):
+            if k not in schema_fields and not is_system_key(k):
+                del self[k]
+                changed=True
+        return changed
 
     def items(self):
         return self.to_dict().items()
