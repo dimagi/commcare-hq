@@ -265,11 +265,12 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
         if is_update_successful and (props_updated or role_updated or metadata_updated):
             change_messages = {}
-            profile_id = self.existing_user.user_data.get(PROFILE_SLUG)
+            user_data = self.existing_user.get_user_data(self.domain)
+            profile_id = user_data.profile_id
             if role_updated:
                 change_messages.update(UserChangeMessage.role_change(user_new_role))
             if metadata_updated:
-                props_updated['user_data'] = self.existing_user.user_data
+                props_updated['user_data'] = user_data.raw
             if profile_updated:
                 profile_name = None
                 if profile_id:
