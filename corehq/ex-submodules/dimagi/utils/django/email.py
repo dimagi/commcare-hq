@@ -1,7 +1,8 @@
+from abc import ABC, abstractmethod
 from smtplib import SMTPDataError, SMTPSenderRefused
 
 from django.conf import settings
-from django.core.mail import get_connection
+from django.core.mail import get_connection as django_get_connection
 from django.core.mail.message import EmailMultiAlternatives
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import gettext as _
@@ -114,7 +115,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
     if settings.SES_CONFIGURATION_SET is not None:
         headers[SES_CONFIGURATION_SET_HEADER] = settings.SES_CONFIGURATION_SET
 
-    connection = get_connection()
+    connection = django_get_connection()
     msg = EmailMultiAlternatives(subject, text_content, email_from,
                                  filtered_recipients, headers=headers,
                                  connection=connection, cc=cc, bcc=bcc)
@@ -168,3 +169,72 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                 bcc=bcc,
             )
             error_msg.send()
+
+
+def get_email_configuration(domain: str, from_email: str = settings.DEFAULT_FROM_EMAIL):
+    from corehq.apps.email.models import EmailSettings
+    try:
+        email_setting = EmailSettings.objects.get(domain=domain, use_this_gateway=True)
+        return CustomEmailConfiguration(email_setting)
+    except EmailSettings.DoesNotExist:
+        return DefaultEmailConfiguration(from_email)
+
+
+class EmailConfigurationManager(ABC):
+    @property
+    @abstractmethod
+    def from_email(self):
+        pass
+
+    @property
+    @abstractmethod
+    def connection(self):
+        pass
+
+    @property
+    @abstractmethod
+    def SES_configuration_set(self):
+        pass
+
+
+class DefaultEmailConfiguration(EmailConfigurationManager):
+    def __init__(self, from_email: str):
+        self._from_email: str = from_email
+
+    @property
+    def from_email(self) -> str:
+        return self._from_email
+
+    @property
+    def connection(self):
+        return django_get_connection()
+
+    @property
+    def SES_configuration_set(self):
+        return settings.SES_CONFIGURATION_SET
+
+
+class CustomEmailConfiguration(EmailConfigurationManager):
+    def __init__(self, email_setting):
+        from corehq.apps.email.models import EmailSettings
+        self._email_setting: EmailSettings = email_setting
+
+    @property
+    def from_email(self) -> str:
+        return self._email_setting.from_email
+
+    @property
+    def connection(self):
+        backend_settings = {
+            'host': self._email_setting.server,
+            'port': self._email_setting.port,
+            'username': self._email_setting.username,
+            'password': self._email_setting.plaintext_password,
+            'use_tls': True,
+        }
+        backend = "django.core.mail.backends.smtp.EmailBackend"
+        return django_get_connection(backend=backend, **backend_settings)
+
+    @property
+    def SES_configuration_set(self):
+        return self._email_setting.ses_config_set_name if self._email_setting.use_tracking_headers else None

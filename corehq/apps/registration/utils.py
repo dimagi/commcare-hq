@@ -258,7 +258,7 @@ You can view the %s here: %s""" % (
         recipients = settings.NEW_DOMAIN_RECIPIENTS
         send_mail_async.delay(
             "New %s: %s" % (entity_texts[0], entity_name),
-            message, settings.SERVER_EMAIL, recipients
+            message, recipients, from_email=settings.SERVER_EMAIL
         )
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
