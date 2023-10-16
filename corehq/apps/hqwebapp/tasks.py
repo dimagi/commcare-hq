@@ -5,7 +5,7 @@ from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
 from django.core.management import call_command
 from django.utils.translation import gettext as _
-from dimagi.utils.django.email import get_email_configuration, DefaultEmailConfiguration
+from dimagi.utils.django.email import get_email_configuration
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
@@ -62,11 +62,7 @@ def send_mail_async(self, subject, message, recipient_list, from_email=settings.
         }
     )
 
-    if use_domain_gateway:
-        configuration = get_email_configuration(from_email)
-    else:
-        configuration = DefaultEmailConfiguration(from_email)
-
+    configuration = get_email_configuration(domain, use_domain_gateway, from_email)
     recipient_list = [_f for _f in recipient_list if _f]
 
     # todo deal with recipients marked as bounced

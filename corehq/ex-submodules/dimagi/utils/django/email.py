@@ -171,13 +171,17 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             error_msg.send()
 
 
-def get_email_configuration(domain: str, from_email: str = settings.DEFAULT_FROM_EMAIL):
+def get_email_configuration(domain: str, use_domain_gateway: bool = True,
+                            from_email: str = settings.DEFAULT_FROM_EMAIL):
     from corehq.apps.email.models import EmailSettings
-    try:
-        email_setting = EmailSettings.objects.get(domain=domain, use_this_gateway=True)
-        return CustomEmailConfiguration(email_setting)
-    except EmailSettings.DoesNotExist:
-        return DefaultEmailConfiguration(from_email)
+    if use_domain_gateway:
+        try:
+            email_setting = EmailSettings.objects.get(domain=domain, use_this_gateway=True)
+            return CustomEmailConfiguration(email_setting)
+        except EmailSettings.DoesNotExist:
+            pass
+
+    return DefaultEmailConfiguration(from_email)
 
 
 class EmailConfigurationManager(ABC):
