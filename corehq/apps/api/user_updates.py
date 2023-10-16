@@ -109,14 +109,15 @@ def _update_groups(user, group_ids, user_change_logger):
 
 
 def _update_user_data(user, new_user_data, user_change_logger):
-    # update user data, log if metadata and user_data differ (which is a bug)
     try:
         changed = user.get_user_data(user.domain).update(new_user_data)
     except UserDataError as e:
         raise UpdateUserException(str(e))
 
     if user_change_logger and changed:
-        user_change_logger.add_changes({'user_data': user.user_data})
+        user_change_logger.add_changes({
+            'user_data': user.get_user_data(user.domain).raw
+        })
 
 
 def _update_user_role(user, role, user_change_logger):

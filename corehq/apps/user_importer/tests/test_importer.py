@@ -675,8 +675,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             PROFILE_SLUG: self.profile.id,
         })
         # Profile fields shouldn't actually be added to user_data
-        self.assertEqual(self.user.user_data, {
-            'commcare_project': 'mydomain',
+        self.assertEqual(self.user.get_user_data(self.domain.name).raw, {
             PROFILE_SLUG: self.profile.id,
         })
 
@@ -840,7 +839,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 'language': 'hin',
                 'email': 'hello@gmail.org',
                 'is_active': False,
-                'user_data': {'commcare_project': 'mydomain', 'post': 'SE'}
+                'user_data': {'post': 'SE'},
             }
         )
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
@@ -1137,12 +1136,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
                                                changed_by=self.uploading_user.get_id)
-        self.assertDictEqual(
-            user_history.changes,
-            {
-                'user_data': {'commcare_project': 'mydomain', 'key': 'F#'}
-            }
-        )
+        self.assertDictEqual(user_history.changes, {'user_data': {'key': 'F#'}})
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
         self.assertEqual(user_history.change_messages, {})
 

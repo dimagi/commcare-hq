@@ -34,6 +34,11 @@ class UserData:
             **self._provided_by_system,
         }
 
+    @property
+    def raw(self):
+        """Data stored on the user object - used for auditing"""
+        return self._local_to_user.copy()
+
     def __repr__(self):
         return f"UserData({self.to_dict()})"
 

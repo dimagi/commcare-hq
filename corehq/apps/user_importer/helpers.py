@@ -42,8 +42,10 @@ class UserChangeLogger(object):
 
         if not is_new_user:
             self.original_user_doc = self.user.to_json()
+            self.original_user_data = self.user.get_user_data(user_domain).raw
         else:
             self.original_user_doc = None
+            self.original_user_data = None
 
         self.fields_changed = {}
         self.change_messages = {}
@@ -162,9 +164,9 @@ class BaseUserImporter(object):
         return self.logger.save()
 
     def _include_user_data_changes(self):
-        # ToDo: consider putting just the diff
-        if self.logger.original_user_doc and self.logger.original_user_doc['user_data'] != self.user.user_data:
-            self.logger.add_changes({'user_data': self.user.user_data})
+        new_user_data = self.user.get_user_data(self.user_domain).raw
+        if self.logger.original_user_data != new_user_data:
+            self.logger.add_changes({'user_data': new_user_data})
 
 
 class CommCareUserImporter(BaseUserImporter):

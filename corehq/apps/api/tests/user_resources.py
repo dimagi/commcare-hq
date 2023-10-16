@@ -302,7 +302,6 @@ class TestCommCareUserResource(APIResourceTest):
                 'user_data': {
                     'chw_id': '13/43/DFA',
                     'commcare_profile': self.profile.id,
-                    'commcare_project': 'qwerty'
                 }
             }
         )
