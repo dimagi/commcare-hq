@@ -12,6 +12,7 @@ DROP_INDEX_SQL = "DROP INDEX CONCURRENTLY IF EXISTS {}".format(INDEX_NAME)
 
 
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('form_processor', '0095_remove_xforminstance_deleted_state'),
