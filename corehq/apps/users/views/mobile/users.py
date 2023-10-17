@@ -1383,8 +1383,6 @@ class ClearCommCareUsers(DeleteCommCareUsers):
     def _clear_users_data(self, request, user_docs_by_id):
         from corehq.apps.users.model_log import UserModelAction
         from corehq.apps.hqwebapp.tasks import send_mail_async
-        from django.conf import settings
-
 
         cleared_count = 0
         for user_id, doc in user_docs_by_id.items():
