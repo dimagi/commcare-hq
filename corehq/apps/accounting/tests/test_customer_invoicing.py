@@ -411,7 +411,7 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
             feature__feature_type=FeatureType.SMS
         ).get()
         self.invoice_date = utils.months_from_date(
-            self.main_subscription.date_start, random.randint(2, self.main_subscription_length)
+            self.main_subscription.date_start, random.randint(2, self.non_main_subscription_length)
         )
         self.sms_date = utils.months_from_date(self.invoice_date, -1)
 
