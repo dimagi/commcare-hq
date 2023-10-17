@@ -155,7 +155,8 @@ class UserInvitationView(object):
                 form = WebUserInvitationForm(
                     request.POST,
                     is_sso=idp is not None,
-                    allow_invite_email_only=allow_invite_email_only)
+                    allow_invite_email_only=allow_invite_email_only,
+                    invite_email=invitation.email)
                 if form.is_valid():
                     # create the new user
                     invited_by_user = CouchUser.get_by_user_id(invitation.invited_by)
