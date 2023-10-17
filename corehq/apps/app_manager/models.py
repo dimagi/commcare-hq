@@ -2121,6 +2121,13 @@ class DefaultCaseSearchProperty(DocumentSchema):
     defaultValue = StringProperty(exclude_if_none=True)
 
 
+class CaseSearchCustomSortProperty(DocumentSchema):
+    """Sort properties to be applied to search before results are filtered"""
+    property_name = StringProperty()
+    sort_type = StringProperty()
+    direction = StringProperty()
+
+
 class BaseCaseSearchLabel(NavMenuItemMediaMixin):
     def get_app(self):
         return self._module.get_app()
@@ -2149,6 +2156,7 @@ class CaseSearch(DocumentSchema):
     search_filter = StringProperty(exclude_if_none=True)
     search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
+    custom_sort_properties = SchemaListProperty(CaseSearchCustomSortProperty)
     blacklisted_owner_ids_expression = StringProperty(exclude_if_none=True)
     additional_case_types = StringListProperty()
     data_registry = StringProperty(exclude_if_none=True)
