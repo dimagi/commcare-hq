@@ -6,7 +6,7 @@ from corehq.util.django_migrations import skip_on_fresh_install
 
 @skip_on_fresh_install
 def _delete_xml(apps, schema_editor):
-    call_command("delete_case_list_custom_variables_xml", "--start-from-scratch", "--failfast", "--force-run-again")
+    call_command("delete_case_list_custom_variables_xml", "--start-from-scratch", "--failfast")
 
 
 @skip_on_fresh_install
