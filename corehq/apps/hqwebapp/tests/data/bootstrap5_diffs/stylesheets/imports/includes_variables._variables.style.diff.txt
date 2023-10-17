@@ -169,7 +169,7 @@
 -@navbar-padding-vertical:        ((@navbar-height - @line-height-computed) / 2);
 -@navbar-default-bg:              @cc-bg;
 -
--@navbar-footer-height:            38px;
+-@navbar-footer-height:            40px;
 -@navbar-footer-link-color:        mix(darken(#ffffff, 10), @brand-primary, 90);
 -@navbar-footer-link-color-hover:  @gray-lighter;
 -@navbar-footer-button-color:      #474747;
