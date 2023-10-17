@@ -249,6 +249,7 @@ class EnterpriseManageMobileWorkersForm(forms.Form):
             (120, gettext_lazy("120 days")),
             (150, gettext_lazy("150 days")),
             (180, gettext_lazy("180 days")),
+            (365, gettext_lazy("365 days")),
         ),
         help_text=gettext_lazy(
             "Mobile workers who have not submitted a form after these many "
