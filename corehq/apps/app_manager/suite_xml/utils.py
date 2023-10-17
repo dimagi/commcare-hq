@@ -81,7 +81,7 @@ def validate_suite(suite):
         suite = etree.fromstring(suite)
     if isinstance(suite, etree._Element):
         suite = Suite(suite)
-    assert isinstance(suite, Suite),\
+    assert isinstance(suite, Suite), \
         'Could not convert suite to a Suite XmlObject: %r' % suite
 
     def is_unique_list(things):
