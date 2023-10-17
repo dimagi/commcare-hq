@@ -152,6 +152,39 @@ hqDefine("geospatial/js/case_grouping_map",[
         return mapboxInstance;
     }
 
+    function loadMapClusters(caseList) {
+        let caseLocationsGeoJson = {
+            "type": "FeatureCollection",
+            "features": [],
+        };
+
+        _.each(caseList, function (caseWithGPS) {
+            const coordinates = caseWithGPS.coordinates;
+            if (coordinates && coordinates.lat && coordinates.lng) {
+                caseLocationsGeoJson["features"].push(
+                    {
+                        "type": "feature",
+                        "properties": {
+                            "id": caseWithGPS.caseId,
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [coordinates.lng, coordinates.lat],
+                        },
+                    }
+                );
+            }
+        });
+
+        if (map.getSource('caseWithGPS')) {
+            map.getSource('caseWithGPS').setData(caseLocationsGeoJson);
+        } else {
+            map.on('load', () => {
+                map.getSource('caseWithGPS').setData(caseLocationsGeoJson);
+            });
+        }
+    }
+
     $(function () {
         let caseModels = [];
         const exportModelInstance = new exportModel();
@@ -196,6 +229,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             const caseData = xhr.responseJSON.aaData;
             if (caseData.length) {
                 loadCases(caseData);
+                loadMapClusters(caseModels);
             }
         });
     });
