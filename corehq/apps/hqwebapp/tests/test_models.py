@@ -4,7 +4,7 @@ from django.test import TestCase
 from ..models import Alert, UserAccessLog, UserAgent
 
 
-class TestCommCareHQAlerts(TestCase):
+class TestAlerts(TestCase):
     def test_creates_alert(self):
         kwargs = {'text': "Maintenance alert"}
         alert = Alert.objects.create(**kwargs)

@@ -228,5 +228,5 @@ class TestMaintenanceAlertsView(TestCase):
 
         self.client.login(username=self.user.username, password='***')
         with self.assertRaisesMessage(Alert.DoesNotExist,
-                                      'CommCareHQAlert matching query does not exist'):
+                                      'Alert matching query does not exist'):
             self.client.post(reverse('alerts'), {'command': 'activate', 'alert_id': domain_alert.id})
