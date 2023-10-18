@@ -76,6 +76,18 @@ class GeoConfigViewTestClass(TestCase):
             data_type=CaseProperty.DataType.GPS,
         ).save()
 
+        cls.min_max_grouping_data = {
+            'selected_grouping_method': GeoConfig.MIN_MAX_GROUPING,
+            'max_cases_per_group': 10,
+            'min_cases_per_group': 5,
+            'selected_disbursement_algorithm': GeoConfig.ROAD_NETWORK_ALGORITHM,
+        }
+        cls.target_size_grouping_data = {
+            'selected_grouping_method': GeoConfig.TARGET_SIZE_GROUPING,
+            'target_group_count': 10,
+            'selected_disbursement_algorithm': GeoConfig.RADIAL_ALGORITHM,
+        }
+
     @classmethod
     def tearDownClass(cls):
         cls.case_type.delete()
@@ -89,11 +101,14 @@ class GeoConfigViewTestClass(TestCase):
         return self.client.post(url, data)
 
     @staticmethod
-    def construct_data(case_property, user_property=None):
-        return {
+    def construct_data(case_property, user_property=None, extra_data=None):
+        data = {
             'case_location_property_name': case_property,
             'user_location_property_name': user_property or '',
         }
+        if extra_data:
+            data |= extra_data
+        return data
 
     def test_feature_flag_not_enabled(self):
         result = self._make_post({})
@@ -107,6 +122,7 @@ class GeoConfigViewTestClass(TestCase):
             self.construct_data(
                 user_property='some_user_field',
                 case_property=self.gps_case_prop_name,
+                extra_data=self.min_max_grouping_data,
             )
         )
         config = GeoConfig.objects.get(domain=self.domain)
@@ -114,6 +130,10 @@ class GeoConfigViewTestClass(TestCase):
         self.assertTrue(config.location_data_source == GeoConfig.CUSTOM_USER_PROPERTY)
         self.assertEqual(config.user_location_property_name, 'some_user_field')
         self.assertEqual(config.case_location_property_name, self.gps_case_prop_name)
+        self.assertEqual(config.selected_grouping_method, GeoConfig.MIN_MAX_GROUPING)
+        self.assertEqual(config.max_cases_per_group, 10)
+        self.assertEqual(config.min_cases_per_group, 5)
+        self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.ROAD_NETWORK_ALGORITHM)
 
     @flag_enabled('GEOSPATIAL')
     def test_config_update(self):
@@ -121,19 +141,25 @@ class GeoConfigViewTestClass(TestCase):
             self.construct_data(
                 user_property='some_user_field',
                 case_property=self.gps_case_prop_name,
+                extra_data=self.min_max_grouping_data,
             )
         )
         config = GeoConfig.objects.get(domain=self.domain)
         self.assertEqual(config.user_location_property_name, 'some_user_field')
+        self.assertEqual(config.selected_grouping_method, GeoConfig.MIN_MAX_GROUPING)
 
         self._make_post(
             self.construct_data(
                 user_property='some_other_name',
                 case_property=config.case_location_property_name,
+                extra_data=self.target_size_grouping_data,
             )
         )
         config = GeoConfig.objects.get(domain=self.domain)
         self.assertEqual(config.user_location_property_name, 'some_other_name')
+        self.assertEqual(config.selected_grouping_method, GeoConfig.TARGET_SIZE_GROUPING)
+        self.assertEqual(config.target_group_count, 10)
+        self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.RADIAL_ALGORITHM)
 
 
 @es_test(requires=[case_adapter], setup_class=True)

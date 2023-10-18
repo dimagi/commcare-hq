@@ -137,16 +137,12 @@ class GeoPolygonView(BaseDomainView):
         })
 
 
-class GeospatialConfigPage(BaseDomainView):
-    urlname = "geospatial_settings"
-    template_name = "geospatial/settings.html"
-
-    page_name = _("Configuration Settings")
+class BaseConfigView(BaseDomainView):
     section_name = _("Geospatial")
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
     def dispatch(self, request, *args, **kwargs):
-        return super(GeospatialConfigPage, self).dispatch(request, *args, **kwargs)
+        return super(BaseConfigView, self).dispatch(request, *args, **kwargs)
 
     @property
     def section_url(self):
@@ -157,29 +153,6 @@ class GeospatialConfigPage(BaseDomainView):
         return reverse(self.urlname, args=(self.domain,))
 
     @property
-    def page_context(self):
-        gps_case_props = CaseProperty.objects.filter(
-            case_type__domain=self.domain,
-            data_type=CaseProperty.DataType.GPS,
-        )
-        return {
-            'form': self.settings_form,
-            'config': model_to_dict(
-                self.config,
-                fields=GeospatialConfigForm.Meta.fields
-            ),
-            'gps_case_props_deprecated_state': {
-                prop.name: prop.deprecated for prop in gps_case_props
-            }
-        }
-
-    @property
-    def settings_form(self):
-        if self.request.method == 'POST':
-            return GeospatialConfigForm(self.request.POST, instance=self.config)
-        return GeospatialConfigForm(instance=self.config)
-
-    @property
     def config(self):
         try:
             obj = GeoConfig.objects.get(domain=self.domain)
@@ -188,8 +161,20 @@ class GeospatialConfigPage(BaseDomainView):
             obj.domain = self.domain
         return obj
 
+    @property
+    def config_form(self):
+        if self.request.method == 'POST':
+            return self.form_class(self.request.POST, instance=self.config)
+        return self.form_class(instance=self.config)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.config_form,
+        }
+
     def post(self, request, *args, **kwargs):
-        form = self.settings_form
+        form = self.config_form
 
         if not form.is_valid():
             return self.get(request, *args, **kwargs)
@@ -199,6 +184,36 @@ class GeospatialConfigPage(BaseDomainView):
         instance.save()
 
         return self.get(request, *args, **kwargs)
+
+
+class GeospatialConfigPage(BaseConfigView):
+    urlname = "geospatial_settings"
+    template_name = "geospatial/settings.html"
+
+    page_name = _("Configuration Settings")
+
+    form_class = GeospatialConfigForm
+
+    @property
+    def page_context(self):
+        context = super().page_context
+
+        gps_case_props = CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            data_type=CaseProperty.DataType.GPS,
+        )
+        context.update({
+            'config': model_to_dict(
+                self.config,
+                fields=GeospatialConfigForm.Meta.fields,
+            ),
+            'gps_case_props_deprecated_state': {
+                prop.name: prop.deprecated for prop in gps_case_props
+            },
+            'target_grouping_name': GeoConfig.TARGET_SIZE_GROUPING,
+            'min_max_grouping_name': GeoConfig.MIN_MAX_GROUPING,
+        })
+        return context
 
 
 class GPSCaptureView(BaseDomainView):

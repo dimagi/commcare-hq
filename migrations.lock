@@ -107,6 +107,7 @@ accounting
  0085_remove_free_50_sms
  0086_add_duplicate_invoice_id_to_invoice_model
  0087_invoice_unique_constraints
+ 0088_add_new_softwareplan_visibility
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -155,6 +156,7 @@ app_manager
  0026_conditional_case_update_deleted_apps
  0027_add_case_tile_template_field
  0028_case_list_custom_variable_xml_to_dict
+ 0029_delete_case_list_custom_variable_xml
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -383,6 +385,8 @@ domain_migration_flags
  0003_add_migration_dates
 dropbox
  0001_initial
+email
+ 0001_initial
 enterprise
  0001_initial
  0002_enterprisepermissions_account_unique
@@ -555,6 +559,7 @@ geospatial
  0001_create_geopolygon
  0002_geoconfig
  0003_auto_20230908_0927
+ 0004_auto_20230920_0821
 hqadmin
  0001_initial
  0002_vcmmigrationaudit

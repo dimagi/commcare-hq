@@ -1,3 +1,12 @@
+from corehq.apps.case_search.const import (
+    CASE_PROPERTIES_PATH,
+    GEOPOINT_VALUE,
+    IDENTIFIER,
+    INDEXED_ON,
+    INDICES_PATH,
+    REFERENCED_ID,
+    VALUE,
+)
 from corehq.apps.es.client import Tombstone
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
@@ -13,11 +22,11 @@ CASE_SEARCH_MAPPING = {
     "date_formats": DATE_FORMATS_ARR,
     "dynamic": False,
     "properties": {
-        "@indexed_on": {
+        INDEXED_ON: {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
-        "case_properties": {
+        CASE_PROPERTIES_PATH: {
             "dynamic": False,
             "type": "nested",
             "properties": {
@@ -29,7 +38,7 @@ CASE_SEARCH_MAPPING = {
                     },
                     "type": "text"
                 },
-                "value": {
+                VALUE: {
                     "fields": {
                         "date": {
                             "format": DATE_FORMATS_STRING,
@@ -52,7 +61,7 @@ CASE_SEARCH_MAPPING = {
                     },
                     "type": "text"
                 },
-                "geopoint_value": {
+                GEOPOINT_VALUE: {
                     "type": "geo_point"
                 }
             }
@@ -81,17 +90,17 @@ CASE_SEARCH_MAPPING = {
         "external_id": {
             "type": "keyword"
         },
-        "indices": {
+        INDICES_PATH: {
             "dynamic": False,
             "type": "nested",
             "properties": {
                 "doc_type": {
                     "type": "keyword"
                 },
-                "identifier": {
+                IDENTIFIER: {
                     "type": "keyword"
                 },
-                "referenced_id": {
+                REFERENCED_ID: {
                     "type": "keyword"
                 },
                 "referenced_type": {

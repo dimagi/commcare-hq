@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,119 +1,66 @@
+@@ -1,120 +1,67 @@
 -@import "@{b3-import-variables}";
 +/*
 +These are Boostrap 3 variables that were carried over in the
@@ -67,7 +67,7 @@
 -@call-to-action-mid: #5c6ac5;
 -@call-to-action-low: #212f78;
 -@call-to-action-extra-low: #000639;
-+$navbar-footer-height:            38px;
++$navbar-footer-height:            40px;
 +$navbar-footer-link-color:        mix(darken(#ffffff, 10), $brand-primary, 90%);
 +$navbar-footer-link-color-hover:  $gray-lighter;
 +$navbar-footer-button-color:      #474747;
@@ -125,7 +125,7 @@
 -@navbar-padding-vertical:        ((@navbar-height - @line-height-computed) / 2);
 -@navbar-default-bg:              @cc-bg;
 -
--@navbar-footer-height:            38px;
+-@navbar-footer-height:            40px;
 -@navbar-footer-link-color:        mix(darken(#ffffff, 10), @brand-primary, 90);
 -@navbar-footer-link-color-hover:  @gray-lighter;
 -@navbar-footer-button-color:      #474747;
@@ -156,12 +156,14 @@
 -@zindex-navbar-cloudcare:             995;
 -@zindex-formplayer-progress:          990;
 -@zindex-cloudcare-debugger:           1005;
+-@zindex-formplayer-scroll-to-bottom:     5;
 +$zindex-navbar:                       1000;
 +$zindex-report-loading:               100;
 +$zindex-app-preview:                  998;
 +$zindex-navbar-cloudcare:             995;
 +$zindex-formplayer-progress:          990;
 +$zindex-cloudcare-debugger:           1005;
++$zindex-formplayer-scroll-to-bottom:     5;
  
 -
 -@input-border-radius-large:       5px;

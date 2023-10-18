@@ -344,16 +344,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
-            this.notifyParentOfFieldChange(e);
+            if (this.dynamicSearchEnabled) {
+                var useDynamicSearch = Date(this.model._previousAttributes.value) !== Date($(e.currentTarget).val());
+            }
+            this.notifyParentOfFieldChange(e, useDynamicSearch);
             this.parentView.setStickyQueryInputs();
         },
 
-        notifyParentOfFieldChange: function (e) {
+        notifyParentOfFieldChange: function (e, useDynamicSearch = false) {
             if (this.model.get('input') === 'address') {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
             }
-            this.parentView.notifyFieldChange(e, this);
+            this.parentView.notifyFieldChange(e, this, useDynamicSearch);
         },
 
         toggleBlankSearch: function (e) {
@@ -396,7 +399,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onRender: function () {
             this._initializeSelect2Dropdown();
-            this.ui.hqHelp.hqHelp();
+            this.ui.hqHelp.hqHelp({
+                placement: () => {
+                    if (this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled) {
+                        return 'auto bottom';
+                    } else {
+                        return 'auto right';
+                    }
+                },
+            });
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.daterangepicker({
                 locale: {
@@ -465,6 +476,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     break;
                 }
             }
+            this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
+                this.handleSmallScreenChange(smallScreenEnabled);
+            });
+            this.smallScreenListener.listen();
         },
 
         templateContext: function () {
@@ -488,6 +503,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'click @ui.submitButton': 'submitAction',
         },
 
+        handleSmallScreenChange: function (enabled) {
+            this.smallScreenEnabled = enabled;
+            if (this.options.sidebarEnabled) {
+                if (this.smallScreenEnabled) {
+                    $('#sidebar-region').addClass('collapse');
+                } else {
+                    $('#sidebar-region').removeClass('collapse');
+                }
+            }
+        },
+
         getAnswers: function () {
             var answers = {};
             this.children.each(function (childView) {
@@ -499,7 +525,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return answers;
         },
 
-        notifyFieldChange: function (e, changedChildView) {
+        notifyFieldChange: function (e, changedChildView, useDynamicSearch) {
             e.preventDefault();
             var self = this;
             self.validateFieldChange(changedChildView).always(function (response) {
@@ -530,7 +556,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
-            if (self.dynamicSearchEnabled) {
+            if (self.dynamicSearchEnabled && useDynamicSearch) {
                 self.updateSearchResults();
             }
         },
@@ -561,6 +587,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     self.selectValuesByKeys,
                     self.options.sidebarEnabled
                 );
+                if (self.smallScreenEnabled && self.options.sidebarEnabled) {
+                    $('#sidebar-region').collapse('hide');
+                }
             });
         },
 
@@ -675,6 +704,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onAttach: function () {
             this.initGeocoders();
+        },
+
+        onBeforeDetach: function () {
+            this.smallScreenListener.stopListening();
         },
 
         initGeocoders: function () {
