@@ -61,6 +61,8 @@ from corehq.apps.domain.views.releases import (
     toggle_release_restriction_by_app_profile,
 )
 from corehq.apps.domain.views.settings import (
+    delete_domain_alert,
+    update_domain_alert_status,
     CaseSearchConfigView,
     DefaultProjectSettingsView,
     EditBasicProjectInfoView,
@@ -191,6 +193,8 @@ domain_settings = [
     url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
     url(r'^alerts/$', ManageDomainAlertsView.as_view(), name=ManageDomainAlertsView.urlname),
+    url(r'^alerts/delete/$', delete_domain_alert, name='delete_domain_alert'),
+    url(r'^alerts/update_status/$', update_domain_alert_status, name='update_domain_alert_status'),
     url(r'^manage_mobile_workers/$', ManageDomainMobileWorkersView.as_view(),
         name=ManageDomainMobileWorkersView.urlname),
     url(r'^flags/$', FlagsAndPrivilegesView.as_view(), name=FlagsAndPrivilegesView.urlname),

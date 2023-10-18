@@ -115,7 +115,7 @@ class TestPasswordResetFormAutocomplete(BaseAutocompleteTest):
         self.verify(False, "/accounts/password_reset_email/", "email")
 
 
-class TestManageDomainAlertsView(TestCase):
+class TestBaseDomainAlertView(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -136,10 +136,6 @@ class TestManageDomainAlertsView(TestCase):
         cls.domain_alert = cls._create_alert_for_domain(cls.domain_name, 'Test Alert 1!', cls.username)
         cls.other_domain_alert = cls._create_alert_for_domain(cls.other_domain_name, 'Test Alert 2!', cls.username)
 
-        cls.url = reverse(ManageDomainAlertsView.urlname, kwargs={
-            'domain': cls.domain_name,
-        })
-
     @staticmethod
     def _create_alert_for_domain(domain, alert_text, username):
         return Alert.objects.create(
@@ -152,6 +148,16 @@ class TestManageDomainAlertsView(TestCase):
     def setUp(self):
         self.client = Client()
         self.client.login(username=self.username, password=self.password)
+
+
+class TestManageDomainAlertsView(TestBaseDomainAlertView):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.url = reverse(ManageDomainAlertsView.urlname, kwargs={
+            'domain': cls.domain_name,
+        })
 
     def test_feature_flag_access_only(self):
         response = self.client.get(self.url)
@@ -169,6 +175,64 @@ class TestManageDomainAlertsView(TestCase):
             ]
         )
         self.assertEqual(response.status_code, 200)
+
+    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    def test_creating_new_alert(self):
+        self.assertEqual(Alert.objects.count(), 2)
+
+        response = self.client.post(
+            self.url,
+            data={
+                'text': 'New Alert!',
+            },
+        )
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert saved!')
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(Alert.objects.count(), 3)
+
+        new_alert = Alert.objects.order_by('pk').last()
+        self.assertEqual(new_alert.html, "New Alert!")
+        self.assertEqual(new_alert.created_by_domain, self.domain.name)
+        self.assertListEqual(new_alert.domains, [self.domain.name])
+
+    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    def test_creating_new_alert_with_errors(self):
+        self.assertEqual(Alert.objects.count(), 2)
+
+        response = self.client.post(
+            self.url,
+            data={
+                'text': '',
+            },
+        )
+
+        self.assertEqual(Alert.objects.count(), 2)
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'There was an error saving your alert. Please try again!')
+        self.assertEqual(response.status_code, 200)
+
+
+class TestUpdateDomainAlertStatusView(TestBaseDomainAlertView):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.url = reverse('update_domain_alert_status', kwargs={
+            'domain': cls.domain_name,
+        })
+
+    def test_feature_flag_access_only(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 404)
+
+    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    def test_post_access_only(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 405)
 
     @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
     def test_apply_command_with_missing_alert_id(self):
@@ -241,44 +305,56 @@ class TestManageDomainAlertsView(TestCase):
         self.assertEqual(messages[0].message, 'Alert not found!')
         self.assertEqual(response.status_code, 302)
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
-    def test_creating_new_alert(self):
-        self.assertEqual(Alert.objects.count(), 2)
 
+class TestDeleteDomainAlertView(TestBaseDomainAlertView):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.url = reverse('delete_domain_alert', kwargs={
+            'domain': cls.domain_name,
+        })
+
+    def test_feature_flag_access_only(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 404)
+
+    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    def test_post_access_only(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 405)
+
+    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    def test_with_missing_alert_id(self):
+        with self.assertRaisesMessage(AssertionError, 'Missing alert ID'):
+            self.client.post(
+                self.url,
+                data={},
+            )
+
+    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    def test_with_missing_alert(self):
         response = self.client.post(
             self.url,
             data={
-                'text': 'New Alert!',
+                'alert_id': 0,
             },
         )
-
         messages = list(get_messages(response.wsgi_request))
-        self.assertEqual(messages[0].message, 'Alert saved!')
+        self.assertEqual(messages[0].message, 'Alert not found!')
         self.assertEqual(response.status_code, 302)
 
-        self.assertEqual(Alert.objects.count(), 3)
-
-        new_alert = Alert.objects.order_by('pk').last()
-        self.assertEqual(new_alert.html, "New Alert!")
-        self.assertEqual(new_alert.created_by_domain, self.domain.name)
-        self.assertListEqual(new_alert.domains, [self.domain.name])
-
     @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
-    def test_creating_new_alert_with_errors(self):
-        self.assertEqual(Alert.objects.count(), 2)
-
+    def test_delete(self):
         response = self.client.post(
             self.url,
             data={
-                'text': '',
+                'alert_id': self.domain_alert.id,
             },
         )
-
-        self.assertEqual(Alert.objects.count(), 2)
-
         messages = list(get_messages(response.wsgi_request))
-        self.assertEqual(messages[0].message, 'There was an error saving your alert. Please try again!')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(messages[0].message, 'Alert was removed!')
+        self.assertEqual(response.status_code, 302)
 
 
 @contextmanager

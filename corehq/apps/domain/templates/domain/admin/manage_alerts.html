@@ -42,7 +42,7 @@
             <td data-bind="text: created_by_user">
             </td>
             <td>
-              <form method="post">
+              <form action="{% url 'update_domain_alert_status' domain %}" method="post">
                 {% csrf_token %}
                 <input name="alert_id"
                        type="hidden"
@@ -64,15 +64,13 @@
               </form>
             </td>
             <td>
-              <form method="post">
+              <form action="{% url 'delete_domain_alert' domain %}" method="post">
                 {% csrf_token %}
                 <input name="alert_id"
                        type="hidden"
                        data-bind="value: id">
                 <button type="submit"
-                      class="btn btn-danger"
-                      name="command"
-                      value="delete">
+                      class="btn btn-danger">
                   {% trans "Delete" %}
                 </button>
               </form>

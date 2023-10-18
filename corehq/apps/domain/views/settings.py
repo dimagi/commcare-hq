@@ -14,6 +14,7 @@ from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_decode
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
@@ -550,49 +551,13 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
         return DomainAlertForm()
 
     def post(self, request, *args, **kwargs):
-        command = request.POST.get('command')
-        if command:
-            self._apply_command(request, command)
-        elif self.form.is_valid():
+        if self.form.is_valid():
             self._create_alert()
             messages.success(request, _("Alert saved!"))
         else:
             messages.error(request, _("There was an error saving your alert. Please try again!"))
             return self.get(request, *args, **kwargs)
         return HttpResponseRedirect(self.page_url)
-
-    def _apply_command(self, request, command):
-        alert_id = request.POST.get('alert_id')
-        assert alert_id, 'Missing alert ID'
-        alert = self._load_alert(alert_id)
-        if not alert:
-            messages.error(request, _("Alert not found!"))
-            return
-
-        if command == 'delete':
-            alert.delete()
-        elif command in ['activate', 'deactivate']:
-            self._update_alert(alert, command)
-            messages.success(request, _("Alert updated!"))
-        else:
-            messages.error(request, _("Unexpected update received. Alert not updated!"))
-
-    @staticmethod
-    def _update_alert(alert, command):
-        if command == 'activate':
-            alert.active = True
-        elif command == 'deactivate':
-            alert.active = False
-        alert.save(update_fields=['active'])
-
-    def _load_alert(self, alert_id):
-        try:
-            return Alert.objects.get(
-                created_by_domain=self.domain,
-                id=alert_id
-            )
-        except Alert.DoesNotExist:
-            return None
 
     def _create_alert(self):
         Alert.objects.create(
@@ -601,3 +566,60 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
             text=self.form.cleaned_data['text'],
             created_by_user=self.request.couch_user.username,
         )
+
+
+@toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
+@domain_admin_required
+@require_POST
+def update_domain_alert_status(request, domain):
+    alert_id = request.POST.get('alert_id')
+    assert alert_id, 'Missing alert ID'
+    alert = _load_alert(alert_id, domain)
+    if not alert:
+        messages.error(request, _("Alert not found!"))
+    else:
+        command = request.POST.get('command')
+        if command:
+            _apply_command(request, alert, command)
+    return HttpResponseRedirect(reverse(ManageDomainAlertsView.urlname, kwargs={'domain': domain}))
+
+
+@toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
+@domain_admin_required
+@require_POST
+def delete_domain_alert(request, domain):
+    alert_id = request.POST.get('alert_id')
+    assert alert_id, 'Missing alert ID'
+    alert = _load_alert(alert_id, domain)
+    if not alert:
+        messages.error(request, _("Alert not found!"))
+    else:
+        alert.delete()
+        messages.success(request, _("Alert was removed!"))
+    return HttpResponseRedirect(reverse(ManageDomainAlertsView.urlname, kwargs={'domain': domain}))
+
+
+def _load_alert(alert_id, domain):
+    try:
+        return Alert.objects.get(
+            created_by_domain=domain,
+            id=alert_id
+        )
+    except Alert.DoesNotExist:
+        return None
+
+
+def _apply_command(request, alert, command):
+    if command in ['activate', 'deactivate']:
+        _update_alert(alert, command)
+        messages.success(request, _("Alert updated!"))
+    else:
+        messages.error(request, _("Unexpected update received. Alert not updated!"))
+
+
+def _update_alert(alert, command):
+    if command == 'activate':
+        alert.active = True
+    elif command == 'deactivate':
+        alert.active = False
+    alert.save(update_fields=['active'])
