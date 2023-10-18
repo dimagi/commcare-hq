@@ -210,6 +210,10 @@ class OAuth2ClientGrantManager(AuthManager):
             # Used by OAuth2Session
             self.last_token = token
 
+        # This adds an extra round trip for all access tokens without refresh tokens.
+        # That is not ideal, but is the only way to ensure that we are able to guarantee
+        # the token will work without error, or refactoring the way sessions are used across
+        # all repeaters.            
         if not self.last_token or self.last_token.get('refresh_token') is None:
             client = BackendApplicationClient(client_id=self.client_id)
             session = OAuth2Session(client=client)
@@ -281,6 +285,10 @@ class OAuth2PasswordGrantManager(AuthManager):
             # Used by OAuth2Session
             self.last_token = token
 
+        # This adds an extra round trip for all access tokens without refresh tokens.
+        # That is not ideal, but is the only way to ensure that we are able to guarantee
+        # the token will work without error, or refactoring the way sessions are used across
+        # all repeaters.
         if not self.last_token or self.last_token.get('refresh_token') is None:
             client = LegacyApplicationClient(client_id=self.client_id)
             session = OAuth2Session(client=client)
