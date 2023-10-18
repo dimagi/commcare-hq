@@ -1288,6 +1288,7 @@ class MaintenanceAlertsView(BasePageView):
                 'expired': alert.end_time and alert.end_time < now,
                 'id': alert.id,
                 'domains': ", ".join(alert.domains) if alert.domains else "All domains",
+                'created_by_user': alert.created_by_user,
             } for alert in alerts]
         }
 
