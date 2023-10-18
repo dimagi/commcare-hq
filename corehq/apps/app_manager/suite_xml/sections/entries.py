@@ -20,6 +20,7 @@ matching parent and child datums.
 .. _this comment: https://github.com/dimagi/commcare-hq/blob/c9fa01d1ccbb73d8f07fefbe56a0bbe1dbe231f8/corehq/apps/app_manager/suite_xml/sections/entries.py#L966-L971
 """  # noqa
 from collections import defaultdict
+import re
 
 from django.utils.translation import gettext as _
 
@@ -245,6 +246,18 @@ class EntriesHelper(object):
         )
         return (using_inline_search or sync_on_form_entry) and not loads_registry_case
 
+    def add_post_to_entry(self, form, module, e):
+        from ..post_process.remote_requests import (
+            RemoteRequestFactory,
+        )
+        case_session_var = self.get_case_session_var_for_form(form)
+        storage_instance = module.search_config.get_instance_name() if module_uses_inline_search(module) \
+            else 'casedb'
+        remote_request_factory = RemoteRequestFactory(
+            None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
+            exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
+        e.post = remote_request_factory.build_remote_request_post()
+
     def entry_for_module(self, module):
         # avoid circular dependency
         from corehq.apps.app_manager.models import AdvancedModule, Module
@@ -257,17 +270,7 @@ class EntriesHelper(object):
                 from ..features.mobile_ucr import get_report_context_tile_datum
                 e.datums.append(get_report_context_tile_datum())
             if form.requires_case() and self.include_post_in_entry(module.get_or_create_unique_id()):
-                case_session_var = self.get_case_session_var_for_form(form)
-                from ..post_process.remote_requests import (
-                    RESULTS_INSTANCE_INLINE,
-                    RemoteRequestFactory,
-                )
-                storage_instance = RESULTS_INSTANCE_INLINE if module_uses_inline_search(module) \
-                    else 'casedb'
-                remote_request_factory = RemoteRequestFactory(
-                    None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
-                    exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
-                e.post = remote_request_factory.build_remote_request_post()
+                self.add_post_to_entry(form, module, e)
 
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
@@ -539,8 +542,10 @@ class EntriesHelper(object):
                 loads_registry_case = module_loads_registry_case(module)
                 uses_inline_search = module_uses_inline_search(module)
                 if loads_registry_case or uses_inline_search:
-                    result.append(self.get_query_datums(module, uses_inline_search))
-                    result.append(datum)
+                    query_datum = self.get_query_datums(module, uses_inline_search)
+                    result.append(query_datum)
+                    renamed_datum = self.rename_datum_nodeset_for_query(datum, query_datum)
+                    result.append(renamed_datum)
                     if loads_registry_case:
                         result.append(self.get_data_registry_case_datums(datum, module))
                 else:
@@ -548,6 +553,18 @@ class EntriesHelper(object):
             else:
                 result.append(datum)
         return result
+
+    def rename_datum_nodeset_for_query(self, datum, query_datum):
+        """Rename the instance in the case datum to match the instance used by the query datum
+        """
+        instance_name = query_datum.datum.storage_instance
+        if instance_name == "results":
+            return datum
+        instance_pattern = r"""instance\(['"]results:(.*?)['"]\)"""
+        new_instance = f"instance('{instance_name}')"
+        renamed = re.sub(instance_pattern, new_instance, datum.datum.nodeset)
+        datum.datum.nodeset = renamed
+        return datum
 
     def get_datum_meta_module(self, module, use_filter=False):
         datums = []
@@ -660,10 +677,9 @@ class EntriesHelper(object):
         """
         from ..post_process.remote_requests import (
             RESULTS_INSTANCE,
-            RESULTS_INSTANCE_INLINE,
             RemoteRequestFactory,
         )
-        storage_instance = RESULTS_INSTANCE_INLINE if uses_inline_search else RESULTS_INSTANCE
+        storage_instance = module.search_config.get_instance_name() if uses_inline_search else RESULTS_INSTANCE
         factory = RemoteRequestFactory(None, module, [], storage_instance=storage_instance)
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
