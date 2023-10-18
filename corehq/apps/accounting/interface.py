@@ -487,6 +487,9 @@ class InvoiceInterfaceBase(GenericTabularReport):
     exportable = True
     export_format_override = Format.CSV
 
+    def filter_by_subscription(self, subscription):
+        self.subscription = subscription
+
 
 class WireInvoiceInterface(InvoiceInterfaceBase):
     name = "Wire Invoices"
@@ -924,9 +927,6 @@ class InvoiceInterface(InvoiceInterfaceBase):
             'rows': self.rows,
         })
 
-    def filter_by_subscription(self, subscription):
-        self.subscription = subscription
-
 
 class CustomerInvoiceInterface(InvoiceInterfaceBase):
     name = "Customer Invoices"
@@ -1185,9 +1185,6 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
             'month': statement_start.strftime("%B"),
             'rows': self.rows,
         })
-
-    def filter_by_subscription(self, subscription):
-        self.subscription = subscription
 
 
 def _get_domain_from_payment_record(payment_record):
