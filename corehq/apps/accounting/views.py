@@ -442,7 +442,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
 
         if self.subscription.account.is_customer_billing_account:
             invoice_report = CustomerInvoiceInterface(self.request)
-            invoice_report.filter_by_account(self.subscription.account)
+            invoice_report.filter_by_subscription(self.subscription)
         else:
             invoice_report = InvoiceInterface(self.request)
             invoice_report.filter_by_subscription(self.subscription)
