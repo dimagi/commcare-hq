@@ -48,7 +48,7 @@
  
          $(document).on('click', '.track-usage-link', function (e) {
              var $link = $(e.currentTarget),
-@@ -449,8 +454,13 @@
+@@ -459,8 +464,13 @@
          // EULA modal
          var eulaCookie = "gdpr_rollout";
          if (!$.cookie(eulaCookie)) {
@@ -64,7 +64,7 @@
                  $("body").addClass("has-eula");
                  $("#eula-agree").click(function () {
                      $(this).disableButton();
-@@ -458,7 +468,7 @@
+@@ -468,7 +478,7 @@
                          url: initialPageData.reverse("agree_to_eula"),
                          method: "POST",
                          success: function () {
@@ -73,7 +73,7 @@
                              $("body").removeClass("has-eula");
                          },
                          error: function (xhr) {
-@@ -474,21 +484,22 @@
+@@ -484,21 +494,22 @@
                          },
                      });
                  });
