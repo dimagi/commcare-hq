@@ -2021,10 +2021,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         value_is_the_default = self.instance_name == 'casedb'
         if value_is_the_default:
             if module_uses_inline_search(module):
-                if module.search_config.instance_name:
-                    return f'{RESULTS_INSTANCE_BASE}{module.search_config.instance_name}'
-                else:
-                    return RESULTS_INSTANCE_INLINE
+                return module.search_config.get_instance_name()
             elif module_loads_registry_case(module):
                 return RESULTS_INSTANCE
         return self.instance_name
@@ -2182,6 +2179,12 @@ class CaseSearch(DocumentSchema):
     @property
     def case_session_var(self):
         return "search_case_id"
+
+    def get_instance_name(self):
+        if self.instance_name:
+            return f'{RESULTS_INSTANCE_BASE}{self.instance_name}'
+        else:
+            return RESULTS_INSTANCE_INLINE
 
     def get_relevant(self, case_session_var, multi_select=False):
         xpath = CaseClaimXpath(case_session_var)

@@ -245,16 +245,10 @@ class EntriesHelper(object):
     def add_post_to_entry(self, form, module, e):
         from ..post_process.remote_requests import (
             RemoteRequestFactory,
-            RESULTS_INSTANCE_INLINE,
-            RESULTS_INSTANCE_BASE
         )
         case_session_var = self.get_case_session_var_for_form(form)
-        if module_uses_inline_search(module):
-            storage_instance = RESULTS_INSTANCE_INLINE
-            if module.search_config.instance_name:
-                storage_instance = f'{RESULTS_INSTANCE_BASE}{module.search_config.instance_name}'
-        else:
-            storage_instance = 'casedb'
+        storage_instance = module.search_config.get_instance_name() if module_uses_inline_search(module) \
+            else 'casedb'
         remote_request_factory = RemoteRequestFactory(
             None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
             exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
@@ -679,13 +673,9 @@ class EntriesHelper(object):
         """
         from ..post_process.remote_requests import (
             RESULTS_INSTANCE,
-            RESULTS_INSTANCE_BASE,
-            RESULTS_INSTANCE_INLINE,
             RemoteRequestFactory,
         )
-        storage_instance = RESULTS_INSTANCE_INLINE if uses_inline_search else RESULTS_INSTANCE
-        if module.search_config.instance_name:
-            storage_instance = f'{RESULTS_INSTANCE_BASE}{module.search_config.instance_name}'
+        storage_instance = module.search_config.get_instance_name() if uses_inline_search else RESULTS_INSTANCE
         factory = RemoteRequestFactory(None, module, [], storage_instance=storage_instance)
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
