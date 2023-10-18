@@ -1,4 +1,10 @@
-from corehq.apps.accounting.models import (SoftwarePlan,
+from corehq.apps.accounting.models import (
+    SoftwarePlan,
+    SoftwarePlanEdition,
+    SoftwarePlanVersion,
+    SoftwarePlanVisibility,
+    SoftwareProductRate,
+)
                                            SoftwarePlanEdition,
                                            SoftwarePlanVersion,
                                            SoftwarePlanVisibility,
