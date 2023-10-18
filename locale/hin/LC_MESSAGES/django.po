@@ -435,7 +435,6 @@ msgstr ""
 #: corehq/apps/events/views.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/geospatial/reports.py
 #: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/locations/forms.py
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -9885,7 +9884,8 @@ msgid "Please enter a password or cancel."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-#: corehq/apps/data_dictionary/models.py corehq/apps/hqwebapp/forms.py
+#: corehq/apps/data_dictionary/models.py corehq/apps/email/forms.py
+#: corehq/apps/hqwebapp/forms.py
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
 #: corehq/apps/users/forms.py corehq/messaging/smsbackends/airtel_tcl/forms.py
 #: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
@@ -12596,7 +12596,8 @@ msgstr ""
 msgid "Manage the Organization Hierarchy"
 msgstr ""
 
-#: corehq/apps/dashboard/views.py corehq/apps/sms/views.py
+#: corehq/apps/dashboard/views.py corehq/apps/email/views.py
+#: corehq/apps/sms/views.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/reports.py corehq/tabs/tabclasses.py
 msgid "Messaging"
@@ -12674,7 +12675,7 @@ msgstr ""
 msgid "Multiple Choice"
 msgstr ""
 
-#: corehq/apps/data_dictionary/models.py corehq/apps/geospatial/reports.py
+#: corehq/apps/data_dictionary/models.py
 msgid "GPS"
 msgstr ""
 
@@ -17599,6 +17600,72 @@ msgid ""
 "dropbox account. You can share it with this link:\n"
 msgstr ""
 
+#: corehq/apps/email/forms.py corehq/apps/reports/views.py
+msgid "Server"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "e.g. \"https://smtp.example.com\""
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Port"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Sender's email"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Use Gateway?"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Select this option to use this email gateway for sending emails"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Use Tracking Headers"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid ""
+"Applicable for Amazon's gateway. When selected, emails will be sent with "
+"tracking headers along with other headers."
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "SNS Endpoint Secret"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid ""
+"Applicable only when gateway is Amazon's SES and tracking headers are "
+"enabled. This secret is used in the AWS SNS settings."
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "SES Configuration Set Name"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid ""
+"Applicable only when gateway is Amazon's SES and tracking headers are "
+"enabled."
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Saved"
+msgstr ""
+
+#: corehq/apps/email/templates/email/email_settings.html
+msgid "Add Email Gateway Settings"
+msgstr ""
+
+#: corehq/apps/email/views.py
+msgid "Email Settings"
+msgstr ""
+
 #: corehq/apps/enterprise/enterprise.py
 msgid "Enterprise Report"
 msgstr ""
@@ -21182,11 +21249,23 @@ msgid "case_id"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
+msgid "gps_point"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py
+msgid "link"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py
 msgid "Case Management Map"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
 msgid "Case Grouping"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Export Groups"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
@@ -31180,10 +31259,6 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Could not update Tableau Server Settings"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "Server"
 msgstr ""
 
 #: corehq/apps/reports/views.py
@@ -42568,6 +42643,10 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Edit Gateway"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Email Connectivity"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
