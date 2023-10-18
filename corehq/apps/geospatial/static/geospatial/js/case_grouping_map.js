@@ -249,8 +249,10 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.triggerGroupLock = function () {
             if (self.groupsLocked()) {
                 self.groupsLocked(false);
+                map.scrollZoom.enable();
             } else {
                 self.groupsLocked(true);
+                map.scrollZoom.disable();
             }
         }
         return self;
