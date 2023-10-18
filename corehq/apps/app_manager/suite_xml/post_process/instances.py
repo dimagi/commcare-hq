@@ -356,9 +356,11 @@ def search_input_instances(app, instance_name):
     try:
         _, query_datum_id = instance_name.split(':', 1)
         src = f'jr://instance/search-input/{query_datum_id}'
+        is_valid_instance_name = is_valid_results_instance_name(app, query_datum_id)
     except ValueError:
         src = 'jr://instance/search-input'  # legacy instance
-    if is_valid_results_instance_name(app, query_datum_id):
+        is_valid_instance_name = True
+    if is_valid_instance_name:
         return Instance(id=instance_name, src=src)
     return None
 
