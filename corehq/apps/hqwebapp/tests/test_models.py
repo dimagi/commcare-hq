@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
 
-from ..models import CommCareHQAlert, UserAccessLog, UserAgent
+from ..models import Alert, UserAccessLog, UserAgent
 
 
 class TestCommCareHQAlerts(TestCase):
     def test_creates_alert(self):
         kwargs = {'text': "Maintenance alert"}
-        alert = CommCareHQAlert.objects.create(**kwargs)
+        alert = Alert.objects.create(**kwargs)
 
         self.assertFalse(alert.active, False)
         self.assertEqual(alert.text, "Maintenance alert")
@@ -18,7 +18,7 @@ class TestCommCareHQAlerts(TestCase):
 
     def test_wraps_alert_links(self):
         kwargs = {'text': "Link to www.commcare.org"}
-        alert = CommCareHQAlert.objects.create(**kwargs)
+        alert = Alert.objects.create(**kwargs)
 
         self.assertEqual(alert.text, "Link to www.commcare.org")
         self.assertEqual(alert.html, 'Link to <a href="www.commcare.org">www.commcare.org</a>')
@@ -32,19 +32,19 @@ class TestCommCareHQAlerts(TestCase):
             'start_time': future_time,
             'active': True
         }
-        alert = CommCareHQAlert.objects.create(**kwargs)
+        alert = Alert.objects.create(**kwargs)
 
-        active_alerts = CommCareHQAlert.get_active_alerts()
+        active_alerts = Alert.get_active_alerts()
         self.assertQuerysetEqual(active_alerts, [])
 
         alert.start_time = past_time
         alert.save()
-        active_alerts = CommCareHQAlert.get_active_alerts()
+        active_alerts = Alert.get_active_alerts()
         self.assertQuerysetEqual(active_alerts, [alert])
 
         alert.end_time = past_time
         alert.save()
-        active_alerts = CommCareHQAlert.get_active_alerts()
+        active_alerts = Alert.get_active_alerts()
         self.assertQuerysetEqual(active_alerts, [])
 
     def test_shows_alerts_without_schedule(self):
@@ -52,9 +52,9 @@ class TestCommCareHQAlerts(TestCase):
             'text': "Maintenance alert",
             'active': True
         }
-        alert = CommCareHQAlert.objects.create(**kwargs)
+        alert = Alert.objects.create(**kwargs)
 
-        active_alerts = CommCareHQAlert.get_active_alerts()
+        active_alerts = Alert.get_active_alerts()
         self.assertQuerysetEqual(active_alerts, [alert])
 
 

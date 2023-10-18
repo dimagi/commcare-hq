@@ -51,7 +51,7 @@ from corehq.apps.domain.forms import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.models import CommCareHQAlert
+from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -539,7 +539,7 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
                     'id': alert.id,
                     'created_by_user': alert.created_by_user,
                 }
-                for alert in CommCareHQAlert.objects.filter(created_by_domain=self.domain)
+                for alert in Alert.objects.filter(created_by_domain=self.domain)
             ]
         }
 
@@ -587,15 +587,15 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
 
     def _load_alert(self, alert_id):
         try:
-            return CommCareHQAlert.objects.get(
+            return Alert.objects.get(
                 created_by_domain=self.domain,
                 id=alert_id
             )
-        except CommCareHQAlert.DoesNotExist:
+        except Alert.DoesNotExist:
             return None
 
     def _create_alert(self):
-        CommCareHQAlert.objects.create(
+        Alert.objects.create(
             created_by_domain=self.domain,
             domains=[self.domain],
             text=self.form.cleaned_data['text'],

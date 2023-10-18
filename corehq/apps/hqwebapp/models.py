@@ -25,7 +25,7 @@ class GaTracker(namedtuple('GaTracking', 'category action label')):
         return super(GaTracker, cls).__new__(cls, category, action, label)
 
 
-class CommCareHQAlert(models.Model):
+class Alert(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=False)

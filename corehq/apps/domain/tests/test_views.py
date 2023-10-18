@@ -14,7 +14,7 @@ from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.settings import ManageDomainAlertsView
-from corehq.apps.hqwebapp.models import CommCareHQAlert
+from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import AppStructureRepeater
@@ -142,7 +142,7 @@ class TestManageDomainAlertsView(TestCase):
 
     @staticmethod
     def _create_alert_for_domain(domain, alert_text, username):
-        return CommCareHQAlert.objects.create(
+        return Alert.objects.create(
             text=alert_text,
             domains=[domain],
             created_by_domain=domain,
@@ -243,7 +243,7 @@ class TestManageDomainAlertsView(TestCase):
 
     @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
     def test_creating_new_alert(self):
-        self.assertEqual(CommCareHQAlert.objects.count(), 2)
+        self.assertEqual(Alert.objects.count(), 2)
 
         response = self.client.post(
             self.url,
@@ -256,16 +256,16 @@ class TestManageDomainAlertsView(TestCase):
         self.assertEqual(messages[0].message, 'Alert saved!')
         self.assertEqual(response.status_code, 302)
 
-        self.assertEqual(CommCareHQAlert.objects.count(), 3)
+        self.assertEqual(Alert.objects.count(), 3)
 
-        new_alert = CommCareHQAlert.objects.order_by('pk').last()
+        new_alert = Alert.objects.order_by('pk').last()
         self.assertEqual(new_alert.html, "New Alert!")
         self.assertEqual(new_alert.created_by_domain, self.domain.name)
         self.assertListEqual(new_alert.domains, [self.domain.name])
 
     @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
     def test_creating_new_alert_with_errors(self):
-        self.assertEqual(CommCareHQAlert.objects.count(), 2)
+        self.assertEqual(Alert.objects.count(), 2)
 
         response = self.client.post(
             self.url,
@@ -274,7 +274,7 @@ class TestManageDomainAlertsView(TestCase):
             },
         )
 
-        self.assertEqual(CommCareHQAlert.objects.count(), 2)
+        self.assertEqual(Alert.objects.count(), 2)
 
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(messages[0].message, 'There was an error saving your alert. Please try again!')
