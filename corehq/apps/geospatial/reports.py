@@ -178,10 +178,7 @@ class CaseGroupingReport(BaseCaseMapReport):
         """
         Returns paginated cases
         """
-        buckets = self._get_buckets(
-            self.domain,
-            self.shared_pagination_GET_params,
-        )
+        buckets = self._get_buckets()
         if not buckets:
             return []
         # Ignore self.pagination.count. It is always treated as 1.
@@ -215,10 +212,7 @@ class CaseGroupingReport(BaseCaseMapReport):
         Pagination count is always treated as 1, so the total number of
         records == the number of pages == the number of buckets.
         """
-        buckets = self._get_buckets(
-            self.domain,
-            self.shared_pagination_GET_params,
-        )
+        buckets = self._get_buckets()
         return len(buckets)
 
     @property
