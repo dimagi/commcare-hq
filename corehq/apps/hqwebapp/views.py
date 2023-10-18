@@ -423,6 +423,8 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
         couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
         if couch_user:
             response.set_cookie(settings.LANGUAGE_COOKIE_NAME, couch_user.language)
+            # reset cookie to an empty list on login to show domain alerts again
+            response.set_cookie('viewed_domain_alerts', [])
             activate(couch_user.language)
 
     return response
@@ -646,8 +648,10 @@ def debug_notify(request):
     try:
         0 // 0
     except ZeroDivisionError:
-        notify_exception(request,
-            "If you want to achieve a 500-style email-out but don't want the user to see a 500, use notify_exception(request[, message])")
+        notify_exception(
+            request,
+            "If you want to achieve a 500-style email-out but don't want the user to see a 500, "
+            "use notify_exception(request[, message])")
     return HttpResponse("Email should have been sent")
 
 
@@ -1255,8 +1259,8 @@ class MaintenanceAlertsView(BasePageView):
 
     @method_decorator(require_superuser)
     def post(self, request):
-        from corehq.apps.hqwebapp.models import MaintenanceAlert
-        ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
+        from corehq.apps.hqwebapp.models import CommCareHQAlert
+        ma = CommCareHQAlert.objects.get(id=request.POST.get('alert_id'), created_by_domain=None)
         command = request.POST.get('command')
         if command == 'activate':
             ma.active = True
@@ -1267,8 +1271,11 @@ class MaintenanceAlertsView(BasePageView):
 
     @property
     def page_context(self):
-        from corehq.apps.hqwebapp.models import MaintenanceAlert
+        from corehq.apps.hqwebapp.models import CommCareHQAlert
         now = datetime.utcnow()
+        alerts = CommCareHQAlert.objects.filter(
+            created_by_domain__isnull=True
+        ).order_by('-active', '-created')[:20]
         return {
             'timezones': pytz.common_timezones,
             'alerts': [{
@@ -1282,7 +1289,7 @@ class MaintenanceAlertsView(BasePageView):
                 'expired': alert.end_time and alert.end_time < now,
                 'id': alert.id,
                 'domains': ", ".join(alert.domains) if alert.domains else "All domains",
-            } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:20]]
+            } for alert in alerts]
         }
 
     @property
@@ -1293,7 +1300,7 @@ class MaintenanceAlertsView(BasePageView):
 @require_POST
 @require_superuser
 def create_alert(request):
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
+    from corehq.apps.hqwebapp.models import CommCareHQAlert
     alert_text = request.POST.get('alert_text')
     domains = request.POST.get('domains')
     domains = domains.split() if domains else None
@@ -1311,8 +1318,9 @@ def create_alert(request):
         tzinfo=pytz.timezone(timezone)
     ).server_time().done() if end_time else None
 
-    MaintenanceAlert(active=False, text=alert_text, domains=domains,
-                     start_time=start_time, end_time=end_time, timezone=timezone).save()
+    CommCareHQAlert(active=False, text=alert_text, domains=domains,
+                    start_time=start_time, end_time=end_time, timezone=timezone,
+                    created_by_user=request.couch_user.username).save()
     return HttpResponseRedirect(reverse('alerts'))
 
 
