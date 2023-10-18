@@ -245,11 +245,16 @@ class EntriesHelper(object):
     def add_post_to_entry(self, form, module, e):
         from ..post_process.remote_requests import (
             RemoteRequestFactory,
-            RESULTS_INSTANCE_INLINE
+            RESULTS_INSTANCE_INLINE,
+            RESULTS_INSTANCE_BASE
         )
         case_session_var = self.get_case_session_var_for_form(form)
-        storage_instance = RESULTS_INSTANCE_INLINE if module_uses_inline_search(module) \
-            else 'casedb'
+        if module_uses_inline_search(module):
+            storage_instance = RESULTS_INSTANCE_INLINE
+            if module.search_config.instance_name:
+                storage_instance = f'{RESULTS_INSTANCE_BASE}{module.search_config.instance_name}'
+        else:
+            storage_instance = 'casedb'
         remote_request_factory = RemoteRequestFactory(
             None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
             exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
