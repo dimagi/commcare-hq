@@ -106,24 +106,30 @@ class CaseActionBase(object):
 
     @classmethod
     def from_v1(cls, block):
-        mapping = {const.CASE_TAG_TYPE_ID: const.CASE_UI_TYPE,
-                   const.CASE_TAG_NAME: const.CASE_UI_NAME,
-                   const.CASE_TAG_EXTERNAL_ID: const.CASE_UI_EXTERNAL_ID,
-                   const.CASE_TAG_USER_ID: const.CASE_UI_USER_ID,
-                   const.CASE_TAG_OWNER_ID: const.CASE_UI_OWNER_ID,
-                   const.CASE_TAG_DATE_OPENED: const.CASE_UI_OPENED_ON}
-        return cls._from_block_and_mapping(block, mapping)
+        return cls._from_block_and_mapping(block, cls.V1_PROPERTY_MAPPING)
 
     @classmethod
     def from_v2(cls, block):
-        # the only difference is the place where "type" is stored
-        mapping = {const.CASE_TAG_TYPE: const.CASE_UI_TYPE,
-                   const.CASE_TAG_NAME: const.CASE_UI_NAME,
-                   const.CASE_TAG_EXTERNAL_ID: const.CASE_UI_EXTERNAL_ID,
-                   const.CASE_TAG_USER_ID: const.CASE_UI_USER_ID,
-                   const.CASE_TAG_OWNER_ID: const.CASE_UI_OWNER_ID,
-                   const.CASE_TAG_DATE_OPENED: const.CASE_UI_OPENED_ON}
-        return cls._from_block_and_mapping(block, mapping)
+        return cls._from_block_and_mapping(block, cls.V2_PROPERTY_MAPPING)
+
+    V1_PROPERTY_MAPPING = {
+        const.CASE_TAG_TYPE_ID: "type",
+        const.CASE_TAG_NAME: "name",
+        const.CASE_TAG_EXTERNAL_ID: "external_id",
+        const.CASE_TAG_USER_ID: "user_id",
+        const.CASE_TAG_OWNER_ID: "owner_id",
+        const.CASE_TAG_DATE_OPENED: "opened_on"
+    }
+
+    # the only difference is the place where "type" is stored
+    V2_PROPERTY_MAPPING = {
+        const.CASE_TAG_TYPE: "type",
+        const.CASE_TAG_NAME: "name",
+        const.CASE_TAG_EXTERNAL_ID: "external_id",
+        const.CASE_TAG_USER_ID: "user_id",
+        const.CASE_TAG_OWNER_ID: "owner_id",
+        const.CASE_TAG_DATE_OPENED: "opened_on"
+    }
 
 
 class CaseNoopAction(CaseActionBase):
@@ -360,6 +366,19 @@ class CaseUpdate(object):
 
     def get_attachment_action(self):
         return self._filtered_action(lambda a: isinstance(a, CaseAttachmentAction))
+
+    def get_normalized_update_property_names(self):
+        changed_properties = set()
+        if self.creates_case():
+            changed_properties.update(self.get_create_action().raw_block.keys())
+        if self.updates_case():
+            changed_properties.update(self.get_update_action().raw_block.keys())
+
+        property_map = \
+            CaseCreateAction.V1_PROPERTY_MAPPING if self.version == V1 else CaseCreateAction.V2_PROPERTY_MAPPING
+
+        normalized_properties = {property_map.get(prop, prop) for prop in changed_properties}
+        return normalized_properties
 
     @classmethod
     def from_v1(cls, case_block):
