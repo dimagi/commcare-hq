@@ -4,12 +4,26 @@
 {% load hq_shared_tags %}
 
 {% block reportcontent %}
-<div class="row panel" id="export-controls">
-  <div class="controls col-sm-2 col-md-2 col-lg-2">
-    <button class="btn-default form-control" data-bind="click: downloadCSV">
-      {% trans "Export Groups" %}
-    </button>
-  </div>
+<div class="row panel">
+  <span id="lock-groups-controls">
+    <div class="controls col-sm-2 col-md-2 col-lg-2">
+      <button data-bind="visible: showLockButton, click: triggerGroupLock" class="btn-default form-control">
+        <i class="fa fa-lock"></i>
+        {% trans "Lock Case Grouping for Me" %}
+      </button>
+      <button data-bind="visible: showUnLockButton, click: triggerGroupLock" class="btn-primary form-control">
+        <i class="fa fa-unlock"></i>
+        {% trans "Unlock Case Grouping for Me" %}
+      </button>
+    </div>
+  </span>
+  <span id="export-controls">
+    <div class="controls col-sm-2 col-md-2 col-lg-2">
+      <button class="btn-default form-control" data-bind="click: downloadCSV">
+        {% trans "Export Groups" %}
+      </button>
+    </div>
+  </span>
 </div>
 
 <div id="case-grouping-map" style="height: 500px"></div>

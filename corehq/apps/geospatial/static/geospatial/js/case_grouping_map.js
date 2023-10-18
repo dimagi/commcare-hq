@@ -233,6 +233,29 @@ hqDefine("geospatial/js/case_grouping_map",[
         }
     }
 
+    function groupLockModel() {
+        'use strict';
+        var self = {};
+
+        self.groupsLocked = ko.observable(false);
+
+        self.showLockButton = ko.computed(function () {
+            return !self.groupsLocked();
+        });
+        self.showUnLockButton = ko.computed(function () {
+            return self.groupsLocked();
+        });
+
+        self.triggerGroupLock = function () {
+            if (self.groupsLocked()) {
+                self.groupsLocked(false);
+            } else {
+                self.groupsLocked(true);
+            }
+        }
+        return self;
+    }
+
     $(function () {
         let caseModels = [];
         const exportModelInstance = new exportModel();
@@ -262,6 +285,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             const isAfterReportLoad = settings.url.includes('geospatial/async/case_grouping_map/');
             if (isAfterReportLoad) {
                 $("#export-controls").koApplyBindings(exportModelInstance);
+                $("#lock-groups-controls").koApplyBindings(new groupLockModel());
                 map = initMap();
                 $("#clusterStats").koApplyBindings(clusterStatsInstance);
                 return;
