@@ -17,6 +17,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
     RESULTS_INSTANCE_INLINE,
+    RESULTS_INSTANCE_BASE,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -129,6 +130,53 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlDoesNotHaveXpath(suite, "./remote-request")
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_short']")
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")
+
+    @flag_enabled('USH_SEARCH_FILTER')
+    def test_inline_search_custom_instance_name(self):
+        custom_instance_name = "custom_instance_name"
+        self.module.search_config.instance_name = custom_instance_name
+        suite = self.app.create_suite()
+
+        custom_instance = f'{RESULTS_INSTANCE_BASE}{custom_instance_name}'
+        expected_entry_query = f"""
+        <partial>
+          <entry>
+            <form>xmlns1.0</form>
+            <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
+                relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
+             <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+            </post>
+            <command id="m0-f0">
+              <text>
+                <locale id="forms.m0f0"/>
+              </text>
+            </command>
+            <instance id="casedb" src="jr://instance/casedb"/>
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <instance id="{custom_instance}" src="jr://instance/remote/{custom_instance}"/>
+            <session>
+                <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+                    storage-instance="{custom_instance}" template="case" default_search="false">
+                  <title>
+                    <text>
+                      <locale id="case_search.m0.inputs"/>
+                    </text>
+                  </title>
+                  <data key="case_type" ref="'case'"/>
+                  <prompt key="name">
+                    <display>
+                      <text>
+                        <locale id="search_property.m0.name"/>
+                      </text>
+                    </display>
+                  </prompt>
+                </query>
+                <datum id="case_id" nodeset="instance('{custom_instance}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                    value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+            </session>
+          </entry>
+        </partial>"""  # noqa: E501
+        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]")
 
     @flag_enabled('USH_SEARCH_FILTER')
     def test_inline_search_case_list_item(self):

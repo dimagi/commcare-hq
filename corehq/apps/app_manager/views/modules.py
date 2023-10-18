@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from dataclasses import asdict
 from collections import OrderedDict
 from functools import partial
@@ -272,6 +273,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'additional_registry_cases': module.search_config.additional_registry_cases,
                 'custom_related_case_property': module.search_config.custom_related_case_property,
                 'inline_search': module.search_config.inline_search,
+                'instance_name': module.search_config.instance_name or "",
                 'include_all_related_cases': module.search_config.include_all_related_cases,
             },
         },
@@ -1331,6 +1333,12 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             # force auto launch when data registry load case workflow selected
             force_auto_launch = data_registry_slug and data_registry_workflow == REGISTRY_WORKFLOW_LOAD_CASE
 
+            instance_name = search_properties.get('instance_name', "")
+            if instance_name and not re.match(r"^[a-zA-Z]\w*$", instance_name):
+                return HttpResponseBadRequest(_(
+                    "'{}' is an invalid instance name. It can contain only letters, numbers, and underscores."
+                ).format(instance_name))
+
             module.search_config = CaseSearch(
                 search_label=search_label,
                 search_again_label=search_again_label,
@@ -1353,6 +1361,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 additional_registry_cases=additional_registry_cases,
                 custom_related_case_property=search_properties.get('custom_related_case_property', ""),
                 inline_search=search_properties.get('inline_search', False),
+                instance_name=instance_name,
                 include_all_related_cases=search_properties.get('include_all_related_cases', False)
             )
 
