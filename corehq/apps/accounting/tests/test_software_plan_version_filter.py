@@ -5,11 +5,6 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVisibility,
     SoftwareProductRate,
 )
-                                           SoftwarePlanEdition,
-                                           SoftwarePlanVersion,
-                                           SoftwarePlanVisibility,
-                                           SoftwareProductRate,
-                                           )
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from django_prbac.models import Role
 import random
