@@ -60,15 +60,17 @@ class RateLimiter(object):
         return allowed
 
     def get_retry_after(self, scope):
-        retry_after = 0.0
-        for limit_scope, rates in self.iter_rates(scope):
-            if limit_scope != scope:
-                continue
-            for rate_counter, limit in rates:
-                current_rate = rate_counter.get(self.feature_key + limit_scope)
+        """
+        Returns the minimum amount of seconds until additional capacity becomes available again
+        """
+        seconds_per_scope = {}
+        for scope, rates in self.iter_rates(scope):
+            seconds_per_scope[scope] = 0.0
+            for rate_counter, current_rate, limit in rates:
                 if current_rate >= limit:
-                    retry_after = max(retry_after, rate_counter.retry_after())
-        return retry_after
+                    seconds_per_scope[scope] = max(seconds_per_scope[scope], rate_counter.retry_after())
+        retry_after_values = seconds_per_scope.values()
+        return min(retry_after_values)
 
     def iter_rates(self, scope=''):
         """
