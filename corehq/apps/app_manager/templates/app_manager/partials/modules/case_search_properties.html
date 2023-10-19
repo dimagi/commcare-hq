@@ -136,6 +136,17 @@
               </label>
             </div>
           </div>
+          <div class="form-group" data-bind="visible: inlineSearchActive">
+            <label class="control-label {% css_label_class %}">
+              {% trans "Search Input Instance Name" %}
+              <span class="hq-help-template" data-title="{% trans "Search Input Instance Name" %}"
+                    data-content="{% trans_html_attr "Customize the name used to reference the search input values." %}">
+              </span>
+            </label>
+            <div class="{% css_field_class %}">
+              <input type="text" name="instance_name" class="form-control" data-bind="value: instance_name"/>
+            </div>
+          </div>
           {% endif %}
           {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
           <div class="form-group" data-bind="hidden: inlineSearchActive">
