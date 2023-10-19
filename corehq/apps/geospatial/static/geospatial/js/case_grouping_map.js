@@ -11,6 +11,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 ) {
     const MAP_CONTAINER_ID = 'case-grouping-map';
     let map;
+    const clusterStatsInstance = new clusterStatsModel();
 
     function caseModel(caseId, coordiantes, caseLink) {
         'use strict';
@@ -22,6 +23,15 @@ hqDefine("geospatial/js/case_grouping_map",[
         // TODO: Group ID needs to be set
         self.groupId = null;
 
+        return self;
+    }
+
+    function clusterStatsModel() {
+        'use strict';
+        let self = {};
+        self.totalClusters = ko.observable(0);
+        self.clusterMinCount = ko.observable(0);
+        self.clusterMaxCount = ko.observable(0);
         return self;
     }
 
