@@ -342,14 +342,6 @@ class ModuleBaseValidator(object):
 
         errors.extend(self.validate_case_list_field_actions())
 
-        if self.module.root_module_id:
-            root_module = self.app.get_module_by_unique_id(self.module.root_module_id)
-            if root_module and module_uses_inline_search(root_module):
-                errors.append({
-                    'type': 'inline search as parent module',
-                    'module': self.get_module_info(),
-                })
-
         for form in self.module.get_suite_forms():
             errors.extend(form.validator.validate_for_module(self.module))
 
@@ -534,6 +526,17 @@ class ModuleBaseValidator(object):
                             'module': self.get_module_info(),
                             'property': prop.name,
                             'message': _('This feature is compatible with only version 2 of Mobile UCR'),
+                        }
+            if self.module.root_module_id:
+                root_module = self.app.get_module_by_unique_id(self.module.root_module_id)
+                if root_module and module_uses_inline_search(root_module):
+                    root_module_instance_name = root_module.search_config.instance_name
+                    if search_config.instance_name == root_module_instance_name:
+                        yield {
+                            "type": "non-unique instance name with parent module",
+                            "message": f'The instance "{search_config.instance_name}" is not unique',
+                            "module": self.get_module_info(),
+                            "details": search_config.instance_name
                         }
 
     def validate_case_list_field_actions(self):
