@@ -158,8 +158,45 @@ hqDefine("geospatial/js/case_grouping_map",[
                 },
             });
         });
+        mapboxInstance.on('moveend', updateClusterStats);
 
         return mapboxInstance;
+    }
+
+    function updateClusterStats() {
+        const sourceFeatures = map.querySourceFeatures('caseWithGPS', {
+            filter: ['get', 'cluster'],
+        });
+
+        // Mapbox clustering creates the same cluster groups with slightly different coordinates.
+        // Seems to be related to keeping track of clusters at different zoom levels.
+        // There could therefore be more than one cluster that share the same ID so we should keep track
+        // of these to skip them if we've gone over them already
+        let uniqueClusterIds = {};
+        let clusterStats = {
+            total: 0,
+            min: 0,
+            max: 0,
+        };
+        for (const clusterFeature of sourceFeatures) {
+            // Skip over duplicate clusters
+            if (uniqueClusterIds[clusterFeature.id]) {
+                continue;
+            }
+
+            uniqueClusterIds[clusterFeature.id] = true;
+            clusterStats.total++;
+            const pointCount = clusterFeature.properties.point_count;
+            if (pointCount < clusterStats.min || clusterStats.min === 0) {
+                clusterStats.min = pointCount;
+            }
+            if (pointCount > clusterStats.max) {
+                clusterStats.max = pointCount;
+            }
+        }
+        clusterStatsInstance.totalClusters(clusterStats.total);
+        clusterStatsInstance.clusterMinCount(clusterStats.min);
+        clusterStatsInstance.clusterMaxCount(clusterStats.max);
     }
 
     function loadMapClusters(caseList) {
