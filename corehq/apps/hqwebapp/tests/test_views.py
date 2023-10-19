@@ -212,6 +212,7 @@ class TestMaintenanceAlertsView(TestCase):
             [{
                 'active': False,
                 'created': str(global_alert.created),
+                'created_by_user': None,
                 'domains': 'test1, test2',
                 'end_time': None,
                 'expired': None,
