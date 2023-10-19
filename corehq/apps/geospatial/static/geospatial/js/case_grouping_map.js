@@ -225,6 +225,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             if (isAfterReportLoad) {
                 $("#export-controls").koApplyBindings(exportModelInstance);
                 map = initMap();
+                $("#clusterStats").koApplyBindings(clusterStatsInstance);
                 return;
             }
 

@@ -24,4 +24,28 @@
       {% endif %}
     {% endblock reporttable %}
 </div>
+
+<div class="row panel" id="clusterStats">
+  <div class="col-sm-6 col-md-6 col-lg-6">
+    <table class="table table-striped table-bordered">
+      <thead>
+        <th colspan="2">{% trans "Summary of Case Grouping" %}</th>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{% trans "Total number of clusters" %}</td>
+          <td data-bind="text: totalClusters"></td>
+        </tr>
+        <tr>
+          <td>{% trans "Maximum cases per cluster" %}</td>
+          <td data-bind="text: clusterMaxCount"></td>
+        </tr>
+        <tr>
+          <td>{% trans "Minimum cases per cluster" %}</td>
+          <td data-bind="text: clusterMinCount"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 {% endblock %}
