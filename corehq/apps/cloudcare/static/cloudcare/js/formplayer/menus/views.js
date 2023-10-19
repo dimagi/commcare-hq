@@ -262,23 +262,46 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 .replace("{appid}", currentAppId)
                 .replace("{case_id}", caseId);
             e.target.className += " disabled";
-            document.location = actionUrl;
+            this.iconIframe(e, actionUrl);
         },
 
-        iconSmartLink: function (e, url) {
-            e.target.className += " disabled";
-            self.processing = true;
-            return $.ajax({
-                type: "GET",
-                url: url,
-                success: function (resp) {
-                    FormplayerFrontend.trigger('showSuccess', gettext('Action was successful'));
-                    e.target.classList.remove("disabled");
-                },error: function (error) {
-                    FormplayerFrontend.trigger('showError', gettext(error.errorMessage));
-                },
-            }).fail(function () {
+        iconIframe: function (e, url) {
+            const clickedIcon = e.target;
+            clickedIcon.classList.add("disabled");
+            clickedIcon.style.display = 'none';
+            const tableData = clickedIcon.closest('td');
+            const spinnerElement = $(tableData).find('i');
+            spinnerElement[0].style.display = '';
+            const iconIframe = document.createElement('iframe');
+            iconIframe.style.display = 'none';
+            iconIframe.src = encodeURI(url);
+            document.body.appendChild(iconIframe);
 
+            $('iframe').on('load', function(){
+                // Get success or error message from iframe and pass to main window
+                const notificationsElement = $("iframe").contents().find("#cloudcare-notifications");
+                notificationsElement.on('DOMNodeInserted', function(e) {
+                    if ($(e.target).hasClass('alert')) {
+                        const alertCollection = $(e.target);
+                        const succeeded = alertCollection[0].classList.contains('alert-success');
+                        let message;
+                        if (succeeded) {
+                            message = notificationsElement.find('.alert-success').find('p').text();
+                            FormplayerFrontend.trigger('showSuccess', gettext(message));
+                        } else {
+                            messageElement = notificationsElement.find('.alert-danger');
+                            // Todo: standardize structures of success and error alert elements
+                            message = messageElement.contents().filter(function(){
+                                return this.nodeType == Node.TEXT_NODE;
+                              })[0].nodeValue;
+                            FormplayerFrontend.trigger('showError', gettext(message));
+                        }
+                        clickedIcon.classList.remove("disabled");
+                        clickedIcon.style.display = '';
+                        spinnerElement[0].style.display = 'none';
+                        iconIframe.parentNode.removeChild(iconIframe);
+                    }
+                })
             });
         },
 
