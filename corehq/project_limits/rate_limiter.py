@@ -72,20 +72,25 @@ class RateLimiter(object):
 
     def iter_rates(self, scope=''):
         """
-        Get generator of tuples for each set of limits returned by get_rate_limits, where the first item
-        of the tuple is the normalized scope, and the second is a generator of (key, current rate, rate limit)
-        for each limit in that scope
+        Get generator of tuples for each set of limits returned by `get_rate_limits`, where the first item
+        of the tuple is the normalized scope, and the second is a generator of
+        (rate_counter (obj), current rate, rate limit) for each limit in that scope
 
         e.g.
         ('test-domain', [
-            ('week', 92359, 115000)
-            ('day', ...)
+            (rate_counter, 92359, 115000)
+            (rate_counter, ...)
             ...
         ])
+        
+        where `rate_counter.key` is the window of the counter i.e. 'week', 'day' etc
         """
+
         for limit_scope, limits in self.get_rate_limits(scope):
             yield (
-                limit_scope, ((rate_counter, limit) for rate_counter, limit in limits)
+                limit_scope,
+                ((rate_counter, rate_counter.get(self.feature_key + limit_scope), limit)
+                for rate_counter, limit in limits)
             )
 
     def wait(self, scope, timeout, windows_not_to_wait_on=('hour', 'day', 'week')):
