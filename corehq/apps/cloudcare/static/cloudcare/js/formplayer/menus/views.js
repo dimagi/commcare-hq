@@ -230,11 +230,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
+            clickIcon: ".module-icon.btn",
             selectRow: ".select-row-checkbox",
             showMore: ".show-more",
         },
 
         events: {
+            "click @ui.clickIcon": "iconClick",
             "click": "rowClick",
             "keydown": "rowKeyAction",
             'click @ui.selectRow': 'selectRowAction',
@@ -262,6 +264,43 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 "tabindex": "0",
                 "id": `row-${modelId}`,
             };
+        },
+
+        iconClick: function (e) {
+            e.stopImmediatePropagation();
+            const origin = window.location.origin;
+            const user = FormplayerFrontend.getChannel().request('currentUser');
+            const appId = formplayerUtils.currentUrlToObject().appId;
+            const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
+            // Confirms we are getting the app id, not build id
+            const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"]
+            const domain = user.domain;
+            const caseId = this.model.get('id');
+            const fieldIndex = $(e.currentTarget).parent().index();
+            const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
+            const actionUrl = origin + urlTemplate
+                .replace("{domain}", domain)
+                .replace("{appid}", currentAppId)
+                .replace("{case_id}", caseId);
+            e.target.className += " disabled";
+            document.location = actionUrl;
+        },
+
+        iconSmartLink: function (e, url) {
+            e.target.className += " disabled";
+            self.processing = true;
+            return $.ajax({
+                type: "GET",
+                url: url,
+                success: function (resp) {
+                    FormplayerFrontend.trigger('showSuccess', gettext('Action was successful'));
+                    e.target.classList.remove("disabled");
+                },error: function (error) {
+                    FormplayerFrontend.trigger('showError', gettext(error.errorMessage));
+                },
+            }).fail(function () {
+
+            });
         },
 
         rowClick: function (e) {
@@ -455,6 +494,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
+                endpointActions: this.options.endpointActions
             };
         },
 
