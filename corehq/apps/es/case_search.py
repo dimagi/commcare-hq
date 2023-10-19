@@ -149,12 +149,11 @@ class CaseSearchES(CaseES):
 
     def sort_by_case_properties(self, sort_properties):
         for sort_property in sort_properties:
-            reset_sort = sort_property is sort_properties[0]
             self = self.nested_sort(
-                CASE_PROPERTIES_PATH, "{}.{}".format(VALUE, sort_property['sort_type']),
-                filters.term(PROPERTY_KEY, sort_property['property_name']),
-                desc=sort_property['is_descending'],
-                reset_sort=reset_sort
+                CASE_PROPERTIES_PATH, "{}.{}".format(VALUE, sort_property.sort_type),
+                filters.term(PROPERTY_KEY, sort_property.property_name),
+                desc=sort_property.is_descending,
+                reset_sort=False
             )
         return self
 

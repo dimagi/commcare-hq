@@ -20,7 +20,6 @@ from corehq.apps.case_search.filter_dsl import (
 )
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
-    CASE_SEARCH_SORT_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
@@ -53,25 +52,27 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
         registry_slug=config.data_registry,
         custom_related_case_property=config.custom_related_case_property,
         include_all_related_cases=config.include_all_related_cases,
+        commcare_sort=config.commcare_sort,
     )
 
 
 def get_case_search_results(domain, case_types, criteria,
-                            app_id=None, couch_user=None, registry_slug=None,
-                            custom_related_case_property=None, include_all_related_cases=None):
+                            app_id=None, couch_user=None, registry_slug=None, custom_related_case_property=None,
+                            include_all_related_cases=None, commcare_sort=None
+                            ):
     helper = _get_helper(couch_user, domain, case_types, registry_slug)
 
-    cases = get_primary_case_search_results(helper, domain, case_types, criteria)
+    cases = get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort)
     if app_id:
         cases.extend(get_and_tag_related_cases(helper, app_id, case_types, cases,
             custom_related_case_property, include_all_related_cases))
     return cases
 
 
-def get_primary_case_search_results(helper, domain, case_types, criteria):
+def get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort=None):
     builder = CaseSearchQueryBuilder(domain, case_types, helper.query_domains)
     try:
-        search_es = builder.build_query(criteria)
+        search_es = builder.build_query(criteria, commcare_sort)
     except TooManyRelatedCasesError:
         raise CaseSearchUserError(_('Search has too many results. Please try a more specific search.'))
     except CaseFilterError as e:
@@ -173,8 +174,9 @@ class CaseSearchQueryBuilder:
             config = CaseSearchConfig(domain=self.request_domain)
         return config
 
-    def build_query(self, search_criteria):
+    def build_query(self, search_criteria, commcare_sort=None):
         search_es = self._get_initial_search_es()
+        search_es = self._apply_sort(search_es, commcare_sort)
         for criteria in search_criteria:
             search_es = self._apply_filter(search_es, criteria)
         return search_es
@@ -184,8 +186,12 @@ class CaseSearchQueryBuilder:
                 .domain(self.query_domains)
                 .case_type(self.case_types)
                 .is_closed(False)
-                .size(CASE_SEARCH_MAX_RESULTS)
-                .set_sorting_block(['_score', '_doc']))
+                .size(CASE_SEARCH_MAX_RESULTS))
+
+    def _apply_sort(self, search_es, commcare_sort=None):
+        if commcare_sort:
+            return search_es.sort_by_case_properties(commcare_sort)
+        return search_es.set_sorting_block(['_score', '_doc'])
 
     def _apply_filter(self, search_es, criteria):
         if criteria.key == CASE_SEARCH_XPATH_QUERY_KEY:
@@ -207,22 +213,9 @@ class CaseSearchQueryBuilder:
         elif criteria.key == COMMCARE_PROJECT:
             if not criteria.is_empty:
                 return search_es.filter(filters.domain(criteria.value))
-        elif criteria.key == CASE_SEARCH_SORT_KEY:
-            return search_es.sort_by_case_properties(self._parse_custom_sort_properties(criteria.value))
         elif criteria.key not in UNSEARCHABLE_KEYS:
             return search_es.add_query(self._get_case_property_query(criteria), queries.MUST)
         return search_es
-
-    def _parse_custom_sort_properties(self, sort_properties):
-        parsed_sort_properties = []
-        for sort_property in sort_properties.split(','):
-            parsed_property = {}
-            parts = sort_property.lstrip('+-').split(':')
-            parsed_property['property_name'] = parts[0]
-            parsed_property['sort_type'] = parts[1] if len(parts) > 1 else 'exact'
-            parsed_property['is_descending'] = sort_property.startswith('-')
-            parsed_sort_properties.append(parsed_property)
-        return parsed_sort_properties
 
     def _get_daterange_query(self, criteria):
         startdate, enddate = criteria.get_date_range()
