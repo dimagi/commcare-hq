@@ -190,8 +190,17 @@ class CaseSearchQueryBuilder:
 
     def _apply_sort(self, search_es, commcare_sort=None):
         if commcare_sort:
-            return search_es.sort_by_case_properties(commcare_sort)
+            return self._sort_by_case_properties(search_es, commcare_sort)
         return search_es.set_sorting_block(['_score', '_doc'])
+
+    def _sort_by_case_properties(self, search_es, commcare_sort_properties):
+        for sort_property in commcare_sort_properties:
+            search_es = search_es.sort_by_case_property(
+                sort_property.property_name,
+                desc=sort_property.is_descending,
+                sort_type=sort_property.sort_type
+            )
+        return search_es
 
     def _apply_filter(self, search_es, criteria):
         if criteria.key == CASE_SEARCH_XPATH_QUERY_KEY:
