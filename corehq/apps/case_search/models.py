@@ -151,6 +151,9 @@ class CommcareSortProperty:
 
 
 def _parse_commcare_sort_properties(values):
+    if values is None:
+        return
+
     parsed_sort_properties = []
     flattened_values = [sort_property for value in values for sort_property in value.split(',')]
     for sort_property in flattened_values:

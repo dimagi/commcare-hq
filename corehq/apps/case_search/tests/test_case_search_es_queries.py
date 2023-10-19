@@ -3,7 +3,7 @@ from collections import OrderedDict
 from django.test import TestCase
 
 from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
-from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns
+from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns, _parse_commcare_sort_properties
 from corehq.apps.case_search.tests.utils import get_case_search_query
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 
@@ -410,9 +410,8 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
         )
 
     def test_add_custom_sort_properties(self):
-        criteria = {
-            "commcare_sort": "name,-date_of_birth:date"
-        }
+        criteria = {}
+        commcare_sort = _parse_commcare_sort_properties(["name,-date_of_birth:date"])
         expected = {
             "query": {
                 "bool": {
@@ -455,6 +454,6 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
         }
 
         self.checkQuery(
-            get_case_search_query(DOMAIN, ['case_type'], criteria),
+            get_case_search_query(DOMAIN, ['case_type'], criteria, commcare_sort=commcare_sort),
             expected
         )
