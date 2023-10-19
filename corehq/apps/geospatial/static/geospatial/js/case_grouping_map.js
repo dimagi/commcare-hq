@@ -85,7 +85,7 @@ hqDefine("geospatial/js/case_grouping_map",[
     function initMap() {
         'use strict';
 
-        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
+        mapboxgl.accessToken = initialPageData.get('mapbox_access_token'); // eslint-disable-line no-undef
         const centerCoordinates = [2.43333330, 9.750];
 
         const mapboxInstance = new mapboxgl.Map({  // eslint-disable-line no-undef
