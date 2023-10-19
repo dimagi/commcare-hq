@@ -64,7 +64,7 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
         cls.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
         cls.advanced_plan.plan.is_customer_software_plan = True
 
-        # This will be the domain have main subscription
+        # This will be the domain with the main subscription
         cls.main_domain = generator.arbitrary_domain()
         cls.main_subscription_length = 15  # months
         main_subscription_start_date = date(2016, 2, 23)
