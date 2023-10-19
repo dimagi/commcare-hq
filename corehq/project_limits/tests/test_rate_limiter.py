@@ -1,10 +1,15 @@
 from unittest.mock import Mock, patch
+
 from testil import eq
-from corehq.project_limits.rate_limiter import RateLimiter, RateDefinition, \
-    PerUserRateDefinition
+
 from corehq.project_limits.rate_counter.presets import (
     second_rate_counter,
     week_rate_counter,
+)
+from corehq.project_limits.rate_limiter import (
+    PerUserRateDefinition,
+    RateDefinition,
+    RateLimiter,
 )
 
 
