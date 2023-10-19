@@ -39,19 +39,19 @@ class RateLimiter(object):
                 rate_counter.increment(self.feature_key + limit_scope, delta=delta)
 
     def get_window_of_first_exceeded_limit(self, scope=''):
-        for limit_scope, rates in self.iter_rates(scope):
-            for rate_counter_key, current_rate, limit in rates:
+        for _limit_scope, rates in self.iter_rates(scope):
+            for rate_counter, current_rate, limit in rates:
                 if current_rate >= limit:
-                    return rate_counter_key
+                    return rate_counter.key
 
         return None
 
     def allow_usage(self, scope=''):
         allowed = False
         # allow usage if any scope has capacity
-        for limit_scope, rates in self.iter_rates(scope):
-            allow = all(rate_counter.get(self.feature_key + limit_scope) < limit
-                        for rate_counter, limit in rates)
+        for _limit_scope, rates in self.iter_rates(scope):
+            allow = all(current_rate < limit
+                        for _rate_counter, current_rate, limit in rates)
             # for each scope all counters must be below threshold
             if allow:
                 allowed = True
@@ -100,8 +100,8 @@ class RateLimiter(object):
         larger_windows_allow = all(
             current_rate < limit
             for limit_scope, limits in self.iter_rates(scope)
-            for rate_counter_key, current_rate, limit in limits
-            if rate_counter_key in windows_not_to_wait_on
+            for rate_counter, current_rate, limit in limits
+            if rate_counter.key in windows_not_to_wait_on
         )
         if not larger_windows_allow:
             # There's no point in waiting 15 seconds for the hour/day/week values to change
