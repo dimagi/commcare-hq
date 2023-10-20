@@ -132,53 +132,6 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")
 
     @flag_enabled('USH_SEARCH_FILTER')
-    def test_inline_search_custom_instance_name(self):
-        custom_instance_name = "custom_instance_name"
-        self.module.search_config.instance_name = custom_instance_name
-        suite = self.app.create_suite()
-
-        custom_instance = f'{RESULTS_INSTANCE_BASE}{custom_instance_name}'
-        expected_entry_query = f"""
-        <partial>
-          <entry>
-            <form>xmlns1.0</form>
-            <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
-                relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
-             <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
-            </post>
-            <command id="m0-f0">
-              <text>
-                <locale id="forms.m0f0"/>
-              </text>
-            </command>
-            <instance id="casedb" src="jr://instance/casedb"/>
-            <instance id="commcaresession" src="jr://instance/session"/>
-            <instance id="{custom_instance}" src="jr://instance/remote/{custom_instance}"/>
-            <session>
-                <query url="http://localhost:8000/a/test_domain/phone/search/123/"
-                    storage-instance="{custom_instance}" template="case" default_search="false">
-                  <title>
-                    <text>
-                      <locale id="case_search.m0.inputs"/>
-                    </text>
-                  </title>
-                  <data key="case_type" ref="'case'"/>
-                  <prompt key="name">
-                    <display>
-                      <text>
-                        <locale id="search_property.m0.name"/>
-                      </text>
-                    </display>
-                  </prompt>
-                </query>
-                <datum id="case_id" nodeset="instance('{custom_instance}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
-                    value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
-            </session>
-          </entry>
-        </partial>"""  # noqa: E501
-        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]")
-
-    @flag_enabled('USH_SEARCH_FILTER')
     def test_inline_search_case_list_item(self):
         self.module.case_list.show = True
         suite = self.app.create_suite()
@@ -660,3 +613,78 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
         </partial>"""  # noqa: E501
 
         self.assertXmlPartialEqual(expected, suite, "./entry[2]/stack/create")
+
+
+@patch_get_xform_resource_overrides()
+class InlineSearchCustomInstanceName(SimpleTestCase, SuiteMixin):
+    file_path = ('data', 'suite_inline_search')
+
+    def setUp(self):
+        factory = AppFactory(DOMAIN, "App with inline search and custom instance names", build_version='2.53.0')
+        self.m0, f0 = factory.new_basic_module("case list0", "case")
+        factory.form_requires_case(f0)
+
+        self.m1, f1 = factory.new_basic_module("case list1", "case")
+
+        factory.form_requires_case(f1)
+
+        base_search_config = CaseSearch(
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+            auto_launch=True,
+            inline_search=True,
+        )
+        self.m0.search_config = base_search_config
+        self.m0.search_config.instance_name = 'custom_instance_name0'
+        self.m1.search_config = base_search_config
+        self.m1.search_config.instance_name = 'custom_instance_name1'
+
+        factory.app._id = "123"
+        # wrap to have assign_references called
+        self.app = Application.wrap(factory.app.to_json())
+
+    def test_inline_search_custom_instance_name(self):
+        suite = self.app.create_suite()
+        custom_instance0 = f'{RESULTS_INSTANCE_BASE}{self.m0.search_config.instance_name}'
+        custom_instance1 = f'{RESULTS_INSTANCE_BASE}{self.m1.search_config.instance_name}'
+
+        self.assertXmlPartialEqual(self._expected_entry_query('m0', custom_instance0), suite, "./entry[1]")
+        self.assertXmlPartialEqual(self._expected_entry_query('m1', custom_instance1), suite, "./entry[2]")
+
+    def _expected_entry_query(self, module, custom_instance):
+        return f"""
+        <partial>
+          <entry>
+            <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
+                relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
+             <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+            </post>
+            <command id="{module}-f0">
+              <text>
+                <locale id="forms.{module}f0"/>
+              </text>
+            </command>
+            <instance id="casedb" src="jr://instance/casedb"/>
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <instance id="{custom_instance}" src="jr://instance/remote/{custom_instance}"/>
+            <session>
+                <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+                    storage-instance="{custom_instance}" template="case" default_search="false">
+                  <title>
+                    <text>
+                      <locale id="case_search.{module}.inputs"/>
+                    </text>
+                  </title>
+                  <data key="case_type" ref="'case'"/>
+                  <prompt key="name">
+                    <display>
+                      <text>
+                        <locale id="search_property.{module}.name"/>
+                      </text>
+                    </display>
+                  </prompt>
+                </query>
+                <datum id="case_id" nodeset="instance('{custom_instance}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+                    value="./@case_id" detail-select="{module}_case_short" detail-confirm="{module}_case_long"/>
+            </session>
+          </entry>
+        </partial>"""  # noqa: E501
