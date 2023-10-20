@@ -274,12 +274,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             spinnerElement[0].style.display = '';
             const iconIframe = document.createElement('iframe');
             iconIframe.style.display = 'none';
+            $(iconIframe).attr('id', 'icon-iframe')
             iconIframe.src = encodeURI(url);
             document.body.appendChild(iconIframe);
 
             $('iframe').on('load', function(){
                 // Get success or error message from iframe and pass to main window
-                const notificationsElement = $("iframe").contents().find("#cloudcare-notifications");
+                const notificationsElement = $("#icon-iframe").contents().find("#cloudcare-notifications");
                 notificationsElement.on('DOMNodeInserted', function(e) {
                     if ($(e.target).hasClass('alert')) {
                         const alertCollection = $(e.target);
