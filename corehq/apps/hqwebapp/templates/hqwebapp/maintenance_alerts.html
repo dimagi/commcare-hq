@@ -103,6 +103,9 @@
               <th>
                 {% trans "Created" %}
               </th>
+              <th>
+                {% trans "Added By" %}
+              </th>
               <th class="col-sm-3">
                 {% trans "Message" %}
               </th>
@@ -124,6 +127,7 @@
                  data-bind="foreach: alerts">
             <tr>
               <td data-bind="text: created"></td>
+              <td data-bind="text: created_by_user"></td>
               <td>
                 <div class="alert alert-warning"
                      data-bind="html: html"></div>
