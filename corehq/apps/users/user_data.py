@@ -66,7 +66,7 @@ class UserData:
         for k in list(self._local_to_user):
             if k not in schema_fields and not is_system_key(k):
                 del self[k]
-                changed=True
+                changed = True
         return changed
 
     def items(self):

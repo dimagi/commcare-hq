@@ -66,7 +66,7 @@ class TestUserMetadata(TestCase):
         web_user = WebUser.create(None, "imogen", "*****", None, None)
         self.addCleanup(web_user.delete, self.domain, deleted_by=None)
         user_data = web_user.get_user_data(self.domain)
-        self.assertEqual(user_data.to_dict(), {'commcare_project':  self.domain})
+        self.assertEqual(user_data.to_dict(), {'commcare_project': self.domain})
 
         user_data['start'] = 'sometimes'
         self.assertEqual(web_user.get_user_data(self.domain).to_dict(), {
@@ -161,14 +161,14 @@ class TestUserDataModel(SimpleTestCase):
         self.assertFalse(changed)
 
     def test_update_order_irrelevant(self):
-        user_data = UserData({PROFILE_SLUG: 'blues',}, self.domain)
+        user_data = UserData({PROFILE_SLUG: 'blues'}, self.domain)
         user_data.update({
-            'favorite_color': 'purple', # this is compatible with the new profile, but not the old
+            'favorite_color': 'purple',  # this is compatible with the new profile, but not the old
             PROFILE_SLUG: 'others',
         })
 
     def test_ignore_noop_conflicts_with_profile(self):
-        user_data = UserData({PROFILE_SLUG: 'blues',}, self.domain)
+        user_data = UserData({PROFILE_SLUG: 'blues'}, self.domain)
         # this key is in the profile, but the values are the same
         user_data['favorite_color'] = 'blue'
 

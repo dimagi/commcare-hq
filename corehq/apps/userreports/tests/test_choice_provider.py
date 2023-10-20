@@ -466,8 +466,10 @@ class UserUserDataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             SearchableChoice(
                 user.get_id, user.raw_username,
                 searchable_text=[
-                    user.username, user.last_name, user.first_name, user.get_user_data(cls.domain).get('login_as_user')])
-            for user in cls.users if user.is_member_of(cls.domain)
+                    user.username, user.last_name, user.first_name,
+                    user.get_user_data(cls.domain).get('login_as_user')
+                ]
+            ) for user in cls.users if user.is_member_of(cls.domain)
         ]
         choices.sort(key=lambda choice: choice.display)
         cls.choice_provider = UserChoiceProvider(report, None)

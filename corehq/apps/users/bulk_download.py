@@ -3,39 +3,34 @@ import uuid
 from django.conf import settings
 from django.utils.translation import gettext
 
-from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from couchexport.writers import Excel2007ExportWriter
 from soil import DownloadBase
 from soil.util import expose_download, get_download_file_path
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.custom_data_fields.models import (
-    PROFILE_SLUG,
-    CustomDataFieldsDefinition,
-    CustomDataFieldsProfile,
-)
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.util import add_on_tableau_details
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
 from corehq.apps.users.dbaccessors import (
     count_invitations_by_filters,
     count_mobile_users_by_filters,
     count_web_users_by_filters,
     get_invitations_by_filters,
-    get_mobile_users_by_filters,
     get_mobile_usernames_by_filters,
+    get_mobile_users_by_filters,
     get_web_users_by_filters,
 )
-from corehq.apps.users.models import UserRole, DeactivateMobileWorkerTrigger
-from corehq.apps.reports.util import add_on_tableau_details
+from corehq.apps.users.models import DeactivateMobileWorkerTrigger, UserRole
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
     flatten_json,
     json_to_headers,
 )
-from couchdbkit import ResourceNotFound
 
 
 class LocationIdToSiteCodeCache(BulkCacheBase):
@@ -196,7 +191,9 @@ def get_user_rows(user_dicts, user_headers):
 
 
 def parse_mobile_users(domain, user_filters, task=None, total_count=None):
-    from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+    from corehq.apps.users.views.mobile.custom_data_fields import (
+        UserFieldsView,
+    )
     fields_definition = CustomDataFieldsDefinition.get_or_create(
         domain,
         UserFieldsView.field_type

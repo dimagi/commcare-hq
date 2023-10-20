@@ -2,17 +2,14 @@ from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.custom_data_fields.models import (
-    CustomDataFieldsDefinition,
-    CustomDataFieldsProfile,
-    Field,
-    PROFILE_SLUG,
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    DeviceAppMeta,
+    WebUser,
 )
 from corehq.apps.users.models_role import UserRole
-from corehq.apps.users.role_utils import UserRolePresets
-from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser, DeviceAppMeta, WebUser, CouchUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import (
     TestFormMetadata,

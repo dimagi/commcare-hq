@@ -1,18 +1,16 @@
-import contextlib
 import uuid
 from datetime import time
 
 from django.test import TestCase, override_settings
 
-from unittest.mock import patch
-
 from casexml.apps.case.tests.util import create_case
+
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
-    PROFILE_SLUG,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
@@ -21,10 +19,10 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.models import CommCareCase
-from corehq.form_processor.utils import is_commcarecase
 from corehq.apps.users.util import normalize_username
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.pillow import get_case_messaging_sync_pillow
 from corehq.messaging.scheduling.models import (
     Content,
@@ -35,8 +33,9 @@ from corehq.messaging.scheduling.models import (
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
     CaseTimedScheduleInstance,
-    ScheduleInstance as AbstractScheduleInstance,
 )
+from corehq.messaging.scheduling.scheduling_partitioned.models import \
+    ScheduleInstance as AbstractScheduleInstance
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
 from corehq.util.test_utils import (
     create_test_case,
