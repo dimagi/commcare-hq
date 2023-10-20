@@ -60,5 +60,14 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             }
         });
 
+        if (initialPageData("exceeds_mobile_ucr_threshold")) {
+            FormplayerFrontEnd.trigger(
+                'showError',
+                gettext("You have the MOBILE_UCR feature flag enabled, and have exceeded the maximum limit of 300 user configurable reports.")
+            );
+
+            $(".formplayer-request").addClass('formplayer-requester-disabled');
+        }
+
     });
 });
