@@ -289,7 +289,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                             message = notificationsElement.find('.alert-success').find('p').text();
                             FormplayerFrontend.trigger('showSuccess', gettext(message));
                         } else {
-                            messageElement = notificationsElement.find('.alert-danger');
+                            const messageElement = notificationsElement.find('.alert-danger');
                             // Todo: standardize structures of success and error alert elements
                             message = messageElement.contents().filter(function(){
                                 return this.nodeType == Node.TEXT_NODE;
