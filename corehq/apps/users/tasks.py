@@ -302,7 +302,7 @@ def remove_unused_custom_fields_from_users_task(domain):
         CUSTOM_USER_DATA_FIELD_TYPE,
     )
     fields_definition = CustomDataFieldsDefinition.get(domain, CUSTOM_USER_DATA_FIELD_TYPE)
-    assert fields_definition, 'remove_unused_custom_fields_from_users called without a valid definition'
+    assert fields_definition, 'remove_unused_custom_fields_from_users_task called without a valid definition'
     schema_fields = {f.slug for f in fields_definition.get_fields()}
     for user in get_all_commcare_users_by_domain(domain):
         user_data = user.get_user_data(domain)
