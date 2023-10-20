@@ -14,11 +14,11 @@ hqDefine("cloudcare/js/formplayer/spec/query_spec", function () {
                     "itemsetChoices": ["California", "Massachusetts", "Florida"],
                 });
 
-            let keyViewCollection = new QueryViewCollection([keyModel])
+            let keyViewCollection = new QueryViewCollection([keyModel]);
 
             sinon.stub(Utils, 'getStickyQueryInputs').callsFake(function () { return 'fake_value'; });
             let keyQueryListView =  QueryListView({ collection: keyViewCollection}),
-                keyQueryView = new keyQueryListView.childView({ parentView: keyQueryListView, model: keyModel})
+                keyQueryView = new keyQueryListView.childView({ parentView: keyQueryListView, model: keyModel});
 
             it('should create dictionary with either keys', function () {
                 let expectedKeyItemsetChoicesDict = { "CA": "California", "MA": "Massachusetts", "FL": "Florida"};
