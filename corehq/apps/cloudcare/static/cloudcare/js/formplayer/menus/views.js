@@ -230,11 +230,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
+            clickIcon: ".module-icon.btn",
             selectRow: ".select-row-checkbox",
             showMore: ".show-more",
         },
 
         events: {
+            "click @ui.clickIcon": "iconClick",
             "click": "rowClick",
             "keydown": "rowKeyAction",
             'click @ui.selectRow': 'selectRowAction',
@@ -262,6 +264,66 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 "tabindex": "0",
                 "id": `row-${modelId}`,
             };
+        },
+
+        iconClick: function (e) {
+            e.stopImmediatePropagation();
+            const origin = window.location.origin;
+            const user = FormplayerFrontend.getChannel().request('currentUser');
+            const appId = formplayerUtils.currentUrlToObject().appId;
+            const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
+            // Confirms we are getting the app id, not build id
+            const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"]
+            const domain = user.domain;
+            const caseId = this.model.get('id');
+            const fieldIndex = $(e.currentTarget).parent().index();
+            const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
+            const actionUrl = origin + urlTemplate
+                .replace("{domain}", domain)
+                .replace("{appid}", currentAppId)
+                .replace("{case_id}", caseId);
+            e.target.className += " disabled";
+            this.iconIframe(e, actionUrl);
+        },
+
+        iconIframe: function (e, url) {
+            const clickedIcon = e.target;
+            clickedIcon.classList.add("disabled");
+            clickedIcon.style.display = 'none';
+            const tableData = clickedIcon.closest('td');
+            const spinnerElement = $(tableData).find('i');
+            spinnerElement[0].style.display = '';
+            const iconIframe = document.createElement('iframe');
+            iconIframe.style.display = 'none';
+            iconIframe.src = encodeURI(url);
+            document.body.appendChild(iconIframe);
+
+            $('iframe').on('load', function(){
+                // Get success or error message from iframe and pass to main window
+                const notificationsElement = $("iframe").contents().find("#cloudcare-notifications");
+                notificationsElement.on('DOMNodeInserted', function(e) {
+                    if ($(e.target).hasClass('alert')) {
+                        const alertCollection = $(e.target);
+                        const succeeded = alertCollection[0].classList.contains('alert-success');
+                        let message;
+                        if (succeeded) {
+                            message = notificationsElement.find('.alert-success').find('p').text();
+                            FormplayerFrontend.trigger('showSuccess', gettext(message));
+                        } else {
+                            messageElement = notificationsElement.find('.alert-danger');
+                            // Todo: standardize structures of success and error alert elements
+                            message = messageElement.contents().filter(function(){
+                                return this.nodeType == Node.TEXT_NODE;
+                              })[0].nodeValue;
+                            FormplayerFrontend.trigger('showError', gettext(message));
+                        }
+                        clickedIcon.classList.remove("disabled");
+                        clickedIcon.style.display = '';
+                        spinnerElement[0].style.display = 'none';
+                        iconIframe.parentNode.removeChild(iconIframe);
+                    }
+                })
+            });
         },
 
         rowClick: function (e) {
@@ -455,6 +517,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
+                endpointActions: this.options.endpointActions
             };
         },
 

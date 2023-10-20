@@ -93,6 +93,7 @@ class FormplayerMain(View):
     preview = False
     urlname = 'formplayer_main'
 
+    @xframe_options_sameorigin
     @use_daterangepicker
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
