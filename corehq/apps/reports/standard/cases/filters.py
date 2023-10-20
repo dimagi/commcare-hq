@@ -23,7 +23,7 @@ from corehq.apps.reports.filters.base import (
     BaseSingleOptionFilter,
 )
 from corehq import privileges
-
+from corehq.util.quickcache import quickcache
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: Replace with library method
 
@@ -181,6 +181,7 @@ class SensitiveCaseProperties(CaseListExplorerColumns):
         return case_properties + special_properties
 
 
+@quickcache(vary_on=['domain', 'include_parent_properties'])
 def get_flattened_case_properties(domain, include_parent_properties=False):
     all_properties_by_type = all_case_properties_by_domain(
         domain,
