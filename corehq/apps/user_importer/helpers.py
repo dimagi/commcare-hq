@@ -1,9 +1,8 @@
+from django.utils.translation import gettext as _
+
 from dimagi.utils.parsing import string_to_boolean
 
-from corehq.apps.custom_data_fields.models import (
-    PROFILE_SLUG,
-    CustomDataFieldsProfile,
-)
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.model_log import UserModelAction
@@ -79,7 +78,7 @@ class UserChangeLogger(object):
     def _update_change_messages(self, change_messages):
         for slug in change_messages:
             if slug in self.change_messages:
-                raise UserUploadError(f"Double Entry for {slug}")
+                raise UserUploadError(_("Double Entry for {}").format(slug))
         self.change_messages.update(change_messages)
 
     def add_info(self, change_message):
@@ -197,7 +196,7 @@ class CommCareUserImporter(BaseUserImporter):
         user_data = self.user.get_user_data(self.user_domain)
         old_profile_id = user_data.profile_id
         if PROFILE_SLUG in data:
-            raise UserUploadError(f"You cannot set {PROFILE_SLUG} directly")
+            raise UserUploadError(_("You cannot set {} directly").format(PROFILE_SLUG))
         if profile_name:
             profile_obj = domain_info.profiles_by_name[profile_name]
             data[PROFILE_SLUG] = profile_obj.id

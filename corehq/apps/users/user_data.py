@@ -1,9 +1,9 @@
 from django.utils.functional import cached_property
+from django.utils.translation import gettext as _
 
 from corehq.apps.custom_data_fields.models import (
     COMMCARE_PROJECT,
     PROFILE_SLUG,
-    CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     is_system_key,
 )
@@ -59,7 +59,7 @@ class UserData:
                 definition__field_type=CUSTOM_USER_DATA_FIELD_TYPE,
             )
         except CustomDataFieldsProfile.DoesNotExist as e:
-            raise UserDataError("User data profile not found") from e
+            raise UserDataError(_("User data profile not found")) from e
 
     def remove_unrecognized(self, schema_fields):
         changed = False
@@ -88,7 +88,7 @@ class UserData:
         if key in self._provided_by_system:
             if value == self._provided_by_system[key]:
                 return
-            raise UserDataError(f"'{key}' cannot be set directly")
+            raise UserDataError(_("'{}' cannot be set directly").format(key))
         if key == PROFILE_SLUG:
             del self.profile
             if not value:
@@ -97,7 +97,7 @@ class UserData:
             new_profile = self._get_profile(value)
             non_empty_existing_fields = {k for k, v in self._local_to_user.items() if v}
             if set(new_profile.fields).intersection(non_empty_existing_fields):
-                raise UserDataError("Profile conflicts with existing data")
+                raise UserDataError(_("Profile conflicts with existing data"))
         self._local_to_user[key] = value
 
     def update(self, data):
@@ -117,7 +117,7 @@ class UserData:
 
     def __delitem__(self, key):
         if key in self._provided_by_system:
-            raise UserDataError(f"{key} cannot be deleted")
+            raise UserDataError(_("{} cannot be deleted").format(key))
         if key == PROFILE_SLUG:
             del self.profile
         del self._local_to_user[key]
@@ -127,7 +127,7 @@ class UserData:
             ret = self._local_to_user[key]
         except KeyError as e:
             if key in self._provided_by_system:
-                raise UserDataError(f"{key} cannot be deleted") from e
+                raise UserDataError(_("{} cannot be deleted").format(key)) from e
             if default != ...:
                 return default
             raise e
