@@ -242,6 +242,11 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.inlineSearchActive = ko.computed(() => {
             return self.inlineSearchVisible() && self.inline_search();
         });
+        self.exampleInstance = ko.computed(() => {
+            let name = self.instance_name() || 'inline';
+            return "instance('results:" + name + "')/results/case";
+        });
+
 
         // Allow search filter to be copied from another part of the page
         self.setSearchFilterVisible = ko.computed(function () {

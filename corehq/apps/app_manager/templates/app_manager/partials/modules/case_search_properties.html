@@ -134,13 +134,16 @@
                 <input type="checkbox" data-bind="checked: inline_search" />
                 <input type="hidden" name="search-input" data-bind="value: inline_search"/>
               </label>
+              <p class="help-block" data-bind="visible: inlineSearchActive">
+                Example: <span data-bind="text: exampleInstance" ></span>
+              </p>
             </div>
           </div>
           <div class="form-group" data-bind="visible: inlineSearchActive">
             <label class="control-label {% css_label_class %}">
               {% trans "Search Input Instance Name" %}
               <span class="hq-help-template" data-title="{% trans "Search Input Instance Name" %}"
-                    data-content="{% trans_html_attr "Customize the name used to reference the search input values." %}">
+                    data-content="{% trans_html_attr "Customize the name used to reference the search input values.  If modified, you'll need to update any existing references to it." %}">
               </span>
             </label>
             <div class="{% css_field_class %}">
