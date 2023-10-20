@@ -429,6 +429,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "sort": [
                 {
                     "case_properties.value.exact": {
+                        "missing": "_first",
                         "order": "asc",
                         "nested_path": "case_properties",
                         "nested_filter": {
@@ -440,6 +441,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                 },
                 {
                     "case_properties.value.date": {
+                        "missing": "_last",
                         "order": "desc",
                         "nested_path": "case_properties",
                         "nested_filter": {
