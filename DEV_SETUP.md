@@ -778,7 +778,9 @@ yarn install --frozen-lockfile
 
 ## Running Formplayer and submitting data with Web Apps
 
-Formplayer is a Java service that allows us to use applications on the web  instead of on a mobile device.
+#### Prerequisites
+
+Formplayer is a Java service that allows us to use applications on the web instead of on a mobile device.
 
 In `localsettings.py`:
 
@@ -786,6 +788,14 @@ In `localsettings.py`:
 FORMPLAYER_URL = 'http://localhost:8080'
 FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
 LOCAL_APPS += ('django_extensions',)
+```
+
+Before running Formplayer either locally or in a container, you need to [initialize the formplayer database](https://github.com/dimagi/formplayer#building-and-running).
+The password for the "commcarehq" user is in the localsettings.py file in the
+`DATABASES` dictionary.
+
+```sh
+createdb formplayer -U commcarehq -h localhost
 ```
 
 **IMPORTANT:** When running HQ, be sure to use `runserver_plus`
@@ -797,16 +807,6 @@ LOCAL_APPS += ('django_extensions',)
 Then you need to have Formplayer running.
 
 ### Running `formplayer` Outside of Docker
-
-#### Prerequisites
-
-Before running Formplayer, you need to [initialize the formplayer database](https://github.com/dimagi/formplayer#building-and-running).
-The password for the "commcarehq" user is in the localsettings.py file in the
-`DATABASES` dictionary.
-
-```sh
-createdb formplayer -U commcarehq -h localhost
-```
 
 #### Installation
 
