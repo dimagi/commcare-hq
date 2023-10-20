@@ -24,7 +24,7 @@
         "bootstrap3-typeahead": "bassjobsen/Bootstrap-3-Typeahead#~3.1.1",
         "bootstrap5": "npm:bootstrap@5.3.1",
         "calendars": "kbwood/calendars#2.1.2",
-        "clipboard": "1.5.15",
+        "clipboard": "2.0.11",
         "crypto-js": "4.0.0",
         "css-grid-polyfill-binaries": "FremyCompany/css-grid-polyfill-binaries#1.1.2",
         "d3": "3.5.17",
