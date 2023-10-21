@@ -102,17 +102,6 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
             do_not_invoice=True
         )
 
-        # This subscription should not be included in any customer invoices in these tests
-        cls.non_main_domain3 = cls._create_domain("non main domain 3")
-        cls.non_main_sub3 = generator.generate_domain_subscription(
-            cls.account,
-            cls.non_main_domain3,
-            date_start=main_subscription_start_date,
-            date_end=non_main_subscription_end_date,
-            plan_version=DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY),
-            do_not_invoice=True
-        )
-
     def tearDown(self):
         for user in self.main_domain.all_users():
             user.delete(self.main_domain.name, deleted_by=None)
@@ -122,9 +111,6 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
 
         for user in self.non_main_domain2.all_users():
             user.delete(self.non_main_domain2.name, deleted_by=None)
-
-        for user in self.non_main_domain3.all_users():
-            user.delete(self.non_main_domain3.name, deleted_by=None)
 
         if self.is_using_test_plans:
             utils.clear_plan_version_cache()
