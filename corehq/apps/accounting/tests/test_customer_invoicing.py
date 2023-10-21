@@ -37,6 +37,7 @@ from corehq.apps.smsbillables.tests.generator import (
     arbitrary_sms_billables_for_domain,
 )
 from corehq.util.dates import get_previous_month_date_range
+from corehq.apps.domain.shortcuts import create_domain
 
 
 class BaseCustomerInvoiceCase(BaseAccountingTest):
@@ -65,7 +66,7 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
         cls.advanced_plan.plan.is_customer_software_plan = True
 
         # This will be the domain with the main subscription
-        cls.main_domain = generator.arbitrary_domain()
+        cls.main_domain = cls._create_domain("main domain")
         cls.main_subscription_length = 15  # months
         main_subscription_start_date = date(2016, 2, 23)
         main_subscription_end_date = add_months_to_date(main_subscription_start_date, cls.main_subscription_length)
@@ -81,7 +82,7 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
         cls.non_main_subscription_length = 10  # months
         non_main_subscription_end_date = add_months_to_date(main_subscription_start_date,
                                                             cls.non_main_subscription_length)
-        cls.non_main_domain1 = generator.arbitrary_domain()
+        cls.non_main_domain1 = cls._create_domain("non main domain 1")
         cls.non_main_sub1 = generator.generate_domain_subscription(
             cls.account,
             cls.non_main_domain1,
@@ -91,7 +92,7 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
             do_not_invoice=True
         )
 
-        cls.non_main_domain2 = generator.arbitrary_domain()
+        cls.non_main_domain2 = cls._create_domain("non main domain 2")
         cls.non_main_sub2 = generator.generate_domain_subscription(
             cls.account,
             cls.non_main_domain2,
@@ -102,7 +103,7 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
         )
 
         # This subscription should not be included in any customer invoices in these tests
-        cls.non_main_domain3 = generator.arbitrary_domain()
+        cls.non_main_domain3 = cls._create_domain("non main domain 3")
         cls.non_main_sub3 = generator.generate_domain_subscription(
             cls.account,
             cls.non_main_domain3,
@@ -131,13 +132,10 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
         super(BaseAccountingTest, self).tearDown()
 
     @classmethod
-    def tearDownClass(cls):
-        cls.main_domain.delete()
-        cls.non_main_domain1.delete()
-        cls.non_main_domain2.delete()
-        cls.non_main_domain3.delete()
-
-        super(BaseCustomerInvoiceCase, cls).tearDownClass()
+    def _create_domain(cls, name):
+        domain_obj = create_domain(name)
+        cls.addClassCleanup(domain_obj.delete)
+        return domain_obj
 
 
 class TestCustomerInvoice(BaseCustomerInvoiceCase):
