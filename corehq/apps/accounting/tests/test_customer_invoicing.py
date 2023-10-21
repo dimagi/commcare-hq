@@ -103,7 +103,7 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
             do_not_invoice=True
         )
 
-    def tearDown(self):
+    def cleanUpUser(self):
         for user in self.main_domain.all_users():
             user.delete(self.main_domain.name, deleted_by=None)
 
@@ -112,8 +112,6 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
 
         for user in self.non_main_domain2.all_users():
             user.delete(self.non_main_domain2.name, deleted_by=None)
-
-        super(BaseAccountingTest, self).tearDown()
 
     @classmethod
     def _create_domain(cls, name):
@@ -299,6 +297,8 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         num_users_non_main_domain1 = random.randint(0, self.user_rate.monthly_limit / 2)
         generator.arbitrary_commcare_users_for_domain(self.non_main_domain1.name, num_users_non_main_domain1)
 
+        self.addCleanup(self.cleanUpUser)
+
         calculate_users_in_all_domains(self.invoice_date)
         tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
@@ -323,6 +323,8 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         num_users_non_main_domain1 = self.user_rate.monthly_limit + 1
         generator.arbitrary_commcare_users_for_domain(self.non_main_domain1.name, num_users_non_main_domain1)
 
+        self.addCleanup(self.cleanUpUser)
+
         calculate_users_in_all_domains(self.invoice_date)
         tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
@@ -346,6 +348,8 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         num_users_non_main_domain1 = 1
         generator.arbitrary_commcare_users_for_domain(self.non_main_domain1.name, num_users_non_main_domain1)
 
+        self.addCleanup(self.cleanUpUser)
+
         # Cover the cost of 1 User
         CreditLine.add_credit(
             amount=Decimal(1.0000),
@@ -368,6 +372,8 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         generator.arbitrary_commcare_users_for_domain(self.main_domain.name, num_users_main_domain)
         num_users_non_main_domain1 = 1
         generator.arbitrary_commcare_users_for_domain(self.non_main_domain1.name, num_users_non_main_domain1)
+
+        self.addCleanup(self.cleanUpUser)
 
         # Cover the cost of 2 User
         CreditLine.add_credit(
