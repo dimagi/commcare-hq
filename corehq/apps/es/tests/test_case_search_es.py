@@ -1,6 +1,6 @@
 import uuid
 from datetime import date, datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 import pytz
 
 from django.test import TestCase
@@ -8,7 +8,7 @@ from django.test.testcases import SimpleTestCase
 
 from couchforms.geopoint import GeoPoint
 
-from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
+from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.case_search.xpath_functions.comparison import adjust_input_date_by_timezone
 from corehq.apps.es import queries
@@ -260,7 +260,6 @@ class TestCaseSearchHitConversions(SimpleTestCase):
     def test_wrap_case_search_hit_include_score(self):
         case = wrap_case_search_hit(self.make_hit(), include_score=True)
         self.assertEqual(case.case_json[RELEVANCE_SCORE], "1.095")
-
 
     @staticmethod
     def make_hit():
