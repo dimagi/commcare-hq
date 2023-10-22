@@ -50,6 +50,7 @@ def get_max_doc_count(query, case_property, precision):
     #
     #     'aggregations': {
     #         'case_properties': {
+    #             'doc_count': 66,
     #             'case_property': {
     #                 'doc_count': 6,
     #                 'geohashes': {
@@ -70,6 +71,11 @@ def get_max_doc_count(query, case_property, precision):
     #                 }
     #             }
     #         }
+    #     },
+    #     'hits': {
+    #         'hits': [],
+    #         'max_score': 0.0,
+    #         'total': 6
     #     }
     buckets = (
         queryset.raw['aggregations']
