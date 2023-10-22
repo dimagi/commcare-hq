@@ -20,6 +20,7 @@ from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.toggles import (
+    GEOSPATIAL,
     USH_CASE_CLAIM_UPDATES,
 )
 from corehq.util.doc_processor.sql import SqlDocumentProvider
@@ -83,7 +84,7 @@ def _get_case_properties(doc_dict):
     dynamic_properties = [_format_property(key, value, case_id)
                           for key, value in doc_dict['case_json'].items()]
 
-    if USH_CASE_CLAIM_UPDATES.enabled(domain):
+    if USH_CASE_CLAIM_UPDATES.enabled(domain) or GEOSPATIAL.enabled(domain):
         _add_smart_types(dynamic_properties, domain, doc_dict['type'])
 
     return base_case_properties + dynamic_properties
