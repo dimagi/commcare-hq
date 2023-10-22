@@ -366,7 +366,31 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal(1200.0000) + num_to_charge - 1)
 
-    def test_subscription_level_user_credits(self):
+    def test_balance_reflects_credit_deduction_for_multiple_subscription_level_user_credit(self):
+        # Add User usage
+        num_users_main_domain = self.user_rate.monthly_limit + 10
+        generator.arbitrary_commcare_users_for_domain(self.main_domain.name, num_users_main_domain)
+        num_users_non_main_domain1 = 10
+        generator.arbitrary_commcare_users_for_domain(self.non_main_domain1.name, num_users_non_main_domain1)
+
+        self.addCleanup(self.cleanUpUser)
+
+        # Cover the cost of 2 User for main subscription
+        CreditLine.add_credit(
+            amount=Decimal(2.0000),
+            feature_type=FeatureType.USER,
+            subscription=self.main_subscription
+        )
+
+        # Cover the cost of 5 User for non main subscription 1
+        CreditLine.add_credit(
+            amount=Decimal(5.0000),
+            feature_type=FeatureType.USER,
+            subscription=self.non_main_sub1
+        )
+
+        num_to_charge = num_users_main_domain + num_users_non_main_domain1 - self.user_rate.monthly_limit
+
         calculate_users_in_all_domains(self.invoice_date)
         tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
