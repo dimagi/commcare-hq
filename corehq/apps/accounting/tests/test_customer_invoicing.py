@@ -341,7 +341,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(user_line_item.total, self.user_rate.per_excess_fee * num_to_charge)
         self.assertEqual(user_line_item.subtotal, self.user_rate.per_excess_fee * num_to_charge)
 
-    def test_account_level_user_credits(self):
+    def test_balance_reflects_credit_deduction_for_account_level_user_credits(self):
         # Add User usage
         num_users_main_domain = self.user_rate.monthly_limit + 10
         generator.arbitrary_commcare_users_for_domain(self.main_domain.name, num_users_main_domain)
@@ -367,6 +367,13 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(invoice.balance, Decimal(1200.0000) + num_to_charge - 1)
 
     def test_subscription_level_user_credits(self):
+        calculate_users_in_all_domains(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal(1200.0000) + num_to_charge - 7)
+
+    def test_balance_reflects_credit_deduction_for_single_subscription_level_user_credit(self):
         # Add User usage
         num_users_main_domain = self.user_rate.monthly_limit + 10
         generator.arbitrary_commcare_users_for_domain(self.main_domain.name, num_users_main_domain)
@@ -455,7 +462,36 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
             self.assertEqual(sms_line_item.unit_cost, sms_cost)
             self.assertEqual(sms_line_item.total, sms_cost)
 
-    def test_subscription_level_sms_credits(self):
+    def test_balance_reflects_credit_deduction_for_multiple_subscription_level_sms_credits(self):
+        # Add SMS usage
+        arbitrary_sms_billables_for_domain(
+            self.main_domain, self.sms_date, self.sms_rate.monthly_limit + 1
+        )
+        arbitrary_sms_billables_for_domain(
+            self.non_main_domain1, self.sms_date, num_sms=10
+        )
+
+        # Cover the cost of 1 SMS for main subscription
+        CreditLine.add_credit(
+            amount=Decimal(0.7500),
+            feature_type=FeatureType.SMS,
+            subscription=self.main_subscription
+        )
+
+        # Cover the cost of 1 SMS for non main subscription 1
+        CreditLine.add_credit(
+            amount=Decimal(0.7500),
+            feature_type=FeatureType.SMS,
+            subscription=self.non_main_sub1
+        )
+
+        calculate_users_in_all_domains(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal('1206.7500'))
+
+    def test_balance_reflects_credit_deduction_for_single_subscription_level_sms_credits(self):
         # Add SMS usage
         arbitrary_sms_billables_for_domain(
             self.main_domain, self.sms_date, self.sms_rate.monthly_limit + 1
@@ -477,7 +513,7 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
         invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal('1207.5000'))
 
-    def test_account_level_sms_credits(self):
+    def test_balance_reflects_credit_deduction_for_account_level_sms_credits(self):
         # Add SMS usage
         arbitrary_sms_billables_for_domain(
             self.main_domain, self.sms_date, self.sms_rate.monthly_limit + 1
