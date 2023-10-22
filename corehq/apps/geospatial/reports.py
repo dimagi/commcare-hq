@@ -11,7 +11,6 @@ from couchforms.geopoint import GeoPoint
 
 from corehq.apps.case_search.const import CASE_PROPERTIES_PATH
 from corehq.apps.es import CaseSearchES, filters
-from corehq.apps.es.case_search import wrap_case_search_hit
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
@@ -60,34 +59,21 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin):
         headers.custom_sort = [[2, 'desc']]
         return headers
 
+    def _get_geo_location(self, case):
+        geo_case_property = get_geo_case_property(self.domain)
+        geo_point = case.get_case_property(geo_case_property)
+        if not geo_point:
+            return
+
+        try:
+            geo_point = GeoPoint.from_string(geo_point, flexible=True)
+            return {"lat": geo_point.latitude, "lng": geo_point.longitude}
+        except BadValueError:
+            return None
+
     @property
     def rows(self):
-        geo_case_property = get_geo_case_property(self.domain)
-
-        def _get_geo_location(case):
-            case_obj = wrap_case_search_hit(case)
-            geo_point = case_obj.get_case_property(geo_case_property)
-            if not geo_point:
-                return
-
-            try:
-                geo_point = GeoPoint.from_string(geo_point, flexible=True)
-                return {"lat": geo_point.latitude, "lng": geo_point.longitude}
-            except BadValueError:
-                return None
-
-        cases = []
-        for row in self.es_results['hits'].get('hits', []):
-            display = CaseDisplayES(
-                self.get_case(row), self.timezone, self.individual
-            )
-            coordinates = _get_geo_location(self.get_case(row))
-            cases.append([
-                display.case_id,
-                coordinates,
-                display.case_link
-            ])
-        return cases
+        raise NotImplementedError()
 
 
 class CaseManagementMap(BaseCaseMapReport):
@@ -100,6 +86,32 @@ class CaseManagementMap(BaseCaseMapReport):
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
 
+    @property
+    def template_context(self):
+        context = super(CaseManagementMap, self).template_context
+        context.update({
+            'saved_polygons': [
+                {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
+                for p in GeoPolygon.objects.filter(domain=self.domain).all()
+            ]
+        })
+        return context
+
+    @property
+    def rows(self):
+        cases = []
+        for row in self.es_results['hits'].get('hits', []):
+            display = CaseDisplayES(
+                self.get_case(row), self.timezone, self.individual
+            )
+            coordinates = self._get_geo_location(self.get_case(row))
+            cases.append([
+                display.case_id,
+                coordinates,
+                display.case_link
+            ])
+        return cases
+
 
 class CaseGroupingReport(BaseCaseMapReport):
     name = gettext_noop('Case Grouping')
@@ -107,6 +119,10 @@ class CaseGroupingReport(BaseCaseMapReport):
 
     base_template = 'geospatial/case_grouping_map_base.html'
     report_template_path = 'case_grouping_map.html'
+
+    @property
+    def rows(self):
+        pass
 
     def _build_query(self):
         query = super()._build_query()
