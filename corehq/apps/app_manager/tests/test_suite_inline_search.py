@@ -17,7 +17,6 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
     RESULTS_INSTANCE_INLINE,
-    RESULTS_INSTANCE_BASE,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -644,8 +643,8 @@ class InlineSearchCustomInstanceName(SimpleTestCase, SuiteMixin):
 
     def test_inline_search_custom_instance_name(self):
         suite = self.app.create_suite()
-        custom_instance0 = f'{RESULTS_INSTANCE_BASE}{self.m0.search_config.get_instance_name()}'
-        custom_instance1 = f'{RESULTS_INSTANCE_BASE}{self.m1.search_config.get_instance_name()}'
+        custom_instance0 = f'{self.m0.search_config.get_instance_name()}'
+        custom_instance1 = f'{self.m1.search_config.get_instance_name()}'
 
         self.assertXmlPartialEqual(self._expected_entry_query('m0', custom_instance0), suite, "./entry[1]")
         self.assertXmlPartialEqual(self._expected_entry_query('m1', custom_instance1), suite, "./entry[2]")
