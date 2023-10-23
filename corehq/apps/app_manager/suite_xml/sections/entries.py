@@ -16,7 +16,6 @@ modules.  See ``update_refs`` and ``rename_other_id``, both inner functions in `
 .. _this comment: https://github.com/dimagi/commcare-hq/blob/c9fa01d1ccbb73d8f07fefbe56a0bbe1dbe231f8/corehq/apps/app_manager/suite_xml/sections/entries.py#L966-L971
 """  # noqa
 from collections import defaultdict
-import re
 
 from django.utils.translation import gettext as _
 
@@ -538,10 +537,8 @@ class EntriesHelper(object):
                 loads_registry_case = module_loads_registry_case(module)
                 uses_inline_search = module_uses_inline_search(module)
                 if loads_registry_case or uses_inline_search:
-                    query_datum = self.get_query_datums(module, uses_inline_search)
-                    result.append(query_datum)
-                    renamed_datum = self.rename_datum_nodeset_for_query(datum, query_datum)
-                    result.append(renamed_datum)
+                    result.append(self.get_query_datums(module, uses_inline_search))
+                    result.append(datum)
                     if loads_registry_case:
                         result.append(self.get_data_registry_case_datums(datum, module))
                 else:
@@ -549,18 +546,6 @@ class EntriesHelper(object):
             else:
                 result.append(datum)
         return result
-
-    def rename_datum_nodeset_for_query(self, datum, query_datum):
-        """Rename the instance in the case datum to match the instance used by the query datum
-        """
-        instance_name = query_datum.datum.storage_instance
-        if instance_name == "results":
-            return datum
-        instance_pattern = r"""instance\(['"]results:(.*?)['"]\)"""
-        new_instance = f"instance('{instance_name}')"
-        renamed = re.sub(instance_pattern, new_instance, datum.datum.nodeset)
-        datum.datum.nodeset = renamed
-        return datum
 
     def get_datum_meta_module(self, module, use_filter=False):
         datums = []
@@ -628,7 +613,8 @@ class EntriesHelper(object):
             uses_inline_search = module_uses_inline_search(detail_module)
             if loads_registry_case or uses_inline_search:
                 if uses_inline_search:
-                    instance_name, root_element = "results:inline", "results"
+                    instance_name = detail_module.search_config.get_instance_name()
+                    root_element = "results"
                 elif loads_registry_case:
                     instance_name, root_element = "results", "results"
                 if detail_module.search_config.search_filter and USH_SEARCH_FILTER.enabled(self.app.domain):
