@@ -1406,6 +1406,8 @@ class ClearCommCareUsers(DeleteCommCareUsers):
             subject=f"Mobile Worker Clearing Complete - {self.domain}",
             message=f"The mobile workers have been cleared successfully for the project '{self.domain}'.",
             recipient_list=[self.request.couch_user.get_email()],
+            domain=self.domain,
+            use_domain_gateway=True,
         )
 
 
