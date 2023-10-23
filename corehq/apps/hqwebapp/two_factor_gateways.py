@@ -245,13 +245,13 @@ def _report_usage(ip_address, number, username):
 
 
 def _report_current_global_two_factor_setup_rate_limiter():
-    for scope, limits in global_two_factor_setup_rate_limiter.iter_rates():
-        for rate_counter, current_rate, threshold in limits:
-            metrics_gauge('commcare.two_factor.global_two_factor_setup_threshold', threshold, tags={
-                'window': rate_counter.key,
+    for scope, rates in global_two_factor_setup_rate_limiter.iter_rates():
+        for rate_info in rates:
+            metrics_gauge('commcare.two_factor.global_two_factor_setup_threshold', rate_info.limit, tags={
+                'window': rate_info.window,
                 'scope': scope
             }, multiprocess_mode=MPM_MAX)
-            metrics_gauge('commcare.two_factor.global_two_factor_setup_usage', current_rate, tags={
-                'window': rate_counter.key,
+            metrics_gauge('commcare.two_factor.global_two_factor_setup_usage', rate_info.current_rate, tags={
+                'window': rate_info.window,
                 'scope': scope
             }, multiprocess_mode=MPM_MAX)

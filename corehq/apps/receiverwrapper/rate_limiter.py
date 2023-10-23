@@ -209,27 +209,27 @@ def _delay_and_report_rate_limit_submission(domain, max_wait, delay_rather_than_
 
 @quickcache([], timeout=60)  # Only report up to once a minute
 def _report_current_global_submission_thresholds():
-    for scope, limits in global_submission_rate_limiter.iter_rates():
-        for rate_counter, value, threshold in limits:
-            metrics_gauge('commcare.xform_submissions.global_threshold', threshold, tags={
-                'window': rate_counter.key,
+    for scope, rates in global_submission_rate_limiter.iter_rates():
+        for rate_info in rates:
+            metrics_gauge('commcare.xform_submissions.global_threshold', rate_info.limit, tags={
+                'window': rate_info.window,
                 'scope': scope
             }, multiprocess_mode='max')
-            metrics_gauge('commcare.xform_submissions.global_usage', value, tags={
-                'window': rate_counter.key,
+            metrics_gauge('commcare.xform_submissions.global_usage', rate_info.current_rate, tags={
+                'window': rate_info.window,
                 'scope': scope
             }, multiprocess_mode='max')
 
 
 @quickcache([], timeout=60)  # Only report up to once a minute
 def _report_current_global_case_update_thresholds():
-    for scope, limits in global_case_rate_limiter.iter_rates():
-        for rate_counter, value, threshold in limits:
-            metrics_gauge('commcare.case_updates.global_threshold', threshold, tags={
-                'window': rate_counter.key,
+    for scope, rates in global_case_rate_limiter.iter_rates():
+        for rate_info in rates:
+            metrics_gauge('commcare.case_updates.global_threshold', rate_info.limit, tags={
+                'window': rate_info.window,
                 'scope': scope
             }, multiprocess_mode='max')
-            metrics_gauge('commcare.case_updates.global_usage', value, tags={
-                'window': rate_counter.key,
+            metrics_gauge('commcare.case_updates.global_usage', rate_info.current_rate, tags={
+                'window': rate_info.window,
                 'scope': scope
             }, multiprocess_mode='max')

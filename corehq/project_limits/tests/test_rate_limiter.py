@@ -10,6 +10,7 @@ from corehq.project_limits.rate_limiter import (
     PerUserRateDefinition,
     RateDefinition,
     RateLimiter,
+    RateInfo
 )
 
 
@@ -37,8 +38,8 @@ def test_get_window_of_first_exceeded_limit():
     min_rate_def = RateDefinition(per_second=100)
     per_user_rate_def = PerUserRateDefinition(per_user_rate_def, min_rate_def)
     rate_limiter = RateLimiter('my_feature', per_user_rate_def.get_rate_limits)
-    rate_limiter.iter_rates = Mock(return_value=[('', [(second_rate_counter, 11, 10)])])
     expected_window = 'second'
+    rate_limiter.iter_rates = Mock(return_value=[('', [RateInfo(second_rate_counter, expected_window, 11, 10)])])
     actual_window = rate_limiter.get_window_of_first_exceeded_limit('my_domain')
     eq(actual_window, expected_window)
 
@@ -51,8 +52,8 @@ def test_get_window_of_first_exceeded_limit_none():
     min_rate_def = RateDefinition(per_second=100)
     per_user_rate_def = PerUserRateDefinition(per_user_rate_def, min_rate_def)
     rate_limiter = RateLimiter('my_feature', per_user_rate_def.get_rate_limits)
-    rate_limiter.iter_rates = Mock(return_value=[('', [(second_rate_counter, 9, 10)])])
     expected_window = None
+    rate_limiter.iter_rates = Mock(return_value=[('', [RateInfo(second_rate_counter, expected_window, 9, 10)])])
     actual_window = rate_limiter.get_window_of_first_exceeded_limit('my_domain')
     eq(actual_window, expected_window)
 
@@ -65,7 +66,7 @@ def test_get_window_of_first_exceeded_limit_priority():
     min_rate_def = RateDefinition(per_second=100)
     per_user_rate_def = PerUserRateDefinition(per_user_rate_def, min_rate_def)
     rate_limiter = RateLimiter('my_feature', per_user_rate_def.get_rate_limits)
-    rate_limiter.iter_rates = Mock(return_value=[('', [(week_rate_counter, 11, 10), ('second', 11, 10)])])
+    rate_limiter.iter_rates = Mock(return_value=[('', [RateInfo(week_rate_counter, 'week', 11, 10), RateInfo(second_rate_counter, 'second', 11, 10)])])
     expected_window = 'week'
     actual_window = rate_limiter.get_window_of_first_exceeded_limit('my_domain')
     eq(actual_window, expected_window)
