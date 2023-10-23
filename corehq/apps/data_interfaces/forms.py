@@ -430,7 +430,8 @@ class CaseRuleCriteriaForm(forms.Form):
             Fieldset(
                 _("Case Filters") if self.show_fieldset_title else "",
                 HTML(
-                    '<p class="help-block alert alert-info"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
+                    '<p class="help-block alert alert-info"><i class="fa fa-info-circle"></i> %s</p>'
+                    % self.fieldset_help_text
                 ),
                 hidden_bound_field('filter_on_server_modified', 'filterOnServerModified'),
                 hidden_bound_field('server_modified_boundary', 'serverModifiedBoundary'),
@@ -548,9 +549,9 @@ class CaseRuleCriteriaForm(forms.Form):
                 self._json_fail_hard()
 
             if (
-                'property_name' not in obj or
-                'property_value' not in obj or
-                'match_type' not in obj
+                'property_name' not in obj
+                or 'property_value' not in obj
+                or 'match_type' not in obj
             ):
                 self._json_fail_hard()
 
@@ -826,9 +827,9 @@ class CaseRuleActionsForm(forms.Form):
                 self._json_fail_hard()
 
             if (
-                'name' not in obj or
-                'value_type' not in obj or
-                'value' not in obj
+                'name' not in obj
+                or 'value_type' not in obj
+                or 'value' not in obj
             ):
                 self._json_fail_hard()
 
@@ -882,15 +883,15 @@ class CaseRuleActionsForm(forms.Form):
     def clean(self):
         cleaned_data = super(CaseRuleActionsForm, self).clean()
         if (
-            'close_case' in cleaned_data and
-            'properties_to_update' in cleaned_data and
-            'custom_action_definitions' in cleaned_data
+            'close_case' in cleaned_data
+            and 'properties_to_update' in cleaned_data
+            and 'custom_action_definitions' in cleaned_data
         ):
             # All fields passed individual validation
             if (
-                not cleaned_data['close_case'] and
-                not cleaned_data['properties_to_update'] and
-                not cleaned_data['custom_action_definitions']
+                not cleaned_data['close_case']
+                and not cleaned_data['properties_to_update']
+                and not cleaned_data['custom_action_definitions']
             ):
                 raise ValidationError(_("Please specify at least one action."))
 
