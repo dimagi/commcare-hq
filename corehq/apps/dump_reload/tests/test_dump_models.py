@@ -98,6 +98,7 @@ IGNORE_MODELS = {
     "util.ComplaintBounceMeta",
     "util.PermanentBounceMeta",
     "util.TransientBounceEmail",
+    "abdm.ABDMUser",
 }
 
 # TODO: determine which of these should not be ignored
