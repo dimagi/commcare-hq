@@ -413,6 +413,7 @@ hqDefine("geospatial/js/geospatial_map", [
             self.hasFiltersChanged = ko.observable(false);  // Used to disable "Apply" button
             self.showFilterMenu = ko.observable(true);
             self.hasErrors = ko.observable(false);
+            self.selectedLocation = null;
 
             self.loadUsers = function () {
                 map.removeMarkersFromMap(userModels());
@@ -458,6 +459,11 @@ hqDefine("geospatial/js/geospatial_map", [
                         self.hasErrors(true);
                     },
                 });
+            };
+
+            self.onLocationFilterChange = function (_, e) {
+                self.selectedLocation = $(e.currentTarget).select2('val');
+                self.onFiltersChange();
             };
 
             self.onFiltersChange = function () {
