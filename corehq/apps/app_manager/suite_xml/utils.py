@@ -130,6 +130,6 @@ def is_valid_results_instance_name(app, instance_name):
     )
 
     valid_instance_names = {RESULTS_INSTANCE, RESULTS_INSTANCE_INLINE}
-    valid_instance_names.update(f'{RESULTS_INSTANCE_BASE}{module.search_config.instance_name}'
+    valid_instance_names.update(f'{RESULTS_INSTANCE_BASE}{module.search_config.get_instance_name()}'
                                 for module in app.get_modules() if hasattr(module, 'search_config'))
     return instance_name in valid_instance_names
