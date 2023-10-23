@@ -165,7 +165,8 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     function updateClusterStats() {
         const sourceFeatures = map.querySourceFeatures('caseWithGPS', {
-            filter: ['get', 'cluster'],
+            sourceLayer: 'clusters',
+            filter: ['==', 'cluster', true],
         });
 
         // Mapbox clustering creates the same cluster groups with slightly different coordinates.
