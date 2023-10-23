@@ -10,6 +10,7 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.geospatial.views import GeospatialConfigPage, GPSCaptureView
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_case
@@ -272,6 +273,7 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
         self.assertEqual(response.json(), expected_output)
 
 
+@es_test(requires=[user_adapter], setup_class=True)
 class TestGetUsersWithGPS(BaseGeospatialViewClass):
 
     urlname = 'get_users_with_gps'
@@ -280,26 +282,56 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
     def setUpClass(cls):
         super().setUpClass()
 
+        cls.location_type = LocationType.objects.create(
+            domain=cls.domain,
+            name='country',
+        )
+        cls.country_a = SQLLocation.objects.create(
+            domain=cls.domain,
+            name='Country A',
+            location_type=cls.location_type,
+        )
+        cls.country_b = SQLLocation.objects.create(
+            domain=cls.domain,
+            name='Country B',
+            location_type=cls.location_type,
+        )
+
         cls.user_a = CommCareUser.create(
             cls.domain,
             username='UserA',
             password='1234',
             created_by=None,
             created_via=None,
-            metadata={GPS_POINT_CASE_PROPERTY: '12.34 45.67'}
+            metadata={GPS_POINT_CASE_PROPERTY: '12.34 45.67'},
+            location=cls.country_a,
         )
         cls.user_b = CommCareUser.create(
             cls.domain,
             username='UserB',
             password='1234',
             created_by=None,
-            created_via=None
+            created_via=None,
+            location=cls.country_b,
         )
+        cls.user_c = CommCareUser.create(
+            cls.domain,
+            username='UserC',
+            password='1234',
+            created_by=None,
+            created_via=None,
+            metadata={GPS_POINT_CASE_PROPERTY: '45.67 12.34'},
+        )
+
+        user_adapter.bulk_index([cls.user_a, cls.user_b, cls.user_c], refresh=True)
 
     @classmethod
     def tearDownClass(cls):
-        cls.user_a.delete(cls.domain, None)
-        cls.user_b.delete(cls.domain, None)
+        for user in CommCareUser.by_domain(cls.domain):
+            user.delete(cls.domain, None)
+        for location in SQLLocation.objects.filter(domain=cls.domain):
+            location.delete()
+        cls.location_type.delete()
         super().tearDownClass()
 
     def test_get_users_with_gps(self):
@@ -315,8 +347,20 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
                     'username': self.user_b.raw_username,
                     'gps_point': '',
                 },
+                {
+                    'id': self.user_c.user_id,
+                    'username': self.user_c.raw_username,
+                    'gps_point': '45.67 12.34',
+                },
             ],
         }
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(self.endpoint)
         self.assertEqual(response.json(), expected_output)
+
+    def test_get_location_filtered_users(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.endpoint, data={'location_id': self.country_a.location_id})
+        user_data = response.json()['user_data']
+        self.assertEqual(len(user_data), 1)
+        self.assertEqual(user_data[0]['gps_point'], '12.34 45.67')
