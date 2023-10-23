@@ -4,7 +4,6 @@ import json
 import logging
 from contextlib import contextmanager
 
-from django.conf import settings
 from django.test import SimpleTestCase
 
 import pytz
@@ -422,7 +421,6 @@ class OwnerTests(LocationHierarchyTestCase):
                 'connections. If necessary, please provide an alternate '
                 'address.',
 
-                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=['admin@example.com'],
             )
 
@@ -458,7 +456,6 @@ class OwnerTests(LocationHierarchyTestCase):
                 'connections. If necessary, please provide an alternate '
                 'address.',
 
-                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=['admin@example.com'],
             )
 

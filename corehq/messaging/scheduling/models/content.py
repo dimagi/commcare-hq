@@ -167,9 +167,9 @@ class EmailContent(Content):
             return
 
         metrics_counter('commcare.messaging.email.sent', tags={'domain': logged_event.domain})
-        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL,
+        send_mail_async.delay(subject, message,
                               [email_address], logged_subevent.id,
-                              domain=logged_event.domain)
+                              domain=logged_event.domain, use_domain_gateway=True)
 
         email = Email(
             domain=logged_event.domain,
