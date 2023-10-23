@@ -1,3 +1,4 @@
+from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
@@ -6,9 +7,6 @@ from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
     CustomDataFieldsProfile,
     is_system_key,
-)
-from corehq.apps.users.views.mobile.custom_data_fields import (
-    CUSTOM_USER_DATA_FIELD_TYPE,
 )
 
 
@@ -68,6 +66,9 @@ class UserData:
             return self._get_profile(self.profile_id)
 
     def _get_profile(self, profile_id):
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            CUSTOM_USER_DATA_FIELD_TYPE,
+        )
         try:
             return CustomDataFieldsProfile.objects.get(
                 id=profile_id,
@@ -152,3 +153,17 @@ class UserData:
     def save(self):
         # TODO
         ...
+
+
+class SQLUserData(models.Model):
+    domain = models.CharField(max_length=128)
+    user_id = models.CharField(max_length=36)
+    modified_on = models.DateTimeField(auto_now=True)
+
+    profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
+                                on_delete=models.PROTECT, null=True)
+    data = models.JSONField()
+
+    class Meta:
+       unique_together = ("user_id", "domain")
+       indexes = [models.Index(fields=['user_id', 'domain'])]

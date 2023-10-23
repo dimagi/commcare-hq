@@ -101,6 +101,7 @@ from .models_role import (  # noqa
     StaticRole,
     UserRole,
 )
+from .user_data import SQLUserData  # noqa
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.locations.models import (
