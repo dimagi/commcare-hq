@@ -427,6 +427,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
                 $.ajax({
                     method: 'GET',
+                    data: {'location_id': self.selectedLocation},
                     url: initialPageData.reverse('get_users_with_gps'),
                     success: function (data) {
                         self.hasFiltersChanged(false);
