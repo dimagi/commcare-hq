@@ -77,7 +77,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('Enable Menu Display Setting Per-Module'),
     gettext_noop('Enable'),
     gettext_noop('Enabled'),
-    gettext_noop('Enables searching as search values change after initial search for Split Screen Case Search'),
+    gettext_noop('Enable searching as input values change after initial Split Screen Case Search'),
     gettext_noop('For mobile map displays, chooses a base tileset for the underlying map layer'),
     gettext_noop('Forms Menu Display'),
     gettext_noop('Forms are Never Removed'),
