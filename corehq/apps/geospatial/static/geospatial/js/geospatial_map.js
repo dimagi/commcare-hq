@@ -2,6 +2,7 @@ hqDefine("geospatial/js/geospatial_map", [
     "jquery",
     "hqwebapp/js/initial_page_data",
     "knockout",
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     initialPageData,
@@ -477,6 +478,25 @@ hqDefine("geospatial/js/geospatial_map", [
             if ($userFiltersDiv.length) {
                 const userFiltersInstance = userFiltersModel();
                 $userFiltersDiv.koApplyBindings(userFiltersInstance);
+                $("#location-filter-select").select2({
+                    placeholder: gettext('All locations'),
+                    allowClear: true,
+                    cache: true,
+                    ajax: {
+                        url: initialPageData.reverse('location_search'),
+                        dataType: 'json',
+                        processResults: function (data) {
+                            return {
+                                results: $.map(data.results, function (item) {
+                                    return {
+                                        text: item.text,
+                                        id: item.id,
+                                    };
+                                }),
+                            };
+                        },
+                    },
+                });
             }
         }
 
