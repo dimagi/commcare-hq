@@ -84,7 +84,6 @@ class RateLimiter(object):
             (rate_counter, ...)
             ...
         ])
-        
         where `rate_counter.key` is the window of the counter i.e. 'week', 'day' etc
         """
 

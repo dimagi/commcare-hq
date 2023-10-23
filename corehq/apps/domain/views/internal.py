@@ -188,8 +188,10 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
                 self.internal_settings_form.cleaned_data['active_ucr_expressions'],
                 old_ucr_permissions,
             )
-            eula_props_changed = (bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula)
-                                  or bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data))
+            eula_props_changed = (
+                bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula)
+                or bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data)
+            )
 
             if eula_props_changed and settings.EULA_CHANGE_EMAIL:
                 message = '\n'.join([
