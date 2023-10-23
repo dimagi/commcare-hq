@@ -225,3 +225,142 @@ These indices are safe to delete and are not used in any functionality of CommCa
 cchq <env> update-config
 ```
 Do not restart the services, let deploy process handle that for you.
+
+### Reindexing One Index At A Time
+
+When there isn't enough space to accomodate duplicate data for all the indices, then we will multiplex, reindex and swap one index at a time. Then we will turn off multiplexer and swap the index and delete the older index. And we will repeat the process for all the indices as described below.
+
+1.  To turn on multiplexer one index at a time, repeat the following steps by replacing <index_cname> with following values one by one :
+
+    ```
+    'apps', 'cases', 'case_search', 'domains', 'forms', 'groups', 'sms', 'users'
+    ```
+
+    1. Update `environments/<env>/public.yml`.
+        ```
+        ES_<index_cname>_INDEX_MULTIPLEXED = True
+        ```
+    2. Apply the changes and restart commcare service
+
+        ```
+        cchq <env> update-config
+        cchq <env> service commcare restart
+        ```
+    3. Start the reindex process for <index_cname>
+        ```
+        ./manage.py elastic_sync_multiplexed start <index_cname>
+        ```
+        It is advised to run the reindex command in a tmux session as it might take a long time and can be detached/re-attached as needed for monitoring progress.
+
+        Note down the `task_number` that is displayed by the command. It should be a numeric ID and would be required to verify the reindex process
+
+    4. Verify reindex is completed by querying the logs (only needed for Elasticsearch 2) and ensuring that doc count matches between primary and secondary indices.
+
+        1. Logs can be queried by running:
+
+            ```
+            cchq <env> run-shell-command elasticsearch "grep '<task_number>.*ReindexResponse' /opt/data/elasticsearch*/logs/*.log"
+            ```
+
+            This command will query the Elasticsearch logs on all data nodes to find any log entries containing the ReindexResponse for the given task_number. The log should look something like:
+
+            ```
+            [2023-10-23 08:59:37,648][INFO] [tasks] 29216 finished with response ReindexResponse[took=1.8s,updated=0,created=1111,batches=2,versionConflicts=0,noops=0,retries=0,throttledUntil=0s,indexing_failures=[],search_failures=[]]
+            ```
+
+            Ensure that `search_failures` and `indexing_failures` are empty lists.
+
+        2. Then check doc counts between primary and secondary indices using:
+
+            ```
+            cchq env django-manage elastic_sync_multiplexed display_doc_counts <index_cname>
+            ```
+
+            This command will display the document counts for both the primary and secondary indices for a given index. If the doc count matches between the two and there are no errors in the reindex logs, then reindexing is complete for that index.
+
+            Please note that for high frequecy indices like case_search, cases and forms the counts may not match perfectly. In such cases, ensure the difference in counts is small (within hundred) and there are no errors in reindex logs.
+
+    5.  After the index has been reindexed, we need to cleanup tombstones and setting the correct replica count for the newly created index.
+        ```
+        ./manage.py elastic_sync_multiplexed cleanup <index_cname>
+        ```
+
+        ```
+        ./manage.py elastic_sync_multiplexed set_replicas <index_cname>
+        ```
+    6. At this step we should have a secondary index for `<index_cname>` which has same data as of primary index. On index `<index_cname>` writes will continue to happen to both primary and secondary indices simultaneously. Reads would still happening from the primary index.
+
+    7. To switch the reads from primary index to the new secondary index, we need to swap the index.
+    To swap the index we need to follow the following steps:
+
+        1. Stop the pillows
+
+            ```
+            cchq <env> service pillowtop stop
+            ```
+        2. Copy the checkpoint ids for the pillows that depend on the index you are about to swap.
+
+            ```
+            cchq <env> django-manage  elastic_sync_multiplexed copy_checkpoints <index_cname>
+            ```
+        3. We will now swap the index in settings file to  make the primary index as secondary and vice versa.
+        Update `environments/<env>/public.yml`, set
+            ```
+            ES_<index_cname>_INDEX_SWAPPED = True
+            ```
+
+        4. From control machine, run update-config and restart commcare services so that new settings are applied. This will also restart the pillows that were stopped in previous step.
+            ```
+            cchq <env> update-config
+            cchq <env> service commcare restart
+            ```
+            After this step, the indexes will be swapped and reads will now happen from the newly created secondary indices.
+
+        5. Look around in CommcareHQ, test out things dealing with the index that was swapped
+
+        6. It is recommended to keep the indices in this state for at least 1 working day. This will provide a safe window to fall back if needed.
+
+    8. When you are confident that things are working fine with the new index, you are all set to turn off the multiplexer settings. Update `environments/<env>/public.yml` with following values:
+        ```
+        ES_<index_cname>_INDEX_MULTIPLEXED = False
+        ```
+    9. For index <index_cname>, writes have been stopped on primary indices. The older index is eligible for deletion. It is recommended to wait for 6 hours after the multiplexer is turned off. The older index can be deleted by running.
+
+    ```
+    cchq <env> django-manage elastic_sync_multiplexed delete <index_cname>
+    ```
+    This will free up the space on machine and you are ready to reindex another index.
+
+    10. Go back to Step 1 and repeat the process with different index_cname
+
+2. Delete any lingering residual indices by running
+
+```
+cchq <env> django-manage elastic_sync_multiplexed remove_residual_indices
+```
+These indices are safe to delete and are not used in any functionality of CommCareHQ.
+
+3. Congratulations :tada: You have successfully created new indexes that are active on CommcareHQ.
+
+4. Update [Index Names](./const.py#L27-L57), set Primary index names to secondary index name and secondary index names to `None`.
+
+5. Set Index swapped variables to False
+
+    ```
+    ES_APPS_INDEX_SWAPPED = False
+    ES_CASE_SEARCH_INDEX_SWAPPED = False
+    ES_CASES_INDEX_SWAPPED = False
+    ES_DOMAINS_INDEX_SWAPPED = False
+    ES_FORMS_INDEX_SWAPPED = False
+    ES_GROUPS_INDEX_SWAPPED = False
+    ES_SMS_INDEX_SWAPPED = False
+    ES_USERS_INDEX_SWAPPED = False
+
+    ```
+
+6. Before deploying the changes in Step 10, run update-config.
+
+```
+cchq <env> update-config
+```
+Do not restart the services, let deploy process handle that for you.
