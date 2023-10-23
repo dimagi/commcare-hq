@@ -530,13 +530,13 @@ class ModuleBaseValidator(object):
             if self.module.root_module_id:
                 root_module = self.app.get_module_by_unique_id(self.module.root_module_id)
                 if root_module and module_uses_inline_search(root_module):
-                    root_module_instance_name = root_module.search_config.instance_name
-                    if search_config.instance_name == root_module_instance_name:
+                    root_module_instance_name = root_module.search_config.get_instance_name()
+                    if search_config.get_instance_name() == root_module_instance_name:
                         yield {
                             "type": "non-unique instance name with parent module",
-                            "message": f'The instance "{search_config.instance_name}" is not unique',
+                            "message": f'The instance "{search_config.get_instance_name()}" is not unique',
                             "module": self.get_module_info(),
-                            "details": search_config.instance_name
+                            "details": search_config.get_instance_name()
                         }
 
     def validate_case_list_field_actions(self):
