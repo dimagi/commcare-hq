@@ -626,11 +626,9 @@ class CaseRuleCriteriaForm(forms.Form):
             self._json_fail_hard()
 
         if value:
-            location_def = value[0]
-            if not location_def.get('include_child_locations'):
-                location_def['include_child_locations'] = False
-
-            return location_def
+            if not value.get('include_child_locations'):
+                value['include_child_locations'] = False
+            return value
         return ''
 
     def clean_ucr_filter_definitions(self):

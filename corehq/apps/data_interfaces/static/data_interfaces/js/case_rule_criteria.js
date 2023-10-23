@@ -106,13 +106,14 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         });
 
         self.locationFilterDefinition = ko.computed(function () {
-            var result = [];
+            var result = undefined;
             $.each(self.criteria(), function (index, value) {
                 if (value.koTemplateId === 'locations-filter') {
-                    result.push({
+                    result = {
                         location_id: value.location_id() || '',
                         include_child_locations: value.include_child_locations() || '',
-                    });
+                    };
+                    return false;  // break -- only a single location is supported
                 }
             });
             return JSON.stringify(result);
