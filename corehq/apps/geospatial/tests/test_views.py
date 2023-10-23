@@ -218,7 +218,7 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
             password='1234',
             created_by=None,
             created_via=None,
-            metadata={GPS_POINT_CASE_PROPERTY: '12.34 45.67'}
+            user_data={GPS_POINT_CASE_PROPERTY: '12.34 45.67'}
         )
         cls.user_b = CommCareUser.create(
             cls.domain,
@@ -286,7 +286,7 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
             password='1234',
             created_by=None,
             created_via=None,
-            metadata={GPS_POINT_CASE_PROPERTY: '12.34 45.67'}
+            user_data={GPS_POINT_CASE_PROPERTY: '12.34 45.67'}
         )
         cls.user_b = CommCareUser.create(
             cls.domain,

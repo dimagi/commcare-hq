@@ -212,6 +212,7 @@ class EditCommCareUserView(BaseEditUserView):
             'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
             'custom_fields_profiles': sorted(profiles, key=lambda x: x['name'].lower()),
             'custom_fields_profile_slug': PROFILE_SLUG,
+            'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'has_any_sync_logs': self.has_any_sync_logs,
@@ -838,7 +839,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             device_id="Generated from HQ",
             first_name=first_name,
             last_name=last_name,
-            metadata=self.custom_data.get_data_to_save(),
+            user_data=self.custom_data.get_data_to_save(),
             is_account_confirmed=is_account_confirmed,
             location=SQLLocation.objects.get(domain=self.domain, location_id=location_id) if location_id else None,
             role_id=role_id
@@ -1066,7 +1067,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 created_via=USER_CHANGE_VIA_WEB,
                 phone_number=phone_number,
                 device_id="Generated from HQ",
-                metadata=self.custom_data.get_data_to_save(),
+                user_data=self.custom_data.get_data_to_save(),
             )
 
             if 'location_id' in request.GET:
