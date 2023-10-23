@@ -643,8 +643,8 @@ class InlineSearchCustomInstanceName(SimpleTestCase, SuiteMixin):
 
     def test_inline_search_custom_instance_name(self):
         suite = self.app.create_suite()
-        custom_instance0 = f'{self.m0.search_config.get_instance_name()}'
-        custom_instance1 = f'{self.m1.search_config.get_instance_name()}'
+        custom_instance0 = self.m0.search_config.get_instance_name()
+        custom_instance1 = self.m1.search_config.get_instance_name()
 
         self.assertXmlPartialEqual(self._expected_entry_query('m0', custom_instance0), suite, "./entry[1]")
         self.assertXmlPartialEqual(self._expected_entry_query('m1', custom_instance1), suite, "./entry[2]")
