@@ -213,6 +213,8 @@ class Requests(object):
             _('MOTECH Error'),
             '\r\n'.join(message_lines),
             recipient_list=self.notify_addresses,
+            domain=self.domain_name,
+            use_domain_gateway=True,
         )
 
 
