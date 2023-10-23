@@ -200,6 +200,11 @@ class EmailConfigurationManager(ABC):
     def SES_configuration_set(self):
         pass
 
+    @property
+    @abstractmethod
+    def return_path_email(self):
+        pass
+
 
 class DefaultEmailConfiguration(EmailConfigurationManager):
     def __init__(self, from_email: str):
@@ -216,6 +221,10 @@ class DefaultEmailConfiguration(EmailConfigurationManager):
     @property
     def SES_configuration_set(self):
         return settings.SES_CONFIGURATION_SET
+
+    @property
+    def return_path_email(self):
+        return settings.RETURN_PATH_EMAIL
 
 
 class CustomEmailConfiguration(EmailConfigurationManager):
@@ -242,3 +251,7 @@ class CustomEmailConfiguration(EmailConfigurationManager):
     @property
     def SES_configuration_set(self):
         return self._email_setting.ses_config_set_name if self._email_setting.use_tracking_headers else None
+
+    @property
+    def return_path_email(self):
+        return self._email_setting.return_path_email
