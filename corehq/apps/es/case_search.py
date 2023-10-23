@@ -128,7 +128,7 @@ class CaseSearchES(CaseES):
             queries.MUST,
         )
 
-    def sort_by_case_property(self, case_property_name, desc=False, sort_type=None, reset_sort=False):
+    def sort_by_case_property(self, case_property_name, desc=False, sort_type=None):
         sort_filter = filters.term(PROPERTY_KEY, case_property_name)
         if sort_type:
             sort_missing = '_last' if desc else '_first'
@@ -136,8 +136,8 @@ class CaseSearchES(CaseES):
                 CASE_PROPERTIES_PATH, "{}.{}".format(VALUE, sort_type),
                 sort_filter,
                 desc,
-                reset_sort,
-                sort_missing
+                reset_sort=False,
+                sort_missing=sort_missing
             )
 
         return self.nested_sort(
