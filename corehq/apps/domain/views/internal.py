@@ -316,8 +316,12 @@ def get_project_limits_context(name_limiter_tuple_list, scope=None):
 
 def _get_rate_limits(scope, rate_limiter):
     return [
-        {'key': scope + ' ' + rate_info.window, 'current_usage': int(rate_info.current_usage), 'limit': int(rate_info.limit),
-         'percent_usage': round(100 * rate_info.current_usage / rate_info.limit, 1)}
+        {
+            'key': scope + ' ' + rate_info.window,
+            'current_usage': int(rate_info.current_usage),
+            'limit': int(rate_info.limit),
+            'percent_usage': round(100 * rate_info.current_usage / rate_info.limit, 1)
+        }
         for scope, rates in rate_limiter.iter_rates(scope)
         for rate_info in rates
     ]
