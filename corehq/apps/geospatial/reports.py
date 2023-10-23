@@ -11,6 +11,7 @@ from couchforms.geopoint import GeoPoint
 
 from corehq.apps.case_search.const import CASE_PROPERTIES_PATH
 from corehq.apps.es import CaseSearchES, filters
+from corehq.apps.es.case_search import wrap_case_search_hit
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
@@ -104,7 +105,8 @@ class CaseManagementMap(BaseCaseMapReport):
             display = CaseDisplayES(
                 self.get_case(row), self.timezone, self.individual
             )
-            coordinates = self._get_geo_location(self.get_case(row))
+            case = wrap_case_search_hit(row)
+            coordinates = self._get_geo_location(case)
             cases.append([
                 display.case_id,
                 coordinates,
