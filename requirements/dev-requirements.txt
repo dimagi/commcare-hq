@@ -245,7 +245,7 @@ eulxml==1.1.3
     # via -r base-requirements.in
 exceptiongroup==1.1.1
     # via cattrs
-executing==0.8.3
+executing==2.0.0
     # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
@@ -779,7 +779,7 @@ unidecode==1.2.0
     # via pyphonetics
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.17
+urllib3==1.26.18
     # via
     #   -r docs-requirements.in
     #   botocore
