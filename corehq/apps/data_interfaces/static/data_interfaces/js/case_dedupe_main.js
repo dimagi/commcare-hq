@@ -247,8 +247,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
             initialPageData.get('case_properties'),
             initialPageData.get('include_closed'),
             initialPageData.get('properties_to_update'),
-            initialPageData.get('all_case_properties'),
-            initialPageData.get('allow_actions')
+            initialPageData.get('all_case_properties')
         );
         $("#case-dedupe-rule-definition").koApplyBindings(caseDedupe);
 
