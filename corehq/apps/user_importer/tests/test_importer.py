@@ -164,13 +164,17 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             'is_active': 'True',
             'phone-number': ['23424123'],
             'password': 123,
-            'email': None
+            'email': None,
+            'user_profile': None,
         }
         if delete_keys:
             for key in delete_keys:
                 spec.pop(key)
         spec.update(kwargs)
         return spec
+
+    def assert_user_data_item(self, key, expected):
+        self.assertEqual(self.user.get_user_data(self.domain.name).get(key), expected)
 
     def test_upload_with_missing_user_id(self):
         import_users_and_groups(
@@ -198,7 +202,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             False
         )
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assertEqual(self.user.location_id, self.user.metadata.get('commcare_location_id'))
+        self.assert_user_data_item('commcare_location_id', self.user.location_id)
         # multiple locations
         self.assertListEqual([self.loc1._id], self.user.assigned_location_ids)
 
@@ -241,11 +245,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         # first location should be primary location
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assertEqual(self.user.location_id, self.user.metadata.get('commcare_location_id'))
+        self.assert_user_data_item('commcare_location_id', self.user.location_id)
         # multiple locations
         self.assertListEqual([loc._id for loc in [self.loc1, self.loc2]], self.user.assigned_location_ids)
         # non-primary location
-        self.assertTrue(self.loc2._id in self.user.metadata.get('commcare_location_ids'))
+        self.assert_user_data_item('commcare_location_ids', " ".join([self.loc1._id, self.loc2._id]))
 
         user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
                                                user_id=self.user.get_id,
@@ -296,7 +300,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # user should have no locations
         self.assertEqual(self.user.location_id, None)
-        self.assertEqual(self.user.metadata.get('commcare_location_id'), None)
+        self.assert_user_data_item('commcare_location_id', None)
         self.assertListEqual(self.user.assigned_location_ids, [])
 
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
@@ -323,8 +327,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # user's primary location should be loc1
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc1._id)
-        self.assertEqual(self.user.metadata.get('commcare_location_ids'), " ".join([self.loc1._id, self.loc2._id]))
+        self.assert_user_data_item('commcare_location_id', self.loc1._id)
+        self.assert_user_data_item('commcare_location_ids', " ".join([self.loc1._id, self.loc2._id]))
         self.assertListEqual(self.user.assigned_location_ids, [self.loc1._id, self.loc2._id])
 
         user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
@@ -349,8 +353,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # user's location should now be loc2
         self.assertEqual(self.user.location_id, self.loc2._id)
-        self.assertEqual(self.user.metadata.get('commcare_location_ids'), self.loc2._id)
-        self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc2._id)
+        self.assert_user_data_item('commcare_location_ids', self.loc2._id)
+        self.assert_user_data_item('commcare_location_id', self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
 
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
@@ -398,7 +402,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # user's location should now be loc2
         self.assertEqual(self.user.location_id, self.loc2._id)
-        self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc2._id)
+        self.assert_user_data_item('commcare_location_id', self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
 
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
@@ -528,8 +532,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(self.user.full_name, "")
 
-    def test_metadata(self):
-        # Set metadata
+    def assert_user_data_equals(self, expected):
+        self.assertEqual(self.user.get_user_data(self.domain.name).to_dict(), expected)
+
+    def test_user_data(self):
+        # Set user_data
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(data={'key': 'F#'})],
@@ -538,9 +545,9 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'F#'})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 'F#'})
 
-        # Update metadata
+        # Update user_data
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(data={'key': 'Bb'}, user_id=self.user._id)],
@@ -549,9 +556,9 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'Bb'})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 'Bb'})
 
-        # Clear metadata
+        # set user data to blank
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(data={'key': ''}, user_id=self.user._id)],
@@ -560,18 +567,18 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': ''})
 
         # Allow falsy but non-blank values
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(data={'play_count': 0}, user_id=self.user._id)],
+            [self._get_spec(data={'key': 0}, user_id=self.user._id)],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
             False
         )
-        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'play_count': 0})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 0})
 
     def test_uncategorized_data(self):
         # Set data
@@ -583,7 +590,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'presto'})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'tempo': 'presto'})
 
         # Update data
         import_users_and_groups(
@@ -594,42 +601,10 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'andante'})
-
-        # Clear metadata
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(uncategorized_data={'tempo': ''}, user_id=self.user._id)],
-            [],
-            self.uploading_user.get_id,
-            self.upload_record.pk,
-            False
-        )
-        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
-
-    def test_uncategorized_data_clear(self):
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(data={'tempo': 'andante'})],
-            [],
-            self.uploading_user.get_id,
-            self.upload_record.pk,
-            False
-        )
-        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'andante'})
-
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(data={'tempo': ''}, user_id=self.user._id)],
-            [],
-            self.uploading_user.get_id,
-            self.upload_record.pk,
-            False
-        )
-        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'tempo': 'andante'})
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
-    def test_metadata_ignore_system_fields(self):
+    def test_user_data_ignore_system_fields(self):
         self.setup_locations()
         import_users_and_groups(
             self.domain.name,
@@ -639,7 +614,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assertEqual(self.user.metadata, {
+        self.assert_user_data_equals({
             'commcare_project': 'mydomain',
             'commcare_location_id': self.loc1.location_id,
             'commcare_location_ids': self.loc1.location_id,
@@ -655,7 +630,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assertEqual(self.user.metadata, {
+        self.assert_user_data_equals({
             'commcare_project': 'mydomain',
             'key': 'G#',
             'commcare_location_id': self.loc1.location_id,
@@ -663,16 +638,17 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             'commcare_primary_case_sharing_id': self.loc1.location_id,
         })
 
-    def test_metadata_profile(self):
+    def test_user_data_profile(self):
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(data={'key': 'F#', PROFILE_SLUG: self.profile.id})],
+            [self._get_spec(data={'key': 'F#'}, user_profile=self.profile.name)],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
             False
         )
-        self.assertEqual(self.user.metadata, {
+
+        self.assert_user_data_equals({
             'commcare_project': 'mydomain',
             'key': 'F#',
             'mode': 'minor',
@@ -684,101 +660,96 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         change_messages = UserChangeMessage.profile_info(self.profile.id, self.profile.name)
         self.assertDictEqual(user_history.change_messages, change_messages)
 
+    def test_user_data_profile_redundant(self):
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(
-                data={'key': 'F#', PROFILE_SLUG: ''},
-                password="skyfall",
-                user_id=self.user.get_id)],
+            [self._get_spec(data={'mode': 'minor'}, user_profile=self.profile.name)],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
             False
         )
-
-        user_history = UserHistory.objects.get(
-            user_id=self.user.get_id, changed_by=self.uploading_user.get_id,
-            action=UserModelAction.UPDATE.value)
-
-        change_messages = UserChangeMessage.password_reset()
-        self.assertDictEqual(user_history.change_messages, change_messages)
-
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(
-                data={'key': 'F#', PROFILE_SLUG: self.profile.id},
-                password="******",
-                user_id=self.user.get_id)],
-            [],
-            self.uploading_user.get_id,
-            self.upload_record.pk,
-            False
-        )
-
-        user_history = UserHistory.objects.filter(
-            user_id=self.user.get_id, changed_by=self.uploading_user.get_id,
-            action=UserModelAction.UPDATE.value
-        ).last()
-        change_messages = UserChangeMessage.profile_info(self.profile.id, self.profile.name)
-        self.assertDictEqual(user_history.change_messages, change_messages)
-
-    def test_metadata_profile_redundant(self):
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': 'minor'})],
-            [],
-            self.uploading_user.get_id,
-            self.upload_record.pk,
-            False
-        )
-        self.assertEqual(self.user.metadata, {
+        self.assert_user_data_equals({
             'commcare_project': 'mydomain',
             'mode': 'minor',
             PROFILE_SLUG: self.profile.id,
         })
         # Profile fields shouldn't actually be added to user_data
-        self.assertEqual(self.user.user_data, {
-            'commcare_project': 'mydomain',
+        self.assertEqual(self.user.get_user_data(self.domain.name).raw, {
             PROFILE_SLUG: self.profile.id,
         })
 
-    def test_metadata_profile_blank(self):
+    def test_user_data_profile_blank(self):
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': ''})],
+            [self._get_spec(data={'mode': ''}, user_profile=self.profile.name)],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
             False
         )
-        self.assertEqual(self.user.metadata, {
+        self.assert_user_data_equals({
             'commcare_project': 'mydomain',
             'mode': 'minor',
             PROFILE_SLUG: self.profile.id,
         })
 
-    def test_metadata_profile_conflict(self):
+    def test_user_data_profile_conflict(self):
         rows = import_users_and_groups(
             self.domain.name,
-            [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': 'major'})],
+            [self._get_spec(data={'mode': 'major'}, user_profile=self.profile.name)],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
             False
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], "metadata properties conflict with profile: mode")
+        self.assertEqual(rows[0]['flag'], "'mode' cannot be set directly")
 
-    def test_metadata_profile_unknown(self):
-        bad_id = self.profile.id + 100
+    def test_profile_cant_overwrite_existing_data(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'mode': 'major'})],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        # This fails because it would silently overwrite the existing "mode"
         rows = import_users_and_groups(
             self.domain.name,
-            [self._get_spec(data={PROFILE_SLUG: bad_id})],
+            [self._get_spec(user_id=self.user.get_id, user_profile=self.profile.name)],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
             False
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], "Could not find profile with id {}".format(bad_id))
+        self.assertEqual(rows[0]['flag'], "Profile conflicts with existing data")
+
+        # This succeeds because it explicitly blanks out "mode"
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(user_id=self.user.get_id, user_profile=self.profile.name, data={'mode': ''})],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        self.assert_user_data_equals({
+            'commcare_project': 'mydomain',
+            'mode': 'minor',
+            PROFILE_SLUG: self.profile.id,
+        })
+
+    def test_user_data_profile_unknown(self):
+        rows = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(user_profile="not_a_real_profile")],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )['messages']['rows']
+        self.assertEqual(rows[0]['flag'], "Profile 'not_a_real_profile' does not exist")
 
     def test_upper_case_email(self):
         """
@@ -868,7 +839,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 'language': 'hin',
                 'email': 'hello@gmail.org',
                 'is_active': False,
-                'user_data': {'commcare_project': 'mydomain', 'post': 'SE'}
+                'user_data': {'post': 'SE'},
             }
         )
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
@@ -1165,12 +1136,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
                                                changed_by=self.uploading_user.get_id)
-        self.assertDictEqual(
-            user_history.changes,
-            {
-                'user_data': {'commcare_project': 'mydomain', 'key': 'F#'}
-            }
-        )
+        self.assertDictEqual(user_history.changes, {'user_data': {'key': 'F#'}})
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
         self.assertEqual(user_history.change_messages, {})
 

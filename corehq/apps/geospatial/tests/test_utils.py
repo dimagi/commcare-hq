@@ -99,4 +99,4 @@ class TestSetGPSProperty(TestCase):
         }
         set_user_gps_property(self.DOMAIN, submit_data)
         user = CommCareUser.get_by_user_id(self.user.user_id, self.DOMAIN)
-        self.assertEqual(user.metadata[GPS_POINT_CASE_PROPERTY], '1.23 4.56 0.0 0.0')
+        self.assertEqual(user.get_user_data(self.DOMAIN)[GPS_POINT_CASE_PROPERTY], '1.23 4.56 0.0 0.0')
