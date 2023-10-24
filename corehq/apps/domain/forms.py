@@ -2655,3 +2655,28 @@ class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
         if not self.cleaned_data.get('version'):
             self.add_error('version', _("Please select version"))
         return self.cleaned_data.get('version')
+
+
+class DomainAlertForm(forms.Form):
+    text = CharField(
+        label="Text",
+        widget=forms.Textarea,
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.layout = Layout(
+            crispy.Fieldset(
+                _('Add New Alert'),
+                *self.fields
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _('Save'),
+                    type='submit',
+                    css_class='btn-primary disable-on-submit'
+                )
+            )
+        )
