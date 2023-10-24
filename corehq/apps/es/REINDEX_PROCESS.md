@@ -364,3 +364,80 @@ These indices are safe to delete and are not used in any functionality of CommCa
 cchq <env> update-config
 ```
 Do not restart the services, let deploy process handle that for you.
+
+
+### Common Issues Resolutions During Reindex
+
+#### ReIndex logs does not have error but doc counts don't match
+
+If the reindex log has no errors but the doc counts don't match, it might be the case that one of the Elasticsearch machine ran out of memory and got restarted.
+
+You can verify this by querying the logs -
+```
+cchq <env> run-shell-command elasticsearch 'grep -r -i "java.lang.OutOfMemoryError" /opt/data/elasticsearch-*/logs -A10'
+```
+By default elasticsearch uses a batch size of 1000 and if there are big docs then this can cause memory issues if cluster is running low on memory. You can try decreasing the `batch_size` to a smaller number while starting the reindex process.
+
+```
+./manage.py elastic_sync_multiplexed start <index_cname> --batch_size <batch size>
+```
+
+This might increase the reindex time but can avoid OOM errors.
+
+#### ReIndex logs have BulkItemResponseFailure
+
+If the reindex logs have `BulkItemResponse$Failure` then it can be because of `_id` being present in `_source` objects. You can query detailed logs by running :
+
+```
+cchq production run-shell-command elasticsearch 'grep -r -i "failed to execute bulk item (index) index" /opt/data/elasticsearch-2.4.6/logs -A20'
+```
+
+If the logs contains following error
+
+```
+MapperParsingException[Field [_id] is a metadata field and cannot be added inside a document. Use the index API request parameters]
+```
+
+The issue can be fixed by passing `--purge-ids` argument to the `reindex` command. This will remove `_id` from documents during reindexing to avoid these errors.
+
+```
+./manage.py elastic_sync_multiplexed start <index_cname> --purge-ids
+```
+
+#### Unable to assign replicas
+
+While assigning replicas if you get the following error in es logs -
+
+```
+[2023-10-03 14:31:09,981][INFO ][cluster.routing.allocation.decider] [esmaster_a1] low disk watermark [85%] exceeded on [Ap_smchPTLinFxB2BPWpJw][es-machine-env][/opt/data/elasticsearch-2.4.6/data/enves-2.x/nodes/0] free: 258.4gb[12.5%], replicas will not be assigned to this node
+```
+
+You can increase the watermark settings to a higher value like:
+
+```
+curl -X PUT "http://<cluster_ip>:9200/_cluster/settings" -H "Content-Type: application/json" -d '{
+  "persistent": {
+    "cluster.routing.allocation.disk.watermark.low": "95%",
+    "cluster.routing.allocation.disk.watermark.high": "97.5%"
+  }
+}'
+```
+
+This will update the Elasticsearch cluster settings to set the disk watermark thresholds higher (to 95% low and 97.5% high from default), allowing replicas to be assigned even when disk usage reaches those levels.
+
+After the replicas are assigned, you can reset the disk watermark thresholds back to the default values by running:
+
+```
+curl -X PUT "http://<cluster_ip>:9200/_cluster/settings" -H "Content-Type: application/json" -d '{
+  "persistent": {
+    "cluster.routing.allocation.disk.watermark.low": "85%",
+    "cluster.routing.allocation.disk.watermark.high": "90%"
+  }
+}'
+```
+
+If reindex fails with out of memory errors, then batch size can be decreased while running reindex
+
+```
+    ./manage.py elastic_sync_multiplexed start <index_cname> --batch_size <batch size>
+```
