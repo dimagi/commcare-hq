@@ -305,6 +305,13 @@ hqDefine("geospatial/js/case_grouping_map",[
         });
     }
 
+    function uuidv4() {
+        // https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid/2117523#2117523
+        return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
+    }
+
     async function setCaseGroups() {
         const sourceFeatures = map.querySourceFeatures('caseWithGPS', {
             sourceLayer: 'clusters',
@@ -318,19 +325,20 @@ hqDefine("geospatial/js/case_grouping_map",[
             const pointCount = cluster.properties.point_count;
 
             try {
-              const casePoints = await getClusterLeavesAsync(clusterSource, clusterId, pointCount);
-              for (const casePoint of casePoints) {
-                const caseId = casePoint.properties.id;
-                caseGroups[caseId] = {
-                    groupId: clusterId,
-                    groupCoordinates: {
-                        lng: cluster.geometry.coordinates[0],
-                        lat: cluster.geometry.coordinates[1],
-                    }
-                };
-              }
+                const casePoints = await getClusterLeavesAsync(clusterSource, clusterId, pointCount);
+                const groupUUID = uuidv4();
+                for (const casePoint of casePoints) {
+                    const caseId = casePoint.properties.id;
+                    caseGroups[caseId] = {
+                        groupId: groupUUID,
+                        groupCoordinates: {
+                            lng: cluster.geometry.coordinates[0],
+                            lat: cluster.geometry.coordinates[1],
+                        }
+                    };
+                }
             } catch (error) {
-              console.error("Error processing cluster:", error);
+                console.error("Error processing cluster:", error);
             }
         }
         loadCaseGroupsInExport(caseGroups);
