@@ -515,6 +515,14 @@ class SubscriptionForm(forms.Form):
         label=gettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
+    plan_visibility = forms.ChoiceField(
+        label=gettext_lazy("Visibility"), initial=SoftwarePlanVisibility.PUBLIC,
+        choices=SoftwarePlanVisibility.CHOICES,
+    )
+    most_recent_version = forms.ChoiceField(
+        label=gettext_lazy("Version"), initial="True",
+        choices=(("True", "Show Most Recent Version"), ("False", "Show All Versions"))
+    )
     plan_version = forms.IntegerField(
         label=gettext_lazy("Software Plan"),
         widget=forms.Select(choices=[]),
@@ -609,7 +617,19 @@ class SubscriptionForm(forms.Form):
                 'plan_edition',
                 self.fields['plan_edition'].initial
             )
-
+            self.fields['plan_visibility'].initial = subscription.plan_version.plan.visibility
+            plan_visibility_field = hqcrispy.B3TextField(
+                'plan_visibility',
+                self.fields['plan_visibility'].initial
+            )
+            is_most_recent_version = subscription.plan_version.plan.get_version() == subscription.plan_version
+            most_recent_version_text = ("is most recent version" if is_most_recent_version
+                                        else "not most recent version")
+            self.fields['most_recent_version'].initial = most_recent_version_text
+            most_recent_version_field = hqcrispy.B3TextField(
+                'most_recent_version',
+                self.fields['most_recent_version'].initial
+            )
             self.fields['domain'].choices = [
                 (subscription.subscriber.domain, subscription.subscriber.domain)
             ]
@@ -666,6 +686,8 @@ class SubscriptionForm(forms.Form):
                 placeholder="Search for Project Space"
             )
             plan_edition_field = crispy.Field('plan_edition')
+            plan_visibility_field = crispy.Field('plan_visibility')
+            most_recent_version_field = crispy.Field('most_recent_version')
             plan_version_field = crispy.Field(
                 'plan_version', css_class="input-xxlarge",
                 placeholder="Search for Software Plan"
@@ -692,8 +714,15 @@ class SubscriptionForm(forms.Form):
                 crispy.Div(*transfer_fields),
                 start_date_field,
                 end_date_field,
-                plan_edition_field,
-                plan_version_field,
+                crispy.Div(
+                    crispy.HTML('<h4 style="margin-bottom: 20px;">%s</h4>'
+                            % _("Software Plan"),),
+                    plan_edition_field,
+                    plan_visibility_field,
+                    most_recent_version_field,
+                    plan_version_field,
+                    css_class="well",
+                ),
                 domain_field,
                 'salesforce_contract_id',
                 hqcrispy.B3MultiField(
@@ -852,6 +881,14 @@ class ChangeSubscriptionForm(forms.Form):
         label=gettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
+    new_plan_visibility = forms.ChoiceField(
+        label=gettext_lazy("Visibility"), initial=SoftwarePlanVisibility.PUBLIC,
+        choices=SoftwarePlanVisibility.CHOICES,
+    )
+    most_recent_version = forms.ChoiceField(
+        label=gettext_lazy("Version"), initial="True",
+        choices=(("True", "Show Most Recent Version"), ("False", "Show All Versions"))
+    )
     new_plan_version = forms.CharField(
         label=gettext_lazy("New Software Plan"),
         widget=forms.Select(choices=[]),
@@ -891,11 +928,18 @@ class ChangeSubscriptionForm(forms.Form):
             crispy.Fieldset(
                 "Change Subscription",
                 crispy.Field('new_date_end', css_class="date-picker"),
-                'new_plan_edition',
-                crispy.Field(
-                    'new_plan_version', css_class="input-xxlarge",
-                    placeholder="Search for Software Plan",
-                    style="width: 100%;"
+                crispy.Div(
+                    crispy.HTML('<h4 style="margin-bottom: 20px;">%s</h4>'
+                            % _("Software Plan"),),
+                    'new_plan_edition',
+                    'new_plan_visibility',
+                    'most_recent_version',
+                    crispy.Field(
+                        'new_plan_version', css_class="input-xxlarge",
+                        placeholder="Search for Software Plan",
+                        style="width: 100%;"
+                    ),
+                    css_class="well",
                 ),
                 'service_type',
                 'pro_bono_status',
