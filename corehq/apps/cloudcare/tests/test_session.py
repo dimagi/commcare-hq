@@ -62,7 +62,7 @@ class SessionUtilsTest(TestCase):
             None,
             None,
             uuid=uuid.uuid4().hex,
-            metadata={PROFILE_SLUG: profile.id},
+            user_data={PROFILE_SLUG: profile.id},
         )
         self.addCleanup(user.delete, None, None)
         user_data = get_user_contributions_to_touchforms_session('cloudcare-tests', user)['user_data']

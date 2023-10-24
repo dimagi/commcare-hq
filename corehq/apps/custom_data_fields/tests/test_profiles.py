@@ -97,7 +97,7 @@ class TestCustomDataFieldsProfile(TestCase):
     @es_test(requires=[user_adapter])
     @sync_users_to_es()
     def test_users_assigned(self):
-        user = CommCareUser.create(self.domain, 'pentagon', '*****', None, None, metadata={
+        user = CommCareUser.create(self.domain, 'pentagon', '*****', None, None, user_data={
             PROFILE_SLUG: self.profile5.id,
         })
         manager.index_refresh(user_adapter.index_name)
