@@ -176,5 +176,5 @@
   description: Enable searching as input values change after initial Split Screen Case Search
   toggle: DYNAMICALLY_UPDATE_SEARCH_RESULTS
   widget: bool
-  default: true
+  default: false
   since: '2.54'
