@@ -1650,16 +1650,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from .user_data import UserData
         return UserData(self.user_data, domain)
 
-    def get_user_data_profile(self, profile_id):
-        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-        from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
-        if profile_id:
-            return CustomDataFieldsProfile.objects.get(
-                id=profile_id,
-                definition__domain=self.domain,
-                definition__field_type=UserFieldsView.field_type,
-            )
-
     def _is_demo_user_cached_value_is_stale(self):
         from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
         cached_demo_users = get_practice_mode_mobile_workers.get_cached_value(self.domain)

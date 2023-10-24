@@ -3,7 +3,6 @@ from unittest.mock import patch
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.custom_data_fields.models import (
-    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
@@ -15,20 +14,6 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 class TestUserMetadata(TestCase):
     domain = 'test-user-metadata'
-
-    @classmethod
-    def setUpTestData(cls):
-        definition = CustomDataFieldsDefinition(domain=cls.domain, field_type=UserFieldsView.field_type)
-        definition.save()
-        definition.set_fields([Field(slug='start')])
-        definition.save()
-        profile = CustomDataFieldsProfile(
-            name='low',
-            fields={'start': 'sometimes'},
-            definition=definition,
-        )
-        profile.save()
-        cls.profile_id = profile.pk
 
     def setUp(self):
         self.user = CommCareUser.create(
