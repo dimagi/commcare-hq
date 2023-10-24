@@ -256,6 +256,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         exportModelInstance.casesToExport().forEach(caseItem => {
             if (caseItem.groupId) {
                 caseItem.groupId = null;
+                caseItem.groupCoordinates = null;
             }
         });
     }
@@ -365,7 +366,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             return self.groupsLocked();
         });
 
-        self.triggerGroupLock = function () {
+        self.toggleGroupLock = function () {
             if (self.groupsLocked()) {
                 self.groupsLocked(false);
                 map.scrollZoom.enable();
