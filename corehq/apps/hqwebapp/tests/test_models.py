@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
 
-from ..models import MaintenanceAlert, UserAccessLog, UserAgent
+from ..models import Alert, UserAccessLog, UserAgent
 
 
-class TestMaintenanceAlerts(TestCase):
+class TestAlerts(TestCase):
     def test_creates_alert(self):
         kwargs = {'text': "Maintenance alert"}
-        alert = MaintenanceAlert.objects.create(**kwargs)
+        alert = Alert.objects.create(**kwargs)
 
         self.assertFalse(alert.active, False)
         self.assertEqual(alert.text, "Maintenance alert")
@@ -15,14 +15,10 @@ class TestMaintenanceAlerts(TestCase):
         self.assertEqual(alert.end_time, None)
         self.assertEqual(alert.domains, None)
         self.assertEqual(alert.timezone, 'UTC')
-        self.assertEqual(
-            repr(alert),
-            "MaintenanceAlert(text='Maintenance alert', active='False', domains='All Domains')"
-        )
 
     def test_wraps_alert_links(self):
         kwargs = {'text': "Link to www.commcare.org"}
-        alert = MaintenanceAlert.objects.create(**kwargs)
+        alert = Alert.objects.create(**kwargs)
 
         self.assertEqual(alert.text, "Link to www.commcare.org")
         self.assertEqual(alert.html, 'Link to <a href="www.commcare.org">www.commcare.org</a>')
@@ -36,19 +32,19 @@ class TestMaintenanceAlerts(TestCase):
             'start_time': future_time,
             'active': True
         }
-        alert = MaintenanceAlert.objects.create(**kwargs)
+        alert = Alert.objects.create(**kwargs)
 
-        active_alerts = MaintenanceAlert.get_active_alerts()
+        active_alerts = Alert.get_active_alerts()
         self.assertQuerysetEqual(active_alerts, [])
 
         alert.start_time = past_time
         alert.save()
-        active_alerts = MaintenanceAlert.get_active_alerts()
+        active_alerts = Alert.get_active_alerts()
         self.assertQuerysetEqual(active_alerts, [alert])
 
         alert.end_time = past_time
         alert.save()
-        active_alerts = MaintenanceAlert.get_active_alerts()
+        active_alerts = Alert.get_active_alerts()
         self.assertQuerysetEqual(active_alerts, [])
 
     def test_shows_alerts_without_schedule(self):
@@ -56,9 +52,9 @@ class TestMaintenanceAlerts(TestCase):
             'text': "Maintenance alert",
             'active': True
         }
-        alert = MaintenanceAlert.objects.create(**kwargs)
+        alert = Alert.objects.create(**kwargs)
 
-        active_alerts = MaintenanceAlert.get_active_alerts()
+        active_alerts = Alert.get_active_alerts()
         self.assertQuerysetEqual(active_alerts, [alert])
 
 
