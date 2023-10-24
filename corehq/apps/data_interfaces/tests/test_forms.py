@@ -10,7 +10,7 @@ class CaseRuleCriteriaFormTests(SimpleTestCase):
         post_data = self._create_form_input(location_filter={
             'name': 'TestLocation',
             'location_id': '123',
-            'include_child_locations': 'false',
+            'include_child_locations': False,
         })
 
         form = CaseRuleCriteriaForm('test-domain', post_data, rule=None)
