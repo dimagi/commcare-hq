@@ -10,6 +10,7 @@ from django.template.defaultfilters import linebreaksbr
 import six
 
 from corehq.apps.celery import task
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.translations.generators import AppTranslationsGenerator
 from corehq.apps.translations.integrations.transifex.parser import (
     TranslationsParser,
@@ -33,15 +34,16 @@ def delete_resources_on_transifex(domain, data, email):
     result_note = "Hi,\nThe request to delete resources for app {app_id}(version {version}), " \
                   "was completed on project {transifex_project_slug} on transifex. " \
                   "The result is as follows:\n".format(**data)
-    email = EmailMessage(
-        subject='[{}] - Transifex removed translations'.format(settings.SERVER_ENVIRONMENT),
-        body=(result_note +
-              "\n".join([' '.join([sheet_name, result]) for sheet_name, result in delete_status.items()])
-              ),
-        to=[email],
-        from_email=settings.DEFAULT_FROM_EMAIL
+
+    subject = '[{}] - Transifex removed translations'.format(settings.SERVER_ENVIRONMENT)
+    body = (result_note
+            + "\n".join([' '.join([sheet_name, result])for sheet_name, result in delete_status.items()])
+            )
+    send_mail_async.delay(
+        subject, body,
+        recipient_list=[email],
     )
-    email.send()
+
 
 
 @task
@@ -72,29 +74,30 @@ def push_translation_files_to_transifex(domain, data, email):
                       "for language '{language}' " \
                       "was completed on project {transifex_project_slug} on transifex. " \
                       "The result is as follows:\n".format(**data)
-        email = EmailMessage(
-            subject='[{}] - Transifex pushed translations'.format(settings.SERVER_ENVIRONMENT),
-            body=(result_note +
-                  "\n".join([' '.join([sheet_name, result]) for sheet_name, result in upload_status.items()])
-                  ),
-            to=[email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+
+        subject = '[{}] - Transifex pushed translations'.format(settings.SERVER_ENVIRONMENT)
+        body = (result_note
+                + "\n".join([' '.join([sheet_name, result]) for sheet_name, result in upload_status.items()])
+                )
+        send_mail_async.delay(
+            subject, body,
+            recipient_list=[email],
         )
-        email.send()
 
 
 @task
 def pull_translation_files_from_transifex(domain, data, user_email=None):
     def notify_error(error):
-        email = EmailMessage(
-            subject='[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT),
-            body="The request could not be completed. Something went wrong with the download. "
-                 "Error raised : {}. "
-                 "If you see this repeatedly and need support, please report an issue. ".format(error),
-            to=[user_email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+        subject = '[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT)
+        body = (
+            "The request could not be completed. Something went wrong with the download. "
+            "Error raised: {}. "
+            "If you see this repeatedly and need support, please report an issue.".format(error)
         )
-        email.send()
+        send_mail_async.delay(
+            subject, body,
+            recipient_list=[user_email],
+        )
     version = data.get('version')
     transifex = Transifex(domain,
                           data.get('app_id'),
@@ -218,9 +221,8 @@ def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, 
         mappings
     ).migrate()
 
-    email = EmailMessage(
+    send_mail_async.delay(
         subject='[{}] - Transifex Project Migration Status'.format(settings.SERVER_ENVIRONMENT),
         body=linebreaksbr(generate_email_body()),
-        to=[email],
-        from_email=settings.DEFAULT_FROM_EMAIL)
-    email.send()
+        recipient_list=[email],
+    )
