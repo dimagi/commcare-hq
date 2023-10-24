@@ -87,11 +87,11 @@ In this case the available free space on all data nodes (56+55+56=167 GB) is gre
     ```
     After these settings are applied all the adpaters will start writing to both primary and secondary indices simultaneously. Reads will still happen from the primary indices.
 
-3. The following steps should be repeated for each value of the following values of <app_name> -  'apps', 'cases', 'case_search', 'domains', 'forms', 'groups', 'sms', 'users'.
+3. The following steps should be repeated for each value of the following values of <index_cname> -  'apps', 'cases', 'case_search', 'domains', 'forms', 'groups', 'sms', 'users'.
 
     1. Start the reindex process
         ```
-        ./manage.py elastic_sync_multiplexed start <app_name>
+        ./manage.py elastic_sync_multiplexed start <index_cname>
         ```
         It is advised to run the reindex command in a tmux session as it might take a long time and can be detached/re-attached as needed for monitoring progress.
 
@@ -189,7 +189,7 @@ To swap the indexes we need to follow the following steps:
     cchq <env> service commcare restart
     ```
 
-7. At this stage, writes have been stopped on primary indices. The older indices are eligible for deletion. It is recommended to wait for 6 hours after the multiplexer is turned off. The older indices can be deleted by running.
+7. At this stage, writes have been stopped on the older indices. The older indices are eligible for deletion. It is recommended to wait for 6 hours after the multiplexer is turned off. The older indices can be deleted by running.
 
     ```
     cchq <env> django-manage elastic_sync_multiplexed delete <index_cname>
@@ -221,10 +221,16 @@ These indices are safe to delete and are not used in any functionality of CommCa
 
 12. Before deploying the changes in Step 10, run `update-config`.
 
-```
-cchq <env> update-config
-```
-Do not restart the services, let deploy process handle that for you.
+    ```
+    cchq <env> update-config
+    ```
+
+13. Deploy Commcare HQ.
+
+    ```
+    cchq <env> deploy
+    ```
+
 
 ### Reindexing One Index At A Time
 
@@ -342,7 +348,7 @@ These indices are safe to delete and are not used in any functionality of CommCa
 
 3. Congratulations :tada: You have successfully created new indexes that are active on CommcareHQ.
 
-4. Update [Index Names](./const.py#L27-L57), set Primary index names to secondary index name and secondary index names to `None`.
+4. Update [Index Names](./const.py#L27-L57), set primary index names to secondary index name and secondary index names to `None`.
 
 5. Set Index swapped variables to False
 
@@ -358,12 +364,17 @@ These indices are safe to delete and are not used in any functionality of CommCa
 
     ```
 
-6. Before deploying the changes in Step 10, run update-config.
+6. Before deploying the changes in Step 10, run `update-config`.
 
-```
-cchq <env> update-config
-```
-Do not restart the services, let deploy process handle that for you.
+    ```
+    cchq <env> update-config
+    ```
+
+7. Deploy Commcare HQ.
+
+    ```
+    cchq <env> deploy
+    ```
 
 
 ### Common Issues Resolutions During Reindex
