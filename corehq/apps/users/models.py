@@ -3025,6 +3025,13 @@ class UserReportingMetadataStaging(models.Model):
                 fcm_token=self.fcm_token, fcm_token_timestamp=self.last_heartbeat, save_user=False
             )
         if save:
+            # update_django_user=False below is an optimization that allows us to update the CouchUser
+            # without propagating that change to SQL.
+            # This is an optimization we're able to do safely only because we happen to know that
+            # the present workflow only updates properties that are *not* stored on the django (SQL) user model.
+            # We have seen that these frequent updates to the SQL user table
+            # occasionally create deadlocks or pile-ups,
+            # which can be avoided by omitting that extraneous write entirely.
             user.save(fire_signals=False, update_django_user=False)
 
     class Meta(object):
