@@ -83,13 +83,13 @@ from corehq.apps.accounting.user_text import (
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
-    get_customer_cards,
     is_downgrade,
     log_accounting_error,
     quantize_accounting_decimal,
     get_paused_plan_context,
     pause_current_subscription,
 )
+from corehq.apps.accounting.utils.stripe import get_customer_cards
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
