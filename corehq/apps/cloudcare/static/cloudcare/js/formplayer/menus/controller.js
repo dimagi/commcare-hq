@@ -127,7 +127,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
 
         var queryResponse = menuResponse.queryResponse;
-        if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
+        if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {;
+            console.log(sessionStorage);
             var queryCollection = new Collection(queryResponse.displays);
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 QueryListView({
@@ -135,6 +136,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     title: menuResponse.title,
                     description: menuResponse.description,
                     sidebarEnabled: true,
+                    disableDynamicSearch: sessionStorage.searchPerformed === undefined ? true: false,
                 }).render()
             );
         } else if (sidebarEnabled && menuResponse.type === "query") {

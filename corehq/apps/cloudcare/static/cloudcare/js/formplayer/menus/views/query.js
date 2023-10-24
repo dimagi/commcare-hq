@@ -561,6 +561,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         submitAction: function (e) {
             var self = this;
+            sessionStorage.submitPerformed = true;
             e.preventDefault();
             self.performSubmit();
         },
