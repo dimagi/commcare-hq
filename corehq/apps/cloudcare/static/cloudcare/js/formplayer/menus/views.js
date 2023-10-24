@@ -256,8 +256,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const domain = user.domain;
             const caseId = this.model.get('id');
             let fieldIndex = $(e.currentTarget).parent().index();
-            if (this.options.groupHeaderRows) {
-                fieldIndex += this.options.groupHeaderRows
+            if (this.options.bodyRowIndices) {
+                fieldIndex = this.options.bodyRowIndices[fieldIndex];
             }
             const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
             const actionUrl = origin + urlTemplate
@@ -391,8 +391,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 acc[index] = data[index];
                 return acc;
             }, {});
-
-            dict['indexedRowDataList'] = this.getIndexedRowDataList();
+            dict['indexedRowDataList'] = this.getIndexedRowDataList()
 
             return dict;
         },
@@ -402,8 +401,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             for (let model of this.options.groupModelsList) {
                 let indexedRowData = model.get('data')
                     .reduce((acc, data, i) => {
-                        if (!this.options.headerRowIndices.includes(i) &&
-                            this.options.styles[i].widthHint !== 0) {
+                        if (this.options.bodyRowIndices.includes(i)) {
                             acc[i] = data;
                         }
                         return acc;
@@ -1030,11 +1028,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }
             }
 
-            let groupHeaderRows = this.options.collection.groupHeaderRows;
+            const groupHeaderRows = this.options.collection.groupHeaderRows;
             // select the indices of the tile fields that are part of the header rows
-            this.headerRowIndices = this.options.collection.tiles
-                .map((tile, index) => ({tile: tile, index: index}))
-                .filter((tile) => tile.tile && tile.tile.gridY < groupHeaderRows)
+
+            const isHeaderRow = (y) => y < groupHeaderRows;
+            const tileAndIndex = this.options.collection.tiles
+                .map((tile, index) => ({tile: tile, index: index}));
+
+            this.headerRowIndices = tileAndIndex
+                .filter((tile) => tile.tile && isHeaderRow(tile.tile.gridY))
+                .map((tile) => tile.index);
+            this.bodyRowIndices = tileAndIndex
+                .filter((tile) => tile.tile && !isHeaderRow(tile.tile.gridY))
                 .map((tile) => tile.index);
         },
 
@@ -1043,6 +1048,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             dict.groupHeaderRows = this.options.collection.groupHeaderRows;
             dict.groupModelsList = this.groupedModels[model.get("groupKey")];
             dict.headerRowIndices = this.headerRowIndices;
+            dict.bodyRowIndices = this.bodyRowIndices;
             return dict;
         },
     });
