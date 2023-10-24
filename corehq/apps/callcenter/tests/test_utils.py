@@ -140,8 +140,7 @@ class CallCenterUtilsTests(TestCase):
             '8starts_with_a_number': '0',
             'xml_starts_with_xml': '0',
             '._starts_with_punctuation': '0',
-            PROFILE_SLUG: profile.id,
-        })
+        }, profile_id=profile.id)
         sync_usercases(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertIsNotNone(case)
@@ -149,7 +148,10 @@ class CallCenterUtilsTests(TestCase):
         self.assertEqual(case.get_case_property('ok'), 'good')
         self.assertEqual(case.get_case_property(PROFILE_SLUG), str(profile.id))
         self.assertEqual(case.get_case_property('from_profile'), 'yes')
-        del self.user.get_user_data(TEST_DOMAIN)[PROFILE_SLUG]
+        self.user.get_user_data(TEST_DOMAIN).profile_id = None
+        sync_usercases(self.user, self.domain.name)
+        case = self._get_user_case()
+        self.assertEqual(case.get_case_property(PROFILE_SLUG), '')
         definition.delete()
 
     def test_get_call_center_cases_for_user(self):

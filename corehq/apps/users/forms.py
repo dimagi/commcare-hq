@@ -30,7 +30,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
@@ -1574,10 +1574,12 @@ class CommCareUserFormSet(object):
     def update_user(self):
         user_data = self.user_form.existing_user.get_user_data(self.domain)
         old_profile_id = user_data.profile_id
-        changed = user_data.update(self.custom_data.get_data_to_save())
+        new_user_data = self.custom_data.get_data_to_save()
+        new_profile_id = new_user_data.pop(PROFILE_SLUG, ...)
+        changed = user_data.update(new_user_data, new_profile_id)
         return self.user_form.update_user(
             metadata_updated=changed,
-            profile_updated=old_profile_id != user_data.profile_id,
+            profile_updated=old_profile_id != new_profile_id
         )
 
 

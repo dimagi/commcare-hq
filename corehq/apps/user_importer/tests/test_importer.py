@@ -545,7 +545,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 'F#'})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 'F#', 'commcare_profile': ''})
 
         # Update user_data
         import_users_and_groups(
@@ -556,7 +556,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 'Bb'})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 'Bb', 'commcare_profile': ''})
 
         # set user data to blank
         import_users_and_groups(
@@ -567,7 +567,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': ''})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': '', 'commcare_profile': ''})
 
         # Allow falsy but non-blank values
         import_users_and_groups(
@@ -578,7 +578,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 0})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 0, 'commcare_profile': ''})
 
     def test_uncategorized_data(self):
         # Set data
@@ -590,7 +590,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'tempo': 'presto'})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'tempo': 'presto', 'commcare_profile': ''})
 
         # Update data
         import_users_and_groups(
@@ -601,7 +601,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'tempo': 'andante'})
+        self.assert_user_data_equals({'commcare_project': 'mydomain', 'tempo': 'andante', 'commcare_profile': ''})
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_user_data_ignore_system_fields(self):
@@ -616,6 +616,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assert_user_data_equals({
             'commcare_project': 'mydomain',
+            'commcare_profile': '',
             'commcare_location_id': self.loc1.location_id,
             'commcare_location_ids': self.loc1.location_id,
             'commcare_primary_case_sharing_id': self.loc1.location_id,
@@ -632,6 +633,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assert_user_data_equals({
             'commcare_project': 'mydomain',
+            'commcare_profile': '',
             'key': 'G#',
             'commcare_location_id': self.loc1.location_id,
             'commcare_location_ids': self.loc1.location_id,

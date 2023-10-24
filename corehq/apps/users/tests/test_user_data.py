@@ -51,15 +51,20 @@ class TestUserMetadata(TestCase):
         web_user = WebUser.create(None, "imogen", "*****", None, None)
         self.addCleanup(web_user.delete, self.domain, deleted_by=None)
         user_data = web_user.get_user_data(self.domain)
-        self.assertEqual(user_data.to_dict(), {'commcare_project': self.domain})
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+        })
 
         user_data['start'] = 'sometimes'
         self.assertEqual(web_user.get_user_data(self.domain).to_dict(), {
             'commcare_project': self.domain,
+            'commcare_profile': '',
             'start': 'sometimes',
         })
         self.assertEqual(web_user.get_user_data('ANOTHER_DOMAIN').to_dict(), {
             'commcare_project': 'ANOTHER_DOMAIN',
+            'commcare_profile': '',
             'start': 'sometimes',  # whoops, domain 1 affects other domains!
         })
 
@@ -89,10 +94,11 @@ class TestUserDataModel(SimpleTestCase):
         user_data = UserData({'yearbook_quote': 'Not all who wander are lost.'}, self.domain)
         self.assertEqual(user_data.to_dict(), {
             'commcare_project': self.domain,
+            'commcare_profile': '',
             'yearbook_quote': 'Not all who wander are lost.',
         })
 
-        user_data[PROFILE_SLUG] = 'blues'
+        user_data.profile_id = 'blues'
         self.assertEqual(user_data.to_dict(), {
             'commcare_project': self.domain,
             'commcare_profile': 'blues',
@@ -101,32 +107,32 @@ class TestUserDataModel(SimpleTestCase):
         })
 
         # Remove profile should remove it and related fields
-        del user_data[PROFILE_SLUG]
+        user_data.profile_id = None
         self.assertEqual(user_data.to_dict(), {
             'commcare_project': self.domain,
+            'commcare_profile': '',
             'yearbook_quote': 'Not all who wander are lost.',
         })
 
     def test_profile_conflicts_with_data(self):
         user_data = UserData({'favorite_color': 'purple'}, self.domain)
         with self.assertRaisesMessage(UserDataError, "Profile conflicts with existing data"):
-            user_data[PROFILE_SLUG] = 'blues'
+            user_data.profile_id = 'blues'
 
     def test_profile_conflicts_with_blank_existing_data(self):
         user_data = UserData({'favorite_color': ''}, self.domain)
-        user_data[PROFILE_SLUG] = 'blues'
+        user_data.profile_id = 'blues'
         self.assertEqual(user_data['favorite_color'], 'blue')
 
     def test_avoid_conflict_by_blanking_out(self):
         user_data = UserData({'favorite_color': 'purple'}, self.domain)
         user_data.update({
-            PROFILE_SLUG: 'blues',
             'favorite_color': '',
-        })
+        }, profile_id='blues')
         self.assertEqual(user_data['favorite_color'], 'blue')
 
     def test_data_conflicts_with_profile(self):
-        user_data = UserData({PROFILE_SLUG: 'blues'}, self.domain)
+        user_data = UserData({}, self.domain, profile_id='blues')
         with self.assertRaisesMessage(UserDataError, "'favorite_color' cannot be set directly"):
             user_data['favorite_color'] = 'purple'
 
@@ -134,9 +140,8 @@ class TestUserDataModel(SimpleTestCase):
         user_data = UserData({}, self.domain)
         with self.assertRaisesMessage(UserDataError, "'favorite_color' cannot be set directly"):
             user_data.update({
-                PROFILE_SLUG: 'blues',
                 'favorite_color': 'purple',
-            })
+            }, profile_id='blues')
 
     def test_update_shows_changed(self):
         user_data = UserData({}, self.domain)
@@ -146,28 +151,27 @@ class TestUserDataModel(SimpleTestCase):
         self.assertFalse(changed)
 
     def test_update_order_irrelevant(self):
-        user_data = UserData({PROFILE_SLUG: 'blues'}, self.domain)
+        user_data = UserData({}, self.domain, profile_id='blues')
         user_data.update({
             'favorite_color': 'purple',  # this is compatible with the new profile, but not the old
-            PROFILE_SLUG: 'others',
-        })
+        }, profile_id='others')
 
     def test_ignore_noop_conflicts_with_profile(self):
-        user_data = UserData({PROFILE_SLUG: 'blues'}, self.domain)
+        user_data = UserData({}, self.domain, profile_id='blues')
         # this key is in the profile, but the values are the same
         user_data['favorite_color'] = 'blue'
 
     def test_remove_profile(self):
-        user_data = UserData({PROFILE_SLUG: 'blues'}, self.domain)
-        user_data.update({PROFILE_SLUG: None})
+        user_data = UserData({}, self.domain, profile_id='blues')
+        user_data.profile_id = None
         self.assertEqual(user_data.profile_id, None)
+        self.assertEqual(user_data.profile, None)
 
     def test_remove_profile_and_clear(self):
-        user_data = UserData({PROFILE_SLUG: 'blues'}, self.domain)
+        user_data = UserData({}, self.domain, profile_id='blues')
         user_data.update({
-            PROFILE_SLUG: None,
             'favorite_color': '',
-        })
+        }, profile_id=None)
 
     def test_delitem(self):
         user_data = UserData({'yearbook_quote': 'something random'}, self.domain)
