@@ -21,15 +21,14 @@ hqDefine("geospatial/js/case_grouping_map",[
     let exportModelInstance;
     let mapMarkers = [];
 
-    function caseModel(caseId, coordiantes, caseLink) {
+    function caseModel(caseId, coordinates, caseLink) {
         'use strict';
         var self = {};
         self.caseId = caseId;
-        self.coordinates = coordiantes;
+        self.coordinates = coordinates;
         self.caseLink = caseLink;
-
-        // TODO: Group ID needs to be set
         self.groupId = null;
+        self.groupCoordinates = null;
 
         return self;
     }
@@ -55,8 +54,10 @@ hqDefine("geospatial/js/case_grouping_map",[
 
             const casesToExport = _.map(self.casesToExport(), function (caseItem) {
                 const coordinates = (caseItem.coordinates) ? `${caseItem.coordinates.lng} ${caseItem.coordinates.lat}` : "";
+                const groupCoordinates = (caseItem.groupCoordinates) ? `${caseItem.groupCoordinates.lng} ${caseItem.groupCoordinates.lat}` : "";
                 return {
                     'groupId': caseItem.groupId,
+                    'groupCenterCoordinates': groupCoordinates,
                     'caseId': caseItem.caseId,
                     'coordinates': coordinates,
                 };
@@ -243,9 +244,10 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     function loadCaseGroupsInExport(caseGroups) {
         exportModelInstance.casesToExport().forEach(caseItem => {
-            const groupId = caseGroups[caseItem.caseId];
-            if (groupId !== undefined) {
-                caseItem.groupId = groupId;
+            const groupData = caseGroups[caseItem.caseId];
+            if (groupData !== undefined) {
+                caseItem.groupId = groupData.groupId;
+                caseItem.groupCoordinates = groupData.groupCoordinates;
             }
         });
     }
@@ -319,7 +321,13 @@ hqDefine("geospatial/js/case_grouping_map",[
               const casePoints = await getClusterLeavesAsync(clusterSource, clusterId, pointCount);
               for (const casePoint of casePoints) {
                 const caseId = casePoint.properties.id;
-                caseGroups[caseId] = clusterId;
+                caseGroups[caseId] = {
+                    groupId: clusterId,
+                    groupCoordinates: {
+                        lng: cluster.geometry.coordinates[0],
+                        lat: cluster.geometry.coordinates[1],
+                    }
+                };
               }
             } catch (error) {
               console.error("Error processing cluster:", error);
