@@ -825,9 +825,16 @@ class LocalizedAction(ActionMixin, TextOrDisplay):
     pass
 
 
+class EndpointAction(XmlObject):
+    ROOT_NAME = 'endpoint_action'
+
+    endpoint_id = StringField('@endpoint_id')
+    background = StringField('@background')
+
+
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
-    ORDER = ('style', 'header', 'template', 'sort_node')
+    ORDER = ('style', 'header', 'template', 'endpoint_action', 'sort_node')
 
     sort = StringField('@sort')
     print_id = StringField('@print-id')
@@ -836,7 +843,7 @@ class Field(OrderedXmlObject):
     template = NodeField('template', Template)
     sort_node = NodeField('sort', Sort)
     background = NodeField('background/text', Text)
-    action = NodeField('action', Action)
+    endpoint_action = NodeField('endpoint_action', EndpointAction)
 
 
 class Lookup(OrderedXmlObject):

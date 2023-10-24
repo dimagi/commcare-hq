@@ -15,14 +15,40 @@
                 <a href="#modalReportIssue" data-toggle="modal">report an issue</a>.
             {% endblocktrans %}
         </div>
-        <div class="form-group">
-            <label class="col-sm-3">
-                {% trans "Show mobile workers on the map" %}
-            </label>
-            <div class="checkbox">
-                <input type="checkbox" data-bind="checked: $root.shouldShowUsers, event: {change: onFiltersChange}" />
+        <fieldset>
+            <div class="form-group">
+                <label class="control-label col-sm-2">
+                    {% trans "Show mobile workers on the map" %}
+                </label>
+                <div class="col-sm-4">
+                    <input type="checkbox" data-bind="checked: $root.shouldShowUsers, event: {change: onFiltersChange}" />
+                </div>
             </div>
-        </div>
+        </fieldset>
+        <fieldset>
+            <div class="form-group">
+                <label class="control-label col-sm-2">
+                    {% trans "Location" %}
+                </label>
+                <div class="col-sm-4">
+                    <select class="form-control"
+                            type="text"
+                            id="location-filter-select"
+                            data-bind="select2: {},
+                                       optionsText: 'text',
+                                       optionsValue: 'id',
+                                       event: {change: onLocationFilterChange},
+                                       enable: $root.shouldShowUsers">
+                    </select>
+                    <p class="help-block">
+                        <i class="fa fa-info-circle"></i>
+                        {% blocktrans %}
+                            Only users at this location will be shown on the map.
+                        {% endblocktrans %}
+                    </p>
+                </div>
+            </div>
+        </fieldset>
         <div class="spacer"></div>
         <div class="form-actions">
             <button type="button" class="btn btn-primary" style="float:left; margin-left:1em" data-bind="event: {click: loadUsers}, enable: hasFiltersChanged()">

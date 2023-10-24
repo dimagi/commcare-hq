@@ -2475,7 +2475,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def save(self, fire_signals=True, **params):
         super().save(fire_signals=fire_signals, **params)
-        if fire_signals:
+        if fire_signals and not self.to_be_deleted():
             from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
             for domain in self.get_domains():
                 sync_web_user_usercases_if_applicable(self, domain)

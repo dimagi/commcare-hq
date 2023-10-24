@@ -1,3 +1,12 @@
+# Case Grouping
+
+There are various configuration settings available for deciding how case grouping is done. These parameters are saved in the `GeoConfig` model which is linked to a domain.
+It is important to note however, that not all available parameters will be used for case grouping. The parameters that actually get used is determined by the chosen grouping
+method. Mainly, these are:
+1. Min/Max Grouping - Grouping is done by specifying the minimum and maximum number of cases that each group may have.
+2. Target Size Grouping - Grouping is done by specifying how many groups should be created. Cases will then evenly get distributed into groups to meet the target number of groups.
+
+
 # Setup Test Data
 
 To populate test data for any domain, you could simply do a bulk upload for cases with the following columns

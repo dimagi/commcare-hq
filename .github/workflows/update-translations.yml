@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-      - uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+      - uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         id: generate-token
         with:
           app_id: ${{ secrets.APP_ID }}
@@ -47,8 +47,8 @@ jobs:
           UPDATE_TRANSLATIONS_SKIP_GIT: 1
       - name: Create Pull Request
         # https://github.com/marketplace/actions/create-pull-request
-        # Pinned to the commit of https://github.com/peter-evans/create-pull-request/releases/tag/v4.1.2
-        uses: peter-evans/create-pull-request@171dd555b9ab6b18fa02519fdfacbb8bf671e1b4
+        # Pinned to the commit of https://github.com/peter-evans/create-pull-request/releases/tag/v5.0.2
+        uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38
         with:
           token: ${{ steps.generate-token.outputs.token }}
           base: master

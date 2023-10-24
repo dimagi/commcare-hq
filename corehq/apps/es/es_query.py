@@ -384,7 +384,7 @@ class ESQuery(object):
         elif self._source is not None:
             self.es_query['_source'] = self._source
         if self.uses_aggregations():
-            self.es_query['size'] = 0
+            self.es_query['size'] = 0  # Just return the aggs, not the hits
             self.es_query['aggs'] = {
                 agg.name: agg.assemble()
                 for agg in self._aggregations
@@ -418,7 +418,7 @@ class ESQuery(object):
         }
         return self._sort(sort_field, reset_sort)
 
-    def nested_sort(self, path, field_name, nested_filter, desc=False, reset_sort=True):
+    def nested_sort(self, path, field_name, nested_filter, desc=False, reset_sort=True, sort_missing=None):
         """Order results by the value of a nested field
         """
         sort_field = {
@@ -426,6 +426,7 @@ class ESQuery(object):
                 'order': 'desc' if desc else 'asc',
                 'nested_path': path,
                 'nested_filter': nested_filter,
+                'missing': sort_missing,
             }
         }
         return self._sort(sort_field, reset_sort)

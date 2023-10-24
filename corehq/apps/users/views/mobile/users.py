@@ -1384,7 +1384,6 @@ class ClearCommCareUsers(DeleteCommCareUsers):
     def _clear_users_data(self, request, user_docs_by_id):
         from corehq.apps.users.model_log import UserModelAction
         from corehq.apps.hqwebapp.tasks import send_mail_async
-        from django.conf import settings
 
         cleared_count = 0
         for user_id, doc in user_docs_by_id.items():
@@ -1407,7 +1406,6 @@ class ClearCommCareUsers(DeleteCommCareUsers):
         send_mail_async.delay(
             subject=f"Mobile Worker Clearing Complete - {self.domain}",
             message=f"The mobile workers have been cleared successfully for the project '{self.domain}'.",
-            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[self.request.couch_user.get_email()],
         )
 
