@@ -2,12 +2,14 @@ hqDefine("geospatial/js/case_grouping_map",[
     "jquery",
     "knockout",
     'underscore',
-    'hqwebapp/js/initial_page_data'
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/bootstrap3/alert_user',
 ], function (
     $,
     ko,
     _,
     initialPageData,
+    alertUser
 ) {
 
     const MAPBOX_LAYER_VISIBILITY = {
@@ -350,7 +352,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                     };
                 }
             } catch (error) {
-                console.error("Error processing cluster:", error);
+                alertUser.alert_user(gettext("Something went wrong while processing the cluster."), 'danger');
             }
         }
         exportModelInstance.loadCaseGroups(caseGroups);
