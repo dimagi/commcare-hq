@@ -11,8 +11,8 @@ def repair_repeaters_with_whitelist_bug():
     # ignores deleted repeaters
     all_repeaters = Repeater.objects.all()
     broken_repeaters = [r for r in all_repeaters if
-                        'white_listed_form_xmlns' in r.options and r.options[
-                            'white_listed_form_xmlns'] == ['[]']]
+                        'white_listed_form_xmlns' in r.options and r.options.get(
+                            'white_listed_form_xmlns') == ['[]']]
 
     fixed_repeaters = []
     for repeater in broken_repeaters:
