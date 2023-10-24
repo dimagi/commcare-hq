@@ -560,7 +560,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         submitAction: function (e) {
+            var urlObject = formplayerUtils.currentUrlToObject();
             var self = this;
+            urlObject.submitPerformed = true;
             e.preventDefault();
             self.performSubmit();
         },
