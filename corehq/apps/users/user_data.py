@@ -17,18 +17,16 @@ class UserDataError(Exception):
 
 
 class UserData:
-    def __init__(self, raw_user_data, domain):
+    def __init__(self, raw_user_data, domain, profile_id=None):
         self._local_to_user = raw_user_data
         self.domain = domain
-
-    @property
-    def profile_id(self):
-        return self._local_to_user.get(PROFILE_SLUG)
+        self._profile_id = profile_id or raw_user_data.get(PROFILE_SLUG, None)
 
     @property
     def _provided_by_system(self):
         return {
             **(self.profile.fields if self.profile else {}),
+            PROFILE_SLUG: self.profile_id or '',
             COMMCARE_PROJECT: self.domain,
         }
 
@@ -45,6 +43,24 @@ class UserData:
 
     def __repr__(self):
         return f"UserData({self.to_dict()})"
+
+    @property
+    def profile_id(self):
+        return self._profile_id
+
+    @profile_id.setter
+    def profile_id(self, profile_id):
+        try:
+            del self.profile
+        except AttributeError:
+            pass
+        if profile_id:
+            new_profile = self._get_profile(profile_id)
+            non_empty_existing_fields = {k for k, v in self._local_to_user.items() if v}
+            if set(new_profile.fields).intersection(non_empty_existing_fields):
+                raise UserDataError(_("Profile conflicts with existing data"))
+        self._profile_id = profile_id
+        self._local_to_user[PROFILE_SLUG] = profile_id
 
     @cached_property
     def profile(self):
@@ -90,36 +106,34 @@ class UserData:
                 return
             raise UserDataError(_("'{}' cannot be set directly").format(key))
         if key == PROFILE_SLUG:
-            del self.profile
-            if not value:
-                self._local_to_user.pop(PROFILE_SLUG, None)
-                return
-            new_profile = self._get_profile(value)
-            non_empty_existing_fields = {k for k, v in self._local_to_user.items() if v}
-            if set(new_profile.fields).intersection(non_empty_existing_fields):
-                raise UserDataError(_("Profile conflicts with existing data"))
+            # TODO disallow
+            self.profile_id = value
         self._local_to_user[key] = value
 
-    def update(self, data):
+    def update(self, data, profile_id=...):
         # There are order-specific conflicts that can arise when setting values
         # individually - this method is a monolithic action whose final state
         # should be consistent
         original = self.to_dict()
+        original_profile = self.profile_id
         for k in data:
             self._local_to_user.pop(k, None)
         if PROFILE_SLUG in data:
-            self[PROFILE_SLUG] = data[PROFILE_SLUG]
+            self.profile_id = data[PROFILE_SLUG]
+        if profile_id != ...:
+            self.profile_id = profile_id
         for k, v in data.items():
             if k != PROFILE_SLUG:
                 if v or k not in self._provided_by_system:
                     self[k] = v
-        return original != self.to_dict()
+        return original != self.to_dict() or original_profile != self.profile_id
 
     def __delitem__(self, key):
         if key in self._provided_by_system:
             raise UserDataError(_("{} cannot be deleted").format(key))
         if key == PROFILE_SLUG:
-            del self.profile
+            # TODO disallow
+            self.profile_id = None
         del self._local_to_user[key]
 
     def pop(self, key, default=...):
@@ -134,3 +148,7 @@ class UserData:
         else:
             del self._local_to_user[key]
             return ret
+
+    def save(self):
+        # TODO
+        ...

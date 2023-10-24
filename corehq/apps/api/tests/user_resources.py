@@ -100,7 +100,7 @@ class TestCommCareUserResource(APIResourceTest):
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
-            'user_data': {'commcare_project': 'qwerty'},
+            'user_data': {'commcare_project': 'qwerty', PROFILE_SLUG: ''},
             'username': 'fake_user'
         })
 
@@ -126,7 +126,7 @@ class TestCommCareUserResource(APIResourceTest):
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
-            'user_data': {'commcare_project': 'qwerty'},
+            'user_data': {'commcare_project': 'qwerty', PROFILE_SLUG: ''},
             'username': 'fake_user',
         })
 
@@ -285,7 +285,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(modified.get_group_ids()[0], group._id)
         user_data = modified.get_user_data(self.domain.name)
         self.assertEqual(user_data["chw_id"], "13/43/DFA")
-        self.assertEqual(user_data[PROFILE_SLUG], self.profile.id)
+        self.assertEqual(user_data.profile_id, self.profile.id)
         self.assertEqual(user_data["imaginary"], "yes")
         self.assertEqual(modified.default_phone_number, "50253311399")
 

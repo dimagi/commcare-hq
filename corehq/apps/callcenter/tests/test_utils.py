@@ -140,8 +140,7 @@ class CallCenterUtilsTests(TestCase):
             '8starts_with_a_number': '0',
             'xml_starts_with_xml': '0',
             '._starts_with_punctuation': '0',
-            PROFILE_SLUG: profile.id,
-        })
+        }, profile_id=profile.id)
         sync_usercases(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertIsNotNone(case)
@@ -149,7 +148,7 @@ class CallCenterUtilsTests(TestCase):
         self.assertEqual(case.get_case_property('ok'), 'good')
         self.assertEqual(case.get_case_property(PROFILE_SLUG), str(profile.id))
         self.assertEqual(case.get_case_property('from_profile'), 'yes')
-        del self.user.get_user_data(TEST_DOMAIN)[PROFILE_SLUG]
+        self.user.get_user_data(TEST_DOMAIN).profile_id = None
         definition.delete()
 
     def test_get_call_center_cases_for_user(self):
@@ -253,7 +252,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
         self.user.save()
         case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertEqual(case.dynamic_case_properties()['completed_training'], 'yes')
-        self._check_update_matches(case, {'completed_training': 'yes'})
+        self._check_update_matches(case, {'completed_training': 'yes', PROFILE_SLUG: ''})
 
     def test_sync_usercase_overwrite_hq_props(self):
         """

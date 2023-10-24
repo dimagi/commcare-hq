@@ -198,11 +198,10 @@ class CommCareUserImporter(BaseUserImporter):
         if PROFILE_SLUG in data:
             raise UserUploadError(_("You cannot set {} directly").format(PROFILE_SLUG))
         if profile_name:
-            profile_obj = domain_info.profiles_by_name[profile_name]
-            data[PROFILE_SLUG] = profile_obj.id
+            profile_id = domain_info.profiles_by_name[profile_name].pk
 
         try:
-            user_data.update(data)
+            user_data.update(data, profile_id=profile_id if profile_name else ...)
             user_data.update(uncategorized_data)
         except UserDataError as e:
             raise UserUploadError(str(e))

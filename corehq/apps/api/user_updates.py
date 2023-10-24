@@ -4,6 +4,7 @@ from django.utils.translation import gettext as _
 from dimagi.utils.couch.bulk import get_docs
 
 from corehq.apps.api.exceptions import UpdateUserException
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -110,7 +111,8 @@ def _update_groups(user, group_ids, user_change_logger):
 
 def _update_user_data(user, new_user_data, user_change_logger):
     try:
-        changed = user.get_user_data(user.domain).update(new_user_data)
+        profile_id = new_user_data.pop(PROFILE_SLUG, ...)
+        changed = user.get_user_data(user.domain).update(new_user_data, profile_id=profile_id)
     except UserDataError as e:
         raise UpdateUserException(str(e))
 
