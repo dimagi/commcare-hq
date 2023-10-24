@@ -45,7 +45,8 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_mail_async(self, subject, message, recipient_list, from_email=settings.DEFAULT_FROM_EMAIL,
-                    messaging_event_id=None, domain: str = None, use_domain_gateway=False):
+                    filename: str = None, content=None, messaging_event_id=None, domain: str = None,
+                    use_domain_gateway=False):
     """ Call with send_mail_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -97,6 +98,8 @@ def send_mail_async(self, subject, message, recipient_list, from_email=settings.
             headers=headers,
             connection=configuration.connection
         )
+        if filename and content:
+            message.attach(filename=filename, content=content)
         return message.send()
     except SMTPDataError as e:
         # If the SES configuration has not been properly set up, resend the message
