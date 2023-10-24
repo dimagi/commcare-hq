@@ -246,7 +246,7 @@ Install Podman
     echo 'export DOCKER_SOCK=$XDG_RUNTIME_DIR/docker.sock' >> ~/.bashrc
 
 Create a podman wrapper script named `docker` with the following content
-somehwere on your ``PATH`` (``~/.local/bin/docker`` may be a good place if it
+somewhere on your ``PATH`` (``~/.local/bin/docker`` may be a good place if it
 is on your ``PATH``).
 
 .. code:: bash
