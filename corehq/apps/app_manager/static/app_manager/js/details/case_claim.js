@@ -1,8 +1,7 @@
-/* global Uint8Array */
 hqDefine("app_manager/js/details/case_claim", function () {
     var get = hqImport('hqwebapp/js/initial_page_data').get,
         generateSemiRandomId = function () {
-        // https://stackoverflow.com/a/2117523
+            // https://stackoverflow.com/a/2117523
             return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, function (c) {
                 return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
             });
@@ -175,6 +174,18 @@ hqDefine("app_manager/js/details/case_claim", function () {
         return self;
     };
 
+    var customSortPropertyModel = function (options, saveButton) {
+        options = _.defaults(options, {
+            property_name: '',
+            sort_type: '',
+            direction: '',
+        });
+        var self = ko.mapping.fromJS(options);
+
+        subscribeToSave(self, ['property_name', 'sort_type', 'direction'], saveButton);
+        return self;
+    };
+
     var additionalRegistryCaseModel = function (xpath, saveButton) {
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -279,7 +290,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.serialize = function () {
             var data = ko.mapping.toJS(self);
-            data.additional_registry_cases = data.data_registry_workflow === "load_case" ?  _.pluck(data.additional_registry_cases, 'caseIdXpath') : [];
+            data.additional_registry_cases = data.data_registry_workflow === "load_case" ? _.pluck(data.additional_registry_cases, 'caseIdXpath') : [];
             _.each(['search_label', 'search_again_label'], function (label) {
                 _.each(['image', 'audio'], function (media) {
                     var key = label + "_" + media,
@@ -298,8 +309,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         // init with blank string to avoid triggering save button
         var appearance = searchProperty.appearance || "";
         if (searchProperty.input_ === "select1" || searchProperty.input_ === "select") {
-            var instance_id = searchProperty.itemset.instance_id;
-            if (instance_id !== null && instance_id.includes("commcare-reports")) {
+            var instanceId = searchProperty.itemset.instance_id;
+            if (instanceId !== null && instanceId.includes("commcare-reports")) {
                 appearance = "report_fixture";
             } else {
                 appearance = "lookup_table_fixture";
@@ -314,11 +325,12 @@ hqDefine("app_manager/js/details/case_claim", function () {
         return appearance;
     };
 
-    var searchViewModel = function (searchProperties, defaultProperties, searchConfigOptions, lang, saveButton, searchFilterObservable) {
+    var searchViewModel = function (searchProperties, defaultProperties, customSortProperties, searchConfigOptions, lang, saveButton, searchFilterObservable) {
         var self = {};
 
         self.searchConfig = searchConfigModel(searchConfigOptions, lang, searchFilterObservable, saveButton);
         self.default_properties = ko.observableArray();
+        self.custom_sort_properties = ko.observableArray();
 
         // searchProperties is a list of CaseSearchProperty objects
         var wrappedSearchProperties = _.map(searchProperties, function (searchProperty) {
@@ -401,12 +413,35 @@ hqDefine("app_manager/js/details/case_claim", function () {
             );
         };
 
+        self.addCustomSortProperty = function () {
+            self.custom_sort_properties.push(customSortPropertyModel({}, saveButton));
+        };
+        self.removeCustomSortProperty = function (property) {
+            self.custom_sort_properties.remove(property);
+        };
+        self._getCustomSortProperties = function () {
+            return _.map(
+                _.filter(
+                    self.custom_sort_properties(),
+                    // Skip properties where property is blank
+                    function (p) { return p.property_name().length > 0; }
+                ),
+                function (prop) { return ko.mapping.toJS(prop); }
+            );
+        };
+
         if (defaultProperties.length > 0) {
             self.default_properties(_.map(defaultProperties, function (p) {
                 return defaultPropertyModel(p, saveButton);
             }));
         } else {
             self.addDefaultProperty();
+        }
+
+        if (customSortProperties.length > 0) {
+            self.custom_sort_properties(_.map(customSortProperties, function (p) {
+                return customSortPropertyModel(p, saveButton);
+            }));
         }
 
         self.commonProperties = ko.computed(function () {
@@ -435,11 +470,11 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return _.extend({
                 properties: self._getProperties(),
                 default_properties: self._getDefaultProperties(),
+                custom_sort_properties: self._getCustomSortProperties(),
             }, self.searchConfig.serialize());
         };
 
-        subscribeToSave(self, ['search_properties', 'default_properties'], saveButton);
-
+        subscribeToSave(self, ['search_properties', 'default_properties', 'custom_sort_properties'], saveButton);
         return self;
     };
 
