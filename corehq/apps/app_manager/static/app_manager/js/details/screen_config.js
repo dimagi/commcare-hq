@@ -176,6 +176,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
             self.search = caseClaimModels.searchViewModel(
                 spec.search_properties || [],
                 spec.default_properties,
+                spec.custom_sort_properties,
                 _.pick(spec, caseClaimModels.searchConfigKeys),
                 spec.lang,
                 self.shortScreen.saveButton,

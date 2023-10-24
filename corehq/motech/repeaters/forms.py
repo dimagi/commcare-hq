@@ -131,12 +131,11 @@ class FormRepeaterForm(GenericRepeaterForm):
     )
 
     def __init__(self, *args, **kwargs):
-        if kwargs.get('data', {}).get('white_listed_form_xmlns'):
+        if 'data' in kwargs and 'white_listed_form_xmlns' in kwargs['data']:
             # `FormRepeater.white_listed_form_xmlns` is a list, but
             # `FormRepeaterForm.white_listed_form_xmlns` takes a string.
-            kwargs['data']['white_listed_form_xmlns'] = ', \n'.join(
-                kwargs['data']['white_listed_form_xmlns']
-            )
+            xmlns_list = kwargs['data']['white_listed_form_xmlns']
+            kwargs['data']['white_listed_form_xmlns'] = ', \n'.join(xmlns_list)
         super().__init__(*args, **kwargs)
 
     @property

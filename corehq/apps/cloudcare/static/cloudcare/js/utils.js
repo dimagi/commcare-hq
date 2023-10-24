@@ -342,6 +342,10 @@ hqDefine('cloudcare/js/utils', [
         $el.on("focusout", $el.data("DateTimePicker").hide);
     };
 
+    var smallScreenIsEnabled = function () {
+        return window.innerWidth < constants.SMALL_SCREEN_WIDTH_PX;
+    };
+
     /**
      *  Listen for screen size changes to enable or disable small screen functionality.
      *  Accepts a callback function that should take in the new value of smallScreenEnabled.
@@ -351,7 +355,7 @@ hqDefine('cloudcare/js/utils', [
      *      stopListening() removes the jQuery event listener
      */
     var smallScreenListener = function (callback) {
-        var smallScreenEnabled = window.innerWidth < constants.SMALL_SCREEN_WIDTH_PX;
+        var smallScreenEnabled = smallScreenIsEnabled();
         var handleSmallScreenChange = () => {
             var shouldEnableSmallScreen = window.innerWidth < constants.SMALL_SCREEN_WIDTH_PX;
             if (smallScreenEnabled !== shouldEnableSmallScreen) {
@@ -389,6 +393,7 @@ hqDefine('cloudcare/js/utils', [
         formplayerLoadingComplete: formplayerLoadingComplete,
         formplayerSyncComplete: formplayerSyncComplete,
         reportFormplayerErrorToHQ: reportFormplayerErrorToHQ,
+        smallScreenIsEnabled: smallScreenIsEnabled,
         smallScreenListener: smallScreenListener,
     };
 });

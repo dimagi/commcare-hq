@@ -4,4 +4,48 @@
 {% load hq_shared_tags %}
 
 {% block reportcontent %}
+<div class="row panel" id="export-controls">
+  <div class="controls col-sm-2 col-md-2 col-lg-2">
+    <button class="btn-default form-control" data-bind="click: downloadCSV">
+      {% trans "Export Groups" %}
+    </button>
+  </div>
+</div>
+
+<div id="case-grouping-map" style="height: 500px"></div>
+
+<div class="panel-body-datatable">
+    {% block reporttable %}
+      {% if report.needs_filters %}
+        {% include 'reports/partials/description.html' %}
+      {% else %}
+        <table id="report_table_{{ report.slug }}" class="table table-striped datatable" width="100%" {% if pagination.filter %} data-filter="true"{% endif %}>
+        </table>
+      {% endif %}
+    {% endblock reporttable %}
+</div>
+
+<div class="row panel" id="clusterStats">
+  <div class="col-sm-6 col-md-6 col-lg-6">
+    <table class="table table-striped table-bordered">
+      <thead>
+        <th colspan="2">{% trans "Summary of Case Grouping" %}</th>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{% trans "Total number of clusters" %}</td>
+          <td data-bind="text: totalClusters"></td>
+        </tr>
+        <tr>
+          <td>{% trans "Maximum cases per cluster" %}</td>
+          <td data-bind="text: clusterMaxCount"></td>
+        </tr>
+        <tr>
+          <td>{% trans "Minimum cases per cluster" %}</td>
+          <td data-bind="text: clusterMinCount"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 {% endblock %}

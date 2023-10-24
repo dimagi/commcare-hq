@@ -463,7 +463,6 @@ msgstr "Un nom est requis pour ce nouveau rôle."
 #: corehq/apps/events/views.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/geospatial/reports.py
 #: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/locations/forms.py
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -634,7 +633,6 @@ msgstr ""
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-#: custom/abt/reports/late_pmt.py
 msgid "Phone Number"
 msgstr "Numéro de téléphone"
 
@@ -659,7 +657,7 @@ msgid "Postal Code"
 msgstr "Code Postale"
 
 #: corehq/apps/accounting/models.py custom/abt/reports/filters.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Country"
 msgstr "Pays"
 
@@ -2267,7 +2265,7 @@ msgstr ""
 #: corehq/messaging/smsbackends/start_enterprise/forms.py
 #: corehq/messaging/smsbackends/trumpia/forms.py
 #: corehq/messaging/smsbackends/unicel/forms.py corehq/motech/openmrs/forms.py
-#: custom/abt/reports/filters.py custom/abt/reports/late_pmt.py
+#: custom/abt/reports/filters.py
 msgid "Username"
 msgstr "Nom d'utilisateur"
 
@@ -6227,6 +6225,7 @@ msgstr "Installer CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
+#: corehq/apps/cloudcare/templates/formplayer/query_view.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
 #: corehq/apps/domain/templates/domain/confirm_plan.html
@@ -6988,29 +6987,7 @@ msgid ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
 "list property\n"
-"                that references a missing form: "
-"<code>%(column.header|trans:langs)s</code>.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
-"list property\n"
-"                that references form with a different case type: "
-"<code>%(column.header|trans:langs)s</code>.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
-"list property\n"
-"                that references form with a different parent module: "
+"                that references a missing form endpoint: "
 "<code>%(column.header|trans:langs)s</code>.\n"
 "              "
 msgstr ""
@@ -10347,7 +10324,8 @@ msgid "Please enter a password or cancel."
 msgstr "Veuillez entrer un mot de passe ou annuler."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-#: corehq/apps/data_dictionary/models.py corehq/apps/hqwebapp/forms.py
+#: corehq/apps/data_dictionary/models.py corehq/apps/email/forms.py
+#: corehq/apps/hqwebapp/forms.py
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
 #: corehq/apps/users/forms.py corehq/messaging/smsbackends/airtel_tcl/forms.py
 #: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
@@ -12376,6 +12354,14 @@ msgid "Please wait while the map loads"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
+msgid "Scroll to bottom"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html
+msgid "Refine search"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html
 msgid "Sort By"
 msgstr ""
 
@@ -13135,7 +13121,8 @@ msgstr "Gérer comptes d'utilisateurs mobiles et utilisateurs web de CommCare"
 msgid "Manage the Organization Hierarchy"
 msgstr "Gérer la hiérarchie géographique"
 
-#: corehq/apps/dashboard/views.py corehq/apps/sms/views.py
+#: corehq/apps/dashboard/views.py corehq/apps/email/views.py
+#: corehq/apps/sms/views.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/reports.py corehq/tabs/tabclasses.py
 msgid "Messaging"
@@ -13213,7 +13200,7 @@ msgstr "Nombre"
 msgid "Multiple Choice"
 msgstr "Choix multiple"
 
-#: corehq/apps/data_dictionary/models.py corehq/apps/geospatial/reports.py
+#: corehq/apps/data_dictionary/models.py
 msgid "GPS"
 msgstr "GPS"
 
@@ -18296,6 +18283,86 @@ msgstr ""
 "Félicitations! Votre fichier a été charger sur votre %(path)s compte "
 "dropbox. Vous pouvez le partager avec ce lien:\n"
 
+#: corehq/apps/email/forms.py corehq/apps/reports/views.py
+msgid "Server"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "e.g. \"https://smtp.example.com\""
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Port"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+#, fuzzy
+#| msgid "Send Email"
+msgid "Sender's email"
+msgstr "Envoyer un courrier électronique"
+
+#: corehq/apps/email/forms.py
+#, fuzzy
+#| msgid "Gateway"
+msgid "Use Gateway?"
+msgstr "Passerelle"
+
+#: corehq/apps/email/forms.py
+msgid "Select this option to use this email gateway for sending emails"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Use Tracking Headers"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid ""
+"Applicable for Amazon's gateway. When selected, emails will be sent with "
+"tracking headers along with other headers."
+msgstr ""
+
+#: corehq/apps/email/forms.py
+#, fuzzy
+#| msgid "Client Secret"
+msgid "SNS Endpoint Secret"
+msgstr "Secret client"
+
+#: corehq/apps/email/forms.py
+msgid ""
+"Applicable only when gateway is Amazon's SES and tracking headers are "
+"enabled. This secret is used in the AWS SNS settings."
+msgstr ""
+
+#: corehq/apps/email/forms.py
+#, fuzzy
+#| msgid "Configuration"
+msgid "SES Configuration Set Name"
+msgstr "Configuration"
+
+#: corehq/apps/email/forms.py
+msgid ""
+"Applicable only when gateway is Amazon's SES and tracking headers are "
+"enabled."
+msgstr ""
+
+#: corehq/apps/email/forms.py
+#, fuzzy
+#| msgid "Saved!"
+msgid "Saved"
+msgstr "Sauvegardé!"
+
+#: corehq/apps/email/templates/email/email_settings.html
+#, fuzzy
+#| msgid "Update My Settings"
+msgid "Add Email Gateway Settings"
+msgstr "Mettre à jour mes paramètres"
+
+#: corehq/apps/email/views.py
+#, fuzzy
+#| msgid "Edit Settings"
+msgid "Email Settings"
+msgstr "Modifier les paramètres"
+
 #: corehq/apps/enterprise/enterprise.py
 msgid "Enterprise Report"
 msgstr ""
@@ -21785,10 +21852,8 @@ msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
 #: corehq/apps/geospatial/filters.py
-#, fuzzy
-#| msgid "Group Data"
 msgid "GPS Data"
-msgstr "Données de groupe"
+msgstr ""
 
 #: corehq/apps/geospatial/filters.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
@@ -21827,6 +21892,40 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
+msgid "Grouping method"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Determines which parameter to use for grouping cases"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Maximum group size"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "The maximum number of cases that can be in a group"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "The minimum number of cases that can be in a group"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Target group count"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The desired number of groups. Cases will be divided equally to create this "
+"many groups"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Disbursement algorithm"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
 msgid "Configure Geospatial Settings"
 msgstr ""
 
@@ -21847,8 +21946,45 @@ msgid ""
 "case property for all users that capture location data.</li></ul>"
 msgstr ""
 
-#: corehq/apps/geospatial/reports.py
-msgid "Case Management Map"
+#: corehq/apps/geospatial/forms.py
+msgid "Case Grouping Parameters"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Algorithms"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Value for maximum group size required"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Value for minimum group size required"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"Maximum group size should be greater than or equal to minimum group size"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Value for target group count required"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Radial Algorithm"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Road Network Algorithm"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Min/Max Grouping"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Target Size Grouping"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py corehq/apps/geospatial/views.py
@@ -21859,6 +21995,30 @@ msgstr ""
 #: corehq/apps/geospatial/reports.py
 msgid "case_id"
 msgstr ""
+
+#: corehq/apps/geospatial/reports.py
+msgid "gps_point"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py
+#, fuzzy
+#| msgid "Add link"
+msgid "link"
+msgstr "Ajouter un lien"
+
+#: corehq/apps/geospatial/reports.py
+msgid "Case Management Map"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py
+msgid "Case Grouping"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+#, fuzzy
+#| msgid "Reporting Groups"
+msgid "Export Groups"
+msgstr "Groupes de signalement"
 
 #: corehq/apps/geospatial/templates/gps_capture.html
 msgid ""
@@ -29855,10 +30015,8 @@ msgid "This report has been deprecated."
 msgstr ""
 
 #: corehq/apps/reports/models.py
-#, fuzzy
-#| msgid "Show Active Mobile Workers"
 msgid "Active Mobile Workers"
-msgstr "Visualiser les utilisateurs mobiles actifs"
+msgstr ""
 
 #: corehq/apps/reports/models.py
 msgid "demo_user"
@@ -32245,10 +32403,6 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Could not update Tableau Server Settings"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "Server"
 msgstr ""
 
 #: corehq/apps/reports/views.py
@@ -43940,6 +44094,12 @@ msgid "Edit Gateway"
 msgstr "Modifier passerelle "
 
 #: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "SMS Connectivity"
+msgid "Email Connectivity"
+msgstr "Connectivité SMS"
+
+#: corehq/tabs/tabclasses.py
 msgid "Template Management"
 msgstr ""
 
@@ -44182,41 +44342,32 @@ msgid "Uploaded file does not contian any sheets."
 msgstr ""
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Level 1"
 msgstr "Niveau 1"
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Level 2"
 msgstr "Niveau 2"
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Level 3"
 msgstr "Niveau 3"
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Level 4"
 msgstr "Niveau 4"
 
-#: custom/abt/reports/filters.py custom/abt/reports/late_pmt.py
-#: custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/filters.py custom/abt/reports/late_pmt_2020.py
 msgid "Submission Status"
 msgstr " État du rapport soumis"
 
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Missing Report Date"
 msgstr "Date du rapport manquant"
-
-#: custom/abt/reports/late_pmt.py
-msgid "No PMT data Submitted"
-msgstr "Aucune donnée PMT soumise"
-
-#: custom/abt/reports/late_pmt.py
-msgid "Incorrect PMT data Submitted"
-msgstr "Données PMT soumises incorrectes"
 
 #: custom/abt/reports/late_pmt_2020.py
 msgid "Incorrect or no PMT data submitted"

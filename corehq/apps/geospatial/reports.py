@@ -11,6 +11,7 @@ from couchforms.geopoint import GeoPoint
 
 from corehq.apps.case_search.const import CASE_PROPERTIES_PATH
 from corehq.apps.es import CaseSearchES, filters
+from corehq.apps.es.case_search import wrap_case_search_hit
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
@@ -21,17 +22,20 @@ from .models import GeoPolygon
 from .utils import get_geo_case_property
 
 
-class BaseCaseMap(ProjectReport, CaseListMixin):
+class BaseCaseMapReport(ProjectReport, CaseListMixin):
     section_name = gettext_noop("Geospatial")
 
     dispatcher = CaseManagementMapDispatcher
 
+    search_class = CaseSearchES
+
     @property
     def template_context(self):
         # Whatever is specified here can be accessed through initial_page_data
-        context = super(BaseCaseMap, self).template_context
+        context = super(BaseCaseMapReport, self).template_context
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'case_row_order': {val.html: idx for idx, val in enumerate(self.headers)},
         })
         return context
 
@@ -43,17 +47,19 @@ class BaseCaseMap(ProjectReport, CaseListMixin):
         )
         headers = DataTablesHeader(
             DataTablesColumn(_("case_id"), prop_name="type.exact"),
-            DataTablesColumn(_("GPS"), prop_name="type.exact"),
-            DataTablesColumn(_("Name"), prop_name="name.exact", css_class="case-name-link"),
+            DataTablesColumn(_("gps_point"), prop_name="type.exact"),
+            DataTablesColumn(_("link"), prop_name="name.exact", css_class="case-name-link"),
         )
         headers.custom_sort = [[2, 'desc']]
         return headers
 
     @property
     def rows(self):
+        geo_case_property = get_geo_case_property(self.domain)
 
         def _get_geo_location(case):
-            geo_point = case.get(get_geo_case_property(case.get('domain')))
+            case_obj = wrap_case_search_hit(case)
+            geo_point = case_obj.get_case_property(geo_case_property)
             if not geo_point:
                 return
 
@@ -77,7 +83,7 @@ class BaseCaseMap(ProjectReport, CaseListMixin):
         return cases
 
 
-class CaseManagementMap(BaseCaseMap):
+class CaseManagementMap(BaseCaseMapReport):
     name = gettext_noop("Case Management Map")
     slug = "case_management_map"
 
@@ -99,13 +105,11 @@ class CaseManagementMap(BaseCaseMap):
         return context
 
 
-class CaseGroupingReport(BaseCaseMap):
+class CaseGroupingReport(BaseCaseMapReport):
     name = gettext_noop('Case Grouping')
     slug = 'case_grouping_map'
-    search_class = CaseSearchES
 
-    # TODO: We need a separate base template
-    base_template = 'geospatial/map_visualization_base.html'
+    base_template = 'geospatial/case_grouping_map_base.html'
     report_template_path = 'case_grouping_map.html'
 
     def _build_query(self):

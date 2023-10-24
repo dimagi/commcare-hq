@@ -1591,14 +1591,6 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     ),
 )
 
-DD_CASE_DATA = StaticToggle(
-    'dd_case_data',
-    'Data Dictionary Case Data Page',
-    TAG_INTERNAL,
-    [NAMESPACE_USER],
-    description='Experimental: render the case data page in accordance with the data dictionary',
-)
-
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
@@ -2454,6 +2446,13 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Provides access to views for resport scheduling '
                 'such as schedule creation and deletion.'
+)
+
+CUSTOM_EMAIL_GATEWAY = StaticToggle(
+    'custom_email_gateway',
+    'Allows user to define custom email gateway that can be used to send emails from HQ',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )
 
 
