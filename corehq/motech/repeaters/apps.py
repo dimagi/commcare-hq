@@ -9,6 +9,7 @@ REPEATER_CLASS_MAP = {}
 
 class RepeaterAppConfig(AppConfig):
     name = 'corehq.motech.repeaters'
+    default_auto_field = 'django.db.models.BigAutoField'
 
     def ready(self):
         from . import signals  # noqa: disable=unused-import,F401
