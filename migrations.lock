@@ -667,6 +667,7 @@ motech
  0011_connectionsettings_is_deleted
  0012_alter_connectionsettings_auth_type
  0013_alter_connectionsettings_auth_type
+ 0014_fix_whitelist_bug_repeaters
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
