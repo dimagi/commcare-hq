@@ -282,9 +282,12 @@ hqDefine("geospatial/js/case_grouping_map",[
         map.setLayoutProperty('unclustered-point', 'visibility', visibility);
     }
 
-    function getRandomColor() {
-        const randomColor = Math.floor(Math.random() * 16777215).toString(16);
-        return `#${randomColor}`;
+    function getRandomRGBColor() {
+        var r = Math.floor(Math.random() * 256); // Random value between 0 and 255 for red
+        var g = Math.floor(Math.random() * 256); // Random value between 0 and 255 for green
+        var b = Math.floor(Math.random() * 256); // Random value between 0 and 255 for blue
+
+        return `rgba(${r},${g},${b},1)`;
     }
 
     function collapseGroupsOnMap() {
@@ -292,20 +295,25 @@ hqDefine("geospatial/js/case_grouping_map",[
         var groupColors = {};
 
         exportModelInstance.casesToExport().forEach(function (caseItem) {
+            if (!caseItem.coordinates) {
+                return;
+            }
+
             const groupId = caseItem.groupId;
+            let color = "rgba(128,128,128,0.25)";
+
             if (groupId) {
                 if (groupColors[groupId] === undefined) {
-                    groupColors[groupId] = getRandomColor();
+                    groupColors[groupId] = getRandomRGBColor();
                 }
-                const color = groupColors[groupId];
-
-                const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
-                marker.setLngLat([caseItem.coordinates.lng, caseItem.coordinates.lat]);
-
-                // Add the marker to the map
-                marker.addTo(map);
-                mapMarkers.push(marker);
+                color = groupColors[groupId];
             }
+            const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
+            marker.setLngLat([caseItem.coordinates.lng, caseItem.coordinates.lat]);
+
+            // Add the marker to the map
+            marker.addTo(map);
+            mapMarkers.push(marker);
         });
     }
 
