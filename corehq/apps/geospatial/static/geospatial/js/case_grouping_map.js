@@ -9,9 +9,17 @@ hqDefine("geospatial/js/case_grouping_map",[
     _,
     initialPageData
 ) {
+
+    MAPBOX_LAYER_VISIBILITY = {
+        None: 'none',
+        Visible: 'visible',
+    }
+
     const MAP_CONTAINER_ID = 'case-grouping-map';
     let map;
     const clusterStatsInstance = new clusterStatsModel();
+    let exportModelInstance;
+    let mapMarkers = [];
 
     function caseModel(caseId, coordiantes, caseLink) {
         'use strict';
@@ -233,6 +241,101 @@ hqDefine("geospatial/js/case_grouping_map",[
         }
     }
 
+    function loadCaseGroupsInExport(caseGroups) {
+        exportModelInstance.casesToExport().forEach(caseItem => {
+            const groupId = caseGroups[caseItem.caseId];
+            if (groupId !== undefined) {
+                caseItem.groupId = groupId;
+            }
+        });
+    }
+
+    function clearCaseGroupsInExport() {
+        exportModelInstance.casesToExport().forEach(caseItem => {
+            if (caseItem.groupId) {
+                caseItem.groupId = null;
+            }
+        });
+    }
+
+    function getClusterLeavesAsync(clusterSource, clusterId, pointCount) {
+        return new Promise((resolve, reject) => {
+            clusterSource.getClusterLeaves(clusterId, pointCount, 0, (error, casePoints) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(casePoints);
+                }
+            });
+        });
+    }
+
+    function setMapLayersVisibility(visibility) {
+        map.setLayoutProperty('clusters', 'visibility', visibility);
+        map.setLayoutProperty('cluster-count', 'visibility', visibility);
+        map.setLayoutProperty('unclustered-point', 'visibility', visibility);
+    }
+
+    function getRandomColor() {
+        const randomColor = Math.floor(Math.random()*16777215).toString(16);
+        return `#${randomColor}`;
+    }
+
+    function collapseGroupsOnMap() {
+        setMapLayersVisibility(MAPBOX_LAYER_VISIBILITY.None);
+        var groupColors = {};
+
+        exportModelInstance.casesToExport().forEach(function(caseItem) {
+            const groupId = caseItem.groupId;
+            if (groupId) {
+                if (groupColors[groupId] === undefined) {
+                    groupColors[groupId] = getRandomColor();
+                }
+                const color = groupColors[groupId];
+
+                const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
+                marker.setLngLat([caseItem.coordinates.lng, caseItem.coordinates.lat]);
+
+                // Add the marker to the map
+                marker.addTo(map);
+                mapMarkers.push(marker);
+            }
+        });
+    }
+
+    async function setCaseGroups() {
+        const sourceFeatures = map.querySourceFeatures('caseWithGPS', {
+            sourceLayer: 'clusters',
+            filter: ['==', 'cluster', true],
+        });
+        const clusterSource = map.getSource('caseWithGPS');
+        let caseGroups = {};
+
+        for (const cluster of sourceFeatures) {
+            const clusterId = cluster.properties.cluster_id;
+            const pointCount = cluster.properties.point_count;
+
+            try {
+              const casePoints = await getClusterLeavesAsync(clusterSource, clusterId, pointCount);
+              for (const casePoint of casePoints) {
+                const caseId = casePoint.properties.id;
+                caseGroups[caseId] = clusterId;
+              }
+            } catch (error) {
+              console.error("Error processing cluster:", error);
+            }
+        }
+        loadCaseGroupsInExport(caseGroups);
+        collapseGroupsOnMap();
+    }
+
+    function clearCaseGroups() {
+        setMapLayersVisibility(MAPBOX_LAYER_VISIBILITY.Visible);
+        mapMarkers.forEach((marker) => marker.remove())
+        mapMarkers = [];
+        clearCaseGroupsInExport();
+    }
+
     function groupLockModel() {
         'use strict';
         var self = {};
@@ -242,7 +345,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.showLockButton = ko.computed(function () {
             return !self.groupsLocked();
         });
-        self.showUnLockButton = ko.computed(function () {
+        self.showUnlockButton = ko.computed(function () {
             return self.groupsLocked();
         });
 
@@ -250,9 +353,11 @@ hqDefine("geospatial/js/case_grouping_map",[
             if (self.groupsLocked()) {
                 self.groupsLocked(false);
                 map.scrollZoom.enable();
+                clearCaseGroups();
             } else {
                 self.groupsLocked(true);
                 map.scrollZoom.disable();
+                setCaseGroups();
             }
         }
         return self;
@@ -260,7 +365,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     $(function () {
         let caseModels = [];
-        const exportModelInstance = new exportModel();
+        exportModelInstance = new exportModel();
 
         // Parses a case row (which is an array of column values) to an object, using caseRowOrder as the order of the columns
         function parseCaseItem(caseItem, caseRowOrder) {
