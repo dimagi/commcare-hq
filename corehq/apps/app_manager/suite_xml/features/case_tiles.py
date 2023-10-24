@@ -10,7 +10,9 @@ from xml.sax.saxutils import escape
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.suite_xml.xml_models import Detail, XPathVariable, Text, TileGroup, Style
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    Detail, XPathVariable, Text, TileGroup, Style, EndpointAction
+)
 from corehq.apps.app_manager.util import (
     module_offers_search,
     module_uses_inline_search,
@@ -186,8 +188,12 @@ class CaseTileHelper(object):
         }
 
         context['variables'] = ''
-        if column.format in ["enum", "conditional-enum", "enum-image"]:
+        if column.format in ["enum", "conditional-enum", "enum-image", "clickable-icon"]:
             context["variables"] = self._get_enum_variables(column)
+
+        context['endpoint_action'] = ''
+        if column.endpoint_action_id:
+            context["endpoint_action"] = self._get_endpoint_action(column.endpoint_action_id)
         return context
 
     def _get_xpath_function(self, column):
@@ -215,6 +221,11 @@ class CaseTileHelper(object):
                 ).serialize()
             )
         return ''.join([bytes(variable).decode('utf-8') for variable in variables])
+
+    def _get_endpoint_action(self, endpoint_action_id):
+        endpoint = EndpointAction(endpoint_id=endpoint_action_id, background="true").serialize()
+        decoded = bytes(endpoint).decode('utf-8')
+        return decoded
 
     @property
     @memoized
