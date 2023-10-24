@@ -30,6 +30,17 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.groupId = null;
         self.groupCoordinates = null;
 
+        self.toJson = function () {
+            const coordinates = (self.coordinates) ? `${self.coordinates.lng} ${self.coordinates.lat}` : "";
+            const groupCoordinates = (self.groupCoordinates) ? `${self.groupCoordinates.lng} ${self.groupCoordinates.lat}` : "";
+            return {
+                'groupId': self.groupId,
+                'groupCenterCoordinates': groupCoordinates,
+                'caseId': self.caseId,
+                'coordinates': coordinates,
+            };
+        }
+
         return self;
     }
 
@@ -53,14 +64,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             }
 
             const casesToExport = _.map(self.casesToExport(), function (caseItem) {
-                const coordinates = (caseItem.coordinates) ? `${caseItem.coordinates.lng} ${caseItem.coordinates.lat}` : "";
-                const groupCoordinates = (caseItem.groupCoordinates) ? `${caseItem.groupCoordinates.lng} ${caseItem.groupCoordinates.lat}` : "";
-                return {
-                    'groupId': caseItem.groupId,
-                    'groupCenterCoordinates': groupCoordinates,
-                    'caseId': caseItem.caseId,
-                    'coordinates': coordinates,
-                };
+                return caseItem.toJson();
             });
 
             let csvStr = "";
