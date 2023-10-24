@@ -276,7 +276,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"]
             const domain = user.domain;
             const caseId = this.model.get('id');
-            const fieldIndex = $(e.currentTarget).parent().index();
+            let fieldIndex = $(e.currentTarget).parent().index();
+            if (this.options.groupHeaderRows) {
+                fieldIndex += this.options.groupHeaderRows
+            }
             const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
             const actionUrl = origin + urlTemplate
                 .replace("{domain}", domain)
@@ -437,6 +440,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
             const data = this.options.model.get('data');
             const headerRowIndices = this.options.headerRowIndices;
+
             dict['indexedHeaderData'] = headerRowIndices.reduce((acc, index) => {
                 acc[index] = data[index];
                 return acc;
