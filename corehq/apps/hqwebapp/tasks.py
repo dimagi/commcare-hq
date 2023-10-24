@@ -246,8 +246,8 @@ def clean_expired_transient_emails():
 
 
 def get_maintenance_alert_active():
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-    return 1 if MaintenanceAlert.get_active_alerts() else 0
+    from corehq.apps.hqwebapp.models import Alert
+    return 1 if Alert.get_active_alerts() else 0
 
 
 metrics_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,

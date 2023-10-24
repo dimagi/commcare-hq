@@ -66,7 +66,6 @@ IGNORE_MODELS = {
     "hqadmin.HistoricalPillowCheckpoint",
     "hqadmin.HqDeploy",
     "hqwebapp.HQOauthApplication",
-    "hqwebapp.MaintenanceAlert",
     "hqwebapp.UserAccessLog",
     "hqwebapp.UserAgent",
     "notifications.DismissedUINotify",
