@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 from oauth2_provider.models import get_application_model
 
 import httpagentparser
+import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -71,7 +72,6 @@ from corehq.apps.dropbox.exceptions import (
 )
 from corehq.apps.dropbox.models import DropboxUploadHelper
 from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN, DropboxAuthInitiate
-from corehq.apps.email.models import EmailSettings
 from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
@@ -157,7 +157,7 @@ def server_error(request, template_name='500.html', exception=None):
 
     traceback_text = format_traceback_the_way_python_does(type, exc, tb)
     traceback_key = uuid.uuid4().hex
-    cache.cache.set(traceback_key, traceback_text, 60 * 60)
+    cache.cache.set(traceback_key, traceback_text, 60*60)
 
     if settings.UNIT_TESTING:
         # Explicitly don't render the 500 page during unit tests to prevent
@@ -1353,15 +1353,11 @@ def temporary_google_verify(request):
 @waf_allow('XSS_BODY')
 @require_POST
 @csrf_exempt
-def log_email_event(request, secret, domain=None):
+def log_email_event(request, secret):
     # From Amazon SNS:
     # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
-    email_setting = EmailSettings.objects.filter(domain=domain).first() if domain else None
-    if (email_setting and email_setting.use_this_gateway and email_setting.use_tracking_headers):
-        SNS_email_event_secret = email_setting.sns_secret
-    else:
-        SNS_email_event_secret = settings.SNS_EMAIL_EVENT_SECRET
-    if secret != SNS_email_event_secret:
+
+    if secret != settings.SNS_EMAIL_EVENT_SECRET:
         return HttpResponse("Incorrect secret", status=403, content_type='text/plain')
 
     request_json = json.loads(request.body)
