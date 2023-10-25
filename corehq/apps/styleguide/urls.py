@@ -39,4 +39,6 @@ urlpatterns = [
         name="styleguide_atoms_colors_b5"),
     url(r'^b5/atoms/icons/$', bootstrap5.styleguide_atoms_icons,
         name="styleguide_atoms_icons_b5"),
+    url(r'^b5/molecules/buttons/$', bootstrap5.styleguide_molecules_buttons,
+        name="styleguide_molecules_buttons_b5"),
 ]
