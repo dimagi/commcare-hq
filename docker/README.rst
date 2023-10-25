@@ -243,7 +243,7 @@ Install Podman
     sudo apt install podman podman-docker
     
     echo 'export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock' >> ~/.bashrc
-    echo 'export DOCKER_SOCK=$XDG_RUNTIME_DIR/docker.sock' >> ~/.bashrc
+    echo 'export DOCKER_SOCK=$XDG_RUNTIME_DIR/podman/podman.sock' >> ~/.bashrc
 
 Create a podman wrapper script named `docker` with the following content
 somewhere on your ``PATH`` (``~/.local/bin/docker`` may be a good place if it
