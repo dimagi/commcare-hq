@@ -463,6 +463,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.dynamicSearchEnabled = options.disableDynamicSearch ? false :
                 (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
 
+            console.log("this.dynamicSearchEnabled");
+            console.log(this.dynamicSearchEnabled);
+            console.log("options.disableDynamicSearch");
+            console.log(options.disableDynamicSearch);
+
             this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);
             });
@@ -561,6 +566,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         submitAction: function (e) {
             var self = this;
+            sessionStorage.submitPerformed = true;
             e.preventDefault();
             self.performSubmit();
         },
