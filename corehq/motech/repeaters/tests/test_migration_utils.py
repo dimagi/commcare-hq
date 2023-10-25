@@ -1,8 +1,10 @@
 from django.test import TestCase
 
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.migration_utils import (
+    repair_repeaters_with_whitelist_bug,
+)
 from corehq.motech.repeaters.models import FormRepeater
-from corehq.motech.repeaters.migration_utils import repair_repeaters_with_whitelist_bug
 
 
 class TestRepairRepeatersWithWhitelistBug(TestCase):

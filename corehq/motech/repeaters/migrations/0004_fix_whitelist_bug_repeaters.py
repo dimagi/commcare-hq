@@ -1,10 +1,13 @@
 from django.db import migrations
 
-from corehq.motech.repeaters.migration_utils import repair_repeaters_with_whitelist_bug
+from corehq.motech.repeaters.migration_utils import (
+    repair_repeaters_with_whitelist_bug,
+)
 
 
 def _fix_broken_repeaters(apps, schema_editor):
     repair_repeaters_with_whitelist_bug()
+
 
 
 class Migration(migrations.Migration):
