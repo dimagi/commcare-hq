@@ -5,9 +5,9 @@
 #
 # Translators:
 # Jensen Daniel <jdaniel@dimagi.com>, 2019
+# Claire O'Grady <cogrady@dimagi.com>, 2019
 # Séfora Vazirna <seforan@gmail.com>, 2022
 # Dimagi Dev <devops@dimagi.com>, 2023
-# Claire O'Grady <cogrady@dimagi.com>, 2023
 #
 #, fuzzy
 msgid ""
@@ -15,7 +15,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Claire O'Grady <cogrady@dimagi.com>, 2023\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2023\n"
 "Language-Team: Portuguese (https://app.transifex.com/dimagi/teams/9388/pt/)\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -3444,6 +3444,10 @@ msgstr ""
 msgid "Name of the Area"
 msgstr ""
 
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "All locations"
+msgstr ""
+
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
 msgstr ""
@@ -4950,6 +4954,3 @@ msgstr ""
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "Description"
-#~ msgstr "Descrição"
