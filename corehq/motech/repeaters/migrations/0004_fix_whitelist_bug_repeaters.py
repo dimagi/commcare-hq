@@ -1,6 +1,6 @@
 from django.db import migrations
 
-from corehq.motech.migration_utils import repair_repeaters_with_whitelist_bug
+from corehq.motech.repeaters.migration_utils import repair_repeaters_with_whitelist_bug
 
 
 def _fix_broken_repeaters(apps, schema_editor):
@@ -10,7 +10,7 @@ def _fix_broken_repeaters(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('motech', '0013_alter_connectionsettings_auth_type'),
+        ('repeaters', '0003_id_fields'),
     ]
 
     operations = [

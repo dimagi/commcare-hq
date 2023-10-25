@@ -3,7 +3,7 @@ from corehq.motech.repeaters.models import Repeater
 
 def repair_repeaters_with_whitelist_bug():
     """
-    Used in 0014_fix_whitelist_bug_repeaters.py
+    Used in 003_fix_whitelist_bug_repeaters.py
     The whitelist bug resulted in the white_listed_form_xmlns key in a
     repeater's option field storing '[]' as a form id it would whitelist.
     :return: list of repeater ids that were fixed
