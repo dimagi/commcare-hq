@@ -418,7 +418,7 @@ class ESQuery(object):
         }
         return self._sort(sort_field, reset_sort)
 
-    def nested_sort(self, path, field_name, nested_filter, desc=False, reset_sort=True):
+    def nested_sort(self, path, field_name, nested_filter, desc=False, reset_sort=True, sort_missing=None):
         """Order results by the value of a nested field
         """
         sort_field = {
@@ -426,6 +426,7 @@ class ESQuery(object):
                 'order': 'desc' if desc else 'asc',
                 'nested_path': path,
                 'nested_filter': nested_filter,
+                'missing': sort_missing,
             }
         }
         return self._sort(sort_field, reset_sort)
