@@ -188,8 +188,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
                 self.internal_settings_form.cleaned_data['active_ucr_expressions'],
                 old_ucr_permissions,
             )
-            eula_props_changed = (bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula)
-                                  or bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data))
+            eula_props_changed = (bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula) or
+                                  bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data))
 
             if eula_props_changed and settings.EULA_CHANGE_EMAIL:
                 message = '\n'.join([
@@ -208,7 +208,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
                 )
                 send_mail_async.delay(
                     'Custom EULA or data use flags changed for {}'.format(self.domain),
-                    message, [settings.EULA_CHANGE_EMAIL]
+                    message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL]
                 )
 
             messages.success(request,
@@ -400,9 +400,9 @@ class ActivateTransferDomainView(BasePageView):
     def get(self, request, guid, *args, **kwargs):
         self.guid = guid
 
-        if (self.active_transfer
-                and self.active_transfer.to_username != request.user.username
-                and not request.user.is_superuser):
+        if (self.active_transfer and
+                self.active_transfer.to_username != request.user.username and
+                not request.user.is_superuser):
             return HttpResponseRedirect(reverse("no_permissions"))
 
         return super(ActivateTransferDomainView, self).get(request, *args, **kwargs)
@@ -437,9 +437,9 @@ class DeactivateTransferDomainView(View):
         if not transfer:
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
-        if (transfer.to_username != request.user.username
-                and transfer.from_username != request.user.username
-                and not request.user.is_superuser):
+        if (transfer.to_username != request.user.username and
+                transfer.from_username != request.user.username and
+                not request.user.is_superuser):
             return HttpResponseRedirect(reverse("no_permissions"))
 
         transfer.active = False

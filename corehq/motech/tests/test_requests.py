@@ -2,6 +2,7 @@ import random
 import string
 from unittest import skip
 
+from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 
 import requests
@@ -182,6 +183,7 @@ class NotifyErrorTests(SimpleTestCase):
                 'connections. If necessary, please provide an alternate '
                 'address.'
             ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=['foo@example.com', 'bar@example.com']
         )
 

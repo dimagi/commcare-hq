@@ -212,6 +212,7 @@ class Requests(object):
         send_mail_async.delay(
             _('MOTECH Error'),
             '\r\n'.join(message_lines),
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=self.notify_addresses,
         )
 

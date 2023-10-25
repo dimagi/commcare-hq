@@ -5,7 +5,6 @@ from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
 from django.core.management import call_command
 from django.utils.translation import gettext as _
-from dimagi.utils.django.email import get_email_configuration
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
@@ -44,8 +43,8 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
 
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_mail_async(self, subject, message, recipient_list, from_email=settings.DEFAULT_FROM_EMAIL,
-                    messaging_event_id=None, domain: str = None, use_domain_gateway=False):
+def send_mail_async(self, subject, message, from_email, recipient_list,
+                    messaging_event_id=None, domain=None):
     """ Call with send_mail_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -62,7 +61,6 @@ def send_mail_async(self, subject, message, recipient_list, from_email=settings.
         }
     )
 
-    configuration = get_email_configuration(domain, use_domain_gateway, from_email)
     recipient_list = [_f for _f in recipient_list if _f]
 
     # todo deal with recipients marked as bounced
@@ -85,17 +83,16 @@ def send_mail_async(self, subject, message, recipient_list, from_email=settings.
 
     if messaging_event_id is not None:
         headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
-    if configuration.SES_configuration_set is not None:
-        headers[SES_CONFIGURATION_SET_HEADER] = configuration.SES_configuration_set
+    if settings.SES_CONFIGURATION_SET is not None:
+        headers[SES_CONFIGURATION_SET_HEADER] = settings.SES_CONFIGURATION_SET
 
     try:
         message = EmailMessage(
             subject=subject,
             body=message,
-            from_email=configuration.from_email,
+            from_email=from_email,
             to=filtered_recipient_list,
             headers=headers,
-            connection=configuration.connection
         )
         return message.send()
     except SMTPDataError as e:
