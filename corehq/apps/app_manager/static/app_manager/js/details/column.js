@@ -268,7 +268,7 @@ hqDefine("app_manager/js/details/column", function () {
         formEndpoints.forEach(([, endpoint]) => {
             if (endpoint.module_name !== moduleName) {
                 moduleName = endpoint.module_name;
-                formEndpointOptions.push({groupName: moduleName});
+                formEndpointOptions.push({groupName: `${moduleName} (${endpoint.module_case_type})`});
             }
             formEndpointOptions.push({value: endpoint.id, label: endpoint.form_name});
         });

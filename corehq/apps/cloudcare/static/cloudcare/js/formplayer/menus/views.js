@@ -275,8 +275,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             // Confirms we are getting the app id, not build id
             const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"]
             const domain = user.domain;
-            const caseId = this.model.get('id');
             let fieldIndex = $(e.currentTarget).parent().index();
+            let caseId;
+            if (this.options.headerRowIndices && this.options.headerRowIndices[fieldIndex]) {
+                caseId = this.model.get('groupKey')
+            } else {
+                caseId = this.model.get('id');
+            }
             if (this.options.bodyRowIndices && this.options.headerRowIndices) {
                 if (this.options.bodyRowIndices[fieldIndex]) {
                     fieldIndex = this.options.bodyRowIndices[fieldIndex];
