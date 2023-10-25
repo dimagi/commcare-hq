@@ -183,7 +183,7 @@ class CustomDataFieldsProfile(models.Model):
             UserES().domain(self.definition.domain)
                     .mobile_users()
                     .show_inactive()
-                    .metadata(PROFILE_SLUG, self.id)
+                    .user_data(PROFILE_SLUG, self.id)
         )
 
     def to_json(self):
