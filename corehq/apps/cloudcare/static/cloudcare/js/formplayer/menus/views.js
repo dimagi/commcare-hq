@@ -293,8 +293,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const clickedIcon = e.target;
             clickedIcon.classList.add("disabled");
             clickedIcon.style.display = 'none';
-            const tableData = clickedIcon.closest('td');
-            const spinnerElement = $(tableData).find('i');
+            const spinnerElement = $(clickedIcon).siblings('i');
             spinnerElement[0].style.display = '';
             const iconIframe = document.createElement('iframe');
             iconIframe.style.display = 'none';
