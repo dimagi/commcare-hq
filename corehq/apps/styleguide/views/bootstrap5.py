@@ -44,3 +44,8 @@ def styleguide_atoms_icons(request):
         'custom_icons': get_custom_icons(),
     })
     return render(request, 'styleguide/bootstrap5/atoms/icons.html', context)
+
+
+def styleguide_molecules_buttons(request):
+    return render(request, 'styleguide/bootstrap5/molecules/buttons.html',
+                  get_navigation_context("styleguide_molecules_buttons_b5"))
