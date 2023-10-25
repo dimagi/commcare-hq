@@ -59,7 +59,7 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
         return false; // let default handler run
     };
 
-    $.fn.hqHelp = function () {
+    $.fn.hqHelp = function (opts) {
         var self = this;
         self.each(function (i) {
             var $self = $(self),
@@ -72,6 +72,9 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
                 container: 'body',
                 sanitize: false,
             };
+            if (opts) {
+                options = _.extend(options, opts);
+            }
             if (!$link.data('content')) {
                 options.content = function () {
                     return $('#popover_content_wrapper').html();

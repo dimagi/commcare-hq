@@ -24,10 +24,13 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
 
         FORMAT_ADDRESS: "Address",
         FORMAT_ADDRESS_POPUP: "AddressPopup",
+        FORMAT_CLICKABLE_ICON: "ClickableIcon",
 
         SMALL_SCREEN_WIDTH_PX: 992,
 
         BREADCRUMB_HEIGHT_PX: 46.125,
         BREADCRUMB_WIDTH_OFFSET_PX: 106.5, // unavailable breadcrumb space i.e. padding, home and hamburger icons
+
+        COLLAPSIBLE_TILE_MAX_HEIGHT: 150,
     };
 });

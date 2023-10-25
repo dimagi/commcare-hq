@@ -312,6 +312,7 @@ HQ_APPS = (
     'corehq.apps.groups',
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
+    'corehq.apps.email',
     'corehq.apps.events',
     'corehq.apps.geospatial',
     'corehq.apps.smsforms',
@@ -477,7 +478,7 @@ DATA_EMAIL = 'datatree@example.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
 BILLING_EMAIL = 'billing-comm@example.com'
-INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
+INVOICING_CONTACT_EMAIL = 'accounts@example.com'
 GROWTH_EMAIL = 'growth@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 SALES_EMAIL = 'sales@example.com'
@@ -1937,10 +1938,6 @@ for k, v in LOCAL_PILLOWTOPS.items():
     PILLOWTOPS[k] = plist
 
 COUCH_CACHE_BACKENDS = [
-    'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
-    'corehq.apps.cachehq.cachemodels.UserGenerationCache',
-    'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
-    'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
