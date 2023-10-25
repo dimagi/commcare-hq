@@ -311,6 +311,7 @@ class RepeaterTest(BaseRepeaterTest):
         # Do not trigger cancelled records
         for repeat_record in self.repeat_records():
             repeat_record.cancelled = True
+            repeat_record.next_check = None
             repeat_record.save()
         with patch('corehq.motech.repeaters.models.simple_request') as mock_fire:
             check_repeaters()
@@ -382,6 +383,7 @@ class RepeaterTest(BaseRepeaterTest):
         # Do not trigger cancelled records
         for repeat_record in self.repeat_records():
             repeat_record.cancelled = True
+            repeat_record.next_check = None
             repeat_record.save()
         with patch('corehq.motech.repeaters.models.simple_request') as mock_fire, \
              patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
