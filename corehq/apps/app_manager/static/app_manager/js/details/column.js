@@ -50,7 +50,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
         self.coordinatesVisible = ko.observable(true);
-        self.tileRowMax = ko.observable(7);
+        self.tileRowMax = ko.observable(7); // set dynamically by screen
         self.tileColumnMax = ko.observable(13);
         self.tileRowStart = ko.observable(self.original.grid_y || 1);
         self.tileRowOptions = ko.computed(function () {
