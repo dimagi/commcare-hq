@@ -294,7 +294,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.search = null;
             this.queryData = null;
             this.sessionId = null;
-            sessionStorage.removeItem('searchPerformed');
+            sessionStorage.removeItem('submitPerformed');
 
         };
 
