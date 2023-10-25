@@ -17,6 +17,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         Visible: 'visible',
     };
 
+    const DEFAULT_MARKER_COLOR = "rgba(128,128,128,0.25)";
     const MAP_CONTAINER_ID = 'case-grouping-map';
     let map;
     const clusterStatsInstance = new clusterStatsModel();
@@ -302,7 +303,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             }
 
             const groupId = caseItem.groupId;
-            let color = "rgba(128,128,128,0.25)";
+            let color = DEFAULT_MARKER_COLOR;
 
             if (groupId) {
                 if (groupColors[groupId] === undefined) {
@@ -333,9 +334,17 @@ hqDefine("geospatial/js/case_grouping_map",[
         });
         const clusterSource = map.getSource('caseWithGPS');
         let caseGroups = {};
+        let failedClustersCount = 0;
+        processedCluster = {}
 
         for (const cluster of sourceFeatures) {
             const clusterId = cluster.properties.cluster_id;
+            if (processedCluster[clusterId]) {
+                continue;
+            } else {
+                processedCluster[clusterId] = true;
+            }
+
             const pointCount = cluster.properties.point_count;
 
             try {
@@ -352,9 +361,16 @@ hqDefine("geospatial/js/case_grouping_map",[
                     };
                 }
             } catch (error) {
-                alertUser.alert_user(gettext("Something went wrong while processing the cluster."), 'danger');
+                failedClustersCount += 1;
             }
         }
+        if (failedClustersCount > 0) {
+            const message = _.template(gettext("Something went wrong processing <%- failedClusters %> groups. These groups will not be exported."))({
+                failedClusters: failedClustersCount,
+            });
+            alertUser.alert_user(message, 'danger');
+        }
+
         exportModelInstance.loadCaseGroups(caseGroups);
         collapseGroupsOnMap();
     }
