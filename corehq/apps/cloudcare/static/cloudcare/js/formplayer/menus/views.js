@@ -277,8 +277,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const domain = user.domain;
             const caseId = this.model.get('id');
             let fieldIndex = $(e.currentTarget).parent().index();
-            if (this.options.bodyRowIndices) {
-                fieldIndex = this.options.bodyRowIndices[fieldIndex];
+            if (this.options.bodyRowIndices && this.options.headerRowIndices) {
+                if (this.options.bodyRowIndices[fieldIndex]) {
+                    fieldIndex = this.options.bodyRowIndices[fieldIndex];
+                } else if (this.options.headerRowIndices[fieldIndex]) {
+                    fieldIndex = this.options.headerRowIndices[fieldIndex];
+                }
             }
             const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
             const actionUrl = origin + urlTemplate
