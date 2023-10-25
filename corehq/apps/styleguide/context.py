@@ -26,6 +26,12 @@ def get_navigation_context(current_page):
                     Page("Icons", 'styleguide_atoms_icons_b5'),
                 ],
             ),
+            NavigationGroup(
+                name="Molecules",
+                pages=[
+                    Page("Buttons", 'styleguide_molecules_buttons_b5'),
+                ],
+            ),
         ],
     }
 
