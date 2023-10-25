@@ -3,7 +3,7 @@ from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 from corehq.util.couch_helpers import paginate_view
 
-from ...models import Repeater
+from ...models import Repeater, enable_attempts_sync_to_sql
 
 
 class Command(PopulateSQLCommand):
@@ -24,6 +24,11 @@ class Command(PopulateSQLCommand):
     @classmethod
     def commit_adding_migration(cls):
         return "TODO: add once the PR adding this file is merged"
+
+    def handle(self, *args, **kw):
+        couch_model_class = self.sql_class()._migration_get_couch_model_class()
+        with enable_attempts_sync_to_sql(couch_model_class, True):
+            return super().handle(*args, **kw)
 
     @classmethod
     def diff_couch_and_sql(cls, couch, sql):

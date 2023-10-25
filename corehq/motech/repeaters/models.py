@@ -68,6 +68,7 @@ import json
 import traceback
 import uuid
 import warnings
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -1038,6 +1039,14 @@ class RepeatRecord(SyncCouchToSQLMixin, Document):
     def _migration_get_sql_model_class(cls):
         return SQLRepeatRecord
 
+    def save(self, *args, sync_attempts=False, **kw):
+        with enable_attempts_sync_to_sql(self, sync_attempts):
+            return super().save(*args, **kw)
+
+    def _migration_sync_submodels_to_sql(self, sql_object):
+        if self._should_sync_attempts:
+            super()._migration_sync_submodels_to_sql(sql_object)
+
     @property
     def record_id(self):
         return self._id
@@ -1293,6 +1302,16 @@ class RepeatRecord(SyncCouchToSQLMixin, Document):
         self.failure_reason = ''
         self.overall_tries = 0
         self.next_check = datetime.utcnow()
+
+
+@contextmanager
+def enable_attempts_sync_to_sql(obj, value):
+    assert not hasattr(obj, "_should_sync_attempts")
+    obj._should_sync_attempts = value
+    try:
+        yield
+    finally:
+        del obj._should_sync_attempts
 
 
 # on_delete=DB_CASCADE denotes ON DELETE CASCADE in the database. The

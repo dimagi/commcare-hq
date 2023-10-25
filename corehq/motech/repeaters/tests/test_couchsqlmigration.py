@@ -235,7 +235,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
 
     def test_sync_to_sql(self):
         doc, obj = self.create_repeat_record(unwrap_doc=False)
-        doc.save()
+        doc.save(sync_attempts=True)
         self.assertEqual(
             self.diff(doc.to_json(), SQLRepeatRecord.objects.get(couch_id=doc._id)),
             [],
@@ -255,6 +255,17 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         self.assertEqual(obj.state, models.State.Fail)
         self.assertEqual(obj.registered_at, hour_hence)
         self.assertEqual(obj.next_check, hour_hence)
+        # attempts are not synced to SQL by default
+        self.assertEqual(obj.attempts[0].state, models.State.Fail)
+        self.assertEqual(len(obj.attempts), 2)
+
+    def test_sync_attempts_to_sql(self):
+        doc, obj = self.create_repeat_record(unwrap_doc=False)
+        doc.save(sync_attempts=True)
+
+        del doc.attempts[0]
+        doc.save(sync_attempts=True)
+        obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
         self.assertEqual(obj.attempts[0].state, models.State.Success)
         self.assertEqual(len(obj.attempts), 1)
 
@@ -263,7 +274,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         doc.attempts.pop()
         assert len(doc.attempts) == 1, doc.attempts
         obj._prefetched_objects_cache["attempt_set"].pop()
-        doc.save()
+        doc.save(sync_attempts=True)
         obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
         self.assertEqual(self.diff(doc.to_json(), obj), [])
 
@@ -291,7 +302,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
     def test_migration_fixup_diffs(self):
         # Additional call should apply any updates
         doc, obj = self.create_repeat_record(unwrap_doc=False)
-        doc.save()
+        doc.save(sync_attempts=True)
         doc.payload_id = payload_id = uuid4().hex
         doc.repeater_id = REPEATER_ID_2
         doc.failure_reason = "something bad happened"
@@ -335,7 +346,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         )
         repeater3.save()
         doc.repeater_id = repeater3.repeater_id
-        doc.save()
+        doc.save(sync_attempts=True)
         with (
             templog() as log,
             patch.object(Command, "get_ids_to_ignore", lambda *a: {}),
