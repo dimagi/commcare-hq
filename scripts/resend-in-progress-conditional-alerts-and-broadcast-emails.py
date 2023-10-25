@@ -1,14 +1,16 @@
 from corehq.apps.sms.models import MessagingSubEvent
 from corehq.apps.sms.models import Email
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from datetime import date
+from datetime import date, datetime
 
-last_deploy_date = date(2023, 10, 18)
+bug_introduced_deploy_date = date(2023, 10, 18)
+utc_one_hour_after_fix_deployed = datetime(2023, 10, 25, 20, 0, 0)
 
 #can optionally do one domain at a time
 subevents = MessagingSubEvent.objects.filter(
     status='PRG',
-    date__gte=last_deploy_date
+    date__gte=bug_introduced_deploy_date,
+    date__lte=utc_one_hour_after_fix_deployed
 )
 
 for subevent in subevents:
