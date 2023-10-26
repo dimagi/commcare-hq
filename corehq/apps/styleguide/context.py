@@ -31,6 +31,7 @@ def get_navigation_context(current_page):
                 name="Molecules",
                 pages=[
                     Page("Buttons", 'styleguide_molecules_buttons_b5'),
+                    Page("Selections", 'styleguide_molecules_selections_b5'),
                 ],
             ),
         ],
