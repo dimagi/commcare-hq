@@ -572,7 +572,11 @@ class BillingAccount(ValidateModelMixin, models.Model):
         new_user_name = web_user.first_name if web_user else self.auto_pay_user
         email = web_user.get_email() if web_user else self.auto_pay_user
         try:
-            last_4 = self.autopay_card.last4
+            # Check if the payment method is of type 'card' and access the last4 accordingly
+            if self.autopay_card.type == "card":
+                last_4 = self.autopay_card.card.last4
+            else:
+                last_4 = None
         except StripePaymentMethod.DoesNotExist:
             last_4 = None
 
@@ -3698,7 +3702,12 @@ class StripePaymentMethod(PaymentMethod):
     @property
     def all_cards(self):
         try:
-            return [card for card in self.customer.cards.data if card is not None]
+            # Retrieve the payment methods associated with the customer and type 'card'
+            payment_methods = stripe.PaymentMethod.list(
+                customer=self.customer.id,
+                type="card",
+            )
+            return [method for method in payment_methods.data if method is not None]
         except stripe.error.AuthenticationError:
             if not settings.STRIPE_PRIVATE_KEY:
                 log_accounting_info("Private key is not defined in settings")
