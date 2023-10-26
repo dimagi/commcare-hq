@@ -453,7 +453,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 acc[index] = data[index];
                 return acc;
             }, {});
-            dict['indexedRowDataList'] = this.getIndexedRowDataList()
+            dict['indexedRowDataList'] = this.getIndexedRowDataList();
 
             return dict;
         },
