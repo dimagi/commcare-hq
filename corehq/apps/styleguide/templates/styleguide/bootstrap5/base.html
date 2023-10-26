@@ -88,5 +88,15 @@
     {% include 'hqwebapp/partials/bootstrap5/ko_select_toggle.html' %}
     {% include 'hqwebapp/partials/bootstrap5/ko_feedback.html' %}
 
+    {% compress js %}
+      <script src="{% static 'jquery-ui/ui/widgets/datepicker.js' %}"></script>
+      <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+      <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
+      <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
+    {% endcompress %}
+
   </body>
 </html>
