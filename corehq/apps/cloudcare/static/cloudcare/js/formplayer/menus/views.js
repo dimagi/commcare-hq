@@ -310,13 +310,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             iconIframe.src = encodeURI(url);
             document.body.appendChild(iconIframe);
 
-            $('iframe').on('load', function () {
+            $('#icon-iframe').on('load', function () {
                 // Get success or error message from iframe and pass to main window
                 const notificationsElement = $("#icon-iframe").contents().find("#cloudcare-notifications");
-                notificationsElement.on('DOMNodeInserted', function (e) {
-                    if ($(e.target).hasClass('alert')) {
-                        const alertCollection = $(e.target);
-                        const succeeded = alertCollection[0].classList.contains('alert-success');
+
+                new MutationObserver((el) => {
+                    const addedNodes = el[0].addedNodes
+                    if (addedNodes[0].classList.contains('alert')) {
+                        const succeeded = addedNodes[0].classList.contains('alert-success');
                         let message;
                         if (succeeded) {
                             message = notificationsElement.find('.alert-success').find('p').text();
@@ -332,9 +333,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         clickedIcon.classList.remove("disabled");
                         clickedIcon.style.display = '';
                         spinnerElement[0].style.display = 'none';
-                        iconIframe.parentNode.removeChild(iconIframe);
+                        iconIframe.remove();
                     }
-                });
+                  }).observe(notificationsElement[0], { childList: true });
             });
         },
 
