@@ -1,4 +1,8 @@
+import logging
+
 from corehq.motech.repeaters.models import Repeater
+
+log = logging.getLogger(__name__)
 
 
 def repair_repeaters_with_whitelist_bug():
@@ -19,4 +23,8 @@ def repair_repeaters_with_whitelist_bug():
         repeater.options["white_listed_form_xmlns"] = []
         repeater.save()
         fixed_repeater_ids.append(repeater.repeater_id)
+
+    log.info(
+        f"[repair_repeaters] The following repeaters were fixed:\n{fixed_repeater_ids}"
+    )
     return fixed_repeater_ids
