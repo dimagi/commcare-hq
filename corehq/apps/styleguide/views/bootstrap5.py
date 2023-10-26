@@ -61,3 +61,22 @@ def styleguide_molecules_buttons(request):
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/buttons.html', context)
+
+
+def styleguide_molecules_selections(request):
+    context = get_navigation_context("styleguide_molecules_selections_b5")
+    context.update({
+        'examples': {
+            'toggles': get_example_context('styleguide/bootstrap5/examples/toggles.html'),
+            'select2_manual': get_example_context('styleguide/bootstrap5/examples/select2_manual.html'),
+            'select2_css_class': get_example_context('styleguide/bootstrap5/examples/select2_css_class.html'),
+            'select2_css_class_multiple': get_example_context(
+                'styleguide/bootstrap5/examples/select2_css_class_multiple.html'),
+            'select2_ko_dynamic': get_example_context('styleguide/bootstrap5/examples/select2_ko_dynamic.html'),
+            'select2_ko_static': get_example_context('styleguide/bootstrap5/examples/select2_ko_static.html'),
+            'select2_ko_autocomplete': get_example_context(
+                'styleguide/bootstrap5/examples/select2_ko_autocomplete.html'),
+            'multiselect': get_example_context('styleguide/bootstrap5/examples/multiselect.html'),
+        }
+    })
+    return render(request, 'styleguide/bootstrap5/molecules/selections.html', context)
