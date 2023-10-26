@@ -4,7 +4,6 @@ from zipfile import ZipFile
 
 from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
-from django.core.mail.message import EmailMessage
 from django.template.defaultfilters import linebreaksbr
 
 import six
@@ -43,7 +42,6 @@ def delete_resources_on_transifex(domain, data, email):
         subject, body,
         recipient_list=[email],
     )
-
 
 
 @task
@@ -110,14 +108,13 @@ def pull_translation_files_from_transifex(domain, data, user_email=None):
     try:
         translation_file, filename = transifex.generate_excel_file()
         with open(translation_file.name, 'rb') as file_obj:
-            email = EmailMessage(
+            send_mail_async.delay(
                 subject='[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT),
-                body="PFA Translations pulled from transifex.",
-                to=[user_email],
-                from_email=settings.DEFAULT_FROM_EMAIL
+                message="PFA Translations pulled from transifex.",
+                recipient_list=[user_email],
+                filename=filename,
+                content=file_obj.read(),
             )
-            email.attach(filename=filename, content=file_obj.read())
-            email.send()
     except Exception as e:
         notify_error(e)
         six.reraise(*sys.exc_info())
@@ -151,15 +148,13 @@ def backup_project_from_transifex(domain, data, email):
                     zipfile.writestr(filename, file_obj.read())
                 os.remove(translation_file.name)
         tmp.seek(0)
-        email = EmailMessage(
+        send_mail_async.delay(
             subject='[{}] - Transifex backup translations'.format(settings.SERVER_ENVIRONMENT),
             body="PFA Translations backup from transifex.",
-            to=[email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+            recipient_list=[email],
+            filename="%s-TransifexBackup.zip" % project_details.get('name'),
+            content=tmp.read(),
         )
-        filename = "%s-TransifexBackup.zip" % project_details.get('name')
-        email.attach(filename=filename, content=tmp.read())
-        email.send()
 
 
 @task
@@ -176,14 +171,13 @@ def email_project_from_hq(domain, data, email):
     try:
         translation_file, __ = parser.generate_excel_file()
         with open(translation_file.name, 'rb') as file_obj:
-            email = EmailMessage(
+            send_mail_async.delay(
                 subject='[{}] - HQ translation download'.format(settings.SERVER_ENVIRONMENT),
-                body="Translations from HQ",
-                to=[email],
-                from_email=settings.DEFAULT_FROM_EMAIL)
-            filename = "{project}-{lang}-translations.xls".format(project=project_slug, lang=lang)
-            email.attach(filename=filename, content=file_obj.read())
-            email.send()
+                message="Translations from HQ",
+                recipient_list=[email],
+                filename="{project}-{lang}-translations.xls".format(project=project_slug, lang=lang),
+                content=file_obj.read(),
+            )
     finally:
         try:
             os.remove(translation_file.name)
