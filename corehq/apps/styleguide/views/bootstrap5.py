@@ -6,6 +6,7 @@ from corehq.apps.styleguide.context import (
     get_neutral_colors,
     get_common_icons,
     get_custom_icons,
+    get_example_context,
 )
 
 
@@ -47,5 +48,16 @@ def styleguide_atoms_icons(request):
 
 
 def styleguide_molecules_buttons(request):
-    return render(request, 'styleguide/bootstrap5/molecules/buttons.html',
-                  get_navigation_context("styleguide_molecules_buttons_b5"))
+    context = get_navigation_context("styleguide_molecules_buttons_b5")
+    context.update({
+        'examples': {
+            'most_buttons': get_example_context('styleguide/bootstrap5/examples/most_buttons.html'),
+            'primary_action_buttons': get_example_context(
+                'styleguide/bootstrap5/examples/primary_action_buttons.html'),
+            'download_upload_buttons': get_example_context(
+                'styleguide/bootstrap5/examples/download_upload_buttons.html'),
+            'destructive_action_buttons': get_example_context(
+                'styleguide/bootstrap5/examples/destructive_action_buttons.html'),
+        }
+    })
+    return render(request, 'styleguide/bootstrap5/molecules/buttons.html', context)
