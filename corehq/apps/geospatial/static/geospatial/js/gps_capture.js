@@ -205,6 +205,27 @@ hqDefine("geospatial/js/gps_capture",[
             });
         };
 
+        self.startCreateCase = function () {
+            self.createCaseEnabled(true);
+            const caseToCreate = new dataItemModel(null, self.dataType);
+            self.captureLocationForItem(caseToCreate);
+        };
+
+        self.finishCreateCase = function () {
+            const hasValidName = self.itemLocationBeingCapturedOnMap().name.length > 0;
+            self.createCaseError(!hasValidName);
+            if (!hasValidName) {
+                return;
+            }
+            self.saveDataRow(self.itemLocationBeingCapturedOnMap());
+        };
+
+        self.cancelCreateCase = function () {
+            self.createCaseEnabled(false);
+            self.createCaseError(false);
+            resetMap();
+        };
+
         return self;
     };
 
