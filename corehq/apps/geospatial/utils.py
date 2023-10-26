@@ -31,16 +31,22 @@ def _format_coordinates(lat, lon):
     return f"{lat} {lon} 0.0 0.0"
 
 
-def set_case_gps_property(domain, case_data):
+def set_case_gps_property(domain, case_data, create_case=False):
     location_prop_name = get_geo_case_property(domain)
-    helper = CaseHelper(domain=domain, case_id=case_data['id'])
-    case_data = {
+    data = {
         'properties': {
             location_prop_name: _format_coordinates(case_data['lat'], case_data['lon'])
         }
     }
 
-    helper.update(case_data)
+    if create_case:
+        helper = CaseHelper(domain=domain)
+        data['case_name'] = case_data['name']
+        data['case_type'] = case_data['case_type']
+        helper.create_case(data)
+    else:
+        helper = CaseHelper(domain=domain, case_id=case_data['id'])
+        helper.update(data)
 
 
 def set_user_gps_property(domain, user_data):
