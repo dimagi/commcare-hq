@@ -185,12 +185,19 @@ hqDefine("geospatial/js/gps_capture",[
         self.saveDataRow = function (dataItem) {
             self.isSubmissionSuccess(false);
             self.hasSubmissionError(false);
+            let dataItemJson = ko.mapping.toJS(dataItem);
+            if (self.createCaseEnabled()) {
+                const caseType = $('#report_filter_case_type').val();
+                dataItemJson['case_type'] = caseType;
+            }
+
             $.ajax({
                 method: 'POST',
                 url: initialPageData.reverse('gps_capture'),
                 data: JSON.stringify({
                     'data_type': self.dataType,
-                    'data_item': ko.mapping.toJS(dataItem),
+                    'data_item': dataItemJson,
+                    'create_case': self.createCaseEnabled(),
                 }),
                 dataType: "json",
                 contentType: "application/json; charset=utf-8",
@@ -198,6 +205,7 @@ hqDefine("geospatial/js/gps_capture",[
                     dataItem.hasUnsavedChanges(false);
                     self.isSubmissionSuccess(true);
                     resetMap();
+                    self.createCaseEnabled(false);
                 },
                 error: function () {
                     self.hasSubmissionError(true);
