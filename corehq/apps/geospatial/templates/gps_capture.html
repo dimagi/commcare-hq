@@ -135,10 +135,15 @@
                                 showSpinner: showPaginationSpinner"></pagination>
         </div>
     </div>
-    <h3 data-bind="visible: itemLocationBeingCapturedOnMap">
-      <div data-bind="with: itemLocationBeingCapturedOnMap">
-          {% trans "Capturing location for:" %}
-          <span data-bind="text: name"></span>
-      </div>
-    </h3>
+    {% if data_type == 'case' %}
+        <button class="btn btn-primary" data-bind="click: startCreateCase, hidden: createCaseEnabled, disable: itemLocationBeingCapturedOnMap">
+            {% trans 'Create New Case' %}
+        </button>
+        <button class="btn btn-primary" data-bind="click: finishCreateCase, visible: createCaseEnabled">
+            {% trans 'Confirm Case Location' %}
+        </button>
+        <button class="btn btn-default" data-bind="click: cancelCreateCase, visible: createCaseEnabled">
+            {% trans 'Cancel' %}
+        </button>
+    {% endif %}
 </div>
