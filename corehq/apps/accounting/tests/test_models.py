@@ -6,6 +6,8 @@ from django.db import models
 
 from unittest import mock
 
+import stripe
+
 from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import tasks
@@ -23,10 +25,6 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.accounting.tests.generator import (
-    FakeStripeCard,
-    FakeStripeCustomer,
-)
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import (
     SmsBillable,
@@ -286,7 +284,6 @@ class TestCustomerBillingRecord(BaseAccountingTest):
         self.assertFalse(self.customer_billing_record.should_send_email)
 
 
-@mock.patch.object(StripePaymentMethod, 'customer')
 class TestStripePaymentMethod(BaseAccountingTest):
 
     def setUp(self):
@@ -295,47 +292,82 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.web_user = generator.create_arbitrary_web_user_name()
         self.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
 
-        self.fake_card = FakeStripeCard()
-        self.fake_stripe_customer = FakeStripeCustomer(cards=[self.fake_card])
+        # Create a Stripe customer and attach the test PaymentMethod
+        self.stripe_customer = stripe.Customer.create(email='test@example.com')
+        stripe.PaymentMethod.attach(
+            'pm_card_visa',
+            customer=self.stripe_customer.id
+        )
+
+        # Retrieve the default payment method for the customer
+        payment_methods = stripe.PaymentMethod.list(
+            customer=self.stripe_customer.id,
+            type="card",
+        )
+        self.stripe_card = payment_methods.data[0]
 
         self.currency = generator.init_default_currency()
         self.billing_account = generator.billing_account(self.dimagi_user, self.web_user)
         self.billing_account_2 = generator.billing_account(self.dimagi_user, self.web_user)
 
-        self.payment_method = StripePaymentMethod(web_user=self.web_user,
-                                                  customer_id=self.fake_stripe_customer.id)
+        self.payment_method = StripePaymentMethod(web_user=self.web_user, customer_id=self.stripe_customer.id)
         self.payment_method.save()
 
-    def test_set_autopay(self, fake_customer):
-        fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
+    def test_set_autopay(self):
         self.assertEqual(self.billing_account.auto_pay_user, None)
         self.assertFalse(self.billing_account.auto_pay_enabled)
 
-        self.payment_method.set_autopay(self.fake_card, self.billing_account, None)
-        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
+        # Call your set_autopay method
+        self.payment_method.set_autopay(self.stripe_card, self.billing_account, None)
+
+        # Fetch the updated card from Stripe to check metadata
+        updated_card = stripe.PaymentMethod.retrieve(self.stripe_card.id)
+
+        self.assertEqual(updated_card.metadata.get("auto_pay_{}".format(self.billing_account.id)), 'True')
         self.assertEqual(self.billing_account.auto_pay_user, self.web_user)
         self.assertTrue(self.billing_account.auto_pay_enabled)
 
-        self.payment_method.set_autopay(self.fake_card, self.billing_account_2, None)
-        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True',
-                                                   "auto_pay_{}".format(self.billing_account_2.id): 'True'})
+        # For the second billing account
+        self.payment_method.set_autopay(self.stripe_card, self.billing_account_2, None)
+        updated_card = stripe.PaymentMethod.retrieve(self.stripe_card.id)
+        self.assertEqual(updated_card.metadata.get("auto_pay_{}".format(self.billing_account_2.id)), 'True')
 
+        # Now test with another user and another card
         other_web_user = generator.create_arbitrary_web_user_name()
-        other_payment_method = StripePaymentMethod(web_user=other_web_user)
-        different_fake_card = FakeStripeCard()
+        other_stripe_customer = stripe.Customer.create(email='other_test@example.com')
+        stripe.PaymentMethod.attach(
+            'pm_card_visa',
+            customer=other_stripe_customer.id
+        )
+        # Retrieve the default payment method for the customer
+        payment_methods = stripe.PaymentMethod.list(
+            customer=other_stripe_customer.id,
+            type="card",
+        )
+        other_stripe_card = payment_methods.data[0]
+        other_payment_method = StripePaymentMethod(web_user=other_web_user, customer_id=other_stripe_customer.id)
+        other_payment_method.save()
 
-        other_payment_method.set_autopay(different_fake_card, self.billing_account, None)
+        other_payment_method.set_autopay(other_stripe_card, self.billing_account, None)
+
         self.assertEqual(self.billing_account.auto_pay_user, other_web_user)
-        self.assertTrue(different_fake_card.metadata["auto_pay_{}".format(self.billing_account.id)])
-        self.assertFalse(self.fake_card.metadata["auto_pay_{}".format(self.billing_account.id)] == 'True')
+        updated_card = stripe.PaymentMethod.retrieve(self.stripe_card.id)
+        self.assertTrue(updated_card.metadata.get("auto_pay_{}".format(self.billing_account.id)))
 
-    def test_unset_autopay(self, fake_customer):
-        fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
-        self.payment_method.set_autopay(self.fake_card, self.billing_account, None)
-        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
+    def test_unset_autopay(self):
+        self.payment_method.set_autopay(self.stripe_card, self.billing_account, None)
+        updated_card = stripe.PaymentMethod.retrieve(self.stripe_card.id)
+        self.assertEqual(updated_card.metadata.get("auto_pay_{}".format(self.billing_account.id)), 'True')
 
-        self.payment_method.unset_autopay(self.fake_card, self.billing_account)
+        self.payment_method.unset_autopay(self.stripe_card, self.billing_account)
 
-        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'False'})
+        # Fetch the updated card again to check metadata
+        updated_card = stripe.PaymentMethod.retrieve(self.stripe_card.id)
+        self.assertEqual(updated_card.metadata.get("auto_pay_{}".format(self.billing_account.id)), 'False')
         self.assertIsNone(self.billing_account.auto_pay_user)
         self.assertFalse(self.billing_account.auto_pay_enabled)
+
+    def tearDown(self):
+        self.stripe_customer.delete()  # This will also delete associated cards
+        self.payment_method.delete()
+        super(TestStripePaymentMethod, self).tearDown()
