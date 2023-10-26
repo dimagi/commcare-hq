@@ -220,7 +220,7 @@ hqDefine("geospatial/js/gps_capture",[
         };
 
         self.finishCreateCase = function () {
-            const hasValidName = self.itemLocationBeingCapturedOnMap().name.length > 0;
+            const hasValidName = self.itemLocationBeingCapturedOnMap().name().length > 0;
             self.createCaseError(!hasValidName);
             if (!hasValidName) {
                 return;
