@@ -277,15 +277,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const domain = user.domain;
             let fieldIndex = $(e.currentTarget).parent().index();
             let caseId;
-            if (this.options.headerRowIndices && this.options.headerRowIndices[fieldIndex]) {
+            if (this.options.headerRowIndices && !$(e.target).closest('.group-rows').length) {
                 caseId = this.model.get('groupKey');
             } else {
                 caseId = this.model.get('id');
             }
             if (this.options.bodyRowIndices && this.options.headerRowIndices) {
-                if (this.options.bodyRowIndices[fieldIndex]) {
+                if ($(e.target).closest('.group-rows').length) {
                     fieldIndex = this.options.bodyRowIndices[fieldIndex];
-                } else if (this.options.headerRowIndices[fieldIndex]) {
+                } else {
                     fieldIndex = this.options.headerRowIndices[fieldIndex];
                 }
             }
