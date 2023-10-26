@@ -273,12 +273,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appId = formplayerUtils.currentUrlToObject().appId;
             const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
             // Confirms we are getting the app id, not build id
-            const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"]
+            const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"];
             const domain = user.domain;
             let fieldIndex = $(e.currentTarget).parent().index();
             let caseId;
             if (this.options.headerRowIndices && this.options.headerRowIndices[fieldIndex]) {
-                caseId = this.model.get('groupKey')
+                caseId = this.model.get('groupKey');
             } else {
                 caseId = this.model.get('id');
             }
@@ -306,14 +306,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             spinnerElement[0].style.display = '';
             const iconIframe = document.createElement('iframe');
             iconIframe.style.display = 'none';
-            $(iconIframe).attr('id', 'icon-iframe')
+            $(iconIframe).attr('id', 'icon-iframe');
             iconIframe.src = encodeURI(url);
             document.body.appendChild(iconIframe);
 
-            $('iframe').on('load', function(){
+            $('iframe').on('load', function () {
                 // Get success or error message from iframe and pass to main window
                 const notificationsElement = $("#icon-iframe").contents().find("#cloudcare-notifications");
-                notificationsElement.on('DOMNodeInserted', function(e) {
+                notificationsElement.on('DOMNodeInserted', function (e) {
                     if ($(e.target).hasClass('alert')) {
                         const alertCollection = $(e.target);
                         const succeeded = alertCollection[0].classList.contains('alert-success');
@@ -324,9 +324,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         } else {
                             const messageElement = notificationsElement.find('.alert-danger');
                             // Todo: standardize structures of success and error alert elements
-                            message = messageElement.contents().filter(function(){
-                                return this.nodeType == Node.TEXT_NODE;
-                              })[0].nodeValue;
+                            message = messageElement.contents().filter(function () {
+                                return this.nodeType === Node.TEXT_NODE;
+                            })[0].nodeValue;
                             FormplayerFrontend.trigger('showError', gettext(message));
                         }
                         clickedIcon.classList.remove("disabled");
@@ -334,7 +334,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         spinnerElement[0].style.display = 'none';
                         iconIframe.parentNode.removeChild(iconIframe);
                     }
-                })
+                });
             });
         },
 
@@ -528,7 +528,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                endpointActions: this.options.endpointActions
+                endpointActions: this.options.endpointActions,
             };
         },
 
