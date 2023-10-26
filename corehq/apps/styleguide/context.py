@@ -1,3 +1,4 @@
+import os
 from collections import namedtuple
 
 NavigationGroup = namedtuple('NavigationGroup', 'name pages')
@@ -137,3 +138,9 @@ def get_custom_icons():
             ],
         },
     ]
+
+
+def get_example_context(filename):
+    examples = os.path.join(os.path.dirname(__file__), 'templates')
+    with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
+        return content.read()
