@@ -43,19 +43,7 @@
     described in the <a href="{%  url "styleguide_atoms_colors_b5" %}">guide on colors</a>.
   </p>
 
-  <div class="card mb-3">
-    <div class="card-body">
-      <button type="button" class="btn btn-outline-primary">Most Buttons</button>
-      <div class="card text-bg-light mt-3">
-        <div class="card-body ">
-          <div class="h4">HTML</div>
-          <pre class="m-0">&lt;button type="button" class="btn btn-outline-primary"&gt;
-    Most Buttons
-&lt;/button&gt;</pre>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.most_buttons %}
 
   <h2 id="primary-action-buttons" class="pt-4">
     Primary Action Buttons
@@ -64,19 +52,7 @@
     Buttons that denote the primary (or main) action of a page should use the <code>btn-primary</code> class.
   </p>
 
-  <div class="card mb-3">
-    <div class="card-body">
-      <button type="button" class="btn btn-primary">Primary Action</button>
-      <div class="card text-bg-light mt-3">
-        <div class="card-body ">
-          <div class="h4">HTML</div>
-          <pre class="m-0">&lt;button type="button" class="btn btn-primary"&gt;
-    Primary Action
-&lt;/button&gt;</pre>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.primary_action_buttons %}
 
   <p>
     Most pages have a <strong>single primary action</strong>&mdash;often save, download, or add&mdash;and may have multiple secondary or
@@ -94,19 +70,7 @@
     the <code>btn-info</code> class should be used.
   </p>
 
-  <div class="card mb-3">
-    <div class="card-body">
-      <button type="button" class="btn btn-info">Download / Upload</button>
-      <div class="card text-bg-light mt-3">
-        <div class="card-body ">
-          <div class="h4">HTML</div>
-          <pre class="m-0">&lt;button type="button" class="btn btn-info"&gt;
-    Download / Upload
-&lt;/button&gt;</pre>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.download_upload_buttons %}
 
   <div class="alert alert-primary">
     <strong>Note:</strong> There are some places in HQ, such as formdesigner, where the primary action on the page, Save,
@@ -123,19 +87,7 @@
     per group of buttons / row or per page.
   </p>
 
-  <div class="card mb-3">
-    <div class="card-body">
-      <button type="button" class="btn btn-outline-danger">Delete</button>
-      <div class="card text-bg-light mt-3">
-        <div class="card-body ">
-          <div class="h4">HTML</div>
-          <pre class="m-0">&lt;button type="button" class="btn btn-outline-danger"&gt;
-    Delete
-&lt;/button&gt;</pre>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.destructive_action_buttons %}
 
   <h2 id="other-buttons" class="pt-4">
     Other Buttons
