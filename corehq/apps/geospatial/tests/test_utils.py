@@ -90,6 +90,20 @@ class TestSetGPSProperty(TestCase):
         case_obj = CommCareCase.objects.get_case(self.case_obj.case_id, self.DOMAIN)
         self.assertEqual(case_obj.case_json[GPS_POINT_CASE_PROPERTY], '1.23 4.56 0.0 0.0')
 
+    def test_create_case_gps_property(self):
+        case_type = 'gps-case'
+        submit_data = {
+            'name': 'CaseB',
+            'lat': '1.23',
+            'lon': '4.56',
+            'case_type': case_type,
+        }
+        set_case_gps_property(self.DOMAIN, submit_data, create_case=True)
+        case_list = CommCareCase.objects.get_case_ids_in_domain(self.DOMAIN, case_type)
+        self.assertEqual(len(case_list), 1)
+        case_obj = CommCareCase.objects.get_case(case_list[0], self.DOMAIN)
+        self.assertEqual(case_obj.case_json[GPS_POINT_CASE_PROPERTY], '1.23 4.56 0.0 0.0')
+
     def test_set_user_gps_property(self):
         submit_data = {
             'id': self.user.user_id,
