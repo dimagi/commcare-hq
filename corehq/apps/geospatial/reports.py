@@ -15,9 +15,10 @@ from corehq.apps.es.case_search import wrap_case_search_hit
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
+from corehq.util.quickcache import quickcache
 
 from .dispatchers import CaseManagementMapDispatcher
-from .es import apply_geohash_agg, find_precision
+from .es import AGG_NAME, apply_geohash_agg, find_precision
 from .models import GeoPolygon
 from .utils import (
     get_geo_case_property,
@@ -125,16 +126,102 @@ class CaseGroupingReport(BaseCaseMapReport):
     default_rows = 1
     force_page_size = True
 
+    def _base_query(self):
+        # Override function to skip default pagination
+        return self.search_class().domain(self.domain)
+
     @property
     def rows(self):
-        pass
+        """
+            Returns cases for the current bucket/page
+
+            Each page is a bucket of filtered cases grouped together.
+            We first load all buckets of filtered cases,
+            and then find the current bucket via index/page number to get the geohash
+            And then we filter cases simply for the geohash corresponding to the bucket
+        """
+        buckets = self._get_buckets()
+        if not buckets:
+            return []
+
+        cases = []
+
+        # self.pagination.start is the page number
+        bucket = buckets[self.pagination.start]
+        geohash = bucket['key']
+
+        query = super()._build_query()
+        # ToDo: filter by geohash
+        es_results = query.run().raw
+
+        for row in es_results['hits'].get('hits', []):
+            display = CaseDisplayES(
+                self.get_case(row), self.timezone, self.individual
+            )
+            case = wrap_case_search_hit(row)
+            coordinates = self._get_geo_location(case)
+            cases.append([
+                display.case_id,
+                coordinates,
+                display.case_link
+            ])
+        return cases
+
+    @quickcache(['self.domain', 'self.shared_pagination_GET_params'], timeout=15 * 60)
+    def _get_buckets(self):
+        query = self._build_query()
+        query = self._aggregate_query(query)
+        es_results = query.run().raw
+        if es_results is None:
+            return []
+        return (
+            es_results['aggregations']
+            ['case_properties']
+            ['case_property']
+            [AGG_NAME]
+            ['buckets']
+        )
+
+    def _aggregate_query(self, query):
+        """
+        Returns ``query`` with geohash grid aggregation applied.
+        """
+        case_property = get_geo_case_property(self.domain)
+        if 'precision' in self.request.GET:
+            precision = self.request.GET['precision']
+        else:
+            precision = find_precision(query, case_property)
+        return apply_geohash_agg(query, case_property, precision)
+
+    @property
+    def total_records(self):
+        """
+        Returns the number of buckets.
+
+        We are showing buckets of cases so,
+        total number of records = number of buckets.
+        """
+        buckets = self._get_buckets()
+        return len(buckets)
 
     def _build_query(self):
+        """
+        Returns a filtered, unaggregated, unpaginated ESQuery.
+        This allows it to be used by `total_cases()`.
+        """
         query = super()._build_query()
-        case_property = get_geo_case_property(self.domain)
+        return self._add_geospatial_filters(query)
 
-        # NOTE: ASSUMES polygon is available in request.GET['features']
-        if 'features' in self.request.GET:
+    def _add_geospatial_filters(self, query):
+        """
+            If a user-defined polygon (or other GeoShape) is passed in the
+            "feature" GET param, adds that as a filter to ``query``.
+            If ``additional_filters`` is set, adds those to ``query``.
+            It is possible that both, either one, or none are set. If none
+            are set, ``query`` is returned unchanged.
+        """
+        if self.request.GET.get('feature'):
+            case_property = get_geo_case_property(self.domain)
             try:
                 features = json.loads(self.request.GET['features'])
                 points_list = features_to_points_list(features)
@@ -147,14 +234,6 @@ class CaseGroupingReport(BaseCaseMapReport):
                 )
             except json.JSONDecodeError:
                 pass
-
-        # Apply geohash grid aggregation
-        if 'precision' in self.request.GET:
-            precision = self.request.GET['precision']
-        else:
-            precision = find_precision(query, case_property)
-
-        query = apply_geohash_agg(query, case_property, precision)
         return query
 
 
