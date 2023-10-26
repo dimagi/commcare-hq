@@ -295,10 +295,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 .replace("{appid}", currentAppId)
                 .replace("{case_id}", caseId);
             e.target.className += " disabled";
-            this.iconIframe(e, actionUrl);
+            this.iconIframe(e, actionUrl, caseId);
         },
 
-        iconIframe: function (e, url) {
+        iconIframe: function (e, url, caseId) {
+            const iframeId = caseId;
             const clickedIcon = e.target;
             clickedIcon.classList.add("disabled");
             clickedIcon.style.display = 'none';
@@ -306,14 +307,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             spinnerElement[0].style.display = '';
             const iconIframe = document.createElement('iframe');
             iconIframe.style.display = 'none';
-            $(iconIframe).attr('id', 'icon-iframe');
+            $(iconIframe).attr('id', iframeId);
             iconIframe.src = encodeURI(url);
             document.body.appendChild(iconIframe);
 
-            $('#icon-iframe').on('load', function () {
+            $(`#${iframeId}`).on('load', function () {
                 // Get success or error message from iframe and pass to main window
-                const notificationsElement = $("#icon-iframe").contents().find("#cloudcare-notifications");
-
+                const notificationsElement = $(`#${iframeId}`).contents().find("#cloudcare-notifications");
                 new MutationObserver((el) => {
                     const addedNodes = el[0].addedNodes
                     if (addedNodes[0].classList.contains('alert')) {
