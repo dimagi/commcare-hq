@@ -390,8 +390,6 @@ def register_sms_user(
     username, cleaned_phone_number, domain, send_welcome_sms=False, admin_alert_emails=None
 ):
     try:
-        user_data = {}
-
         username = process_username(username, domain)
         password = random_password()
         new_user = CommCareUser.create(
@@ -400,7 +398,6 @@ def register_sms_user(
             password,
             created_by=None,
             created_via=USER_CHANGE_VIA_SMS,
-            metadata=user_data
         )
         new_user.add_phone_number(cleaned_phone_number)
         new_user.save()
