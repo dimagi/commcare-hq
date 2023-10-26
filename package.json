@@ -25,7 +25,7 @@
         "bootstrap5": "npm:bootstrap@5.3.1",
         "calendars": "kbwood/calendars#2.1.2",
         "clipboard": "1.5.15",
-        "crypto-js": "4.0.0",
+        "crypto-js": "4.2.0",
         "css-grid-polyfill-binaries": "FremyCompany/css-grid-polyfill-binaries#1.1.2",
         "d3": "3.5.17",
         "datamaps": "0.5.9",

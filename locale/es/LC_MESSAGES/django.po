@@ -200,7 +200,7 @@ msgstr "Nombre del Plan"
 msgid "Edition"
 msgstr "Edición"
 
-#: corehq/apps/accounting/filters.py
+#: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 msgid "Visibility"
 msgstr "Visibilidad"
@@ -278,6 +278,21 @@ msgstr ""
 #: corehq/apps/accounting/forms.py
 msgid "Billing Account"
 msgstr "Cuenta de Facturación"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#: corehq/apps/builds/templates/builds/all.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
+#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
+#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+msgid "Version"
+msgstr "Versión"
 
 #: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
@@ -2694,6 +2709,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/data_dictionary/models.py corehq/apps/hqadmin/reports.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
@@ -4983,6 +4999,7 @@ msgid "Numeric Selection"
 msgstr "Selección Numérica"
 
 #: corehq/apps/app_manager/static_strings.py
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Numeric"
 msgstr "Numérico"
 
@@ -5737,20 +5754,6 @@ msgstr "Etiquetas"
 #: corehq/apps/reports/templates/reports/form/partials/readable_form.html
 msgid "Question IDs"
 msgstr "ID de Preguntas"
-
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#: corehq/apps/builds/templates/builds/all.html
-#: corehq/apps/builds/templates/builds/edit_menu.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
-msgid "Version"
-msgstr "Versión"
 
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
@@ -6610,10 +6613,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has a Parent Menu configured with \"make search input "
-"available after search\",\n"
-"                This workflow is unsupported.\n"
+"              The case list in <a href=\"%(module_url)s\">%(module_name)s</"
+"a> can not use the same \"search input instance name\" as its Parent Menu.\n"
 "              "
 msgstr ""
 
@@ -8395,6 +8396,7 @@ msgstr ""
 "por la primera prioridad, luego la segunda, etc."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/enterprise/interface.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/smsbillables/filters.py
 msgid "Direction"
@@ -8423,6 +8425,7 @@ msgstr "Clasificar Cálculos"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
 msgid "Format"
@@ -8881,6 +8884,40 @@ msgid "Add default search property"
 msgstr "Agregar propiedad de búsqueda predeterminada"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#, fuzzy
+#| msgid "Custom Properties"
+msgid "Custom Sort Properties"
+msgstr "Propiedades Personalizadas"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid ""
+"Sort search results by case property before filtering. These will affect the "
+"priority in which results are returned and are hidden from the user."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Exact"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#, fuzzy
+#| msgid "Pending"
+msgid "Ascending"
+msgstr "Pendientes"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#, fuzzy
+#| msgid "Pending"
+msgid "Descending"
+msgstr "Pendientes"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#, fuzzy
+#| msgid "Add custom export property"
+msgid "Add custom sort property"
+msgstr "Agregar propiedad de exportación personalizada"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Search and Claim Options"
 msgstr "Opciones de Búsqueda y Solicitud"
 
@@ -8912,6 +8949,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Make search input available after search"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Search Input Instance Name"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
@@ -10876,6 +10917,12 @@ msgid ""
 "                The case search property '{}' is missing the following "
 "lookup table attributes: {}\n"
 "            "
+msgstr ""
+
+#: corehq/apps/app_manager/views/modules.py
+msgid ""
+"'{}' is an invalid instance name. It can contain only letters, numbers, and "
+"underscores."
 msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py
@@ -14544,6 +14591,7 @@ msgstr "Fecha propiedad de caso (avanzado)"
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
 #: corehq/apps/events/forms.py corehq/apps/events/views.py
+#: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/locations/templates/locations/manage/locations.html
@@ -18370,16 +18418,12 @@ msgid "Port"
 msgstr ""
 
 #: corehq/apps/email/forms.py
-#, fuzzy
-#| msgid "Send Email"
 msgid "Sender's email"
-msgstr "Enviar Correo Electrónico"
+msgstr ""
 
 #: corehq/apps/email/forms.py
-#, fuzzy
-#| msgid "Gateway"
 msgid "Use Gateway?"
-msgstr "Portal"
+msgstr ""
 
 #: corehq/apps/email/forms.py
 msgid "Select this option to use this email gateway for sending emails"
@@ -18396,10 +18440,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/email/forms.py
-#, fuzzy
-#| msgid "Client Secret"
 msgid "SNS Endpoint Secret"
-msgstr "Secreto de Cliente"
+msgstr ""
 
 #: corehq/apps/email/forms.py
 msgid ""
@@ -18408,10 +18450,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/email/forms.py
-#, fuzzy
-#| msgid "Configuration"
 msgid "SES Configuration Set Name"
-msgstr "Configuración"
+msgstr ""
 
 #: corehq/apps/email/forms.py
 msgid ""
@@ -18420,22 +18460,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/email/forms.py
-#, fuzzy
-#| msgid "Saved!"
 msgid "Saved"
-msgstr "¡Guardado!"
+msgstr "Guardado"
 
 #: corehq/apps/email/templates/email/email_settings.html
-#, fuzzy
-#| msgid "Update My Settings"
 msgid "Add Email Gateway Settings"
-msgstr "Actualice Mis Configuraciones"
+msgstr ""
 
 #: corehq/apps/email/views.py
-#, fuzzy
-#| msgid "Edit Settings"
 msgid "Email Settings"
-msgstr "Editar Configuraciones"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Enterprise Report"
@@ -22082,10 +22116,8 @@ msgid "gps_point"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
-#, fuzzy
-#| msgid "Add link"
 msgid "link"
-msgstr "Agregar enlace"
+msgstr ""
 
 #: corehq/apps/geospatial/reports.py
 msgid "Case Management Map"
@@ -22096,10 +22128,26 @@ msgid "Case Grouping"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/case_grouping_map.html
-#, fuzzy
-#| msgid "Reporting Groups"
 msgid "Export Groups"
-msgstr "Grupos de Reporte"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Summary of Case Grouping"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+#, fuzzy
+#| msgid "Number of expected users"
+msgid "Total number of clusters"
+msgstr "Número de usuarios esperados"
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Maximum cases per cluster"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Minimum cases per cluster"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
 msgid ""
@@ -22229,6 +22277,21 @@ msgstr ""
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Show mobile workers on the map"
 msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
+msgid ""
+"\n"
+"                            Only users at this location will be shown on the "
+"map.\n"
+"                        "
+msgstr ""
+"\n"
+"Captura Instantánea de  %(snap_name)s"
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
@@ -28200,52 +28263,59 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"            For organizations exploring CommCare.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"            See <a href=\"https://dimagi.com/commcare/pricing/\" "
-"target=\"_blank\">pricing</a> options.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"              Request Custom Trial\n"
+"              For individuals learning<br/> about data collection.\n"
 "            "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"                Watch Demo\n"
+"              Free for personal use.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"                Create Account\n"
 "              "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"            For individuals learning about data collection.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"            Free for personal use.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"              Create Account\n"
+"              For organizations<br /> exploring CommCare.\n"
 "            "
 msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"              See <a href=\"https://dimagi.com/commcare/pricing/\" "
+"target=\"_blank\">pricing</a> options.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"                Request Custom Trial\n"
+"              "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
+msgid ""
+"\n"
+"                  Watch Demo\n"
+"                "
+msgstr ""
+"\n"
+"Captura Instantánea de  %(snap_name)s"
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/server_errors.html
 msgid "Oh, no!"
@@ -44128,10 +44198,8 @@ msgid "Edit Gateway"
 msgstr "Editar Portal"
 
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "SMS Connectivity"
 msgid "Email Connectivity"
-msgstr "Conectividad SMS"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Template Management"
