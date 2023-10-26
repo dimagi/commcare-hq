@@ -320,7 +320,7 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
             password='1234',
             created_by=None,
             created_via=None,
-            metadata={GPS_POINT_CASE_PROPERTY: '45.67 12.34'},
+            user_data={GPS_POINT_CASE_PROPERTY: '45.67 12.34'},
         )
 
         user_adapter.bulk_index([cls.user_a, cls.user_b, cls.user_c], refresh=True)
