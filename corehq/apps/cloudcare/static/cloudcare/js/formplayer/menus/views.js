@@ -245,6 +245,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keypress @ui.showMore': 'showMoreAction',
         },
 
+        modelEvents: {
+            "change": "modelChanged"
+        },
+
         initialize: function () {
             const self = this;
             self.isMultiSelect = this.options.isMultiSelect;
@@ -295,10 +299,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 .replace("{appid}", currentAppId)
                 .replace("{case_id}", caseId);
             e.target.className += " disabled";
-            this.iconIframe(e, actionUrl);
+            this.iconIframe(e, actionUrl, this.model.get('id'));
         },
 
-        iconIframe: function (e, url) {
+        iconIframe: function (e, url, caseId) {
+            const self = this;
             const clickedIcon = e.target;
             clickedIcon.classList.add("disabled");
             clickedIcon.style.display = 'none';
@@ -321,6 +326,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         if (succeeded) {
                             message = notificationsElement.find('.alert-success').find('p').text();
                             FormplayerFrontend.trigger('showSuccess', gettext(message));
+                            self.reloadCase(caseId)
                         } else {
                             const messageElement = notificationsElement.find('.alert-danger');
                             // Todo: standardize structures of success and error alert elements
@@ -336,6 +342,24 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     }
                 });
             });
+        },
+
+        reloadCase: function (caseId) {
+            const self = this
+            const urlObject = formplayerUtils.currentUrlToObject();
+            urlObject.addSelection(caseId);
+            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true);
+            $.when(fetchingDetails).done(function (detailResponse) {
+                self.model.set("data", detailResponse.models[0].attributes.details)
+                console.log('updating case');
+            }).fail(function () {
+                console.log('could not get case details');
+            });
+        },
+
+        modelChanged: function() {
+            console.log('rendering case');
+            this.render();
         },
 
         rowClick: function (e) {
