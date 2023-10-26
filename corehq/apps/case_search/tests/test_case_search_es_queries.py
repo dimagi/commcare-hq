@@ -3,7 +3,7 @@ from collections import OrderedDict
 from django.test import TestCase
 
 from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
-from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns
+from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns, _parse_commcare_sort_properties
 from corehq.apps.case_search.tests.utils import get_case_search_query
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 
@@ -190,7 +190,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                                                                 },
                                                                 {
                                                                     "term": {
-                                                                        "case_properties.value.exact": "this should be"
+                                                                        "case_properties.value.exact": "this should be"  # noqa: E501
                                                                     }
                                                                 }
                                                             ]
@@ -220,7 +220,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                                                                 },
                                                                 {
                                                                     "term": {
-                                                                        "case_properties.value.exact": "this word should not be gone"
+                                                                        "case_properties.value.exact": "this word should not be gone"  # noqa: E501
                                                                     }
                                                                 }
                                                             ]
@@ -256,87 +256,87 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             ('_xpath_query', ["name='Frodo Baggins'", "home='Hobbiton'"]),
         ])
         expected = {
-                    "query": {
-                        "bool": {
-                            "filter": [
-                                {"terms": {"domain.exact": [DOMAIN]}},
-                                {"terms": {"type.exact": ["case_type"]}},
-                                {"term": {"closed": False}},
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "name"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.value.exact": "Frodo Baggins"
-                                                                    }
-                                                                }
-                                                            ]
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"terms": {"domain.exact": [DOMAIN]}},
+                        {"terms": {"type.exact": ["case_type"]}},
+                        {"term": {"closed": False}},
+                        {
+                            "nested": {
+                                "path": "case_properties",
+                                "query": {
+                                    "bool": {
+                                        "filter": [
+                                            {
+                                                "bool": {
+                                                    "filter": [
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key.exact": "name"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "Frodo Baggins"
+                                                            }
                                                         }
-                                                    }
-                                                ],
-                                                "must": {
-                                                    "match_all": {}
+                                                    ]
                                                 }
                                             }
+                                        ],
+                                        "must": {
+                                            "match_all": {}
                                         }
                                     }
-                                },
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "home"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.value.exact": "Hobbiton"
-                                                                    }
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                ],
-                                                "must": {
-                                                    "match_all": {}
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "match_all": {}
                                 }
-                            ],
-                            "must": {
-                                "match_all": {}
                             }
+                        },
+                        {
+                            "nested": {
+                                "path": "case_properties",
+                                "query": {
+                                    "bool": {
+                                        "filter": [
+                                            {
+                                                "bool": {
+                                                    "filter": [
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key.exact": "home"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "Hobbiton"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ],
+                                        "must": {
+                                            "match_all": {}
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
                         }
-                    },
-                    "sort": [
-                        "_score",
-                        "_doc"
                     ],
-                    "size": CASE_SEARCH_MAX_RESULTS
+                    "must": {
+                        "match_all": {}
+                    }
                 }
+            },
+            "sort": [
+                "_score",
+                "_doc"
+            ],
+            "size": CASE_SEARCH_MAX_RESULTS
+        }
         self.checkQuery(
             get_case_search_query(DOMAIN, ['case_type'], criteria),
             expected,
@@ -407,4 +407,55 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             get_case_search_query(DOMAIN, ['case_type'], criteria),
             expected,
             validate_query=False
+        )
+
+    def test_add_custom_sort_properties(self):
+        criteria = {}
+        commcare_sort = _parse_commcare_sort_properties(["name,-date_of_birth:date"])
+        expected = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"terms": {"domain.exact": [DOMAIN]}},
+                        {"terms": {"type.exact": ["case_type"]}},
+                        {"term": {"closed": False}},
+                        {"match_all": {}}
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "sort": [
+                {
+                    "case_properties.value.exact": {
+                        "missing": "_first",
+                        "order": "asc",
+                        "nested_path": "case_properties",
+                        "nested_filter": {
+                            "term": {
+                                "case_properties.key.exact": "name"
+                            }
+                        }
+                    }
+                },
+                {
+                    "case_properties.value.date": {
+                        "missing": "_last",
+                        "order": "desc",
+                        "nested_path": "case_properties",
+                        "nested_filter": {
+                            "term": {
+                                "case_properties.key.exact": "date_of_birth"
+                            }
+                        }
+                    }
+                }
+            ],
+            "size": CASE_SEARCH_MAX_RESULTS
+        }
+
+        self.checkQuery(
+            get_case_search_query(DOMAIN, ['case_type'], criteria, commcare_sort=commcare_sort),
+            expected
         )

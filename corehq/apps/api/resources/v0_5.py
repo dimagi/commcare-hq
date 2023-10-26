@@ -141,7 +141,8 @@ from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_
 
 
 MOCK_BULK_USER_ES = None
-EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 200
+EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 1000
+EXPORT_DATASOURCE_MAX_PAGINATION_LIMIT = 10000
 
 
 def user_es_call(domain, q, fields, size, start_at):
@@ -1358,8 +1359,8 @@ def get_datasource_data(request, config_id, domain):
     datasource_adapter = get_indicator_adapter(config, load_source='export_data_source')
     request_params = get_request_params(request).params
     request_params["limit"] = request.GET.dict().get("limit", EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT)
-    if int(request_params["limit"]) > EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT:
-        request_params["limit"] = EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT
+    if int(request_params["limit"]) > EXPORT_DATASOURCE_MAX_PAGINATION_LIMIT:
+        request_params["limit"] = EXPORT_DATASOURCE_MAX_PAGINATION_LIMIT
     query = cursor_based_query_for_datasource(request_params, datasource_adapter)
     data = response_for_cursor_based_pagination(request, query, request_params, datasource_adapter)
     return JsonResponse(data)
