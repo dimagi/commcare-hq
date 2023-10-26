@@ -130,6 +130,9 @@ hqDefine("geospatial/js/gps_capture",[
             return !self.showLoadingSpinner() && !self.hasError();
         });
 
+        self.createCaseEnabled = ko.observable(false);
+        self.createCaseError = ko.observable(false);
+
         self.captureLocationForItem = function (item) {
             self.itemLocationBeingCapturedOnMap(item);
             selectedDataListObject = self;
