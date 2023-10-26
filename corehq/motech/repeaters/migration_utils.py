@@ -9,13 +9,14 @@ def repair_repeaters_with_whitelist_bug():
     :return: list of repeater ids that were fixed
     """
     all_repeaters = Repeater.all_objects.all()
-    broken_repeaters = [r for r in all_repeaters if r.options.get('white_listed_form_xmlns') == ['[]']]
+    broken_repeaters = [
+        r for r in all_repeaters if r.options.get("white_listed_form_xmlns") == ["[]"]
+    ]
 
     fixed_repeater_ids = []
     for repeater in broken_repeaters:
         # reset back to an empty list
-        repeater.options['white_listed_form_xmlns'] = []
+        repeater.options["white_listed_form_xmlns"] = []
         repeater.save()
         fixed_repeater_ids.append(repeater.repeater_id)
-
     return fixed_repeater_ids
