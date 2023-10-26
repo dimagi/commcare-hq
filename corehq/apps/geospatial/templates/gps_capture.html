@@ -146,4 +146,20 @@
             {% trans 'Cancel' %}
         </button>
     {% endif %}
+    <div class="row panel" data-bind="visible: itemLocationBeingCapturedOnMap">
+        <div class="col-sm-5 col-md-5 col-lg-5">
+            <div data-bind="with: itemLocationBeingCapturedOnMap">
+                <h3>
+                    {% trans "Capturing location for:" %}
+                    <span data-bind="text: name"></span>
+                </h3>
+                <div class="form-group" data-bind="css: { 'has-error': $root.createCaseError }">
+                    <input data-bind="value: name, visible: $root.createCaseEnabled" type="text" class="form-control" placeholder="{% trans 'Enter new case name...' %}" />
+                    <span class="help-block" data-bind="visible: $root.createCaseError">
+                        {% trans 'A case name is required' %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
