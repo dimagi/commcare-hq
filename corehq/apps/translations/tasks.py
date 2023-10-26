@@ -41,6 +41,8 @@ def delete_resources_on_transifex(domain, data, email):
     send_mail_async.delay(
         subject, body,
         recipient_list=[email],
+        domain=domain,
+        use_domain_gateway=True,
     )
 
 
@@ -80,6 +82,8 @@ def push_translation_files_to_transifex(domain, data, email):
         send_mail_async.delay(
             subject, body,
             recipient_list=[email],
+            domain=domain,
+            use_domain_gateway=True,
         )
 
 
@@ -95,6 +99,8 @@ def pull_translation_files_from_transifex(domain, data, user_email=None):
         send_mail_async.delay(
             subject, body,
             recipient_list=[user_email],
+            domain=domain,
+            use_domain_gateway=True,
         )
     version = data.get('version')
     transifex = Transifex(domain,
@@ -114,6 +120,8 @@ def pull_translation_files_from_transifex(domain, data, user_email=None):
                 recipient_list=[user_email],
                 filename=filename,
                 content=file_obj.read(),
+                domain=domain,
+                use_domain_gateway=True,
             )
     except Exception as e:
         notify_error(e)
@@ -154,6 +162,8 @@ def backup_project_from_transifex(domain, data, email):
             recipient_list=[email],
             filename="%s-TransifexBackup.zip" % project_details.get('name'),
             content=tmp.read(),
+            domain=domain,
+            use_domain_gateway=True,
         )
 
 
@@ -177,6 +187,8 @@ def email_project_from_hq(domain, data, email):
                 recipient_list=[email],
                 filename="{project}-{lang}-translations.xls".format(project=project_slug, lang=lang),
                 content=file_obj.read(),
+                domain=domain,
+                use_domain_gateway=True,
             )
     finally:
         try:
@@ -219,4 +231,6 @@ def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, 
         subject='[{}] - Transifex Project Migration Status'.format(settings.SERVER_ENVIRONMENT),
         body=linebreaksbr(generate_email_body()),
         recipient_list=[email],
+        domain=domain,
+        use_domain_gateway=True,
     )
