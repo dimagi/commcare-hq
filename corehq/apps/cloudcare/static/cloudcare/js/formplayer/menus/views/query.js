@@ -341,14 +341,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
-            if (this.dynamicSearchEnabled) {
-                var useDynamicSearch = Date(this.model._previousAttributes.value) !== Date($(e.currentTarget).val());
-            }
+            var useDynamicSearch = Date(this.model._previousAttributes.value) !== Date($(e.currentTarget).val());
             this.notifyParentOfFieldChange(e, useDynamicSearch);
             this.parentView.setStickyQueryInputs();
         },
 
-        notifyParentOfFieldChange: function (e, useDynamicSearch = false) {
+        notifyParentOfFieldChange: function (e, useDynamicSearch = true) {
             if (this.model.get('input') === 'address') {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
