@@ -127,6 +127,7 @@ class TestStartSession(TestCase):
                 'commcare_first_name': None,
                 'commcare_last_name': None,
                 'commcare_phone_number': None,
+                'commcare_profile': '',
                 'commcare_project': self.domain,
                 'commcare_user_type': 'web',
             },
