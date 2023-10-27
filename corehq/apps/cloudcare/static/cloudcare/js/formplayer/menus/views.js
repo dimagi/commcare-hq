@@ -402,7 +402,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
-                    return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
+                    return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
             };
         },
@@ -1241,7 +1241,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {
-                    return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
+                    return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
             };
         },

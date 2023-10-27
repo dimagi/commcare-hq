@@ -65,7 +65,6 @@
         </xpath>
       </text>
     </template>
-    {header[endpoint_action]}
     <sort type="string" order="-2" direction="ascending">
       <text>
         <xpath function="{header[xpath_function]}">
@@ -99,7 +98,6 @@
         </xpath>
       </text>
     </template>
-    {top_left[endpoint_action]}
     <sort type="string" order="-2" direction="ascending">
       <text>
         <xpath function="{top_left[xpath_function]}">
@@ -133,7 +131,6 @@
         </xpath>
       </text>
     </template>
-    {sex[endpoint_action]}
   </field>
 
   <field>
@@ -160,7 +157,6 @@
         </xpath>
       </text>
     </template>
-    {bottom_left[endpoint_action]}
     <sort type="string" order="-2" direction="ascending">
       <text>
         <xpath function="{bottom_left[xpath_function]}">
