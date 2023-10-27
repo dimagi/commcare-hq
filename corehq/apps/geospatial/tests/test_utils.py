@@ -97,6 +97,7 @@ class TestSetGPSProperty(TestCase):
             'lat': '1.23',
             'lon': '4.56',
             'case_type': case_type,
+            'owner_id': self.user.user_id,
         }
         set_case_gps_property(self.DOMAIN, submit_data, create_case=True)
         case_list = CommCareCase.objects.get_case_ids_in_domain(self.DOMAIN, case_type)
