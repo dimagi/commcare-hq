@@ -1101,6 +1101,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         self.first_name = data.pop(0)
         self.last_name = ' '.join(data)
 
+    def get_user_data(self, domain):
+        from .user_data import UserData
+        return UserData(self.user_data, domain)
+
     def get_user_session_data(self, domain):
         from corehq.apps.custom_data_fields.models import (
             SYSTEM_PREFIX,
@@ -1645,10 +1649,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 domain=data.get('domain', ""), role_id=role_id
             ).to_json()
         return super(CommCareUser, cls).wrap(data)
-
-    def get_user_data(self, domain):
-        from .user_data import UserData
-        return UserData(self.user_data, domain)
 
     def _is_demo_user_cached_value_is_stale(self):
         from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
@@ -2464,10 +2464,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
             for domain in self.get_domains():
                 sync_web_user_usercases_if_applicable(self, domain)
-
-    def get_user_data(self, domain):
-        from .user_data import UserData
-        return UserData(self.user_data, domain)  # this is not properly scoped to domain
 
     def add_to_assigned_locations(self, domain, location):
         membership = self.get_domain_membership(domain)
