@@ -371,7 +371,11 @@ def user_can_access_domain_specific_pages(request):
         they are a member of the domain or
         a superuser and domain does not restrict superusers from access
     """
-    from corehq.apps.domain.decorators import active_user_logged_in, _ensure_request_couch_user, _ensure_request_project
+    from corehq.apps.domain.decorators import (
+        _ensure_request_couch_user,
+        _ensure_request_project,
+        active_user_logged_in,
+    )
 
     if not active_user_logged_in(request):
         return False
