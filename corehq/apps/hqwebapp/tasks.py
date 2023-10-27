@@ -20,8 +20,7 @@ from corehq.apps.celery import periodic_task, task
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.email_event_utils import get_bounced_system_emails
 from corehq.util.log import send_HTML_email
-from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
-from corehq.util.metrics.const import MPM_MAX
+from corehq.util.metrics import metrics_track_errors
 from corehq.util.models import TransientBounceEmail
 
 
@@ -243,15 +242,6 @@ def clean_expired_transient_emails():
                 'error': e,
             }
         )
-
-
-def get_maintenance_alert_active():
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-    return 1 if MaintenanceAlert.get_active_alerts() else 0
-
-
-metrics_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,
-                   run_every=crontab(minute=1), multiprocess_mode=MPM_MAX)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=4))
