@@ -84,7 +84,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
                     file_attachments=None, bcc=None,
                     smtp_exception_skip_list=None, messaging_event_id=None,
-                    domain=None):
+                    domain=None, use_domain_gateway=False):
     recipients = list(recipient) if not isinstance(recipient, str) else [recipient]
     filtered_recipients = get_valid_recipients(recipients, domain)
     bounced_addresses = list(set(recipients) - set(filtered_recipients))
@@ -104,21 +104,20 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                                NO_HTML_EMAIL_MESSAGE)
     elif not isinstance(text_content, str):
         text_content = text_content.decode('utf-8')
+    configuration = get_email_configuration(domain, use_domain_gateway, email_from)
+    headers = {'From': configuration.from_email}  # From-header
 
-    headers = {'From': email_from}  # From-header
-
-    if settings.RETURN_PATH_EMAIL:
-        headers['Return-Path'] = settings.RETURN_PATH_EMAIL
+    if configuration.return_path_email:
+        headers['Return-Path'] = configuration.return_path_email
 
     if messaging_event_id is not None:
         headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
-    if settings.SES_CONFIGURATION_SET is not None:
-        headers[SES_CONFIGURATION_SET_HEADER] = settings.SES_CONFIGURATION_SET
+    if configuration.SES_configuration_set is not None:
+        headers[SES_CONFIGURATION_SET_HEADER] = configuration.SES_configuration_set
 
-    connection = django_get_connection()
-    msg = EmailMultiAlternatives(subject, text_content, email_from,
+    msg = EmailMultiAlternatives(subject, text_content, configuration.from_email,
                                  filtered_recipients, headers=headers,
-                                 connection=connection, cc=cc, bcc=bcc)
+                                 connection=configuration.connection, cc=cc, bcc=bcc)
     for file in (file_attachments or []):
         if file:
             msg.attach(file["title"], file["file_obj"].getvalue(),
@@ -161,10 +160,10 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             error_msg = EmailMultiAlternatives(
                 error_subject,
                 error_text,
-                email_from,
+                configuration.from_email,
                 filtered_recipients,
                 headers=headers,
-                connection=connection,
+                connection=configuration.connection,
                 cc=cc,
                 bcc=bcc,
             )
