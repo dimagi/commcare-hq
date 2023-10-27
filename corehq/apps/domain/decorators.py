@@ -65,9 +65,13 @@ OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' U
 
 def load_domain(req, domain):
     domain_name = normalize_domain_name(domain)
+    _store_project_on_request(req, domain_name)
+    return domain_name, req.project
+
+
+def _store_project_on_request(request, domain_name):
     domain_obj = Domain.get_by_name(domain_name)
-    req.project = domain_obj
-    return domain_name, domain_obj
+    request.project = domain_obj
 
 
 def redirect_for_login_or_domain(request, login_url=None):
@@ -86,7 +90,7 @@ def login_and_domain_required(view_func):
             msg = _('The domain "{domain}" was not found.').format(domain=domain_name)
             raise Http404(msg)
 
-        if not (user.is_authenticated and user.is_active):
+        if not (active_user_logged_in(req)):
             login_url = reverse('domain_login', kwargs={'domain': domain_name})
             return redirect_for_login_or_domain(req, login_url=login_url)
 
@@ -172,6 +176,17 @@ def _ensure_request_couch_user(request):
     if not couch_user and hasattr(request, 'user'):
         request.couch_user = couch_user = CouchUser.from_django_user(request.user)
     return couch_user
+
+
+def _ensure_request_project(request):
+    project = getattr(request, 'project', None)
+    if not project and hasattr(request, 'domain'):
+        _store_project_on_request(request, request.domain)
+    return project
+
+
+def active_user_logged_in(request):
+    return request.user.is_authenticated and request.user.is_active
 
 
 class LoginAndDomainMixin(object):

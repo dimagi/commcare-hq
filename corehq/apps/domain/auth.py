@@ -362,3 +362,30 @@ class ConnectIDAuthBackend:
         if (couch_user.username != link.commcare_user.username):
             return None
         return link.commcare_user
+
+
+def user_can_access_domain_specific_pages(request):
+    """
+        An active logged-in user can access domain specific pages if
+        domain is active &
+        they are a member of the domain or
+        a superuser and domain does not restrict superusers from access
+    """
+    from corehq.apps.domain.decorators import (
+        _ensure_request_couch_user,
+        _ensure_request_project,
+        active_user_logged_in,
+    )
+
+    if not active_user_logged_in(request):
+        return False
+
+    project = _ensure_request_project(request)
+    if not (project and project.is_active):
+        return False
+
+    couch_user = _ensure_request_couch_user(request)
+    if not couch_user:
+        return False
+
+    return couch_user.is_member_of(project) or (couch_user.is_superuser and not project.restrict_superusers)
