@@ -132,7 +132,7 @@ class CallCenterUtilsTests(TestCase):
         )
         profile.save()
 
-        self.user.update_metadata({
+        self.user.get_user_data(self.domain.name).update({
             '': 'blank_key',
             'blank_val': '',
             'ok': 'good',
@@ -140,8 +140,7 @@ class CallCenterUtilsTests(TestCase):
             '8starts_with_a_number': '0',
             'xml_starts_with_xml': '0',
             '._starts_with_punctuation': '0',
-            PROFILE_SLUG: profile.id,
-        })
+        }, profile_id=profile.id)
         sync_usercases(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertIsNotNone(case)
@@ -149,7 +148,7 @@ class CallCenterUtilsTests(TestCase):
         self.assertEqual(case.get_case_property('ok'), 'good')
         self.assertEqual(case.get_case_property(PROFILE_SLUG), str(profile.id))
         self.assertEqual(case.get_case_property('from_profile'), 'yes')
-        self.user.pop_metadata(PROFILE_SLUG)
+        self.user.get_user_data(TEST_DOMAIN).profile_id = None
         definition.delete()
 
     def test_get_call_center_cases_for_user(self):
@@ -237,9 +236,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
         """
         Custom user data should be synced when the user is created
         """
-        self.user.update_metadata({
-            'completed_training': 'yes',
-        })
+        self.user.get_user_data(self.domain.name)['completed_training'] = 'yes'
         self.user.save()
         case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(case)
@@ -249,23 +246,19 @@ class CallCenterUtilsUsercaseTests(TestCase):
         """
         Custom user data should be synced when the user is updated
         """
-        self.user.update_metadata({
-            'completed_training': 'no',
-        })
+        self.user.get_user_data(self.domain.name)['completed_training'] = 'no'
         self.user.save()
-        self.user.update_metadata({
-            'completed_training': 'yes',
-        })
+        self.user.get_user_data(self.domain.name)['completed_training'] = 'yes'
         self.user.save()
         case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertEqual(case.dynamic_case_properties()['completed_training'], 'yes')
-        self._check_update_matches(case, {'completed_training': 'yes'})
+        self._check_update_matches(case, {'completed_training': 'yes', PROFILE_SLUG: ''})
 
     def test_sync_usercase_overwrite_hq_props(self):
         """
         Test that setting custom user data for owner_id and case_type don't change the case
         """
-        self.user.update_metadata({
+        self.user.get_user_data(self.domain.name).update({
             'owner_id': 'someone else',
             'case_type': 'bob',
         })
@@ -309,7 +302,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
         user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
 
-        self.user.update_metadata({'foo': 'bar'})
+        self.user.get_user_data(self.domain.name)['foo'] = 'bar'
         self.user.save()
         user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
@@ -331,7 +324,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
         user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
 
-        self.user.update_metadata({'foo': 'bar'})
+        self.user.get_user_data(self.domain.name)['foo'] = 'bar'
         self.user.is_active = True
         self.user.save()
         user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
@@ -339,9 +332,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
         self.assertEqual(user_case.dynamic_case_properties()['foo'], 'bar')
 
     def test_update_no_change(self):
-        self.user.update_metadata({
-            'numeric': 123,
-        })
+        self.user.get_user_data(self.domain.name)['numeric'] = 123
         self.user.save()
         user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(user_case)
