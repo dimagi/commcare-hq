@@ -65,9 +65,13 @@ OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' U
 
 def load_domain(req, domain):
     domain_name = normalize_domain_name(domain)
+    _store_project_on_request(req, domain_name)
+    return domain_name, req.project
+
+
+def _store_project_on_request(request, domain_name):
     domain_obj = Domain.get_by_name(domain_name)
-    req.project = domain_obj
-    return domain_name, domain_obj
+    request.project = domain_obj
 
 
 def redirect_for_login_or_domain(request, login_url=None):
@@ -177,8 +181,7 @@ def _ensure_request_couch_user(request):
 def _ensure_request_project(request):
     project = getattr(request, 'project', None)
     if not project and hasattr(request, 'domain'):
-        domain_name, domain_obj = load_domain(request, request.domain)
-        request.project = domain_obj
+        _store_project_on_request(request, request.domain)
     return project
 
 
