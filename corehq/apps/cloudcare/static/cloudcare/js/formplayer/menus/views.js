@@ -299,7 +299,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         iconIframe: function (e, url, caseId) {
-            const iframeId = caseId;
+            const iframeId = "icon-iframe-" + caseId;
             const clickedIcon = e.target;
             clickedIcon.classList.add("disabled");
             clickedIcon.style.display = 'none';
