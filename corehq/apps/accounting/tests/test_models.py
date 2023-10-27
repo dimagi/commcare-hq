@@ -367,6 +367,18 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.assertIsNone(self.billing_account.auto_pay_user)
         self.assertFalse(self.billing_account.auto_pay_enabled)
 
+    def test_get_stripe_customer_if_existed(self):
+        customer = self.payment_method._get_or_create_stripe_customer()
+        self.assertEqual(customer.id, self.stripe_customer.id)
+
+    def test_create_stripe_customer_if_not_existed(self):
+        web_user_email = generator.create_arbitrary_web_user_name()
+        payment_method = StripePaymentMethod(web_user=web_user_email)
+        self.addCleanup(payment_method.delete)
+        customer = payment_method._get_or_create_stripe_customer()
+        self.assertEqual(customer.email, web_user_email)
+        self.addCleanup(customer.delete)
+
     def tearDown(self):
         self.stripe_customer.delete()  # This will also delete associated cards
         self.payment_method.delete()
