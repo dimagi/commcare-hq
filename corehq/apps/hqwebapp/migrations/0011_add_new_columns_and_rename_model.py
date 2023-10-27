@@ -27,6 +27,6 @@ class Migration(migrations.Migration):
         ),
         migrations.RenameModel(
             old_name='MaintenanceAlert',
-            new_name='CommCareHQAlert',
+            new_name='Alert',
         ),
     ]
