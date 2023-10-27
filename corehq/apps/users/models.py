@@ -1710,14 +1710,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                location=None,
                commit=True,
                is_account_confirmed=True,
-               metadata=None,  # TODO remove
                user_data=None,
                **kwargs):
         """
         Main entry point into creating a CommCareUser (mobile worker).
         """
-        if metadata is not None:
-            raise ValueError("Use user_data, not metadata")
         uuid = uuid or uuid4().hex
         # if the account is not confirmed, also set is_active false so they can't login
         if 'is_active' not in kwargs:
@@ -2372,9 +2369,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               metadata=None, user_data=None, by_domain_required_for_log=True, **kwargs):
-        if metadata is not None:
-            raise ValueError("Use user_data, not metadata")
+               user_data=None, by_domain_required_for_log=True, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
                                               date, **kwargs)
         if domain:
