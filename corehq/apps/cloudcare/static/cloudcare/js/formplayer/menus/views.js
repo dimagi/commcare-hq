@@ -315,7 +315,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 // Get success or error message from iframe and pass to main window
                 const notificationsElement = $(`#${iframeId}`).contents().find("#cloudcare-notifications");
                 new MutationObserver((el) => {
-                    const addedNodes = el[0].addedNodes
+                    const addedNodes = el[0].addedNodes;
                     if (addedNodes[0].classList.contains('alert')) {
                         const succeeded = addedNodes[0].classList.contains('alert-success');
                         let message;
@@ -335,7 +335,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         spinnerElement[0].style.display = 'none';
                         iconIframe.remove();
                     }
-                  }).observe(notificationsElement[0], { childList: true });
+                }).observe(notificationsElement[0], { childList: true });
             });
         },
 
