@@ -574,13 +574,12 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
 def update_domain_alert_status(request, domain):
     alert_id = request.POST.get('alert_id')
     assert alert_id, 'Missing alert ID'
+
     alert = _load_alert(alert_id, domain)
     if not alert:
         messages.error(request, _("Alert not found!"))
     else:
-        command = request.POST.get('command')
-        if command:
-            _apply_command(request, alert, command)
+        _apply_update(request, alert)
     return HttpResponseRedirect(reverse(ManageDomainAlertsView.urlname, kwargs={'domain': domain}))
 
 
@@ -609,7 +608,8 @@ def _load_alert(alert_id, domain):
         return None
 
 
-def _apply_command(request, alert, command):
+def _apply_update(request, alert):
+    command = request.POST.get('command')
     if command in ['activate', 'deactivate']:
         _update_alert(alert, command)
         messages.success(request, _("Alert updated!"))
