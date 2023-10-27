@@ -41,8 +41,11 @@ def set_case_gps_property(domain, case_data, create_case=False):
 
     if create_case:
         helper = CaseHelper(domain=domain)
-        data['case_name'] = case_data['name']
-        data['case_type'] = case_data['case_type']
+        data |= {
+            'case_name': case_data['name'],
+            'case_type': case_data['case_type'],
+            'owner_id': case_data['owner_id'],
+        }
         helper.create_case(data)
     else:
         helper = CaseHelper(domain=domain, case_id=case_data['id'])

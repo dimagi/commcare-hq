@@ -280,6 +280,8 @@ class GPSCaptureView(BaseDomainView):
         data_type = json_data.get('data_type', None)
         data_item = json_data.get('data_item', None)
         create_case = json_data.get('create_case', False)
+        if create_case:
+            data_item['owner_id'] = request.couch_user.user_id
 
         if data_type == 'case':
             set_case_gps_property(request.domain, data_item, create_case)
