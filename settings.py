@@ -312,6 +312,7 @@ HQ_APPS = (
     'corehq.apps.groups',
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
+    'corehq.apps.email',
     'corehq.apps.events',
     'corehq.apps.geospatial',
     'corehq.apps.smsforms',
@@ -477,7 +478,7 @@ DATA_EMAIL = 'datatree@example.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
 BILLING_EMAIL = 'billing-comm@example.com'
-INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
+INVOICING_CONTACT_EMAIL = 'accounts@example.com'
 GROWTH_EMAIL = 'growth@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 SALES_EMAIL = 'sales@example.com'
@@ -859,14 +860,14 @@ ES_SEARCH_TIMEOUT = 30
 # The variables should be used while reindexing an index.
 # When the variables are set to true the data will be written to both primary and secondary indexes.
 
-ES_APPS_INDEX_MULTIPLEXED = False
-ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
-ES_CASES_INDEX_MULTIPLEXED = False
-ES_DOMAINS_INDEX_MULTIPLEXED = False
-ES_FORMS_INDEX_MULTIPLEXED = False
-ES_GROUPS_INDEX_MULTIPLEXED = False
-ES_SMS_INDEX_MULTIPLEXED = False
-ES_USERS_INDEX_MULTIPLEXED = False
+ES_APPS_INDEX_MULTIPLEXED = True
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = True
+ES_CASES_INDEX_MULTIPLEXED = True
+ES_DOMAINS_INDEX_MULTIPLEXED = True
+ES_FORMS_INDEX_MULTIPLEXED = True
+ES_GROUPS_INDEX_MULTIPLEXED = True
+ES_SMS_INDEX_MULTIPLEXED = True
+ES_USERS_INDEX_MULTIPLEXED = True
 
 
 # Setting the variable to True would mean that the primary index would become secondary and vice-versa
@@ -900,7 +901,8 @@ OAUTH2_PROVIDER = {
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
         'reports:view': 'Allow users to view and download all report data',
-        'mobile_access': 'Allow access to mobile sync and submit endpoints'
+        'mobile_access': 'Allow access to mobile sync and submit endpoints',
+        'sync': '(Deprecated, do not use) Allow access to mobile endpoints',
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
@@ -1936,10 +1938,6 @@ for k, v in LOCAL_PILLOWTOPS.items():
     PILLOWTOPS[k] = plist
 
 COUCH_CACHE_BACKENDS = [
-    'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
-    'corehq.apps.cachehq.cachemodels.UserGenerationCache',
-    'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
-    'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
@@ -2091,3 +2089,5 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
+
+PERMANENT_DELETION_WINDOW = 30  # days

@@ -1,6 +1,6 @@
 import logging
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 from django.conf import settings
 from django.db import transaction
@@ -18,17 +18,9 @@ from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_static_url_prefix
 
 from corehq.apps.accounting.models import (
-    DEFAULT_ACCOUNT_FORMAT,
     BillingAccount,
-    BillingAccountType,
     BillingContactInfo,
-    Currency,
-    DefaultProductPlan,
-    PreOrPostPay,
-    SoftwarePlanEdition,
-    Subscription,
     SubscriptionAdjustmentMethod,
-    SubscriptionType,
 )
 from corehq.apps.accounting.utils.subscription import ensure_community_or_paused_subscription
 from corehq.apps.analytics.tasks import (
@@ -258,7 +250,7 @@ You can view the %s here: %s""" % (
         recipients = settings.NEW_DOMAIN_RECIPIENTS
         send_mail_async.delay(
             "New %s: %s" % (entity_texts[0], entity_name),
-            message, settings.SERVER_EMAIL, recipients
+            message, recipients, from_email=settings.SERVER_EMAIL
         )
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)

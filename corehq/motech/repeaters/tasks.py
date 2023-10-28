@@ -165,39 +165,29 @@ def retry_process_repeat_record(repeat_record_id, domain):
 
 
 def _process_repeat_record(repeat_record):
-
-    # A RepeatRecord should ideally never get into this state, as the
-    # domain_has_privilege check is also triggered in the create_repeat_records
-    # in signals.py. But if it gets here, forcefully cancel the RepeatRecord.
-    if not domain_can_forward(repeat_record.domain):
-        repeat_record.cancel()
-        repeat_record.save()
-
-    if (
-        repeat_record.state == RECORD_FAILURE_STATE and
-        repeat_record.overall_tries >= repeat_record.max_possible_tries
-    ):
-        repeat_record.cancel()
-        repeat_record.save()
-        return
     if repeat_record.cancelled:
+        return
+
+    if not domain_can_forward(repeat_record.domain) or repeat_record.exceeded_max_retries:
+        # When creating repeat records, we check if a domain can forward so
+        # we should never have a repeat record associated with a domain that
+        # cannot forward, but this is just to be sure
+        repeat_record.cancel()
+        repeat_record.save()
         return
 
     if repeat_record.is_repeater_deleted():
         if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
             repeat_record.doc_type += DELETED_SUFFIX
-            repeat_record.save()
-
-    repeater = repeat_record.repeater
-    if not repeater:
         repeat_record.cancel()
         repeat_record.save()
         return
 
     try:
-        if repeater.is_paused:
-            # postpone repeat record by MAX_RETRY_WAIT so that these don't get picked in each cycle and
-            # thus clogging the queue with repeat records with paused repeater
+        if repeat_record.repeater.is_paused:
+            # postpone repeat record by MAX_RETRY_WAIT so that it is not fetched
+            # in the next check to process repeat records, which helps to avoid
+            # clogging the queue
             repeat_record.postpone_by(MAX_RETRY_WAIT)
         elif repeat_record.state == RECORD_PENDING_STATE or repeat_record.state == RECORD_FAILURE_STATE:
             repeat_record.fire()
@@ -214,7 +204,7 @@ metrics_gauge_task(
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeater(repeater_id: int):
+def process_repeater(repeater_id):
     """
     Worker task to send SQLRepeatRecords in chronological order.
 

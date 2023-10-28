@@ -726,13 +726,6 @@ CASE_LIST_MAP = StaticToggle(
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
-CASE_LIST_CLICKABLE_ICON = StaticToggle(
-    'case_list_clickable_icon',
-    'USH: Allow use of clickable icons in the case list in Web Apps to trigger auto submitting forms',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
     'show_persist_case_context_setting',
     'Allow toggling the persistent case context tile',
@@ -1426,7 +1419,7 @@ SMS_LOG_CHANGES = StaticToggle(
 EXPORT_DATA_SOURCE_DATA = StaticToggle(
     'export_data_source_data',
     'Add Export Data Source Data page',
-    TAG_CUSTOM,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
     description="Add the Export Data Source Data page to the Data tab",
 )
@@ -1598,14 +1591,6 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     ),
 )
 
-DD_CASE_DATA = StaticToggle(
-    'dd_case_data',
-    'Data Dictionary Case Data Page',
-    TAG_INTERNAL,
-    [NAMESPACE_USER],
-    description='Experimental: render the case data page in accordance with the data dictionary',
-)
-
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
@@ -1693,6 +1678,14 @@ SESSION_ENDPOINTS = StaticToggle(
     [NAMESPACE_DOMAIN],
     description='Support external Android apps calling in to an endpoint in a '
                 'CommCare app. (Used by the Reminders App)',
+)
+
+CASE_LIST_CLICKABLE_ICON = StaticToggle(
+    'case_list_clickable_icon',
+    'USH: Allow use of clickable icons in the case list in Web Apps to trigger auto submitting forms',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    parent_toggles=[SESSION_ENDPOINTS]
 )
 
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
@@ -2453,6 +2446,13 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Provides access to views for resport scheduling '
                 'such as schedule creation and deletion.'
+)
+
+CUSTOM_EMAIL_GATEWAY = StaticToggle(
+    'custom_email_gateway',
+    'Allows user to define custom email gateway that can be used to send emails from HQ',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )
 
 

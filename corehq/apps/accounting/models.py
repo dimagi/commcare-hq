@@ -74,6 +74,7 @@ from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
+from django.db.models import OuterRef, Subquery
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -168,10 +169,14 @@ class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
     TRIAL = "TRIAL"
+    ANNUAL = "ANNUAL"
+    ARCHIVED = "ARCHIVED"
     CHOICES = (
-        (PUBLIC, "Anyone can subscribe"),
-        (INTERNAL, "Dimagi must create subscription"),
-        (TRIAL, "This is a Trial Plan"),
+        (PUBLIC, "PUBLIC - Anyone can subscribe"),
+        (INTERNAL, "INTERNAL - Dimagi must create subscription"),
+        (TRIAL, "TRIAL- This is a Trial Plan"),
+        (ARCHIVED, "ARCHIVED - hidden from subscription change forms"),
+        (ANNUAL, "ANNUAL - public plans that on annual pricing"),
     )
 
 
@@ -884,6 +889,38 @@ class SoftwarePlanVersion(models.Model):
     def save(self, *args, **kwargs):
         super(SoftwarePlanVersion, self).save(*args, **kwargs)
         SoftwarePlan.get_version.clear(self.plan)
+
+    @staticmethod
+    def filter_version_query(query, edition=None, visibility=None, is_plan_query=False):
+        prefix = "plan__" if not is_plan_query else ""
+
+        if edition:
+            query = query.filter(**{f"{prefix}edition": edition})
+        if visibility:
+            query = query.filter(**{f"{prefix}visibility": visibility})
+        return query
+
+    @classmethod
+    def get_most_recent_version(cls, edition=None, visibility=None):
+        plan_versions_query = cls.objects.all()
+        plan_versions_query = cls.filter_version_query(plan_versions_query, edition, visibility)
+
+        latest_versions_date = plan_versions_query.filter(
+            plan=OuterRef('pk')
+        ).order_by('-date_created').values('date_created')[:1]
+
+        software_plans_query = SoftwarePlan.objects.all()
+        software_plans_query = cls.filter_version_query(software_plans_query, edition, visibility,
+                                                        is_plan_query=True)
+
+        latest_versions = software_plans_query.annotate(
+            latest_version_date=Subquery(latest_versions_date)
+        ).values('id', 'name', 'latest_version_date')
+
+        return cls.objects.filter(
+            plan__in=[item['id'] for item in latest_versions],
+            date_created__in=[item['latest_version_date'] for item in latest_versions]
+        )
 
     @property
     def version(self):
@@ -3799,7 +3836,7 @@ class StripePaymentMethod(PaymentMethod):
         """
         return 'auto_pay_{billing_account_id}'.format(billing_account_id=billing_account.id)
 
-    def create_charge(self, card, amount_in_dollars, description):
+    def create_charge(self, card, amount_in_dollars, description, idempotency_key=None):
         """ Charges a stripe card and returns a transaction id """
         amount_in_cents = int((amount_in_dollars * Decimal('100')).quantize(Decimal(10)))
         transaction_record = stripe.Charge.create(
@@ -3808,6 +3845,7 @@ class StripePaymentMethod(PaymentMethod):
             amount=amount_in_cents,
             currency=settings.DEFAULT_CURRENCY,
             description=description,
+            idempotency_key=idempotency_key
         )
         return transaction_record.id
 
