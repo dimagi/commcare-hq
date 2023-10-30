@@ -92,7 +92,8 @@ hqDefine("geospatial/js/case_grouping_map",[
             hiddenElement.remove();
         };
 
-        self.loadCaseGroups = function(caseGroups) {
+        self.addGroupsToCases = function(caseGroups) {
+            clearCaseGroups();
             self.casesToExport().forEach(caseItem => {
                 const groupData = caseGroups[caseItem.caseId];
                 if (groupData !== undefined) {
@@ -297,28 +298,24 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     function collapseGroupsOnMap() {
         setMapLayersVisibility(MAPBOX_LAYER_VISIBILITY.None);
-        var groupColors = {};
+        mapMarkers.forEach((marker) => marker.remove());
+        mapMarkers = [];
 
         exportModelInstance.casesToExport().forEach(function (caseItem) {
             if (!caseItem.coordinates) {
                 return;
             }
+            const caseGroupID = caseItem.groupId;
+            if (caseGroupsInstance.groupIDInVisibleGroupIds(caseGroupID)) {
+                let caseGroup = caseGroupsInstance.getGroupByID(caseGroupID);
+                color = caseGroup.color;
+                const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
+                marker.setLngLat([caseItem.coordinates.lng, caseItem.coordinates.lat]);
 
-            const groupId = caseItem.groupId;
-            let color = DEFAULT_MARKER_COLOR;
-
-            if (groupId) {
-                if (groupColors[groupId] === undefined) {
-                    groupColors[groupId] = getRandomRGBColor();
-                }
-                color = groupColors[groupId];
+                // Add the marker to the map
+                marker.addTo(map);
+                mapMarkers.push(marker);
             }
-            const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
-            marker.setLngLat([caseItem.coordinates.lng, caseItem.coordinates.lat]);
-
-            // Add the marker to the map
-            marker.addTo(map);
-            mapMarkers.push(marker);
         });
     }
 
@@ -328,10 +325,102 @@ hqDefine("geospatial/js/case_grouping_map",[
             (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16),
         );
     }
+
     function caseGroupSelectModel() {
         'use strict';
         var self = {};
 
+        self.allGroups = ko.observableArray([]);
+        self.allCaseGroups;
+        self.showGroupSelectionTable = ko.computed(function() {
+            return groupLockModelInstance.groupsLocked();
+        })
+        self.visibleGroupIDs = ko.observableArray([]);
+
+        self.groupIDInVisibleGroupIds = function(groupID) {
+            if (self.visibleGroupIDs().indexOf(groupID) !== -1) {
+                return true;
+              } else {
+                return false;
+              }
+        };
+
+        self.getGroupByID = function(groupID) {
+            return _.filter(self.allGroups(), function(group) {return group.groupID === groupID})[0];
+        };
+
+        self.loadCaseGroups = function(caseGroups) {
+            self.allCaseGroups = caseGroups; // {case_id: {group_info}}
+            // Add groups to the cases being exported
+            exportModelInstance.addGroupsToCases(caseGroups);
+            let uniqueGroups = [];
+            var groupIds = _.map(caseGroups, function(caseItem) {
+                return caseItem.groupId;
+            });
+            new Set(groupIds).forEach(id => uniqueGroups.push(
+                {groupID: id, color: getRandomRGBColor()}
+            ));
+            self.allGroups(uniqueGroups);
+
+            let visibleIDs = _.map(uniqueGroups, function(group) {return group.groupID});
+            self.visibleGroupIDs(visibleIDs);
+        };
+
+        self.restoreMarkerOpacity = function() {
+            mapMarkers.forEach(function(marker) {
+                setMarkerOpacity(marker, DEFAULT_MARKER_OPACITY);
+            });
+        };
+
+        self.highlightGroup = function(group) {
+            exportModelInstance.casesToExport().forEach(caseItem => {
+                    let caseIsInGroup = caseItem.groupId === group.groupID;
+                    mapMarkers.forEach(function(marker) {
+                        let markerCoordinates = marker.getLngLat();
+                        let caseCoordinates = caseItem.coordinates;
+                        let latEqual = markerCoordinates.lat === caseCoordinates.lat;
+                        let lonEqual = markerCoordinates.lng === caseCoordinates.lng;
+                        let caseMarkerFound = latEqual && lonEqual;
+                        if (caseMarkerFound) {
+                            let opacity = DEFAULT_MARKER_OPACITY
+                            if (!caseIsInGroup) {
+                                opacity = 0.2;
+                            }
+                            setMarkerOpacity(marker, opacity);
+                        }
+                    });
+            });
+        };
+
+        function setMarkerOpacity(marker, opacity) {
+            let element = marker.getElement();
+            element.style.opacity = opacity;
+        };
+
+        self.showSelectedGroups = function() {
+            if (!self.allCaseGroups) {
+                return;
+            }
+
+            let filteredCaseGroups = {};
+            for (const caseID in self.allCaseGroups) {
+                if (self.groupIDInVisibleGroupIds(self.allCaseGroups[caseID].groupId)) {
+                    filteredCaseGroups[caseID] = self.allCaseGroups[caseID];
+                }
+            }
+            exportModelInstance.addGroupsToCases(filteredCaseGroups);
+            collapseGroupsOnMap();
+        };
+
+        self.showAllGroups = function() {
+            if (!self.allCaseGroups) {
+                return;
+            }
+            exportModelInstance.addGroupsToCases(self.allCaseGroups);
+            self.visibleGroupIDs(_.map(self.allGroups(), function(group) {return group.groupID}));
+            collapseGroupsOnMap();
+
+        };
         return self;
     }
 
@@ -377,7 +466,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             alertUser.alert_user(message, 'danger');
         }
 
-        exportModelInstance.loadCaseGroups(caseGroups);
+        caseGroupsInstance.loadCaseGroups(caseGroups)
         collapseGroupsOnMap();
     }
 
