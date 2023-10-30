@@ -41,7 +41,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 groupObj.toBeDeprecated.subscribe(changeSaveButton);
 
                 for (let prop of group.properties) {
-                    const isGeoCaseProp = (self.geoCaseProp === prop.name);
+                    const isGeoCaseProp = (self.geoCaseProp === prop.name && prop.data_type === 'gps');
                     var propObj = propertyListItem(prop.name, prop.label, false, group.name, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
                         prop.removeFHIRResourcePropertyPath, isGeoCaseProp);
