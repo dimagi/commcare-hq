@@ -248,8 +248,14 @@ class GPSCaptureView(BaseDomainView):
 
     @property
     def page_context(self):
+        case_types = CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            data_type=CaseProperty.DataType.GPS,
+        ).values_list('case_type__name', flat=True).distinct()
+
         page_context = {
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'case_types_with_gps': list(case_types),
         }
         page_context.update(self._case_filters_context())
         return page_context
