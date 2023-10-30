@@ -130,8 +130,8 @@ hqDefine("geospatial/js/gps_capture",[
             return !self.showLoadingSpinner() && !self.hasError();
         });
 
-        self.createCaseEnabled = ko.observable(false);
-        self.createCaseError = ko.observable(false);
+        self.isCreatingCase = ko.observable(false);
+        self.hasCreateCaseError = ko.observable(false);
 
         self.captureLocationForItem = function (item) {
             self.itemLocationBeingCapturedOnMap(item);
@@ -186,7 +186,7 @@ hqDefine("geospatial/js/gps_capture",[
             self.isSubmissionSuccess(false);
             self.hasSubmissionError(false);
             let dataItemJson = ko.mapping.toJS(dataItem);
-            if (self.createCaseEnabled()) {
+            if (self.isCreatingCase()) {
                 const caseType = $('#report_filter_case_type').val();
                 dataItemJson['case_type'] = caseType;
             }
@@ -197,7 +197,7 @@ hqDefine("geospatial/js/gps_capture",[
                 data: JSON.stringify({
                     'data_type': self.dataType,
                     'data_item': dataItemJson,
-                    'create_case': self.createCaseEnabled(),
+                    'create_case': self.isCreatingCase(),
                 }),
                 dataType: "json",
                 contentType: "application/json; charset=utf-8",
@@ -214,18 +214,17 @@ hqDefine("geospatial/js/gps_capture",[
         };
 
         self.startCreateCase = function () {
-            self.createCaseEnabled(true);
+            self.isCreatingCase(true);
             const caseToCreate = new dataItemModel(null, self.dataType);
             self.captureLocationForItem(caseToCreate);
         };
 
         self.finishCreateCase = function () {
             const hasValidName = self.itemLocationBeingCapturedOnMap().name().length > 0;
-            self.createCaseError(!hasValidName);
-            if (!hasValidName) {
-                return;
+            self.hasCreateCaseError(!hasValidName);
+            if (hasValidName) {
+                self.saveDataRow(self.itemLocationBeingCapturedOnMap());
             }
-            self.saveDataRow(self.itemLocationBeingCapturedOnMap());
         };
 
         self.cancelCreateCase = function () {
@@ -234,8 +233,8 @@ hqDefine("geospatial/js/gps_capture",[
         };
 
         self.resetCaseCreateFlags = function () {
-            self.createCaseEnabled(false);
-            self.createCaseError(false);
+            self.isCreatingCase(false);
+            self.hasCreateCaseError(false);
         };
 
         return self;
