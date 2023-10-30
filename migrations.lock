@@ -593,6 +593,8 @@ hqwebapp
  0008_hqoauthapplication
  0009_truncate_authtoken_table
  0010_maintenancealert_scheduling
+ 0011_add_new_columns_and_rename_model
+ 0012_rename_commcarehqalert_alert
 integration
  0001_initial
  0002_dialersettings
