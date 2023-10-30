@@ -95,12 +95,13 @@ class FormActions(OriginalFormActions):
             )
         fields_html = mark_safe(fields_html)  # nosec: just concatenated safe fields
         offsets = _get_offsets(context)
-        return render_to_string(self.template, {
+        context.update({
             'formactions': self,
             'fields_output': fields_html,
             'offsets': offsets,
             'field_class': context.get('field_class', '')
         })
+        return render_to_string(self.template, context.flatten())
 
 
 class StaticField(LayoutObject):
