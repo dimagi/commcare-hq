@@ -335,9 +335,6 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.allCaseGroups;
         self.visibleGroupIDs = ko.observableArray([]);
         self.groupMaxSizeBreached = ko.observable(false);
-        self.showGroupSelectionTable = ko.computed(function() {
-            return groupLockModelInstance.groupsLocked() && !self.groupMaxSizeBreached();
-        })
         self.casePerGroup = {};
 
         self.groupIDInVisibleGroupIds = function(groupID) {
