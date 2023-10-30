@@ -1,0 +1,40 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load case_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load proptable_tags %}
+{% load timezone_tags %}
+
+{% block head %} {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
+{% endblock %}
+
+{% requirejs_main 'reports/js/case_details' %}
+
+{% block page_content %}
+<div>
+  <h2>
+    Case Deletion
+  </h2>
+  <h4>
+    Please review the listed items before proceeding with the case deletion.
+  </h4>
+  </br>
+  <p>
+    {{ formatted_delete_list }}
+  </p>
+  </br>
+  <div class="clearfix form-actions">
+    <div class="col-sm-12">
+      <a class="btn btn-default pull-left" href="{% url 'case_data' domain case_id %}">
+        {% trans 'Cancel' %}
+      </a>
+      <form class="form form-horizontal disable-on-submit" method="post" id="delete-cases-forms">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">{% trans "Permanently Delete Cases and Forms" %}</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
