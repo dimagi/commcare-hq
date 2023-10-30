@@ -4,9 +4,12 @@ from rest_framework.authtoken.models import Token
 
 
 class ABDMUser(models.Model):
-    username = models.CharField(max_length=100, primary_key=True)
+    username = models.CharField(max_length=100)
     access_token = models.CharField(max_length=2000, null=True, blank=True)
-    domain = models.CharField(max_length=100, default="")
+    domain = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ['username', 'domain']
 
     def save(self, *args, **kwargs):
         if not self.access_token:
