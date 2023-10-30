@@ -25,9 +25,8 @@ from .const import (
     CHECK_REPEATERS_KEY,
     CHECK_REPEATERS_PARTITION_COUNT,
     MAX_RETRY_WAIT,
-    RECORD_FAILURE_STATE,
-    RECORD_PENDING_STATE,
     RECORDS_AT_A_TIME,
+    State,
 )
 from .dbaccessors import (
     get_overdue_repeat_record_count,
@@ -173,7 +172,7 @@ def _get_repeat_record(repeat_record_id):
 
 
 def _process_repeat_record(repeat_record):
-    if repeat_record.cancelled:
+    if repeat_record.state == State.Cancelled:
         return
 
     if not domain_can_forward(repeat_record.domain) or repeat_record.exceeded_max_retries:
@@ -197,7 +196,7 @@ def _process_repeat_record(repeat_record):
             # in the next check to process repeat records, which helps to avoid
             # clogging the queue
             repeat_record.postpone_by(MAX_RETRY_WAIT)
-        elif repeat_record.state == RECORD_PENDING_STATE or repeat_record.state == RECORD_FAILURE_STATE:
+        elif repeat_record.state == State.Pending or repeat_record.state == State.Fail:
             repeat_record.fire()
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))

@@ -1528,9 +1528,53 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
         attempts = list(self.attempts)
         return attempts[-1].message if attempts else ''
 
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Members below this line have been added to support the
+    # Couch repeater processing logic.
+
     @property
     def overall_tries(self):
         return self.num_attempts
+
+    @overall_tries.setter
+    def overall_tries(self, ignored):
+        pass
+
+    @property
+    def exceeded_max_retries(self):
+        return self.num_attempts >= self.max_possible_tries
+
+    def is_repeater_deleted(self):
+        # TODO change to query since self.repeater may be None?
+        # OTOH, self.repeater should never be None because of FK constraint with cascading delete
+        return self.repeater.is_deleted
+
+    def fire(self, force_send=False):
+        if self.try_now() or force_send:
+            self.overall_tries += 1
+            try:
+                attempt = self.repeater.fire_for_record(self)
+            except Exception as e:
+                log_repeater_error_in_datadog(self.domain, status_code=None,
+                                              repeater_type=self.repeater_type)
+                attempt = self.handle_payload_exception(e)
+                raise
+            finally:
+                # pycharm warns attempt might not be defined.
+                # that'll only happen if fire_for_record raise a non-Exception exception (e.g. SIGINT)
+                # or handle_payload_exception raises an exception. I'm okay with that. -DMR
+                self.add_attempt(attempt)
+                self.save()
+
+    def try_now(self):
+        # TODO rename to should_try_now
+        return self.state != State.Success
+
+    def handle_exception(self, exception):
+        self.add_client_failure_attempt(str(exception))
+
+    def add_attempt(self, attempt):
+        assert attempt is None, "SQL attempts are added/saved on create"
 
 
 class SQLRepeatRecordAttempt(models.Model):
