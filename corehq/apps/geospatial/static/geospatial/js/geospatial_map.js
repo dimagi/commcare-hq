@@ -294,6 +294,9 @@ hqDefine("geospatial/js/geospatial_map", [
             'use strict';
             var self = {};
             var mapboxinstance = map.getMapboxInstance();
+            self.btnRunDisbursementDisabled = ko.computed(function () {
+                return caseModels().length === 0 || userModels().length === 0;
+            });
             self.btnSaveDisabled = ko.observable(true);
             self.btnExportDisabled = ko.observable(true);
 
