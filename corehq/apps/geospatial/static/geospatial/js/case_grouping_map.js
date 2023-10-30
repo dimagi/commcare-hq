@@ -19,7 +19,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     const DEFAULT_MARKER_OPACITY = 1.0;
     const MAP_CONTAINER_ID = 'case-grouping-map';
-    const MAX_CASES_PER_GROUP = 10000;
+    let max_cases_per_group = initialPageData.get('max_cases_per_group');
     let map;
     const clusterStatsInstance = new clusterStatsModel();
     let exportModelInstance;
@@ -358,7 +358,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                 let caseItem = caseGroups[caseID];
 
                 incrementGroupCaseCount(caseItem.groupId);
-                if (self.casePerGroup[caseItem.groupId] > MAX_CASES_PER_GROUP) {
+                if (self.casePerGroup[caseItem.groupId] > max_cases_per_group) {
                     self.groupMaxSizeBreached(true)
                     return;
                 }
@@ -374,6 +374,11 @@ hqDefine("geospatial/js/case_grouping_map",[
             let visibleIDs = _.map(uniqueGroups, function(group) {return group.groupID});
             self.visibleGroupIDs(visibleIDs);
             self.showAllGroups()
+        };
+
+        self.clear = function() {
+            self.allGroups([]);
+            self.visibleGroupIDs([]);
         };
 
         let incrementGroupCaseCount = function(groupId) {
@@ -510,6 +515,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             } else {
                 map.scrollZoom.enable();
                 clearCaseGroups();
+                caseGroupsInstance.clear();
             }
         };
         return self;

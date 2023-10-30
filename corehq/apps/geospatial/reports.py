@@ -36,6 +36,7 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin):
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'case_row_order': {val.html: idx for idx, val in enumerate(self.headers)},
+            'max_cases_per_group': 10000,
         })
         return context
 
