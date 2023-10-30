@@ -1305,8 +1305,6 @@ class FormBase(DocumentSchema):
         if case_type is None:
             return False
 
-        if self.get_module().case_type != case_type:
-            return False
         if not self.requires_case():
             return False
 
