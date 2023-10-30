@@ -276,6 +276,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"];
             const domain = user.domain;
             let fieldIndex = $(e.currentTarget).parent().index();
+            if (this.isMultiSelect) {
+                fieldIndex -= 1;
+            }
             let caseId;
             if (this.options.headerRowIndices && !$(e.target).closest('.group-rows').length) {
                 caseId = this.model.get('groupKey');
@@ -293,6 +296,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const actionUrl = origin + urlTemplate
                 .replace("{domain}", domain)
                 .replace("{appid}", currentAppId)
+                .replace("{selected_cases}", caseId)
                 .replace("{case_id}", caseId);
             e.target.className += " disabled";
             this.iconIframe(e, actionUrl, caseId);
