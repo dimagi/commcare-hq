@@ -238,6 +238,20 @@ hqDefine("geospatial/js/gps_capture",[
             self.hasCreateCaseError(false);
         };
 
+        self.setCaseTypeList = function (caseTypeList) {
+            self.availableCaseTypes(caseTypeList);
+            if (!caseTypeList.length) {
+                return;
+            }
+
+            const filteredCaseType = $('#report_filter_case_type').val();
+            if (self.availableCaseTypes().includes(filteredCaseType)) {
+                self.selectedCaseType(filteredCaseType);
+            } else {
+                self.selectedCaseType(self.availableCaseTypes()[0]);
+            }
+        };
+
         return self;
     };
 
