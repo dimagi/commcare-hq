@@ -6,6 +6,8 @@ import prometheus_client
 import settings
 from prometheus_client import multiprocess
 
+from corehq.util.metrics.datadog import DatadogMetrics
+
 
 def prometheus_metrics(request):
     """Exports /metrics as a Django view. Only available in DEBUG mode.
@@ -23,3 +25,9 @@ def prometheus_metrics(request):
     return HttpResponse(
         metrics_page, content_type=prometheus_client.CONTENT_TYPE_LATEST
     )
+
+
+def datadog_histogram_metrics(request):
+    dd_metrics = DatadogMetrics()
+    dd_metrics.datadog_histogram(request.POST.get("metrics"), request.POST.get("responseTime"))
+    return HttpResponse("Success!!")

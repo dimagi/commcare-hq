@@ -200,6 +200,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled) {
+        console.log("Menu query event listener start");
+        var startTime = performance.now();
         var urlObject = utils.currentUrlToObject();
         var queryObject = _.extend(
             {
@@ -212,6 +214,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
         API.listMenus();
+        var endTime = performance.now();
+        console.log("Menu query event listener end");
+        var responseTime = endTime - startTime;
+        console.log("Response time in menu:query listener: " + responseTime + " milliseconds");
     });
 
     FormplayerFrontend.on('restore_as:list', function () {
