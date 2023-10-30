@@ -351,16 +351,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             urlObject.addSelection(caseId);
             const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true);
             $.when(fetchingDetails).done(function (detailResponse) {
-                self.model.set("data", detailResponse.models[0].attributes.details)
-                console.log('updating case');
+                self.updateModelFromDetailResponse(caseId, detailResponse)
             }).fail(function () {
                 console.log('could not get case details');
             });
         },
 
+        updateModelFromDetailResponse: function (caseId, detailResponse) {
+            this.model.set("data", detailResponse.models[0].attributes.details)
+        },
+
         modelChanged: function() {
-            console.log('rendering case');
-            this.render();
+            if (!this.model.get('updating')) {
+                this.render();
+            }
         },
 
         rowClick: function (e) {
@@ -461,6 +465,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             dict['prefix'] = this.options.prefix;
             return dict;
         },
+
+        updateModelFromDetailResponse: function (caseId, detailResponse) {
+            CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse])
+        },
     });
 
     const CaseTileGroupedView = CaseTileView.extend({
@@ -486,18 +494,33 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         getIndexedRowDataList: function () {
             let indexedRowDataList = [];
             for (let model of this.options.groupModelsList) {
-                let indexedRowData = model.get('data')
-                    .reduce((acc, data, i) => {
-                        if (this.options.bodyRowIndices.includes(i)) {
-                            acc[i] = data;
-                        }
-                        return acc;
-                    }, {});
-                if (Object.keys(indexedRowData).length !== 0) {
-                    indexedRowDataList.push(indexedRowData);
+                if (model.id === this.model.get('updatedCaseId')) {
+                    indexedRowDataList.push(this.model.get('updatedRowData'));
+                } else {
+                    let indexedRowData = model.get('data')
+                        .reduce((acc, data, i) => {
+                            if (this.options.bodyRowIndices.includes(i)) {
+                                acc[i] = data;
+                            }
+                            return acc;
+                        }, {});
+                    if (Object.keys(indexedRowData).length !== 0) {
+                        indexedRowDataList.push(indexedRowData);
+                    }
                 }
             }
             return indexedRowDataList;
+        },
+
+        updateModelFromDetailResponse: function (caseId, detailResponse) {
+            this.model.set('updating', true)
+            CaseTileGroupedView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse])
+            this.model.set('updatedCaseId', caseId);
+            this.model.set('updatedRowData', this.options.bodyRowIndices.reduce((acc, index) => {
+                acc[index] = detailResponse.models[0].attributes.details[index];
+                return acc;
+            }, {}));
+            this.model.set('updating', false)
         },
     });
 
