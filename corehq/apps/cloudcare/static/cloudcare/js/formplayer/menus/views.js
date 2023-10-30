@@ -273,39 +273,55 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appId = formplayerUtils.currentUrlToObject().appId;
             const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
             // Confirms we are getting the app id, not build id
-            const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"]
+            const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"];
             const domain = user.domain;
-            const caseId = this.model.get('id');
-            const fieldIndex = $(e.currentTarget).parent().index();
+            let fieldIndex = $(e.currentTarget).parent().index();
+            if (this.isMultiSelect) {
+                fieldIndex -= 1;
+            }
+            let caseId;
+            if (this.options.headerRowIndices && !$(e.target).closest('.group-rows').length) {
+                caseId = this.model.get('groupKey');
+            } else {
+                caseId = this.model.get('id');
+            }
+            if (this.options.bodyRowIndices && this.options.headerRowIndices) {
+                if ($(e.target).closest('.group-rows').length) {
+                    fieldIndex = this.options.bodyRowIndices[fieldIndex];
+                } else {
+                    fieldIndex = this.options.headerRowIndices[fieldIndex];
+                }
+            }
             const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
             const actionUrl = origin + urlTemplate
                 .replace("{domain}", domain)
                 .replace("{appid}", currentAppId)
+                .replace("{selected_cases}", caseId)
                 .replace("{case_id}", caseId);
             e.target.className += " disabled";
-            this.iconIframe(e, actionUrl);
+            this.iconIframe(e, actionUrl, caseId);
         },
 
-        iconIframe: function (e, url) {
+        iconIframe: function (e, url, caseId) {
+            const iframeId = "icon-iframe-" + caseId;
             const clickedIcon = e.target;
             clickedIcon.classList.add("disabled");
             clickedIcon.style.display = 'none';
-            const tableData = clickedIcon.closest('td');
-            const spinnerElement = $(tableData).find('i');
+            const spinnerElement = $(clickedIcon).siblings('i');
             spinnerElement[0].style.display = '';
             const iconIframe = document.createElement('iframe');
             iconIframe.style.display = 'none';
-            $(iconIframe).attr('id', 'icon-iframe')
+            $(iconIframe).attr('id', iframeId);
             iconIframe.src = encodeURI(url);
             document.body.appendChild(iconIframe);
 
-            $('iframe').on('load', function(){
+            $(`#${iframeId}`).on('load', function () {
                 // Get success or error message from iframe and pass to main window
-                const notificationsElement = $("#icon-iframe").contents().find("#cloudcare-notifications");
-                notificationsElement.on('DOMNodeInserted', function(e) {
-                    if ($(e.target).hasClass('alert')) {
-                        const alertCollection = $(e.target);
-                        const succeeded = alertCollection[0].classList.contains('alert-success');
+                const notificationsElement = $(`#${iframeId}`).contents().find("#cloudcare-notifications");
+                new MutationObserver((el) => {
+                    const addedNodes = el[0].addedNodes;
+                    if (addedNodes[0].classList.contains('alert')) {
+                        const succeeded = addedNodes[0].classList.contains('alert-success');
                         let message;
                         if (succeeded) {
                             message = notificationsElement.find('.alert-success').find('p').text();
@@ -313,17 +329,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         } else {
                             const messageElement = notificationsElement.find('.alert-danger');
                             // Todo: standardize structures of success and error alert elements
-                            message = messageElement.contents().filter(function(){
-                                return this.nodeType == Node.TEXT_NODE;
-                              })[0].nodeValue;
+                            message = messageElement.contents().filter(function () {
+                                return this.nodeType === Node.TEXT_NODE;
+                            })[0].nodeValue;
                             FormplayerFrontend.trigger('showError', gettext(message));
                         }
                         clickedIcon.classList.remove("disabled");
                         clickedIcon.style.display = '';
                         spinnerElement[0].style.display = 'none';
-                        iconIframe.parentNode.removeChild(iconIframe);
+                        iconIframe.remove();
                     }
-                })
+                }).observe(notificationsElement[0], { childList: true });
             });
         },
 
@@ -390,7 +406,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
-                    return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
+                    return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
             };
         },
@@ -437,11 +453,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
             const data = this.options.model.get('data');
             const headerRowIndices = this.options.headerRowIndices;
+
             dict['indexedHeaderData'] = headerRowIndices.reduce((acc, index) => {
                 acc[index] = data[index];
                 return acc;
             }, {});
-
             dict['indexedRowDataList'] = this.getIndexedRowDataList();
 
             return dict;
@@ -452,8 +468,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             for (let model of this.options.groupModelsList) {
                 let indexedRowData = model.get('data')
                     .reduce((acc, data, i) => {
-                        if (!this.options.headerRowIndices.includes(i) &&
-                            this.options.styles[i].widthHint !== 0) {
+                        if (this.options.bodyRowIndices.includes(i)) {
                             acc[i] = data;
                         }
                         return acc;
@@ -518,7 +533,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                endpointActions: this.options.endpointActions
+                endpointActions: this.options.endpointActions,
             };
         },
 
@@ -1065,11 +1080,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }
             }
 
-            let groupHeaderRows = this.options.collection.groupHeaderRows;
+            const groupHeaderRows = this.options.collection.groupHeaderRows;
             // select the indices of the tile fields that are part of the header rows
-            this.headerRowIndices = this.options.collection.tiles
-                .map((tile, index) => ({tile: tile, index: index}))
-                .filter((tile) => tile.tile && tile.tile.gridY < groupHeaderRows)
+
+            const isHeaderRow = (y) => y < groupHeaderRows;
+            const tileAndIndex = this.options.collection.tiles
+                .map((tile, index) => ({tile: tile, index: index}));
+
+            this.headerRowIndices = tileAndIndex
+                .filter((tile) => tile.tile && isHeaderRow(tile.tile.gridY))
+                .map((tile) => tile.index);
+            this.bodyRowIndices = tileAndIndex
+                .filter((tile) => tile.tile && !isHeaderRow(tile.tile.gridY))
                 .map((tile) => tile.index);
         },
 
@@ -1078,6 +1100,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             dict.groupHeaderRows = this.options.collection.groupHeaderRows;
             dict.groupModelsList = this.groupedModels[model.get("groupKey")];
             dict.headerRowIndices = this.headerRowIndices;
+            dict.bodyRowIndices = this.bodyRowIndices;
             return dict;
         },
     });
@@ -1222,7 +1245,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {
-                    return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
+                    return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
             };
         },

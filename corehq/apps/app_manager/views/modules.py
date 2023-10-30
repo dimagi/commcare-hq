@@ -530,7 +530,8 @@ def _form_endpoint_options(app, module, lang=None):
         {
             "id": form.session_endpoint_id,
             "form_name": trans(form.name, langs),
-            "module_name": trans(mod.name, langs)
+            "module_name": trans(mod.name, langs),
+            "module_case_type": mod.case_type
         }
         for mod in app.get_modules()
         for form in mod.get_forms() if form.session_endpoint_id and form.is_auto_submitting_form(module.case_type)
