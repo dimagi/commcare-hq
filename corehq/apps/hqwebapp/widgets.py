@@ -42,6 +42,11 @@ class BootstrapCheckboxInput(CheckboxInput):
             self.inline_label)
 
 
+class BootstrapSwitchInput(BootstrapCheckboxInput):
+    """Only valid for forms using Bootstrap5"""
+    template_name = "hqwebapp/crispy/switch_widget.html"
+
+
 class _Select2AjaxMixin():
     """
     A Select2 widget that loads its options asynchronously.
