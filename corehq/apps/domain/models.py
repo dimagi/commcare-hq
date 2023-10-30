@@ -968,7 +968,10 @@ class TransferDomainRequest(models.Model):
             _('Transfer of ownership for CommCare project space.'),
             self.to_user.get_email(),
             html_content,
-            text_content=text_content)
+            text_content=text_content,
+            domain=self.domain,
+            use_domain_gateway=True,
+        )
 
     def email_from_request(self):
         context = self.as_dict()
@@ -985,7 +988,10 @@ class TransferDomainRequest(models.Model):
             _('Transfer of ownership for CommCare project space.'),
             self.from_user.get_email(),
             html_content,
-            text_content=text_content)
+            text_content=text_content,
+            domain=self.domain,
+            use_domain_gateway=True,
+        )
 
     @requires_active_transfer
     def transfer_domain(self, by_user, *args, transfer_via=None, **kwargs):

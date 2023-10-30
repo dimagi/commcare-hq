@@ -457,7 +457,8 @@ def send_admin_registration_alert(domain, recipients, user):
         "domain": domain,
         "url": absolute_reverse(EditCommCareUserView.urlname, args=[domain, user.get_id])
     })
-    send_html_email_async.delay(subject, recipients, html_content, domain=domain)
+    send_html_email_async.delay(subject, recipients, html_content,
+                                domain=domain, use_domain_gateway=True)
 
 
 def is_registration_text(text):
