@@ -17,11 +17,13 @@ hqDefine("geospatial/js/case_grouping_map",[
         Visible: 'visible',
     };
 
-    const DEFAULT_MARKER_COLOR = "rgba(128,128,128,0.25)";
+    const DEFAULT_MARKER_OPACITY = 1.0;
     const MAP_CONTAINER_ID = 'case-grouping-map';
     let map;
     const clusterStatsInstance = new clusterStatsModel();
     let exportModelInstance;
+    let groupLockModelInstance = new groupLockModel()
+    let caseGroupsInstance = new caseGroupSelectModel()
     let mapMarkers = [];
 
     function caseModel(caseId, coordinates, caseLink) {
@@ -285,12 +287,12 @@ hqDefine("geospatial/js/case_grouping_map",[
         map.setLayoutProperty('unclustered-point', 'visibility', visibility);
     }
 
-    function getRandomRGBColor() {
+    function getRandomRGBColor() { // TODO: Ensure generated colors looks different!
         var r = Math.floor(Math.random() * 256); // Random value between 0 and 255 for red
         var g = Math.floor(Math.random() * 256); // Random value between 0 and 255 for green
         var b = Math.floor(Math.random() * 256); // Random value between 0 and 255 for blue
 
-        return `rgba(${r},${g},${b},1)`;
+        return `rgba(${r},${g},${b},${DEFAULT_MARKER_OPACITY})`;
     }
 
     function collapseGroupsOnMap() {
@@ -325,6 +327,12 @@ hqDefine("geospatial/js/case_grouping_map",[
         return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
             (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16),
         );
+    }
+    function caseGroupSelectModel() {
+        'use strict';
+        var self = {};
+
+        return self;
     }
 
     async function setCaseGroups() {
@@ -428,9 +436,10 @@ hqDefine("geospatial/js/case_grouping_map",[
             const isAfterReportLoad = settings.url.includes('geospatial/async/case_grouping_map/');
             if (isAfterReportLoad) {
                 $("#export-controls").koApplyBindings(exportModelInstance);
-                $("#lock-groups-controls").koApplyBindings(new groupLockModel());
+                $("#lock-groups-controls").koApplyBindings(groupLockModelInstance);
                 map = initMap();
                 $("#clusterStats").koApplyBindings(clusterStatsInstance);
+                $("#caseGroupSelect").koApplyBindings(caseGroupsInstance);
                 return;
             }
 
