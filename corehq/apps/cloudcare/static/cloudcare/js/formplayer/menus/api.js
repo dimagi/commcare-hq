@@ -162,7 +162,16 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     message: "[request] " + route,
                     data: _.pick(sentryData, _.identity),
                 });
-                menus.fetch($.extend(true, {}, options));
+
+                var callStartTime = performance.now();
+                menus.fetch($.extend(true, {}, options)).always(function () {
+                    // Calculate the response time
+                    var callEndTime = performance.now();
+                    var callResponseTime = callEndTime - callStartTime;
+
+                    // Log the response time
+                    console.log("Server response time: " + callResponseTime + " ms");
+                });
             });
 
             return defer.promise();
@@ -175,7 +184,16 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
             options.selectedValues = currentSelectedValues !== undefined && currentSelectedValues !== '' ? currentSelectedValues.split(',') : undefined;
         }
         if (!options.endpointId) {
-            return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
+            const startTime = performance.now();
+            console.log("Options: " + JSON.stringify(options));
+            const result = API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
+            const endTime = performance.now();
+            const timeTaken = endTime - startTime;
+
+            console.log("Time taken for queryFormplayer:: " + timeTaken + " milliseconds");
+
+            return result;
+
         }
 
         var progressView = ProgressBar({
