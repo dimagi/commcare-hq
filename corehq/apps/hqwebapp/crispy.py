@@ -13,7 +13,9 @@ from crispy_forms.layout import LayoutObject
 from crispy_forms.utils import flatatt, get_template_pack, render_field
 
 CSS_LABEL_CLASS = 'col-xs-12 col-sm-4 col-md-4 col-lg-2'
+CSS_LABEL_CLASS_BOOTSTRAP5 = 'col-xs-12 col-sm-4 col-md-4 col-lg-3'
 CSS_FIELD_CLASS = 'col-xs-12 col-sm-8 col-md-8 col-lg-6'
+CSS_FIELD_CLASS_BOOTSTRAP5 = 'col-xs-12 col-sm-8 col-md-8 col-lg-9'
 CSS_ACTION_CLASS = CSS_FIELD_CLASS + ' col-sm-offset-4 col-md-offset-4 col-lg-offset-2'
 
 
@@ -24,6 +26,13 @@ class HQFormHelper(FormHelper):
 
     def __init__(self, *args, **kwargs):
         super(HQFormHelper, self).__init__(*args, **kwargs)
+        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+        bootstrap_version = get_bootstrap_version()
+        use_bootstrap5 = bootstrap_version == BOOTSTRAP_5
+        if use_bootstrap5:
+            self.label_class = CSS_LABEL_CLASS_BOOTSTRAP5
+            self.field_class = CSS_FIELD_CLASS_BOOTSTRAP5
+
         if 'autocomplete' not in self.attrs:
             self.attrs.update({
                 'autocomplete': 'off',
