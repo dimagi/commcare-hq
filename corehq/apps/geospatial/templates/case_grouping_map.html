@@ -5,25 +5,37 @@
 
 {% block reportcontent %}
 <div class="row panel">
-  <span id="lock-groups-controls">
-    <div class="controls col-sm-2 col-md-2 col-lg-2">
-      <button data-bind="visible: !groupsLocked(), click: toggleGroupLock" class="btn-default form-control">
-        <i class="fa fa-lock"></i>
-        {% trans "Lock Case Grouping for Me" %}
-      </button>
-      <button data-bind="visible: groupsLocked(), click: toggleGroupLock" class="btn-primary form-control">
-        <i class="fa fa-unlock"></i>
-        {% trans "Unlock Case Grouping for Me" %}
-      </button>
-    </div>
-  </span>
-  <span id="export-controls">
-    <div class="controls col-sm-2 col-md-2 col-lg-2">
-      <button class="btn-default form-control" data-bind="click: downloadCSV">
-        {% trans "Export Groups" %}
-      </button>
-    </div>
-  </span>
+  <div class="col col-md-2">
+    <span id="lock-groups-controls">
+      <div class="controls">
+        <button data-bind="visible: !groupsLocked(), click: toggleGroupLock" class="btn-default form-control">
+          <i class="fa fa-lock"></i>
+          {% trans "Lock Case Grouping for Me" %}
+        </button>
+        <button data-bind="visible: groupsLocked(), click: toggleGroupLock" class="btn-primary form-control">
+          <i class="fa fa-unlock"></i>
+          {% trans "Unlock Case Grouping for Me" %}
+        </button>
+      </div>
+    </span>
+  </div>
+  <div class="col col-md-2">
+    <span id="export-controls">
+      <div class="controls">
+        <button class="btn-default form-control" data-bind="click: downloadCSV">
+          {% trans "Export Groups" %}
+        </button>
+      </div>
+    </span>
+  </div>
+</div>
+<div class="row" id="groupingWarningBanner">
+  <div class="alert alert-warning" data-bind="visible: groupMaxSizeBreached">
+    <i class="fa fa-exclamation-triangle"></i>
+    {% blocktrans %}
+        There are too many cases per group. Please zoom in to create more groups.
+    {% endblocktrans %}
+  </div>
 </div>
 
 <div id="case-grouping-map" style="height: 500px"></div>
@@ -38,28 +50,61 @@
       {% endif %}
     {% endblock reporttable %}
 </div>
-
-<div class="row panel" id="clusterStats">
-  <div class="col-sm-6 col-md-6 col-lg-6">
-    <table class="table table-striped table-bordered">
-      <thead>
-        <th colspan="2">{% trans "Summary of Case Grouping" %}</th>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{% trans "Total number of clusters" %}</td>
-          <td data-bind="text: totalClusters"></td>
-        </tr>
-        <tr>
-          <td>{% trans "Maximum cases per cluster" %}</td>
-          <td data-bind="text: clusterMaxCount"></td>
-        </tr>
-        <tr>
-          <td>{% trans "Minimum cases per cluster" %}</td>
-          <td data-bind="text: clusterMinCount"></td>
-        </tr>
-      </tbody>
-    </table>
+<div class="row">
+    <div class="col-sm-6" id="clusterStats">
+      <table class="table table-striped table-bordered">
+        <thead>
+          <th colspan="2">{% trans "Summary of Case Grouping" %}</th>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{% trans "Total number of clusters" %}</td>
+            <td data-bind="text: totalClusters"></td>
+          </tr>
+          <tr>
+            <td>{% trans "Maximum cases per cluster" %}</td>
+            <td data-bind="text: clusterMaxCount"></td>
+          </tr>
+          <tr>
+            <td>{% trans "Minimum cases per cluster" %}</td>
+            <td data-bind="text: clusterMinCount"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-sm-6 row" id="caseGroupSelect" data-bind="visible: showGroupSelectionTable()">
+      <div>
+        <table class="table table-striped table-bordered">
+          <thead>
+            <th colspan="2">{% trans "Select Case Groups to View" %}</th>
+          </thead>
+          <tbody data-bind="foreach: allGroups">
+            <tr>
+              <td data-bind="event: {mouseover: $parent.highlightGroup, mouseout: $parent.restoreMarkerOpacity}">
+                <div class="checkbox">
+                  <label>
+                    <input type="checkbox" data-bind="checked: $parent.visibleGroupIDs, checkedValue: groupID" />
+                      <span data-bind="text: groupID"></span>
+                  </label>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="row">
+          <div class="col col-md-6">
+            <button class="btn-default form-control" data-bind="click: showSelectedGroups()">
+              {% trans "Show Only Selected Groups on Map" %}
+            </button>
+          </div>
+          <div class="col col-md-6">
+            <button class="btn-default form-control" data-bind="click: showAllGroups()">
+              {% trans "Show All Groups" %}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
