@@ -339,9 +339,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
         for (const cluster of sourceFeatures) {
             const clusterId = cluster.properties.cluster_id;
-            if (processedCluster[clusterId]) {
-                continue;
-            } else {
+            if (!processedCluster[clusterId]) {
                 processedCluster[clusterId] = true;
             }
 
