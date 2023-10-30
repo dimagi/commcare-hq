@@ -74,7 +74,7 @@ def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
     user_es = UserES().domain(domain)
 
     if RESTRICT_LOGIN_AS.enabled(domain):
-        user_es = user_es.OR(users.metadata('login_as_user', search_string),
+        user_es = user_es.OR(users.user_data('login_as_user', search_string),
                              queries.search_string_query(search_string, default_search_fields))
     else:
         user_es = user_es.search_string_query(search_string, default_search_fields)
