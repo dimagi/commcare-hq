@@ -315,8 +315,11 @@ hqDefine("geospatial/js/gps_capture",[
     }
 
     $(function () {
+        const caseDataItemListInstance = dataItemListModel('case');
+        caseDataItemListInstance.setCaseTypeList(initialPageData.get('case_types_with_gps'));
+
         $("#tabs-list").koApplyBindings(TabListViewModel());
-        $("#no-gps-list-case").koApplyBindings(dataItemListModel('case'));
+        $("#no-gps-list-case").koApplyBindings(caseDataItemListInstance);
         $("#no-gps-list-user").koApplyBindings(dataItemListModel('user'));
 
         initMap();
