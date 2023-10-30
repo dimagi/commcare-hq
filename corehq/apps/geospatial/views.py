@@ -51,6 +51,7 @@ from .utils import (
     get_lat_lon_from_dict,
     set_case_gps_property,
     set_user_gps_property,
+    create_case_with_gps_property,
 )
 
 
@@ -286,11 +287,13 @@ class GPSCaptureView(BaseDomainView):
         data_type = json_data.get('data_type', None)
         data_item = json_data.get('data_item', None)
         create_case = json_data.get('create_case', False)
-        if create_case:
-            data_item['owner_id'] = request.couch_user.user_id
 
         if data_type == 'case':
-            set_case_gps_property(request.domain, data_item, create_case)
+            if create_case:
+                data_item['owner_id'] = request.couch_user.user_id
+                create_case_with_gps_property(request.domain, data_item)
+            else:
+                set_case_gps_property(request.domain, data_item)
         elif data_type == 'user':
             set_user_gps_property(request.domain, data_item)
 
