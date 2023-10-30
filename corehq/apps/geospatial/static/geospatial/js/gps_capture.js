@@ -132,6 +132,8 @@ hqDefine("geospatial/js/gps_capture",[
 
         self.isCreatingCase = ko.observable(false);
         self.hasCreateCaseError = ko.observable(false);
+        self.availableCaseTypes = ko.observableArray([]);
+        self.selectedCaseType = ko.observable('');
 
         self.captureLocationForItem = function (item) {
             self.itemLocationBeingCapturedOnMap(item);
@@ -187,8 +189,7 @@ hqDefine("geospatial/js/gps_capture",[
             self.hasSubmissionError(false);
             let dataItemJson = ko.mapping.toJS(dataItem);
             if (self.isCreatingCase()) {
-                const caseType = $('#report_filter_case_type').val();
-                dataItemJson['case_type'] = caseType;
+                dataItemJson['case_type'] = self.selectedCaseType();
             }
 
             $.ajax({
