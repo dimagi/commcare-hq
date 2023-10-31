@@ -61,6 +61,13 @@ class DatadogMetrics(HqMetrics):
         dd_tags = _format_tags(tags)
         _datadog_record(statsd.gauge, name, value, dd_tags)
 
+    def _datadog_histogram(self, metric_name, metric_value):
+        """
+        https://docs.datadoghq.com/metrics/types/?tab=histogram#metric-types
+        """
+        print(f"Logging {metric_name} - {metric_value}")
+        _datadog_record(statsd.histogram, metric_name, metric_value)
+
     def _histogram(self, name: str, value: float,
                   bucket_tag: str, buckets: List[int], bucket_unit: str = '',
                   tags: Dict[str, str] = None, documentation: str = ''):

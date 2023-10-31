@@ -175,7 +175,15 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
             options.selectedValues = currentSelectedValues !== undefined && currentSelectedValues !== '' ? currentSelectedValues.split(',') : undefined;
         }
         if (!options.endpointId) {
-            return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
+            const startTime = performance.now();
+            const result = API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
+            const endTime = performance.now();
+            const timeTaken = endTime - startTime;
+
+            console.log("Time taken for queryFormplayer: " + timeTaken + " milliseconds");
+
+            return result;
+
         }
 
         var progressView = ProgressBar({
