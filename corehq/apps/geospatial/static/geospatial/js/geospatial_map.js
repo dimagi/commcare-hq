@@ -283,13 +283,60 @@ hqDefine("geospatial/js/geospatial_map", [
             }
         };
 
+        function connectUserWithCasesOnMap(userId, casesIds, color) {
+            user = userModels().find((userModel) => {return userModel.itemId === userId});
+            cases = caseModels().filter((caseModel) => {return casesIds.includes(caseModel.itemId)});
+
+            cases.forEach((caseModel) => {
+                 const lineCoordinates = [
+                    [user.itemData.coordinates.lng, user.itemData.coordinates.lat],
+                    [caseModel.itemData.coordinates.lng, caseModel.itemData.coordinates.lat],
+                ];
+                let mapInstance = map.getMapboxInstance();
+                mapInstance.addLayer({
+                  id: "route-" + caseModel.itemId,
+                  type: 'line',
+                  source: {
+                    type: 'geojson',
+                    data: {
+                      type: 'Feature',
+                      properties: {},
+                      geometry: {
+                        type: 'LineString',
+                        coordinates: lineCoordinates
+                      }
+                    }
+                  },
+                  layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                  },
+                  paint: {
+                    'line-color': '#FF0000',
+                    'line-width': 1
+                  }
+                });
+            });
+        }
+
         function runCaseDisbursementAlgorithm(cases, users) {
-            let caseData = cases.map(function (c) {
-                return {
+            let mapInstance = map.getMapboxInstance();
+
+            let caseData = [];
+            cases.forEach(function (c) {
+                const layerId = "route-" + c.itemId;
+                if (mapInstance.getLayer(layerId)) {
+                    mapInstance.removeLayer(layerId);
+                }
+                if (mapInstance.getSource(layerId)) {
+                    mapInstance.removeSource(layerId);
+                }
+
+                caseData.push({
                     id: c.itemId,
                     lon: c.itemData.coordinates.lng,
                     lat: c.itemData.coordinates.lat,
-                }
+                });
             })
 
             let userData = users.map(function (c) {
@@ -307,7 +354,9 @@ hqDefine("geospatial/js/geospatial_map", [
                 data: JSON.stringify({'users': userData, "cases": caseData}),
                 contentType: "application/json; charset=utf-8",
                 success: function (ret) {
-                    console.log(ret);
+                    Object.keys(ret).forEach((userId) => {
+                        connectUserWithCasesOnMap(userId, ret[userId]);
+                    });
                 },
             });
         }
