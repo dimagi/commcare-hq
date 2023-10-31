@@ -69,7 +69,17 @@ hqDefine("geospatial/js/case_grouping_map",[
                 return;
             }
 
-            const casesToExport = _.map(self.casesToExport(), function (caseItem) {
+            // Only cases with belonging to groups should be exported
+            let exportableCases = self.casesToExport().filter(function(caseItem) {
+                return caseItem.groupId;
+            });
+
+            if (!exportableCases.length) {
+                // If no case belongs to a group, we export all cases
+                exportableCases = self.casesToExport();
+            }
+
+            const casesToExport = _.map(exportableCases, function (caseItem) {
                 return caseItem.toJson();
             });
 
