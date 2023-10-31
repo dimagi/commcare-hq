@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
@@ -8,7 +9,7 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.apps.users.user_data import UserData, UserDataError
+from corehq.apps.users.user_data import SQLUserData, UserData, UserDataError
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 
@@ -59,6 +60,33 @@ class TestUserMetadata(TestCase):
             'commcare_profile': '',
             'start': 'sometimes',  # whoops, domain 1 affects other domains!
         })
+
+    def test_lazy_init_and_save(self):
+        # mimic loading a user from the db
+        user = CommCareUser.wrap({
+            '_id': str(uuid.uuid4()),
+            'domain': self.domain,
+            'username': 'birdman',
+            'password': '***',
+            'user_data': {'favorite_color': 'purple'},
+        })
+        with self.assertRaises(SQLUserData.DoesNotExist):
+            SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
+
+        # Accessing data for the first time saves it to SQL
+        self.assertEqual(user.get_user_data(self.domain)['favorite_color'], 'purple')
+        sql_data = SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
+        self.assertEqual(sql_data.data['favorite_color'], 'purple')
+
+        # Making a modification works immediately, but isn't persisted until user save
+        user.get_user_data(self.domain)['favorite_color'] = 'blue'
+        self.assertEqual(user.get_user_data(self.domain)['favorite_color'], 'blue')
+        sql_data.refresh_from_db()
+        self.assertEqual(sql_data.data['favorite_color'], 'purple')  # unchanged
+        user.save()
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
+        sql_data.refresh_from_db()
+        self.assertEqual(sql_data.data['favorite_color'], 'blue')
 
 
 def _get_profile(self, profile_id):

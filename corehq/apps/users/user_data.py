@@ -15,10 +15,38 @@ class UserDataError(Exception):
 
 
 class UserData:
-    def __init__(self, raw_user_data, domain, profile_id=None):
+    def __init__(self, raw_user_data, domain, profile_id=None, user_id=None):
         self._local_to_user = raw_user_data
         self.domain = domain
         self._profile_id = profile_id or raw_user_data.get(PROFILE_SLUG, None)
+        self._user_id = user_id
+
+    @classmethod
+    def lazy_init(cls, couch_user, domain):
+        # To be used during initial rollout - lazily create user_data objs from
+        # existing couch data
+        raw_user_data = couch_user.user_data.copy()
+        raw_user_data.pop(COMMCARE_PROJECT, None)
+        profile_id = raw_user_data.pop(PROFILE_SLUG, None)
+        sql_data, _ = SQLUserData.objects.get_or_create(
+            user_id=couch_user.user_id,
+            domain=domain,
+            defaults={
+                'data': couch_user.user_data,
+                'profile_id': profile_id,
+            }
+        )
+        return cls(sql_data.data, domain, profile_id=sql_data.profile_id, user_id=couch_user.user_id)
+
+    def save(self):
+        SQLUserData.objects.update_or_create(
+            user_id=self._user_id,
+            domain=self.domain,
+            defaults={
+                'data': self._local_to_user,
+                'profile_id': self.profile_id,
+            },
+        )
 
     @property
     def _provided_by_system(self):
@@ -149,10 +177,6 @@ class UserData:
         else:
             del self._local_to_user[key]
             return ret
-
-    def save(self):
-        # TODO
-        ...
 
 
 class SQLUserData(models.Model):
