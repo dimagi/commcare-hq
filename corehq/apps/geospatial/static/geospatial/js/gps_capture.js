@@ -134,6 +134,7 @@ hqDefine("geospatial/js/gps_capture",[
         self.hasCreateCaseError = ko.observable(false);
         self.availableCaseTypes = ko.observableArray([]);
         self.selectedCaseType = ko.observable('');
+        self.hasCaseTypeError = ko.observable(false);
 
         self.captureLocationForItem = function (item) {
             self.itemLocationBeingCapturedOnMap(item);
@@ -223,7 +224,9 @@ hqDefine("geospatial/js/gps_capture",[
         self.finishCreateCase = function () {
             const hasValidName = self.itemLocationBeingCapturedOnMap().name().length > 0;
             self.hasCreateCaseError(!hasValidName);
-            if (hasValidName) {
+            const hasValidCaseType = self.selectedCaseType() && self.selectedCaseType().length > 0;
+            self.hasCaseTypeError(!hasValidCaseType);
+            if (hasValidName && hasValidCaseType) {
                 self.saveDataRow(self.itemLocationBeingCapturedOnMap());
             }
         };
@@ -236,20 +239,7 @@ hqDefine("geospatial/js/gps_capture",[
         self.resetCaseCreateFlags = function () {
             self.isCreatingCase(false);
             self.hasCreateCaseError(false);
-        };
-
-        self.setCaseTypeList = function (caseTypeList) {
-            self.availableCaseTypes(caseTypeList);
-            if (!caseTypeList.length) {
-                return;
-            }
-
-            const filteredCaseType = $('#report_filter_case_type').val();
-            if (self.availableCaseTypes().includes(filteredCaseType)) {
-                self.selectedCaseType(filteredCaseType);
-            } else {
-                self.selectedCaseType(self.availableCaseTypes()[0]);
-            }
+            self.hasCaseTypeError(false);
         };
 
         return self;
@@ -316,7 +306,7 @@ hqDefine("geospatial/js/gps_capture",[
 
     $(function () {
         const caseDataItemListInstance = dataItemListModel('case');
-        caseDataItemListInstance.setCaseTypeList(initialPageData.get('case_types_with_gps'));
+        caseDataItemListInstance.availableCaseTypes(initialPageData.get('case_types_with_gps'));
 
         $("#tabs-list").koApplyBindings(TabListViewModel());
         $("#no-gps-list-case").koApplyBindings(caseDataItemListInstance);
