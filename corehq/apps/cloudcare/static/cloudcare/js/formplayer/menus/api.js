@@ -203,7 +203,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
     FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent, isShortDetail) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        options.isShortDetail = isShortDetail
+        options.isShortDetail = isShortDetail;
         return API.queryFormplayer(options, 'get_details');
     });
 
