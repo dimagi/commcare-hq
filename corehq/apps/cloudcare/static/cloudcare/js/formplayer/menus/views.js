@@ -246,7 +246,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         modelEvents: {
-            "change": "modelChanged"
+            "change": "modelChanged",
         },
 
         initialize: function () {
@@ -327,7 +327,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         if (succeeded) {
                             message = notificationsElement.find('.alert-success').find('p').text();
                             FormplayerFrontend.trigger('showSuccess', gettext(message));
-                            self.reloadCase(caseId)
+                            self.reloadCase(caseId);
                         } else {
                             const messageElement = notificationsElement.find('.alert-danger');
                             // Todo: standardize structures of success and error alert elements
@@ -346,22 +346,22 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         reloadCase: function (caseId) {
-            const self = this
+            const self = this;
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
             const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true);
             $.when(fetchingDetails).done(function (detailResponse) {
-                self.updateModelFromDetailResponse(caseId, detailResponse)
+                self.updateModelFromDetailResponse(caseId, detailResponse);
             }).fail(function () {
                 console.log('could not get case details');
             });
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
-            this.model.set("data", detailResponse.models[0].attributes.details)
+            this.model.set("data", detailResponse.models[0].attributes.details);
         },
 
-        modelChanged: function() {
+        modelChanged: function () {
             if (!this.model.get('updating')) {
                 this.render();
             }
@@ -467,7 +467,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
-            CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse])
+            CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
         },
     });
 
@@ -513,14 +513,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
-            this.model.set('updating', true)
-            CaseTileGroupedView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse])
+            this.model.set('updating', true);
+            CaseTileGroupedView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
             this.model.set('updatedCaseId', caseId);
             this.model.set('updatedRowData', this.options.bodyRowIndices.reduce((acc, index) => {
                 acc[index] = detailResponse.models[0].attributes.details[index];
                 return acc;
             }, {}));
-            this.model.set('updating', false)
+            this.model.set('updating', false);
         },
     });
 
