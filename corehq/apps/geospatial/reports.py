@@ -12,6 +12,7 @@ from couchforms.geopoint import GeoPoint
 from corehq.apps.case_search.const import CASE_PROPERTIES_PATH
 from corehq.apps.es import CaseSearchES, filters
 from corehq.apps.es.case_search import wrap_case_search_hit
+from corehq.apps.geospatial.const import MAX_GEOHASH_DOC_COUNT
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
@@ -36,7 +37,7 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin):
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'case_row_order': {val.html: idx for idx, val in enumerate(self.headers)},
-            'max_cases_per_group': 10000,
+            'max_cases_per_group': MAX_GEOHASH_DOC_COUNT,
         })
         return context
 
@@ -138,8 +139,7 @@ class CaseGroupingReport(BaseCaseMapReport):
         else:
             precision = find_precision(query, case_property)
 
-        # This is temporary, and only for staging
-        # query = apply_geohash_agg(query, case_property, precision)
+        query = apply_geohash_agg(query, case_property, precision)
         return query
 
 
