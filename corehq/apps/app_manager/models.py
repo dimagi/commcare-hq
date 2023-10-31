@@ -4499,6 +4499,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def save(self, response_json=None, increment_version=None, **params):
         from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
+        from corehq.apps.reports.standard.cases.filters import get_flattened_case_properties
+
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
@@ -4506,6 +4508,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             # expire cache unless new application
             self.global_app_config.clear_version_caches()
         get_all_case_properties.clear(self)
+        get_flattened_case_properties.clear(self.domain, True)
+        get_flattened_case_properties.clear(self.domain, False)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
         get_apps_in_domain.clear(self.domain, True)
