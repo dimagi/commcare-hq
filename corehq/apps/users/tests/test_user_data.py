@@ -15,34 +15,26 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 class TestUserMetadata(TestCase):
     domain = 'test-user-metadata'
 
-    def setUp(self):
-        self.user = CommCareUser.create(
-            domain=self.domain,
-            username='birdman',
-            password='***',
-            created_by=None,
-            created_via=None,
-        )
-        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
-
     def test_user_data_accessor(self):
-        user_data = self.user.get_user_data(self.domain)
+        user = CommCareUser.create(self.domain, 'birdman', '***', None, None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
+        user_data = user.get_user_data(self.domain)
         self.assertEqual(user_data['commcare_project'], self.domain)
         user_data.update({
             'cruise': 'control',
             'this': 'road',
         })
         # Normally you shouldn't use `user.user_data` directly - I'm demonstrating that it's updated
-        self.assertEqual(self.user.user_data, {
+        self.assertEqual(user.user_data, {
             'cruise': 'control',
             'this': 'road',
         })
         del user_data['cruise']
-        self.assertEqual(self.user.user_data, {
+        self.assertEqual(user.user_data, {
             'this': 'road',
         })
         user_data.update({'this': 'field'})
-        self.assertEqual(self.user.user_data, {
+        self.assertEqual(user.user_data, {
             'this': 'field',
         })
 
