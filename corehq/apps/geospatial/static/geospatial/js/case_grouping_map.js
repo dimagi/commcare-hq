@@ -19,7 +19,6 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     const DEFAULT_MARKER_OPACITY = 1.0;
     const MAP_CONTAINER_ID = 'case-grouping-map';
-    let max_cases_per_group = initialPageData.get('max_cases_per_group');
     let map;
     const clusterStatsInstance = new clusterStatsModel();
     let exportModelInstance;
@@ -344,7 +343,6 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.allGroups = ko.observableArray([]);
         self.allCaseGroups;
         self.visibleGroupIDs = ko.observableArray([]);
-        self.groupMaxSizeBreached = ko.observable(false);
         self.casePerGroup = {};
 
         self.groupIDInVisibleGroupIds = function(groupID) {
@@ -362,13 +360,6 @@ hqDefine("geospatial/js/case_grouping_map",[
             let groupIds = [];
             for (let caseID in caseGroups) {
                 let caseItem = caseGroups[caseID];
-
-                // Commenting out until the requirements are clear
-                // incrementGroupCaseCount(caseItem.groupId); // TODO
-                // if (self.casePerGroup[caseItem.groupId] > max_cases_per_group) {
-                //     self.groupMaxSizeBreached(true)
-                //     return;
-                // }
                 groupIds.push(caseItem.groupId);
             }
 
@@ -385,14 +376,6 @@ hqDefine("geospatial/js/case_grouping_map",[
             self.allGroups([]);
             self.visibleGroupIDs([]);
         };
-
-        // let incrementGroupCaseCount = function(groupId) {
-        //     if (!(groupId in self.casePerGroup)) {
-        //         self.casePerGroup[groupId] = 1;
-        //     } else {
-        //         self.casePerGroup[groupId] ++;
-        //     }
-        // }
 
         self.restoreMarkerOpacity = function() {
             mapMarkers.forEach(function(marker) {
@@ -512,7 +495,6 @@ hqDefine("geospatial/js/case_grouping_map",[
 
         self.toggleGroupLock = function () {
             // reset the warning banner
-            caseGroupsInstance.groupMaxSizeBreached(false);
             self.groupsLocked(!self.groupsLocked());
             if (self.groupsLocked()) {
                 map.scrollZoom.disable();
@@ -559,7 +541,6 @@ hqDefine("geospatial/js/case_grouping_map",[
                 map = initMap();
                 $("#clusterStats").koApplyBindings(clusterStatsInstance);
                 $("#caseGroupSelect").koApplyBindings(caseGroupsInstance);
-                $("#groupingWarningBanner").koApplyBindings(caseGroupsInstance);
                 return;
             }
 
