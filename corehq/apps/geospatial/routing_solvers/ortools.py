@@ -13,7 +13,7 @@ class ORToolsRadialDistanceSolver:
 
     """
 
-    def __init__(self, request_json, max_route_distance):
+    def __init__(self, request_json):
         validate_routing_request(request_json)
         self.user_locations = request_json['users']
         self.case_locations = request_json['cases']

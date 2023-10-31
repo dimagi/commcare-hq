@@ -18,6 +18,7 @@ hqDefine("geospatial/js/geospatial_map", [
     };
 
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
+    var runDisbursementUrl = initialPageData.reverse('case_disbursement');
 
     function mapItemModel(itemId, itemData, marker, markerColors) {
         'use strict';
@@ -282,6 +283,35 @@ hqDefine("geospatial/js/geospatial_map", [
             }
         };
 
+        function runCaseDisbursementAlgorithm(cases, users) {
+            let caseData = cases.map(function (c) {
+                return {
+                    id: c.itemId,
+                    lon: c.itemData.coordinates.lng,
+                    lat: c.itemData.coordinates.lat,
+                }
+            })
+
+            let userData = users.map(function (c) {
+                return {
+                    id: c.itemId,
+                    lon: c.itemData.coordinates.lng,
+                    lat: c.itemData.coordinates.lat,
+                }
+            })
+
+            $.ajax({
+                type: 'post',
+                url: runDisbursementUrl,
+                dataType: 'json',
+                data: JSON.stringify({'users': userData, "cases": caseData}),
+                contentType: "application/json; charset=utf-8",
+                success: function (ret) {
+                    console.log(ret);
+                },
+            });
+        }
+
         function savedPolygon(polygon) {
             var self = {};
             self.text = polygon.name;
@@ -399,6 +429,13 @@ hqDefine("geospatial/js/geospatial_map", [
             $exportDrawnArea.click(function () {
                 if (map) {
                     mapControlsModelInstance.exportGeoJson();
+                }
+            });
+
+            var $runDisbursement = $("#btnRunDisbursement");
+            $runDisbursement.click(function () {
+                if (map) {
+                    runCaseDisbursementAlgorithm(caseModels(), userModels());
                 }
             });
         }
