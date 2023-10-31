@@ -363,11 +363,12 @@ hqDefine("geospatial/js/case_grouping_map",[
             for (let caseID in caseGroups) {
                 let caseItem = caseGroups[caseID];
 
-                incrementGroupCaseCount(caseItem.groupId);
-                if (self.casePerGroup[caseItem.groupId] > max_cases_per_group) {
-                    self.groupMaxSizeBreached(true)
-                    return;
-                }
+                // Commenting out until the requirements are clear
+                // incrementGroupCaseCount(caseItem.groupId); // TODO
+                // if (self.casePerGroup[caseItem.groupId] > max_cases_per_group) {
+                //     self.groupMaxSizeBreached(true)
+                //     return;
+                // }
                 groupIds.push(caseItem.groupId);
             }
 
@@ -385,13 +386,13 @@ hqDefine("geospatial/js/case_grouping_map",[
             self.visibleGroupIDs([]);
         };
 
-        let incrementGroupCaseCount = function(groupId) {
-            if (!(groupId in self.casePerGroup)) {
-                self.casePerGroup[groupId] = 1;
-            } else {
-                self.casePerGroup[groupId] ++;
-            }
-        }
+        // let incrementGroupCaseCount = function(groupId) {
+        //     if (!(groupId in self.casePerGroup)) {
+        //         self.casePerGroup[groupId] = 1;
+        //     } else {
+        //         self.casePerGroup[groupId] ++;
+        //     }
+        // }
 
         self.restoreMarkerOpacity = function() {
             mapMarkers.forEach(function(marker) {
