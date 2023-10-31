@@ -39,7 +39,7 @@ class TestUserCanAccessDomainSpecificPages(SimpleTestCase):
 
     @patch('corehq.apps.domain.decorators.active_user_logged_in', return_value=True)
     @patch('corehq.apps.domain.decorators.ensure_request_project', return_value=Domain(is_active=True))
-    @patch('corehq.apps.domain.decorators.ensure_request_couch_user', return_value=CouchUser())
+    @patch('corehq.apps.domain.decorators._ensure_request_couch_user', return_value=CouchUser())
     def test_request_for_missing_domain_membership_for_non_superuser(self, *args):
         request = HttpRequest()
 
@@ -53,12 +53,12 @@ class TestUserCanAccessDomainSpecificPages(SimpleTestCase):
         couch_user = CouchUser()
         couch_user.is_superuser = True
 
-        with patch('corehq.apps.domain.decorators.ensure_request_couch_user', return_value=couch_user):
+        with patch('corehq.apps.domain.decorators._ensure_request_couch_user', return_value=couch_user):
             self.assertTrue(user_can_access_domain_specific_pages(request))
 
     @patch('corehq.apps.domain.decorators.active_user_logged_in', return_value=True)
     @patch('corehq.apps.domain.decorators.ensure_request_project', return_value=Domain(is_active=True))
-    @patch('corehq.apps.domain.decorators.ensure_request_couch_user', return_value=CouchUser())
+    @patch('corehq.apps.domain.decorators._ensure_request_couch_user', return_value=CouchUser())
     def test_request_for_valid_domain_membership_for_non_superuser(self, *args):
         request = HttpRequest()
 
