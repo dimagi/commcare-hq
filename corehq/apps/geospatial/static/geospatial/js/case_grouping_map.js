@@ -348,22 +348,18 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.casePerGroup = {};
 
         self.groupIDInVisibleGroupIds = function(groupID) {
-            if (self.visibleGroupIDs().indexOf(groupID) !== -1) {
-                return true;
-              } else {
-                return false;
-              }
+            return self.visibleGroupIDs().indexOf(groupID) !== -1;
         };
 
         self.getGroupByID = function(groupID) {
-            return _.filter(self.allGroups(), function(group) {return group.groupID === groupID})[0];
+            return self.allGroups().find((group) => group.groupID === groupID);
         };
 
         self.loadCaseGroups = function(caseGroups) {
             self.allCaseGroups = caseGroups; // {case_id: {group_info}}
             // Add groups to the cases being exported
 
-            var groupIds = [];
+            let groupIds = [];
             for (let caseID in caseGroups) {
                 let caseItem = caseGroups[caseID];
 
@@ -375,13 +371,11 @@ hqDefine("geospatial/js/case_grouping_map",[
                 groupIds.push(caseItem.groupId);
             }
 
-            let uniqueGroups = [];
-            new Set(groupIds).forEach(id => uniqueGroups.push(
+            new Set(groupIds).forEach(id => self.allGroups.push(
                 {groupID: id, color: getRandomRGBColor()}
             ));
-            self.allGroups(uniqueGroups);
 
-            let visibleIDs = _.map(uniqueGroups, function(group) {return group.groupID});
+            let visibleIDs = _.map(self.allGroups(), function(group) {return group.groupID});
             self.visibleGroupIDs(visibleIDs);
             self.showAllGroups()
         };
@@ -408,20 +402,20 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.highlightGroup = function(group) {
             exportModelInstance.casesToExport().forEach(caseItem => {
                     let caseIsInGroup = caseItem.groupId === group.groupID;
-                    mapMarkers.forEach(function(marker) {
+                    let opacity = DEFAULT_MARKER_OPACITY
+                    if (!caseIsInGroup) {
+                        opacity = 0.2;
+                    }
+                    let marker = mapMarkers.find((marker) => {
                         let markerCoordinates = marker.getLngLat();
                         let caseCoordinates = caseItem.coordinates;
                         let latEqual = markerCoordinates.lat === caseCoordinates.lat;
                         let lonEqual = markerCoordinates.lng === caseCoordinates.lng;
-                        let caseMarkerFound = latEqual && lonEqual;
-                        if (caseMarkerFound) {
-                            let opacity = DEFAULT_MARKER_OPACITY
-                            if (!caseIsInGroup) {
-                                opacity = 0.2;
-                            }
-                            setMarkerOpacity(marker, opacity);
-                        }
+                        return latEqual && lonEqual;
                     });
+                    if (marker) {
+                        setMarkerOpacity(marker, opacity);
+                        }
             });
         };
 
