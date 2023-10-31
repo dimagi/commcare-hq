@@ -96,7 +96,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         if (!isPersistent) {
             urlObject.addSelection(caseId);
         }
-        var fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, isPersistent);
+        var fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, isPersistent, false);
         $.when(fetchingDetails).done(function (detailResponse) {
             showDetail(detailResponse, detailIndex, caseId, isMultiSelect);
         }).fail(function () {
