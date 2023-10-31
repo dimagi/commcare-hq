@@ -1544,6 +1544,10 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     def exceeded_max_retries(self):
         return self.num_attempts >= self.max_possible_tries
 
+    @property
+    def repeater_type(self):
+        return self.repeater.repeater_type
+
     def is_repeater_deleted(self):
         # TODO change to query since self.repeater may be None?
         # OTOH, self.repeater should never be None because of FK constraint with cascading delete
@@ -1569,6 +1573,19 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     def try_now(self):
         # TODO rename to should_try_now
         return self.state != State.Success
+
+    def handle_success(self, response):
+        if is_response(response):
+            # ^^^ Don't bother logging success in Datadog if the payload
+            # did not need to be sent. (This can happen with DHIS2 if
+            # the form that triggered the forwarder doesn't contain data
+            # for a DHIS2 Event.)
+            log_repeater_success_in_datadog(
+                self.domain,
+                response.status_code,
+                self.repeater_type
+            )
+        self.add_success_attempt(response)
 
     def handle_exception(self, exception):
         self.add_client_failure_attempt(str(exception))
