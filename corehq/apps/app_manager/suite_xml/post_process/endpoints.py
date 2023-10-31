@@ -48,7 +48,8 @@ class EndpointsHelper(PostProcessor):
                 for form in module.get_suite_forms():
                     if form.session_endpoint_id:
                         self.suite.endpoints.append(self._make_session_endpoint(
-                            form.session_endpoint_id, module, form))
+                            form.session_endpoint_id, module, form,
+                            respect_relevancy=getattr(form, 'respect_relevancy')))
             elif module.session_endpoint_id:
                 for form in module.get_suite_forms():
                     endpoint = next(
@@ -57,7 +58,8 @@ class EndpointsHelper(PostProcessor):
                         self.suite.endpoints.append(self._make_session_endpoint(
                             endpoint.session_endpoint_id, module, form))
 
-    def _make_session_endpoint(self, endpoint_id, module, form=None, should_add_last_selection_datum=True):
+    def _make_session_endpoint(self, endpoint_id, module, form=None, should_add_last_selection_datum=True,
+                               respect_relevancy=None):
         stack = Stack()
         children = self.get_frame_children(module, form)
         argument_ids = self.get_argument_ids(children, form, should_add_last_selection_datum)
@@ -102,11 +104,19 @@ class EndpointsHelper(PostProcessor):
             else:
                 arguments.append(Argument(id=arg_id))
 
-        return SessionEndpoint(
-            id=endpoint_id,
-            arguments=arguments,
-            stack=stack,
-        )
+        if respect_relevancy:
+            return SessionEndpoint(
+                id=endpoint_id,
+                arguments=arguments,
+                stack=stack,
+                respect_relevancy=respect_relevancy
+            )
+        else:
+            return SessionEndpoint(
+                id=endpoint_id,
+                arguments=arguments,
+                stack=stack
+            )
 
     def get_argument_ids(self, frame_children, form=None, should_add_last_selection_datum=True):
 
