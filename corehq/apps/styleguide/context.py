@@ -5,6 +5,7 @@ NavigationGroup = namedtuple('NavigationGroup', 'name pages')
 Page = namedtuple('Page', 'name urlname')
 ColorGroup = namedtuple('ColorGroup', 'title description main_color')
 Color = namedtuple('Color', 'slug hex')
+CrispyFormsDemo = namedtuple('CrispyFormsDemo', 'form code')
 
 
 def get_navigation_context(current_page):
@@ -143,5 +144,11 @@ def get_custom_icons():
 
 def get_example_context(filename):
     examples = os.path.join(os.path.dirname(__file__), 'templates')
+    with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
+        return content.read()
+
+
+def get_crispy_forms_context(filename):
+    examples = os.path.join(os.path.dirname(__file__), 'examples', 'bootstrap5')
     with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
         return content.read()
