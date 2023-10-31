@@ -12,7 +12,10 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
-from django.shortcuts import render
+from django.shortcuts import (
+    redirect,
+    render
+)
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -25,6 +28,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 import urllib.parse
 from text_unidecode import unidecode
 
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
 from couchforms.const import VALID_ATTACHMENT_FILE_EXTENSION_MAP
@@ -51,6 +55,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 
 from corehq.apps.cloudcare.const import (
+    MAX_MOBILE_UCR_LIMIT,
     PREVIEW_APP_ENVIRONMENT,
     WEB_APPS_ENVIRONMENT,
 )
@@ -58,6 +63,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_applicatio
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
+from corehq.apps.cloudcare.utils import exceeds_mobile_ucr_limit
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -163,6 +169,9 @@ class FormplayerMain(View):
         return request.couch_user, set_cookie
 
     def get(self, request, domain):
+        if exceeds_mobile_ucr_limit(domain):
+            return redirect('too_many_ucrs', domain=domain)
+
         option = request.GET.get('option')
         if option == 'apps':
             return self.get_option_apps(request, domain)
@@ -293,6 +302,9 @@ class PreviewAppView(TemplateView):
     @use_daterangepicker
     @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
+        if exceeds_mobile_ucr_limit(request.domain):
+            context = get_context_for_ucr_limit_error(request.domain)
+            return render(request, 'preview_app/too_many_ucrs_preview.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
@@ -605,3 +617,25 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
         })
     cloudcare_state = json.dumps(state)
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
+
+
+class TooManyUCRsErrorView(BaseDomainView):
+
+    urlname = 'too_many_ucrs'
+    template_name = 'too_many_ucrs.html'
+
+    def get(self, request, *args, **kwargs):
+        context = get_context_for_ucr_limit_error(request.domain)
+        return render(request, self.template_name, context)
+
+
+def get_context_for_ucr_limit_error(domain):
+    return {
+        'domain': domain,
+        'ucr_limit': MAX_MOBILE_UCR_LIMIT,
+        'error_message': _("""You have the MOBILE_UCR feature flag enabled, and have exceeded the maximum limit
+                           of {ucr_limit} total User Configurable Reports used across all of your applications.
+                           To resolve, you must remove references to UCRs in your applications until you are under
+                           the limit.
+                           """).format(ucr_limit=MAX_MOBILE_UCR_LIMIT)
+    }

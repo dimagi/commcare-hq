@@ -8,11 +8,12 @@ from corehq.apps.cloudcare.views import (
     LoginAsUsers,
     PreviewAppView,
     ReadableQuestions,
+    TooManyUCRsErrorView,
     default,
     report_formplayer_error,
     report_sentry_error
 )
-from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 
 app_urls = [
     url(r'^v2/$', FormplayerMain.as_view(), name=FormplayerMain.urlname),
@@ -25,6 +26,7 @@ app_urls = [
     url(r'^preview_app/(?P<app_id>[\w-]+)/$', PreviewAppView.as_view(), name=PreviewAppView.urlname),
     url(r'^report_formplayer_error', report_formplayer_error, name='report_formplayer_error'),
     url(r'^report_sentry_error', report_sentry_error, name='report_sentry_error'),
+    url(r'^too_many_ucrs/$', use_bootstrap5(TooManyUCRsErrorView.as_view()), name=TooManyUCRsErrorView.urlname),
 ]
 
 api_urls = [
