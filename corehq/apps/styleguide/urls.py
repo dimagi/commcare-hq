@@ -43,4 +43,6 @@ urlpatterns = [
         name="styleguide_molecules_buttons_b5"),
     url(r'^b5/molecules/selections/$', bootstrap5.styleguide_molecules_selections,
         name="styleguide_molecules_selections_b5"),
+    url(r'^b5/molecules/checkboxes/$', bootstrap5.styleguide_molecules_checkboxes,
+        name="styleguide_molecules_checkboxes_b5"),
 ]
