@@ -34,10 +34,10 @@ def should_case_be_deleted(case_id, domain):
     :return: returns True if it is in the deleted state, and False otherwise
     """
     detail = RebuildWithReason(reason="check final state of case")
-    sql_case, lock_obj = FormProcessorSQL.get_case_with_lock(case_id, lock=False)
+    sql_case, _ = FormProcessorSQL.get_case_with_lock(case_id, lock=False)
     if not sql_case:
         sql_case = CommCareCase(case_id=case_id, domain=domain)
-    commcare_case, rebuild_transaction = FormProcessorSQL._rebuild_case_from_transactions(sql_case, detail)
+    commcare_case, _ = FormProcessorSQL._rebuild_case_from_transactions(sql_case, detail)
     return commcare_case.is_deleted
 
 
