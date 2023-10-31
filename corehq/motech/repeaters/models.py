@@ -1576,6 +1576,10 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     def add_attempt(self, attempt):
         assert attempt is None, "SQL attempts are added/saved on create"
 
+    def cancel(self):
+        self.state = State.Cancelled
+        self.next_check = None
+
 
 class SQLRepeatRecordAttempt(models.Model):
     repeat_record = models.ForeignKey(
