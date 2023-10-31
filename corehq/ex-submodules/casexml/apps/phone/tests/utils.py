@@ -32,9 +32,7 @@ def create_restore_user(
             created_by=None,
             created_via=None,
             first_name=first_name,
-            metadata={
-                'something': 'arbitrary'
-            }
+            user_data={'something': 'arbitrary'},
         )
     )
     if phone_number:
@@ -64,7 +62,6 @@ def deprecated_generate_restore_payload(project, user, restore_id="", version=V1
         project, user, restore_id, version, state_hash, items, overwrite_cache,
         force_cache, **kw
     ).get_payload().as_string()
-
 
 
 def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=None, device_id=''):

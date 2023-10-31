@@ -365,7 +365,7 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
         UserES()
         .domain(domain)
         .mobile_users()
-        .missing_or_empty_metadata_property(location_prop_name)
+        .missing_or_empty_user_data_property(location_prop_name)
         .search_string_query(query, ['username'])
         .sort('created_on', desc=True)
     )
@@ -408,7 +408,7 @@ def get_users_with_gps(request, domain):
         {
             'id': user.user_id,
             'username': user.raw_username,
-            'gps_point': user.metadata.get(location_prop_name, ''),
+            'gps_point': user.get_user_data(domain).get(location_prop_name, ''),
         } for user in users
     ]
 
