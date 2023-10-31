@@ -19,7 +19,7 @@ class TestUserCanAccessDomainSpecificPages(SimpleTestCase):
     def test_request_with_no_project(self, *args):
         request = HttpRequest()
 
-        with patch('corehq.apps.domain.decorators.ensure_request_project', return_value=None):
+        with patch('corehq.apps.domain.decorators._ensure_request_project', return_value=None):
             self.assertFalse(user_can_access_domain_specific_pages(request))
 
     @patch('corehq.apps.domain.decorators.active_user_logged_in', return_value=True)
@@ -27,18 +27,18 @@ class TestUserCanAccessDomainSpecificPages(SimpleTestCase):
         request = HttpRequest()
         project = Domain(is_active=False)
 
-        with patch('corehq.apps.domain.decorators.ensure_request_project', return_value=project):
+        with patch('corehq.apps.domain.decorators._ensure_request_project', return_value=project):
             self.assertFalse(user_can_access_domain_specific_pages(request))
 
     @patch('corehq.apps.domain.decorators.active_user_logged_in', return_value=True)
-    @patch('corehq.apps.domain.decorators.ensure_request_project', return_value=Domain(is_active=True))
+    @patch('corehq.apps.domain.decorators._ensure_request_project', return_value=Domain(is_active=True))
     def test_request_with_no_couch_user(self, *args):
         request = HttpRequest()
 
         self.assertFalse(user_can_access_domain_specific_pages(request))
 
     @patch('corehq.apps.domain.decorators.active_user_logged_in', return_value=True)
-    @patch('corehq.apps.domain.decorators.ensure_request_project', return_value=Domain(is_active=True))
+    @patch('corehq.apps.domain.decorators._ensure_request_project', return_value=Domain(is_active=True))
     @patch('corehq.apps.domain.decorators._ensure_request_couch_user', return_value=CouchUser())
     def test_request_for_missing_domain_membership_for_non_superuser(self, *args):
         request = HttpRequest()
@@ -46,7 +46,7 @@ class TestUserCanAccessDomainSpecificPages(SimpleTestCase):
         self.assertFalse(user_can_access_domain_specific_pages(request))
 
     @patch('corehq.apps.domain.decorators.active_user_logged_in', return_value=True)
-    @patch('corehq.apps.domain.decorators.ensure_request_project', return_value=Domain(is_active=True))
+    @patch('corehq.apps.domain.decorators._ensure_request_project', return_value=Domain(is_active=True))
     def test_request_for_missing_domain_membership_for_superuser(self, *args):
         request = HttpRequest()
 
@@ -57,7 +57,7 @@ class TestUserCanAccessDomainSpecificPages(SimpleTestCase):
             self.assertTrue(user_can_access_domain_specific_pages(request))
 
     @patch('corehq.apps.domain.decorators.active_user_logged_in', return_value=True)
-    @patch('corehq.apps.domain.decorators.ensure_request_project', return_value=Domain(is_active=True))
+    @patch('corehq.apps.domain.decorators._ensure_request_project', return_value=Domain(is_active=True))
     @patch('corehq.apps.domain.decorators._ensure_request_couch_user', return_value=CouchUser())
     def test_request_for_valid_domain_membership_for_non_superuser(self, *args):
         request = HttpRequest()
