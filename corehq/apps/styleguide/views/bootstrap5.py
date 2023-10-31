@@ -1,5 +1,6 @@
 from django.shortcuts import render
 
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.styleguide.context import (
     get_navigation_context,
     get_interaction_colors,
@@ -7,7 +8,11 @@ from corehq.apps.styleguide.context import (
     get_common_icons,
     get_custom_icons,
     get_example_context,
+    get_crispy_forms_context,
+    CrispyFormsDemo,
 )
+from corehq.apps.styleguide.examples.bootstrap5.checkbox_form import CheckboxDemoForm
+from corehq.apps.styleguide.examples.bootstrap5.switch_form import SwitchDemoForm
 
 
 def styleguide_home(request):
@@ -80,3 +85,24 @@ def styleguide_molecules_selections(request):
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/selections.html', context)
+
+
+@use_bootstrap5
+def styleguide_molecules_checkboxes(request):
+    context = get_navigation_context("styleguide_molecules_checkboxes_b5")
+    context.update({
+        'examples': {
+            'switch': get_example_context('styleguide/bootstrap5/examples/switch.html'),
+            'checkbox': get_example_context('styleguide/bootstrap5/examples/checkbox.html'),
+            'checkbox_form': get_example_context('styleguide/bootstrap5/examples/checkbox_form.html'),
+            'checkbox_horizontal_form': get_example_context(
+                'styleguide/bootstrap5/examples/checkbox_horizontal_form.html'),
+            'checkbox_crispy': CrispyFormsDemo(
+                CheckboxDemoForm(), get_crispy_forms_context('checkbox_form.py'),
+            ),
+            'switch_crispy': CrispyFormsDemo(
+                SwitchDemoForm(), get_crispy_forms_context('switch_form.py'),
+            ),
+        }
+    })
+    return render(request, 'styleguide/bootstrap5/molecules/checkboxes.html', context)
