@@ -302,7 +302,7 @@ importlib-metadata==6.0.0
     #   markdown
     #   opentelemetry-api
     #   sphinx
-iso8601==1.1.0
+iso8601==2.0.0
     # via -r base-requirements.in
 jinja2==3.1.2
     # via
@@ -668,9 +668,9 @@ xmltodict==0.13.0
     # via ddtrace
 zipp==3.7.0
     # via importlib-metadata
-zope-event==4.5.0
+zope-event==5.0
     # via gevent
-zope-interface==5.4.0
+zope-interface==6.1
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:

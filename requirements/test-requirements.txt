@@ -220,7 +220,7 @@ exceptiongroup==1.1.1
     # via cattrs
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==18.6.1
+faker==19.12.0
     # via -r test-requirements.in
 firebase-admin==6.1.0
     # via -r base-requirements.in
@@ -306,7 +306,7 @@ importlib-metadata==6.0.0
     # via
     #   markdown
     #   opentelemetry-api
-iso8601==1.1.0
+iso8601==2.0.0
     # via -r base-requirements.in
 isodate==0.6.1
     # via python3-saml
@@ -674,9 +674,9 @@ xmltodict==0.13.0
     # via ddtrace
 zipp==3.7.0
     # via importlib-metadata
-zope-event==4.5.0
+zope-event==5.0
     # via gevent
-zope-interface==5.4.0
+zope-interface==6.1
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
