@@ -2,7 +2,7 @@ from django.db import models
 from django.utils.translation import gettext as _
 
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
-from corehq.apps.geospatial.routing_solvers import ortools
+from corehq.apps.geospatial.routing_solvers import ortools, mapbox_optimize
 
 
 class GeoPolygon(models.Model):
@@ -26,7 +26,7 @@ class GeoConfig(models.Model):
 
     VALID_DISBURSEMENT_ALGORITHM_CLASSES = {
         RADIAL_ALGORITHM: ortools.ORToolsRadialDistanceSolver,
-        ROAD_NETWORK_ALGORITHM: ortools.ORToolsRoadNetworkSolver,
+        ROAD_NETWORK_ALGORITHM: mapbox_optimize.MapboxVRPSolver,
     }
 
     VALID_LOCATION_SOURCES = [

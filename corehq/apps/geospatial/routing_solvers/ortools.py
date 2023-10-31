@@ -5,15 +5,18 @@ import requests
 from ortools.linear_solver import pywraplp
 from django.conf import settings
 from .mapbox_optimize import validate_routing_request
+from corehq.apps.geospatial.routing_solvers.base import DisbursementAlgorithmSolverInterface
 
 
-class ORToolsRadialDistanceSolver:
+class ORToolsRadialDistanceSolver(DisbursementAlgorithmSolverInterface):
     """
     Solves user-case location assignment based on radial distance
 
     """
 
     def __init__(self, request_json):
+        super().__init__(request_json)
+
         validate_routing_request(request_json)
         self.user_locations = request_json['users']
         self.case_locations = request_json['cases']
@@ -85,7 +88,7 @@ class ORToolsRadialDistanceSolver:
         else:
             if print_solution:
                 print("No solution found.")
-        return solution
+        return None, solution
 
 
 class ORToolsRoadNetworkSolver(ORToolsRadialDistanceSolver):

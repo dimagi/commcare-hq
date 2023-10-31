@@ -11,6 +11,7 @@ from .views import (
     get_paginated_cases_or_users_without_gps,
     get_users_with_gps,
     mapbox_routing_status,
+    routing_status_view,
 )
 
 urlpatterns = [
@@ -26,6 +27,9 @@ urlpatterns = [
     url(r'^mapbox_routing_status/(?P<poll_id>[\w-]+)/',
         mapbox_routing_status,
         name="mapbox_routing_status"),
+    url(r'^routing_status/(?P<poll_id>[\w-]+)/',
+        routing_status_view,
+        name="routing_status"),
     url(r'^settings/$', GeospatialConfigPage.as_view(),
         name=GeospatialConfigPage.urlname),
     url(r'^gps_capture/json/$', get_paginated_cases_or_users_without_gps,

@@ -19,6 +19,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
+    var disbursementSpinner;
 
     function mapItemModel(itemId, itemData, marker, markerColors) {
         'use strict';
@@ -319,6 +320,20 @@ hqDefine("geospatial/js/geospatial_map", [
             });
         }
 
+        function savedPolygon(polygon) {
+            var self = {};
+            self.text = polygon.name;
+            self.id = polygon.id;
+            self.geoJson = polygon.geo_json;
+            return self;
+        }
+
+        function showDisbursementResultsOnMap(result) {
+            Object.keys(result).forEach((userId) => {
+                connectUserWithCasesOnMap(userId, result[userId]);
+            });
+        }
+
         function runCaseDisbursementAlgorithm(cases, users) {
             let mapInstance = map.getMapboxInstance();
 
@@ -346,6 +361,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     lat: c.itemData.coordinates.lat,
                 }
             })
+            disbursementSpinner.showLoadingSpinner(true);
 
             $.ajax({
                 type: 'post',
@@ -354,18 +370,49 @@ hqDefine("geospatial/js/geospatial_map", [
                 data: JSON.stringify({'users': userData, "cases": caseData}),
                 contentType: "application/json; charset=utf-8",
                 success: function (ret) {
-                    Object.keys(ret).forEach((userId) => {
-                        connectUserWithCasesOnMap(userId, ret[userId]);
-                    });
+                    if (ret['poll_url'] !== undefined) {
+                        disbursementSpinner.startPoll(ret['poll_url']);
+                    }
+                    else {
+                        showDisbursementResultsOnMap(ret['result']);
+                        disbursementSpinner.showLoadingSpinner(false);
+                    }
                 },
             });
         }
 
-        function savedPolygon(polygon) {
+        var disbursementSpinnerModel = function () {
             var self = {};
-            self.text = polygon.name;
-            self.id = polygon.id;
-            self.geoJson = polygon.geo_json;
+
+            self.pollUrl = ko.observable('');
+            self.showLoadingSpinner = ko.observable(false);
+
+            self.startPoll = function (pollUrl) {
+                if (!self.showLoadingSpinner()) {
+                    showLoadingSpinner(true);
+                }
+                self.pollUrl(pollUrl);
+                self.doPoll();
+            }
+            self.doPoll = function () {
+                var tick = function () {
+                    $.ajax({
+                        method: 'GET',
+                        url: self.pollUrl(),
+                        success: function (data) {
+                            const result = data.result;
+                            if (!data) {
+                                setTimeout(tick, 1500);
+                            } else {
+                                showDisbursementResultsOnMap(result);
+                                self.showLoadingSpinner(false);
+                            }
+                        },
+                    });
+                };
+                tick();
+            };
+
             return self;
         }
 
@@ -656,6 +703,9 @@ hqDefine("geospatial/js/geospatial_map", [
             if (xhr.responseJSON.aaData.length && map) {
                 loadCases(xhr.responseJSON.aaData);
             }
+
+            disbursementSpinner = new disbursementSpinnerModel();
+            $("#disbursement-spinner").koApplyBindings(disbursementSpinner)
         });
     });
 });

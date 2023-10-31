@@ -88,6 +88,13 @@
         {% trans 'Run Disbursement' %}
     </a>
 </div>
+<div id="disbursement-spinner">
+  <h4 id="loading" class="hide"
+      data-bind="visible: showLoadingSpinner(), css: {hide: false}">
+    <i class="fa fa-spin fa-spinner"></i>
+    {% trans "Running disbursement algorithm..." %}
+  </h4>
+</div>
 <div id="geospatial-map" style="height: 500px"></div>
 
 <!-- For Pagination -->

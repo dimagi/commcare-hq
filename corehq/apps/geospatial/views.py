@@ -88,14 +88,27 @@ def mapbox_routing_status(request, domain, poll_id):
     return routing_status(poll_id)
 
 
+def routing_status_view(request, domain, poll_id):
+    # Todo; handle HTTPErrors
+    return json_response({
+        'result': routing_status(poll_id)
+    })
+
+
 class CaseDisbursementAlgorithm(BaseDomainView):
     urlname = "case_disbursement"
 
     def post(self, request, domain, *args, **kwargs):
         solver_class = GeoConfig.objects.get(domain=domain).disbursement_solver
         request_json = json.loads(request.body.decode('utf-8'))
-        solution = solver_class(request_json).solve(print_solution=True)
-        return JsonResponse(data=solution)
+        poll_id, result = solver_class(request_json).solve()
+        if poll_id is None:
+            return json_response(
+                {'result': result}
+            )
+        return json_response({
+            "poll_url": reverse("routing_status", args=[self.domain, poll_id])
+        })
 
 
 class GeoPolygonView(BaseDomainView):
