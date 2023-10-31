@@ -144,6 +144,7 @@ class TestMaintenanceAlertsView(TestCase):
     def tearDownClass(cls):
         cls.user.delete(cls.domain, deleted_by=None)
         cls.project.delete()
+        super().tearDownClass()
 
     def _alert_with_timezone(self):
         self.client.login(username=self.user.username, password='***')
