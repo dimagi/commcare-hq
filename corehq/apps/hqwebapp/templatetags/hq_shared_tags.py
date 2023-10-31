@@ -390,12 +390,18 @@ def chevron(value):
 
 @register.simple_tag
 def commcarehq_alerts(request):
+    from corehq.apps.domain.auth import user_can_access_domain_specific_pages
+
     active_alerts = Alert.get_active_alerts()
-    domain = getattr(request, 'domain', None)
+    load_alerts_for_domain = None
+
+    if hasattr(request, 'domain') and user_can_access_domain_specific_pages(request):
+        load_alerts_for_domain = request.domain
+
     return [
         alert for alert in active_alerts
         if (not alert.domains
-            or domain in alert.domains)
+            or load_alerts_for_domain in alert.domains)
     ]
 
 
