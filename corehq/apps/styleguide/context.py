@@ -33,6 +33,7 @@ def get_navigation_context(current_page):
                 pages=[
                     Page("Buttons", 'styleguide_molecules_buttons_b5'),
                     Page("Selections", 'styleguide_molecules_selections_b5'),
+                    Page("Checkboxes & Switches", 'styleguide_molecules_checkboxes_b5'),
                 ],
             ),
         ],
