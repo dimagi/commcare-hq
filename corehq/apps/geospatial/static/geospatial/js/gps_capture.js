@@ -207,7 +207,7 @@ hqDefine("geospatial/js/gps_capture",[
                     dataItem.hasUnsavedChanges(false);
                     self.isSubmissionSuccess(true);
                     resetMap();
-                    self.resetCaseCreateFlags();
+                    self.resetCaseCreate();
                 },
                 error: function () {
                     self.hasSubmissionError(true);
@@ -232,14 +232,15 @@ hqDefine("geospatial/js/gps_capture",[
         };
 
         self.cancelCreateCase = function () {
-            self.resetCaseCreateFlags();
+            self.resetCaseCreate();
             resetMap();
         };
 
-        self.resetCaseCreateFlags = function () {
+        self.resetCaseCreate = function () {
             self.isCreatingCase(false);
             self.hasCreateCaseError(false);
             self.hasCaseTypeError(false);
+            self.selectedCaseType('');
         };
 
         return self;
