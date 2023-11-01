@@ -1,16 +1,17 @@
 import uuid
 from unittest.mock import MagicMock, patch
 
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.user_data import UserData
 
 
 @es_test(requires=[user_adapter])
-class TestLoginAsUserQuery(SimpleTestCase):
+class TestLoginAsUserQuery(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -22,15 +23,23 @@ class TestLoginAsUserQuery(SimpleTestCase):
         cls.domain = 'user-esaccessors-test'
 
     def _send_user_to_es(self, _id=None, username=None, user_data=None):
-        user = CommCareUser(
+        user = CommCareUser.create(
             domain=self.domain,
             username=username or self.username,
+            password='password',
+            created_by=None,
+            created_via=None,
             _id=_id or uuid.uuid4().hex,
             first_name=self.first_name,
             last_name=self.last_name,
-            user_data=user_data or {},
             is_active=True,
+
         )
+        user.save()
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
+        if user_data:
+            user.get_user_data(self.domain).update(user_data)
+            user.get_user_data(self.domain).save()
 
         with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
             user_adapter.index(user, refresh=True)
