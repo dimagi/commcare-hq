@@ -3583,10 +3583,8 @@ msgid "Name of the Area"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-#, fuzzy
-#| msgid "Auto fill translations"
 msgid "All locations"
-msgstr "Traducciones automáticas"
+msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
