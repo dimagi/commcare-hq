@@ -130,6 +130,8 @@ class TestMaintenanceAlertsView(TestCase):
     def setUpClass(cls):
         super(TestMaintenanceAlertsView, cls).setUpClass()
         cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+
         cls.user = WebUser.create(
             cls.domain,
             'maintenance-user',
@@ -139,12 +141,7 @@ class TestMaintenanceAlertsView(TestCase):
         )
         cls.user.is_superuser = True
         cls.user.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain, deleted_by=None)
-        cls.project.delete()
-        super().tearDownClass()
+        cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
 
     def _alert_with_timezone(self):
         self.client.login(username=self.user.username, password='***')
