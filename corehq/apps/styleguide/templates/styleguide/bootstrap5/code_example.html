@@ -1,11 +1,6 @@
-<div class="card mb-3">
-  <div class="card-body">
-    {{ content|safe }}
-    <div class="card text-bg-light mt-3">
-      <div class="card-body ">
-        <div class="h4">HTML</div>
-        <pre class="m-0">{{ content }}</pre>
-      </div>
-    </div>
-  </div>
-</div>
+{% extends 'styleguide/bootstrap5/base_example.html' %}
+
+{% block working_code %}{{ content|safe }}{% endblock %}
+{% block readable_code %}
+  {% include 'styleguide/bootstrap5/partials/readable_code_block.html' with content=content language="HTML" %}
+{% endblock %}
