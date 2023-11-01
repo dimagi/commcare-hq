@@ -185,7 +185,7 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
 
 
 def _send_email(report, link, recipient, subject=None):
-    send_report_download_email(report.name, recipient, link, subject)
+    send_report_download_email(report.name, recipient, link, subject, domain=report.domain)
 
 
 def _store_excel_in_blobdb(report_class, file, domain, report_slug):
