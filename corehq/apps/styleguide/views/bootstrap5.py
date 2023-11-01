@@ -10,6 +10,8 @@ from corehq.apps.styleguide.context import (
     get_example_context,
     get_crispy_forms_context,
     CrispyFormsDemo,
+    CrispyFormsWithJsDemo,
+    get_js_example_context,
 )
 from corehq.apps.styleguide.examples.bootstrap5.checkbox_form import CheckboxDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.switch_form import SwitchDemoForm
