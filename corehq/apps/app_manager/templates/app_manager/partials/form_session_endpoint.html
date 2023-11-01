@@ -28,7 +28,6 @@
                         data-content="{% blocktrans %}Turn this setting on to allow this endpoint to access
                                         hidden forms.{% endblocktrans %}"></span>
                 </label>
-                <p>{{ form.name }} {{form.respect_relevancy}} </p>
                 <div id="respect-relevancy"
                     class="{% css_field_class %} commcare-feature"
                     data-since-version="2.51"
@@ -37,6 +36,7 @@
                         id="respect_relevancy"
                         name="respect_relevancy"
                         value="true"
+                        style="margin-top: 10px"
                         {% if form.respect_relevancy %} checked {% endif %}
                     />
                     <input type="hidden" name="respect_relevancy" value="false"/>
