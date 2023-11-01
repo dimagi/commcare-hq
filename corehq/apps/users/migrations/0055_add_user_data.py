@@ -1,4 +1,5 @@
 import django.db.models.deletion
+from django.conf import settings
 from django.db import migrations, models
 
 
@@ -6,6 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('custom_data_fields', '0008_custom_data_fields_upstream_ids'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('users', '0054_connectiduserlink'),
     ]
 
@@ -18,6 +20,7 @@ class Migration(migrations.Migration):
                 ('user_id', models.CharField(max_length=36)),
                 ('modified_on', models.DateTimeField(auto_now=True)),
                 ('data', models.JSONField()),
+                ('django_user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
                 ('profile', models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to='custom_data_fields.customdatafieldsprofile')),
             ],
         ),

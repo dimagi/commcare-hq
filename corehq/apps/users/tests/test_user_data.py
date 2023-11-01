@@ -62,14 +62,11 @@ class TestUserMetadata(TestCase):
         })
 
     def test_lazy_init_and_save(self):
-        # mimic loading a user from the db
-        user = CommCareUser.wrap({
-            '_id': str(uuid.uuid4()),
-            'domain': self.domain,
-            'username': 'birdman',
-            'password': '***',
-            'user_data': {'favorite_color': 'purple'},
-        })
+        # Mimic user created the old way, with data stored in couch
+        user = CommCareUser.create(self.domain, 'riggan', '***', None, None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
+        user['user_data'] = {'favorite_color': 'purple'}
+        user.save()
         with self.assertRaises(SQLUserData.DoesNotExist):
             SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
 
@@ -84,7 +81,6 @@ class TestUserMetadata(TestCase):
         sql_data.refresh_from_db()
         self.assertEqual(sql_data.data['favorite_color'], 'purple')  # unchanged
         user.save()
-        self.addCleanup(user.delete, self.domain, deleted_by=None)
         sql_data.refresh_from_db()
         self.assertEqual(sql_data.data['favorite_color'], 'blue')
 
@@ -109,9 +105,17 @@ def _get_profile(self, profile_id):
 class TestUserDataModel(SimpleTestCase):
     domain = 'test-user-data-model'
 
+    def init_user_data(self, raw_user_data=None, profile_id=None):
+        return UserData(
+            raw_user_data=raw_user_data or {},
+            couch_user=None,  # This is only used for saving to the db
+            domain=self.domain,
+            profile_id=profile_id,
+        )
+
     def test_add_and_remove_profile(self):
         # Custom user data profiles get their data added to metadata automatically for mobile users
-        user_data = UserData({'yearbook_quote': 'Not all who wander are lost.'}, self.domain)
+        user_data = self.init_user_data({'yearbook_quote': 'Not all who wander are lost.'})
         self.assertEqual(user_data.to_dict(), {
             'commcare_project': self.domain,
             'commcare_profile': '',
@@ -135,71 +139,71 @@ class TestUserDataModel(SimpleTestCase):
         })
 
     def test_profile_conflicts_with_data(self):
-        user_data = UserData({'favorite_color': 'purple'}, self.domain)
+        user_data = self.init_user_data({'favorite_color': 'purple'})
         with self.assertRaisesMessage(UserDataError, "Profile conflicts with existing data"):
             user_data.profile_id = 'blues'
 
     def test_profile_conflicts_with_blank_existing_data(self):
-        user_data = UserData({'favorite_color': ''}, self.domain)
+        user_data = self.init_user_data({'favorite_color': ''})
         user_data.profile_id = 'blues'
         self.assertEqual(user_data['favorite_color'], 'blue')
 
     def test_avoid_conflict_by_blanking_out(self):
-        user_data = UserData({'favorite_color': 'purple'}, self.domain)
+        user_data = self.init_user_data({'favorite_color': 'purple'})
         user_data.update({
             'favorite_color': '',
         }, profile_id='blues')
         self.assertEqual(user_data['favorite_color'], 'blue')
 
     def test_data_conflicts_with_profile(self):
-        user_data = UserData({}, self.domain, profile_id='blues')
+        user_data = self.init_user_data({}, profile_id='blues')
         with self.assertRaisesMessage(UserDataError, "'favorite_color' cannot be set directly"):
             user_data['favorite_color'] = 'purple'
 
     def test_profile_and_data_conflict(self):
-        user_data = UserData({}, self.domain)
+        user_data = self.init_user_data({})
         with self.assertRaisesMessage(UserDataError, "'favorite_color' cannot be set directly"):
             user_data.update({
                 'favorite_color': 'purple',
             }, profile_id='blues')
 
     def test_update_shows_changed(self):
-        user_data = UserData({}, self.domain)
+        user_data = self.init_user_data({})
         changed = user_data.update({'favorite_color': 'purple'})
         self.assertTrue(changed)
         changed = user_data.update({'favorite_color': 'purple'})
         self.assertFalse(changed)
 
     def test_update_order_irrelevant(self):
-        user_data = UserData({}, self.domain, profile_id='blues')
+        user_data = self.init_user_data({}, profile_id='blues')
         user_data.update({
             'favorite_color': 'purple',  # this is compatible with the new profile, but not the old
         }, profile_id='others')
 
     def test_ignore_noop_conflicts_with_profile(self):
-        user_data = UserData({}, self.domain, profile_id='blues')
+        user_data = self.init_user_data({}, profile_id='blues')
         # this key is in the profile, but the values are the same
         user_data['favorite_color'] = 'blue'
 
     def test_remove_profile(self):
-        user_data = UserData({}, self.domain, profile_id='blues')
+        user_data = self.init_user_data({}, profile_id='blues')
         user_data.profile_id = None
         self.assertEqual(user_data.profile_id, None)
         self.assertEqual(user_data.profile, None)
 
     def test_remove_profile_and_clear(self):
-        user_data = UserData({}, self.domain, profile_id='blues')
+        user_data = self.init_user_data({}, profile_id='blues')
         user_data.update({
             'favorite_color': '',
         }, profile_id=None)
 
     def test_delitem(self):
-        user_data = UserData({'yearbook_quote': 'something random'}, self.domain)
+        user_data = self.init_user_data({'yearbook_quote': 'something random'})
         del user_data['yearbook_quote']
         self.assertNotIn('yearbook_quote', user_data.to_dict())
 
     def test_popitem(self):
-        user_data = UserData({'yearbook_quote': 'something random'}, self.domain)
+        user_data = self.init_user_data({'yearbook_quote': 'something random'})
         res = user_data.pop('yearbook_quote')
         self.assertEqual(res, 'something random')
         self.assertNotIn('yearbook_quote', user_data.to_dict())
@@ -209,17 +213,17 @@ class TestUserDataModel(SimpleTestCase):
             user_data.pop('yearbook_quote')
 
     def test_remove_unrecognized(self):
-        user_data = UserData({
+        user_data = self.init_user_data({
             'in_schema': 'true',
             'not_in_schema': 'true',
             'commcare_location_id': '123',
-        }, self.domain)
+        })
         changed = user_data.remove_unrecognized({'in_schema', 'in_schema_not_doc'})
         self.assertTrue(changed)
         self.assertEqual(user_data.raw, {'in_schema': 'true', 'commcare_location_id': '123'})
 
     def test_remove_unrecognized_empty_field(self):
-        user_data = UserData({}, self.domain)
+        user_data = self.init_user_data({})
         changed = user_data.remove_unrecognized(set())
         self.assertFalse(changed)
         self.assertEqual(user_data.raw, {})

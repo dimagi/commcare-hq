@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
@@ -15,11 +16,11 @@ class UserDataError(Exception):
 
 
 class UserData:
-    def __init__(self, raw_user_data, domain, profile_id=None, user_id=None):
+    def __init__(self, raw_user_data, couch_user, domain, profile_id=None):
         self._local_to_user = raw_user_data
+        self._couch_user = couch_user
         self.domain = domain
         self._profile_id = profile_id or raw_user_data.get(PROFILE_SLUG, None)
-        self._user_id = user_id
 
     @classmethod
     def lazy_init(cls, couch_user, domain):
@@ -33,17 +34,19 @@ class UserData:
             domain=domain,
             defaults={
                 'data': couch_user.user_data,
+                'django_user': couch_user.get_django_user(),
                 'profile_id': profile_id,
             }
         )
-        return cls(sql_data.data, domain, profile_id=sql_data.profile_id, user_id=couch_user.user_id)
+        return cls(sql_data.data, couch_user, domain, profile_id=sql_data.profile_id)
 
     def save(self):
         SQLUserData.objects.update_or_create(
-            user_id=self._user_id,
+            user_id=self._couch_user.user_id,
             domain=self.domain,
             defaults={
                 'data': self._local_to_user,
+                'django_user': self._couch_user.get_django_user(),
                 'profile_id': self.profile_id,
             },
         )
@@ -182,6 +185,7 @@ class UserData:
 class SQLUserData(models.Model):
     domain = models.CharField(max_length=128)
     user_id = models.CharField(max_length=36)
+    django_user = models.ForeignKey(User, on_delete=models.CASCADE)
     modified_on = models.DateTimeField(auto_now=True)
 
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
