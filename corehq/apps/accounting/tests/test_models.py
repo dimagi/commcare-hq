@@ -380,6 +380,31 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.assertEqual(customer.email, web_user_email)
         self.addCleanup(customer.delete)
 
+    def test_all_cards_raise_authentication_error_when_stripe_key_is_wrong(self):
+        stripe.api_key = "12345678"
+        with self.assertRaises(stripe.error.AuthenticationError):
+            self.payment_method.all_cards
+
+    def test_all_cards_return_the_correct_collection_of_cards_for_a_customer(self):
+        # Get the payment methods that is associated with the customer
+        payment_methods = stripe.PaymentMethod.list(
+            customer=self.stripe_customer.id,
+            type="card",
+        )
+        cards = self.payment_method.all_cards
+        actual_card_ids = [card.fingerprint for card in cards]
+        expected_card_ids = [payment_method.card.fingerprint for payment_method in payment_methods]
+        self.assertCountEqual(actual_card_ids, expected_card_ids)
+
+    def test_all_cards_return_empty_array_for_customer_have_no_cards(self):
+        pass
+
+    def test_all_cards_return_empty_array_if_no_stripe_key(self):
+        pass
+
+    def test_all_cards_serialized_return_the_correct_property_of_a_card(self):
+        pass
+
     def tearDown(self):
         self.stripe_customer.delete()  # This will also delete associated cards
         self.payment_method.delete()

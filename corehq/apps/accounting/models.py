@@ -3707,7 +3707,7 @@ class StripePaymentMethod(PaymentMethod):
                 customer=self.customer.id,
                 type="card",
             )
-            return [method for method in payment_methods.data if method is not None]
+            return [method.card for method in payment_methods.data if method is not None]
         except stripe.error.AuthenticationError:
             if not settings.STRIPE_PRIVATE_KEY:
                 log_accounting_info("Private key is not defined in settings")
@@ -3726,7 +3726,7 @@ class StripePaymentMethod(PaymentMethod):
         } for card in self.all_cards]
 
     def get_card(self, card_token):
-        return self.customer.cards.retrieve(card_token)
+        return stripe.PaymentMethod.retrieve(card_token)
 
     def get_autopay_card(self, billing_account):
         return next((
@@ -3737,7 +3737,7 @@ class StripePaymentMethod(PaymentMethod):
     def remove_card(self, card_token):
         card = self.get_card(card_token)
         self._remove_card_from_all_accounts(card)
-        card.delete()
+        stripe.PaymentMethod.detach(card.id)
 
     def _remove_card_from_all_accounts(self, card):
         accounts = BillingAccount.objects.filter(auto_pay_user=self.web_user)
@@ -3747,16 +3747,21 @@ class StripePaymentMethod(PaymentMethod):
 
     def create_card(self, stripe_token, billing_account, domain, autopay=False):
         customer = self.customer
-        card = customer.cards.create(card=stripe_token)
-        self.set_default_card(card)
+        payment_method = stripe.PaymentMethod.attach(
+            stripe_token,
+            customer=customer.id
+        )
+        self.set_default_payment_method(payment_method)
         if autopay:
-            self.set_autopay(card, billing_account, domain)
-        return card
+            self.set_autopay(payment_method.card, billing_account, domain)
+        return payment_method.card
 
-    def set_default_card(self, card):
-        self.customer.default_card = card
-        self.customer.save()
-        return card
+    def set_default_payment_method(self, payment_method):
+        stripe.Customer.modify(
+            self.customer.id,
+            invoice_settings={'default_payment_method': payment_method.id}
+        )
+        return payment_method
 
     def set_autopay(self, card, billing_account, domain):
         """
@@ -3812,18 +3817,28 @@ class StripePaymentMethod(PaymentMethod):
         """
         return 'auto_pay_{billing_account_id}'.format(billing_account_id=billing_account.id)
 
-    def create_charge(self, card, amount_in_dollars, description, idempotency_key=None):
-        """ Charges a stripe card and returns a transaction id """
+    def create_charge_new(self, card, amount_in_dollars, description, idempotency_key=None):
+        """ Creates a payment intent and returns its id """
         amount_in_cents = int((amount_in_dollars * Decimal('100')).quantize(Decimal(10)))
-        transaction_record = stripe.Charge.create(
-            card=card,
-            customer=self.customer,
+        # Create the payment intent
+        payment_intent = stripe.PaymentIntent.create(
             amount=amount_in_cents,
             currency=settings.DEFAULT_CURRENCY,
             description=description,
+            customer=self.customer.id,
+            payment_method=card.id,
+            confirm=True,  # This tells Stripe to immediately confirm the payment intent
+            # This ensures the payment will fail if any additional authentication is required
+            error_on_requires_action=True,
             idempotency_key=idempotency_key
         )
-        return transaction_record.id
+
+        # If the payment intent requires further steps (e.g., 3D Secure authentication),
+        # you will need to handle it on the client side.
+        # For the purpose of this example, we're assuming the payment will be successful
+        # or raise an error if it's not.
+
+        return payment_intent.id
 
 
 class PaymentRecord(models.Model):
