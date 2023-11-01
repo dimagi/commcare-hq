@@ -347,7 +347,18 @@ hqDefine("geospatial/js/geospatial_map", [
             self.pollUrl = ko.observable('');
             self.isBusy = ko.observable(false);
 
+            self.setBusy = function (isBusy) {
+                self.isBusy(isBusy);
+                $("#hq-content *").prop("disabled", isBusy);
+                if (isBusy) {
+                    $("#btnRunDisbursement").addClass('disabled');
+                } else {
+                    $("#btnRunDisbursement").removeClass('disabled');
+                }
+            }
+
             self.runCaseDisbursementAlgorithm = function (cases, users) {
+                self.setBusy(true);
                 let mapInstance = map.getMapboxInstance();
 
                 let caseData = [];
@@ -374,7 +385,6 @@ hqDefine("geospatial/js/geospatial_map", [
                         lat: c.itemData.coordinates.lat,
                     }
                 })
-                self.isBusy(true);
 
                 $.ajax({
                     type: 'post',
@@ -388,7 +398,7 @@ hqDefine("geospatial/js/geospatial_map", [
                         }
                         else {
                             showDisbursementResultsOnMap(ret['result']);
-                            self.isBusy(false);
+                            self.setBusy(false);
                         }
                     },
                 });
@@ -396,7 +406,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
             self.startPoll = function (pollUrl) {
                 if (!self.isBusy()) {
-                    isBusy(true);
+                    self.setBusy(true);
                 }
                 self.pollUrl(pollUrl);
                 self.doPoll();
@@ -413,7 +423,7 @@ hqDefine("geospatial/js/geospatial_map", [
                                 setTimeout(tick, 1500);
                             } else {
                                 showDisbursementResultsOnMap(result);
-                                self.isBusy(false);
+                                self.setBusy(false);
                             }
                         },
                     });
