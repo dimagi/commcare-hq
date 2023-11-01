@@ -463,9 +463,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
             this.smallScreenListener.listen();
 
-            this.dynamicSearchEnabled = options.disableDynamicSearch ? false :
-                (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled
-                    && !this.smallScreenEnabled);
+            this.dynamicSearchEnabled = !(options.disableDynamicSearch || this.smallScreenEnabled) &&
+                (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
         },
 
         templateContext: function () {
