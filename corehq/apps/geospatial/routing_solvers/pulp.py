@@ -1,14 +1,14 @@
 import haversine
 
 import requests
+import pulp
 
-from ortools.linear_solver import pywraplp
 from django.conf import settings
 from .mapbox_optimize import validate_routing_request
 from corehq.apps.geospatial.routing_solvers.base import DisbursementAlgorithmSolverInterface
 
 
-class ORToolsRadialDistanceSolver(DisbursementAlgorithmSolverInterface):
+class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
     """
     Solves user-case location assignment based on radial distance
 
@@ -22,64 +22,55 @@ class ORToolsRadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         self.case_locations = request_json['cases']
 
     def calculate_distance_matrix(self):
-        users = [
-            (float(user['lat']), float(user['lon']))
-            for user in self.user_locations
-        ]
-        cases = [
-            (float(case['lat']), float(case['lon']))
-            for case in self.case_locations
-        ]
-        return haversine.haversine_vector(cases, users, comb=True)
+        distance_matrix = []
+        for user in self.user_locations:
+            user_point = (float(user['lat']), float(user['lon']))
+            user_distances = []
+            for case in self.case_locations:
+                case_point = (float(case['lat']), float(case['lon']))
+                user_distances.append(haversine.haversine(case_point, user_point))
+
+            distance_matrix.append(user_distances)
+
+        return distance_matrix
 
     def solve(self, print_solution=False):
-        # Modelled after https://developers.google.com/optimization/assignment/assignment_teams
         costs = self.calculate_distance_matrix()
         user_count = len(costs)
         case_count = len(costs[0])
 
-        # Solver
-        # Create the mip solver with the SCIP backend.
-        solver = pywraplp.Solver.CreateSolver("SCIP")
+        # Create a linear programming problem
+        problem = pulp.LpProblem("assign_user_cases", pulp.LpMinimize)
 
-        if not solver:
-            return
-
-        # Variables
-        # x[i, j] is an array of 0-1 variables, which will be 1
-        # if user i is assigned to case j.
+        # Define decision variables
         x = {}
         for i in range(user_count):
             for j in range(case_count):
-                x[i, j] = solver.IntVar(0, 1, "")
+                x[i, j] = pulp.LpVariable(f"x_{i}_{j}", 0, 1, pulp.LpBinary)
 
-        # Constraints
-        # Each user is assigned to at most case_count/user_count
+        # Add constraints
         for i in range(user_count):
-            solver.Add(solver.Sum([x[i, j] for j in range(case_count)]) <= int(case_count / user_count) + 1)
+            problem += pulp.lpSum([x[i, j] for j in range(case_count)]) <= int(case_count / user_count) + 1
 
-        # Each case is assigned to exactly one user.
         for j in range(case_count):
-            solver.Add(solver.Sum([x[i, j] for i in range(user_count)]) == 1)
+            problem += pulp.lpSum([x[i, j] for i in range(user_count)]) == 1
 
-        # Objective
-        objective_terms = []
-        for i in range(user_count):
-            for j in range(case_count):
-                objective_terms.append(costs[i][j] * x[i, j])
-        solver.Minimize(solver.Sum(objective_terms))
+        # Define the objective function
+        objective_terms = [costs[i][j] * x[i, j] for i in range(user_count) for j in range(case_count)]
+        problem += pulp.lpSum(objective_terms)
 
-        # Solve
-        status = solver.Solve()
+        # Solve the problem
+        problem.solve()
+
         solution = {loc['id']: [] for loc in self.user_locations}
-        # Print solution.
-        if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
+
+        # Process the solution
+        if pulp.LpStatus[problem.status] == "Optimal":
             if print_solution:
-                print(f"Total cost = {solver.Objective().Value()}\n")
+                print(f"Total cost = {pulp.value(problem.objective)}\n")
             for i in range(user_count):
                 for j in range(case_count):
-                    # Test if x[i,j] is 1 (with tolerance for floating point arithmetic).
-                    if x[i, j].solution_value() > 0.5:
+                    if pulp.value(x[i, j]) > 0.5:
                         solution[self.user_locations[i]['id']].append(self.case_locations[j]['id'])
                         if print_solution:
                             print(f"Case {self.case_locations[j]['id']} assigned to "
@@ -91,7 +82,7 @@ class ORToolsRadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         return None, solution
 
 
-class ORToolsRoadNetworkSolver(ORToolsRadialDistanceSolver):
+class RoadNetworkSolver(RadialDistanceSolver):
     """
     Solves user-case location assignment based on driving distance
     """

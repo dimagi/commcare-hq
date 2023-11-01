@@ -4,8 +4,6 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
-absl-py==1.4.0
-    # via ortools
 alabaster==0.7.12
     # via sphinx
 alembic==1.7.7
@@ -364,8 +362,6 @@ msgpack==1.0.5
     # via cachecontrol
 myst-parser==2.0.0
     # via -r docs-requirements.in
-numpy==1.24.3
-    # via ortools
 oauthlib==3.1.0
     # via
     #   django-oauth-toolkit
@@ -378,8 +374,6 @@ openpyxl==3.0.9
     #   commcaretranslationchecker
 opentelemetry-api==1.18.0
     # via ddtrace
-ortools==9.7.2996
-    # via -r base-requirements.in
 packaging==23.0
     # via
     #   -r base-requirements.in
@@ -416,11 +410,12 @@ protobuf==4.24.2
     #   google-cloud-firestore
     #   googleapis-common-protos
     #   grpcio-status
-    #   ortools
     #   proto-plus
 psycogreen==1.0.2
     # via -r base-requirements.in
 psycopg2==2.9.6
+    # via -r base-requirements.in
+pulp==2.7.0
     # via -r base-requirements.in
 py-kissmetrics==1.1.0
     # via -r base-requirements.in

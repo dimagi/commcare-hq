@@ -574,6 +574,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 if (self.smallScreenEnabled && self.options.sidebarEnabled) {
                     $('#sidebar-region').collapse('hide');
                 }
+                sessionStorage.submitPerformed = true;
             });
         },
 

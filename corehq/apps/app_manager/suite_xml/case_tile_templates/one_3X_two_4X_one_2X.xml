@@ -21,6 +21,7 @@
         </xpath>
       </text>
     </template>
+    {header[endpoint_action]}
   </field>
 
   <field>
@@ -39,6 +40,7 @@
         </xpath>
       </text>
     </template>
+    {top[endpoint_action]}
   </field>
 
   <field>
@@ -57,6 +59,7 @@
         </xpath>
       </text>
     </template>
+    {middle0[endpoint_action]}
   </field>
 
   <field>
@@ -90,6 +93,7 @@
         </xpath>
       </text>
     </template>
+    {middle1_right[endpoint_action]}
   </field>
 
   <field>
@@ -123,6 +127,7 @@
         </xpath>
       </text>
     </template>
+    {middle2_right[endpoint_action]}
   </field>
 
   <field>
@@ -156,6 +161,7 @@
         </xpath>
       </text>
     </template>
+    {middle3_right[endpoint_action]}
   </field>
 
   <field>
@@ -207,6 +213,7 @@
         </xpath>
       </text>
     </template>
+    {middle5[endpoint_action]}
   </field>
 
   <field>
@@ -225,6 +232,7 @@
         </xpath>
       </text>
     </template>
+    {bottom[endpoint_action]}
   </field>
 
   <field>
