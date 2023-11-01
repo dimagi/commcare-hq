@@ -51,6 +51,7 @@ from .utils import (
     get_lat_lon_from_dict,
     set_case_gps_property,
     set_user_gps_property,
+    create_case_with_gps_property,
 )
 
 
@@ -248,8 +249,14 @@ class GPSCaptureView(BaseDomainView):
 
     @property
     def page_context(self):
+        case_types = CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            data_type=CaseProperty.DataType.GPS,
+        ).values_list('case_type__name', flat=True).distinct()
+
         page_context = {
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'case_types_with_gps': list(case_types),
         }
         page_context.update(self._case_filters_context())
         return page_context
@@ -279,9 +286,14 @@ class GPSCaptureView(BaseDomainView):
         json_data = json.loads(request.body)
         data_type = json_data.get('data_type', None)
         data_item = json_data.get('data_item', None)
+        create_case = json_data.get('create_case', False)
 
         if data_type == 'case':
-            set_case_gps_property(request.domain, data_item)
+            if create_case:
+                data_item['owner_id'] = request.couch_user.user_id
+                create_case_with_gps_property(request.domain, data_item)
+            else:
+                set_case_gps_property(request.domain, data_item)
         elif data_type == 'user':
             set_user_gps_property(request.domain, data_item)
 
