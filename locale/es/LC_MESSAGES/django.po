@@ -8884,10 +8884,8 @@ msgid "Add default search property"
 msgstr "Agregar propiedad de búsqueda predeterminada"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#, fuzzy
-#| msgid "Custom Properties"
 msgid "Custom Sort Properties"
-msgstr "Propiedades Personalizadas"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
@@ -8900,22 +8898,16 @@ msgid "Exact"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#, fuzzy
-#| msgid "Pending"
 msgid "Ascending"
-msgstr "Pendientes"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#, fuzzy
-#| msgid "Pending"
 msgid "Descending"
-msgstr "Pendientes"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#, fuzzy
-#| msgid "Add custom export property"
 msgid "Add custom sort property"
-msgstr "Agregar propiedad de exportación personalizada"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Search and Claim Options"
@@ -13429,6 +13421,12 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Case Property Group"
 msgstr "Grupo de Propiedad del Caso"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"This GPS case property is currently being used to store the geolocation for "
+"cases, so the data type cannot be changed."
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/tests/test_util.py
@@ -18747,6 +18745,12 @@ msgid "180 days"
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py
+#, fuzzy
+#| msgid "days"
+msgid "365 days"
+msgstr "días"
+
+#: corehq/apps/enterprise/forms.py
 msgid ""
 "Mobile workers who have not submitted a form after these many days will be "
 "considered inactive."
@@ -22136,10 +22140,8 @@ msgid "Summary of Case Grouping"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/case_grouping_map.html
-#, fuzzy
-#| msgid "Number of expected users"
 msgid "Total number of clusters"
-msgstr "Número de usuarios esperados"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/case_grouping_map.html
 msgid "Maximum cases per cluster"
@@ -22279,19 +22281,12 @@ msgid "Show mobile workers on the map"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
 msgid ""
 "\n"
 "                            Only users at this location will be shown on the "
 "map.\n"
 "                        "
 msgstr ""
-"\n"
-"Captura Instantánea de  %(snap_name)s"
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
@@ -28304,18 +28299,11 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
 msgid ""
 "\n"
 "                  Watch Demo\n"
 "                "
 msgstr ""
-"\n"
-"Captura Instantánea de  %(snap_name)s"
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/server_errors.html
 msgid "Oh, no!"
