@@ -84,6 +84,9 @@ def styleguide_molecules_selections(request):
             'select2_ko_autocomplete': get_example_context(
                 'styleguide/bootstrap5/examples/select2_ko_autocomplete.html'),
             'multiselect': get_example_context('styleguide/bootstrap5/examples/multiselect.html'),
+            'select2_ajax_crispy': CrispyFormsDemo(
+                Select2AjaxDemoForm(), get_crispy_forms_context('select2_ajax_form.py'),
+            ),
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/selections.html', context)
