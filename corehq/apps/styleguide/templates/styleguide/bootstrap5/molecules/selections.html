@@ -13,20 +13,45 @@
   <nav id="TableOfContents">
     <ul>
       <li><a href="#overview">Overview</a></li>
-      <li><a href="#select-toggle">Select-Toggle</a></li>
+      <li><a href="#select-toggle">Select-Toggle</a>
+          <ul>
+            <a href="#select-toggle-crispy">Usage in Crispy Forms</a></li>
+          </ul>
+        </li>
       <li><a href="#select2">Select2</a>
         <ul>
-          <li><a href="#select2-manual">Manually in Javascript</a></li>
-          <li><a href="#select2-css-class">Referencing a CSS Class</a></li>
-          <li><a href="#select2-ko-dynamic">Dynamic Knockout Binding</a></li>
-          <li><a href="#select2-ko-static">Static Knockout Binding</a></li>
-          <li><a href="#select2-ko-autocomplete">Autocomplete Knockout Binding</a></li>
+          <li><a href="#select2-manual">Manual Setup</a>
+            <ul>
+              <a href="#select2-manual-crispy">With Crispy Forms</a></li>
+            </ul>
+          </li>
+          <li><a href="#select2-css-class">Referencing a CSS Class</a>
+            <ul>
+              <a href="#select2-css-class-crispy">With Crispy Forms</a></li>
+            </ul>
+          </li>
+          <li><a href="#select2-ko-dynamic">Dynamic Knockout Binding</a>
+            <ul>
+              <a href="#select2-ko-dynamic-crispy">With Crispy Forms</a></li>
+            </ul>
+          </li>
+          <li><a href="#select2-ko-static">Static Knockout Binding</a>
+            <ul>
+              <a href="#select2-ko-static-crispy">With Crispy Forms</a></li>
+            </ul>
+          </li>
+          <li><a href="#select2-ko-autocomplete">Autocomplete Knockout Binding</a>
+            <ul>
+              <a href="#select2-ko-autocomplete-crispy">With Crispy Forms</a></li>
+            </ul>
+          </li>
           <li><a href="#select2-crispy-select2Ajax-widget">Crispy Forms Select2Ajax Widget</a></li>
         </ul>
       </li>
       <li><a href="#multiselect">Multiselect</a>
         <ul>
           <li><a href="#multiselect-optional-properties">Optional Properties</a></li>
+          <li><a href="#multiselect-crispy">Use in Crispy Forms</a></li>
         </ul>
       </li>
       <li><a href="#other-selection">Other Selection Interactions</a>
@@ -58,6 +83,7 @@
     certain projects. It's better to assume that a list will grow large and display it as some kind of dropdown
     where the options are a click away, rather than to assume it'll stay small and display all options on the page.
   </p>
+
   <h2 id="select-toggle" class="pt-4">
     Select-Toggle
   </h2>
@@ -86,6 +112,17 @@
     which separates the buttons, making them easier to read and wrap better.
   </div>
 
+  <h3 id="select-toggle-crispy" class="pt-3">
+    Usage in Crispy Forms
+  </h3>
+  <p>
+    In crispy forms, we can use the <code>SelectToggle</code> widget on a <code>ChoiceField</code>. If the crispy
+    form is not being included inside a knockout model, <code>apply_bindings=True</code> must be specified in the
+    widget's arguments. Otherwise, you can specify <code>ko_value</code>, as well as other options in
+    <code>attrs</code>.
+  </p>
+  {% include 'styleguide/bootstrap5/form_example.html' with content=examples.toggles_crispy %}
+
   <h2 id="select2" class="pt-4">
     Select2
   </h2>
@@ -105,13 +142,23 @@
     questions. Before you add a new custom set of <code>select2</code> options, please look around and ask
     around for other parts of HQ that have similar behavior.
   </p>
+
   <h3 id="select2-manual" class="pt-3">
-    Manually in Javascript
+    Manual Setup
   </h3>
   <p>
     This is the most straightforward way of initializing a <code>select2</code> element.
   </p>
   {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_manual %}
+
+  <h4 id="select2-manual-crispy" class="pt-2">
+    Manual Setup with Crispy Forms
+  </h4>
+  <p>
+    This is similar to the manual setup above, but using crispy forms to provide the form HTML.
+  </p>
+  {% include 'styleguide/bootstrap5/form_js_example.html' with content=examples.select2_manual_crispy %}
+
   <h3 id="select2-css-class" class="pt-3">
     Referencing a CSS Class
   </h3>
@@ -124,6 +171,16 @@
     This also applies <code>&lt;select multiple&gt;</code> elements:
   </p>
   {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_css_class_multiple %}
+
+  <h4 id="select2-css-class-crispy" class="pt-2">
+    Referencing the CSS Class in Crispy Forms
+  </h4>
+  <p>
+    This is similar to the HTML-based setups above, but adding the <code>hqwebapp-select2</code> to
+    <code>crispy.Field</code>'s <code>css_class</code> argument instead.
+  </p>
+  {% include 'styleguide/bootstrap5/form_example.html' with content=examples.select2_css_class_crispy %}
+
   <h3 id="select2-ko-dynamic" class="pt-3">
     Dynamic Knockout Binding
   </h3>
@@ -132,6 +189,18 @@
     provided by Knockout.
   </p>
   {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_ko_dynamic %}
+
+  <h4 id="select2-ko-dynamic-crispy" class="pt-2">
+    Dynamic Knockout Binding with Crispy Forms
+  </h4>
+  <p>
+    This is similar to the HTML-based setups above, except that an external script applies <code>koApplyBindings</code>
+    to the <code>&lt;form&gt; id</code> (<code>&lt;form&gt;</code> can also be wrapped with a <code>&lt;div&gt;</code> with the same
+    <code>id</code>). In order to apply the binding to the <code>ChoiceField</code> in
+    crispy forms, the <code>data_bind</code> argument is used inside <code>crispy.Field</code>.
+  </p>
+  {% include 'styleguide/bootstrap5/form_js_example.html' with content=examples.select2_ko_dynamic_crispy %}
+
   <h3 id="select2-ko-static" class="pt-3">
     Static Knockout Binding
   </h3>
@@ -142,15 +211,36 @@
     Knockout-controlled UI, so they aren't guaranteed to exist on page render.
   </p>
   {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_ko_static %}
+
+  <h4 id="select2-ko-static-crispy" class="pt-2">
+    Static Knockout Binding with Crispy Forms
+  </h4>
+  <p>
+    This is similar to the HTML-based setups above, except that an external script applies <code>koApplyBindings</code>
+    to the <code>&lt;form&gt; id</code> (<code>&lt;form&gt;</code> can also be wrapped with a <code>&lt;div&gt;</code> with the same
+    <code>id</code>).
+  </p>
+  {% include 'styleguide/bootstrap5/form_js_example.html' with content=examples.select2_ko_static_crispy %}
+
   <h3 id="select2-ko-autocomplete" class="pt-3">
     Autocomplete Knockout Binding
   </h3>
   <p>
     To initialize a <code>select2</code> to autocomplete select suggestions, use the <code>autocompleteSelect2</code>
-    Knockout binding.
+    Knockout binding. The difference between this binding and the original <code>select2</code>, is the ability to
+    enter free text.
   </p>
   {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_ko_autocomplete %}
 
+  <h4 id="select2-ko-autocomplete-crispy" class="pt-2">
+    Autocomplete Knockout Binding with Crispy Forms
+  </h4>
+  <p>
+    This is similar to the HTML-based setups above, except that an external script applies <code>koApplyBindings</code>
+    to the <code>&lt;form&gt; id</code> (<code>&lt;form&gt;</code> can also be wrapped with a <code>&lt;div&gt;</code> with the same
+    <code>id</code>).
+  </p>
+  {% include 'styleguide/bootstrap5/form_js_example.html' with content=examples.select2_ko_autocomplete_crispy %}
 
   <h3 id="select2-crispy-select2Ajax-widget" class="pt-3">
     Crispy Forms Select2Ajax Widget
@@ -165,6 +255,7 @@
     how <code>Select2Ajax</code> is currently being used in HQ.
   </div>
   {% include 'styleguide/bootstrap5/form_example.html' with content=examples.select2_ajax_crispy %}
+
   <h2 id="multiselect" class="pt-4">
     Multiselect
   </h2>
@@ -178,6 +269,7 @@
     you're creating. It's more complicated than a dropdown and takes up much more space.
   </div>
   {% include 'styleguide/bootstrap5/code_example.html' with content=examples.multiselect %}
+
   <h4 id="multiselect-optional-properties" class="pt-3">
     Optional Properties
   </h4>
@@ -196,6 +288,14 @@
     </dd>
   </dl>
 
+  <h4 id="multiselect-crispy" class="pt-2">
+    Use in Crispy Forms
+  </h4>
+  <p>
+    This is similar to the manual setup above, but using crispy forms to provide the form HTML.
+  </p>
+  {% include 'styleguide/bootstrap5/form_js_example.html' with content=examples.multiselect_crispy %}
+
   <h2 id="other-selection" class="pt-4">
     Other Selection Interactions
   </h2>
@@ -203,6 +303,7 @@
     There are several other interactions used on HQ to select items from a list, however use of these options
     should be <strong>limited</strong> compared to the options above.
   </p>
+
   <h3 id="other-standard-select" class="pt-3">
     Standard Select Elements
   </h3>
@@ -218,6 +319,7 @@
     For instance, with 15+ items, it becomes difficult to find and select an item. Therefore, long lists
     in particular should be switched to <code>select2</code>.
   </div>
+
   <h3 id="other-checkbox-lists" class="pt-3">
     Lists of Checkboxes
   </h3>
