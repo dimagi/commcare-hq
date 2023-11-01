@@ -182,30 +182,11 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                             }
                         },
                         {
-                            "bool": {
-                                "filter": [
-                                    {
-                                        "term": {
-                                            "case_properties.key.exact": "location"
-                                        }
-                                    },
-                                    {
-                                        "geo_polygon": {
-                                            "case_properties.geopoint_value": {
-                                                "points": [
-                                                    {
-                                                        "lat": 40.73,
-                                                        "lon": -74.1
-                                                    },
-                                                    {
-                                                        "lat": 40.01,
-                                                        "lon": -71.12
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                ]
+                            "geo_bounding_box": {
+                                "location": {
+                                    "top_left": "40.73 -74.1",
+                                    "bottom_right": "40.01 -71.12",
+                                }
                             }
                         },
                         {
@@ -242,30 +223,20 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                 "bool": {
                     "filter": [
                         {
-                            "bool": {
-                                "filter": [
-                                    {
-                                        "term": {
-                                            "case_properties.key.exact": "case_gps"
+                            "geo_shape": {
+                                "case_gps": {
+                                    "shape": [
+                                        {
+                                            "lat": 40.73,
+                                            "lon": -74.1
+                                        },
+                                        {
+                                            "lat": 40.01,
+                                            "lon": -71.12
                                         }
-                                    },
-                                    {
-                                        "geo_polygon": {
-                                            "case_properties.geopoint_value": {
-                                                "points": [
-                                                    {
-                                                        "lat": 40.73,
-                                                        "lon": -74.1
-                                                    },
-                                                    {
-                                                        "lat": 40.01,
-                                                        "lon": -71.12
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                ]
+                                    ],
+                                    "relation": "intersects"
+                                }
                             }
                         },
                         {
