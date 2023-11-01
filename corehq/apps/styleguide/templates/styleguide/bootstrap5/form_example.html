@@ -1,13 +1,7 @@
+{% extends 'styleguide/bootstrap5/base_example.html' %}
 {% load crispy_forms_tags %}
 
-<div class="card mb-3">
-  <div class="card-body">
-    {% crispy content.form %}
-    <div class="card text-bg-light mt-3">
-      <div class="card-body ">
-        <div class="h4">python</div>
-        <pre class="m-0">{{ content.code }}</pre>
-      </div>
-    </div>
-  </div>
-</div>
+{% block working_code %}{% crispy content.form %}{% endblock %}
+{% block readable_code %}
+  {% include 'styleguide/bootstrap5/partials/readable_code_block.html' with content=content.code language="Python" %}
+{% endblock %}
