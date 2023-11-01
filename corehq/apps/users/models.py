@@ -1435,9 +1435,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         if uuid:
             if not re.match(r'[\w-]+', uuid):
                 raise cls.InvalidID('invalid id %r' % uuid)
-            couch_user = cls(_id=uuid)
         else:
-            couch_user = cls()
+            uuid = uuid4().hex
+        couch_user = cls(_id=uuid)
 
         if date:
             couch_user.created_on = force_to_datetime(date)
@@ -1732,7 +1732,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         Main entry point into creating a CommCareUser (mobile worker).
         """
-        uuid = uuid or uuid4().hex
         # if the account is not confirmed, also set is_active false so they can't login
         if 'is_active' not in kwargs:
             kwargs['is_active'] = is_account_confirmed
