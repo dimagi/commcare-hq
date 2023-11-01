@@ -19,7 +19,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
-    var disbursementSpinner;
+    var disbursementRunner;
 
     function mapItemModel(itemId, itemData, marker, markerColors) {
         'use strict';
@@ -334,66 +334,67 @@ hqDefine("geospatial/js/geospatial_map", [
             });
         }
 
-        function runCaseDisbursementAlgorithm(cases, users) {
-            let mapInstance = map.getMapboxInstance();
-
-            let caseData = [];
-            cases.forEach(function (c) {
-                const layerId = "route-" + c.itemId;
-                if (mapInstance.getLayer(layerId)) {
-                    mapInstance.removeLayer(layerId);
-                }
-                if (mapInstance.getSource(layerId)) {
-                    mapInstance.removeSource(layerId);
-                }
-
-                caseData.push({
-                    id: c.itemId,
-                    lon: c.itemData.coordinates.lng,
-                    lat: c.itemData.coordinates.lat,
-                });
-            })
-
-            let userData = users.map(function (c) {
-                return {
-                    id: c.itemId,
-                    lon: c.itemData.coordinates.lng,
-                    lat: c.itemData.coordinates.lat,
-                }
-            })
-            disbursementSpinner.showLoadingSpinner(true);
-
-            $.ajax({
-                type: 'post',
-                url: runDisbursementUrl,
-                dataType: 'json',
-                data: JSON.stringify({'users': userData, "cases": caseData}),
-                contentType: "application/json; charset=utf-8",
-                success: function (ret) {
-                    if (ret['poll_url'] !== undefined) {
-                        disbursementSpinner.startPoll(ret['poll_url']);
-                    }
-                    else {
-                        showDisbursementResultsOnMap(ret['result']);
-                        disbursementSpinner.showLoadingSpinner(false);
-                    }
-                },
-            });
-        }
-
-        var disbursementSpinnerModel = function () {
+        var disbursementRunnerModel = function () {
             var self = {};
 
             self.pollUrl = ko.observable('');
-            self.showLoadingSpinner = ko.observable(false);
+            self.isBusy = ko.observable(false);
+
+            self.runCaseDisbursementAlgorithm = function (cases, users) {
+                let mapInstance = map.getMapboxInstance();
+
+                let caseData = [];
+                cases.forEach(function (c) {
+                    const layerId = "route-" + c.itemId;
+                    if (mapInstance.getLayer(layerId)) {
+                        mapInstance.removeLayer(layerId);
+                    }
+                    if (mapInstance.getSource(layerId)) {
+                        mapInstance.removeSource(layerId);
+                    }
+
+                    caseData.push({
+                        id: c.itemId,
+                        lon: c.itemData.coordinates.lng,
+                        lat: c.itemData.coordinates.lat,
+                    });
+                })
+
+                let userData = users.map(function (c) {
+                    return {
+                        id: c.itemId,
+                        lon: c.itemData.coordinates.lng,
+                        lat: c.itemData.coordinates.lat,
+                    }
+                })
+                self.isBusy(true);
+
+                $.ajax({
+                    type: 'post',
+                    url: runDisbursementUrl,
+                    dataType: 'json',
+                    data: JSON.stringify({'users': userData, "cases": caseData}),
+                    contentType: "application/json; charset=utf-8",
+                    success: function (ret) {
+                        if (ret['poll_url'] !== undefined) {
+                            self.startPoll(ret['poll_url']);
+                        }
+                        else {
+                            showDisbursementResultsOnMap(ret['result']);
+                            self.isBusy(false);
+                        }
+                    },
+                });
+            }
 
             self.startPoll = function (pollUrl) {
-                if (!self.showLoadingSpinner()) {
-                    showLoadingSpinner(true);
+                if (!self.isBusy()) {
+                    isBusy(true);
                 }
                 self.pollUrl(pollUrl);
                 self.doPoll();
             }
+
             self.doPoll = function () {
                 var tick = function () {
                     $.ajax({
@@ -405,7 +406,7 @@ hqDefine("geospatial/js/geospatial_map", [
                                 setTimeout(tick, 1500);
                             } else {
                                 showDisbursementResultsOnMap(result);
-                                self.showLoadingSpinner(false);
+                                self.isBusy(false);
                             }
                         },
                     });
@@ -531,7 +532,7 @@ hqDefine("geospatial/js/geospatial_map", [
             var $runDisbursement = $("#btnRunDisbursement");
             $runDisbursement.click(function () {
                 if (map) {
-                    runCaseDisbursementAlgorithm(caseModels(), userModels());
+                    disbursementRunner.runCaseDisbursementAlgorithm(caseModels(), userModels());
                 }
             });
         }
@@ -704,8 +705,8 @@ hqDefine("geospatial/js/geospatial_map", [
                 loadCases(xhr.responseJSON.aaData);
             }
 
-            disbursementSpinner = new disbursementSpinnerModel();
-            $("#disbursement-spinner").koApplyBindings(disbursementSpinner)
+            disbursementRunner = new disbursementRunnerModel();
+            $("#disbursement-spinner").koApplyBindings(disbursementRunner)
         });
     });
 });

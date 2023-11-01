@@ -90,7 +90,7 @@
 </div>
 <div id="disbursement-spinner">
   <h4 id="loading" class="hide"
-      data-bind="visible: showLoadingSpinner(), css: {hide: false}">
+      data-bind="visible: isBusy(), css: {hide: false}">
     <i class="fa fa-spin fa-spinner"></i>
     {% trans "Running disbursement algorithm..." %}
   </h4>
