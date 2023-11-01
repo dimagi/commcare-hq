@@ -21,6 +21,7 @@
           <li><a href="#select2-ko-dynamic">Dynamic Knockout Binding</a></li>
           <li><a href="#select2-ko-static">Static Knockout Binding</a></li>
           <li><a href="#select2-ko-autocomplete">Autocomplete Knockout Binding</a></li>
+          <li><a href="#select2-crispy-select2Ajax-widget">Crispy Forms Select2Ajax Widget</a></li>
         </ul>
       </li>
       <li><a href="#multiselect">Multiselect</a>
@@ -150,6 +151,20 @@
   </p>
   {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_ko_autocomplete %}
 
+
+  <h3 id="select2-crispy-select2Ajax-widget" class="pt-3">
+    Crispy Forms Select2Ajax Widget
+  </h3>
+  <p>
+    It's also possible to use <code>select2</code> that fetches its options asynchronously in crispy forms using the
+    <code>Select2Ajax</code> <code>widget</code>. This is extremely useful for selecting from a large data set, like
+    Mobile Workers or Locations. A very simplified example is below.
+  </p>
+  <div class="alert alert-primary">
+    Note that you will need a view to <code>POST</code> queries to with this widget. It's recommended to explore
+    how <code>Select2Ajax</code> is currently being used in HQ.
+  </div>
+  {% include 'styleguide/bootstrap5/form_example.html' with content=examples.select2_ajax_crispy %}
   <h2 id="multiselect" class="pt-4">
     Multiselect
   </h2>
