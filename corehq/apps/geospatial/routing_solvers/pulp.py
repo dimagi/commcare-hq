@@ -96,12 +96,18 @@ class RoadNetworkSolver(RadialDistanceSolver):
             f'{loc["lon"]},{loc["lat"]}'
             for loc in self.user_locations + self.case_locations]
         )
-        sources = ";".join(map(str, list(range(len(self.user_locations)))))
+        sources_count = len(self.user_locations)
+        destinations_count = len(self.case_locations)
 
-        url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/driving/{coordinates}&{sources}'
+        sources = ";".join(map(str, list(range(sources_count))))
+        destinations = ";".join(map(str, list(range(sources_count, sources_count + destinations_count))))
+
+        url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/driving/{coordinates}'
         params = {
+            'sources': sources,
+            'destinations': destinations,
             'annotations': 'distance',
-            'access_token': settings.MAPBOX_ACCESS_TOKEN
+            'access_token': settings.MAPBOX_MATRIX_API_TOKEN
         }
 
         response = requests.get(url, params=params)
