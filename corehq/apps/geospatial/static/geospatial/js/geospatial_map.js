@@ -2,6 +2,7 @@ hqDefine("geospatial/js/geospatial_map", [
     "jquery",
     "hqwebapp/js/initial_page_data",
     "knockout",
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     initialPageData,
@@ -412,6 +413,7 @@ hqDefine("geospatial/js/geospatial_map", [
             self.hasFiltersChanged = ko.observable(false);  // Used to disable "Apply" button
             self.showFilterMenu = ko.observable(true);
             self.hasErrors = ko.observable(false);
+            self.selectedLocation = null;
 
             self.loadUsers = function () {
                 map.removeMarkersFromMap(userModels());
@@ -425,6 +427,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
                 $.ajax({
                     method: 'GET',
+                    data: {'location_id': self.selectedLocation},
                     url: initialPageData.reverse('get_users_with_gps'),
                     success: function (data) {
                         self.hasFiltersChanged(false);
@@ -459,6 +462,11 @@ hqDefine("geospatial/js/geospatial_map", [
                 });
             };
 
+            self.onLocationFilterChange = function (_, e) {
+                self.selectedLocation = $(e.currentTarget).select2('val');
+                self.onFiltersChange();
+            };
+
             self.onFiltersChange = function () {
                 self.hasFiltersChanged(true);
             };
@@ -477,6 +485,25 @@ hqDefine("geospatial/js/geospatial_map", [
             if ($userFiltersDiv.length) {
                 const userFiltersInstance = userFiltersModel();
                 $userFiltersDiv.koApplyBindings(userFiltersInstance);
+                $("#location-filter-select").select2({
+                    placeholder: gettext('All locations'),
+                    allowClear: true,
+                    cache: true,
+                    ajax: {
+                        url: initialPageData.reverse('location_search'),
+                        dataType: 'json',
+                        processResults: function (data) {
+                            return {
+                                results: $.map(data.results, function (item) {
+                                    return {
+                                        text: item.text,
+                                        id: item.id,
+                                    };
+                                }),
+                            };
+                        },
+                    },
+                });
             }
         }
 

@@ -1,12 +1,20 @@
-from django.test import TestCase, RequestFactory, override_settings
-from django_prbac.models import Role, Grant
+from django.test import RequestFactory, TestCase, override_settings
+
+from django_prbac.models import Grant, Role
+
 from corehq import privileges
-
-from corehq.apps.users.models import WebUser
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    CaseRuleAction,
+    UpdateCaseDefinition,
+)
+from corehq.apps.data_interfaces.views import (
+    AutomaticUpdateRuleListView,
+    DeduplicationRuleCreateView,
+)
 from corehq.apps.domain.shortcuts import create_domain
-
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CaseRuleAction, UpdateCaseDefinition
-from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
+from corehq.apps.users.models import WebUser
 
 
 @override_settings(REQUIRE_TWO_FACTOR_FOR_SUPERUSERS=False)
@@ -81,3 +89,47 @@ class AutomaticUpdateRuleListViewTests(TestCase):
         request.user = self.user
         request.role = self.test_role
         return request
+
+
+class DeduplicationRuleCreateViewTests(TestCase):
+    def test_system_properties_are_included_with_case_properties(self):
+        case_type = CaseType.objects.create(name='case', domain=self.domain)
+        CaseProperty.objects.create(name='prop1', case_type=case_type)
+        CaseProperty.objects.create(name='prop2', case_type=case_type)
+
+        prop_dict = DeduplicationRuleCreateView.get_augmented_data_dict_props_by_case_type(self.domain)
+
+        self.assertEqual(set(prop_dict['case']), {'name', 'owner_id', 'prop1', 'prop2'})
+
+    def test_system_properties_work_with_duplicate_case_properties(self):
+        case_type = CaseType.objects.create(name='case', domain=self.domain)
+        CaseProperty.objects.create(name='name', case_type=case_type)
+        CaseProperty.objects.create(name='owner_id', case_type=case_type)
+
+        prop_dict = DeduplicationRuleCreateView.get_augmented_data_dict_props_by_case_type(self.domain)
+
+        self.assertEqual(set(prop_dict['case']), {'name', 'owner_id'})
+
+    def test_system_properties_override_deprecated_properties(self):
+        case_type = CaseType.objects.create(name='case', domain=self.domain)
+        CaseProperty.objects.create(name='prop1', case_type=case_type)
+        CaseProperty.objects.create(name='name', deprecated=True, case_type=case_type)
+
+        prop_dict = DeduplicationRuleCreateView.get_augmented_data_dict_props_by_case_type(self.domain)
+
+        self.assertEqual(set(prop_dict['case']), {'name', 'owner_id', 'prop1'})
+
+    def test_properties_are_sorted(self):
+        case_type = CaseType.objects.create(name='cookies', domain=self.domain)
+        CaseProperty.objects.create(name='golden_oreos', case_type=case_type)
+        CaseProperty.objects.create(name='peanut_butter_oreos', case_type=case_type)
+        CaseProperty.objects.create(name='oreos', case_type=case_type)
+
+        prop_dict = DeduplicationRuleCreateView.get_augmented_data_dict_props_by_case_type(self.domain)
+        self.assertEqual(
+            prop_dict['cookies'],
+            ['golden_oreos', 'name', 'oreos', 'owner_id', 'peanut_butter_oreos']
+        )
+
+    def setUp(self):
+        self.domain = 'test-domain'

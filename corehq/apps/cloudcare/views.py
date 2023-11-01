@@ -93,6 +93,7 @@ class FormplayerMain(View):
     preview = False
     urlname = 'formplayer_main'
 
+    @xframe_options_sameorigin
     @use_daterangepicker
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
@@ -366,7 +367,7 @@ class LoginAsUsers(View):
         user = CouchUser.wrap_correctly(user_json)
         formatted_user = {
             'username': user.raw_username,
-            'customFields': user.metadata,
+            'customFields': user.get_user_data(self.domain).to_dict(),
             'first_name': user.first_name,
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,

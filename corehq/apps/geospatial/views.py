@@ -33,6 +33,7 @@ from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
+from corehq.apps.users.dbaccessors import get_mobile_users_by_filters
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone
@@ -50,6 +51,7 @@ from .utils import (
     get_lat_lon_from_dict,
     set_case_gps_property,
     set_user_gps_property,
+    create_case_with_gps_property,
 )
 
 
@@ -247,8 +249,14 @@ class GPSCaptureView(BaseDomainView):
 
     @property
     def page_context(self):
+        case_types = CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            data_type=CaseProperty.DataType.GPS,
+        ).values_list('case_type__name', flat=True).distinct()
+
         page_context = {
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'case_types_with_gps': list(case_types),
         }
         page_context.update(self._case_filters_context())
         return page_context
@@ -278,9 +286,14 @@ class GPSCaptureView(BaseDomainView):
         json_data = json.loads(request.body)
         data_type = json_data.get('data_type', None)
         data_item = json_data.get('data_item', None)
+        create_case = json_data.get('create_case', False)
 
         if data_type == 'case':
-            set_case_gps_property(request.domain, data_item)
+            if create_case:
+                data_item['owner_id'] = request.couch_user.user_id
+                create_case_with_gps_property(request.domain, data_item)
+            else:
+                set_case_gps_property(request.domain, data_item)
         elif data_type == 'user':
             set_user_gps_property(request.domain, data_item)
 
@@ -364,7 +377,7 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
         UserES()
         .domain(domain)
         .mobile_users()
-        .missing_or_empty_metadata_property(location_prop_name)
+        .missing_or_empty_user_data_property(location_prop_name)
         .search_string_query(query, ['username'])
         .sort('created_on', desc=True)
     )
@@ -392,13 +405,22 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
 @require_GET
 @login_and_domain_required
 def get_users_with_gps(request, domain):
+    selected_location_id = request.GET.get('location_id')
+    if selected_location_id:
+        user_filters = {
+            'location_id': selected_location_id,
+            'selected_location_only': True,
+        }
+        users = get_mobile_users_by_filters(domain, user_filters)
+    else:
+        users = CommCareUser.by_domain(domain)
+
     location_prop_name = get_geo_user_property(domain)
-    users = CommCareUser.by_domain(domain)
     user_data = [
         {
             'id': user.user_id,
             'username': user.raw_username,
-            'gps_point': user.metadata.get(location_prop_name, ''),
+            'gps_point': user.get_user_data(domain).get(location_prop_name, ''),
         } for user in users
     ]
 

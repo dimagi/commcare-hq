@@ -854,7 +854,6 @@ msgid "Question"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Name"
 msgstr ""
 
@@ -2598,26 +2597,6 @@ msgstr ""
 msgid "Command Bar"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Module ID"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Description"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Time Estimate"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Must be an integer"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Estimated time to complete the module in hours."
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
 msgstr ""
@@ -3455,6 +3434,10 @@ msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "Name of the Area"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "All locations"
 msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js

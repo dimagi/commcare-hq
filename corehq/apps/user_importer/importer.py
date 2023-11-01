@@ -315,7 +315,7 @@ def get_location_from_site_code(site_code, location_cache):
 
 DomainInfo = namedtuple('DomainInfo', [
     'validators', 'can_assign_locations', 'location_cache',
-    'roles_by_name', 'profiles_by_name', 'profile_name_by_id', 'group_memoizer'
+    'roles_by_name', 'profiles_by_name', 'group_memoizer'
 ])
 
 
@@ -383,7 +383,6 @@ def get_domain_info(
 
     allowed_group_names = [group.name for group in domain_group_memoizer.groups]
     profiles_by_name = {}
-    profile_name_by_id = {}
     domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
     if is_web_upload:
         roles_by_name = {role[1]: role[0] for role in get_editable_role_choices(domain, upload_user,
@@ -404,10 +403,6 @@ def get_domain_info(
                 profile.name: profile
                 for profile in profiles
             }
-            profile_name_by_id = {
-                profile.pk: profile.name
-                for profile in profiles
-            }
         validators = get_user_import_validators(
             domain_obj,
             domain_user_specs,
@@ -424,7 +419,6 @@ def get_domain_info(
         location_cache,
         roles_by_name,
         profiles_by_name,
-        profile_name_by_id,
         domain_group_memoizer
     )
     domain_info_by_domain[domain] = domain_info
@@ -537,7 +531,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
         location_codes = row.get('location_code', []) if 'location_code' in row else None
         location_codes = format_location_codes(location_codes)
         role = row.get('role', None)
-        profile = row.get('user_profile', None)
+        profile_name = row.get('user_profile', None)
         web_user_username = row.get('web_user')
         phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
 
@@ -581,7 +575,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             if name:
                 commcare_user_importer.update_name(name)
 
-            commcare_user_importer.update_user_data(data, uncategorized_data, profile, domain_info)
+            commcare_user_importer.update_user_data(data, uncategorized_data, profile_name, domain_info)
 
             if update_deactivate_after_date:
                 commcare_user_importer.update_deactivate_after(deactivate_after)
@@ -607,7 +601,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 commcare_user_importer.update_role('none')
 
             if web_user_username:
-                user.update_metadata({'login_as_user': web_user_username})
+                user.get_user_data(domain)['login_as_user'] = web_user_username
 
             user.save()
             log = commcare_user_importer.save_log()
