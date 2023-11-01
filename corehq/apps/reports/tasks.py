@@ -170,17 +170,16 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
     file = report.excel_response
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
 
-    if report.domain is None:
-        # Some HQ-wide reports (e.g. accounting/smsbillables) will not have a domain associated with them
-        # This uses the user's first domain to store the file in the blobdb
-        report.domain = report.request.couch_user.get_domains()[0]
+    # Some HQ-wide reports (e.g. accounting/smsbillables) will not have a domain associated with them
+    # This uses the user's first domain to store the file in the blobdb
+    report_storage_domain = report.request.couch_user.get_domains()[0] if report.domain is None else report.domain
 
-    hash_id = _store_excel_in_blobdb(report_class, file, report.domain, report.slug)
+    hash_id = _store_excel_in_blobdb(report_class, file, report_storage_domain, report.slug)
     logger.info(f'Stored report {report.name} with parameters: {report_state["request_params"]} in hash {hash_id}')
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
-        link = absolute_reverse("export_report", args=[report.domain, str(hash_id), report.export_format])
+        link = absolute_reverse("export_report", args=[report_storage_domain, str(hash_id), report.export_format])
         _send_email(report, link, recipient=recipient, subject=subject)
         logger.info(f'Sent {report.name} with hash {hash_id} to {recipient}')
 
