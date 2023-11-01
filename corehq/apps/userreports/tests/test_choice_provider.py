@@ -6,11 +6,11 @@ from django.test import SimpleTestCase, TestCase
 from django.utils.translation import gettext
 
 from corehq.apps.domain.shortcuts import create_domain, create_user
+from corehq.apps.es.client import manager
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
-from corehq.apps.es.client import manager
-from corehq.apps.es.users import user_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.registry.tests.utils import (
@@ -43,6 +43,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.models_role import UserRole
+from corehq.apps.users.tests.util import patch_user_data_db_layer
 from corehq.apps.users.util import normalize_username
 from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import flag_disabled, flag_enabled
@@ -262,6 +263,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     domain = 'user-choice-provider'
 
     @classmethod
+    @patch_user_data_db_layer
     def make_mobile_worker(cls, username, domain=None):
         domain = domain or cls.domain
         user = CommCareUser(username=normalize_username(username, domain),

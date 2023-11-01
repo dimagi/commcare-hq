@@ -49,6 +49,7 @@ from corehq.apps.users.models import (
     HqPermissions,
 )
 from corehq.apps.users.model_log import UserModelAction
+from corehq.apps.users.tests.util import patch_user_data_db_layer
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
@@ -2062,6 +2063,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             local_tableau_users.get(username='george@eliot.com')
 
 
+@patch_user_data_db_layer
 class TestUserChangeLogger(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
