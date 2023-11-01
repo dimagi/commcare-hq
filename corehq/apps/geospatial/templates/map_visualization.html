@@ -222,6 +222,7 @@
 </div>
 
 <script type="text/html" id="select-case">
+    <small data-bind="html: getItemType()"></small>
     <div class="form-check">
       <input type="checkbox" class="form-check-input" data-bind="checked: isSelected, attr: {id: selectCssId}">
       <label class="form-check-label" data-bind="html: $data.itemData.link, attr: {for: selectCssId}"></label>

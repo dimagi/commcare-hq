@@ -39,6 +39,13 @@ hqDefine("geospatial/js/geospatial_map", [
             path.setAttribute("fill", newColor);
         }
 
+        self.getItemType = function () {
+            if (self.itemData.link.includes("user")) {
+                return gettext("Mobile Worker");
+            }
+            return gettext("Case");
+        }
+
         self.isSelected.subscribe(function () {
             var color = self.isSelected() ? self.markerColors.selected : self.markerColors.default;
             changeMarkerColor(self, color);
