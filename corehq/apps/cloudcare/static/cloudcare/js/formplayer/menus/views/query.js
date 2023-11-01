@@ -563,13 +563,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.performSubmit();
         },
 
-        performSubmit: function () {
+        performSubmit: function (initiator) {
+            console.log("In performSubmit, initiator: " + initiator);
             var self = this;
             self.validateAllFields().done(function () {
                 FormplayerFrontend.trigger(
                     "menu:query",
                     self.getAnswers(),
-                    self.options.sidebarEnabled
+                    self.options.sidebarEnabled,
+                    initiator
                 );
                 if (self.smallScreenEnabled && self.options.sidebarEnabled) {
                     $('#sidebar-region').collapse('hide');
@@ -579,6 +581,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         updateSearchResults: function () {
+            console.log("Updating the search results");
+            var startTime = performance.now();
             var self = this;
             var invalidRequiredFields = [];
             self.children.each(function (childView) {
@@ -587,8 +591,26 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
             });
             if (invalidRequiredFields.length === 0) {
-                self.performSubmit();
+                console.log("Performing submit");
+                self.performSubmit("dynamicSearch");
+                var endTime = performance.now();
+                console.log("Submit done");
+                var responseTime = endTime - startTime;
+                console.log("Response time: " + responseTime + " milliseconds");
+
+                $.ajax("/hq/admin/metrics_datadog", {
+                    method: 'POST',
+                    data: {responseTime: responseTime/1000, metrics: "commcare.dynamic_search.response_time"},
+                    success: function (resp) {
+                        console.log(resp);
+                    },
+                    error: function (xhr) {
+                        console.log("API call failed");
+                    },
+                });
+
             }
+            console.log("Search result updated");
         },
 
         validateFieldChange: function (changedChildView) {

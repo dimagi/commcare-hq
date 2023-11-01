@@ -264,15 +264,25 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
         };
 
-        this.setQueryData = function ({ inputs, execute, forceManualSearch}) {
+        this.setQueryData = function ({ inputs, execute, forceManualSearch, initiatedBy}) {
+            console.log("initiatedBy " + initiatedBy);
             var selections = Utils.currentUrlToObject().selections;
             this.queryData = this.queryData || {};
-            this.queryData[sessionStorage.queryKey] = _.defaults({
+
+            const queryDataEntry = _.defaults({
                 inputs: inputs,
                 execute: execute,
                 force_manual_search: forceManualSearch,
                 selections: selections,
             }, this.queryData[sessionStorage.queryKey]);
+
+            if (initiatedBy !== null && initiatedBy !== undefined) {
+                queryDataEntry.initiated_by = initiatedBy;
+            }
+
+            console.log("queryDataEntry " + JSON.stringify(queryDataEntry));
+            this.queryData[sessionStorage.queryKey] = queryDataEntry;
+
             this.page = null;
             this.search = null;
         };
