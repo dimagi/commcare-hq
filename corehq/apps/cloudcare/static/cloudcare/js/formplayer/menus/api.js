@@ -165,12 +165,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                 var callStartTime = performance.now();
                 menus.fetch($.extend(true, {}, options)).always(function () {
-                    // Calculate the response time
                     var callEndTime = performance.now();
                     var callResponseTime = callEndTime - callStartTime;
 
-                    // Log the response time
                     console.log("Server response time: " + callResponseTime + " ms");
+                    hqImport('analytix/js/google').track.event('Split Screen Case Search', 'Dynamic Search', 'Dynamic Search Query', callResponseTime);
                 });
             });
 
