@@ -180,14 +180,12 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
-        _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject=subject)
+        link = absolute_reverse("export_report", args=[report.domain, str(hash_id), report.export_format])
+        _send_email(report, link, recipient=recipient, subject=subject)
         logger.info(f'Sent {report.name} with hash {hash_id} to {recipient}')
 
 
-def _send_email(user, report, hash_id, recipient, subject=None):
-    link = absolute_reverse("export_report", args=[report.domain, str(hash_id),
-                                                   report.export_format])
-
+def _send_email(report, link, recipient, subject=None):
     send_report_download_email(report.name, recipient, link, subject)
 
 
