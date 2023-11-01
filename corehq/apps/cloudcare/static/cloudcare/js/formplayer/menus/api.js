@@ -11,6 +11,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar");
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var API = {
         queryFormplayer: function (params, route) {
@@ -165,12 +166,25 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                 var callStartTime = performance.now();
                 menus.fetch($.extend(true, {}, options)).always(function () {
-                    // Calculate the response time
                     var callEndTime = performance.now();
                     var callResponseTime = callEndTime - callStartTime;
 
-                    // Log the response time
-                    console.log("Server response time: " + callResponseTime + " ms");
+                    console.log("data = " + JSON.stringify(data));
+                    if (data.query_data.results.initiated_by === "dynamic_search") {
+                        console.log("API Server response time: " + callResponseTime + " ms");
+                        console.log("initialPageData.reverse('api_histogram_metrics') " + initialPageData.reverse('api_histogram_metrics'));
+
+                        $.ajax(initialPageData.reverse('api_histogram_metrics'), {
+                            method: 'POST',
+                            data: {responseTime: callResponseTime, metrics: "commcare.dynamic_search.response_time"},
+                            success: function (resp) {
+                                console.log(resp);
+                            },
+                            error: function (xhr) {
+                                console.log("API call failed");
+                            },
+                        });
+                    }
                 });
             });
 
@@ -184,16 +198,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
             options.selectedValues = currentSelectedValues !== undefined && currentSelectedValues !== '' ? currentSelectedValues.split(',') : undefined;
         }
         if (!options.endpointId) {
-            const startTime = performance.now();
-            console.log("Options: " + JSON.stringify(options));
-            const result = API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
-            const endTime = performance.now();
-            const timeTaken = endTime - startTime;
-
-            console.log("Time taken for queryFormplayer:: " + timeTaken + " milliseconds");
-
-            return result;
-
+            return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
         }
 
         var progressView = ProgressBar({
