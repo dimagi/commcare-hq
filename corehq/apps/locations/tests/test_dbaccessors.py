@@ -22,6 +22,7 @@ from ..dbaccessors import (
     get_users_assigned_to_locations,
     get_users_by_location_id,
     get_users_location_ids,
+    user_ids_at_locations,
     mobile_user_ids_at_locations,
     get_user_ids_from_assigned_location_ids,
     get_user_ids_from_primary_location_ids,
@@ -148,6 +149,13 @@ class TestUsersByLocation(TestCase):
             mobile_user_ids_at_locations([self.meereen._id]),
             [self.daenerys._id, self.tyrion._id]
         )
+
+    def test_all_user_ids_at_locations(self):
+        self.assertItemsEqual(
+            user_ids_at_locations([self.meereen._id]),
+            [self.daenerys._id, self.tyrion._id, self.george._id]
+        )
+
 
 
 class TestFilteredLocationsCount(TestCase):
