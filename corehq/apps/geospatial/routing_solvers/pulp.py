@@ -19,15 +19,17 @@ class RadialDistanceSolver:
         self.case_locations = request_json['cases']
 
     def calculate_distance_matrix(self):
-        users = [
-            (float(user['lat']), float(user['lon']))
-            for user in self.user_locations
-        ]
-        cases = [
-            (float(case['lat']), float(case['lon']))
-            for case in self.case_locations
-        ]
-        return haversine.haversine_vector(cases, users, comb=True)
+        distance_matrix = []
+        for user in self.user_locations:
+            user_point = (float(user['lat']), float(user['lon']))
+            user_distances = []
+            for case in self.case_locations:
+                case_point = (float(case['lat']), float(case['lon']))
+                user_distances.append(haversine.haversine(case_point, user_point))
+
+            distance_matrix.append(user_distances)
+
+        return distance_matrix
 
     def solve(self, print_solution=False):
         costs = self.calculate_distance_matrix()
