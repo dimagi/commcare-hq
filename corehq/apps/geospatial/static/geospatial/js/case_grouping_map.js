@@ -354,7 +354,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         };
 
         self.loadCaseGroups = function(caseGroups) {
-            self.allCaseGroups = caseGroups; // {case_id: {group_info}}
+            self.allCaseGroups = caseGroups;
             // Add groups to the cases being exported
 
             let groupIds = [];
