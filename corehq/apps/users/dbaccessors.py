@@ -391,3 +391,13 @@ def get_practice_mode_mobile_workers(domain):
         .fields(['_id', 'username'])
         .run().hits
     )
+
+
+def get_all_user_search_query(search_string):
+    query = (UserES()
+             .remove_default_filters())
+    if search_string:
+        fields = ['username', 'first_name', 'last_name', 'phone_numbers',
+                  'domain_membership.domain', 'domain_memberships.domain']
+        query = query.search_string_query(search_string, fields)
+    return query

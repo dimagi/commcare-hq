@@ -129,7 +129,6 @@ class TestUsersByLocation(TestCase):
         )
 
 
-
 class TestFilteredLocationsCount(TestCase):
 
     @classmethod
