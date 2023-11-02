@@ -12796,6 +12796,12 @@ msgid "Case Property Group"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"This GPS case property is currently being used to store the geolocation for "
+"cases, so the data type cannot be changed."
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/tests/test_util.py
 #: corehq/apps/data_dictionary/util.py corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
@@ -17965,6 +17971,10 @@ msgstr ""
 
 #: corehq/apps/enterprise/forms.py
 msgid "180 days"
+msgstr ""
+
+#: corehq/apps/enterprise/forms.py
+msgid "365 days"
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py

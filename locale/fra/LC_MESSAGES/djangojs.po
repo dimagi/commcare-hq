@@ -3476,10 +3476,8 @@ msgid "Name of the Area"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-#, fuzzy
-#| msgid "Select a Location"
 msgid "All locations"
-msgstr "Sélectionner un site"
+msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
