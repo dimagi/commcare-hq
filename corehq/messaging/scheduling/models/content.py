@@ -23,7 +23,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.domain.models import Domain
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
-from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.sms.models import (
     Email,
@@ -123,9 +123,10 @@ class EmailContent(Content):
         return renderer.render(subject), renderer.render(message)
 
     def send(self, recipient, logged_event, phone_entry=None):
-        email_usage = EmailUsage.get_or_create_usage_record(logged_event.domain)
-        is_trial = domain_is_on_trial(logged_event.domain)
-        domain_obj = Domain.get_by_name(logged_event.domain)
+        domain = logged_event.domain
+        email_usage = EmailUsage.get_or_create_usage_record(domain)
+        is_trial = domain_is_on_trial(domain)
+        domain_obj = Domain.get_by_name(domain)
 
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
@@ -162,19 +163,30 @@ class EmailContent(Content):
             logged_subevent.error(e.error_type, additional_error_text=e.additional_text)
             return
 
-        if is_trial and EmailUsage.get_total_count(logged_event.domain) >= self.TRIAL_MAX_EMAILS:
+        if is_trial and EmailUsage.get_total_count(domain) >= self.TRIAL_MAX_EMAILS:
             logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
             return
 
-        metrics_counter('commcare.messaging.email.sent', tags={'domain': logged_event.domain})
-        send_mail_async.delay(subject, message,
-                              [email_address],
-                              messaging_event_id=logged_subevent.id,
-                              domain=logged_event.domain,
-                              use_domain_gateway=True)
+        metrics_counter('commcare.messaging.email.sent', tags={'domain': domain})
+        if toggles.RICH_TEXT_EMAILS.enabled(domain):
+            send_html_email_async.delay(
+                subject,
+                email_address,
+                message,        # TODO: Switch to html_message?
+                text_content="TODO",
+                messaging_event_id=logged_subevent.id,
+                domain=domain)
+        else:
+            send_mail_async.delay(
+                subject,
+                message,
+                [email_address],
+                messaging_event_id=logged_subevent.id,
+                domain=domain,
+                use_domain_gateway=True)
 
         email = Email(
-            domain=logged_event.domain,
+            domain=domain,
             date=logged_subevent.date_last_activity,  # use date from subevent for consistency
             couch_recipient_doc_type=logged_subevent.recipient_type,
             couch_recipient=logged_subevent.recipient_id,
