@@ -1,3 +1,5 @@
+import doctest
+
 from nose.tools import assert_equal
 
 from django.test import TestCase
@@ -60,3 +62,10 @@ class TestCaseGroupingReport(TestCase):
             list(context_data['case_row_order'].keys()),
             expected_columns
         )
+
+
+def test_doctests():
+    import corehq.apps.geospatial.reports as reports
+
+    results = doctest.testmod(reports)
+    assert results.failed == 0

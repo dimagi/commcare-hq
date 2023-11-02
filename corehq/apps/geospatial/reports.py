@@ -11,18 +11,30 @@ from couchforms.geopoint import GeoPoint
 
 from corehq.apps.case_search.const import CASE_PROPERTIES_PATH
 from corehq.apps.es import CaseSearchES, filters
-from corehq.apps.es.case_search import wrap_case_search_hit
+from corehq.apps.es.case_search import (
+    PROPERTY_GEOPOINT_VALUE,
+    PROPERTY_KEY,
+    wrap_case_search_hit,
+)
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.util.quickcache import quickcache
 
 from .dispatchers import CaseManagementMapDispatcher
-from .es import AGG_NAME, apply_geohash_agg, find_precision
+from .es import (
+    BUCKET_CASES_AGG,
+    CASE_PROPERTIES_AGG,
+    CASE_PROPERTY_AGG,
+    GEOHASHES_AGG,
+    apply_geohash_agg,
+    find_precision,
+)
 from .models import GeoPolygon
 from .utils import (
+    assert_geometry_type,
+    geojson_to_es_geoshape,
     get_geo_case_property,
-    features_to_points_list,
 )
 
 
@@ -144,16 +156,42 @@ class CaseGroupingReport(BaseCaseMapReport):
         if not buckets:
             return []
 
-        cases = []
-
         # self.pagination.start is the page number
+        # (self.pagination.count is always treated as 1)
         bucket = buckets[self.pagination.start]
-        geohash = bucket['key']
+        # Example bucket:
+        #     {
+        #         'key': 't0'
+        #         'doc_count': 1,
+        #         'bucket_cases': {
+        #             'bounds': {
+        #                 'bottom_right': {
+        #                     'lat': 4.912349972873926,
+        #                     'lon': 52.374080987647176,
+        #                 },
+        #                 'top_left': {
+        #                     'lat': 4.912349972873926,
+        #                     'lon': 52.374080987647176,
+        #                 },
+        #             },
+        #         },
+        #     }
+        bounds = bucket[BUCKET_CASES_AGG]['bounds']
 
-        query = super()._build_query()
-        # ToDo: filter by geohash
+        query = super()._build_query()  # `super()` so as not to filter
+        filters_ = [filters.geo_bounding_box(
+            field=PROPERTY_GEOPOINT_VALUE,
+            top_left=bounds['top_left'],
+            bottom_right=bounds['bottom_right'],
+        )]
+        if self.request.GET.get('features'):
+            features = json.loads(self.request.GET['features'])
+            features_filter = self._get_filter_for_features(features)
+            filters_.append(features_filter)
+        query = self._filter_query(query, filters_)
         es_results = query.run().raw
 
+        cases = []
         for row in es_results['hits'].get('hits', []):
             display = CaseDisplayES(
                 self.get_case(row), self.timezone, self.individual
@@ -176,9 +214,9 @@ class CaseGroupingReport(BaseCaseMapReport):
             return []
         return (
             es_results['aggregations']
-            ['case_properties']
-            ['case_property']
-            [AGG_NAME]
+            [CASE_PROPERTIES_AGG]
+            [CASE_PROPERTY_AGG]
+            [GEOHASHES_AGG]
             ['buckets']
         )
 
@@ -207,59 +245,93 @@ class CaseGroupingReport(BaseCaseMapReport):
     def _build_query(self):
         """
         Returns a filtered, unaggregated, unpaginated ESQuery.
-        This allows it to be used by `total_cases()`.
         """
         query = super()._build_query()
-        return self._add_geospatial_filters(query)
-
-    def _add_geospatial_filters(self, query):
-        """
-            If a user-defined polygon (or other GeoShape) is passed in the
-            "feature" GET param, adds that as a filter to ``query``.
-            If ``additional_filters`` is set, adds those to ``query``.
-            It is possible that both, either one, or none are set. If none
-            are set, ``query`` is returned unchanged.
-        """
-        if self.request.GET.get('feature'):
-            case_property = get_geo_case_property(self.domain)
-            try:
-                features = json.loads(self.request.GET['features'])
-                points_list = features_to_points_list(features)
-                query = query.nested(
-                    CASE_PROPERTIES_PATH,
-                    filters.geo_shape(
-                        field=case_property,
-                        points_list=points_list,
-                    )
-                )
-            except json.JSONDecodeError:
-                pass
+        if self.request.GET.get('features'):
+            features = json.loads(self.request.GET['features'])
+            features_filter = self._get_filter_for_features(features)
+            query = self._filter_query(query, [features_filter])
         return query
 
+    @staticmethod
+    def _get_filter_for_features(features):
+        """
+        Returns an Elasticsearch filter to select for cases within the
+        polygons defined by GeoJSON ``features``.
 
-def geojson_to_es_geoshape(geojson):
-    """
-    Given a GeoJSON dict, returns a GeoJSON Geometry dict, with "type"
-    given as an Elasticsearch type (i.e. in lowercase).
+        Example value of ``features``::
 
-    More info:
+            {
+              "1fe8e9a47059aa0d24d3bb518dd32cec": {
+                "id": "1fe8e9a47059aa0d24d3bb518dd32cec",
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                  "type": "Polygon",
+                  "coordinates": [
+                    [  /* exterior ring */
+                      [
+                        1.7739302693154002,
+                        6.30270638391498
+                      ],
+                      /* At least three more points, given
+                         counterclockwise. The last point will equal the
+                         first. */
+                    ],
+                    /* interior rings / holes. Points are given
+                       clockwise. */
+                  ]
+                }
+              },
+              "e732a9da883ad59534ff7b6284eeff4a": {
+                "id": "e732a9da883ad59534ff7b6284eeff4a",
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                  "type": "Polygon",
+                  "coordinates": [
+                    [
+                      [
+                        0.7089909368813494,
+                        7.1851152290118705
+                      ],
+                      /* ... */
+                    ]
+                  ]
+                }
+              }
+            }
 
-    * `The GeoJSON specification (RFC 7946) <https://datatracker.ietf.org/doc/html/rfc7946>`_
-    * `Elasticsearch types <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/geo-shape.html#input-structure>`_
+        """
+        polygon_filters = []
+        for feature in features.values():
+            assert_geometry_type(feature)
+            polygon = geojson_to_es_geoshape(feature)
+            # The first list of coordinates is the exterior ring, and
+            # the rest are interior rings, i.e. holes.
+            # https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.6
+            # The polygon filter in Elasticsearch 5.6 does not support
+            # holes, but the geo_shape filter in Elasticsearch 8+ does.
+            exterior_ring = polygon['coordinates'][0]
+            polygon_filters.append(filters.geo_polygon(
+                field=PROPERTY_GEOPOINT_VALUE,
+                points=exterior_ring,
+            ))
+        return filters.OR(*polygon_filters)
 
-    """  # noqa: E501
-    supported_types = (
-        'Point',
-        'LineString',
-        'Polygon',  # We expect this, but we get the others for free
-        'MultiPoint',
-        'MultiLineString',
-        'MultiPolygon',
-        # GeometryCollection is not supported
-    )
-    assert geojson['geometry']['type'] in supported_types, \
-        f"{geojson['geometry']['type']} is not a supported geometry type"
-    return {
-        'type': geojson['geometry']['type'].lower(),
-        'coordinates': geojson['geometry']['coordinates'],
-    }
+    def _filter_query(self, query, filters_):
+        """
+        Prepends the geo case property name filter to a list of
+        ``filters_``, and filters ``query`` by ``filters_``.
+        """
+        if filters_:
+            case_property = get_geo_case_property(self.domain)
+            filters_.insert(0, filters.term(
+                field=PROPERTY_KEY,
+                value=case_property
+            ))
+            query = query.nested(
+                path=CASE_PROPERTIES_PATH,
+                filter_=filters.AND(*filters_)
+            )
+        return query
