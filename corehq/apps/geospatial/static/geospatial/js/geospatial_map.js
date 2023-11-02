@@ -20,6 +20,7 @@ hqDefine("geospatial/js/geospatial_map", [
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
     var disbursementRunner;
+    var caseGroupsIndex = {};
 
     function mapItemModel(itemId, itemData, marker, markerColors) {
         'use strict';
@@ -30,6 +31,11 @@ hqDefine("geospatial/js/geospatial_map", [
         self.selectCssId = "select" + itemId;
         self.isSelected = ko.observable(false);
         self.markerColors = markerColors;
+
+        self.setMarkerOpacity = function (opacity) {
+            let element = self.marker.getElement();
+            element.style.opacity = opacity;
+        }
 
         function changeMarkerColor(selectedCase, newColor) {
             let marker = selectedCase.marker;
@@ -230,6 +236,8 @@ hqDefine("geospatial/js/geospatial_map", [
                 const markerDiv = marker.getElement();
                 // Show popup on hover
                 markerDiv.addEventListener('mouseenter', () => marker.togglePopup());
+                markerDiv.addEventListener('mouseenter', () => highlightMarkerGroup(marker));
+                markerDiv.addEventListener('mouseleave', () => resetMarkersOpacity());
 
                 // Hide popup if mouse leaves marker and popup
                 var addLeaveEvent = function (fromDiv, toDiv) {
@@ -291,12 +299,33 @@ hqDefine("geospatial/js/geospatial_map", [
             }
         };
 
-        function connectUserWithCasesOnMap(userId, casesIds, color) {
-            user = userModels().find((userModel) => {return userModel.itemId === userId});
-            cases = caseModels().filter((caseModel) => {return casesIds.includes(caseModel.itemId)});
+        function resetMarkersOpacity() {
+            Object.keys(caseGroupsIndex).forEach(itemCoordinates => {
+                const mapMarkerItem = caseGroupsIndex[itemCoordinates];
+                mapMarkerItem.item.setMarkerOpacity(1);
+            });
+        }
 
+        function highlightMarkerGroup(marker) {
+            const markerCoords = marker.getLngLat();
+            const currentMarkerPosition = markerCoords.lng + " " + markerCoords.lat;
+            const markerItem = caseGroupsIndex[currentMarkerPosition];
+
+            if (markerItem) {
+                const groupId = markerItem.groupId;
+
+                Object.keys(caseGroupsIndex).forEach(itemCoordinates => {
+                    const mapMarkerItem = caseGroupsIndex[itemCoordinates];
+                    if (mapMarkerItem.groupId !== groupId) {
+                        mapMarkerItem.item.setMarkerOpacity(0.2);
+                    }
+                });
+            }
+        }
+
+        function connectUserWithCasesOnMap(user, cases) {
             cases.forEach((caseModel) => {
-                 const lineCoordinates = [
+                const lineCoordinates = [
                     [user.itemData.coordinates.lng, user.itemData.coordinates.lat],
                     [caseModel.itemData.coordinates.lng, caseModel.itemData.coordinates.lat],
                 ];
@@ -320,7 +349,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     'line-cap': 'round'
                   },
                   paint: {
-                    'line-color': '#FF0000',
+                    'line-color': '#808080',
                     'line-width': 1
                   }
                 });
@@ -333,12 +362,6 @@ hqDefine("geospatial/js/geospatial_map", [
             self.id = polygon.id;
             self.geoJson = polygon.geo_json;
             return self;
-        }
-
-        function showDisbursementResultsOnMap(result) {
-            Object.keys(result).forEach((userId) => {
-                connectUserWithCasesOnMap(userId, result[userId]);
-            });
         }
 
         var disbursementRunnerModel = function () {
@@ -355,6 +378,27 @@ hqDefine("geospatial/js/geospatial_map", [
                 } else {
                     $("#btnRunDisbursement").removeClass('disabled');
                 }
+            }
+
+            self.handleDisbursementResults = function(result) {
+                var groupId = 0;
+                Object.keys(result).forEach((userId) => {
+                    user = userModels().find((userModel) => {return userModel.itemId === userId});
+                    const userCoordString = user.itemData.coordinates['lng'] + " " + user.itemData.coordinates['lat'];
+                    caseGroupsIndex[userCoordString] = {groupId: groupId, item: user};
+
+                    let cases = [];
+                    caseModels().forEach((caseModel) => {
+                        if (result[userId].includes(caseModel.itemId)) {
+                            cases.push(caseModel);
+                            const coordString = caseModel.itemData.coordinates['lng'] + " " + caseModel.itemData.coordinates['lat'];
+                            caseGroupsIndex[coordString] = {groupId: groupId, item: caseModel};
+                        }
+                    });
+                    connectUserWithCasesOnMap(user, cases);
+                    groupId += 1;
+                });
+                self.setBusy(false);
             }
 
             self.runCaseDisbursementAlgorithm = function (cases, users) {
@@ -397,8 +441,7 @@ hqDefine("geospatial/js/geospatial_map", [
                             self.startPoll(ret['poll_url']);
                         }
                         else {
-                            showDisbursementResultsOnMap(ret['result']);
-                            self.setBusy(false);
+                            self.handleDisbursementResults(ret['result']);
                         }
                     },
                 });
@@ -422,8 +465,7 @@ hqDefine("geospatial/js/geospatial_map", [
                             if (!data) {
                                 setTimeout(tick, 1500);
                             } else {
-                                showDisbursementResultsOnMap(result);
-                                self.setBusy(false);
+                                self.handleDisbursementResults(result);
                             }
                         },
                     });
