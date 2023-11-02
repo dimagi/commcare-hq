@@ -92,7 +92,11 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
     ScheduleInstance,
 )
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, FCM_NOTIFICATION
+from corehq.toggles import (
+    EXTENSION_CASES_SYNC_ENABLED,
+    FCM_NOTIFICATION,
+    RICH_TEXT_EMAILS,
+)
 
 
 def validate_time(value):
@@ -232,6 +236,7 @@ class ContentForm(Form):
             raise ValueError("Expected schedule_form in kwargs")
 
         self.schedule_form = kwargs.pop('schedule_form')
+        self.domain = self.schedule_form.domain
         super(ContentForm, self).__init__(*args, **kwargs)
         self.set_app_and_form_unique_id_choices()
 
@@ -421,6 +426,11 @@ class ContentForm(Form):
             raise ValueError("Unexpected value for content: '%s'" % self.schedule_form.cleaned_data['content'])
 
     def get_layout_fields(self):
+        if RICH_TEXT_EMAILS.enabled(self.domain):
+            message_field_template = 'scheduling/partials/rich_text_message_configuration.html'
+        else:
+            message_field_template = 'scheduling/partials/message_configuration.html'
+
         return [
             hqcrispy.B3MultiField(
                 _('Message type'),
@@ -457,7 +467,7 @@ class ContentForm(Form):
                     data_bind='value: message.messagesJSONString',
                 ),
                 crispy.Div(
-                    crispy.Div(template='scheduling/partials/message_configuration.html'),
+                    crispy.Div(template=message_field_template),
                     data_bind='with: message',
                 ),
                 data_bind=(
