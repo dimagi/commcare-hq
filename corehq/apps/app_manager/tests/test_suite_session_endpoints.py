@@ -629,7 +629,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
 
     def test_session_endpoint_respect_relevancy_on_followup_form(self):
         self.form.session_endpoint_id = 'my_form'
-        self.form.respect_relevancy = True
+        self.form.respect_relevancy = False
         self.factory.form_requires_case(self.form, case_type=self.parent_case_type)
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
@@ -637,7 +637,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_form" respect-relevancy="true">
+                <endpoint id="my_form" respect-relevancy="false">
                     <argument id="case_id"/>
                     <stack>
                         <push>

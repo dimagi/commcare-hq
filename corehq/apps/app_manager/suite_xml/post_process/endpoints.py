@@ -104,19 +104,14 @@ class EndpointsHelper(PostProcessor):
             else:
                 arguments.append(Argument(id=arg_id))
 
-        if respect_relevancy:
-            return SessionEndpoint(
-                id=endpoint_id,
-                arguments=arguments,
-                stack=stack,
-                respect_relevancy=respect_relevancy
-            )
-        else:
-            return SessionEndpoint(
-                id=endpoint_id,
-                arguments=arguments,
-                stack=stack
-            )
+        endpoint = SessionEndpoint(
+            id=endpoint_id,
+            arguments=arguments,
+            stack=stack
+        )
+        if respect_relevancy is False:
+            endpoint.respect_relevancy = False
+        return endpoint
 
     def get_argument_ids(self, frame_children, form=None, should_add_last_selection_datum=True):
 

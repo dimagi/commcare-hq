@@ -28,17 +28,19 @@
                         data-content="{% blocktrans %}Turn this setting on to allow this endpoint to access
                                         hidden forms.{% endblocktrans %}"></span>
                 </label>
-                <div id="respect-relevancy"
+                <div id="access-hidden-forms"
                     class="{% css_field_class %} commcare-feature"
                     data-since-version="2.51"
                     class="{% css_field_class %}">
                     <input type="checkbox"
-                        id="respect_relevancy"
-                        name="respect_relevancy"
+                        id="access_hidden_forms"
+                        name="access_hidden_forms"
                         value="true"
                         style="margin-top: 10px"
-                        {% if form.respect_relevancy %} checked {% endif %}
+                        {% comment %} respect_relevancy is an inverse condition of allowing access to hidden forms
+                        {% endcomment %}
+                        {% if not form.respect_relevancy %} checked {% endif %}
                     />
-                    <input type="hidden" name="respect_relevancy" value="false"/>
+                    <input type="hidden" name="access_hidden_forms" value="false"/>
                 </div>
             </div>
