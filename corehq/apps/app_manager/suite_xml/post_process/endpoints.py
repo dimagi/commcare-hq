@@ -49,7 +49,7 @@ class EndpointsHelper(PostProcessor):
                     if form.session_endpoint_id:
                         self.suite.endpoints.append(self._make_session_endpoint(
                             form.session_endpoint_id, module, form,
-                            respect_relevancy=getattr(form, 'respect_relevancy')))
+                            respect_relevancy=getattr(form, 'respect_relevancy', None)))
             elif module.session_endpoint_id:
                 for form in module.get_suite_forms():
                     endpoint = next(
