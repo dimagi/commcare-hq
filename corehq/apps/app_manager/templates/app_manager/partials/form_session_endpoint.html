@@ -39,7 +39,7 @@
                         style="margin-top: 10px"
                         {% comment %} respect_relevancy is an inverse condition of allowing access to hidden forms
                         {% endcomment %}
-                        {% if not form.respect_relevancy %} checked {% endif %}
+                        {% if form.respect_relevancy is False %} checked {% endif %}
                     />
                     <input type="hidden" name="access_hidden_forms" value="false"/>
                 </div>
