@@ -31,6 +31,7 @@ class CaseTileTemplates(models.TextChoices):
                                                       "and map"))
     ONE_TWO_TWO = ("one_two_two", _("Title row, second row with two cells, third row with two cells"))
     ICON_TEXT_GRID = ("icon_text_grid", _("2 x 3 grid of image and text"))
+    BHA_REFERRALS = ("bha_referrals", _("BHA Referrals"))
 
 
 @dataclass
