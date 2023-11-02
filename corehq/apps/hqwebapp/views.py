@@ -76,7 +76,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
-from corehq.apps.hqwebapp.decorators import waf_allow, use_bootstrap5
+from corehq.apps.hqwebapp.decorators import waf_allow, use_bootstrap5, setup_two_factor
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.encoders import LazyEncoder
@@ -478,11 +478,16 @@ def iframe_sso_login_pending(request):
 
 class HQLoginView(LoginView):
     form_list = [
-        ('auth', EmailAuthenticationForm),
-        ('token', HQAuthenticationTokenForm),
-        ('backup', HQBackupTokenForm),
+        (LoginView.AUTH_STEP, EmailAuthenticationForm),
+        (LoginView.TOKEN_STEP, HQAuthenticationTokenForm),
+        (LoginView.BACKUP_STEP, HQBackupTokenForm),
     ]
     extra_context = {}
+
+    @setup_two_factor
+    def setup(self, request, *args, **kwargs):
+        # this is only here to add decorators
+        return super().setup(request, *args, **kwargs)
 
     def post(self, *args, **kwargs):
         if settings.ENFORCE_SSO_LOGIN and self.steps.current == 'auth':
@@ -516,9 +521,9 @@ class HQLoginView(LoginView):
 
 class CloudCareLoginView(HQLoginView):
     form_list = [
-        ('auth', CloudCareAuthenticationForm),
-        ('token', HQAuthenticationTokenForm),
-        ('backup', HQBackupTokenForm),
+        (HQLoginView.AUTH_STEP, CloudCareAuthenticationForm),
+        (HQLoginView.TOKEN_STEP, HQAuthenticationTokenForm),
+        (HQLoginView.BACKUP_STEP, HQBackupTokenForm),
     ]
 
 
