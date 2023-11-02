@@ -15,11 +15,13 @@ from crispy_forms.layout import Layout
 from two_factor.forms import (
     DeviceValidationForm,
     MethodForm,
-    PhoneNumberForm,
-    PhoneNumberMethodForm,
     TOTPDeviceForm,
 )
-from two_factor.models import get_available_phone_methods
+from two_factor.plugins.phonenumber.utils import get_available_phone_methods
+from two_factor.plugins.phonenumber.forms import (
+    PhoneNumberForm,
+    PhoneNumberMethodForm,
+)
 from two_factor.utils import totp_digits
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
