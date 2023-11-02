@@ -135,6 +135,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     title: menuResponse.title,
                     description: menuResponse.description,
                     sidebarEnabled: true,
+                    disableDynamicSearch: !sessionStorage.submitPerformed,
                 }).render()
             );
         } else if (sidebarEnabled && menuResponse.type === "query") {
