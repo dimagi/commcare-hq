@@ -265,9 +265,3 @@ def delete_all_repeat_records():
         include_docs=True,
     ).all()
     db.bulk_delete([r["doc"] for r in results], empty_on_delete=False)
-
-
-@unit_testing_only
-def delete_all_repeaters():
-    from .models import Repeater
-    Repeater.objects.all().delete()

@@ -14,6 +14,7 @@ from corehq.form_processor.utils.xform import (
     TestFormMetadata,
 )
 from corehq.motech.models import ConnectionSettings, RequestLog
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import FormRepeater, RepeatRecord, Repeater
 from corehq.motech.repeaters.tasks import delete_old_request_logs, process_repeater, _process_repeat_record
 from ..const import (
@@ -28,9 +29,6 @@ PAYLOAD_IDS = ['aon', 'dha', 'trì', 'ceithir', 'coig', 'sia', 'seachd', 'ochd',
 
 
 class TestDeleteOldRequestLogs(TestCase):
-
-    def tearDown(self):
-        RequestLog.objects.filter(domain=DOMAIN).delete()
 
     def test_raw_delete_logs_old(self):
         log = RequestLog.objects.create(domain=DOMAIN)
@@ -78,11 +76,13 @@ class TestProcessRepeater(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = create_domain(DOMAIN)
+        cls.addClassCleanup(cls.domain.delete)
         cls.connection_settings = ConnectionSettings.objects.create(
             domain=DOMAIN,
             name='Test API',
             url="http://localhost/api/"
         )
+        cls.addClassCleanup(delete_all_repeat_records)
 
     def setUp(self):
         self.repeater = FormRepeater.objects.create(
@@ -99,15 +99,6 @@ class TestProcessRepeater(TestCase):
                 registered_at=just_now,
             )
             just_now += timedelta(seconds=1)
-
-    def tearDown(self):
-        self.repeater.delete()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.connection_settings.delete()
-        cls.domain.delete()
-        super().tearDownClass()
 
     def test_get_payload_fails(self):
         # If the payload of a repeat record is missing, it should be
@@ -300,6 +291,7 @@ class TestProcessRepeatRecord(TestCase):
             domain=cls.domain,
             connection_settings=cls.conn_settings,
         )
+        cls.addClassCleanup(delete_all_repeat_records)
 
     def setUp(self):
         self.patch()
