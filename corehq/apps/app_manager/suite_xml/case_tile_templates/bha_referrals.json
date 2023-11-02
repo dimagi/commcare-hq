@@ -1,0 +1,21 @@
+{
+    "slug": "bha_referrals",
+    "filename": "bha_referrals.xml",
+    "has_map": true,
+    "fields": ["Profile Information", "Age", "Gender", "ASAM Level",
+      "Reason for Seeking Care", "Level of Care Needed", "Date Sent", "Status",
+      "Destination", "image", "warning text"],
+    "grid": {
+        "Profile Information": {"height":"1", "width":"12", "x":"0", "y":"0", "horz-align":"left", "vert-align":"center", "font-size":"small"},
+        "Age": {"height":"1", "width":"4", "x":"0", "y":"1", "horz-align":"left", "vert-align":"center", "font-size":"small"},
+        "Gender": {"height":"1", "width":"4", "x":"4", "y":"1", "horz-align":"left", "vert-align":"center", "font-size":"small"},
+        "ASAM Level": {"height":"1", "width":"4", "x":"8", "y":"1", "horz-align":"left", "vert-align":"center", "font-size":"small"},
+        "Reason for Seeking Care": {"height":"1", "width":"4", "x":"0", "y":"2", "horz-align":"left", "vert-align":"center", "font-size":"small"},
+        "Level of Care Needed": {"height":"1", "width":"8", "x":"4", "y":"2", "horz-align":"left", "vert-align":"center", "font-size":"small"},
+        "Date Sent": {"height":"1", "width":"6", "x":"0", "y":"3", "horz-align":"left", "vert-align":"center", "font-size":"small"},
+        "Status": {"height":"1", "width":"6", "x":"6", "y":"3", "horz-align":"left", "vert-align":"center", "font-size":"small"},
+        "Destination": {"height":"1", "width":"12", "x":"0", "y":"4", "horz-align":"left", "vert-align":"center", "font-size":"small"},
+        "image": {"height":"1", "width":"1", "x":"0", "y":"5", "horz-align":"center", "vert-align":"start", "font-size":"small"},
+        "warning text": {"height":"1", "width":"11", "x":"1", "y":"5", "horz-align":"left", "vert-align":"start", "font-size":"small"}
+    }
+}

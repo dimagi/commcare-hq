@@ -1,0 +1,178 @@
+
+<detail id="m12_case_short">
+    <title>
+        <text>
+            <locale id="cchq.case"/>
+        </text>
+    </title>
+
+   <field>
+    <style horz-align="left" vert-align="center" font-size="small">
+      <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
+    </style>
+    <header>
+      <text/>
+    </header>
+    <template form="plain">
+      <text>
+        <xpath function="concat('**Profile Information**')"/>
+      </text>
+    </template>
+  </field>
+
+   <field>
+      <style horz-align="left" vert-align="center" font-size="small">
+        <grid grid-height="1" grid-width="4" grid-x="0" grid-y="1"/>
+       </style>
+      <header>
+        <text>
+        </text>
+      </header>
+      <template form="plain">
+        <text>
+          <xpath function="concat('**Age:** 27')">
+          </xpath>
+        </text>
+      </template>
+    </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="small">
+      <grid grid-height="1" grid-width="4" grid-x="4" grid-y="1"/>
+    </style>
+    <header>
+      <text/>
+    </header>
+    <template form="plain">
+      <text>
+        <xpath function="concat('**Gender:** Male')"/>
+      </text>
+    </template>
+  </field>
+
+<field>
+      <style horz-align="left" vert-align="center" font-size="small">
+        <grid grid-height="1" grid-width="4" grid-x="8" grid-y="1"/>
+       </style>
+      <header>
+        <text>
+        </text>
+      </header>
+      <template form="plain">
+        <text>
+          <xpath function="concat('**ASAM Level:** Level 3.2WM')">
+          </xpath>
+        </text>
+      </template>
+    </field>
+
+    <field>
+    <style horz-align="left" vert-align="center" font-size="small">
+      <grid grid-height="1" grid-width="4" grid-x="0" grid-y="2"/>
+    </style>
+    <header>
+      <text/>
+    </header>
+    <template form="plain">
+      <text>
+        <xpath function="concat('**Reason for Seeking Care:** blah blah')"/>
+      </text>
+    </template>
+  </field>
+
+  <field>
+      <style horz-align="left" vert-align="center" font-size="small">
+        <grid grid-height="1" grid-width="8" grid-x="4" grid-y="2"/>
+       </style>
+      <header>
+        <text>
+        </text>
+      </header>
+      <template form="plain">
+        <text>
+          <xpath function="concat('**Level of Care Needed:** high acuity')">
+          </xpath>
+        </text>
+      </template>
+    </field>
+
+
+     <field>
+    <style horz-align="left" vert-align="center" font-size="small">
+      <grid grid-height="1" grid-width="6" grid-x="0" grid-y="3"/>
+    </style>
+    <header>
+      <text/>
+    </header>
+    <template form="plain">
+      <text>
+        <xpath function="concat('**Date Sent:**')"/>
+      </text>
+    </template>
+  </field>
+
+  <field>
+      <style horz-align="left" vert-align="center" font-size="small">
+        <grid grid-height="1" grid-width="6" grid-x="6" grid-y="3"/>
+       </style>
+      <header>
+        <text>
+        </text>
+      </header>
+      <template form="plain">
+        <text>
+          <xpath function="concat('**Status:**')">
+          </xpath>
+        </text>
+      </template>
+    </field>
+
+    <field>
+      <style horz-align="left" vert-align="center" font-size="small">
+        <grid grid-height="1" grid-width="12" grid-x="0" grid-y="4"/>
+       </style>
+      <header>
+        <text>
+        </text>
+      </header>
+      <template form="plain">
+        <text>
+          <xpath function="concat('**Destination:**')">
+          </xpath>
+        </text>
+      </template>
+    </field>
+
+      <field>
+      <style horz-align="center" vert-align="start" font-size="small">
+        <grid grid-height="1" grid-width="1" grid-x="0" grid-y="5"/>
+       </style>
+      <header>
+        <text>
+        </text>
+      </header>
+      <template form="plain">
+        <text>
+          <xpath function="concat('image')">
+          </xpath>
+        </text>
+      </template>
+    </field>
+
+    <field>
+      <style horz-align="left" vert-align="start" font-size="small">
+        <grid grid-height="1" grid-width="11" grid-x="1" grid-y="5"/>
+       </style>
+      <header>
+        <text>
+        </text>
+      </header>
+      <template form="plain">
+        <text>
+          <xpath function="concat('warning text')">
+          </xpath>
+        </text>
+      </template>
+    </field>
+
+</detail>
