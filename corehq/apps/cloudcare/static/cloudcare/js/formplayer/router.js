@@ -199,7 +199,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled) {
+    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiator) {
+        console.log("Menu query event listener start");
+        console.log("initiator " + initiator);
+        var startTime = performance.now();
         var urlObject = utils.currentUrlToObject();
         var queryObject = _.extend(
             {
@@ -209,9 +212,18 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             // force manual search in split screen case search for workflow compatibility
             sidebarEnabled ? { forceManualSearch: true } : {}
         );
+
+        var queryObject = _.extend(queryObject, initiator === "dynamicSearch" ? { initiatedBy: "dynamic_search"} : {});
+
+        console.log("queryObject " + JSON.stringify(queryObject));
+
         urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
         API.listMenus();
+        var endTime = performance.now();
+        console.log("Menu query event listener end");
+        var responseTime = endTime - startTime;
+        console.log("Response time in menu:query listener: " + responseTime + " milliseconds");
     });
 
     FormplayerFrontend.on('restore_as:list', function () {
