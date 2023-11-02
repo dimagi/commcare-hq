@@ -1587,6 +1587,9 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
             )
         self.add_success_attempt(response)
 
+    def handle_failure(self, response):
+        self.add_server_failure_attempt(format_response(response))
+
     def handle_exception(self, exception):
         self.add_client_failure_attempt(str(exception))
 
