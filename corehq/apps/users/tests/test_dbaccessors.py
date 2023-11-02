@@ -24,6 +24,7 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_users_by_filters,
     get_web_users_by_filters,
     hard_delete_deleted_users,
+    get_all_user_search_query,
 )
 from corehq.apps.users.models import (
     CommCareUser,
@@ -157,6 +158,19 @@ class AllCommCareUsersTest(TestCase):
         )
 
         self.assertEqual(count_web_users_by_filters(self.ccdomain.name, {}), 2)
+
+        # query_string search
+        self.assertItemsEqual(
+            get_all_user_search_query(self.ccdomain.name[0:2]).get_ids()
+            [
+                self.ccuser_1._id, self.ccuser_2._id, self.web_user._id,
+                self.location_restricted_web_user._id, self.ccuser_inactive._id
+            ]
+        )
+        self.assertItemsEqual(
+            get_all_user_search_query(self.ccuser_1.username).get_ids()
+            [self.ccuser_1._id]
+        )
 
         # can search by username
         filters = {'search_string': 'user_1'}
