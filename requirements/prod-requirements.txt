@@ -672,7 +672,7 @@ zope-interface==6.1
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==23.0.1
+pip==23.3
     # via -r prod-requirements.in
 setuptools==67.3.2
     # via
