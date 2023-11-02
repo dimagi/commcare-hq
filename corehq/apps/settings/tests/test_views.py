@@ -7,7 +7,8 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
 
-from two_factor.views import PhoneSetupView, ProfileView, SetupView
+from two_factor.views import ProfileView, SetupView
+from two_factor.plugins.phonenumber.views import PhoneSetupView
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.audit.change_messages import UserChangeMessage

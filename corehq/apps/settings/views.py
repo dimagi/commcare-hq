@@ -20,16 +20,19 @@ from django.views.decorators.debug import sensitive_post_parameters
 import langcodes
 import qrcode
 from memoized import memoized
-from two_factor.models import PhoneDevice
-from two_factor.utils import backup_phones, default_device
+from two_factor.plugins.phonenumber.models import PhoneDevice
+from two_factor.utils import default_device
+from two_factor.plugins.phonenumber.utils import backup_phones
 from two_factor.views import (
     BackupTokensView,
     DisableView,
-    PhoneDeleteView,
-    PhoneSetupView,
     ProfileView,
     SetupCompleteView,
     SetupView,
+)
+from two_factor.plugins.phonenumber.views import (
+    PhoneDeleteView,
+    PhoneSetupView
 )
 
 from dimagi.utils.web import json_response
