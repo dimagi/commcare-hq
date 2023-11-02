@@ -11,7 +11,7 @@
     </style>
     <header>
       <text>
-        <locale id="{header[locale_id]}"/>
+        <locale id="{header[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
       </text>
     </header>
     <template form="{header[format]}">
@@ -30,17 +30,17 @@
     </style>
     <header>
       <text>
-        <locale id="{top_left[locale_id]}"/>
+        <locale id="{top_left[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
       </text>
     </header>
     <template form="{top_left[format]}">
       <text>
         <xpath function="{top_left[xpath_function]}">
-            {top_left[variables]}
+          {top_left[variables]}
         </xpath>
       </text>
     </template>
-      {top_left[endpoint_action]}
+    {top_left[endpoint_action]}
   </field>
 
   <field>
@@ -49,7 +49,7 @@
     </style>
     <header>
       <text>
-        <locale id="{top_center[locale_id]}"/>
+        <locale id="{top_center[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
       </text>
     </header>
     <template form="{top_center[format]}">
@@ -68,17 +68,17 @@
     </style>
     <header>
       <text>
-        <locale id="{top_right[locale_id]}"/>
+        <locale id="{top_right[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
       </text>
     </header>
     <template form="{top_right[format]}">
       <text>
         <xpath function="{top_right[xpath_function]}">
-            {top_right[variables]}
+          {top_right[variables]}
         </xpath>
       </text>
     </template>
-      {top_right[endpoint_action]}
+    {top_right[endpoint_action]}
   </field>
 
   <field>
@@ -87,7 +87,7 @@
     </style>
     <header>
       <text>
-        <locale id="{middle0_left[locale_id]}"/>
+        <locale id="{middle0_left[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
       </text>
     </header>
     <template form="{middle0_left[format]}">
@@ -106,17 +106,17 @@
     </style>
     <header>
       <text>
-        <locale id="{middle0_right[locale_id]}"/>
+        <locale id="{middle0_right[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
       </text>
     </header>
     <template form="{middle0_right[format]}">
       <text>
         <xpath function="{middle0_right[xpath_function]}">
-            {middle0_right[variables]}
+          {middle0_right[variables]}
         </xpath>
       </text>
     </template>
-      {middle0_right[endpoint_action]}
+    {middle0_right[endpoint_action]}
   </field>
 
 
@@ -126,7 +126,7 @@
     </style>
     <header>
       <text>
-        <locale id="{middle1_left[locale_id]}"/>
+        <locale id="{middle1_left[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
       </text>
     </header>
     <template form="{middle1_left[format]}">
@@ -145,17 +145,17 @@
     </style>
     <header>
       <text>
-        <locale id="{middle1_right[locale_id]}"/>
+        <locale id="{middle1_right[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
       </text>
     </header>
     <template form="{middle1_right[format]}">
       <text>
         <xpath function="{middle1_right[xpath_function]}">
-            {middle1_right[variables]}
+          {middle1_right[variables]}
         </xpath>
       </text>
     </template>
-      {middle1_right[endpoint_action]}
+    {middle1_right[endpoint_action]}
   </field>
 
   <field>
@@ -164,17 +164,17 @@
     </style>
     <header>
       <text>
-        <locale id="{middle2[locale_id]}"/>
+        <locale id="{middle2[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
       </text>
     </header>
     <template form="{middle2[format]}">
       <text>
         <xpath function="{middle2[xpath_function]}">
-            {middle2[variables]}
+          {middle2[variables]}
         </xpath>
       </text>
     </template>
-      {middle2[endpoint_action]}
+    {middle2[endpoint_action]}
   </field>
 
   <field>
@@ -187,11 +187,11 @@
     <template form="{bottom_left_img[format]}">
       <text>
         <xpath function="{bottom_left_img[xpath_function]}">
-            {bottom_left_img[variables]}
+          {bottom_left_img[variables]}
         </xpath>
       </text>
     </template>
-      {bottom_left_img[endpoint_action]}
+    {bottom_left_img[endpoint_action]}
   </field>
 
   <field>
@@ -200,17 +200,17 @@
     </style>
     <header>
       <text>
-        <locale id="{bottom_right[locale_id]}"/>
+        <locale id="{bottom_right[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
       </text>
     </header>
     <template form="{bottom_right[format]}">
       <text>
         <xpath function="{bottom_right[xpath_function]}">
-            {bottom_right[variables]}
+          {bottom_right[variables]}
         </xpath>
       </text>
     </template>
-      {bottom_right[endpoint_action]}
+    {bottom_right[endpoint_action]}
   </field>
 
 </detail>
