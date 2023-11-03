@@ -9,12 +9,13 @@
   </div>
 </div>
 
-<textarea data-bind="ckeditor: nonTranslatedMessage"></textarea>
+<div class="controls translation-controls" data-bind="visible: !translate()">
+  <textarea data-bind="ckeditor: nonTranslatedMessage"></textarea>
+</div>
 
 <div data-bind="visible: translate(), foreach: translatedMessages">
   <div class="controls translation-controls">
     <label>{% trans "Translation" %} (<span data-bind="text: language_code"></span>):</label>
-    <textarea data-bind="value: message" rows="10" cols="40" class="textarea form-control vertical-resize">
-        </textarea>
+    <textarea data-bind="ckeditor: message"></textarea>
   </div>
 </div>
