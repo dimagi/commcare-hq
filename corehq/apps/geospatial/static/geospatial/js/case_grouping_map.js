@@ -19,6 +19,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     const DEFAULT_MARKER_COLOR = "rgba(128,128,128,0.25)";
     const MAP_CONTAINER_ID = 'case-grouping-map';
+    let map;  // TODO: Map and related functions should be moved to a model
     let mapDrawControls;
     const clusterStatsInstance = new clusterStatsModel();
     let exportModelInstance;
@@ -394,7 +395,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                             "type": "Point",
                             "coordinates": [coordinates.lng, coordinates.lat],
                         },
-                    },
+                    }
                 );
             }
         });
@@ -464,7 +465,7 @@ hqDefine("geospatial/js/case_grouping_map",[
     function uuidv4() {
         // https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid/2117523#2117523
         return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
-            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16),
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
         );
     }
 
