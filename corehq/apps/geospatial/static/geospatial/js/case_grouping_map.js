@@ -24,6 +24,8 @@ hqDefine("geospatial/js/case_grouping_map",[
     let exportModelInstance;
     let mapMarkers = [];
 
+    let polygonFilterInstance;
+
     function caseModel(caseId, coordinates, caseLink) {
         'use strict';
         var self = {};
@@ -108,6 +110,15 @@ hqDefine("geospatial/js/case_grouping_map",[
                 }
             });
         }
+        return self;
+    }
+
+    function polygonFilterModel() {
+        let self = {};
+
+        self.savedPolygons = ko.observableArray();
+        self.selectedSavedPolygonId = ko.observable('');
+
         return self;
     }
 
@@ -445,6 +456,9 @@ hqDefine("geospatial/js/case_grouping_map",[
                 $("#lock-groups-controls").koApplyBindings(new groupLockModel());
                 map = initMap();
                 $("#clusterStats").koApplyBindings(clusterStatsInstance);
+                polygonFilterInstance = new polygonFilterModel();
+                $("#polygon-filters").koApplyBindings(polygonFilterInstance);
+
                 return;
             }
 

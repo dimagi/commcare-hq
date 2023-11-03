@@ -26,6 +26,20 @@
   </span>
 </div>
 
+<div class="panel" id="polygon-filters">
+  <div class="row">
+    <label for="saved-polygons" class="control-label col-sm-2 col-md-2 col-lg-2">
+    {% trans "Filter by Saved Area" %}</label>
+    <div class="controls col-sm-2 col-md-2 col-lg-2">
+        <select id="saved-polygons"
+                class="form-control"
+                data-bind="select2: savedPolygons,
+                        value: selectedSavedPolygonId,
+                        ">
+        </select>
+    </div>
+  </div>
+</div>
 <div id="case-grouping-map" style="height: 500px"></div>
 
 <div class="panel-body-datatable">
