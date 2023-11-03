@@ -59,7 +59,8 @@ class TestUserInvitation(TestCase):
             is_sso=False,
             allow_invite_email_only=True,
             invite_email="test@dimagi.com",
-            request_email="other_test@dimagi.com",)
+            request_email="other_test@dimagi.com",
+        )
 
         with self.assertRaises(forms.ValidationError) as ve:
             form.clean_email()
