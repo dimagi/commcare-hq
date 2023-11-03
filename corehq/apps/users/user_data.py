@@ -193,5 +193,5 @@ class SQLUserData(models.Model):
     data = models.JSONField()
 
     class Meta:
-       unique_together = ("user_id", "domain")
-       indexes = [models.Index(fields=['user_id', 'domain'])]
+        unique_together = ("user_id", "domain")
+        indexes = [models.Index(fields=['user_id', 'domain'])]

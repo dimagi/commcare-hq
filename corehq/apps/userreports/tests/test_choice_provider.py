@@ -607,7 +607,9 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
                           Choice(value='B', display='B'),
                           Choice(value='C', display='C')],
                          self.choice_provider.query(ChoiceQueryContext(query='', offset=0, user=self.web_user)))
-        self.assertEqual([], self.choice_provider.query(ChoiceQueryContext(query='D', offset=0, user=self.web_user)))
+        self.assertEqual([], self.choice_provider.query(
+            ChoiceQueryContext(query='D', offset=0, user=self.web_user)
+        ))
 
     def test_query_no_registry_access(self):
         self.assertEqual([Choice(value='A', display='A')],

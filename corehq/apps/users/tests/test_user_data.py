@@ -1,16 +1,10 @@
-import uuid
 from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.custom_data_fields.models import (
-    CustomDataFieldsDefinition,
-    CustomDataFieldsProfile,
-    Field,
-)
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.user_data import SQLUserData, UserData, UserDataError
-from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 
 class TestUserMetadata(TestCase):
