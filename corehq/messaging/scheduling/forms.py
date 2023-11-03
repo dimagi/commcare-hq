@@ -20,6 +20,7 @@ from django.forms.widgets import (
     Select,
     SelectMultiple,
 )
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -239,9 +240,14 @@ class ContentForm(Form):
         self.domain = self.schedule_form.domain
         super(ContentForm, self).__init__(*args, **kwargs)
         self.set_app_and_form_unique_id_choices()
+        self.set_message_template()
 
     def set_app_and_form_unique_id_choices(self):
         self.fields['app_and_form_unique_id'].choices = [('', '')] + self.schedule_form.form_choices
+
+    def set_message_template(self):
+        if RICH_TEXT_EMAILS.enabled(self.domain):
+            self.fields['message'].initial = {'*': render_to_string('scheduling/partials/rich_text_email_template.html')}
 
     def clean_subject(self):
         if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION

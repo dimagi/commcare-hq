@@ -11,7 +11,19 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
 ) {
     ko.bindingHandlers.ckeditor = function() {
         self.init = function (element, valueAccessor, allBindingsAccessor, viewModel) {
-            var options = allBindingsAccessor().richTextOptions || {},
+            var options = {
+                htmlSupport: {
+                    // TODO: Only allow some html!
+                    allow: [
+                        {
+                            name: /.*/,
+                            attributes: true,
+                            classes: true,
+                            styles: true
+                        }
+                    ]
+                },
+            },
                 editorInstance = undefined;
 
             CKEditor.create(element, options).then(function(editor) {
