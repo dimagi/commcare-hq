@@ -19,7 +19,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     const DEFAULT_MARKER_COLOR = "rgba(128,128,128,0.25)";
     const MAP_CONTAINER_ID = 'case-grouping-map';
-    let map;
+    let mapDrawControls;
     const clusterStatsInstance = new clusterStatsModel();
     let exportModelInstance;
     let mapMarkers = [];
@@ -192,6 +192,18 @@ hqDefine("geospatial/js/case_grouping_map",[
                 },
             });
         });
+
+        mapDrawControls = new MapboxDraw({  // eslint-disable-line no-undef
+            // API: https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md
+            displayControlsDefault: false,
+            boxSelect: true,
+            controls: {
+                polygon: true,
+                trash: true,
+            },
+        });
+        mapboxInstance.addControl(mapDrawControls);
+
         mapboxInstance.on('moveend', updateClusterStats);
 
         return mapboxInstance;
