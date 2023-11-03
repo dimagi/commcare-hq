@@ -26,7 +26,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
     function getLineFeatureId(itemId) {
         return "route-" + itemId;
-    };
+    }
 
     function mapItemModel(itemId, itemData, marker, markerColors) {
         'use strict';
@@ -41,7 +41,7 @@ hqDefine("geospatial/js/geospatial_map", [
         self.setMarkerOpacity = function (opacity) {
             let element = self.marker.getElement();
             element.style.opacity = opacity;
-        }
+        };
 
         function changeMarkerColor(selectedCase, newColor) {
             let marker = selectedCase.marker;
@@ -56,7 +56,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 return gettext("Mobile Worker");
             }
             return gettext("Case");
-        }
+        };
 
         self.isSelected.subscribe(function () {
             var color = self.isSelected() ? self.markerColors.selected : self.markerColors.default;
@@ -307,8 +307,6 @@ hqDefine("geospatial/js/geospatial_map", [
 
         function resetMarkersOpacity() {
             let mapInstance = map.getMapboxInstance();
-            let linesToReset = [];
-
             let markers = [];
             Object.keys(caseGroupsIndex).forEach(itemCoordinates => {
                 const mapMarkerItem = caseGroupsIndex[itemCoordinates];
@@ -319,10 +317,11 @@ hqDefine("geospatial/js/geospatial_map", [
                     mapInstance.setPaintProperty(lineId, 'line-opacity', 1);
                 }
             });
-
-            setTimeout(function() {
+            // It's necessary to delay obscuring the markers since mapbox does not play nice
+            // if we try to do it all at once.
+            setTimeout(function () {
                 markers.forEach(marker => {
-                    marker.setMarkerOpacity(1)
+                    marker.setMarkerOpacity(1);
                 });
             }, HOVER_DELAY);
         }
@@ -348,19 +347,14 @@ hqDefine("geospatial/js/geospatial_map", [
                         }
                     }
                 });
+                // It's necessary to delay obscuring the markers since mapbox does not play nice
+                // if we try to do it all at once.
                 setTimeout(function () {
                     markersToHide.forEach(marker => {
-                        marker.setMarkerOpacity(DOWNPLAY_OPACITY)
+                        marker.setMarkerOpacity(DOWNPLAY_OPACITY);
                     });
                 }, HOVER_DELAY);
             }
-        }
-
-        function setLineOpacity(lineIds, opacity) {
-            let mapInstance = map.getMapboxInstance();
-            lineIds.forEach((lineId) => {
-                mapInstance.setPaintProperty(lineId, 'line-opacity', opacity);
-            });
         }
 
         function connectUserWithCasesOnMap(user, cases) {
@@ -371,27 +365,27 @@ hqDefine("geospatial/js/geospatial_map", [
                 ];
                 let mapInstance = map.getMapboxInstance();
                 mapInstance.addLayer({
-                  id: getLineFeatureId(caseModel.itemId),
-                  type: 'line',
-                  source: {
-                    type: 'geojson',
-                    data: {
-                      type: 'Feature',
-                      properties: {},
-                      geometry: {
-                        type: 'LineString',
-                        coordinates: lineCoordinates
-                      }
-                    }
-                  },
-                  layout: {
-                    'line-join': 'round',
-                    'line-cap': 'round'
-                  },
-                  paint: {
-                    'line-color': '#808080',
-                    'line-width': 1
-                  }
+                    id: getLineFeatureId(caseModel.itemId),
+                    type: 'line',
+                    source: {
+                        type: 'geojson',
+                        data: {
+                            type: 'Feature',
+                            properties: {},
+                            geometry: {
+                                type: 'LineString',
+                                coordinates: lineCoordinates,
+                            },
+                        },
+                    },
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round',
+                    },
+                    paint: {
+                        'line-color': '#808080',
+                        'line-width': 1,
+                    },
                 });
             });
         }
@@ -418,12 +412,12 @@ hqDefine("geospatial/js/geospatial_map", [
                 } else {
                     $("#btnRunDisbursement").removeClass('disabled');
                 }
-            }
+            };
 
-            self.handleDisbursementResults = function(result) {
+            self.handleDisbursementResults = function (result) {
                 var groupId = 0;
                 Object.keys(result).forEach((userId) => {
-                    user = userModels().find((userModel) => {return userModel.itemId === userId});
+                    let user = userModels().find((userModel) => {return userModel.itemId === userId;});
                     const userCoordString = user.itemData.coordinates['lng'] + " " + user.itemData.coordinates['lat'];
                     caseGroupsIndex[userCoordString] = {groupId: groupId, item: user};
 
@@ -439,7 +433,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     groupId += 1;
                 });
                 self.setBusy(false);
-            }
+            };
 
             self.runCaseDisbursementAlgorithm = function (cases, users) {
                 self.setBusy(true);
@@ -460,15 +454,15 @@ hqDefine("geospatial/js/geospatial_map", [
                         lon: c.itemData.coordinates.lng,
                         lat: c.itemData.coordinates.lat,
                     });
-                })
+                });
 
                 let userData = users.map(function (c) {
                     return {
                         id: c.itemId,
                         lon: c.itemData.coordinates.lng,
                         lat: c.itemData.coordinates.lat,
-                    }
-                })
+                    };
+                });
 
                 $.ajax({
                     type: 'post',
@@ -479,13 +473,12 @@ hqDefine("geospatial/js/geospatial_map", [
                     success: function (ret) {
                         if (ret['poll_url'] !== undefined) {
                             self.startPoll(ret['poll_url']);
-                        }
-                        else {
+                        } else {
                             self.handleDisbursementResults(ret['result']);
                         }
                     },
                 });
-            }
+            };
 
             self.startPoll = function (pollUrl) {
                 if (!self.isBusy()) {
@@ -493,7 +486,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 }
                 self.pollUrl(pollUrl);
                 self.doPoll();
-            }
+            };
 
             self.doPoll = function () {
                 var tick = function () {
@@ -514,7 +507,7 @@ hqDefine("geospatial/js/geospatial_map", [
             };
 
             return self;
-        }
+        };
 
         var mapControlsModel = function () {
             'use strict';
@@ -805,7 +798,7 @@ hqDefine("geospatial/js/geospatial_map", [
             }
 
             disbursementRunner = new disbursementRunnerModel();
-            $("#disbursement-spinner").koApplyBindings(disbursementRunner)
+            $("#disbursement-spinner").koApplyBindings(disbursementRunner);
         });
     });
 });
