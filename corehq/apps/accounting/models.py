@@ -3770,6 +3770,28 @@ class StripePaymentMethod(PaymentMethod):
                 account.remove_autopay_user()
 
     def create_card(self, stripe_token, billing_account, domain, autopay=False):
+        """
+        Creates and associates a new card with the Stripe customer.
+
+        This method uses a Stripe token (usually generated on the client side)
+        to securely create a new card and associate it with the customer
+        represented by this instance. The card, once created, can be set as the
+        default card for the customer. Additionally, if the 'autopay' flag is
+        set to True, it sets the card to be used for automatic payments for
+        a specific billing account and domain.
+
+        Parameters:
+        - stripe_token (str): The token representing the card details, typically
+                            generated using Stripe.js on the client side.
+        - billing_account (BillingAccount): The account for which the card might
+                                            be set for automatic payments.
+        - domain (str): The domain associated with the billing account.
+        - autopay (bool, optional): Flag indicating if the card should be set for
+                                    automatic payments. Default is False.
+
+        Returns:
+        - card (stripe.Card): The newly created Stripe card object.
+        """
         customer = self.customer
         card = customer.cards.create(card=stripe_token)
         self.set_default_card(card)
