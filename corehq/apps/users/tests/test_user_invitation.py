@@ -37,13 +37,12 @@ class TestUserInvitation(TestCase):
         invite_uuid = "e1bd37f5-9ff8-4853-b953-fd75483a0ec7"
         domain = "domain"
 
-        invite = Invitation.objects.create(
+        Invitation.objects.create(
             uuid=invite_uuid,
             domain=domain,
             is_accepted=True,
             invited_on=datetime.date(2023, 9, 1)
         )
-        invite.save()
 
         response = UserInvitationView()(request, invite_uuid, domain=domain)
         self.assertEqual(302, response.status_code)
@@ -78,7 +77,8 @@ class TestUserInvitation(TestCase):
             },
             is_sso=False,
             allow_invite_email_only=False,
-            invite_email="test@dimagi.com")
+            invite_email="test@dimagi.com",
+        )
 
         print(form.errors)
         self.assertTrue(form.is_valid())
@@ -92,6 +92,7 @@ class TestUserInvitation(TestCase):
             },
             is_sso=False,
             allow_invite_email_only=True,
-            invite_email="test@dimagi.com")
+            invite_email="test@dimagi.com",
+        )
 
         self.assertTrue(form.is_valid())
