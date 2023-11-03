@@ -125,6 +125,7 @@ hqDefine("geospatial/js/case_grouping_map",[
     function polygonFilterModel() {
         let self = {};
         self.polygons = {};
+        self.shouldRefreshPage = ko.observable(false);
 
         self.savedPolygons = ko.observableArray();
         self.selectedSavedPolygonId = ko.observable('');
@@ -154,6 +155,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                 url.searchParams.delete(FEATURE_QUERY_PARAM);
             }
             window.history.replaceState({ path: url.href }, '', url.href);
+            self.shouldRefreshPage(true);
         }
 
         function removeActivePolygonLayer() {

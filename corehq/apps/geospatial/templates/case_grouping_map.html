@@ -42,6 +42,13 @@
       {% trans 'Clear' %}
     </button>
   </div>
+  <div class="alert alert-info" data-bind="visible: shouldRefreshPage">
+    {% blocktrans %}
+      Please
+      <a href="">refresh the page</a>
+      to apply the polygon filtering changes.
+    {% endblocktrans %}
+  </div>
 </div>
 <div id="case-grouping-map" style="height: 500px"></div>
 
