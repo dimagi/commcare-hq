@@ -36,6 +36,10 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin):
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'case_row_order': {val.html: idx for idx, val in enumerate(self.headers)},
+            'saved_polygons': [
+                {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
+                for p in GeoPolygon.objects.filter(domain=self.domain).all()
+            ],
         })
         return context
 
@@ -92,17 +96,6 @@ class CaseManagementMap(BaseCaseMapReport):
 
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
-
-    @property
-    def template_context(self):
-        context = super(CaseManagementMap, self).template_context
-        context.update({
-            'saved_polygons': [
-                {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
-                for p in GeoPolygon.objects.filter(domain=self.domain).all()
-            ]
-        })
-        return context
 
 
 class CaseGroupingReport(BaseCaseMapReport):
