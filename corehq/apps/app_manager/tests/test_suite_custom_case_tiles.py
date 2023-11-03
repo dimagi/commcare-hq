@@ -42,7 +42,7 @@ class SuiteCustomCaseTilesTest(SimpleTestCase, SuiteMixin):
             <partial>
                 <field>
                     <style>
-                        <grid grid-height="1" grid-width="3" grid-x="1" grid-y="1"/>
+                        <grid grid-height="1" grid-width="3" grid-x="0" grid-y="0"/>
                     </style>
                     <header>
                         <text>
@@ -74,7 +74,7 @@ class SuiteCustomCaseTilesTest(SimpleTestCase, SuiteMixin):
             <partial>
                 <field>
                     <style>
-                        <grid grid-height="1" grid-width="3" grid-x="1" grid-y="1"/>
+                        <grid grid-height="1" grid-width="3" grid-x="0" grid-y="0"/>
                     </style>
                     <header>
                         <text>
