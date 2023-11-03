@@ -317,13 +317,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     mapInstance.setPaintProperty(lineId, 'line-opacity', 1);
                 }
             });
-            // It's necessary to delay obscuring the markers since mapbox does not play nice
-            // if we try to do it all at once.
-            setTimeout(function () {
-                markers.forEach(marker => {
-                    marker.setMarkerOpacity(1);
-                });
-            }, HOVER_DELAY);
+            changeMarkersOpacity(markers, 1);
         }
 
         function highlightMarkerGroup(marker) {
@@ -347,14 +341,18 @@ hqDefine("geospatial/js/geospatial_map", [
                         }
                     }
                 });
-                // It's necessary to delay obscuring the markers since mapbox does not play nice
-                // if we try to do it all at once.
-                setTimeout(function () {
-                    markersToHide.forEach(marker => {
-                        marker.setMarkerOpacity(DOWNPLAY_OPACITY);
-                    });
-                }, HOVER_DELAY);
+                changeMarkersOpacity(markersToHide, DOWNPLAY_OPACITY);
             }
+        }
+
+        function changeMarkersOpacity(markers, opacity) {
+            // It's necessary to delay obscuring the markers since mapbox does not play nice
+            // if we try to do it all at once.
+            setTimeout(function () {
+                markers.forEach(marker => {
+                    marker.setMarkerOpacity(opacity);
+                });
+            }, HOVER_DELAY);
         }
 
         function connectUserWithCasesOnMap(user, cases) {
