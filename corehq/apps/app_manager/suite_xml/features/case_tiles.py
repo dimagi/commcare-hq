@@ -93,7 +93,9 @@ class CaseTileHelper(object):
                 style = None
                 if any(field is not None for field in [column_info.column.grid_x, column_info.column.grid_y,
                                                        column_info.column.height, column_info.column.width]):
-                    style = Style(grid_x=column_info.column.grid_x, grid_y=column_info.column.grid_y,
+                    zero_based_grid_x = column_info.column.grid_x - 1
+                    zero_based_grid_y = column_info.column.grid_y - 1
+                    style = Style(grid_x=zero_based_grid_x, grid_y=zero_based_grid_y,
                                   grid_height=column_info.column.height, grid_width=column_info.column.width,
                                   horz_align=column_info.column.horizontal_align,
                                   vert_align=column_info.column.vertical_align,
