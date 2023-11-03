@@ -15,6 +15,7 @@ from corehq.apps.geospatial.utils import (
     set_case_gps_property,
     set_user_gps_property,
     create_case_with_gps_property,
+    features_to_points_list,
 )
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 
@@ -116,3 +117,43 @@ class TestSetGPSProperty(TestCase):
         set_user_gps_property(self.DOMAIN, submit_data)
         user = CommCareUser.get_by_user_id(self.user.user_id, self.DOMAIN)
         self.assertEqual(user.get_user_data(self.DOMAIN)[GPS_POINT_CASE_PROPERTY], '1.23 4.56 0.0 0.0')
+
+
+class TestFeaturesToPointsList(TestCase):
+
+    def setUp(self):
+        super(TestFeaturesToPointsList, self).setUp()
+        self.features = {
+            '123': {
+                'geometry': {
+                    'coordinates': [
+                        [
+                            [3.4, 1.2],
+                            [7.8, 5.6],
+                        ],
+                        [
+                            [11.12, 9.10],
+                        ],
+                    ],
+                },
+            },
+            '456': {
+                'geometry': {
+                    'coordinates': [
+                        [
+                            [15.16, 13.14],
+                        ],
+                    ],
+                },
+            },
+        }
+
+    def test_features_to_points_list(self):
+        expected_output = [
+            {'lat': 1.2, 'lon': 3.4},
+            {'lat': 5.6, 'lon': 7.8},
+            {'lat': 9.10, 'lon': 11.12},
+            {'lat': 13.14, 'lon': 15.16},
+        ]
+        points_list = features_to_points_list(self.features)
+        self.assertEqual(points_list, expected_output)

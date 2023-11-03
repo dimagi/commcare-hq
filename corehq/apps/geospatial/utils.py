@@ -71,3 +71,33 @@ def get_lat_lon_from_dict(data, key):
     except (KeyError, BadValueError):
         lat, lon = ('', '')
     return lat, lon
+
+
+def features_to_points_list(features):
+    """
+    `features` should be in the following format:
+    {
+        feature_id: {
+            geometry: {
+                coordinates: [
+                    [
+                        [lon, lat]
+                        ...
+                    ],
+                    ...
+                ]
+            }
+        }
+    }
+    Each list in `coordinates` is a separate polygon of the feature. This will usually only be a single polygon,
+    but there may be more if a multi-polygon is given.
+    """
+    points_list = []
+    for feature in features.values():
+        feature_coords = feature['geometry']['coordinates']
+        for poly_coords in feature_coords:
+            points_list += [
+                {'lat': coords[1], 'lon': coords[0]}
+                for coords in poly_coords
+            ]
+    return points_list
