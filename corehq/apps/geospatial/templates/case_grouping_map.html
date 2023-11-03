@@ -38,6 +38,9 @@
                         ">
         </select>
     </div>
+    <button class="btn btn-default" data-bind="click: clearActivePolygon, enable: selectedSavedPolygonId">
+      {% trans 'Clear' %}
+    </button>
   </div>
 </div>
 <div id="case-grouping-map" style="height: 500px"></div>
