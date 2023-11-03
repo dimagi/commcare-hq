@@ -50,6 +50,8 @@ jobs:
         NOSE_DIVIDED_WE_RUN: ${{ matrix.NOSE_DIVIDED_WE_RUN }}
         JS_SETUP: yes
         KAFKA_HOSTNAME: kafka
+        STRIPE_PUBLIC_KEY: ${{ secrets.STRIPE_PUBLIC_KEY }}
+        STRIPE_PRIVATE_KEY: ${{ secrets.STRIPE_PRIVATE_KEY }}
       run: scripts/docker test --noinput --stop -v --divided-we-run=${{ matrix.NOSE_DIVIDED_WE_RUN }} --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
     - name: "Codecov upload"
       env:
