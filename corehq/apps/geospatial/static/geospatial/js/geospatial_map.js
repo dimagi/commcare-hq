@@ -16,6 +16,8 @@ hqDefine("geospatial/js/geospatial_map", [
         'default': "#0e00ff", // Blue
         'selected': "#0b940d", // Dark Green
     };
+    const DOWNPLAY_OPACITY = 0.2;
+    const HOVER_DELAY = 400;
 
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
@@ -300,27 +302,61 @@ hqDefine("geospatial/js/geospatial_map", [
         };
 
         function resetMarkersOpacity() {
+            let mapInstance = map.getMapboxInstance();
+            let linesToReset = [];
+
+            let markers = [];
             Object.keys(caseGroupsIndex).forEach(itemCoordinates => {
                 const mapMarkerItem = caseGroupsIndex[itemCoordinates];
-                mapMarkerItem.item.setMarkerOpacity(1);
+                markers.push(mapMarkerItem.item);
+
+                const lineId = "route-" + mapMarkerItem.item.itemId;
+                if (mapInstance.getLayer(lineId)) {
+                    mapInstance.setPaintProperty(lineId, 'line-opacity', 1);
+                }
             });
+
+            setTimeout(function() {
+                markers.forEach(marker => {
+                    marker.setMarkerOpacity(1)
+                });
+            }, HOVER_DELAY);
         }
 
         function highlightMarkerGroup(marker) {
             const markerCoords = marker.getLngLat();
             const currentMarkerPosition = markerCoords.lng + " " + markerCoords.lat;
             const markerItem = caseGroupsIndex[currentMarkerPosition];
+            let mapInstance = map.getMapboxInstance();
 
             if (markerItem) {
                 const groupId = markerItem.groupId;
 
+                let markersToHide = [];
                 Object.keys(caseGroupsIndex).forEach(itemCoordinates => {
                     const mapMarkerItem = caseGroupsIndex[itemCoordinates];
+
                     if (mapMarkerItem.groupId !== groupId) {
-                        mapMarkerItem.item.setMarkerOpacity(0.2);
+                        markersToHide.push(mapMarkerItem.item);
+                        const lineId = "route-" + mapMarkerItem.item.itemId;
+                        if (mapInstance.getLayer(lineId)) {
+                            mapInstance.setPaintProperty(lineId, 'line-opacity', DOWNPLAY_OPACITY);
+                        }
                     }
                 });
+                setTimeout(function () {
+                    markersToHide.forEach(marker => {
+                        marker.setMarkerOpacity(DOWNPLAY_OPACITY)
+                    });
+                }, HOVER_DELAY);
             }
+        }
+
+        function setLineOpacity(lineIds, opacity) {
+            let mapInstance = map.getMapboxInstance();
+            lineIds.forEach((lineId) => {
+                mapInstance.setPaintProperty(lineId, 'line-opacity', opacity);
+            });
         }
 
         function connectUserWithCasesOnMap(user, cases) {
