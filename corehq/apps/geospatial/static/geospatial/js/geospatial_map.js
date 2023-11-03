@@ -24,6 +24,10 @@ hqDefine("geospatial/js/geospatial_map", [
     var disbursementRunner;
     var caseGroupsIndex = {};
 
+    function getLineFeatureId(itemId) {
+        return "route-" + itemId;
+    };
+
     function mapItemModel(itemId, itemData, marker, markerColors) {
         'use strict';
         var self = {};
@@ -310,7 +314,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 const mapMarkerItem = caseGroupsIndex[itemCoordinates];
                 markers.push(mapMarkerItem.item);
 
-                const lineId = "route-" + mapMarkerItem.item.itemId;
+                const lineId = getLineFeatureId(mapMarkerItem.item.itemId);
                 if (mapInstance.getLayer(lineId)) {
                     mapInstance.setPaintProperty(lineId, 'line-opacity', 1);
                 }
@@ -338,7 +342,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
                     if (mapMarkerItem.groupId !== groupId) {
                         markersToHide.push(mapMarkerItem.item);
-                        const lineId = "route-" + mapMarkerItem.item.itemId;
+                        const lineId = getLineFeatureId(mapMarkerItem.item.itemId);
                         if (mapInstance.getLayer(lineId)) {
                             mapInstance.setPaintProperty(lineId, 'line-opacity', DOWNPLAY_OPACITY);
                         }
@@ -367,7 +371,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 ];
                 let mapInstance = map.getMapboxInstance();
                 mapInstance.addLayer({
-                  id: "route-" + caseModel.itemId,
+                  id: getLineFeatureId(caseModel.itemId),
                   type: 'line',
                   source: {
                     type: 'geojson',
@@ -443,7 +447,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
                 let caseData = [];
                 cases.forEach(function (c) {
-                    const layerId = "route-" + c.itemId;
+                    const layerId = getLineFeatureId(c.itemId);
                     if (mapInstance.getLayer(layerId)) {
                         mapInstance.removeLayer(layerId);
                     }
