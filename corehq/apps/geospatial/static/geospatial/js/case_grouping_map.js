@@ -126,6 +126,37 @@ hqDefine("geospatial/js/case_grouping_map",[
 
         self.savedPolygons = ko.observableArray();
         self.selectedSavedPolygonId = ko.observable('');
+        self.activeSavedPolygon;
+
+        function removeActivePolygonLayer() {
+            if (self.activeSavedPolygon) {
+                map.removeLayer(self.activeSavedPolygon.id);
+                map.removeSource(self.activeSavedPolygon.id);
+            }
+        }
+
+        function createActivePolygonLayer(polygonObj) {
+            map.addSource(
+                String(polygonObj.id),
+                {'type': 'geojson', 'data': polygonObj.geoJson}
+            );
+            map.addLayer({
+                'id': String(polygonObj.id),
+                'type': 'fill',
+                'source': String(polygonObj.id),
+                'layout': {},
+                'paint': {
+                    'fill-color': '#0080ff',
+                    'fill-opacity': 0.5,
+                },
+            });
+        }
+
+        self.clearActivePolygon = function () {
+            self.selectedSavedPolygonId('');
+            removeActivePolygonLayer();
+            self.activeSavedPolygon = null;
+        };
 
         self.loadPolygons = function (polygonArr) {
             self.savedPolygons([]);
