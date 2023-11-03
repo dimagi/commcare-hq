@@ -52,7 +52,7 @@ hqDefine("geospatial/js/geospatial_map", [
         }
 
         self.getItemType = function () {
-            if (self.itemData.link.includes("user")) {
+            if (self.itemData.type == "user") {
                 return gettext("Mobile Worker");
             }
             return gettext("Case");
@@ -679,7 +679,7 @@ hqDefine("geospatial/js/geospatial_map", [
                             const editUrl = initialPageData.reverse('edit_commcare_user', userData.id);
                             const link = `<a class="ajax_dialog" href="${editUrl}" target="_blank">${userData.username}</a>`;
 
-                            return [userData.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link}];
+                            return [userData.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link, 'type': "user"}];
                         }));
 
                         const userMapItems = map.addMarkersToMap(userData, userMarkerColors);
@@ -745,7 +745,7 @@ hqDefine("geospatial/js/geospatial_map", [
             // Index by case_id
             var casesById = _.object(_.map(casesWithGPS, function (item) {
                 if (item[1]) {
-                    return [item[0], {'coordinates': item[1], 'link': item[2]}];
+                    return [item[0], {'coordinates': item[1], 'link': item[2], 'type': 'case'}];
                 }
             }));
             const caseMapItems = map.addMarkersToMap(casesById, caseMarkerColors);
