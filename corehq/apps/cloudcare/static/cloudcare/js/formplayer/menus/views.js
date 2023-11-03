@@ -8,8 +8,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         toggles = hqImport("hqwebapp/js/toggles"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         cloudcareUtils = hqImport("cloudcare/js/utils"),
-        markdown = hqImport("cloudcare/js/markdown"),
-        API = hqImport("cloudcare/js/formplayer/menus/api");
+        markdown = hqImport("cloudcare/js/markdown");
 
     const MenuView = Marionette.View.extend({
         tagName: function () {
