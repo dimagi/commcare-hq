@@ -677,7 +677,7 @@ hqDefine("geospatial/js/geospatial_map", [
                             const editUrl = initialPageData.reverse('edit_commcare_user', userData.id);
                             const link = `<a class="ajax_dialog" href="${editUrl}" target="_blank">${userData.username}</a>`;
 
-                            return [userData.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link, 'type': "user"}];
+                            return [userData.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link, 'type': 'user'}];
                         }));
 
                         const userMapItems = map.addMarkersToMap(userData, userMarkerColors);
