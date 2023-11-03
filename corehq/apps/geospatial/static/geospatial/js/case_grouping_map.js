@@ -123,10 +123,25 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     function polygonFilterModel() {
         let self = {};
+        self.polygons = {};
 
         self.savedPolygons = ko.observableArray();
         self.selectedSavedPolygonId = ko.observable('');
         self.activeSavedPolygon;
+
+        self.addPolygonsToFilterList = function (featureList) {
+            for (const feature of featureList) {
+                self.polygons[feature.id] = feature;
+            }
+        };
+
+        self.removePolygonsFromFilterList = function (featureList) {
+            for (const feature of featureList) {
+                if (self.polygons[feature.id]) {
+                    delete self.polygons[feature.id];
+                }
+            }
+        };
 
         function removeActivePolygonLayer() {
             if (self.activeSavedPolygon) {
@@ -154,6 +169,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
         self.clearActivePolygon = function () {
             self.selectedSavedPolygonId('');
+            self.removePolygonsFromFilterList(self.activeSavedPolygon.geoJson.features);
             removeActivePolygonLayer();
             self.activeSavedPolygon = null;
         };
@@ -175,6 +191,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             createActivePolygonLayer(polygonObj);
 
             self.activeSavedPolygon = polygonObj;
+            self.addPolygonsToFilterList(polygonObj.geoJson.features);
         });
 
         self.loadPolygons = function (polygonArr) {
@@ -285,6 +302,9 @@ hqDefine("geospatial/js/case_grouping_map",[
         mapboxInstance.addControl(mapDrawControls);
 
         mapboxInstance.on('moveend', updateClusterStats);
+        mapboxInstance.on('draw.update', (e) => polygonFilterInstance.addPolygonsToFilterList(e.features));
+        mapboxInstance.on('draw.create', (e) => polygonFilterInstance.addPolygonsToFilterList(e.features));
+        mapboxInstance.on('draw.delete', (e) => polygonFilterInstance.removePolygonsFromFilterList(e.features));
 
         return mapboxInstance;
     }
