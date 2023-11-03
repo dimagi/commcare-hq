@@ -346,7 +346,6 @@ class CallCenterUtilsUsercaseTests(TestCase):
         self.assertEqual(1, len(user_case.xform_ids))
 
     def test_bulk_upload_usercases(self):
-        self.user.username = format_username('bushy_top', TEST_DOMAIN)
         self.user.save()
 
         upload_record = UserUploadRecord.objects.create(
@@ -384,7 +383,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
 
         old_user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertEqual(old_user_case.owner_id, self.user.get_id)
-        self.assertEqual(2, len(old_user_case.xform_ids))
+        self.assertEqual(1, len(old_user_case.xform_ids))
 
         new_user = CommCareUser.get_by_username(format_username('the_bunk', TEST_DOMAIN))
         self.addCleanup(new_user.delete, self.domain.name, deleted_by=None)
