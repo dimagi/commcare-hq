@@ -113,6 +113,14 @@ hqDefine("geospatial/js/case_grouping_map",[
         return self;
     }
 
+    function polygonModel(polygon) {
+        let self = {};
+        self.text = polygon.name;
+        self.id = polygon.id;
+        self.geoJson = polygon.geo_json;
+        return self;
+    }
+
     function polygonFilterModel() {
         let self = {};
 
