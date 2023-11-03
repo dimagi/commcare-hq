@@ -158,6 +158,19 @@ hqDefine("geospatial/js/case_grouping_map",[
             self.shouldRefreshPage(true);
         }
 
+        self.loadPolygonFromQueryParam = function () {
+            const url = new URL(window.location.href);
+            const featureParam = url.searchParams.get(FEATURE_QUERY_PARAM);
+            if (featureParam) {
+                const features = JSON.parse(featureParam);
+                for (const featureId in features) {
+                    const feature = features[featureId];
+                    mapDrawControls.add(feature);
+                    self.polygons[featureId] = feature;
+                }
+            }
+        };
+
         function removeActivePolygonLayer() {
             if (self.activeSavedPolygon) {
                 map.removeLayer(self.activeSavedPolygon.id);
@@ -210,6 +223,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         });
 
         self.loadPolygons = function (polygonArr) {
+            self.loadPolygonFromQueryParam();
             self.savedPolygons([]);
             _.each(polygonArr, (polygon) => {
                 // Saved features don't have IDs, so we need to give them to uniquely identify them for polygon filtering
