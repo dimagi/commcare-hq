@@ -302,10 +302,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
 
             e.target.className += " disabled";
-            this.iconClick(e, endpointId, this.model.get('id'));
+            this.updateIconProperty(e, endpointId, this.model.get('id'));
         },
 
-        iconClick: function (e, endpointId, caseId) {
+        updateIconProperty: function (e, endpointId, caseId) {
             const self = this;
             const clickedIcon = e.target;
             clickedIcon.classList.add("disabled");
