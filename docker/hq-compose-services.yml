@@ -76,5 +76,5 @@ services:
       file: hq-compose.yml
       service: minio
     ports:
-      - "9980:9980"
-      - "9981:9981"
+      - "9000:9000"
+      - "9001:9001"

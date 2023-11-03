@@ -166,7 +166,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 if settingshelper.is_testing():
     S3_BLOB_DB_SETTINGS = {
-        "url": "http://localhost:9980",
+        "url": "http://localhost:9000",
         "access_key": "admin-key",
         "secret_key": "admin-secret",
         "config": {

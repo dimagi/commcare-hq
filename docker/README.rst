@@ -125,7 +125,7 @@ so you can connect to them directly.
 * Redis (6397)
 * Zookeeper (2181)
 * Kafka (9092)
-* MinIO (9980)
+* MinIO (9000 (API)  & 9001 (Console))
 
 CommCare HQ and the services
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

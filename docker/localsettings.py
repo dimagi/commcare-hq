@@ -105,7 +105,7 @@ ELASTICSEARCH_PORT = 9200  # ES 5 port
 ELASTICSEARCH_MAJOR_VERSION = 5
 
 S3_BLOB_DB_SETTINGS = {
-    "url": "http://minio:9980/",
+    "url": "http://minio:9000/",
     "access_key": "admin-key",
     "secret_key": "admin-secret",
     "config": {
