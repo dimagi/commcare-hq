@@ -127,6 +127,17 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.savedPolygons = ko.observableArray();
         self.selectedSavedPolygonId = ko.observable('');
 
+        self.loadPolygons = function (polygonArr) {
+            self.savedPolygons([]);
+            _.each(polygonArr, (polygon) => {
+                // Saved features don't have IDs, so we need to give them to uniquely identify them for polygon filtering
+                for (const feature of polygon.geo_json.features) {
+                    feature.id = uuidv4();
+                }
+                self.savedPolygons.push(polygonModel(polygon));
+            });
+        };
+
         return self;
     }
 
@@ -465,6 +476,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                 map = initMap();
                 $("#clusterStats").koApplyBindings(clusterStatsInstance);
                 polygonFilterInstance = new polygonFilterModel();
+                polygonFilterInstance.loadPolygons(initialPageData.get('saved_polygons'));
                 $("#polygon-filters").koApplyBindings(polygonFilterInstance);
 
                 return;
