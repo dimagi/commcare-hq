@@ -52,7 +52,7 @@ hqDefine("geospatial/js/geospatial_map", [
         }
 
         self.getItemType = function () {
-            if (self.itemData.type == "user") {
+            if (self.itemData.type === "user") {
                 return gettext("Mobile Worker");
             }
             return gettext("Case");
