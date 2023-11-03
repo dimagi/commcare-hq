@@ -8,7 +8,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         toggles = hqImport("hqwebapp/js/toggles"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         cloudcareUtils = hqImport("cloudcare/js/utils"),
-        markdown = hqImport("cloudcare/js/markdown");
+        markdown = hqImport("cloudcare/js/markdown"),
+        API = hqImport("cloudcare/js/formplayer/menus/api");
 
     const MenuView = Marionette.View.extend({
         tagName: function () {
@@ -297,55 +298,35 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }
             }
             const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
-            const actionUrl = origin + urlTemplate
-                .replace("{domain}", domain)
-                .replace("{appid}", currentAppId)
-                .replace("{selected_cases}", caseId)
-                .replace("{case_id}", caseId);
+            // Grab endpoint id from urlTemplate
+            const temp = urlTemplate.substring(0, urlTemplate.indexOf('?') - 1);
+            const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
+
             e.target.className += " disabled";
-            this.iconIframe(e, actionUrl, this.model.get('id'));
+            this.iconClick(e, endpointId, this.model.get('id'));
         },
 
-        iconIframe: function (e, url, caseId) {
+        iconClick: function (e, endpointId, caseId) {
             const self = this;
-            const iframeId = "icon-iframe-" + caseId;
             const clickedIcon = e.target;
             clickedIcon.classList.add("disabled");
             clickedIcon.style.display = 'none';
             const spinnerElement = $(clickedIcon).siblings('i');
             spinnerElement[0].style.display = '';
-            const iconIframe = document.createElement('iframe');
-            iconIframe.style.display = 'none';
-            $(iconIframe).attr('id', iframeId);
-            iconIframe.src = encodeURI(url);
-            document.body.appendChild(iconIframe);
-
-            $(`#${iframeId}`).on('load', function () {
-                // Get success or error message from iframe and pass to main window
-                const notificationsElement = $(`#${iframeId}`).contents().find("#cloudcare-notifications");
-                new MutationObserver((el) => {
-                    const addedNodes = el[0].addedNodes;
-                    if (addedNodes[0].classList.contains('alert')) {
-                        const succeeded = addedNodes[0].classList.contains('alert-success');
-                        let message;
-                        if (succeeded) {
-                            message = notificationsElement.find('.alert-success').find('p').text();
-                            FormplayerFrontend.trigger('showSuccess', gettext(message));
-                            self.reloadCase(caseId);
-                        } else {
-                            const messageElement = notificationsElement.find('.alert-danger');
-                            // Todo: standardize structures of success and error alert elements
-                            message = messageElement.contents().filter(function () {
-                                return this.nodeType === Node.TEXT_NODE;
-                            })[0].nodeValue;
-                            FormplayerFrontend.trigger('showError', gettext(message));
-                        }
-                        clickedIcon.classList.remove("disabled");
-                        clickedIcon.style.display = '';
-                        spinnerElement[0].style.display = 'none';
-                        iconIframe.remove();
-                    }
-                }).observe(notificationsElement[0], { childList: true });
+            const currentUrlToObject = formplayerUtils.currentUrlToObject();
+            currentUrlToObject.endpointArgs = {case_id: caseId};
+            currentUrlToObject.endpointId = endpointId;
+            $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function (response) {
+                self.reloadCase(caseId);
+                clickedIcon.classList.remove("disabled");
+                clickedIcon.style.display = '';
+                spinnerElement[0].style.display = 'none';
+                message = `${self.model.collection.title} saved successfully!`;
+                FormplayerFrontend.trigger('showSuccess', gettext(message));
+            }).fail(function () {
+                clickedIcon.classList.remove("disabled");
+                clickedIcon.style.display = '';
+                spinnerElement[0].style.display = 'none';
             });
         },
 
