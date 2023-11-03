@@ -158,6 +158,25 @@ hqDefine("geospatial/js/case_grouping_map",[
             self.activeSavedPolygon = null;
         };
 
+        self.selectedSavedPolygonId.subscribe(() => {
+            const selectedId = parseInt(self.selectedSavedPolygonId());
+            const polygonObj = self.savedPolygons().find(
+                function (o) { return o.id === selectedId; }
+            );
+            if (!polygonObj) {
+                return;
+            }
+
+            if (self.activeSavedPolygon) {
+                self.clearActivePolygon();
+            }
+
+            removeActivePolygonLayer();
+            createActivePolygonLayer(polygonObj);
+
+            self.activeSavedPolygon = polygonObj;
+        });
+
         self.loadPolygons = function (polygonArr) {
             self.savedPolygons([]);
             _.each(polygonArr, (polygon) => {
