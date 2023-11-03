@@ -25,6 +25,7 @@ hqDefine("geospatial/js/case_grouping_map",[
     let mapMarkers = [];
 
     let polygonFilterInstance;
+    const FEATURE_QUERY_PARAM = 'features';
 
     function caseModel(caseId, coordinates, caseLink) {
         'use strict';
@@ -133,6 +134,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             for (const feature of featureList) {
                 self.polygons[feature.id] = feature;
             }
+            updatePolygonQueryParam();
         };
 
         self.removePolygonsFromFilterList = function (featureList) {
@@ -141,7 +143,18 @@ hqDefine("geospatial/js/case_grouping_map",[
                     delete self.polygons[feature.id];
                 }
             }
+            updatePolygonQueryParam();
         };
+
+        function updatePolygonQueryParam() {
+            const url = new URL(window.location.href);
+            if (Object.keys(self.polygons).length) {
+                url.searchParams.set(FEATURE_QUERY_PARAM, JSON.stringify(self.polygons));
+            } else {
+                url.searchParams.delete(FEATURE_QUERY_PARAM);
+            }
+            window.history.replaceState({ path: url.href }, '', url.href);
+        }
 
         function removeActivePolygonLayer() {
             if (self.activeSavedPolygon) {
