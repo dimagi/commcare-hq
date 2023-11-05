@@ -178,6 +178,9 @@ class CaseGroupingReport(BaseCaseMapReport):
         #     }
         bounds = bucket[BUCKET_CASES_AGG]['bounds']
 
+        # TODO: If top_left and bottom_right are identical, shift them
+        #       by, say, a metre.
+
         query = super()._build_query()  # `super()` so as not to filter
         filters_ = [filters.geo_bounding_box(
             field=PROPERTY_GEOPOINT_VALUE,
