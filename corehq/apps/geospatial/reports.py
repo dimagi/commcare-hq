@@ -310,13 +310,28 @@ class CaseGroupingReport(BaseCaseMapReport):
             # The first list of coordinates is the exterior ring, and
             # the rest are interior rings, i.e. holes.
             # https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.6
-            # The polygon filter in Elasticsearch 5.6 does not support
-            # holes, but the geo_shape filter in Elasticsearch 8+ does.
-            exterior_ring = polygon['coordinates'][0]
-            polygon_filters.append(filters.geo_polygon(
+            exterior_coordinates = polygon['coordinates'][0]
+            exterior_filter = filters.geo_polygon(
                 field=PROPERTY_GEOPOINT_VALUE,
-                points=exterior_ring,
-            ))
+                points=exterior_coordinates,
+            )
+            if len(polygon['coordinates']) > 1:
+                # Use AND NOT to exclude holes from the polygon. (Using
+                # the geo_shape filter in Elasticsearch 8+, this should
+                # be unnecessary.)
+                interior_filters = []
+                for interior_coordinates in polygon['coordinates'][1:]:
+                    hole = filters.geo_polygon(
+                        field=PROPERTY_GEOPOINT_VALUE,
+                        points=interior_coordinates,
+                    )
+                    interior_filters.append(filters.NOT(hole))
+                polygon_filters.append(filters.AND(
+                    exterior_filter,
+                    *interior_filters
+                ))
+            else:
+                polygon_filters.append(exterior_filter)
         return filters.OR(*polygon_filters)
 
     def _filter_query(self, query, filters_):
