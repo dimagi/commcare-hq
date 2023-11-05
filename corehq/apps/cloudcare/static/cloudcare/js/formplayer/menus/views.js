@@ -295,7 +295,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
 
             e.target.className += " disabled";
-            this.clickableIconRuquest(e, endpointId, this.model.get('id'));
+            this.clickableIconRequest(e, endpointId, this.model.get('id'));
         },
 
         clickableIconRequest: function (e, endpointId, caseId) {
@@ -313,8 +313,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 clickedIcon.classList.remove("disabled");
                 clickedIcon.style.display = '';
                 spinnerElement[0].style.display = 'none';
-                message = `${self.model.collection.title} saved successfully!`;
-                FormplayerFrontend.trigger('showSuccess', gettext(message));
             }).fail(function () {
                 clickedIcon.classList.remove("disabled");
                 clickedIcon.style.display = '';
