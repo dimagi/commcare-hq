@@ -272,13 +272,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         iconClick: function (e) {
             e.stopImmediatePropagation();
-            const origin = window.location.origin;
-            const user = FormplayerFrontend.getChannel().request('currentUser');
-            const appId = formplayerUtils.currentUrlToObject().appId;
-            const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
-            // Confirms we are getting the app id, not build id
-            const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"];
-            const domain = user.domain;
             let fieldIndex = $(e.currentTarget).parent().index();
             if (this.isMultiSelect) {
                 fieldIndex -= 1;
