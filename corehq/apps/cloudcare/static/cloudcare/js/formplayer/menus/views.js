@@ -285,12 +285,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
             const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
             const isBackground = this.options.endpointActions[fieldIndex]['background'];
+            let caseId;
+            if (this.options.headerRowIndices && !$(e.target).closest('.group-rows').length) {
+                caseId = this.model.get('groupKey');
+            } else {
+                caseId = this.model.get('id');
+            }
             // Grab endpoint id from urlTemplate
             const temp = urlTemplate.substring(0, urlTemplate.indexOf('?') - 1);
             const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
 
             e.target.className += " disabled";
-            this.clickableIconRequest(e, endpointId, this.model.get('id'), isBackground);
+            this.clickableIconRequest(e, endpointId, caseId, isBackground);
         },
 
         clickableIconRequest: function (e, endpointId, caseId, isBackground) {
@@ -312,7 +318,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
 
             $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
-                self.reloadCase(caseId);
+                self.reloadCase(self.model.get('id'));
                 resetIcon();
             }).fail(function () {
                 resetIcon();
