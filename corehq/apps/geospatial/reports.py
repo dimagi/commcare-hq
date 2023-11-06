@@ -178,8 +178,23 @@ class CaseGroupingReport(BaseCaseMapReport):
         #     }
         bounds = bucket[BUCKET_CASES_AGG]['bounds']
 
-        # TODO: If top_left and bottom_right are identical, shift them
-        #       by, say, a metre.
+        # If there is only one case in the bucket, then the bounds will
+        # be the geo_point of that case, and top_left and bottom_right
+        # will be the same.
+        #
+        # If they are the same, then the geo_bounding_box filter will
+        # error in Elasticsearch 5.6. (This is not a problem in
+        # Elasticsearch 8+, where we can use the bucket key, which is
+        # its geohash, to select the cases in the bucket.)
+        #
+        # So we shift the top left and bottom right by 0.000_01 degrees,
+        # or roughly 1 metre.
+        if bounds['top_left']['lat'] == bounds['bottom_right']['lat']:
+            bounds['top_left']['lat'] += 0.000_01
+            bounds['bottom_right']['lat'] -= 0.000_01
+        if bounds['top_left']['lon'] == bounds['bottom_right']['lon']:
+            bounds['top_left']['lon'] -= 0.000_01
+            bounds['bottom_right']['lon'] += 0.000_01
 
         query = super()._build_query()  # `super()` so as not to filter
         filters_ = [filters.geo_bounding_box(

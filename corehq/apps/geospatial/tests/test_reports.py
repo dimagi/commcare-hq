@@ -73,26 +73,6 @@ class TestCaseGroupingReport(BaseReportTest):
         self.assertIn(lagos.case_id, case_ids)
 
     def test_bucket_and_polygon_with_hole(self):
-
-        # AAARGH! top_left and bottom_right are the same!
-
-        #   {
-        #       'key': 's1',
-        #       'doc_count': 1,
-        #       'bucket_cases': {
-        #           'bounds': {
-        #               'top_left': {
-        #                   'lat': 6.497221975587308,
-        #                   'lon': 2.604999952018261
-        #               },
-        #               'bottom_right': {
-        #                   'lat': 6.497221975587308,
-        #                   'lon': 2.604999952018261
-        #               }
-        #           }
-        #       }
-        #   }
-
         with self.get_cases() as (porto_novo, bohicon, lagos):
             request = self._get_request(data={
                 'features': json.dumps(polygon_with_hole)
@@ -126,13 +106,21 @@ class TestCaseGroupingReport(BaseReportTest):
         porto_novo = create_case('Porto-Novo', '6.497222 2.605')
         bohicon = create_case('Bohicon', '7.2 2.066667')
         lagos = create_case('Lagos', '6.455027 3.384082')
-        case_search_adapter.bulk_index(
-            [porto_novo, bohicon, lagos],
-            refresh=True,
-        )
+        case_search_adapter.bulk_index([
+            porto_novo,
+            bohicon,
+            lagos
+        ], refresh=True)
+
         try:
             yield porto_novo, bohicon, lagos
+
         finally:
+            case_search_adapter.bulk_delete([
+                porto_novo.case_id,
+                bohicon.case_id,
+                lagos.case_id
+            ], refresh=True)
             porto_novo.delete()
             bohicon.delete()
             lagos.delete()
