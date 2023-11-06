@@ -23,7 +23,7 @@ from .utils import get_geo_case_property
 
 
 class BaseCaseMapReport(ProjectReport, CaseListMixin):
-    section_name = gettext_noop("Geospatial")
+    section_name = gettext_noop("Data")
 
     dispatcher = CaseManagementMapDispatcher
 
