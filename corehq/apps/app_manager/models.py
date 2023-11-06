@@ -1844,8 +1844,10 @@ class DetailColumn(IndexedSchema):
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
 
-    grid_x = IntegerProperty(exclude_if_none=True)
-    grid_y = IntegerProperty(exclude_if_none=True)
+    # Only applies to custom case list tile. grid_x and grid_y are zero-based values
+    # representing the starting row and column.
+    grid_x = IntegerProperty(required=False)
+    grid_y = IntegerProperty(required=False)
     width = IntegerProperty(exclude_if_none=True)
     height = IntegerProperty(exclude_if_none=True)
     horizontal_align = StringProperty(exclude_if_none=True)
