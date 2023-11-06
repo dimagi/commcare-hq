@@ -140,7 +140,7 @@ class GeoPolygonView(BaseDomainView):
 
 
 class BaseConfigView(BaseDomainView):
-    section_name = _("Geospatial")
+    section_name = _("Data")
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
     def dispatch(self, request, *args, **kwargs):
@@ -223,7 +223,7 @@ class GPSCaptureView(BaseDomainView):
     template_name = 'gps_capture_view.html'
 
     page_name = _("Manage GPS Data")
-    section_name = _("Geospatial")
+    section_name = _("Data")
 
     fields = [
         'corehq.apps.reports.filters.case_list.CaseListFilter',
