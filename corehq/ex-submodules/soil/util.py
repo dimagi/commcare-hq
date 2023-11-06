@@ -131,7 +131,8 @@ def process_email_request(domain, download_id, email_address):
                             '{}').format(dropbox_url)
     email_body = _('Your CommCare export for {} is ready! Click on the link below to download your requested data:'
                    '<br/>{}{}').format(domain, download_url, dropbox_message)
-    send_HTML_email(_('CommCare Export Complete'), email_address, email_body)
+    send_HTML_email(_('CommCare Export Complete'), email_address, email_body,
+                    domain=domain, use_domain_gateway=True,)
 
 
 def get_task(task_id):
