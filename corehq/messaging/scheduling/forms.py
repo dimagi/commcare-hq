@@ -432,11 +432,6 @@ class ContentForm(Form):
             raise ValueError("Unexpected value for content: '%s'" % self.schedule_form.cleaned_data['content'])
 
     def get_layout_fields(self):
-        if RICH_TEXT_EMAILS.enabled(self.domain):
-            message_field_template = 'scheduling/partials/rich_text_message_configuration.html'
-        else:
-            message_field_template = 'scheduling/partials/message_configuration.html'
-
         return [
             hqcrispy.B3MultiField(
                 _('Message type'),
@@ -473,15 +468,30 @@ class ContentForm(Form):
                     data_bind='value: message.messagesJSONString',
                 ),
                 crispy.Div(
-                    crispy.Div(template=message_field_template),
+                    crispy.Div(template='scheduling/partials/message_configuration.html'),
                     data_bind='with: message',
                 ),
                 data_bind=(
-                    "visible: $root.content() === '%s' || $root.content() === '%s' || $root.content() === '%s' "
+                    "visible: $root.content() === '%s' || $root.content() === '%s' "
                     "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
-                    (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
+                    (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_SMS_CALLBACK,
                      ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
                 ),
+            ),
+            hqcrispy.B3MultiField(
+                _("Message"),
+                crispy.Field(
+                    'message',
+                    data_bind='value: message.messagesJSONString',
+                ),
+                crispy.Div(
+                    crispy.Div(template='scheduling/partials/rich_text_message_configuration.html'         if RICH_TEXT_EMAILS.enabled(self.domain) else 'scheduling/partials/message_configuration.html'),
+                    data_bind='with: message',
+                ),
+                data_bind="visible: $root.content() === '%s' || ($root.content() === '%s' "
+                          "&& fcm_message_type() === '%s')" %
+                          (ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_FCM_NOTIFICATION,
+                           FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
             ),
             crispy.Div(
                 crispy.Field(
