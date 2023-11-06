@@ -8456,10 +8456,8 @@ msgid "Add default search property"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#, fuzzy
-#| msgid "custom user property"
 msgid "Custom Sort Properties"
-msgstr "Propriedade do usuário personalizada"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
@@ -8480,10 +8478,8 @@ msgid "Descending"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#, fuzzy
-#| msgid "custom user property"
 msgid "Add custom sort property"
-msgstr "Propriedade do usuário personalizada"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Search and Claim Options"
@@ -12895,6 +12891,12 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Case Property Group"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"This GPS case property is currently being used to store the geolocation for "
+"cases, so the data type cannot be changed."
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -18071,6 +18073,10 @@ msgid "180 days"
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py
+msgid "365 days"
+msgstr ""
+
+#: corehq/apps/enterprise/forms.py
 msgid ""
 "Mobile workers who have not submitted a form after these many days will be "
 "considered inactive."
@@ -21586,21 +21592,12 @@ msgid "Show mobile workers on the map"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Reporting groups are used in reports "
-#| "to filter and view\n"
-#| "                                    data."
 msgid ""
 "\n"
 "                            Only users at this location will be shown on the "
 "map.\n"
 "                        "
 msgstr ""
-"\n"
-"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
-" dados."
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html

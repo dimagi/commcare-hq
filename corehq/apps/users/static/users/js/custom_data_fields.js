@@ -22,7 +22,7 @@ hqDefine("users/js/custom_data_fields", [
 
     var customDataFieldsEditor = function (options) {
         assertProperties.assertRequired(options, ['profiles', 'slugs', 'profile_slug'], ['user_data']);
-        options.metadata = options.metadata || {};
+        options.user_data = options.user_data || {};
         var self = {};
 
         self.profiles = _.indexBy(options.profiles, 'id');
@@ -32,8 +32,8 @@ hqDefine("users/js/custom_data_fields", [
         var originalProfileFields = {},
             originalProfileId,
             originalProfile;
-        if (options.metadata) {
-            originalProfileId = options.metadata[options.profile_slug];
+        if (options.user_data) {
+            originalProfileId = options.user_data[options.profile_slug];
             if (originalProfileId) {
                 originalProfile = self.profiles[originalProfileId];
                 if (originalProfile) {
@@ -43,7 +43,7 @@ hqDefine("users/js/custom_data_fields", [
         }
         _.each(self.slugs, function (slug) {
             self[slug] = fieldModel({
-                value: options.metadata[slug] || originalProfileFields[slug],
+                value: options.user_data[slug] || originalProfileFields[slug],
                 disable: !!originalProfileFields[slug],
             });
         });

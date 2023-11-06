@@ -456,17 +456,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initialize: function (options) {
             this.parentModel = options.collection.models || [];
-
-            // whether the select prompt selection is passed as itemset keys
-            // only here to maintain backward compatibility and can be removed
-            // once web apps fully transition using keys to convey select prompt selection.
-            this.selectValuesByKeys = false;
             this.dynamicSearchEnabled = options.hasDynamicSearch && this.options.sidebarEnabled;
 
             this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);
             });
             this.smallScreenListener.listen();
+
+            this.dynamicSearchEnabled = !(options.disableDynamicSearch || this.smallScreenEnabled) &&
+                (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
         },
 
         templateContext: function () {
@@ -576,6 +574,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 if (self.smallScreenEnabled && self.options.sidebarEnabled) {
                     $('#sidebar-region').collapse('hide');
                 }
+                sessionStorage.submitPerformed = true;
             });
         },
 

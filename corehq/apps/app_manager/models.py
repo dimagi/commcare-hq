@@ -1305,8 +1305,6 @@ class FormBase(DocumentSchema):
         if case_type is None:
             return False
 
-        if self.get_module().case_type != case_type:
-            return False
         if not self.requires_case():
             return False
 
@@ -3417,7 +3415,8 @@ class CustomDataAutoFilter(ReportAppFilter):
 
     def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
-        return Choice(value=user.metadata[self.custom_data_property], display=None)
+        user_data = user.get_user_data(getattr(user, 'current_domain', user.domain))
+        return Choice(value=user_data[self.custom_data_property], display=None)
 
 
 class StaticChoiceFilter(ReportAppFilter):

@@ -183,7 +183,8 @@
         <div class="<%- prefix %>-grid-style-<%- index %> box" >
           <% if (styles[index].displayFormat === 'ClickableIcon') {
           if(resolveUri(datum)) { %>
-            <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+            <img class="module-icon btn" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+            <i class="fa fa-spin fa-spinner" style="display:none"></i>
           <% } %>
           <% } else if (styles[index].displayFormat === 'Image') {
           if(resolveUri(datum)) { %>
@@ -208,7 +209,12 @@
                 if(resolveUri(datum)) { %>
                   <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
                 <% } %>
-                <% } else { %>
+              <% } else if (styles[index].displayFormat === 'ClickableIcon') {
+                if(resolveUri(datum)) { %>
+                  <img class="module-icon btn" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+                  <i class="fa fa-spin fa-spinner" style="display:none"></i>
+                <% } %>
+              <% } else { %>
                   <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
               <% } %>
             </div>
