@@ -19,12 +19,16 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     const DEFAULT_MARKER_OPACITY = 1.0;
     const MAP_CONTAINER_ID = 'case-grouping-map';
-    let map;
+    let map;  // TODO: Map and related functions should be moved to a model
+    let mapDrawControls;
     const clusterStatsInstance = new clusterStatsModel();
     let exportModelInstance;
     let groupLockModelInstance = new groupLockModel()
     let caseGroupsInstance = new caseGroupSelectModel()
     let mapMarkers = [];
+
+    let polygonFilterInstance;
+    const FEATURE_QUERY_PARAM = 'features';
 
     function caseModel(caseId, coordinates, caseLink) {
         'use strict';
@@ -124,6 +128,129 @@ hqDefine("geospatial/js/case_grouping_map",[
         return self;
     }
 
+    function polygonModel(polygon) {
+        let self = {};
+        self.text = polygon.name;
+        self.id = polygon.id;
+        self.geoJson = polygon.geo_json;
+        return self;
+    }
+
+    function polygonFilterModel() {
+        let self = {};
+        self.polygons = {};
+        self.shouldRefreshPage = ko.observable(false);
+
+        self.savedPolygons = ko.observableArray();
+        self.selectedSavedPolygonId = ko.observable('');
+        self.activeSavedPolygon;
+
+        self.addPolygonsToFilterList = function (featureList) {
+            for (const feature of featureList) {
+                self.polygons[feature.id] = feature;
+            }
+            updatePolygonQueryParam();
+        };
+
+        self.removePolygonsFromFilterList = function (featureList) {
+            for (const feature of featureList) {
+                if (self.polygons[feature.id]) {
+                    delete self.polygons[feature.id];
+                }
+            }
+            updatePolygonQueryParam();
+        };
+
+        function updatePolygonQueryParam() {
+            const url = new URL(window.location.href);
+            if (Object.keys(self.polygons).length) {
+                url.searchParams.set(FEATURE_QUERY_PARAM, JSON.stringify(self.polygons));
+            } else {
+                url.searchParams.delete(FEATURE_QUERY_PARAM);
+            }
+            window.history.replaceState({ path: url.href }, '', url.href);
+            self.shouldRefreshPage(true);
+        }
+
+        self.loadPolygonFromQueryParam = function () {
+            const url = new URL(window.location.href);
+            const featureParam = url.searchParams.get(FEATURE_QUERY_PARAM);
+            if (featureParam) {
+                const features = JSON.parse(featureParam);
+                for (const featureId in features) {
+                    const feature = features[featureId];
+                    mapDrawControls.add(feature);
+                    self.polygons[featureId] = feature;
+                }
+            }
+        };
+
+        function removeActivePolygonLayer() {
+            if (self.activeSavedPolygon) {
+                map.removeLayer(self.activeSavedPolygon.id);
+                map.removeSource(self.activeSavedPolygon.id);
+            }
+        }
+
+        function createActivePolygonLayer(polygonObj) {
+            map.addSource(
+                String(polygonObj.id),
+                {'type': 'geojson', 'data': polygonObj.geoJson}
+            );
+            map.addLayer({
+                'id': String(polygonObj.id),
+                'type': 'fill',
+                'source': String(polygonObj.id),
+                'layout': {},
+                'paint': {
+                    'fill-color': '#0080ff',
+                    'fill-opacity': 0.5,
+                },
+            });
+        }
+
+        self.clearActivePolygon = function () {
+            self.selectedSavedPolygonId('');
+            self.removePolygonsFromFilterList(self.activeSavedPolygon.geoJson.features);
+            removeActivePolygonLayer();
+            self.activeSavedPolygon = null;
+        };
+
+        self.selectedSavedPolygonId.subscribe(() => {
+            const selectedId = parseInt(self.selectedSavedPolygonId());
+            const polygonObj = self.savedPolygons().find(
+                function (o) { return o.id === selectedId; }
+            );
+            if (!polygonObj) {
+                return;
+            }
+
+            if (self.activeSavedPolygon) {
+                self.clearActivePolygon();
+            }
+
+            removeActivePolygonLayer();
+            createActivePolygonLayer(polygonObj);
+
+            self.activeSavedPolygon = polygonObj;
+            self.addPolygonsToFilterList(polygonObj.geoJson.features);
+        });
+
+        self.loadPolygons = function (polygonArr) {
+            self.loadPolygonFromQueryParam();
+            self.savedPolygons([]);
+            _.each(polygonArr, (polygon) => {
+                // Saved features don't have IDs, so we need to give them to uniquely identify them for polygon filtering
+                for (const feature of polygon.geo_json.features) {
+                    feature.id = uuidv4();
+                }
+                self.savedPolygons.push(polygonModel(polygon));
+            });
+        };
+
+        return self;
+    }
+
     function getTodayDate() {
         const todayDate = new Date();
         return todayDate.toLocaleDateString();
@@ -205,7 +332,22 @@ hqDefine("geospatial/js/case_grouping_map",[
                 },
             });
         });
+
+        mapDrawControls = new MapboxDraw({  // eslint-disable-line no-undef
+            // API: https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md
+            displayControlsDefault: false,
+            boxSelect: true,
+            controls: {
+                polygon: true,
+                trash: true,
+            },
+        });
+        mapboxInstance.addControl(mapDrawControls);
+
         mapboxInstance.on('moveend', updateClusterStats);
+        mapboxInstance.on('draw.update', (e) => polygonFilterInstance.addPolygonsToFilterList(e.features));
+        mapboxInstance.on('draw.create', (e) => polygonFilterInstance.addPolygonsToFilterList(e.features));
+        mapboxInstance.on('draw.delete', (e) => polygonFilterInstance.removePolygonsFromFilterList(e.features));
 
         return mapboxInstance;
     }
@@ -266,7 +408,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                             "type": "Point",
                             "coordinates": [coordinates.lng, coordinates.lat],
                         },
-                    },
+                    }
                 );
             }
         });
@@ -332,7 +474,7 @@ hqDefine("geospatial/js/case_grouping_map",[
     function uuidv4() {
         // https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid/2117523#2117523
         return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
-            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16),
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
         );
     }
 
@@ -540,6 +682,10 @@ hqDefine("geospatial/js/case_grouping_map",[
                 $("#lock-groups-controls").koApplyBindings(groupLockModelInstance);
                 map = initMap();
                 $("#clusterStats").koApplyBindings(clusterStatsInstance);
+                polygonFilterInstance = new polygonFilterModel();
+                polygonFilterInstance.loadPolygons(initialPageData.get('saved_polygons'));
+                $("#polygon-filters").koApplyBindings(polygonFilterInstance);
+
                 $("#caseGroupSelect").koApplyBindings(caseGroupsInstance);
                 return;
             }
