@@ -2572,39 +2572,6 @@ class AttendanceTrackingTab(UITab):
         return toggles.ATTENDANCE_TRACKING.enabled(self.domain) and self.couch_user.can_manage_events(self.domain)
 
 
-class GeospatialTab(UITab):
-    title = gettext_noop("Geospatial")
-    view = 'geospatial_default'
-
-    url_prefix_formats = (
-        '/a/{domain}/geospatial',
-    )
-
-    @property
-    def sidebar_items(self):
-        items = [
-            (_("Settings"), [
-                {
-                    'title': _("Configure geospatial settings"),
-                    'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
-                },
-                {
-                    'title': _("Manage GPS Data"),
-                    'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
-                },
-            ]),
-        ]
-        items.extend(
-            CaseManagementMapDispatcher.navigation_sections(request=self._request, domain=self.domain)
-        )
-
-        return items
-
-    @property
-    def _is_viewable(self):
-        return toggles.GEOSPATIAL.enabled(self.domain)
-
-
 def _get_repeat_record_report(domain):
     from corehq.motech.repeaters.models import are_repeat_records_migrated
     from corehq.motech.repeaters.views import (
