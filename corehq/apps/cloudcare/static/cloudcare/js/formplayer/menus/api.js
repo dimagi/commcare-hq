@@ -166,22 +166,14 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                 var callStartTime = performance.now();
                 menus.fetch($.extend(true, {}, options)).always(function () {
-                    var callEndTime = performance.now();
-                    var callResponseTime = callEndTime - callStartTime;
-
-                    console.log("data = " + JSON.stringify(data));
                     if (data.query_data.results.initiated_by === "dynamic_search") {
-                        console.log("API Server response time: " + callResponseTime + " ms");
-                        console.log("initialPageData.reverse('api_histogram_metrics') " + initialPageData.reverse('api_histogram_metrics'));
-
+                        var callEndTime = performance.now();
+                        var callResponseTime = callEndTime - callStartTime;
                         $.ajax(initialPageData.reverse('api_histogram_metrics'), {
                             method: 'POST',
                             data: {responseTime: callResponseTime, metrics: "commcare.dynamic_search.response_time"},
-                            success: function (resp) {
-                                console.log(resp);
-                            },
                             error: function (xhr) {
-                                console.log("API call failed");
+                                console.log("API call failed to record metrics");
                             },
                         });
                     }

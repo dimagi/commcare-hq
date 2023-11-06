@@ -265,7 +265,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         };
 
         this.setQueryData = function ({ inputs, execute, forceManualSearch, initiatedBy}) {
-            console.log("initiatedBy " + initiatedBy);
             var selections = Utils.currentUrlToObject().selections;
             this.queryData = this.queryData || {};
 
@@ -280,7 +279,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 queryDataEntry.initiated_by = initiatedBy;
             }
 
-            console.log("queryDataEntry " + JSON.stringify(queryDataEntry));
             this.queryData[sessionStorage.queryKey] = queryDataEntry;
 
             this.page = null;

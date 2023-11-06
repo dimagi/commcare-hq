@@ -84,9 +84,6 @@ PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 
-logger = logging.getLogger("OTA")
-
-
 @location_safe
 @handle_401_response
 @mobile_auth_or_formplayer
@@ -128,7 +125,6 @@ def app_aware_search(request, domain, app_id):
     """
     start_time = datetime.now()
     request_dict = request.GET if request.method == 'GET' else request.POST
-    logger.info(f"app_aware_search request_dict {request_dict}")
     try:
         cases = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
     except CaseSearchUserError as e:

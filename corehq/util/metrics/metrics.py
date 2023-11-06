@@ -69,9 +69,6 @@ class HqMetrics(metaclass=abc.ABCMeta):
         _validate_tag_names(tags)
         self._histogram(name, value, bucket_tag, buckets, bucket_unit, tags, documentation)
 
-    def datadog_histogram(self, name, value):
-        self._datadog_histogram(name, value)
-
     def create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
                      tags: Dict[str, str] = None, aggregation_key: str = None):
         _validate_tag_names(tags)
