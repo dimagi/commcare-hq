@@ -48,6 +48,9 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                 options = {
                     success: function (parsedMenus, response) {
+                        if (response.submitResponseMessage) {
+                            FormplayerFrontend.trigger('showSuccess', gettext(response.submitResponseMessage));
+                        }
                         if (response.status === 'retry') {
                             FormplayerFrontend.trigger('retry', response, function () {
                                 var newOptionsData = JSON.stringify($.extend(true, { mustRestore: true }, JSON.parse(options.data)));
@@ -220,6 +223,10 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         }
 
         // If an endpoint is provided, first claim any cases it references, then navigate
+        return API.queryFormplayer(options, "get_endpoint");
+    });
+
+    FormplayerFrontend.getChannel().reply("icon:click", function (options) {
         return API.queryFormplayer(options, "get_endpoint");
     });
 
