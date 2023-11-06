@@ -534,6 +534,34 @@ hqDefine("geospatial/js/geospatial_map", [
                 missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
             }
             missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
+
+
+        // @param mapItems - Should be an array of mapItemModel type objects
+        function fitMapBounds(mapItems) {
+            const mapInstance = map.getMapboxInstance();
+            if (!mapItems.length) {
+                mapInstance.flyTo({
+                    zoom: 0,
+                    center: DEFAULT_CENTER_COORD,
+                    duration: 500,
+                });
+                return;
+            }
+
+            // See https://stackoverflow.com/questions/62939325/scale-mapbox-gl-map-to-fit-set-of-markers
+            const firstCoord = mapItems[0].itemData.coordinates;
+            const bounds = mapItems.reduce(function (bounds, mapItem) {
+                const coord = mapItem.itemData.coordinates;
+                if (coord) {
+                    return bounds.extend(coord);
+                }
+            }, new mapboxgl.LngLatBounds(firstCoord, firstCoord));  // eslint-disable-line no-undef
+
+            map.getMapboxInstance().fitBounds(bounds, {
+                padding: 50,  // in pixels
+                duration: 500,  // in ms
+                maxZoom: 10,  // 0-23
+            });
         }
 
         $(document).ajaxComplete(function (event, xhr, settings) {
