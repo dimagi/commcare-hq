@@ -1,6 +1,7 @@
 from collections import namedtuple
 
 from django.http import JsonResponse
+from django.shortcuts import render
 
 FakeUser = namedtuple('FakeUser', 'id username')
 
@@ -35,4 +36,11 @@ def select2_ajax_demo(request):
     return JsonResponse({
         "results": results,
         "total": total,
+    })
+
+
+def remote_modal_demo(request):
+    secret_message = request.GET.get('testParam')
+    return render(request, "styleguide/bootstrap5/examples/remote_modal.html", {
+        "secret_message": secret_message,
     })
