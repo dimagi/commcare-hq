@@ -19,7 +19,10 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from .dispatchers import CaseManagementMapDispatcher
 from .es import apply_geohash_agg, find_precision
 from .models import GeoPolygon
-from .utils import get_geo_case_property
+from .utils import (
+    get_geo_case_property,
+    features_to_points_list,
+)
 
 
 class BaseCaseMapReport(ProjectReport, CaseListMixin):
@@ -36,6 +39,10 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin):
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'case_row_order': {val.html: idx for idx, val in enumerate(self.headers)},
+            'saved_polygons': [
+                {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
+                for p in GeoPolygon.objects.filter(domain=self.domain).all()
+            ],
         })
         return context
 
@@ -93,17 +100,6 @@ class CaseManagementMap(BaseCaseMapReport):
     def default_report_url(self):
         return reverse('geospatial_default', args=[self.request.project.name])
 
-    @property
-    def template_context(self):
-        context = super(CaseManagementMap, self).template_context
-        context.update({
-            'saved_polygons': [
-                {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
-                for p in GeoPolygon.objects.filter(domain=self.domain).all()
-            ]
-        })
-        return context
-
 
 class CaseGroupingReport(BaseCaseMapReport):
     name = gettext_noop('Case Grouping')
@@ -116,20 +112,20 @@ class CaseGroupingReport(BaseCaseMapReport):
         query = super()._build_query()
         case_property = get_geo_case_property(self.domain)
 
-        # NOTE: ASSUMES polygon is available in request.POST['feature']
-        if 'feature' in self.request.POST:
-            # Filter cases by a shape set by the user
-            geojson = json.loads(self.request.POST['feature'])
-            shape = geojson_to_es_geoshape(geojson)
-            relation = 'within' if shape['type'] == 'polygon' else 'intersects'
-            query.nested(
-                CASE_PROPERTIES_PATH,
-                filters.geo_shape(
-                    field=case_property,
-                    shape=shape,
-                    relation=relation,
+        # NOTE: ASSUMES polygon is available in request.GET['features']
+        if 'features' in self.request.GET:
+            try:
+                features = json.loads(self.request.GET['features'])
+                points_list = features_to_points_list(features)
+                query = query.nested(
+                    CASE_PROPERTIES_PATH,
+                    filters.geo_shape(
+                        field=case_property,
+                        points_list=points_list,
+                    )
                 )
-            )
+            except json.JSONDecodeError:
+                pass
 
         # Apply geohash grid aggregation
         if 'precision' in self.request.GET:

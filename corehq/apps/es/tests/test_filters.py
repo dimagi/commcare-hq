@@ -182,17 +182,30 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                             }
                         },
                         {
-                            "geo_shape": {
-                                "location": {
-                                    "shape": {
-                                        "type": "envelope",
-                                        "coordinates": [
-                                            [-74.1, 40.73],
-                                            [-71.12, 40.01]
-                                        ]
+                            "bool": {
+                                "filter": [
+                                    {
+                                        "term": {
+                                            "case_properties.key.exact": "location"
+                                        }
                                     },
-                                    "relation": "within"
-                                }
+                                    {
+                                        "geo_polygon": {
+                                            "case_properties.geopoint_value": {
+                                                "points": [
+                                                    {
+                                                        "lat": 40.73,
+                                                        "lon": -74.1
+                                                    },
+                                                    {
+                                                        "lat": 40.01,
+                                                        "lon": -71.12
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ]
                             }
                         },
                         {
@@ -216,30 +229,43 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
         )
 
     def test_geo_shape(self):
-        shape = {
-            'type': 'envelope',
-            # NOTE: coordinate order is longitude, latitude (X, Y)
-            'coordinates': [[-74.1, 40.73], [-71.12, 40.01]]
-        }
+        points_list = [
+            {"lat": 40.73, "lon": -74.1},
+            {"lat": 40.01, "lon": -71.12},
+        ]
+
         query = CaseSearchES().filter(
-            filters.geo_shape('case_gps', shape)
+            filters.geo_shape('case_gps', points_list)
         )
         json_output = {
             "query": {
                 "bool": {
                     "filter": [
                         {
-                            "geo_shape": {
-                                "case_gps": {
-                                    "shape": {
-                                        "type": "envelope",
-                                        "coordinates": [
-                                            [-74.1, 40.73],
-                                            [-71.12, 40.01]
-                                        ]
+                            "bool": {
+                                "filter": [
+                                    {
+                                        "term": {
+                                            "case_properties.key.exact": "case_gps"
+                                        }
                                     },
-                                    "relation": "intersects"
-                                }
+                                    {
+                                        "geo_polygon": {
+                                            "case_properties.geopoint_value": {
+                                                "points": [
+                                                    {
+                                                        "lat": 40.73,
+                                                        "lon": -74.1
+                                                    },
+                                                    {
+                                                        "lat": 40.01,
+                                                        "lon": -71.12
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ]
                             }
                         },
                         {
