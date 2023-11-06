@@ -272,23 +272,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         iconClick: function (e) {
             e.stopImmediatePropagation();
-            const origin = window.location.origin;
-            const user = FormplayerFrontend.getChannel().request('currentUser');
-            const appId = formplayerUtils.currentUrlToObject().appId;
-            const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
-            // Confirms we are getting the app id, not build id
-            const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"];
-            const domain = user.domain;
             let fieldIndex = $(e.currentTarget).parent().index();
             if (this.isMultiSelect) {
                 fieldIndex -= 1;
             }
-            let caseId;
-            if (this.options.headerRowIndices && !$(e.target).closest('.group-rows').length) {
-                caseId = this.model.get('groupKey');
-            } else {
-                caseId = this.model.get('id');
-            }
+            // let caseId;
+            // if (this.options.headerRowIndices && !$(e.target).closest('.group-rows').length) {
+            //     caseId = this.model.get('groupKey');
+            // } else {
+            //     caseId = this.model.get('id');
+            // }
             if (this.options.bodyRowIndices && this.options.headerRowIndices) {
                 if ($(e.target).closest('.group-rows').length) {
                     fieldIndex = this.options.bodyRowIndices[fieldIndex];
@@ -297,55 +290,38 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }
             }
             const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
-            const actionUrl = origin + urlTemplate
-                .replace("{domain}", domain)
-                .replace("{appid}", currentAppId)
-                .replace("{selected_cases}", caseId)
-                .replace("{case_id}", caseId);
+            const isBackground = this.options.endpointActions[fieldIndex]['background'];
+            // Grab endpoint id from urlTemplate
+            const temp = urlTemplate.substring(0, urlTemplate.indexOf('?') - 1);
+            const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
+
             e.target.className += " disabled";
-            this.iconIframe(e, actionUrl, this.model.get('id'));
+            this.clickableIconRequest(e, endpointId, this.model.get('id'), isBackground);
         },
 
-        iconIframe: function (e, url, caseId) {
+        clickableIconRequest: function (e, endpointId, caseId, isBackground) {
             const self = this;
-            const iframeId = "icon-iframe-" + caseId;
             const clickedIcon = e.target;
             clickedIcon.classList.add("disabled");
             clickedIcon.style.display = 'none';
             const spinnerElement = $(clickedIcon).siblings('i');
             spinnerElement[0].style.display = '';
-            const iconIframe = document.createElement('iframe');
-            iconIframe.style.display = 'none';
-            $(iconIframe).attr('id', iframeId);
-            iconIframe.src = encodeURI(url);
-            document.body.appendChild(iconIframe);
+            const currentUrlToObject = formplayerUtils.currentUrlToObject();
+            currentUrlToObject.endpointArgs = {case_id: caseId};
+            currentUrlToObject.endpointId = endpointId;
+            currentUrlToObject.isBackground = isBackground;
 
-            $(`#${iframeId}`).on('load', function () {
-                // Get success or error message from iframe and pass to main window
-                const notificationsElement = $(`#${iframeId}`).contents().find("#cloudcare-notifications");
-                new MutationObserver((el) => {
-                    const addedNodes = el[0].addedNodes;
-                    if (addedNodes[0].classList.contains('alert')) {
-                        const succeeded = addedNodes[0].classList.contains('alert-success');
-                        let message;
-                        if (succeeded) {
-                            message = notificationsElement.find('.alert-success').find('p').text();
-                            FormplayerFrontend.trigger('showSuccess', gettext(message));
-                            self.reloadCase(caseId);
-                        } else {
-                            const messageElement = notificationsElement.find('.alert-danger');
-                            // Todo: standardize structures of success and error alert elements
-                            message = messageElement.contents().filter(function () {
-                                return this.nodeType === Node.TEXT_NODE;
-                            })[0].nodeValue;
-                            FormplayerFrontend.trigger('showError', gettext(message));
-                        }
-                        clickedIcon.classList.remove("disabled");
-                        clickedIcon.style.display = '';
-                        spinnerElement[0].style.display = 'none';
-                        iconIframe.remove();
-                    }
-                }).observe(notificationsElement[0], { childList: true });
+            function resetIcon() {
+                clickedIcon.classList.remove("disabled");
+                clickedIcon.style.display = '';
+                spinnerElement[0].style.display = 'none';
+            }
+
+            $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
+                self.reloadCase(caseId);
+                resetIcon();
+            }).fail(function () {
+                resetIcon();
             });
         },
 
