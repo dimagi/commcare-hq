@@ -133,7 +133,7 @@ class CaseGroupingReport(BaseCaseMapReport):
         else:
             precision = find_precision(query, case_property)
 
-        query = apply_geohash_agg(query, case_property, precision)
+        # query = apply_geohash_agg(query, case_property, precision)
         return query
 
 
