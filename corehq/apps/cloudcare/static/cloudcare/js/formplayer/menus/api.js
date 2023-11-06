@@ -207,10 +207,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         return API.queryFormplayer(options, "get_endpoint");
     });
 
-    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent, isShortDetail) {
+    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent, isShortDetail, isRefreshCaseSearch) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         options.isShortDetail = isShortDetail;
+        options.isRefreshCaseSearch = isRefreshCaseSearch;
         return API.queryFormplayer(options, 'get_details');
     });
 
