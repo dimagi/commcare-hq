@@ -535,6 +535,8 @@ hqDefine("geospatial/js/geospatial_map", [
             }
             missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
 
+            fitMapBounds(caseMapItems);
+        }
 
         // @param mapItems - Should be an array of mapItemModel type objects
         function fitMapBounds(mapItems) {
