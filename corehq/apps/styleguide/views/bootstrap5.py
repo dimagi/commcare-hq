@@ -167,3 +167,14 @@ def styleguide_molecules_modals(request):
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/modals.html', context)
+
+
+@use_bootstrap5
+def styleguide_molecules_pagination(request):
+    context = get_navigation_context("styleguide_molecules_pagination_b5")
+    context.update({
+        'examples': {
+            'pagination': get_example_context('styleguide/bootstrap5/examples/pagination.html'),
+        }
+    })
+    return render(request, 'styleguide/bootstrap5/molecules/pagination.html', context)
