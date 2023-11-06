@@ -312,6 +312,7 @@ HQ_APPS = (
     'corehq.apps.groups',
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
+    'corehq.apps.email',
     'corehq.apps.events',
     'corehq.apps.geospatial',
     'corehq.apps.smsforms',
@@ -477,7 +478,7 @@ DATA_EMAIL = 'datatree@example.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
 BILLING_EMAIL = 'billing-comm@example.com'
-INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
+INVOICING_CONTACT_EMAIL = 'accounts@example.com'
 GROWTH_EMAIL = 'growth@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 SALES_EMAIL = 'sales@example.com'
@@ -859,14 +860,14 @@ ES_SEARCH_TIMEOUT = 30
 # The variables should be used while reindexing an index.
 # When the variables are set to true the data will be written to both primary and secondary indexes.
 
-ES_APPS_INDEX_MULTIPLEXED = False
-ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
-ES_CASES_INDEX_MULTIPLEXED = False
-ES_DOMAINS_INDEX_MULTIPLEXED = False
-ES_FORMS_INDEX_MULTIPLEXED = False
-ES_GROUPS_INDEX_MULTIPLEXED = False
-ES_SMS_INDEX_MULTIPLEXED = False
-ES_USERS_INDEX_MULTIPLEXED = False
+ES_APPS_INDEX_MULTIPLEXED = True
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = True
+ES_CASES_INDEX_MULTIPLEXED = True
+ES_DOMAINS_INDEX_MULTIPLEXED = True
+ES_FORMS_INDEX_MULTIPLEXED = True
+ES_GROUPS_INDEX_MULTIPLEXED = True
+ES_SMS_INDEX_MULTIPLEXED = True
+ES_USERS_INDEX_MULTIPLEXED = True
 
 
 # Setting the variable to True would mean that the primary index would become secondary and vice-versa

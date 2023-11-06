@@ -50,10 +50,12 @@ hqDefine("app_manager/js/details/column", function () {
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
         self.coordinatesVisible = ko.observable(true);
-        self.tileRowMax = ko.observable(7);
+        self.tileRowMax = ko.observable(7); // set dynamically by screen
         self.tileColumnMax = ko.observable(13);
         self.tileRowStart = ko.observable(self.original.grid_y || 1);
-        self.tileRowOptions = [""].concat(_.range(1, self.tileRowMax()));
+        self.tileRowOptions = ko.computed(function () {
+            return [""].concat(_.range(1, self.tileRowMax()));
+        });
         self.tileColumnStart = ko.observable(self.original.grid_x || 1);
         self.tileColumnOptions = [""].concat(_.range(1, self.tileColumnMax()));
         self.tileWidth = ko.observable(self.original.width || self.tileRowMax() - 1);
@@ -67,7 +69,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.horizontalAlign = ko.observable(self.original.horizontal_align || 'left');
         self.horizontalAlignOptions = ['left', 'center', 'right'];
 
-        self.verticalAlign = ko.observable(self.original.vertial_align || 'start');
+        self.verticalAlign = ko.observable(self.original.vertical_align || 'start');
         self.verticalAlignOptions = ['start', 'center', 'end'];
 
         self.fontSize = ko.observable(self.original.font_size || 'medium');
@@ -268,7 +270,7 @@ hqDefine("app_manager/js/details/column", function () {
         formEndpoints.forEach(([, endpoint]) => {
             if (endpoint.module_name !== moduleName) {
                 moduleName = endpoint.module_name;
-                formEndpointOptions.push({groupName: moduleName});
+                formEndpointOptions.push({groupName: `${moduleName} (${endpoint.module_case_type})`});
             }
             formEndpointOptions.push({value: endpoint.id, label: endpoint.form_name});
         });
@@ -428,7 +430,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.height = self.tileHeight();
             column.width = self.tileWidth();
             column.horizontal_align = self.horizontalAlign();
-            column.vertial_align = self.verticalAlign();
+            column.vertical_align = self.verticalAlign();
             column.font_size = self.fontSize();
             column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;
             column.late_flag = parseInt(self.late_flag_extra.val(), 10);

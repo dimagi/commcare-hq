@@ -80,14 +80,15 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
-    CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY
-
+    CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
+    CASE_SEARCH_SORT_KEY,
 )
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
 # The name of the instance where search results are stored
 RESULTS_INSTANCE = 'results'
+RESULTS_INSTANCE_BASE = f'{RESULTS_INSTANCE}:'
 RESULTS_INSTANCE_INLINE = 'results:inline'
 
 # The name of the instance where search results are stored when querying a data registry
@@ -280,6 +281,18 @@ class RemoteRequestFactory(object):
                 QueryData(
                     key=CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
                     ref="'true'",
+                )
+            )
+        if self.module.search_config.custom_sort_properties:
+            refs = []
+            for sort_property in self.module.search_config.custom_sort_properties:
+                direction = '-' if sort_property.direction == 'descending' else '+'
+                sort_type = sort_property.sort_type or 'exact'
+                refs.append(f"{direction}{sort_property.property_name}:{sort_type}")
+            datums.append(
+                QueryData(
+                    key=CASE_SEARCH_SORT_KEY,
+                    ref=f"'{','.join(refs)}'",
                 )
             )
         return datums

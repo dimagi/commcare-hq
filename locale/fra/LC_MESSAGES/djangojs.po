@@ -13,9 +13,9 @@
 # Rowena Luk <rluk@dimagi.com>, 2021
 # Dimagi Dev <devops@dimagi.com>, 2021
 # Ismaïla Diene <idiene@dimagi.com>, 2022
+# Tyler Wymer <twymer@dimagi.com>, 2023
 # Aissetou Sawadogo <ais107@hotmail.com>, 2023
 # Ayla Reith <areith@dimagi.com>, 2023
-# Tyler Wymer <twymer@dimagi.com>, 2023
 # Carla Legros <clegros@dimagi.com>, 2023
 #
 #, fuzzy
@@ -886,7 +886,6 @@ msgid "Question"
 msgstr "Question"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Name"
 msgstr "Nom"
 
@@ -2637,26 +2636,6 @@ msgstr ""
 msgid "Command Bar"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Module ID"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Description"
-msgstr "Description"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Time Estimate"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Must be an integer"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Estimated time to complete the module in hours."
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
 msgstr ""
@@ -3494,6 +3473,10 @@ msgstr "Date sensible"
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "Name of the Area"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "All locations"
 msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js

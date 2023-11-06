@@ -2,17 +2,14 @@ from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.custom_data_fields.models import (
-    CustomDataFieldsDefinition,
-    CustomDataFieldsProfile,
-    Field,
-    PROFILE_SLUG,
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    DeviceAppMeta,
+    WebUser,
 )
 from corehq.apps.users.models_role import UserRole
-from corehq.apps.users.role_utils import UserRolePresets
-from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser, DeviceAppMeta, WebUser, CouchUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import (
     TestFormMetadata,
@@ -35,11 +32,11 @@ class UserModelTest(TestCase):
             created_via=None,
         )
 
-        self.metadata = TestFormMetadata(
+        metadata = TestFormMetadata(
             domain=self.user.domain,
             user_id=self.user._id,
         )
-        get_simple_wrapped_form('123', metadata=self.metadata)
+        get_simple_wrapped_form('123', metadata=metadata)
 
     def tearDown(self):
         CommCareUser.get_db().delete_doc(self.user._id)
@@ -79,100 +76,6 @@ class UserModelTest(TestCase):
         CommCareUser.bulk_save([self.user])
         user = CommCareUser.get(self.user._id)
         self.assertGreater(user.last_modified, lm)
-
-    def test_user_data_not_allowed_in_create(self):
-        message = "Do not access user_data directly, pass metadata argument to create."
-        with self.assertRaisesMessage(ValueError, message):
-            CommCareUser.create(self.domain, 'martha', 'bmfa', None, None, user_data={'country': 'Canada'})
-
-    def test_metadata(self):
-        metadata = self.user.metadata
-        self.assertEqual(metadata, {'commcare_project': 'my-domain'})
-        metadata.update({
-            'cruise': 'control',
-            'this': 'road',
-        })
-        self.user.update_metadata(metadata)
-        self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
-            'cruise': 'control',
-            'this': 'road',
-        })
-        self.user.pop_metadata('cruise')
-        self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
-            'this': 'road',
-        })
-        self.user.update_metadata({'this': 'field'})
-        self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
-            'this': 'field',
-        })
-
-    def test_metadata_with_profile(self):
-        definition = CustomDataFieldsDefinition(domain='my-domain', field_type=UserFieldsView.field_type)
-        definition.save()
-        definition.set_fields([Field(slug='start')])
-        definition.save()
-        profile = CustomDataFieldsProfile(
-            name='low',
-            fields={'start': 'sometimes'},
-            definition=definition,
-        )
-        profile.save()
-        conflict_message = "metadata properties conflict with profile: start"
-
-        # Custom user data profiles get their data added to metadata automatically for mobile users
-        self.user.update_metadata({PROFILE_SLUG: profile.id})
-        self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
-            PROFILE_SLUG: profile.id,
-            'start': 'sometimes',
-        })
-
-        # Remove profile should remove it and related fields
-        self.user.pop_metadata(PROFILE_SLUG)
-        self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
-        })
-
-        # Can't add profile that conflicts with existing data
-        self.user.update_metadata({
-            'start': 'never',
-            'end': 'yesterday',
-        })
-        with self.assertRaisesMessage(ValueError, conflict_message):
-            self.user.update_metadata({
-                PROFILE_SLUG: profile.id,
-            })
-
-        # Can't add data that conflicts with existing profile
-        self.user.pop_metadata('start')
-        self.user.update_metadata({PROFILE_SLUG: profile.id})
-        with self.assertRaisesMessage(ValueError, conflict_message):
-            self.user.update_metadata({'start': 'never'})
-
-        # Can't add both a profile and conflicting data
-        self.user.pop_metadata(PROFILE_SLUG)
-        with self.assertRaisesMessage(ValueError, conflict_message):
-            self.user.update_metadata({
-                PROFILE_SLUG: profile.id,
-                'start': 'never',
-            })
-
-        # Custom user data profiles don't get populated for web users
-        web_user = WebUser.create(None, "imogen", "*****", None, None)
-        self.assertEqual(web_user.metadata, {
-            'commcare_project': None,
-        })
-        web_user.update_metadata({PROFILE_SLUG: profile.id})
-        self.assertEqual(web_user.metadata, {
-            'commcare_project': None,
-            PROFILE_SLUG: profile.id,
-        })
-
-        definition.delete()
-        web_user.delete(self.domain, deleted_by=None)
 
     def test_commcare_user_lockout_limits(self):
         commcare_user = self.create_user('test_user', is_web_user=False)

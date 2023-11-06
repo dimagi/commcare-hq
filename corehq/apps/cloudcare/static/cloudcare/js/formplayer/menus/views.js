@@ -208,19 +208,45 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         return caseListLayout;
     };
 
+    const getScrollTopOffset = function (smallScreenEnabled, mapIsFullscreen = false) {
+        const $mapEl = $('#module-case-list-map');
+        const $stickyHeader = $('#small-screen-sticky-header');
+        let scrollTopOffset = parseInt(($mapEl).css('top'));
+        if (smallScreenEnabled) {
+            if ($stickyHeader[0]) {
+                scrollTopOffset = parseInt($stickyHeader.css('top')) + $stickyHeader.outerHeight();
+            } else if (mapIsFullscreen) {
+                scrollTopOffset = constants.BREADCRUMB_HEIGHT_PX;
+            } else {
+                scrollTopOffset += $mapEl.outerHeight();
+            }
+        }
+        return scrollTopOffset;
+    };
+
+
     const CaseView = Marionette.View.extend({
         tagName: "tr",
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
+            clickIcon: ".module-icon.btn",
             selectRow: ".select-row-checkbox",
+            showMore: ".show-more",
         },
 
         events: {
+            "click @ui.clickIcon": "iconClick",
             "click": "rowClick",
             "keydown": "rowKeyAction",
             'click @ui.selectRow': 'selectRowAction',
             'keypress @ui.selectRow': 'selectRowAction',
+            'click @ui.showMore': 'showMoreAction',
+            'keypress @ui.showMore': 'showMoreAction',
+        },
+
+        modelEvents: {
+            "change": "modelChanged",
         },
 
         initialize: function () {
@@ -231,6 +257,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     self.ui.selectRow.prop("checked", action === constants.MULTI_SELECT_ADD);
                 }
             });
+            self.smallScreenEnabled = cloudcareUtils.smallScreenIsEnabled();
         },
 
         className: "formplayer-request case-row",
@@ -243,11 +270,114 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
 
+        iconClick: function (e) {
+            e.stopImmediatePropagation();
+            const origin = window.location.origin;
+            const user = FormplayerFrontend.getChannel().request('currentUser');
+            const appId = formplayerUtils.currentUrlToObject().appId;
+            const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
+            // Confirms we are getting the app id, not build id
+            const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"];
+            const domain = user.domain;
+            let fieldIndex = $(e.currentTarget).parent().index();
+            if (this.isMultiSelect) {
+                fieldIndex -= 1;
+            }
+            let caseId;
+            if (this.options.headerRowIndices && !$(e.target).closest('.group-rows').length) {
+                caseId = this.model.get('groupKey');
+            } else {
+                caseId = this.model.get('id');
+            }
+            if (this.options.bodyRowIndices && this.options.headerRowIndices) {
+                if ($(e.target).closest('.group-rows').length) {
+                    fieldIndex = this.options.bodyRowIndices[fieldIndex];
+                } else {
+                    fieldIndex = this.options.headerRowIndices[fieldIndex];
+                }
+            }
+            const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
+            const actionUrl = origin + urlTemplate
+                .replace("{domain}", domain)
+                .replace("{appid}", currentAppId)
+                .replace("{selected_cases}", caseId)
+                .replace("{case_id}", caseId);
+            e.target.className += " disabled";
+            this.iconIframe(e, actionUrl, this.model.get('id'));
+        },
+
+        iconIframe: function (e, url, caseId) {
+            const self = this;
+            const iframeId = "icon-iframe-" + caseId;
+            const clickedIcon = e.target;
+            clickedIcon.classList.add("disabled");
+            clickedIcon.style.display = 'none';
+            const spinnerElement = $(clickedIcon).siblings('i');
+            spinnerElement[0].style.display = '';
+            const iconIframe = document.createElement('iframe');
+            iconIframe.style.display = 'none';
+            $(iconIframe).attr('id', iframeId);
+            iconIframe.src = encodeURI(url);
+            document.body.appendChild(iconIframe);
+
+            $(`#${iframeId}`).on('load', function () {
+                // Get success or error message from iframe and pass to main window
+                const notificationsElement = $(`#${iframeId}`).contents().find("#cloudcare-notifications");
+                new MutationObserver((el) => {
+                    const addedNodes = el[0].addedNodes;
+                    if (addedNodes[0].classList.contains('alert')) {
+                        const succeeded = addedNodes[0].classList.contains('alert-success');
+                        let message;
+                        if (succeeded) {
+                            message = notificationsElement.find('.alert-success').find('p').text();
+                            FormplayerFrontend.trigger('showSuccess', gettext(message));
+                            self.reloadCase(caseId);
+                        } else {
+                            const messageElement = notificationsElement.find('.alert-danger');
+                            // Todo: standardize structures of success and error alert elements
+                            message = messageElement.contents().filter(function () {
+                                return this.nodeType === Node.TEXT_NODE;
+                            })[0].nodeValue;
+                            FormplayerFrontend.trigger('showError', gettext(message));
+                        }
+                        clickedIcon.classList.remove("disabled");
+                        clickedIcon.style.display = '';
+                        spinnerElement[0].style.display = 'none';
+                        iconIframe.remove();
+                    }
+                }).observe(notificationsElement[0], { childList: true });
+            });
+        },
+
+        reloadCase: function (caseId) {
+            const self = this;
+            const urlObject = formplayerUtils.currentUrlToObject();
+            urlObject.addSelection(caseId);
+            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true);
+            $.when(fetchingDetails).done(function (detailResponse) {
+                self.updateModelFromDetailResponse(caseId, detailResponse);
+            }).fail(function () {
+                console.log('could not get case details');
+            });
+        },
+
+        updateModelFromDetailResponse: function (caseId, detailResponse) {
+            this.model.set("data", detailResponse.models[0].attributes.details);
+        },
+
+        modelChanged: function () {
+            if (!this.model.get('updating')) {
+                this.render();
+            }
+        },
+
         rowClick: function (e) {
             if (!(
                 e.target.classList.contains('module-case-list-column-checkbox') ||  // multiselect checkbox
                 e.target.classList.contains("select-row-checkbox") ||               // multiselect select all
-                $(e.target).is('a')                                                 // actual link, as in markdown
+                $(e.target).is('a') ||                                              // actual link, as in markdown
+                e.target.classList.contains('show-more') ||
+                $(e.target).parent().hasClass('show-more')
             )) {
                 e.preventDefault();
                 let modelId = this.model.get('id');
@@ -275,6 +405,23 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("multiSelect:updateCases", action, [this.model.get('id')]);
         },
 
+        showMoreAction: function (e) {
+            const arrow = $(e.currentTarget).find("i");
+            const tileContent = $(e.currentTarget).siblings('.collapsible-tile-content');
+            if (tileContent.hasClass("collapsed-tile-content")) {
+                arrow.removeClass("fa-angle-double-down");
+                arrow.addClass("fa-angle-double-up");
+                tileContent.removeClass("collapsed-tile-content");
+            } else {
+                arrow.removeClass("fa-angle-double-up");
+                arrow.addClass("fa-angle-double-down");
+                tileContent.addClass("collapsed-tile-content");
+                const offset = getScrollTopOffset(this.smallScreenEnabled);
+                $(window).scrollTop($(e.currentTarget).parent().offset().top - offset);
+            }
+
+        },
+
         isChecked: function () {
             return this.ui.selectRow.prop("checked");
         },
@@ -287,9 +434,23 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
-                    return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
+                    return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
             };
+        },
+
+        onAttach: function () {
+            const self = this;
+            if (self.isMultiSelect && self.smallScreenEnabled) {
+                const height = $(self.el).height();
+                if (height > constants.COLLAPSIBLE_TILE_MAX_HEIGHT) {
+                    const tileContent = $(self.el).find('> .collapsible-tile-content');
+                    if (tileContent.length) {
+                        tileContent.addClass('collapsed-tile-content');
+                        $(self.el).append(`<div class="show-more"><i class="fa fa-angle-double-down"></i></div>`);
+                    }
+                }
+            }
         },
     });
 
@@ -308,6 +469,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             dict['prefix'] = this.options.prefix;
             return dict;
         },
+
+        updateModelFromDetailResponse: function (caseId, detailResponse) {
+            CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+        },
     });
 
     const CaseTileGroupedView = CaseTileView.extend({
@@ -320,11 +485,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
             const data = this.options.model.get('data');
             const headerRowIndices = this.options.headerRowIndices;
+
             dict['indexedHeaderData'] = headerRowIndices.reduce((acc, index) => {
                 acc[index] = data[index];
                 return acc;
             }, {});
-
             dict['indexedRowDataList'] = this.getIndexedRowDataList();
 
             return dict;
@@ -333,19 +498,33 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         getIndexedRowDataList: function () {
             let indexedRowDataList = [];
             for (let model of this.options.groupModelsList) {
-                let indexedRowData = model.get('data')
-                    .reduce((acc, data, i) => {
-                        if (!this.options.headerRowIndices.includes(i) &&
-                            this.options.styles[i].widthHint !== 0) {
-                            acc[i] = data;
-                        }
-                        return acc;
-                    }, {});
-                if (Object.keys(indexedRowData).length !== 0) {
-                    indexedRowDataList.push(indexedRowData);
+                if (model.id === this.model.get('updatedCaseId')) {
+                    indexedRowDataList.push(this.model.get('updatedRowData'));
+                } else {
+                    let indexedRowData = model.get('data')
+                        .reduce((acc, data, i) => {
+                            if (this.options.bodyRowIndices.includes(i)) {
+                                acc[i] = data;
+                            }
+                            return acc;
+                        }, {});
+                    if (Object.keys(indexedRowData).length !== 0) {
+                        indexedRowDataList.push(indexedRowData);
+                    }
                 }
             }
             return indexedRowDataList;
+        },
+
+        updateModelFromDetailResponse: function (caseId, detailResponse) {
+            this.model.set('updating', true);
+            CaseTileGroupedView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+            this.model.set('updatedCaseId', caseId);
+            this.model.set('updatedRowData', this.options.bodyRowIndices.reduce((acc, index) => {
+                acc[index] = detailResponse.models[0].attributes.details[index];
+                return acc;
+            }, {}));
+            this.model.set('updating', false);
         },
     });
 
@@ -401,6 +580,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
+                endpointActions: this.options.endpointActions,
             };
         },
 
@@ -595,22 +775,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             });
         },
 
-        getMapScrollOffset: function (addressMap) {
-            const $mapEl = $('#module-case-list-map');
-            const $stickyHeader = $('#small-screen-sticky-header');
-            let scrollTopOffset = parseInt(($mapEl).css('top'));
-            if (this.smallScreenEnabled) {
-                if ($stickyHeader[0]) {
-                    scrollTopOffset = parseInt($stickyHeader.css('top')) + $stickyHeader.outerHeight();
-                } else if (addressMap.isFullscreen()) {
-                    scrollTopOffset = constants.BREADCRUMB_HEIGHT_PX;
-                } else {
-                    scrollTopOffset += $mapEl.outerHeight();
-                }
-            }
-            return scrollTopOffset;
-        },
-
         loadMap: function () {
             const token = initialPageData.get("mapbox_access_token");
 
@@ -687,8 +851,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     markers.forEach(m => m.setIcon(locationIcon));
                                     marker.setIcon(selectedLocationIcon);
 
+                                    const offset = getScrollTopOffset(this.smallScreenEnabled, addressMap.isFullscreen());
                                     $([document.documentElement, document.body]).animate({
-                                        scrollTop: $(`#${rowId}`).offset().top - this.getMapScrollOffset(addressMap),
+                                        scrollTop: $(`#${rowId}`).offset().top - offset,
                                     }, 500);
 
                                     addressMap.panTo(markerCoordinates);
@@ -962,11 +1127,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }
             }
 
-            let groupHeaderRows = this.options.collection.groupHeaderRows;
+            const groupHeaderRows = this.options.collection.groupHeaderRows;
             // select the indices of the tile fields that are part of the header rows
-            this.headerRowIndices = this.options.collection.tiles
-                .map((tile, index) => ({tile: tile, index: index}))
-                .filter((tile) => tile.tile && tile.tile.gridY < groupHeaderRows)
+
+            const isHeaderRow = (y) => y < groupHeaderRows;
+            const tileAndIndex = this.options.collection.tiles
+                .map((tile, index) => ({tile: tile, index: index}));
+
+            this.headerRowIndices = tileAndIndex
+                .filter((tile) => tile.tile && isHeaderRow(tile.tile.gridY))
+                .map((tile) => tile.index);
+            this.bodyRowIndices = tileAndIndex
+                .filter((tile) => tile.tile && !isHeaderRow(tile.tile.gridY))
                 .map((tile) => tile.index);
         },
 
@@ -975,6 +1147,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             dict.groupHeaderRows = this.options.collection.groupHeaderRows;
             dict.groupModelsList = this.groupedModels[model.get("groupKey")];
             dict.headerRowIndices = this.headerRowIndices;
+            dict.bodyRowIndices = this.bodyRowIndices;
             return dict;
         },
     });
@@ -1119,7 +1292,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {
-                    return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
+                    return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
             };
         },
