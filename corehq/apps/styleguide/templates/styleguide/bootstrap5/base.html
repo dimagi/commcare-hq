@@ -28,6 +28,10 @@
             href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
     {% endcompress %}
 
+    <script>
+      window.USE_BOOTSTRAP5 = true;
+    </script>
+
     {% javascript_libraries hq=True use_bootstrap5=True %}
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
   </head>
