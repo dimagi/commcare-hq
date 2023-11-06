@@ -974,6 +974,23 @@ class ProjectDataTab(UITab):
                 })
         return explore_data_views
 
+    def _get_geospatial_views(self):
+        geospatial_items = CaseManagementMapDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
+        management_sections = [
+            {
+                'title': _("Manage GPS Data"),
+                'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
+            },
+            {
+                'title': _("Configure Geospatial Settings"),
+                'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
+            }
+        ]
+        for section in management_sections:
+            geospatial_items[0][1].append(section)
+        return geospatial_items
+
     @property
     def dropdown_items(self):
         if (
