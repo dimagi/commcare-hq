@@ -180,7 +180,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         }
 
         var progressView = ProgressBar({
-            progressMessage: gettext("Switching project spaces..."),
+            progressMessage: gettext("Loading..."),
         });
         FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
 
