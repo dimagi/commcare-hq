@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import datetime
 from looseversion import LooseVersion
@@ -76,10 +77,14 @@ from .utils import (
     handle_401_response,
     is_permitted_to_restore,
 )
+from corehq.util.metrics import metrics_histogram
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
+
+
+logger = logging.getLogger("OTA")
 
 
 @location_safe
@@ -121,12 +126,21 @@ def app_aware_search(request, domain, app_id):
 
     Returns results as a fixture with the same structure as a casedb instance.
     """
+    start_time = datetime.now()
     request_dict = request.GET if request.method == 'GET' else request.POST
+    logger.info(f"app_aware_search request_dict {request_dict}")
     try:
         cases = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
+    end_time = datetime.now()
+    metrics_histogram("commcare.app_aware_search.processing_time",
+                      int((end_time - start_time).total_seconds() * 1000),
+                      bucket_tag='duration_bucket',
+                      buckets=(500, 1000, 5000),
+                      bucket_unit='ms',
+                      tags={'domain': domain})
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
@@ -370,7 +384,7 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
     def _safe_int(val):
         try:
             return int(val)
-        except:
+        except Exception:
             pass
 
     app_version = _safe_int(request.GET.get('app_version', ''))
