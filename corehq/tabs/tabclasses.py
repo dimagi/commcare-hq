@@ -460,6 +460,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data_dictionary/',
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
+        '/a/{domain}/geospatial/',
     )
 
     @property
@@ -579,6 +580,10 @@ class ProjectDataTab(UITab):
         return toggles.CASE_DEDUPE.enabled_for_request(self._request)
 
     @property
+    def _can_view_geospatial(self):
+        return toggles.GEOSPATIAL.enabled(self.domain)
+
+    @property
     def _is_viewable(self):
         return self.domain and (
             self.can_edit_commcare_data
@@ -637,6 +642,8 @@ class ProjectDataTab(UITab):
                     ]
                 ]
             )
+        if self._can_view_geospatial:
+            items += self._get_geospatial_views()
         return items
 
     @cached_property
