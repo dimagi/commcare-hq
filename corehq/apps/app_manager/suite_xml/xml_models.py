@@ -536,6 +536,8 @@ class SessionEndpoint(IdNode):
     arguments = NodeListField('argument', Argument)
     stack = NodeField('stack', Stack)
 
+    respect_relevancy = BooleanField('@respect-relevancy', required=False)
+
 
 class Assertion(XmlObject):
     ROOT_NAME = 'assert'

@@ -1043,6 +1043,7 @@ class FormBase(DocumentSchema):
     is_release_notes_form = BooleanProperty(default=False)
     enable_release_notes = BooleanProperty(default=False)
     session_endpoint_id = StringProperty(exclude_if_none=True)  # See toggles.SESSION_ENDPOINTS
+    respect_relevancy = BooleanProperty(default=True)
 
     # computed datums IDs that are allowed in endpoints
     function_datum_endpoints = StringListProperty()
