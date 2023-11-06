@@ -106,6 +106,7 @@ class SMSContent(Content):
 class EmailContent(Content):
     subject = old_jsonfield.JSONField(default=dict)
     message = old_jsonfield.JSONField(default=dict)
+    html_message = old_jsonfield.JSONField(default=dict)
 
     TRIAL_MAX_EMAILS = 50
 
