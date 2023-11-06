@@ -276,12 +276,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (this.isMultiSelect) {
                 fieldIndex -= 1;
             }
-            let caseId;
-            if (this.options.headerRowIndices && !$(e.target).closest('.group-rows').length) {
-                caseId = this.model.get('groupKey');
-            } else {
-                caseId = this.model.get('id');
-            }
+            // let caseId;
+            // if (this.options.headerRowIndices && !$(e.target).closest('.group-rows').length) {
+            //     caseId = this.model.get('groupKey');
+            // } else {
+            //     caseId = this.model.get('id');
+            // }
             if (this.options.bodyRowIndices && this.options.headerRowIndices) {
                 if ($(e.target).closest('.group-rows').length) {
                     fieldIndex = this.options.bodyRowIndices[fieldIndex];
@@ -311,13 +311,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             currentUrlToObject.endpointId = endpointId;
             currentUrlToObject.isBackground = isBackground;
 
-            function resetIcon () {
+            function resetIcon() {
                 clickedIcon.classList.remove("disabled");
                 clickedIcon.style.display = '';
                 spinnerElement[0].style.display = 'none';
             }
 
-            $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function (response) {
+            $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
                 self.reloadCase(caseId);
                 resetIcon();
             }).fail(function () {
