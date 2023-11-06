@@ -17,6 +17,8 @@ hqDefine("geospatial/js/geospatial_map", [
         'selected': "#0b940d", // Dark Green
     };
 
+    const DEFAULT_CENTER_COORD = [-20.0, -0.0];
+
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
 
     function mapItemModel(itemId, itemData, marker, markerColors) {
@@ -101,7 +103,7 @@ hqDefine("geospatial/js/geospatial_map", [
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
 
             if (!centerCoordinates) {
-                centerCoordinates = [-91.874, 42.76]; // should be domain specific
+                centerCoordinates = DEFAULT_CENTER_COORD; // should be domain specific
             }
 
             const map = new mapboxgl.Map({  // eslint-disable-line no-undef
