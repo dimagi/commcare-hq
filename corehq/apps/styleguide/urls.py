@@ -32,6 +32,8 @@ urlpatterns = [
     url(r'^b5/$', bootstrap5.styleguide_home, name="styleguide_home_b5"),
     url(r'^b5/data/select2_ajax_demo$', bootstrap5_data.select2_ajax_demo,
         name="styleguide_data_select2_ajax_demo"),
+    url(r'^b5/data/remote_modal_demo$', bootstrap5_data.remote_modal_demo,
+        name="styleguide_data_remote_modal"),
     url(r'^b5/guidelines/$', bootstrap5.styleguide_code_guidelines,
         name="styleguide_code_guidelines_b5"),
     url(r'^b5/atoms/accessibility/$', bootstrap5.styleguide_atoms_accessibility,
@@ -48,4 +50,6 @@ urlpatterns = [
         name="styleguide_molecules_selections_b5"),
     url(r'^b5/molecules/checkboxes/$', bootstrap5.styleguide_molecules_checkboxes,
         name="styleguide_molecules_checkboxes_b5"),
+    url(r'^b5/molecules/modals/$', bootstrap5.styleguide_molecules_modals,
+        name="styleguide_molecules_modals_b5"),
 ]

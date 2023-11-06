@@ -151,3 +151,19 @@ def styleguide_molecules_checkboxes(request):
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/checkboxes.html', context)
+
+
+@use_bootstrap5
+def styleguide_molecules_modals(request):
+    context = get_navigation_context("styleguide_molecules_modals_b5")
+    context.update({
+        'examples': {
+            'modal': get_example_context('styleguide/bootstrap5/examples/modal.html'),
+            'modal_ko': get_example_context('styleguide/bootstrap5/examples/modal_ko.html'),
+            'open_modal_ko': get_example_context('styleguide/bootstrap5/examples/open_modal_ko.html'),
+            'open_remote_modal_ko': get_example_context(
+                'styleguide/bootstrap5/examples/open_remote_modal_ko.html'),
+            'remote_modal': get_example_context('styleguide/bootstrap5/examples/remote_modal.html'),
+        }
+    })
+    return render(request, 'styleguide/bootstrap5/molecules/modals.html', context)
