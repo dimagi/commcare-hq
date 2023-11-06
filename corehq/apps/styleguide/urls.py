@@ -52,4 +52,6 @@ urlpatterns = [
         name="styleguide_molecules_checkboxes_b5"),
     url(r'^b5/molecules/modals/$', bootstrap5.styleguide_molecules_modals,
         name="styleguide_molecules_modals_b5"),
+    url(r'^b5/molecules/pagination/$', bootstrap5.styleguide_molecules_pagination,
+        name="styleguide_molecules_pagination_b5"),
 ]
