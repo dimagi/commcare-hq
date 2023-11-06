@@ -18,6 +18,7 @@ hqDefine("geospatial/js/geospatial_map", [
     };
     const DOWNPLAY_OPACITY = 0.2;
     const HOVER_DELAY = 400;
+    const DEFAULT_POLL_TIME_MS = 1500;
 
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
@@ -494,7 +495,7 @@ hqDefine("geospatial/js/geospatial_map", [
                         success: function (data) {
                             const result = data.result;
                             if (!data) {
-                                setTimeout(tick, 1500);
+                                setTimeout(tick, DEFAULT_POLL_TIME_MS);
                             } else {
                                 self.handleDisbursementResults(result);
                             }
@@ -512,7 +513,7 @@ hqDefine("geospatial/js/geospatial_map", [
             var self = {};
             var mapboxinstance = map.getMapboxInstance();
             self.btnRunDisbursementDisabled = ko.computed(function () {
-                return caseModels().length === 0 || userModels().length === 0;
+                return !caseModels().length || !userModels().length;
             });
             self.btnSaveDisabled = ko.observable(true);
             self.btnExportDisabled = ko.observable(true);
