@@ -276,12 +276,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (this.isMultiSelect) {
                 fieldIndex -= 1;
             }
-            // let caseId;
-            // if (this.options.headerRowIndices && !$(e.target).closest('.group-rows').length) {
-            //     caseId = this.model.get('groupKey');
-            // } else {
-            //     caseId = this.model.get('id');
-            // }
             if (this.options.bodyRowIndices && this.options.headerRowIndices) {
                 if ($(e.target).closest('.group-rows').length) {
                     fieldIndex = this.options.bodyRowIndices[fieldIndex];
@@ -307,7 +301,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const spinnerElement = $(clickedIcon).siblings('i');
             spinnerElement[0].style.display = '';
             const currentUrlToObject = formplayerUtils.currentUrlToObject();
-            currentUrlToObject.endpointArgs = {case_id: caseId};
+            currentUrlToObject.endpointArgs = self.isMultiSelect ? {selected_cases: caseId} : {case_id: caseId};
             currentUrlToObject.endpointId = endpointId;
             currentUrlToObject.isBackground = isBackground;
 
