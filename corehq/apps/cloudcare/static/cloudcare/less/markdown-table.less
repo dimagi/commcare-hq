@@ -2,7 +2,6 @@
     table {
         padding: 0;
         tr {
-            border-top: 1px solid #cccccc;
             background-color: white;
             margin: 0;
             padding: 0;
@@ -11,9 +10,8 @@
                 background-color: #f8f8f8;
             }
 
-            th {
-                font-weight: bold;
-                border: 1px solid #cccccc;
+            th, td {
+                border: 1px solid #ccc;
                 text-align: left;
                 margin: 0;
                 padding: 6px 13px;
@@ -25,17 +23,9 @@
                 }
             }
 
-            td {
-                border: 1px solid #cccccc;
-                text-align: left;
-                margin: 0;
-                padding: 6px 13px;
-                &:first-child {
-                    margin-top: 0;
-                }
-                &:last-child {
-                    margin-bottom: 0;
-                }
+            th {
+                font-weight: bold;
+                background-color: #ddd;     // override tr background color
             }
         }
     }
