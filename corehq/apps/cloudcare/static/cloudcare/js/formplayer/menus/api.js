@@ -151,7 +151,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "tz_from_browser": tzFromBrowser,
                     "selected_values": params.selectedValues,
                     "isShortDetail": params.isShortDetail,
-                    "isRefreshCaseSearch": params.isRefreshCaseSearch
+                    "isRefreshCaseSearch": params.isRefreshCaseSearch,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;

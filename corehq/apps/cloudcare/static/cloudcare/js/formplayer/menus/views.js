@@ -284,7 +284,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             // Grab endpoint id from urlTemplate
             const temp = urlTemplate.substring(0, urlTemplate.indexOf('?') - 1);
             const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
-            const endpointArg = urlTemplate.substring(urlTemplate.indexOf('?') + 1, urlTemplate.lastIndexOf('='))
+            const endpointArg = urlTemplate.substring(urlTemplate.indexOf('?') + 1, urlTemplate.lastIndexOf('='));
             e.target.className += " disabled";
             this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
         },
