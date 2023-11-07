@@ -530,9 +530,14 @@ hqDefine("geospatial/js/geospatial_map", [
 
             // On selection, add the polygon to the map
             self.selectedPolygon.subscribe(function (value) {
+                const polygonId = parseInt(self.selectedPolygon());
                 var polygonObj = self.savedPolygons().find(
-                    function (o) { return o.id === self.selectedPolygon(); }
+                    function (o) { return o.id === polygonId; }
                 );
+                if (!polygonObj) {
+                    return;
+                }
+
                 // Clear existing polygon
                 if (self.activePolygon()) {
                     mapboxinstance.removeLayer(self.activePolygon());
