@@ -134,6 +134,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
             multiSelectMaxSelectValue: menuResponse.maxSelectValue,
+            hasDynamicSearch: menuResponse.hasDynamicSearch,
             endpointActions: menuResponse.endpointActions,
         };
     };
