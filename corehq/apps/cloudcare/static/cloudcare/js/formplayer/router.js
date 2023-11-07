@@ -199,7 +199,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled) {
+    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiator) {
         var urlObject = utils.currentUrlToObject();
         var queryObject = _.extend(
             {
@@ -209,6 +209,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             // force manual search in split screen case search for workflow compatibility
             sidebarEnabled ? { forceManualSearch: true } : {}
         );
+
+        var queryObject = _.extend(queryObject, {initiatedBy: initiator});
+
         urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
         API.listMenus();
