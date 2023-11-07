@@ -54,4 +54,6 @@ urlpatterns = [
         name="styleguide_molecules_modals_b5"),
     url(r'^b5/molecules/pagination/$', bootstrap5.styleguide_molecules_pagination,
         name="styleguide_molecules_pagination_b5"),
+    url(r'^b5/molecules/searching/$', bootstrap5.styleguide_molecules_searching,
+        name="styleguide_molecules_searching_b5"),
 ]
