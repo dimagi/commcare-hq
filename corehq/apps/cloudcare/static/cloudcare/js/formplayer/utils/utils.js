@@ -276,7 +276,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             }, this.queryData[sessionStorage.queryKey]);
 
             if (initiatedBy !== null && initiatedBy !== undefined) {
-                queryDataEntry.initiated_by = initiatedBy;
+                queryDataEntry.initiatedBy = initiatedBy;
             }
 
             this.queryData[sessionStorage.queryKey] = queryDataEntry;

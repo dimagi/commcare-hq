@@ -10,7 +10,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar");
+        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var API = {
@@ -167,7 +167,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                 var callStartTime = performance.now();
                 menus.fetch($.extend(true, {}, options)).always(function () {
-                    if (data.query_data.results && data.query_data.results.initiated_by === "dynamicSearch") {
+                    console.log("data " + JSON.stringify(data));
+                    if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === "dynamicSearch") {
                         var callEndTime = performance.now();
                         var callResponseTime = callEndTime - callStartTime;
                         $.ajax(initialPageData.reverse('api_histogram_metrics'), {

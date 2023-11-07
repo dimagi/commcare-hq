@@ -563,14 +563,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.performSubmit();
         },
 
-        performSubmit: function (initiator) {
+        performSubmit: function (initiatedBy) {
             var self = this;
             self.validateAllFields().done(function () {
                 FormplayerFrontend.trigger(
                     "menu:query",
                     self.getAnswers(),
                     self.options.sidebarEnabled,
-                    initiator
+                    initiatedBy
                 );
                 if (self.smallScreenEnabled && self.options.sidebarEnabled) {
                     $('#sidebar-region').collapse('hide');
