@@ -16,6 +16,7 @@ from django.http import (
 )
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import get_language
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -24,6 +25,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from casexml.apps.case import const
 from casexml.apps.case.cleanup import close_case, rebuild_case_from_forms
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.templatetags.case_tags import case_inline_display
@@ -76,6 +78,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import (
     CommCareCase,
     UserRequestedRebuild,
@@ -553,6 +556,184 @@ def close_case_view(request, domain, case_id):
         )
         messages.success(request, msg, extra_tags='html')
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
+
+
+@location_safe
+@require_case_view_permission
+@require_permission(HqPermissions.edit_data)
+def get_cases_and_forms_for_deletion(request, domain, case_id):
+    delete_cases = set()  # actual cases to be soft deleted
+    delete_forms = set()  # actual forms to be soft deleted
+
+    # For formatting the list of cases/submission forms
+    cases = {}  # structured like: {case: {form: {case touched by form: actions taken by form}}}
+    case_names = {}  # {case_id: case_name}
+    form_names = {}  # {form_ids: form name}
+    reopened_cases = {}
+    affected_cases = {}
+
+    update_actions = [const.CASE_ACTION_INDEX,
+                      const.CASE_ACTION_UPDATE,
+                      const.CASE_ACTION_ATTACHMENT,
+                      const.CASE_ACTION_COMMTRACK,
+                      const.CASE_ACTION_REBUILD]
+
+    too_many_cases = set()
+
+    def get_forms_for_deletion_from_case(case, subcase_count):
+        delete_cases.add(case.case_id)
+        if len(delete_cases) > 10 or subcase_count >= 3:
+            too_many_cases.add(True)
+            return
+        if case.case_id not in cases:
+            cases[case.case_id] = {}
+            case_names[case.case_id] = case.name
+        case_xforms = case.xform_ids
+
+        for form_id in case_xforms:
+            delete_forms.add(form_id)
+            form_object = XFormInstance.objects.get_form(form_id, domain)
+            if form_id not in form_names:
+                form_names[form_id] = xmlns_to_name(domain, form_object.xmlns, form_object.app_id)
+            # confirm this is doing what I intend for it to do
+            case_db = FormProcessorInterface(domain).casedb_cache(
+                domain=domain,
+                load_src="process_stock",
+            )
+            touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, [form_object])
+
+            case_actions = {}
+
+            for touched_id in touched_cases:
+                case_object = safely_get_case(request, domain, touched_id)
+                meta = touched_cases[touched_id]
+                if touched_id == case.case_id:
+                    case_actions['current'] = list(meta.actions)  # do I need to make it a list?
+                elif touched_id not in delete_cases:
+                    if touched_id not in case_actions:
+                        case_actions[case_object.name] = list(meta.actions)
+                    if const.CASE_ACTION_CREATE in meta.actions and touched_id != case.case_id:
+                        subcase_count += 1
+                        get_forms_for_deletion_from_case(case_object, subcase_count)
+                        if too_many_cases:
+                            return
+                        subcase_count -= 1
+                    if const.CASE_ACTION_CLOSE in meta.actions:
+                        # theoretically only one form should ever close a case?
+                        reopened_cases[touched_id] = form_id
+                    # this needs to be expanded on / different actions handled separately
+                    if any(action in meta.actions for action in update_actions):
+                        if touched_id not in affected_cases:
+                            affected_cases[touched_id] = {}
+                        affected_cases[touched_id][form_id] = ', '.join(list(meta.actions))
+                        case_names[touched_id] = case_object.name
+            cases[case.case_id][form_id] = case_actions
+        return
+
+    case_instance = safely_get_case(request, domain, case_id)
+    subcase_count = 0
+    get_forms_for_deletion_from_case(case_instance, subcase_count)
+    if too_many_cases:
+        messages.error(request, _("Deleting this case would delete too many related cases. "
+                                  "Please delete some of this cases' subcases before attempting"
+                                  "to delete this case."))
+        return {}, True
+
+    def get_case_link(caseid):
+        url = reverse('case_data', args=[domain, caseid])
+        name = case_names[caseid]
+        if name == case_instance.name:
+            name += ' (main)'
+        return mark_safe('<a href="{}"> {} </a>'.format(url, name))
+
+    def get_form_link(formid):
+        url = reverse('render_form_data', args=[domain, formid])
+        return mark_safe('<a href="{}"> {} </a>'.format(url, form_names[formid]))
+
+    prepared_cases = {}
+    for case in cases:
+        prepared_forms = {}
+        for form in cases[case]:
+            form_link = get_form_link(form)
+            prepared_forms[form_link] = {}
+            for case_action in cases[case][form]:
+                prepared_forms[form_link][case_action] = ', '.join(cases[case][form][case_action])
+        prepared_cases[get_case_link(case)] = prepared_forms
+
+    prepared_reopened_cases = {}
+    for case in reopened_cases:
+        prepared_reopened_cases[get_case_link(case)] = get_form_link(reopened_cases[case])
+
+    prepared_affected_cases = {}
+    for case in affected_cases:
+        if case in delete_cases:
+            continue
+        prepared_forms = {}
+        for form in affected_cases[case]:
+            prepared_forms[get_form_link(form)] = affected_cases[case][form]
+        prepared_affected_cases[get_case_link(case)] = prepared_forms
+
+    return {
+        'main_case_name': case_instance.name,
+        'delete_dict': prepared_cases,
+        'affected_cases': prepared_affected_cases,
+        'reopened_cases': prepared_reopened_cases,
+        'case_delete_list': delete_cases,
+        'form_delete_list': delete_forms,
+    }, False
+
+
+@location_safe
+class DeleteCaseView(BaseProjectReportSectionView):
+    urlname = 'soft_delete_case_view'
+    page_title = gettext_lazy('Delete Case and Related Forms')
+    template_name = 'reports/reportdata/case_delete.html'
+    delete_dict = {}
+
+    def dispatch(self, request, *args, **kwargs):
+        self.delete_dict, redirect = get_cases_and_forms_for_deletion(request, self.domain, self.case_id)
+        if redirect:
+            return HttpResponseRedirect(reverse('case_data', args=[self.domain, self.case_id]))
+        return super(DeleteCaseView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def case_id(self):
+        return self.kwargs['case_id']
+
+    @property
+    def domain(self):
+        return self.kwargs['domain']
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.case_id))
+
+    @property
+    def page_context(self):
+        context = {
+            "case_id": self.case_id,
+        }
+        context.update(self.delete_dict)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('input') != self.delete_dict['main_case_name']:
+            messages.error(request, "Incorrect name. Please enter the case name as shown into the textbox.")
+            return HttpResponseRedirect(self.page_url)
+        soft_delete_case(request, self.domain, None)
+        msg = "[DRY RUN] Nothing has been deleted, but it will eventually!"
+        messages.success(request, msg, extra_tags='html')
+        return HttpResponseRedirect(reverse('case_data', args=[self.domain, self.case_id]))
+
+
+@require_permission(HqPermissions.edit_data)
+@location_safe
+def soft_delete_case(request, domain, delete_dict=None):
+    print("in soft_delete_case")
+    # to be expanded on later
+    # perform soft delete
+    # return success or error message
+    return delete_dict
 
 
 @location_safe
