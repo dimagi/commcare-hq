@@ -101,17 +101,6 @@ class CaseManagementMap(BaseCaseMapReport):
         return reverse('geospatial_default', args=[self.request.project.name])
 
     @property
-    def template_context(self):
-        context = super(CaseManagementMap, self).template_context
-        context.update({
-            'saved_polygons': [
-                {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
-                for p in GeoPolygon.objects.filter(domain=self.domain).all()
-            ]
-        })
-        return context
-
-    @property
     def rows(self):
         cases = []
         for row in self.es_results['hits'].get('hits', []):
@@ -135,6 +124,7 @@ class CaseGroupingReport(BaseCaseMapReport):
     base_template = 'geospatial/case_grouping_map_base.html'
     report_template_path = 'case_grouping_map.html'
 
+    # TODO: Hide pagination controls on UI
     default_rows = 1
     force_page_size = True
 
@@ -203,9 +193,12 @@ class CaseGroupingReport(BaseCaseMapReport):
             bottom_right=bounds['bottom_right'],
         )]
         if self.request.GET.get('features'):
-            features = json.loads(self.request.GET['features'])
-            features_filter = self._get_filter_for_features(features)
-            filters_.append(features_filter)
+            try:
+                features = json.loads(self.request.GET['features'])
+                features_filter = self._get_filter_for_features(features)
+                filters_.append(features_filter)
+            except json.JSONDecodeError:
+                raise ValueError('Invalid GeoJSON format')
         query = self._filter_query(query, filters_)
         es_results = query.run().raw
 
@@ -323,7 +316,10 @@ class CaseGroupingReport(BaseCaseMapReport):
         """
         polygon_filters = []
         for feature in features.values():
-            assert_geometry_type(feature)
+            try:
+                assert_geometry_type(feature)
+            except AssertionError as err:
+                raise ValueError('Unsupported geometry type') from err
             polygon = geojson_to_es_geoshape(feature)
             # The first list of coordinates is the exterior ring, and
             # the rest are interior rings, i.e. holes.
