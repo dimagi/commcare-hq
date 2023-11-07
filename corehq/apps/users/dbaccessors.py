@@ -3,6 +3,7 @@ from collections import namedtuple
 from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
+from corehq.apps.es.users import web_users, mobile_users
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, CouchUser, Invitation, UserRole
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
@@ -395,7 +396,8 @@ def get_practice_mode_mobile_workers(domain):
 
 def get_all_user_search_query(search_string):
     query = (UserES()
-             .remove_default_filters())
+             .remove_default_filters()
+             .OR(web_users(), mobile_users()))
     if search_string:
         fields = ['username', 'first_name', 'last_name', 'phone_numbers',
                   'domain_membership.domain', 'domain_memberships.domain']
