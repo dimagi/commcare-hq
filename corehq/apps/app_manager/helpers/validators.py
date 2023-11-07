@@ -559,6 +559,8 @@ class ModuleDetailValidatorMixin(object):
 
     __invalid_tile_configuration_type: str = "invalid tile configuration"
 
+    __invalid_clickable_icon_configuration: str = "invalid clickable icon configuration"
+
     def _validate_fields_with_format(
         self,
         format_value: str,
@@ -574,6 +576,18 @@ class ModuleDetailValidatorMixin(object):
                 'module': self.get_module_info(),
                 'reason': _('Format "{}" can only be used once but is used by multiple properties: {}'
                             .format(format_display, fields_with_address_format_str))
+            })
+
+    def _validate_clickable_icons(
+        self,
+        columns: list,
+        errors: list
+    ):
+        for field in [c.field for c in columns if c.format == 'clickable-icon' and c.endpoint_action_id == '']:
+            errors.append({
+                'type': self.__invalid_clickable_icon_configuration,
+                'module': self.get_module_info(),
+                'reason': _('Column/Field "{}": Clickable Icons require a form to be configured.'.format(field))
             })
 
     '''
@@ -619,6 +633,7 @@ class ModuleDetailValidatorMixin(object):
                         })
             self._validate_fields_with_format('address', 'Address', detail.columns, errors)
             self._validate_fields_with_format('address-popup', 'Address Popup', detail.columns, errors)
+            self._validate_clickable_icons(detail.columns, errors)
 
             if detail.has_persistent_tile() and self.module.report_context_tile:
                 errors.append({
