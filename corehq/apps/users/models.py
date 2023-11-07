@@ -2682,8 +2682,9 @@ class Invitation(models.Model):
     def send_activation_email(self, remaining_days=30):
         inviter = CouchUser.get_by_user_id(self.invited_by)
         url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.uuid])
+        domain_obj = Domain.get_by_name(self.domain)
         params = {
-            "domain": self.domain,
+            "domain": domain_obj.display_name(),
             "url": url,
             "days": remaining_days,
             "inviter": inviter.formatted_name,
