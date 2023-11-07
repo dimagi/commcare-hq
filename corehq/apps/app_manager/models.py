@@ -2166,6 +2166,7 @@ class CaseSearch(DocumentSchema):
     title_label = LabelProperty(default={})
     description = LabelProperty(default={})
     include_all_related_cases = BooleanProperty(default=False)
+    dynamic_search = BooleanProperty(default=False)
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -4158,6 +4159,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         default=const.DEFAULT_LOCATION_FIXTURE_OPTION, choices=const.LOCATION_FIXTURE_OPTIONS,
         required=False
     )
+    split_screen_dynamic_search = BooleanProperty(default=False)
 
     @property
     def id(self):
