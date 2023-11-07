@@ -16,8 +16,20 @@ hqDefine("geospatial/js/geospatial_map", [
         'default': "#0e00ff", // Blue
         'selected': "#0b940d", // Dark Green
     };
+    const DOWNPLAY_OPACITY = 0.2;
+    const HOVER_DELAY = 400;
+    const DEFAULT_POLL_TIME_MS = 1500;
+
+    const DEFAULT_CENTER_COORD = [-20.0, -0.0];
 
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
+    var runDisbursementUrl = initialPageData.reverse('case_disbursement');
+    var disbursementRunner;
+    var caseGroupsIndex = {};
+
+    function getLineFeatureId(itemId) {
+        return "route-" + itemId;
+    }
 
     function mapItemModel(itemId, itemData, marker, markerColors) {
         'use strict';
@@ -29,6 +41,11 @@ hqDefine("geospatial/js/geospatial_map", [
         self.isSelected = ko.observable(false);
         self.markerColors = markerColors;
 
+        self.setMarkerOpacity = function (opacity) {
+            let element = self.marker.getElement();
+            element.style.opacity = opacity;
+        };
+
         function changeMarkerColor(selectedCase, newColor) {
             let marker = selectedCase.marker;
             let element = marker.getElement();
@@ -36,6 +53,13 @@ hqDefine("geospatial/js/geospatial_map", [
             let path = svg.getElementsByTagName("path")[0];
             path.setAttribute("fill", newColor);
         }
+
+        self.getItemType = function () {
+            if (self.itemData.type === "user") {
+                return gettext("Mobile Worker");
+            }
+            return gettext("Case");
+        };
 
         self.isSelected.subscribe(function () {
             var color = self.isSelected() ? self.markerColors.selected : self.markerColors.default;
@@ -101,14 +125,13 @@ hqDefine("geospatial/js/geospatial_map", [
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
 
             if (!centerCoordinates) {
-                centerCoordinates = [-91.874, 42.76]; // should be domain specific
+                centerCoordinates = DEFAULT_CENTER_COORD; // should be domain specific
             }
 
             const map = new mapboxgl.Map({  // eslint-disable-line no-undef
                 container: 'geospatial-map', // container ID
                 style: 'mapbox://styles/mapbox/streets-v12', // style URL
                 center: centerCoordinates, // starting position [lng, lat]
-                zoom: 12,
                 attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             });
@@ -221,6 +244,8 @@ hqDefine("geospatial/js/geospatial_map", [
                 const markerDiv = marker.getElement();
                 // Show popup on hover
                 markerDiv.addEventListener('mouseenter', () => marker.togglePopup());
+                markerDiv.addEventListener('mouseenter', () => highlightMarkerGroup(marker));
+                markerDiv.addEventListener('mouseleave', () => resetMarkersOpacity());
 
                 // Hide popup if mouse leaves marker and popup
                 var addLeaveEvent = function (fromDiv, toDiv) {
@@ -282,6 +307,89 @@ hqDefine("geospatial/js/geospatial_map", [
             }
         };
 
+        function resetMarkersOpacity() {
+            let mapInstance = map.getMapboxInstance();
+            let markers = [];
+            Object.keys(caseGroupsIndex).forEach(itemCoordinates => {
+                const mapMarkerItem = caseGroupsIndex[itemCoordinates];
+                markers.push(mapMarkerItem.item);
+
+                const lineId = getLineFeatureId(mapMarkerItem.item.itemId);
+                if (mapInstance.getLayer(lineId)) {
+                    mapInstance.setPaintProperty(lineId, 'line-opacity', 1);
+                }
+            });
+            changeMarkersOpacity(markers, 1);
+        }
+
+        function highlightMarkerGroup(marker) {
+            const markerCoords = marker.getLngLat();
+            const currentMarkerPosition = markerCoords.lng + " " + markerCoords.lat;
+            const markerItem = caseGroupsIndex[currentMarkerPosition];
+            let mapInstance = map.getMapboxInstance();
+
+            if (markerItem) {
+                const groupId = markerItem.groupId;
+
+                let markersToHide = [];
+                Object.keys(caseGroupsIndex).forEach(itemCoordinates => {
+                    const mapMarkerItem = caseGroupsIndex[itemCoordinates];
+
+                    if (mapMarkerItem.groupId !== groupId) {
+                        markersToHide.push(mapMarkerItem.item);
+                        const lineId = getLineFeatureId(mapMarkerItem.item.itemId);
+                        if (mapInstance.getLayer(lineId)) {
+                            mapInstance.setPaintProperty(lineId, 'line-opacity', DOWNPLAY_OPACITY);
+                        }
+                    }
+                });
+                changeMarkersOpacity(markersToHide, DOWNPLAY_OPACITY);
+            }
+        }
+
+        function changeMarkersOpacity(markers, opacity) {
+            // It's necessary to delay obscuring the markers since mapbox does not play nice
+            // if we try to do it all at once.
+            setTimeout(function () {
+                markers.forEach(marker => {
+                    marker.setMarkerOpacity(opacity);
+                });
+            }, HOVER_DELAY);
+        }
+
+        function connectUserWithCasesOnMap(user, cases) {
+            cases.forEach((caseModel) => {
+                const lineCoordinates = [
+                    [user.itemData.coordinates.lng, user.itemData.coordinates.lat],
+                    [caseModel.itemData.coordinates.lng, caseModel.itemData.coordinates.lat],
+                ];
+                let mapInstance = map.getMapboxInstance();
+                mapInstance.addLayer({
+                    id: getLineFeatureId(caseModel.itemId),
+                    type: 'line',
+                    source: {
+                        type: 'geojson',
+                        data: {
+                            type: 'Feature',
+                            properties: {},
+                            geometry: {
+                                type: 'LineString',
+                                coordinates: lineCoordinates,
+                            },
+                        },
+                    },
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round',
+                    },
+                    paint: {
+                        'line-color': '#808080',
+                        'line-width': 1,
+                    },
+                });
+            });
+        }
+
         function savedPolygon(polygon) {
             var self = {};
             self.text = polygon.name;
@@ -290,10 +398,124 @@ hqDefine("geospatial/js/geospatial_map", [
             return self;
         }
 
+        var disbursementRunnerModel = function () {
+            var self = {};
+
+            self.pollUrl = ko.observable('');
+            self.isBusy = ko.observable(false);
+
+            self.setBusy = function (isBusy) {
+                self.isBusy(isBusy);
+                $("#hq-content *").prop("disabled", isBusy);
+                if (isBusy) {
+                    $("#btnRunDisbursement").addClass('disabled');
+                } else {
+                    $("#btnRunDisbursement").removeClass('disabled');
+                }
+            };
+
+            self.handleDisbursementResults = function (result) {
+                var groupId = 0;
+                Object.keys(result).forEach((userId) => {
+                    let user = userModels().find((userModel) => {return userModel.itemId === userId;});
+                    const userCoordString = user.itemData.coordinates['lng'] + " " + user.itemData.coordinates['lat'];
+                    caseGroupsIndex[userCoordString] = {groupId: groupId, item: user};
+
+                    let cases = [];
+                    caseModels().forEach((caseModel) => {
+                        if (result[userId].includes(caseModel.itemId)) {
+                            cases.push(caseModel);
+                            const coordString = caseModel.itemData.coordinates['lng'] + " " + caseModel.itemData.coordinates['lat'];
+                            caseGroupsIndex[coordString] = {groupId: groupId, item: caseModel};
+                        }
+                    });
+                    connectUserWithCasesOnMap(user, cases);
+                    groupId += 1;
+                });
+                self.setBusy(false);
+            };
+
+            self.runCaseDisbursementAlgorithm = function (cases, users) {
+                self.setBusy(true);
+                let mapInstance = map.getMapboxInstance();
+
+                let caseData = [];
+                cases.forEach(function (c) {
+                    const layerId = getLineFeatureId(c.itemId);
+                    if (mapInstance.getLayer(layerId)) {
+                        mapInstance.removeLayer(layerId);
+                    }
+                    if (mapInstance.getSource(layerId)) {
+                        mapInstance.removeSource(layerId);
+                    }
+
+                    caseData.push({
+                        id: c.itemId,
+                        lon: c.itemData.coordinates.lng,
+                        lat: c.itemData.coordinates.lat,
+                    });
+                });
+
+                let userData = users.map(function (c) {
+                    return {
+                        id: c.itemId,
+                        lon: c.itemData.coordinates.lng,
+                        lat: c.itemData.coordinates.lat,
+                    };
+                });
+
+                $.ajax({
+                    type: 'post',
+                    url: runDisbursementUrl,
+                    dataType: 'json',
+                    data: JSON.stringify({'users': userData, "cases": caseData}),
+                    contentType: "application/json; charset=utf-8",
+                    success: function (ret) {
+                        if (ret['poll_url'] !== undefined) {
+                            self.startPoll(ret['poll_url']);
+                        } else {
+                            self.handleDisbursementResults(ret['result']);
+                        }
+                    },
+                });
+            };
+
+            self.startPoll = function (pollUrl) {
+                if (!self.isBusy()) {
+                    self.setBusy(true);
+                }
+                self.pollUrl(pollUrl);
+                self.doPoll();
+            };
+
+            self.doPoll = function () {
+                var tick = function () {
+                    $.ajax({
+                        method: 'GET',
+                        url: self.pollUrl(),
+                        success: function (data) {
+                            const result = data.result;
+                            if (!data) {
+                                setTimeout(tick, DEFAULT_POLL_TIME_MS);
+                            } else {
+                                self.handleDisbursementResults(result);
+                            }
+                        },
+                    });
+                };
+                tick();
+            };
+
+            return self;
+        };
+
         var mapControlsModel = function () {
             'use strict';
             var self = {};
             var mapboxinstance = map.getMapboxInstance();
+            self.btnRunDisbursementDisabled = ko.computed(function () {
+                return !caseModels().length || !userModels().length;
+            });
             self.btnSaveDisabled = ko.observable(true);
             self.btnExportDisabled = ko.observable(true);
 
@@ -309,9 +531,14 @@ hqDefine("geospatial/js/geospatial_map", [
 
             // On selection, add the polygon to the map
             self.selectedPolygon.subscribe(function (value) {
+                const polygonId = parseInt(self.selectedPolygon());
                 var polygonObj = self.savedPolygons().find(
-                    function (o) { return o.id === self.selectedPolygon(); }
+                    function (o) { return o.id === polygonId; }
                 );
+                if (!polygonObj) {
+                    return;
+                }
+
                 // Clear existing polygon
                 if (self.activePolygon()) {
                     mapboxinstance.removeLayer(self.activePolygon());
@@ -398,6 +625,13 @@ hqDefine("geospatial/js/geospatial_map", [
                     mapControlsModelInstance.exportGeoJson();
                 }
             });
+
+            var $runDisbursement = $("#btnRunDisbursement");
+            $runDisbursement.click(function () {
+                if (map) {
+                    disbursementRunner.runCaseDisbursementAlgorithm(caseModels(), userModels());
+                }
+            });
         }
 
         var missingGPSModel = function () {
@@ -450,7 +684,7 @@ hqDefine("geospatial/js/geospatial_map", [
                             const editUrl = initialPageData.reverse('edit_commcare_user', userData.id);
                             const link = `<a class="ajax_dialog" href="${editUrl}" target="_blank">${userData.username}</a>`;
 
-                            return [userData.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link}];
+                            return [userData.id, {'coordinates': {'lat': lat, 'lng': lng}, 'link': link, 'type': 'user'}];
                         }));
 
                         const userMapItems = map.addMarkersToMap(userData, userMarkerColors);
@@ -516,7 +750,7 @@ hqDefine("geospatial/js/geospatial_map", [
             // Index by case_id
             var casesById = _.object(_.map(casesWithGPS, function (item) {
                 if (item[1]) {
-                    return [item[0], {'coordinates': item[1], 'link': item[2]}];
+                    return [item[0], {'coordinates': item[1], 'link': item[2], 'type': 'case'}];
                 }
             }));
             const caseMapItems = map.addMarkersToMap(casesById, caseMarkerColors);
@@ -533,6 +767,36 @@ hqDefine("geospatial/js/geospatial_map", [
                 missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
             }
             missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
+
+            fitMapBounds(caseMapItems);
+        }
+
+        // @param mapItems - Should be an array of mapItemModel type objects
+        function fitMapBounds(mapItems) {
+            const mapInstance = map.getMapboxInstance();
+            if (!mapItems.length) {
+                mapInstance.flyTo({
+                    zoom: 0,
+                    center: DEFAULT_CENTER_COORD,
+                    duration: 500,
+                });
+                return;
+            }
+
+            // See https://stackoverflow.com/questions/62939325/scale-mapbox-gl-map-to-fit-set-of-markers
+            const firstCoord = mapItems[0].itemData.coordinates;
+            const bounds = mapItems.reduce(function (bounds, mapItem) {
+                const coord = mapItem.itemData.coordinates;
+                if (coord) {
+                    return bounds.extend(coord);
+                }
+            }, new mapboxgl.LngLatBounds(firstCoord, firstCoord));  // eslint-disable-line no-undef
+
+            map.getMapboxInstance().fitBounds(bounds, {
+                padding: 50,  // in pixels
+                duration: 500,  // in ms
+                maxZoom: 10,  // 0-23
+            });
         }
 
         $(document).ajaxComplete(function (event, xhr, settings) {
@@ -567,6 +831,9 @@ hqDefine("geospatial/js/geospatial_map", [
             if (xhr.responseJSON.aaData.length && map) {
                 loadCases(xhr.responseJSON.aaData);
             }
+
+            disbursementRunner = new disbursementRunnerModel();
+            $("#disbursement-spinner").koApplyBindings(disbursementRunner);
         });
     });
 });

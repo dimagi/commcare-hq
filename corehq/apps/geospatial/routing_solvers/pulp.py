@@ -5,15 +5,18 @@ import pulp
 
 from django.conf import settings
 from .mapbox_optimize import validate_routing_request
+from corehq.apps.geospatial.routing_solvers.base import DisbursementAlgorithmSolverInterface
 
 
-class RadialDistanceSolver:
+class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
     """
     Solves user-case location assignment based on radial distance
 
     """
 
-    def __init__(self, request_json, max_route_distance):
+    def __init__(self, request_json):
+        super().__init__(request_json)
+
         validate_routing_request(request_json)
         self.user_locations = request_json['users']
         self.case_locations = request_json['cases']
@@ -76,8 +79,7 @@ class RadialDistanceSolver:
         else:
             if print_solution:
                 print("No solution found.")
-
-        return solution
+        return None, solution
 
 
 class RoadNetworkSolver(RadialDistanceSolver):
@@ -94,12 +96,18 @@ class RoadNetworkSolver(RadialDistanceSolver):
             f'{loc["lon"]},{loc["lat"]}'
             for loc in self.user_locations + self.case_locations]
         )
-        sources = ";".join(map(str, list(range(len(self.user_locations)))))
+        sources_count = len(self.user_locations)
+        destinations_count = len(self.case_locations)
 
-        url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/driving/{coordinates}&{sources}'
+        sources = ";".join(map(str, list(range(sources_count))))
+        destinations = ";".join(map(str, list(range(sources_count, sources_count + destinations_count))))
+
+        url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/driving/{coordinates}'
         params = {
+            'sources': sources,
+            'destinations': destinations,
             'annotations': 'distance',
-            'access_token': settings.MAPBOX_ACCESS_TOKEN
+            'access_token': settings.MAPBOX_MATRIX_API_TOKEN
         }
 
         response = requests.get(url, params=params)
