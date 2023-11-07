@@ -294,12 +294,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             // Grab endpoint id from urlTemplate
             const temp = urlTemplate.substring(0, urlTemplate.indexOf('?') - 1);
             const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
-
+            const endpointArg = urlTemplate.substring(urlTemplate.indexOf('?') + 1, urlTemplate.lastIndexOf('='))
             e.target.className += " disabled";
-            this.clickableIconRequest(e, endpointId, caseId, isBackground);
+            this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
         },
 
-        clickableIconRequest: function (e, endpointId, caseId, isBackground) {
+        clickableIconRequest: function (e, endpointId, caseId, endpointArg, isBackground) {
             const self = this;
             const clickedIcon = e.target;
             clickedIcon.classList.add("disabled");
@@ -307,7 +307,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const spinnerElement = $(clickedIcon).siblings('i');
             spinnerElement[0].style.display = '';
             const currentUrlToObject = formplayerUtils.currentUrlToObject();
-            currentUrlToObject.endpointArgs = self.isMultiSelect ? {selected_cases: caseId} : {case_id: caseId};
+            currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
             currentUrlToObject.endpointId = endpointId;
             currentUrlToObject.isBackground = isBackground;
 
