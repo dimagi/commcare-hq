@@ -290,7 +290,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         getFieldIndexFromEvent: function (e) {
-            return $(e.currentTarget).parent().index('.module-case-list-column');
+            return $(e.currentTarget).parent().parent().children('.module-case-list-column').index($(e.currentTarget).parent());
         },
 
         clickableIconRequest: function (e, endpointId, caseId, endpointArg, isBackground) {
