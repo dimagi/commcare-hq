@@ -51,7 +51,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-lib:}/mnt/lib
 
   formplayer:
-    image: dimagi/formplayer
+    image: docker.io/dimagi/formplayer
     environment:
       COMMCARE_HOST: "http://host.docker.internal:8000"
       COMMCARE_ALTERNATE_ORIGINS: "http://localhost:8000,http://127.0.0.1:8000"
@@ -95,7 +95,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-couchdb2:}/opt/couchdb/data
 
   redis:
-    image: redis:7
+    image: docker.io/redis:7
     expose:
       - "6379"
     healthcheck:
@@ -138,7 +138,7 @@ services:
       - ./files/elasticsearch_5.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   zookeeper:
-    image: zookeeper:3.7
+    image: docker.io/zookeeper:3.7
     expose:
       - "2181"
     # No healthcheck:
@@ -151,7 +151,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.7/data
 
   kafka:
-    image: confluentinc/cp-kafka:7.2.2 # kafka v3.2.2
+    image: docker.io/confluentinc/cp-kafka:7.2.2 # kafka v3.2.2
     expose:
       - "9092"
     environment:
@@ -179,7 +179,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/kafka/kafka-logs-1
 
   minio:
-    image: minio/minio
+    image: docker.io/minio/minio
     command: server --address :9980 --console-address :9981 /data
     expose:
       - "9980"
