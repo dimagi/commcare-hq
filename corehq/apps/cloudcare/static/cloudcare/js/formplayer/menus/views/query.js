@@ -10,8 +10,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles");
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var separator = " to ",
         serverSeparator = "__",
@@ -457,6 +456,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initialize: function (options) {
             this.parentModel = options.collection.models || [];
+            this.dynamicSearchEnabled = options.hasDynamicSearch && this.options.sidebarEnabled;
 
             this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);

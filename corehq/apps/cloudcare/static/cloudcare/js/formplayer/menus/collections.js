@@ -71,6 +71,9 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'langs',
             'session_id',
         ],
+        queryProperties: [
+            'hasDynamicSearch',
+        ],
 
         parse: function (response) {
             _.extend(this, _.pick(response, this.commonProperties));
@@ -110,6 +113,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
                 _.extend(this, _.pick(response, this.entityProperties));
                 return response.entities;
             } else if (response.type === "query") {
+                _.extend(this, _.pick(response, this.queryProperties));
                 addBreadcrumb(this, "query", sentryData);
                 return response.displays;
             } else if (response.details) {
