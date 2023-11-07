@@ -37,6 +37,7 @@ def get_navigation_context(current_page):
                     Page("Checkboxes & Switches", 'styleguide_molecules_checkboxes_b5'),
                     Page("Modals", 'styleguide_molecules_modals_b5'),
                     Page("Pagination", 'styleguide_molecules_pagination_b5'),
+                    Page("Searching & Filtering", 'styleguide_molecules_searching_b5'),
                 ],
             ),
         ],
