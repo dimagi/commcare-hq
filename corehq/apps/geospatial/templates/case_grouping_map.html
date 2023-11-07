@@ -76,8 +76,8 @@
                 <td data-bind="event: {mouseover: $parent.highlightGroup, mouseout: $parent.restoreMarkerOpacity}">
                   <div class="checkbox">
                     <label>
-                      <input type="checkbox" data-bind="checked: $parent.visibleGroupIDs, checkedValue: groupID" />
-                        <span data-bind="text: groupID"></span>
+                      <input type="checkbox" data-bind="checked: $parent.visibleGroupIDs, checkedValue: groupId" />
+                        <span data-bind="text: groupId"></span>
                     </label>
                   </div>
                 </td>
@@ -101,4 +101,17 @@
     </div>
   </div>
 </div>
+
+<script type="text/html" id="select-case">
+  <div class="form-group">
+    <div class="row">
+      <label data-bind="attr: {for: selectCssId}">Select group</label>
+      <select class="form-control" data-bind="attr: {id: selectCssId},
+        options: groupsOptions, optionsText: 'name', optionsValue: 'groupId', value: selectedGroup">
+      </select>
+    </div>
+  </div>
+  <div data-bind="html: $data.itemData.caseLink"></div>
+</script>
+
 {% endblock %}
