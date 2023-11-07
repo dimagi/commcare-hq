@@ -148,6 +148,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "tz_offset_millis": timezoneOffsetMillis,
                     "tz_from_browser": tzFromBrowser,
                     "selected_values": params.selectedValues,
+                    "isShortDetail": params.isShortDetail,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;
@@ -194,7 +195,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         }
 
         var progressView = ProgressBar({
-            progressMessage: gettext("Switching project spaces..."),
+            progressMessage: gettext("Loading..."),
         });
         FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
 
@@ -214,9 +215,10 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         return API.queryFormplayer(options, "get_endpoint");
     });
 
-    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent) {
+    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent, isShortDetail) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        options.isShortDetail = isShortDetail;
         return API.queryFormplayer(options, 'get_details');
     });
 

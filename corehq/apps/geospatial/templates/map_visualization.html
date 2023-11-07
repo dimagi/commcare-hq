@@ -84,6 +84,16 @@
     <a id="btnSaveDrawnArea" class="col-sm-2 btn btn-default" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnSaveDisabled }">
         {% trans 'Save Area' %}
     </a>
+    <a id="btnRunDisbursement" class="col-sm-2 btn btn-primary" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnRunDisbursementDisabled }">
+        {% trans 'Run Disbursement' %}
+    </a>
+</div>
+<div id="disbursement-spinner">
+  <h4 id="loading" class="hide"
+      data-bind="visible: isBusy(), css: {hide: false}">
+    <i class="fa fa-spin fa-spinner"></i>
+    {% trans "Running disbursement algorithm..." %}
+  </h4>
 </div>
 <div id="geospatial-map" style="height: 500px"></div>
 
@@ -212,6 +222,7 @@
 </div>
 
 <script type="text/html" id="select-case">
+    <small data-bind="html: getItemType()"></small>
     <div class="form-check">
       <input type="checkbox" class="form-check-input" data-bind="checked: isSelected, attr: {id: selectCssId}">
       <label class="form-check-label" data-bind="html: $data.itemData.link, attr: {for: selectCssId}"></label>

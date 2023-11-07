@@ -593,6 +593,7 @@ hqwebapp
  0008_hqoauthapplication
  0009_truncate_authtoken_table
  0010_maintenancealert_scheduling
+ 0011_add_new_columns_and_rename_model
 integration
  0001_initial
  0002_dialersettings
@@ -778,6 +779,7 @@ repeaters
  0001_adjust_auth_field_format_squashed_0015_drop_connection_settings_fk
  0002_repeaters_db
  0003_id_fields
+ 0004_fix_whitelist_bug_repeaters
 reports
  0001_initial
  0002_auto_20171121_1803

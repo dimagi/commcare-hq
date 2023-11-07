@@ -8401,10 +8401,8 @@ msgid "Add default search property"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#, fuzzy
-#| msgid "Properties"
 msgid "Custom Sort Properties"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
@@ -12809,6 +12807,12 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Case Property Group"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"This GPS case property is currently being used to store the geolocation for "
+"cases, so the data type cannot be changed."
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -17981,6 +17985,10 @@ msgstr ""
 
 #: corehq/apps/enterprise/forms.py
 msgid "180 days"
+msgstr ""
+
+#: corehq/apps/enterprise/forms.py
+msgid "365 days"
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py
