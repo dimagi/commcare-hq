@@ -210,7 +210,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             sidebarEnabled ? { forceManualSearch: true } : {}
         );
 
-        var queryObject = _.extend(queryObject, initiator === "dynamicSearch" ? { initiatedBy: "dynamic_search"} : {});
+        var queryObject = _.extend(queryObject, {initiatedBy: initiator});
 
         urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
