@@ -3,7 +3,6 @@ import datetime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
 
-from corehq.sql_db.util import estimate_row_count
 from corehq.util.couch_helpers import paginate_view
 from corehq.util.test_utils import unit_testing_only
 
@@ -65,7 +64,7 @@ def get_sql_repeat_record_count(domain, repeater_id=None, state=None):
         queryset = queryset.filter(repeater__id=repeater_id)
     if state is not None:
         queryset = queryset.filter(state=state)
-    return estimate_row_count(queryset)
+    return queryset.count()
 
 
 def get_overdue_repeat_record_count(overdue_threshold=datetime.timedelta(minutes=10)):
