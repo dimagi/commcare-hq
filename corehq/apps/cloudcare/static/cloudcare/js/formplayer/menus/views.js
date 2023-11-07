@@ -272,17 +272,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         iconClick: function (e) {
             e.stopImmediatePropagation();
-            let fieldIndex = $(e.currentTarget).parent().index();
-            if (this.isMultiSelect) {
-                fieldIndex -= 1;
-            }
-            if (this.options.bodyRowIndices && this.options.headerRowIndices) {
-                if ($(e.target).closest('.group-rows').length) {
-                    fieldIndex = this.options.bodyRowIndices[fieldIndex];
-                } else {
-                    fieldIndex = this.options.headerRowIndices[fieldIndex];
-                }
-            }
+            const fieldIndex = this.getFieldIndexFromEvent(e);
             const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
             const isBackground = this.options.endpointActions[fieldIndex]['background'];
             let caseId;
@@ -297,6 +287,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const endpointArg = urlTemplate.substring(urlTemplate.indexOf('?') + 1, urlTemplate.lastIndexOf('='))
             e.target.className += " disabled";
             this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
+        },
+
+        getFieldIndexFromEvent: function (e) {
+            return $(e.currentTarget).parent().index('.module-case-list-column');
         },
 
         clickableIconRequest: function (e, endpointId, caseId, endpointArg, isBackground) {
@@ -449,6 +443,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         updateModelFromDetailResponse: function (caseId, detailResponse) {
             CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
         },
+
+        getFieldIndexFromEvent: function (e) {
+            CaseTileView.__super__.getFieldIndexFromEvent.apply(this, [e]);
+            return $(e.currentTarget).parent().index();
+        },
     });
 
     const CaseTileGroupedView = CaseTileView.extend({
@@ -469,6 +468,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             dict['indexedRowDataList'] = this.getIndexedRowDataList();
 
             return dict;
+        },
+
+        getFieldIndexFromEvent: function (e) {
+            const fieldIndex = CaseTileGroupedView.__super__.getFieldIndexFromEvent.apply(this, [e]);
+            if ($(e.target).closest('.group-rows').length) {
+                return this.options.bodyRowIndices[fieldIndex];
+            } else {
+                return this.options.headerRowIndices[fieldIndex];
+            }
         },
 
         getIndexedRowDataList: function () {
