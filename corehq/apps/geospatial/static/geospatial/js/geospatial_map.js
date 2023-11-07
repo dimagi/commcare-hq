@@ -20,6 +20,8 @@ hqDefine("geospatial/js/geospatial_map", [
     const HOVER_DELAY = 400;
     const DEFAULT_POLL_TIME_MS = 1500;
 
+    const DEFAULT_CENTER_COORD = [-20.0, -0.0];
+
     var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
     var disbursementRunner;
@@ -123,14 +125,13 @@ hqDefine("geospatial/js/geospatial_map", [
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
 
             if (!centerCoordinates) {
-                centerCoordinates = [-91.874, 42.76]; // should be domain specific
+                centerCoordinates = DEFAULT_CENTER_COORD; // should be domain specific
             }
 
             const map = new mapboxgl.Map({  // eslint-disable-line no-undef
                 container: 'geospatial-map', // container ID
                 style: 'mapbox://styles/mapbox/streets-v12', // style URL
                 center: centerCoordinates, // starting position [lng, lat]
-                zoom: 12,
                 attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             });
@@ -766,6 +767,36 @@ hqDefine("geospatial/js/geospatial_map", [
                 missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
             }
             missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
+
+            fitMapBounds(caseMapItems);
+        }
+
+        // @param mapItems - Should be an array of mapItemModel type objects
+        function fitMapBounds(mapItems) {
+            const mapInstance = map.getMapboxInstance();
+            if (!mapItems.length) {
+                mapInstance.flyTo({
+                    zoom: 0,
+                    center: DEFAULT_CENTER_COORD,
+                    duration: 500,
+                });
+                return;
+            }
+
+            // See https://stackoverflow.com/questions/62939325/scale-mapbox-gl-map-to-fit-set-of-markers
+            const firstCoord = mapItems[0].itemData.coordinates;
+            const bounds = mapItems.reduce(function (bounds, mapItem) {
+                const coord = mapItem.itemData.coordinates;
+                if (coord) {
+                    return bounds.extend(coord);
+                }
+            }, new mapboxgl.LngLatBounds(firstCoord, firstCoord));  // eslint-disable-line no-undef
+
+            map.getMapboxInstance().fitBounds(bounds, {
+                padding: 50,  // in pixels
+                duration: 500,  // in ms
+                maxZoom: 10,  // 0-23
+            });
         }
 
         $(document).ajaxComplete(function (event, xhr, settings) {
