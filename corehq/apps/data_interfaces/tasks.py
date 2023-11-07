@@ -295,6 +295,8 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
             user.get_email(),
             render_to_string("data_interfaces/partials/case_reassign_complete_email.html", context),
             text_content=text_content,
+            domain=domain,
+            use_domain_gateway=True,
         )
 
     _send_email()
@@ -339,6 +341,8 @@ def bulk_case_copy_async(domain, user_id, owner_id, download_id, report_url, **k
             user.get_email(),
             render_to_string("data_interfaces/partials/case_copy_complete_email.html", context),
             text_content=text_content,
+            domain=domain,
+            use_domain_gateway=True,
         )
 
     _send_email()

@@ -182,7 +182,8 @@ class NotifyErrorTests(SimpleTestCase):
                 'connections. If necessary, please provide an alternate '
                 'address.'
             ),
-            recipient_list=['foo@example.com', 'bar@example.com']
+            recipient_list=['foo@example.com', 'bar@example.com'],
+            domain='test-domain', use_domain_gateway=True
         )
 
 
