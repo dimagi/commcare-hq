@@ -146,7 +146,8 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             <text>
               <locale id="modules.m1"/>
             </text>
-            <command id="m1-f0" relevant="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case_clinic]/edd = '123'"/>
+            <command id="m1-f0" relevant="instance('casedb')/casedb/""" +\
+            """case[@case_id=instance('commcaresession')/session/data/case_id_case_clinic]/edd = '123'"/>
             <command id="m1-f1"/>
             <command id="m1-f2"/>
             <command id="m1-case-list"/>
@@ -379,7 +380,8 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
         <partial>
           <remote-request>
             <post url="http://localhost:8000/a/domain/phone/claim-case/"
-                relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0">
+                relevant="count(instance('casedb')/casedb/""" +\
+            """case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0">
               <data key="case_id" ref="instance('commcaresession')/session/data/search_case_id"/>
             </post>
             <command id="search_command.m0">
