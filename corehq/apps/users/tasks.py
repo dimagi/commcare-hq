@@ -369,7 +369,7 @@ def _process_reporting_metadata_staging(chunk_size=100):
             try:
                 record.process_record(user)
             except ResourceConflict:
-                # https://sentry.io/organizations/dimagi/issues/1479516073/
+                # if the user was updated before we were able to save the processed metadata, try again
                 user = CouchUser.get_by_user_id(record.user_id, record.domain)
                 try:
                     record.process_record(user)

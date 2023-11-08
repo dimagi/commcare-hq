@@ -207,10 +207,10 @@ class TestProcessReportingMetadataStaging(TestCase):
 
     def test_process_record_is_retried_if_resource_conflict_raised(self, mock_process_record):
         """
-        I'm not sure why this is necessary, but the original introduction of this links back to
-        https://github.com/dimagi/commcare-hq/pull/27138 which also doesn't have context since
-        all of the related links are no longer accessible. If we are able to remove this, that
-        would be great.
+        The original introduction of this links back to https://github.com/dimagi/commcare-hq/pull/27138
+        which doesn't have context since all of the related links are no longer accessible. However this
+        is likely needed in the event that the user object is updated within the time it takes us to process
+        the metadata and save it to the user since couch does not provide a locking mechanism.
         """
         # Simulate the scenario where the first attempt to process a record raises ResourceConflict
         # but the next attempt succeeds
