@@ -286,6 +286,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
             const endpointArg = urlTemplate.substring(urlTemplate.indexOf('?') + 1, urlTemplate.lastIndexOf('='));
             e.target.className += " disabled";
+            debugger;
             this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
         },
 
@@ -304,7 +305,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
             currentUrlToObject.endpointId = endpointId;
             currentUrlToObject.isBackground = isBackground;
-
             function resetIcon() {
                 clickedIcon.classList.remove("disabled");
                 clickedIcon.style.display = '';
@@ -312,8 +312,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
 
             $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
-                self.reloadCase(self.model.get('id'));
-                resetIcon();
+                setTimeout(() => {
+                    self.reloadCase(self.model.get('id'));
+                    resetIcon();
+                }, 500);
             }).fail(function () {
                 resetIcon();
             });
