@@ -19,6 +19,7 @@ import jsonfield
 import stripe
 from django_prbac.models import Role
 from memoized import memoized
+from corehq.apps.accounting.utils.stripe import charge_through_stripe
 
 from corehq.apps.domain.shortcuts import publish_domain_saved
 from dimagi.ext.couchdbkit import (
@@ -3860,11 +3861,10 @@ class StripePaymentMethod(PaymentMethod):
 
     def create_charge(self, card, amount_in_dollars, description, idempotency_key=None):
         """ Charges a stripe card and returns a transaction id """
-        amount_in_cents = int((amount_in_dollars * Decimal('100')).quantize(Decimal(10)))
-        transaction_record = stripe.Charge.create(
+        transaction_record = charge_through_stripe(
             card=card,
             customer=self.customer,
-            amount=amount_in_cents,
+            amount_in_dollars=amount_in_dollars,
             currency=settings.DEFAULT_CURRENCY,
             description=description,
             idempotency_key=idempotency_key
