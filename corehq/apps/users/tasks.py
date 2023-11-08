@@ -360,9 +360,9 @@ def process_reporting_metadata_staging():
         process_reporting_metadata_staging.delay()
 
 
-def _process_reporting_metadata_staging():
+def _process_reporting_metadata_staging(chunk_size=100):
     from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
-    for i in range(100):
+    for i in range(chunk_size):
         with transaction.atomic():
             records = (
                 UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')

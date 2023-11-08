@@ -223,6 +223,16 @@ class TestProcessReportingMetadataStaging(TestCase):
         self.assertEqual(mock_process_record.call_count, 2)
         self.assertEqual(UserReportingMetadataStaging.objects.all().count(), 0)
 
+    def test_processed_records_are_limited_to_chunk_size(self, mock_process_record):
+        for _ in range(5):
+            UserReportingMetadataStaging.objects.create(user_id=self.user._id, domain='test-domain')
+
+        _process_reporting_metadata_staging(chunk_size=3)
+
+        # 5 records were created, 3 were processed, 2 should be left over
+        self.assertEqual(mock_process_record.call_count, 3)
+        self.assertEqual(UserReportingMetadataStaging.objects.all().count(), 2)
+
     def setUp(self):
         super().setUp()
         self.user = CommCareUser.create('test-domain', 'test-username', 'qwer1234', None, None)
