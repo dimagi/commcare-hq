@@ -18,6 +18,14 @@ hqDefine("geospatial/js/case_grouping_map",[
     };
 
     const DEFAULT_MARKER_OPACITY = 1.0;
+    const OBSCURING_OPACITY = 0.2;
+    const DEFAULT_GROUP_ID = "unassigned-group-id";
+    const DEFAULT_GROUP = {
+        groupId: DEFAULT_GROUP_ID,
+        name: gettext("No group"),
+        color: `rgba(128,128,128,${OBSCURING_OPACITY})`,
+    }
+
     const MAP_CONTAINER_ID = 'case-grouping-map';
     let map;
     const clusterStatsInstance = new clusterStatsModel();
@@ -70,7 +78,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
             // Only cases with belonging to groups should be exported
             let exportableCases = self.casesToExport().filter(function(caseItem) {
-                return caseItem.groupId;
+                return caseItem.groupId !== DEFAULT_GROUP_ID;
             });
 
             if (!exportableCases.length) {
@@ -102,12 +110,16 @@ hqDefine("geospatial/js/case_grouping_map",[
             hiddenElement.remove();
         };
 
-        self.addGroupDataToCases = function(caseGroups, groupsData) {
+        self.addGroupDataToCases = function(caseGroups, groupsData, assignDefaultGroup) {
+            const defaultGroup = groupsData[0];
+
             self.casesToExport().forEach(caseItem => {
                 const groupId = caseGroups[caseItem.caseId];
                 if (groupId !== undefined) {
                     const group = groupsData.find((group) => {return group.groupId === groupId});
                     self.setItemGroup(caseItem, groupId, group.coordinates);
+                } else if (assignDefaultGroup) {
+                    self.setItemGroup(caseItem, defaultGroup.groupId, {});
                 }
             });
         }
@@ -352,7 +364,6 @@ hqDefine("geospatial/js/case_grouping_map",[
         setMapLayersVisibility(MAPBOX_LAYER_VISIBILITY.None);
         mapMarkers.forEach((marker) => marker.remove());
         mapMarkers = [];
-
         exportModelInstance.casesToExport().forEach(function (caseItem) {
             if (!caseItem.coordinates) {
                 return;
@@ -456,7 +467,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                     let caseIsInGroup = caseItem.groupId === group.groupId;
                     let opacity = DEFAULT_MARKER_OPACITY
                     if (!caseIsInGroup) {
-                        opacity = 0.2;
+                        opacity = OBSCURING_OPACITY;
                     }
                     let marker = mapMarkers.find((marker) => {
                         let markerCoordinates = marker.getLngLat();
@@ -483,7 +494,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
             let filteredCaseGroups = {};
             for (const caseID in self.allCaseGroups) {
-                if (self.groupIDInVisibleGroupIds(self.allCaseGroups[caseID].groupId)) {
+                if (self.groupIDInVisibleGroupIds(self.allCaseGroups[caseID])) {
                     filteredCaseGroups[caseID] = self.allCaseGroups[caseID];
                 }
             }
@@ -512,7 +523,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         processedCluster = {};
 
         var groupCount = 1;
-        var groups = [];
+        var groups = [DEFAULT_GROUP];
 
         for (const cluster of sourceFeatures) {
             const clusterId = cluster.properties.cluster_id;
@@ -530,8 +541,11 @@ hqDefine("geospatial/js/case_grouping_map",[
                 const groupUUID = uuidv4();
 
                 if (casePoints.length > 0) {
-                    groupName = "Group " + groupCount;
+                    groupName = _.template(gettext("Group <%- groupCount %>"))({
+                        groupCount: groupCount,
+                    });
                     groupCount += 1;
+
                     groups.push({
                         name: groupName,
                         groupId: groupUUID,
@@ -557,7 +571,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             });
             alertUser.alert_user(message, 'danger');
         }
-        exportModelInstance.addGroupDataToCases(caseGroups, groups);
+        exportModelInstance.addGroupDataToCases(caseGroups, groups, true);
         caseGroupsInstance.loadCaseGroups(caseGroups, groups);
     }
 

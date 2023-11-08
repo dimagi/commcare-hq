@@ -77,7 +77,8 @@
                   <div class="checkbox">
                     <label>
                       <input type="checkbox" data-bind="checked: $parent.visibleGroupIDs, checkedValue: groupId" />
-                        <span data-bind="text: groupId"></span>
+                      <span data-bind="text: name"></span>
+                      <span data-bind="style: {color: color}">■</span>
                     </label>
                   </div>
                 </td>
