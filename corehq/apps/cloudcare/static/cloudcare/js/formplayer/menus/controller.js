@@ -134,7 +134,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     collection: queryCollection,
                     title: menuResponse.title,
                     description: menuResponse.description,
-                    hasDynamicSearch: queryCollection.dynamicSearch,
+                    hasDynamicSearch: queryResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: !sessionStorage.submitPerformed,
                 }).render()
