@@ -143,7 +143,8 @@ def get_download_file_path(use_transfer, filename):
     if use_transfer:
         fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, filename)
     else:
-        _, fpath = tempfile.mkstemp()
+        fd, fpath = tempfile.mkstemp()
+        os.close(fd)
 
     return fpath
 
