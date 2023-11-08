@@ -136,7 +136,7 @@ def domain(domain, allow_enterprise=False):
 def domains(domains):
     return filters.OR(
         filters.term("domain.exact", domains),
-        filters.term("domain_memberships.domain.exact", domains)
+        domain_memberships_filter("domain.exact", domains)
     )
 
 
@@ -201,7 +201,7 @@ def location(location_id):
         filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
         filters.AND(
             web_users(),
-            filters.term('domain_memberships.assigned_location_ids', location_id)
+            domain_memberships_filter('assigned_location_ids', location_id)
         ),
     )
 
@@ -212,8 +212,11 @@ def is_practice_user(practice_mode=True):
 
 def role_id(role_id):
     return filters.OR(
-        filters.term("domain_membership.role_id", role_id),     # mobile users
-        filters.term("domain_memberships.role_id", role_id)     # web users
+        filters.nested(
+            'domain_membership',
+            filters.term('domain_membership.role_id', role_id)
+        ),
+        domain_memberships_filter("role_id", role_id)     # web users
     )
 
 
@@ -265,4 +268,12 @@ def missing_or_empty_user_data_property(property_name):
     return filters.OR(
         _missing_user_data_property(property_name),
         _missing_user_data_value(property_name),
+    )
+
+
+def domain_memberships_filter(field_name, value):
+    # return filters.term(f'domain_memberships.{field_name}', value)
+    return filters.nested(
+        'domain_memberships',
+        filters.term(f'domain_memberships.{field_name}', value)
     )

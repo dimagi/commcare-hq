@@ -30,7 +30,17 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                                         "bool": {
                                             "filter": (
                                                 {"term": {"doc_type": "WebUser"}},
-                                                {"terms": {"domain_memberships.assigned_location_ids": with_ids}})}
+                                                {
+                                                    "nested": {
+                                                        "path": "domain_memberships",
+                                                        "query": {
+                                                            "bool": {
+                                                                "filter": {"terms": {"domain_memberships.assigned_location_ids": with_ids}}
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            )}
                                     }
                                 )
                             }
@@ -164,7 +174,8 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
     def test_users_at_locations(self):
         location_ids = ['09d1a58cb849e53bb3a456a5957d998a', '09d1a58cb849e53bb3a456a5957d99ba']
         query = users.UserES().location(location_ids)
-        self._check_user_location_query(query, location_ids)
+        with patch.object(self, "test_adapter", users.user_adapter):
+            self._check_user_location_query(query, location_ids)
 
     def test_remove_all_defaults(self):
         # Elasticsearch fails if you pass it an empty list of filters

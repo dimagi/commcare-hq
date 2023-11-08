@@ -64,6 +64,35 @@ class TestQueries(TestCase):
             }
         })
 
+    def test_query_with_nested_fields(self):
+        default_fields = ['name', 'type', 'date']
+        nested_fields = [("domain_memberships", "domain")]
+        query = (HQESQuery('forms')
+                 .search_string_query("name: foo", default_fields, nested_fields))
+        self.assertHasQuery(query, {
+            "bool": {
+                "should": [
+                    {
+                        "query_string": {
+                            "query": "*name* *foo*",
+                            "default_operator": "AND",
+                            "fields": ['name', 'type', 'date']
+                        }
+                    },
+                    {
+                        "nested": {
+                            "path": "domain_memberships",
+                            "query": {
+                                "query_string": {
+                                    "query": "domain_memberships.domain:*name* *foo*"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        })
+
     def test_match_raises_with_invalid_operator(self):
         with self.assertRaises(ValueError):
             match("cyrus", "pet_name", operator="And")
