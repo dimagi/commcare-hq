@@ -316,10 +316,10 @@ class ESQuery(object):
     def get_query(self):
         return self.es_query['query']['bool']['must']
 
-    def search_string_query(self, search_string, default_fields):
+    def search_string_query(self, search_string, default_fields, nested_fields=[]):
         """Accepts a user-defined search string"""
         return self.set_query(
-            queries.search_string_query(search_string, default_fields)
+            queries.search_string_query(search_string, default_fields, nested_fields=nested_fields)
         )
 
     def fields(self, fields):

@@ -1,6 +1,6 @@
 from django.db import migrations
 
-from corehq.apps.es import UserES
+from corehq.apps.es import UserES, filters
 from corehq.apps.users.models import WebUser
 from corehq.util.couch import DocUpdate, iter_update
 from corehq.util.django_migrations import skip_on_fresh_install
@@ -14,13 +14,15 @@ def fix_users(apps, schema_editor):
 
 
 def _get_admins_with_roles():
-    # domain_memberships isn't a nested mapping in ES, so this only checks that
-    # they have a domain membership that's an admin, and one with a role_id,
-    # not that it's both on the same membership
     return (UserES()
             .web_users()
-            .term('domain_memberships.is_admin', True)
-            .non_null('domain_memberships.role_id')
+            .filter(filters.OR(
+                filters.nested('domain_memberships',
+                    filters.term('domain_memberships.is_admin', True)),
+                filters.nested('domain_memberships',
+                    filters.non_null('domain_memberships.role_id'))
+                )
+            )
             .get_ids())
 
 

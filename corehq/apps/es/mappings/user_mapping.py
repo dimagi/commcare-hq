@@ -117,7 +117,7 @@ USER_MAPPING = {
         },
         "domain_membership": {
             "dynamic": False,
-            "type": "object",
+            "type": "nested",
             "properties": {
                 "assigned_location_ids": {
                     "type": "text"
@@ -152,7 +152,7 @@ USER_MAPPING = {
         },
         "domain_memberships": {
             "dynamic": False,
-            "type": "object",
+            "type": "nested",
             "properties": {
                 "assigned_location_ids": {
                     "type": "text"

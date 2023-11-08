@@ -58,12 +58,21 @@ def match_all():
     return {"match_all": {}}
 
 
-def search_string_query(search_string, default_fields):
+def search_string_query(search_string, default_fields, nested_fields=[]):
     """
     All input defaults to doing an infix search for each term.
     (This may later change to some kind of fuzzy matching).
 
     This is also available via the main ESQuery class.
+
+    args:
+        search_string: string to search for
+        default_fields: list of field names to search on
+
+    kwargs:
+        nested_fields: list of nested field tuples to search on
+            Tuple should be in (nested_field_path, sub_path) format
+            for e.g. ("domain_memberships", "domain")
     """
     if not search_string:
         return match_all()
@@ -75,13 +84,31 @@ def search_string_query(search_string, default_fields):
 
     # TODO: add support for searching date ranges.
 
-    return {
+    default_field_query = {
         "query_string": {
             "query": query_string,
             "default_operator": "AND",
             "fields": default_fields,
         }
     }
+    nested_queries = []
+    for nested_field, path in nested_fields:
+        nested_field_query = nested(
+            f"{nested_field}",
+            {
+                "query_string": {
+                    "query": f"{nested_field}.{path}:{query_string}"
+                }
+            }
+        )
+        nested_queries.append(nested_field_query)
+
+    if nested_fields:
+        return BOOL_CLAUSE(
+            SHOULD_CLAUSE([default_field_query] + nested_queries)
+        )
+    else:
+        return default_field_query
 
 
 def ids_query(doc_ids):
