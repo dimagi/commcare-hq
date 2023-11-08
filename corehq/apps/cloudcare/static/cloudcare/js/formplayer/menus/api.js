@@ -49,7 +49,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     success: function (parsedMenus, response) {
                         if (response.submitResponseMessage) {
                             let message = response.submitResponseMessage;
-                            if (message.indexOf('\n') != -1) {
+                            if (message.indexOf('\n') !== -1) {
                                 message = message.substring(0, message.indexOf('\n'))
                             }
                             FormplayerFrontend.trigger('showSuccess', gettext(message));
