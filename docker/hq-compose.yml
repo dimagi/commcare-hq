@@ -185,8 +185,10 @@ services:
       - "9980"
       - "9981"
     healthcheck:
-      # https://min.io/docs/minio/linux/operations/monitoring/healthcheck-probe.html#node-liveness
-      test: curl -I http://minio:9980/minio/health/live
+      # The docker image ships with the expectation that minio runs on port 9000.
+      # If we ran on port 9000, we wouldn't need to update the local alias,
+      # but we felt it was less disruptive to use this workaround
+      test: mc alias set local http://localhost:9980 "" "" >/dev/null && mc ready local
       start_period: 15s
       interval: 10s
       retries: 10

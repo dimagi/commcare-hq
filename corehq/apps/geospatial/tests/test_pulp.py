@@ -1,16 +1,16 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.geospatial.routing_solvers.ortools import (
-    ORToolsRadialDistanceSolver
+from corehq.apps.geospatial.routing_solvers.pulp import (
+    RadialDistanceSolver
 )
 
 
-class TestORToolsRadialDistanceSolver(SimpleTestCase):
+class TestRadialDistanceSolver(SimpleTestCase):
     # Tests the correctness of the code, not the optimumness of the solution
 
     def test(self):
         self.assertEqual(
-            ORToolsRadialDistanceSolver(
+            RadialDistanceSolver(
                 {
                     "users": [
                         {"id": "New York", "lon": -73.9750671, "lat": 40.7638143},
@@ -27,10 +27,11 @@ class TestORToolsRadialDistanceSolver(SimpleTestCase):
                         {"id": "Jackson", "lat": 40.55517003526139, "lon": -106.34189549259928},
                     ],
                 },
-                1000000000,
-            ).solve(),
-            {
-                'New York': ['New Hampshire', 'Newark', 'NY2'],
-                'Los Angeles': ['Phoenix', 'LA2', 'LA3', 'Dallas', 'Jackson']
-            }
+            ).solve(), (
+                None,
+                {
+                    'New York': ['New Hampshire', 'Newark', 'NY2'],
+                    'Los Angeles': ['Phoenix', 'LA2', 'LA3', 'Dallas', 'Jackson']
+                }
+            )
         )

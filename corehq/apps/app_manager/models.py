@@ -116,6 +116,7 @@ from corehq.apps.app_manager.suite_xml.generator import (
 )
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
     RESULTS_INSTANCE,
+    RESULTS_INSTANCE_BASE,
     RESULTS_INSTANCE_INLINE,
 )
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -1305,8 +1306,6 @@ class FormBase(DocumentSchema):
         if case_type is None:
             return False
 
-        if self.get_module().case_type != case_type:
-            return False
         if not self.requires_case():
             return False
 
@@ -2010,7 +2009,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         value_is_the_default = self.instance_name == 'casedb'
         if value_is_the_default:
             if module_uses_inline_search(module):
-                return RESULTS_INSTANCE_INLINE
+                return module.search_config.get_instance_name()
             elif module_loads_registry_case(module):
                 return RESULTS_INSTANCE
         return self.instance_name
@@ -2122,6 +2121,13 @@ class DefaultCaseSearchProperty(DocumentSchema):
     defaultValue = StringProperty(exclude_if_none=True)
 
 
+class CaseSearchCustomSortProperty(DocumentSchema):
+    """Sort properties to be applied to search before results are filtered"""
+    property_name = StringProperty()
+    sort_type = StringProperty()
+    direction = StringProperty()
+
+
 class BaseCaseSearchLabel(NavMenuItemMediaMixin):
     def get_app(self):
         return self._module.get_app()
@@ -2150,6 +2156,7 @@ class CaseSearch(DocumentSchema):
     search_filter = StringProperty(exclude_if_none=True)
     search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
+    custom_sort_properties = SchemaListProperty(CaseSearchCustomSortProperty)
     blacklisted_owner_ids_expression = StringProperty(exclude_if_none=True)
     additional_case_types = StringListProperty()
     data_registry = StringProperty(exclude_if_none=True)
@@ -2163,10 +2170,17 @@ class CaseSearch(DocumentSchema):
     custom_related_case_property = StringProperty(exclude_if_none=True)
 
     inline_search = BooleanProperty(default=False)
+    instance_name = StringProperty(exclude_if_none=True)  # only applicable to inline_search
 
     @property
     def case_session_var(self):
         return "search_case_id"
+
+    def get_instance_name(self):
+        if self.instance_name:
+            return f'{RESULTS_INSTANCE_BASE}{self.instance_name}'
+        else:
+            return RESULTS_INSTANCE_INLINE
 
     def get_relevant(self, case_session_var, multi_select=False):
         xpath = CaseClaimXpath(case_session_var)
@@ -3402,7 +3416,8 @@ class CustomDataAutoFilter(ReportAppFilter):
 
     def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
-        return Choice(value=user.metadata[self.custom_data_property], display=None)
+        user_data = user.get_user_data(getattr(user, 'current_domain', user.domain))
+        return Choice(value=user_data[self.custom_data_property], display=None)
 
 
 class StaticChoiceFilter(ReportAppFilter):

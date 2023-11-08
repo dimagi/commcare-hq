@@ -192,7 +192,7 @@ msgstr ""
 msgid "Edition"
 msgstr ""
 
-#: corehq/apps/accounting/filters.py
+#: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 msgid "Visibility"
 msgstr ""
@@ -264,6 +264,21 @@ msgstr ""
 
 #: corehq/apps/accounting/forms.py
 msgid "Billing Account"
+msgstr ""
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#: corehq/apps/builds/templates/builds/all.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
+#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
+#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+msgid "Version"
 msgstr ""
 
 #: corehq/apps/accounting/forms.py
@@ -2453,6 +2468,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/data_dictionary/models.py corehq/apps/hqadmin/reports.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
@@ -4646,6 +4662,7 @@ msgid "Numeric Selection"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Numeric"
 msgstr ""
 
@@ -5320,20 +5337,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/base_summary.html
 #: corehq/apps/reports/templates/reports/form/partials/readable_form.html
 msgid "Question IDs"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#: corehq/apps/builds/templates/builds/all.html
-#: corehq/apps/builds/templates/builds/edit_menu.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
-msgid "Version"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
@@ -6177,10 +6180,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has a Parent Menu configured with \"make search input "
-"available after search\",\n"
-"                This workflow is unsupported.\n"
+"              The case list in <a href=\"%(module_url)s\">%(module_name)s</"
+"a> can not use the same \"search input instance name\" as its Parent Menu.\n"
 "              "
 msgstr ""
 
@@ -7922,6 +7923,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/enterprise/interface.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/smsbillables/filters.py
 msgid "Direction"
@@ -7947,6 +7949,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
 msgid "Format"
@@ -8384,6 +8387,32 @@ msgid "Add default search property"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Custom Sort Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid ""
+"Sort search results by case property before filtering. These will affect the "
+"priority in which results are returned and are hidden from the user."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Exact"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Ascending"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Descending"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Add custom sort property"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Search and Claim Options"
 msgstr ""
 
@@ -8415,6 +8444,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Make search input available after search"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Search Input Instance Name"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
@@ -10313,6 +10346,12 @@ msgid ""
 "                The case search property '{}' is missing the following "
 "lookup table attributes: {}\n"
 "            "
+msgstr ""
+
+#: corehq/apps/app_manager/views/modules.py
+msgid ""
+"'{}' is an invalid instance name. It can contain only letters, numbers, and "
+"underscores."
 msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py
@@ -12757,6 +12796,12 @@ msgid "Case Property Group"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"This GPS case property is currently being used to store the geolocation for "
+"cases, so the data type cannot be changed."
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/tests/test_util.py
 #: corehq/apps/data_dictionary/util.py corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
@@ -13905,6 +13950,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
 #: corehq/apps/events/forms.py corehq/apps/events/views.py
+#: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/locations/templates/locations/manage/locations.html
@@ -17928,6 +17974,10 @@ msgid "180 days"
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py
+msgid "365 days"
+msgstr ""
+
+#: corehq/apps/enterprise/forms.py
 msgid ""
 "Mobile workers who have not submitted a form after these many days will be "
 "considered inactive."
@@ -21254,6 +21304,22 @@ msgstr ""
 msgid "Export Groups"
 msgstr ""
 
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Summary of Case Grouping"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Total number of clusters"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Maximum cases per cluster"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Minimum cases per cluster"
+msgstr ""
+
 #: corehq/apps/geospatial/templates/gps_capture.html
 msgid ""
 "\n"
@@ -21381,6 +21447,14 @@ msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Show mobile workers on the map"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid ""
+"\n"
+"                            Only users at this location will be shown on the "
+"map.\n"
+"                        "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
@@ -27141,51 +27215,51 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"            For organizations exploring CommCare.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"            See <a href=\"https://dimagi.com/commcare/pricing/\" "
-"target=\"_blank\">pricing</a> options.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"              Request Custom Trial\n"
+"              For individuals learning<br/> about data collection.\n"
 "            "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"                Watch Demo\n"
+"              Free for personal use.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"                Create Account\n"
 "              "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"            For individuals learning about data collection.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"            Free for personal use.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"              Create Account\n"
+"              For organizations<br /> exploring CommCare.\n"
 "            "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"              See <a href=\"https://dimagi.com/commcare/pricing/\" "
+"target=\"_blank\">pricing</a> options.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"                Request Custom Trial\n"
+"              "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"                  Watch Demo\n"
+"                "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/server_errors.html

@@ -13,9 +13,9 @@
 # Rowena Luk <rluk@dimagi.com>, 2021
 # Dimagi Dev <devops@dimagi.com>, 2021
 # Ismaïla Diene <idiene@dimagi.com>, 2022
+# Tyler Wymer <twymer@dimagi.com>, 2023
 # Aissetou Sawadogo <ais107@hotmail.com>, 2023
 # Ayla Reith <areith@dimagi.com>, 2023
-# Tyler Wymer <twymer@dimagi.com>, 2023
 # Carla Legros <clegros@dimagi.com>, 2023
 #
 #, fuzzy
@@ -3475,6 +3475,10 @@ msgstr "Date sensible"
 msgid "Name of the Area"
 msgstr ""
 
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "All locations"
+msgstr ""
+
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
 msgstr ""
@@ -4996,6 +5000,3 @@ msgstr ""
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "Description"
-#~ msgstr "Description"

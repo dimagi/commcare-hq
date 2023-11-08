@@ -988,7 +988,7 @@ class TestUserESAccessors(TestCase):
             first_name='clark',
             last_name='kent',
             is_active=True,
-            metadata={PROFILE_SLUG: cls.profile.id, 'office': 'phone_booth'},
+            user_data={PROFILE_SLUG: cls.profile.id, 'office': 'phone_booth'},
         )
         cls.user.save()
 

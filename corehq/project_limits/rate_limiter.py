@@ -39,19 +39,19 @@ class RateLimiter(object):
                 rate_counter.increment(self.feature_key + limit_scope, delta=delta)
 
     def get_window_of_first_exceeded_limit(self, scope=''):
-        for limit_scope, rates in self.iter_rates(scope):
-            for rate_counter_key, current_rate, limit in rates:
+        for _limit_scope, rates in self.iter_rates(scope):
+            for rate_counter, current_rate, limit in rates:
                 if current_rate >= limit:
-                    return rate_counter_key
+                    return rate_counter.key
 
         return None
 
     def allow_usage(self, scope=''):
         allowed = False
         # allow usage if any scope has capacity
-        for limit_scope, rates in self.iter_rates(scope):
+        for _limit_scope, rates in self.iter_rates(scope):
             allow = all(current_rate < limit
-                        for rate_counter_key, current_rate, limit in rates)
+                        for _rate_counter, current_rate, limit in rates)
             # for each scope all counters must be below threshold
             if allow:
                 allowed = True
@@ -59,23 +59,38 @@ class RateLimiter(object):
                 metrics_counter('commcare.rate_limit_exceeded', tags={'key': self.feature_key, 'scope': scope})
         return allowed
 
+    def get_retry_after(self, scope):
+        """
+        Returns the minimum amount of seconds until additional capacity becomes available again
+        """
+        seconds_per_scope = {}
+        for scope, rates in self.iter_rates(scope):
+            seconds_per_scope[scope] = 0.0
+            for rate_counter, current_rate, limit in rates:
+                if current_rate >= limit:
+                    seconds_per_scope[scope] = max(seconds_per_scope[scope], rate_counter.retry_after())
+        retry_after_values = seconds_per_scope.values()
+        return min(retry_after_values)
+
     def iter_rates(self, scope=''):
         """
-        Get generator of tuples for each set of limits returned by get_rate_limits, where the first item
-        of the tuple is the normalized scope, and the second is a generator of (key, current rate, rate limit)
-        for each limit in that scope
+        Get generator of tuples for each set of limits returned by `get_rate_limits`, where the first item
+        of the tuple is the normalized scope, and the second is a generator of
+        (rate_counter (obj), current rate, rate limit) for each limit in that scope
 
         e.g.
         ('test-domain', [
-            ('week', 92359, 115000)
-            ('day', ...)
+            (rate_counter, 92359, 115000)
+            (rate_counter, ...)
             ...
         ])
+        where `rate_counter.key` is the window of the counter i.e. 'week', 'day' etc
         """
+
         for limit_scope, limits in self.get_rate_limits(scope):
             yield (
                 limit_scope,
-                ((rate_counter.key, rate_counter.get(self.feature_key + limit_scope), limit)
+                ((rate_counter, rate_counter.get(self.feature_key + limit_scope), limit)
                 for rate_counter, limit in limits)
             )
 
@@ -86,8 +101,8 @@ class RateLimiter(object):
         larger_windows_allow = all(
             current_rate < limit
             for limit_scope, limits in self.iter_rates(scope)
-            for rate_counter_key, current_rate, limit in limits
-            if rate_counter_key in windows_not_to_wait_on
+            for rate_counter, current_rate, limit in limits
+            if rate_counter.key in windows_not_to_wait_on
         )
         if not larger_windows_allow:
             # There's no point in waiting 15 seconds for the hour/day/week values to change
