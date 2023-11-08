@@ -114,7 +114,7 @@ def pull_translation_files_from_transifex(domain, data, user_email=None):
     try:
         translation_file, filename = transifex.generate_excel_file()
         with open(translation_file.name, 'rb') as file_obj:
-            send_mail_async.delay(
+            send_mail_async(
                 subject='[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT),
                 message="PFA Translations pulled from transifex.",
                 recipient_list=[user_email],
@@ -156,7 +156,7 @@ def backup_project_from_transifex(domain, data, email):
                     zipfile.writestr(filename, file_obj.read())
                 os.remove(translation_file.name)
         tmp.seek(0)
-        send_mail_async.delay(
+        send_mail_async(
             subject='[{}] - Transifex backup translations'.format(settings.SERVER_ENVIRONMENT),
             body="PFA Translations backup from transifex.",
             recipient_list=[email],
@@ -181,7 +181,7 @@ def email_project_from_hq(domain, data, email):
     try:
         translation_file, __ = parser.generate_excel_file()
         with open(translation_file.name, 'rb') as file_obj:
-            send_mail_async.delay(
+            send_mail_async(
                 subject='[{}] - HQ translation download'.format(settings.SERVER_ENVIRONMENT),
                 message="Translations from HQ",
                 recipient_list=[email],
@@ -227,7 +227,7 @@ def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, 
         mappings
     ).migrate()
 
-    send_mail_async.delay(
+    send_mail_async(
         subject='[{}] - Transifex Project Migration Status'.format(settings.SERVER_ENVIRONMENT),
         body=linebreaksbr(generate_email_body()),
         recipient_list=[email],
