@@ -362,19 +362,24 @@ def process_reporting_metadata_staging():
 
 def _process_reporting_metadata_staging(chunk_size=100):
     from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
-    for i in range(chunk_size):
+    for pk in UserReportingMetadataStaging.objects.values_list('pk', flat=True).order_by('pk')[:chunk_size]:
         with transaction.atomic():
-            records = (
-                UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
-            )[:1]
-            for record in records:
+            record = UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).get(pk=pk)
+            user = CouchUser.get_by_user_id(record.user_id, record.domain)
+            try:
+                record.process_record(user)
+            except ResourceConflict:
+                # https://sentry.io/organizations/dimagi/issues/1479516073/
                 user = CouchUser.get_by_user_id(record.user_id, record.domain)
                 try:
                     record.process_record(user)
-                except ResourceConflict:
-                    # https://sentry.io/organizations/dimagi/issues/1479516073/
-                    user = CouchUser.get_by_user_id(record.user_id, record.domain)
-                    record.process_record(user)
+                except Exception:
+                    notify_exception(None, "Error encountered in _process_reporting_metadata_staging")
+                else:
+                    record.delete()
+            except Exception:
+                notify_exception(None, "Error encountered in _process_reporting_metadata_staging")
+            else:
                 record.delete()
 
 

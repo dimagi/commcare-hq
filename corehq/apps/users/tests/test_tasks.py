@@ -200,8 +200,7 @@ class TestProcessReportingMetadataStaging(TestCase):
         record = UserReportingMetadataStaging.objects.create(user_id=self.user._id, domain='test-domain')
         mock_process_record.side_effect = Exception
 
-        with self.assertRaises(Exception):
-            _process_reporting_metadata_staging()
+        _process_reporting_metadata_staging()
 
         self.assertEqual(mock_process_record.call_count, 1)
         self.assertTrue(UserReportingMetadataStaging.objects.get(id=record.id))
@@ -233,7 +232,18 @@ class TestProcessReportingMetadataStaging(TestCase):
         self.assertEqual(mock_process_record.call_count, 3)
         self.assertEqual(UserReportingMetadataStaging.objects.all().count(), 2)
 
+    def test_subsequent_records_are_still_processed_if_general_exception_encountered(self, mock_process_record):
+        for _ in range(2):
+            UserReportingMetadataStaging.objects.create(user_id=self.user._id, domain='test-domain')
+        # raise exception first to ensure subsequent record(s) are processed
+        mock_process_record.side_effect = [Exception, None]
+
+        _process_reporting_metadata_staging()
+
+        self.assertEqual(mock_process_record.call_count, 2)
+        self.assertEqual(UserReportingMetadataStaging.objects.all().count(), 1)
+
     def setUp(self):
         super().setUp()
-        self.user = CommCareUser.create('test-domain', 'test-username', 'qwer1234', None, None)
+        self.user = CommCareUser.create('test-domain', 'test-username', 'abc123', None, None)
         self.addCleanup(self.user.delete, 'test-domain', deleted_by=None)
