@@ -642,12 +642,6 @@ class ModuleDetailValidatorMixin(object):
 
         for detail in [self.module.case_details.short, self.module.case_details.long]:
             if detail.case_tile_template:
-                if not detail.display == "short":
-                    errors.append({
-                        'type': self.__invalid_tile_configuration_type,
-                        'module': self.get_module_info(),
-                        'reason': _('Case tiles may only be used for the case list (not the case details).')
-                    })
                 col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
                 for field in case_tile_template_config(detail.case_tile_template).fields:
                     if field not in col_by_tile_field:
