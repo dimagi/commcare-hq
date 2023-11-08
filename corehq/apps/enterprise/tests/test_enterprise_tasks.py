@@ -44,7 +44,7 @@ class TestEmailEnterpriseReport(TestCase):
             email_enterprise_report(self.domain.name, EnterpriseReport.DOMAINS, self.couch_user)
 
         expected_title = "Enterprise Dashboard: Project Spaces"
-        mock_send.assert_called_with(expected_title, self.couch_user.username, body=mock.ANY,
+        mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY,
                                      domain=self.domain.name, use_domain_gateway=True)
 
     @patch('corehq.apps.enterprise.tasks.send_html_email_async')
@@ -109,5 +109,4 @@ class TestEmailEnterpriseReport(TestCase):
 
         with patch('corehq.apps.enterprise.tasks.get_redis_client', return_val=mock_redis_client), \
                 self.assertRaises(EnterpriseReportError):
-            email_enterprise_report(self.domain.name, 'unknown', self.couch_user,
-                                    domain=self.domain.name, use_domain_gateway=True)
+            email_enterprise_report(self.domain.name, 'unknown', self.couch_user)
