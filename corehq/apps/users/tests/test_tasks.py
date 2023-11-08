@@ -1,13 +1,16 @@
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from unittest import mock
 
 from django.test import TestCase
+
+from couchdbkit import ResourceConflict
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, UserReportingMetadataStaging, WebUser
 from corehq.apps.users.tasks import (
     apply_correct_demo_mode_to_loadtest_user,
     update_domain_date,
@@ -15,7 +18,10 @@ from corehq.apps.users.tasks import (
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es import case_search_adapter
 from corehq.form_processor.models import CommCareCase
-from corehq.apps.users.tasks import remove_users_test_cases
+from corehq.apps.users.tasks import (
+    _process_reporting_metadata_staging,
+    remove_users_test_cases,
+)
 from corehq.apps.reports.util import domain_copied_cases_by_owner
 from corehq.apps.hqcase.case_helper import CaseCopier
 
@@ -176,3 +182,48 @@ class TestRemoveUsersTestCases(TestCase):
 
         case_search_adapter.index(case, refresh=True)
         return case
+
+
+@mock.patch.object(UserReportingMetadataStaging, 'process_record')
+class TestProcessReportingMetadataStaging(TestCase):
+
+    def test_record_is_deleted_if_processed_successfully(self, mock_process_record):
+        record = UserReportingMetadataStaging.objects.create(user_id=self.user._id, domain='test-domain')
+        self.assertTrue(UserReportingMetadataStaging.objects.get(id=record.id))
+
+        _process_reporting_metadata_staging()
+
+        self.assertEqual(mock_process_record.call_count, 1)
+        self.assertEqual(UserReportingMetadataStaging.objects.all().count(), 0)
+
+    def test_record_is_not_deleted_if_not_processed_successfully(self, mock_process_record):
+        record = UserReportingMetadataStaging.objects.create(user_id=self.user._id, domain='test-domain')
+        mock_process_record.side_effect = Exception
+
+        with self.assertRaises(Exception):
+            _process_reporting_metadata_staging()
+
+        self.assertEqual(mock_process_record.call_count, 1)
+        self.assertTrue(UserReportingMetadataStaging.objects.get(id=record.id))
+
+    def test_process_record_is_retried_if_resource_conflict_raised(self, mock_process_record):
+        """
+        I'm not sure why this is necessary, but the original introduction of this links back to
+        https://github.com/dimagi/commcare-hq/pull/27138 which also doesn't have context since
+        all of the related links are no longer accessible. If we are able to remove this, that
+        would be great.
+        """
+        # Simulate the scenario where the first attempt to process a record raises ResourceConflict
+        # but the next attempt succeeds
+        mock_process_record.side_effect = [ResourceConflict, None]
+        UserReportingMetadataStaging.objects.create(user_id=self.user._id, domain='test-domain')
+
+        _process_reporting_metadata_staging()
+
+        self.assertEqual(mock_process_record.call_count, 2)
+        self.assertEqual(UserReportingMetadataStaging.objects.all().count(), 0)
+
+    def setUp(self):
+        super().setUp()
+        self.user = CommCareUser.create('test-domain', 'test-username', 'qwer1234', None, None)
+        self.addCleanup(self.user.delete, 'test-domain', deleted_by=None)
