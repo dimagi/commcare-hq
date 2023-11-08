@@ -1,53 +1,59 @@
 import logging
-import random
 import string
+import random
 from collections import defaultdict, namedtuple
 from datetime import datetime
+from corehq.util.soft_assert.api import soft_assert
 
-from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS
+
+from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
+from corehq.apps.users.util import generate_mobile_username
+from dimagi.utils.logging import notify_exception
 from django.utils.translation import gettext as _
 
 from couchdbkit.exceptions import (
     BulkSaveError,
     MultipleResultsFound,
-    ResourceConflict,
     ResourceNotFound,
+    ResourceConflict
 )
 
-from dimagi.utils.logging import notify_error, notify_exception
-
+from django.core.exceptions import ValidationError
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+)
 from corehq.apps.domain.models import Domain
-from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.sms.util import validate_phone_number
 from corehq.apps.user_importer.exceptions import UserUploadError
-from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
+from corehq.apps.user_importer.helpers import (
+    spec_value_to_boolean_or_none,
+)
 from corehq.apps.user_importer.validation import (
     get_user_import_validators,
     is_password,
 )
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
     send_account_confirmation_sms_if_necessary,
 )
-from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     Invitation,
-    InvitationStatus,
     UserRole,
+    InvitationStatus
 )
-from corehq.apps.users.util import generate_mobile_username
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, TABLEAU_USER_SYNCING
-from corehq.util.soft_assert.api import soft_assert
+from corehq.apps.sms.util import validate_phone_number
+
+from dimagi.utils.logging import notify_error
 
 required_headers = set(['username'])
 web_required_headers = set(['username', 'role'])
@@ -358,9 +364,7 @@ def get_domain_info(
     group_memoizer=None,
     is_web_upload=False
 ):
-    from corehq.apps.users.views.mobile.custom_data_fields import (
-        UserFieldsView,
-    )
+    from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     from corehq.apps.users.views.utils import get_editable_role_choices
 
     domain_info = domain_info_by_domain.get(domain)
@@ -468,10 +472,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
     # Please remove this flag when this method no longer triggers an 'E' or 'F'
     # classification from the radon code static analysis
 
-    from corehq.apps.user_importer.helpers import (
-        CommCareUserImporter,
-        WebUserImporter,
-    )
+    from corehq.apps.user_importer.helpers import CommCareUserImporter, WebUserImporter
 
     domain_info_by_domain = {}
 
@@ -605,7 +606,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             if web_user_username:
                 user.get_user_data(domain)['login_as_user'] = web_user_username
 
-            user.save()
+            user.save(fail_hard=True)
             log = commcare_user_importer.save_log()
 
             if web_user_username:
@@ -685,6 +686,16 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             status_row['flag'] = e.message
         except (UserUploadError, CouchUser.Inconsistent) as e:
             status_row['flag'] = str(e)
+        except Exception as e:
+            # HACK: Catching all exception here is temporary. We believe that user critical sections
+            # are not behaving properly, and this catch-all is here to identify the problem
+            status_row['flag'] = str(e)
+            notify_error(f'Error while processing bulk import: {str(e)}')
+            soft_assert(to='{}@{}'.format('mriley', 'dimagi.com'), send_to_ops=False)(
+                False,
+                'Error while processing bulk import',
+                e
+            )
 
         ret["rows"].append(status_row)
 

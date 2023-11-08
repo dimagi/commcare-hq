@@ -1450,13 +1450,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     bulk_save = save_docs
 
-    def save(self, fire_signals=True, update_django_user=True, **params):
+    def save(self, fire_signals=True, update_django_user=True, fail_hard=False, **params):
+        # fail_hard determines whether the save should fail if it cannot obtain the critical section
+        # historically, the critical section hasn't been enforced, but enforcing it is a dramatic change
+        # for our system. The goal here is to allow the programmer to specify fail_hard on a workflow-by-workflow
+        # basis, so we can gradually shift to all saves requiring the critical section.
+
         # HEADS UP!
         # When updating this method, please also ensure that your updates also
         # carry over to bulk_auto_deactivate_commcare_users.
         self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
-        with CriticalSection(['username-check-%s' % self.username], timeout=120):
+        with CriticalSection(['username-check-%s' % self.username], fail_hard=fail_hard, timeout=120):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
             if by_username and by_username['id'] != self._id:
