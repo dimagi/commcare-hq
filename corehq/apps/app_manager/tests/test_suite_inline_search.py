@@ -667,7 +667,7 @@ class InlineSearchCustomInstanceName(SimpleTestCase, SuiteMixin):
             <instance id="{custom_instance}" src="jr://instance/remote/{custom_instance}"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
-                    storage-instance="{custom_instance}" template="case" default_search="false">
+                    storage-instance="{custom_instance}" template="case" default_search="false" dynamic_search="false">
                   <title>
                     <text>
                       <locale id="case_search.{module}.inputs"/>
