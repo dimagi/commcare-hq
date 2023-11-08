@@ -161,14 +161,15 @@ class AllCommCareUsersTest(TestCase):
 
         # query_string search
         self.assertItemsEqual(
-            get_all_user_search_query(self.ccdomain.name[0:2]).get_ids()
+            get_all_user_search_query(self.ccdomain.name[0:2]).get_ids(),
             [
                 self.ccuser_1._id, self.ccuser_2._id, self.web_user._id,
                 self.location_restricted_web_user._id, self.ccuser_inactive._id
             ]
         )
+
         self.assertItemsEqual(
-            get_all_user_search_query(self.ccuser_1.username).get_ids()
+            get_all_user_search_query(self.ccuser_1.username).get_ids(),
             [self.ccuser_1._id]
         )
 
@@ -233,7 +234,6 @@ class AllCommCareUsersTest(TestCase):
             .assigned_location_ids
         filters = {'web_user_assigned_location_ids': list(assigned_location_ids)}
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 2)
-
 
     def test_get_invitations_by_filters(self):
         invitations = [
