@@ -50,7 +50,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         if (response.submitResponseMessage) {
                             let message = response.submitResponseMessage;
                             if (message.indexOf('\n') !== -1) {
-                                message = message.substring(0, message.indexOf('\n'))
+                                message = message.substring(0, message.indexOf('\n'));
                             }
                             FormplayerFrontend.trigger('showSuccess', gettext(message));
                         }
