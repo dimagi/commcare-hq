@@ -161,7 +161,8 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             case_tag="adherence",
             case_type="clinic",
             load_case_from_fixture=LoadCaseFromFixture(
-                fixture_nodeset="instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]",
+                fixture_nodeset="instance('item-list:table_tag')/calendar/year/month"
+                                "/day[@date > 735992 and @date < 736000]",
                 fixture_tag="selected_date",
                 fixture_variable="./@date",
                 case_property="adherence_event_date",
@@ -178,7 +179,8 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             case_tag="adherence",
             case_type="clinic",
             load_case_from_fixture=LoadCaseFromFixture(
-                fixture_nodeset="instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]",
+                fixture_nodeset="instance('item-list:table_tag')/calendar/year/month/"
+                                "day[@date > 735992 and @date < 736000]",
                 fixture_tag="selected_date",
                 fixture_variable="./@date",
                 case_property="adherence_event_date",
@@ -228,8 +230,10 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             )
         ))
         suite = app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_session'), suite, './entry[2]/session')
-        self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_instance'), suite, './entry[2]/instance')
+        self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_session'), suite,
+                                   './entry[2]/session')
+        self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_instance'), suite,
+                                   './entry[2]/instance')
 
     def test_advanced_suite_load_from_fixture(self, *args):
         nodeset = "instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]"
