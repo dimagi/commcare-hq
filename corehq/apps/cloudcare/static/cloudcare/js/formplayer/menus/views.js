@@ -304,6 +304,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
             currentUrlToObject.endpointId = endpointId;
             currentUrlToObject.isBackground = isBackground;
+            currentUrlToObject.isClickableIcon = true;
 
             function resetIcon() {
                 clickedIcon.classList.remove("disabled");
