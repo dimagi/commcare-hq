@@ -508,6 +508,7 @@ def get_usercase_properties(app):
     return {USERCASE_TYPE: []}
 
 
+@quickcache(vary_on=['domain', 'include_parent_properties', 'exclude_deprecated_properties'])
 def all_case_properties_by_domain(domain, include_parent_properties=True, exclude_deprecated_properties=True):
     builder = ParentCasePropertyBuilder.for_domain(
         domain, include_parent_properties=include_parent_properties,
