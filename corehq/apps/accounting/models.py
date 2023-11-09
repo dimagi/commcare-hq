@@ -562,6 +562,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
             email,
             render_to_string('accounting/email/autopay_card_removed.html', context),
             text_content=strip_tags(render_to_string('accounting/email/autopay_card_removed.html', context)),
+            domain=domain,
+            use_domain_gateway=True,
         )
 
     def _send_autopay_card_added_email(self, domain):
@@ -593,6 +595,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
             email,
             render_to_string('accounting/email/invoice_autopay_setup.html', context),
             text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
+            domain=domain,
+            use_domain_gateway=True,
         )
 
     @staticmethod
