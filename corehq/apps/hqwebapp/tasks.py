@@ -133,15 +133,15 @@ def send_mail_async(self, subject, message, recipient_list, from_email=settings.
 
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_html_email_async(self, subject, recipient, html_content,
-                          text_content=None, cc=None,
-                          email_from=settings.DEFAULT_FROM_EMAIL,
-                          file_attachments=None, bcc=None,
-                          smtp_exception_skip_list=None,
-                          messaging_event_id=None,
-                          domain=None,
-                          use_domain_gateway=False):
-    """ Call with send_HTML_email_async.delay(*args, **kwargs)
+def send_html_email(self, subject, recipient, html_content,
+                    text_content=None, cc=None,
+                    email_from=settings.DEFAULT_FROM_EMAIL,
+                    file_attachments=None, bcc=None,
+                    smtp_exception_skip_list=None,
+                    messaging_event_id=None,
+                    domain=None,
+                    use_domain_gateway=False):
+    """ Call with send_html_email.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
     - retry a maximum of 10 times

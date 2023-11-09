@@ -11,7 +11,7 @@ from corehq.apps.enterprise.enterprise import EnterpriseReport
 from corehq.apps.accounting.models import (
     BillingAccount,
 )
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.users.models import CouchUser
 
 
@@ -90,7 +90,7 @@ class Command(BaseCommand):
         cc = []
         if kwargs.get('cc'):
             cc = kwargs.get('cc').split(",")
-        send_html_email_async(
+        send_html_email(
             "Report on enterprise account {}".format(account.name), self.couch_user.get_email(),
             linebreaksbr(message), cc=cc, text_content=message, file_attachments=attachments,
         )

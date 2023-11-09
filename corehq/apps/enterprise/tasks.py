@@ -15,7 +15,7 @@ from corehq.apps.enterprise.models import (
     EnterpriseMobileWorkerSettings,
     EnterprisePermissions,
 )
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.users.models import DeactivateMobileWorkerTrigger
 from corehq.const import ONE_DAY
 from corehq.util.metrics import metrics_gauge
@@ -48,7 +48,7 @@ def email_enterprise_report(domain: str, slug, couch_user):
     body = "The enterprise report you requested for the account {} is ready.<br>" \
            "You can download the data at the following link: {}<br><br>" \
            "Please remember that this link will only be active for 24 hours.".format(account.name, link)
-    send_html_email_async(
+    send_html_email(
         subject,
         couch_user.get_email(),
         body,

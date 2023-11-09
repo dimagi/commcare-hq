@@ -82,7 +82,7 @@ from corehq.apps.accounting.utils.software_plans import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.users.models import WebUser
 from corehq.util.dates import get_first_last_days
 
@@ -1982,9 +1982,9 @@ class EnterprisePlanContactForm(forms.Form):
         Message:
         %(message)s
         """ % context
-        send_html_email_async.delay(subject, settings.BILLING_EMAIL,
-                                    html_content, text_content,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email.delay(subject, settings.BILLING_EMAIL,
+                              html_content, text_content,
+                              email_from=settings.DEFAULT_FROM_EMAIL)
 
 
 class AnnualPlanContactForm(forms.Form):
@@ -2052,9 +2052,9 @@ class AnnualPlanContactForm(forms.Form):
         Message:
         %(message)s
         """ % context
-        send_html_email_async.delay(subject, settings.BILLING_EMAIL,
-                                    html_content, text_content,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email.delay(subject, settings.BILLING_EMAIL,
+                              html_content, text_content,
+                              email_from=settings.DEFAULT_FROM_EMAIL)
 
 
 class TriggerInvoiceForm(forms.Form):

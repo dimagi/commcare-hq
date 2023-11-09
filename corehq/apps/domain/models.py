@@ -48,7 +48,7 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.util import log_user_change
 from corehq.blobs import CODES as BLOB_CODES
@@ -963,7 +963,7 @@ class TransferDomainRequest(models.Model):
         html_content = render_to_string("{template}.html".format(template=self.TRANSFER_TO_EMAIL), context)
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_TO_EMAIL), context)
 
-        send_html_email_async.delay(
+        send_html_email.delay(
             _('Transfer of ownership for CommCare project space.'),
             self.to_user.get_email(),
             html_content,
@@ -983,7 +983,7 @@ class TransferDomainRequest(models.Model):
         html_content = render_to_string("{template}.html".format(template=self.TRANSFER_FROM_EMAIL), context)
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)
 
-        send_html_email_async.delay(
+        send_html_email.delay(
             _('Transfer of ownership for CommCare project space.'),
             self.from_user.get_email(),
             html_content,
@@ -1019,7 +1019,7 @@ class TransferDomainRequest(models.Model):
             "{template}.txt".format(template=self.DIMAGI_CONFIRM_EMAIL),
             self.as_dict())
 
-        send_html_email_async.delay(
+        send_html_email.delay(
             _('There has been a transfer of ownership of {domain}').format(domain=self.domain),
             settings.SUPPORT_EMAIL, html_content, text_content=text_content,
         )

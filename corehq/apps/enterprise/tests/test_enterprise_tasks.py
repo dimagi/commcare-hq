@@ -30,7 +30,7 @@ class TestEmailEnterpriseReport(TestCase):
         cls.domain.delete()
         super(TestEmailEnterpriseReport, cls).tearDownClass()
 
-    @patch('corehq.apps.enterprise.tasks.send_html_email_async')
+    @patch('corehq.apps.enterprise.tasks.send_html_email')
     def test_email_report_domains_successful(self, mock_send):
         """
         Test that a request to email a Domains enterprise report is successful
@@ -47,7 +47,7 @@ class TestEmailEnterpriseReport(TestCase):
         mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY,
                                      domain=self.domain.name, use_domain_gateway=True)
 
-    @patch('corehq.apps.enterprise.tasks.send_html_email_async')
+    @patch('corehq.apps.enterprise.tasks.send_html_email')
     def test_email_report_web_users(self, mock_send):
         """
         Test that a request to email a Web Users enterprise report is successful
@@ -64,7 +64,7 @@ class TestEmailEnterpriseReport(TestCase):
         mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY,
                                      domain=self.domain.name, use_domain_gateway=True)
 
-    @patch('corehq.apps.enterprise.tasks.send_html_email_async')
+    @patch('corehq.apps.enterprise.tasks.send_html_email')
     def test_email_report_mobile_users(self, mock_send):
         """
         Test that a request to email a Mobile Users enterprise report is successful
@@ -81,7 +81,7 @@ class TestEmailEnterpriseReport(TestCase):
         mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY,
                                      domain=self.domain.name, use_domain_gateway=True)
 
-    @patch('corehq.apps.enterprise.tasks.send_html_email_async')
+    @patch('corehq.apps.enterprise.tasks.send_html_email')
     def test_email_report_form_submissions(self, mock_send):
         """
         Test that a request to email a Form Submissions enterprise report is successful

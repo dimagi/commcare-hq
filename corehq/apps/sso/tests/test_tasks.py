@@ -101,7 +101,7 @@ class TestSSOTasks(TestCase):
         # test alerts
         for num_days in remind_days:
             with freeze_time(expires - datetime.timedelta(days=num_days)):
-                with patch("corehq.apps.sso.tasks.send_html_email_async.delay") as mock_send:
+                with patch("corehq.apps.sso.tasks.send_html_email.delay") as mock_send:
                     idp_cert_expires_reminder()
                     if assert_reminder:
                         mock_send.assert_called_once_with(ANY, recipient, ANY,

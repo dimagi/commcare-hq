@@ -41,7 +41,7 @@ from corehq.apps.domain.views.settings import (
     BaseProjectSettingsView,
 )
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_bootstrap5
-from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
+from corehq.apps.hqwebapp.tasks import send_html_email, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.receiverwrapper.rate_limiter import domain_case_rate_limiter, submission_rate_limiter
 from corehq.apps.toggle_ui.views import ToggleEditView
@@ -165,7 +165,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         dimagi_contact = self.internal_settings_form.cleaned_data['dimagi_contact']
         recipients = [partner_contact, dimagi_contact]
         params = {'contact_name': CouchUser.get_by_username(dimagi_contact).human_friendly_name}
-        send_html_email_async.delay(
+        send_html_email.delay(
             subject="Project Support Transition",
             recipient=recipients,
             html_content=render_to_string(

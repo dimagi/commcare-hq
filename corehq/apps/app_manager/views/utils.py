@@ -40,7 +40,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.util import generate_xmlns, update_form_unique_ids
 from corehq.apps.es import FormES
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.linked_domain.exceptions import (
     ActionNotPermitted,
     RemoteAuthError,
@@ -326,7 +326,7 @@ def update_linked_app_and_notify(domain, app_id, master_app_id, user_id, email):
     except Exception:
         # Send an email but then crash the process
         # so we know what the error was
-        send_html_email_async.delay(subject, email, _(
+        send_html_email.delay(subject, email, _(
             "Something went wrong updating your linked app. "
             "Our team has been notified and will monitor the situation. "
             "Please try again, and if the problem persists report it as an issue."),
@@ -336,7 +336,7 @@ def update_linked_app_and_notify(domain, app_id, master_app_id, user_id, email):
         raise
     else:
         message = _("Your linked application was successfully updated to the latest version.")
-    send_html_email_async.delay(
+    send_html_email.delay(
         subject,
         email,
         message,

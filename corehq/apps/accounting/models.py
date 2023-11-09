@@ -63,7 +63,7 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
@@ -557,7 +557,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
 
-        send_html_email_async(
+        send_html_email(
             subject,
             email,
             render_to_string('accounting/email/autopay_card_removed.html', context),
@@ -590,7 +590,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
 
-        send_html_email_async(
+        send_html_email(
             subject,
             email,
             render_to_string('accounting/email/invoice_autopay_setup.html', context),
@@ -1661,7 +1661,7 @@ class Subscription(models.Model):
         if self.account.dimagi_contact is not None:
             bcc.append(self.account.dimagi_contact)
         for email in self._reminder_email_contacts(domain_name):
-            send_html_email_async.delay(
+            send_html_email.delay(
                 subject, email, email_html,
                 text_content=email_plaintext,
                 email_from=get_dimagi_from_email(),
@@ -1763,7 +1763,7 @@ class Subscription(models.Model):
         context = self.dimagi_ending_reminder_context
         email_html = render_to_string(self.dimagi_ending_reminder_email_html, context)
         email_plaintext = render_to_string(self.dimagi_ending_reminder_email_text, context)
-        send_html_email_async.delay(
+        send_html_email.delay(
             subject, self.account.dimagi_contact, email_html,
             text_content=email_plaintext,
             email_from=settings.DEFAULT_FROM_EMAIL,
@@ -2596,7 +2596,7 @@ class BillingRecordBase(models.Model):
         context['can_view_statement'] = can_view_statement
         email_html = render_to_string(self.html_template, context)
         email_plaintext = render_to_string(self.text_template, context)
-        send_html_email_async.delay(
+        send_html_email.delay(
             subject, contact_email, email_html,
             text_content=email_plaintext,
             email_from=email_from,

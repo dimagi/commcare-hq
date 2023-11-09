@@ -29,7 +29,7 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
+from corehq.apps.hqwebapp.tasks import send_html_email, send_mail_async
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.tasks import send_domain_registration_email
 from corehq.apps.users.models import CouchUser, WebUser
@@ -272,9 +272,9 @@ def send_mobile_experience_reminder(recipient, full_name):
     subject = gettext('Visit CommCareHQ on your computer!')
 
     try:
-        send_html_email_async.delay(subject, recipient, message_html,
-                                    text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email.delay(subject, recipient, message_html,
+                              text_content=message_plaintext,
+                              email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning(
             "Can't send email, but the message was:\n%s" % message_plaintext)

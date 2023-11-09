@@ -1,7 +1,7 @@
 from celery.schedules import crontab
 
 from corehq.apps.celery import periodic_task
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.settings.views import ApiKeyView
 from corehq.apps.users.models import HQApiKey
 from corehq.const import USER_DATETIME_FORMAT
@@ -50,7 +50,7 @@ def notify_about_to_expire_api_keys():
         html_content = render_to_string("settings/email/about_to_expire_api_key.html", params)
         subject = "Api key about to expire"
 
-        send_html_email_async.delay(subject, key.user.email, html_content,
-                                    text_content=text_content,
-                                    domain=key.domain,
-                                    use_domain_gateway=True)
+        send_html_email.delay(subject, key.user.email, html_content,
+                              text_content=text_content,
+                              domain=key.domain,
+                              use_domain_gateway=True)

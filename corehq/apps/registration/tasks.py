@@ -11,7 +11,7 @@ from celery.schedules import crontab
 from dimagi.utils.web import get_site_domain, get_static_url_prefix
 
 from corehq.apps.celery import periodic_task, task
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.registration.models import (
     AsyncSignupRequest,
     RegistrationRequest,
@@ -48,7 +48,7 @@ def activation_24hr_reminder_email():
         subject = gettext('Reminder to Activate your CommCare project')
 
         recipient = user.get_email() if user else request.new_user_username
-        send_html_email_async.delay(
+        send_html_email.delay(
             subject, recipient, message_html,
             text_content=message_plaintext,
             email_from=settings.DEFAULT_FROM_EMAIL
@@ -79,9 +79,9 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name, firs
     subject = gettext('Activate your CommCare project')
 
     try:
-        send_html_email_async.delay(subject, recipient, message_html,
-                                    text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email.delay(subject, recipient, message_html,
+                              text_content=message_plaintext,
+                              email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
