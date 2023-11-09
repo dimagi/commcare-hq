@@ -312,10 +312,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
 
             $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
-                setTimeout(() => {
-                    self.reloadCase(self.model.get('id'));
-                    resetIcon();
-                }, 500);
+                self.reloadCase(self.model.get('id'));
+                resetIcon();
             }).fail(function () {
                 resetIcon();
             });
