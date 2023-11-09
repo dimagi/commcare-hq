@@ -115,41 +115,6 @@ USER_MAPPING = {
             },
             "type": "text"
         },
-        "domain_membership": {
-            "dynamic": False,
-            "type": "nested",
-            "properties": {
-                "assigned_location_ids": {
-                    "type": "text"
-                },
-                "doc_type": {
-                    "type": "keyword"
-                },
-                "domain": {
-                    "fields": {
-                        "exact": {
-                            "type": "keyword"
-                        }
-                    },
-                    "type": "text"
-                },
-                "is_admin": {
-                    "type": "boolean"
-                },
-                "location_id": {
-                    "type": "keyword"
-                },
-                "override_global_tz": {
-                    "type": "boolean"
-                },
-                "role_id": {
-                    "type": "text"
-                },
-                "timezone": {
-                    "type": "text"
-                }
-            }
-        },
         "domain_memberships": {
             "dynamic": False,
             "type": "nested",

@@ -22,6 +22,7 @@ of all unknown users, web users, and demo users on a domain.
 
     owner_ids = query.get_ids()
 """
+from copy import copy
 
 from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
@@ -74,6 +75,7 @@ class ElasticUser(ElasticDocumentAdapter):
 
     settings_key = IndexSettingsKey.USERS
     canonical_name = HQ_USERS_INDEX_CANONICAL_NAME
+    single_domain_types = ['CommCareUser', 'UnknownUser', 'AdminUser']
 
     @property
     def model_cls(self):
@@ -112,7 +114,19 @@ class ElasticUser(ElasticDocumentAdapter):
                     'key': key,
                     'value': value,
                 })
+
+        if user_dict['doc_type'] in self.single_domain_types:
+            user_dict['domain_memberships'] = [copy(user_dict['domain_membership'])]
+            del user_dict['domain_membership']
+
         return super()._from_dict(user_dict)
+
+    def _fix_hit(self, result):
+        super()._fix_hit(result)
+        doc_source = result['_source']
+        if doc_source['doc_type'] in self.single_domain_types:
+            doc_source['domain_membership'] = copy(doc_source['domain_memberships'][0])
+        del doc_source['domain_memberships']
 
 
 user_adapter = create_document_adapter(
@@ -211,13 +225,7 @@ def is_practice_user(practice_mode=True):
 
 
 def role_id(role_id):
-    return filters.OR(
-        filters.nested(
-            'domain_membership',
-            filters.term('domain_membership.role_id', role_id)
-        ),
-        domain_memberships_filter("role_id", role_id)     # web users
-    )
+    return domain_memberships_filter("role_id", role_id)
 
 
 def is_active(active=True):
