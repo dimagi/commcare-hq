@@ -367,6 +367,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         mapMarkers.forEach((marker) => marker.remove());
         mapMarkers = [];
         exportModelInstance.clearCaseGroups();
+        caseGroupsInstance.allCaseGroups = undefined;
     }
 
     function groupLockModel() {
