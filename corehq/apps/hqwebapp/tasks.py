@@ -147,7 +147,7 @@ def send_html_email(self, subject, recipient, html_content,
     - retry a maximum of 10 times
     """
     try:
-        send_mail(
+        _send_mail(
             subject,
             recipient,
             html_content,
@@ -181,7 +181,7 @@ def send_html_email(self, subject, recipient, html_content,
                 mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
 
 
-def send_mail(subject, recipient, text_content, html_content=None,
+def _send_mail(subject, recipient, text_content, html_content=None,
               cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
               file_attachments=None, bcc=None,
               smtp_exception_skip_list=None, messaging_event_id=None,
@@ -220,9 +220,15 @@ def send_mail(subject, recipient, text_content, html_content=None,
     if configuration.SES_configuration_set is not None:
         headers[SES_CONFIGURATION_SET_HEADER] = configuration.SES_configuration_set
 
-    msg = EmailMultiAlternatives(subject, text_content, configuration.from_email,
-                                 filtered_recipient_list, headers=headers,
-                                 connection=configuration.connection, cc=cc, bcc=bcc)
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_content,
+        from_email=configuration.from_email,
+        to=filtered_recipient_list,
+        headers=headers,
+        connection=configuration.connection,
+        cc=cc,
+        bcc=bcc)
 
     for file in (file_attachments or []):
         if file:
