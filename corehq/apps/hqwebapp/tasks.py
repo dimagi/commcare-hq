@@ -186,13 +186,25 @@ def _send_mail(subject, recipient, text_content, html_content=None,
               file_attachments=None, bcc=None,
               smtp_exception_skip_list=None, messaging_event_id=None,
               domain=None, use_domain_gateway=False):
+    original_recipient_list = [_f for _f in recipient] if not isinstance(recipient, str) else [recipient]
+    from corehq.util.soft_assert import soft_assert
+    soft_assert('{}@dimagi.com'.format('skelly'))(
+        all(recipient for recipient in original_recipient_list),
+        'Blank email addresses',
+        {
+            'subject': subject,
+            'message': text_content,
+            'recipients': original_recipient_list
+        }
+    )
+
     from dimagi.utils.django.email import (
         get_valid_recipients,
         mark_local_bounced_email,
         NO_HTML_EMAIL_MESSAGE,
         LARGE_FILE_SIZE_ERROR_CODES,
     )
-    recipient_list = [_f for _f in recipient if _f] if not isinstance(recipient, str) else [recipient]
+    recipient_list = [_f for _f in original_recipient_list if _f]
     filtered_recipient_list = get_valid_recipients(recipient_list, domain)
     bounced_addresses = list(set(recipient_list) - set(filtered_recipient_list))
     if bounced_addresses and messaging_event_id:
