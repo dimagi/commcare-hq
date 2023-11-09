@@ -2,7 +2,7 @@ from smtplib import SMTPDataError, SMTPSenderRefused
 
 from django.conf import settings
 from django.core.mail import mail_admins
-from django.core.mail.message import EmailMessage, EmailMultiAlternatives
+from django.core.mail.message import EmailMultiAlternatives
 from django.core.management import call_command
 from django.utils.translation import gettext as _
 from dimagi.utils.django.email import get_email_configuration
@@ -51,73 +51,30 @@ def send_mail_async(self, subject, message, recipient_list, from_email=settings.
     - if sending fails, retry in 15 min
     - retry a maximum of 10 times
     """
-    from corehq.util.soft_assert import soft_assert
-    soft_assert('{}@dimagi.com'.format('skelly'))(
-        all(recipient for recipient in recipient_list),
-        'Blank email addresses',
-        {
-            'subject': subject,
-            'message': message,
-            'recipients': recipient_list
-        }
-    )
-
-    configuration = get_email_configuration(domain, use_domain_gateway, from_email)
-    recipient_list = [_f for _f in recipient_list if _f]
-
-    # todo deal with recipients marked as bounced
-    from dimagi.utils.django.email import (
-        get_valid_recipients,
-        mark_local_bounced_email,
-    )
-    filtered_recipient_list = get_valid_recipients(recipient_list, domain)
-    bounced_recipients = list(set(recipient_list) - set(filtered_recipient_list))
-    if bounced_recipients and messaging_event_id:
-        mark_local_bounced_email(bounced_recipients, messaging_event_id)
-
-    if not filtered_recipient_list:
-        return
-
-    headers = {}
-
-    if configuration.return_path_email:
-        headers['Return-Path'] = configuration.return_path_email
-
-    if messaging_event_id is not None:
-        headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
-    if configuration.SES_configuration_set is not None:
-        headers[SES_CONFIGURATION_SET_HEADER] = configuration.SES_configuration_set
-
+    file_attachment = {
+        'title': filename,
+        'file_obj': content,
+        'mimetype': None,
+    }
     try:
-        message = EmailMessage(
+        _send_mail(
             subject=subject,
-            body=message,
-            from_email=configuration.from_email,
-            to=filtered_recipient_list,
-            headers=headers,
-            connection=configuration.connection
+            recipient=recipient_list,
+            text_content=message,
+            email_from=from_email,
+            file_attachments=[file_attachment],
+            messaging_event_id=messaging_event_id,
+            domain=domain,
+            use_domain_gateway=use_domain_gateway
         )
-        if filename and content:
-            message.attach(filename=filename, content=content)
         return message.send()
-    except SMTPDataError as e:
-        # If the SES configuration has not been properly set up, resend the message
-        if (
-            "Configuration Set does not exist" in repr(e.smtp_error)
-            and SES_CONFIGURATION_SET_HEADER in message.extra_headers
-        ):
-            del message.extra_headers[SES_CONFIGURATION_SET_HEADER]
-            message.send()
-            notify_exception(None, message="SES Configuration Set missing", details={'error': e})
-        else:
-            raise
     except Exception as e:
         notify_exception(
             None,
             message="Encountered error while sending email",
             details={
                 'subject': subject,
-                'recipients': ', '.join(filtered_recipient_list),
+                'recipients': ', '.join(recipient_list),
                 'error': e,
                 'messaging_event_id': messaging_event_id,
             }
@@ -183,7 +140,7 @@ def send_html_email(self, subject, recipient, html_content,
 
 def _send_mail(subject, recipient, text_content, html_content=None,
               cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
-              file_attachments=None, bcc=None,
+              file_attachments: list = None, bcc=None,
               smtp_exception_skip_list=None, messaging_event_id=None,
               domain=None, use_domain_gateway=False):
     original_recipient_list = [_f for _f in recipient] if not isinstance(recipient, str) else [recipient]
