@@ -44,25 +44,20 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_mail_async(self, subject, message, recipient_list, from_email=settings.DEFAULT_FROM_EMAIL,
-                    filename: str = None, content=None, messaging_event_id=None, domain: str = None,
-                    use_domain_gateway=False):
+                    file_attachments=None, messaging_event_id=None,
+                    domain: str = None, use_domain_gateway=False):
     """ Call with send_mail_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
     - retry a maximum of 10 times
     """
-    file_attachment = {
-        'title': filename,
-        'file_obj': content,
-        'mimetype': None,
-    }
     try:
         _send_mail(
             subject=subject,
             recipient=recipient_list,
             text_content=message,
             email_from=from_email,
-            file_attachments=[file_attachment],
+            file_attachments=file_attachments,
             messaging_event_id=messaging_event_id,
             domain=domain,
             use_domain_gateway=use_domain_gateway
