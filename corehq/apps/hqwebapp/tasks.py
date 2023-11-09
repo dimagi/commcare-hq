@@ -43,7 +43,7 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
 
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_mail_async(self, subject, message, recipient_list, from_email=settings.DEFAULT_FROM_EMAIL,
+def send_mail_async(self, subject, message, recipient: str | list | set, from_email=settings.DEFAULT_FROM_EMAIL,
                     file_attachments=None, messaging_event_id=None,
                     domain: str = None, use_domain_gateway=False):
     """ Call with send_mail_async.delay(*args, **kwargs)
@@ -54,7 +54,7 @@ def send_mail_async(self, subject, message, recipient_list, from_email=settings.
     try:
         _send_mail(
             subject=subject,
-            recipient=recipient_list,
+            recipient=recipient,
             text_content=message,
             email_from=from_email,
             file_attachments=file_attachments,
@@ -69,7 +69,7 @@ def send_mail_async(self, subject, message, recipient_list, from_email=settings.
             message="Encountered error while sending email",
             details={
                 'subject': subject,
-                'recipients': ', '.join(recipient_list),
+                'recipients': ', '.join(recipient),
                 'error': e,
                 'messaging_event_id': messaging_event_id,
             }
