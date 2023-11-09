@@ -85,13 +85,13 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                     file_attachments=None, bcc=None,
                     smtp_exception_skip_list=None, messaging_event_id=None,
                     domain=None, use_domain_gateway=False):
-    recipients = list(recipient) if not isinstance(recipient, str) else [recipient]
-    filtered_recipients = get_valid_recipients(recipients, domain)
-    bounced_addresses = list(set(recipients) - set(filtered_recipients))
+    recipient_list = [_f for _f in recipient if _f] if not isinstance(recipient, str) else [recipient]
+    filtered_recipient_list = get_valid_recipients(recipient_list, domain)
+    bounced_addresses = list(set(recipient_list) - set(filtered_recipient_list))
     if bounced_addresses and messaging_event_id:
         mark_local_bounced_email(bounced_addresses, messaging_event_id)
 
-    if not filtered_recipients:
+    if not filtered_recipient_list:
         # todo address root issues by throwing a real error to catch upstream
         #  fail silently for now to fix time-sensitive SES issue
         return
@@ -116,7 +116,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
         headers[SES_CONFIGURATION_SET_HEADER] = configuration.SES_configuration_set
 
     msg = EmailMultiAlternatives(subject, text_content, configuration.from_email,
-                                 filtered_recipients, headers=headers,
+                                 filtered_recipient_list, headers=headers,
                                  connection=configuration.connection, cc=cc, bcc=bcc)
     for file in (file_attachments or []):
         if file:
@@ -161,7 +161,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                 error_subject,
                 error_text,
                 configuration.from_email,
-                filtered_recipients,
+                filtered_recipient_list,
                 headers=headers,
                 connection=configuration.connection,
                 cc=cc,
