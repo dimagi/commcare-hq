@@ -189,3 +189,15 @@ def styleguide_molecules_searching(request):
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/searching.html', context)
+
+
+@use_bootstrap5
+def styleguide_molecules_inline_editing(request):
+    context = get_navigation_context("styleguide_molecules_inline_editing_b5")
+    context.update({
+        'examples': {
+            'inline_edit': get_example_context('styleguide/bootstrap5/examples/inline_edit.html'),
+            'inline_edit_lang': get_example_context('styleguide/bootstrap5/examples/inline_edit_lang.html'),
+        }
+    })
+    return render(request, 'styleguide/bootstrap5/molecules/inline_editing.html', context)
