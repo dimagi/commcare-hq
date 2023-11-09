@@ -26,7 +26,7 @@ from corehq.apps.saved_reports.scheduled import (
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import ESError
 from corehq.util.decorators import serial_task
-from corehq.util.log import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email
 
 from .exceptions import ReportNotFound
 from .models import ScheduledReportLog
@@ -106,7 +106,7 @@ def queue_scheduled_reports():
 def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                       request_data, once, cleaned_data):
     """
-    Function invokes send_HTML_email to email the html text report.
+    Function invokes send_html_email to email the html text report.
     If the report is too large to fit into email then a download link is
     sent via email to download report
     :Parameter recipient_list:
@@ -148,7 +148,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
         body = render_full_report_notification(None, report_text).content
 
         for recipient in recipient_emails:
-            send_HTML_email(subject, recipient,
+            send_html_email(subject, recipient,
                             body, smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES,
                             domain=domain, use_domain_gateway=True,)
 

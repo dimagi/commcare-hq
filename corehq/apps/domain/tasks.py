@@ -7,7 +7,7 @@ from corehq.apps.celery import periodic_task
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.users.models import WebUser
-from corehq.util.log import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email
 
 
 def _domains_over_x_forms(num_forms=200, domains=None):
@@ -66,7 +66,7 @@ def self_starter_email():
             'domain/email/self_starter.html', {'domains': domains})
         email_content_plaintext = render_to_string(
             'domain/email/self_starter.txt', {'domains': domains})
-        send_HTML_email(
+        send_html_email(
             "Incomplete Self Started Domains",
             settings.MASTER_LIST_EMAIL,
             email_content,

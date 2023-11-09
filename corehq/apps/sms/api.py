@@ -16,7 +16,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.sms.messages import (
     MSG_DUPLICATE_USERNAME,
     MSG_OPTED_IN,
@@ -457,8 +457,8 @@ def send_admin_registration_alert(domain, recipients, user):
         "domain": domain,
         "url": absolute_reverse(EditCommCareUserView.urlname, args=[domain, user.get_id])
     })
-    send_html_email_async.delay(subject, recipients, html_content,
-                                domain=domain, use_domain_gateway=True)
+    send_html_email.delay(subject, recipients, html_content,
+                          domain=domain, use_domain_gateway=True)
 
 
 def is_registration_text(text):

@@ -114,12 +114,15 @@ def pull_translation_files_from_transifex(domain, data, user_email=None):
     try:
         translation_file, filename = transifex.generate_excel_file()
         with open(translation_file.name, 'rb') as file_obj:
+            file_attachment = {
+                'title': filename,
+                'file_obj': file_obj.read(),
+            }
             send_mail_async(
                 subject='[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT),
                 message="PFA Translations pulled from transifex.",
                 recipient_list=[user_email],
-                filename=filename,
-                content=file_obj.read(),
+                file_attachments=[file_attachment],
                 domain=domain,
                 use_domain_gateway=True,
             )
@@ -156,12 +159,15 @@ def backup_project_from_transifex(domain, data, email):
                     zipfile.writestr(filename, file_obj.read())
                 os.remove(translation_file.name)
         tmp.seek(0)
+        file_attachment = {
+            'title': "%s-TransifexBackup.zip" % project_details.get('name'),
+            'file_obj': tmp.read(),
+        }
         send_mail_async(
             subject='[{}] - Transifex backup translations'.format(settings.SERVER_ENVIRONMENT),
             body="PFA Translations backup from transifex.",
             recipient_list=[email],
-            filename="%s-TransifexBackup.zip" % project_details.get('name'),
-            content=tmp.read(),
+            file_attachments=[file_attachment],
             domain=domain,
             use_domain_gateway=True,
         )
@@ -181,12 +187,15 @@ def email_project_from_hq(domain, data, email):
     try:
         translation_file, __ = parser.generate_excel_file()
         with open(translation_file.name, 'rb') as file_obj:
+            file_attachment = {
+                'title': "{project}-{lang}-translations.xls".format(project=project_slug, lang=lang),
+                'file_obj': file_obj.read(),
+            }
             send_mail_async(
                 subject='[{}] - HQ translation download'.format(settings.SERVER_ENVIRONMENT),
                 message="Translations from HQ",
                 recipient_list=[email],
-                filename="{project}-{lang}-translations.xls".format(project=project_slug, lang=lang),
-                content=file_obj.read(),
+                file_attachments=[file_attachment],
                 domain=domain,
                 use_domain_gateway=True,
             )

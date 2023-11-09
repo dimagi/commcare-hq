@@ -11,7 +11,7 @@ from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
 )
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.translations.app_translations.upload_form import (
     BulkAppTranslationFormUpdater,
 )
@@ -102,8 +102,8 @@ def _email_app_translations_discrepancies(msgs, checker_messages, email, app_nam
         attachments.append(attachment("{} TranslationChecker.xlsx".format(app_name),
                            io.BytesIO(read_workbook_content_as_file(result_wb)), result_wb.mime_type))
 
-    send_html_email_async.delay(subject, email, linebreaksbr(text_content), file_attachments=attachments,
-                                domain=domain, use_domain_gateway=True)
+    send_html_email.delay(subject, email, linebreaksbr(text_content), file_attachments=attachments,
+                          domain=domain, use_domain_gateway=True)
 
 
 def process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=None):

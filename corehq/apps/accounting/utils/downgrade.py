@@ -18,7 +18,7 @@ from corehq.apps.accounting.utils.invoicing import (
     get_accounts_with_customer_invoices_over_threshold,
     get_oldest_unpaid_invoice_over_threshold,
 )
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.accounting.utils import (
     get_dimagi_from_email,
     log_accounting_error,
@@ -84,7 +84,7 @@ def is_subscription_eligible_for_downgrade_process(subscription):
 
 
 def _send_downgrade_notice(invoice, context):
-    send_html_email_async.delay(
+    send_html_email.delay(
         _('Oh no! Your CommCare subscription for {} has been paused'.format(invoice.get_domain())),
         invoice.get_contact_emails(include_domain_admins=True, filter_out_dimagi=True),
         render_to_string('accounting/email/downgrade.html', context),
@@ -129,7 +129,7 @@ def _send_downgrade_warning(invoice, communication_model, context):
     context.update({
         'subscriptions_to_downgrade': subscriptions_to_downgrade
     })
-    send_html_email_async.delay(
+    send_html_email.delay(
         subject,
         invoice.get_contact_emails(include_domain_admins=True, filter_out_dimagi=True),
         render_to_string('accounting/email/downgrade_warning.html', context),
@@ -148,7 +148,7 @@ def _send_overdue_notice(invoice, communication_model, context):
         bcc = None
     else:
         bcc = [settings.GROWTH_EMAIL]
-    send_html_email_async.delay(
+    send_html_email.delay(
         _('CommCare Billing Statement 30 days Overdue for {}'.format(context['domain_or_account'])),
         invoice.get_contact_emails(include_domain_admins=True, filter_out_dimagi=True),
         render_to_string('accounting/email/30_days.html', context),

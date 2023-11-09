@@ -112,7 +112,7 @@ from corehq.apps.domain.models import (
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.hqwebapp.widgets import (
     BootstrapCheckboxInput,
     GeoCoderInput,
@@ -1455,7 +1455,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
             message_plaintext = render_to_string('registration/password_reset_email.html', c)
             message_html = render_to_string(email_template_name, c)
 
-            send_html_email_async.delay(
+            send_html_email.delay(
                 subject, user_email, message_html,
                 text_content=message_plaintext,
                 email_from=settings.DEFAULT_FROM_EMAIL
@@ -1901,7 +1901,7 @@ class ProBonoForm(forms.Form):
             subject = "[Pro-Bono Application]"
             if domain is not None:
                 subject = "%s %s" % (subject, domain)
-            send_html_email_async.delay(subject, recipient, html_content, text_content=text_content,
+            send_html_email.delay(subject, recipient, html_content, text_content=text_content,
                             email_from=settings.DEFAULT_FROM_EMAIL)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "

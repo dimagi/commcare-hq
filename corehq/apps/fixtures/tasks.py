@@ -7,7 +7,7 @@ from soil import DownloadBase
 from corehq.apps.celery import task
 from corehq.apps.fixtures.download import prepare_fixture_download
 from corehq.apps.fixtures.upload import upload_fixture_file
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 
 
 @task
@@ -40,7 +40,7 @@ def send_upload_fixture_complete_email(email, domain, time_start, time_end, mess
         "time_end": time_end,
         "messages": messages
     }
-    send_html_email_async.delay(
+    send_html_email.delay(
         "Your fixture upload is complete!",
         email,
         render_to_string('fixtures/upload_complete.html', context),

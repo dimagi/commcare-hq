@@ -13,7 +13,7 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.celery import task
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.linked_domain.const import (
     FEATURE_FLAG_DATA_MODEL_TOGGLES,
     MODEL_APP,
@@ -290,7 +290,7 @@ def send_linked_domain_release_email(results, upstream_domain, username, models,
         subject += _(" Errors occurred.")
 
     email = manager.user.email or manager.user.username
-    send_html_email_async(
+    send_html_email(
         subject,
         email,
         manager.get_email_message(models, downstream_domains, html=True),

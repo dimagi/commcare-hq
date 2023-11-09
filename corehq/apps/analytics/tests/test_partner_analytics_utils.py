@@ -318,8 +318,8 @@ class TestPartnerAnalyticsReportUtils(TestCase):
         'corehq.apps.analytics.utils.partner_analytics.get_number_of_submissions',
         _get_fake_number_of_submissions
     )
-    @mock.patch('corehq.apps.analytics.utils.partner_analytics.send_HTML_email')
-    def test_send_partner_emails(self, mock_send_HTML_email):
+    @mock.patch('corehq.apps.analytics.utils.partner_analytics.send_html_email')
+    def test_send_partner_emails(self, mock_send_html_email):
         generate_monthly_mobile_worker_statistics(self.year, self.month)
         generate_monthly_web_user_statistics(self.year, self.month)
         generate_monthly_submissions_statistics(self.year, self.month)
@@ -346,8 +346,8 @@ class TestPartnerAnalyticsReportUtils(TestCase):
             ['OData Access', 'test-002', 1],
             ['OData Access', 'test-003', 3],
         ])
-        self.assertEqual(mock_send_HTML_email.call_count, 1)
-        email_args = mock_send_HTML_email.call_args_list
+        self.assertEqual(mock_send_html_email.call_count, 1)
+        email_args = mock_send_html_email.call_args_list
         self.assertEqual(
             email_args[0][0][0],
             "CommCare HQ Analytics Report: Helping Earth {month_name} {year}".format(

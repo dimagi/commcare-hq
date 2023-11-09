@@ -30,7 +30,7 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.toggles import CASE_DEDUPE, DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
-from corehq.util.log import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email
 
 from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
 from .interfaces import FormManagementMode
@@ -290,7 +290,7 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
         updated, you can open individual cases and confirm
         the right case owner, the report gets updated with a slight delay.
         """.format(**context)
-        send_HTML_email(
+        send_html_email(
             "Reassign Cases Complete on {domain}- CommCare HQ",
             user.get_email(),
             render_to_string("data_interfaces/partials/case_reassign_complete_email.html", context),
@@ -336,7 +336,7 @@ def bulk_case_copy_async(domain, user_id, owner_id, download_id, report_url, **k
         updated, you can open individual cases and confirm
         the right case owner, the report gets updated with a slight delay.
         """.format(**context)
-        send_HTML_email(
+        send_html_email(
             "Copy Cases Complete on {domain}- CommCare HQ",
             user.get_email(),
             render_to_string("data_interfaces/partials/case_copy_complete_email.html", context),

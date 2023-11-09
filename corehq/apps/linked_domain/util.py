@@ -7,7 +7,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import MultimediaMissingError
 from corehq.apps.hqmedia.models import CommCareMultimedia
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.linked_domain.remote_accessors import fetch_remote_media
 from corehq.privileges import RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT
 from corehq.util.timezones.conversions import ServerTime
@@ -85,7 +85,7 @@ def pull_missing_multimedia_for_app_and_notify(domain, app_id, email, force=Fals
     except Exception:
         # Send an email but then crash the process
         # so we know what the error was
-        send_html_email_async.delay(subject, email, _(
+        send_html_email.delay(subject, email, _(
             "Something went wrong while pulling multimedia for your linked app. "
             "Our team has been notified and will monitor the situation. "
             "Please try again, and if the problem persists report it as an issue."),
@@ -95,7 +95,7 @@ def pull_missing_multimedia_for_app_and_notify(domain, app_id, email, force=Fals
         raise
     else:
         message = _("Multimedia was successfully updated for the linked app.")
-    send_html_email_async.delay(
+    send_html_email.delay(
         subject,
         email,
         message,

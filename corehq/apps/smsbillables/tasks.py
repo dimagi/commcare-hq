@@ -10,7 +10,7 @@ from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFeeCriteria
-from corehq.util.log import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email
 
 
 @periodic_task(run_every=crontab(day_of_month='1', hour=13, minute=0), queue='background_queue', acks_late=True)
@@ -60,8 +60,7 @@ def send_gateway_fee_report_out():
                 cost_string_in_default_currency
             )
 
-
-    send_HTML_email(
+    send_html_email(
         subject,
         settings.ACCOUNTS_EMAIL,
         ''.join(

@@ -65,7 +65,7 @@ from corehq.apps.domain.utils import (
     domain_restricts_superusers,
     guess_domain_language,
 )
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
@@ -2688,8 +2688,8 @@ class DomainRequest(models.Model):
         text_content = render_to_string("users/email/new_domain_request.txt", params)
         html_content = render_to_string("users/email/new_domain_request.html", params)
         subject = _('Request to join %s approved') % domain_name
-        send_html_email_async.delay(subject, self.email, html_content, text_content=text_content,
-                                    domain=self.domain, use_domain_gateway=True)
+        send_html_email.delay(subject, self.email, html_content, text_content=text_content,
+                              domain=self.domain, use_domain_gateway=True)
 
     def send_request_email(self):
         domain_name = Domain.get_by_name(self.domain).display_name()
@@ -2707,8 +2707,8 @@ class DomainRequest(models.Model):
             'name': self.full_name,
             'domain': domain_name,
         }
-        send_html_email_async.delay(subject, recipients, html_content, text_content=text_content,
-                                    domain=self.domain, use_domain_gateway=True)
+        send_html_email.delay(subject, recipients, html_content, text_content=text_content,
+                              domain=self.domain, use_domain_gateway=True)
 
 
 class InvitationStatus(object):
@@ -2772,12 +2772,12 @@ class Invitation(models.Model):
                 text_content = render_to_string("domain/email/domain_request_approval.txt", params)
                 html_content = render_to_string("domain/email/domain_request_approval.html", params)
                 subject = _('Request to join CommCareHQ approved')
-        send_html_email_async.delay(subject, self.email, html_content,
-                                    text_content=text_content,
-                                    cc=[inviter.get_email()],
-                                    messaging_event_id=f"{self.EMAIL_ID_PREFIX}{self.uuid}",
-                                    domain=self.domain,
-                                    use_domain_gateway=True)
+        send_html_email.delay(subject, self.email, html_content,
+                              text_content=text_content,
+                              cc=[inviter.get_email()],
+                              messaging_event_id=f"{self.EMAIL_ID_PREFIX}{self.uuid}",
+                              domain=self.domain,
+                              use_domain_gateway=True)
 
     def get_role_name(self):
         if self.role:
@@ -2808,7 +2808,7 @@ class Invitation(models.Model):
                                         context)
         text_content = render_to_string('domain/email/invite_confirmation.txt',
                                         context)
-        send_html_email_async.delay(
+        send_html_email.delay(
             subject,
             recipient,
             html_content,
@@ -3228,7 +3228,7 @@ def check_and_send_limit_email(domain, plan_limit, user_count, prev_count):
         subject = _("User count has reached the Plan limit for {}").format(domain)
     else:
         subject = _("User count has reached 90% of the Plan limit for {}").format(domain)
-    send_html_email_async(
+    send_html_email(
         subject,
         set(admins + billing_admins),
         render_to_string('users/email/user_limit_notice.html', context={

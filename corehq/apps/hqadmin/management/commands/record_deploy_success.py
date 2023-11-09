@@ -12,7 +12,6 @@ from dimagi.utils.parsing import json_format_datetime
 from pillow_retry.models import PillowError
 
 from corehq.apps.hqadmin.models import HqDeploy
-from corehq.util.log import send_HTML_email
 
 STYLE_MARKDOWN = 'markdown'
 DASHBOARD_URL = 'https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef'

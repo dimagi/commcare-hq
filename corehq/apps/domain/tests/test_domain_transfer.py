@@ -129,7 +129,7 @@ class TestTransferDomainModel(BaseDomainTest):
         self.assertEqual(user_history.changes, {})
 
     def test_send_transfer_request(self):
-        with patch('corehq.apps.hqwebapp.tasks.send_HTML_email') as patched_send_HTML_email:
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email') as patched_send_HTML_email:
             self.transfer.send_transfer_request()
 
             self.assertIsNotNone(self.transfer.transfer_guid)
@@ -253,7 +253,7 @@ class TestTransferDomainIntegration(BaseDomainTest):
         form.data['to_username'] = self.muggle.username
 
         # Post the form data
-        with patch('corehq.apps.hqwebapp.tasks.send_HTML_email') as patched_send_HTML_email:
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email') as patched_send_HTML_email:
             resp = self.client.post(reverse(TransferDomainView.urlname, args=[self.domain.name]),
                                     form.data, follow=True)
             self.assertEqual(resp.status_code, 200)
@@ -274,7 +274,7 @@ class TestTransferDomainIntegration(BaseDomainTest):
         self.assertIsNotNone(resp.context['transfer'])
 
         # Finally accept the transfer
-        with patch('corehq.apps.hqwebapp.tasks.send_HTML_email') as patched_send_HTML_email:
+        with patch('corehq.apps.hqwebapp.tasks.send_html_email') as patched_send_HTML_email:
             self.client.post(reverse('activate_transfer_domain', args=[transfer.transfer_guid]), follow=True)
             self.assertEqual(patched_send_HTML_email.call_count, 1, msg="Send an email to Dimagi to confirm")
 

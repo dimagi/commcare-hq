@@ -10,7 +10,7 @@ from dropbox.sharing import RequestedVisibility, SharedLinkSettings
 from corehq.apps.celery import task
 from corehq.apps.dropbox.utils import upload_to_dropbox
 from corehq.apps.users.models import CouchUser
-from corehq.util.log import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.util.translation import localize
 
 
@@ -61,7 +61,7 @@ def upload(dropbox_helper_id, access_token, size, max_retries):
             html_content = render_to_string('dropbox/emails/upload_error.html', context)
             text_content = render_to_string('dropbox/emails/upload_error.txt', context)
 
-    send_HTML_email(
+    send_html_email(
         subject,
         helper.user.email,
         html_content,

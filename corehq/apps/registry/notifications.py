@@ -1,7 +1,7 @@
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.registry.models import RegistryInvitation
 from corehq.apps.users.models import WebUser
 from corehq.util import reverse
@@ -54,7 +54,7 @@ def _send_registry_email(for_domain, subject, template, context):
     recipients = {u.get_email() for u in WebUser.get_admins_by_domain(for_domain)}
     email_html = render_to_string(f'registry/email/{template}.html', context)
     email_plaintext = render_to_string(f'registry/email/{template}.txt', context)
-    send_html_email_async.delay(
+    send_html_email.delay(
         subject, recipients, email_html,
         text_content=email_plaintext,
         domain=for_domain,

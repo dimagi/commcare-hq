@@ -5,7 +5,7 @@ from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 
 import settings
-from corehq.util.log import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email
 
 
 class Command(BaseCommand):
@@ -47,7 +47,7 @@ class Command(BaseCommand):
         if recipients:
             recipients = recipients.split(',')
             if is_html:
-                send_HTML_email(
+                send_html_email(
                     subject=subject, recipient=recipients, html_content=message
                 )
             else:

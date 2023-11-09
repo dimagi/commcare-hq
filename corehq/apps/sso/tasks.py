@@ -4,7 +4,7 @@ import logging
 from celery.schedules import crontab
 
 from corehq.apps.celery import periodic_task
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
 from corehq.apps.sso.utils.context_helpers import (
     get_idp_cert_expiration_email_context,
@@ -78,7 +78,7 @@ def send_idp_cert_expires_reminder_emails(num_days):
             log.error(f"no admin email addresses for IdP: {idp}")
         try:
             for send_to in context["to"]:
-                send_html_email_async.delay(
+                send_html_email.delay(
                     context["subject"],
                     send_to,
                     context["html"],

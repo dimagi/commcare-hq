@@ -31,7 +31,7 @@ from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
 from corehq.toggles import TABLEAU_USER_SYNCING
-from corehq.util.log import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.util.quickcache import quickcache
 
 from .analytics.esaccessors import (
@@ -389,7 +389,7 @@ def send_report_download_email(title, recipient, link, subject=None, domain=None
            "You can download the data at the following link: %s<br><br>" \
            "Please remember that this link will only be active for 24 hours."
 
-    send_HTML_email(
+    send_html_email(
         subject,
         recipient,
         _(body) % (title, "<a href='%s'>%s</a>" % (link, link)),

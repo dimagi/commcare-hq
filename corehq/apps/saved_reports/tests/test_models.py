@@ -167,7 +167,7 @@ class TestGetAndSendReport(SimpleTestCase):
 
 class TestSendEmails(SimpleTestCase):
     def setUp(self):
-        email_mocker = patch.object(models, 'send_HTML_email')
+        email_mocker = patch.object(models, 'send_html_email')
         self.mock_send_email = email_mocker.start()
         self.addCleanup(email_mocker.stop)
 

@@ -47,7 +47,7 @@ def should_send_account_confirmation(couch_user):
 
 
 def send_account_confirmation(commcare_user):
-    from corehq.apps.hqwebapp.tasks import send_html_email_async
+    from corehq.apps.hqwebapp.tasks import send_html_email
     from corehq.apps.users.views.mobile import CommCareUserConfirmAccountView
     template_params = _get_account_confirmation_template_params(
         commcare_user, commcare_user.get_id, CommCareUserConfirmAccountView.urlname
@@ -60,10 +60,10 @@ def send_account_confirmation(commcare_user):
         html_content = render_to_string("registration/email/mobile_worker_confirm_account.html",
                                         template_params)
         subject = _(f'Confirm your CommCare account for {commcare_user.domain}')
-    send_html_email_async.delay(subject, commcare_user.email, html_content,
-                                text_content=text_content,
-                                domain=commcare_user.domain,
-                                use_domain_gateway=True)
+    send_html_email.delay(subject, commcare_user.email, html_content,
+                          text_content=text_content,
+                          domain=commcare_user.domain,
+                          use_domain_gateway=True)
 
 
 def send_account_confirmation_sms(commcare_user):
