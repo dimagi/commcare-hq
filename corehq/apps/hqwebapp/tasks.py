@@ -202,7 +202,7 @@ def _send_mail(subject, recipient, text_content, html_content=None,
     for file in (file_attachments or []):
         if file:
             msg.attach(file["title"], file["file_obj"].getvalue(),
-                       file["mimetype"])
+                       file.get("mimetype"))
 
     if html_content:
         if not isinstance(html_content, str):
