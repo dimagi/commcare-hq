@@ -1,3 +1,5 @@
+import random
+import time
 from collections import namedtuple
 
 from django.http import JsonResponse
@@ -43,4 +45,22 @@ def remote_modal_demo(request):
     secret_message = request.GET.get('testParam')
     return render(request, "styleguide/bootstrap5/examples/remote_modal.html", {
         "secret_message": secret_message,
+    })
+
+
+def inline_edit_demo(request):
+    time.sleep(1)  # simulates a long process, so we can preview / check spinner icon
+    show_error = random.randint(0, 1)
+    if show_error:
+        response = JsonResponse({
+            "error": "This is a random error returned from the server. Try again until it succeeds.",
+        })
+        response.status_code = 400
+        return response
+
+    return JsonResponse({
+        "do_something_with_this": {
+            "secret_message": "hi",
+        },
+        "posted_data": request.POST,
     })
