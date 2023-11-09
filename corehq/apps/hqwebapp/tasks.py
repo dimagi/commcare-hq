@@ -1,8 +1,8 @@
-from smtplib import SMTPDataError
+from smtplib import SMTPDataError, SMTPSenderRefused
 
 from django.conf import settings
 from django.core.mail import mail_admins
-from django.core.mail.message import EmailMessage
+from django.core.mail.message import EmailMessage, EmailMultiAlternatives
 from django.core.management import call_command
 from django.utils.translation import gettext as _
 from dimagi.utils.django.email import get_email_configuration
@@ -19,7 +19,6 @@ from dimagi.utils.logging import notify_exception
 from corehq.apps.celery import periodic_task, task
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.email_event_utils import get_bounced_system_emails
-from corehq.util.log import send_HTML_email
 from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.models import TransientBounceEmail
@@ -180,6 +179,103 @@ def send_html_email_async(self, subject, recipient, html_content,
         except MaxRetriesExceededError:
             if messaging_event_id is not None:
                 mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
+
+
+def send_HTML_email(subject, recipient, html_content, text_content=None,
+                    cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
+                    file_attachments=None, bcc=None,
+                    smtp_exception_skip_list=None, messaging_event_id=None,
+                    domain=None, use_domain_gateway=False):
+    from dimagi.utils.django.email import (
+        get_valid_recipients,
+        mark_local_bounced_email,
+        NO_HTML_EMAIL_MESSAGE,
+        LARGE_FILE_SIZE_ERROR_CODES,
+    )
+    recipient_list = [_f for _f in recipient if _f] if not isinstance(recipient, str) else [recipient]
+    filtered_recipient_list = get_valid_recipients(recipient_list, domain)
+    bounced_addresses = list(set(recipient_list) - set(filtered_recipient_list))
+    if bounced_addresses and messaging_event_id:
+        mark_local_bounced_email(bounced_addresses, messaging_event_id)
+
+    if not filtered_recipient_list:
+        # todo address root issues by throwing a real error to catch upstream
+        #  fail silently for now to fix time-sensitive SES issue
+        return
+
+    if not isinstance(html_content, str):
+        html_content = html_content.decode('utf-8')
+
+    if not text_content:
+        text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
+                               NO_HTML_EMAIL_MESSAGE)
+    elif not isinstance(text_content, str):
+        text_content = text_content.decode('utf-8')
+
+    configuration = get_email_configuration(domain, use_domain_gateway, email_from)
+    headers = {'From': configuration.from_email}  # From-header
+
+    if configuration.return_path_email:
+        headers['Return-Path'] = configuration.return_path_email
+
+    if messaging_event_id is not None:
+        headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
+    if configuration.SES_configuration_set is not None:
+        headers[SES_CONFIGURATION_SET_HEADER] = configuration.SES_configuration_set
+
+    msg = EmailMultiAlternatives(subject, text_content, configuration.from_email,
+                                 filtered_recipient_list, headers=headers,
+                                 connection=configuration.connection, cc=cc, bcc=bcc)
+    for file in (file_attachments or []):
+        if file:
+            msg.attach(file["title"], file["file_obj"].getvalue(),
+                       file["mimetype"])
+    msg.attach_alternative(html_content, "text/html")
+
+    try:
+        msg.send()
+    except SMTPDataError as e:
+        # If the SES configuration has not been properly set up, resend the message
+        if (
+            "Configuration Set does not exist" in repr(e.smtp_error)
+            and SES_CONFIGURATION_SET_HEADER in msg.extra_headers
+        ):
+            del msg.extra_headers[SES_CONFIGURATION_SET_HEADER]
+            msg.send()
+            notify_exception(None, message="SES Configuration Set missing", details={'error': e})
+        else:
+            raise
+    except SMTPSenderRefused as e:
+
+        if smtp_exception_skip_list and e.smtp_code in smtp_exception_skip_list:
+            raise e
+        else:
+            error_subject = _('ERROR: Could not send "%(subject)s"') % {
+                'subject': subject,
+            }
+
+            if e.smtp_code in LARGE_FILE_SIZE_ERROR_CODES:
+                error_text = _('Could not send email: file size is too large.')
+            else:
+                error_text = e.smtp_error
+            error_text = '%s\n\n%s' % (
+                error_text,
+                _('Please contact %(support_email)s for assistance.') % {
+                    'support_email': settings.SUPPORT_EMAIL,
+                },
+            )
+
+            error_msg = EmailMultiAlternatives(
+                error_subject,
+                error_text,
+                configuration.from_email,
+                filtered_recipient_list,
+                headers=headers,
+                connection=configuration.connection,
+                cc=cc,
+                bcc=bcc,
+            )
+            error_msg.send()
 
 
 @task(serializer='pickle', queue="email_queue",
