@@ -6,7 +6,6 @@ from datetime import timedelta, datetime
 
 from celery._state import get_current_task
 
-from corehq.apps.hqwebapp.tasks import send_html_email
 from django.core import mail
 from django.http import HttpRequest
 from django.utils.log import AdminEmailHandler
@@ -318,7 +317,3 @@ def get_traceback_string():
     f = StringIO()
     traceback.print_exc(file=f)
     return f.getvalue()
-
-
-def send_HTML_email(subject, recipient, html_content, *args, **kwargs):
-    return send_html_email(subject, recipient, html_content, *args, **kwargs)

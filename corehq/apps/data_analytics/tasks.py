@@ -16,7 +16,7 @@ from corehq.apps.data_analytics.util import (
     last_month_dict,
 )
 from corehq.apps.domain.models import Domain
-from corehq.util.log import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.util.soft_assert import soft_assert
 
 logger = get_task_logger(__name__)
@@ -57,7 +57,7 @@ def build_last_month_GIR():
               ' http://www.commcarehq.org/hq/admin/download_gir/'.format(
                   last_month
               )
-    send_HTML_email(
+    send_html_email(
         'GIR data is ready',
         settings.DATA_EMAIL,
         message,

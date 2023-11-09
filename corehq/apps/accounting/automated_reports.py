@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 
 from corehq.apps.accounting.models import Subscription, CreditLine
 from corehq.apps.accounting.utils import quantize_accounting_decimal
-from corehq.util.log import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 
@@ -55,7 +55,7 @@ class CreditsAutomatedReport(object):
         }
 
         from_email = "Dimagi Finance <{}>".format(settings.DEFAULT_FROM_EMAIL)
-        send_HTML_email(
+        send_html_email(
             "{} Credits on HQ {}".format(
                 yesterday_string,
                 settings.SERVER_ENVIRONMENT,

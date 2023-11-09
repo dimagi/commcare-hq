@@ -82,7 +82,7 @@ from corehq.const import (
     USER_MONTH_FORMAT,
 )
 from corehq.util.dates import get_previous_month_date_range
-from corehq.util.log import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.util.serialization import deserialize_decimal
 from corehq.util.soft_assert import soft_assert
 
@@ -407,7 +407,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
 
     emails = emails or settings.BOOKKEEPER_CONTACT_EMAILS
     for email in emails:
-        send_HTML_email(
+        send_html_email(
             "Invoices for %s" % datetime.date(year, month, 1).strftime(USER_MONTH_FORMAT),
             email,
             email_content,
@@ -519,7 +519,7 @@ def send_purchase_receipt(payment_record_id, domain, template_html, template_pla
     email_html = render_to_string(template_html, context['template_context'])
     email_plaintext = render_to_string(template_plaintext, context['template_context'])
 
-    send_HTML_email(
+    send_html_email(
         subject=_("Payment Received - Thank You!"),
         recipient=context['email_to'],
         html_content=email_html,
@@ -538,7 +538,7 @@ def send_autopay_failed(invoice_id):
     template_plaintext = 'accounting/email/autopay_failed.txt'
     text_content = render_to_string(template_plaintext, context['template_context'])
 
-    send_HTML_email(
+    send_html_email(
         subject=_(f"Subscription Payment for CommCare Invoice {context['invoice_number']} was declined"),
         recipient=context['email_to'],
         html_content=html_content,
@@ -628,7 +628,7 @@ def weekly_digest():
     env = ("[{}] ".format(settings.SERVER_ENVIRONMENT.upper())
            if settings.SERVER_ENVIRONMENT != "production" else "")
     email_subject = "{}Subscriptions ending in 40 Days from {}".format(env, today.isoformat())
-    send_HTML_email(
+    send_html_email(
         email_subject,
         settings.ACCOUNTS_EMAIL,
         email_content,
@@ -796,7 +796,7 @@ def send_prepaid_credits_export():
 
     date_string = datetime.datetime.utcnow().strftime(SERVER_DATE_FORMAT)
     filename = 'prepaid-credits-export_%s_%s.csv' % (settings.SERVER_ENVIRONMENT, date_string)
-    send_HTML_email(
+    send_html_email(
         '[%s] Prepaid Credits Export - %s' % (settings.SERVER_ENVIRONMENT, date_string),
         settings.ACCOUNTS_EMAIL,
         'See attached file.',

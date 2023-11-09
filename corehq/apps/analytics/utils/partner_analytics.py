@@ -13,7 +13,7 @@ from corehq.apps.analytics.models import (
 from corehq.apps.es import FormES
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import Invitation
-from corehq.util.log import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email
 from dimagi.utils.dates import get_start_and_end_dates_of_month
 
 
@@ -163,7 +163,7 @@ def send_partner_emails(year, month):
             'month_name': calendar.month_name[month],
             'year': year,
         }
-        send_HTML_email(
+        send_html_email(
             "CommCare HQ Analytics Report: {partner} {month_name} {year}".format(
                 partner=contact.organization_name,
                 month_name=calendar.month_name[month],
