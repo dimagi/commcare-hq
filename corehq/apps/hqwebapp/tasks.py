@@ -147,7 +147,7 @@ def send_html_email_async(self, subject, recipient, html_content,
     - retry a maximum of 10 times
     """
     try:
-        send_HTML_email(
+        send_mail(
             subject,
             recipient,
             html_content,
@@ -181,11 +181,11 @@ def send_html_email_async(self, subject, recipient, html_content,
                 mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
 
 
-def send_HTML_email(subject, recipient, html_content, text_content=None,
-                    cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=None, bcc=None,
-                    smtp_exception_skip_list=None, messaging_event_id=None,
-                    domain=None, use_domain_gateway=False):
+def send_mail(subject, recipient, text_content, html_content=None,
+              cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
+              file_attachments=None, bcc=None,
+              smtp_exception_skip_list=None, messaging_event_id=None,
+              domain=None, use_domain_gateway=False):
     from dimagi.utils.django.email import (
         get_valid_recipients,
         mark_local_bounced_email,
@@ -202,9 +202,6 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
         # todo address root issues by throwing a real error to catch upstream
         #  fail silently for now to fix time-sensitive SES issue
         return
-
-    if not isinstance(html_content, str):
-        html_content = html_content.decode('utf-8')
 
     if not text_content:
         text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
@@ -226,11 +223,16 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
     msg = EmailMultiAlternatives(subject, text_content, configuration.from_email,
                                  filtered_recipient_list, headers=headers,
                                  connection=configuration.connection, cc=cc, bcc=bcc)
+
     for file in (file_attachments or []):
         if file:
             msg.attach(file["title"], file["file_obj"].getvalue(),
                        file["mimetype"])
-    msg.attach_alternative(html_content, "text/html")
+
+    if html_content:
+        if not isinstance(html_content, str):
+            html_content = html_content.decode('utf-8')
+        msg.attach_alternative(html_content, "text/html")
 
     try:
         msg.send()
