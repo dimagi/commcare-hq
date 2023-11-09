@@ -64,3 +64,10 @@ def inline_edit_demo(request):
         },
         "posted_data": request.POST,
     })
+
+
+def submit_feedback_demo(request):
+    """See domain.views.feedback.submit_feedback for ow this is actually used"""
+    return JsonResponse({
+        "success": True,
+    })

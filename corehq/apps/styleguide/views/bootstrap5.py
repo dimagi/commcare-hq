@@ -201,3 +201,14 @@ def styleguide_molecules_inline_editing(request):
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/inline_editing.html', context)
+
+
+@use_bootstrap5
+def styleguide_molecules_feedback(request):
+    context = get_navigation_context("styleguide_molecules_feedback_b5")
+    context.update({
+        'examples': {
+            'feedback': get_example_context('styleguide/bootstrap5/examples/feedback.html'),
+        }
+    })
+    return render(request, 'styleguide/bootstrap5/molecules/feedback.html', context)
