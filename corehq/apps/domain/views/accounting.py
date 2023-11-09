@@ -227,7 +227,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         cards = None
         trial_length = None
         if subscription:
-            cards = get_customer_cards(self.request.user.username, self.domain)
+            cards = get_customer_cards(self.request.user.username)
             date_end = (subscription.date_end.strftime(USER_DATE_FORMAT)
                         if subscription.date_end is not None else "--")
 
@@ -457,7 +457,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
 
     @property
     def stripe_cards(self):
-        return get_customer_cards(self.request.user.username, self.domain)
+        return get_customer_cards(self.request.user.username)
 
     @property
     def show_hidden(self):

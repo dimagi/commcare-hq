@@ -188,7 +188,7 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 
     @property
     def stripe_cards(self):
-        return get_customer_cards(self.request.user.username, self.domain)
+        return get_customer_cards(self.request.user.username)
 
     @property
     def show_hidden(self):

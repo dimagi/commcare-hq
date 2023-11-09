@@ -4,7 +4,7 @@ from corehq.apps.accounting.utils import log_accounting_info
 import stripe
 
 
-def get_customer_cards(username, domain):
+def get_customer_cards(username):
     from corehq.apps.accounting.models import StripePaymentMethod, PaymentMethodType
 
     try:
