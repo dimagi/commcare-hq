@@ -427,6 +427,9 @@ hqDefine("geospatial/js/geospatial_map", [
             showMapControls(false);
             missingGPSModelInstance = new models.MissingGPSModel();
 
+            disbursementRunner = new disbursementRunnerModel();
+            $("#disbursement-spinner").koApplyBindings(disbursementRunner);
+
             return;
         }
 
@@ -443,8 +446,5 @@ hqDefine("geospatial/js/geospatial_map", [
         if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {
             loadCases(xhr.responseJSON.aaData);
         }
-
-        disbursementRunner = new disbursementRunnerModel();
-        $("#disbursement-spinner").koApplyBindings(disbursementRunner);
     });
 });
