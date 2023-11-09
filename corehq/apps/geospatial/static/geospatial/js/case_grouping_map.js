@@ -4,12 +4,14 @@ hqDefine("geospatial/js/case_grouping_map",[
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/alert_user',
+    'geospatial/js/models',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    alertUser
+    alertUser,
+    models,
 ) {
 
     const MAPBOX_LAYER_VISIBILITY = {
@@ -24,6 +26,7 @@ hqDefine("geospatial/js/case_grouping_map",[
     let caseGroupsInstance = new caseGroupSelectModel()
     let mapMarkers = [];
 
+    let mapModel;
     let polygonFilterInstance;
 
     function clusterStatsModel() {
@@ -409,12 +412,28 @@ hqDefine("geospatial/js/case_grouping_map",[
             exportModelInstance.casesToExport(caseModels);
         }
 
+        function initMap() {
+            mapModel = new models.Map(true);
+            mapModel.initMap(MAP_CONTAINER_ID);
+
+            mapModel.mapInstance.on('moveend', updateClusterStats);
+            mapModel.mapInstance.on("draw.update", (e) => {
+                polygonFilterInstance.addPolygonsToFilterList(e.features);
+            });
+            mapModel.mapInstance.on('draw.delete', function (e) {
+                polygonFilterInstance.removePolygonsFromFilterList(e.features);
+            });
+            mapModel.mapInstance.on('draw.create', function (e) {
+                polygonFilterInstance.addPolygonsToFilterList(e.features);
+            });
+        }
+
         $(document).ajaxComplete(function (event, xhr, settings) {
             const isAfterReportLoad = settings.url.includes('geospatial/async/case_grouping_map/');
             if (isAfterReportLoad) {
                 $("#export-controls").koApplyBindings(exportModelInstance);
                 $("#lock-groups-controls").koApplyBindings(groupLockModelInstance);
-                map = initMap();
+                initMap();
                 $("#clusterStats").koApplyBindings(clusterStatsInstance);
                 polygonFilterInstance = new polygonFilterModel();
                 polygonFilterInstance.loadPolygons(initialPageData.get('saved_polygons'));
