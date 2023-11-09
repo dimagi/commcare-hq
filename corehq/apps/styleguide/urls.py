@@ -34,6 +34,8 @@ urlpatterns = [
         name="styleguide_data_select2_ajax_demo"),
     url(r'^b5/data/remote_modal_demo$', bootstrap5_data.remote_modal_demo,
         name="styleguide_data_remote_modal"),
+    url(r'^b5/data/inline_edit_demo$', bootstrap5_data.inline_edit_demo,
+        name="styleguide_inline_edit_demo"),
     url(r'^b5/guidelines/$', bootstrap5.styleguide_code_guidelines,
         name="styleguide_code_guidelines_b5"),
     url(r'^b5/atoms/accessibility/$', bootstrap5.styleguide_atoms_accessibility,
@@ -56,4 +58,6 @@ urlpatterns = [
         name="styleguide_molecules_pagination_b5"),
     url(r'^b5/molecules/searching/$', bootstrap5.styleguide_molecules_searching,
         name="styleguide_molecules_searching_b5"),
+    url(r'^b5/molecules/inline_editing/$', bootstrap5.styleguide_molecules_inline_editing,
+        name="styleguide_molecules_inline_editing_b5"),
 ]
