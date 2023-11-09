@@ -20,7 +20,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         None: 'none',
         Visible: 'visible',
     };
-
+    const DEFAULT_MARKER_OPACITY = 1.0;
     const MAP_CONTAINER_ID = 'case-grouping-map';
     const clusterStatsInstance = new clusterStatsModel();
     let exportModelInstance;
