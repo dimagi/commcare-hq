@@ -32,6 +32,10 @@
       window.USE_BOOTSTRAP5 = true;
     </script>
 
+    {% block csrf_token_block %}
+      <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+    {% endblock %}
+
     {% javascript_libraries hq=True use_bootstrap5=True %}
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
   </head>
