@@ -9,6 +9,7 @@ hqDefine('geospatial/js/models', [
 ) {
     const HOVER_DELAY = 400;
     const DOWNPLAY_OPACITY = 0.2;
+    const FEATURE_QUERY_PARAM = 'features';
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
 
     var MissingGPSModel = function () {
@@ -376,11 +377,166 @@ hqDefine('geospatial/js/models', [
         };
     };
 
+    var PolygonFilter = function (mapObj, shouldUpdateQueryParam, shouldSelectAfterFilter) {
+        var self = this;
+
+        self.mapObj = mapObj;
+
+        // TODO: This can be moved to geospatial JS (specific functionality)
+        self.btnRunDisbursementDisabled = ko.computed(function () {
+            return !self.mapObj.caseMapItems().length || !self.mapObj.userMapItems().length;
+        });
+
+        self.shouldUpdateQuryParam = shouldUpdateQueryParam;
+        self.shouldSelectAfterFilter = shouldSelectAfterFilter;
+        self.btnSaveDisabled = ko.observable(true);
+        self.btnExportDisabled = ko.observable(true);
+
+        self.polygons = {};
+        self.shouldRefreshPage = ko.observable(false);
+
+        self.savedPolygons = ko.observableArray([]);
+        self.selectedSavedPolygonId = ko.observable('');
+        self.activeSavedPolygon;
+
+        self.addPolygonsToFilterList = function (featureList) {
+            for (const feature of featureList) {
+                self.polygons[feature.id] = feature;
+            }
+            if (self.shouldUpdateQuryParam) {
+                updatePolygonQueryParam();
+            }
+        };
+
+        self.removePolygonsFromFilterList = function (featureList) {
+            for (const feature of featureList) {
+                if (self.polygons[feature.id]) {
+                    delete self.polygons[feature.id];
+                }
+            }
+            if (self.shouldUpdateQuryParam) {
+                updatePolygonQueryParam();
+            }
+        };
+
+        function updatePolygonQueryParam() {
+            const url = new URL(window.location.href);
+            if (Object.keys(self.polygons).length) {
+                url.searchParams.set(FEATURE_QUERY_PARAM, JSON.stringify(self.polygons));
+            } else {
+                url.searchParams.delete(FEATURE_QUERY_PARAM);
+            }
+            window.history.replaceState({ path: url.href }, '', url.href);
+            self.shouldRefreshPage(true);
+        }
+
+        self.loadPolygonFromQueryParam = function () {
+            const url = new URL(window.location.href);
+            const featureParam = url.searchParams.get(FEATURE_QUERY_PARAM);
+            if (featureParam) {
+                const features = JSON.parse(featureParam);
+                for (const featureId in features) {
+                    const feature = features[featureId];
+                    self.mapObj.drawControls.add(feature);
+                    self.polygons[featureId] = feature;
+                }
+            }
+        };
+
+        function removeActivePolygonLayer() {
+            if (self.activeSavedPolygon) {
+                self.mapObj.mapInstance.removeLayer(self.activeSavedPolygon.id);
+                self.mapObj.mapInstance.removeSource(self.activeSavedPolygon.id);
+            }
+        }
+
+        function createActivePolygonLayer(polygonObj) {
+            self.mapObj.mapInstance.addSource(
+                String(polygonObj.id),
+                {'type': 'geojson', 'data': polygonObj.geoJson}
+            );
+            self.mapObj.mapInstance.addLayer({
+                'id': String(polygonObj.id),
+                'type': 'fill',
+                'source': String(polygonObj.id),
+                'layout': {},
+                'paint': {
+                    'fill-color': '#0080ff',
+                    'fill-opacity': 0.5,
+                },
+            });
+        }
+
+        self.clearActivePolygon = function () {
+            if (self.activeSavedPolygon) {
+                // self.selectedSavedPolygonId('');
+                self.removePolygonsFromFilterList(self.activeSavedPolygon.geoJson.features);
+                removeActivePolygonLayer();
+                self.activeSavedPolygon = null;
+                self.btnSaveDisabled(false);
+                self.btnExportDisabled(true);
+            }
+        };
+
+        self.selectedSavedPolygonId.subscribe(() => {
+            const selectedId = parseInt(self.selectedSavedPolygonId());
+            const polygonObj = self.savedPolygons().find(
+                function (o) { return o.id === selectedId; }
+            );
+            if (!polygonObj) {
+                return;
+            }
+
+            self.clearActivePolygon();
+
+            removeActivePolygonLayer();
+            createActivePolygonLayer(polygonObj);
+
+            self.activeSavedPolygon = polygonObj;
+            self.addPolygonsToFilterList(polygonObj.geoJson.features);
+            self.btnExportDisabled(false);
+            self.btnSaveDisabled(true);
+            if (self.shouldSelectAfterFilter) {
+                self.mapObj.selectAllMapItems(polygonObj.geoJson.features);
+            }
+        });
+
+        self.loadPolygons = function (polygonArr) {
+            let utils = hqImport('geospatial/js/utils');
+            if (self.shouldUpdateQuryParam) {
+                self.loadPolygonFromQueryParam();
+            }
+            self.savedPolygons([]);
+
+            _.each(polygonArr, (polygon) => {
+                // Saved features don't have IDs, so we need to give them to uniquely identify them for polygon filtering
+                for (const feature of polygon.geo_json.features) {
+                    feature.id = utils.uuidv4();
+                }
+                self.savedPolygons.push(new SavedPolygon(polygon));
+            });
+        };
+
+        self.exportGeoJson = function (exportButtonId) {
+            const exportButton = $(`#${exportButtonId}`);
+            const selectedId = parseInt(self.selectedSavedPolygonId());
+            const selectedPolygon = self.savedPolygons().find(
+                function (o) { return o.id === selectedId; }
+            );
+            if (selectedPolygon) {
+                const convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(selectedPolygon.geoJson));
+                exportButton.attr('href', 'data:' + convertedData);
+                exportButton.attr('download','data.geojson');
+            }
+        };
+    };
+
     return {
         MissingGPSModel: MissingGPSModel,
         SavedPolygon: SavedPolygon,
         MapItem: MapItem,
         ClusterMapItem: ClusterMapItem,
         Map: Map,
+        PolygonFilter: PolygonFilter,
     };
 });
