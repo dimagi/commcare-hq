@@ -14,7 +14,7 @@ from django.utils.html import strip_tags
 import attr
 from celery.schedules import crontab
 
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_static_url_prefix
 from pillowtop.utils import get_couch_pillow_instances
@@ -22,7 +22,6 @@ from pillowtop.utils import get_couch_pillow_instances
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.blobs import CODES, get_blob_db
 from corehq.elastic import get_es_new
 from corehq.util.celery_utils import periodic_task_when_true
@@ -47,8 +46,7 @@ def check_pillows_for_rewind():
                 details={
                     'pillow checkpoint seq': checkpoint.get_current_sequence_id(),
                     'stored seq': historical_seq
-                }
-            )
+                })
 
 
 @periodic_task(run_every=crontab(hour=0, minute=0), queue='background_queue')
@@ -102,7 +100,7 @@ def send_mass_emails(email_for_requesting_user, real_email, subject, html, text)
         text_content = strip_tags(text_template.render(Context(context)))
 
         try:
-            send_HTML_email(subject, recipient['email'], html_content, text_content=text_content)
+            send_html_email_async(subject, recipient['email'], html_content, text_content=text_content)
             successes.append((recipient['username'], None))
         except Exception as e:
             failures.append((recipient['username'], e))

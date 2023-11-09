@@ -39,7 +39,7 @@ from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.hqadmin.utils import unset_password
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.app_manager.models import Application
@@ -505,7 +505,7 @@ class DisableUserView(FormView):
                 reason=reason,
             )
         )
-        send_HTML_email(
+        send_html_email_async(
             "%sYour account has been %s" % (settings.EMAIL_SUBJECT_PREFIX, verb),
             couch_user.get_email(),
             render_to_string('hqadmin/email/account_disabled_email.html', context={
@@ -604,7 +604,7 @@ class DisableTwoFactorView(FormView):
                 days=disable_for_days
             ),
         )
-        send_HTML_email(
+        send_html_email_async(
             "%sTwo-Factor authentication reset" % settings.EMAIL_SUBJECT_PREFIX,
             couch_user.get_email(),
             render_to_string('hqadmin/email/two_factor_reset_email.html', context={

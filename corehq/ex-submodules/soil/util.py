@@ -7,7 +7,7 @@ from django.conf import settings
 from django.utils.translation import gettext as _
 
 from couchexport.models import Format
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email
 from soil import (
     BlobDownload,
     CachedDownload,
@@ -131,7 +131,7 @@ def process_email_request(domain, download_id, email_address):
                             '{}').format(dropbox_url)
     email_body = _('Your CommCare export for {} is ready! Click on the link below to download your requested data:'
                    '<br/>{}{}').format(domain, download_url, dropbox_message)
-    send_HTML_email(_('CommCare Export Complete'), email_address, email_body,
+    send_html_email(_('CommCare Export Complete'), email_address, email_body,
                     domain=domain, use_domain_gateway=True,)
 
 
