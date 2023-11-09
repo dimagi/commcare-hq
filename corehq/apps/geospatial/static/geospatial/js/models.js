@@ -2,10 +2,12 @@ hqDefine('geospatial/js/models', [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'geospatial/js/utils',
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
+    utils
 ) {
     const HOVER_DELAY = 400;
     const DOWNPLAY_OPACITY = 0.2;
@@ -502,7 +504,6 @@ hqDefine('geospatial/js/models', [
         });
 
         self.loadPolygons = function (polygonArr) {
-            let utils = hqImport('geospatial/js/utils');
             if (self.shouldUpdateQuryParam) {
                 self.loadPolygonFromQueryParam();
             }
