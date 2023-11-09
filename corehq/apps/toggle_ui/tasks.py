@@ -9,7 +9,7 @@ import pytz
 from couchdbkit import ResourceNotFound
 
 from couchforms.analytics import domain_has_submission_in_last_30_days
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
@@ -72,7 +72,7 @@ def generate_toggle_csv_download(self, tag, download_id, username):
         url = absolute_reverse("retrieve_download", args=[download_id])
         url += "?get_file"
         valid_until = meta.expires_on.replace(tzinfo=pytz.UTC).strftime(USER_DATETIME_FORMAT)
-        send_html_email_async("Feature Flag download ready", user.get_email(), html_content=inspect.cleandoc(f"""
+        send_html_email("Feature Flag download ready", user.get_email(), html_content=inspect.cleandoc(f"""
         Download URL: {url}
         Download Valid until: {valid_until}
         """))

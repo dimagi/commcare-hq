@@ -41,7 +41,7 @@ from dimagi.utils.web import json_request
 
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email
 from corehq.apps.reports.daterange import (
     get_all_daterange_slugs,
     get_daterange_start_end_dates,
@@ -846,7 +846,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 self._export_report(emails, title)
 
     def _send_email(self, title, email, body, excel_files):
-        send_html_email_async(
+        send_html_email(
             title, email, body,
             file_attachments=excel_files,
             smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES,
@@ -855,7 +855,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def _send_only_attachments(self, title, emails, excel_files):
         message = _("Unable to generate email report. Excel files are attached.")
-        send_html_email_async(
+        send_html_email(
             title,
             emails,
             message,
