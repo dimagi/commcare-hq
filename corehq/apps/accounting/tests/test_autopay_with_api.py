@@ -20,6 +20,8 @@ from corehq.apps.accounting.payment_handlers import (
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from django.db import transaction
+from unittest import SkipTest
+from django.conf import settings
 
 
 class TestBillingAutoPay(BaseInvoiceTestCase):
@@ -27,6 +29,10 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
     @classmethod
     def setUpClass(cls):
         super(TestBillingAutoPay, cls).setUpClass()
+        # Dependabot-created PRs do not have access to secrets.
+        # We skip test so the tests do not fail when dependabot creates new PR for dependency upgrades.
+        if not settings.STRIPE_PRIVATE_KEY:
+            raise SkipTest("Stripe API Key not set")
         cls._generate_autopayable_entities()
         cls._generate_non_autopayable_entities()
         cls._generate_invoices()

@@ -3,12 +3,18 @@ import stripe
 from corehq.apps.accounting.models import StripePaymentMethod
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.utils.stripe import get_customer_cards, charge_through_stripe
+from unittest import SkipTest
+from django.conf import settings
 
 
 class StripeUtilsTests(TestCase):
 
     def setUp(self):
         super().setUp()
+        # Dependabot-created PRs do not have access to secrets.
+        # We skip test so the tests do not fail when dependabot creates new PR for dependency upgrades.
+        if not settings.STRIPE_PRIVATE_KEY:
+            raise SkipTest("Stripe API Key not set")
         self.web_user_email = "test@example.com"
 
         # Set up Stripe customer with a card

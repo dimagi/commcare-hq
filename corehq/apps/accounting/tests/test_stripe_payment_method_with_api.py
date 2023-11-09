@@ -4,12 +4,17 @@ import stripe
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.models import StripePaymentMethod
+from unittest import SkipTest
 
 
 class TestStripePaymentMethod(BaseAccountingTest):
 
     def setUp(self):
         super(TestStripePaymentMethod, self).setUp()
+        # Dependabot-created PRs do not have access to secrets.
+        # We skip test so the tests do not fail when dependabot creates new PR for dependency upgrades.
+        if not settings.STRIPE_PRIVATE_KEY:
+            raise SkipTest("Stripe API Key not set")
         stripe.api_key = settings.STRIPE_PRIVATE_KEY
 
         self.web_user_email = "test_web_user@gmail.com"
