@@ -169,7 +169,7 @@ class FormplayerMain(View):
 
     def get(self, request, domain):
         if should_restrict_web_apps_usage(domain):
-            return redirect('too_many_ucrs', domain=domain)
+            return redirect('block_web_apps', domain=domain)
 
         option = request.GET.get('option')
         if option == 'apps':
@@ -303,7 +303,7 @@ class PreviewAppView(TemplateView):
     def get(self, request, *args, **kwargs):
         if should_restrict_web_apps_usage(request.domain):
             context = get_context_for_ucr_limit_error(request.domain)
-            return render(request, 'preview_app/too_many_ucrs_preview.html', context)
+            return render(request, 'preview_app/block_app_preview.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
@@ -618,10 +618,10 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
 
 
-class TooManyUCRsErrorView(BaseDomainView):
+class BlockWebAppsView(BaseDomainView):
 
-    urlname = 'too_many_ucrs'
-    template_name = 'too_many_ucrs.html'
+    urlname = 'block_web_apps'
+    template_name = 'block_web_apps.html'
 
     def get(self, request, *args, **kwargs):
         context = get_context_for_ucr_limit_error(request.domain)
@@ -635,6 +635,6 @@ def get_context_for_ucr_limit_error(domain):
         'error_message': _("""You have the MOBILE_UCR feature flag enabled, and have exceeded the maximum limit
                            of {ucr_limit} total User Configurable Reports used across all of your applications.
                            To resolve, you must remove references to UCRs in your applications until you are under
-                           the limit.
+                           the limit. If you believe this is a mistake, please reach out to support.
                            """).format(ucr_limit=settings.MAX_MOBILE_UCR_LIMIT)
     }

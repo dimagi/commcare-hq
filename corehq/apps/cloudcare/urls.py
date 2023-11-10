@@ -8,7 +8,7 @@ from corehq.apps.cloudcare.views import (
     LoginAsUsers,
     PreviewAppView,
     ReadableQuestions,
-    TooManyUCRsErrorView,
+    BlockWebAppsView,
     default,
     report_formplayer_error,
     report_sentry_error
@@ -26,7 +26,7 @@ app_urls = [
     url(r'^preview_app/(?P<app_id>[\w-]+)/$', PreviewAppView.as_view(), name=PreviewAppView.urlname),
     url(r'^report_formplayer_error', report_formplayer_error, name='report_formplayer_error'),
     url(r'^report_sentry_error', report_sentry_error, name='report_sentry_error'),
-    url(r'^too_many_ucrs/$', use_bootstrap5(TooManyUCRsErrorView.as_view()), name=TooManyUCRsErrorView.urlname),
+    url(r'^block_web_apps/$', use_bootstrap5(BlockWebAppsView.as_view()), name=BlockWebAppsView.urlname),
 ]
 
 api_urls = [
