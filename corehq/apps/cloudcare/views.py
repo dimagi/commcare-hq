@@ -63,7 +63,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_applicatio
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
-from corehq.apps.cloudcare.utils import exceeds_mobile_ucr_limit
+from corehq.apps.cloudcare.utils import should_restrict_web_apps_usage
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -169,7 +169,7 @@ class FormplayerMain(View):
         return request.couch_user, set_cookie
 
     def get(self, request, domain):
-        if exceeds_mobile_ucr_limit(domain):
+        if should_restrict_web_apps_usage(domain):
             return redirect('too_many_ucrs', domain=domain)
 
         option = request.GET.get('option')
@@ -302,7 +302,7 @@ class PreviewAppView(TemplateView):
     @use_daterangepicker
     @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
-        if exceeds_mobile_ucr_limit(request.domain):
+        if should_restrict_web_apps_usage(request.domain):
             context = get_context_for_ucr_limit_error(request.domain)
             return render(request, 'preview_app/too_many_ucrs_preview.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
