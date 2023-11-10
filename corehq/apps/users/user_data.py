@@ -89,7 +89,6 @@ class UserData:
             if set(new_profile.fields).intersection(non_empty_existing_fields):
                 raise UserDataError(_("Profile conflicts with existing data"))
         self._profile_id = profile_id
-        self._local_to_user[PROFILE_SLUG] = profile_id
 
     @cached_property
     def profile(self):
@@ -137,9 +136,6 @@ class UserData:
             if value == self._provided_by_system[key]:
                 return
             raise UserDataError(_("'{}' cannot be set directly").format(key))
-        if key == PROFILE_SLUG:
-            # TODO disallow
-            self.profile_id = value
         self._local_to_user[key] = value
 
     def update(self, data, profile_id=...):
@@ -163,9 +159,6 @@ class UserData:
     def __delitem__(self, key):
         if key in self._provided_by_system:
             raise UserDataError(_("{} cannot be deleted").format(key))
-        if key == PROFILE_SLUG:
-            # TODO disallow
-            self.profile_id = None
         del self._local_to_user[key]
 
     def pop(self, key, default=...):
