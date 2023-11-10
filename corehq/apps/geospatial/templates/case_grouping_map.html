@@ -71,7 +71,7 @@
             <thead>
               <th colspan="2">{% trans "Select Case Groups to View" %}</th>
             </thead>
-            <tbody data-bind="foreach: allGroups">
+            <tbody data-bind="foreach: caseGroupsForTable">
               <tr>
                 <td data-bind="event: {mouseover: $parent.highlightGroup, mouseout: $parent.restoreMarkerOpacity}">
                   <div class="checkbox">

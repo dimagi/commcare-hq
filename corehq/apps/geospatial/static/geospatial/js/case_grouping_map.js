@@ -112,7 +112,6 @@ hqDefine("geospatial/js/case_grouping_map",[
 
         self.addGroupDataToCases = function(caseGroups, groupsData, assignDefaultGroup) {
             const defaultGroup = groupsData[0];
-
             self.casesToExport().forEach(caseItem => {
                 const groupId = caseGroups[caseItem.caseId];
                 if (groupId !== undefined) {
@@ -337,7 +336,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.isSelected = ko.observable(false);
         self.markerColors = markerColors;
 
-        self.groupsOptions = ko.observable(caseGroupsInstance.allGroups());
+        self.groupsOptions = ko.observable(caseGroupsInstance.allGroups);
         self.selectedGroup = ko.observable(itemData.groupId);
 
         self.updateGroup = ko.computed(function () {
@@ -426,8 +425,11 @@ hqDefine("geospatial/js/case_grouping_map",[
         'use strict';
         var self = {};
 
-        self.allGroups = ko.observableArray([]);
         self.allCaseGroups;
+        // allGroups and caseGroupsForTable contains the same data, but there's weird knockoutjs behaviour
+        // if we're making allGroups an observable. caseGroupsForTable is populated by setCaseGroupsForTable
+        self.allGroups = [];
+        self.caseGroupsForTable = ko.observableArray([]);
         self.visibleGroupIDs = ko.observableArray([]);
         self.casePerGroup = {};
 
@@ -436,7 +438,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         };
 
         self.getGroupByID = function(groupID) {
-            return self.allGroups().find((group) => group.groupId === groupID);
+            return self.allGroups.find((group) => group.groupId === groupID);
         };
 
         self.updateCaseGroup = function(itemId, newGroupId) {
@@ -445,14 +447,14 @@ hqDefine("geospatial/js/case_grouping_map",[
 
         self.loadCaseGroups = function(caseGroups, groups) {
             self.allCaseGroups = caseGroups;
-            self.allGroups(groups);
-            let visibleIDs = _.map(self.allGroups(), function(group) {return group.groupId});
-            self.visibleGroupIDs(visibleIDs);
+            self.allGroups = groups;
+
             self.showAllGroups();
         };
 
         self.clear = function() {
-            self.allGroups([]);
+            self.allGroups = [];
+            self.caseGroupsForTable([]);
             self.visibleGroupIDs([]);
         };
 
@@ -478,7 +480,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                     });
                     if (marker) {
                         setMarkerOpacity(marker, opacity);
-                        }
+                    }
             });
         };
 
@@ -498,7 +500,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                     filteredCaseGroups[caseID] = self.allCaseGroups[caseID];
                 }
             }
-            exportModelInstance.addGroupDataToCases(filteredCaseGroups, self.allGroups());
+            exportModelInstance.addGroupDataToCases(filteredCaseGroups, self.allGroups);
             revealGroupsOnMap();
         };
 
@@ -506,9 +508,15 @@ hqDefine("geospatial/js/case_grouping_map",[
             if (!self.allCaseGroups) {
                 return;
             }
-            self.visibleGroupIDs(_.map(self.allGroups(), function(group) {return group.groupId}));
+            self.visibleGroupIDs(_.map(self.allGroups, function(group) {return group.groupId}));
             revealGroupsOnMap();
+            self.setCaseGroupsForTable();
         };
+
+        self.setCaseGroupsForTable = function() {
+            self.caseGroupsForTable(self.allGroups);
+        }
+
         return self;
     }
 
@@ -555,8 +563,8 @@ hqDefine("geospatial/js/case_grouping_map",[
                             lat: cluster.geometry.coordinates[1],
                         }
                     });
-
                     for (const casePoint of casePoints) {
+                        console.log("Hitting case and adding to group");
                         const caseId = casePoint.properties.id;
                         caseGroups[caseId] = groupUUID;
                     }
