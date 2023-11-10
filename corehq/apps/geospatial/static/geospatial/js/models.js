@@ -65,7 +65,7 @@ hqDefine('geospatial/js/models', [
         });
     };
 
-    var ClusterMapItem = function (itemId, itemData, link) {
+    var GroupedCaseMapItem = function (itemId, itemData, link) {
         let self = this;
         self.itemId = itemId;
         self.itemData = itemData;
@@ -536,7 +536,7 @@ hqDefine('geospatial/js/models', [
         MissingGPSModel: MissingGPSModel,
         SavedPolygon: SavedPolygon,
         MapItem: MapItem,
-        ClusterMapItem: ClusterMapItem,
+        GroupedCaseMapItem: GroupedCaseMapItem,
         Map: Map,
         PolygonFilter: PolygonFilter,
     };
