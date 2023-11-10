@@ -1,4 +1,3 @@
-from unittest.mock import patch
 from django.test import TestCase
 
 from corehq.apps.app_manager.models import Application, ReportModule, ReportAppConfig
@@ -13,7 +12,7 @@ class TestShouldRestrictWebAppsUsage(TestCase):
     @flag_disabled("MOBILE_UCR")
     def test_returns_false_if_domain_ucr_count_is_under_limit_and_neither_toggle_is_enable(self):
         self._create_app_with_reports(report_count=0)
-        with patch('corehq.apps.cloudcare.utils.MAX_MOBILE_UCR_LIMIT', 1):
+        with self.settings(MAX_MOBILE_UCR_LIMIT=1):
             result = should_restrict_web_apps_usage(self.domain.name)
         self.assertFalse(result)
 
@@ -21,7 +20,7 @@ class TestShouldRestrictWebAppsUsage(TestCase):
     @flag_disabled("MOBILE_UCR")
     def test_returns_false_if_domain_ucr_count_exceeds_limit_and_neither_toggle_is_enabled(self):
         self._create_app_with_reports(report_count=2)
-        with patch('corehq.apps.cloudcare.utils.MAX_MOBILE_UCR_LIMIT', 1):
+        with self.settings(MAX_MOBILE_UCR_LIMIT=1):
             result = should_restrict_web_apps_usage(self.domain.name)
         self.assertFalse(result)
 
@@ -29,7 +28,7 @@ class TestShouldRestrictWebAppsUsage(TestCase):
     @flag_disabled("MOBILE_UCR")
     def test_returns_false_if_domain_ucr_count_exceeds_limit_and_ALLOW_WEB_APPS_RESTRICTION_is_enabled(self):
         self._create_app_with_reports(report_count=2)
-        with patch('corehq.apps.cloudcare.utils.MAX_MOBILE_UCR_LIMIT', 1):
+        with self.settings(MAX_MOBILE_UCR_LIMIT=1):
             result = should_restrict_web_apps_usage(self.domain.name)
         self.assertFalse(result)
 
@@ -37,7 +36,7 @@ class TestShouldRestrictWebAppsUsage(TestCase):
     @flag_enabled("MOBILE_UCR")
     def test_returns_false_if_domain_ucr_count_exceeds_limit_and_MOBILE_UCR_is_enabled(self):
         self._create_app_with_reports(report_count=2)
-        with patch('corehq.apps.cloudcare.utils.MAX_MOBILE_UCR_LIMIT', 1):
+        with self.settings(MAX_MOBILE_UCR_LIMIT=1):
             result = should_restrict_web_apps_usage(self.domain.name)
         self.assertFalse(result)
 
@@ -45,7 +44,7 @@ class TestShouldRestrictWebAppsUsage(TestCase):
     @flag_enabled("MOBILE_UCR")
     def test_returns_false_if_domain_ucr_count_is_under_limit_and_both_flags_are_enabled(self):
         self._create_app_with_reports(report_count=1)
-        with patch('corehq.apps.cloudcare.utils.MAX_MOBILE_UCR_LIMIT', 2):
+        with self.settings(MAX_MOBILE_UCR_LIMIT=2):
             result = should_restrict_web_apps_usage(self.domain.name)
         self.assertFalse(result)
 
@@ -53,7 +52,7 @@ class TestShouldRestrictWebAppsUsage(TestCase):
     @flag_enabled("MOBILE_UCR")
     def test_returns_false_if_domain_ucr_count_equals_limit_and_both_flags_are_enabled(self):
         self._create_app_with_reports(report_count=1)
-        with patch('corehq.apps.cloudcare.utils.MAX_MOBILE_UCR_LIMIT', 1):
+        with self.settings(MAX_MOBILE_UCR_LIMIT=1):
             result = should_restrict_web_apps_usage(self.domain.name)
         self.assertFalse(result)
 
@@ -61,9 +60,9 @@ class TestShouldRestrictWebAppsUsage(TestCase):
     @flag_enabled("MOBILE_UCR")
     def test_returns_true_if_domain_ucr_count_exceeds_limit_and_both_flags_are_enabled(self):
         self._create_app_with_reports(report_count=2)
-        with patch('corehq.apps.cloudcare.utils.MAX_MOBILE_UCR_LIMIT', 1):
+        with self.settings(MAX_MOBILE_UCR_LIMIT=1):
             result = should_restrict_web_apps_usage(self.domain.name)
-        self.assertTrue(result)
+            self.assertTrue(result)
 
     def _create_app_with_reports(self, report_count=1):
         configs = []

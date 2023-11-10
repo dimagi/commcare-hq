@@ -55,7 +55,6 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 
 from corehq.apps.cloudcare.const import (
-    MAX_MOBILE_UCR_LIMIT,
     PREVIEW_APP_ENVIRONMENT,
     WEB_APPS_ENVIRONMENT,
 )
@@ -632,10 +631,10 @@ class TooManyUCRsErrorView(BaseDomainView):
 def get_context_for_ucr_limit_error(domain):
     return {
         'domain': domain,
-        'ucr_limit': MAX_MOBILE_UCR_LIMIT,
+        'ucr_limit': settings.MAX_MOBILE_UCR_LIMIT,
         'error_message': _("""You have the MOBILE_UCR feature flag enabled, and have exceeded the maximum limit
                            of {ucr_limit} total User Configurable Reports used across all of your applications.
                            To resolve, you must remove references to UCRs in your applications until you are under
                            the limit.
-                           """).format(ucr_limit=MAX_MOBILE_UCR_LIMIT)
+                           """).format(ucr_limit=settings.MAX_MOBILE_UCR_LIMIT)
     }
