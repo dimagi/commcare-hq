@@ -422,6 +422,7 @@ class OwnerTests(LocationHierarchyTestCase):
                 'address.',
 
                 recipient_list=['admin@example.com'],
+                domain=TEST_DOMAIN, use_domain_gateway=True
             )
 
     def test_bad_group(self):
@@ -457,6 +458,7 @@ class OwnerTests(LocationHierarchyTestCase):
                 'address.',
 
                 recipient_list=['admin@example.com'],
+                domain=TEST_DOMAIN, use_domain_gateway=True
             )
 
 
