@@ -1806,6 +1806,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore Case Indexes that were removed
         - It will not restore the user's phone numbers
         - It will not restore reminders for cases
+        - It will not restore custom user data
         """
         from corehq.apps.users.model_log import UserModelAction
 
