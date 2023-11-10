@@ -573,7 +573,6 @@ hqDefine("geospatial/js/case_grouping_map",[
                         }
                     });
                     for (const casePoint of casePoints) {
-                        console.log("Hitting case and adding to group");
                         const caseId = casePoint.properties.id;
                         caseGroups[caseId] = groupUUID;
                     }

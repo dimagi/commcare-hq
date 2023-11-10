@@ -104,13 +104,11 @@
 </div>
 
 <script type="text/html" id="select-case">
-  <div class="form-group">
-    <div class="row">
-      <label data-bind="attr: {for: selectCssId}">Select group</label>
-      <select class="form-control" data-bind="attr: {id: selectCssId},
+  <div class="d-flex flex-row">
+    <label data-bind="attr: {for: selectCssId}">Select group</label>
+    <select class="form-control" data-bind="attr: {id: selectCssId},
         options: groupsOptions, optionsText: 'name', optionsValue: 'groupId', value: selectedGroup">
-      </select>
-    </div>
+    </select>
   </div>
   <div data-bind="html: $data.itemData.caseLink"></div>
 </script>
