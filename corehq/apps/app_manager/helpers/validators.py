@@ -406,12 +406,25 @@ class ModuleBaseValidator(object):
             from corehq.apps.app_manager.views.modules import get_all_case_modules
             valid_modules = get_all_case_modules(self.app, self.module)
         valid_module_ids = [info['unique_id'] for info in valid_modules]
+        search_config = getattr(self.module, 'search_config', None)
         if self.module.parent_select.module_id not in valid_module_ids:
             errors.append({
                 'type': 'invalid parent select id',
                 'module': self.get_module_info(),
             })
 
+        elif search_config:
+            parent_module_id = self.module.parent_select.module_id
+            parent_select_module = self.module.get_app().get_module_by_unique_id(parent_module_id)
+            if parent_select_module and module_uses_inline_search(parent_select_module):
+                parent_module_instance_name = parent_select_module.search_config.get_instance_name()
+                if search_config.get_instance_name() == parent_module_instance_name:
+                    errors.append({
+                        'type': 'non-unique instance name with parent select module',
+                        "message": f'The instance "{search_config.get_instance_name()}" is not unique',
+                        "module": self.get_module_info(),
+                        "details": search_config.get_instance_name()
+                    })
         return errors
 
     def validate_smart_links(self):

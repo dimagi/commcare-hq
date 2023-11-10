@@ -191,6 +191,10 @@
               {% blocktrans with module_name=error.module.name|trans:langs %}
               The case list in <a href="{{ module_url }}">{{ module_name }}</a> can not use the same "search input instance name" as its Parent Menu.
               {% endblocktrans %}
+            {% case "non-unique instance name with parent select module" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+              The case list in <a href="{{ module_url }}">{{ module_name }}</a> can not use the same "search input instance name" as its Parent Select Menu.
+              {% endblocktrans %}
             {% case "inline search to display only forms" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
