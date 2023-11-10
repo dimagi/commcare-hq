@@ -19,6 +19,7 @@ from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.retry import retry_on
 from soil import DownloadBase
 
 from corehq import toggles
@@ -361,21 +362,25 @@ def process_reporting_metadata_staging():
 
 
 def _process_reporting_metadata_staging():
-    from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
+    from corehq.apps.users.models import UserReportingMetadataStaging
     for i in range(100):
         with transaction.atomic():
-            records = (
-                UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
-            )[:1]
+            records = (UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk'))[:1]
             for record in records:
-                user = CouchUser.get_by_user_id(record.user_id, record.domain)
-                try:
-                    record.process_record(user)
-                except ResourceConflict:
-                    # https://sentry.io/organizations/dimagi/issues/1479516073/
-                    user = CouchUser.get_by_user_id(record.user_id, record.domain)
-                    record.process_record(user)
+                _process_record_with_retry(record)
                 record.delete()
+
+
+@retry_on(ResourceConflict, delays=[0])
+def _process_record_with_retry(record):
+    """
+    It is possible that an unrelated user update is saved to the db while we are processing the record
+    but before saving any user updates resulting from process_record. In this case, a ResourceConflict is
+    raised so we should try once more to see if it was just bad timing or a persistent error.
+    """
+    from corehq.apps.users.models import CouchUser
+    user = CouchUser.get_by_user_id(record.user_id, record.domain)
+    record.process_record(user)
 
 
 @task(queue='background_queue', acks_late=True)
