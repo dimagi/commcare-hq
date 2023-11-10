@@ -141,6 +141,11 @@ hqDefine("geospatial/js/case_grouping_map",[
                 }
             });
         }
+
+        self.groupsReady = function() {
+            return groupLockModelInstance.groupsLocked();
+        }
+
         return self;
     }
 
@@ -516,6 +521,10 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.setCaseGroupsForTable = function() {
             self.caseGroupsForTable(self.allGroups);
         }
+
+        self.groupsReady = function() {
+            return groupLockModelInstance.groupsLocked() && self.caseGroupsForTable().length;
+        };
 
         return self;
     }

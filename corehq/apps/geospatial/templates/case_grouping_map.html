@@ -22,7 +22,7 @@
   <div class="col col-md-2">
     <span id="export-controls">
       <div class="controls">
-        <button class="btn-default form-control" data-bind="click: downloadCSV">
+        <button class="btn-default form-control" data-bind="click: downloadCSV, disable: !groupsReady()">
           {% trans "Export Groups" %}
         </button>
       </div>
@@ -88,12 +88,12 @@
         </div>
         <div class="row">
           <div class="col col-md-6">
-            <button class="btn-default form-control" data-bind="click: showSelectedGroups()">
+            <button class="btn-default form-control" data-bind="click: showSelectedGroups(), disable: !groupsReady()">
               {% trans "Show Only Selected Groups on Map" %}
             </button>
           </div>
           <div class="col col-md-6">
-            <button class="btn-default form-control" data-bind="click: showAllGroups()">
+            <button class="btn-default form-control" data-bind="click: showAllGroups(), disable: !groupsReady()">
               {% trans "Show All Groups" %}
             </button>
           </div>
