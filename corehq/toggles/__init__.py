@@ -2455,6 +2455,18 @@ CUSTOM_EMAIL_GATEWAY = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ALLOW_WEB_APPS_RESTRICTION = StaticToggle(
+    'allow_web_apps_restriction',
+    'Makes domain eligible to be restricted from using web apps/app preview.',
+    tag=TAG_SAAS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    When enabled, the domain is eligible to be restricted from using web apps/app preview. The intention is
+    to only enable this for domains in extreme cases where their formplayer restores are resource intensive
+    to the point where they can degrade web apps performance for the entire system.
+    """
+)
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
