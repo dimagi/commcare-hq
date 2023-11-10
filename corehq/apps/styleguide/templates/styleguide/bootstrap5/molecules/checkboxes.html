@@ -1,0 +1,108 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Checkboxes &amp; Switches</h1>
+  <p class="sg-lead">
+    A guide of how we use checkboxes and switches in HQ.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#checkboxes">Checkboxes</a>
+        <ul>
+          <li><a href="#checkbox-usage-crispy-forms">Usage in Crispy Forms</a></li>
+          <li><a href="#checkboxes-standard-forms">Usage in Standard HTML Forms</a></li>
+          <li><a href="#checkboxes-horizontal-forms">Usage in Horizontal Forms</a></li>
+        </ul>
+      </li>
+      <li><a href="#switches">Switches</a>
+        <ul>
+          <li><a href="#switch-usage-crispy-forms">Usage in Crispy Forms</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">Overview</h2>
+  <p>
+    HQ typically doesn't use checkboxes to select options from a list, but we do frequently use single
+    checkboxes for true or false values. In the past we didn't have switches available,
+    so checkboxes were often used to indicate whether we wanted to turn a setting on or off.
+  </p>
+  <p>
+    However, with the introduction of switches in Bootstrap 5, we should move toward using switches for on/off settings
+    and checkboxes to indicate whether a <em>statement</em> is true or false.
+  </p>
+  <h2 id="checkboxes" class="pt-4">
+    Checkboxes
+  </h2>
+  <p>
+    Checkboxes and their labels should get wrapped in a <code>form-check</code> classed <code>div</code> element.
+  </p>
+  <p>
+    See <a href="https://getbootstrap.com/docs/5.3/forms/checks-radios/" target="_blank">Bootstrap's documentation</a>
+    for a more complete checkbox deep dive.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.checkbox %}
+  <h3 id="checkbox-usage-crispy-forms" class="pt-3">
+    Checkbox Usage in Crispy Forms
+  </h3>
+  <p>
+    Checkboxes in <code>form-horizontal</code> classed crispy forms
+    can be challenging to style. Checkboxes are the default representation for a <code>BooleanField</code>, but they're
+    displayed with the label to the right of the checkbox, instead of displaying the label on the
+    left as for other fields.
+  </p>
+  <p>
+    To get a label to appear on the left, checkboxes are sometimes displayed as a single-element you must use the
+    <code>BootstrapCheckboxInput</code> <code>widget</code> and the <code>PrependText</code> crispy forms layout element
+    as shown below.
+  </p>
+  <p>
+    If you want to display a checkbox without an additional left-hand label, the default <code>Field</code> layout element
+    works perfectly fine.
+  </p>
+  {% include 'styleguide/bootstrap5/form_example.html' with content=examples.checkbox_crispy %}
+  <h3 id="checkboxes-standard-forms" class="pt-3">
+    Checkbox Usage in Standard HTML Forms
+  </h3>
+  <p>
+    As mentioned above, when checkbox labels are used, they should be statements about what the value means.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.checkbox_form %}
+  <h3 id="checkboxes-horizontal-forms" class="pt-3">
+    Checkbox Usage in Horizontal Forms
+  </h3>
+  <p>
+    Checkboxes that appear in larger horizontal forms often have a separate label in addition to the label
+    next to the checkbox. The label on the left should be a short description of that checkbox (often the name of the field).
+    The label next to the checkbox should be a statement that expands on what that checkbox <em>means</em>.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.checkbox_horizontal_form %}
+
+  <h2 id="switches" class="pt-4">
+    Switches
+  </h2>
+  <p>
+    Switches are new as of Bootstrap 5. Use switches for indicating whether a particular setting is turned on or off.
+    Switches are for settings, checkboxes are for statements.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.switch %}
+  <h3 id="switch-usage-crispy-forms" class="pt-3">
+    Switch Usage in Crispy Forms
+  </h3>
+  <p>
+    Switches can also be used in crispy forms for <code>BooleanField</code>s using a combination of the
+    <code>BootstrapSwitchInput</code> <code>widget</code> and the <code>PrependText</code> crispy forms layout element
+    as shown below.
+  </p>
+  {% include 'styleguide/bootstrap5/form_example.html' with content=examples.switch_crispy %}
+
+{% endblock content %}
