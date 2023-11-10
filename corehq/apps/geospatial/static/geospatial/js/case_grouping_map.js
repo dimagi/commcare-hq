@@ -111,7 +111,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         };
 
         self.addGroupDataToCases = function(caseGroups, groupsData, assignDefaultGroup) {
-            const defaultGroup = groupsData[0];
+            const defaultGroup = groupsData.find((group) => {return group.groupId === DEFAULT_GROUP_ID});
             self.casesToExport().forEach(caseItem => {
                 const groupId = caseGroups[caseItem.caseId];
                 if (groupId !== undefined) {
