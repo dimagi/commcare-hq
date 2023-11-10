@@ -19,6 +19,7 @@ from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.retry import retry_on
 from soil import DownloadBase
 
 from corehq import toggles
@@ -361,26 +362,28 @@ def process_reporting_metadata_staging():
 
 
 def _process_reporting_metadata_staging(chunk_size=100):
-    from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
+    from corehq.apps.users.models import UserReportingMetadataStaging
     for pk in UserReportingMetadataStaging.objects.values_list('pk', flat=True).order_by('pk')[:chunk_size]:
         with transaction.atomic():
             record = UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).get(pk=pk)
-            user = CouchUser.get_by_user_id(record.user_id, record.domain)
             try:
-                record.process_record(user)
-            except ResourceConflict:
-                # if the user was updated before we were able to save the processed metadata, try again
-                user = CouchUser.get_by_user_id(record.user_id, record.domain)
-                try:
-                    record.process_record(user)
-                except Exception:
-                    notify_exception(None, "Error encountered in _process_reporting_metadata_staging")
-                else:
-                    record.delete()
+                _process_record_with_retry(record)
             except Exception:
                 notify_exception(None, "Error encountered in _process_reporting_metadata_staging")
             else:
                 record.delete()
+
+
+@retry_on(ResourceConflict, delays=[0])
+def _process_record_with_retry(record):
+    """
+    It is possible that an unrelated user update is saved to the db while we are processing the record
+    but before saving any user updates resulting from process_record. In this case, a ResourceConflict is
+    raised so we should try once more to see if it was just bad timing or a persistent error.
+    """
+    from corehq.apps.users.models import CouchUser
+    user = CouchUser.get_by_user_id(record.user_id, record.domain)
+    record.process_record(user)
 
 
 @task(queue='background_queue', acks_late=True)
