@@ -43,14 +43,6 @@ class TestFromPythonInElasticUser(TestCase):
         commcare_user = user_adapter.to_json(self.user)
         es_user = user_adapter.search({})['hits']['hits'][0]['_source']
 
-        del commcare_user['domain_memberships']
-        del es_user['domain_membership']
-
         self.assertEqual(es_user, commcare_user)
-
-    def test_domain_membership_transform(self):
-        user_adapter.index(self.user, refresh=True)
-        es_unfixed_doc = user_adapter._search({})['hits']['hits'][0]['_source']
-        self.assertTrue('domain_memberships' in es_unfixed_doc)
-        es_fixed_doc = user_adapter.search({})['hits']['hits'][0]['_source']
-        self.assertTrue('domain_membership' in es_fixed_doc)
+        # Make sure es_user can be wrapped as CommCareUser
+        CommCareUser.wrap(es_user)

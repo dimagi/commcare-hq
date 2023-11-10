@@ -117,16 +117,8 @@ class ElasticUser(ElasticDocumentAdapter):
 
         if user_dict['doc_type'] in self.single_domain_types:
             user_dict['domain_memberships'] = [copy(user_dict['domain_membership'])]
-            del user_dict['domain_membership']
 
         return super()._from_dict(user_dict)
-
-    def _fix_hit(self, result):
-        super()._fix_hit(result)
-        doc_source = result['_source']
-        if doc_source['doc_type'] in self.single_domain_types:
-            doc_source['domain_membership'] = copy(doc_source['domain_memberships'][0])
-        del doc_source['domain_memberships']
 
 
 user_adapter = create_document_adapter(

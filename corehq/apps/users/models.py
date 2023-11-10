@@ -1665,6 +1665,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             data['domain_membership'] = DomainMembership(
                 domain=data.get('domain', ""), role_id=role_id
             ).to_json()
+
+        # cleanup docs coming from ES
+        if 'domain_memberships' in data:
+            del data['domain_memberships']
         return super(CommCareUser, cls).wrap(data)
 
     def _is_demo_user_cached_value_is_stale(self):

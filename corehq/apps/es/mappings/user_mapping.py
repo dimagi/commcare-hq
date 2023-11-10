@@ -115,6 +115,12 @@ USER_MAPPING = {
             },
             "type": "text"
         },
+        # CommCareUser.domain_membership is indexed
+        #   as a single list domain_memberships
+        "domain_membership": {
+            "enabled": False,
+            "type": "object"
+        },
         "domain_memberships": {
             "dynamic": False,
             "type": "nested",
