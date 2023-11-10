@@ -22,7 +22,7 @@
   <div class="col col-md-2">
     <span id="export-controls">
       <div class="controls">
-        <button class="btn-default form-control" data-bind="click: downloadCSV">
+        <button class="btn-default form-control" data-bind="click: downloadCSV, disable: !groupsReady()">
           {% trans "Export Groups" %}
         </button>
       </div>
@@ -95,13 +95,14 @@
             <thead>
               <th colspan="2">{% trans "Select Case Groups to View" %}</th>
             </thead>
-            <tbody data-bind="foreach: allGroups">
+            <tbody data-bind="foreach: caseGroupsForTable">
               <tr>
                 <td data-bind="event: {mouseover: $parent.highlightGroup, mouseout: $parent.restoreMarkerOpacity}">
                   <div class="checkbox">
                     <label>
-                      <input type="checkbox" data-bind="checked: $parent.visibleGroupIDs, checkedValue: groupID" />
-                        <span data-bind="text: groupID"></span>
+                      <input type="checkbox" data-bind="checked: $parent.visibleGroupIDs, checkedValue: groupId" />
+                      <span data-bind="text: name"></span>
+                      <span data-bind="style: {color: color}">■</span>
                     </label>
                   </div>
                 </td>
@@ -111,12 +112,12 @@
         </div>
         <div class="row">
           <div class="col col-md-6">
-            <button class="btn-default form-control" data-bind="click: showSelectedGroups()">
+            <button class="btn-default form-control" data-bind="click: showSelectedGroups(), disable: !groupsReady()">
               {% trans "Show Only Selected Groups on Map" %}
             </button>
           </div>
           <div class="col col-md-6">
-            <button class="btn-default form-control" data-bind="click: showAllGroups()">
+            <button class="btn-default form-control" data-bind="click: showAllGroups(), disable: !groupsReady()">
               {% trans "Show All Groups" %}
             </button>
           </div>
@@ -125,4 +126,15 @@
     </div>
   </div>
 </div>
+
+<script type="text/html" id="select-case">
+  <div class="d-flex flex-row">
+    <label data-bind="attr: {for: selectCssId}">Select group</label>
+    <select class="form-control" data-bind="attr: {id: selectCssId},
+        options: groupsOptions, optionsText: 'name', optionsValue: 'groupId', value: selectedGroup">
+    </select>
+  </div>
+  <div data-bind="html: $data.itemData.caseLink"></div>
+</script>
+
 {% endblock %}
