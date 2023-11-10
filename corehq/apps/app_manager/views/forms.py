@@ -923,7 +923,7 @@ def _get_linkable_forms_context(module, langs):
         return "{} > {}".format(module_name, form_name)
 
     linkable_items = []
-    is_multi_select = module.is_multi_select()
+    is_multi_select = True #module.is_multi_select()
     for candidate_module in module.get_app().get_modules():
         # Menus can be linked automatically if they're a top-level menu (no parent)
         # or their parent menu's case type matches the current menu's parent's case type.
@@ -931,15 +931,18 @@ def _get_linkable_forms_context(module, langs):
         # dedicated screen to navigate to. All other menus can be linked manually.
         if not candidate_module.put_in_root:
             is_top_level = candidate_module.root_module_id is None
-            is_child_match = (
-                not is_top_level
-                and module.root_module_id is not None
-                and module.root_module.case_type == candidate_module.root_module.case_type
-            )
+            is_child_match = True #(
+                # not is_top_level
+                # and module.root_module_id is not None
+                # and module.root_module.case_type == candidate_module.root_module.case_type
+            # )
+            parent_name = ""
+            if candidate_module.root_module_id:
+                parent_name = _module_name(candidate_module.root_module) + " > "
             if is_top_level or is_child_match:
                 linkable_items.append({
                     'unique_id': candidate_module.unique_id,
-                    'name': _module_name(candidate_module),
+                    'name': parent_name + _module_name(candidate_module),
                     'auto_link': True,
                     'allow_manual_linking': False,
                 })
