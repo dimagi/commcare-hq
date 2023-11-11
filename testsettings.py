@@ -162,5 +162,4 @@ FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
 if os.environ.get("STRIPE_PRIVATE_KEY"):
-    STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLIC_KEY")
     STRIPE_PRIVATE_KEY = os.environ.get("STRIPE_PRIVATE_KEY")
