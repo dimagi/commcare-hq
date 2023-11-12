@@ -31,7 +31,11 @@ app_urls = [
 
 api_urls = [
     url(r'^login_as/users/$', LoginAsUsers.as_view(), name=LoginAsUsers.urlname),
-    url(r'^readable_questions/$', waf_allow('XSS_BODY')(ReadableQuestions.as_view()), name=ReadableQuestions.urlname),
+    url(
+        r'^readable_questions/$',
+        waf_allow('XSS_BODY')(ReadableQuestions.as_view()),
+        name=ReadableQuestions.urlname
+    ),
 ]
 
 # used in settings urls
