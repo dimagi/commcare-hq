@@ -436,6 +436,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.nameChecked = ko.observable(false);
         self.name.subscribe((value) => {
             if (!value) {
+                self.nameChecked(false);
                 return;
             }
             let existing = _.find(self.caseTypes(), function (prop) {
