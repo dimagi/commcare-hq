@@ -442,6 +442,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 return prop.name === value;
             });
             self.nameUnique(!existing);
+            self.nameValid(isNameValid(self.name()));
             self.nameChecked(true);
         });
 
