@@ -101,17 +101,6 @@ class CaseManagementMap(BaseCaseMapReport):
         return reverse('geospatial_default', args=[self.request.project.name])
 
     @property
-    def template_context(self):
-        context = super(CaseManagementMap, self).template_context
-        context.update({
-            'saved_polygons': [
-                {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
-                for p in GeoPolygon.objects.filter(domain=self.domain).all()
-            ]
-        })
-        return context
-
-    @property
     def rows(self):
         cases = []
         for row in self.es_results['hits'].get('hits', []):
@@ -203,9 +192,16 @@ class CaseGroupingReport(BaseCaseMapReport):
             bottom_right=bounds['bottom_right'],
         )]
         if self.request.GET.get('features'):
-            features = json.loads(self.request.GET['features'])
-            features_filter = self._get_filter_for_features(features)
-            filters_.append(features_filter)
+            try:
+                features = json.loads(self.request.GET['features'])
+                features_filter = self._get_filter_for_features(features)
+                filters_.append(features_filter)
+            except json.JSONDecodeError:
+                raise ValueError('"features" parameter is not valid GeoJSON')
+            except AssertionError as err:
+                raise ValueError(
+                    '"features" parameter has an unsupported geometry type'
+                ) from err
         query = self._filter_query(query, filters_)
         es_results = query.run().raw
 
@@ -266,8 +262,15 @@ class CaseGroupingReport(BaseCaseMapReport):
         """
         query = super()._build_query()
         if self.request.GET.get('features'):
-            features = json.loads(self.request.GET['features'])
-            features_filter = self._get_filter_for_features(features)
+            try:
+                features = json.loads(self.request.GET['features'])
+                features_filter = self._get_filter_for_features(features)
+            except json.JSONDecodeError:
+                raise ValueError('"features" parameter is not valid GeoJSON')
+            except AssertionError as err:
+                raise ValueError(
+                    '"features" parameter has an unsupported geometry type'
+                ) from err
             query = self._filter_query(query, [features_filter])
         return query
 
@@ -276,6 +279,8 @@ class CaseGroupingReport(BaseCaseMapReport):
         """
         Returns an Elasticsearch filter to select for cases within the
         polygons defined by GeoJSON ``features``.
+
+        Raises AssertionError on unsupported geometry type.
 
         Example value of ``features``::
 
