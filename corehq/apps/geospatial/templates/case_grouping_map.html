@@ -129,7 +129,7 @@
 
 <script type="text/html" id="select-case">
   <div class="d-flex flex-row">
-    <label data-bind="attr: {for: selectCssId}">Select group</label>
+    <label data-bind="attr: {for: selectCssId}, text: title"></label>
     <select class="form-control" data-bind="attr: {id: selectCssId},
         options: groupsOptions, optionsText: 'name', optionsValue: 'groupId', value: selectedGroup">
     </select>

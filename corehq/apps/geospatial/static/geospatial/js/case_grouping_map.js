@@ -221,6 +221,7 @@ hqDefine("geospatial/js/case_grouping_map",[
     function mapMarkerModel(itemId, itemData, marker, markerColors) {
         'use strict';
         var self = {};
+        self.title = gettext("Select group");
         self.itemId = itemId;
         self.itemData = itemData;
         self.marker = marker;
@@ -228,7 +229,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.isSelected = ko.observable(false);
         self.markerColors = markerColors;
 
-        self.groupsOptions = ko.observable(caseGroupsInstance.allGroups);
+        self.groupsOptions = ko.observable(caseGroupsInstance.generatedGroups);
         self.selectedGroup = ko.observable(itemData.groupId);
 
         self.updateGroup = ko.computed(function () {
@@ -312,10 +313,10 @@ hqDefine("geospatial/js/case_grouping_map",[
         'use strict';
         var self = {};
 
-        self.allCaseGroups;
-        // allGroups and caseGroupsForTable contains the same data, but there's weird knockoutjs behaviour
-        // if we're making allGroups an observable. caseGroupsForTable is populated by setCaseGroupsForTable
-        self.allGroups = [];
+        self.groupsByCase;
+        // generatedGroups and caseGroupsForTable contains the same data, but there's weird knockoutjs behaviour
+        // if we're making generatedGroups an observable. caseGroupsForTable is populated by setCaseGroupsForTable
+        self.generatedGroups = [];
         self.caseGroupsForTable = ko.observableArray([]);
         self.visibleGroupIDs = ko.observableArray([]);
         self.casePerGroup = {};
@@ -325,22 +326,22 @@ hqDefine("geospatial/js/case_grouping_map",[
         };
 
         self.getGroupByID = function(groupID) {
-            return self.allGroups.find((group) => group.groupId === groupID);
+            return self.generatedGroups.find((group) => group.groupId === groupID);
         };
 
         self.updateCaseGroup = function(itemId, newGroupId) {
-            self.allCaseGroups[itemId] = newGroupId;
+            self.groupsByCase[itemId] = newGroupId;
         };
 
         self.loadCaseGroups = function(caseGroups, groups) {
-            self.allCaseGroups = caseGroups;
-            self.allGroups = groups;
+            self.groupsByCase = caseGroups;
+            self.generatedGroups = groups;
 
             self.showAllGroups();
         };
 
         self.clear = function() {
-            self.allGroups = [];
+            self.generatedGroups = [];
             self.caseGroupsForTable([]);
             self.visibleGroupIDs([]);
         };
@@ -377,31 +378,31 @@ hqDefine("geospatial/js/case_grouping_map",[
         };
 
         self.showSelectedGroups = function() {
-            if (!self.allCaseGroups) {
+            if (!self.groupsByCase) {
                 return;
             }
 
             let filteredCaseGroups = {};
-            for (const caseID in self.allCaseGroups) {
-                if (self.groupIDInVisibleGroupIds(self.allCaseGroups[caseID])) {
-                    filteredCaseGroups[caseID] = self.allCaseGroups[caseID];
+            for (const caseID in self.groupsByCase) {
+                if (self.groupIDInVisibleGroupIds(self.groupsByCase[caseID])) {
+                    filteredCaseGroups[caseID] = self.groupsByCase[caseID];
                 }
             }
-            exportModelInstance.addGroupDataToCases(filteredCaseGroups, self.allGroups);
+            exportModelInstance.addGroupDataToCases(filteredCaseGroups, self.generatedGroups);
             revealGroupsOnMap();
         };
 
         self.showAllGroups = function() {
-            if (!self.allCaseGroups) {
+            if (!self.groupsByCase) {
                 return;
             }
-            self.visibleGroupIDs(_.map(self.allGroups, function(group) {return group.groupId}));
+            self.visibleGroupIDs(_.map(self.generatedGroups, function(group) {return group.groupId}));
             revealGroupsOnMap();
             self.setCaseGroupsForTable();
         };
 
         self.setCaseGroupsForTable = function() {
-            self.caseGroupsForTable(self.allGroups);
+            self.caseGroupsForTable(self.generatedGroups);
         }
 
         self.groupsReady = function() {
@@ -426,7 +427,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
         for (const cluster of sourceFeatures) {
             const clusterId = cluster.properties.cluster_id;
-            if (processedCluster[clusterId] == undefined) {
+            if (processedCluster[clusterId] === undefined) {
                 processedCluster[clusterId] = true;
             }
             else {
@@ -439,7 +440,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                 const casePoints = await getClusterLeavesAsync(clusterSource, clusterId, pointCount);
                 const groupUUID =  utils.uuidv4();
 
-                if (casePoints.length > 0) {
+                if (casePoints.length) {
                     groupName = _.template(gettext("Group <%- groupCount %>"))({
                         groupCount: groupCount,
                     });
