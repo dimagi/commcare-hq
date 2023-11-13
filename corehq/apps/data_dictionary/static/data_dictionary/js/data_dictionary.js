@@ -357,7 +357,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             const propertyNameFormatted = self.newPropertyName().toLowerCase().trim();
             const activeCaseTypeData = self.activeCaseTypeData();
             for (const group of activeCaseTypeData) {
-                if (group.properties().some(v => v.name.toLowerCase() === propertyNameFormatted)) {
+                if (group.properties().find(v => v.name.toLowerCase() === propertyNameFormatted)) {
                     return false;
                 }
             }
