@@ -1516,8 +1516,6 @@ class ProjectUsersTab(UITab):
                      'urlname': 'delete_commcare_users'},
                     {'title': _('Bulk Lookup'),
                      'urlname': 'commcare_users_lookup'},
-                    {'title': _('Edit User Fields'),
-                     'urlname': 'user_fields_view'},
                     {'title': _('Filter and Download Mobile Workers'),
                      'urlname': 'filter_and_download_commcare_users'},
                     {'title': _(
@@ -1525,6 +1523,13 @@ class ProjectUsersTab(UITab):
                         'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
                 ],
                 'show_in_dropdown': True,
+            }
+
+    def _user_fields(self):
+        if self.can_access_all_locations and self.couch_user.can_edit_commcare_users():
+            return {
+                'title': _("Edit User Fields"),
+                'url': reverse('user_fields_view', args=[self.domain]),
             }
 
     def _groups(self):
@@ -1706,6 +1711,7 @@ class ProjectUsersTab(UITab):
             self._mobile_workers(),
             self._web_users(),
             self._roles_and_permissions(),
+            self._user_fields(),
             self._groups(),
             self._web_apps_permissions(),
         ])
