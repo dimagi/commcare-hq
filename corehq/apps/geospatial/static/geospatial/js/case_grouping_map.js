@@ -286,7 +286,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
                 const markerDiv = marker.getElement();
                 // Show popup on hover
-                markerDiv.addEventListener('mouseenter', () => marker.togglePopup());
+                markerDiv.addEventListener('mouseenter', marker.togglePopup);
 
                 // Hide popup if mouse leaves marker and popup
                 var addLeaveEvent = function (fromDiv, toDiv) {
