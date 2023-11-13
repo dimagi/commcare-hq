@@ -331,7 +331,7 @@
           </div>
         </div>
         {% if not request.is_view_only %}
-          <form class="form-inline">
+          <form class="form-inline" data-bind="css: { 'has-error': !newPropertyNameUnique() || !newPropertyNameValid() }">
             <input class="form-control" placeholder="Case Property" data-bind="value: newPropertyName">
             <button class="btn btn-default" data-bind="click: $root.newCaseProperty, enable: newPropertyNameUnique() && newPropertyNameValid()">
               <i class="fa fa-plus"></i>
@@ -347,7 +347,7 @@
             </div>
           </form>
           <br />
-          <form class="form-inline">
+          <form class="form-inline" data-bind="css: {'has-error': !newGroupNameUnique() || !newGroupNameValid()}">
             <input class="form-control" placeholder="Group Name" data-bind="value: newGroupName">
             <button class="btn btn-default" data-bind="click: $root.newGroup, enable: newGroupNameUnique() && newGroupNameValid()">
               <i class="fa fa-plus"></i>
