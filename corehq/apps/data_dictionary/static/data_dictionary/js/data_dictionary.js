@@ -336,6 +336,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.saveButton.setState('saved');
         };
 
+        function isNameValid(nameStr) {
+            // First character must be a letter, and the entire name can only contain letters, numbers, '-', and '_'
+            const pattern = /^[a-zA-Z][a-zA-Z0-9-_]*$/;
+            return pattern.test(nameStr);
+        }
+
         self.newPropertyNameUnique = ko.computed(function () {
             if (!self.newPropertyName()) {
                 return true;
