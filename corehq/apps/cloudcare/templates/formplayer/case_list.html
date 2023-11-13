@@ -227,13 +227,21 @@
 
 <script type="text/template" id="cell-layout-style-template">
   <% _.each(models, function(model){ %>
-  .<%- model.id %> {
-  grid-area: <%- model.gridStyle %>;
-  font-size: <%- model.fontStyle %>;
-  justify-self: <%- model.horizontalAlign %>;
-  text-align: <%- model.horizontalAlign %>;
-  align-self: <%- model.verticalAlign %>;
-  }
+    .<%- model.id %> {
+      grid-area: <%- model.gridStyle %>;
+      font-size: <%- model.fontStyle %>;
+      justify-self: <%- model.horizontalAlign %>;
+      text-align: <%- model.horizontalAlign %>;
+      align-self: <%- model.verticalAlign %>;
+      <% if (model.showBorder) { %>
+        border: 1px solid #685c53;
+        border-radius: 8px;
+        padding-top: 5px;
+        padding-bottom: 0px;
+        padding-left: 5px;
+        padding-right: 5px;
+      <% } %>
+    }
   <% }); %>
 </script>
 

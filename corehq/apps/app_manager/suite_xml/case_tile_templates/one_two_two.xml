@@ -50,7 +50,7 @@
   </field>
 
   <field>
-    <style horz-align="left" vert-align="center" font-size="small">
+    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
       <grid grid-height="1" grid-width="3" grid-x="3" grid-y="5"/>
     </style>
     <header>
