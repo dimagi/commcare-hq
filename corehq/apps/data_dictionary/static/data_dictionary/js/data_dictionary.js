@@ -342,6 +342,13 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return pattern.test(nameStr);
         }
 
+        self.newPropertyNameValid = ko.computed(function () {
+            if (!self.newPropertyName()) {
+                return true;
+            }
+            return isNameValid(self.newPropertyName());
+        });
+
         self.newPropertyNameUnique = ko.computed(function () {
             if (!self.newPropertyName()) {
                 return true;
@@ -355,6 +362,13 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 }
             }
             return true;
+        });
+
+        self.newGroupNameValid = ko.computed(function () {
+            if (!self.newGroupName()) {
+                return true;
+            }
+            return isNameValid(self.newGroupName());
         });
 
         self.newGroupNameUnique = ko.computed(function () {
