@@ -175,18 +175,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 divEl.css("width", "100%");
             }
             console.log("model.get('value')");
-            console.log(model.get('value'));
-            try {
-                model.set('value', attributes.value);
-            } catch(err) {
-                console.log("error!");
-                console.log(err);
-            }
+            console.log(model.set('value'));
 
+            //should set value
 
-            if (model.get('value')) {
-                $field.find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
+            if (sessionStorage.geocoderValue) {
+                $field.find('.mapboxgl-ctrl-geocoder--input').val(sessionStorage.geocoderValue);
             }
+            // if (model.get('value')) {
+            //     $field.find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
+            // }
         };
 
     var QueryView = Marionette.View.extend({
@@ -346,8 +344,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.model.set('value', $(e.currentTarget).val());
             } else if (this.model.get('input') === 'address') {
+                sessionStorage.geocoderValue = $(e.currentTarget).val();
                 console.log("this.model in changeQueryField");
-                console.log(this.model);
+                console.log("sessionStorage.geocoderValue");
+                console.log(sessionStorage.geocoderValue);
                 // geocoderItemCallback sets the value on the model
             } else if (this.model.get('input') === 'checkbox') {
                 var newValue = _.chain($(e.currentTarget).find('input[type=checkbox]'))
