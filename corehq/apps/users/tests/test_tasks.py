@@ -187,7 +187,7 @@ class TestRemoveUsersTestCases(TestCase):
 
 
 @mock.patch.object(UserReportingMetadataStaging, 'process_record')
-class TestProcessReportingMetadataStaging(TransactionTestCase):
+class TestProcessReportingMetadataStaging(TestCase):
 
     def test_record_is_deleted_if_processed_successfully(self, mock_process_record):
         record = UserReportingMetadataStaging.objects.create(user_id=self.user._id, domain='test-domain')
@@ -230,6 +230,17 @@ class TestProcessReportingMetadataStaging(TransactionTestCase):
         self.assertEqual(mock_process_record.call_count, 1)
         self.assertEqual(UserReportingMetadataStaging.objects.all().count(), 2)
 
+    def setUp(self):
+        super().setUp()
+        self.user = CommCareUser.create('test-domain', 'test-username', 'qwer1234', None, None)
+        self.addCleanup(self.user.delete, 'test-domain', deleted_by=None)
+
+
+@mock.patch.object(UserReportingMetadataStaging, 'process_record')
+class TestProcessReportingMetadataStagingTransaction(TransactionTestCase):
+    """
+    TransactionTestCase is much slower than TestCase, but needed to use new_db_connection
+    """
     def test_subsequent_records_are_processed_if_record_is_locked(self, mock_process_record):
         record = UserReportingMetadataStaging.objects.create(user_id=self.user._id, domain='test-domain')
         UserReportingMetadataStaging.objects.create(user_id=self.user._id, domain='test-domain')
