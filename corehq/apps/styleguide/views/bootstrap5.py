@@ -14,6 +14,11 @@ from corehq.apps.styleguide.context import (
     get_js_example_context,
 )
 from corehq.apps.styleguide.examples.bootstrap5.checkbox_form import CheckboxDemoForm
+from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_basic import BasicCrispyExampleForm
+from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_errors import ErrorsCrispyExampleForm
+from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_knockout import KnockoutCrispyExampleForm
+from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_knockout_validation import \
+    KnockoutValidationCrispyExampleForm
 from corehq.apps.styleguide.examples.bootstrap5.multiselect_form import MultiselectDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_ajax_form import Select2AjaxDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_autocomplete_ko_form import Select2AutocompleteKoForm
@@ -212,3 +217,34 @@ def styleguide_molecules_feedback(request):
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/feedback.html', context)
+
+
+@use_bootstrap5
+def styleguide_organisms_forms(request):
+    crispy_errors_form = ErrorsCrispyExampleForm({'full_name': 'Jon Jackson'})
+    crispy_errors_form.is_valid()
+    context = get_navigation_context("styleguide_organisms_forms_b5")
+    context.update({
+        'examples': {
+            'crispy_basic': CrispyFormsDemo(
+                BasicCrispyExampleForm(), get_crispy_forms_context('crispy_forms_basic.py'),
+            ),
+            'crispy_errors': CrispyFormsDemo(
+                crispy_errors_form, get_crispy_forms_context('crispy_forms_errors.py'),
+            ),
+            'crispy_knockout': CrispyFormsWithJsDemo(
+                form=KnockoutCrispyExampleForm(),
+                code_python=get_crispy_forms_context('crispy_forms_knockout.py'),
+                code_js=get_js_example_context('crispy_forms_knockout.js'),
+            ),
+            'crispy_knockout_validation': CrispyFormsWithJsDemo(
+                form=KnockoutValidationCrispyExampleForm(),
+                code_python=get_crispy_forms_context('crispy_forms_knockout_validation.py'),
+                code_js=get_js_example_context('crispy_forms_knockout_validation.js'),
+            ),
+            'basic_form': get_example_context('styleguide/bootstrap5/examples/basic_form.html'),
+            'form_invalid': get_example_context('styleguide/bootstrap5/examples/form_invalid.html'),
+            'form_valid': get_example_context('styleguide/bootstrap5/examples/form_valid.html'),
+        }
+    })
+    return render(request, 'styleguide/bootstrap5/organisms/forms.html', context)
