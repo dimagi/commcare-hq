@@ -12,6 +12,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         var self = {};
         self.dataTableElem = options.dataTableElem || '.datatable';
         self.paginationType = options.paginationType || 'bs_normal';
+        self.forcePageSize = options.forcePageSize || false;
         self.defaultRows = options.defaultRows || 10;
         self.startAtRowNum = options.startAtRowNum || 0;
         self.showAllRowsOption = options.showAllRowsOption || false;
@@ -207,6 +208,10 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                 if (self.aoColumns)
                     params.aoColumns = self.aoColumns;
 
+                if (self.forcePageSize) {
+                    // limit the page size option to just the default size
+                    params.lengthMenu = [self.defaultRows];
+                }
                 var datatable = $(this).dataTable(params);
                 if (!self.datatable)
                     self.datatable = datatable;
