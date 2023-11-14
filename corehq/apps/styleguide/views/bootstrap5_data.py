@@ -1,6 +1,7 @@
 import random
 import time
 from collections import namedtuple
+from gettext import gettext
 
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -71,3 +72,21 @@ def submit_feedback_demo(request):
     return JsonResponse({
         "success": True,
     })
+
+
+def validate_ko_demo(request):
+    time.sleep(1)  # simulates a long process, so we can preview / check spinner icon
+    response = {
+        "isValid": True,
+    }
+    if request.POST.get('username') == 'jon':
+        response = {
+            "isValid": False,
+            "message": gettext("This username is already taken. Please try another one."),
+        }
+    if request.POST.get('email') == 'jon@dimagi.com':
+        response = {
+            "isValid": False,
+            "message": gettext("This email is already assigned to a user. Please use another email."),
+        }
+    return JsonResponse(response)
