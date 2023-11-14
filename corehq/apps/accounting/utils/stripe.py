@@ -33,7 +33,7 @@ def charge_through_stripe(card, customer, amount_in_dollars, currency, descripti
     Parameters:
     - card (str): The card token or ID representing the payment source to be charged.
     - customer (str): The ID of the stripe customer to whom the card belongs.
-    - amount_in_dollars (int): The amount to charge in dollars
+    - amount_in_dollars (Decimal): The amount to charge, represented as a Decimal in dollars.
     - currency (str): The three-letter ISO currency code representing the currency of the charge.
     - description (str): An arbitrary string attached to the charge, for describing the transaction.
     - idempotency_key (str, optional): A unique key that ensures idempotence of the charge.
