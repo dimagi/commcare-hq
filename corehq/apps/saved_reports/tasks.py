@@ -149,8 +149,8 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
 
         for recipient in recipient_emails:
             send_HTML_email(subject, recipient,
-                            body, email_from=settings.DEFAULT_FROM_EMAIL,
-                            smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
+                            body, smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES,
+                            domain=domain, use_domain_gateway=True,)
 
     except Exception as er:
         notify_exception(
