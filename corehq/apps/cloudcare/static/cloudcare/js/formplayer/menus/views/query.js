@@ -85,6 +85,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 model.set('value', item.place_name);
                 console.log("initMapboxWidget called in geocoderItemCallback");
                 initMapboxWidget(model);
+                sessionStorage.geocoderValue = item.place_name;
                 var broadcastObj = formEntryUtils.getBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
@@ -176,6 +177,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
             console.log("model.get('value')");
             console.log(model.set('value'));
+
+            console.log(sessionStorage.geocoderValue);
+            console.log(sessionStorage.geocoderValue);
 
             //should set value
 
@@ -344,10 +348,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.model.set('value', $(e.currentTarget).val());
             } else if (this.model.get('input') === 'address') {
-                sessionStorage.geocoderValue = $(e.currentTarget).val();
-                console.log("this.model in changeQueryField");
-                console.log("sessionStorage.geocoderValue");
-                console.log(sessionStorage.geocoderValue);
                 // geocoderItemCallback sets the value on the model
             } else if (this.model.get('input') === 'checkbox') {
                 var newValue = _.chain($(e.currentTarget).find('input[type=checkbox]'))
