@@ -374,7 +374,7 @@ def send_hubspot_form(form_id, request, user=None, extra_fields=None):
 
 @analytics_task()
 def send_hubspot_form_task(form_id, web_user_id, hubspot_cookie, meta,
-                              extra_fields=None):
+                           extra_fields=None):
     web_user = WebUser.get_by_user_id(web_user_id)
     _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
                           extra_fields=extra_fields)
@@ -442,7 +442,8 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
         res = km.record(
             email,
             event,
-            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()} if properties else {},
+            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()}
+            if properties else {},
             timestamp
         )
         log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
@@ -777,10 +778,10 @@ def get_subscription_properties_by_user(couch_user):
             ProBonoStatus.YES,
             ProBonoStatus.DISCOUNTED,
         ]
-        return (plan_version.plan.visibility != SoftwarePlanVisibility.TRIAL and
-                subscription.service_type not in NON_PAYING_SERVICE_TYPES and
-                subscription.pro_bono_status not in NON_PAYING_PRO_BONO_STATUSES and
-                plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY)
+        return (plan_version.plan.visibility != SoftwarePlanVisibility.TRIAL
+                and subscription.service_type not in NON_PAYING_SERVICE_TYPES
+                and subscription.pro_bono_status not in NON_PAYING_PRO_BONO_STATUSES
+                and plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY)
 
     # Note: using "yes" and "no" instead of True and False because spec calls
     # for using these values. (True is just converted to "True" in KISSmetrics)
