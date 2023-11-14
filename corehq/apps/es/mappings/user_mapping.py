@@ -397,19 +397,25 @@ USER_MAPPING = {
         "status": {
             "type": "text"
         },
-        "user_data": {
-            "enabled": False,
-            "type": "object"
-        },
         "user_data_es": {
             "dynamic": False,
             "type": "nested",
             "properties": {
-                "key": {
-                    "type": "keyword"
-                },
-                "value": {
+                "domain": {
+                    "fields": {"exact": {"type": "keyword"}},
                     "type": "text"
+                },
+                "data": {
+                    "dynamic": False,
+                    "type": "nested",
+                    "properties": {
+                        "key": {
+                            "type": "keyword"
+                        },
+                        "value": {
+                            "type": "text"
+                        }
+                    }
                 }
             }
         },

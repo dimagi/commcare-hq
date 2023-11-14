@@ -20,9 +20,12 @@ class TestUserES(TestCase):
         cls.domain_obj = create_domain(cls.domain)
 
         with sync_users_to_es():
-            cls._create_mobile_worker('stark', user_data={'sigil': 'direwolf', 'seat': 'Winterfell'})
-            cls._create_mobile_worker('lannister', user_data={'sigil': 'lion', 'seat': 'Casterly Rock'})
-            cls._create_mobile_worker('targaryen', user_data={'sigil': 'dragon', 'false_sigil': 'direwolf'})
+            cls._create_mobile_worker('stark',
+                user_data={'sigil': 'direwolf', 'seat': 'Winterfell', 'optional': 'ok'})
+            cls._create_mobile_worker('lannister',
+                user_data={'sigil': 'lion', 'seat': 'Casterly Rock', 'optional': ''})
+            cls._create_mobile_worker('targaryen',
+                user_data={'sigil': 'dragon', 'false_sigil': 'direwolf'})
         manager.index_refresh(user_adapter.index_name)
 
     @classmethod
@@ -59,3 +62,12 @@ class TestUserES(TestCase):
                              .user_data('seat', 'Casterly Rock')
                              .values_list('username', flat=True))
         self.assertEqual(direwolf_families, [])
+
+    def test_missing_key(self):
+        missing_optional = (UserES()
+                            .missing_or_empty_user_data_property('optional')
+                            .values_list('username', flat=True))
+        self.assertEqual(
+            missing_optional,
+            ['lannister', 'targaryen']
+        )
