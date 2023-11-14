@@ -446,15 +446,18 @@ hqDefine("data_dictionary/js/data_dictionary", [
         });
 
         self.nameValid = ko.observable(false);
+        self.nameUnique = ko.observable(false);
         self.nameChecked = ko.observable(false);
         self.name.subscribe((value) => {
             if (!value) {
+                self.nameChecked(false);
                 return;
             }
             let existing = _.find(self.caseTypes(), function (prop) {
                 return prop.name === value;
             });
-            self.nameValid(!existing);
+            self.nameUnique(!existing);
+            self.nameValid(isNameValid(self.name()));
             self.nameChecked(true);
         });
 
@@ -468,6 +471,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             $("#create-case-type-form").trigger("reset");
             self.name("");
             self.nameValid(false);
+            self.nameUnique(false);
             self.nameChecked(false);
             return true;
         };
