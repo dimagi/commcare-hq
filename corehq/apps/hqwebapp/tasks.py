@@ -44,7 +44,8 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_mail_async(self, subject, message, recipient_list, from_email=settings.DEFAULT_FROM_EMAIL,
-                    messaging_event_id=None, domain: str = None, use_domain_gateway=False):
+                    messaging_event_id=None, filename: str = None, content=None, domain: str = None,
+                    use_domain_gateway=False):
     """ Call with send_mail_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -79,8 +80,8 @@ def send_mail_async(self, subject, message, recipient_list, from_email=settings.
 
     headers = {}
 
-    if settings.RETURN_PATH_EMAIL:
-        headers['Return-Path'] = settings.RETURN_PATH_EMAIL
+    if configuration.return_path_email:
+        headers['Return-Path'] = configuration.return_path_email
 
     if messaging_event_id is not None:
         headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
@@ -96,6 +97,8 @@ def send_mail_async(self, subject, message, recipient_list, from_email=settings.
             headers=headers,
             connection=configuration.connection
         )
+        if filename and content:
+            message.attach(filename=filename, content=content)
         return message.send()
     except SMTPDataError as e:
         # If the SES configuration has not been properly set up, resend the message
@@ -136,7 +139,8 @@ def send_html_email_async(self, subject, recipient, html_content,
                           file_attachments=None, bcc=None,
                           smtp_exception_skip_list=None,
                           messaging_event_id=None,
-                          domain=None):
+                          domain=None,
+                          use_domain_gateway=False):
     """ Call with send_HTML_email_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -154,7 +158,8 @@ def send_html_email_async(self, subject, recipient, html_content,
             bcc=bcc,
             smtp_exception_skip_list=smtp_exception_skip_list,
             messaging_event_id=messaging_event_id,
-            domain=domain
+            domain=domain,
+            use_domain_gateway=use_domain_gateway
         )
     except Exception as e:
         recipient = list(recipient) if not isinstance(recipient, str) else [recipient]
