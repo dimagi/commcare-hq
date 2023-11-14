@@ -346,6 +346,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.model.set('value', $(e.currentTarget).val());
             } else if (this.model.get('input') === 'address') {
+                console.log("this.model in changeQueryField");
+                console.log(this.model);
                 // geocoderItemCallback sets the value on the model
             } else if (this.model.get('input') === 'checkbox') {
                 var newValue = _.chain($(e.currentTarget).find('input[type=checkbox]'))
