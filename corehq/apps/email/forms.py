@@ -18,10 +18,10 @@ class EmailSMTPSettingsForm(forms.ModelForm):
         widget=forms.PasswordInput(render_value=True),
     )
 
-    server = forms.URLField(
+    server = forms.CharField(
         label=_('Server'),
         required=True,
-        help_text=_('e.g. "https://smtp.example.com"'),
+        help_text=_('e.g. "smtp.example.com"'),
     )
 
     port = forms.IntegerField(

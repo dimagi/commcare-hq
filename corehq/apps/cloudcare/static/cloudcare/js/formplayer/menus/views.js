@@ -230,17 +230,23 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
+            clickIcon: ".module-icon.btn",
             selectRow: ".select-row-checkbox",
             showMore: ".show-more",
         },
 
         events: {
+            "click @ui.clickIcon": "iconClick",
             "click": "rowClick",
             "keydown": "rowKeyAction",
             'click @ui.selectRow': 'selectRowAction',
             'keypress @ui.selectRow': 'selectRowAction',
             'click @ui.showMore': 'showMoreAction',
             'keypress @ui.showMore': 'showMoreAction',
+        },
+
+        modelEvents: {
+            "change": "modelChanged",
         },
 
         initialize: function () {
@@ -262,6 +268,77 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 "tabindex": "0",
                 "id": `row-${modelId}`,
             };
+        },
+
+        iconClick: function (e) {
+            e.stopImmediatePropagation();
+            const fieldIndex = this.getFieldIndexFromEvent(e);
+            const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
+            const isBackground = this.options.endpointActions[fieldIndex]['background'];
+            let caseId;
+            if (this.options.headerRowIndices && !$(e.target).closest('.group-rows').length) {
+                caseId = this.model.get('groupKey');
+            } else {
+                caseId = this.model.get('id');
+            }
+            // Grab endpoint id from urlTemplate
+            const temp = urlTemplate.substring(0, urlTemplate.indexOf('?') - 1);
+            const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
+            const endpointArg = urlTemplate.substring(urlTemplate.indexOf('?') + 1, urlTemplate.lastIndexOf('='));
+            e.target.className += " disabled";
+            this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
+        },
+
+        getFieldIndexFromEvent: function (e) {
+            return $(e.currentTarget).parent().parent().children('.module-case-list-column').index($(e.currentTarget).parent());
+        },
+
+        clickableIconRequest: function (e, endpointId, caseId, endpointArg, isBackground) {
+            const self = this;
+            const clickedIcon = e.target;
+            clickedIcon.classList.add("disabled");
+            clickedIcon.style.display = 'none';
+            const spinnerElement = $(clickedIcon).siblings('i');
+            spinnerElement[0].style.display = '';
+            const currentUrlToObject = formplayerUtils.currentUrlToObject();
+            currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
+            currentUrlToObject.endpointId = endpointId;
+            currentUrlToObject.isBackground = isBackground;
+
+            function resetIcon() {
+                clickedIcon.classList.remove("disabled");
+                clickedIcon.style.display = '';
+                spinnerElement[0].style.display = 'none';
+            }
+
+            $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
+                self.reloadCase(self.model.get('id'));
+                resetIcon();
+            }).fail(function () {
+                resetIcon();
+            });
+        },
+
+        reloadCase: function (caseId) {
+            const self = this;
+            const urlObject = formplayerUtils.currentUrlToObject();
+            urlObject.addSelection(caseId);
+            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
+            $.when(fetchingDetails).done(function (detailResponse) {
+                self.updateModelFromDetailResponse(caseId, detailResponse);
+            }).fail(function () {
+                console.log('could not get case details');
+            });
+        },
+
+        updateModelFromDetailResponse: function (caseId, detailResponse) {
+            this.model.set("data", detailResponse.models[0].attributes.details);
+        },
+
+        modelChanged: function () {
+            if (!this.model.get('updating')) {
+                this.render();
+            }
         },
 
         rowClick: function (e) {
@@ -327,7 +404,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
-                    return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
+                    return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
             };
         },
@@ -362,6 +439,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             dict['prefix'] = this.options.prefix;
             return dict;
         },
+
+        updateModelFromDetailResponse: function (caseId, detailResponse) {
+            CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+        },
+
+        getFieldIndexFromEvent: function (e) {
+            CaseTileView.__super__.getFieldIndexFromEvent.apply(this, [e]);
+            return $(e.currentTarget).parent().index();
+        },
     });
 
     const CaseTileGroupedView = CaseTileView.extend({
@@ -374,32 +460,55 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
             const data = this.options.model.get('data');
             const headerRowIndices = this.options.headerRowIndices;
+
             dict['indexedHeaderData'] = headerRowIndices.reduce((acc, index) => {
                 acc[index] = data[index];
                 return acc;
             }, {});
-
             dict['indexedRowDataList'] = this.getIndexedRowDataList();
 
             return dict;
         },
 
+        getFieldIndexFromEvent: function (e) {
+            const fieldIndex = CaseTileGroupedView.__super__.getFieldIndexFromEvent.apply(this, [e]);
+            if ($(e.target).closest('.group-rows').length) {
+                return this.options.bodyRowIndices[fieldIndex];
+            } else {
+                return this.options.headerRowIndices[fieldIndex];
+            }
+        },
+
         getIndexedRowDataList: function () {
             let indexedRowDataList = [];
             for (let model of this.options.groupModelsList) {
-                let indexedRowData = model.get('data')
-                    .reduce((acc, data, i) => {
-                        if (!this.options.headerRowIndices.includes(i) &&
-                            this.options.styles[i].widthHint !== 0) {
-                            acc[i] = data;
-                        }
-                        return acc;
-                    }, {});
-                if (Object.keys(indexedRowData).length !== 0) {
-                    indexedRowDataList.push(indexedRowData);
+                if (model.id === this.model.get('updatedCaseId')) {
+                    indexedRowDataList.push(this.model.get('updatedRowData'));
+                } else {
+                    let indexedRowData = model.get('data')
+                        .reduce((acc, data, i) => {
+                            if (this.options.bodyRowIndices.includes(i)) {
+                                acc[i] = data;
+                            }
+                            return acc;
+                        }, {});
+                    if (Object.keys(indexedRowData).length !== 0) {
+                        indexedRowDataList.push(indexedRowData);
+                    }
                 }
             }
             return indexedRowDataList;
+        },
+
+        updateModelFromDetailResponse: function (caseId, detailResponse) {
+            this.model.set('updating', true);
+            CaseTileGroupedView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+            this.model.set('updatedCaseId', caseId);
+            this.model.set('updatedRowData', this.options.bodyRowIndices.reduce((acc, index) => {
+                acc[index] = detailResponse.models[0].attributes.details[index];
+                return acc;
+            }, {}));
+            this.model.set('updating', false);
         },
     });
 
@@ -455,6 +564,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
+                endpointActions: this.options.endpointActions,
             };
         },
 
@@ -1001,11 +1111,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }
             }
 
-            let groupHeaderRows = this.options.collection.groupHeaderRows;
+            const groupHeaderRows = this.options.collection.groupHeaderRows;
             // select the indices of the tile fields that are part of the header rows
-            this.headerRowIndices = this.options.collection.tiles
-                .map((tile, index) => ({tile: tile, index: index}))
-                .filter((tile) => tile.tile && tile.tile.gridY < groupHeaderRows)
+
+            const isHeaderRow = (y) => y < groupHeaderRows;
+            const tileAndIndex = this.options.collection.tiles
+                .map((tile, index) => ({tile: tile, index: index}));
+
+            this.headerRowIndices = tileAndIndex
+                .filter((tile) => tile.tile && isHeaderRow(tile.tile.gridY))
+                .map((tile) => tile.index);
+            this.bodyRowIndices = tileAndIndex
+                .filter((tile) => tile.tile && !isHeaderRow(tile.tile.gridY))
                 .map((tile) => tile.index);
         },
 
@@ -1014,6 +1131,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             dict.groupHeaderRows = this.options.collection.groupHeaderRows;
             dict.groupModelsList = this.groupedModels[model.get("groupKey")];
             dict.headerRowIndices = this.headerRowIndices;
+            dict.bodyRowIndices = this.bodyRowIndices;
             return dict;
         },
     });
@@ -1158,7 +1276,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {
-                    return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
+                    return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
             };
         },

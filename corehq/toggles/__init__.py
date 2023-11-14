@@ -1419,7 +1419,7 @@ SMS_LOG_CHANGES = StaticToggle(
 EXPORT_DATA_SOURCE_DATA = StaticToggle(
     'export_data_source_data',
     'Add Export Data Source Data page',
-    TAG_CUSTOM,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
     description="Add the Export Data Source Data page to the Data tab",
 )
@@ -2655,4 +2655,13 @@ DATA_DICTIONARY = FrozenPrivilegeToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Project level data dictionary of cases',
     help_link='https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary'
+)
+
+
+CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
+    slug='custom_domain_banners',
+    label='Allow projects to add banners for their users on HQ',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow projects to add banners visible to their users on HQ on every login',
 )
