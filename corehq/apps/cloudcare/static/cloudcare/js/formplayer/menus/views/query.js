@@ -563,13 +563,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.performSubmit();
         },
 
-        performSubmit: function () {
+        performSubmit: function (initiator) {
             var self = this;
             self.validateAllFields().done(function () {
                 FormplayerFrontend.trigger(
                     "menu:query",
                     self.getAnswers(),
-                    self.options.sidebarEnabled
+                    self.options.sidebarEnabled,
+                    initiator
                 );
                 if (self.smallScreenEnabled && self.options.sidebarEnabled) {
                     $('#sidebar-region').collapse('hide');
@@ -587,7 +588,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
             });
             if (invalidRequiredFields.length === 0) {
-                self.performSubmit();
+                self.performSubmit("dynamicSearch");
             }
         },
 
