@@ -121,8 +121,10 @@ class TestStripePaymentMethod(BaseAccountingTest):
         stripe.api_key = None
         original_key = settings.STRIPE_PRIVATE_KEY
         settings.STRIPE_PRIVATE_KEY = None
-        self.assertEqual(len(self.payment_method.all_cards), 0)
-        settings.STRIPE_PRIVATE_KEY = original_key
+        try:
+            self.assertEqual(len(self.payment_method.all_cards), 0)
+        finally:
+            settings.STRIPE_PRIVATE_KEY = original_key
 
     def test_all_cards_serialized_return_the_correct_property_of_a_card(self):
         cards = self.payment_method.all_cards_serialized(self.billing_account)
