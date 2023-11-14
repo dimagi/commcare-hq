@@ -180,15 +180,11 @@ class TestStripePaymentMethod(BaseAccountingTest):
         with self.assertRaises(stripe.error.InvalidRequestError):
             self.payment_method.remove_card("non_existent_card_id")
 
-    def test_create_card_creates_card_and_sets_default(self):
+    def test_create_card_creates_card(self):
         created_card = self.payment_method.create_card('tok_discover', self.billing_account, None)
         self.addCleanup(created_card.delete)
         self.assertIsNotNone(created_card)
         self.assertEqual(created_card.brand, 'Discover')
-        customer = self.payment_method._get_or_create_stripe_customer()
-        # TODO: not able to get default card updated. But we also didn't use default card at any place.
-        # Can we just remove set default???
-        self.assertEqual(created_card.id, customer.default_card)
 
     def test_create_charge_success(self):
         description = "Test charge"

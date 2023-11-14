@@ -3776,8 +3776,7 @@ class StripePaymentMethod(PaymentMethod):
 
         This method uses a Stripe token (usually generated on the client side)
         to securely create a new card and associate it with the customer
-        represented by this instance. The card, once created, can be set as the
-        default card for the customer. Additionally, if the 'autopay' flag is
+        represented by this instance. Additionally, if the 'autopay' flag is
         set to True, it sets the card to be used for automatic payments for
         a specific billing account and domain.
 
@@ -3795,14 +3794,8 @@ class StripePaymentMethod(PaymentMethod):
         """
         customer = self.customer
         card = customer.cards.create(card=stripe_token)
-        self.set_default_card(card)
         if autopay:
             self.set_autopay(card, billing_account, domain)
-        return card
-
-    def set_default_card(self, card):
-        self.customer.default_card = card
-        self.customer.save()
         return card
 
     def set_autopay(self, card, billing_account, domain):
