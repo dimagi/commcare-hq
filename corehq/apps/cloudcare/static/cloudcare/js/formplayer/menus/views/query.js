@@ -176,6 +176,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
             console.log("model.get('value')");
             console.log(model.get('value'));
+            try {
+                model.set('value', value);
+            } catch(err) {
+                console.log("error!");
+                console.log(err);
+            }
+
+
             if (model.get('value')) {
                 $field.find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
             }
@@ -218,6 +226,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (stickyValue && !value) {  // Sticky values don't override default values
                 value = stickyValue;
             }
+            console.log("in initialize for QueryView with model then value")
+            console.log(this.model);
+            console.log(value);
             this.model.set('value', value);
         },
 
