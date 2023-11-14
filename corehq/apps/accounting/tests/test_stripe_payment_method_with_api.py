@@ -20,7 +20,6 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.web_user_email = "test_web_user@gmail.com"
         self.dimagi_user_email = "test_dimagi_user@dimagi.com"
         self.billing_account = generator.billing_account(self.dimagi_user_email, self.web_user_email)
-        self.addCleanup(self.billing_account.delete)
 
         self.stripe_customer = stripe.Customer.create(email=self.web_user_email)
         self.addCleanup(self.stripe_customer.delete)
@@ -63,7 +62,6 @@ class TestStripePaymentMethod(BaseAccountingTest):
 
     def test_same_card_used_by_multiple_billing_accounts(self):
         billing_account_2 = generator.billing_account(self.dimagi_user_email, self.web_user_email)
-        self.addCleanup(billing_account_2.delete)
 
         # Use the card for first billing account
         self.payment_method.set_autopay(self.card, self.billing_account, None)

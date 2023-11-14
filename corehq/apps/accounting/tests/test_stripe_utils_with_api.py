@@ -24,7 +24,6 @@ class StripeUtilsTests(TestCase):
         # Create a corresponding local StripePaymentMethod instance
         self.dimagi_user_email = "test_dimagi_user@dimagi.com"
         self.billing_account = generator.billing_account(self.dimagi_user_email, self.web_user_email)
-        self.addCleanup(self.billing_account.delete)
         self.payment_method = StripePaymentMethod.objects.create(
             web_user=self.web_user_email,
             customer_id=self.stripe_customer.id
