@@ -79,6 +79,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         geocoderItemCallback = function (addressTopic, model) {
             return function (item) {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
+                console.log("setting this model with this value");
+                console.log(model);
+                console.log(item.place_name)
                 model.set('value', item.place_name);
                 console.log("initMapboxWidget called in geocoderItemCallback");
                 initMapboxWidget(model);
