@@ -64,6 +64,7 @@ from corehq.util.decorators import analytics_task
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
 from corehq.util.soft_assert import soft_assert
+from dimagi.utils.logging import notify_error
 
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
@@ -684,6 +685,8 @@ def submit_data_to_hub_and_kiss(submit_json):
                 'Error submitting periodic analytics data to Hubspot or Kissmetrics',
                 {'response': e.response.content.decode('utf-8')}
             )
+            notify_error("Error submitting periodic analytics data to Hubspot or Kissmetrics",
+                         details=e.response.content.decode('utf-8'))
         except Exception as e:
             notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
 
