@@ -18,6 +18,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.views.generic import View
 from django.views.generic.base import TemplateView
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -77,6 +78,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
+from corehq.util.metrics import metrics_histogram
 from xml2json.lib import xml2json
 
 from langcodes import get_name
@@ -605,3 +607,24 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
         })
     cloudcare_state = json.dumps(state)
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
+
+
+@login_and_domain_required
+@require_POST
+def api_histogram_metrics(request, domain):
+    request_dict = request.POST
+
+    metric_name = request_dict.get("metrics")
+    try:
+        duration = float(request_dict.get("responseTime"))
+    except ValueError:
+        duration = None
+
+    if metric_name and duration:
+        metrics_histogram(metric_name,
+                          duration,
+                          bucket_tag='duration_bucket',
+                          buckets=(1000, 2000, 5000),
+                          bucket_unit='ms',
+                          tags={'domain': domain})
+    return HttpResponse("Success!!")
