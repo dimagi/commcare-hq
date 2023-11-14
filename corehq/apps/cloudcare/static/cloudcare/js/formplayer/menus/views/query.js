@@ -178,7 +178,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             console.log("model.get('value')");
             console.log(model.set('value'));
 
-            console.log(sessionStorage.geocoderValue);
+            console.log("sessionStorage.geocoderValue");
             console.log(sessionStorage.geocoderValue);
 
             //should set value
@@ -228,9 +228,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (stickyValue && !value) {  // Sticky values don't override default values
                 value = stickyValue;
             }
-            console.log("in initialize for QueryView with model then value")
-            console.log(this.model);
-            console.log(value);
             this.model.set('value', value);
         },
 
@@ -267,12 +264,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         _render: function () {
-            console.log("_render called");
             var self = this;
             _.defer(function () {
                 self.render();
                 if (self.model.get('input') === 'address') {
-                    console.log("initalized initMapboxWidget");
                     initMapboxWidget(self.model);
                 }
             });
@@ -348,6 +343,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.model.set('value', $(e.currentTarget).val());
             } else if (this.model.get('input') === 'address') {
+                console.log("changeQueryField called for address");
+                sessionStorage.removeItem('geocoderValue');
                 // geocoderItemCallback sets the value on the model
             } else if (this.model.get('input') === 'checkbox') {
                 var newValue = _.chain($(e.currentTarget).find('input[type=checkbox]'))
@@ -417,7 +414,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         onRender: function () {
-            console.log("onRender called");
             this._initializeSelect2Dropdown();
             this.ui.hqHelp.hqHelp({
                 placement: () => {
