@@ -42,6 +42,12 @@ def get_navigation_context(current_page):
                     Page("Feedback", 'styleguide_molecules_feedback_b5'),
                 ],
             ),
+            NavigationGroup(
+                name="Organisms",
+                pages=[
+                    Page("Forms", 'styleguide_organisms_forms_b5'),
+                ],
+            ),
         ],
     }
 
