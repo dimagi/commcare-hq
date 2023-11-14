@@ -134,3 +134,16 @@ code {
   border: none;
   font-weight: bold;
 }
+
+pre.ace-chrome {
+  background-color: transparent;
+  line-height: 1.25rem;
+}
+
+pre.ace-chrome .ace_marker-layer .ace_bracket {
+  border: none;
+}
+
+pre.ace-chrome .ace_comment {
+  font-weight: bold;
+}
