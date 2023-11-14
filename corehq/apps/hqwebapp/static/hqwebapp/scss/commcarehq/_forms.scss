@@ -30,3 +30,16 @@ legend {
   padding-bottom: $spacer * .25;
   margin-bottom: $spacer * 1.25;
 }
+
+.form-actions {
+  border-top: 1px solid $border-color;
+  background-color: $light;
+  border-bottom-left-radius: $border-radius;
+  border-bottom-right-radius: $border-radius;
+  padding: $spacer 0;
+  margin: 0 0 $spacer 0;
+
+  div {
+    padding-left: 6px;
+  }
+}
