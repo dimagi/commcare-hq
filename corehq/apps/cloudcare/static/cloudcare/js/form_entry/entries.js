@@ -291,7 +291,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 divId: self.entryId,
                 itemCallback: self.geocoderItemCallback,
                 clearCallBack: self.geocoderOnClearCallback,
-                inputOnKeyDown: self._inputOnKeyDown
+                inputOnKeyDown: self._inputOnKeyDown,
             });
         };
 
@@ -756,11 +756,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
     function TimeEntry(question, options) {
         this.templateType = 'time';
-        let is12Hour = false;
         if (question.style) {
             if (question.stylesContains(constants.TIME_12_HOUR)) {
                 this.clientFormat = 'h:mm a';
-                is12Hour = true;
             }
         }
         DateTimeEntryBase.call(this, question, options);
