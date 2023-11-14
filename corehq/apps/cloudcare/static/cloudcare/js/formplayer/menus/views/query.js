@@ -177,7 +177,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             console.log("model.get('value')");
             console.log(model.get('value'));
             try {
-                model.set('value', value);
+                model.set('value', attributes.value);
             } catch(err) {
                 console.log("error!");
                 console.log(err);
