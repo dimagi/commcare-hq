@@ -336,6 +336,19 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.saveButton.setState('saved');
         };
 
+        function isNameValid(nameStr) {
+            // First character must be a letter, and the entire name can only contain letters, numbers, '-', and '_'
+            const pattern = /^[a-zA-Z][a-zA-Z0-9-_]*$/;
+            return pattern.test(nameStr);
+        }
+
+        self.newPropertyNameValid = ko.computed(function () {
+            if (!self.newPropertyName()) {
+                return true;
+            }
+            return isNameValid(self.newPropertyName());
+        });
+
         self.newPropertyNameUnique = ko.computed(function () {
             if (!self.newPropertyName()) {
                 return true;
@@ -344,11 +357,18 @@ hqDefine("data_dictionary/js/data_dictionary", [
             const propertyNameFormatted = self.newPropertyName().toLowerCase().trim();
             const activeCaseTypeData = self.activeCaseTypeData();
             for (const group of activeCaseTypeData) {
-                if (group.properties().some(v => v.name.toLowerCase() === propertyNameFormatted)) {
+                if (group.properties().find(v => v.name.toLowerCase() === propertyNameFormatted)) {
                     return false;
                 }
             }
             return true;
+        });
+
+        self.newGroupNameValid = ko.computed(function () {
+            if (!self.newGroupName()) {
+                return true;
+            }
+            return isNameValid(self.newGroupName());
         });
 
         self.newGroupNameUnique = ko.computed(function () {
@@ -426,15 +446,18 @@ hqDefine("data_dictionary/js/data_dictionary", [
         });
 
         self.nameValid = ko.observable(false);
+        self.nameUnique = ko.observable(false);
         self.nameChecked = ko.observable(false);
         self.name.subscribe((value) => {
             if (!value) {
+                self.nameChecked(false);
                 return;
             }
             let existing = _.find(self.caseTypes(), function (prop) {
                 return prop.name === value;
             });
-            self.nameValid(!existing);
+            self.nameUnique(!existing);
+            self.nameValid(isNameValid(self.name()));
             self.nameChecked(true);
         });
 
@@ -448,6 +471,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             $("#create-case-type-form").trigger("reset");
             self.name("");
             self.nameValid(false);
+            self.nameUnique(false);
             self.nameChecked(false);
             return true;
         };
