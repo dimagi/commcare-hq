@@ -15,7 +15,7 @@
     <instance id="item-list:textures" src="jr://fixture/item-list:textures"/>
     <instance id="results" src="jr://instance/remote/results"/>
     <session>
-      <query default_search="false" storage-instance="results" template="case" url="https://www.example.com/a/test_domain/phone/search/456/">
+      <query default_search="false" dynamic_search="false" storage-instance="results" template="case" url="https://www.example.com/a/test_domain/phone/search/456/">
         <title>
           <text>
             <locale id="case_search.m1.inputs"/>
