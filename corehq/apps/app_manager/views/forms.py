@@ -918,12 +918,19 @@ def _get_linkable_forms_context(module, langs):
         return trans(module.name, langs)
 
     def _form_name(module, form):
-        module_name = _module_name(module)
+        names = [_module_name(m) for m in _module_hierarchy(module)]
+        module_names = " > ".join(names)
         form_name = trans(form.name, langs)
-        return "{} > {}".format(module_name, form_name)
+        return "{} > {}".format(module_names, form_name)
+
+    def _module_hierarchy(module):
+        if not module.root_module_id:
+            return [module]
+        else:
+            return _module_hierarchy(module.root_module) + [module]
 
     linkable_items = []
-    is_multi_select = True #module.is_multi_select()
+    is_multi_select = module.is_multi_select()
     for candidate_module in module.get_app().get_modules():
         # Menus can be linked automatically if they're a top-level menu (no parent)
         # or their parent menu's case type matches the current menu's parent's case type.
@@ -931,11 +938,11 @@ def _get_linkable_forms_context(module, langs):
         # dedicated screen to navigate to. All other menus can be linked manually.
         if not candidate_module.put_in_root:
             is_top_level = candidate_module.root_module_id is None
-            is_child_match = True #(
-                # not is_top_level
-                # and module.root_module_id is not None
-                # and module.root_module.case_type == candidate_module.root_module.case_type
-            # )
+            is_child_match = (
+                not is_top_level
+                and module.root_module_id is not None
+                and module.root_module.case_type == candidate_module.root_module.case_type
+            )
             parent_name = ""
             if candidate_module.root_module_id:
                 parent_name = _module_name(candidate_module.root_module) + " > "
@@ -946,6 +953,14 @@ def _get_linkable_forms_context(module, langs):
                     'auto_link': True,
                     'allow_manual_linking': False,
                 })
+            else:
+                linkable_items.append({
+                    'unique_id': candidate_module.unique_id,
+                    'name': parent_name + _module_name(candidate_module),
+                    'auto_link': True,
+                    'allow_manual_linking': True,
+                })
+
         for candidate_form in candidate_module.get_suite_forms():
             # Forms can be linked automatically if their module is the same case type as this module,
             # or if they belong to this module's parent module. All other forms can be linked manually.
