@@ -52,7 +52,14 @@
        }
      }
  }
-@@ -67,9 +67,9 @@
+@@ -72,16 +72,12 @@
+     .select2-input {
+         width: 100% !important;
+     }
+-
+-    textarea.select2-search__field {    // Placeholder for multi-select
+-        line-height: 21px;
+-    }
  }
  
  .select2-container.select2-container-active > .select2-choice {

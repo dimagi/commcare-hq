@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,123 +1,121 @@
+@@ -1,124 +1,122 @@
 -@import "@{b3-import-variables}";
 +// Grid Containers
 +// we will want to adapt the defaults in a full redesign
@@ -26,6 +26,7 @@
 +
 +// Form Overrides
 +$input-border-radius-lg: 5px;
++$input-color:            #000;
 +
 +// Navbar
 +//$nav-link-height: 38px;
@@ -207,6 +208,7 @@
  
  
 -@input-border-radius-large:       5px;
+-@input-color:                     #000;
 -@cursor-disabled:                 'not-allowed';
 +////// Bootstrap 5 Color Overrides
 +$primary:   #5c6ac5;
