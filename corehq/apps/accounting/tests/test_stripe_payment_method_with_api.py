@@ -120,12 +120,9 @@ class TestStripePaymentMethod(BaseAccountingTest):
 
     def test_all_cards_return_empty_array_if_no_stripe_key(self):
         stripe.api_key = None
-        original_key = settings.STRIPE_PRIVATE_KEY
-        settings.STRIPE_PRIVATE_KEY = None
-        try:
+        from unittest.mock import patch
+        with patch.object(settings, "STRIPE_PRIVATE_KEY", None):
             self.assertEqual(len(self.payment_method.all_cards), 0)
-        finally:
-            settings.STRIPE_PRIVATE_KEY = original_key
 
     def test_all_cards_serialized_return_the_correct_property_of_a_card(self):
         cards = self.payment_method.all_cards_serialized(self.billing_account)
