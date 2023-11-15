@@ -161,6 +161,8 @@ UNKNOWN_MODELS = {
     "telerivet.IncomingRequest",
     "userreports.AsyncIndicator",
     "userreports.DataSourceActionLog",
+    "userreports.DataSourceRowTransactionLog",
+    "userreports.DataSourceSubscriber",
     "userreports.InvalidUCRData",
     "userreports.UCRExpression",
     "users.HQApiKey",
