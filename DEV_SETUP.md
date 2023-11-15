@@ -927,7 +927,7 @@ files from Vellum directly, do the following.
 
     ```sh
     # clone directly:
-    git clone git@github.com:dimagi/Vellum.git ./submodules/formdesigner
+    git clone https://github.com/dimagi/Vellum.git ./submodules/formdesigner
 
     # -- OR --
 
