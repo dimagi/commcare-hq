@@ -4,7 +4,7 @@ version: '2.3'
 
 services:
   postgres:
-    image: dimagi/docker-postgresql:${DOCKER_HQ_POSTGRES_VERSION}
+    image: docker.io/dimagi/docker-postgresql:${DOCKER_HQ_POSTGRES_VERSION}
     platform: linux/amd64
   couch:
     platform: linux/amd64

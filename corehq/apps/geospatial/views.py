@@ -51,6 +51,7 @@ from .utils import (
     get_lat_lon_from_dict,
     set_case_gps_property,
     set_user_gps_property,
+    create_case_with_gps_property,
 )
 
 
@@ -86,6 +87,29 @@ class MapboxOptimizationV2(BaseDomainView):
 def mapbox_routing_status(request, domain, poll_id):
     # Todo; handle HTTPErrors
     return routing_status(poll_id)
+
+
+def routing_status_view(request, domain, poll_id):
+    # Todo; handle HTTPErrors
+    return json_response({
+        'result': routing_status(poll_id)
+    })
+
+
+class CaseDisbursementAlgorithm(BaseDomainView):
+    urlname = "case_disbursement"
+
+    def post(self, request, domain, *args, **kwargs):
+        solver_class = GeoConfig.objects.get(domain=domain).disbursement_solver
+        request_json = json.loads(request.body.decode('utf-8'))
+        poll_id, result = solver_class(request_json).solve()
+        if poll_id is None:
+            return json_response(
+                {'result': result}
+            )
+        return json_response({
+            "poll_url": reverse("routing_status", args=[self.domain, poll_id])
+        })
 
 
 class GeoPolygonView(BaseDomainView):
@@ -139,7 +163,7 @@ class GeoPolygonView(BaseDomainView):
 
 
 class BaseConfigView(BaseDomainView):
-    section_name = _("Geospatial")
+    section_name = _("Data")
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
     def dispatch(self, request, *args, **kwargs):
@@ -222,7 +246,7 @@ class GPSCaptureView(BaseDomainView):
     template_name = 'gps_capture_view.html'
 
     page_name = _("Manage GPS Data")
-    section_name = _("Geospatial")
+    section_name = _("Data")
 
     fields = [
         'corehq.apps.reports.filters.case_list.CaseListFilter',
@@ -248,8 +272,14 @@ class GPSCaptureView(BaseDomainView):
 
     @property
     def page_context(self):
+        case_types = CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            data_type=CaseProperty.DataType.GPS,
+        ).values_list('case_type__name', flat=True).distinct()
+
         page_context = {
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'case_types_with_gps': list(case_types),
         }
         page_context.update(self._case_filters_context())
         return page_context
@@ -279,9 +309,14 @@ class GPSCaptureView(BaseDomainView):
         json_data = json.loads(request.body)
         data_type = json_data.get('data_type', None)
         data_item = json_data.get('data_item', None)
+        create_case = json_data.get('create_case', False)
 
         if data_type == 'case':
-            set_case_gps_property(request.domain, data_item)
+            if create_case:
+                data_item['owner_id'] = request.couch_user.user_id
+                create_case_with_gps_property(request.domain, data_item)
+            else:
+                set_case_gps_property(request.domain, data_item)
         elif data_type == 'user':
             set_user_gps_property(request.domain, data_item)
 
@@ -365,7 +400,7 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
         UserES()
         .domain(domain)
         .mobile_users()
-        .missing_or_empty_metadata_property(location_prop_name)
+        .missing_or_empty_user_data_property(location_prop_name)
         .search_string_query(query, ['username'])
         .sort('created_on', desc=True)
     )
@@ -408,7 +443,7 @@ def get_users_with_gps(request, domain):
         {
             'id': user.user_id,
             'username': user.raw_username,
-            'gps_point': user.metadata.get(location_prop_name, ''),
+            'gps_point': user.get_user_data(domain).get(location_prop_name, ''),
         } for user in users
     ]
 

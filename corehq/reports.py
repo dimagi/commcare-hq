@@ -355,7 +355,7 @@ USER_MANAGEMENT_REPORTS = (
 )
 
 GEOSPATIAL_MAP = (
-    (_("Case Management"), (
+    (_("Case Mapping"), (
         CaseManagementMap,
         CaseGroupingReport,
     )),

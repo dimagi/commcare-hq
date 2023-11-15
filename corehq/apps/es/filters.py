@@ -152,17 +152,14 @@ def geo_bounding_box(field, top_left, bottom_right):
 
     top_left_geo = GeoPoint.from_string(top_left, flexible=True)
     bottom_right_geo = GeoPoint.from_string(bottom_right, flexible=True)
-    shape = {
-        'type': 'envelope',
-        'coordinates': [
-            [float(top_left_geo.longitude), float(top_left_geo.latitude)],
-            [float(bottom_right_geo.longitude), float(bottom_right_geo.latitude)]
-        ]
-    }
-    return geo_shape(field, shape, relation='within')
+    points_list = [
+        {"lat": float(top_left_geo.latitude), "lon": float(top_left_geo.longitude)},
+        {"lat": float(bottom_right_geo.latitude), "lon": float(bottom_right_geo.longitude)},
+    ]
+    return geo_shape(field, points_list)
 
 
-def geo_shape(field, shape, relation='intersects'):
+def geo_shape(field, points_list):
     """
     Filters cases by case properties indexed using the the geo_point
     type.
@@ -170,17 +167,20 @@ def geo_shape(field, shape, relation='intersects'):
     More info: `The Geoshape query reference <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html>`_
 
     :param field: The field where geopoints are stored
-    :param shape: A shape definition given in GeoJSON geometry format.
-        More info: `The GeoJSON specification (RFC 7946) <https://datatracker.ietf.org/doc/html/rfc7946>`_
-    :param relation: The relation between the shape and the case
-        property values.
+    :param points_list: A list of points for the polygon in the format [{lat: x, lon: y},...]
     :return: A filter definition
     """  # noqa: E501
-    return {
-        "geo_shape": {
-            field: {
-                "shape": shape,
-                "relation": relation
-            }
-        }
-    }
+    from corehq.apps.es.case_search import (
+        PROPERTY_GEOPOINT_VALUE,
+        PROPERTY_KEY,
+    )
+    return AND(
+        term(PROPERTY_KEY, field),
+        {
+            "geo_polygon": {
+                PROPERTY_GEOPOINT_VALUE: {
+                    "points": points_list,
+                },
+            },
+        },
+    )

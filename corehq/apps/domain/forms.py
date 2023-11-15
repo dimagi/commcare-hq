@@ -804,6 +804,11 @@ class PrivacySecurityForm(forms.Form):
         help_text=gettext_lazy("Mobile Workers will never be locked out of their account, regardless"
             "of the number of failed attempts")
     )
+    allow_invite_email_only = BooleanField(
+        label=gettext_lazy("During sign up, only allow the email address the invitation was sent to"),
+        required=False,
+        help_text=gettext_lazy("Disables the email field on the sign up page")
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
@@ -861,6 +866,7 @@ class PrivacySecurityForm(forms.Form):
         domain_obj.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
         domain_obj.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
         domain_obj.disable_mobile_login_lockout = self.cleaned_data.get('disable_mobile_login_lockout', False)
+        domain_obj.allow_invite_email_only = self.cleaned_data.get('allow_invite_email_only', False)
 
         domain_obj.save()
 
@@ -2655,3 +2661,28 @@ class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
         if not self.cleaned_data.get('version'):
             self.add_error('version', _("Please select version"))
         return self.cleaned_data.get('version')
+
+
+class DomainAlertForm(forms.Form):
+    text = CharField(
+        label="Text",
+        widget=forms.Textarea,
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.layout = Layout(
+            crispy.Fieldset(
+                _('Add New Alert'),
+                *self.fields
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _('Save'),
+                    type='submit',
+                    css_class='btn-primary disable-on-submit'
+                )
+            )
+        )
