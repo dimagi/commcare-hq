@@ -6,7 +6,7 @@ from ast import literal_eval
 from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime, timedelta
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
@@ -144,6 +144,29 @@ class DataSourceActionLog(models.Model):
     # True for actions that were skipped because the data source
     # was marked with ``disable_destructive_rebuild``
     skip_destructive = models.BooleanField(default=False)
+
+
+class DataSourceRowTransactionLog(models.Model):
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
+
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=32, choices=(
+        (CREATE, CREATE),
+        (UPDATE, UPDATE),
+        (DELETE, DELETE),
+    ), null=False, blank=False)
+    data_source_id = models.UUIDField(null=False, blank=False)
+    row_id = models.UUIDField(unique=True, null=False, blank=False, db_index=True)  # The Form or Case ID
+    row_data = models.JSONField(null=True, blank=True)
+
+
+class DataSourceSubscriber(models.Model):
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    data_source_id = models.UUIDField(null=False, blank=False)
+    subscriber_uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False, null=False, blank=False)
 
 
 class SQLColumnIndexes(DocumentSchema):
