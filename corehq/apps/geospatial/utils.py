@@ -73,31 +73,52 @@ def get_lat_lon_from_dict(data, key):
     return lat, lon
 
 
-def features_to_points_list(features):
+def assert_geometry_type(geojson):
     """
-    `features` should be in the following format:
-    {
-        feature_id: {
-            geometry: {
-                coordinates: [
-                    [
-                        [lon, lat]
-                        ...
-                    ],
-                    ...
-                ]
-            }
-        }
+    Asserts that the GeoJSON geometry type is supported.
+
+    Case properties that are set as the "GPS" data type in the Data
+    Dictionary are given the ``geo_point`` data type in Elasticsearch.
+
+    In Elasticsearch 8+, the flexible ``geo_shape`` query supports the
+    ``geo_point`` type, but Elasticsearch 5.6 does not. Instead, we have
+    to filter GPS case properties using the ``geo_polygon`` query, which
+    is **deprecated in Elasticsearch 7.12**.
+    """
+    # TODO: After Elasticsearch is upgraded, switch from
+    #       filters.geo_polygon to filters.geo_shape, and update this
+    #       list of supported types. See filters.geo_shape for more
+    #       details. (Norman, 2023-11-01)
+    supported_types = (
+        'Polygon',  # Supported by Elasticsearch 5.6
+
+        # Available for the `geo_point` data type using the `geo_shape`
+        # filter from Elasticsearch 8+:
+        #
+        # 'Point',
+        # 'LineString',
+        # 'MultiPoint',
+        # 'MultiLineString',
+        # 'MultiPolygon',
+
+        # 'GeometryCollection', YAGNI
+    )
+    assert geojson['geometry']['type'] in supported_types, \
+        f"{geojson['geometry']['type']} is not a supported geometry type"
+
+
+def geojson_to_es_geoshape(geojson):
+    """
+    Given a GeoJSON dict, returns a GeoJSON Geometry dict, with "type"
+    given as an Elasticsearch type (i.e. in lowercase).
+
+    More info:
+
+    * `The GeoJSON specification (RFC 7946) <https://datatracker.ietf.org/doc/html/rfc7946>`_
+    * `Elasticsearch types <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/geo-shape.html#input-structure>`_
+
+    """  # noqa: E501
+    return {
+        'type': geojson['geometry']['type'].lower(),
+        'coordinates': geojson['geometry']['coordinates'],
     }
-    Each list in `coordinates` is a separate polygon of the feature. This will usually only be a single polygon,
-    but there may be more if a multi-polygon is given.
-    """
-    points_list = []
-    for feature in features.values():
-        feature_coords = feature['geometry']['coordinates']
-        for poly_coords in feature_coords:
-            points_list += [
-                {'lat': coords[1], 'lon': coords[0]}
-                for coords in poly_coords
-            ]
-    return points_list
