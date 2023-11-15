@@ -4097,6 +4097,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
+msgid "Column/Field \"{}\": Clickable Icons require a form to be configured."
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
 msgid "Case tiles may only be used for the case list (not the case details)."
 msgstr ""
 "Las fichas de casos solo pueden ser utilizadas para la lista de caso (no "
@@ -4738,6 +4742,10 @@ msgstr ""
 "commcarepublic/Grid+View+for+Form+and+Module+Screens\">Sitio de Ayuda </a>. "
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "Dynamic Search for Split Screen Case Search"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "Enable Menu Display Setting Per-Module"
 msgstr "Habilitar Configuración de Visualización de Menú por Módulo"
 
@@ -4753,6 +4761,12 @@ msgstr "Habilitar"
 #: corehq/messaging/scheduling/forms.py
 msgid "Enabled"
 msgstr "Habilitado"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid ""
+"Enable searching as input values change after initial Split Screen Case "
+"Search"
+msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
@@ -7205,6 +7219,32 @@ msgstr "Descargando su Archivo"
 msgid "Processing data. Please wait..."
 msgstr "Procesando los datos. Por favor, espere..."
 
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+#: corehq/apps/app_manager/templates/app_manager/partials/function_datum_endpoints.html
+#: corehq/apps/app_manager/templates/app_manager/partials/module_session_endpoint.html
+msgid "Session Endpoint ID"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+msgid ""
+"A session endpoint ID allows Android apps to call in to\n"
+"                                        CommCare at this position."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+msgid "Allow endpoint to access hidden forms"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+msgid "Allow access to hidden forms"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+msgid ""
+"Turn this setting on to allow this endpoint to access\n"
+"                                        hidden forms."
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
 msgid "Form Changes"
 msgstr "Cambios en el Formulario"
@@ -8127,11 +8167,6 @@ msgid "Enable these function datums in session endpoints"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/function_datum_endpoints.html
-#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
-msgid "Session Endpoint ID"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/function_datum_endpoints.html
 msgid "Comma separated list of function datums in session endpoints"
 msgstr ""
 
@@ -8221,6 +8256,12 @@ msgid ""
 "\n"
 "                This action will also delete all forms in this %(menu)s.\n"
 "                "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_session_endpoint.html
+msgid ""
+"A session endpoint ID allows Android apps to call in to\n"
+"                                    CommCare at this position."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/add_property_button.html
@@ -10181,12 +10222,6 @@ msgstr ""
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
 msgid "Revert"
 msgstr "Revertir"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
-msgid ""
-"A session endpoint ID allows Android apps to call in to\n"
-"                                    CommCare at this position."
-msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
@@ -15816,10 +15851,8 @@ msgid "Restriction for profile {profile} failed: {message}"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-#, fuzzy
-#| msgid "Add Named Answer"
 msgid "Add New Alert"
-msgstr "Añada Respuesta Nombrada"
+msgstr ""
 
 #: corehq/apps/domain/models.py
 msgid "Transfer domain request is no longer active"
@@ -16195,10 +16228,8 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-#, fuzzy
-#| msgid "Used By"
 msgid "Added By"
-msgstr "Utilizado Por"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
@@ -16216,10 +16247,8 @@ msgid "De-activate Alert"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#, fuzzy
-#| msgid "You are no longer part of the project %s"
 msgid "No alerts added yet for the project."
-msgstr "Usted ya no es parte del proyecto  %s"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 msgid "Measure"
@@ -18393,47 +18422,32 @@ msgid "Manage Mobile Workers"
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-#, fuzzy
-#| msgid "Manage Project"
 msgid "Manage Project Alerts"
-msgstr "Administrar Proyecto"
+msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-#, fuzzy
-#| msgid "Product saved!"
 msgid "Alert saved!"
-msgstr "¡Producto guardado!"
+msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-#, fuzzy
-#| msgid "There was an error saving, please try again!"
 msgid "There was an error saving your alert. Please try again!"
-msgstr "Hubo un error al guardar, por favor intente nuevamente."
+msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-#, fuzzy
-#| msgid "Filter {} not found!"
 msgid "Alert not found!"
-msgstr "¡Filtro {} no encontrado!"
+msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-#, fuzzy
-#| msgid "Case Removed"
 msgid "Alert was removed!"
-msgstr "Caso Eliminado"
+msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-#, fuzzy
-#| msgid "Settings updated!"
 msgid "Alert updated!"
-msgstr "¡Configuraciones actualizadas!"
+msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-#, fuzzy
-#| msgid "Unexpected format received for site code '%(site_code)s'"
 msgid "Unexpected update received. Alert not updated!"
 msgstr ""
-"Se recibió un formato no esperado para el código del sitio  '%(site_code)s'"
 
 #: corehq/apps/domain/views/sms.py
 msgid "SMS Rate Calculator"
@@ -18510,7 +18524,7 @@ msgid "Server"
 msgstr ""
 
 #: corehq/apps/email/forms.py
-msgid "e.g. \"https://smtp.example.com\""
+msgid "e.g. \"smtp.example.com\""
 msgstr ""
 
 #: corehq/apps/email/forms.py
@@ -18518,7 +18532,18 @@ msgid "Port"
 msgstr ""
 
 #: corehq/apps/email/forms.py
-msgid "Sender's email"
+#, fuzzy
+#| msgid "Send Email"
+msgid "Sender's Email"
+msgstr "Enviar Correo Electrónico"
+
+#: corehq/apps/email/forms.py
+msgid "Return Path Email"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid ""
+"The email address to which message bounces and complaints should be sent"
 msgstr ""
 
 #: corehq/apps/email/forms.py
@@ -22269,20 +22294,16 @@ msgid "Minimum cases per cluster"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/case_grouping_map.html
-#, fuzzy
-#| msgid "Select Table to View"
 msgid "Select Case Groups to View"
-msgstr "Seleccione la Tabla que desea Ver"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/case_grouping_map.html
 msgid "Show Only Selected Groups on Map"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/case_grouping_map.html
-#, fuzzy
-#| msgid "Show All"
 msgid "Show All Groups"
-msgstr "Mostrar Todo"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
 msgid ""
@@ -22368,38 +22389,28 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
-#, fuzzy
-#| msgid "Create New Report"
 msgid "Create New Case"
-msgstr "Crear Nuevo Reporte "
+msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
-#, fuzzy
-#| msgid "Auto Capture Location"
 msgid "Confirm Case Location"
-msgstr "Ubicación de Autocaptura "
+msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
 msgid "Capturing location for:"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
-#, fuzzy
-#| msgid "Enter a Case Type"
 msgid "Enter new case name..."
-msgstr "Ingrese un Tipo de Caso"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
-#, fuzzy
-#| msgid "case type is required"
 msgid "A case name is required"
-msgstr "Se requiere un tipo de caso"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
-#, fuzzy
-#| msgid "case type is required"
 msgid "A case type is required"
-msgstr "Se requiere un tipo de caso"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture_view.html
 msgid "Update Case Data"
@@ -22482,10 +22493,8 @@ msgid "Cases Missing GPS Data"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "Mobile Workers Only"
 msgid "Mobile Workers Missing GPS Data"
-msgstr "Solo Usuarios Móviles "
+msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Selected Mobile Workers"
@@ -36433,10 +36442,8 @@ msgid "Please select language to validate."
 msgstr ""
 
 #: corehq/apps/user_importer/helpers.py
-#, fuzzy
-#| msgid "Could not find form '{}'"
 msgid "Double Entry for {}"
-msgstr "No encontramos el formulario '{}'"
+msgstr ""
 
 #: corehq/apps/user_importer/helpers.py
 msgid "You cannot set {} directly"
@@ -44318,10 +44325,8 @@ msgid "User Management"
 msgstr "Manejo de Casos"
 
 #: corehq/reports.py
-#, fuzzy
-#| msgid "Case Tile Mapping"
 msgid "Case Mapping"
-msgstr "Mapeo de Ficha de Caso"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py corehq/tabs/utils.py
 msgid "View All"

@@ -3815,6 +3815,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
+msgid "Column/Field \"{}\": Clickable Icons require a form to be configured."
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
 msgid "Case tiles may only be used for the case list (not the case details)."
 msgstr ""
 
@@ -4414,6 +4418,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "Dynamic Search for Split Screen Case Search"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "Enable Menu Display Setting Per-Module"
 msgstr ""
 
@@ -4428,6 +4436,12 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py corehq/apps/sms/forms.py
 #: corehq/messaging/scheduling/forms.py
 msgid "Enabled"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
+msgid ""
+"Enable searching as input values change after initial Split Screen Case "
+"Search"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -6771,6 +6785,32 @@ msgstr ""
 msgid "Processing data. Please wait..."
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+#: corehq/apps/app_manager/templates/app_manager/partials/function_datum_endpoints.html
+#: corehq/apps/app_manager/templates/app_manager/partials/module_session_endpoint.html
+msgid "Session Endpoint ID"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+msgid ""
+"A session endpoint ID allows Android apps to call in to\n"
+"                                        CommCare at this position."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+msgid "Allow endpoint to access hidden forms"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+msgid "Allow access to hidden forms"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+msgid ""
+"Turn this setting on to allow this endpoint to access\n"
+"                                        hidden forms."
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
 msgid "Form Changes"
 msgstr ""
@@ -7671,11 +7711,6 @@ msgid "Enable these function datums in session endpoints"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/function_datum_endpoints.html
-#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
-msgid "Session Endpoint ID"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/function_datum_endpoints.html
 msgid "Comma separated list of function datums in session endpoints"
 msgstr ""
 
@@ -7765,6 +7800,12 @@ msgid ""
 "\n"
 "                This action will also delete all forms in this %(menu)s.\n"
 "                "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_session_endpoint.html
+msgid ""
+"A session endpoint ID allows Android apps to call in to\n"
+"                                    CommCare at this position."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/add_property_button.html
@@ -9656,12 +9697,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
 msgid "Revert"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
-msgid ""
-"A session endpoint ID allows Android apps to call in to\n"
-"                                    CommCare at this position."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
@@ -17717,7 +17752,7 @@ msgid "Server"
 msgstr ""
 
 #: corehq/apps/email/forms.py
-msgid "e.g. \"https://smtp.example.com\""
+msgid "e.g. \"smtp.example.com\""
 msgstr ""
 
 #: corehq/apps/email/forms.py
@@ -17725,7 +17760,16 @@ msgid "Port"
 msgstr ""
 
 #: corehq/apps/email/forms.py
-msgid "Sender's email"
+msgid "Sender's Email"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Return Path Email"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid ""
+"The email address to which message bounces and complaints should be sent"
 msgstr ""
 
 #: corehq/apps/email/forms.py
