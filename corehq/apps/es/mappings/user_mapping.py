@@ -397,6 +397,10 @@ USER_MAPPING = {
         "status": {
             "type": "text"
         },
+        "user_data": {
+            "enabled": False,
+            "type": "object"
+        },
         "user_data_es": {
             "dynamic": False,
             "type": "nested",
