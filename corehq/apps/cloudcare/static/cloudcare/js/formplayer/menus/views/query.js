@@ -85,7 +85,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 model.set('value', item.place_name);
                 console.log("initMapboxWidget called in geocoderItemCallback");
                 initMapboxWidget(model);
-                sessionStorage.geocoderValue = item.place_name;
+                sessionStorage.geocoderValue[model.id] = item.place_name;
                 var broadcastObj = formEntryUtils.getBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
@@ -186,11 +186,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             console.log(sessionStorage.geocoderValue[id]);
             if (sessionStorage.geocoderValue[id]) {
                 try {
-                    document.getElementById("foo").getElementsByClassName('.mapboxgl-ctrl-geocoder--input').val(sessionStorage.geocoderValue);
+                    document.getElementById(id).getElementsByClassName('.mapboxgl-ctrl-geocoder--input').val(sessionStorage.geocoderValue[id]);
                 } catch (err) {
                     console.log("error setting field");
                     console.log(err);
-                    $field.find('.mapboxgl-ctrl-geocoder--input').val(sessionStorage.geocoderValue);
+                    $field.find('.mapboxgl-ctrl-geocoder--input').val(sessionStorage.geocoderValue[id]);
                 }
             }
             // if (model.get('value')) {
@@ -353,7 +353,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 console.log("changeQueryField called for address");
                 console.log("this.model");
                 console.log(this.model);
-                if (sessionStorage.geocoderValue[this.model.id] !== this.model.value) {
+                if (sessionStorage.geocoderValue && sessionStorage.geocoderValue[this.model.id] !== this.model.value) {
                     sessionStorage.geocoderValue[this.model.id] = undefined;
                 }
                 console.log(sessionStorage.geocoderValue);
@@ -730,6 +730,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         initGeocoders: function () {
             console.log("initgeocoders called");
             var self = this;
+            if (sessionStorage.geocoderValue === undefined) {
+                sessionStorage.geocoderValue = {};
+            }
+
+            console.log(sessionStorage.geocoderValue);
             _.each(self.collection.models, function (model, i) {
                 var $field = $($(".query-field")[i]);
 
