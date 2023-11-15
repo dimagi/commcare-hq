@@ -2,7 +2,7 @@ import doctest
 import json
 from contextlib import contextmanager
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_raises
 
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
@@ -10,7 +10,10 @@ from corehq.apps.geospatial.reports import (
     CaseGroupingReport,
     geojson_to_es_geoshape,
 )
-from corehq.apps.geospatial.utils import get_geo_case_property
+from corehq.apps.geospatial.utils import (
+    get_geo_case_property,
+    validate_geometry,
+)
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.reports.tests.test_sql_reports import DOMAIN, BaseReportTest
 from corehq.util.test_utils import flag_enabled
@@ -32,6 +35,24 @@ def test_geojson_to_es_geoshape():
         "type": "point",  # NOTE: lowercase Elasticsearch type
         "coordinates": [125.6, 10.1]
     })
+
+
+def test_validate_geometry_type():
+    geojson_geometry = {
+        "type": "Point",
+        "coordinates": [125.6, 10.1]
+    }
+    with assert_raises(ValueError):
+        validate_geometry(geojson_geometry)
+
+
+def test_validate_geometry_schema():
+    geojson_geometry = {
+        "type": "Polygon",
+        "coordinates": [125.6, 10.1]
+    }
+    with assert_raises(ValueError):
+        validate_geometry(geojson_geometry)
 
 
 @flag_enabled('GEOSPATIAL')
