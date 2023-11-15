@@ -79,8 +79,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         geocoderItemCallback = function (addressTopic, model) {
             return function (item) {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
+                console.log("setting this model with this value");
+                console.log(model);
+                console.log(item.place_name)
                 model.set('value', item.place_name);
+                console.log("initMapboxWidget called in geocoderItemCallback");
                 initMapboxWidget(model);
+                sessionStorage.geocoderValue[model.id] = item.place_name;
                 var broadcastObj = formEntryUtils.getBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
@@ -143,6 +148,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             };
         },
         initMapboxWidget = function (model) {
+            console.log("in initMapboxWidget");
+            console.log("model in initMapboxWidget");
+            console.log(model);
             var id = model.get('id'),
                 inputId = id + "_mapbox",
                 $field = $("#" + inputId);
@@ -167,10 +175,27 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 divEl.css("max-width", "none");
                 divEl.css("width", "100%");
             }
+            console.log("model");
+            console.log(model);
 
-            if (model.get('value')) {
-                $field.find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
+            console.log("sessionStorage.geocoderValue");
+            console.log(sessionStorage.geocoderValue);
+
+            //should set value
+            console.log("sessionStorage.geocoderValue[id]");
+            console.log(sessionStorage.geocoderValue[id]);
+            if (sessionStorage.geocoderValue[id]) {
+                try {
+                    document.getElementById(id).getElementsByClassName('.mapboxgl-ctrl-geocoder--input').val(sessionStorage.geocoderValue[id]);
+                } catch (err) {
+                    console.log("error setting field");
+                    console.log(err);
+                    $field.find('.mapboxgl-ctrl-geocoder--input').val(sessionStorage.geocoderValue[id]);
+                }
             }
+            // if (model.get('value')) {
+            //     $field.find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
+            // }
         };
 
     var QueryView = Marionette.View.extend({
@@ -325,6 +350,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.model.set('value', $(e.currentTarget).val());
             } else if (this.model.get('input') === 'address') {
+                console.log("changeQueryField called for address");
+                console.log("this.model");
+                console.log(this.model);
+                if (sessionStorage.geocoderValue && sessionStorage.geocoderValue[this.model.id] !== this.model.value) {
+                    sessionStorage.geocoderValue[this.model.id] = undefined;
+                }
+                console.log(sessionStorage.geocoderValue);
                 // geocoderItemCallback sets the value on the model
             } else if (this.model.get('input') === 'checkbox') {
                 var newValue = _.chain($(e.currentTarget).find('input[type=checkbox]'))
@@ -366,6 +398,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                         relatedModel.set('searchForBlank', searchForBlank);
                     }
                 });
+                console.log("initMapboxWidget called in toggleBlankSearch");
                 initMapboxWidget(this.model);
             }
             self.parentView.setStickyQueryInputs();
@@ -697,7 +730,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         initGeocoders: function () {
+            console.log("initgeocoders called");
             var self = this;
+            if (sessionStorage.geocoderValue === undefined) {
+                sessionStorage.geocoderValue = {};
+            }
+
+            console.log(sessionStorage.geocoderValue);
             _.each(self.collection.models, function (model, i) {
                 var $field = $($(".query-field")[i]);
 
@@ -709,6 +748,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
                 // Set geocoder address publish
                 if (model.get('input') === 'address') {
+                    console.log("initMapboxWidget called in initgeocoders");
                     initMapboxWidget(model);
                 }
             });
