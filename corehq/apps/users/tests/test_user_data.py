@@ -72,6 +72,22 @@ class TestUserData(TestCase):
             'commcare_profile': '',
             'start': 'sometimes',  # whoops, domain 1 affects other domains!
         })
+        web_user.save()
+        # at this point, user data has been initialized for each domain, and
+        # will no longer share a namespace
+        web_user = WebUser.get_by_user_id(web_user.user_id)
+        user_data = web_user.get_user_data(self.domain)['new_field'] = 'not_cross_domain'
+        self.assertEqual(web_user.get_user_data(self.domain).to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+            'start': 'sometimes',
+            'new_field': 'not_cross_domain',
+        })
+        self.assertEqual(web_user.get_user_data('ANOTHER_DOMAIN').to_dict(), {
+            'commcare_project': 'ANOTHER_DOMAIN',
+            'commcare_profile': '',
+            'start': 'sometimes',
+        })
 
     def test_lazy_init_and_save(self):
         # Mimic user created the old way, with data stored in couch
