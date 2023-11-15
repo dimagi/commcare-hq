@@ -50,7 +50,6 @@ class UserES(HQESQuery):
             mobile_users,
             web_users,
             user_ids,
-            primary_location,
             location,
             last_logged_in,
             analytics_enabled,
@@ -196,22 +195,10 @@ def user_ids(user_ids):
     return filters.term("_id", list(user_ids))
 
 
-def primary_location(location_id):
-    # by primary location
-    return filters.OR(
-        filters.AND(mobile_users(), filters.term('location_id', location_id)),
-        filters.AND(
-            web_users(),
-            filters.term('domain_memberships.location_id', location_id)
-        ),
-    )
-
-
 def location(location_id):
     # by any assigned-location primary or not
     return filters.OR(
         filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
-        # todo; this actually doesn't get applied since the below field is not indexed
         filters.AND(
             web_users(),
             filters.term('domain_memberships.assigned_location_ids', location_id)

@@ -74,7 +74,7 @@
         <select id="saved-polygons"
                 class="form-control"
                 data-bind="select2: savedPolygons,
-                        value: selectedPolygon,
+                        value: selectedSavedPolygonId,
                         ">
         </select>
     </div>
@@ -118,7 +118,7 @@
         </a>
         <a class="btn btn-default" target="_blank" href="{% url 'gps_capture' domain %}?data_type=user" data-bind="visible: usersWithoutGPS().length">
             <span data-bind="text: usersWithoutGPS().length"></span>
-            &nbsp;{% trans "Users Missing GPS Data" %}
+            &nbsp;{% trans "Mobile Workers Missing GPS Data" %}
         </a>
     </div>
 

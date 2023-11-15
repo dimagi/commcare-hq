@@ -26,7 +26,7 @@ class BootstrapCheckboxInput(CheckboxInput):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         extra_attrs = {'type': 'checkbox', 'name': conditional_escape(name)}
-        extra_attrs.update(attrs)
+        extra_attrs.update(self.attrs)
         final_attrs = self.build_attrs(attrs, extra_attrs=extra_attrs)
         try:
             result = self.check_test(value)
@@ -42,7 +42,7 @@ class BootstrapCheckboxInput(CheckboxInput):
         final_attrs['class'] = 'form-check-input' if use_bootstrap5 else 'bootstrapcheckboxinput'
         context.update({
             'use_bootstrap5': use_bootstrap5,
-            'input_id': attrs['id'],
+            'input_id': final_attrs.get('id'),
             'inline_label': self.inline_label,
             'attrs': mark_safe(flatatt(final_attrs)),  # nosec: trusting the user to sanitize attributes
         })

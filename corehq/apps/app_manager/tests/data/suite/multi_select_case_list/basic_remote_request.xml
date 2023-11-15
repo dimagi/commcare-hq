@@ -19,7 +19,7 @@
       <instance id="results" src="jr://instance/remote/results"/>
     <instance id="search_selected_cases" src="jr://instance/selected-entities/search_selected_cases"/>
     <session>
-      <query default_search="false" storage-instance="results" template="case" url="https://www.example.com/a/multiple-referrals/phone/search/{app_id}/">
+      <query default_search="false" dynamic_search="false" storage-instance="results" template="case" url="https://www.example.com/a/multiple-referrals/phone/search/{app_id}/">
         <title>
           <text>
             <locale id="case_search.m0.inputs"/>
