@@ -89,6 +89,8 @@
       </div>
     </footer>
 
+    {% initial_page_data 'ace_base_path' 'ace-builds/src-min-noconflict'|static %}
+
     {# Knockout component templates #}
     {% include 'hqwebapp/partials/bootstrap5/ko_pagination.html' %}
     {% include 'hqwebapp/partials/bootstrap5/ko_inline_edit.html' %}
