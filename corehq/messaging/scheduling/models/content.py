@@ -43,6 +43,10 @@ from corehq.apps.smsforms.util import (
     form_requires_input,
 )
 from corehq.apps.users.models import CommCareUser
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.exceptions import NotFound
+from corehq.blobs.models import BlobMeta
+from corehq.blobs.util import random_url_id
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.fcm.exceptions import FCMTokenValidationException
 from corehq.messaging.fcm.utils import FCMUtil
@@ -636,3 +640,77 @@ class FCMNotificationContent(Content):
         if not devices_fcm_tokens:
             raise FCMTokenValidationException(MessagingEvent.ERROR_NO_FCM_TOKENS)
         return devices_fcm_tokens
+
+
+def _meta_property(name):
+    def fget(self):
+        return getattr(self._meta, name)
+    return property(fget)
+
+
+class EmailImage(object):
+    """EmailImage is a thin wrapper around BlobMeta"""
+    id = _meta_property("id")
+    domain = _meta_property("parent_id")
+    filename = _meta_property("name")
+    blob_id = _meta_property("key")
+    content_type = _meta_property("content_type")
+    content_length = _meta_property("content_length")
+    delete_after = _meta_property("expires_on")
+
+    def __init__(self, meta):
+        self._meta = meta
+
+    @classmethod
+    def get(cls, domain, pk):
+        return cls(cls.meta_query(domain).get(pk=pk))
+
+    @classmethod
+    def get_by_key(cls, domain, key):
+        return cls(cls.meta_query(domain).get(key=key))
+
+    @staticmethod
+    def meta_query(domain):
+        Q = models.Q
+        return BlobMeta.objects.partitioned_query(domain).filter(
+            Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
+            parent_id=domain,
+            type_code=CODES.email_multimedia,
+        )
+
+    @classmethod
+    def get_all(cls, domain):
+        return [cls(meta) for meta in cls.meta_query(domain).order_by("name")]
+
+    @classmethod
+    def get_total_size(cls, domain):
+        return cls.meta_query(domain).aggregate(total=models.Sum('content_length'))["total"]
+
+    @classmethod
+    def save_blob(cls, file_obj, domain, filename, content_type):
+        # if delete_after is None:
+        #     raise ValidationError(
+        #         'delete_after can be None only for legacy files that were added before August 2018'
+        #     )
+        return cls(get_blob_db().put(
+            file_obj,
+            domain=domain,
+            parent_id=domain,
+            type_code=CODES.email_multimedia,
+            name=filename,
+            key=random_url_id(16),
+            content_type=content_type,
+        ))
+
+    def get_blob(self):
+        db = get_blob_db()
+        try:
+            blob = db.get(meta=self._meta)
+        except (KeyError, NotFound) as err:
+            raise NotFound(str(err))
+        return blob
+
+    def delete(self):
+        get_blob_db().delete(key=self._meta.key)
+
+    DoesNotExist = BlobMeta.DoesNotExist

@@ -91,3 +91,7 @@ ALLOWED_CSS_PROPERTIES = {
         "white-space",
         "width",
 }
+
+
+MAX_IMAGE_UPLOAD_SIZE = 1024 * 1024  # 1MB
+VALID_EMAIL_IMAGE_MIMETYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}

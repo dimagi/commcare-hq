@@ -10,6 +10,8 @@ from corehq.messaging.scheduling.views import (
     EditScheduleView,
     MessagingDashboardView,
     UploadConditionalAlertView,
+    messaging_image_download_view,
+    messaging_image_upload_view,
 )
 
 urlpatterns = [
@@ -28,4 +30,6 @@ urlpatterns = [
     url(r'^conditional/download/$', DownloadConditionalAlertView.as_view(),
         name=DownloadConditionalAlertView.urlname),
     url(r'^conditional/upload/$', UploadConditionalAlertView.as_view(), name=UploadConditionalAlertView.urlname),
+    url(r'^image/upload/$', messaging_image_upload_view, name="upload_messaging_image"),
+    url(r'^image/download/(?P<image_key>[\w-]+)$', messaging_image_download_view, name="download_messaging_image"),
 ]

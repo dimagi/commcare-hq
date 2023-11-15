@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.http import (
     Http404,
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
     JsonResponse,
@@ -15,6 +16,8 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.views.decorators.csrf import csrf_exempt
+from magic import Magic
 
 from six.moves.urllib.parse import quote_plus
 
@@ -31,6 +34,7 @@ from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
 )
 from django.utils.html import format_html
+from corehq.apps.domain.decorators import LoginAndDomainMixin, login_and_domain_required
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
@@ -49,11 +53,13 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.sms.tasks import OutboundDailyCounter, time_within_windows
 from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.blobs.exceptions import NotFound
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.messaging.scheduling.async_handlers import (
     ConditionalAlertAsyncHandler,
     MessagingRecipientHandler,
 )
+from corehq.messaging.scheduling.const import MAX_IMAGE_UPLOAD_SIZE, VALID_EMAIL_IMAGE_MIMETYPES
 from corehq.messaging.scheduling.forms import (
     BroadcastForm,
     ConditionalAlertCriteriaForm,
@@ -66,6 +72,7 @@ from corehq.messaging.scheduling.models import (
     ScheduledBroadcast,
     TimedSchedule,
 )
+from corehq.messaging.scheduling.models.content import EmailImage
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_count_of_active_schedule_instances_due,
 )
@@ -85,6 +92,7 @@ from corehq.messaging.tasks import initiate_messaging_rule_run
 from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
 
@@ -1085,3 +1093,48 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
             msg[0](request, msg[1])
 
         return self.get(request, *args, **kwargs)
+
+
+@login_and_domain_required
+@csrf_exempt                    # TODO: Remove this!
+def messaging_image_upload_view(request, domain):
+    if request.method == 'POST' and request.FILES.get('upload'):
+        image_file = request.FILES['upload']
+
+        if image_file.size > MAX_IMAGE_UPLOAD_SIZE:
+            return JsonResponse({
+                'error': _('Image file is too large. Images must be smaller than 1MB')
+            }, status=400)
+
+        if not _validate_is_image_type(image_file.file):
+            image_extensions = [mimetype.split("/")[1] for mimetype in VALID_EMAIL_IMAGE_MIMETYPES]
+            return JsonResponse({
+                'error': _('You can only upload {image_extensions} images').format(
+                    image_extensions=", ".join(image_extensions))
+            }, status=400)
+
+        image = EmailImage.save_blob(
+            image_file,
+            domain=request.domain,
+            filename=image_file.name,
+            content_type=image_file.content_type,
+        )
+        return JsonResponse({
+            'url': absolute_reverse("download_messaging_image", args=[domain, image.blob_id])
+        }, status=201)
+    return JsonResponse({'error': _('Invalid request')}, status=400)
+
+
+def _validate_is_image_type(data):
+    mime = Magic(mime=True)
+    return mime.from_buffer(data.read()) in VALID_EMAIL_IMAGE_MIMETYPES
+
+
+def messaging_image_download_view(request, domain, image_key):
+    try:
+        image_meta = EmailImage.get_by_key(domain, image_key)
+        image_blob = image_meta.get_blob()
+    except (EmailImage.DoesNotExist, NotFound):
+        raise Http404()
+
+    return HttpResponse(image_blob, content_type=image_meta.content_type)
