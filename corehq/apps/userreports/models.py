@@ -158,14 +158,14 @@ class DataSourceRowTransactionLog(models.Model):
         (UPDATE, UPDATE),
         (DELETE, DELETE),
     ), null=False, blank=False)
-    data_source_id = models.UUIDField(null=False, blank=False)
+    data_source_id = models.UUIDField(db_index=True, null=False, blank=False)
     row_id = models.UUIDField(unique=True, null=False, blank=False, db_index=True)  # The Form or Case ID
     row_data = models.JSONField(null=True, blank=True)
 
 
 class DataSourceSubscriber(models.Model):
     domain = models.CharField(max_length=126, null=False, db_index=True)
-    data_source_id = models.UUIDField(null=False, blank=False)
+    data_source_id = models.UUIDField(db_index=True, null=False, blank=False)
     subscriber_uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False, null=False, blank=False)
 
 
