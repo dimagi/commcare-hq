@@ -44,5 +44,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(fix_users, reverse_code=migrations.RunPython.noop, elidable=True)
+        # No longer needed. No-op
+        # migrations.RunPython(fix_users, reverse_code=migrations.RunPython.noop, elidable=True)
     ]
