@@ -5,6 +5,7 @@ from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.models import StripePaymentMethod
 from unittest import SkipTest
+from unittest.mock import patch
 
 
 class TestStripePaymentMethod(BaseAccountingTest):
@@ -120,7 +121,6 @@ class TestStripePaymentMethod(BaseAccountingTest):
 
     def test_all_cards_return_empty_array_if_no_stripe_key(self):
         stripe.api_key = None
-        from unittest.mock import patch
         with patch.object(settings, "STRIPE_PRIVATE_KEY", None):
             self.assertEqual(len(self.payment_method.all_cards), 0)
 
