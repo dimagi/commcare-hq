@@ -175,8 +175,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 divEl.css("max-width", "none");
                 divEl.css("width", "100%");
             }
-            console.log("model.get('value')");
-            console.log(model.set('value'));
+            console.log("model");
+            console.log(model);
 
             console.log("sessionStorage.geocoderValue");
             console.log(sessionStorage.geocoderValue);
@@ -344,6 +344,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 this.model.set('value', $(e.currentTarget).val());
             } else if (this.model.get('input') === 'address') {
                 console.log("changeQueryField called for address");
+                console.log("this.model");
+                console.log(this.model);
                 sessionStorage.removeItem('geocoderValue');
                 // geocoderItemCallback sets the value on the model
             } else if (this.model.get('input') === 'checkbox') {
