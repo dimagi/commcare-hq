@@ -6,6 +6,23 @@
   </title>
 
   <field>
+    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
+      <grid grid-height="2" grid-width="3" grid-x="3" grid-y="5"/>
+    </style>
+    <header>
+      <text>
+      </text>
+    </header>
+    <template form="plain">
+      <text>
+          <xpath function="''">
+        </xpath>
+      </text>
+    </template>
+    {top_left[endpoint_action]}
+  </field>
+
+  <field>
     <style
         horz-align="center"
         vert-align="center"
@@ -50,7 +67,7 @@
   </field>
 
   <field>
-    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
+    <style horz-align="left" vert-align="center" font-size="small">
       <grid grid-height="1" grid-width="3" grid-x="3" grid-y="5"/>
     </style>
     <header>
