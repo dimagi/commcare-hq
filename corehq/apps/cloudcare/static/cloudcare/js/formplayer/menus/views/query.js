@@ -182,9 +182,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             console.log(sessionStorage.geocoderValue);
 
             //should set value
-
-            if (sessionStorage.geocoderValue) {
-                $field.find('.mapboxgl-ctrl-geocoder--input').val(sessionStorage.geocoderValue);
+            console.log("sessionStorage.geocoderValue[id]");
+            console.log(sessionStorage.geocoderValue[id]);
+            if (sessionStorage.geocoderValue[id]) {
+                try {
+                    document.getElementById("foo").getElementsByClassName('.mapboxgl-ctrl-geocoder--input').val(sessionStorage.geocoderValue);
+                } catch (err) {
+                    console.log("error setting field");
+                    console.log(err);
+                    $field.find('.mapboxgl-ctrl-geocoder--input').val(sessionStorage.geocoderValue);
+                }
             }
             // if (model.get('value')) {
             //     $field.find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
@@ -346,7 +353,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 console.log("changeQueryField called for address");
                 console.log("this.model");
                 console.log(this.model);
-                sessionStorage.removeItem('geocoderValue');
+                if (sessionStorage.geocoderValue[this.model.id] !== this.model.value) {
+                    sessionStorage.geocoderValue[this.model.id] = undefined;
+                }
+                console.log(sessionStorage.geocoderValue);
                 // geocoderItemCallback sets the value on the model
             } else if (this.model.get('input') === 'checkbox') {
                 var newValue = _.chain($(e.currentTarget).find('input[type=checkbox]'))
