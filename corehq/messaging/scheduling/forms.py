@@ -1,6 +1,7 @@
 import json
 import re
 from datetime import datetime, timedelta
+from bleach.css_sanitizer import CSSSanitizer
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -22,9 +23,11 @@ from django.forms.widgets import (
 )
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
+from django.utils.html import strip_tags
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
+import bleach
 from couchdbkit import ResourceNotFound
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -63,6 +66,9 @@ from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.const import (
+    ALLOWED_CSS_PROPERTIES,
+    ALLOWED_HTML_ATTRIBUTES,
+    ALLOWED_HTML_TAGS,
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
     VISIT_WINDOW_START,
@@ -400,9 +406,22 @@ class ContentForm(Form):
                 message=self.cleaned_data['message']
             )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_EMAIL:
+            plaintext_message = {}
+            sanitized_message = {}
+            css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
+            for lang, content in self.cleaned_data['message'].items():
+                plaintext_message[lang] = strip_tags(content)
+                sanitized_message[lang] = bleach.clean(
+                    content,
+                    attributes=ALLOWED_HTML_ATTRIBUTES,
+                    tags=ALLOWED_HTML_TAGS,
+                    css_sanitizer=css_sanitizer
+                )
+
             return EmailContent(
                 subject=self.cleaned_data['subject'],
-                message=self.cleaned_data['message'],
+                message=plaintext_message,
+                html_message=sanitized_message,
             )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_SMS_SURVEY:
             combined_id = self.cleaned_data['app_and_form_unique_id']

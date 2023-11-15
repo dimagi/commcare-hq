@@ -117,11 +117,12 @@ class EmailContent(Content):
         return EmailContent(
             subject=deepcopy(self.subject),
             message=deepcopy(self.message),
+            html_message=deepcopy(self.html_message),
         )
 
-    def render_subject_and_message(self, subject, message, recipient):
+    def render_subject_and_message(self, subject, message, html_message, recipient):
         renderer = self.get_template_renderer(recipient)
-        return renderer.render(subject), renderer.render(message)
+        return renderer.render(subject), renderer.render(message), renderer.render(html_message)
 
     def send(self, recipient, logged_event, phone_entry=None):
         domain = logged_event.domain
@@ -147,14 +148,20 @@ class EmailContent(Content):
             recipient.get_language_code()
         )
 
+        html_message = self.get_translation_from_message_dict(
+            domain_obj,
+            self.html_message,
+            recipient.get_language_code()
+        )
+
         try:
-            subject, message = self.render_subject_and_message(subject, message, recipient)
+            subject, message, html_message = self.render_subject_and_message(subject, message, html_message, recipient)
         except Exception:
             logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
             return
 
         subject = subject or '(No Subject)'
-        if not message:
+        if not message or not html_message:
             logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
             return
 
@@ -169,12 +176,12 @@ class EmailContent(Content):
             return
 
         metrics_counter('commcare.messaging.email.sent', tags={'domain': domain})
-        if toggles.RICH_TEXT_EMAILS.enabled(domain):
+        if toggles.RICH_TEXT_EMAILS.enabled(domain) and html_message:
             send_html_email_async.delay(
                 subject,
                 email_address,
-                message,        # TODO: Switch to html_message?
-                text_content="TODO",
+                html_message,
+                text_content=message,
                 messaging_event_id=logged_subevent.id,
                 domain=domain)
         else:
@@ -195,6 +202,7 @@ class EmailContent(Content):
             recipient_address=email_address,
             subject=subject,
             body=message,
+            html_body=html_message,
         )
         email.save()
 

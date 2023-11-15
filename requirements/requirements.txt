@@ -24,6 +24,8 @@ beaker==1.11.0
     # via oic
 billiard==3.6.4.0
     # via celery
+bleach[css]==6.1.0
+    # via -r base-requirements.in
 boto3==1.24.96
     # via -r base-requirements.in
 botocore==1.27.96
@@ -511,6 +513,7 @@ simplejson==3.17.6
 six==1.16.0
     # via
     #   -r base-requirements.in
+    #   bleach
     #   click-repl
     #   ddsketch
     #   ddtrace
@@ -553,6 +556,8 @@ tenacity==8.2.2
     # via ddtrace
 text-unidecode==1.3
     # via -r base-requirements.in
+tinycss2==1.2.1
+    # via bleach
 toposort==1.7
     # via -r base-requirements.in
 tropo-webapi-python==0.1.3
@@ -593,6 +598,10 @@ vine==5.0.0
     #   kombu
 wcwidth==0.2.5
     # via prompt-toolkit
+webencodings==0.5.1
+    # via
+    #   bleach
+    #   tinycss2
 werkzeug==3.0.1
     # via -r base-requirements.in
 wrapt==1.12.1
