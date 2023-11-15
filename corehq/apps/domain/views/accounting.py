@@ -1150,7 +1150,6 @@ class SelectedAnnualPlanView(SelectPlanView):
     template_name = 'domain/selected_annual_plan.html'
     urlname = 'annual_plan_request_quote'
     step_title = gettext_lazy("Contact Dimagi")
-    edition = None
 
     @property
     def steps(self):
