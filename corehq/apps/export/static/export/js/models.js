@@ -14,7 +14,7 @@ hqDefine('export/js/models', [
     'analytix/js/kissmetrix',
     'export/js/const',
     'export/js/utils',
-    'hqwebapp/js/validators.ko',        // needed for validation of customPathString
+    'hqwebapp/js/bootstrap3/validators.ko',        // needed for validation of customPathString
     'hqwebapp/js/bootstrap3/knockout_bindings.ko', // needed for multirow_sortable binding
 ], function (
     $,

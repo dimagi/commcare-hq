@@ -72,6 +72,11 @@ class ErrorsOnlyField(Field):
     template = 'hqwebapp/crispy/field/errors_only_field.html'
 
 
+def get_form_action_class():
+    """This is only valid for bootstrap 5"""
+    return CSS_LABEL_CLASS_BOOTSTRAP5.replace('col', 'offset') + CSS_FIELD_CLASS_BOOTSTRAP5
+
+
 def _get_offsets(context):
     label_class = context.get('label_class', '')
     use_bootstrap5 = context.get('use_bootstrap5')
@@ -135,6 +140,11 @@ class FormStepNumber(LayoutObject):
 
 
 class ValidationMessage(LayoutObject):
+    """
+    IMPORTANT: DO NOT USE IN BOOTSTRAP 5 VIEWS.
+    See bootstrap5/validators.ko and revisit styleguide in
+    Organisms > Forms for additional help.
+    """
     template = 'hqwebapp/crispy/validation_message.html'
 
     def __init__(self, ko_observable):
