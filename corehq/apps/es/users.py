@@ -232,17 +232,23 @@ def is_active(active=True):
     return filters.term("is_active", active)
 
 
-def user_data(key, value):
+def user_data(key, value, domain=None):
+
+    data_filter = [queries.nested(
+        "user_data_es.data",
+        filters.AND(
+            filters.term("user_data_es.data.key", key),
+            queries.match(field='user_data_es.data.value', search_string=value)
+        )
+    )]
+    domain_filter = [
+        filters.term('user_data_es.domain.exact', domain)
+    ] if domain else []
+
     return queries.nested(
         "user_data_es",
         filters.AND(
-            queries.nested(
-                "user_data_es.data",
-                filters.AND(
-                    filters.term("user_data_es.data.key", key),
-                    queries.match(field='user_data_es.data.value', search_string=value)
-                )
-            )
+            *(data_filter + domain_filter)
         )
     )
 
@@ -268,13 +274,11 @@ def _missing_user_data_value(property_name):
     """
     return queries.nested(
         "user_data_es",
-        filters.AND(
-            queries.nested(
-                "user_data_es.data",
-                filters.AND(
-                    filters.term("user_data_es.data.key", property_name),
-                    filters.NOT(filters.wildcard(field='user_data_es.data.value', value='*'))
-                )
+        queries.nested(
+            "user_data_es.data",
+            filters.AND(
+                filters.term("user_data_es.data.key", property_name),
+                filters.NOT(filters.wildcard(field='user_data_es.data.value', value='*'))
             )
         )
     )

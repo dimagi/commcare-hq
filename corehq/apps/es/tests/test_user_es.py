@@ -17,6 +17,7 @@ class TestUserES(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = 'test-user-es'
+        cls.another_domain = 'another-test-user-es'
         cls.domain_obj = create_domain(cls.domain)
 
         with sync_users_to_es():
@@ -26,12 +27,15 @@ class TestUserES(TestCase):
                 user_data={'sigil': 'lion', 'seat': 'Casterly Rock', 'optional': ''})
             cls._create_mobile_worker('targaryen',
                 user_data={'sigil': 'dragon', 'false_sigil': 'direwolf'})
+            cls._create_mobile_worker('another_stark',
+                domain=cls.another_domain,
+                user_data={'sigil': 'direwolf', 'seat': 'Winterfell', 'optional': 'ok'})
         manager.index_refresh(user_adapter.index_name)
 
     @classmethod
-    def _create_mobile_worker(cls, username, user_data):
+    def _create_mobile_worker(cls, username, user_data, domain=None):
         CommCareUser.create(
-            domain=cls.domain,
+            domain=domain or cls.domain,
             username=username,
             password="*****",
             created_by=None,
@@ -47,14 +51,19 @@ class TestUserES(TestCase):
 
     def test_basic_user_data_query(self):
         direwolf_families = UserES().user_data('sigil', 'direwolf').values_list('username', flat=True)
+        self.assertEqual(direwolf_families, ['stark', 'another_stark'])
+
+    def test_user_data_query_with_domain(self):
+        direwolf_families = UserES().user_data(
+            'sigil', 'direwolf', domain=self.domain).values_list('username', flat=True)
         self.assertEqual(direwolf_families, ['stark'])
 
     def test_chained_user_data_queries_where_both_match(self):
         direwolf_families = (UserES()
-                             .user_data('sigil', 'direwolf')
+                             .user_data('sigil', 'direwolf', domain=self.another_domain)
                              .user_data('seat', 'Winterfell')
                              .values_list('username', flat=True))
-        self.assertEqual(direwolf_families, ['stark'])
+        self.assertEqual(direwolf_families, ['another_stark'])
 
     def test_chained_user_data_queries_with_only_one_match(self):
         direwolf_families = (UserES()
