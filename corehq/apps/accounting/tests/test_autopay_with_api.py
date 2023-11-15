@@ -31,6 +31,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         super(TestBillingAutoPay, cls).setUpClass()
         # Dependabot-created PRs do not have access to secrets.
         # We skip test so the tests do not fail when dependabot creates new PR for dependency upgrades.
+        # Or for developers running tests locally if they do not have stripe API key in their localsettings.
         if not settings.STRIPE_PRIVATE_KEY:
             raise SkipTest("Stripe API Key not set")
         cls._generate_autopayable_entities()
