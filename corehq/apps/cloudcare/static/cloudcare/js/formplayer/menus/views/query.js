@@ -86,6 +86,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 console.log("initMapboxWidget called in geocoderItemCallback");
                 initMapboxWidget(model);
                 sessionStorage.geocoderValue[model.id] = item.place_name;
+                console.log("model.id");
+                console.log(model.id);
+                console.log(sessionStorage.geocoderValue);
                 var broadcastObj = formEntryUtils.getBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
@@ -184,6 +187,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             //should set value
             console.log("sessionStorage.geocoderValue[id]");
             console.log(sessionStorage.geocoderValue[id]);
+            console.log("id");
+            console.log(id);
             if (sessionStorage.geocoderValue[id]) {
                 try {
                     document.getElementById(id).getElementsByClassName('.mapboxgl-ctrl-geocoder--input').val(sessionStorage.geocoderValue[id]);
@@ -731,7 +736,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             console.log("initgeocoders called");
             var self = this;
             if (sessionStorage.geocoderValue === undefined) {
-                sessionStorage.geocoderValue = {};
+                sessionStorage.geocoderValue = new Object();
             }
 
             console.log(sessionStorage.geocoderValue);
