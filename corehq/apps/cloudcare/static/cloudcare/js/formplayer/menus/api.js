@@ -47,9 +47,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                 options = {
                     success: function (parsedMenus, response) {
-                        if (response.submitResponseMessage) {
-                            FormplayerFrontend.trigger('showSuccess', gettext(response.submitResponseMessage));
-                        }
                         if (response.status === 'retry') {
                             FormplayerFrontend.trigger('retry', response, function () {
                                 var newOptionsData = JSON.stringify($.extend(true, { mustRestore: true }, JSON.parse(options.data)));

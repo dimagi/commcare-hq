@@ -65,6 +65,7 @@ from corehq.apps.app_manager import (
     remote_app,
 )
 from corehq.apps.app_manager.app_schemas.case_properties import (
+    all_case_properties_by_domain,
     get_all_case_properties,
     get_usercase_properties,
 )
@@ -1042,6 +1043,7 @@ class FormBase(DocumentSchema):
     is_release_notes_form = BooleanProperty(default=False)
     enable_release_notes = BooleanProperty(default=False)
     session_endpoint_id = StringProperty(exclude_if_none=True)  # See toggles.SESSION_ENDPOINTS
+    respect_relevancy = BooleanProperty(default=True)
 
     # computed datums IDs that are allowed in endpoints
     function_datum_endpoints = StringListProperty()
@@ -1844,8 +1846,10 @@ class DetailColumn(IndexedSchema):
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
 
-    grid_x = IntegerProperty(exclude_if_none=True)
-    grid_y = IntegerProperty(exclude_if_none=True)
+    # Only applies to custom case list tile. grid_x and grid_y are zero-based values
+    # representing the starting row and column.
+    grid_x = IntegerProperty(required=False)
+    grid_y = IntegerProperty(required=False)
     width = IntegerProperty(exclude_if_none=True)
     height = IntegerProperty(exclude_if_none=True)
     horizontal_align = StringProperty(exclude_if_none=True)
@@ -4507,6 +4511,10 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             # expire cache unless new application
             self.global_app_config.clear_version_caches()
         get_all_case_properties.clear(self)
+        all_case_properties_by_domain.clear(self.domain, True, True)
+        all_case_properties_by_domain.clear(self.domain, True, False)
+        all_case_properties_by_domain.clear(self.domain, False, True)
+        all_case_properties_by_domain.clear(self.domain, False, False)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
         get_apps_in_domain.clear(self.domain, True)

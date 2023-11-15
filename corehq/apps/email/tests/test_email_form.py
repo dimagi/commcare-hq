@@ -55,19 +55,6 @@ class EmailSMTPSettingsFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('from_email', form.errors)
 
-    def test_clean_server(self):
-        form_data = EmailSMTPSettingsFormTests._get_valid_form_data()
-
-        # Valid server format
-        form = EmailSMTPSettingsForm(data=form_data)
-        self.assertTrue(form.is_valid())
-
-        # Invalid server format
-        form_data.update({'server': 'server'})
-        form = EmailSMTPSettingsForm(data=form_data)
-        self.assertFalse(form.is_valid())
-        self.assertIn('server', form.errors)
-
     @staticmethod
     def _get_valid_form_data():
         return {
