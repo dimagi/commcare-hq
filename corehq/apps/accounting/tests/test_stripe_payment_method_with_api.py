@@ -188,8 +188,7 @@ class TestStripePaymentMethod(BaseAccountingTest):
 
     def test_create_charge_success(self):
         description = "Test charge"
-        amount_in_dollars = 100
-
+        amount_in_dollars = Decimal('100')
         # Perform the charge
         transaction_id = self.payment_method.create_charge(
             card=self.card.id,
@@ -205,7 +204,7 @@ class TestStripePaymentMethod(BaseAccountingTest):
 
     def test_create_charge_with_idempotency_key(self):
         description = "Test charge"
-        amount_in_dollars = 100
+        amount_in_dollars = Decimal('100')
         # Idempotency key ensures that the charge can be retried without fear of double charging
         idempotency_key = 'test_idempotency_key_12345'
         transaction_id_first_attempt = self.payment_method.create_charge(

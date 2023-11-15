@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.test import TestCase
 import stripe
 from corehq.apps.accounting.models import StripePaymentMethod
@@ -41,7 +42,7 @@ class StripeUtilsTests(TestCase):
         self.assertEqual(cards['data'][0].id, self.card.id)
 
     def test_charge_through_stripe_successful(self):
-        amount_in_dollars = 10
+        amount_in_dollars = Decimal('10.00')
         currency = 'usd'
         description = 'Test charge'
         charge = charge_through_stripe(
