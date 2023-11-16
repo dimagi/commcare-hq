@@ -3,8 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest import mock
 
-from django.db import transaction
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase
 
 from couchdbkit import ResourceConflict
 
@@ -237,23 +236,41 @@ class TestProcessReportingMetadataStaging(TestCase):
 
 
 @mock.patch.object(UserReportingMetadataStaging, 'process_record')
-class TestProcessReportingMetadataStagingTransaction(TransactionTestCase):
+class TestProcessReportingMetadataStagingTransaction(TestCase):
     """
-    TransactionTestCase is much slower than TestCase, but needed to use new_db_connection
+    This is testing the same method as TestProcessReportingMetadataStaging is above, but
+    this is specifically testing how the method behaves when a record is locked.
+    In order to reproduce this scenario without using a TransactionTestCase, which has a
+    heavy handed cleanup process that can disrupt other tests, we need to create the initial
+    records outside of the TestCase transaction, otherwise the records will not be available
+    from another db connection. No other test should be added to this class as ``select_for_update``
+    will hold a lock for the duration of the outer transaction, and the general cleanup/teardown
+    here is kludgy.
     """
     def test_subsequent_records_are_processed_if_record_is_locked(self, mock_process_record):
-        record = UserReportingMetadataStaging.objects.create(user_id=self.user._id, domain='test-domain')
-        UserReportingMetadataStaging.objects.create(user_id=self.user._id, domain='test-domain')
-
-        with transaction.atomic():
-            _ = UserReportingMetadataStaging.objects.select_for_update().get(pk=record.id)
-            with new_db_connection():
-                _process_reporting_metadata_staging()
+        _ = UserReportingMetadataStaging.objects.select_for_update().get(pk=self.record.id)
+        with new_db_connection():
+            _process_reporting_metadata_staging()
 
         self.assertEqual(mock_process_record.call_count, 1)
         self.assertEqual(UserReportingMetadataStaging.objects.all().count(), 1)
 
-    def setUp(self):
-        super().setUp()
-        self.user = CommCareUser.create('test-domain', 'test-username', 'qwer1234', None, None)
-        self.addCleanup(self.user.delete, 'test-domain', deleted_by=None)
+    @classmethod
+    def setUpClass(cls):
+        cls.user = CommCareUser.create('test-domain', 'test-username', 'qwer1234', None, None)
+        # Create the records outside of the TestCase transaction to ensure they are committed/saved
+        # to the db by the time the method under tests attempts to read from the database
+        # Because this is outside of a transaction, we are responsible for cleaning these up
+        cls.record = UserReportingMetadataStaging.objects.create(user_id=cls.user._id, domain='test-domain')
+        cls.record_two = UserReportingMetadataStaging.objects.create(user_id=cls.user._id, domain='test-domain')
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        # Cleanup needs to be done outside of the TestCase transaction to ensure it is not rolled back
+        # Notably, the user is currently stored in couch and could be done within the transaction, but
+        # for consistency it is here
+        cls.user.delete('test-domain', deleted_by=None)
+        cls.record.delete()
+        cls.record_two.delete()
