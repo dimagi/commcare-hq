@@ -68,11 +68,14 @@ class Command(BaseCommand):
                                  " against a CouchDB 'doc_type' or Django model name: 'app_label.ModelName'."
                                  "Use 'print_domain_stats' command to get a list of available types.")
         parser.add_argument('--json-output', action="store_true", help="Produce JSON output for use in tests")
+        parser.add_argument('--chunksize', type=int, default=100,
+                            help="Set custom chunksize in case it runs into large couch documents")
 
     def handle(self, dump_file_path, **options):
         self.force = options.get('force')
         self.dry_run = options.get('dry_run')
         self.use_extracted = options.get('use_extracted')
+        self.chunksize = options.get('chunksize')
 
         if not os.path.isfile(dump_file_path):
             raise CommandError("Dump file not found: {}".format(dump_file_path))
@@ -91,7 +94,7 @@ class Command(BaseCommand):
         dump_meta = _get_dump_meta(extracted_dir)
         for loader in loaders:
             loaded_meta.update(self._load_data(
-                loader, extracted_dir, object_filter, dump_meta
+                loader, extracted_dir, object_filter, dump_meta, self.chunksize
             ))
 
         if options.get("json_output"):
@@ -122,10 +125,11 @@ class Command(BaseCommand):
                 "Extracted dump already exists at {}. Delete it or use --use-extracted".format(target_dir))
         return target_dir
 
-    def _load_data(self, loader_class, extracted_dump_path, object_filter, dump_meta):
+    def _load_data(self, loader_class, extracted_dump_path, object_filter, dump_meta, chunksize=None):
         try:
             loader = loader_class(object_filter, self.stdout, self.stderr)
-            return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force, dry_run=self.dry_run)
+            return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force,
+                                         dry_run=self.dry_run, chunksize=chunksize)
         except DataExistsException as e:
             raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(str(e)))
         except Exception as e:

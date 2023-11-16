@@ -153,6 +153,8 @@ class IterDB(object):
                  new_edits=None, callback=None):
         self.db = database
         self.chunksize = chunksize
+        if not self.chunksize:
+            self.chunksize = 100
         self.throttle_secs = throttle_secs
         self.saved_ids = set()
         self.deleted_ids = set()

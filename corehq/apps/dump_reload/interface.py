@@ -55,16 +55,16 @@ class DataLoader(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def load_from_path(self, extracted_dump_path, dump_meta, force=False, dry_run=False):
+    def load_from_path(self, extracted_dump_path, dump_meta, force=False, dry_run=False, chunksize=None):
         loaded_object_count = {}
         for file in os.listdir(extracted_dump_path):
             path = os.path.join(extracted_dump_path, file)
             if file.startswith(self.slug) and file.endswith('.gz') and os.path.isfile(path):
-                counts = self.load_from_file(path, dump_meta, force, dry_run)
+                counts = self.load_from_file(path, dump_meta, force, dry_run, chunksize)
                 loaded_object_count.update(counts)
         return loaded_object_count
 
-    def load_from_file(self, file_path, dump_meta, force=False, dry_run=False):
+    def load_from_file(self, file_path, dump_meta, force=False, dry_run=False, chunksize=None):
         if not os.path.isfile(file_path):
             raise Exception("Dump file not found: {}".format(file_path))
 
@@ -73,7 +73,10 @@ class DataLoader(metaclass=ABCMeta):
         expected_count = sum(dump_meta[meta_slug].values())
         with gzip.open(file_path) as dump_file:
             object_strings = with_progress_bar(dump_file, length=expected_count)
-            loaded_object_count = self.load_objects(object_strings, force, dry_run)
+            if self.slug == 'couch' and chunksize:
+                loaded_object_count = self.load_objects(object_strings, force, dry_run, chunksize)
+            else:
+                loaded_object_count = self.load_objects(object_strings, force, dry_run)
 
         # Warn if the file we loaded contains 0 objects.
         if sum(loaded_object_count.values()) == 0:

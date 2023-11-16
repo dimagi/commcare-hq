@@ -29,7 +29,7 @@ class CouchDataLoader(DataLoader):
         self._dbs = {}
         self._success_counter = Counter()
 
-    def load_objects(self, object_strings, force=False, dry_run=False):
+    def load_objects(self, object_strings, force=False, dry_run=False, chunksize=None):
         for obj_string in object_strings:
             doc = json.loads(obj_string)
             doc_type = drop_suffix(doc['doc_type'])
@@ -37,7 +37,7 @@ class CouchDataLoader(DataLoader):
                 if dry_run:
                     self._success_counter[doc_type] += 1
                 else:
-                    db = self._get_db_for_doc_type(doc_type)
+                    db = self._get_db_for_doc_type(doc_type, chunksize)
                     db.save(doc)
 
         for db in self._dbs.values():
@@ -48,13 +48,12 @@ class CouchDataLoader(DataLoader):
     def _doc_type_matches_filter(self, doc_type):
         return not self.object_filter or self.object_filter.findall(doc_type)
 
-    def _get_db_for_doc_type(self, doc_type):
+    def _get_db_for_doc_type(self, doc_type, chunksize=None):
         if doc_type not in self._dbs:
             couch_db = get_db_by_doc_type(doc_type)
             if couch_db is None:
                 raise DocumentClassNotFound('No Document class with name "{}" could be found.'.format(doc_type))
             callback = LoaderCallback(self._success_counter, self.stdout)
-            chunksize = 100
             if doc_type in [Application._doc_type, LinkedApplication._doc_type, RemoteApp._doc_type]:
                 chunksize = 1
             db = IterDB(couch_db, new_edits=False, callback=callback, chunksize=chunksize, throttle_secs=0.25)
