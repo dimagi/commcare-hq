@@ -47,6 +47,6 @@ def get_case_ids_missing_from_case_search(domain):
     :param domain: domain name
     :return: list of case ids that exist in Case index but not CaseSearch index
     """
-    case_ids_in_es = {c for c in CaseES().domain(domain).values_list('_id', flat=True)}
-    case_search_ids_in_es = {c for c in CaseSearchES().domain(domain).values_list('_id', flat=True)}
+    case_ids_in_es = {c for c in CaseES().domain(domain).values_list('_id', flat=True, scroll=True)}
+    case_search_ids_in_es = {c for c in CaseSearchES().domain(domain).values_list('_id', flat=True, scroll=True)}
     return list(case_ids_in_es - case_search_ids_in_es)
