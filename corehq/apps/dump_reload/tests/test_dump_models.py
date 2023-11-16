@@ -162,7 +162,7 @@ UNKNOWN_MODELS = {
     "userreports.AsyncIndicator",
     "userreports.DataSourceActionLog",
     "userreports.DataSourceRowTransactionLog",
-    "userreports.DataSourceSubscriber",
+    "userreports.DataSourceChangeSubscriber",
     "userreports.InvalidUCRData",
     "userreports.UCRExpression",
     "users.HQApiKey",
