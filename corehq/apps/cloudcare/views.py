@@ -615,10 +615,7 @@ def api_histogram_metrics(request, domain):
     request_dict = request.POST
 
     metric_name = request_dict.get("metrics")
-    try:
-        duration = float(request_dict.get("responseTime"))
-    except ValueError:
-        duration = None
+    duration = float(request_dict.get("responseTime"))
 
     if metric_name and duration:
         metrics_histogram(metric_name,
