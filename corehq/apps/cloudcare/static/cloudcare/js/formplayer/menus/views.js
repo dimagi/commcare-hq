@@ -535,7 +535,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             casesPerPageLimit: '.per-page-limit',
             searchMoreButton: '#search-more',
             scrollToBottomButton: '#scroll-to-bottom',
-            mapShowHideButton: '#hide-map-button'
+            mapShowHideButton: '#hide-map-button',
         };
     };
 
@@ -553,7 +553,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
             'keypress @ui.paginators': 'paginateKeyAction',
-            'click @ui.mapShowHideButton' : 'showHideMap',
+            'click @ui.mapShowHideButton': 'showHideMap',
         };
     };
 
