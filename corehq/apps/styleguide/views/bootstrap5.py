@@ -19,7 +19,9 @@ from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_errors import Error
 from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_knockout import KnockoutCrispyExampleForm
 from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_knockout_validation import \
     KnockoutValidationCrispyExampleForm
+from corehq.apps.styleguide.examples.bootstrap5.disabled_fields import DisabledFieldsExampleForm
 from corehq.apps.styleguide.examples.bootstrap5.multiselect_form import MultiselectDemoForm
+from corehq.apps.styleguide.examples.bootstrap5.placeholder_help_text import PlaceholderHelpTextExampleForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_ajax_form import Select2AjaxDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_autocomplete_ko_form import Select2AutocompleteKoForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_css_class_form import Select2CssClassDemoForm
@@ -232,6 +234,12 @@ def styleguide_organisms_forms(request):
             'crispy_errors': CrispyFormsDemo(
                 crispy_errors_form, get_crispy_forms_context('crispy_forms_errors.py'),
             ),
+            'crispy_disabled_fields': CrispyFormsDemo(
+                DisabledFieldsExampleForm(), get_crispy_forms_context('disabled_fields.py'),
+            ),
+            'crispy_placeholder_help_text': CrispyFormsDemo(
+                PlaceholderHelpTextExampleForm(), get_crispy_forms_context('placeholder_help_text.py'),
+            ),
             'crispy_knockout': CrispyFormsWithJsDemo(
                 form=KnockoutCrispyExampleForm(),
                 code_python=get_crispy_forms_context('crispy_forms_knockout.py'),
@@ -245,6 +253,9 @@ def styleguide_organisms_forms(request):
             'basic_form': get_example_context('styleguide/bootstrap5/examples/basic_form.html'),
             'form_invalid': get_example_context('styleguide/bootstrap5/examples/form_invalid.html'),
             'form_valid': get_example_context('styleguide/bootstrap5/examples/form_valid.html'),
+            'disabled_fields': get_example_context('styleguide/bootstrap5/examples/disabled_fields.html'),
+            'placeholder_help_text': get_example_context(
+                'styleguide/bootstrap5/examples/placeholder_help_text.html'),
         }
     })
     return render(request, 'styleguide/bootstrap5/organisms/forms.html', context)

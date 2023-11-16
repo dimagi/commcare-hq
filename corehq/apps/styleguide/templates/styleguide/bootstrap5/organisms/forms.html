@@ -16,19 +16,36 @@
       <li><a href="#overview">Overview</a></li>
       <li><a href="#crispy-forms">Crispy Forms</a>
         <ul>
-          <a href="#crispy-forms-simple">Simple Example</a>
-          <a href="#crispy-forms-knockout">Using Knockout</a>
+          <li><a href="#crispy-forms-simple">Simple Example</a></li>
+          <li><a href="#crispy-forms-knockout">Using Knockout</a></li>
+
         </ul>
       </li>
       <li><a href="#html-forms">HTML Forms</a></li>
       <li><a href="#validation">Form Validation</a>
         <ul>
-          <a href="#field-errors">Showing Field Errors</a>
-          <a href="#form-errors">Showing Form Errors</a>
-          <a href="#cirspy-errors">Showing Errors in Crispy Forms</a>
-          <a href="#valid-fields">Marking Fields as Valid</a>
-          <a href="#valid-crispy">Valid Feedback in Crispy Forms</a>
-          <a href="#ko-validation">Knockout Validation</a>
+          <li><a href="#field-errors">Showing Field Errors</a></li>
+          <li><a href="#form-errors">Showing Form Errors</a></li>
+          <li><a href="#cirspy-errors">Showing Errors in Crispy Forms</a></li>
+          <li><a href="#valid-fields">Marking Fields as Valid</a></li>
+          <li><a href="#valid-crispy">Valid Feedback in Crispy Forms</a></li>
+          <li><a href="#ko-validation">Knockout Validation</a></li>
+        </ul>
+      </li>
+      <li><a href="#field-states">Field States</a>
+        <ul>
+          <li><a href="#field-state-disabled-readonly">Disabled &amp; Readonly</a>
+            <ul>
+              <li><a href="#disabled-readonly-html">HTML Example</a></li>
+              <li><a href="#disabled-readonly-crispy">Crispy Forms</a></li>
+            </ul>
+          </li>
+          <li><a href="#field-state-placeholders-help">Placeholders &amp; Help Text</a>
+            <ul>
+              <li><a href="#placeholder-help-text-html">HTML Example</a></li>
+              <li><a href="#placeholder-help-text-crispy">Crispy Forms</a></li>
+            </ul>
+          </li>
         </ul>
       </li>
     </ul>
@@ -95,6 +112,14 @@
     <li>
       <p>
         <code>self.helper.form_action</code> is where you can set the url for the form to post to.
+      </p>
+    </li>
+    <li>
+      <p>
+        It is possible to override <code>self.helper.field_class</code> and <code>self.helper.form_class</code>, but
+        please do this sparingly. See Bootstrap's
+        <a href="https://getbootstrap.com/docs/5.3/layout/columns/" target="_blank">Column Documentation</a>
+        for more information about how to use these classes.
       </p>
     </li>
   </ul>
@@ -273,4 +298,66 @@
   </p>
   {% registerurl "styleguide_validate_ko_demo" %}
   {% include 'styleguide/bootstrap5/form_js_example.html' with content=examples.crispy_knockout_validation %}
+
+  <h2 id="field-states" class="pt-4">
+    Field States
+  </h2>
+  <p>
+    In addition to validation states described above, there are other field states available.
+  </p>
+
+  <h3 id="field-state-disabled-readonly" class="pt-3">
+    Disabled &amp; Readonly / Plain Text Fields
+  </h3>
+  <p>
+    Disabling a field gives it a grayed out appearance, removes pointer events, and prevents focusing. This
+    can be done by adding the <code>disabled</code> attribute to the field.
+  </p>
+  <p>
+    Additionally, we can mark a field as readonly and plain text, which removes the input styling and prevents
+    the field from being editing, while also displaying the value as plain text.
+    To do this, add the <code>form-control-plaintext</code> class to the field AND the <code>readonly</code> attribute.
+    Note that this only works for <code>input</code> and <code>textarea</code> elements.
+  </p>
+  <p>
+    Generally it's best to use <code>disabled</code> on fields that are not editable due to permissions
+    or form logic, but would otherwise be editable. If a field cannot be editable by any means and the text is
+    intended to always be read-only, please use the <code>form-control-plaintext</code> class alongside the
+    <code>readonly</code> attribute.
+  </p>
+
+  <h4 id="disabled-readonly-html" class="pt-3">
+    HTML Example
+  </h4>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.disabled_fields %}
+
+  <h4 id="disabled-readonly-crispy" class="pt-3">
+    Crispy Forms Example
+  </h4>
+  {% include 'styleguide/bootstrap5/form_example.html' with content=examples.crispy_disabled_fields %}
+
+  <h3 id="field-state-placeholders-help" class="pt-3">
+    Placeholders &amp; Help Text
+  </h3>
+  <p>
+    Placeholders and help text are a great way to give the user guidance when filling out a form.
+    Placeholders insert "hint text" directly in a field that gets replaced by the inputted value,
+    while help text is text that appears beneath the field.
+  </p>
+  <p>
+    Placeholders are useful for providing example formatting for the expected input.
+  </p>
+  <p>
+    Help text is useful for providing detailed guidance or comments related to the field.
+  </p>
+  <h4 id="placeholder-help-text-html" class="pt-3">
+    HTML Example
+  </h4>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.placeholder_help_text %}
+
+  <h4 id="placeholder-help-text-crispy" class="pt-3">
+    Crispy Forms Example
+  </h4>
+  {% include 'styleguide/bootstrap5/form_example.html' with content=examples.crispy_placeholder_help_text %}
+
 {% endblock content %}
