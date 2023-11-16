@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,123 +1,67 @@
+@@ -1,124 +1,67 @@
 -@import "@{b3-import-variables}";
 +/*
 +These are Boostrap 3 variables that were carried over in the
@@ -170,5 +170,6 @@
  
 -
 -@input-border-radius-large:       5px;
+-@input-color:                     #000;
 -@cursor-disabled:                 'not-allowed';
 +$cursor-disabled: 'not-allowed';
