@@ -65,6 +65,7 @@ from corehq.apps.app_manager import (
     remote_app,
 )
 from corehq.apps.app_manager.app_schemas.case_properties import (
+    all_case_properties_by_domain,
     get_all_case_properties,
     get_usercase_properties,
 )
@@ -115,6 +116,7 @@ from corehq.apps.app_manager.suite_xml.generator import (
 )
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
     RESULTS_INSTANCE,
+    RESULTS_INSTANCE_BASE,
     RESULTS_INSTANCE_INLINE,
 )
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -1041,6 +1043,7 @@ class FormBase(DocumentSchema):
     is_release_notes_form = BooleanProperty(default=False)
     enable_release_notes = BooleanProperty(default=False)
     session_endpoint_id = StringProperty(exclude_if_none=True)  # See toggles.SESSION_ENDPOINTS
+    respect_relevancy = BooleanProperty(default=True)
 
     # computed datums IDs that are allowed in endpoints
     function_datum_endpoints = StringListProperty()
@@ -1304,8 +1307,6 @@ class FormBase(DocumentSchema):
         if case_type is None:
             return False
 
-        if self.get_module().case_type != case_type:
-            return False
         if not self.requires_case():
             return False
 
@@ -1845,8 +1846,10 @@ class DetailColumn(IndexedSchema):
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
 
-    grid_x = IntegerProperty(exclude_if_none=True)
-    grid_y = IntegerProperty(exclude_if_none=True)
+    # Only applies to custom case list tile. grid_x and grid_y are zero-based values
+    # representing the starting row and column.
+    grid_x = IntegerProperty(required=False)
+    grid_y = IntegerProperty(required=False)
     width = IntegerProperty(exclude_if_none=True)
     height = IntegerProperty(exclude_if_none=True)
     horizontal_align = StringProperty(exclude_if_none=True)
@@ -1862,17 +1865,7 @@ class DetailColumn(IndexedSchema):
     filter_xpath = StringProperty(default="", exclude_if_none=True)
     time_ago_interval = FloatProperty(default=365.25)
     date_format = StringProperty(default="%d/%m/%y")
-    action_form_id = FormIdProperty(
-        # This should only be used by 'module.case_details.short'
-        # but adding in all possible reference here for safety
-        'modules[*].case_details.short.columns[*].action_form_id',
-        'modules[*].case_details.long.columns[*].action_form_id',
-        'modules[*].ref_details.short.columns[*].action_form_id',
-        'modules[*].ref_details.long.columns[*].action_form_id',
-        'modules[*].product_details.short.columns[*].action_form_id',
-        'modules[*].product_details.long.columns[*].action_form_id',
-        default="", exclude_if_none=True
-    )
+    endpoint_action_id = FormIdProperty(default="", exclude_if_none=True)
 
     @property
     def enum_dict(self):
@@ -1987,7 +1980,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     persistent_case_context_xml = StringProperty(default='case_name')
 
     # Custom variables to add into the <variables /> node
-    custom_variables = StringProperty(exclude_if_none=True)
     custom_variables_dict = DictProperty(exclude_if_none=True)
 
     # Allow selection of mutiple cases. Only applies to 'short' details
@@ -2020,7 +2012,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         value_is_the_default = self.instance_name == 'casedb'
         if value_is_the_default:
             if module_uses_inline_search(module):
-                return RESULTS_INSTANCE_INLINE
+                return module.search_config.get_instance_name()
             elif module_loads_registry_case(module):
                 return RESULTS_INSTANCE
         return self.instance_name
@@ -2132,6 +2124,13 @@ class DefaultCaseSearchProperty(DocumentSchema):
     defaultValue = StringProperty(exclude_if_none=True)
 
 
+class CaseSearchCustomSortProperty(DocumentSchema):
+    """Sort properties to be applied to search before results are filtered"""
+    property_name = StringProperty()
+    sort_type = StringProperty()
+    direction = StringProperty()
+
+
 class BaseCaseSearchLabel(NavMenuItemMediaMixin):
     def get_app(self):
         return self._module.get_app()
@@ -2160,6 +2159,7 @@ class CaseSearch(DocumentSchema):
     search_filter = StringProperty(exclude_if_none=True)
     search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
+    custom_sort_properties = SchemaListProperty(CaseSearchCustomSortProperty)
     blacklisted_owner_ids_expression = StringProperty(exclude_if_none=True)
     additional_case_types = StringListProperty()
     data_registry = StringProperty(exclude_if_none=True)
@@ -2168,15 +2168,23 @@ class CaseSearch(DocumentSchema):
     title_label = LabelProperty(default={})
     description = LabelProperty(default={})
     include_all_related_cases = BooleanProperty(default=False)
+    dynamic_search = BooleanProperty(default=False)
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
 
     inline_search = BooleanProperty(default=False)
+    instance_name = StringProperty(exclude_if_none=True)  # only applicable to inline_search
 
     @property
     def case_session_var(self):
         return "search_case_id"
+
+    def get_instance_name(self):
+        if self.instance_name:
+            return f'{RESULTS_INSTANCE_BASE}{self.instance_name}'
+        else:
+            return RESULTS_INSTANCE_INLINE
 
     def get_relevant(self, case_session_var, multi_select=False):
         xpath = CaseClaimXpath(case_session_var)
@@ -3412,7 +3420,8 @@ class CustomDataAutoFilter(ReportAppFilter):
 
     def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
-        return Choice(value=user.metadata[self.custom_data_property], display=None)
+        user_data = user.get_user_data(getattr(user, 'current_domain', user.domain))
+        return Choice(value=user_data[self.custom_data_property], display=None)
 
 
 class StaticChoiceFilter(ReportAppFilter):
@@ -4152,6 +4161,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         default=const.DEFAULT_LOCATION_FIXTURE_OPTION, choices=const.LOCATION_FIXTURE_OPTIONS,
         required=False
     )
+    split_screen_dynamic_search = BooleanProperty(default=False)
 
     @property
     def id(self):
@@ -4503,6 +4513,10 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             # expire cache unless new application
             self.global_app_config.clear_version_caches()
         get_all_case_properties.clear(self)
+        all_case_properties_by_domain.clear(self.domain, True, True)
+        all_case_properties_by_domain.clear(self.domain, True, False)
+        all_case_properties_by_domain.clear(self.domain, False, True)
+        all_case_properties_by_domain.clear(self.domain, False, False)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
         get_apps_in_domain.clear(self.domain, True)

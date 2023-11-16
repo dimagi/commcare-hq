@@ -35,6 +35,7 @@ from corehq.apps.data_dictionary.views import DataDictionaryView
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
+from corehq.apps.email.views import EmailSMTPSettingsView
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
 from corehq.apps.events.models import AttendeeModel
@@ -112,7 +113,10 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
 from corehq.apps.users.models import HqPermissions
-from corehq.apps.geospatial.views import GeospatialConfigPage, GPSCaptureView
+from corehq.apps.geospatial.views import (
+    GeospatialConfigPage,
+    GPSCaptureView,
+)
 
 
 class ProjectReportsTab(UITab):
@@ -456,6 +460,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data_dictionary/',
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
+        '/a/{domain}/geospatial/',
     )
 
     @property
@@ -575,6 +580,10 @@ class ProjectDataTab(UITab):
         return toggles.CASE_DEDUPE.enabled_for_request(self._request)
 
     @property
+    def _can_view_geospatial(self):
+        return toggles.GEOSPATIAL.enabled(self.domain)
+
+    @property
     def _is_viewable(self):
         return self.domain and (
             self.can_edit_commcare_data
@@ -633,6 +642,8 @@ class ProjectDataTab(UITab):
                     ]
                 ]
             )
+        if self._can_view_geospatial:
+            items += self._get_geospatial_views()
         return items
 
     @cached_property
@@ -970,6 +981,23 @@ class ProjectDataTab(UITab):
                 })
         return explore_data_views
 
+    def _get_geospatial_views(self):
+        geospatial_items = CaseManagementMapDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
+        management_sections = [
+            {
+                'title': _("Manage GPS Data"),
+                'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
+            },
+            {
+                'title': _("Configure Geospatial Settings"),
+                'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
+            }
+        ]
+        for section in management_sections:
+            geospatial_items[0][1].append(section)
+        return geospatial_items
+
     @property
     def dropdown_items(self):
         if (
@@ -1131,6 +1159,7 @@ class MessagingTab(UITab):
         '/a/{domain}/sms/',
         '/a/{domain}/reminders/',
         '/a/{domain}/data/edit/case_groups/',
+        '/a/{domain}/email/',
     )
 
     @property
@@ -1311,6 +1340,12 @@ class MessagingTab(UITab):
                         'urlname': EditDomainGatewayView.urlname,
                     },
                 ],
+            })
+
+        if toggles.CUSTOM_EMAIL_GATEWAY.enabled(self.domain) and self.couch_user.is_domain_admin():
+            settings_urls.append({
+                'title': _('Email Connectivity'),
+                'url': reverse(EmailSMTPSettingsView.urlname, args=[self.domain]),
             })
 
         if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
@@ -1984,6 +2019,7 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
         ManageDomainMobileWorkersView,
+        ManageDomainAlertsView,
         RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -2000,6 +2036,12 @@ def _get_administration_section(domain):
         'title': _(FeaturePreviewsView.page_title),
         'url': reverse(FeaturePreviewsView.urlname, args=[domain])
     })
+
+    if toggles.CUSTOM_DOMAIN_BANNER_ALERTS.enabled(domain):
+        administration.append({
+            'title': _(ManageDomainAlertsView.page_title),
+            'url': reverse(ManageDomainAlertsView.urlname, args=[domain])
+        })
 
     if toggles.TRANSFER_DOMAIN.enabled(domain):
         administration.append({
@@ -2552,39 +2594,6 @@ class AttendanceTrackingTab(UITab):
     def _is_viewable(self):
         # The FF check is temporary until the full feature is released
         return toggles.ATTENDANCE_TRACKING.enabled(self.domain) and self.couch_user.can_manage_events(self.domain)
-
-
-class GeospatialTab(UITab):
-    title = gettext_noop("Geospatial")
-    view = 'geospatial_default'
-
-    url_prefix_formats = (
-        '/a/{domain}/geospatial',
-    )
-
-    @property
-    def sidebar_items(self):
-        items = [
-            (_("Settings"), [
-                {
-                    'title': _("Configure geospatial settings"),
-                    'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
-                },
-                {
-                    'title': _("Manage GPS Data"),
-                    'url': reverse(GPSCaptureView.urlname, args=(self.domain,)),
-                },
-            ]),
-        ]
-        items.extend(
-            CaseManagementMapDispatcher.navigation_sections(request=self._request, domain=self.domain)
-        )
-
-        return items
-
-    @property
-    def _is_viewable(self):
-        return toggles.GEOSPATIAL.enabled(self.domain)
 
 
 def _get_repeat_record_report(domain):

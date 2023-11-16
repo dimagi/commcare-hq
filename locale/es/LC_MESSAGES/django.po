@@ -33,7 +33,7 @@ msgstr "Tipo de cuenta"
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/linked_domain/filters.py
+#: corehq/apps/geospatial/filters.py corehq/apps/linked_domain/filters.py
 #: corehq/apps/reports/filters/commtrack.py
 #: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
@@ -200,7 +200,7 @@ msgstr "Nombre del Plan"
 msgid "Edition"
 msgstr "Edición"
 
-#: corehq/apps/accounting/filters.py
+#: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 msgid "Visibility"
 msgstr "Visibilidad"
@@ -278,6 +278,21 @@ msgstr ""
 #: corehq/apps/accounting/forms.py
 msgid "Billing Account"
 msgstr "Cuenta de Facturación"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#: corehq/apps/builds/templates/builds/all.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
+#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
+#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+msgid "Version"
+msgstr "Versión"
 
 #: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
@@ -439,7 +454,6 @@ msgstr "Se requiere un nombre para este nuevo rol."
 #: corehq/apps/events/views.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/geospatial/reports.py
 #: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/locations/forms.py
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -476,6 +490,7 @@ msgid "Company / Organization"
 msgstr "Empresa/Organización"
 
 #: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 #: corehq/apps/reminders/forms.py corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/sms.py corehq/ex-submodules/phonelog/reports.py
@@ -610,7 +625,6 @@ msgstr ""
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-#: custom/abt/reports/late_pmt.py
 msgid "Phone Number"
 msgstr "Número de Teléfono "
 
@@ -635,7 +649,7 @@ msgid "Postal Code"
 msgstr "Código Postal"
 
 #: corehq/apps/accounting/models.py custom/abt/reports/filters.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Country"
 msgstr "País"
 
@@ -1047,6 +1061,7 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
 #: corehq/apps/export/templates/export/partials/feed_filter_modal.html
 #: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -2252,7 +2267,7 @@ msgstr ""
 #: corehq/messaging/smsbackends/start_enterprise/forms.py
 #: corehq/messaging/smsbackends/trumpia/forms.py
 #: corehq/messaging/smsbackends/unicel/forms.py corehq/motech/openmrs/forms.py
-#: custom/abt/reports/filters.py custom/abt/reports/late_pmt.py
+#: custom/abt/reports/filters.py
 msgid "Username"
 msgstr "Nombre de Usuario"
 
@@ -2696,6 +2711,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/data_dictionary/models.py corehq/apps/hqadmin/reports.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
@@ -2991,6 +3007,7 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/domain/forms.py
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/forms.py
 #: corehq/apps/geospatial/templates/gps_capture.html
@@ -3703,7 +3720,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/add_ons.py
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
-#: corehq/reports.py
 msgid "Case Management"
 msgstr "Manejo de Casos"
 
@@ -4078,6 +4094,10 @@ msgstr ""
 #: corehq/apps/app_manager/helpers/validators.py
 msgid ""
 "Format \"{}\" can only be used once but is used by multiple properties: {}"
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
+msgid "Column/Field \"{}\": Clickable Icons require a form to be configured."
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
@@ -4722,6 +4742,10 @@ msgstr ""
 "commcarepublic/Grid+View+for+Form+and+Module+Screens\">Sitio de Ayuda </a>. "
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "Dynamic Search for Split Screen Case Search"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "Enable Menu Display Setting Per-Module"
 msgstr "Habilitar Configuración de Visualización de Menú por Módulo"
 
@@ -4737,6 +4761,12 @@ msgstr "Habilitar"
 #: corehq/messaging/scheduling/forms.py
 msgid "Enabled"
 msgstr "Habilitado"
+
+#: corehq/apps/app_manager/static_strings.py
+msgid ""
+"Enable searching as input values change after initial Split Screen Case "
+"Search"
+msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
@@ -4985,6 +5015,7 @@ msgid "Numeric Selection"
 msgstr "Selección Numérica"
 
 #: corehq/apps/app_manager/static_strings.py
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Numeric"
 msgstr "Numérico"
 
@@ -5537,6 +5568,10 @@ msgstr ""
 msgid "2 x 3 grid of image and text"
 msgstr ""
 
+#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
+msgid "BHA Referrals"
+msgstr ""
+
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
 #, python-brace-format
 msgid "There is no schedule for form {form_id}"
@@ -5739,20 +5774,6 @@ msgstr "Etiquetas"
 #: corehq/apps/reports/templates/reports/form/partials/readable_form.html
 msgid "Question IDs"
 msgstr "ID de Preguntas"
-
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#: corehq/apps/builds/templates/builds/all.html
-#: corehq/apps/builds/templates/builds/edit_menu.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
-msgid "Version"
-msgstr "Versión"
 
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
@@ -6307,6 +6328,7 @@ msgstr "Instale CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
+#: corehq/apps/cloudcare/templates/formplayer/query_view.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
 #: corehq/apps/domain/templates/domain/confirm_plan.html
@@ -6611,10 +6633,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                has a Parent Menu configured with \"make search input "
-"available after search\",\n"
-"                This workflow is unsupported.\n"
+"              The case list in <a href=\"%(module_url)s\">%(module_name)s</"
+"a> can not use the same \"search input instance name\" as its Parent Menu.\n"
 "              "
 msgstr ""
 
@@ -7068,29 +7088,7 @@ msgid ""
 "\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
 "list property\n"
-"                that references a missing form: "
-"<code>%(column.header|trans:langs)s</code>.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
-"list property\n"
-"                that references form with a different case type: "
-"<code>%(column.header|trans:langs)s</code>.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
-"list property\n"
-"                that references form with a different parent module: "
+"                that references a missing form endpoint: "
 "<code>%(column.header|trans:langs)s</code>.\n"
 "              "
 msgstr ""
@@ -7165,6 +7163,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -7219,6 +7218,32 @@ msgstr "Descargando su Archivo"
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 msgid "Processing data. Please wait..."
 msgstr "Procesando los datos. Por favor, espere..."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+#: corehq/apps/app_manager/templates/app_manager/partials/function_datum_endpoints.html
+#: corehq/apps/app_manager/templates/app_manager/partials/module_session_endpoint.html
+msgid "Session Endpoint ID"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+msgid ""
+"A session endpoint ID allows Android apps to call in to\n"
+"                                        CommCare at this position."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+msgid "Allow endpoint to access hidden forms"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+msgid "Allow access to hidden forms"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_session_endpoint.html
+msgid ""
+"Turn this setting on to allow this endpoint to access\n"
+"                                        hidden forms."
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
 msgid "Form Changes"
@@ -7455,6 +7480,7 @@ msgstr "Etiqueta del Caso"
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/v2/filters/case_report.py
@@ -8141,11 +8167,6 @@ msgid "Enable these function datums in session endpoints"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/function_datum_endpoints.html
-#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
-msgid "Session Endpoint ID"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/function_datum_endpoints.html
 msgid "Comma separated list of function datums in session endpoints"
 msgstr ""
 
@@ -8235,6 +8256,12 @@ msgid ""
 "\n"
 "                This action will also delete all forms in this %(menu)s.\n"
 "                "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_session_endpoint.html
+msgid ""
+"A session endpoint ID allows Android apps to call in to\n"
+"                                    CommCare at this position."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/add_property_button.html
@@ -8418,6 +8445,7 @@ msgstr ""
 "por la primera prioridad, luego la segunda, etc."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/enterprise/interface.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/smsbillables/filters.py
 msgid "Direction"
@@ -8446,6 +8474,7 @@ msgstr "Clasificar Cálculos"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
 msgid "Format"
@@ -8904,6 +8933,32 @@ msgid "Add default search property"
 msgstr "Agregar propiedad de búsqueda predeterminada"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Custom Sort Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid ""
+"Sort search results by case property before filtering. These will affect the "
+"priority in which results are returned and are hidden from the user."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Exact"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Ascending"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Descending"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Add custom sort property"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Search and Claim Options"
 msgstr "Opciones de Búsqueda y Solicitud"
 
@@ -8935,6 +8990,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Make search input available after search"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Search Input Instance Name"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
@@ -10164,12 +10223,6 @@ msgstr ""
 msgid "Revert"
 msgstr "Revertir"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/session_endpoints.html
-msgid ""
-"A session endpoint ID allows Android apps to call in to\n"
-"                                    CommCare at this position."
-msgstr ""
-
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
@@ -10424,7 +10477,8 @@ msgid "Please enter a password or cancel."
 msgstr "Por favor ingrese una contraseña o cancele."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
-#: corehq/apps/data_dictionary/models.py corehq/apps/hqwebapp/forms.py
+#: corehq/apps/data_dictionary/models.py corehq/apps/email/forms.py
+#: corehq/apps/hqwebapp/forms.py
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
 #: corehq/apps/users/forms.py corehq/messaging/smsbackends/airtel_tcl/forms.py
 #: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py
@@ -10901,6 +10955,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py
+msgid ""
+"'{}' is an invalid instance name. It can contain only letters, numbers, and "
+"underscores."
+msgstr ""
+
+#: corehq/apps/app_manager/views/modules.py
 msgid "There was a problem processing your request."
 msgstr "Hubo un problema mientras procesábamos su solicitud."
 
@@ -11093,13 +11153,9 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/utils.py
 #, python-brace-format
-msgid "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
-msgstr ""
-
-#: corehq/apps/app_manager/views/utils.py
-#, python-brace-format
 msgid ""
-"Session endpoint IDs must be unique. {duplicates} are used multiple times"
+"Session endpoint IDs must be unique. The following id(s) are used multiple "
+"times: {duplicates}"
 msgstr ""
 
 #: corehq/apps/app_manager/views/utils.py
@@ -12125,6 +12181,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/fixtures/templates/fixtures/fixtures_base.html
+#: corehq/apps/geospatial/reports.py corehq/apps/geospatial/views.py
 #: corehq/apps/settings/views.py
 #: corehq/apps/userreports/reports/builder/forms.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
@@ -12454,7 +12511,9 @@ msgstr "SÍ"
 #: corehq/apps/cloudcare/templates/formplayer/query_view.html
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
 msgstr "Borrar"
 
@@ -12464,6 +12523,14 @@ msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid "Please wait while the map loads"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html
+msgid "Scroll to bottom"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html
+msgid "Refine search"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
@@ -13226,7 +13293,8 @@ msgstr "Administre cuentas para usuarios móviles y usuarios CommCareHQ"
 msgid "Manage the Organization Hierarchy"
 msgstr "Administrar la Jerarquía de la Organización"
 
-#: corehq/apps/dashboard/views.py corehq/apps/sms/views.py
+#: corehq/apps/dashboard/views.py corehq/apps/email/views.py
+#: corehq/apps/sms/views.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/reports.py corehq/tabs/tabclasses.py
 msgid "Messaging"
@@ -13305,7 +13373,7 @@ msgstr "Número"
 msgid "Multiple Choice"
 msgstr "Opción Multiple"
 
-#: corehq/apps/data_dictionary/models.py corehq/apps/geospatial/reports.py
+#: corehq/apps/data_dictionary/models.py
 msgid "GPS"
 msgstr "GPS"
 
@@ -13399,6 +13467,12 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Case Property Group"
 msgstr "Grupo de Propiedad del Caso"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"This GPS case property is currently being used to store the geolocation for "
+"cases, so the data type cannot be changed."
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/tests/test_util.py
@@ -13749,6 +13823,7 @@ msgstr "Reasignar"
 
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/reports/v2/reports/explore_case_data.py
 msgid "Case Name"
@@ -14561,6 +14636,7 @@ msgstr "Fecha propiedad de caso (avanzado)"
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
 #: corehq/apps/events/forms.py corehq/apps/events/views.py
+#: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/locations/templates/locations/manage/locations.html
@@ -15432,6 +15508,14 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "During sign up, only allow the email address the invitation was sent to"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Disables the email field on the sign up page"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Edit Privacy Settings"
 msgstr ""
 
@@ -15764,6 +15848,10 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #, python-brace-format
 msgid "Restriction for profile {profile} failed: {message}"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Add New Alert"
 msgstr ""
 
 #: corehq/apps/domain/models.py
@@ -16132,6 +16220,35 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/location_fixture.html
 msgid "Location Fixture Settings"
 msgstr "Configuración de Fixture de Ubicación"
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Available Alerts"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Added By"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Activate or De-activate"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Activate Alert"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "De-activate Alert"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+msgid "No alerts added yet for the project."
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 msgid "Measure"
@@ -16736,8 +16853,8 @@ msgstr "Hola,"
 #, python-format
 msgid ""
 "\n"
-"    %(inviter)s has invited you to join the %(domain)s project space at "
-"CommCare HQ.\n"
+"    %(inviter)s has invited you to join the %(domain)s project at CommCare "
+"HQ.\n"
 "    This invitation expires in %(days)s day(s).\n"
 msgstr ""
 
@@ -18304,6 +18421,34 @@ msgstr ""
 msgid "Manage Mobile Workers"
 msgstr ""
 
+#: corehq/apps/domain/views/settings.py
+msgid "Manage Project Alerts"
+msgstr ""
+
+#: corehq/apps/domain/views/settings.py
+msgid "Alert saved!"
+msgstr ""
+
+#: corehq/apps/domain/views/settings.py
+msgid "There was an error saving your alert. Please try again!"
+msgstr ""
+
+#: corehq/apps/domain/views/settings.py
+msgid "Alert not found!"
+msgstr ""
+
+#: corehq/apps/domain/views/settings.py
+msgid "Alert was removed!"
+msgstr ""
+
+#: corehq/apps/domain/views/settings.py
+msgid "Alert updated!"
+msgstr ""
+
+#: corehq/apps/domain/views/settings.py
+msgid "Unexpected update received. Alert not updated!"
+msgstr ""
+
 #: corehq/apps/domain/views/sms.py
 msgid "SMS Rate Calculator"
 msgstr "Calculador de Tarifas SMS"
@@ -18373,6 +18518,83 @@ msgstr ""
 "\n"
 "¡Felicidades! Su archivo ha sido cargado exitosamente a  %(path)s en su "
 "cuenta de Dropbox. Lo puede compartir con este enlace:\n"
+
+#: corehq/apps/email/forms.py corehq/apps/reports/views.py
+msgid "Server"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "e.g. \"smtp.example.com\""
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Port"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+#, fuzzy
+#| msgid "Send Email"
+msgid "Sender's Email"
+msgstr "Enviar Correo Electrónico"
+
+#: corehq/apps/email/forms.py
+msgid "Return Path Email"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid ""
+"The email address to which message bounces and complaints should be sent"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Use Gateway?"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Select this option to use this email gateway for sending emails"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Use Tracking Headers"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid ""
+"Applicable for Amazon's gateway. When selected, emails will be sent with "
+"tracking headers along with other headers."
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "SNS Endpoint Secret"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid ""
+"Applicable only when gateway is Amazon's SES and tracking headers are "
+"enabled. This secret is used in the AWS SNS settings."
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "SES Configuration Set Name"
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid ""
+"Applicable only when gateway is Amazon's SES and tracking headers are "
+"enabled."
+msgstr ""
+
+#: corehq/apps/email/forms.py
+msgid "Saved"
+msgstr "Guardado"
+
+#: corehq/apps/email/templates/email/email_settings.html
+msgid "Add Email Gateway Settings"
+msgstr ""
+
+#: corehq/apps/email/views.py
+msgid "Email Settings"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Enterprise Report"
@@ -18647,6 +18869,10 @@ msgstr ""
 
 #: corehq/apps/enterprise/forms.py
 msgid "180 days"
+msgstr ""
+
+#: corehq/apps/enterprise/forms.py
+msgid "365 days"
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py
@@ -21869,6 +22095,19 @@ msgstr ""
 msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
+#: corehq/apps/geospatial/filters.py
+msgid "GPS Data"
+msgstr ""
+
+#: corehq/apps/geospatial/filters.py
+#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+msgid "Missing"
+msgstr ""
+
+#: corehq/apps/geospatial/filters.py
+msgid "Show cases that have missing GPS Data or All cases"
+msgstr ""
+
 #: corehq/apps/geospatial/forms.py
 msgid "Custom user field"
 msgstr ""
@@ -21897,6 +22136,40 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
+msgid "Grouping method"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Determines which parameter to use for grouping cases"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Maximum group size"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "The maximum number of cases that can be in a group"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "The minimum number of cases that can be in a group"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Target group count"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The desired number of groups. Cases will be divided equally to create this "
+"many groups"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Disbursement algorithm"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py corehq/tabs/tabclasses.py
 msgid "Configure Geospatial Settings"
 msgstr ""
 
@@ -21917,17 +22190,119 @@ msgid ""
 "case property for all users that capture location data.</li></ul>"
 msgstr ""
 
-#: corehq/apps/geospatial/reports.py
-msgid "Case Management Map"
+#: corehq/apps/geospatial/forms.py
+msgid "Case Grouping Parameters"
 msgstr ""
 
-#: corehq/apps/geospatial/reports.py corehq/apps/geospatial/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Geospatial"
+#: corehq/apps/geospatial/forms.py
+msgid "Algorithms"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Value for maximum group size required"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Value for minimum group size required"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"Maximum group size should be greater than or equal to minimum group size"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Value for target group count required"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Radial Algorithm"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Road Network Algorithm"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Min/Max Grouping"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Target Size Grouping"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
 msgid "case_id"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py
+msgid "gps_point"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py
+msgid "link"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py
+msgid "Case Management Map"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py
+msgid "Case Grouping"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Lock Case Grouping for Me"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Unlock Case Grouping for Me"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Export Groups"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Filter by Saved Area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid ""
+"\n"
+"      Please\n"
+"      <a href=\"\">refresh the page</a>\n"
+"      to apply the polygon filtering changes.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Summary of Case Grouping"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Total number of clusters"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Maximum cases per cluster"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Minimum cases per cluster"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Select Case Groups to View"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Show Only Selected Groups on Map"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid "Show All Groups"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
@@ -21941,23 +22316,12 @@ msgstr ""
 #: corehq/apps/geospatial/templates/gps_capture.html
 msgid ""
 "\n"
-"                    Cases that do not have any associated GPS data.\n"
-"                "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid ""
-"\n"
 "            Changes have been saved successfully!\n"
 "        "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
 msgid "Users without GPS Data"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Cases without GPS Data"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
@@ -22025,30 +22389,38 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Create New Case"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Confirm Case Location"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
 msgid "Capturing location for:"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/manage_gps_data.html
-msgid ""
-"\n"
-"      Use this page to manage GPS data associated with Cases or Mobile "
-"workers.\n"
-"    "
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "Enter new case name..."
 msgstr ""
 
-#: corehq/apps/geospatial/templates/manage_gps_data.html
-#, fuzzy
-#| msgid "Update Data"
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "A case name is required"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture.html
+msgid "A case type is required"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/gps_capture_view.html
 msgid "Update Case Data"
-msgstr "Actualizar Datos"
+msgstr ""
 
-#: corehq/apps/geospatial/templates/manage_gps_data.html
-#, fuzzy
-#| msgid "Create Mobile Worker"
+#: corehq/apps/geospatial/templates/gps_capture_view.html
 msgid "Update Mobile Worker Data"
-msgstr "Crear Usuario Móvil"
+msgstr ""
 
-#: corehq/apps/geospatial/templates/manage_gps_data.html
+#: corehq/apps/geospatial/templates/gps_capture_view.html
 msgid ""
 "\n"
 "            To create new Mobile Workers navigate to the Mobile Workers page "
@@ -22056,7 +22428,7 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/manage_gps_data.html
+#: corehq/apps/geospatial/templates/gps_capture_view.html
 msgid ""
 "\n"
 "            Navigate there.\n"
@@ -22064,10 +22436,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "Mobile Workers"
 msgid "Mobile Worker Filters"
-msgstr "Usuarios Móviles"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid ""
@@ -22081,10 +22451,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "Mobile Workers only"
 msgid "Show mobile workers on the map"
-msgstr "Solo Usuarios Móviles"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid ""
+"\n"
+"                            Only users at this location will be shown on the "
+"map.\n"
+"                        "
+msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
@@ -22097,10 +22473,6 @@ msgid "Show Filter Options"
 msgstr "Mostrar Opciones de Filtro"
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-msgid "Filter by Saved Area"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Export Area"
 msgstr ""
 
@@ -22109,30 +22481,32 @@ msgid "Save Area"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Run Disbursement"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Running disbursement algorithm..."
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Cases Missing GPS Data"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-msgid "Users Missing GPS Data"
+msgid "Mobile Workers Missing GPS Data"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "Select Mobile Worker"
 msgid "Selected Mobile Workers"
-msgstr "Seleccione Usuario Móvil"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "Mobile Workers only"
 msgid "Mobile Workers on Map"
-msgstr "Solo Usuarios Móviles"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-#, fuzzy
-#| msgid "All Mobile Workers"
 msgid "All Mobile Workers on Map"
-msgstr "Todos los Usuarios Móviles"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Selected Cases"
@@ -23313,10 +23687,6 @@ msgstr ""
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 msgid "Path in Application"
 msgstr "Ruta en Aplicación"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Missing"
-msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 msgid ""
@@ -24620,10 +24990,6 @@ msgid "Preview Alert"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-msgid "Available Alerts"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "Scheduled start"
 msgstr ""
 
@@ -24632,19 +24998,7 @@ msgid "Scheduled end"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-msgid "Activate or De-activate"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "Schedule Alert"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-msgid "Activate Alert"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-msgid "De-activate Alert"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
@@ -27614,6 +27968,11 @@ msgstr ""
 msgid "You will use this email to log in."
 msgstr "Usted utilizará este correo electrónico para ingresar."
 
+#: corehq/apps/registration/forms.py corehq/apps/users/views/web.py
+msgid ""
+"You can only sign up with the email address your invitation was sent to."
+msgstr ""
+
 #: corehq/apps/registration/forms.py
 msgid "Username already taken. Please try another or log in."
 msgstr ""
@@ -28066,51 +28425,51 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"            For organizations exploring CommCare.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"            See <a href=\"https://dimagi.com/commcare/pricing/\" "
-"target=\"_blank\">pricing</a> options.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"              Request Custom Trial\n"
+"              For individuals learning<br/> about data collection.\n"
 "            "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"                Watch Demo\n"
+"              Free for personal use.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"                Create Account\n"
 "              "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"            For individuals learning about data collection.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"            Free for personal use.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"              Create Account\n"
+"              For organizations<br /> exploring CommCare.\n"
 "            "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"              See <a href=\"https://dimagi.com/commcare/pricing/\" "
+"target=\"_blank\">pricing</a> options.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"                Request Custom Trial\n"
+"              "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"                  Watch Demo\n"
+"                "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/server_errors.html
@@ -29017,6 +29376,7 @@ msgid "Both Mobile Workers and Cases"
 msgstr "Tanto Usarios Móviles y Casos"
 
 #: corehq/apps/reminders/forms.py
+#: corehq/apps/reports/templates/reports/filters/filter_users.html
 msgid "Mobile Workers Only"
 msgstr "Solo Usuarios Móviles "
 
@@ -29740,10 +30100,6 @@ msgid "%s & Others"
 msgstr "%s y Otros"
 
 #: corehq/apps/reports/filters/users.py
-msgid "[Active Mobile Workers]"
-msgstr ""
-
-#: corehq/apps/reports/filters/users.py
 msgid ""
 "When searching by location, put your location name in quotes to show only "
 "exact matches. To more easily find a location, you may specify multiple "
@@ -29761,14 +30117,6 @@ msgid ""
 "<i class=\"fa fa-info-circle\"></i> See <a href=\"https://confluence.dimagi."
 "com/display/commcarepublic/Report+and+Export+Filters\" target=\"_blank\"> "
 "Filter Definitions</a>."
-msgstr ""
-
-#: corehq/apps/reports/filters/users.py
-msgid "[Deactivated Mobile Workers]"
-msgstr ""
-
-#: corehq/apps/reports/filters/users.py
-msgid "[Web Users]"
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py
@@ -29928,6 +30276,10 @@ msgstr ""
 
 #: corehq/apps/reports/generic.py
 msgid "This report has been deprecated."
+msgstr ""
+
+#: corehq/apps/reports/models.py
+msgid "Active Mobile Workers"
 msgstr ""
 
 #: corehq/apps/reports/models.py
@@ -31084,11 +31436,6 @@ msgstr "Mostrando  %(datespan)s."
 #, python-format
 msgid "This report's timezone is %(timezone)s."
 msgstr "La zona horaria de este reporte es %(timezone)s."
-
-#: corehq/apps/reports/templates/reports/filters/filter_users.html
-#: corehq/apps/users/templates/users/roles_and_permissions.html
-msgid "Only"
-msgstr "Solamente"
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
 msgid "Known Forms"
@@ -32318,10 +32665,6 @@ msgid "Could not update Tableau Server Settings"
 msgstr ""
 
 #: corehq/apps/reports/views.py
-msgid "Server"
-msgstr ""
-
-#: corehq/apps/reports/views.py
 msgid "Tableau Visualization"
 msgstr ""
 
@@ -32429,6 +32772,15 @@ msgstr "Reporte Eliminado"
 #: corehq/apps/saved_reports/models.py
 msgid "Unsupported Report"
 msgstr "Reporte No Soportado"
+
+#: corehq/apps/saved_reports/models.py
+msgid ""
+"This project has restricted data access "
+"rules.                                                  Please contact your "
+"project administrator to be assigned "
+"access                                                  to data in this "
+"project."
+msgstr ""
 
 #: corehq/apps/saved_reports/models.py
 msgid ""
@@ -36089,6 +36441,14 @@ msgstr "¡Las Traducciones UI han sido actualizadas!"
 msgid "Please select language to validate."
 msgstr ""
 
+#: corehq/apps/user_importer/helpers.py
+msgid "Double Entry for {}"
+msgstr ""
+
+#: corehq/apps/user_importer/helpers.py
+msgid "You cannot set {} directly"
+msgstr ""
+
 #: corehq/apps/user_importer/importer.py
 #, python-brace-format
 msgid ""
@@ -39491,6 +39851,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Only"
+msgstr "Solamente"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "Manage All"
 msgstr ""
 
@@ -39619,6 +39983,22 @@ msgstr "¿Está seguro que desea eliminar esta invitación?"
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Copy and paste admin emails"
 msgstr "Copiar y pegar correos electrónicos administrativos"
+
+#: corehq/apps/users/user_data.py
+msgid "Profile conflicts with existing data"
+msgstr ""
+
+#: corehq/apps/users/user_data.py
+msgid "User data profile not found"
+msgstr ""
+
+#: corehq/apps/users/user_data.py
+msgid "'{}' cannot be set directly"
+msgstr ""
+
+#: corehq/apps/users/user_data.py
+msgid "{} cannot be deleted"
+msgstr ""
 
 #: corehq/apps/users/validation.py
 msgid "Username is required."
@@ -43944,6 +44324,10 @@ msgstr "Estatus del Dominio"
 msgid "User Management"
 msgstr "Manejo de Casos"
 
+#: corehq/reports.py
+msgid "Case Mapping"
+msgstr ""
+
 #: corehq/tabs/tabclasses.py corehq/tabs/utils.py
 msgid "View All"
 msgstr "Ver Todos"
@@ -43995,6 +44379,10 @@ msgstr "Añadir Portal"
 #: corehq/tabs/tabclasses.py
 msgid "Edit Gateway"
 msgstr "Editar Portal"
+
+#: corehq/tabs/tabclasses.py
+msgid "Email Connectivity"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Template Management"
@@ -44203,10 +44591,6 @@ msgstr ""
 msgid "Manage Attendance Tracking Events"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py
-msgid "Configure geospatial settings"
-msgstr ""
-
 #: corehq/trans_override.py
 msgid "Token generator"
 msgstr ""
@@ -44239,40 +44623,31 @@ msgid "Uploaded file does not contian any sheets."
 msgstr ""
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Level 1"
 msgstr ""
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Level 2"
 msgstr ""
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Level 3"
 msgstr ""
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Level 4"
 msgstr ""
 
-#: custom/abt/reports/filters.py custom/abt/reports/late_pmt.py
-#: custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/filters.py custom/abt/reports/late_pmt_2020.py
 msgid "Submission Status"
 msgstr ""
 
-#: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Missing Report Date"
-msgstr ""
-
-#: custom/abt/reports/late_pmt.py
-msgid "No PMT data Submitted"
-msgstr ""
-
-#: custom/abt/reports/late_pmt.py
-msgid "Incorrect PMT data Submitted"
 msgstr ""
 
 #: custom/abt/reports/late_pmt_2020.py

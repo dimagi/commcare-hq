@@ -182,17 +182,30 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                             }
                         },
                         {
-                            "geo_bounding_box": {
-                                "location": {
-                                    "top_left": {
-                                        "lat": 40.73,
-                                        "lon": -74.1
+                            "bool": {
+                                "filter": [
+                                    {
+                                        "term": {
+                                            "case_properties.key.exact": "location"
+                                        }
                                     },
-                                    "bottom_right": {
-                                        "lat": 40.01,
-                                        "lon": -71.12
+                                    {
+                                        "geo_polygon": {
+                                            "case_properties.geopoint_value": {
+                                                "points": [
+                                                    {
+                                                        "lat": 40.73,
+                                                        "lon": -74.1
+                                                    },
+                                                    {
+                                                        "lat": 40.01,
+                                                        "lon": -71.12
+                                                    }
+                                                ]
+                                            }
+                                        }
                                     }
-                                }
+                                ]
                             }
                         },
                         {
@@ -213,6 +226,63 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
             query,
             json_output,
             validate_query=False,  # Avoid creating an index just for this test
+        )
+
+    def test_geo_shape(self):
+        points_list = [
+            {"lat": 40.73, "lon": -74.1},
+            {"lat": 40.01, "lon": -71.12},
+        ]
+
+        query = CaseSearchES().filter(
+            filters.geo_shape('case_gps', points_list)
+        )
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "bool": {
+                                "filter": [
+                                    {
+                                        "term": {
+                                            "case_properties.key.exact": "case_gps"
+                                        }
+                                    },
+                                    {
+                                        "geo_polygon": {
+                                            "case_properties.geopoint_value": {
+                                                "points": [
+                                                    {
+                                                        "lat": 40.73,
+                                                        "lon": -74.1
+                                                    },
+                                                    {
+                                                        "lat": 40.01,
+                                                        "lon": -71.12
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        self.checkQuery(
+            query,
+            json_output,
+            validate_query=False,
         )
 
 

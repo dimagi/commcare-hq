@@ -36,6 +36,16 @@ hqDefine("geospatial/js/geo_config", [
             }
         };
 
+        const targetGroupingName = configData.get('target_grouping_name');
+        const minMaxGroupingName = configData.get('min_max_grouping_name');
+        self.selectedGroupMethod = ko.observable();
+        self.isTargetGrouping = ko.computed(function () {
+            return self.selectedGroupMethod() === targetGroupingName;
+        });
+        self.isMinMaxGrouping = ko.computed(function () {
+            return self.selectedGroupMethod() === minMaxGroupingName;
+        });
+
         return self;
     };
 

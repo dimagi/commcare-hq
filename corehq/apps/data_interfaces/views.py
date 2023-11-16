@@ -22,6 +22,7 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 from no_exceptions.exceptions import Http403
 
+from casexml.apps.case import const
 from dimagi.utils.logging import notify_exception
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -34,7 +35,10 @@ from corehq.apps.casegroups.dbaccessors import (
     get_number_of_case_groups_in_domain,
 )
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
+from corehq.apps.data_dictionary.util import (
+    get_data_dict_props_by_case_type,
+    is_case_type_deprecated,
+)
 from corehq.apps.data_interfaces.deduplication import (
     reset_and_backfill_deduplicate_rule,
 )
@@ -64,6 +68,7 @@ from corehq.apps.data_interfaces.tasks import (
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.hqwebapp.models import PageInfoContext
@@ -89,18 +94,16 @@ from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_with_params
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
-from corehq.apps.data_dictionary.util import is_case_type_deprecated
 
 from ..users.decorators import require_permission
 from ..users.models import HqPermissions
 from .dispatcher import require_form_management_privilege
 from .interfaces import (
     BulkFormManagementInterface,
-    CaseReassignmentInterface,
     CaseCopyInterface,
+    CaseReassignmentInterface,
     FormManagementMode,
 )
-from corehq.apps.hqcase.case_helper import CaseCopier
 
 
 @login_and_domain_required
@@ -531,7 +534,9 @@ class XFormManagementView(DataInterfaceSection):
             # Altough evaluating form_ids and sending to task would be cleaner,
             # heavier calls should be in an async task instead
             from urllib.parse import unquote
+
             from django.http import HttpRequest, QueryDict
+
             from django_otp.middleware import OTPMiddleware
 
             form_query_string = unquote(self.request.POST.get('select_all'))
@@ -1153,14 +1158,18 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
     def page_context(self):
         context = super().page_context
         context.update({
-            'all_case_properties': {
-                t: sorted(names) for t, names in
-                get_data_dict_props_by_case_type(self.domain).items()
-            },
+            'all_case_properties': self.get_augmented_data_dict_props_by_case_type(self.domain),
             'case_types': sorted(list(get_case_types_for_domain(self.domain))),
             'criteria_form': self.case_filter_form,
         })
         return context
+
+    @classmethod
+    def get_augmented_data_dict_props_by_case_type(cls, domain):
+        return {
+            t: sorted(names.union({const.CASE_UI_NAME, const.CASE_UI_OWNER_ID})) for t, names in
+            get_data_dict_props_by_case_type(domain).items()
+        }
 
     def get_context_data(self, **kwargs):
         context = super(DeduplicationRuleCreateView, self).get_context_data(**kwargs)

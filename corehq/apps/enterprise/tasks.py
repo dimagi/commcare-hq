@@ -24,7 +24,7 @@ from corehq.util.view_utils import absolute_reverse
 
 
 @task(serializer='pickle', queue="email_queue")
-def email_enterprise_report(domain, slug, couch_user):
+def email_enterprise_report(domain: str, slug, couch_user):
     account = BillingAccount.get_account_by_domain(domain)
     report = EnterpriseReport.create(slug, account.id, couch_user)
 
@@ -48,7 +48,13 @@ def email_enterprise_report(domain, slug, couch_user):
     body = "The enterprise report you requested for the account {} is ready.<br>" \
            "You can download the data at the following link: {}<br><br>" \
            "Please remember that this link will only be active for 24 hours.".format(account.name, link)
-    send_html_email_async(subject, couch_user.get_email(), body)
+    send_html_email_async(
+        subject,
+        couch_user.get_email(),
+        body,
+        domain=domain,
+        use_domain_gateway=True,
+    )
 
 
 @task

@@ -17,6 +17,7 @@ CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
 CASE_SEARCH_CASE_TYPE_KEY = "case_type"
 CASE_SEARCH_INDEX_KEY_PREFIX = "indices."
+CASE_SEARCH_SORT_KEY = "commcare_sort"
 
 # These use the `x_commcare_` prefix to distinguish them from 'filter' keys
 # This is a purely aesthetic distinction and not functional
@@ -29,6 +30,7 @@ CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_REGISTRY_ID_KEY: "data_registry",
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: "custom_related_case_property",
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY: "include_all_related_cases",
+    CASE_SEARCH_SORT_KEY: "commcare_sort",
 }
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
@@ -119,7 +121,6 @@ class SearchCriteria:
                 self.key
             )
 
-
     def _validate_daterange(self):
         if not self.is_daterange:
             return
@@ -142,6 +143,30 @@ def criteria_dict_to_criteria_list(criteria_dict):
     return criteria
 
 
+@attr.dataclass
+class CommcareSortProperty:
+    property_name: str = ''
+    sort_type: str = ''
+    is_descending: bool = False
+
+
+def _parse_commcare_sort_properties(values):
+    if values is None:
+        return
+
+    parsed_sort_properties = []
+    flattened_values = [sort_property for value in values for sort_property in value.split(',')]
+    for sort_property in flattened_values:
+        parts = sort_property.lstrip('+-').split(':')
+        parsed_sort_properties.append(
+            CommcareSortProperty(
+                property_name=parts[0],
+                sort_type=parts[1] if len(parts) > 1 else 'exact',
+                is_descending=sort_property.startswith('-')
+            ))
+    return parsed_sort_properties
+
+
 @attr.s(frozen=True)
 class CaseSearchRequestConfig:
     criteria = attr.ib(kw_only=True)
@@ -149,6 +174,7 @@ class CaseSearchRequestConfig:
     data_registry = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
     custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
     include_all_related_cases = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
+    commcare_sort = attr.ib(kw_only=True, default=None, converter=_parse_commcare_sort_properties)
 
     @case_types.validator
     def _require_case_type(self, attribute, value):

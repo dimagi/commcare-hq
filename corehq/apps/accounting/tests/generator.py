@@ -114,7 +114,8 @@ def subscribable_plan_version(edition=SoftwarePlanEdition.STANDARD):
 
 @unit_testing_only
 def generate_domain_subscription(account, domain, date_start, date_end,
-                                 plan_version=None, service_type=SubscriptionType.NOT_SET, is_active=False):
+                                 plan_version=None, service_type=SubscriptionType.NOT_SET,
+                                 is_active=False, do_not_invoice=False):
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
     subscription = Subscription(
         account=account,
@@ -124,6 +125,7 @@ def generate_domain_subscription(account, domain, date_start, date_end,
         date_end=date_end,
         service_type=service_type,
         is_active=is_active,
+        do_not_invoice=do_not_invoice
     )
     subscription.save()
     return subscription
@@ -155,15 +157,17 @@ def arbitrary_domain_and_subscriber():
 
 
 @unit_testing_only
-def arbitrary_user(domain, is_active=True, is_webuser=False):
+def arbitrary_user(domain_name, is_active=True, is_webuser=False):
     username = unique_name()
     if is_webuser:
         username = create_arbitrary_web_user_name()
         user_cls = WebUser
+        email = username
     else:
         username = unique_name()
         user_cls = CommCareUser
-    commcare_user = user_cls.create(domain, username, 'test123', None, None)
+        email = None
+    commcare_user = user_cls.create(domain_name, username, 'test123', None, None, email)
     commcare_user.is_active = is_active
     return commcare_user
 

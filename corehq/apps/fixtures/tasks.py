@@ -1,6 +1,5 @@
 import datetime
 
-from django.conf import settings
 from django.template.loader import render_to_string
 
 from soil import DownloadBase
@@ -46,7 +45,8 @@ def send_upload_fixture_complete_email(email, domain, time_start, time_end, mess
         email,
         render_to_string('fixtures/upload_complete.html', context),
         render_to_string('fixtures/upload_complete.txt', context),
-        email_from=settings.DEFAULT_FROM_EMAIL
+        domain=domain,
+        use_domain_gateway=True,
     )
     return
 

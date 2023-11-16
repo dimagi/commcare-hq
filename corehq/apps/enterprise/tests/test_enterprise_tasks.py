@@ -41,10 +41,11 @@ class TestEmailEnterpriseReport(TestCase):
         mock_redis_client.expire.return_value = MagicMock(return_value=None)
 
         with patch('corehq.apps.enterprise.tasks.get_redis_client', return_val=mock_redis_client):
-            email_enterprise_report(self.domain, EnterpriseReport.DOMAINS, self.couch_user)
+            email_enterprise_report(self.domain.name, EnterpriseReport.DOMAINS, self.couch_user)
 
         expected_title = "Enterprise Dashboard: Project Spaces"
-        mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY)
+        mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY,
+                                     domain=self.domain.name, use_domain_gateway=True)
 
     @patch('corehq.apps.enterprise.tasks.send_html_email_async')
     def test_email_report_web_users(self, mock_send):
@@ -57,10 +58,11 @@ class TestEmailEnterpriseReport(TestCase):
         mock_redis_client.expire.return_value = MagicMock(return_value=None)
 
         with patch('corehq.apps.enterprise.tasks.get_redis_client', return_val=mock_redis_client):
-            email_enterprise_report(self.domain, EnterpriseReport.WEB_USERS, self.couch_user)
+            email_enterprise_report(self.domain.name, EnterpriseReport.WEB_USERS, self.couch_user)
 
         expected_title = "Enterprise Dashboard: Web Users"
-        mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY)
+        mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY,
+                                     domain=self.domain.name, use_domain_gateway=True)
 
     @patch('corehq.apps.enterprise.tasks.send_html_email_async')
     def test_email_report_mobile_users(self, mock_send):
@@ -73,10 +75,11 @@ class TestEmailEnterpriseReport(TestCase):
         mock_redis_client.expire.return_value = MagicMock(return_value=None)
 
         with patch('corehq.apps.enterprise.tasks.get_redis_client', return_val=mock_redis_client):
-            email_enterprise_report(self.domain, EnterpriseReport.MOBILE_USERS, self.couch_user)
+            email_enterprise_report(self.domain.name, EnterpriseReport.MOBILE_USERS, self.couch_user)
 
         expected_title = "Enterprise Dashboard: Mobile Workers"
-        mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY)
+        mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY,
+                                     domain=self.domain.name, use_domain_gateway=True)
 
     @patch('corehq.apps.enterprise.tasks.send_html_email_async')
     def test_email_report_form_submissions(self, mock_send):
@@ -89,10 +92,11 @@ class TestEmailEnterpriseReport(TestCase):
         mock_redis_client.expire.return_value = MagicMock(return_value=None)
 
         with patch('corehq.apps.enterprise.tasks.get_redis_client', return_val=mock_redis_client):
-            email_enterprise_report(self.domain, EnterpriseReport.FORM_SUBMISSIONS, self.couch_user)
+            email_enterprise_report(self.domain.name, EnterpriseReport.FORM_SUBMISSIONS, self.couch_user)
 
         expected_title = "Enterprise Dashboard: Mobile Form Submissions"
-        mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY)
+        mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY,
+                                     domain=self.domain.name, use_domain_gateway=True)
 
     def test_email_report_unknown_type_fails(self):
         """
@@ -103,6 +107,6 @@ class TestEmailEnterpriseReport(TestCase):
         mock_redis_client.set.return_value = MagicMock(return_value=None)
         mock_redis_client.expire.return_value = MagicMock(return_value=None)
 
-        with patch('corehq.apps.enterprise.tasks.get_redis_client', return_val=mock_redis_client),\
+        with patch('corehq.apps.enterprise.tasks.get_redis_client', return_val=mock_redis_client), \
                 self.assertRaises(EnterpriseReportError):
-            email_enterprise_report(self.domain, 'unknown', self.couch_user)
+            email_enterprise_report(self.domain.name, 'unknown', self.couch_user)

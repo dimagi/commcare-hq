@@ -41,8 +41,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 groupObj.toBeDeprecated.subscribe(changeSaveButton);
 
                 for (let prop of group.properties) {
-                    const isGeoCaseProp = (self.geoCaseProp === prop.name);
-                    var propObj = propertyListItem(prop.name, prop.label, false, prop.group, self.name, prop.data_type,
+                    const isGeoCaseProp = (self.geoCaseProp === prop.name && prop.data_type === 'gps');
+                    var propObj = propertyListItem(prop.name, prop.label, false, group.name, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
                         prop.removeFHIRResourcePropertyPath, isGeoCaseProp);
                     propObj.description.subscribe(changeSaveButton);
@@ -102,7 +102,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.fhirResourcePropPath = ko.observable(fhirResourcePropPath);
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
-        self.isGeoCaseProp = isGeoCaseProp;
+        self.isGeoCaseProp = ko.observable(isGeoCaseProp);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
         let subTitle;
         if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
@@ -128,7 +128,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.deprecateProperty = function () {
-            if (toggles.toggleEnabled('GEOSPATIAL') && self.isGeoCaseProp) {
+            if (toggles.toggleEnabled('GEOSPATIAL') && self.isGeoCaseProp()) {
                 self.confirmGeospatialDeprecation();
             } else {
                 self.deprecated(true);

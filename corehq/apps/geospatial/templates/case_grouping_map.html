@@ -1,0 +1,140 @@
+{% extends "reports/tabular.html" %}
+{% load i18n %}
+{% load compress %}
+{% load hq_shared_tags %}
+
+{% block reportcontent %}
+<div class="row panel">
+  <div class="col col-md-2">
+    <span id="lock-groups-controls">
+      <div class="controls">
+        <button data-bind="visible: !groupsLocked(), click: toggleGroupLock" class="btn-default form-control">
+          <i class="fa fa-lock"></i>
+          {% trans "Lock Case Grouping for Me" %}
+        </button>
+        <button data-bind="visible: groupsLocked(), click: toggleGroupLock" class="btn-primary form-control">
+          <i class="fa fa-unlock"></i>
+          {% trans "Unlock Case Grouping for Me" %}
+        </button>
+      </div>
+    </span>
+  </div>
+  <div class="col col-md-2">
+    <span id="export-controls">
+      <div class="controls">
+        <button class="btn-default form-control" data-bind="click: downloadCSV, disable: !groupsReady()">
+          {% trans "Export Groups" %}
+        </button>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="panel" id="polygon-filters">
+  <div class="row">
+    <label for="saved-polygons" class="control-label col-sm-2 col-md-2 col-lg-2">
+    {% trans "Filter by Saved Area" %}</label>
+    <div class="controls col-sm-2 col-md-2 col-lg-2">
+        <select id="saved-polygons"
+                class="form-control"
+                data-bind="select2: savedPolygons,
+                        value: selectedSavedPolygonId,
+                        ">
+        </select>
+    </div>
+    <button class="btn btn-default" data-bind="click: clearActivePolygon, enable: selectedSavedPolygonId">
+      {% trans 'Clear' %}
+    </button>
+  </div>
+  <div class="alert alert-info" data-bind="visible: shouldRefreshPage">
+    {% blocktrans %}
+      Please
+      <a href="">refresh the page</a>
+      to apply the polygon filtering changes.
+    {% endblocktrans %}
+  </div>
+</div>
+<div id="case-grouping-map" style="height: 500px"></div>
+
+<div class="panel-body-datatable">
+    {% block reporttable %}
+      {% if report.needs_filters %}
+        {% include 'reports/partials/description.html' %}
+      {% else %}
+        <table id="report_table_{{ report.slug }}" class="table table-striped datatable" width="100%" {% if pagination.filter %} data-filter="true"{% endif %}>
+        </table>
+      {% endif %}
+    {% endblock reporttable %}
+</div>
+<div class="row">
+    <div class="col-sm-6" id="clusterStats">
+      <table class="table table-striped table-bordered">
+        <thead>
+          <th colspan="2">{% trans "Summary of Case Grouping" %}</th>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{% trans "Total number of clusters" %}</td>
+            <td data-bind="text: totalClusters"></td>
+          </tr>
+          <tr>
+            <td>{% trans "Maximum cases per cluster" %}</td>
+            <td data-bind="text: clusterMaxCount"></td>
+          </tr>
+          <tr>
+            <td>{% trans "Minimum cases per cluster" %}</td>
+            <td data-bind="text: clusterMinCount"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-sm-6 row" id="caseGroupSelect">
+      <div>
+        <div style="max-height: 200px; overflow-y: auto;">
+          <table class="table table-striped table-bordered">
+            <thead>
+              <th colspan="2">{% trans "Select Case Groups to View" %}</th>
+            </thead>
+            <tbody data-bind="foreach: caseGroupsForTable">
+              <tr>
+                <td data-bind="event: {mouseover: $parent.highlightGroup, mouseout: $parent.restoreMarkerOpacity}">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" data-bind="checked: $parent.visibleGroupIDs, checkedValue: groupId" />
+                      <span data-bind="text: name"></span>
+                      <span data-bind="style: {color: color}">■</span>
+                    </label>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="row">
+          <div class="col col-md-6">
+            <button class="btn-default form-control" data-bind="click: showSelectedGroups(), disable: !groupsReady()">
+              {% trans "Show Only Selected Groups on Map" %}
+            </button>
+          </div>
+          <div class="col col-md-6">
+            <button class="btn-default form-control" data-bind="click: showAllGroups(), disable: !groupsReady()">
+              {% trans "Show All Groups" %}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/html" id="select-case">
+  <div class="d-flex flex-row">
+    <label data-bind="attr: {for: selectCssId}, text: title"></label>
+    <select class="form-control" data-bind="attr: {id: selectCssId},
+        options: groupsOptions, optionsText: 'name', optionsValue: 'groupId', value: selectedGroup">
+    </select>
+  </div>
+  <div data-bind="html: $data.itemData.caseLink"></div>
+</script>
+
+{% endblock %}

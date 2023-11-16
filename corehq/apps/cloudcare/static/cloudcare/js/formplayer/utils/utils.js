@@ -264,14 +264,11 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
         };
 
-        this.setQueryData = function ({ inputs, execute, forceManualSearch, selectValuesByKeys = false }) {
+        this.setQueryData = function ({ inputs, execute, forceManualSearch}) {
             var selections = Utils.currentUrlToObject().selections;
             this.queryData = this.queryData || {};
             this.queryData[sessionStorage.queryKey] = _.defaults({
                 inputs: inputs,
-                // only here to maintain backward compatibility and can be removed
-                // once web apps fully transition using keys to convey select prompt selection.
-                select_values_by_key: selectValuesByKeys,
                 execute: execute,
                 force_manual_search: forceManualSearch,
                 selections: selections,
@@ -297,6 +294,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.search = null;
             this.queryData = null;
             this.sessionId = null;
+            sessionStorage.removeItem('submitPerformed');
         };
 
         this.onSubmit = function () {

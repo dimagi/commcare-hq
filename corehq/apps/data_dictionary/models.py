@@ -93,9 +93,8 @@ class CaseProperty(models.Model):
         default=DataType.UNDEFINED,
         blank=True,
     )
-    group = models.TextField(default='', blank=True)
     index = models.IntegerField(default=0, blank=True)
-    group_obj = models.ForeignKey(
+    group = models.ForeignKey(
         CasePropertyGroup,
         on_delete=models.CASCADE,
         related_name='properties',
@@ -163,9 +162,8 @@ class CaseProperty(models.Model):
 
     @property
     def group_name(self):
-        if self.group_obj:
-            return self.group_obj.name
-        return self.group
+        if self.group:
+            return self.group.name
 
 
 class CasePropertyAllowedValue(models.Model):
