@@ -167,7 +167,7 @@ class DataSourceRowTransactionLog(models.Model):
 class DataSourceChangeSubscriber(models.Model):
     domain = models.CharField(max_length=126, null=False, db_index=True)
     data_source_id = models.CharField(db_index=True, max_length=255, null=False, blank=False)
-    consumer_uuid = models.CharField(
+    subscriber_uuid = models.CharField(
         primary_key=True, default=uuid4, max_length=255, editable=False, null=False, blank=False
     )
     checkpoint = models.BigIntegerField(null=False, blank=False)
