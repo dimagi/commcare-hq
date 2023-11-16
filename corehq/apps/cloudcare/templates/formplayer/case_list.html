@@ -33,9 +33,12 @@
     </div>
     <% } %>
 
-    <div id="module-case-list-container__results-container" class="row row-no-gutters">
+    <div id="module-case-list-container__results-container" class="row row-no-gutters" style="position:relative;">
       <% if (showMap) { %>
         <div id="module-case-list-map" class="sticky sticky-map col-md-5 col-md-push-9<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
+        <div id="hide-map-button" class="case-list-map-hide-button case-list-map-hide-button-right">
+          <i class="fa fa-regular fa-map fa-lg"></i>
+        </div>
       <% } %>
       <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
         <% if (useTiles) { %>

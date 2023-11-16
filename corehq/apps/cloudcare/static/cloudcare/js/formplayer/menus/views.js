@@ -535,6 +535,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             casesPerPageLimit: '.per-page-limit',
             searchMoreButton: '#search-more',
             scrollToBottomButton: '#scroll-to-bottom',
+            mapShowHideButton: '#hide-map-button'
         };
     };
 
@@ -552,6 +553,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
             'keypress @ui.paginators': 'paginateKeyAction',
+            'click @ui.mapShowHideButton' : 'showHideMap',
         };
     };
 
@@ -603,6 +605,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             self.smallScreenEnabled = enabled;
             if (self.options.sidebarEnabled) {
                 self.positionStickyItems(enabled);
+            }
+            const mapShowHideButton = $('#hide-map-button');
+            if (enabled) {
+                mapShowHideButton.removeClass('case-list-map-hide-button-right');
+                mapShowHideButton.addClass('case-list-map-hide-button-top');
+            } else {
+                mapShowHideButton.removeClass('case-list-map-hide-button-top');
+                mapShowHideButton.addClass('case-list-map-hide-button-right');
             }
         },
 
@@ -699,6 +709,19 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 const columnSelection = $(e.currentTarget).data("id") + 1;
                 FormplayerFrontend.trigger("menu:sort", columnSelection);
             }
+        },
+
+        showHideMap: function () {
+            const mapDiv = $('#module-case-list-map');
+            const moduleCaseList = $('#module-case-list');
+            if (!mapDiv.hasClass('hide')) {
+                mapDiv.addClass('hide');
+                moduleCaseList.removeClass('col-md-7 col-md-pull-5').addClass('col-md');
+            } else {
+                mapDiv.removeClass('hide');
+                moduleCaseList.addClass('col-md-7 col-md-pull-5').removeClass('col-md');
+            }
+
         },
 
         _allCaseIds: function () {
