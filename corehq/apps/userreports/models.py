@@ -151,6 +151,7 @@ class DataSourceRowTransactionLog(models.Model):
     UPDATE = "update"
     DELETE = "delete"
 
+    id = models.BigAutoField(primary_key=True)
     domain = models.CharField(max_length=126, null=False, db_index=True)
     date_created = models.DateTimeField(auto_now_add=True)
     action = models.CharField(max_length=32, choices=(
@@ -163,12 +164,13 @@ class DataSourceRowTransactionLog(models.Model):
     row_data = models.JSONField(null=True, blank=True)
 
 
-class DataSourceSubscriber(models.Model):
+class DataSourceChangeSubscriber(models.Model):
     domain = models.CharField(max_length=126, null=False, db_index=True)
     data_source_id = models.CharField(db_index=True, max_length=255, null=False, blank=False)
-    subscriber_uuid = models.CharField(
+    consumer_uuid = models.CharField(
         primary_key=True, default=uuid4, max_length=255, editable=False, null=False, blank=False
     )
+    checkpoint = models.BigIntegerField(null=False, blank=False)
 
 
 class SQLColumnIndexes(DocumentSchema):
