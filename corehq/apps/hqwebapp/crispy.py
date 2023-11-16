@@ -135,6 +135,11 @@ class FormStepNumber(LayoutObject):
 
 
 class ValidationMessage(LayoutObject):
+    """
+    IMPORTANT: DO NOT USE IN BOOTSTRAP 5 VIEWS.
+    See bootstrap5/validators.ko and revisit styleguide in
+    Organisms > Forms for additional help.
+    """
     template = 'hqwebapp/crispy/validation_message.html'
 
     def __init__(self, ko_observable):
