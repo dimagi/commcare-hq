@@ -31,6 +31,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
 )
 from corehq.apps.app_manager.const import (
+    CASE_LIST_FILTER_LOCATIONS_FIXTURE,
     MOBILE_UCR_VERSION_1,
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
@@ -215,6 +216,11 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         if case_list_map_enabled or not option_to_config[1]['has_map']
     ]
 
+    fixture_column_options = _get_fixture_columns_by_type(app.domain)
+    fixture_column_options[CASE_LIST_FILTER_LOCATIONS_FIXTURE] = [
+        'location/@id', 'location/name'
+    ]
+
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
@@ -230,7 +236,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             (REGISTRY_WORKFLOW_SMART_LINK, _("Smart link to external domain")),
         ),
         'js_options': {
-            'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
+            'fixture_columns_by_type': fixture_column_options,
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
             'has_geocoder_privs': (
