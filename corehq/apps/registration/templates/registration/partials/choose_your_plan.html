@@ -6,6 +6,37 @@
   <div class="row">
 
     <div class="col-xs-6">
+      <div class="plan-container plan-container-community">
+        <div class="plan-header">
+          <h2>
+            <small>CommCare</small>
+            Community
+          </h2>
+        </div>
+        <p class="lead">
+          {% blocktrans %}
+            For individuals learning about data collection.
+          {% endblocktrans %}
+        </p>
+        {% include 'registration/partials/feature_list.html' with features=community_features %}
+        <p class="plan-price">
+          {% blocktrans %}
+            Free for personal use.
+          {% endblocktrans %}
+        </p>
+        <div class="plan-cta">
+          <a href="#"
+             id="js-create-account"
+             class="btn btn-default">
+            {% blocktrans %}
+              Create Account
+            {% endblocktrans %}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xs-6">
       <div class="plan-container plan-container-professional">
         <div class="plan-header">
           <h2>
@@ -55,37 +86,6 @@
               {% endblocktrans %}
             </a>
           </span>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-xs-6">
-      <div class="plan-container plan-container-community">
-        <div class="plan-header">
-          <h2>
-            <small>CommCare</small>
-            Community
-          </h2>
-        </div>
-        <p class="lead">
-          {% blocktrans %}
-            For individuals learning about data collection.
-          {% endblocktrans %}
-        </p>
-        {% include 'registration/partials/feature_list.html' with features=community_features %}
-        <p class="plan-price">
-          {% blocktrans %}
-            Free for personal use.
-          {% endblocktrans %}
-        </p>
-        <div class="plan-cta">
-          <a href="#"
-             id="js-create-account"
-             class="btn btn-default">
-            {% blocktrans %}
-              Create Account
-            {% endblocktrans %}
-          </a>
         </div>
       </div>
     </div>
