@@ -76,18 +76,11 @@
 
         {% block hero %}
 
-          {# START CommCare by Dimagi Logo #}
-          <div style="text-align: left; padding-top: 29px; padding-left: 43px;">
-            <img src="{{ url_prefix }}{% static 'registration/images/commcare_by_dimagi.png' %}" width="228" height="51"
-                 alt="CommCare by Dimagi" />
-          </div>
-          {# END CommCare by Dimagi Logo #}
-
           {# START CTA Button #}
-          <div style="text-align: left; padding-top: 160px; padding-left: 43px;">
+          <div style="text-align: left; margin-top: 0px; padding-left: 43px;">
             <a class="btn"
                href="{% block cta_url %}#{% endblock %}"
-               style="color: #5d70d2; text-decoration: none; padding: 13px 21px; background-color: #ffffff; border-radius: 5px; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
+               style="color: #5d70d2; text-decoration: none; padding: 15px 20px; background-color: #ffffff; border-radius: 5px; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer; margin-top:260px;">
               {% block cta_text %}
                 CTA Text -- Replace!
               {% endblock %}
