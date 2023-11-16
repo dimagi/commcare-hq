@@ -547,6 +547,9 @@
     </div>
   </fieldset>
 </script>
+<script type="text/html" id="button-entry-ko-template">
+  <button class="btn btn-default" data-bind="text: buttonLabel(), click: onClick, attr: {id: entryId}"></button>
+</script>
 <script type="text/html" id="dropdown-entry-ko-template">
   <span class="help-block type sr-only" data-bind="
         text: helpText(),
