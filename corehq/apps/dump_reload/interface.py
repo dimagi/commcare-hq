@@ -37,10 +37,11 @@ class DataDumper(metaclass=ABCMeta):
 
 
 class DataLoader(metaclass=ABCMeta):
-    def __init__(self, object_filter=None, stdout=None, stderr=None):
+    def __init__(self, object_filter=None, stdout=None, stderr=None, chunksize=None):
         self.stdout = stdout or sys.stdout
         self.stderr = stderr or sys.stderr
         self.object_filter = re.compile(object_filter, re.IGNORECASE) if object_filter else None
+        self.chunksize = chunksize
 
     @abstractproperty
     def slug(self):
