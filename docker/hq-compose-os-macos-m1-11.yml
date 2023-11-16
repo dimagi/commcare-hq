@@ -5,4 +5,4 @@ version: '2.3'
 services:
   postgres:
     # TODO: enumerate differences with 'dimagi/docker-postgresql' image
-    image: arm64v8/postgres
+    image: docker.io/arm64v8/postgres

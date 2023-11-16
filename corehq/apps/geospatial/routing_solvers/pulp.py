@@ -107,7 +107,7 @@ class RoadNetworkSolver(RadialDistanceSolver):
             'sources': sources,
             'destinations': destinations,
             'annotations': 'distance',
-            'access_token': settings.MAPBOX_MATRIX_API_TOKEN
+            'access_token': settings.MAPBOX_ACCESS_TOKEN
         }
 
         response = requests.get(url, params=params)

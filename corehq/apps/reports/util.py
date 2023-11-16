@@ -6,7 +6,6 @@ from collections import defaultdict, namedtuple
 from datetime import datetime
 import pytz
 
-from django.conf import settings
 from django.core.cache import cache
 from django.db.transaction import atomic
 from django.http import Http404
@@ -383,7 +382,7 @@ def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     return user_es_query.count() > USER_QUERY_LIMIT
 
 
-def send_report_download_email(title, recipient, link, subject=None):
+def send_report_download_email(title, recipient, link, subject=None, domain=None):
     if subject is None:
         subject = _("%s: Requested export excel data") % title
     body = "The export you requested for the '%s' report is ready.<br>" \
@@ -394,7 +393,8 @@ def send_report_download_email(title, recipient, link, subject=None):
         subject,
         recipient,
         _(body) % (title, "<a href='%s'>%s</a>" % (link, link)),
-        email_from=settings.DEFAULT_FROM_EMAIL
+        domain=domain,
+        use_domain_gateway=True,
     )
 
 
