@@ -201,7 +201,8 @@
 
 <script type="text/html" id="question-fullform-ko-template">
   <div data-bind="class:questionTileWidth">
-  <!-- ko if: datatype() !== 'info' -->
+  <!-- ko if: datatype() !== 'info'
+    && !(datatype() === 'select' && stylesContains('button-select')) -->
   <div class="q form-group" data-bind="
             css: {
                 error: error,
@@ -310,6 +311,20 @@
           "></div>
       </div>
     </div>
+  </div>
+  <!-- /ko -->
+  <!-- ko if: datatype() === 'select' && stylesContains('button-select') -->
+  {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
+  <div class="q form-group" data-bind="
+    css: {
+      error: error,
+      'text-center': stylesContains('text-align-center'),
+      'text-right': stylesContains('text-align-right')
+    }">
+    <div class="widget" data-bind="
+      template: { name: entryTemplate, data: entry, afterRender: afterRender },
+      css: { 'has-error': hasError }
+      "></div>
   </div>
   <!-- /ko -->
   </div>
