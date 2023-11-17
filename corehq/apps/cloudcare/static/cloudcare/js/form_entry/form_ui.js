@@ -186,7 +186,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             // shade(#5D70D2, 40%): #38437e
             const repeatColor = ["#7d8ddb", "#4a5aa8", "#38437e"];
             const repeatColorCount = repeatColor.length;
-            const index = nestedDepthCount - 1 % repeatColorCount;
+            const index = (nestedDepthCount - 1) % repeatColorCount;
 
             return repeatColor[index];
         };
