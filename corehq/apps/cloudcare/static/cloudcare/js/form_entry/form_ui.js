@@ -164,7 +164,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         /**
          * Calculates background color for nested Group and Repeat headers.
          * Recursively determines nesting level (considering only Group and Repeat),
-         * starting at 0 for the Form and cycling colors for each level.
+         * starting at 0 for the Form level and cycling colors for each level.
          *
          * @returns {string} - Background color for the header's nesting level.
          */
@@ -179,9 +179,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             }
 
             //Placeholder colors
-            const repeatColor = ["#7d8ddb", "#252d54", "#4a5aa8"];
+            const repeatColor = ["#252d54", "#4a5aa8", "#7d8ddb"];
             const repeatColorCount = repeatColor.length
-            const index = nestedDepthCount % repeatColorCount;
+            const index = nestedDepthCount-1 % repeatColorCount;
 
             return repeatColor[index];
         };
