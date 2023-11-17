@@ -168,20 +168,25 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
          *
          * @returns {string} - Background color for the header's nesting level.
          */
-        self.headerBackgroundColor= function () {
+        self.headerBackgroundColor = function () {
             let currentNode = self;
             let nestedDepthCount = 0;
             while (currentNode.parent) {
-                if (currentNode.type() === constants.GROUP_TYPE || currentNode.type() === constants.REPEAT_TYPE){
-                    nestedDepthCount += 1
+                let isCollapsibleGroup = currentNode.type() === constants.GROUP_TYPE && currentNode.collapsible;
+                if (isCollapsibleGroup || currentNode.type() === constants.REPEAT_TYPE) {
+                    nestedDepthCount += 1;
                 }
-                currentNode = currentNode.parent
+                currentNode = currentNode.parent;
             }
 
-            //Placeholder colors
-            const repeatColor = ["#252d54", "#4a5aa8", "#7d8ddb"];
-            const repeatColorCount = repeatColor.length
-            const index = nestedDepthCount-1 % repeatColorCount;
+            // Colors are ordered from lightest to darkest with the lightest color for the highest level.
+            // Colors are based on Bootstrap provided tint/shades of #5D70D2 (CommCare Cornflower Blue)
+            // tint(#5D70D2, 20%): #7d8ddb
+            // shade(#5D70D2, 20%): #4a5aa8
+            // shade(#5D70D2, 40%): #38437e
+            const repeatColor = ["#7d8ddb", "#4a5aa8", "#38437e"];
+            const repeatColorCount = repeatColor.length;
+            const index = (nestedDepthCount - 1) % repeatColorCount;
 
             return repeatColor[index];
         };
