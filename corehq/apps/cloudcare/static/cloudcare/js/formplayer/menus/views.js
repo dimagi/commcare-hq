@@ -606,14 +606,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (self.options.sidebarEnabled) {
                 self.positionStickyItems(enabled);
             }
-            const mapShowHideButton = $('#hide-map-button');
-            if (enabled) {
-                mapShowHideButton.removeClass('case-list-map-hide-button-right');
-                mapShowHideButton.addClass('case-list-map-hide-button-top');
-            } else {
-                mapShowHideButton.removeClass('case-list-map-hide-button-top');
-                mapShowHideButton.addClass('case-list-map-hide-button-right');
-            }
         },
 
         positionStickyItems: function (smallScreenEnabled) {
@@ -714,12 +706,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         showHideMap: function () {
             const mapDiv = $('#module-case-list-map');
             const moduleCaseList = $('#module-case-list');
+            const hideButton = $('#hide-map-button');
             if (!mapDiv.hasClass('hide')) {
                 mapDiv.addClass('hide');
                 moduleCaseList.removeClass('col-md-7 col-md-pull-5').addClass('col-md');
+                hideButton.text(gettext('Show Map'));
             } else {
                 mapDiv.removeClass('hide');
                 moduleCaseList.addClass('col-md-7 col-md-pull-5').removeClass('col-md');
+                hideButton.text(gettext('Hide Map'));
             }
 
         },

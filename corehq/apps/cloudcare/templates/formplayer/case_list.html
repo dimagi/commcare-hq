@@ -7,16 +7,24 @@
       <i class="fa fa-lg fa-arrow-down" aria-hidden="true"></i>
     </button>
     <div class="page-header menu-header" id="case-list-menu-header">
-      <% if (sidebarEnabled) {%>
+      <div class="pull-right" style="margin-top: 12px">
+      <% if (showMap) { %>
+        <button id="hide-map-button" style="margin-left: 12px" class="btn btn-primary visible pull-right" type="button"
+          data-toggle="collapse" data-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
+          {% trans "Hide Map" %}
+        </button>
+      <% } %>
+      <% if (sidebarEnabled) { %>
         <button id="search-more" class="btn btn-primary visible-xs visible-sm pull-right" type="button"
           data-toggle="collapse" data-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
           {% trans "Refine search" %}
         </button>
       <% } %>
-      <% if (title.length > 0) {%>
-      <h1  aria-label="<%- title %>" tabindex="0" class="page-title"><%- title %></h1>
+        </div>
+      <% if (title.length > 0) { %>
+        <h1  aria-label="<%- title %>" tabindex="0" class="page-title"><%- title %></h1>
       <% } %>
-      <% if (sidebarEnabled && description.length > 0) {%>
+      <% if (sidebarEnabled && description.length > 0) { %>
         <div aria-label="<%- description %>" tabindex="0" class="query-description"><%= description %></div>
       <% } %>
     </div>
@@ -36,9 +44,6 @@
     <div id="module-case-list-container__results-container" class="row row-no-gutters" style="position:relative;">
       <% if (showMap) { %>
         <div id="module-case-list-map" class="sticky sticky-map col-md-5 col-md-push-9<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
-        <div id="hide-map-button" class="case-list-map-hide-button case-list-map-hide-button-right">
-          <i class="fa fa-regular fa-map fa-lg"></i>
-        </div>
       <% } %>
       <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
         <% if (useTiles) { %>
