@@ -11,7 +11,7 @@ from corehq.apps.cloudcare.views import (
     BlockWebAppsView,
     default,
     report_formplayer_error,
-    report_sentry_error
+    report_sentry_error, api_histogram_metrics
 )
 from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 
@@ -43,10 +43,15 @@ settings_urls = [
     url(r'^app/', EditCloudcareUserPermissionsView.as_view(), name=EditCloudcareUserPermissionsView.urlname),
 ]
 
+metrics_urls = [
+    url(r'^record_api_metrics', api_histogram_metrics, name="api_histogram_metrics")
+]
+
 urlpatterns = [
     url(r'^$', default, name='cloudcare_default'),
     url(r'^apps/', include(app_urls)),
     url(r'^api/', include(api_urls)),
+    url(r'^metrics/', include(metrics_urls)),
 ]
 
 
