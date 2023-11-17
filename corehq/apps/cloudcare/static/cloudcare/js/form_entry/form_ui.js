@@ -732,9 +732,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.dirty = ko.computed(function () {
             return self.pendingAnswer() !== constants.NO_PENDING_ANSWER;
         });
-        self.clean = ko.computed(function () {
-            return !self.dirty() && !self.error() && !self.serverError() && self.hasAnswered;
-        });
         self.hasError = ko.computed(function () {
             return (self.error() || self.serverError()) && !self.dirty();
         });
