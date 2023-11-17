@@ -588,6 +588,8 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
         if case.case_id not in cases:
             cases[case.case_id] = {}
             case_names[case.case_id] = case.name
+            if len(case_names) == 1:  # only add primary label to first/main case
+                case_names[case.case_id] += ' <span class="label label-default">primary case</span>'
         case_xforms = case.xform_ids
 
         for form_id in case_xforms:
@@ -641,10 +643,7 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
 
     def get_case_link(caseid):
         url = reverse('case_data', args=[domain, caseid])
-        name = case_names[caseid]
-        if name == case_instance.name:
-            name += ' (main)'
-        return mark_safe('<a href="{}"> {} </a>'.format(url, name))
+        return mark_safe('<a href="{}"> {} </a>'.format(url, case_names[caseid]))
 
     def get_form_link(formid):
         url = reverse('render_form_data', args=[domain, formid])
@@ -690,6 +689,7 @@ class DeleteCaseView(BaseProjectReportSectionView):
     template_name = 'reports/reportdata/case_delete.html'
     delete_dict = {}
 
+    @method_decorator(require_case_view_permission)
     def dispatch(self, request, *args, **kwargs):
         self.delete_dict, redirect = get_cases_and_forms_for_deletion(request, self.domain, self.case_id)
         if redirect:
