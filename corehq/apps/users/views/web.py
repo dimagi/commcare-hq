@@ -66,10 +66,8 @@ class UserInvitationView(object):
                                       "request a project administrator to send you the invitation again."))
             return HttpResponseRedirect(reverse("login"))
 
-        is_invited_user = False
-        if request.user.is_authenticated:
-            if request.couch_user.username.lower() == invitation.email.lower():
-                is_invited_user = True
+        is_invited_user = (request.user.is_authenticated
+            and request.couch_user.username.lower() == invitation.email.lower())
 
         if invitation.is_accepted:
             if request.user.is_authenticated and not is_invited_user:
