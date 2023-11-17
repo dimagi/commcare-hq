@@ -160,6 +160,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('users.RoleAssignableBy', SimpleFilter('role__domain')),
     FilteredModelIteratorBuilder('users.RolePermission', SimpleFilter('role__domain')),
     FilteredModelIteratorBuilder('users.UserRole', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('users.SQLUserData', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('commtrack.CommtrackConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('commtrack.ActionConfig', SimpleFilter('commtrack_config__domain')),

@@ -50,11 +50,11 @@ User Data
 Users may have arbitrary data associated with them, assigned by the project and then referenced in applications.
 This user data is implemented via the ``custom_data_fields`` app, the same way as location and product data.
 
-User data is only relevant to mobile users. However, ``user_data`` is a property of ``CouchUser``
-and not ``CommCareUser`` because a legacy feature applied user data to web users. As a result of this,
-some web users do have user data saved to their documents.
+User data is being migrated to SQL to support web users, which will have a ``SQLUserData`` object for each domain
+they are a member of.  Data is accessed through the accessor ``user.get_user_data(domain)``, which returns an
+instance of ``UserData`` - a class that acts like a dictionary, but factors in data controlled by user data
+profiles and uneditable system fields.
 
-User data should be accessed via the ``metadata`` property, which takes into account user data profiles.
 
 UserRole and Permissions
 ~~~~~~~~~~~~~~~~~~~~~~~~
