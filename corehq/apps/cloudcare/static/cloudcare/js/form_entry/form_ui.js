@@ -168,14 +168,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
          *
          * @returns {string} - Background color for the header's nesting level.
          */
-        self.headerBackgroundColor= function () {
+        self.headerBackgroundColor = function () {
             let currentNode = self;
             let nestedDepthCount = 0;
             while (currentNode.parent) {
-                if (currentNode.type() === constants.GROUP_TYPE || currentNode.type() === constants.REPEAT_TYPE){
-                    nestedDepthCount += 1
+                if (currentNode.type() === constants.GROUP_TYPE || currentNode.type() === constants.REPEAT_TYPE) {
+                    nestedDepthCount += 1;
                 }
-                currentNode = currentNode.parent
+                currentNode = currentNode.parent;
             }
 
             // Colors are ordered from lightest to darkest with the lightest color for the highest level.
@@ -184,8 +184,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             // shade(#5D70D2, 20%): #4a5aa8
             // shade(#5D70D2, 40%): #38437e
             const repeatColor = ["#7d8ddb", "#4a5aa8", "#38437e"];
-            const repeatColorCount = repeatColor.length
-            const index = nestedDepthCount-1 % repeatColorCount;
+            const repeatColorCount = repeatColor.length;
+            const index = nestedDepthCount - 1 % repeatColorCount;
 
             return repeatColor[index];
         };
