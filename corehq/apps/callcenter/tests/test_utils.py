@@ -224,7 +224,8 @@ class CallCenterUtilsUsercaseTests(TestCase):
         cls.domain.save()
 
     def setUp(self):
-        self.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***', None, None, commit=False)  # Don't commit yet
+        self.user = CommCareUser.create(TEST_DOMAIN, format_username('user1', TEST_DOMAIN),
+                                        '***', None, None, commit=False)  # Don't commit yet
 
     def tearDown(self):
         self.user.delete(self.domain.name, deleted_by=None)
@@ -346,7 +347,6 @@ class CallCenterUtilsUsercaseTests(TestCase):
         self.assertEqual(1, len(user_case.xform_ids))
 
     def test_bulk_upload_usercases(self):
-        self.user.username = format_username('bushy_top', TEST_DOMAIN)
         self.user.save()
 
         upload_record = UserUploadRecord.objects.create(
@@ -381,6 +381,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
             upload_record_id=upload_record.pk,
         )
         self.assertEqual(results['errors'], [])
+        self.assertEqual([r['flag'] for r in results['rows']], ['updated', 'created'])
 
         old_user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertEqual(old_user_case.owner_id, self.user.get_id)
