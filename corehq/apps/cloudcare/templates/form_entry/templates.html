@@ -27,7 +27,10 @@
                 'tabindex': isVisibleGroup() ? '0' : '-1'
               },
         click: toggleChildren,
-        event: {keypress: keyPressAction}">
+        event: {keypress: keyPressAction},
+        style: {'background-color':  isRepetition || !collapsible ? '' : headerBackgroundColor(),
+                'color': headerBackgroundColor() ? 'white' : '',
+        }">
       <div data-bind="ifnot: collapsible">
         <legend>
           <span class="caption webapp-markdown-output"
@@ -285,9 +288,9 @@
                     }">{% trans 'Sorry, this response is required!' %}</div>
   <!-- /ko -->
   <!-- ko if: datatype() === 'info' -->
-  <div class="info panel panel-default">
+  <div class="form-group">
     {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
-    <div class="panel-body" data-bind="css: {
+    <div class="info col-sm-12" data-bind="css: {
         'text-center': stylesContains('text-align-center'),
         'text-right': stylesContains('text-align-right'),
       }">
@@ -317,7 +320,10 @@
 
 <script type="text/html" id="repeat-juncture-fullform-ko-template">
   <div class="panel panel-default rep">
-    <div class="panel-heading">
+    <div class="panel-heading" data-bind="style: {
+        'background-color': headerBackgroundColor(),
+        'color': headerBackgroundColor() ? 'white' : '',
+      }">
       <h3 class="caption" data-bind="html: header" tabindex="0"></h3>
       <span class="ix" data-bind="text: ixInfo($data)"></span>
     </div>
