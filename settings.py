@@ -1153,6 +1153,7 @@ FCM_CREDS = None
 
 CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -2093,3 +2094,5 @@ GOOGLE_SHEETS_API_VERSION = "v4"
 DAYS_KEEP_GSHEET_STATUS = 14
 
 PERMANENT_DELETION_WINDOW = 30  # days
+
+ABDM_TOKEN_EXPIRY = 24 * 60 * 3  # in minutes

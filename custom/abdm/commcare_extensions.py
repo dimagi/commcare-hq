@@ -6,8 +6,8 @@ from custom.abdm.models import ABDMUser
 
 def _get_abdm_api_token(username, domain):
     user, _ = ABDMUser.objects.get_or_create(username=username, domain=domain)
-    if not user.access_token:
-        user.generate_token()
+    user.generate_token()
+    user.save()
     return user.access_token
 
 

@@ -13,6 +13,6 @@ class ABDMUserAuthentication(TokenAuthentication):
             user = ABDMUser.objects.get(access_token=token)
         except ABDMUser.DoesNotExist:
             raise AuthenticationFailed('Unauthorized')
-        if not user.is_token_valid:
-            raise AuthenticationFailed('Invalid Token')
+        if user.is_token_expired:
+            raise AuthenticationFailed('Token expired. Please re-sync.')
         return user, None

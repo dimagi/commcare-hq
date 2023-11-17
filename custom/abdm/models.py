@@ -1,11 +1,13 @@
 from django.db import models
-
+from datetime import datetime, timedelta
 from rest_framework.authtoken.models import Token
+from django.conf import settings
 
 
 class ABDMUser(models.Model):
     username = models.CharField(max_length=100)
     access_token = models.CharField(max_length=2000, null=True, blank=True)
+    token_created_at = models.DateTimeField()
     domain = models.CharField(max_length=100)
 
     class Meta:
@@ -18,11 +20,11 @@ class ABDMUser(models.Model):
 
     def generate_token(self):
         self.access_token = Token.generate_key()
+        self.token_created_at = datetime.utcnow()
 
     @property
-    def is_token_valid(self):
-        # To be used in future when token expiry is introduced.
-        return True
+    def is_token_expired(self):
+        return (self.token_created_at + timedelta(minutes=settings.ABDM_TOKEN_EXPIRY)) < datetime.utcnow()
 
     @property
     def is_authenticated(self):
