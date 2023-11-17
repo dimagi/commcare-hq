@@ -172,7 +172,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             let currentNode = self;
             let nestedDepthCount = 0;
             while (currentNode.parent) {
-                if (currentNode.type() === constants.GROUP_TYPE || currentNode.type() === constants.REPEAT_TYPE) {
+                isCollapsibleGroup = currentNode.type() === constants.GROUP_TYPE && currentNode.collapsible
+                if (isCollapsibleGroup || currentNode.type() === constants.REPEAT_TYPE) {
                     nestedDepthCount += 1;
                 }
                 currentNode = currentNode.parent;
