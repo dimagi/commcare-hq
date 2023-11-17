@@ -1,0 +1,6 @@
+{% extends 'styleguide/bootstrap5/base_example.html' %}
+
+{% block working_code %}{{ content|safe }}{% endblock %}
+{% block readable_code %}
+  {% include 'styleguide/bootstrap5/partials/readable_code_block.html' with content=content language="HTML" %}
+{% endblock %}

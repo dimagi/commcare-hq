@@ -1,0 +1,88 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Typography</h1>
+  <p class="sg-lead">
+    Font choice can have a strong yet subtle effect on how users perceive content.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#font-face">Font Face</a></li>
+      <li><a href="#further-reading">Further Reading</a></li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="font-face">
+    Font Face
+  </h2>
+  <p>
+    HQ uses <a href='https://fonts.google.com/specimen/Nunito+Sans' target='_blank'>Nunito Sans</a> as its default font.
+    This is embdedded in our <a
+    href='https://github.com/dimagi/commcare-hq/blob/92b21a8bc9522148872fbcd735c9aa26839940d5/corehq/apps/hqwebapp/templates/hqwebapp/base.html#L39'
+    target='_blank'>base template</a> and is consistent with dimagi.com.
+  </p>
+  <div class="row">
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="card-body text-bg-light">
+          <h1>Nunito Sans H1</h1>
+          <h2>Nunito Sans H2</h2>
+          <h3>Nunito Sans H3</h3>
+          <h4>Nunito Sans H4</h4>
+          <h5>Nunito Sans H5</h5>
+          <h6>Nunito Sans H6</h6>
+          <p>Nunito Sans paragraph</p>
+          <p><strong>Nunito Sans strong</strong></p>
+          <p><em>Nunito Sans emphasis</em></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6">
+      <div class="card text-bg-dark">
+        <div class="card-body">
+          <h1>Nunito Sans H1</h1>
+          <h2>Nunito Sans H2</h2>
+          <h3>Nunito Sans H3</h3>
+          <h4>Nunito Sans H4</h4>
+          <h5>Nunito Sans H5</h5>
+          <h6>Nunito Sans H6</h6>
+          <p>Nunito Sans paragraph</p>
+          <p><strong>Nunito Sans strong</strong></p>
+          <p><em>Nunito Sans emphasis</em></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <h2 id="further-reading" class="pt-4">
+    Further Reading
+  </h2>
+  <ul>
+    <li>
+      <a href="https://thenextweb.com/dd/2017/03/31/science-behind-fonts-make-feel/" target="_blank">
+        The science behind fonts (and how they make you feel)
+      </a>
+    </li>
+    <li>
+      <a href=https://getbootstrap.com/docs/5.3/content/typography/" target="_blank">
+        Bootstrap 5 Typography
+      </a>
+    </li>
+    <li>
+      <a href="https://getbootstrap.com/docs/5.3/utilities/text/" target="_blank">
+        Bootstrap 5 Text Utilities
+      </a>
+    </li>
+    <li>
+      <a href="https://getbootstrap.com/docs/5.3/helpers/text-truncation/" target="_blank">
+        Bootstrap 5 Text Truncation
+      </a>
+    </li>
+  </ul>
+{% endblock content %}
