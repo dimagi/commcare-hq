@@ -606,7 +606,21 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             if web_user_username:
                 user.get_user_data(domain)['login_as_user'] = web_user_username
 
-            user.save(fail_hard=True)
+            try:
+                user.save(fail_hard=True)
+            except Exception as e:
+                # HACK: Catching all exception here is temporary. We believe that user critical sections
+                # are not behaving properly, and this catch-all is here to identify the problem
+                status_row['flag'] = str(e)
+                notify_error(f'Error while processing bulk import: {str(e)}')
+                soft_assert(to='{}@{}'.format('mriley', 'dimagi.com'), send_to_ops=False)(
+                    False,
+                    'Error while processing bulk import',
+                    e
+                )
+                ret["rows"].append(status_row)
+                continue
+
             log = commcare_user_importer.save_log()
 
             if web_user_username:
@@ -686,16 +700,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             status_row['flag'] = e.message
         except (UserUploadError, CouchUser.Inconsistent) as e:
             status_row['flag'] = str(e)
-        except Exception as e:
-            # HACK: Catching all exception here is temporary. We believe that user critical sections
-            # are not behaving properly, and this catch-all is here to identify the problem
-            status_row['flag'] = str(e)
-            notify_error(f'Error while processing bulk import: {str(e)}')
-            soft_assert(to='{}@{}'.format('mriley', 'dimagi.com'), send_to_ops=False)(
-                False,
-                'Error while processing bulk import',
-                e
-            )
 
         ret["rows"].append(status_row)
 
