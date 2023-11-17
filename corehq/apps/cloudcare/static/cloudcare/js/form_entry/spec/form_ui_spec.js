@@ -113,6 +113,37 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             assert.equal(form.children()[3].children().length, 1); // [q3]
         });
 
+        it('Should calculate nested background header color', function () {
+            let styleObj = {raw: 'group-collapse'};
+            let g0 = fixtures.groupJSON({
+                style: styleObj,
+            });
+            let g1 = fixtures.groupJSON({
+                style: styleObj,
+            });
+            g1.children[0].style = styleObj
+            g1.children[0].children.push(fixtures.repeatJSON())
+            g0.children[0].children.push(g1)
+
+            /* Group (collapsible) [g0]
+                -Group
+                    -Question
+                    -Question
+                    -Group (collapsible) [g1]
+                        -Group (collapsible) [g1-0]
+                            -Question
+                            -Question
+                            -Repeat [r1]
+            */
+            formJSON.tree = [g0];
+            let form = formUI.Form(formJSON);
+
+            assert.equal(form.children()[0].headerBackgroundColor(), '#7d8ddb'); //[g0]
+            assert.equal(form.children()[0].children()[0].children()[2].headerBackgroundColor(), '#4a5aa8') //[g1]
+            assert.equal(form.children()[0].children()[0].children()[2].children()[0].headerBackgroundColor(), '#38437e') //[g1-0]
+            assert.equal(form.children()[0].children()[0].children()[2].children()[0].children()[2].headerBackgroundColor(), '#7d8ddb') //[r1]
+        });
+
         it('Should reconcile question choices', function () {
             formJSON.tree = [questionJSON];
             var form = formUI.Form(formJSON),
