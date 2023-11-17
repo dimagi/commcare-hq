@@ -178,8 +178,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 currentNode = currentNode.parent
             }
 
-            //Placeholder colors
-            const repeatColor = ["#252d54", "#4a5aa8", "#7d8ddb"];
+            // Colors are ordered from lightest to darkest with the lightest color for the highest level.
+            // Colors are based on Bootstrap provided tint/shades of #5D70D2 (CommCare Cornflower Blue)
+            // tint(#5D70D2, 20%): #7d8ddb
+            // shade(#5D70D2, 20%): #4a5aa8
+            // shade(#5D70D2, 40%): #38437e
+            const repeatColor = ["#7d8ddb", "#4a5aa8", "#38437e"];
             const repeatColorCount = repeatColor.length
             const index = nestedDepthCount-1 % repeatColorCount;
 
