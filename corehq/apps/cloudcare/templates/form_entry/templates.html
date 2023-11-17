@@ -28,7 +28,7 @@
               },
         click: toggleChildren,
         event: {keypress: keyPressAction},
-        style: {'background-color':  isRepetition ? '' : headerBackgroundColor()}">
+        style: {'background-color':  isRepetition || !collapsible ? '' : headerBackgroundColor()}">
       <div data-bind="ifnot: collapsible">
         <legend>
           <span class="caption webapp-markdown-output"
