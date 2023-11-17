@@ -643,7 +643,7 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
         url = reverse('case_data', args=[domain, caseid])
         name = case_names[caseid]
         if name == case_instance.name:
-            name += ' (main)'
+            name += ' <span class="label label-default">primary case</span>'
         return mark_safe('<a href="{}"> {} </a>'.format(url, name))
 
     def get_form_link(formid):
