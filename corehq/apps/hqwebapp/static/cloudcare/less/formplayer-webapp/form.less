@@ -37,27 +37,31 @@
   }
 
   .panel-body {
-    padding-left: @form-text-indent + 5px;
-    padding-right: @form-text-indent + 5px;
+    padding-left: 0px;
+    padding-right: 0px;
     // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
     .row {
       margin-left: 0px;
       margin-right: 0px;
     }
-    @media (max-width: @screen-xs-max) {
-      padding-left: 0px;
-      padding-right: 0px;
-    }
   }
 
   .info {
-    .panel-body {
-      overflow-x: auto;
-      @media (max-width: @screen-xs-max) {
-        padding-left: @form-text-indent + 5px;
-        padding-right: @form-text-indent + 5px;
-      }
-    }
+    // Use similar border styling to .panel-default
+    border: solid 1px #ddd;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+
+    // Add padding to give space between content and border
+    padding-top: 15px;
+    padding-bottom: 15px;
+
+    // Give enough padding between border and content, while
+    // keeping text aligned with regular questions above/below
+    margin-left: -10px;
+    padding-left: 20px;
+
+    overflow-x: auto;
   }
 
   .gr-header {
@@ -133,19 +137,6 @@
     border: none;
   }
 
-}
-
-
-.question-container .gr .children {
-  .info.panel-default {
-    border: none;
-    background-color: transparent;
-    .box-shadow(none);
-
-    .panel-body {
-      padding-top: 6px;
-    }
-  }
 }
 
 @media print {
