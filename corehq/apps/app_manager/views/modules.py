@@ -216,10 +216,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         if case_list_map_enabled or not option_to_config[1]['has_map']
     ]
 
-    fixture_column_options = _get_fixture_columns_by_type(app.domain)
-    fixture_column_options[CASE_LIST_FILTER_LOCATIONS_FIXTURE] = [
-        'location/@id', 'location/name'
-    ]
+    fixture_column_options = _get_fixture_columns_options(app.domain)
 
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
@@ -427,6 +424,14 @@ def _get_report_module_context(app, module):
         'uuids_by_instance_id': get_uuids_by_instance_id(app),
     }
     return context
+
+
+def _get_fixture_columns_options(domain):
+    fixture_column_options = _get_fixture_columns_by_type(domain)
+    fixture_column_options[CASE_LIST_FILTER_LOCATIONS_FIXTURE] = [
+        'location/@id', 'location/name'
+    ]
+    return fixture_column_options
 
 
 def _get_fixture_columns_by_type(domain):
