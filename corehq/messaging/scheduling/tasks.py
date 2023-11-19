@@ -3,15 +3,20 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
+from bs4 import BeautifulSoup
+from celery.schedules import crontab
+
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.celery import task
+from corehq.apps.celery.periodic import periodic_task
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,
     ScheduledBroadcast,
     TimedSchedule,
 )
+from corehq.messaging.scheduling.models.content import EmailContent, EmailImage
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_alert_schedule_instance,
     delete_alert_schedule_instances_for_schedule,
@@ -531,3 +536,27 @@ def handle_case_timed_schedule_instance(case_id, schedule_instance_id, domain):
 def delete_schedule_instances_for_cases(domain, case_ids):
     for case_id in case_ids:
         delete_schedule_instances_by_case_id(domain, case_id)
+
+
+@periodic_task(run_every=crontab(minute='0', hour='1'), queue=settings.CELERY_PERIODIC_QUEUE)
+def delete_unused_messaging_images():
+    """Removes images that were uploaded to be used in emails, but were then deleted for whatever reason
+
+    """
+    image_ids = set(EmailImage.get_all_blob_ids())
+
+    present_image_ids = set()
+    # There is no easy way of figuring out the domain from EmailContent directly, so we only fetch those EmailContents that have html.
+    email_messages = EmailContent.objects.values_list("html_message", flat=True).filter(html_message__isnull=False)
+    for messages in email_messages:
+        for lang, content in messages:
+            soup = BeautifulSoup(content, features='lxml')
+            images = soup.find_all("img")
+            for image in images:
+                try:
+                    present_image_ids.add(image['src'].split('/')[-1])
+                except KeyError:
+                    continue
+
+    unused_images = image_ids - present_image_ids
+    EmailImage.bulk_delete(unused_images)

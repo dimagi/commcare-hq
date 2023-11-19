@@ -53,6 +53,8 @@ from corehq.messaging.fcm.utils import FCMUtil
 from corehq.messaging.scheduling.exceptions import EmailValidationException
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.util.metrics import metrics_counter
+from corehq.util.models import NullJsonField
+from corehq.util.view_utils import absolute_reverse
 
 
 @contextmanager
@@ -110,7 +112,7 @@ class SMSContent(Content):
 class EmailContent(Content):
     subject = old_jsonfield.JSONField(default=dict)
     message = old_jsonfield.JSONField(default=dict)
-    html_message = old_jsonfield.JSONField(default=dict)
+    html_message = NullJsonField(default=dict)
 
     TRIAL_MAX_EMAILS = 50
 
@@ -669,18 +671,28 @@ class EmailImage(object):
     def get_by_key(cls, domain, key):
         return cls(cls.meta_query(domain).get(key=key))
 
+    @classmethod
+    def get_by_keys(cls, keys, domain=None):
+        return [cls(m) for m in cls.meta_query(domain).filter(key__in=keys).all()]
+
     @staticmethod
-    def meta_query(domain):
+    def meta_query(domain=None):
         Q = models.Q
-        return BlobMeta.objects.partitioned_query(domain).filter(
+        query = BlobMeta.objects.partitioned_query(domain).filter(
             Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
-            parent_id=domain,
             type_code=CODES.email_multimedia,
         )
+        if domain is not None:
+            query = query.filter(parent_id=domain)
+        return query
 
     @classmethod
-    def get_all(cls, domain):
+    def get_all(cls, domain=None):
         return [cls(meta) for meta in cls.meta_query(domain).order_by("name")]
+
+    @classmethod
+    def get_all_blob_ids(cls, domain=None):
+        return cls.meta_query(domain).values_list('key', flat=True)
 
     @classmethod
     def get_total_size(cls, domain):
@@ -710,7 +722,14 @@ class EmailImage(object):
             raise NotFound(str(err))
         return blob
 
+    @classmethod
+    def bulk_delete(cls, keys):
+        get_blob_db().bulk_delete([c._meta for c in cls.get_by_keys(keys)])
+
     def delete(self):
         get_blob_db().delete(key=self._meta.key)
+
+    def get_url(self):
+        return absolute_reverse("download_messaging_image", args=[self.domain, self.blob_id])
 
     DoesNotExist = BlobMeta.DoesNotExist
