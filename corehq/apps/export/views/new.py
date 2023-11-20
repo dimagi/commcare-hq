@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.generic import View
@@ -540,5 +541,10 @@ class CopyExportView(View):
                 request,
                 format_html(_("Export <strong>{}</strong> created."), new_export.name)
             )
-        redirect = request.GET.get('next', reverse('data_interfaces_default', args=[domain]))
-        return HttpResponseRedirect(redirect)
+        redirect = request.GET.get('next')
+        if redirect:
+            is_valid = url_has_allowed_host_and_scheme(redirect, allowed_hosts=None)
+            if is_valid:
+                return HttpResponseRedirect(redirect)
+        else:
+            return HttpResponseRedirect(redirect)

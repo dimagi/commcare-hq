@@ -38,6 +38,7 @@ from django.template.response import TemplateResponse
 from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop, activate
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -373,7 +374,8 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     extra_context = extra_context or {}
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
-        if redirect_to:
+        is_valid = url_has_allowed_host_and_scheme(redirect_to, allowed_hosts=None)
+        if redirect_to and is_valid:
             return HttpResponseRedirect(redirect_to)
         if not domain_name:
             return HttpResponseRedirect(reverse('homepage'))
