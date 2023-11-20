@@ -147,16 +147,14 @@ class DataSourceActionLog(models.Model):
 
 
 class DataSourceRowTransactionLog(models.Model):
-    CREATE = "create"
-    UPDATE = "update"
+    UPSERT = "upsert"
     DELETE = "delete"
 
     id = models.BigAutoField(primary_key=True)
     domain = models.CharField(max_length=126, null=False, db_index=True)
     date_created = models.DateTimeField(auto_now_add=True)
     action = models.CharField(max_length=32, choices=(
-        (CREATE, CREATE),
-        (UPDATE, UPDATE),
+        (UPSERT, UPSERT),
         (DELETE, DELETE),
     ), null=False, blank=False)
     data_source_id = models.CharField(db_index=True, max_length=255, null=False, blank=False)
