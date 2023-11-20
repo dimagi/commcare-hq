@@ -1151,6 +1151,9 @@ FCM_CREDS = None
 
 CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 
+# used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
+PERMANENT_DELETION_WINDOW = 30  # days
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -2089,5 +2092,3 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
-
-PERMANENT_DELETION_WINDOW = 30  # days
