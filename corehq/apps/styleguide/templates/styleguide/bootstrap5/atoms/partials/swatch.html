@@ -1,0 +1,14 @@
+<div class="col-sm-4">
+  <div class="card text-bg-{{ swatch.main_color.slug }} rounded-3 mb-2">
+    <div class="card-body">
+      <h4>{{ swatch.title }}</h4>
+      <span class="badge text-bg-light">
+        ${{ swatch.main_color.slug }}
+      </span>
+      <span class="badge text-bg-light">
+        #{{ swatch.main_color.hex }}
+      </span>
+    </div>
+  </div>
+  <p>{{ swatch.description }}</p>
+</div>
