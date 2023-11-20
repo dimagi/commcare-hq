@@ -161,6 +161,10 @@ class DataSourceRowTransactionLog(models.Model):
     row_id = models.CharField(null=False, blank=False, max_length=255, db_index=True)
     row_data = models.JSONField(null=True, blank=True)
 
+    @property
+    def get_id(self):
+        return str(self.id)
+
 
 class DataSourceChangeSubscriber(models.Model):
     domain = models.CharField(max_length=126, null=False, db_index=True)

@@ -781,6 +781,7 @@ repeaters
  0002_repeaters_db
  0003_id_fields
  0004_fix_whitelist_bug_repeaters
+ 0005_datasourcerepeater
 reports
  0001_initial
  0002_auto_20171121_1803
