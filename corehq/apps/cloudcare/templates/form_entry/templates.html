@@ -315,11 +315,13 @@
       'text-center': stylesContains('text-align-center'),
       'text-right': stylesContains('text-align-right')
     }">
-    <div class="widget" data-bind="
-      template: { name: entryTemplate, data: entry, afterRender: afterRender },
-      css: { 'has-error': hasError }
-      "></div>
-  </div>
+    <div class="widget-container controls col-sm-12">
+      <div class="widget" data-bind="
+        template: { name: entryTemplate, data: entry, afterRender: afterRender },
+        css: { 'has-error': hasError }
+        "></div>
+      </div>
+    </div>
   <!-- /ko -->
   </div>
 </script>
