@@ -27,7 +27,10 @@
                 'tabindex': isVisibleGroup() ? '0' : '-1'
               },
         click: toggleChildren,
-        event: {keypress: keyPressAction}">
+        event: {keypress: keyPressAction},
+        style: {'background-color':  isRepetition || !collapsible ? '' : headerBackgroundColor(),
+                'color': headerBackgroundColor() ? 'white' : '',
+        }">
       <div data-bind="ifnot: collapsible">
         <legend>
           <span class="caption webapp-markdown-output"
@@ -317,7 +320,10 @@
 
 <script type="text/html" id="repeat-juncture-fullform-ko-template">
   <div class="panel panel-default rep">
-    <div class="panel-heading">
+    <div class="panel-heading" data-bind="style: {
+        'background-color': headerBackgroundColor(),
+        'color': headerBackgroundColor() ? 'white' : '',
+      }">
       <h3 class="caption" data-bind="html: header" tabindex="0"></h3>
       <span class="ix" data-bind="text: ixInfo($data)"></span>
     </div>
