@@ -33,17 +33,21 @@
     }
   }
 
+  .gr.panel {
+    border-radius: 0px;
+  }
+
+  .rep.panel {
+    border-radius: 0px;
+  }
+
   .panel-body {
-    padding-left: @form-text-indent + 5px;
-    padding-right: @form-text-indent + 5px;
+    padding-left: 0px;
+    padding-right: 0px;
     // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
     .row {
       margin-left: 0px;
       margin-right: 0px;
-    }
-    @media (max-width: @screen-xs-max) {
-      padding-left: 0px;
-      padding-right: 0px;
     }
   }
 
@@ -60,6 +64,11 @@
     legend {
       padding-left: @form-text-indent + 3px;
     }
+  }
+
+  .panel-heading {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
   }
 
 }
