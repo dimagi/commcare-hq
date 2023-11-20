@@ -594,7 +594,7 @@ class EntriesHelper(object):
             fixture_select_filter = ''
             if datum['module'].fixture_select.active:
                 if datum['module'].fixture_select.fixture_type == CASE_LIST_FILTER_LOCATIONS_FIXTURE:
-                    nodeset = XPath("instance('locations')/locations")
+                    nodeset = XPath("instance('locations')/locations/location")
                 else:
                     nodeset = ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance()
                 datums.append(FormDatumMeta(

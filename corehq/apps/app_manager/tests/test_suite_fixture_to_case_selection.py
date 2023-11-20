@@ -32,8 +32,8 @@ class SuiteAssertionsTest(SimpleTestCase, SuiteMixin):
         module, form = factory.new_basic_module('my_module', 'cases')
         module.fixture_select.active = True
         module.fixture_select.fixture_type = CASE_LIST_FILTER_LOCATIONS_FIXTURE
-        module.fixture_select.display_column = 'location/name'
-        module.fixture_select.variable_column = 'location/@id'
+        module.fixture_select.display_column = 'name'
+        module.fixture_select.variable_column = '@id'
         module.fixture_select.xpath = 'case_location_id=$fixture_value'
 
         factory.form_requires_case(form)
@@ -43,7 +43,7 @@ class SuiteAssertionsTest(SimpleTestCase, SuiteMixin):
         expected_xml = """
             <partial>
                 <datum detail-select="m0_fixture_select" id="fixture_value_m0"
-                  nodeset="instance('locations')/locations" value="location/@id"/>
+                  nodeset="instance('locations')/locations/location" value="@id"/>
             </partial>
         """
         self.assertXmlPartialEqual(expected_xml, suite_xml, "./entry/session/datum[1]")

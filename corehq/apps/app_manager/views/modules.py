@@ -429,7 +429,7 @@ def _get_report_module_context(app, module):
 def _get_fixture_columns_options(domain):
     fixture_column_options = _get_fixture_columns_by_type(domain)
     fixture_column_options[CASE_LIST_FILTER_LOCATIONS_FIXTURE] = [
-        'location/@id', 'location/name', 'location/site_code'
+        '@id', 'name', 'site_code'
     ]
     return fixture_column_options
 

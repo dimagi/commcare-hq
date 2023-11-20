@@ -117,7 +117,7 @@ class ModuleTests(SimpleTestCase):
             self.assertDictEqual(
                 result,
                 {
-                    CASE_LIST_FILTER_LOCATIONS_FIXTURE: ['location/@id', 'location/name', 'location/site_code'],
+                    CASE_LIST_FILTER_LOCATIONS_FIXTURE: ['@id', 'name', 'site_code'],
                     "duck": ["wing"]
                 }
             )
