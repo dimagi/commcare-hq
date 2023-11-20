@@ -542,6 +542,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const CaseListViewEvents = function () {
         return {
             'click @ui.actionButton': 'caseListAction',
+            'click @ui.mapShowHideButton': 'showHideMap',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
             'click @ui.paginationGoButton': 'paginationGoAction',
@@ -553,7 +554,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
             'keypress @ui.paginators': 'paginateKeyAction',
-            'click @ui.mapShowHideButton': 'showHideMap',
         };
     };
 
@@ -703,7 +703,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        showHideMap: function () {
+        showHideMap: function (e) {
             const mapDiv = $('#module-case-list-map');
             const moduleCaseList = $('#module-case-list');
             const hideButton = $('#hide-map-button');
@@ -711,10 +711,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 mapDiv.addClass('hide');
                 moduleCaseList.removeClass('col-md-7 col-md-pull-5').addClass('col-md');
                 hideButton.text(gettext('Show Map'));
+                $(e.target).attr('aria-expanded', 'false');
             } else {
                 mapDiv.removeClass('hide');
                 moduleCaseList.addClass('col-md-7 col-md-pull-5').removeClass('col-md');
                 hideButton.text(gettext('Hide Map'));
+                $(e.target).attr('aria-expanded', 'true');
             }
 
         },
