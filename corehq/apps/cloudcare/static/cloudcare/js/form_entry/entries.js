@@ -1194,14 +1194,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var options = {};
         var isMinimal = false;
         var isCombobox = false;
-        var isLabel = false;
         var isButton = false;
+        var isLabel = false;
         var hideLabel = false;
-        var style;
-
-        if (question.style) {
-            style = ko.utils.unwrapObservable(question.style.raw);
-        }
 
         var displayOptions = _getDisplayOptions(question);
         var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
@@ -1251,15 +1246,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 });
                 break;
             case constants.SELECT:
-                isButton = question.stylesContains(constants.BUTTON_SELECT);
                 isMinimal = question.stylesContains(constants.MINIMAL);
-                if (style) {
-                    isCombobox = question.stylesContains(constants.COMBOBOX);
-                }
-                if (style) {
-                    isLabel = question.stylesContains(constants.LABEL) || question.stylesContains(constants.LIST_NOLABEL);
-                    hideLabel = question.stylesContains(constants.LIST_NOLABEL);
-                }
+                isCombobox = question.stylesContains(constants.COMBOBOX);
+                isButton = question.stylesContains(constants.BUTTON_SELECT);
+                isLabel = question.stylesContains(constants.LABEL) || question.stylesContains(constants.LIST_NOLABEL);
+                hideLabel = question.stylesContains(constants.LIST_NOLABEL);
 
                 if (isMinimal) {
                     entry = new DropdownEntry(question, {});
@@ -1303,10 +1294,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 break;
             case constants.MULTI_SELECT:
                 isMinimal = question.stylesContains(constants.MINIMAL);
-                if (style) {
-                    isLabel = question.stylesContains(constants.LABEL);
-                    hideLabel = question.stylesContains(constants.LIST_NOLABEL);
-                }
+                isLabel = question.stylesContains(constants.LABEL);
+                hideLabel = question.stylesContains(constants.LIST_NOLABEL);
 
                 if (isMinimal) {
                     entry = new MultiDropdownEntry(question, {});

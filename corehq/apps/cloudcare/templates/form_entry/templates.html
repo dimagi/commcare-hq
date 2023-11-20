@@ -201,8 +201,7 @@
 
 <script type="text/html" id="question-fullform-ko-template">
   <div data-bind="class:questionTileWidth">
-  <!-- ko if: datatype() !== 'info'
-    && !(datatype() === 'select' && stylesContains('button-select')) -->
+  <!-- ko if: !isLabel && !isButton -->
   <div class="q form-group" data-bind="
             css: {
                 error: error,
@@ -285,7 +284,7 @@
                       on: $root.forceRequiredVisible,
                     }">{% trans 'Sorry, this response is required!' %}</div>
   <!-- /ko -->
-  <!-- ko if: datatype() === 'info' -->
+  <!-- ko if: isLabel -->
   <div class="info panel panel-default">
     {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
     <div class="panel-body" data-bind="css: {
@@ -313,7 +312,7 @@
     </div>
   </div>
   <!-- /ko -->
-  <!-- ko if: datatype() === 'select' && stylesContains('button-select') -->
+  <!-- ko if: isButton -->
   {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
   <div class="q form-group" data-bind="
     css: {
