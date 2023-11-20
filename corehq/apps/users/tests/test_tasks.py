@@ -1,7 +1,7 @@
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from unittest import mock
+from unittest.mock import patch
 
 from django.test import TestCase
 
@@ -185,7 +185,7 @@ class TestRemoveUsersTestCases(TestCase):
         return case
 
 
-@mock.patch.object(UserReportingMetadataStaging, 'process_record')
+@patch.object(UserReportingMetadataStaging, 'process_record')
 class TestProcessReportingMetadataStaging(TestCase):
 
     def test_record_is_deleted_if_processed_successfully(self, mock_process_record):
@@ -235,7 +235,7 @@ class TestProcessReportingMetadataStaging(TestCase):
         self.addCleanup(self.user.delete, 'test-domain', deleted_by=None)
 
 
-@mock.patch.object(UserReportingMetadataStaging, 'process_record')
+@patch.object(UserReportingMetadataStaging, 'process_record')
 class TestProcessReportingMetadataStagingTransaction(TestCase):
     """
     This is testing the same method as TestProcessReportingMetadataStaging is above, but
