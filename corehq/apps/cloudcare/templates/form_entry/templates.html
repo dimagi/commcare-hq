@@ -201,7 +201,7 @@
 
 <script type="text/html" id="question-fullform-ko-template">
   <div data-bind="class:questionTileWidth">
-  <!-- ko if: datatype() !== 'info' -->
+  <!-- ko if: !isLabel && !isButton -->
   <div class="q form-group" data-bind="
             css: {
                 error: error,
@@ -279,10 +279,10 @@
                       on: $root.forceRequiredVisible,
                     }">{% trans 'Sorry, this response is required!' %}</div>
   <!-- /ko -->
-  <!-- ko if: datatype() === 'info' -->
-  <div class="info panel panel-default">
+  <!-- ko if: isLabel -->
+  <div class="form-group">
     {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
-    <div class="panel-body" data-bind="css: {
+    <div class="info col-sm-12" data-bind="css: {
         'text-center': stylesContains('text-align-center'),
         'text-right': stylesContains('text-align-right'),
       }">
@@ -305,6 +305,20 @@
           "></div>
       </div>
     </div>
+  </div>
+  <!-- /ko -->
+  <!-- ko if: isButton -->
+  {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
+  <div class="q form-group" data-bind="
+    css: {
+      error: error,
+      'text-center': stylesContains('text-align-center'),
+      'text-right': stylesContains('text-align-right')
+    }">
+    <div class="widget" data-bind="
+      template: { name: entryTemplate, data: entry, afterRender: afterRender },
+      css: { 'has-error': hasError }
+      "></div>
   </div>
   <!-- /ko -->
   </div>
@@ -541,6 +555,9 @@
       </button>
     </div>
   </fieldset>
+</script>
+<script type="text/html" id="button-entry-ko-template">
+  <button class="btn btn-default" data-bind="text: buttonLabel(), click: onClick, attr: {id: entryId}"></button>
 </script>
 <script type="text/html" id="dropdown-entry-ko-template">
   <span class="help-block type sr-only" data-bind="

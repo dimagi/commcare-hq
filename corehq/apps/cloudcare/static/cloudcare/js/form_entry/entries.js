@@ -524,6 +524,32 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     };
 
     /**
+     * Represents a single button that cycles through choices
+     */
+    function ButtonSelectEntry(question, options) {
+        var self = this;
+        SingleSelectEntry.call(this, question, options);
+        self.templateType = 'button';
+
+        self.buttonLabel = function () {
+            const choices = self.choices();
+            const answer = self.answer() || 0;
+            return answer < choices.length ? choices[answer] : choices[0];
+        };
+
+        self.onClick = function () {
+            const answer = self.answer();
+            if (answer && answer < self.choices().length) {
+                self.answer(answer + 1);
+            } else {
+                self.answer(1);
+            }
+        };
+    }
+    ButtonSelectEntry.prototype = Object.create(SingleSelectEntry.prototype);
+    ButtonSelectEntry.prototype.constructor = SingleSelectEntry;
+
+    /**
      * This is used for the labels and inputs in a Combined Multiple Choice question in a Question
      * List Group. It is also used for labels in a Combined Checkbox question.
      */
@@ -1168,13 +1194,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var options = {};
         var isMinimal = false;
         var isCombobox = false;
+        var isButton = false;
         var isLabel = false;
         var hideLabel = false;
-        var style;
-
-        if (question.style) {
-            style = ko.utils.unwrapObservable(question.style.raw);
-        }
 
         var displayOptions = _getDisplayOptions(question);
         var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
@@ -1225,13 +1247,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 break;
             case constants.SELECT:
                 isMinimal = question.stylesContains(constants.MINIMAL);
-                if (style) {
-                    isCombobox = question.stylesContains(constants.COMBOBOX);
-                }
-                if (style) {
-                    isLabel = question.stylesContains(constants.LABEL) || question.stylesContains(constants.LIST_NOLABEL);
-                    hideLabel = question.stylesContains(constants.LIST_NOLABEL);
-                }
+                isCombobox = question.stylesContains(constants.COMBOBOX);
+                isButton = question.stylesContains(constants.BUTTON_SELECT);
+                isLabel = question.stylesContains(constants.LABEL) || question.stylesContains(constants.LIST_NOLABEL);
+                hideLabel = question.stylesContains(constants.LIST_NOLABEL);
 
                 if (isMinimal) {
                     entry = new DropdownEntry(question, {});
@@ -1249,6 +1268,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                         matchType: question.style.raw().split(' ')[1],
                         receiveStyle: receiveStyle,
                     });
+                } else if (isButton) {
+                    entry = new ButtonSelectEntry(question, {});
                 } else if (isLabel) {
                     entry = new ChoiceLabelEntry(question, {
                         hideLabel: hideLabel,
@@ -1273,10 +1294,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 break;
             case constants.MULTI_SELECT:
                 isMinimal = question.stylesContains(constants.MINIMAL);
-                if (style) {
-                    isLabel = question.stylesContains(constants.LABEL);
-                    hideLabel = question.stylesContains(constants.LIST_NOLABEL);
-                }
+                isLabel = question.stylesContains(constants.LABEL);
+                hideLabel = question.stylesContains(constants.LIST_NOLABEL);
 
                 if (isMinimal) {
                     entry = new MultiDropdownEntry(question, {});
@@ -1398,6 +1417,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         getEntry: getEntry,
         AddressEntry: AddressEntry,
         AudioEntry: AudioEntry,
+        ButtonSelectEntry: ButtonSelectEntry,
         ComboboxEntry: ComboboxEntry,
         DateEntry: DateEntry,
         DropdownEntry: DropdownEntry,
