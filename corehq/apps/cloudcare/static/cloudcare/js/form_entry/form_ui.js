@@ -635,7 +635,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.headerBackgroundColor = function () {
             if (self.isRepetition || !self.collapsible) {
-                return ''
+                return '';
             }
             let parentColor = Container.prototype.headerBackgroundColor.call(this);
             return parentColor;

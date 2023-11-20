@@ -121,9 +121,9 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             let g1 = fixtures.groupJSON({
                 style: styleObj,
             });
-            let r1 = fixtures.repeatNestJSON()
+            let r1 = fixtures.repeatNestJSON();
             g1.children[0].style = styleObj;
-            r1.children[0].style =styleObj;
+            r1.children[0].style = styleObj;
             g1.children[0].children.push(r1);
             g0.children[0].children.push(g1);
 
