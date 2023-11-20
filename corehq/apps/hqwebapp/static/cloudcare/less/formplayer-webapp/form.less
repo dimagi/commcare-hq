@@ -51,13 +51,7 @@
   }
 
   .info {
-    .panel-body {
-      overflow-x: auto;
-      @media (max-width: @screen-xs-max) {
-        padding-left: @form-text-indent + 5px;
-        padding-right: @form-text-indent + 5px;
-      }
-    }
+    overflow-x: auto;
   }
 
   .gr-header {
@@ -133,19 +127,6 @@
     border: none;
   }
 
-}
-
-
-.question-container .gr .children {
-  .info.panel-default {
-    border: none;
-    background-color: transparent;
-    .box-shadow(none);
-
-    .panel-body {
-      padding-top: 6px;
-    }
-  }
 }
 
 @media print {
