@@ -3,7 +3,7 @@ hqDefine('users/js/invite_web_user',[
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
-    'hqwebapp/js/validators.ko',
+    'hqwebapp/js/bootstrap3/validators.ko',
     'locations/js/widgets',
 ], function (
     $,

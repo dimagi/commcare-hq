@@ -439,6 +439,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
     disable_mobile_login_lockout = BooleanProperty(default=False)
+    allow_invite_email_only = BooleanProperty(default=False)
 
     requested_report_builder_subscription = StringListProperty()
 
@@ -447,7 +448,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     ga_opt_out = BooleanProperty(default=False)
     orphan_case_alerts_warning = BooleanProperty(default=False)
-
 
     @classmethod
     def wrap(cls, data):
@@ -968,7 +968,10 @@ class TransferDomainRequest(models.Model):
             _('Transfer of ownership for CommCare project space.'),
             self.to_user.get_email(),
             html_content,
-            text_content=text_content)
+            text_content=text_content,
+            domain=self.domain,
+            use_domain_gateway=True,
+        )
 
     def email_from_request(self):
         context = self.as_dict()
@@ -985,7 +988,10 @@ class TransferDomainRequest(models.Model):
             _('Transfer of ownership for CommCare project space.'),
             self.from_user.get_email(),
             html_content,
-            text_content=text_content)
+            text_content=text_content,
+            domain=self.domain,
+            use_domain_gateway=True,
+        )
 
     @requires_active_transfer
     def transfer_domain(self, by_user, *args, transfer_via=None, **kwargs):

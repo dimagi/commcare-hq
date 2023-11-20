@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/validators.ko", [
+hqDefine("hqwebapp/js/bootstrap3/validators.ko", [
     'jquery',
     'knockout',
     'knockout-validation/dist/knockout.validation.min', // needed for ko.validation
