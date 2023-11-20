@@ -355,3 +355,30 @@ def get_domain_for_ucr_table_name(table_name):
         # double-unescape because corehq.apps.userreports.util.get_table_name escapes twice
         return unescape(unescape(match.group(1)))
     raise ValueError(f"Expected {table_name} to start with {UCR_TABLE_PREFIX} or {LEGACY_UCR_TABLE_PREFIX}")
+
+
+def register_data_source_change(domain, data_source_id, row_changes, action):
+    from corehq.motech.repeaters.models import DataSourceRepeater
+    from corehq.motech.repeaters.signals import ucr_data_source_updated
+    from corehq.apps.userreports.models import DataSourceRowTransactionLog
+    # TODO: Log exceptions
+    if not DataSourceRepeater.datasource_is_subscribed_to(domain, data_source_id):
+        return
+
+    if action == DataSourceRowTransactionLog.UPSERT:
+        formatted_rows = [
+            {i.column.database_column_name.decode('utf-8'): str(i.value) for i in row}
+            for row in row_changes
+        ]
+    else:
+        formatted_rows = row_changes
+
+    for row_change in formatted_rows:
+        kwargs = {
+            "domain": domain,
+            "data_source_id": data_source_id,
+            "doc_id": row_change["doc_id"],
+            "row_change": row_change,
+            "action": action
+        }
+        ucr_data_source_updated.send_robust(sender=None, **kwargs)
