@@ -1151,6 +1151,8 @@ FCM_CREDS = None
 
 CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 
+MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -2091,5 +2093,3 @@ GOOGLE_SHEETS_API_VERSION = "v4"
 DAYS_KEEP_GSHEET_STATUS = 14
 
 PERMANENT_DELETION_WINDOW = 30  # days
-
-MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
