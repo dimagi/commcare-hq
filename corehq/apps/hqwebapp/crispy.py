@@ -72,6 +72,11 @@ class ErrorsOnlyField(Field):
     template = 'hqwebapp/crispy/field/errors_only_field.html'
 
 
+def get_form_action_class():
+    """This is only valid for bootstrap 5"""
+    return CSS_LABEL_CLASS_BOOTSTRAP5.replace('col', 'offset') + CSS_FIELD_CLASS_BOOTSTRAP5
+
+
 def _get_offsets(context):
     label_class = context.get('label_class', '')
     use_bootstrap5 = context.get('use_bootstrap5')
