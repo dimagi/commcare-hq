@@ -2089,3 +2089,5 @@ os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'F
 
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
+# NOTE: if you are adding a new setting that you intend to have other environments override,
+# make sure you add it before localsettings are imported (from localsettings import *)
