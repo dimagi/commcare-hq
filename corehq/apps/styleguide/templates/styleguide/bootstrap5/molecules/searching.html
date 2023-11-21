@@ -1,0 +1,119 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Searching &amp; Filtering</h1>
+  <p class="sg-lead">
+    Large sets of data should usually support search.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#usage">Usage</a>
+        <ul>
+          <li><a href="#quick-example">Quick Example</a></li>
+          <li><a href="#client-side">Client-Side Only Search</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">Overview</h2>
+  <p>
+    HQ has a custom searching and filtering component that uses
+    <a href="https://knockoutjs.com/documentation/component-overview.html" target="_blank">Knockout Components</a>.
+    See
+    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/components/search_box.js"
+       target="_blank">search_box.js</a>
+    for full documentation.
+  </p>
+  <h2 id="usage" class="pt-4">
+    Usage
+  </h2>
+  <p>
+    The best way to understand how to implement the search box widget is to see its use in HQ directly. The best
+    sources for this are the Web Users and Mobile Workers pages. As you might notice, it's often the case that the
+    search box component is used in combination with the
+    <a href="{% url 'styleguide_molecules_pagination_b5' %}">pagination</a> component.
+  </p>
+  <p>
+    For the Mobile Workers page, the key points are:
+  </p>
+  <ul>
+    <li>
+      <a href="https://github.com/dimagi/commcare-hq/blob/61ea80f022c7979ac3f95cdb1a1dd1b877b8aa62/corehq/apps/users/templates/users/mobile_workers.html#L275-L278"
+         target="_blank">
+        the HTML widget
+      </a>
+      initializing the search box
+    </li>
+    <li>
+      <a href="https://github.com/dimagi/commcare-hq/blob/996fd40ccbc1280e4fbfab0ea95408cdcaa635e7/corehq/apps/users/static/users/js/mobile_workers.js#L211-L243"
+         target="_blank">
+        the goToPage javascript function
+      </a>
+      that passes the query to the server (along with pagination data)
+    </li>
+    <li>
+      <a href="https://github.com/dimagi/commcare-hq/blob/47181887c7e188ac14fc705cbda0941269d087d6/corehq/apps/users/views/mobile/users.py#L946-L1003"
+         target="_blank">
+        the django view
+      </a>
+      that uses the query value along with other pagination information to return the list of mobile workers
+    </li>
+  </ul>
+
+  <h3 id="quick-example" class="pt-3">
+    A Quick Example
+  </h3>
+  <p>
+    Here is a quick example simulating the search box usage. Ideally, this searching should be done asynchronously,
+    as this widget is most useful for larger data sets, and it would likely be inefficient store the whole dataset in memory.
+    This is mainly to have a visual reference of the search box widget.
+  </p>
+  <div class="alert alert-primary">
+    <strong>Note:</strong>
+    The <code>immediate</code> parameter used in this example controls whether the widget searches on every key press or only when
+    the user clicks the search button or presses enter.
+  </div>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.search_box %}
+
+  <h3 id="client-side" class="pt-3">
+    Client-Side Only Search
+  </h3>
+  <p>
+    In some cases we might only want to do client-side searches. This means that the entire data set is stored in browser
+    memory, and we query that dataset without making additional calls to the server.
+  </p>
+  <p>
+    An example use case for this is the "Clean Case Data" modal that can be accessed from the Case Data
+    page. In this page we use the search box widget to filter case properties.
+  </p>
+  <p>
+    Key points for this example are:
+  </p>
+  <ul>
+    <li>
+      <a href="https://github.com/dimagi/commcare-hq/blob/202201bb5117373a57e50e841378e249a44bffae/corehq/apps/reports/templates/reports/partials/data_corrections_modal.html#L29-L33"
+         target="_blank">
+        the search box widget
+      </a>
+    </li>
+    <li>
+      <a href="https://github.com/dimagi/commcare-hq/blob/996fd40ccbc1280e4fbfab0ea95408cdcaa635e7/corehq/apps/reports/static/reports/js/data_corrections.js#L198-L214"
+         target="_blank">
+        the javascript code
+      </a> that applies the query to the list of case properties
+    </li>
+  </ul>
+  <div class="alert alert-primary">
+    Note that this is an example referencing the <code>search-box</code> widget usage only. The UI for this feature as a whole
+    should not be duplicated as a "best practice" and hopefully cleaned up in the future.
+  </div>
+{% endblock content %}
