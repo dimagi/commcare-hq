@@ -23,5 +23,5 @@ def get_users_without_user_data():
 
 def populate_user_data(django_user):
     user = CouchUser.from_django_user(django_user, strict=True)
-    for domain in user.domains:  # get_domains?
+    for domain in user.get_domains():
         user.get_user_data(domain).save()
