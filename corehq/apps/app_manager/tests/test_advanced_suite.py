@@ -376,7 +376,8 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
           <remote-request>
             <post url="http://localhost:8000/a/domain/phone/claim-case/"
                 relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0">
-              <data key="case_id" ref="instance('commcaresession')/session/data/search_case_id"/>
+              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) != 0"
+                    key="case_id" ref="instance('commcaresession')/session/data/search_case_id"/>
             </post>
             <command id="search_command.m0">
               <display>
