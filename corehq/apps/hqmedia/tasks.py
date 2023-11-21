@@ -155,6 +155,7 @@ def _get_file_path(app, include_multimedia_files, include_index_files, build_pro
             fpath += '-targeted'
     else:
         dummy, fpath = tempfile.mkstemp()
+        os.close(dummy)
     return fpath
 
 

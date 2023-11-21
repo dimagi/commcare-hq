@@ -21,6 +21,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     log_accounting_info,
 )
+from corehq.apps.accounting.utils.stripe import charge_through_stripe
 from corehq.const import USER_DATE_FORMAT
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
@@ -59,11 +60,6 @@ class BaseStripePaymentHandler(object):
         """Updates any relevant Credit lines
         """
         raise NotImplementedError("you must implement update_credits")
-
-    @staticmethod
-    def get_amount_in_cents(amount):
-        amt_cents = amount * Decimal('100')
-        return int(amt_cents.quantize(Decimal(10)))
 
     def update_payment_information(self, account):
         account.last_payment_method = LastPayment.CC_ONE_TIME
@@ -182,10 +178,10 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
         return _("Invoice #%s") % self.invoice.id
 
     def create_charge(self, amount, card=None, customer=None):
-        return stripe.Charge.create(
+        return charge_through_stripe(
             card=card,
             customer=customer,
-            amount=self.get_amount_in_cents(amount),
+            amount_in_dollars=amount,
             currency=settings.DEFAULT_CURRENCY,
             description="Payment for Invoice %s" % self.invoice.invoice_number,
         )
@@ -244,10 +240,10 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
         return _('Bulk Payment for project space %s' % self.domain)
 
     def create_charge(self, amount, card=None, customer=None):
-        return stripe.Charge.create(
+        return charge_through_stripe(
             card=card,
             customer=customer,
-            amount=self.get_amount_in_cents(amount),
+            amount_in_dollars=amount,
             currency=settings.DEFAULT_CURRENCY,
             description=self.cost_item_name,
         )
@@ -345,10 +341,10 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         return Decimal(request.POST['amount'])
 
     def create_charge(self, amount, card=None, customer=None):
-        return stripe.Charge.create(
+        return charge_through_stripe(
             card=card,
             customer=customer,
-            amount=self.get_amount_in_cents(amount),
+            amount_in_dollars=amount,
             currency=settings.DEFAULT_CURRENCY,
             description="Payment for %s" % self.cost_item_name,
         )
