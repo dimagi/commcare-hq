@@ -1364,10 +1364,6 @@ datatables-bootstrap3@Jowin/Datatables-Bootstrap3:
   version "0.0.0"
   resolved "https://codeload.github.com/Jowin/Datatables-Bootstrap3/tar.gz/45802ec4d337bdba6750f03b6472ddbb1d34608c"
 
-datatables-colreorder@DataTables/ColReorder#^1.5.1:
-  version "0.0.0"
-  resolved "https://codeload.github.com/DataTables/ColReorder/tar.gz/f0e558a1f38919fa95d82700aeea7ce3ca6fbfd5"
-
 datatables-fixedcolumns@DataTables/FixedColumns#3.2.0:
   version "0.0.0"
   resolved "https://codeload.github.com/DataTables/FixedColumns/tar.gz/a87428accba62d881e14fa2710bcc035a6efbbb6"
