@@ -1372,10 +1372,6 @@ datatables-fixedcolumns@DataTables/FixedColumns#3.2.0:
   version "0.0.0"
   resolved "https://codeload.github.com/DataTables/FixedColumns/tar.gz/a87428accba62d881e14fa2710bcc035a6efbbb6"
 
-datatables-scroller@DataTables/Scroller#^1.5.1:
-  version "0.0.0"
-  resolved "https://codeload.github.com/DataTables/Scroller/tar.gz/7dc5c7a56c7797677b224cff4be0a3a18604cc75"
-
 datatables.net@1.11.3:
   version "1.11.3"
   resolved "https://registry.yarnpkg.com/datatables.net/-/datatables.net-1.11.3.tgz#80e691036efcd62467558ee64c07dd566cb761b4"
