@@ -38,8 +38,8 @@ class UniqueConstraintInvoiceTest(BaseInvoiceTestCase):
 
 class UniqueConstraintCustomerInvoiceTest(BaseCustomerInvoiceCase):
     def test_unique_constraint_prevents_duplicate_customer_invoice(self):
-        invoice_date = utils.months_from_date(self.subscription.date_start,
-                                              random.randint(3, self.subscription_length))
+        invoice_date = utils.months_from_date(self.main_subscription.date_start,
+                                              random.randint(3, self.main_subscription_length))
         calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices_based_on_date(invoice_date)
         with self.assertLogs(level='ERROR') as log_cm:

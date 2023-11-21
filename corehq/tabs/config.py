@@ -16,7 +16,6 @@ from corehq.tabs.tabclasses import (
     SMSAdminTab,
     TranslationsTab,
     AttendanceTrackingTab,
-    GeospatialTab,
 )
 
 MENU_TABS = (
@@ -34,7 +33,6 @@ MENU_TABS = (
     EnterpriseSettingsTab,
     MySettingsTab,
     TranslationsTab,
-    GeospatialTab,
     # Admin
     AdminTab,
     SMSAdminTab,

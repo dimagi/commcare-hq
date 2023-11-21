@@ -1465,7 +1465,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     bulk_save = save_docs
 
-    def save(self, fire_signals=True, **params):
+    def save(self, fire_signals=True, update_django_user=True, **params):
         # HEADS UP!
         # When updating this method, please also ensure that your updates also
         # carry over to bulk_auto_deactivate_commcare_users.
@@ -1477,7 +1477,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             if by_username and by_username['id'] != self._id:
                 raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
-            if self._rev and not self.to_be_deleted():
+            if update_django_user and self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()
                 django_user.save()
 
@@ -2631,7 +2631,7 @@ class DomainRequest(models.Model):
         html_content = render_to_string("users/email/new_domain_request.html", params)
         subject = _('Request to join %s approved') % domain_name
         send_html_email_async.delay(subject, self.email, html_content, text_content=text_content,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+                                    domain=self.domain, use_domain_gateway=True)
 
     def send_request_email(self):
         domain_name = Domain.get_by_name(self.domain).display_name()
@@ -2650,7 +2650,7 @@ class DomainRequest(models.Model):
             'domain': domain_name,
         }
         send_html_email_async.delay(subject, recipients, html_content, text_content=text_content,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+                                    domain=self.domain, use_domain_gateway=True)
 
 
 class InvitationStatus(object):
@@ -2695,8 +2695,9 @@ class Invitation(models.Model):
     def send_activation_email(self, remaining_days=30):
         inviter = CouchUser.get_by_user_id(self.invited_by)
         url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.uuid])
+        domain_obj = Domain.get_by_name(self.domain)
         params = {
-            "domain": self.domain,
+            "domain": domain_obj.display_name(),
             "url": url,
             "days": remaining_days,
             "inviter": inviter.formatted_name,
@@ -2717,8 +2718,9 @@ class Invitation(models.Model):
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
                                     cc=[inviter.get_email()],
-                                    email_from=settings.DEFAULT_FROM_EMAIL,
-                                    messaging_event_id=f"{self.EMAIL_ID_PREFIX}{self.uuid}")
+                                    messaging_event_id=f"{self.EMAIL_ID_PREFIX}{self.uuid}",
+                                    domain=self.domain,
+                                    use_domain_gateway=True)
 
     def get_role_name(self):
         if self.role:
@@ -2753,7 +2755,9 @@ class Invitation(models.Model):
             subject,
             recipient,
             html_content,
-            text_content=text_content
+            text_content=text_content,
+            domain=self.domain,
+            use_domain_gateway=True
         )
 
     def accept_invitation_and_join_domain(self, web_user):
@@ -2967,7 +2971,14 @@ class UserReportingMetadataStaging(models.Model):
                 fcm_token=self.fcm_token, fcm_token_timestamp=self.last_heartbeat, save_user=False
             )
         if save:
-            user.save(fire_signals=False)
+            # update_django_user=False below is an optimization that allows us to update the CouchUser
+            # without propagating that change to SQL.
+            # This is an optimization we're able to do safely only because we happen to know that
+            # the present workflow only updates properties that are *not* stored on the django (SQL) user model.
+            # We have seen that these frequent updates to the SQL user table
+            # occasionally create deadlocks or pile-ups,
+            # which can be avoided by omitting that extraneous write entirely.
+            user.save(fire_signals=False, update_django_user=False)
 
     class Meta(object):
         unique_together = ('domain', 'user_id', 'app_id')
@@ -3176,6 +3187,8 @@ def check_and_send_limit_email(domain, plan_limit, user_count, prev_count):
             'user_count': user_count,
             'plan_limit': plan_limit,
         }),
+        domain=domain,
+        use_domain_gateway=True,
     )
     return
 
