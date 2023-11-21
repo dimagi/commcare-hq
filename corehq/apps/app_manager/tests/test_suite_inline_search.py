@@ -381,7 +381,10 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             <form>xmlns1.0</form>
             <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
                 relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
-              <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) != 0"
+              key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case]) != 0"
+              key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
             </post>
             <command id="m0-f0">
               <text>
@@ -551,7 +554,10 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
           <entry>
             <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
                 relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case]) = 0">
-              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case]) != 0"
+                key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) != 0"
+                key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
             </post>
             <command id="m1-f0">
               <text>
