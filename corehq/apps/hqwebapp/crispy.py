@@ -74,7 +74,7 @@ class ErrorsOnlyField(Field):
 
 def get_form_action_class():
     """This is only valid for bootstrap 5"""
-    return CSS_LABEL_CLASS_BOOTSTRAP5.replace('col', 'offset') + CSS_FIELD_CLASS_BOOTSTRAP5
+    return CSS_LABEL_CLASS_BOOTSTRAP5.replace('col', 'offset') + ' ' + CSS_FIELD_CLASS_BOOTSTRAP5
 
 
 def _get_offsets(context):
