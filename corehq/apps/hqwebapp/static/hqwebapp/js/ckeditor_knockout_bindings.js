@@ -2,11 +2,13 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
     'jquery',
     'underscore',
     'knockout',
+    'hqwebapp/js/initial_page_data',
     'hqwebapp/js/lib/ckeditor5/ckeditor',
 ], function (
     $,
     _,
     ko,
+    initialPageData,
     CKEditor
 ) {
     ko.bindingHandlers.ckeditor = function() {
@@ -37,6 +39,10 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                     // TODO: inline CSS here?
                     valueAccessor()(editorInstance.getData());
                 });
+
+                if (initialPageData.get('read_only_mode')) {
+                    editorInstance.enableReadOnlyMode('');
+                }
             });
 
             // handle disposal (if KO removes by the template binding)
