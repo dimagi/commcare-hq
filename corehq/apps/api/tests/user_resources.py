@@ -299,10 +299,7 @@ class TestCommCareUserResource(APIResourceTest):
                 'language': 'pol',
                 'last_name': 'last',
                 'first_name': 'test',
-                'user_data': {
-                    'chw_id': '13/43/DFA',
-                    'commcare_profile': self.profile.id,
-                }
+                'user_data': {'chw_id': '13/43/DFA'},
             }
         )
         self.assertTrue("50253311398" in
