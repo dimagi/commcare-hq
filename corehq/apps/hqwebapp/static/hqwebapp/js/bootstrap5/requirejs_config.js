@@ -45,9 +45,6 @@ requirejs.config({
         "datatables.fixedColumns": {
             "datatables.net": "datatables",
         },
-        "datatables.scroller": {
-            "datatables.net": "datatables",
-        },
     },
 
     // This is really build config, but it's easier to define a js function here than in bootstrap5/requirejs.yml
