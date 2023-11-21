@@ -11,7 +11,6 @@ requirejs.config({
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
         "datatables.scroller": "datatables-scroller/js/dataTables.scroller",
-        "datatables.colReorder": "datatables-colreorder/js/dataTables.colReorder",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
@@ -45,9 +44,6 @@ requirejs.config({
             "datatables.net": "datatables",
         },
         "datatables.scroller": {
-            "datatables.net": "datatables",
-        },
-        "datatables.colReorder": {
             "datatables.net": "datatables",
         },
     },
