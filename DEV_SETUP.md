@@ -532,10 +532,12 @@ $ ./manage.py create_kafka_topics
 $ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
 ```
 
-If you are using a partitioned database, populate the additional databases too:
+If you are using a partitioned database, populate the additional
+databases too, and configure PL/Proxy:
 
 ```sh
 $ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate_multi --noinput
+$ ./manage.py configure_pl_proxy_cluster --create_only
 ```
 
 You should run `./manage.py migrate` frequently, but only use the environment

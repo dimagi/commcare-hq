@@ -272,80 +272,50 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         iconClick: function (e) {
             e.stopImmediatePropagation();
-            const origin = window.location.origin;
-            const user = FormplayerFrontend.getChannel().request('currentUser');
-            const appId = formplayerUtils.currentUrlToObject().appId;
-            const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
-            // Confirms we are getting the app id, not build id
-            const currentAppId = currentApp.attributes["copy_of"] ? currentApp.attributes["copy_of"] : currentApp.attributes["_id"];
-            const domain = user.domain;
-            let fieldIndex = $(e.currentTarget).parent().index();
-            if (this.isMultiSelect) {
-                fieldIndex -= 1;
-            }
+            const fieldIndex = this.getFieldIndexFromEvent(e);
+            const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
+            const isBackground = this.options.endpointActions[fieldIndex]['background'];
             let caseId;
             if (this.options.headerRowIndices && !$(e.target).closest('.group-rows').length) {
                 caseId = this.model.get('groupKey');
             } else {
                 caseId = this.model.get('id');
             }
-            if (this.options.bodyRowIndices && this.options.headerRowIndices) {
-                if ($(e.target).closest('.group-rows').length) {
-                    fieldIndex = this.options.bodyRowIndices[fieldIndex];
-                } else {
-                    fieldIndex = this.options.headerRowIndices[fieldIndex];
-                }
-            }
-            const urlTemplate = this.options.endpointActions[fieldIndex]['urlTemplate'];
-            const actionUrl = origin + urlTemplate
-                .replace("{domain}", domain)
-                .replace("{appid}", currentAppId)
-                .replace("{selected_cases}", caseId)
-                .replace("{case_id}", caseId);
+            // Grab endpoint id from urlTemplate
+            const temp = urlTemplate.substring(0, urlTemplate.indexOf('?') - 1);
+            const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
+            const endpointArg = urlTemplate.substring(urlTemplate.indexOf('?') + 1, urlTemplate.lastIndexOf('='));
             e.target.className += " disabled";
-            this.iconIframe(e, actionUrl, this.model.get('id'));
+            this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
         },
 
-        iconIframe: function (e, url, caseId) {
+        getFieldIndexFromEvent: function (e) {
+            return $(e.currentTarget).parent().parent().children('.module-case-list-column').index($(e.currentTarget).parent());
+        },
+
+        clickableIconRequest: function (e, endpointId, caseId, endpointArg, isBackground) {
             const self = this;
-            const iframeId = "icon-iframe-" + caseId;
             const clickedIcon = e.target;
             clickedIcon.classList.add("disabled");
             clickedIcon.style.display = 'none';
             const spinnerElement = $(clickedIcon).siblings('i');
             spinnerElement[0].style.display = '';
-            const iconIframe = document.createElement('iframe');
-            iconIframe.style.display = 'none';
-            $(iconIframe).attr('id', iframeId);
-            iconIframe.src = encodeURI(url);
-            document.body.appendChild(iconIframe);
+            const currentUrlToObject = formplayerUtils.currentUrlToObject();
+            currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
+            currentUrlToObject.endpointId = endpointId;
+            currentUrlToObject.isBackground = isBackground;
 
-            $(`#${iframeId}`).on('load', function () {
-                // Get success or error message from iframe and pass to main window
-                const notificationsElement = $(`#${iframeId}`).contents().find("#cloudcare-notifications");
-                new MutationObserver((el) => {
-                    const addedNodes = el[0].addedNodes;
-                    if (addedNodes[0].classList.contains('alert')) {
-                        const succeeded = addedNodes[0].classList.contains('alert-success');
-                        let message;
-                        if (succeeded) {
-                            message = notificationsElement.find('.alert-success').find('p').text();
-                            FormplayerFrontend.trigger('showSuccess', gettext(message));
-                            self.reloadCase(caseId);
-                        } else {
-                            const messageElement = notificationsElement.find('.alert-danger');
-                            // Todo: standardize structures of success and error alert elements
-                            message = messageElement.contents().filter(function () {
-                                return this.nodeType === Node.TEXT_NODE;
-                            })[0].nodeValue;
-                            FormplayerFrontend.trigger('showError', gettext(message));
-                        }
-                        clickedIcon.classList.remove("disabled");
-                        clickedIcon.style.display = '';
-                        spinnerElement[0].style.display = 'none';
-                        iconIframe.remove();
-                    }
-                }).observe(notificationsElement[0], { childList: true });
+            function resetIcon() {
+                clickedIcon.classList.remove("disabled");
+                clickedIcon.style.display = '';
+                spinnerElement[0].style.display = 'none';
+            }
+
+            $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
+                self.reloadCase(self.model.get('id'));
+                resetIcon();
+            }).fail(function () {
+                resetIcon();
             });
         },
 
@@ -353,7 +323,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const self = this;
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
-            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true);
+            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
                 self.updateModelFromDetailResponse(caseId, detailResponse);
             }).fail(function () {
@@ -473,6 +443,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         updateModelFromDetailResponse: function (caseId, detailResponse) {
             CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
         },
+
+        getFieldIndexFromEvent: function (e) {
+            CaseTileView.__super__.getFieldIndexFromEvent.apply(this, [e]);
+            return $(e.currentTarget).parent().index();
+        },
     });
 
     const CaseTileGroupedView = CaseTileView.extend({
@@ -493,6 +468,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             dict['indexedRowDataList'] = this.getIndexedRowDataList();
 
             return dict;
+        },
+
+        getFieldIndexFromEvent: function (e) {
+            const fieldIndex = CaseTileGroupedView.__super__.getFieldIndexFromEvent.apply(this, [e]);
+            if ($(e.target).closest('.group-rows').length) {
+                return this.options.bodyRowIndices[fieldIndex];
+            } else {
+                return this.options.headerRowIndices[fieldIndex];
+            }
         },
 
         getIndexedRowDataList: function () {
