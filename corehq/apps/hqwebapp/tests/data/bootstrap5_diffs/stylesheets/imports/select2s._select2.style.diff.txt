@@ -52,7 +52,29 @@
        }
      }
  }
-@@ -67,9 +67,9 @@
+@@ -57,14 +57,6 @@
+ .select2-container {
+     width: 100% !important;
+ 
+-    .select2-selection.select2-selection--single {
+-        height: @input-height-base;
+-    }
+-
+-    .select2-selection.select2-selection--multiple {
+-        min-height: @input-height-base;
+-    }
+-
+     .select2-search-field {
+         width: 100% !important;
+     }
+@@ -72,16 +64,12 @@
+     .select2-input {
+         width: 100% !important;
+     }
+-
+-    textarea.select2-search__field {    // Placeholder for multi-select
+-        line-height: 21px;
+-    }
  }
  
  .select2-container.select2-container-active > .select2-choice {

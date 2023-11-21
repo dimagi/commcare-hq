@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,123 +1,121 @@
+@@ -1,121 +1,121 @@
 -@import "@{b3-import-variables}";
 +// Grid Containers
 +// we will want to adapt the defaults in a full redesign
@@ -134,9 +134,6 @@
 -@cc-brand-hi:   #bcdeff;
 -@cc-brand-mid:  #004ebc;
 -@cc-brand-low:  #002c5f;
--
--// used in registration app only. will be merged into "brand" color Bootstrap 5 migration
--@commcare-blue:  #5D70D2;
 +$cc-brand-hi:   #bcdeff;
 +$cc-brand-mid:  #004ebc;
 +$cc-brand-low:  #002c5f;
@@ -172,7 +169,7 @@
 -@navbar-padding-vertical:        ((@navbar-height - @line-height-computed) / 2);
 -@navbar-default-bg:              @cc-bg;
 -
--@navbar-footer-height:            40px;
+-@navbar-footer-height:            38px;
 -@navbar-footer-link-color:        mix(darken(#ffffff, 10), @brand-primary, 90);
 -@navbar-footer-link-color-hover:  @gray-lighter;
 -@navbar-footer-button-color:      #474747;
@@ -207,6 +204,7 @@
  
  
 -@input-border-radius-large:       5px;
+-@input-color:                     #000;
 -@cursor-disabled:                 'not-allowed';
 +////// Bootstrap 5 Color Overrides
 +$primary:   #5c6ac5;

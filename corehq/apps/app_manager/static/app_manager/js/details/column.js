@@ -54,10 +54,10 @@ hqDefine("app_manager/js/details/column", function () {
         self.tileColumnMax = ko.observable(13);
         self.tileRowStart = ko.observable(self.original.grid_y + 1 || 1); // converts from 0 to 1-based for UI
         self.tileRowOptions = ko.computed(function () {
-            return [""].concat(_.range(1, self.tileRowMax()));
+            return _.range(1, self.tileRowMax());
         });
         self.tileColumnStart = ko.observable(self.original.grid_x + 1 || 1); // converts from 0 to 1-based for UI
-        self.tileColumnOptions = [""].concat(_.range(1, self.tileColumnMax()));
+        self.tileColumnOptions = _.range(1, self.tileColumnMax());
         self.tileWidth = ko.observable(self.original.width || self.tileRowMax() - 1);
         self.tileWidthOptions = ko.computed(function () {
             return _.range(1, self.tileColumnMax() + 1 - (self.tileColumnStart() || 1));

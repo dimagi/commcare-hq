@@ -104,7 +104,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             <instance id="results:inline" src="jr://instance/remote/results:inline"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
-                    storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                    storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false" dynamic_search="false">
                   <title>
                     <text>
                       <locale id="case_search.m0.inputs"/>
@@ -147,7 +147,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             <instance id="results:inline" src="jr://instance/remote/results:inline"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
-                    storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                    storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false" dynamic_search="false">
                   <title>
                     <text>
                         <locale id="case_search.m0.inputs"/>
@@ -202,7 +202,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                     storage-instance="{RESULTS_INSTANCE_INLINE}"
-                    template="case" default_search="false">
+                    template="case" default_search="false" dynamic_search="false">
                   <title>
                     <text>
                         <locale id="case_search.m0.inputs"/>
@@ -396,7 +396,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']"
                 value="./@case_id" detail-select="m2_case_short"/>
               <query url="http://localhost:8000/a/test_domain/phone/search/123/"
-                storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false" dynamic_search="false">
                 <title>
                   <text>
                       <locale id="case_search.m0.inputs"/>
@@ -565,7 +565,7 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
               <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']"
                 value="./@case_id" detail-select="m0_case_short"/>
               <query url="http://localhost:8000/a/test_domain/phone/search/123/"
-                storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false" dynamic_search="false">
                 <title>
                   <text>
                       <locale id="case_search.m1.inputs"/>
@@ -669,7 +669,7 @@ class InlineSearchCustomInstanceName(SimpleTestCase, SuiteMixin):
             <instance id="{custom_instance}" src="jr://instance/remote/{custom_instance}"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
-                    storage-instance="{custom_instance}" template="case" default_search="false">
+                    storage-instance="{custom_instance}" template="case" default_search="false" dynamic_search="false">
                   <title>
                     <text>
                       <locale id="case_search.{module}.inputs"/>
