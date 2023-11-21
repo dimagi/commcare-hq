@@ -119,10 +119,10 @@ class Change(object):
         return self._dict[key]
 
     def __setitem__(self, key, value):
-        raise NotImplemented('This is a read-only dictionary!')
+        raise NotImplementedError('This is a read-only dictionary!')
 
     def __delitem__(self, key, value):
-        raise NotImplemented('This is a read-only dictionary!')
+        raise NotImplementedError('This is a read-only dictionary!')
 
     def __iter__(self):
         return iter(self._dict)
@@ -134,7 +134,7 @@ class Change(object):
         return self._dict.get(key, default)
 
     def pop(self, key, default):
-        raise NotImplemented('This is a read-only dictionary!')
+        raise NotImplementedError('This is a read-only dictionary!')
 
     def to_dict(self):
         return self._dict
