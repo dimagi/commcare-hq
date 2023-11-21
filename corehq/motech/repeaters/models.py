@@ -865,6 +865,13 @@ class DataSourceRepeater(Repeater):
         from corehq.apps.userreports.models import DataSourceRowTransactionLog
         return DataSourceRowTransactionLog.objects.get(id=repeat_record.payload_id)
 
+    @staticmethod
+    def datasource_is_subscribed_to(domain, data_source_id):
+        # Since Repeater.options is not a native django JSON field, we cannot query it
+        return DataSourceRepeater.objects.filter(
+            domain=domain, options={"data_source_id": data_source_id}
+        ).exists()
+
 
 class RepeatRecordAttempt(DocumentSchema):
     cancelled = BooleanProperty(default=False)
