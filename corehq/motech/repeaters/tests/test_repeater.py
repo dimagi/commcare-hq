@@ -2,11 +2,11 @@ import json
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
 
 import attr
-from unittest.mock import Mock, patch
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
@@ -26,6 +26,7 @@ from corehq.apps.receiverwrapper.exceptions import (
     IgnoreDocument,
 )
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.userreports.models import DataSourceRowTransactionLog
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -35,16 +36,14 @@ from corehq.motech.repeaters.const import (
     MIN_RETRY_WAIT,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.dbaccessors import (
-    delete_all_repeat_records,
-)
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import (
-    RepeatRecord,
     CaseRepeater,
     DataSourceRepeater,
     FormRepeater,
     LocationRepeater,
     Repeater,
+    RepeatRecord,
     ShortFormRepeater,
     UserRepeater,
     _get_retry_interval,
@@ -55,10 +54,9 @@ from corehq.motech.repeaters.repeater_generators import (
     RegisterGenerator,
 )
 from corehq.motech.repeaters.tasks import (
-    check_repeaters,
     _process_repeat_record,
+    check_repeaters,
 )
-from corehq.apps.userreports.models import DataSourceRowTransactionLog
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"
