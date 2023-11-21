@@ -242,6 +242,36 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     /**
+     * Calculates background color for nested Group and Repeat headers.
+     * Recursively determines nesting level (considering only Group and Repeat),
+     * starting at 0 for the Form level and cycling colors for each level.
+     *
+     * @returns {string} - Background color for the header's nesting level.
+     */
+    Container.prototype.headerBackgroundColor = function () {
+        let currentNode = this;
+        let nestedDepthCount = 0;
+        while (currentNode.parent) {
+            let isCollapsibleGroup = currentNode.type() === constants.GROUP_TYPE && currentNode.collapsible;
+            if (isCollapsibleGroup || currentNode.type() === constants.REPEAT_TYPE) {
+                nestedDepthCount += 1;
+            }
+            currentNode = currentNode.parent;
+        }
+
+        // Colors are ordered from lightest to darkest with the lightest color for the highest level.
+        // Colors are based on Bootstrap provided tint/shades of #5D70D2 (CommCare Cornflower Blue)
+        // tint(#5D70D2, 20%): #7d8ddb
+        // shade(#5D70D2, 20%): #4a5aa8
+        // shade(#5D70D2, 40%): #38437e
+        const repeatColor = ["#7d8ddb", "#4a5aa8", "#38437e"];
+        const repeatColorCount = repeatColor.length;
+        const index = (nestedDepthCount - 1) % repeatColorCount;
+
+        return repeatColor[index];
+    };
+
+    /**
      * Recursively groups sequential "question" items in a nested JSON structure.
      *
      * This function takes a JSON object as input and searches for sequential "question"
@@ -601,6 +631,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             const hasChildren = self.children().length !== 0;
             const hasLabel = !!ko.utils.unwrapObservable(self.caption_markdown) || !!self.caption();
             return hasChildren && hasLabel;
+        };
+
+        self.headerBackgroundColor = function () {
+            if (self.isRepetition || !self.collapsible) {
+                return '';
+            }
+            return Container.prototype.headerBackgroundColor.call(self);
         };
     }
     Group.prototype = Object.create(Container.prototype);
