@@ -10,7 +10,6 @@ requirejs.config({
         "datatables": "datatables.net/js/jquery.dataTables.min",
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
-        "datatables.scroller": "datatables-scroller/js/dataTables.scroller",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
