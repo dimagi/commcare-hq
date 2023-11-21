@@ -152,7 +152,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var id = model.get('id'),
                 inputId = id + "_mapbox",
                 $field = $("#" + inputId);
-            if (!sessionStorage.geocoderValues || typeof sessionStorage.geocoderValues !== 'object') {
+            console.log("typeof sessionStorage.geocoderValues !== 'object'");
+            console.log(typeof sessionStorage.geocoderValues !== 'object');
+            if (!sessionStorage.geocoderValues) {
+                console.log("new object created");
                 sessionStorage.geocoderValues = JSON.stringify({});
             }
             $(function () {
@@ -348,13 +351,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 console.log("changeQueryField called for address");
                 console.log("this.model");
                 console.log(this.model);
-                if (sessionStorage.geocoderValues) {
-                    let geocoderValues = JSON.parse(sessionStorage.geocoderValues);
-                    if (geocoderValues[this.model.id] !== this.model.value) {
-                        geocoderValues[this.model.id] = undefined;
-                        sessionStorage.geocoderValues = JSON.stringify(geocoderValues);
-                    }
-                }
+                // if (sessionStorage.geocoderValues) {
+                //     let geocoderValues = JSON.parse(sessionStorage.geocoderValues);
+                //     if (geocoderValues[this.model.id] !== this.model.value) {
+                //         console.log("in changeQueryField set to undefined");
+                //         geocoderValues[this.model.id] = undefined;
+                //         sessionStorage.geocoderValues = JSON.stringify(geocoderValues);
+                //     }
+                //}
                 console.log(sessionStorage.geocoderValues);
                 // geocoderItemCallback sets the value on the model
             } else if (this.model.get('input') === 'checkbox') {
