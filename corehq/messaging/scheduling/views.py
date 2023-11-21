@@ -14,10 +14,10 @@ from django.http import (
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
-from magic import Magic
 
 from six.moves.urllib.parse import quote_plus
 
@@ -30,11 +30,11 @@ from dimagi.utils.parsing import json_format_date
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
-from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule,
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
+    login_and_domain_required,
 )
-from django.utils.html import format_html
-from corehq.apps.domain.decorators import LoginAndDomainMixin, login_and_domain_required
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
@@ -59,7 +59,10 @@ from corehq.messaging.scheduling.async_handlers import (
     ConditionalAlertAsyncHandler,
     MessagingRecipientHandler,
 )
-from corehq.messaging.scheduling.const import MAX_IMAGE_UPLOAD_SIZE, VALID_EMAIL_IMAGE_MIMETYPES
+from corehq.messaging.scheduling.const import (
+    MAX_IMAGE_UPLOAD_SIZE,
+    VALID_EMAIL_IMAGE_MIMETYPES,
+)
 from corehq.messaging.scheduling.forms import (
     BroadcastForm,
     ConditionalAlertCriteriaForm,
@@ -1103,14 +1106,18 @@ def messaging_image_upload_view(request, domain):
 
         if image_file.size > MAX_IMAGE_UPLOAD_SIZE:
             return JsonResponse({
-                'error': _('Image file is too large. Images must be smaller than 1MB')
+                'error': {
+                    "message": _('Image file is too large. Images must be smaller than 1MB'),
+                }
             }, status=400)
 
-        if not _validate_is_image_type(image_file.file):
+        if not image_file.content_type in VALID_EMAIL_IMAGE_MIMETYPES:
             image_extensions = [mimetype.split("/")[1] for mimetype in VALID_EMAIL_IMAGE_MIMETYPES]
             return JsonResponse({
-                'error': _('You can only upload {image_extensions} images').format(
-                    image_extensions=", ".join(image_extensions))
+                'error':{
+                    "message": _('You can only upload {image_extensions} images').format(
+                        image_extensions=", ".join(image_extensions))
+                },
             }, status=400)
 
         image = EmailImage.save_blob(
@@ -1122,12 +1129,7 @@ def messaging_image_upload_view(request, domain):
         return JsonResponse({
             'url': absolute_reverse("download_messaging_image", args=[domain, image.blob_id])
         }, status=201)
-    return JsonResponse({'error': _('Invalid request')}, status=400)
-
-
-def _validate_is_image_type(data):
-    mime = Magic(mime=True)
-    return mime.from_buffer(data.read()) in VALID_EMAIL_IMAGE_MIMETYPES
+    return JsonResponse({'error': {"message": _('Invalid request')}}, status=400)
 
 
 def messaging_image_download_view(request, domain, image_key):

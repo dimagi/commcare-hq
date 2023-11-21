@@ -30,6 +30,9 @@ ALLOWED_HTML_TAGS = {
     "sup",
     "blockquote",
     "code",
+    "img",
+    "figure",
+    "figcaption",
 }
 
 
@@ -39,6 +42,9 @@ ALLOWED_HTML_ATTRIBUTES = {
     'acronym': ['title'],
     'div': ['style', 'class'],
     'span': ['style', 'class'],
+    'img': ['style', 'src', 'width', 'height'],
+    'figcaption': ['style'],
+    'figure': ['style'],
 }
 
 ALLOWED_CSS_PROPERTIES = {
