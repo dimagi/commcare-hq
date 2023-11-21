@@ -20,7 +20,7 @@ hqDefine("export/js/export_list", [
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'export/js/utils',
-    'hqwebapp/js/validators.ko',        // needed for validation of startDate and endDate
+    'hqwebapp/js/bootstrap3/validators.ko',        // needed for validation of startDate and endDate
     'hqwebapp/js/bootstrap3/components.ko',        // pagination & feedback widget
     'select2/dist/js/select2.full.min',
 ], function (

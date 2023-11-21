@@ -23,10 +23,7 @@ from memoized import memoized
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
-from corehq.apps.enterprise.models import (
-    EnterprisePermissions,
-    EnterpriseMobileWorkerSettings,
-)
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.enterprise.tasks import clear_enterprise_permissions_cache_for_all_users
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -35,9 +32,9 @@ from corehq import privileges
 from corehq.apps.accounting.models import (
     CustomerInvoice,
     CustomerBillingRecord,
-    BillingAccount,
 )
-from corehq.apps.accounting.utils import get_customer_cards, quantize_accounting_decimal, log_accounting_error
+from corehq.apps.accounting.utils.stripe import get_customer_cards
+from corehq.apps.accounting.utils import quantize_accounting_decimal, log_accounting_error
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
@@ -48,10 +45,7 @@ from corehq.apps.domain.views.accounting import PAYMENT_ERROR_MESSAGES, InvoiceS
 
 from corehq.apps.enterprise.enterprise import EnterpriseReport
 
-from corehq.apps.enterprise.forms import (
-    EnterpriseSettingsForm,
-    EnterpriseManageMobileWorkersForm,
-)
+from corehq.apps.enterprise.forms import EnterpriseSettingsForm
 from corehq.apps.enterprise.tasks import email_enterprise_report
 
 from corehq.apps.export.utils import get_default_export_settings_if_available
@@ -194,7 +188,7 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 
     @property
     def stripe_cards(self):
-        return get_customer_cards(self.request.user.username, self.domain)
+        return get_customer_cards(self.request.user.username)
 
     @property
     def show_hidden(self):
