@@ -6,7 +6,7 @@ from ast import literal_eval
 from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime, timedelta
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
@@ -164,15 +164,6 @@ class DataSourceRowTransactionLog(models.Model):
     @property
     def get_id(self):
         return str(self.id)
-
-
-class DataSourceChangeSubscriber(models.Model):
-    domain = models.CharField(max_length=126, null=False, db_index=True)
-    data_source_id = models.CharField(db_index=True, max_length=255, null=False, blank=False)
-    subscriber_uuid = models.CharField(
-        primary_key=True, default=uuid4, max_length=255, editable=False, null=False, blank=False
-    )
-    checkpoint = models.BigIntegerField(null=False, blank=False)
 
 
 class SQLColumnIndexes(DocumentSchema):

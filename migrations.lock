@@ -1120,7 +1120,7 @@ userreports
  0018_ucrexpression
  0019_ucrexpression_upstream_id
  0020_delete_ucr_comparison_models
- 0021_datasourcechangesubscriber_datasourcerowtransactionlog
+ 0021_datasourcerowtransactionlog
  0022_alter_datasourcerowtransactionlog_action
 users
  0001_add_location_permission

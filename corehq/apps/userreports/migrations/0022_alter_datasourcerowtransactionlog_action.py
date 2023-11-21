@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('userreports', '0021_datasourcechangesubscriber_datasourcerowtransactionlog'),
+        ('userreports', '0021_datasourcerowtransactionlog'),
     ]
 
     operations = [
