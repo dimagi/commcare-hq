@@ -543,7 +543,9 @@ class CopyExportView(View):
             )
         redirect = request.GET.get('next')
         if redirect:
-            is_valid = url_has_allowed_host_and_scheme(redirect, allowed_hosts=None)
+            is_valid = url_has_allowed_host_and_scheme(
+                redirect, allowed_hosts=settings.BASE_ADDRESS
+            )
             if is_valid:
                 return HttpResponseRedirect(redirect)
         else:
