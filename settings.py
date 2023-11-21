@@ -1042,6 +1042,8 @@ COMMCARE_NAME = {
     "default": "CommCare",
 }
 
+ALLOW_MAKE_SUPERUSER_COMMAND = True
+
 ENTERPRISE_MODE = False
 
 RESTRICT_DOMAIN_CREATION = False
@@ -1232,8 +1234,6 @@ for database in DATABASES.values():
 _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
-
-ALLOW_MAKE_SUPERUSER_COMMAND = True
 
 if 'KAFKA_URL' in globals():
     import warnings
