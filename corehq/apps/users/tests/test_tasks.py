@@ -9,21 +9,23 @@ from couchdbkit import ResourceConflict
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
-from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, UserReportingMetadataStaging, WebUser
-from corehq.apps.users.tasks import (
-    apply_correct_demo_mode_to_loadtest_user,
-    update_domain_date,
-)
-from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es import case_search_adapter
-from corehq.form_processor.models import CommCareCase
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.hqcase.case_helper import CaseCopier
+from corehq.apps.reports.util import domain_copied_cases_by_owner
+from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.models import (
+    CommCareUser,
+    UserReportingMetadataStaging,
+    WebUser,
+)
 from corehq.apps.users.tasks import (
     _process_reporting_metadata_staging,
+    apply_correct_demo_mode_to_loadtest_user,
     remove_users_test_cases,
+    update_domain_date,
 )
-from corehq.apps.reports.util import domain_copied_cases_by_owner
-from corehq.apps.hqcase.case_helper import CaseCopier
+from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import new_db_connection
 
 
@@ -78,6 +80,7 @@ class TasksTest(TestCase):
         self.assertIsNone(self._last_accessed(self.web_user, self.mirror_domain.name))
 
 
+@patch('corehq.apps.users.models.CouchUser.get_user_session_data', new=lambda _, __: {})
 class TestLoadtestUserIsDemoUser(TestCase):
 
     def test_set_loadtest_factor_on_demo_user(self):
@@ -125,7 +128,6 @@ def _get_user(loadtest_factor, is_demo_user):
         'username': f'testy@{domain_name}.commcarehq.org',
         'loadtest_factor': loadtest_factor,
         'is_demo_user': is_demo_user,
-        'user_data': {},
         'date_joined': just_now,
     })
     user.save()
