@@ -40,6 +40,9 @@ class ChangeMeta(jsonobject.JsonObject):
     # track when first published (will not get updated on retry, unlike publish_timestamp)
     original_publication_datetime = jsonobject.DateTimeProperty(default=datetime.utcnow)
 
+    # available to hold any associated document. For cases, this is the form ID responsible for the change
+    associated_document_id = jsonobject.StringProperty()
+
 
 class Change(object):
     """

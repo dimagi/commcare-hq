@@ -31,16 +31,16 @@ def publish_form_deleted(domain, form_id):
     ))
 
 
-def publish_case_saved(case, send_post_save_signal=True):
+def publish_case_saved(case, associated_form_id=None, send_post_save_signal=True):
     """
     Publish the change to kafka and run case post-save signals.
     """
-    producer.send_change(topics.CASE_SQL, change_meta_from_sql_case(case))
+    producer.send_change(topics.CASE_SQL, change_meta_from_sql_case(case, associated_form_id))
     if send_post_save_signal:
         sql_case_post_save.send(case.__class__, case=case)
 
 
-def change_meta_from_sql_case(case):
+def change_meta_from_sql_case(case, associated_form_id=None):
     return ChangeMeta(
         document_id=case.case_id,
         data_source_type=data_sources.SOURCE_SQL,
@@ -49,6 +49,7 @@ def change_meta_from_sql_case(case):
         document_subtype=case.type,
         domain=case.domain,
         is_deletion=case.is_deleted,
+        associated_document_id=associated_form_id
     )
 
 
