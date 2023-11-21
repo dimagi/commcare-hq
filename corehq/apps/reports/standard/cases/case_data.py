@@ -44,7 +44,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
+from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions, get_app
 from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.data_dictionary.util import is_case_type_deprecated
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -597,6 +597,13 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
             form_object = XFormInstance.objects.get_form(form_id, domain)
             if form_id not in form_names:
                 form_names[form_id] = xmlns_to_name(domain, form_object.xmlns, form_object.app_id)
+                if form_names[form_id] == form_object.xmlns:
+                    form_name = [
+                        get_app(domain, form_object.app_id).name or "[Unknown App]",
+                        "[Unknown Module]",
+                        form_object.name or "[Unknown Form]"
+                    ]
+                    form_names[form_id] = ' > '.join(form_name)
             # confirm this is doing what I intend for it to do
             case_db = FormProcessorInterface(domain).casedb_cache(
                 domain=domain,
