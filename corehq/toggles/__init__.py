@@ -690,13 +690,6 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
-DATASOURCE_BACKGROUND_REFRESH = StaticToggle(
-    'datasource_background_refresh',
-    'Enable API access to data source background refresh functionality',
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN],
-)
-
 CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
     'case_list_custom_variables',
     'Show editor for entering custom variables',

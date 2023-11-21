@@ -434,7 +434,7 @@ class IndicatorPillowTest(TestCase):
         self.pillow.process_change(doc_to_change(sample_doc))
         self._check_sample_doc_state(expected_indicators)
 
-    @flag_enabled('DATASOURCE_BACKGROUND_REFRESH')
+    @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.motech.repeaters.signals.domain_can_forward', lambda _x: True)
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_datasource_change_triggers_change_signal(self, datetime_mock):
@@ -450,7 +450,7 @@ class IndicatorPillowTest(TestCase):
         self.assertEqual(transaction_log.row_id, sample_doc["_id"])
         self.assertEqual(transaction_log.action, DataSourceRowTransactionLog.UPSERT)
 
-    @flag_enabled('DATASOURCE_BACKGROUND_REFRESH')
+    @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_rebuild_indicators(self, datetime_mock):
         data_source_id = self.config._id
@@ -518,7 +518,7 @@ class IndicatorPillowTest(TestCase):
 
         CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
 
-    @flag_enabled('DATASOURCE_BACKGROUND_REFRESH')
+    @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.motech.repeaters.signals.domain_can_forward', lambda _x: True)
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):

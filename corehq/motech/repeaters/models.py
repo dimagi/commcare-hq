@@ -867,7 +867,7 @@ class DataSourceRepeater(Repeater):
 
     @staticmethod
     def datasource_is_subscribed_to(domain, data_source_id):
-        # Since Repeater.options is not a native django JSON field, we cannot query it
+        # Since Repeater.options is not a native django JSON field, we cannot query it like a django json field
         return DataSourceRepeater.objects.filter(
             domain=domain, options={"data_source_id": data_source_id}
         ).exists()
