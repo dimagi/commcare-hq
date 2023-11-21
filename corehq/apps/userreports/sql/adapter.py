@@ -180,7 +180,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         register_data_source_change(
             domain=self.config.domain,
             data_source_id=self.config._id,
-            row_changes=rows,
+            row_changes=[{key: str(value) for key, value in row.items()} for row in formatted_rows],
             action="upsert"
         )
 

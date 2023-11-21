@@ -360,20 +360,11 @@ def get_domain_for_ucr_table_name(table_name):
 def register_data_source_change(domain, data_source_id, row_changes, action):
     from corehq.motech.repeaters.models import DataSourceRepeater
     from corehq.motech.repeaters.signals import ucr_data_source_updated
-    from corehq.apps.userreports.models import DataSourceRowTransactionLog
-    # TODO: Log exceptions
+
     if not DataSourceRepeater.datasource_is_subscribed_to(domain, data_source_id):
         return
 
-    if action == DataSourceRowTransactionLog.UPSERT:
-        formatted_rows = [
-            {i.column.database_column_name.decode('utf-8'): str(i.value) for i in row}
-            for row in row_changes
-        ]
-    else:
-        formatted_rows = row_changes
-
-    for row_change in formatted_rows:
+    for row_change in row_changes:
         kwargs = {
             "domain": domain,
             "data_source_id": data_source_id,
