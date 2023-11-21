@@ -16,6 +16,6 @@
 <div data-bind="visible: translate(), foreach: translatedMessages">
   <div class="controls translation-controls">
     <label>{% trans "Translation" %} (<span data-bind="text: language_code"></span>):</label>
-    <textarea data-bind="ckeditor: message"></textarea>
+    <textarea data-bind="ckeditor: html_message"></textarea>
   </div>
 </div>

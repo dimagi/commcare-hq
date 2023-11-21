@@ -23,6 +23,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
 
         self.language_code = ko.observable(language_code);
         self.message = ko.observable(message);
+        self.html_message = ko.observable(message);
     };
 
     var TranslationViewModel = function (language_codes, translations) {
@@ -62,6 +63,18 @@ hqDefine("scheduling/js/create_schedule.ko", [
             return JSON.stringify(result);
         });
 
+        self.htmlMessagesJSONString = ko.computed(function () {
+            var result = {};
+            if (self.translate()) {
+                self.translatedMessages().forEach(function (messageModel) {
+                    result[messageModel.language_code()] = messageModel.html_message();
+                });
+            } else {
+                result['*'] = self.nonTranslatedMessage();
+            }
+            return JSON.stringify(result);
+        });
+
         self.loadInitialTranslatedMessages = function () {
             language_codes.forEach(function (language_code) {
                 self.translatedMessages.push(new MessageViewModel(language_code, translations[language_code]));
@@ -82,6 +95,10 @@ hqDefine("scheduling/js/create_schedule.ko", [
         self.message = new TranslationViewModel(
             initialPageData.get("language_list"),
             initial_values.message
+        );
+        self.html_message = new TranslationViewModel(
+            initialPageData.get("language_list"),
+            initial_values.html_message
         );
 
         self.survey_reminder_intervals_enabled = ko.observable(initial_values.survey_reminder_intervals_enabled);
