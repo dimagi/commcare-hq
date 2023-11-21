@@ -6,6 +6,11 @@
     "private": true,
     "dependencies": {
         "@babel/standalone": "^7.21.4",
+        "@ckeditor/ckeditor5-build-classic": "^40.1.0",
+        "@ckeditor/ckeditor5-font": "^40.1.0",
+        "@ckeditor/ckeditor5-horizontal-line": "^40.1.0",
+        "@ckeditor/ckeditor5-html-support": "^40.1.0",
+        "@ckeditor/ckeditor5-restricted-editing": "^40.1.0",
         "@mapbox/mapbox-gl-draw": "1.4.1",
         "@mapbox/mapbox-gl-geocoder": "5.0.1",
         "At.js": "millerdev/At.js#master",
