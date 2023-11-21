@@ -361,7 +361,8 @@ def register_data_source_change(domain, data_source_id, row_changes, action):
     from corehq.motech.repeaters.models import DataSourceRepeater
     from corehq.motech.repeaters.signals import ucr_data_source_updated
 
-    if not DataSourceRepeater.datasource_is_subscribed_to(domain, data_source_id):
+    datasource_subscribed_to = DataSourceRepeater.datasource_is_subscribed_to(domain, data_source_id)
+    if not (toggles.DATASOURCE_BACKGROUND_REFRESH.enabled(domain) and datasource_subscribed_to):
         return
 
     for row_change in row_changes:

@@ -6,6 +6,7 @@ from django.test import SimpleTestCase, TestCase
 
 from unittest import mock
 from unittest.mock import patch
+from corehq.util.test_utils import flag_enabled
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
@@ -433,6 +434,7 @@ class IndicatorPillowTest(TestCase):
         self.pillow.process_change(doc_to_change(sample_doc))
         self._check_sample_doc_state(expected_indicators)
 
+    @flag_enabled('DATASOURCE_BACKGROUND_REFRESH')
     @mock.patch('corehq.motech.repeaters.signals.domain_can_forward', lambda _x: True)
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_datasource_change_triggers_change_signal(self, datetime_mock):
@@ -448,6 +450,7 @@ class IndicatorPillowTest(TestCase):
         self.assertEqual(transaction_log.row_id, sample_doc["_id"])
         self.assertEqual(transaction_log.action, DataSourceRowTransactionLog.UPSERT)
 
+    @flag_enabled('DATASOURCE_BACKGROUND_REFRESH')
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_rebuild_indicators(self, datetime_mock):
         data_source_id = self.config._id
@@ -515,6 +518,7 @@ class IndicatorPillowTest(TestCase):
 
         CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
 
+    @flag_enabled('DATASOURCE_BACKGROUND_REFRESH')
     @mock.patch('corehq.motech.repeaters.signals.domain_can_forward', lambda _x: True)
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):
