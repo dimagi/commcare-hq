@@ -438,8 +438,10 @@
             accept: accept,
         },
     "/>
-  <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear">
-    {% trans "Clear" %}
+  <button class="btn btn-default btn-xs pull-right" data-bind="
+    click: onClear,
+    text: $root.getTranslation('upload.clear.title', '{% trans_html_attr 'Clear' %}'),
+  ">
   </button>
 </script>
 
