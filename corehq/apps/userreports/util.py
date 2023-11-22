@@ -362,9 +362,9 @@ def register_data_source_change(domain, data_source_id, row_changes, action):
     from corehq.motech.repeaters.models import DataSourceRepeater
     from corehq.motech.repeaters.signals import ucr_data_source_updated
     try:
-        if (
-            not toggles.SUPERSET_ANALYTICS.enabled(domain)
-            or not DataSourceRepeater.datasource_is_subscribed_to(domain, data_source_id)
+        if not (
+            toggles.SUPERSET_ANALYTICS.enabled(domain)
+            and DataSourceRepeater.datasource_is_subscribed_to(domain, data_source_id)
         ):
             return
 

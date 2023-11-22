@@ -742,6 +742,9 @@ class LocationPayloadGenerator(BasePayloadGenerator):
 
 
 class DataSourcePayloadGenerator(BasePayloadGenerator):
+    format_name = 'json'
+    format_label = _('JSON')
+
     @property
     def content_type(self):
         return 'application/json'
