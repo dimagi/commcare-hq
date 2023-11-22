@@ -2,7 +2,7 @@ import time
 
 from django.conf import settings
 from django.db.models.signals import post_save
-from django.dispatch import receiver
+from django.dispatch import receiver, dispatcher
 
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.util.metrics import metrics_counter
@@ -13,12 +13,15 @@ from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeaters.models import (
     CreateCaseRepeater,
+    DataSourceRepeater,
     DataRegistryCaseUpdateRepeater,
     ReferCaseRepeater,
     UpdateCaseRepeater,
     domain_can_forward,
 )
 from dimagi.utils.logging import notify_exception
+
+ucr_data_source_updated = dispatcher.Signal()
 
 
 def create_form_repeat_records(sender, xform, **kwargs):
@@ -100,6 +103,25 @@ def fire_synchronous_case_repeaters(sender, case, **kwargs):
     _create_repeat_records(DataRegistryCaseUpdateRepeater, case, fire_synchronously=True)
 
 
+def create_data_source_transaction_log_entry(sender, **kwargs):
+    """Creates a transaction log for the datasource that changed"""
+    from corehq.apps.userreports.models import DataSourceRowTransactionLog
+    domain = kwargs["domain"]
+    data_source_id = kwargs["data_source_id"]
+    transaction_log = DataSourceRowTransactionLog.objects.create(
+        domain=domain,
+        data_source_id=data_source_id,
+        row_id=kwargs["doc_id"],
+        row_data=kwargs["row_change"],
+        action=kwargs["action"]
+    )
+
+    repeaters = DataSourceRepeater.get_datasource_repeaters(domain, data_source_id)
+    for repeater in repeaters:
+        repeater.register(transaction_log)
+
+
 successful_form_received.connect(create_form_repeat_records)
 successful_form_received.connect(create_short_form_repeat_records)
 sql_case_post_save.connect(create_case_repeat_records, CommCareCase)
+ucr_data_source_updated.connect(create_data_source_transaction_log_entry)
