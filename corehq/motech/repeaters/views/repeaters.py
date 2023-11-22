@@ -24,7 +24,7 @@ from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
 
-from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
+from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm, DataSourceRepeaterForm
 from ..models import (
     Repeater,
     RepeatRecord,
@@ -200,8 +200,7 @@ class EditRepeaterView(BaseRepeaterView):
     def page_url(self):
         # The EditRepeaterView url routes to the correct edit form for
         # its subclasses. It does this with `repeater_type` in
-        # r'^forwarding/(?P<repeater_type>\w+)/edit/(?P<repeater_id>\w+)/$'
-        # See corehq/apps/domain/urls.py for details.
+        # r'^forwarding/edit/(?P<repeater_type>\w+)/(?P<repeater_id>\w+)/$'
         return reverse(EditRepeaterView.urlname,
                        args=[self.domain, self.repeater_type, self.repeater_id])
 
@@ -298,6 +297,29 @@ class EditCaseRepeaterView(EditRepeaterView, AddCaseRepeaterView):
     @property
     def page_url(self):
         return reverse(AddCaseRepeaterView.urlname, args=[self.domain])
+
+
+class AddDataSourceRepeaterView(AddRepeaterView):
+    urlname = 'add_datasource_repeater'
+    repeater_form_class = DataSourceRepeaterForm
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater = super().set_repeater_attr(repeater, cleaned_data)
+        repeater.data_source_id = self.add_repeater_form.cleaned_data['data_source_id']
+        return repeater
+
+
+class EditDataSourceRepeaterView(EditRepeaterView, AddDataSourceRepeaterView):
+    urlname = 'edit_datasource_repeater'
+    page_title = gettext_lazy("Edit DataSource Repeater")
+
+    @property
+    def page_url(self):
+        return reverse(AddDataSourceRepeaterView.urlname, args=[self.domain])
 
 
 class EditReferCaseRepeaterView(EditCaseRepeaterView):
