@@ -1099,7 +1099,6 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
 
 
 @login_and_domain_required
-@csrf_exempt                    # TODO: Remove this!
 def messaging_image_upload_view(request, domain):
     if request.method == 'POST' and request.FILES.get('upload'):
         image_file = request.FILES['upload']

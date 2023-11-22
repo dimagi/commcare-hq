@@ -10,12 +10,12 @@
 </div>
 
 <div class="controls translation-controls" data-bind="visible: !translate()">
-  <textarea data-bind="ckeditor: nonTranslatedMessage"></textarea>
+  <textarea data-bind="ckeditor: nonTranslatedMessage" data-image-upload-url="upload_messaging_image"></textarea>
 </div>
 
 <div data-bind="visible: translate(), foreach: translatedMessages">
   <div class="controls translation-controls">
     <label>{% trans "Translation" %} (<span data-bind="text: language_code"></span>):</label>
-    <textarea data-bind="ckeditor: html_message"></textarea>
+    <textarea data-bind="ckeditor: html_message" data-image-upload-url="upload_messaging_image"></textarea>
   </div>
 </div>

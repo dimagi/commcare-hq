@@ -15,15 +15,10 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
         self.init = function (element, valueAccessor, allBindingsAccessor, viewModel) {
             var options = {
                 simpleUpload: {
-                    // The URL that the images are uploaded to.
-                    uploadUrl: initialPageData.reverse('upload_messaging_image'),
-
-                    // Enable the XMLHttpRequest.withCredentials property.
+                    uploadUrl: initialPageData.reverse(element.attributes['data-image-upload-url'].value),
                     withCredentials: true,
-
-                    // Headers sent along with the XMLHttpRequest to the upload server.
                     headers: {
-                        'X-CSRF-TOKEN': 'CSRF-Token',
+                        'X-CSRFTOKEN': $("#csrfTokenContainer").val(),
                     }
                 },
                 htmlSupport: {
