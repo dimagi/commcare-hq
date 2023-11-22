@@ -1,7 +1,6 @@
 import json
 import re
 from datetime import datetime, timedelta
-from bleach.css_sanitizer import CSSSanitizer
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -28,6 +27,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 import bleach
+from bleach.css_sanitizer import CSSSanitizer
 from couchdbkit import ResourceNotFound
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -418,22 +418,7 @@ class ContentForm(Form):
             )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_EMAIL:
             if RICH_TEXT_EMAILS.enabled(self.domain):
-                plaintext_message = {}
-                sanitized_message = {}
-                css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
-                for lang, content in self.cleaned_data['html_message'].items():
-                    plaintext_message[lang] = strip_tags(content)
-                    sanitized_message[lang] = bleach.clean(
-                        content,
-                        attributes=ALLOWED_HTML_ATTRIBUTES,
-                        tags=ALLOWED_HTML_TAGS,
-                        css_sanitizer=css_sanitizer
-                    )
-                return EmailContent(
-                    subject=self.cleaned_data['subject'],
-                    message=plaintext_message,
-                    html_message=sanitized_message,
-                )
+                return self._distill_rich_text_email()
             else:
                 # TODO: Fix this!
                 pass
@@ -463,6 +448,25 @@ class ContentForm(Form):
             )
         else:
             raise ValueError("Unexpected value for content: '%s'" % self.schedule_form.cleaned_data['content'])
+
+    def _distill_rich_text_email(self):
+        plaintext_message = {}
+        html_message = {}
+
+        css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
+        for lang, content in self.cleaned_data['html_message'].items():
+            plaintext_message[lang] = strip_tags(content)
+            html_message[lang] = bleach.clean(
+                content,
+                attributes=ALLOWED_HTML_ATTRIBUTES,
+                tags=ALLOWED_HTML_TAGS,
+                css_sanitizer=css_sanitizer
+            )
+        return EmailContent(
+            subject=self.cleaned_data['subject'],
+            message=plaintext_message,
+            html_message=html_message,
+        )
 
     def get_layout_fields(self):
         if RICH_TEXT_EMAILS.enabled(self.domain):
