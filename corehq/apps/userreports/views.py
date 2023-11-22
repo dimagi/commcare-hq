@@ -1540,6 +1540,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
 
 @api_auth()
 @require_permission(HqPermissions.view_reports)
+@toggles.SUPERSET_ANALYTICS.required_decorator()
 @api_throttle
 def subscribe_to_data_source_changes(request, config_id):
     from corehq.motech.models import ConnectionSettings
