@@ -1,3 +1,4 @@
+import uuid
 import datetime
 import functools
 import json
@@ -178,6 +179,7 @@ from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
+from corehq.motech.repeaters.models import DataSourceRepeater
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -1549,7 +1551,7 @@ def subscribe_to_data_source_changes(request, config_id):
     webhook_url = request.POST['webhook_url']
 
     client_hostname = urlparse(webhook_url).hostname
-    connection_settings_name = f"{client_hostname}_{config_id}"
+    connection_settings_name = f"{_('Connection')} : {client_hostname}"
 
     conn_settings = ConnectionSettings.objects.get_or_create(
         domain=request.domain,
@@ -1561,6 +1563,14 @@ def subscribe_to_data_source_changes(request, config_id):
     conn_settings.token_url = request.POST['token_url']
     conn_settings.refresh_url = request.POST['refresh_url']
     conn_settings.save()
+
+    DataSourceRepeater.objects.create(
+        name=f"{client_hostname}_{config_id}",
+        domain=request.domain,
+        data_source_id=config_id,
+        repeater_id=uuid.uuid4().hex,
+        connection_settings_id=conn_settings.id,
+    )
 
     return HttpResponse(status=201)
 
