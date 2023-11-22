@@ -71,7 +71,7 @@ urlpatterns = [
     url(r'^data_sources/export/(?P<config_id>[\w-]+)/$', export_data_source,
         name='export_configurable_data_source'),
     url(r'^data_sources/subscribe/(?P<config_id>[\w-]+)/$', subscribe_to_data_source_changes,
-        name='export_configurable_data_source'),
+        name='subscribe_to_configurable_data_source'),
     url(r'^expression_debugger/$', ExpressionDebuggerView.as_view(),
         name='expression_debugger'),
     url(r'^data_source_debugger/$', DataSourceDebuggerView.as_view(),

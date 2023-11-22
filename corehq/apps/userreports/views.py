@@ -1540,21 +1540,26 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
         return export_response(Temp(path), params.format, adapter.display_name)
 
 
+@require_POST
 @api_auth()
 @require_permission(HqPermissions.view_reports)
 @toggles.SUPERSET_ANALYTICS.required_decorator()
 @api_throttle
-def subscribe_to_data_source_changes(request, config_id):
+def subscribe_to_data_source_changes(request, domain, config_id):
     from corehq.motech.models import ConnectionSettings
     from corehq.motech.const import OAUTH2_CLIENT
+    from django.utils.translation import gettext as _
+
+    for param in ['webhook_url', 'client_id', 'client_secret', 'token_url', 'refresh_url']:
+        if param not in request.POST:
+            return HttpResponse(status=422, content=f"Missing parameter: {param}")
 
     webhook_url = request.POST['webhook_url']
-
     client_hostname = urlparse(webhook_url).hostname
-    connection_settings_name = f"{_('Connection')} : {client_hostname}"
+    connection_settings_name = f"{_('Connection')} - {client_hostname}"
 
-    conn_settings = ConnectionSettings.objects.get_or_create(
-        domain=request.domain,
+    conn_settings, _ = ConnectionSettings.objects.get_or_create(
+        domain=domain,
         name=connection_settings_name,
         client_id=request.POST['client_id'],
         auth_type=OAUTH2_CLIENT,
@@ -1566,12 +1571,11 @@ def subscribe_to_data_source_changes(request, config_id):
 
     DataSourceRepeater.objects.create(
         name=f"{client_hostname}_{config_id}",
-        domain=request.domain,
+        domain=domain,
         data_source_id=config_id,
         repeater_id=uuid.uuid4().hex,
         connection_settings_id=conn_settings.id,
     )
-
     return HttpResponse(status=201)
 
 
