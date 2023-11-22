@@ -436,19 +436,24 @@ class IndicatorPillowTest(TestCase):
 
     @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.motech.repeaters.signals.domain_can_forward', lambda _x: True)
+    @mock.patch('corehq.motech.repeaters.models.Repeater.register')
     @mock.patch('corehq.apps.userreports.specs.datetime')
-    def test_datasource_change_triggers_change_signal(self, datetime_mock):
+    def test_datasource_change_triggers_change_signal(self, datetime_mock, register_mock):
         data_source_id = self.config._id
-        self._setup_data_source_subscription(self.config.domain, data_source_id)
+        num_repeaters = 2
+        self._setup_data_source_subscription(self.config.domain, data_source_id, num_repeaters=num_repeaters)
 
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, _expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
         self.pillow.process_change(doc_to_change(sample_doc))
+
+        # Assert some data source transaction log stuff
         transaction_logs = DataSourceRowTransactionLog.objects.filter(data_source_id=data_source_id).all()
         self.assertEqual(len(transaction_logs), 1)
         transaction_log = transaction_logs[0]
         self.assertEqual(transaction_log.row_id, sample_doc["_id"])
         self.assertEqual(transaction_log.action, DataSourceRowTransactionLog.UPSERT)
+        self.assertEqual(register_mock.call_count, num_repeaters)
 
     @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.apps.userreports.specs.datetime')
@@ -520,8 +525,9 @@ class IndicatorPillowTest(TestCase):
 
     @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.motech.repeaters.signals.domain_can_forward', lambda _x: True)
+    @mock.patch('corehq.motech.repeaters.models.Repeater.register')
     @mock.patch('corehq.apps.userreports.specs.datetime')
-    def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):
+    def test_process_deleted_doc_from_sql_chunked(self, datetime_mock, register_mock):
         self._setup_data_source_subscription(self.config.domain, self.config._id)
 
         self.pillow = _get_pillow([self.config], processor_chunk_size=100)
@@ -535,6 +541,7 @@ class IndicatorPillowTest(TestCase):
         transaction_log = transaction_logs[1]
         self.assertEqual(transaction_log.action, DataSourceRowTransactionLog.DELETE)
         self.assertEqual(transaction_log.row_data, {"doc_id": doc["_id"]})
+        self.assertEqual(register_mock.call_count, 2)
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_delete_doc_should_not_create_transaction_log(self, datetime_mock):
@@ -543,13 +550,16 @@ class IndicatorPillowTest(TestCase):
         transaction_logs = DataSourceRowTransactionLog.objects.filter(data_source_id=self.config._id).all()
         self.assertTrue(len(transaction_logs) == 0)
 
-    def _setup_data_source_subscription(self, domain, data_source_id):
-        DataSourceRepeater.objects.create(
-            data_source_id=data_source_id,
-            domain=domain,
-            repeater_id=str(uuid.uuid4()),
-            connection_settings_id=self.conn_setting.id,
-        )
+    def _setup_data_source_subscription(self, domain, data_source_id, num_repeaters=1):
+        for _i in range(num_repeaters):
+            DataSourceRepeater.objects.create(
+                data_source_id=data_source_id,
+                domain=domain,
+                repeater_id=str(uuid.uuid4()),
+                connection_settings_id=self.conn_setting.id,
+            )
+        repeater_count = len(DataSourceRepeater.get_datasource_repeaters(domain, data_source_id))
+        self.assertEqual(repeater_count, num_repeaters)
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql(self, datetime_mock):
