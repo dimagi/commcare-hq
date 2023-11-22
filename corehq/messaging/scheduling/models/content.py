@@ -1,3 +1,4 @@
+import os
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -9,6 +10,7 @@ from django.db import models
 from django.http import Http404
 from django.utils.translation import gettext as _
 
+import css_inline
 import jsonfield as old_jsonfield
 from memoized import memoized
 
@@ -183,10 +185,17 @@ class EmailContent(Content):
 
         metrics_counter('commcare.messaging.email.sent', tags={'domain': domain})
         if toggles.RICH_TEXT_EMAILS.enabled(domain) and html_message:
+
+            email_css_filepath = os.path.join("corehq", "messaging", "scheduling", "templates", "scheduling", "rich_text_email_styles.css")
+            with open(email_css_filepath, 'r') as css_file:
+                css_inliner = css_inline.CSSInliner(extra_css=css_file.read())
+            inlined_content = css_inliner.inline(html_message)
+            inlined_message = inlined_content
+
             send_html_email_async.delay(
                 subject,
                 email_address,
-                html_message,
+                inlined_message,
                 text_content=message,
                 messaging_event_id=logged_subevent.id,
                 domain=domain)
