@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 from collections import OrderedDict, namedtuple
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
@@ -651,7 +652,8 @@ class ConfigureReport(ReportBuilderView):
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
         report_form = form_type(
-            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report, self.registry_slug,
+            self.domain, self.page_name, self.app_id, self.source_type, self.source_id,
+            self.existing_report, self.registry_slug,
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
         return {
@@ -1534,6 +1536,32 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             )
             return HttpResponse(msg, status=400)
         return export_response(Temp(path), params.format, adapter.display_name)
+
+
+@api_auth()
+@require_permission(HqPermissions.view_reports)
+@api_throttle
+def subscribe_to_data_source_changes(request, config_id):
+    from corehq.motech.models import ConnectionSettings
+    from corehq.motech.const import OAUTH2_CLIENT
+
+    webhook_url = request.POST['webhook_url']
+
+    client_hostname = urlparse(webhook_url).hostname
+    connection_settings_name = f"{client_hostname}_{config_id}"
+
+    conn_settings = ConnectionSettings.objects.get_or_create(
+        domain=request.domain,
+        name=connection_settings_name,
+        client_id=request.POST['client_id'],
+        auth_type=OAUTH2_CLIENT,
+    )
+    conn_settings.client_secret = request.POST['client_secret']
+    conn_settings.token_url = request.POST['token_url']
+    conn_settings.refresh_url = request.POST['refresh_url']
+    conn_settings.save()
+
+    return HttpResponse(status=201)
 
 
 def _get_report_filter(domain, report_id, filter_id):
