@@ -6,6 +6,7 @@ from django.test import SimpleTestCase, TestCase
 
 from unittest import mock
 from unittest.mock import patch
+from corehq.util.test_utils import flag_enabled
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
@@ -14,7 +15,8 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.pillow_utils import rebuild_table
 from corehq.form_processor.signals import sql_case_post_save
 from pillow_retry.models import PillowError
-
+from corehq.motech.repeaters.models import ConnectionSettings
+from corehq.motech.repeaters.models import DataSourceRepeater
 from corehq.apps.userreports.data_source_providers import (
     MockDataSourceProvider,
     DynamicDataSourceProvider)
@@ -46,6 +48,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case import get_case_pillow
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import softer_assert, flaky_slow
+from corehq.apps.userreports.models import DataSourceRowTransactionLog
 
 
 def setup_module():
@@ -383,6 +386,11 @@ class IndicatorPillowTest(TestCase):
         cls.adapter.build_table()
         cls.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
         cls.pillow = _get_pillow([cls.config])
+        cls.conn_setting = ConnectionSettings.objects.create(
+            domain=cls.config.domain,
+            name="TestConnectionSetting",
+            url="http://example.test",
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -426,13 +434,36 @@ class IndicatorPillowTest(TestCase):
         self.pillow.process_change(doc_to_change(sample_doc))
         self._check_sample_doc_state(expected_indicators)
 
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @mock.patch('corehq.motech.repeaters.signals.domain_can_forward', lambda _x: True)
+    @mock.patch('corehq.apps.userreports.specs.datetime')
+    def test_datasource_change_triggers_change_signal(self, datetime_mock):
+        data_source_id = self.config._id
+        self._setup_data_source_subscription(self.config.domain, data_source_id)
+
+        datetime_mock.utcnow.return_value = self.fake_time_now
+        sample_doc, _expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
+        self.pillow.process_change(doc_to_change(sample_doc))
+        transaction_logs = DataSourceRowTransactionLog.objects.filter(data_source_id=data_source_id).all()
+        self.assertEqual(len(transaction_logs), 1)
+        transaction_log = transaction_logs[0]
+        self.assertEqual(transaction_log.row_id, sample_doc["_id"])
+        self.assertEqual(transaction_log.action, DataSourceRowTransactionLog.UPSERT)
+
+    @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_rebuild_indicators(self, datetime_mock):
+        data_source_id = self.config._id
+        self._setup_data_source_subscription(self.config.domain, data_source_id)
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
         _save_sql_case(sample_doc)
-        rebuild_indicators(self.config._id)
+        rebuild_indicators(data_source_id)
         self._check_sample_doc_state(expected_indicators)
+
+        transaction_logs = DataSourceRowTransactionLog.objects.filter(data_source_id=data_source_id).all()
+        self.assertEqual(len(transaction_logs), 1)
+        self.assertEqual(transaction_logs[0].action, DataSourceRowTransactionLog.UPSERT)
 
     def test_bad_integer_datatype(self):
         bad_ints = ['a', '', None]
@@ -487,11 +518,38 @@ class IndicatorPillowTest(TestCase):
 
         CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
 
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @mock.patch('corehq.motech.repeaters.signals.domain_can_forward', lambda _x: True)
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):
+        self._setup_data_source_subscription(self.config.domain, self.config._id)
+
         self.pillow = _get_pillow([self.config], processor_chunk_size=100)
-        self._test_process_deleted_doc_from_sql(datetime_mock)
+        doc = self._test_process_deleted_doc_from_sql(datetime_mock)
         self.pillow = _get_pillow([self.config])
+
+        transaction_logs = DataSourceRowTransactionLog.objects.filter(data_source_id=self.config._id).all()
+        self.assertEqual(len(transaction_logs), 2)
+        transaction_log = transaction_logs[0]
+        self.assertEqual(transaction_log.action, DataSourceRowTransactionLog.UPSERT)
+        transaction_log = transaction_logs[1]
+        self.assertEqual(transaction_log.action, DataSourceRowTransactionLog.DELETE)
+        self.assertEqual(transaction_log.row_data, {"doc_id": doc["_id"]})
+
+    @mock.patch('corehq.apps.userreports.specs.datetime')
+    def test_delete_doc_should_not_create_transaction_log(self, datetime_mock):
+        """A DataSourceRowTransactionLog should not be created when the repeater does not exist"""
+        self._test_process_deleted_doc_from_sql(datetime_mock)
+        transaction_logs = DataSourceRowTransactionLog.objects.filter(data_source_id=self.config._id).all()
+        self.assertTrue(len(transaction_logs) == 0)
+
+    def _setup_data_source_subscription(self, domain, data_source_id):
+        DataSourceRepeater.objects.create(
+            data_source_id=data_source_id,
+            domain=domain,
+            repeater_id=str(uuid.uuid4()),
+            connection_settings_id=self.conn_setting.id,
+        )
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql(self, datetime_mock):
@@ -517,6 +575,7 @@ class IndicatorPillowTest(TestCase):
         self.assertEqual(0, self.adapter.get_query_object().count())
 
         CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
+        return sample_doc
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_filter_no_longer_pass(self, datetime_mock):

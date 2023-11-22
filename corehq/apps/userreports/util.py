@@ -18,6 +18,7 @@ from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
 from corehq.util.metrics.load_counters import ucr_load_counter
 from dimagi.utils.couch.undo import is_deleted, remove_deleted_doc_type_suffix
+import logging
 
 UCR_TABLE_PREFIX = 'ucr_'
 LEGACY_UCR_TABLE_PREFIX = 'config_report_'
@@ -355,3 +356,26 @@ def get_domain_for_ucr_table_name(table_name):
         # double-unescape because corehq.apps.userreports.util.get_table_name escapes twice
         return unescape(unescape(match.group(1)))
     raise ValueError(f"Expected {table_name} to start with {UCR_TABLE_PREFIX} or {LEGACY_UCR_TABLE_PREFIX}")
+
+
+def register_data_source_change(domain, data_source_id, row_changes, action):
+    from corehq.motech.repeaters.models import DataSourceRepeater
+    from corehq.motech.repeaters.signals import ucr_data_source_updated
+    try:
+        if (
+            not toggles.SUPERSET_ANALYTICS.enabled(domain)
+            or not DataSourceRepeater.datasource_is_subscribed_to(domain, data_source_id)
+        ):
+            return
+
+        for row_change in row_changes:
+            kwargs = {
+                "domain": domain,
+                "data_source_id": data_source_id,
+                "doc_id": row_change["doc_id"],
+                "row_change": row_change,
+                "action": action
+            }
+            ucr_data_source_updated.send_robust(sender=None, **kwargs)
+    except Exception as e:
+        logging.exception(str(e))
