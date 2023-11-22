@@ -2,6 +2,7 @@
 requirejs.config({
     baseUrl: '/static/',
     paths: {
+        "ckeditor5": "ckeditor5/build/ckeditor5-dll",
         "es6": "requirejs-babel7/es6",
         "babel": "@babel/standalone/babel.min",
         "babel-plugin-transform-modules-requirejs-babel": "babel-plugin-transform-modules-requirejs-babel/index",
@@ -17,6 +18,10 @@ requirejs.config({
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+        "ckeditor5": { exports: 'CKEditor5' },
+        "@ckeditor/ckeditor5-editor-classic/build/editor-classic": { deps: ["ckeditor5"] },
+        "@ckeditor/ckeditor5-basic-styles/build/basic-styles": { deps: ["ckeditor5"] },
+        "@ckeditor/ckeditor5-essentials/build/essentials": { deps: ["ckeditor5"] },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/bootstrap5/hq.helpers": { deps: ['jquery', 'knockout', 'underscore'] },
         "datatables.bootstrap": { deps: ['datatables'] },

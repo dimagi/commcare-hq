@@ -2,6 +2,7 @@
 requirejs.config({
     baseUrl: '/static/',
     paths: {
+        "ckeditor5": "ckeditor5/build/ckeditor5-dll",
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
@@ -14,6 +15,10 @@ requirejs.config({
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
         "bootstrap": { deps: ['jquery'] },
+        "ckeditor5": { exports: 'CKEditor5' },
+        "@ckeditor/ckeditor5-editor-classic/build/editor-classic": { deps: ["ckeditor5"] },
+        "@ckeditor/ckeditor5-basic-styles/build/basic-styles": { deps: ["ckeditor5"] },
+        "@ckeditor/ckeditor5-essentials/build/essentials": { deps: ["ckeditor5"] },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/bootstrap3/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
         "datatables.bootstrap": { deps: ['datatables'] },

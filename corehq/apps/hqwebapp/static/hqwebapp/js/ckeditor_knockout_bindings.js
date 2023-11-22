@@ -3,13 +3,16 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/lib/ckeditor5/ckeditor',
+    'ckeditor5',
+    '@ckeditor/ckeditor5-editor-classic/build/editor-classic',
+    '@ckeditor/ckeditor5-essentials/build/essentials',
+    '@ckeditor/ckeditor5-basic-styles/build/basic-styles',
 ], function (
     $,
     _,
     ko,
     initialPageData,
-    CKEditor
+    CKEditor5
 ) {
     ko.bindingHandlers.ckeditor = {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
@@ -32,14 +35,22 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                             },
                         ],
                     },
+                    plugins: [
+                        CKEditor5.essentials.Essentials,
+                        CKEditor5.basicStyles.Bold,
+                        CKEditor5.basicStyles.Italic,
+                        CKEditor5.paragraph.Paragraph,
+                    ],
+                    toolbar: {
+                        items: ['bold', 'italic'],
+                    },
                 },
                 editorInstance = undefined;
 
-            CKEditor.create(element, options).then(function (editor) {
+            CKEditor5.editorClassic.ClassicEditor.create(element, options).then(function (editor) {
                 var isSubscriberChange = false,
                     isEditorChange = false,
                     editorInstance = editor;
-
                 if (typeof ko.utils.unwrapObservable(valueAccessor()) !== "undefined") {
                     editorInstance.setData(ko.utils.unwrapObservable(valueAccessor()));
                 }
@@ -71,7 +82,7 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
 
             // handle disposal (if KO removes by the template binding)
             ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
-                CKEditor.remove(editorInstance);
+                CKEditor5.editorClassic.ClassicEditor.remove(editorInstance);
             });
 
         },
