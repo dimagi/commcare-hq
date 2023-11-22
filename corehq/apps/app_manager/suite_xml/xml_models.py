@@ -792,6 +792,7 @@ class Style(XmlObject):
     grid_width = StringField("grid/@grid-width")
     grid_x = StringField("grid/@grid-x")
     grid_y = StringField("grid/@grid-y")
+    show_border = BooleanField("@show-border")
 
 
 class Extra(XmlObject):

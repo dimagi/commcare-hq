@@ -21,7 +21,8 @@ def add_columns_for_case_details(_module, format='plain'):
             grid_x=1,
             grid_y=1,
             width=3,
-            height=1
+            height=1,
+            show_border=False
         ),
     ]
 
