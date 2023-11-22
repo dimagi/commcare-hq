@@ -79,6 +79,20 @@ hqDefine("app_manager/js/details/column", function () {
         self.showBorderOptions = ['no border', 'show border'];
         self.showBorder = ko.observable(self.showBorderOptions[Number(self.original.show_border || false)]);
 
+        self.openStyleModal = function () {
+            var $modalDiv = $(document.createElement("div"));
+            $modalDiv.attr("data-bind", "template: 'style_configuration_modal'");
+
+            $modalDiv.koApplyBindings(self);
+
+            var $modal = $modalDiv.find('.modal');
+            $modal.appendTo('body');
+            $modal.modal('show');
+            $modal.on('hidden.bs.modal', function () {
+                $modal.remove();
+            });
+        }
+
         self.tileRowEnd = ko.computed(function () {
             return Number(self.tileRowStart()) + Number(self.tileHeight());
         });
