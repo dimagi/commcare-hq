@@ -1307,7 +1307,6 @@ msgid "Phone Number or Numeric ID"
 msgstr "Número de teléfono o ID Numérico"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Password"
 msgstr "Contraseña"
@@ -1385,7 +1384,6 @@ msgid "Long"
 msgstr "Largo"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Decimal"
 msgstr "Decimal"
 
@@ -1706,7 +1704,6 @@ msgid "Form has validation errors."
 msgstr "El formulario tiene errores de validación."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Number"
 msgstr "Número"
 
@@ -2771,23 +2768,11 @@ msgid "Error evaluating expression."
 msgstr "Error al evaluar la expresión."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "Barcode"
-msgstr "Código de barras"
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "Free response"
-msgstr "Respuesta libre"
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Not a valid whole number"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Number is too large"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "Phone number or Numeric ID"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
@@ -2799,20 +2784,8 @@ msgid "Please choose an item"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "Combobox"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Not a valid choice"
 msgstr "Opción no válida"
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "12-hour clock"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "24-hour clock"
-msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Invalid file type chosen. Please select a valid multimedia file."
@@ -2822,22 +2795,6 @@ msgstr ""
 msgid ""
 "The file you selected exceeds the size limit of 4MB. Please select a file "
 "that is smaller than 4MB."
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "Upload image"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "Upload audio file"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "Upload video file"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
-msgid "Draw signature"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
@@ -2987,6 +2944,18 @@ msgstr ""
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid "Please perform a search."
 msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#, fuzzy
+#| msgid "Show"
+msgid "Show Map"
+msgstr "Mostrar"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+#, fuzzy
+#| msgid "Hide Path"
+msgid "Hide Map"
+msgstr "Oculte la Ruta"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
@@ -3577,16 +3546,12 @@ msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "Group"
 msgid "No group"
-msgstr "Grupo"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "Select a group"
 msgid "Select group"
-msgstr "Seleccione un grupo"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "Group <%- groupCount %>"
@@ -3709,6 +3674,17 @@ msgstr ""
 msgid "We could not turn off the new feature. Please try again later."
 msgstr "No pudimos apagar la nueva función. Por favor intente más tarde."
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/validators.ko.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/validators.ko.js
+msgid "Not a valid email"
+msgstr "No es un correo electrónico válido"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/validators.ko.js
+#, fuzzy
+#| msgid "Checking email..."
+msgid "Checking..."
+msgstr "Revisando correo electrónico..."
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
 msgid "Error saving, please try again."
 msgstr ""
@@ -3823,10 +3799,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping.js
 msgid "Edit mapping for \"<%- property %>\""
 msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js
-msgid "Not a valid email"
-msgstr "No es un correo electrónico válido"
 
 #: corehq/apps/integration/static/integration/js/dialer/connect-streams-min.js
 msgid "MultiSessionHangUp"
@@ -5171,3 +5143,9 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
+
+#~ msgid "Barcode"
+#~ msgstr "Código de barras"
+
+#~ msgid "Free response"
+#~ msgstr "Respuesta libre"

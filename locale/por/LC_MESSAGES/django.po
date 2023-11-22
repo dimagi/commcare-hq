@@ -12006,6 +12006,10 @@ msgid "Scroll to bottom"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
+msgid "Hide Map"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html
 msgid "Refine search"
 msgstr ""
 
@@ -27558,52 +27562,66 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"              For individuals learning<br/> about data collection.\n"
-"            "
+"            For organizations exploring CommCare.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"              Free for personal use.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"                Create Account\n"
-"              "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"              For organizations<br /> exploring CommCare.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"              See <a href=\"https://dimagi.com/commcare/pricing/\" "
+"            See <a href=\"https://dimagi.com/commcare/pricing/\" "
 "target=\"_blank\">pricing</a> options.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"              Request Custom Trial\n"
 "            "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"                Request Custom Trial\n"
+"                Watch Demo\n"
 "              "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"                  Watch Demo\n"
-"                "
+"            For individuals learning about data collection.\n"
+"          "
 msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Upload Lookup Tables\n"
+#| "        "
+msgid ""
+"\n"
+"            Free for personal use.\n"
+"          "
+msgstr ""
+"\n"
+"Carregar Tabelas de Pesquisa"
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Welcome Back to %(cc_name)s\n"
+#| "        "
+msgid ""
+"\n"
+"              Create Account\n"
+"            "
+msgstr ""
+"\n"
+"Bem-vindo de volta ao %(cc_name)s"
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/server_errors.html
 msgid "Oh, no!"
