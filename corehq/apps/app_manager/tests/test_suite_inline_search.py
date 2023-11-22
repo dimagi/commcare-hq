@@ -579,8 +579,14 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
         m0, f0 = factory.new_basic_module("case list", "case")
         factory.form_requires_case(f0)
 
+        m0.search_config = CaseSearch(
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+            auto_launch=True,
+            inline_search=True,
+        )
+
         m1, f1 = factory.new_basic_module("child case list", "case", parent_module=m0)
-        m1.parent_select = ParentSelect(active=True, relationship=None, module_id=m0.get_or_create_unique_id())
+        m1.parent_select = ParentSelect(active=True, relationship='parent', module_id=m0.get_or_create_unique_id())
         f2 = factory.new_form(m1)
 
         factory.form_requires_case(f1)
@@ -596,7 +602,7 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
         # wrap to have assign_references called
         self.app = Application.wrap(factory.app.to_json())
 
-    def test_child_module_with_inline_search_entry(self):
+    def test_child_and_parent_module_with_inline_search_and_parent_relationship_parent_select(self):
         """An inline search module can be a child module
             * as long as there is no parent selection or parent_select.relationship = None
 
@@ -612,6 +618,8 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
                 relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case]) = 0">
               <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case]) != 0"
                 key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/parent_id]) != 0"
+                key="case_id" ref="instance('commcaresession')/session/data/parent_id"/>
               <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) != 0"
                 key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
             </post>
@@ -624,7 +632,22 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
             <instance id="commcaresession" src="jr://instance/session"/>
             <instance id="results:inline" src="jr://instance/remote/results:inline"/>
             <session>
-              <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']"
+              <query default_search="false" dynamic_search="false" storage-instance="results:inline" template="case" url="http://localhost:8000/a/test_domain/phone/search/123/">
+                <title>
+                  <text>
+                    <locale id="case_search.m0.inputs"/>
+                  </text>
+                </title>
+                <data key="case_type" ref="'case'"/>
+                <prompt key="name">
+                  <display>
+                    <text>
+                      <locale id="search_property.m0.name"/>
+                    </text>
+                  </display>
+                </prompt>
+              </query>
+              <datum id="case_id" nodeset="instance('results:inline')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                 value="./@case_id" detail-select="m0_case_short"/>
               <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                 storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false" dynamic_search="false">
@@ -643,7 +666,7 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
                 </prompt>
               </query>
               <datum id="case_id_case"
-                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+                nodeset="instance('results:inline')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/case_id]"
                 value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
             </session>
           </entry>
@@ -663,12 +686,12 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
         <partial>
           <create>
             <command value="'m0'"/>
-            <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
-            <command value="'m1'"/>
             <query id="{RESULTS_INSTANCE_INLINE}" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="case_type" ref="'case'"/>
-              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+              <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
             </query>
+            <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+            <command value="'m1'"/>
             <datum id="case_id_case" value="instance('commcaresession')/session/data/case_id_case"/>
             <command value="'m1-f1'"/>
           </create>
