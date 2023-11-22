@@ -1,0 +1,121 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Modals</h1>
+  <p class="sg-lead">
+    When reaching for a modal, first consider if you can communicate this message in another way.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#using-modals">Using Modals</a>
+        <ul>
+          <li><a href="#standard-usage">Standard Usage</a></li>
+          <li><a href="#ko-modal-binding">Modal Knockout Binding</a></li>
+          <li><a href="#ko-open-modal-binding">OpenModal Knockout Binding</a></li>
+          <li><a href="#ko-open-remote-modal-binding">OpenRemoteModal Knockout Binding</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">Overview</h2>
+  <p>
+    Modals are disruptive, confusing, poorly accessible, blocking the user’s interaction, hard to escape,
+    used as a junk drawer, frustrating on small screens, and add to cognitive load.
+    Consider non-modal dialogs on empy screen space, go inline, expand elements or use a new page.
+  </p>
+  <div class="alert alert-primary">
+    If you must use a modal, make sure it is <strong>easy to close, single purpose, short, and
+    accessible.</strong>
+  </div>
+  <p>
+    There are lots of alternatives to modals. Most of the time, if you need to confirm an action, material
+    design suggests instead offering an option to undo. This still gives a user an option to reverse an
+    action, but it does not interrupt their flow and increase their cognitive load.
+    Read more on <a target='_blank' href='https://modalzmodalzmodalz.com/'>modalzmodalzmodalz.com</a>
+  </p>
+
+  <h2 id="using-modals" class="pt-4">
+    Using Modals
+  </h2>
+  <p>
+    When it's appropriate to use a modal, we have several options in HQ to initialize a modal.
+  </p>
+
+  <h3 id="standard-usage" class="pt-3">
+    Standard Usage
+  </h3>
+  <p>
+    The standard way to use modals is with HTML&mdash;an example is shown below.
+    You can read <a href="https://getbootstrap.com/docs/5.3/components/modal/" target="_blank">Bootstrap 5's modal docs</a>
+    for all available background options, sizing, javascript usage, and more.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.modal %}
+
+  <h3 id="ko-modal-binding" class="pt-3">
+    Modal Knockout Binding
+  </h3>
+  <p>
+    It is also possible to control modals with Knockout using the <code>modal</code> knockout binding.
+    This binding accepts an observable as an argument. If the value of the observable is
+    <code>true</code>, then the modal is shown. If the value is <code>false</code>,
+    then the modal is hidden. This method eliminates the use of the <code>data-bs-toggle="modal"</code> and
+    <code>data-bs-target="#modalId"</code> attributes on the modal trigger element, as well as the
+    <code>data-bs-dismiss="modal"</code> attributes.
+  </p>
+  <p>
+    The most simplified version of this is to have a boolean observable bound to <code>modal</code> that's
+    toggled <code>true</code> or <code>false</code> with knockout code. However, the example below is a slightly
+    more complex approach that's more realistic to how we use it in HQ (like with <code>UserRole</code> editing).
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.modal_ko %}
+
+  <h3 id="ko-open-modal-binding" class="pt-3">
+    OpenModal Knockout Binding
+  </h3>
+  <p>
+    This method quickly opens a modal using the <code>openModal</code> knockout binding, which takes a string value
+    of the <code>id</code> of the knockout template supplying the HTML for this modal.
+  </p>
+  <div class="alert alert-primary">
+    Note that the HTML for the modal in the knockout template differentiates from the standard use because it doesn't
+    contain the <code>&lt;div class="modal fade"&gt;</code> wrapper element. Additionally, the modal inherits the
+    knockout model context that was applied to the element that applied <code>openModal</code> binding.
+  </div>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.open_modal_ko %}
+
+  <h3 id="ko-open-remote-modal-binding" class="pt-3">
+    OpenRemoteModal Knockout Binding
+  </h3>
+  <p>
+    Another less frequently-used way of triggering a modal is to use the <code>openRemoteModal</code> Knockout Binding.
+    This binding takes a URL to a view in HQ that renders the <code>modal-dialog</code> content of the modal, similar
+    to the knockout template above.
+  </p>
+  {% registerurl "styleguide_data_remote_modal" %}
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.open_remote_modal_ko %}
+  <p class="m-0">
+    In the example above, the URL passed to <code>openRemoteModal</code> was registered
+    on the page using the following template tag:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0"><code>&lcub;% registerurl "styleguide_data_remote_modal" %&rcub;</code></pre>
+    </div>
+  </div>
+  <p>
+    The view for <code>styleguide_data_remote_modal</code> rendered the HTML below. Note that the <code>secret_message</code>
+    template variable was populated byt the <code>GET</code> parameter <code>testParam</code> specified
+    at the end of the <code>remoteUrl</code> value as seen in the code above.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.remote_modal %}
+{% endblock content %}
