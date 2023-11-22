@@ -106,19 +106,14 @@ def fire_synchronous_case_repeaters(sender, case, **kwargs):
 def create_data_source_transaction_log_entry(sender, **kwargs):
     """Creates a transaction log for the datasource that changed"""
     from corehq.apps.userreports.models import DataSourceRowTransactionLog
-    domain = kwargs["domain"]
-    data_source_id = kwargs["data_source_id"]
     transaction_log = DataSourceRowTransactionLog.objects.create(
-        domain=domain,
-        data_source_id=data_source_id,
+        domain=kwargs["domain"],
+        data_source_id=kwargs["data_source_id"],
         row_id=kwargs["doc_id"],
         row_data=kwargs["row_change"],
         action=kwargs["action"]
     )
-
-    repeaters = DataSourceRepeater.get_datasource_repeaters(domain, data_source_id)
-    for repeater in repeaters:
-        repeater.register(transaction_log)
+    create_repeat_records(DataSourceRepeater, transaction_log)
 
 
 successful_form_received.connect(create_form_repeat_records)

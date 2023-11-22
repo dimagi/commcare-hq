@@ -873,20 +873,14 @@ class DataSourceRepeater(Repeater):
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
-        DataSourceRepeater.get_datasource_repeaters.clear(self.domain, self.data_source_id)
-
-    @staticmethod
-    @quickcache(['domain', 'data_source_id'], timeout=15 * 60)
-    def get_datasource_repeaters(domain, data_source_id):
-        return DataSourceRepeater.objects.filter(
-            domain=domain, options={"data_source_id": data_source_id}
-        ).all()
 
     @staticmethod
     @quickcache(['domain', 'data_source_id'], timeout=15 * 60)
     def datasource_is_subscribed_to(domain, data_source_id):
         # Since Repeater.options is not a native django JSON field, we cannot query it like a django json field
-        return len(DataSourceRepeater.get_datasource_repeaters(domain, data_source_id)) > 0
+        return DataSourceRepeater.objects.filter(
+            domain=domain, options={"data_source_id": data_source_id}
+        ).exists()
 
 
 class RepeatRecordAttempt(DocumentSchema):
