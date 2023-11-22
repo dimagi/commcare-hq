@@ -119,6 +119,7 @@ from corehq.util.metrics import metrics_counter
 from corehq.util.models import ForeignObject, foreign_init
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.util.quickcache import quickcache
 
 from ..repeater_helpers import RepeaterResponse
 from .const import (
@@ -151,6 +152,7 @@ from .repeater_generators import (
     ReferCasePayloadGenerator,
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
+    DataSourcePayloadGenerator,
 )
 
 
@@ -183,7 +185,12 @@ class RepeaterSuperProxy(models.Model):
     class Meta:
         abstract = True
 
+    def clear_caches(self):
+        """Override this to clear any cache that the repeater type migth be using"""
+        pass
+
     def save(self, *args, **kwargs):
+        self.clear_caches()
         self.repeater_type = self._repeater_type
         # For first save when reepater is created
         # If repeater_id is not set then set one
@@ -845,6 +852,35 @@ def get_repeater_response_from_submission_response(response):
 
 def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
+
+
+class DataSourceRepeater(Repeater):
+    class Meta:
+        proxy = True
+
+    data_source_id = OptionValue(default=None)
+
+    friendly_name = _("Forward Data Source Data")
+
+    payload_generator_classes = (DataSourcePayloadGenerator,)
+
+    def allowed_to_forward(self, transaction_log):
+        return transaction_log.data_source_id == self.data_source_id
+
+    def payload_doc(self, repeat_record):
+        from corehq.apps.userreports.models import DataSourceRowTransactionLog
+        return DataSourceRowTransactionLog.objects.get(id=repeat_record.payload_id)
+
+    def clear_caches(self):
+        DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
+
+    @staticmethod
+    @quickcache(['domain', 'data_source_id'], timeout=15 * 60)
+    def datasource_is_subscribed_to(domain, data_source_id):
+        # Since Repeater.options is not a native django JSON field, we cannot query it like a django json field
+        return DataSourceRepeater.objects.filter(
+            domain=domain, options={"data_source_id": data_source_id}
+        ).exists()
 
 
 class RepeatRecordAttempt(DocumentSchema):
