@@ -27,7 +27,7 @@ import attr
 from memoized import memoized
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
+from corehq.apps.app_manager.const import CASE_LIST_FILTER_LOCATIONS_FIXTURE, USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ParentModuleReferenceError,
@@ -602,10 +602,14 @@ class EntriesHelper(object):
 
             fixture_select_filter = ''
             if datum['module'].fixture_select.active:
+                if datum['module'].fixture_select.fixture_type == CASE_LIST_FILTER_LOCATIONS_FIXTURE:
+                    nodeset = XPath("instance('locations')/locations/location")
+                else:
+                    nodeset = ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance()
                 datums.append(FormDatumMeta(
                     datum=SessionDatum(
                         id=id_strings.fixture_session_var(datum['module']),
-                        nodeset=ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance(),
+                        nodeset=nodeset,
                         value=datum['module'].fixture_select.variable_column,
                         detail_select=id_strings.fixture_detail(detail_module)
                     ),
