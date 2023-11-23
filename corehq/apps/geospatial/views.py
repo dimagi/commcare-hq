@@ -313,7 +313,7 @@ class GPSCaptureView(BaseDomainView):
 
         if data_type == 'case':
             if create_case:
-                data_item['owner_id'] = request.couch_user.user_id
+                data_item['owner_id'] = data_item['owner_id'] or request.couch_user.user_id
                 create_case_with_gps_property(request.domain, data_item)
             else:
                 set_case_gps_property(request.domain, data_item)
