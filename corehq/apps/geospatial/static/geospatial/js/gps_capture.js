@@ -137,6 +137,7 @@ hqDefine("geospatial/js/gps_capture",[
         self.availableCaseTypes = ko.observableArray([]);
         self.selectedCaseType = ko.observable('');
         self.hasCaseTypeError = ko.observable(false);
+        self.selectedOwnerId = ko.observable(null);
 
         self.captureLocationForItem = function (item) {
             self.itemLocationBeingCapturedOnMap(item);
@@ -187,12 +188,17 @@ hqDefine("geospatial/js/gps_capture",[
             self.goToPage(1);
         };
 
+        self.onOwnerIdChange = function (_, e) {
+            self.selectedOwnerId($(e.currentTarget).select2('val'));
+        };
+
         self.saveDataRow = function (dataItem) {
             self.isSubmissionSuccess(false);
             self.hasSubmissionError(false);
             let dataItemJson = ko.mapping.toJS(dataItem);
             if (self.isCreatingCase()) {
                 dataItemJson['case_type'] = self.selectedCaseType();
+                dataItemJson['owner_id'] = self.selectedOwnerId();
             }
 
             $.ajax({
@@ -279,6 +285,7 @@ hqDefine("geospatial/js/gps_capture",[
             self.hasCreateCaseError(false);
             self.hasCaseTypeError(false);
             self.selectedCaseType('');
+            self.selectedOwnerId(null);
         };
 
         return self;
