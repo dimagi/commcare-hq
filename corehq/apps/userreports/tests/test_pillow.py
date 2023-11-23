@@ -16,7 +16,7 @@ from corehq.apps.userreports.pillow_utils import rebuild_table
 from corehq.form_processor.signals import sql_case_post_save
 from pillow_retry.models import PillowError
 from corehq.motech.repeaters.models import ConnectionSettings
-from corehq.motech.repeaters.models import DataSourceRepeater, RepeatRecord
+from corehq.motech.repeaters.models import DataSourceRepeater
 from corehq.apps.userreports.data_source_providers import (
     MockDataSourceProvider,
     DynamicDataSourceProvider)
@@ -440,8 +440,9 @@ class IndicatorPillowTest(BaseRepeaterTest):
         self._check_sample_doc_state(expected_indicators)
 
     @flag_enabled('SUPERSET_ANALYTICS')
+    @mock.patch('corehq.motech.repeaters.models.RepeatRecord.attempt_forward_now')
     @mock.patch('corehq.apps.userreports.specs.datetime')
-    def test_datasource_change_triggers_change_signal(self, datetime_mock):
+    def test_datasource_change_triggers_change_signal(self, datetime_mock, attempt_forward_now_mock):
         data_source_id = self.config._id
         num_repeaters = 2
         self._setup_data_source_subscription(self.config.domain, data_source_id, num_repeaters=num_repeaters)
@@ -456,9 +457,7 @@ class IndicatorPillowTest(BaseRepeaterTest):
         transaction_log = transaction_logs[0]
         self.assertEqual(transaction_log.row_id, sample_doc["_id"])
         self.assertEqual(transaction_log.action, DataSourceRowTransactionLog.UPSERT)
-        later = datetime.utcnow() + timedelta(hours=100)
-        records = RepeatRecord.all(domain=self.config.domain, due_before=later)
-        self.assertEqual(len(records), 2)
+        self.assertEqual(attempt_forward_now_mock.call_count, 2)
 
     @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.apps.userreports.specs.datetime')
