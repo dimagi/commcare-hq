@@ -420,8 +420,10 @@ class ContentForm(Form):
             if RICH_TEXT_EMAILS.enabled(self.domain):
                 return self._distill_rich_text_email()
             else:
-                # TODO: Fix this!
-                pass
+                return EmailContent(
+                    subject=self.cleaned_data['subject'],
+                    message=self.cleaned_data['message'],
+                )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_SMS_SURVEY:
             combined_id = self.cleaned_data['app_and_form_unique_id']
             app_id, form_unique_id = split_combined_id(combined_id)
@@ -452,7 +454,6 @@ class ContentForm(Form):
     def _distill_rich_text_email(self):
         plaintext_message = {}
         html_message = {}
-
         css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
         for lang, content in self.cleaned_data['html_message'].items():
             plaintext_message[lang] = strip_tags(content)
@@ -517,12 +518,12 @@ class ContentForm(Form):
                         data_bind='with: message',
                     ),
                     data_bind=(
-                        "visible: $root.content() === '%s' || $root.content() === '%s' "
+                        "visible: $root.content() === '%s' || $root.content() === '%s' || $root.content() === '%s' "
                         "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
                         (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
                          ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
                     ),
-                )
+                ),
             ]
 
         return [

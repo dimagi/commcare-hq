@@ -169,7 +169,7 @@ class EmailContent(Content):
             return
 
         subject = subject or '(No Subject)'
-        if not message or not html_message:
+        if not (message or html_message):
             logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
             return
 
@@ -191,7 +191,6 @@ class EmailContent(Content):
                 css_inliner = css_inline.CSSInliner(extra_css=css_file.read())
             inlined_content = css_inliner.inline(html_message)
             inlined_message = inlined_content
-
             send_html_email_async.delay(
                 subject,
                 email_address,
