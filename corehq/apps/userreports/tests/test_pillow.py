@@ -442,6 +442,7 @@ class IndicatorPillowTest(BaseRepeaterTest):
         self._check_sample_doc_state(expected_indicators)
 
     @flag_enabled('SUPERSET_ANALYTICS')
+    @mock.patch('corehq.motech.repeaters.models.Repeater.allowed_to_forward', True)
     @mock.patch('corehq.motech.repeaters.models.RepeatRecord.attempt_forward_now')
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_datasource_change_triggers_change_signal(self, datetime_mock, attempt_forward_now_mock):
@@ -460,27 +461,6 @@ class IndicatorPillowTest(BaseRepeaterTest):
         self.assertEqual(transaction_log.row_id, sample_doc["_id"])
         self.assertEqual(transaction_log.action, DataSourceRowTransactionLog.UPSERT)
         self.assertEqual(attempt_forward_now_mock.call_count, 2)
-
-    @flag_enabled('SUPERSET_ANALYTICS')
-    @mock.patch('corehq.motech.repeaters.models.Repeater.register')
-    @mock.patch('corehq.apps.userreports.specs.datetime')
-    def test_to_debug_something(self, datetime_mock, register_mock):
-        # This is a temporary test method to test debug some github test issue
-        data_source_id = self.config._id
-        num_repeaters = 2
-        self._setup_data_source_subscription(self.config.domain, data_source_id, num_repeaters=num_repeaters)
-
-        datetime_mock.utcnow.return_value = self.fake_time_now
-        sample_doc, _expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
-        self.pillow.process_change(doc_to_change(sample_doc))
-
-        # Assert some data source transaction log stuff
-        transaction_logs = DataSourceRowTransactionLog.objects.filter(data_source_id=data_source_id)
-        self.assertEqual(len(transaction_logs), 1)
-        transaction_log = transaction_logs[0]
-        self.assertEqual(transaction_log.row_id, sample_doc["_id"])
-        self.assertEqual(transaction_log.action, DataSourceRowTransactionLog.UPSERT)
-        self.assertEqual(register_mock.call_count, 2)
 
     @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.apps.userreports.specs.datetime')
