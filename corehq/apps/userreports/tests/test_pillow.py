@@ -1,39 +1,35 @@
 import decimal
 import uuid
 from datetime import datetime, timedelta
+from unittest import mock
+from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
-from unittest import mock
-from unittest.mock import patch
-from corehq.util.test_utils import flag_enabled
-
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.pillow_utils import rebuild_table
-from corehq.form_processor.signals import sql_case_post_save
 from pillow_retry.models import PillowError
-from corehq.motech.repeaters.models import ConnectionSettings
-from corehq.motech.repeaters.models import DataSourceRepeater
+
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.data_source_providers import (
+    DynamicDataSourceProvider,
     MockDataSourceProvider,
-    DynamicDataSourceProvider)
+)
 from corehq.apps.userreports.exceptions import StaleRebuildError
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.models import (
     AsyncIndicator,
     DataSourceConfiguration,
+    DataSourceRowTransactionLog,
     InvalidUCRData,
     Validation,
 )
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
-from corehq.motech.repeaters.tests.test_repeater import BaseRepeaterTest
 from corehq.apps.userreports.pillow import (
     REBUILD_CHECK_INTERVAL,
     ConfigurableReportPillowProcessor,
     ConfigurableReportTableManager,
 )
+from corehq.apps.userreports.pillow_utils import rebuild_table
 from corehq.apps.userreports.tasks import (
     queue_async_indicators,
     rebuild_indicators,
@@ -47,10 +43,16 @@ from corehq.apps.userreports.tests.utils import (
 )
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.signals import sql_case_post_save
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
+from corehq.motech.repeaters.models import (
+    ConnectionSettings,
+    DataSourceRepeater,
+)
+from corehq.motech.repeaters.tests.test_repeater import BaseRepeaterTest
 from corehq.pillows.case import get_case_pillow
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.test_utils import softer_assert, flaky_slow
-from corehq.apps.userreports.models import DataSourceRowTransactionLog
+from corehq.util.test_utils import flag_enabled, flaky_slow, softer_assert
 
 
 def setup_module():
