@@ -535,12 +535,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             casesPerPageLimit: '.per-page-limit',
             searchMoreButton: '#search-more',
             scrollToBottomButton: '#scroll-to-bottom',
+            mapShowHideButton: '#hide-map-button',
         };
     };
 
     const CaseListViewEvents = function () {
         return {
             'click @ui.actionButton': 'caseListAction',
+            'click @ui.mapShowHideButton': 'showHideMap',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
             'click @ui.paginationGoButton': 'paginationGoAction',
@@ -699,6 +701,24 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 const columnSelection = $(e.currentTarget).data("id") + 1;
                 FormplayerFrontend.trigger("menu:sort", columnSelection);
             }
+        },
+
+        showHideMap: function (e) {
+            const mapDiv = $('#module-case-list-map');
+            const moduleCaseList = $('#module-case-list');
+            const hideButton = $('#hide-map-button');
+            if (!mapDiv.hasClass('hide')) {
+                mapDiv.addClass('hide');
+                moduleCaseList.removeClass('col-md-7 col-md-pull-5').addClass('col-md');
+                hideButton.text(gettext('Show Map'));
+                $(e.target).attr('aria-expanded', 'false');
+            } else {
+                mapDiv.removeClass('hide');
+                moduleCaseList.addClass('col-md-7 col-md-pull-5').removeClass('col-md');
+                hideButton.text(gettext('Hide Map'));
+                $(e.target).attr('aria-expanded', 'true');
+            }
+
         },
 
         _allCaseIds: function () {
