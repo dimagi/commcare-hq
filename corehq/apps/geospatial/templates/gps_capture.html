@@ -176,6 +176,21 @@
                         </span>
                     </div>
                 </div>
+                <div class="col">
+                    <label class="control-label col-sm-1 col-md-1 col-lg-1">
+                        {% trans 'Owner' %}
+                    </label>
+                    <div class="col-sm-2 col-md-2 col-lg-2">
+                        <select class="form-control"
+                                type="text"
+                                id="owner-select"
+                                data-bind="select2: {},
+                                           optionsText: 'text',
+                                           optionsValue: 'id',
+                                           event: {change: $root.onOwnerIdChange}">
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
