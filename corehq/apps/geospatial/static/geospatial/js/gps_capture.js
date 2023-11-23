@@ -4,6 +4,7 @@ hqDefine("geospatial/js/gps_capture",[
     'underscore',
     'hqwebapp/js/initial_page_data',
     "hqwebapp/js/bootstrap3/components.ko", // for pagination
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
@@ -12,6 +13,7 @@ hqDefine("geospatial/js/gps_capture",[
 ) {
     'use strict';
     const MAP_CONTAINER_ID = "geospatial-map";
+    const USER_LIMIT = 10;
 
     var map;
     var selectedDataListObject;
@@ -219,6 +221,42 @@ hqDefine("geospatial/js/gps_capture",[
             self.isCreatingCase(true);
             const caseToCreate = new dataItemModel(null, self.dataType);
             self.captureLocationForItem(caseToCreate);
+
+            $("#owner-select").select2({
+                placeholder: gettext('Current User'),
+                cache: true,
+                allowClear: true,
+                delay: 250,
+                ajax: {
+                    url: initialPageData.reverse('paginate_mobile_workers'),
+                    dataType: 'json',
+                    data: function (params) {
+                        return {
+                            query: params.term,
+                            page_limit: USER_LIMIT,
+                            page: params.page,
+                        };
+                    },
+                    processResults: function (data, params) {
+                        params.page = params.page || 1;
+
+                        const hasMore = (params.page * USER_LIMIT) < data.total;
+                        const dataResults = $.map(data.users, function (user) {
+                            return {
+                                text: user.username,
+                                id: user.user_id,
+                            };
+                        });
+
+                        return {
+                            results: dataResults,
+                            pagination: {
+                                more: hasMore,
+                            },
+                        };
+                    },
+                },
+            });
         };
 
         self.finishCreateCase = function () {
