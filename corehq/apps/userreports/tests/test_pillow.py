@@ -462,9 +462,9 @@ class IndicatorPillowTest(BaseRepeaterTest):
         self.assertEqual(attempt_forward_now_mock.call_count, 2)
 
     @flag_enabled('SUPERSET_ANALYTICS')
-    @mock.patch('corehq.motech.repeaters.models.RepeatRecord.attempt_forward_now')
+    @mock.patch('corehq.motech.repeaters.models.Repeater.register')
     @mock.patch('corehq.apps.userreports.specs.datetime')
-    def test_to_debug_something(self, datetime_mock, attempt_forward_now_mock):
+    def test_to_debug_something(self, datetime_mock, register_mock):
         # This is a temporary test method to test debug some github test issue
         data_source_id = self.config._id
         num_repeaters = 2
@@ -480,7 +480,7 @@ class IndicatorPillowTest(BaseRepeaterTest):
         transaction_log = transaction_logs[0]
         self.assertEqual(transaction_log.row_id, sample_doc["_id"])
         self.assertEqual(transaction_log.action, DataSourceRowTransactionLog.UPSERT)
-        self.assertEqual(attempt_forward_now_mock.call_count, 2)
+        self.assertEqual(register_mock.call_count, 2)
 
     @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.apps.userreports.specs.datetime')

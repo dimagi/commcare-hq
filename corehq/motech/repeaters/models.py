@@ -393,10 +393,8 @@ class Repeater(RepeaterSuperProxy):
         return not self.connection_settings.skip_cert_verify
 
     def register(self, payload, fire_synchronously=False):
-        print("\n\n\n\n-------------------- INSIDE REGISTER -----------------\n\n\n")
         if not self.allowed_to_forward(payload):
             return
-        print("\n\n\n\n-------------------- We are allowed to forward -----------------\n\n\n")
         now = datetime.utcnow()
         repeat_record = RepeatRecord(
             repeater_id=self.repeater_id,
@@ -412,7 +410,6 @@ class Repeater(RepeaterSuperProxy):
             'mode': 'sync' if fire_synchronously else 'async'
         })
         repeat_record.save()
-        print("\n\n\n\n-------------------- Record created -----------------\n\n\n")
 
         if fire_synchronously:
             # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
