@@ -454,7 +454,7 @@ class IndicatorPillowTest(BaseRepeaterTest):
         self.pillow.process_change(doc_to_change(sample_doc))
 
         # Assert some data source transaction log stuff
-        transaction_logs = DataSourceRowTransactionLog.objects.filter(data_source_id=data_source_id).all()
+        transaction_logs = DataSourceRowTransactionLog.objects.filter(data_source_id=data_source_id)
         self.assertEqual(len(transaction_logs), 1)
         transaction_log = transaction_logs[0]
         self.assertEqual(transaction_log.row_id, sample_doc["_id"])
@@ -553,7 +553,7 @@ class IndicatorPillowTest(BaseRepeaterTest):
         """A DataSourceRowTransactionLog should not be created when the repeater does not exist"""
         self._test_process_deleted_doc_from_sql(datetime_mock)
         transaction_logs = DataSourceRowTransactionLog.objects.filter(data_source_id=self.config._id).all()
-        self.assertTrue(len(transaction_logs) == 0)
+        self.assertEqual(len(transaction_logs), 0)
 
     def _setup_data_source_subscription(self, domain, data_source_id, num_repeaters=1):
         for _i in range(num_repeaters):

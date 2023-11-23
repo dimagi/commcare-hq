@@ -186,7 +186,7 @@ class RepeaterSuperProxy(models.Model):
         abstract = True
 
     def clear_caches(self):
-        """Override this to clear any cache that the repeater type migth be using"""
+        """Override this to clear any cache that the repeater type might be using"""
         pass
 
     def save(self, *args, **kwargs):
