@@ -216,6 +216,7 @@ hqDefine("geospatial/js/gps_capture",[
                     self.isSubmissionSuccess(true);
                     resetMap();
                     self.resetCaseCreate();
+                    $(window).scrollTop(0);
                 },
                 error: function () {
                     self.hasSubmissionError(true);
