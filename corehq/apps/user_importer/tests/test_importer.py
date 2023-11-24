@@ -678,9 +678,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             PROFILE_SLUG: self.profile.id,
         })
         # Profile fields shouldn't actually be added to user_data
-        self.assertEqual(self.user.get_user_data(self.domain.name).raw, {
-            PROFILE_SLUG: self.profile.id,
-        })
+        self.assertEqual(self.user.get_user_data(self.domain.name).raw, {})
 
     def test_user_data_profile_blank(self):
         import_users_and_groups(

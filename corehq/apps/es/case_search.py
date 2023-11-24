@@ -64,6 +64,10 @@ class CaseSearchES(CaseES):
             external_id,
             indexed_on,
             case_property_missing,
+            filters.geo_bounding_box,
+            filters.geo_polygon,
+            filters.geo_shape,  # Available in Elasticsearch 8+
+            filters.geo_grid,  # Available in Elasticsearch 8+
         ] + super(CaseSearchES, self).builtin_filters
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):

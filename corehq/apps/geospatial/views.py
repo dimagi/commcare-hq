@@ -89,6 +89,29 @@ def mapbox_routing_status(request, domain, poll_id):
     return routing_status(poll_id)
 
 
+def routing_status_view(request, domain, poll_id):
+    # Todo; handle HTTPErrors
+    return json_response({
+        'result': routing_status(poll_id)
+    })
+
+
+class CaseDisbursementAlgorithm(BaseDomainView):
+    urlname = "case_disbursement"
+
+    def post(self, request, domain, *args, **kwargs):
+        solver_class = GeoConfig.objects.get(domain=domain).disbursement_solver
+        request_json = json.loads(request.body.decode('utf-8'))
+        poll_id, result = solver_class(request_json).solve()
+        if poll_id is None:
+            return json_response(
+                {'result': result}
+            )
+        return json_response({
+            "poll_url": reverse("routing_status", args=[self.domain, poll_id])
+        })
+
+
 class GeoPolygonView(BaseDomainView):
     urlname = 'geo_polygon'
 
@@ -140,7 +163,7 @@ class GeoPolygonView(BaseDomainView):
 
 
 class BaseConfigView(BaseDomainView):
-    section_name = _("Geospatial")
+    section_name = _("Data")
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
     def dispatch(self, request, *args, **kwargs):
@@ -223,7 +246,7 @@ class GPSCaptureView(BaseDomainView):
     template_name = 'gps_capture_view.html'
 
     page_name = _("Manage GPS Data")
-    section_name = _("Geospatial")
+    section_name = _("Data")
 
     fields = [
         'corehq.apps.reports.filters.case_list.CaseListFilter',

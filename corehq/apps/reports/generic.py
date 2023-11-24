@@ -828,6 +828,7 @@ class GenericTabularReport(GenericReportView):
     # new class properties
     total_row = None
     statistics_rows = None
+    force_page_size = False  # force page size to be as the default rows
     default_rows = 10
     start_at_row = 0
     show_all_rows = False
@@ -1083,6 +1084,7 @@ class GenericTabularReport(GenericReportView):
                 rows=rows,
                 total_row=self.total_row,
                 statistics_rows=self.statistics_rows,
+                force_page_size=self.force_page_size,
                 default_rows=self.default_rows,
                 start_at_row=self.start_at_row,
                 show_all_rows=self.show_all_rows,
@@ -1100,6 +1102,7 @@ class GenericTabularReport(GenericReportView):
         context.update({
             'report_table_js_options': {
                 'datatables': report_table['datatables'],
+                'force_page_size': report_table['force_page_size'],
                 'default_rows': report_table['default_rows'] or 10,
                 'start_at_row': report_table['start_at_row'] or 0,
                 'show_all_rows': report_table['show_all_rows'],
