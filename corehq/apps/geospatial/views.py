@@ -280,6 +280,7 @@ class GPSCaptureView(BaseDomainView):
         page_context = {
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'case_types_with_gps': list(case_types),
+            'couch_user_username': self.request.couch_user.raw_username,
         }
         page_context.update(self._case_filters_context())
         return page_context

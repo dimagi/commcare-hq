@@ -228,8 +228,9 @@ hqDefine("geospatial/js/gps_capture",[
             const caseToCreate = new dataItemModel(null, self.dataType);
             self.captureLocationForItem(caseToCreate);
 
+            const placeholderStr = `${initialPageData.get('couch_user_username')} (${gettext("current user")})`;
             $("#owner-select").select2({
-                placeholder: gettext('Current User'),
+                placeholder: placeholderStr,
                 cache: true,
                 allowClear: true,
                 delay: 250,
