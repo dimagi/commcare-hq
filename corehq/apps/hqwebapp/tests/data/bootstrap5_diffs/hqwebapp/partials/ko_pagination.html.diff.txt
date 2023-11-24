@@ -33,7 +33,7 @@
 -        <li>
 -          <a href="#"
 -             data-bind="click: previousPage">
--            <span>&laquo;</span>
+-            <span>{% trans 'Previous' %}</span>
 -          </a>
 -        </li>
 -        <!-- ko foreach: pagesShown -->
@@ -49,7 +49,7 @@
 -        <!-- /ko -->
 -        <li>
 -          <a href="#" data-bind="click: nextPage">
--            <span>&raquo;</span>
+-            <span>{% trans 'Next' %}</span>
 -          </a>
 -        </li>
 -      </ul>
@@ -62,7 +62,7 @@
 +               class="page-link"
 +               aria-label="Previous"
 +               data-bind="click: previousPage">
-+              <span aria-hidden="true">&laquo;</span>
++              <span aria-hidden="true">{% trans 'Previous' %}</span>
 +            </a>
 +          </li>
 +          <!-- ko foreach: pagesShown -->
@@ -83,7 +83,7 @@
 +               class="page-link"
 +               aria-label="Next"
 +               data-bind="click: nextPage">
-+              <span aria-hidden="true">&raquo;</span>
++              <span aria-hidden="true">{% trans 'Next' %}</span>
 +            </a>
 +          </li>
 +        </ul>
