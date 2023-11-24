@@ -33,6 +33,7 @@ from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
+from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.users.dbaccessors import get_mobile_users_by_filters
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
@@ -336,7 +337,7 @@ def get_paginated_cases_or_users_without_gps(request, domain):
     if case_or_user == 'user':
         data = _get_paginated_users_without_gps(domain, page, limit, query)
     else:
-        data = GetPaginatedCases(request, domain).get_paginated_cases_without_gps(domain, page, limit, query)
+        data = GetPaginatedCases(request, domain).get_paginated_cases_without_gps(domain, page, limit)
     return JsonResponse(data)
 
 
@@ -357,7 +358,7 @@ class GetPaginatedCases(CaseListMixin):
             .domain(self.domain)
         )
 
-    def get_paginated_cases_without_gps(self, domain, page, limit, query):
+    def get_paginated_cases_without_gps(self, domain, page, limit):
         show_cases_with_missing_gps_data_only = True
 
         if GPSDataFilter(self.request, self.domain).show_all:
@@ -367,11 +368,12 @@ class GetPaginatedCases(CaseListMixin):
         location_prop_name = get_geo_case_property(domain)
         if show_cases_with_missing_gps_data_only:
             cases_query = cases_query.case_property_missing(location_prop_name)
-        cases_query = (
-            cases_query
-            .search_string_query(query, ['name'])
-            .sort('server_modified_on', desc=True)
-        )
+
+        search_string = CaseSearchFilter.get_value(self.request, self.domain)
+        if search_string:
+            cases_query = cases_query.set_query({"query_string": {"query": search_string}})
+
+        cases_query = cases_query.sort('server_modified_on', desc=True)
         case_ids = cases_query.get_ids()
 
         paginator = Paginator(case_ids, limit)
