@@ -79,7 +79,7 @@ hqDefine('geospatial/js/models', [
             return {
                 'groupId': self.groupId,
                 'groupCenterCoordinates': groupCoordinates,
-                'caseId': self.caseId,
+                'caseId': self.itemId,
                 'coordinates': coordinates,
             };
         };

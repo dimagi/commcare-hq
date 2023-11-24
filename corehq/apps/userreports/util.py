@@ -36,9 +36,9 @@ def localize(value, lang):
     """
     if isinstance(value, collections.Mapping) and len(value):
         return (
-            value.get(lang, None) or
-            value.get(default_language(), None) or
-            value[sorted(value.keys())[0]]
+            value.get(lang, None)
+            or value.get(default_language(), None)
+            or value[sorted(value.keys())[0]]
         )
     return value
 
@@ -138,10 +138,10 @@ def allowed_report_builder_reports(request):
     if has_privilege(request, privileges.REPORT_BUILDER_15):
         return 15
     if (
-        has_privilege(request, privileges.REPORT_BUILDER_TRIAL) or
-        has_privilege(request, privileges.REPORT_BUILDER_5) or
-        beta_group_enabled or
-        (builder_enabled and legacy_builder_priv)
+        has_privilege(request, privileges.REPORT_BUILDER_TRIAL)
+        or has_privilege(request, privileges.REPORT_BUILDER_5)
+        or beta_group_enabled
+        or (builder_enabled and legacy_builder_priv)
     ):
         return 5
     return 0

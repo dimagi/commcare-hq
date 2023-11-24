@@ -186,7 +186,7 @@ class RepeaterSuperProxy(models.Model):
         abstract = True
 
     def clear_caches(self):
-        """Override this to clear any cache that the repeater type migth be using"""
+        """Override this to clear any cache that the repeater type might be using"""
         pass
 
     def save(self, *args, **kwargs):
@@ -395,7 +395,6 @@ class Repeater(RepeaterSuperProxy):
     def register(self, payload, fire_synchronously=False):
         if not self.allowed_to_forward(payload):
             return
-
         now = datetime.utcnow()
         repeat_record = RepeatRecord(
             repeater_id=self.repeater_id,
@@ -416,7 +415,7 @@ class Repeater(RepeaterSuperProxy):
             # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
             # to prevent serializing the repeater in the celery task payload
             RepeatRecord.repeater.fget.get_cache(repeat_record)[()] = self
-
+        print("\n\n\n\n-------------------- Attempt to forward -----------------\n\n\n")
         repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
