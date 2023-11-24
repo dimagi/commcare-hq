@@ -13,7 +13,7 @@ hqDefine("geospatial/js/gps_capture",[
 ) {
     'use strict';
     const MAP_CONTAINER_ID = "geospatial-map";
-    const USER_LIMIT = 10;
+    const USERS_PER_PAGE = 10;
 
     var map;
     var selectedDataListObject;
@@ -240,14 +240,14 @@ hqDefine("geospatial/js/gps_capture",[
                     data: function (params) {
                         return {
                             query: params.term,
-                            page_limit: USER_LIMIT,
+                            page_limit: USERS_PER_PAGE,
                             page: params.page,
                         };
                     },
                     processResults: function (data, params) {
                         params.page = params.page || 1;
 
-                        const hasMore = (params.page * USER_LIMIT) < data.total;
+                        const hasMore = (params.page * USERS_PER_PAGE) < data.total;
                         const dataResults = $.map(data.users, function (user) {
                             return {
                                 text: user.username,
