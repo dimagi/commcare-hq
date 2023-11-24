@@ -328,7 +328,7 @@ class GPSCaptureView(BaseDomainView):
 
 @require_GET
 @login_and_domain_required
-def get_paginated_cases_or_users_without_gps(request, domain):
+def get_paginated_cases_or_users(request, domain):
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 5))
     query = request.GET.get('query', '')

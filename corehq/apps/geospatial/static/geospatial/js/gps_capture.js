@@ -150,7 +150,7 @@ hqDefine("geospatial/js/gps_capture",[
             self.hasError(false);
             self.showPaginationSpinner(true);
             self.showLoadingSpinner(true);
-            let url = initialPageData.reverse('get_paginated_cases_or_users_without_gps');
+            let url = initialPageData.reverse('get_paginated_cases_or_users');
             if (self.dataType === 'case') {
                 url += window.location.search;
             }
