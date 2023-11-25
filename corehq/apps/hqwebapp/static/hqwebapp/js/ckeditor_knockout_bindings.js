@@ -11,8 +11,8 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
     initialPageData,
     CKEditor
 ) {
-    ko.bindingHandlers.ckeditor = function() {
-        self.init = function (element, valueAccessor, allBindingsAccessor, viewModel) {
+    ko.bindingHandlers.ckeditor = {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
             var options = {
                 simpleUpload: {
                     uploadUrl: initialPageData.reverse(element.attributes['data-image-upload-url'].value),
@@ -36,15 +36,32 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                 editorInstance = undefined;
 
             CKEditor.create(element, options).then(function(editor) {
+                var isSubscriberChange = false,
+                    isEditorChange = false,
                 editorInstance = editor;
 
                 if (typeof ko.utils.unwrapObservable(valueAccessor()) !== "undefined") {
                     editorInstance.setData(ko.utils.unwrapObservable(valueAccessor()));
                 };
 
+                // Update the observable value when the document changes
                 editorInstance.model.document.on('change:data', function(data) {
-                    // TODO: inline CSS here?
-                    valueAccessor()(editorInstance.getData());
+                    if (!isSubscriberChange) {
+                        isEditorChange = true;
+                        valueAccessor()(editorInstance.getData());
+                        isEditorChange = false;
+                    }
+                    
+                });
+
+                // Update the document whenever the observable changes
+                valueAccessor().subscribe(function (value) {
+                    if (!isEditorChange){
+                        isSubscriberChange = true;
+                        editorInstance.setData(value);
+                        isSubscriberChange = false;
+                    }
+
                 });
 
                 if (initialPageData.get('read_only_mode')) {
@@ -57,8 +74,6 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                 CKEditor.remove(editorInstance);
             });
 
-        };
-        
-        return self;
-    }();
+        }
+    };
 });

@@ -47,6 +47,9 @@ hqDefine("scheduling/js/create_schedule.ko", [
                     if (!messageModel.message()) {
                         messageModel.message(self.nonTranslatedMessage());
                     }
+                    if (!messageModel.html_message()) {
+                        messageModel.html_message(self.nonTranslatedMessage());
+                    }
                 });
             }
         });

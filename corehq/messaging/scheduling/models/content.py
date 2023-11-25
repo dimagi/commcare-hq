@@ -169,7 +169,7 @@ class EmailContent(Content):
             return
 
         subject = subject or '(No Subject)'
-        if not (message or html_message):
+        if not message and not html_message:
             logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
             return
 
