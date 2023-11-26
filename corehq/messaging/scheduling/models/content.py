@@ -156,11 +156,13 @@ class EmailContent(Content):
             recipient.get_language_code()
         )
 
-        html_message = self.get_translation_from_message_dict(
-            domain_obj,
-            self.html_message,
-            recipient.get_language_code()
-        )
+        html_message = ''
+        if self.html_message:
+            html_message = self.get_translation_from_message_dict(
+                domain_obj,
+                self.html_message,
+                recipient.get_language_code()
+            )
 
         try:
             subject, message, html_message = self.render_subject_and_message(
