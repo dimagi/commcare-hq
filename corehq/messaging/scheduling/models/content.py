@@ -163,7 +163,12 @@ class EmailContent(Content):
         )
 
         try:
-            subject, message, html_message = self.render_subject_and_message(subject, message, html_message, recipient)
+            subject, message, html_message = self.render_subject_and_message(
+                subject,
+                message,
+                html_message,
+                recipient
+            )
         except Exception:
             logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
             return
@@ -186,7 +191,8 @@ class EmailContent(Content):
         metrics_counter('commcare.messaging.email.sent', tags={'domain': domain})
         if toggles.RICH_TEXT_EMAILS.enabled(domain) and html_message:
 
-            email_css_filepath = os.path.join("corehq", "messaging", "scheduling", "templates", "scheduling", "rich_text_email_styles.css")
+            email_css_filepath = os.path.join(
+                "corehq", "messaging", "scheduling", "templates", "scheduling", "rich_text_email_styles.css")
             with open(email_css_filepath, 'r') as css_file:
                 css_inliner = css_inline.CSSInliner(extra_css=css_file.read())
             inlined_content = css_inliner.inline(html_message)

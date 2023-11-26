@@ -256,8 +256,10 @@ class ContentForm(Form):
         self.fields['app_and_form_unique_id'].choices = [('', '')] + self.schedule_form.form_choices
 
     def set_message_template(self):
-        if RICH_TEXT_EMAILS.enabled(self.domain) :
-            self.fields['html_message'].initial = {'*': render_to_string('scheduling/partials/rich_text_email_template.html')}
+        if RICH_TEXT_EMAILS.enabled(self.domain):
+            self.fields['html_message'].initial = {
+                '*': render_to_string('scheduling/partials/rich_text_email_template.html')
+            }
 
     def clean_subject(self):
         if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
@@ -271,7 +273,10 @@ class ContentForm(Form):
         return self._clean_message_field('subject')
 
     def clean_message(self):
-        if RICH_TEXT_EMAILS.enabled(self.domain) and self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_EMAIL:
+        if (
+                RICH_TEXT_EMAILS.enabled(self.domain)
+                and self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_EMAIL
+        ):
             return None
         if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
                 and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
@@ -518,7 +523,8 @@ class ContentForm(Form):
                         data_bind='with: message',
                     ),
                     data_bind=(
-                        "visible: $root.content() === '%s' || $root.content() === '%s' || $root.content() === '%s' "
+                        "visible: $root.content() === '%s' || $root.content() === '%s' "
+                        "|| $root.content() === '%s' "
                         "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
                         (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
                          ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)

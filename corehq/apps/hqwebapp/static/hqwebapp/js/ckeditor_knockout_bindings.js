@@ -14,38 +14,38 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
     ko.bindingHandlers.ckeditor = {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
             var options = {
-                simpleUpload: {
-                    uploadUrl: initialPageData.reverse(element.attributes['data-image-upload-url'].value),
-                    withCredentials: true,
-                    headers: {
-                        'X-CSRFTOKEN': $("#csrfTokenContainer").val(),
-                    }
-                },
-                htmlSupport: {
+                    simpleUpload: {
+                        uploadUrl: initialPageData.reverse(element.attributes['data-image-upload-url'].value),
+                        withCredentials: true,
+                        headers: {
+                            'X-CSRFTOKEN': $("#csrfTokenContainer").val(),
+                        },
+                    },
+                    htmlSupport: {
                     // TODO: Only allow some html!
-                    allow: [
-                        {
-                            name: /.*/,
-                            attributes: true,
-                            classes: true,
-                            styles: true
-                        }
-                    ]
+                        allow: [
+                            {
+                                name: /.*/,
+                                attributes: true,
+                                classes: true,
+                                styles: true,
+                            },
+                        ],
+                    },
                 },
-            },
                 editorInstance = undefined;
 
-            CKEditor.create(element, options).then(function(editor) {
+            CKEditor.create(element, options).then(function (editor) {
                 var isSubscriberChange = false,
                     isEditorChange = false,
-                editorInstance = editor;
+                    editorInstance = editor;
 
                 if (typeof ko.utils.unwrapObservable(valueAccessor()) !== "undefined") {
                     editorInstance.setData(ko.utils.unwrapObservable(valueAccessor()));
-                };
+                }
 
                 // Update the observable value when the document changes
-                editorInstance.model.document.on('change:data', function(data) {
+                editorInstance.model.document.on('change:data', function (data) {
                     if (!isSubscriberChange) {
                         isEditorChange = true;
                         valueAccessor()(editorInstance.getData());
@@ -56,7 +56,7 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
 
                 // Update the document whenever the observable changes
                 valueAccessor().subscribe(function (value) {
-                    if (!isEditorChange){
+                    if (!isEditorChange) {
                         isSubscriberChange = true;
                         editorInstance.setData(value);
                         isSubscriberChange = false;
@@ -74,6 +74,6 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                 CKEditor.remove(editorInstance);
             });
 
-        }
+        },
     };
 });

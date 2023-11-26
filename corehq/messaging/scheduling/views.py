@@ -17,7 +17,6 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-from django.views.decorators.csrf import csrf_exempt
 
 from six.moves.urllib.parse import quote_plus
 
@@ -31,10 +30,7 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.apps.domain.decorators import (
-    LoginAndDomainMixin,
-    login_and_domain_required,
-)
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
@@ -1110,10 +1106,10 @@ def messaging_image_upload_view(request, domain):
                 }
             }, status=400)
 
-        if not image_file.content_type in VALID_EMAIL_IMAGE_MIMETYPES:
+        if image_file.content_type not in VALID_EMAIL_IMAGE_MIMETYPES:
             image_extensions = [mimetype.split("/")[1] for mimetype in VALID_EMAIL_IMAGE_MIMETYPES]
             return JsonResponse({
-                'error':{
+                'error': {
                     "message": _('You can only upload {image_extensions} images').format(
                         image_extensions=", ".join(image_extensions))
                 },

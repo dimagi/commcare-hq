@@ -546,7 +546,8 @@ def delete_unused_messaging_images():
     image_ids = set(EmailImage.get_all_blob_ids())
 
     present_image_ids = set()
-    # There is no easy way of figuring out the domain from EmailContent directly, so we only fetch those EmailContents that have html.
+    # There is no easy way of figuring out the domain from EmailContent
+    # directly, so we only fetch those EmailContents that have html.
     email_messages = EmailContent.objects.values_list("html_message", flat=True).filter(html_message__isnull=False)
     for messages in email_messages:
         for lang, content in messages:
