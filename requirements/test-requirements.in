@@ -1,6 +1,5 @@
 -r requirements.in
 
-beautifulsoup4
 django-nose @ https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
 fakecouch
 nose

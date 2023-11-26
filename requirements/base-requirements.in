@@ -1,6 +1,7 @@
 alembic
 architect
 attrs>=21.4
+beautifulsoup4
 bleach
 bleach[css]
 boto3

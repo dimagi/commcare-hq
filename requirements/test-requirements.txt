@@ -23,7 +23,7 @@ attrs==23.1.0
 beaker==1.11.0
     # via oic
 beautifulsoup4==4.10.0
-    # via -r test-requirements.in
+    # via -r base-requirements.in
 billiard==3.6.4.0
     # via celery
 bleach[css]==6.1.0
