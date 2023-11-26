@@ -192,20 +192,8 @@ class EmailContent(Content):
 
         metrics_counter('commcare.messaging.email.sent', tags={'domain': domain})
         if toggles.RICH_TEXT_EMAILS.enabled(domain) and html_message:
-
-            email_css_filepath = os.path.join(
-                "corehq", "messaging", "scheduling", "templates", "scheduling", "rich_text_email_styles.css")
-            with open(email_css_filepath, 'r') as css_file:
-                css_inliner = css_inline.CSSInliner(extra_css=css_file.read())
-            inlined_content = css_inliner.inline(html_message)
-            inlined_message = inlined_content
-            send_html_email_async.delay(
-                subject,
-                email_address,
-                inlined_message,
-                text_content=message,
-                messaging_event_id=logged_subevent.id,
-                domain=domain)
+            self._send_rich_text_email(
+                domain, email_address, subject, message, html_message, logged_subevent)
         else:
             send_mail_async.delay(
                 subject,
@@ -229,6 +217,29 @@ class EmailContent(Content):
         email.save()
 
         email_usage.update_count()
+
+    def _send_rich_text_email(
+            self,
+            domain,
+            email_address,
+            subject,
+            plaintext_message,
+            html_message,
+            logged_subevent
+    ):
+        # Add extra css added by CKEditor, and inline other css styles
+        email_css_filepath = os.path.join(
+            "corehq", "messaging", "scheduling", "templates", "scheduling", "rich_text_email_styles.css")
+        with open(email_css_filepath, 'r') as css_file:
+            css_inliner = css_inline.CSSInliner(extra_css=css_file.read())
+        inlined_message = css_inliner.inline(html_message)
+        send_html_email_async.delay(
+            subject,
+            email_address,
+            inlined_message,
+            text_content=plaintext_message,
+            messaging_event_id=logged_subevent.id,
+            domain=domain)
 
     def get_recipient_email(self, recipient):
         email_address = recipient.get_email()
@@ -715,11 +726,7 @@ class EmailImage(object):
         return cls.meta_query(domain).aggregate(total=models.Sum('content_length'))["total"]
 
     @classmethod
-    def save_blob(cls, file_obj, domain, filename, content_type):
-        # if delete_after is None:
-        #     raise ValidationError(
-        #         'delete_after can be None only for legacy files that were added before August 2018'
-        #     )
+    def save_blob(cls, file_obj, domain, filename, content_type, delete_after):
         return cls(get_blob_db().put(
             file_obj,
             domain=domain,
@@ -728,6 +735,7 @@ class EmailImage(object):
             name=filename,
             key=random_url_id(16),
             content_type=content_type,
+            expires_on=delete_after,
         ))
 
     def get_blob(self):

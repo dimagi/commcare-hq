@@ -1120,6 +1120,7 @@ def messaging_image_upload_view(request, domain):
             domain=request.domain,
             filename=image_file.name,
             content_type=image_file.content_type,
+            delete_after=datetime.utcnow() + timedelta(days=365),
         )
         return JsonResponse({
             'url': absolute_reverse("download_messaging_image", args=[domain, image.blob_id])
@@ -1132,6 +1133,7 @@ def messaging_image_download_view(request, domain, image_key):
         image_meta = EmailImage.get_by_key(domain, image_key)
         image_blob = image_meta.get_blob()
     except (EmailImage.DoesNotExist, NotFound):
+        # We could instead serve a placeholder image here
         raise Http404()
 
     return HttpResponse(image_blob, content_type=image_meta.content_type)
