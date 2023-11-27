@@ -142,11 +142,11 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             formJSON.tree = [g0];
             let form = formUI.Form(formJSON);
 
-            assert.equal(form.children()[0].headerBackgroundColor(), '#7d8ddb'); //[g0]
+            assert.equal(form.children()[0].headerBackgroundColor(), '#4a5aa8'); //[g0]
             assert.equal(form.children()[0].children()[0].headerBackgroundColor(), ''); //[g0-0]
-            assert.equal(form.children()[0].children()[0].children()[2].headerBackgroundColor(), '#4a5aa8'); //[g1]
-            assert.equal(form.children()[0].children()[0].children()[2].children()[0].headerBackgroundColor(), '#38437e'); //[g1-0]
-            assert.equal(form.children()[0].children()[0].children()[2].children()[0].children()[2].headerBackgroundColor(), '#7d8ddb'); //[r1]
+            assert.equal(form.children()[0].children()[0].children()[2].headerBackgroundColor(), '#38437e'); //[g1]
+            assert.equal(form.children()[0].children()[0].children()[2].children()[0].headerBackgroundColor(), '#252d54'); //[g1-0]
+            assert.equal(form.children()[0].children()[0].children()[2].children()[0].children()[2].headerBackgroundColor(), '#4a5aa8'); //[r1]
             assert.equal(form.children()[0].children()[0].children()[2].children()[0].children()[2].children()[0].headerBackgroundColor(), ''); //[r1-0]
         });
 
