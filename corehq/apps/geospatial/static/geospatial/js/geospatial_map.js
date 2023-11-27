@@ -233,20 +233,23 @@ hqDefine("geospatial/js/geospatial_map", [
         ko.applyBindings({'userModels': mapModel.userMapItems, 'selectedUsers': selectedUsers}, $("#user-modals")[0]);
         ko.applyBindings({'caseModels': mapModel.caseMapItems, 'selectedCases': selectedCases}, $("#case-modals")[0]);
 
-        mapModel.mapInstance.on("draw.update", (e) => {
-            mapModel.selectAllMapItems(e.features);
-        });
-        mapModel.mapInstance.on('draw.selectionchange', (e) => {
-            mapModel.selectAllMapItems(e.features);
-        });
+        mapModel.mapInstance.on("draw.update", selectMapItemsInPolygons);
+        mapModel.mapInstance.on('draw.selectionchange', selectMapItemsInPolygons);
         mapModel.mapInstance.on('draw.delete', function () {
-            // TODO: Need to fix this
             polygonFilterModel.btnSaveDisabled(!mapModel.mapHasPolygons());
+            selectMapItemsInPolygons();
         });
         mapModel.mapInstance.on('draw.create', function () {
-            // TODO: Need to fix this
             polygonFilterModel.btnSaveDisabled(!mapModel.mapHasPolygons());
         });
+    }
+
+    function selectMapItemsInPolygons() {
+        let features = mapModel.drawControls.getAll().features;
+        if (polygonFilterModel.activeSavedPolygon) {
+            features = features.concat(polygonFilterModel.activeSavedPolygon.geoJson.features);
+        }
+        mapModel.selectAllMapItems(features);
     }
 
     function initPolygonFilters() {
