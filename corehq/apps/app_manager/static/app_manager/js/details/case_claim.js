@@ -90,6 +90,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             requiredText: '',
             validationTest: '',
             validationText: '',
+            isGroup: false,
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -153,6 +154,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             );
         });
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
+        self.isGroup = options.isGroup;
 
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
@@ -352,6 +354,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 hidden: searchProperty.hidden,
                 receiverExpression: searchProperty.receiver_expression,
                 itemsetOptions: searchProperty.itemset,
+                isGroup: searchProperty.is_group,
             }, saveButton);
         });
 
@@ -392,6 +395,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
+                        is_group: p.isGroup,
                     };
                 }
             );
