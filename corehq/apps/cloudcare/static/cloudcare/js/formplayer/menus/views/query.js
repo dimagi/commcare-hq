@@ -183,13 +183,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             console.log("geocoderValues");
             console.log(geocoderValues);
             if (geocoderValues[id]) {
-                try {
-                    document.getElementById(id).getElementsByClassName('.mapboxgl-ctrl-geocoder--input').val(geocoderValues[id]);
-                } catch (err) {
-                    console.log("error setting field");
-                    console.log(err);
-                    $field.find('.mapboxgl-ctrl-geocoder--input').val(geocoderValues[id]);
-                }
+                $field.find('.mapboxgl-ctrl-geocoder--input').val(geocoderValues[id]);
             }
             // if (model.get('value')) {
             //     $field.find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
