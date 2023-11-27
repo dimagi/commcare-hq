@@ -1,3 +1,5 @@
+from decimal import Decimal
+import random
 from django.core import mail
 
 from django_prbac.models import Role
@@ -52,7 +54,6 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         cls.addClassCleanup(cls.stripe_customer.delete)
         cls.payment_method = StripePaymentMethod(web_user=cls.autopay_user_email,
                                                 customer_id=cls.stripe_customer.id)
-        # cls.payment_method.save()
         cls.card = cls.payment_method.create_card('tok_visa', cls.autopay_account, None)
         cls.payment_method.set_autopay(cls.card, cls.autopay_account, cls.domain)
         cls.payment_method.save()
@@ -118,22 +119,37 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
     def test_pay_autopayable_invoices(self):
         original_outbox_length = len(mail.outbox)
 
-        autopayable_invoice = Invoice.objects.filter(subscription=self.subscription)
-        date_due = autopayable_invoice.first().date_due
+        autopayable_invoice = Invoice.objects.filter(subscription=self.subscription).first()
+        date_due = autopayable_invoice.date_due
+
+        # Keys for idempotent requests can only be used with the same parameters they were first used with.
+        # So introduce randomness in idempotency key to avoid clashes
+        for line_item in autopayable_invoice.lineitem_set.all():
+            line_item.unit_cost = Decimal(random.randint(1, 50))
+            line_item.save()
+        autopayable_invoice.update_balance()
+        autopayable_invoice.save()
 
         AutoPayInvoicePaymentHandler().pay_autopayable_invoices(date_due)
-        self.assertAlmostEqual(autopayable_invoice.first().get_total(), 0)
+        self.assertAlmostEqual(autopayable_invoice.get_total(), 0)
         self.assertEqual(len(PaymentRecord.objects.all()), 1)
         self.assertEqual(len(mail.outbox), original_outbox_length + 1)
 
     def test_double_charge_is_prevented_and_only_one_payment_record_created(self):
         self.original_outbox_length = len(mail.outbox)
         invoice = Invoice.objects.get(subscription=self.subscription)
-        original_amount = invoice.balance
+        # Keys for idempotent requests can only be used with the same parameters they were first used with.
+        # So introduce randomness in idempotency key to avoid clashes
+        for line_item in invoice.lineitem_set.all():
+            line_item.unit_cost = Decimal(random.randint(1, 50))
+            line_item.save()
+        invoice.update_balance()
+        invoice.save()
+        balance = invoice.balance
         self._run_autopay()
         # Add balance to the same invoice so it gets paid again
         invoice = Invoice.objects.get(subscription=self.subscription)
-        invoice.balance = original_amount
+        invoice.balance = balance
         invoice.save()
         # Run autopay again to test no double charge
         with transaction.atomic(), self.assertLogs(level='ERROR') as log_cm:
