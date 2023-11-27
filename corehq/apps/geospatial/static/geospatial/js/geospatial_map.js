@@ -278,8 +278,22 @@ hqDefine("geospatial/js/geospatial_map", [
 
         var $runDisbursement = $("#btnRunDisbursement");
         $runDisbursement.click(function () {
-            if (mapModel && mapModel.mapInstance) {
-                disbursementRunner.runCaseDisbursementAlgorithm(mapModel.caseMapItems(), mapModel.userMapItems());
+            if (mapModel && mapModel.mapInstance && !polygonFilterModel.btnRunDisbursementDisabled()) {
+                let selectedCases = mapModel.caseMapItems();
+                let selectedUsers = mapModel.userMapItems();
+                if (mapModel.mapHasPolygons() || polygonFilterModel.activeSavedPolygon) {
+                    selectedCases = mapModel.caseMapItems().filter(function (caseItem) {
+                        return caseItem.isSelected();
+                    });
+                    selectedUsers = mapModel.userMapItems().filter((userItem) => {
+                        return userItem.isSelected();
+                    });
+                }
+
+                const hasValidData = selectedCases.length && selectedUsers.length;
+                if (hasValidData) {
+                    disbursementRunner.runCaseDisbursementAlgorithm(selectedCases, selectedUsers);
+                }
             }
         });
     }
