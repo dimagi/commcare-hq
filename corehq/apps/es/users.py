@@ -233,7 +233,13 @@ def is_active(active=True):
 
 
 def user_data(key, value, domain=None):
+    if isinstance(value, list):
+        return filters.OR([_user_data_filter(key, v, domain=domain) for v in value])
+    else:
+        return _user_data_filter(key, value, domain=domain)
 
+
+def _user_data_filter(key, value, domain=None):
     data_filter = [queries.nested(
         "user_data_es.data",
         filters.AND(
