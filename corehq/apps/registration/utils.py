@@ -230,7 +230,8 @@ def send_new_request_update_email(user, requesting_ip, entity_name, entity_type=
     if is_new_sso_user:
         message = f"A new SSO user just requested a {entity_texts[0]} called {entity_name}."
     elif is_confirming:
-        message = "A (basically) brand new user just confirmed his/her account. The %s requested was %s." % (entity_texts[0], entity_name)
+        message = "A (basically) brand new user just confirmed his/her account. The %s requested was %s." % (
+            entity_texts[0], entity_name)
     elif is_new_user:
         message = "A brand new user just requested a %s called %s." % (entity_texts[0], entity_name)
     else:
