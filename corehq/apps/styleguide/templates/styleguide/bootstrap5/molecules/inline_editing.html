@@ -1,0 +1,110 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Inline Editing</h1>
+  <p class="sg-lead">
+    Instant saving of quick text edits can make for a better user experience.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#usage">Usage</a>
+        <ul>
+          <li><a href="#working-example">Working Example</a></li>
+          <li><a href="#langcode">Using Language Tags</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">Overview</h2>
+  <p>
+    HQ has a custom component for inline editing, based on
+    <a href="https://knockoutjs.com/documentation/component-overview.html"
+       target="_blank">Knockout Components</a>.
+    This component is visually lighter weight than a standard text box, and it updates the value immediately via
+    an ajax call.
+  </p>
+  <p>
+    This component has a number of options that affect the save action and the look and feel; see
+    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js"
+       target='_blank'>inline_edit.js</a>
+    for full documentation.
+  </p>
+  <div class="alert alert-primary">
+    <strong>Important:</strong> Because most of HQ does not use instant saving, don't use this component near
+    or inside another form.
+    It works well when it's the only style of saving on the page, or when it's clearly separated from other
+    forms.
+  </div>
+
+  <h2 id="usage" class="pt-4">
+    Usage
+  </h2>
+  <p>
+    The best way to understand how to implement the <code>inline-edit</code> component is to see its use in HQ directly.
+  </p>
+  <p>
+    The Case Import page is a good example of its usage, and key points are:
+  </p>
+  <ul>
+    <li>
+      <a href="https://github.com/dimagi/commcare-hq/blob/718623227a79bf5a4b2ecca245b7f19922783371/corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html#L73-L80"
+         target="_blank">
+        the HTML widget
+      </a> that instantiates the <code>inline-edit</code>
+    </li>
+    <li>
+      <a href="https://github.com/dimagi/commcare-hq/blob/996fd40ccbc1280e4fbfab0ea95408cdcaa635e7/corehq/apps/case_importer/static/case_importer/js/import_history.js#L27-L29"
+         target="_blank">
+        the javascript functionality
+      </a> that returns the url the component will post changes to
+    </li>
+  </ul>
+  <p>
+    Several App Manager pages also use the template tag
+    <a href="https://github.com/dimagi/commcare-hq/blob/56463013077e309f633790d45b179e12d15e2a0f/corehq/apps/app_manager/templatetags/xforms_extras.py#L152-L181"
+       target="_blank">
+      inline_edit_trans
+    </a> to provide an <code>inline-edit</code> component that handles multiple languages. This is the
+    real-world example of the second example below.
+  </p>
+
+  <h3 id="working-example" class="pt-3">
+    A Working Example
+  </h3>
+  <p>
+    Below is a working example of the <code>inline-edit</code> component. It's working in a sense that it posts to
+    a real URL. However, the edits aren't saved anywhere. Try it out! Note that the demo endpoint will randomly throw
+    an error so that the entire UI can be tested visually here.
+  </p>
+  <div class="alert alert-primary">
+    Note that the error message displayed is not the same as the <code>errorMessage</code> passed in to the component
+    params. This is because the <code>inline_edit_demo</code> view returns a formatted JSON response that the component
+    expects to find an server-generated error message in.
+  </div>
+  {% registerurl "styleguide_inline_edit_demo" %}
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.inline_edit %}
+
+  <h3 id="langcode" class="pt-3">
+    Using Language Tags
+  </h3>
+  <p>
+    Below is an example of how language tags (set by the <code>lang</code> parameter) are used
+    with <code>inline-edit</code>. This is also a showcase of using the <code>nodeName: 'input'</code>
+    option.
+  </p>
+  <p>
+    As with the example above, this component posts to a view that randomly throws an error so that
+    the error message functionality can be observed and tested here.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.inline_edit_lang %}
+{% endblock content %}
