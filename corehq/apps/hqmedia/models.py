@@ -39,6 +39,7 @@ from corehq.apps.domain import SHARED_DOMAIN
 from corehq.apps.domain.models import LICENSE_LINKS, LICENSES
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.blobs.mixin import CODES, BlobMixin
+from corehq.util.view_utils import absolute_reverse
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -1037,3 +1038,8 @@ class LogoForSystemEmailsReference(models.Model):
     domain = models.CharField(max_length=255, unique=True, null=False)
     # Doc ID of the CommCareImage the object references
     image_id = models.CharField(max_length=255, null=False)
+
+    def full_url_to_image(self):
+        from corehq.apps.hqmedia.views import ViewMultimediaFile
+        image = CommCareImage.get(self.image_id)
+        return absolute_reverse(ViewMultimediaFile.urlname, args=[image.doc_type, image._id])

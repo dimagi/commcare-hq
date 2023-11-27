@@ -29,11 +29,13 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqmedia.models import LogoForSystemEmailsReference
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.tasks import send_domain_registration_email
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.util.view_utils import absolute_reverse
+from corehq.toggles import USE_LOGO_IN_SYSTEM_EMAILS
 
 APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']
 
@@ -279,3 +281,16 @@ def send_mobile_experience_reminder(recipient, full_name):
         logging.warning(
             "Can't send email, but the message was:\n%s" % message_plaintext)
         raise
+
+
+def project_logo_emails_context(domain):
+    if USE_LOGO_IN_SYSTEM_EMAILS.enabled(domain):
+        try:
+            image_reference = LogoForSystemEmailsReference.objects.get(domain=domain)
+            return {
+                "base_container_template": "registration/email/base_templates/_base_container_project_logo.html",
+                "link_to_logo": image_reference.full_url_to_image()
+            }
+        except LogoForSystemEmailsReference.DoesNotExist:
+            pass
+    return {}
