@@ -3,13 +3,15 @@ hqDefine("geospatial/js/gps_capture",[
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'reports/js/config.dataTables.bootstrap',
     "hqwebapp/js/bootstrap3/components.ko", // for pagination
     'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
+    datatablesConfig
 ) {
     'use strict';
     const MAP_CONTAINER_ID = "geospatial-map";
@@ -361,5 +363,6 @@ hqDefine("geospatial/js/gps_capture",[
         $("#no-gps-list-user").koApplyBindings(dataItemListModel('user'));
 
         initMap();
+        datatablesConfig.HQReportDataTables(initialPageData.get('dataTablesOptions'));
     });
 });

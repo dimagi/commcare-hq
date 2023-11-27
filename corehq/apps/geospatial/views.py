@@ -53,6 +53,7 @@ from .utils import (
     set_user_gps_property,
     create_case_with_gps_property,
 )
+from ..reports.datatables import DataTablesHeader, DataTablesColumn
 
 
 def geospatial_default(request, *args, **kwargs):
@@ -277,13 +278,36 @@ class GPSCaptureView(BaseDomainView):
             data_type=CaseProperty.DataType.GPS,
         ).values_list('case_type__name', flat=True).distinct()
 
+        data_tables_options = {
+            'slug': self.urlname,
+            'defaultRows': 10,
+            'startAtRowNum': 0,
+            'showAllRowsOption': False,
+            'autoWidth': False,
+        }
+
         page_context = {
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'case_types_with_gps': list(case_types),
             'couch_user_username': self.request.couch_user.raw_username,
+            'headers': self.headers(),
+            'data_tables_options': data_tables_options,
         }
         page_context.update(self._case_filters_context())
         return page_context
+
+    def headers(self):
+        headers = DataTablesHeader(
+            DataTablesColumn(_("Case Type"), prop_name="type.exact"),
+            DataTablesColumn(_("Name"), prop_name="name.exact", css_class="case-name-link"),
+            DataTablesColumn(_("Owner"), prop_name="owner_display", sortable=False),
+            DataTablesColumn(_("Created Date"), prop_name="opened_on"),
+            DataTablesColumn(_("Created By"), prop_name="opened_by_display", sortable=False),
+            DataTablesColumn(_("Modified Date"), prop_name="modified_on"),
+            DataTablesColumn(_("Status"), prop_name="get_status_display", sortable=False)
+        )
+        headers.custom_sort = [[5, 'desc']]
+        return headers
 
     def _case_filters_context(self):
         # set up context for report filters template to be used for case filtering
