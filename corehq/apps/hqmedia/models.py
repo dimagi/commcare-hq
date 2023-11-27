@@ -4,6 +4,7 @@ from copy import copy
 from datetime import datetime
 from io import BytesIO
 
+from django.db import models
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -1030,3 +1031,9 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 has_restored = True
                 del self.archived_media[LOGO_ARCHIVE_KEY][slug]
         return has_restored
+
+
+class LogoForSystemEmailsReference(models.Model):
+    domain = models.CharField(max_length=255, unique=True, null=False)
+    # Doc ID of the CommCareImage the object references
+    image_id = models.CharField(max_length=255, null=False)
