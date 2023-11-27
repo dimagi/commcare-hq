@@ -259,6 +259,19 @@ You can view the %s here: %s""" % (
         logging.warning("Can't send email, but the message was:\n%s" % message)
 
 
+def project_logo_emails_context(domain):
+    if USE_LOGO_IN_SYSTEM_EMAILS.enabled(domain):
+        try:
+            image_reference = LogoForSystemEmailsReference.objects.get(domain=domain)
+            return {
+                "base_container_template": "registration/email/base_templates/_base_container_project_logo.html",
+                "link_to_logo": image_reference.full_url_to_image()
+            }
+        except LogoForSystemEmailsReference.DoesNotExist:
+            pass
+    return {}
+
+
 def send_mobile_experience_reminder(recipient, full_name, domain):
     url = absolute_reverse("login")
 
@@ -283,16 +296,3 @@ def send_mobile_experience_reminder(recipient, full_name, domain):
         logging.warning(
             "Can't send email, but the message was:\n%s" % message_plaintext)
         raise
-
-
-def project_logo_emails_context(domain):
-    if USE_LOGO_IN_SYSTEM_EMAILS.enabled(domain):
-        try:
-            image_reference = LogoForSystemEmailsReference.objects.get(domain=domain)
-            return {
-                "base_container_template": "registration/email/base_templates/_base_container_project_logo.html",
-                "link_to_logo": image_reference.full_url_to_image()
-            }
-        except LogoForSystemEmailsReference.DoesNotExist:
-            pass
-    return {}
