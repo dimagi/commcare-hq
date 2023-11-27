@@ -74,6 +74,8 @@ hqDefine("geospatial/js/geospatial_map", [
         self.pollUrl = ko.observable('');
         self.isBusy = ko.observable(false);
 
+        self.hasMissingData = ko.observable(false);  // True if the user attemps disbursement with polygon filtering that includes no cases/users.
+
         self.setBusy = function (isBusy) {
             self.isBusy(isBusy);
             $("#hq-content *").prop("disabled", isBusy);
@@ -290,7 +292,10 @@ hqDefine("geospatial/js/geospatial_map", [
                     });
                 }
 
+                // User might do polygon filtering on an area with no cases/users. We should not do
+                // disbursement if this is the case
                 const hasValidData = selectedCases.length && selectedUsers.length;
+                disbursementRunner.hasMissingData(!hasValidData);
                 if (hasValidData) {
                     disbursementRunner.runCaseDisbursementAlgorithm(selectedCases, selectedUsers);
                 }
@@ -449,6 +454,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
             disbursementRunner = new disbursementRunnerModel();
             $("#disbursement-spinner").koApplyBindings(disbursementRunner);
+            $("#disbursement-error").koApplyBindings(disbursementRunner);
 
             return;
         }
