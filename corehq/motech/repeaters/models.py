@@ -1355,12 +1355,18 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
         ``response`` can be a Requests response instance, or True if the
         payload did not result in an API call.
         """
+        # NOTE a 204 status here could mean either
+        # 1. the request was not sent, in which case response is
+        #    probably RepeaterResponse(204, "No Content")
+        # 2. the request was sent, and the remote end responded
+        #    with 204 (No Content)
+        # Interpreting 204 as Empty (request not sent) is wrong,
+        # although the Couch RepeatRecord did the same.
+        code = getattr(response, "status_code", None)
+        state = State.Empty if code == 204 else State.Success
         self.repeater.reset_next_attempt()
-        self.attempt_set.create(
-            state=State.Success,
-            message=format_response(response) or '',
-        )
-        self.state = State.Success
+        self.attempt_set.create(state=state, message=format_response(response) or '')
+        self.state = state
         self.next_check = None
         self.save()
 
