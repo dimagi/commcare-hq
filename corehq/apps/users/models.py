@@ -2703,6 +2703,8 @@ class Invitation(models.Model):
             "inviter": inviter.formatted_name,
             "url_prefix": get_static_url_prefix(),
         }
+        from corehq.apps.registration.utils import project_logo_emails_context
+        params.update(project_logo_emails_context(domain_obj.name))
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
         lang = guess_domain_language(self.domain)

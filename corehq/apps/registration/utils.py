@@ -259,7 +259,7 @@ You can view the %s here: %s""" % (
         logging.warning("Can't send email, but the message was:\n%s" % message)
 
 
-def send_mobile_experience_reminder(recipient, full_name):
+def send_mobile_experience_reminder(recipient, full_name, domain):
     url = absolute_reverse("login")
 
     params = {
@@ -267,6 +267,7 @@ def send_mobile_experience_reminder(recipient, full_name):
         "url": url,
         'url_prefix': get_static_url_prefix(),
     }
+    params.update(project_logo_emails_context(domain))
     message_plaintext = render_to_string(
         'registration/email/mobile_signup_reminder.txt', params)
     message_html = render_to_string(

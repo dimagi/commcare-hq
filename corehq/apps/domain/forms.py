@@ -119,6 +119,7 @@ from corehq.apps.hqwebapp.widgets import (
     GeoCoderInput,
     Select2Ajax,
 )
+from corehq.apps.registration.utils import project_logo_emails_context
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.toggles import (
@@ -1496,6 +1497,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
                 'token': token_generator.make_token(user),
                 'protocol': 'https' if use_https else 'http',
             }
+            c.update(project_logo_emails_context(domain))
             subject = render_to_string(subject_template_name, c)
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
