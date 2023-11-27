@@ -511,7 +511,8 @@ hqDefine('geospatial/js/models', [
             self.btnExportDisabled(false);
             self.btnSaveDisabled(true);
             if (self.shouldSelectAfterFilter) {
-                self.mapObj.selectAllMapItems(polygonObj.geoJson.features);
+                const features = polygonObj.geoJson.features.concat(mapObj.drawControls.getAll().features);
+                self.mapObj.selectAllMapItems(features);
             }
         });
 
