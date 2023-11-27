@@ -365,6 +365,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.addProperty = function () {
             self.search_properties.push(searchPropertyModel({}, saveButton));
         };
+        self.addGroupProperty = function () {
+            self.search_properties.push(searchPropertyModel({isGroup:true}, saveButton));
+        };
         self.removeProperty = function (property) {
             self.search_properties.remove(property);
         };
