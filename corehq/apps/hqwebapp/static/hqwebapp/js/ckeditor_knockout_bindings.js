@@ -29,30 +29,11 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
     ko.bindingHandlers.ckeditor = {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
             var options = {
-                    simpleUpload: {
-                        uploadUrl: initialPageData.reverse(element.attributes['data-image-upload-url'].value),
-                        withCredentials: true,
-                        headers: {
-                            'X-CSRFTOKEN': $("#csrfTokenContainer").val(),
-                        },
-                    },
-                    htmlSupport: {
-                    // TODO: Only allow some html!
-                        allow: [
-                            {
-                                name: /.*/,
-                                attributes: true,
-                                classes: true,
-                                styles: true,
-                            },
-                        ],
-                    },
                     plugins: [
                         CKEditor5.link.AutoLink,
                         CKEditor5.autoformat.Autoformat,
                         CKEditor5.basicStyles.Bold,
                         CKEditor5.basicStyles.Italic,
-                        CKEditor5.blockQuote.BlockQuote,
                         CKEditor5.essentials.Essentials,
                         CKEditor5.font.Font,
                         CKEditor5.font.FontColor,
@@ -92,15 +73,16 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                             'indent',
                             '|',
                             'uploadImage',
-                            'blockQuote',
                             'undo',
                             'redo',
                             'restrictedEditing',
                         ],
                     },
                     image: {
+                        insert: {
+                            type: 'inline',
+                        },
                         toolbar: [
-                            'imageStyle:block',
                             'imageStyle:side',
                             '|',
                             'toggleImageCaption',
@@ -108,8 +90,66 @@ hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
                             'linkImage',
                         ],
                     },
+                    simpleUpload: {
+                        uploadUrl: initialPageData.reverse(element.attributes['data-image-upload-url'].value),
+                        withCredentials: true,
+                        headers: {
+                            'X-CSRFTOKEN': $("#csrfTokenContainer").val(),
+                        },
+                    },
+                    htmlSupport: {
+                    // We allow all HTML here, and filter it out in a sanitizing step
+                        allow: [
+                            {
+                                name: /.*/,
+                                attributes: true,
+                                classes: true,
+                                styles: true,
+                            },
+                        ],
+                    },
                     restrictedEditing: {
-                        allowedCommands: ['bold'],
+                        allowedCommands: [
+                            "fontColor",
+                            "fontBackgroundColor",
+                            "deleteForward",
+                            "forwardDelete",
+                            "delete",
+                            "bold",
+                            "italic",
+                            "enter",
+                            "selectAll",
+                            "shiftEnter",
+                            "insertText",
+                            "input",
+                            "undo",
+                            "redo",
+                            "fontFamily",
+                            "fontSize",
+                            "paragraph",
+                            "insertParagraph",
+                            "heading",
+                            "horizontalLine",
+                            "insertImage",
+                            "replaceImageSource",
+                            "imageInsert",
+                            "imageTextAlternative",
+                            "imageTypeInline",
+                            "toggleImageCaption",
+                            "imageStyle",
+                            "resizeImage",
+                            "imageResize",
+                            "uploadImage",
+                            "imageUpload",
+                            "indent",
+                            "outdent",
+                            "link",
+                            "unlink",
+                            "numberedList",
+                            "bulletedList",
+                            "indentList",
+                            ,"outdentList",
+                        ],
                     },
                 },
                 editorInstance = undefined;
