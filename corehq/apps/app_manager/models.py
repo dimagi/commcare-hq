@@ -1855,6 +1855,7 @@ class DetailColumn(IndexedSchema):
     horizontal_align = StringProperty(exclude_if_none=True)
     vertical_align = StringProperty(exclude_if_none=True)
     font_size = StringProperty(exclude_if_none=True)
+    show_border = BooleanProperty(exclude_if_none=True)
 
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
