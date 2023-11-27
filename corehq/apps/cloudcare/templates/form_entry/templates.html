@@ -49,7 +49,7 @@
               css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
           "></i>
         </div>
-        <span class="caption" data-bind="html: caption(), attr: {id: captionId()}"></span><!-- Markdown interferes with header styling -->
+        <span class="webapp-markdown-output caption" data-bind="html: caption_markdown(), attr: {id: captionId()}"></span>
         <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
         <button class="btn btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
