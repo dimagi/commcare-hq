@@ -310,24 +310,26 @@ hqDefine('geospatial/js/models', [
 
         self.selectAllMapItems = function (featuresArr) {
             // See https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#drawselectionchange
-            if (!featuresArr.length) {
-                return;
+            for (const caseItem of self.caseMapItems()) {
+                self.selectMapItemInPolygons(featuresArr, caseItem);
             }
-
-            for (const feature of featuresArr) {
-                if (feature.geometry.type === 'Polygon') {
-                    self.selectMapItemsInPolygon(feature, self.caseMapItems());
-                    self.selectMapItemsInPolygon(feature, self.userMapItems());
-                }
+            for (const userItem of self.userMapItems()) {
+                self.selectMapItemInPolygons(featuresArr, userItem);
             }
         };
 
-        self.selectMapItemsInPolygon = function (polygonFeature, mapItems) {
-            _.values(mapItems).filter(function (mapItem) {
-                if (mapItem.itemData.coordinates) {
-                    mapItem.isSelected(isMapItemInPolygon(polygonFeature, mapItem.itemData.coordinates));
+        self.selectMapItemInPolygons = function (polygonArr, mapItem) {
+            let isSelected = false;
+            for (const polygon of polygonArr) {
+                if (polygon.geometry.type !== 'Polygon') {
+                    continue;
                 }
-            });
+                if (isMapItemInPolygon(polygon, mapItem.itemData.coordinates)) {
+                    isSelected = true;
+                    break;
+                }
+            }
+            mapItem.isSelected(isSelected);
         };
 
         function isMapItemInPolygon(polygonFeature, coordinates) {
