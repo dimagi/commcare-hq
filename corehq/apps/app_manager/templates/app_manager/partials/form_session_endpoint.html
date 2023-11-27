@@ -1,0 +1,46 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+            <div class="form-group">
+                <label class="control-label {% css_label_class %}">
+                    {% trans 'Session Endpoint ID' %}
+                    <span class="hq-help-template"
+                        data-title="{% trans 'Session Endpoint ID' %}"
+                        data-content="{% blocktrans %}A session endpoint ID allows Android apps to call in to
+                                        CommCare at this position.{% endblocktrans %}"></span>
+                </label>
+                <div id="session-endpoint-id"
+                    class="{% css_field_class %} commcare-feature"
+                    data-since-version="2.51"
+                    class="{% css_field_class %}">
+                    <input class="code form-control"
+                        type="text"
+                        id="session_endpoint_id"
+                        name="session_endpoint_id"
+                        value="{{ form.session_endpoint_id|default:'' }}" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label {% css_label_class %}">
+                    {% trans 'Allow endpoint to access hidden forms' %}
+                    <span class="hq-help-template"
+                        data-title="{% trans 'Allow access to hidden forms' %}"
+                        data-content="{% blocktrans %}Turn this setting on to allow this endpoint to access
+                                        hidden forms.{% endblocktrans %}"></span>
+                </label>
+                <div id="access-hidden-forms"
+                    class="{% css_field_class %} commcare-feature"
+                    data-since-version="2.51"
+                    class="{% css_field_class %}">
+                    <input type="checkbox"
+                        id="access_hidden_forms"
+                        name="access_hidden_forms"
+                        value="true"
+                        style="margin-top: 10px"
+                        {% comment %} respect_relevancy is an inverse condition of allowing access to hidden forms
+                        {% endcomment %}
+                        {% if form.respect_relevancy is False %} checked {% endif %}
+                    />
+                    <input type="hidden" name="access_hidden_forms" value="false"/>
+                </div>
+            </div>

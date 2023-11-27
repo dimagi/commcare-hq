@@ -2452,7 +2452,10 @@ CUSTOM_EMAIL_GATEWAY = StaticToggle(
     'custom_email_gateway',
     'Allows user to define custom email gateway that can be used to send emails from HQ',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link=('https://confluence.dimagi.com/display/USH/'
+               'Allow+user+to+define+custom+email+gateway+that+'
+               'can+be+used+to+send+emails+from+HQ'),
 )
 
 ALLOW_WEB_APPS_RESTRICTION = StaticToggle(
@@ -2664,4 +2667,13 @@ DATA_DICTIONARY = FrozenPrivilegeToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Project level data dictionary of cases',
     help_link='https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary'
+)
+
+
+CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
+    slug='custom_domain_banners',
+    label='Allow projects to add banners for their users on HQ',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allow projects to add banners visible to their users on HQ on every login',
 )

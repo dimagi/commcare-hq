@@ -4,6 +4,7 @@ hqDefine("geospatial/js/gps_capture",[
     'underscore',
     'hqwebapp/js/initial_page_data',
     "hqwebapp/js/bootstrap3/components.ko", // for pagination
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
@@ -12,6 +13,7 @@ hqDefine("geospatial/js/gps_capture",[
 ) {
     'use strict';
     const MAP_CONTAINER_ID = "geospatial-map";
+    const USERS_PER_PAGE = 10;
 
     var map;
     var selectedDataListObject;
@@ -130,6 +132,13 @@ hqDefine("geospatial/js/gps_capture",[
             return !self.showLoadingSpinner() && !self.hasError();
         });
 
+        self.isCreatingCase = ko.observable(false);
+        self.hasCreateCaseError = ko.observable(false);
+        self.availableCaseTypes = ko.observableArray([]);
+        self.selectedCaseType = ko.observable('');
+        self.hasCaseTypeError = ko.observable(false);
+        self.selectedOwnerId = ko.observable(null);
+
         self.captureLocationForItem = function (item) {
             self.itemLocationBeingCapturedOnMap(item);
             selectedDataListObject = self;
@@ -179,15 +188,26 @@ hqDefine("geospatial/js/gps_capture",[
             self.goToPage(1);
         };
 
+        self.onOwnerIdChange = function (_, e) {
+            self.selectedOwnerId($(e.currentTarget).select2('val'));
+        };
+
         self.saveDataRow = function (dataItem) {
             self.isSubmissionSuccess(false);
             self.hasSubmissionError(false);
+            let dataItemJson = ko.mapping.toJS(dataItem);
+            if (self.isCreatingCase()) {
+                dataItemJson['case_type'] = self.selectedCaseType();
+                dataItemJson['owner_id'] = self.selectedOwnerId();
+            }
+
             $.ajax({
                 method: 'POST',
                 url: initialPageData.reverse('gps_capture'),
                 data: JSON.stringify({
                     'data_type': self.dataType,
-                    'data_item': ko.mapping.toJS(dataItem),
+                    'data_item': dataItemJson,
+                    'create_case': self.isCreatingCase(),
                 }),
                 dataType: "json",
                 contentType: "application/json; charset=utf-8",
@@ -195,11 +215,79 @@ hqDefine("geospatial/js/gps_capture",[
                     dataItem.hasUnsavedChanges(false);
                     self.isSubmissionSuccess(true);
                     resetMap();
+                    self.resetCaseCreate();
+                    $(window).scrollTop(0);
                 },
                 error: function () {
                     self.hasSubmissionError(true);
                 },
             });
+        };
+
+        self.startCreateCase = function () {
+            self.isCreatingCase(true);
+            const caseToCreate = new dataItemModel(null, self.dataType);
+            self.captureLocationForItem(caseToCreate);
+
+            const placeholderStr = `${initialPageData.get('couch_user_username')} (${gettext("current user")})`;
+            $("#owner-select").select2({
+                placeholder: placeholderStr,
+                cache: true,
+                allowClear: true,
+                delay: 250,
+                ajax: {
+                    url: initialPageData.reverse('paginate_mobile_workers'),
+                    dataType: 'json',
+                    data: function (params) {
+                        return {
+                            query: params.term,
+                            page_limit: USERS_PER_PAGE,
+                            page: params.page,
+                        };
+                    },
+                    processResults: function (data, params) {
+                        params.page = params.page || 1;
+
+                        const hasMore = (params.page * USERS_PER_PAGE) < data.total;
+                        const dataResults = $.map(data.users, function (user) {
+                            return {
+                                text: user.username,
+                                id: user.user_id,
+                            };
+                        });
+
+                        return {
+                            results: dataResults,
+                            pagination: {
+                                more: hasMore,
+                            },
+                        };
+                    },
+                },
+            });
+        };
+
+        self.finishCreateCase = function () {
+            const hasValidName = self.itemLocationBeingCapturedOnMap().name().length > 0;
+            self.hasCreateCaseError(!hasValidName);
+            const hasValidCaseType = self.selectedCaseType() && self.selectedCaseType().length > 0;
+            self.hasCaseTypeError(!hasValidCaseType);
+            if (hasValidName && hasValidCaseType) {
+                self.saveDataRow(self.itemLocationBeingCapturedOnMap());
+            }
+        };
+
+        self.cancelCreateCase = function () {
+            self.resetCaseCreate();
+            resetMap();
+        };
+
+        self.resetCaseCreate = function () {
+            self.isCreatingCase(false);
+            self.hasCreateCaseError(false);
+            self.hasCaseTypeError(false);
+            self.selectedCaseType('');
+            self.selectedOwnerId(null);
         };
 
         return self;
@@ -265,8 +353,11 @@ hqDefine("geospatial/js/gps_capture",[
     }
 
     $(function () {
+        const caseDataItemListInstance = dataItemListModel('case');
+        caseDataItemListInstance.availableCaseTypes(initialPageData.get('case_types_with_gps'));
+
         $("#tabs-list").koApplyBindings(TabListViewModel());
-        $("#no-gps-list-case").koApplyBindings(dataItemListModel('case'));
+        $("#no-gps-list-case").koApplyBindings(caseDataItemListInstance);
         $("#no-gps-list-user").koApplyBindings(dataItemListModel('user'));
 
         initMap();

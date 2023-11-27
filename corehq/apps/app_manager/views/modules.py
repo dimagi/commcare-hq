@@ -278,6 +278,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'inline_search': module.search_config.inline_search,
                 'instance_name': module.search_config.instance_name or "",
                 'include_all_related_cases': module.search_config.include_all_related_cases,
+                'dynamic_search': app.split_screen_dynamic_search,
             },
         },
     }
@@ -530,7 +531,8 @@ def _form_endpoint_options(app, module, lang=None):
         {
             "id": form.session_endpoint_id,
             "form_name": trans(form.name, langs),
-            "module_name": trans(mod.name, langs)
+            "module_name": trans(mod.name, langs),
+            "module_case_type": mod.case_type
         }
         for mod in app.get_modules()
         for form in mod.get_forms() if form.session_endpoint_id and form.is_auto_submitting_form(module.case_type)
@@ -1369,7 +1371,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 custom_related_case_property=search_properties.get('custom_related_case_property', ""),
                 inline_search=search_properties.get('inline_search', False),
                 instance_name=instance_name,
-                include_all_related_cases=search_properties.get('include_all_related_cases', False)
+                include_all_related_cases=search_properties.get('include_all_related_cases', False),
+                dynamic_search=app.split_screen_dynamic_search and not module.is_auto_select(),
             )
 
     resp = {}

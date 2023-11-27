@@ -89,7 +89,7 @@
                             </div>
                         </td>
                         <td>
-                            <button type="button" class="btn btn-default" data-bind="event: {click: $root.captureLocationForItem.bind($data)}">
+                            <button type="button" class="btn btn-default" data-bind="event: {click: $root.captureLocationForItem.bind($data)}, disable: $root.isCreatingCase">
                                 {% trans "Capture on Map" %}
                             </button>
                             <button type="button" class="btn btn-primary" data-bind="enable: canSaveRow, event: {click: $root.saveDataRow.bind($data)}">
@@ -135,10 +135,63 @@
                                 showSpinner: showPaginationSpinner"></pagination>
         </div>
     </div>
-    <h3 data-bind="visible: itemLocationBeingCapturedOnMap">
-      <div data-bind="with: itemLocationBeingCapturedOnMap">
-          {% trans "Capturing location for:" %}
-          <span data-bind="text: name"></span>
-      </div>
-    </h3>
+    {% if data_type == 'case' %}
+        <button class="btn btn-primary" data-bind="click: startCreateCase, hidden: isCreatingCase, disable: itemLocationBeingCapturedOnMap">
+            {% trans 'Create New Case' %}
+        </button>
+        <button class="btn btn-primary" data-bind="click: finishCreateCase, visible: isCreatingCase">
+            {% trans 'Save Case' %}
+        </button>
+        <button class="btn btn-default" data-bind="click: cancelCreateCase, visible: isCreatingCase">
+            {% trans 'Cancel' %}
+        </button>
+    {% endif %}
+    <div class="panel" data-bind="visible: itemLocationBeingCapturedOnMap">
+        <div data-bind="with: itemLocationBeingCapturedOnMap" class="row">
+            <h3 class="col">
+                {% trans "Capturing location for:" %}
+                <span data-bind="text: name"></span>
+            </h3>
+            <div data-bind="visible: $root.isCreatingCase" class="form-row">
+                <div class="col" data-bind="css: { 'has-error': $root.hasCreateCaseError }">
+                    <label class="control-label col-sm-1 col-md-1 col-lg-1">
+                        {% trans 'Case Name' %}
+                    </label>
+                    <div class="col-sm-2 col-md-2 col-lg-2" >
+                        <input data-bind="value: name, visible: $root.isCreatingCase" type="text" class="form-control" placeholder="{% trans 'Enter new case name...' %}" />
+                        <span class="help-block" data-bind="visible: $root.hasCreateCaseError">
+                            {% trans 'A case name is required' %}
+                        </span>
+                    </div>
+                </div>
+                <div class="col" data-bind="css: { 'has-error': $root.hasCaseTypeError }">
+                    <label class="control-label col-sm-1 col-md-1 col-lg-1">
+                        {% trans 'Case Type' %}
+                    </label>
+                    <div class="col-sm-2 col-md-2 col-lg-2">
+                        <select class="form-control" data-bind="select2: $root.availableCaseTypes, value: $root.selectedCaseType">
+                        </select>
+                        <span class="help-block" data-bind="visible: $root.hasCaseTypeError">
+                            {% trans 'A case type is required' %}
+                        </span>
+                    </div>
+                </div>
+                <div class="col">
+                    <label class="control-label col-sm-1 col-md-1 col-lg-1">
+                        {% trans 'Owner' %}
+                    </label>
+                    <div class="col-sm-3 col-md-3 col-lg-3">
+                        <select class="form-control"
+                                type="text"
+                                id="owner-select"
+                                data-bind="select2: {},
+                                           optionsText: 'text',
+                                           optionsValue: 'id',
+                                           event: {change: $root.onOwnerIdChange}">
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

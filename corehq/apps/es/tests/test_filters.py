@@ -182,16 +182,10 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                             }
                         },
                         {
-                            "geo_shape": {
+                            "geo_bounding_box": {
                                 "location": {
-                                    "shape": {
-                                        "type": "envelope",
-                                        "coordinates": [
-                                            [-74.1, 40.73],
-                                            [-71.12, 40.01]
-                                        ]
-                                    },
-                                    "relation": "within"
+                                    "top_left": "40.73 -74.1",
+                                    "bottom_right": "40.01 -71.12",
                                 }
                             }
                         },
@@ -216,13 +210,13 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
         )
 
     def test_geo_shape(self):
-        shape = {
-            'type': 'envelope',
-            # NOTE: coordinate order is longitude, latitude (X, Y)
-            'coordinates': [[-74.1, 40.73], [-71.12, 40.01]]
-        }
+        points_list = [
+            {"lat": 40.73, "lon": -74.1},
+            {"lat": 40.01, "lon": -71.12},
+        ]
+
         query = CaseSearchES().filter(
-            filters.geo_shape('case_gps', shape)
+            filters.geo_shape('case_gps', points_list)
         )
         json_output = {
             "query": {
@@ -231,14 +225,49 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                         {
                             "geo_shape": {
                                 "case_gps": {
-                                    "shape": {
-                                        "type": "envelope",
-                                        "coordinates": [
-                                            [-74.1, 40.73],
-                                            [-71.12, 40.01]
-                                        ]
-                                    },
+                                    "shape": [
+                                        {
+                                            "lat": 40.73,
+                                            "lon": -74.1
+                                        },
+                                        {
+                                            "lat": 40.01,
+                                            "lon": -71.12
+                                        }
+                                    ],
                                     "relation": "intersects"
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        self.checkQuery(
+            query,
+            json_output,
+            validate_query=False,
+        )
+
+    def test_geo_grid(self):
+        query = CaseSearchES().filter(
+            filters.geo_grid('location', 'u0')
+        )
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "geo_grid": {
+                                "location": {
+                                    "geohash": "u0"
                                 }
                             }
                         },

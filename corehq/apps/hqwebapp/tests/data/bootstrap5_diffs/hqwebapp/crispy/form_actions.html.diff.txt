@@ -1,0 +1,12 @@
+--- 
++++ 
+@@ -1,5 +1,5 @@
+-<div {% if formactions.attrs %} {{ formactions.flat_attrs|safe }}{% endif %} class="form-actions">
+-    <div class="{{ offsets }} controls {{ field_class }}">
+-        {{ fields_output }}
+-    </div>
++<div class="form-actions{% if 'form-horizontal' in form_class %} row{% endif %}" {% if formactions.attrs %} {{ formactions.flat_attrs|safe }}{% endif %}>
++  <div class="{{ offsets }} {{ field_class }}">
++    {{ fields_output }}
++  </div>
+ </div>

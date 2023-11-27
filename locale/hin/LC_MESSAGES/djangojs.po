@@ -1991,6 +1991,7 @@ msgid "Lookup table was not found in the project"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js
 msgid "Loading..."
 msgstr ""
@@ -2234,6 +2235,7 @@ msgid "A reference to an integer question in this form."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 #: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
 msgid "Case"
 msgstr ""
@@ -2840,10 +2842,6 @@ msgid ""
 "continue to see this message."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
-msgid "Switching project spaces..."
-msgstr ""
-
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
 msgid "Fetching your location..."
 msgstr ""
@@ -3435,12 +3433,34 @@ msgstr ""
 msgid "Sensitive Date"
 msgstr ""
 
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "No group"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Select group"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Group <%- groupCount %>"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid ""
+"Something went wrong processing <%- failedClusters %> groups. These groups "
+"will not be exported."
+msgstr ""
+
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "Name of the Area"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "All locations"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Mobile Worker"
 msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js

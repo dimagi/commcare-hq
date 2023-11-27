@@ -387,6 +387,8 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.is_sso = kwargs.pop('is_sso', False)
+        self.allow_invite_email_only = kwargs.pop('allow_invite_email_only', False)
+        self.invite_email = kwargs.pop('invite_email', False)
         super().__init__(*args, **kwargs)
 
         if settings.ENFORCE_SSO_LOGIN and self.is_sso:
@@ -446,19 +448,26 @@ class WebUserInvitationForm(BaseUserInvitationForm):
         else:
             # web users login with their emails
             self.fields['email'].help_text = _('You will use this email to log in.')
+            if self.allow_invite_email_only:
+                self.fields['email'].widget.attrs['readonly'] = 'readonly'
 
     def clean_email(self):
-        data = super().clean_email()
+        email = super().clean_email()
         # web user login emails should be globally unique
-        duplicate = CouchUser.get_by_username(data)
+        if self.allow_invite_email_only and email != self.invite_email.lower():
+            raise forms.ValidationError(_(
+                "You can only sign up with the email address your invitation was sent to."
+            ))
+
+        duplicate = CouchUser.get_by_username(email)
         if duplicate:
             # sync django user
             duplicate.save()
-        if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
+        if User.objects.filter(username__iexact=email).count() > 0 or duplicate:
             raise forms.ValidationError(_(
                 'Username already taken. Please try another or log in.'
             ))
-        return data
+        return email
 
 
 class MobileWorkerAccountConfirmationForm(BaseUserInvitationForm):

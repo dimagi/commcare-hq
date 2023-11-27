@@ -26,6 +26,7 @@
         </xpath>
       </text>
     </template>
+    {image[endpoint_action]}
   </field>
 
   <field>
@@ -45,6 +46,7 @@
         </xpath>
       </text>
     </template>
+    {header[endpoint_action]}
   </field>
 
   <field>
@@ -64,6 +66,7 @@
         </xpath>
       </text>
     </template>
+    {top_left[endpoint_action]}
   </field>
 
   <field>
@@ -83,6 +86,7 @@
         </xpath>
       </text>
     </template>
+    {top_right[endpoint_action]}
   </field>
 
   <field>
@@ -102,6 +106,7 @@
         </xpath>
       </text>
     </template>
+    {bottom_left[endpoint_action]}
   </field>
 
   <field>
@@ -121,5 +126,6 @@
         </xpath>
       </text>
     </template>
+    {bottom_right[endpoint_action]}
   </field>
 </detail>

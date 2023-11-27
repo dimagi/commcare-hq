@@ -1,0 +1,127 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-hqDefine("hqwebapp/js/bootstrap3/validators.ko", [
++hqDefine("hqwebapp/js/bootstrap5/validators.ko", [
+     'jquery',
+     'knockout',
+     'knockout-validation/dist/knockout.validation.min', // needed for ko.validation
+@@ -6,6 +6,15 @@
+     $,
+     ko
+ ) {
++    'use strict';
++
++    ko.validation.init({
++        errorMessageClass: 'invalid-feedback',
++        errorElementClass: 'is-invalid',
++        decorateElement: true,
++        decorateInputElement: true,
++    }, true);
++
+     ko.validation.rules['emailRFC2822'] = {
+         validator: function (val) {
+             if (val === undefined || val.length === 0) return true;  // do separate validation for required
+@@ -19,52 +28,71 @@
+ 
+     /**
+      * Use this handler to show bootstrap validation states on a form input when
+-     * your input's observable has been extended by KnockoutValidation.
++     * your input's observable has been extended by Knockout Validation
+      *
+      * Pass in the following:
+      * {
+-     *      validator: observableWithValidation,
+-     *      delayedValidator: rateLimitedObservableWithValidation,
++     *      validator: primary observable with validation,
++     *      delayedValidator: de-coupled rate limited observable with validation (optional),
++     *      successMessage: text (optional),
++     *      checkingMessage: text (optional),
+      * }
+      *
+-     * delayedValidator is optional. Useful if you are doing async validation.
++     * delayedValidator is useful if you are doing async validation and want to decouple async validation from
++     * other validators (perhaps for rate limiting). See Organisms > Forms in styleguide for example.
+      *
+-     * You can see initial usage of this in registration/js/new_user.ko.js
+      */
+     ko.bindingHandlers.koValidationStateFeedback = {
+-        init: function (element) {
+-            $(element).after($('<span />').addClass('fa form-control-feedback'));
++        init: function (element, valueAccessor) {
++            let options = valueAccessor(),
++                successMessage = ko.unwrap(options.successMessage),
++                checkingMessage = ko.unwrap(options.checkingMessage);
++            $(element)
++                .after($('<span />').addClass('valid-feedback').text(successMessage))
++                .after($('<span />').addClass('validating-feedback')
++                    .append($('<i class="fa fa-spin fa-spinner"></i>')).append(" " + (checkingMessage || gettext("Checking..."))))
++                .after($('<span />').addClass('ko-delayed-feedback'));
+         },
+         update: function (element, valueAccessor) {
+-            var options = valueAccessor(),
+-                $feedback = $(element).next('.form-control-feedback'),
+-                $formGroup = $(element).parent('.form-group');
+-
+-            var validatorVal = ko.unwrap(options.validator);
+-
+-            // reset formGroup
+-            $formGroup
+-                .addClass('has-feedback')
+-                .removeClass('has-success has-error has-warning');
+-
+-            // reset feedback
+-            $feedback
+-                .removeClass('fa-check fa-remove fa-spin fa-spinner');
++            let options = valueAccessor(),
++                validatorVal = ko.unwrap(options.validator),
++                isValid = false,
++                isValidating = false,
++                isDelayedValid;
+ 
+             if (validatorVal === undefined) {
+                 return;
+             }
+-            var isValid = (
+-                (options.validator.isValid() && options.delayedValidator === undefined) ||
+-                (options.validator.isValid() && options.delayedValidator !== undefined && options.delayedValidator.isValid())
+-            );
+ 
+-            if (isValid) {
+-                $feedback.addClass("fa-check");
+-                $formGroup.addClass("has-success");
+-            } else if (validatorVal !== undefined) {
+-                $feedback.addClass("fa-remove");
+-                $formGroup.addClass("has-error");
++            if (options.delayedValidator === undefined) {
++                isValid = options.validator.isValid();
++                isValidating = options.validator.isValidating !== undefined && options.validator.isValidating();
++                if (isValid !== undefined && !isValid) $(element).addClass('is-invalid');
++            } else {
++                isValidating = options.validator.isValid() && options.delayedValidator.isValidating();
++
++                isDelayedValid = options.delayedValidator.isValid();
++                if (!isDelayedValid && !isValidating) {
++                    $(element).addClass('is-invalid').removeClass('is-valid is-validating');
++                    $(element).next('.ko-delayed-feedback')
++                        .addClass('invalid-feedback').text(options.delayedValidator.error());
++                } else {
++                    $(element).next('.ko-delayed-feedback').removeClass('invalid-feedback').text("");
++                }
++
++                isValid = options.validator.isValid() && isDelayedValid;
++            }
++
++            if (isValidating) {
++                $(element).removeClass('is-valid is-invalid').addClass('is-validating');
++            } else {
++                $(element).removeClass('is-validating');
++            }
++
++            if (isValid && !isValidating) {
++                $(element).addClass('is-valid').removeClass('is-invalid is-validating');
++            } else if (!isValid) {
++                $(element).removeClass('is-valid');
+             }
+         },
+     };

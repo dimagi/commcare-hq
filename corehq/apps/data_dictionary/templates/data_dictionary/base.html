@@ -269,14 +269,23 @@
               </div>
               {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
                 <div class="row-item main-form">
-                <select class="form-control"
+                  <select class="form-control"
+                          data-bind="
+                            options: $root.availableDataTypes,
+                            optionsCaption: 'Select a data type',
+                            optionsText: 'display',
+                            optionsValue: 'value',
+                            value: dataType,
+                            disable: isGeoCaseProp,">
+                  </select>
+                  <span class="hq-help" style="height: fit-content"
                         data-bind="
-                                    options: $root.availableDataTypes,
-                                    optionsCaption: 'Select a data type',
-                                    optionsText: 'display',
-                                    optionsValue: 'value',
-                                    value: dataType,
-                                "></select>
+                          popover: {
+                            content: '{% blocktrans %}This GPS case property is currently being used to store the geolocation for cases, so the data type cannot be changed.{% endblocktrans %}',
+                            trigger: 'hover' },
+                          visible: isGeoCaseProp">
+                    <i class="fa fa-question-circle icon-question-sign"></i>
+                  </span>
                 </div>
               {% endif %}
               <div class="row-item main-form">
