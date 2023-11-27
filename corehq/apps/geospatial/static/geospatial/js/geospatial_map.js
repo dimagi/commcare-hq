@@ -85,6 +85,9 @@ hqDefine("geospatial/js/geospatial_map", [
         };
 
         self.handleDisbursementResults = function (result) {
+            // Clean stale disbursement results
+            mapModel.removeDisbursementLayers();
+
             var groupId = 0;
             Object.keys(result).forEach((userId) => {
                 let user = mapModel.userMapItems().find((userModel) => {return userModel.itemId === userId;});

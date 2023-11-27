@@ -378,6 +378,15 @@ hqDefine('geospatial/js/models', [
                 maxZoom: 10,  // 0-23
             });
         };
+
+        self.removeDisbursementLayers = function () {
+            const mapLayers = self.mapInstance.getStyle().layers;
+            mapLayers.forEach(function (layer) {
+                if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
+                    self.mapInstance.removeLayer(layer.id);
+                }
+            });
+        };
     };
 
     var PolygonFilter = function (mapObj, shouldUpdateQueryParam, shouldSelectAfterFilter) {
