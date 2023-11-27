@@ -13,6 +13,7 @@ hqDefine('geospatial/js/models', [
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
+    const DISBURSEMENT_LAYER_PREFIX = 'route-';
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -304,7 +305,7 @@ hqDefine('geospatial/js/models', [
         }
 
         self.getLineFeatureId = function (itemId) {
-            return "route-" + itemId;
+            return DISBURSEMENT_LAYER_PREFIX + itemId;
         };
 
         self.selectAllMapItems = function (featuresArr) {
