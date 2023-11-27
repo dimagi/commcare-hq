@@ -280,6 +280,7 @@ class GPSCaptureView(BaseDomainView):
         page_context = {
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'case_types_with_gps': list(case_types),
+            'couch_user_username': self.request.couch_user.raw_username,
         }
         page_context.update(self._case_filters_context())
         return page_context
@@ -313,7 +314,7 @@ class GPSCaptureView(BaseDomainView):
 
         if data_type == 'case':
             if create_case:
-                data_item['owner_id'] = request.couch_user.user_id
+                data_item['owner_id'] = data_item['owner_id'] or request.couch_user.user_id
                 create_case_with_gps_property(request.domain, data_item)
             else:
                 set_case_gps_property(request.domain, data_item)
