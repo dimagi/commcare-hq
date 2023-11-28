@@ -3,8 +3,9 @@ from django.core import mail
 
 from unittest import mock
 from django_prbac.models import Role
-from stripe import Charge
+import stripe
 from stripe.stripe_object import StripeObject
+from corehq.apps.accounting.tests.test_models import setup_stripe_common_mocks
 
 from dimagi.utils.dates import add_months_to_date
 
@@ -22,8 +23,8 @@ from corehq.apps.accounting.payment_handlers import (
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.generator import (
-    FakeStripeCard,
-    FakeStripeCustomer,
+    FakeStripeCardManager,
+    FakeStripeCustomerManager,
 )
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from django.db import transaction
@@ -53,8 +54,8 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         cls.autopay_account.save()
         web_user = generator.arbitrary_user(domain_name=cls.domain.name, is_active=True, is_webuser=True)
         cls.autopay_user_email = web_user.email
-        cls.fake_card = FakeStripeCard()
-        cls.fake_stripe_customer = FakeStripeCustomer(cards=[cls.fake_card])
+        cls.fake_card = FakeStripeCardManager.create_card()
+        cls.fake_stripe_customer = FakeStripeCustomerManager.create_customer(cards=[cls.fake_card])
         cls.autopay_account.update_autopay_user(cls.autopay_user_email, cls.domain)
 
     @classmethod
@@ -94,10 +95,13 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         tasks.generate_invoices_based_on_date(invoice_date)
 
     @mock.patch.object(StripePaymentMethod, 'customer')
-    def test_get_autopayable_invoices(self, fake_customer):
+    @mock.patch.object(stripe.Customer, 'modify_source')
+    @mock.patch.object(stripe.Customer, 'list_sources')
+    def test_get_autopayable_invoices(self, mock_list_sources, mock_modify_source, fake_customer):
         """
         Invoice.autopayable_invoices() should return invoices that can be automatically paid
         """
+        setup_stripe_common_mocks(mock_list_sources, mock_modify_source)
         self._create_autopay_method(fake_customer)
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription)
         date_due = autopayable_invoice.first().date_due
@@ -116,8 +120,12 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self.assertItemsEqual(autopayable_invoices, [])
 
     @mock.patch.object(StripePaymentMethod, 'customer')
-    @mock.patch.object(Charge, 'create')
-    def test_pay_autopayable_invoices(self, fake_charge, fake_customer):
+    @mock.patch.object(stripe.Charge, 'create')
+    @mock.patch.object(stripe.Customer, 'modify_source')
+    @mock.patch.object(stripe.Customer, 'list_sources')
+    def test_pay_autopayable_invoices(self, mock_list_sources, mock_modify_source, fake_charge, fake_customer):
+        setup_stripe_common_mocks(mock_list_sources, mock_modify_source)
+
         self._create_autopay_method(fake_customer)
         fake_charge.return_value = StripeObject(id='transaction_id')
 
@@ -139,8 +147,13 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self.payment_method.save()
 
     @mock.patch.object(StripePaymentMethod, 'customer')
-    @mock.patch.object(Charge, 'create')
-    def test_double_charge_is_prevented_and_only_one_payment_record_created(self, fake_charge, fake_customer):
+    @mock.patch.object(stripe.Charge, 'create')
+    @mock.patch.object(stripe.Customer, 'modify_source')
+    @mock.patch.object(stripe.Customer, 'list_sources')
+    def test_double_charge_is_prevented_and_only_one_payment_record_created(self, mock_list_sources,
+                                                                            mock_modify_source, fake_charge,
+                                                                            fake_customer):
+        setup_stripe_common_mocks(mock_list_sources, mock_modify_source)
         self._create_autopay_method(fake_customer)
         self.original_outbox_length = len(mail.outbox)
         fake_charge.return_value = StripeObject(id='transaction_id')
@@ -157,8 +170,12 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self.assertEqual(len(mail.outbox), self.original_outbox_length + 1)
 
     @mock.patch.object(StripePaymentMethod, 'customer')
-    @mock.patch.object(Charge, 'create')
-    def test_when_stripe_fails_no_payment_record_exists(self, fake_create, fake_customer):
+    @mock.patch.object(stripe.Charge, 'create')
+    @mock.patch.object(stripe.Customer, 'modify_source')
+    @mock.patch.object(stripe.Customer, 'list_sources')
+    def test_when_stripe_fails_no_payment_record_exists(self, mock_list_sources, mock_modify_source,
+                                                        fake_create, fake_customer):
+        setup_stripe_common_mocks(mock_list_sources, mock_modify_source)
         fake_create.side_effect = Exception
         self._create_autopay_method(fake_customer)
 
