@@ -40,6 +40,10 @@ urlpatterns = [
         name="styleguide_submit_feedback_demo"),
     url(r'^b5/data/validate_ko_demo$', bootstrap5_data.validate_ko_demo,
         name="styleguide_validate_ko_demo"),
+    url(r'^b5/data/datatables_data$', bootstrap5_data.datatables_data,
+        name="styleguide_datatables_data"),
+    url(r'^b5/data/paginated_table_data$', bootstrap5_data.paginated_table_data,
+        name="styleguide_paginated_table_data"),
     url(r'^b5/guidelines/$', bootstrap5.styleguide_code_guidelines,
         name="styleguide_code_guidelines_b5"),
     url(r'^b5/atoms/accessibility/$', bootstrap5.styleguide_atoms_accessibility,
@@ -68,4 +72,6 @@ urlpatterns = [
         name="styleguide_molecules_feedback_b5"),
     url(r'^b5/organisms/forms/$', bootstrap5.styleguide_organisms_forms,
         name="styleguide_organisms_forms_b5"),
+    url(r'^b5/organisms/tables/$', bootstrap5.styleguide_organisms_tables,
+        name="styleguide_organisms_tables_b5"),
 ]
