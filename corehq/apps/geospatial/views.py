@@ -448,3 +448,27 @@ def get_users_with_gps(request, domain):
     ]
 
     return json_response({'user_data': user_data})
+
+
+class NewMpboxView(BaseDomainView):
+    urlname = 'new_mapbox_view'
+    template_name = 'new_mapbox_view.html'
+
+    page_name = _("New Mapbox View")
+    section_name = _("Data")
+
+    @property
+    def page_context(self):
+        page_context = {
+            'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+        }
+        return page_context
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @use_datatables
+    @use_jquery_ui
+    def dispatch(self, *args, **kwargs):
+        return super(NewMpboxView, self).dispatch(*args, **kwargs)

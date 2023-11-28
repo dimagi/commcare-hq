@@ -1,0 +1,22 @@
+{% extends "base_template.html" %}
+{% load compress %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+
+{% block js %}{{ block.super }}
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+    {% compress js %}
+        <script src="{% static 'geospatial/js/new_mapbox_view.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
+
+{% block stylesheets %}
+ {{ block.super }}
+ <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+{% endblock %}
+
+
+{% block page_content %}
+<div id="geospatial-map" style="height: 500px"></div>
+{% endblock %}
