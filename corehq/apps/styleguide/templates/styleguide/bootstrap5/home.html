@@ -1,0 +1,139 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">How to Use This Guide</h1>
+  <p class="sg-lead">
+    This is a communication and reference tool. It can be used to help make decisions that
+    have already been thoughtfully made.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li>
+        <a href="#atomic-design">Atomic Design and Organization</a>
+        <ul>
+          <li><a href="#atomic-design-atoms">Atoms</a></li>
+          <li><a href="#atomic-design-molecules">Molecules</a></li>
+          <li><a href="#atomic-design-organisms">Organisms</a></li>
+          <li><a href="#atomic-design-templates">Templates and Pages</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="atomic-design">Atomic Design and how we organize stylistic concepts</h2>
+  <p>
+    Why all the biology-related terminology? It comes from the notion of <a href='http://atomicdesign.bradfrost.com/chapter-2/' target="_blank">atomic design</a>.
+    Atomic design relates design to the hierarchies and building processes of the natural world.
+    It uses five stages: atoms, molecules, organisms, templates, and pages.
+  </p>
+  <p>
+    HQ doesn't completely follow this methodology, but the rough ideas can still make for
+    a useful communication framework.
+  </p>
+  <p>
+    By taking similar, simplified base patterns, often called <strong>atoms</strong>,
+    we can build cohesive <strong>molecules</strong> and then more complex <strong>organisms</strong>.
+    This keeps code cleaner and lighter while also keeping things simpler for our users to understand.
+  </p>
+  <p>
+    Some general principles to keep in mind:
+  </p>
+  <ul>
+    <li>
+      <p>
+        <strong>How much effort does a user have to expend on your design?</strong><br />
+        Consider both the effort to understand it in the first place, and then the effort to use it on an ongoing basis.
+      </p>
+    </li>
+    <li>
+      <p>
+        <strong>Group related information together.</strong><br />
+        <strong>Visually emphasize content according to its importance.</strong><br />
+        If you were to step back and squint at your feature, or if you couldn't read the text, how well
+        could you guess what to read first and what to click?
+      </p>
+    </li>
+    <li>
+      <p>
+        <strong>Consider multiple designs.</strong><br />
+        Just the practice of making yourself consider alternatives can lead to
+        better designs and stronger design rationale.
+      </p>
+    </li>
+  </ul>
+
+  <h3 id="atomic-design-atoms" class="pt-4">Atoms</h3>
+  <p>
+    This section discusses the most basic elements of design on HQ.
+    Much of this information is a level of detail that developers don't deal with on a day-to-day basis:
+    the fonts, colors, etc. that underlie the classes and widgets used to build pages.
+  </p>
+  <ul>
+    <li>Accessibility: what is it and why does it matter?</li>
+    <li>Typography: what fonts do we use and why?</li>
+    <li>Colors: why use one color or another?</li>
+    <li>Icons: how do you find an icon that enhances your content?</li>
+    <li>Code Guidelines: how does one write good CSS/SCSS?</li>
+  </ul>
+
+  <h3 id="atomic-design-molecules" class="pt-4">Molecules</h3>
+  <p>
+    This section covers the most common components used in CommCare HQ and how to use them well.
+    Additionally, it covers any modifications or additions that have been made to these components
+    on top of what might be supported by Bootstrap's framework by default.
+  </p>
+  <p>
+    These "molecules" build on the base concepts like typography, colors, and accessibility introduced in the atoms
+    section.
+  </p>
+  <p>
+    A key point of this section is to <strong>keep concepts and design focused</strong> in order
+    to avoid the phenomenon of
+    <strong><a href='https://en.wikipedia.org/wiki/Analysis_paralysis' target='_blank'>analysis paralysis</a></strong>.
+  </p>
+  <ul>
+    <li>Buttons</li>
+    <li>Selections</li>
+    <li>Checkboxes</li>
+    <li>Modals</li>
+    <li>Pagination</li>
+    <li>Searching and Filtering</li>
+    <li>Inline Editing</li>
+    <li>Feedback</li>
+  </ul>
+
+  <h3 id="atomic-design-organisms" class="pt-4">Organisms</h3>
+  <p>
+    Molecules connect into organisms: even larger building blocks, the kind that make up a substantial
+    portion of the design of a new feature or significant update to an existing feature.
+  </p>
+  <p>
+    It's often said that CommCare HQ is basically a site of forms and tables, as those are the biggest "organisms"
+    that make their way to new features and pages.
+  </p>
+  <p>
+    Very rarely are other "organisms" introduced, and covering that is outside the scope of this guide and will
+    likely be part of a greater Design Spec discussion.
+  </p>
+  <ul>
+    <li>Forms</li>
+    <li>Tables</li>
+  </ul>
+
+  <h3 id="atomic-design-templates" class="pt-4">Templates and Pages</h3>
+  <p>
+    Templates structure free-floating molecules and organisms into a context: a specific page.
+  </p>
+  <ul>
+    <li>Navigation</li>
+    <li>Class-Based Views</li>
+    <li>Functional Views</li>
+  </ul>
+{% endblock content %}
