@@ -1,0 +1,89 @@
+<div id="paginated-table-example">
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>Case Type</th>
+        <th>Name</th>
+        <th>Color</th>
+        <th>Big Cats</th>
+        <th>Date of Birth</th>
+        <th>Application</th>
+        <th>Opened On</th>
+        <th>Owner</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- ko foreach: rows -->
+      <tr>
+        <!-- ko foreach: $data.columns -->
+        <td data-bind="text: $data"></td>
+        <!-- /ko -->
+      </tr>
+      <!-- /ko -->
+    </tbody>
+  </table>
+  <pagination data-apply-bindings="false"
+              params="goToPage: goToPage,
+                      slug: 'style-guide',
+                      perPage: itemsPerPage,
+                      onLoad: onPaginationLoad,
+                      totalItems: totalItems"></pagination>
+</div>
+
+<script>
+    $(function () {
+        let initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        let rowData = function (data) {
+            let self = {};
+            self.columns = ko.observableArray(data);
+            return self;
+        };
+
+        let paginationExample = function () {
+            let self = {};
+
+            self.rows = ko.observableArray();
+
+            self.perPage = ko.observable();
+            self.totalItems = ko.observable();
+            self.itemsPerPage = ko.observable();
+
+            self.showLoadingSpinner = ko.observable(true);
+            self.error = ko.observable();
+
+            self.goToPage = function (page) {
+                $.ajax({
+                    method: 'POST',
+                    url: initialPageData.reverse("styleguide_paginated_table_data"),
+                    data: {
+                        page: page,
+                        limit: self.itemsPerPage(),
+                    },
+                    success: function (data) {
+                        self.showLoadingSpinner(false);
+                        self.totalItems(data.total);
+                        self.rows.removeAll();
+                        _.each(data.rows, function (row) {
+                          self.rows.push(new rowData(row));
+                        });
+                        self.error(null);
+                    },
+                    error: function () {
+                        self.showLoadingSpinner(false);
+                        self.error(gettext("Could not load users. Please try again later or report an issue if this problem persists."));
+                    },
+                });
+            };
+
+            // Initialize with first page of data
+            self.onPaginationLoad = function () {
+                self.goToPage(1);
+            };
+
+            return self;
+        };
+
+        $("#paginated-table-example").koApplyBindings(paginationExample());
+    });
+</script>
