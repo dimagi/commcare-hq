@@ -729,7 +729,7 @@ class ElasticDocumentAdapter(BaseAdapter):
                 # resulting in this method fetching a maximum `size * 2`
                 # documents.
                 # see: https://stackoverflow.com/a/63911571
-                result = self._es.scroll(scroll_id, scroll=scroll)
+                result = self._es.scroll(scroll_id=scroll_id, scroll=scroll)
                 scroll_id = result.get("_scroll_id")
                 yield result
                 if scroll_id is None or not result["hits"]["hits"]:
