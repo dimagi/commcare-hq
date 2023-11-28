@@ -46,6 +46,7 @@ def get_navigation_context(current_page):
                 name="Organisms",
                 pages=[
                     Page("Forms", 'styleguide_organisms_forms_b5'),
+                    Page("Tables", 'styleguide_organisms_tables_b5'),
                 ],
             ),
         ],
