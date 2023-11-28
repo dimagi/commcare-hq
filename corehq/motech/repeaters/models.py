@@ -1574,6 +1574,36 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
         # TODO rename to should_try_now
         return self.state != State.Success
 
+    def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
+        from corehq.motech.repeaters.tasks import (
+            process_repeat_record,
+            retry_process_repeat_record,
+        )
+
+        if self.next_check is None or self.next_check > datetime.utcnow():
+            return
+
+        # Set the next check to happen an arbitrarily long time from now.
+        # This way if there's a delay in calling `process_repeat_record` (which
+        # also sets or clears next_check) we won't queue this up in duplicate.
+        # If `process_repeat_record` is totally borked, this future date is a
+        # fallback.
+        updated = type(self).objects.filter(
+            id=self.id,
+            next_check=self.next_check
+        ).update(next_check=datetime.utcnow() + timedelta(hours=48))
+        if not updated:
+            # Use optimistic locking to prevent a process with stale
+            # data from overwriting the work of another.
+            return
+
+        # separated for improved datadog reporting
+        task = retry_process_repeat_record if is_retry else process_repeat_record
+        if fire_synchronously:
+            task(self.id, self.domain)
+        else:
+            task.delay(self.id, self.domain)
+
     def handle_success(self, response):
         if is_response(response):
             # ^^^ Don't bother logging success in Datadog if the payload
@@ -1636,12 +1666,12 @@ def _get_retry_interval(last_checked, now):
     return interval
 
 
-def attempt_forward_now(repeater: Repeater):
+def attempt_forward_now(repeater: Repeater):  # unused
     from corehq.motech.repeaters.tasks import process_repeater
 
     if not domain_can_forward(repeater.domain):
         return
-    if not repeater.is_ready:
+    if not repeater.is_ready:  # only place that uses Repeater.is_ready
         return
     process_repeater.delay(repeater.id.hex)
 
