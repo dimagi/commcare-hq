@@ -238,7 +238,7 @@ class TableauConnectedApp(models.Model):
             return False
         try:
             if server.server_name and cls.objects.get(server=server):
-                return True
+                return server
         except TableauConnectedApp.DoesNotExist:
             pass
         return False
