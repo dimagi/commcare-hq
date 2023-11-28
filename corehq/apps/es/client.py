@@ -334,7 +334,7 @@ class ElasticManageAdapter(BaseAdapter):
         :param mapping: ``dict`` mapping for the provided doc type
         """
         self._validate_single_index(index)
-        return self._es.indices.put_mapping(type_, mapping, index,
+        return self._es.indices.put_mapping(doc_type=type_, body=mapping, index=index,
                                             expand_wildcards="none")
 
     def index_get_mapping(self, index, type_):
