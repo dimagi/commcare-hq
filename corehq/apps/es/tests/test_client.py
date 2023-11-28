@@ -603,7 +603,10 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             self.adapter.index_close(test_adapter.index_name)
             with self.assertRaises(TransportError) as test:
                 test_adapter.index(TestDoc("2", "test"))
-            self.assertEqual(test.exception.status_code, 403)
+            if test_adapter.elastic_major_version <= 5:
+                self.assertEqual(test.exception.status_code, 403)
+            else:
+                self.assertEqual(test.exception.status_code, 400)
             self.assertEqual(test.exception.error, "index_closed_exception")
 
     def test_index_put_alias(self):
