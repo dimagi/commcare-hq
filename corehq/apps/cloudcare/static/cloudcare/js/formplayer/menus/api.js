@@ -54,7 +54,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             }, gettext('Waiting for server progress'));
                         } else if (_.has(response, 'exception')) {
                             if (params.clickedIcon &&
-                                response.exception.includes('Could not find case with ID')) {
+                                response.statusCode === 404) {
                                 parsedMenus.removeCaseRow = true;
                                 FormplayerFrontend.trigger('clearProgress');
                                 defer.resolve(parsedMenus);
