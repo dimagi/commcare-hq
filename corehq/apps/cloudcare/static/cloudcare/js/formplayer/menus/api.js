@@ -53,7 +53,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                             }, gettext('Waiting for server progress'));
                         } else if (_.has(response, 'exception')) {
-                            if (params.isClickableIcon &&
+                            if (params.clickedIcon &&
                                 response.exception.includes('Could not find case with ID')) {
                                 parsedMenus.removeCaseRow = true;
                                 FormplayerFrontend.trigger('clearProgress');
@@ -155,7 +155,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "selected_values": params.selectedValues,
                     "isShortDetail": params.isShortDetail,
                     "isRefreshCaseSearch": params.isRefreshCaseSearch,
-                    "isClickableIcon": params.isClickableIcon,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;
@@ -215,13 +214,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
     FormplayerFrontend.getChannel().reply("entity:get:details", function (options,
         isPersistent,
         isShortDetail,
-        isRefreshCaseSearch,
-        isClickableIcon) {
+        isRefreshCaseSearch) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         options.isShortDetail = isShortDetail;
         options.isRefreshCaseSearch = isRefreshCaseSearch;
-        options.isClickableIcon = isClickableIcon;
         return API.queryFormplayer(options, 'get_details');
     });
 
