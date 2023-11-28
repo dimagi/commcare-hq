@@ -1,3 +1,4 @@
+import jsonschema
 from jsonobject.exceptions import BadValueError
 
 from couchforms.geopoint import GeoPoint
@@ -73,31 +74,94 @@ def get_lat_lon_from_dict(data, key):
     return lat, lon
 
 
-def features_to_points_list(features):
+def validate_geometry(geojson_geometry):
     """
-    `features` should be in the following format:
-    {
-        feature_id: {
-            geometry: {
-                coordinates: [
-                    [
-                        [lon, lat]
-                        ...
-                    ],
-                    ...
-                ]
+    Validates the GeoJSON geometry, and checks that its type is
+    supported.
+    """
+    # Case properties that are set as the "GPS" data type in the Data
+    # Dictionary are given the ``geo_point`` data type in Elasticsearch.
+    #
+    # In Elasticsearch 8+, the flexible ``geo_shape`` query supports the
+    # ``geo_point`` type, but Elasticsearch 5.6 does not. Instead, we
+    # have to filter GPS case properties using the ``geo_polygon``
+    # query, which is **deprecated in Elasticsearch 7.12**.
+    #
+    # TODO: After Elasticsearch is upgraded, switch from
+    #       filters.geo_polygon to filters.geo_shape, and update this
+    #       list of supported types. See filters.geo_shape for more
+    #       details. (Norman, 2023-11-01)
+    supported_types = (
+        'Polygon',  # Supported by Elasticsearch 5.6
+
+        # Available for the `geo_point` data type using the `geo_shape`
+        # filter from Elasticsearch 8+:
+        #
+        # 'Point',
+        # 'LineString',
+        # 'MultiPoint',
+        # 'MultiLineString',
+        # 'MultiPolygon',
+
+        # 'GeometryCollection', YAGNI
+    )
+    if geojson_geometry['type'] not in supported_types:
+        raise ValueError(
+            f"{geojson_geometry['type']} is not a supported geometry type"
+        )
+
+    # The complete schema is at https://geojson.org/schema/GeoJSON.json
+    schema = {
+        "type": "object",
+        "required": ["type", "coordinates"],
+        "properties": {
+            "type": {
+                "type": "string"
+            },
+            "coordinates": {
+                "type": "array",
+                # Polygon-specific properties:
+                "items": {
+                    "type": "array",
+                    "minItems": 4,
+                    "items": {
+                        "type": "array",
+                        "minItems": 2,
+                        "items": {
+                            "type": "number"
+                        }
+                    }
+                }
+            },
+            # Unused but valid
+            "bbox": {
+                "type": "array",
+                "minItems": 4,
+                "items": {
+                    "type": "number"
+                }
             }
         }
     }
-    Each list in `coordinates` is a separate polygon of the feature. This will usually only be a single polygon,
-    but there may be more if a multi-polygon is given.
+    try:
+        jsonschema.validate(geojson_geometry, schema)
+    except jsonschema.ValidationError as err:
+        raise ValueError(
+            f'{geojson_geometry!r} is not a valid GeoJSON geometry'
+        ) from err
+
+
+def geojson_to_es_geoshape(geojson):
     """
-    points_list = []
-    for feature in features.values():
-        feature_coords = feature['geometry']['coordinates']
-        for poly_coords in feature_coords:
-            points_list += [
-                {'lat': coords[1], 'lon': coords[0]}
-                for coords in poly_coords
-            ]
-    return points_list
+    Given a GeoJSON dict, returns a GeoJSON Geometry dict, with "type"
+    given as an Elasticsearch type (i.e. in lowercase).
+
+    More info:
+
+    * `The GeoJSON specification (RFC 7946) <https://datatracker.ietf.org/doc/html/rfc7946>`_
+    * `Elasticsearch types <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/geo-shape.html#input-structure>`_
+
+    """  # noqa: E501
+    es_geoshape = geojson['geometry'].copy()
+    es_geoshape['type'] = es_geoshape['type'].lower()
+    return es_geoshape

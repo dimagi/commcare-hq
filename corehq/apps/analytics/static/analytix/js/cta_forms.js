@@ -4,7 +4,7 @@ hqDefine('analytix/js/cta_forms', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
-    'hqwebapp/js/validators.ko',        // needed for validation of startDate and endDate
+    'hqwebapp/js/bootstrap3/validators.ko',        // needed for validation of startDate and endDate
     'intl-tel-input/build/js/intlTelInput.min',
 ], function (
     $,

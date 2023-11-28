@@ -66,10 +66,14 @@ class UserInvitationView(object):
                                       "request a project administrator to send you the invitation again."))
             return HttpResponseRedirect(reverse("login"))
 
+        is_invited_user = (request.user.is_authenticated
+            and request.couch_user.username.lower() == invitation.email.lower())
+
         if invitation.is_accepted:
-            messages.error(request, _("Sorry, that invitation has already been used up. "
-                                      "If you feel this is a mistake please ask the inviter for "
-                                      "another invitation."))
+            if request.user.is_authenticated and not is_invited_user:
+                messages.error(request, _("Sorry, that invitation has already been used up. "
+                                          "If you feel this is a mistake, please ask the inviter for "
+                                          "another invitation."))
             return HttpResponseRedirect(reverse("login"))
 
         self.validate_invitation(invitation)
@@ -98,7 +102,6 @@ class UserInvitationView(object):
         else:
             context['current_page'] = {'page_name': _('Project Invitation, Account Required')}
         if request.user.is_authenticated:
-            is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
                 if is_invited_user:
                     # if this invite was actually for this user, just mark it accepted

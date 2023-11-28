@@ -349,6 +349,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'StockLevelsConfig', 'StockRestoreConfig',
     ]),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
+    ModelDeletion('users', 'SQLUserData', 'domain'),
     ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', [
         'CustomDataFieldsProfile', 'Field',
     ]),
