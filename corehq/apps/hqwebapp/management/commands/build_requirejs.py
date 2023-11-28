@@ -5,7 +5,6 @@ import re
 import subprocess
 from collections import defaultdict
 from pathlib import Path
-from uuid import uuid4
 from shutil import copyfile
 from subprocess import call
 
