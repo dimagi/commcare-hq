@@ -13,14 +13,13 @@ class ABDMUser(models.Model):
     class Meta:
         unique_together = ['username', 'domain']
 
-    def save(self, *args, **kwargs):
-        if not self.access_token:
-            self.generate_token()
-        return super().save(*args, **kwargs)
-
     def generate_token(self):
         self.access_token = Token.generate_key()
         self.token_created_at = datetime.utcnow()
+
+    def refresh_token(self):
+        self.generate_token()
+        self.save()
 
     @property
     def is_token_expired(self):
