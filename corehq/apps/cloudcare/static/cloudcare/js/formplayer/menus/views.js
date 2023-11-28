@@ -326,16 +326,23 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const self = this;
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
-            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
+            urlObject.clickedIcon = true;
+            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
-                self.updateModelFromDetailResponse(caseId, detailResponse);
+                // If case not in case list remove from ui
+                const removeCaseRow = detailResponse.removeCaseRow;
+                self.updateModelFromDetailResponse(caseId, detailResponse, removeCaseRow);
             }).fail(function () {
                 console.log('could not get case details');
             });
         },
 
-        updateModelFromDetailResponse: function (caseId, detailResponse) {
-            this.model.set("data", detailResponse.models[0].attributes.details);
+        updateModelFromDetailResponse: function (caseId, detailResponse, removeCaseRow) {
+            if (removeCaseRow) {
+                this.destroy();
+            } else {
+                this.model.set("data", detailResponse.models[0].attributes.details);
+            }
         },
 
         modelChanged: function () {
