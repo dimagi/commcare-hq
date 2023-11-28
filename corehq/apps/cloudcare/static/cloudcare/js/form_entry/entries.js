@@ -1136,7 +1136,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var isMinimal = false;
         var isCombobox = false;
         var isButton = false;
-        var isLabel = false;
+        var isChoiceLabel = false;
         var hideLabel = false;
 
         var displayOptions = _getDisplayOptions(question);
@@ -1190,7 +1190,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 isMinimal = question.stylesContains(constants.MINIMAL);
                 isCombobox = question.stylesContains(constants.COMBOBOX);
                 isButton = question.stylesContains(constants.BUTTON_SELECT);
-                isLabel = question.stylesContains(constants.LABEL) || question.stylesContains(constants.LIST_NOLABEL);
+                isChoiceLabel = question.stylesContains(constants.LABEL) || question.stylesContains(constants.LIST_NOLABEL);
                 hideLabel = question.stylesContains(constants.LIST_NOLABEL);
 
                 if (isMinimal) {
@@ -1211,7 +1211,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     });
                 } else if (isButton) {
                     entry = new ButtonSelectEntry(question, {});
-                } else if (isLabel) {
+                } else if (isChoiceLabel) {
                     entry = new ChoiceLabelEntry(question, {
                         hideLabel: hideLabel,
                     });
@@ -1235,12 +1235,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 break;
             case constants.MULTI_SELECT:
                 isMinimal = question.stylesContains(constants.MINIMAL);
-                isLabel = question.stylesContains(constants.LABEL);
+                isChoiceLabel = question.stylesContains(constants.LABEL);
                 hideLabel = question.stylesContains(constants.LIST_NOLABEL);
 
                 if (isMinimal) {
                     entry = new MultiDropdownEntry(question, {});
-                } else if (isLabel) {
+                } else if (isChoiceLabel) {
                     entry = new ChoiceLabelEntry(question, {
                         hideLabel: false,
                     });
