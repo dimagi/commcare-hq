@@ -20,4 +20,25 @@ $(function () {
             editor.session.setMode('ace/mode/' + aceLang);
         });
     });
+    _.each(["h2", "h3", "h4"], function (header) {
+        $(header).each(function () {
+            let headerId = $(this).attr('id');
+            if (headerId === undefined) return;
+
+            let $copyLinkToSection = $('<a href="#' + headerId + '" class="d-inline-block" />').append($('<i class="fa fa-link"></i>'));
+            $(this).addClass('d-inline-block pe-3').after(
+                $copyLinkToSection
+            );
+            new bootstrap.Tooltip($copyLinkToSection.get(0), {
+                title: "Click to copy link to section.",
+                placement: "right",
+            });
+            $copyLinkToSection.click(function (e) {
+                e.preventDefault();
+                let fullLink = window.location.origin + window.location.pathname + $(this).attr('href');
+                navigator.clipboard.writeText(fullLink);
+                $(this).blur();
+            });
+        });
+    });
 });
