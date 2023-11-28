@@ -259,3 +259,17 @@ def styleguide_organisms_forms(request):
         }
     })
     return render(request, 'styleguide/bootstrap5/organisms/forms.html', context)
+
+
+@use_bootstrap5
+def styleguide_organisms_tables(request):
+    context = get_navigation_context("styleguide_organisms_tables_b5")
+    context.update({
+        'examples': {
+            'basic_table': get_example_context('styleguide/bootstrap5/examples/basic_table.html'),
+            'sectioned_table': get_example_context('styleguide/bootstrap5/examples/sectioned_table.html'),
+            'datatables': get_example_context('styleguide/bootstrap5/examples/datatables.html'),
+            'paginated_table': get_example_context('styleguide/bootstrap5/examples/paginated_table.html'),
+        },
+    })
+    return render(request, 'styleguide/bootstrap5/organisms/tables.html', context)
