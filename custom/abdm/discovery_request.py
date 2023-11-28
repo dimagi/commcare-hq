@@ -32,7 +32,7 @@ def base_discover_query(domains, hip_id):
     ).case_type(PATIENT_CASE_TYPE).case_property_query(HIP_ID_PROPERTY, hip_id).sort('opened_on')
 
 
-def discover_by_health_id(patient_details, hip_id, abdm_enabled_domains):
+def get_patient_by_health_id(patient_details, hip_id, abdm_enabled_domains):
     health_id_query = base_discover_query(abdm_enabled_domains, hip_id).case_property_query(
         HEALTH_ID_PROPERTY,
         patient_details.health_id
@@ -40,7 +40,7 @@ def discover_by_health_id(patient_details, hip_id, abdm_enabled_domains):
     return health_id_query.values('name', 'domain', 'indices.referenced_id')
 
 
-def discover_by_demographics(patient_details, hip_id, abdm_enabled_domains):
+def get_patient_by_demographics(patient_details, hip_id, abdm_enabled_domains):
     demographics_query = base_discover_query(abdm_enabled_domains, hip_id).case_property_query(
         PHONE_NUMBER_PROPERTY, patient_details.mobile
     ).case_property_query(GENDER_PROPERTY, patient_details.gender)
@@ -57,12 +57,12 @@ def discover_by_demographics(patient_details, hip_id, abdm_enabled_domains):
     return demographics_query.values('name', 'domain', 'indices.referenced_id', 'case_properties')
 
 
-def discover_patient(patient_details, hip_id):
+def get_patient(patient_details, hip_id):
     abdm_enabled_domains = find_domains_with_toggle_enabled(ABDM_INTEGRATION)
-    results = discover_by_health_id(patient_details, hip_id, abdm_enabled_domains)
+    results = get_patient_by_health_id(patient_details, hip_id, abdm_enabled_domains)
     if results:
         return results, IdentifierType.HEALTH_ID
-    results = discover_by_demographics(patient_details, hip_id, abdm_enabled_domains)
+    results = get_patient_by_demographics(patient_details, hip_id, abdm_enabled_domains)
     return results, IdentifierType.MOBILE
 
 
@@ -71,7 +71,9 @@ def get_care_context_cases(discovered_patients):
     for record in discovered_patients:
         care_context_cases.extend(
             CommCareCase.objects.get_reverse_indexed_cases(
-                record['domain'], [record['indices']['referenced_id']], case_types=[CARE_CONTEXT_CASE_TYPE]
+                record['domain'],
+                [record['indices']['referenced_id']],
+                case_types=[CARE_CONTEXT_CASE_TYPE]
             )
         )
     return care_context_cases
@@ -104,7 +106,7 @@ def _get_data_to_match(patient_record):
     )
 
 
-def check_if_patients_matches(patient_records):
+def check_if_discovered_patients_are_same(patient_records):
     first_patient_data_to_match = _get_data_to_match(patient_records[0])
     for record in patient_records[1:]:
         if _get_data_to_match(record) != first_patient_data_to_match:
@@ -112,14 +114,14 @@ def check_if_patients_matches(patient_records):
     return True
 
 
-def discover_patient_and_care_contexts(patient_details, hip_id):
-    discovered_patients, matched_by = discover_patient(patient_details, hip_id)
+def discover_patient_with_care_contexts(patient_details, hip_id):
+    discovered_patients, matched_by = get_patient(patient_details, hip_id)
     if not discovered_patients:
         raise DiscoveryNoPatientFoundError()
     # In case multiple discoveries via demographics, they are considered as same
     # patient only if their Date of birth and name matches
     if matched_by == IdentifierType.MOBILE and len(discovered_patients) > 1:
-        if not check_if_patients_matches(discovered_patients):
+        if not check_if_discovered_patients_are_same(discovered_patients):
             raise DiscoveryMultiplePatientsFoundError()
     # In case of same patient discovered across multiple hip ids,
     # consider first registered patient case id as the reference number
