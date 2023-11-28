@@ -18,7 +18,6 @@ from nose.tools import assert_in, assert_raises
 from testil import eq
 
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from corehq.util.test_utils import _create_case
 
 from ..const import (
@@ -561,9 +560,9 @@ class TestRepeaterModelMethods(RepeaterTestCase):
         repeat_record = self.repeater.register(payload, fire_synchronously=True)
         self.addCleanup(repeat_record.delete)
         self.assertEqual(repeat_record.payload_id, payload.get_id)
-        all_records = list(iter_repeat_records_by_domain(DOMAIN))
+        all_records = list(SQLRepeatRecord.objects.iterate(DOMAIN))
         self.assertEqual(len(all_records), 1)
-        self.assertEqual(all_records[0]._id, repeat_record.get_id)
+        self.assertEqual(all_records[0].couch_id, repeat_record._id)
 
     def test_send_request(self):
         case_id = uuid.uuid4().hex

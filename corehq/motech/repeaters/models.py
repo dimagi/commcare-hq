@@ -73,7 +73,7 @@ from datetime import datetime, timedelta
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from django.db import models
+from django.db import models, router
 from django.db.models.base import Deferred
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -122,6 +122,7 @@ from corehq.motech.repeaters.optionvalue import OptionValue
 from corehq.motech.requests import simple_request
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.sql_db.fields import CharIdField
+from corehq.sql_db.util import paginate_query
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import ForeignObject, foreign_init
 from corehq.util.quickcache import quickcache
@@ -1347,6 +1348,15 @@ class RepeatRecordManager(models.Manager):
             next_check__isnull=False,
             next_check__lt=datetime.utcnow() - threshold
         ).count()
+
+    def iterate(self, domain, repeater_id=None, state=None, chunk_size=1000):
+        db = router.db_for_read(self.model)
+        where = models.Q(domain=domain)
+        if repeater_id:
+            where &= models.Q(repeater__id=repeater_id)
+        if state is not None:
+            where &= models.Q(state=state)
+        return paginate_query(db, self.model, where, query_size=chunk_size)
 
     def page(self, domain, skip, limit, repeater_id=None, state=None):
         """Get a page of repeat records

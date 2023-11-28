@@ -12,7 +12,6 @@ from corehq.motech.repeaters.dbaccessors import (
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
     get_success_repeat_record_count,
-    iter_repeat_records_by_domain,
     iterate_repeat_record_ids,
 )
 from corehq.motech.repeaters.models import ConnectionSettings, FormRepeater, RepeatRecord, SQLRepeatRecord
@@ -172,15 +171,15 @@ class TestRepeatRecordDBAccessors(TestCase):
         self.assertEqual(len(records), 4)  # Should grab all but the succeeded one
 
     def test_get_all_repeat_records_by_domain_wrong_domain(self):
-        records = list(iter_repeat_records_by_domain("wrong-domain"))
+        records = list(SQLRepeatRecord.objects.iterate("wrong-domain"))
         self.assertEqual(len(records), 0)
 
     def test_get_all_repeat_records_by_domain_with_repeater_id(self):
-        records = list(iter_repeat_records_by_domain(self.domain, repeater_id=self.repeater_id))
+        records = list(SQLRepeatRecord.objects.iterate(self.domain, repeater_id=self.repeater_id))
         self.assertEqual(len(records), 7)
 
     def test_get_all_repeat_records_by_domain(self):
-        records = list(iter_repeat_records_by_domain(self.domain))
+        records = list(SQLRepeatRecord.objects.iterate(self.domain))
         self.assertEqual(len(records), len(self.records))
 
     def test_get_repeat_records_by_payload_id(self):

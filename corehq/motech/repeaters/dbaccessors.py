@@ -66,23 +66,6 @@ def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None):
     return kwargs
 
 
-def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, chunk_size=1000):
-    from .models import RepeatRecord
-    kwargs = {
-        'include_docs': True,
-        'reduce': False,
-        'descending': True,
-    }
-    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
-
-    for doc in paginate_view(
-            RepeatRecord.get_db(),
-            'repeaters/repeat_records',
-            chunk_size,
-            **kwargs):
-        yield RepeatRecord.wrap(doc['doc'])
-
-
 def iter_repeat_records_by_repeater(domain, repeater_id, chunk_size=1000):
     return _iter_repeat_records_by_repeater(domain, repeater_id, chunk_size,
                                             include_docs=True)
