@@ -147,7 +147,8 @@ class ElasticManageAdapter(BaseAdapter):
         :returns: ``dict`` of task details
         :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)
         """
-        if self.elastic_major_version == 5:
+        # TODO - Refactor this and reomove support for ES 2
+        if self.elastic_major_version >= 5:
             try:
                 task_details = self._es.tasks.get(task_id=task_id)
                 task_info = task_details['task']
