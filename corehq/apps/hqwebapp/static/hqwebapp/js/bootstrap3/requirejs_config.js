@@ -2,6 +2,9 @@
 requirejs.config({
     baseUrl: '/static/',
     paths: {
+        "es6": "requirejs-babel7/es6",
+        "babel": "@babel/standalone/babel.min",
+        "babel-plugin-transform-modules-requirejs-babel": "babel-plugin-transform-modules-requirejs-babel/index",
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
@@ -16,6 +19,7 @@ requirejs.config({
         "bootstrap": { deps: ['jquery'] },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/bootstrap3/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
+        "es6!sentry/js/sentry.browser.7.28.0.min": { exports: "Sentry" },
         "datatables.bootstrap": { deps: ['datatables'] },
         "jquery.rmi/jquery.rmi": {
             deps: ['jquery', 'knockout', 'underscore'],

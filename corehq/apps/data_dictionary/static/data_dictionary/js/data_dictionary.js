@@ -7,6 +7,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "analytix/js/google",
     "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list",
     "DOMPurify/dist/purify.min",
+    "es6!sentry/js/sentry.browser.7.28.0.min",
     "hqwebapp/js/toggles",
     "hqwebapp/js/bootstrap3/knockout_bindings.ko",
     "data_interfaces/js/make_read_only",
@@ -21,8 +22,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
     googleAnalytics,
     uiElementKeyValueList,
     DOMPurify,
+    Sentry,
     toggles
 ) {
+console.log("this is a thing: " + Sentry);
     var caseType = function (name, fhirResourceType, deprecated, moduleCount, geoCaseProp) {
         var self = {};
         self.name = name || gettext("No Name");
