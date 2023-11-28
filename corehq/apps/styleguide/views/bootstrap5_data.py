@@ -6,6 +6,8 @@ from gettext import gettext
 from django.http import JsonResponse
 from django.shortcuts import render
 
+from corehq.apps.styleguide.utils import get_fake_tabular_data
+
 FakeUser = namedtuple('FakeUser', 'id username')
 
 
@@ -90,3 +92,22 @@ def validate_ko_demo(request):
             "message": gettext("This email is already assigned to a user. Please use another email."),
         }
     return JsonResponse(response)
+
+
+def datatables_data(request):
+    return JsonResponse({
+        "data": get_fake_tabular_data(50),
+    })
+
+
+def paginated_table_data(request):
+    page = int(request.POST.get('page'))
+    limit = int(request.POST.get('limit'))
+    start = (page - 1) * limit
+    fake_data = get_fake_tabular_data(100)
+    total = len(fake_data)
+    end = min(page * limit, total)
+    return JsonResponse({
+        "total": len(fake_data),
+        "rows": fake_data[start:end],
+    })
