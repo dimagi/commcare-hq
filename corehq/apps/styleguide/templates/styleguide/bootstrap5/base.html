@@ -28,6 +28,9 @@
             href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
     {% endcompress %}
 
+    {% block stylesheets %}
+    {% endblock stylesheets %}
+
     <script>
       window.USE_BOOTSTRAP5 = true;
     </script>
@@ -116,6 +119,9 @@
       <script src="{% static 'hqwebapp/js/bootstrap5/validators.ko.js' %}"></script>
       <script src="{% static 'hqwebapp/js/password_validators.ko.js' %}"></script>
     {% endcompress %}
+
+    {% block javascript %}
+    {% endblock javascript %}
 
     <div class="initial-page-data" class="hide">
       {% block initial_page_data %}
