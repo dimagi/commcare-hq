@@ -244,6 +244,173 @@ hqDefine("geospatial/js/geospatial_map", [
             // TODO: Need to fix this
             polygonFilterModel.btnSaveDisabled(!mapModel.mapHasPolygons());
         });
+        loadMapBoxStreetsLayers(mapModel.mapInstance);
+    }
+
+    function loadMapBoxStreetsLayers(map) {
+        map.on('load', () => {
+            map.addSource('mapbox-streets', {
+                type: 'vector',
+                url: 'mapbox://mapbox.mapbox-streets-v8'
+            });
+            // templates: line
+//            map.addLayer({
+//                id: '',
+//                source: 'mapbox-streets',
+//                'source-layer': '',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#800080' // purple
+//                }
+//            });
+             // templates: circle
+//            map.addLayer({
+//                id: '',
+//                source: 'mapbox-streets',
+//                'source-layer': '',
+//                "type": "circle",
+//                "paint": {
+//                    "circle-radius": 3,
+//                    "circle-color": "rgba(238,78,139, 0.4)",
+//                    "circle-stroke-color": "rgba(238,78,139, 1)",
+//                    "circle-stroke-width": 1
+//                }
+//            });
+            // templates: fill
+//              map.addLayer({
+//                id: '',
+//                source: 'mapbox-streets',
+//                'source-layer': '',
+//                type: 'fill',
+//                "paint": {
+//                    "fill-color": "rgba(66,100,251, 0.3)",
+//                    "fill-outline-color": "rgba(66,100,251, 1)"
+//                }
+//              });
+            // landuse; minzoom 5 [No changes to map]
+//            map.addLayer({
+//                id: 'landuse',
+//                source: 'mapbox-streets',
+//                'source-layer': 'landuse',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#800080' // purple
+//                }
+//            });
+            // waterway; minzoom: 7 [No changes to map; possibly already present]
+//            map.addLayer({
+//                id: 'waterway',
+//                source: 'mapbox-streets',
+//                'source-layer': 'waterway',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#800080' // purple
+//                }
+//            });
+            // water; minzoom: 0 [No changes to map; possibly already present]
+//            map.addLayer({
+//                id: 'water',
+//                source: 'mapbox-streets',
+//                'source-layer': 'water',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#800080' // purple
+//                }
+//            });
+            // aeroway; mizoom: 9 [No changes to map]
+//            map.addLayer({
+//                id: 'aeroway',
+//                source: 'mapbox-streets',
+//                'source-layer': 'aeroway',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#800080' // purple
+//                }
+//            });
+              // structure; minzoom: 13 [No changes to map]
+//            map.addLayer({
+//                id: 'structure',
+//                source: 'mapbox-streets',
+//                'source-layer': 'structure',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#800080' // purple
+//                }
+//            });
+            // building; minzoom: 12 [No changes to map]
+//            map.addLayer({
+//                id: 'mapbox-building',
+//                source: 'mapbox-streets',
+//                'source-layer': 'building',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#800080' // purple
+//                }
+//            });
+            // landuse_overlay; minzoom: 5 [Works]
+//            map.addLayer({
+//                id: 'landuse_overlay',
+//                source: 'mapbox-streets',
+//                'source-layer': 'landuse_overlay',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#800080' // purple
+//                }
+//            });
+              // road; minzoom: 3 [Works]
+//            map.addLayer({
+//                id: 'road',
+//                source: 'mapbox-streets',
+//                'source-layer': 'road',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#023020' // dark green
+//                }
+//            });
+            // admin; minzoom: 0 [Works]
+//            map.addLayer({
+//                id: 'admin',
+//                source: 'mapbox-streets',
+//                'source-layer': 'admin',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#800080' // purple
+//                }
+//            });
+            // place_label; minzoom: 0 [No changes to map; possibly already present]
+//            map.addLayer({
+//                id: 'place_label',
+//                source: 'mapbox-streets',
+//                'source-layer': 'place_label',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#800080' // purple
+//                }
+//            });
+            // airport_label; minzoom: 8 [No changes to map; possibly already present]
+//            map.addLayer({
+//                id: 'airport_label',
+//                source: 'mapbox-streets',
+//                'source-layer': 'airport_label',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#800080' // purple
+//                }
+//            });
+            // transit_stop_label; minzoom: 5 [No changes to map]
+//            map.addLayer({
+//                id: 'transit_stop_label',
+//                source: 'mapbox-streets',
+//                'source-layer': 'transit_stop_label',
+//                "type": "circle",
+//                "paint": {
+//                    "circle-radius": 3,
+//                    "circle-color": "rgba(238,78,139, 0.4)",
+//                    "circle-stroke-color": "rgba(238,78,139, 1)",
+//                    "circle-stroke-width": 1
+//                }
+//            });
+        });
     }
 
     function initPolygonFilters() {
