@@ -415,7 +415,6 @@ class Repeater(RepeaterSuperProxy):
             # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
             # to prevent serializing the repeater in the celery task payload
             RepeatRecord.repeater.fget.get_cache(repeat_record)[()] = self
-        print("\n\n\n\n-------------------- Attempt to forward -----------------\n\n\n")
         repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
