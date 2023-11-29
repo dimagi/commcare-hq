@@ -314,6 +314,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.model.set('error', null);
             self.errorMessage = null;
             self.model.set('searchForBlank', false);
+            sessionStorage.removeItem('geocoderValues');
             if (self.ui.date.length) {
                 self.ui.date.data("DateTimePicker").clear();
             }
