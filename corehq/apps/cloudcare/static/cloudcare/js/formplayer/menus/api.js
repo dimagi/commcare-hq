@@ -54,23 +54,29 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                             }, gettext('Waiting for server progress'));
                         } else if (_.has(response, 'exception')) {
-                            FormplayerFrontend.trigger('clearProgress');
-                            FormplayerFrontend.trigger(
-                                'showError',
-                                response.exception,
-                                response.type === 'html'
-                            );
-
-                            var currentUrl = FormplayerFrontend.getCurrentRoute();
-                            if (FormplayerFrontend.lastError === currentUrl) {
-                                FormplayerFrontend.lastError = null;
-                                FormplayerFrontend.trigger('navigateHome');
+                            if (params.clickedIcon &&
+                                response.statusCode === 404) {
+                                parsedMenus.removeCaseRow = true;
+                                FormplayerFrontend.trigger('clearProgress');
+                                defer.resolve(parsedMenus);
                             } else {
-                                FormplayerFrontend.lastError = currentUrl;
-                                FormplayerFrontend.trigger('navigation:back');
-                            }
-                            defer.reject();
+                                FormplayerFrontend.trigger('clearProgress');
+                                FormplayerFrontend.trigger(
+                                    'showError',
+                                    response.exception,
+                                    response.type === 'html'
+                                );
 
+                                var currentUrl = FormplayerFrontend.getCurrentRoute();
+                                if (FormplayerFrontend.lastError === currentUrl) {
+                                    FormplayerFrontend.lastError = null;
+                                    FormplayerFrontend.trigger('navigateHome');
+                                } else {
+                                    FormplayerFrontend.lastError = currentUrl;
+                                    FormplayerFrontend.trigger('navigation:back');
+                                }
+                                defer.reject();
+                            }
                         } else {
                             if (response.smartLinkRedirect) {
                                 if (user.environment === constants.PREVIEW_APP_ENVIRONMENT) {
@@ -220,7 +226,10 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         return API.queryFormplayer(options, "get_endpoint");
     });
 
-    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent, isShortDetail, isRefreshCaseSearch) {
+    FormplayerFrontend.getChannel().reply("entity:get:details", function (options,
+        isPersistent,
+        isShortDetail,
+        isRefreshCaseSearch) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         options.isShortDetail = isShortDetail;
