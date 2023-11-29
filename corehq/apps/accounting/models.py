@@ -3737,7 +3737,7 @@ class StripePaymentMethod(PaymentMethod):
     def all_cards(self):
         try:
             cards = stripe.Customer.list_sources(customer=self.customer.id, object="card")
-            return [card for card in cards.data if cards is not None]
+            return [card for card in cards.data if card is not None]
         except stripe.error.AuthenticationError:
             if not settings.STRIPE_PRIVATE_KEY:
                 log_accounting_info("Private key is not defined in settings")
