@@ -24,8 +24,8 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.generator import (
-    FakeStripeCard,
-    FakeStripeCustomer,
+    FakeStripeCardManager,
+    FakeStripeCustomerManager,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import (
@@ -36,6 +36,7 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFeeCriteria,
 )
 from corehq.util.dates import get_previous_month_date_range
+import stripe
 
 
 class TestBillingAccount(BaseAccountingTest):
@@ -295,8 +296,8 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.web_user = generator.create_arbitrary_web_user_name()
         self.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
 
-        self.fake_card = FakeStripeCard()
-        self.fake_stripe_customer = FakeStripeCustomer(cards=[self.fake_card])
+        self.fake_card = FakeStripeCardManager.create_card()
+        self.fake_stripe_customer = FakeStripeCustomerManager.create_customer(cards=[self.fake_card])
 
         self.currency = generator.init_default_currency()
         self.billing_account = generator.billing_account(self.dimagi_user, self.web_user)
@@ -306,11 +307,15 @@ class TestStripePaymentMethod(BaseAccountingTest):
                                                   customer_id=self.fake_stripe_customer.id)
         self.payment_method.save()
 
-    def test_set_autopay(self, fake_customer):
+    @mock.patch.object(stripe.Customer, 'modify_source')
+    @mock.patch('corehq.apps.accounting.models.BillingAccount._send_autopay_card_added_email')
+    @mock.patch.object(stripe.Customer, 'list_sources')
+    def test_set_autopay(self, mock_list_sources, mock_send_email, mock_modify_source, fake_customer):
         fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
         self.assertEqual(self.billing_account.auto_pay_user, None)
         self.assertFalse(self.billing_account.auto_pay_enabled)
 
+        setup_stripe_common_mocks(mock_list_sources, mock_modify_source)
         self.payment_method.set_autopay(self.fake_card, self.billing_account, None)
         self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
         self.assertEqual(self.billing_account.auto_pay_user, self.web_user)
@@ -322,14 +327,17 @@ class TestStripePaymentMethod(BaseAccountingTest):
 
         other_web_user = generator.create_arbitrary_web_user_name()
         other_payment_method = StripePaymentMethod(web_user=other_web_user)
-        different_fake_card = FakeStripeCard()
+        different_fake_card = FakeStripeCardManager.create_card()
 
         other_payment_method.set_autopay(different_fake_card, self.billing_account, None)
         self.assertEqual(self.billing_account.auto_pay_user, other_web_user)
         self.assertTrue(different_fake_card.metadata["auto_pay_{}".format(self.billing_account.id)])
         self.assertFalse(self.fake_card.metadata["auto_pay_{}".format(self.billing_account.id)] == 'True')
 
-    def test_unset_autopay(self, fake_customer):
+    @mock.patch.object(stripe.Customer, 'modify_source')
+    @mock.patch.object(stripe.Customer, 'list_sources')
+    def test_unset_autopay(self, mock_list_sources, mock_modify_source, fake_customer):
+        setup_stripe_common_mocks(mock_list_sources, mock_modify_source)
         fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
         self.payment_method.set_autopay(self.fake_card, self.billing_account, None)
         self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
@@ -339,3 +347,15 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'False'})
         self.assertIsNone(self.billing_account.auto_pay_user)
         self.assertFalse(self.billing_account.auto_pay_enabled)
+
+
+def setup_stripe_common_mocks(mock_list_sources, mock_modify_source):
+    def modify_source_side_effect(*args, **kwargs):
+        updated_metadata = {k: str(v) for k, v in kwargs['metadata'].items()}
+        FakeStripeCardManager.get_card_by_id(kwargs['id']).metadata.update(updated_metadata)
+
+    def list_sources_side_effect(*args, **kwargs):
+        return FakeStripeCustomerManager.get_customer_by_id(kwargs['customer']).cards
+
+    mock_modify_source.side_effect = modify_source_side_effect
+    mock_list_sources.side_effect = list_sources_side_effect
