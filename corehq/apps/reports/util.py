@@ -619,7 +619,9 @@ def _get_hq_group_id(session):
 def sync_all_tableau_users():
     domains_grouped_by_server = defaultdict(list)  # Looks like {(server name, tableau site): [domains]...}
     for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
-        server = TableauServer.objects.get(domain=domain)
+        server = TableauConnectedApp.get_server(domain)
+        if not server:
+            continue
         server_details = (server.server_name, server.target_site)
         domains_grouped_by_server[server_details].append(domain)
     for list_of_domains_for_server in domains_grouped_by_server.values():
