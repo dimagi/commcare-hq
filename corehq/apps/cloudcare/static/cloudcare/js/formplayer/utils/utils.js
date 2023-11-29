@@ -300,6 +300,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
 
         this.onSubmit = function () {
             sessionStorage.removeItem('selectedValues');
+            sessionStorage.removeItem('geocoderValues');
             this.page = null;
             this.sortIndex = null;
             this.search = null;
