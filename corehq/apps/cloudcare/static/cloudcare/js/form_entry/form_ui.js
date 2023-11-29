@@ -760,7 +760,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return self.error() === null && self.serverError() === null;
         };
 
-        self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
+        self.isButton = self.datatype() === 'select' && self.stylesContains(constants.BUTTON_SELECT);
         self.isLabel = self.datatype() === 'info';
         self.entry = entries.getEntry(self);
         self.entryTemplate = function () {
