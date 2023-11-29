@@ -81,7 +81,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 model.set('value', item.place_name);
                 initMapboxWidget(model);
-                let geocoderValues = JSON.parse(sessionStorage.geocoderValues);
+                const geocoderValues = JSON.parse(sessionStorage.geocoderValues);
                 geocoderValues[model.id] = item.place_name;
                 sessionStorage.geocoderValues = JSON.stringify(geocoderValues);
                 var broadcastObj = formEntryUtils.getBroadcastObject(item);
@@ -152,9 +152,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             $(function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Seen in Case Search");
             });
-            let queryKey = sessionStorage.queryKey;
-            let storedGeocoderValues = sessionStorage.geocoderValues;
-            let geoValues = storedGeocoderValues ? JSON.parse(storedGeocoderValues) : {};
+            const queryKey = sessionStorage.queryKey;
+            const storedGeocoderValues = sessionStorage.geocoderValues;
+            const geoValues = storedGeocoderValues ? JSON.parse(storedGeocoderValues) : {};
             if (!("queryKey" in geoValues) || geoValues["queryKey"] !== queryKey) {
                 geoValues["queryKey"] = queryKey;
                 sessionStorage.geocoderValues = JSON.stringify(geoValues);
@@ -178,7 +178,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 divEl.css("width", "100%");
             }
 
-            let geocoderValues = JSON.parse(sessionStorage.geocoderValues);
+            const geocoderValues = JSON.parse(sessionStorage.geocoderValues);
             if (geocoderValues[id]) {
                 $field.find('.mapboxgl-ctrl-geocoder--input').val(geocoderValues[id]);
             }
