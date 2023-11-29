@@ -1,0 +1,12 @@
+{
+    "bool": {
+      "must": [
+        { "exists": { "field": "domain_membership" } },
+        {
+          "terms": {
+            "doc_type": ["UnknownUser", "AdminUser"]
+          }
+        }
+      ]
+    }
+}

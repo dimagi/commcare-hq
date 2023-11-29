@@ -405,7 +405,8 @@ class ElasticManageAdapter(BaseAdapter):
     def reindex(
             self, source, dest, wait_for_completion=False,
             refresh=False, batch_size=1000, purge_ids=False,
-            requests_per_second=None,
+            requests_per_second=None, source_query_json=None,
+            script_json=None,
     ):
         """
         Starts the reindex process in elastic search cluster
@@ -424,6 +425,10 @@ class ElasticManageAdapter(BaseAdapter):
                           these cause errors on reindexing the doc, but the script slows down the reindex
                           substantially, so it is only recommended to enable this if you have run into
                           the specific error it is designed to resolve.
+        :param script_json: path to a json painless script file that maps to "script" field in the
+                            reindex API
+        :param source_query_json: path to a json painless script file that maps to "source.query" field
+                            in the reindex API
 
         :returns: None if wait_for_completion is True else would return task_id of reindex task
         """
@@ -445,6 +450,14 @@ class ElasticManageAdapter(BaseAdapter):
         }
         if purge_ids:
             reindex_body["script"] = {"inline": "if (ctx._source._id) {ctx._source.remove('_id')}"}
+            if script_json:
+                raise ValueError("You can't use both purge_ids and script_json at once")
+        elif script_json:
+            with open(script_json) as f:
+                reindex_body["script"] = json.loads(f.read())
+        if source_query_json:
+            with open(source_query_json) as f:
+                reindex_body["source"]["query"] = json.loads(f.read())
 
         reindex_kwargs = {
             "wait_for_completion": wait_for_completion,

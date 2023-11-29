@@ -1,0 +1,3 @@
+{
+    "source": "if (ctx._source.containsKey('domain_membership')) {if (ctx._source.doc_type == 'UnknownUser' || ctx._source.doc_type == 'AdminUser') {ctx._source.domain_memberships = ctx._source.domain_membership;}}"
+}
