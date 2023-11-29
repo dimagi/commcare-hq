@@ -76,8 +76,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.fontSize = ko.observable(self.original.font_size || 'medium');
         self.fontSizeOptions = ['small', 'medium', 'large'];
 
-        self.showBorderOptions = ['no border', 'show border'];
-        self.showBorder = ko.observable(self.showBorderOptions[Number(self.original.show_border || false)]);
+        self.showBorder = ko.observable(self.original.show_border || false);
 
         self.openStyleModal = function () {
             const $modalDiv = $(document.createElement("div"));
@@ -449,7 +448,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.horizontal_align = self.horizontalAlign();
             column.vertical_align = self.verticalAlign();
             column.font_size = self.fontSize();
-            column.show_border = self.showBorder() === self.showBorderOptions[1];
+            column.show_border = self.showBorder();
             column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;
             column.late_flag = parseInt(self.late_flag_extra.val(), 10);
             column.time_ago_interval = parseFloat(self.time_ago_extra.val());
