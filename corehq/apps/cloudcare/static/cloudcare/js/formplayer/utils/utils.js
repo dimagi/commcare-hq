@@ -328,6 +328,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.search = null;
             this.sortIndex = null;
             sessionStorage.removeItem('selectedValues');
+            sessionStorage.removeItem('geocoderValues');
             this.sessionId = null;
         };
 
