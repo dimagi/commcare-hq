@@ -504,6 +504,19 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             });
         };
 
+        self.getTranslation = function (translationKey, defaultTranslation) {
+            // Find the root level element which contains the translations.
+            var translations = self.translations;
+
+            if (translations) {
+                var translationText = ko.toJS(translations[translationKey]);
+                if (translationText) {
+                    return translationText;
+                }
+            }
+            return defaultTranslation;
+        };
+
         self.afterRender = function () {
             $(document).on("click", ".help-text-trigger", function (event) {
                 event.preventDefault();
@@ -669,20 +682,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             $.publish('formplayer.' + constants.NEW_REPEAT, self);
             $.publish('formplayer.dirty');
             $('.add').trigger('blur');
-        };
-
-        self.getTranslation = function (translationKey, defaultTranslation) {
-            // Find the root level element which contains the translations.
-            var curParent = getParentForm(self);
-            var translations = curParent.translations;
-
-            if (translations) {
-                var addNewRepeatTranslation = ko.toJS(translations[translationKey]);
-                if (addNewRepeatTranslation) {
-                    return addNewRepeatTranslation;
-                }
-            }
-            return defaultTranslation;
         };
     }
     Repeat.prototype = Object.create(Container.prototype);
