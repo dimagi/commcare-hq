@@ -1227,6 +1227,8 @@ def quick_find(request):
     is_member = result.domain and request.couch_user.is_member_of(result.domain, allow_enterprise=True)
     if is_member or request.couch_user.is_superuser:
         doc_info = get_doc_info(result.doc)
+        if doc_info.is_deleted:
+            raise Http404()
     else:
         raise Http404()
     if redirect and doc_info.link:
