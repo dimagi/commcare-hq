@@ -155,7 +155,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             let queryKey = sessionStorage.queryKey;
             let storedGeocoderValues = sessionStorage.geocoderValues;
             let geoValues = storedGeocoderValues ? JSON.parse(storedGeocoderValues) : {};
-            if (!geoValues.hasOwnProperty("queryKey") || geoValues["queryKey"] !== queryKey) {
+            if (!("queryKey" in geoValues) || geoValues["queryKey"] !== queryKey) {
                 geoValues["queryKey"] = queryKey;
                 sessionStorage.geocoderValues = JSON.stringify(geoValues);
             }
