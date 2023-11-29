@@ -326,16 +326,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             urlObject.clickedIcon = true;
             const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
-                // If case not in case list remove from ui
-                const removeCaseRow = detailResponse.removeCaseRow;
-                self.updateModelFromDetailResponse(caseId, detailResponse, removeCaseRow);
+                self.updateModelFromDetailResponse(caseId, detailResponse);
             }).fail(function () {
                 console.log('could not get case details');
             });
         },
 
-        updateModelFromDetailResponse: function (caseId, detailResponse, removeCaseRow) {
-            if (removeCaseRow) {
+        updateModelFromDetailResponse: function (caseId, detailResponse) {
+            if (detailResponse.removeCaseRow) {
                 this.destroy();
             } else {
                 this.model.set("data", detailResponse.models[0].attributes.details);
@@ -448,7 +446,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
-            CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+            if (detailResponse.removeCaseRow) {
+                this.destroy();
+            } else {
+                CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+            }
         },
 
         getFieldIndexFromEvent: function (e) {
@@ -508,14 +510,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
-            this.model.set('updating', true);
-            CaseTileGroupedView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
-            this.model.set('updatedCaseId', caseId);
-            this.model.set('updatedRowData', this.options.bodyRowIndices.reduce((acc, index) => {
-                acc[index] = detailResponse.models[0].attributes.details[index];
-                return acc;
-            }, {}));
-            this.model.set('updating', false);
+            if (detailResponse.removeCaseRow) {
+                this.destroy();
+            } else {
+                this.model.set('updating', true);
+                CaseTileGroupedView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+                this.model.set('updatedCaseId', caseId);
+                this.model.set('updatedRowData', this.options.bodyRowIndices.reduce((acc, index) => {
+                    acc[index] = detailResponse.models[0].attributes.details[index];
+                    return acc;
+                }, {}));
+                this.model.set('updating', false);
+            }
         },
     });
 
