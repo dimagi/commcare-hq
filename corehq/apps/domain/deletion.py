@@ -438,6 +438,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('userreports', 'DataSourceActionLog', 'domain'),
+    ModelDeletion('userreports', 'DataSourceRowTransactionLog', 'domain'),
     ModelDeletion('userreports', 'InvalidUCRData', 'domain'),
     ModelDeletion('userreports', 'UCRExpression', 'domain'),
     ModelDeletion('users', 'ConnectIDUserLink', 'domain'),
