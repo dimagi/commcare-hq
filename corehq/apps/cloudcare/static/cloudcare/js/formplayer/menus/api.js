@@ -55,22 +55,26 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             }, gettext('Waiting for server progress'));
                         } else if (_.has(response, 'exception')) {
                             FormplayerFrontend.trigger('clearProgress');
-                            FormplayerFrontend.trigger(
-                                'showError',
-                                response.exception,
-                                response.type === 'html'
-                            );
-
-                            var currentUrl = FormplayerFrontend.getCurrentRoute();
-                            if (FormplayerFrontend.lastError === currentUrl) {
-                                FormplayerFrontend.lastError = null;
-                                FormplayerFrontend.trigger('navigateHome');
+                            if (params.clickedIcon && response.statusCode === 404) {
+                                parsedMenus.removeCaseRow = true;
+                                defer.resolve(parsedMenus);
                             } else {
-                                FormplayerFrontend.lastError = currentUrl;
-                                FormplayerFrontend.trigger('navigation:back');
-                            }
-                            defer.reject();
+                                FormplayerFrontend.trigger(
+                                    'showError',
+                                    response.exception,
+                                    response.type === 'html'
+                                );
 
+                                var currentUrl = FormplayerFrontend.getCurrentRoute();
+                                if (FormplayerFrontend.lastError === currentUrl) {
+                                    FormplayerFrontend.lastError = null;
+                                    FormplayerFrontend.trigger('navigateHome');
+                                } else {
+                                    FormplayerFrontend.lastError = currentUrl;
+                                    FormplayerFrontend.trigger('navigation:back');
+                                }
+                                defer.reject();
+                            }
                         } else {
                             if (response.smartLinkRedirect) {
                                 if (user.environment === constants.PREVIEW_APP_ENVIRONMENT) {
