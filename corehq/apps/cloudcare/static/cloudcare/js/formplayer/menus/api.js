@@ -174,7 +174,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         $.ajax(initialPageData.reverse('api_histogram_metrics'), {
                             method: 'POST',
                             data: {responseTime: callResponseTime, metrics: "commcare.dynamic_search.response_time"},
-                            error: function (xhr) {
+                            error: function () {
                                 console.log("API call failed to record metrics");
                             },
                         });
