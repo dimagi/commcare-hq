@@ -303,10 +303,12 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.queryData = null;
             this.sessionId = null;
             sessionStorage.removeItem('submitPerformed');
+            sessionStorage.removeItem('geocoderValues');
         };
 
         this.onSubmit = function () {
             sessionStorage.removeItem('selectedValues');
+            sessionStorage.removeItem('geocoderValues');
             this.page = null;
             this.sortIndex = null;
             this.search = null;
@@ -334,6 +336,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.search = null;
             this.sortIndex = null;
             sessionStorage.removeItem('selectedValues');
+            sessionStorage.removeItem('geocoderValues');
             this.sessionId = null;
         };
 
