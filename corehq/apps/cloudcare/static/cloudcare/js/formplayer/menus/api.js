@@ -53,8 +53,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                             }, gettext('Waiting for server progress'));
                         } else if (_.has(response, 'exception')) {
-                            if (params.clickedIcon &&
-                                response.statusCode === 404) {
+                            if (params.clickedIcon && response.statusCode === 404) {
                                 parsedMenus.removeCaseRow = true;
                                 FormplayerFrontend.trigger('clearProgress');
                                 defer.resolve(parsedMenus);
@@ -211,10 +210,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         return API.queryFormplayer(options, "get_endpoint");
     });
 
-    FormplayerFrontend.getChannel().reply("entity:get:details", function (options,
-        isPersistent,
-        isShortDetail,
-        isRefreshCaseSearch) {
+    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent, isShortDetail, isRefreshCaseSearch) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         options.isShortDetail = isShortDetail;
