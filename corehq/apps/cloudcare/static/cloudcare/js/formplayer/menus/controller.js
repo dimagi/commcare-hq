@@ -104,11 +104,32 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
     };
 
-    const groupDisplays = function(displays) {
+    const groupDisplays = function(displays, groupHeaders) {
         const groupedDisplays = [];
-        const currentGroup = {}
+        let currentGroup = {
+            groupKey: null,
+            groupName: null,
+            displays: []
+        }
 
-        return [];
+        displays.forEach(display => {
+            const groupKey = display.get('groupKey')
+            if (currentGroup.groupKey !== groupKey) {
+                if (currentGroup.groupKey != null) {
+                    groupedDisplays.push(currentGroup);
+                }
+                currentGroup = {
+                    groupKey: groupKey,
+                    groupName: groupHeaders[groupKey],
+                    displays: [display]
+                };
+            } else {
+                currentGroup.displays.push(display);
+            }
+        });
+        groupedDisplays.push(currentGroup);
+
+        return groupedDisplays;
     };
 
     var showMenu = function (menuResponse) {
@@ -135,8 +156,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         var queryResponse = menuResponse.queryResponse;
         if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
-            groupDisplays(queryResponse.displays);
             var queryCollection = new Collection(queryResponse.displays);
+            // if (queryResponse.hasOwnProperty("groupHeaders")) {
+            //     queryCollection = new Collection(groupDisplays(queryResponse.displays));
+            // }
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 QueryListView({
                     collection: queryCollection,
@@ -148,9 +171,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 }).render()
             );
         } else if (sidebarEnabled && menuResponse.type === "query") {
+            var queryCollection = menuResponse;
+            if (menuResponse.hasOwnProperty("groupHeaders")) {
+                queryCollection = new Collection(groupDisplays(menuResponse, menuResponse.groupHeaders));
+            }
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 QueryListView({
-                    collection: menuResponse,
+                    collection: queryCollection,
                     title: menuResponse.title,
                     description: menuResponse.description,
                     hasDynamicSearch: menuResponse.dynamicSearch,

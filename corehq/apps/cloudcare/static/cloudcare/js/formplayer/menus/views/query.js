@@ -448,10 +448,44 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
     });
 
+    var GroupedQueryView = Marionette.CollectionView.extend({
+        tagName: "div",
+        template: _.template($("#query-view-group-template").html() || ""),
+        childView: QueryView,
+        childViewContainer: "#query-properties",
+
+        childViewOptions: function () {
+            return {parentView: this.options.parentView};
+        },
+        initialize: function (options) {
+            console.log('groupedQueryView');
+        },
+    });
+
     var QueryListView = Marionette.CollectionView.extend({
         tagName: "div",
         template: _.template($("#query-view-list-template").html() || ""),
-        childView: QueryView,
+        childView(item) {
+            if (item.has("groupName")) {
+                return GroupedQueryView;
+            } else {
+                return QueryView;
+            }
+        },
+
+        buildChildView(child, ChildViewClass, childViewOptions) {
+            let options = {};
+
+            if (child.has("groupName")) {
+                const childList = new Backbone.Collection(child.get('displays'));
+                options = _.extend({collection: childList}, childViewOptions);
+            } else {
+                options = _.extend({model: child}, childViewOptions);
+            }
+
+            return new ChildViewClass(options);
+          },
+
         childViewContainer: "#query-properties",
         childViewOptions: function () { return {parentView: this}; },
 
@@ -500,9 +534,36 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
         },
 
+        _getChildren: function () {
+            return _.flatten(_.map(
+                Array.from(this.children),
+                function(item) {
+                    if (item.children) {
+                        return Array.from(item.children);
+                    } else {
+                        return [item];
+                    }
+                }
+            ));
+        },
+
+        _getChildModels: function () {
+            return _.flatten(_.map(
+                Array.from(this.collection),
+                function(item) {
+                    if (item.has("displays")) {
+                        return item.get("displays");
+                    } else {
+                        return [item];
+                    }
+                }
+            ));
+        },
+
         getAnswers: function () {
             var answers = {};
-            this.children.each(function (childView) {
+            const getChildren = this._getChildren();
+            getChildren.each(function (childView) {
                 var encodedValue = childView.getEncodedValue();
                 if (encodedValue !== undefined) {
                     answers[childView.model.get('id')] = encodedValue;
@@ -661,7 +722,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Update models based on response
                 if (response.queryResponse) {
                     _.each(response.queryResponse.displays, function (responseModel, i) {
-                        self.collection.models[i].set({
+                        self._getChildModels().set({
                             error: responseModel.error,
                             required: responseModel.required,
                             required_msg: responseModel.required_msg,
@@ -669,7 +730,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     });
                 } else {
                     _.each(response.models, function (responseModel, i) {
-                        self.collection.models[i].set({
+                        const childModels = self._getChildModels();
+                        childModels[i].set({
                             error: responseModel.get('error'),
                             required: responseModel.get('required'),
                             required_msg: responseModel.get('required_msg'),
