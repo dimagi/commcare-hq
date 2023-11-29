@@ -2677,3 +2677,11 @@ CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow projects to add banners visible to their users on HQ on every login',
 )
+
+USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
+    slug='use_logo_in_system_emails',
+    label='Use the project\'s logo in emails sent from HQ',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='The project logo replaces the CommCare logo.',
+)
