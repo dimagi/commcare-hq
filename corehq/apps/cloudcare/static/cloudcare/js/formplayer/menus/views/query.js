@@ -81,9 +81,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 model.set('value', item.place_name);
                 initMapboxWidget(model);
-                let geocoderValues = JSON.parse(sessionStorage.geocoderValues);
-                geocoderValues[model.id] = item.place_name;
-                sessionStorage.geocoderValues = JSON.stringify(geocoderValues);
+                if (toggles.toggleEnabled('PERSISTENT_GEOCODER_SEARCH_FIELDS')) {
+                    let geocoderValues = JSON.parse(sessionStorage.geocoderValues);
+                    geocoderValues[model.id] = item.place_name;
+                    sessionStorage.geocoderValues = JSON.stringify(geocoderValues);
+                }
                 var broadcastObj = formEntryUtils.getBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
@@ -174,9 +176,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 divEl.css("width", "100%");
             }
 
+
             let geocoderValues = JSON.parse(sessionStorage.geocoderValues);
-            if (geocoderValues[id]) {
+            if (geocoderValues[id] && toggles.toggleEnabled('PERSISTENT_GEOCODER_SEARCH_FIELDS')) {
                 $field.find('.mapboxgl-ctrl-geocoder--input').val(geocoderValues[id]);
+            } else if (model.get('value')) {
+                $field.find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
             }
         };
 

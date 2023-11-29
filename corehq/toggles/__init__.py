@@ -2665,3 +2665,12 @@ CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow projects to add banners visible to their users on HQ on every login',
 )
+
+PERSISTENT_GEOCODER_SEARCH_FIELDS = StaticToggle(
+    slug='persistent_geocoder_search_fields',
+    label='Allows case search fields configured with geocoder widgets to maintain their value between searches',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Allows case search fields configured with geocoder widgets to maintain their value '
+                'between searches',
+)
