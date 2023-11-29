@@ -44,6 +44,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     PushFrame,
     QueryData,
     QueryPrompt,
+    QueryPromptGroup,
     RemoteRequest,
     RemoteRequestPost,
     RemoteRequestQuery,
@@ -300,6 +301,14 @@ class RemoteRequestFactory(object):
     def build_query_prompts(self):
         prompts = []
         for prop in self.module.search_config.properties:
+            if prop.is_group:
+                text = Text(locale_id=id_strings.search_property_locale(self.module, prop.group_key))
+                prompts.append(QueryPromptGroup(**{
+                    'key': prop.group_key,
+                    'display': Display(text=text)
+                }))
+                continue
+
             text = Text(locale_id=id_strings.search_property_locale(self.module, prop.name))
             if prop.hint:
                 display = Display(

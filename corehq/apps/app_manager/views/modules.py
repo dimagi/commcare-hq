@@ -1136,6 +1136,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             }]
         if prop.get('is_group'):
             ret['is_group'] = prop['is_group']
+        if prop.get('group_key'):
+            ret['group_key'] = prop['group_key']
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'

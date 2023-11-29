@@ -91,6 +91,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             validationTest: '',
             validationText: '',
             isGroup: false,
+            groupKey:'',
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -155,6 +156,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         });
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
         self.isGroup = options.isGroup;
+        self.groupKey = options.groupKey;
 
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
@@ -355,12 +357,25 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 receiverExpression: searchProperty.receiver_expression,
                 itemsetOptions: searchProperty.itemset,
                 isGroup: searchProperty.is_group,
+                groupKey: searchProperty.group_key,
             }, saveButton);
         });
 
         self.search_properties = ko.observableArray(
             wrappedSearchProperties.length > 0 ? wrappedSearchProperties : [searchPropertyModel({}, saveButton)]
         );
+
+        self.search_properties.subscribe(function (newProperties) {
+            let groupKey = ''
+            ko.utils.arrayForEach(newProperties, function (property, index) {
+                if (property.isGroup) {
+                    groupKey = `group_header_${index}`
+                }
+                if(property.groupKey != groupKey) {
+                    property.groupKey = groupKey
+                }
+            });
+        });
 
         self.addProperty = function () {
             self.search_properties.push(searchPropertyModel({}, saveButton));
@@ -376,7 +391,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return _.map(
                 _.filter(
                     self.search_properties(),
-                    function (p) { return p.name().length > 0; }  // Skip properties where name is blank
+                    function (p) { return p.name().length > 0 || p.isGroup; }  // Skip properties where name is blank
                 ),
                 function (p) {
                     var ifSupportsValidation = function (val) {
@@ -399,6 +414,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
                         is_group: p.isGroup,
+                        group_key: p.groupKey,
                     };
                 }
             );
