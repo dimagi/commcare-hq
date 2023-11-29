@@ -53,12 +53,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                             }, gettext('Waiting for server progress'));
                         } else if (_.has(response, 'exception')) {
+                            FormplayerFrontend.trigger('clearProgress');
                             if (params.clickedIcon && response.statusCode === 404) {
                                 parsedMenus.removeCaseRow = true;
-                                FormplayerFrontend.trigger('clearProgress');
                                 defer.resolve(parsedMenus);
                             } else {
-                                FormplayerFrontend.trigger('clearProgress');
                                 FormplayerFrontend.trigger(
                                     'showError',
                                     response.exception,
