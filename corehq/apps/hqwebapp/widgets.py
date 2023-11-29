@@ -17,12 +17,14 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import html_attr
 
 
 class BootstrapCheckboxInput(CheckboxInput):
+    template_name = "hqwebapp/crispy/checkbox_widget.html"
 
     def __init__(self, attrs=None, check_test=bool, inline_label=""):
-        super(BootstrapCheckboxInput, self).__init__(attrs, check_test)
+        super().__init__(attrs, check_test)
         self.inline_label = inline_label
 
-    def render(self, name, value, attrs=None, renderer=None):
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
         extra_attrs = {'type': 'checkbox', 'name': conditional_escape(name)}
         extra_attrs.update(self.attrs)
         final_attrs = self.build_attrs(attrs, extra_attrs=extra_attrs)
@@ -35,11 +37,21 @@ class BootstrapCheckboxInput(CheckboxInput):
         if value not in ('', True, False, None):
             # Only add the 'value' attribute if a value is non-empty.
             final_attrs['value'] = force_str(value)
-        final_attrs['class'] = 'bootstrapcheckboxinput'
-        return format_html(
-            '<label class="checkbox"><input{} /> {}</label>',
-            mark_safe(flatatt(final_attrs)),  # nosec: trusting the user to sanitize attributes
-            self.inline_label)
+        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+        use_bootstrap5 = get_bootstrap_version() == BOOTSTRAP_5
+        final_attrs['class'] = 'form-check-input' if use_bootstrap5 else 'bootstrapcheckboxinput'
+        context.update({
+            'use_bootstrap5': use_bootstrap5,
+            'input_id': final_attrs.get('id'),
+            'inline_label': self.inline_label,
+            'attrs': mark_safe(flatatt(final_attrs)),  # nosec: trusting the user to sanitize attributes
+        })
+        return context
+
+
+class BootstrapSwitchInput(BootstrapCheckboxInput):
+    """Only valid for forms using Bootstrap5"""
+    template_name = "hqwebapp/crispy/switch_widget.html"
 
 
 class _Select2AjaxMixin():

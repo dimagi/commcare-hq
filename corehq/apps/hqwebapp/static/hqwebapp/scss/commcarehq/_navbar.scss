@@ -128,9 +128,6 @@
     &.btn { color: #ffffff; }
   }
   a.footer-link-img {
-    img {
-      margin-top: -2px;
-    }
     &:hover {
       text-decoration: none;
     }
@@ -139,7 +136,7 @@
   .dimagi-logo svg {
     height: 22px;
     width: 50px;
-    top: 0;
+    top: 2px;
     position: relative;
     display: inline-block;
   }

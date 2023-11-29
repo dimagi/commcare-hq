@@ -2094,6 +2094,7 @@ msgid "Lookup table was not found in the project"
 msgstr "No se encontró la Tabla de búsqueda en el proyecto."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js
 msgid "Loading..."
 msgstr "Cargando..."
@@ -2364,6 +2365,7 @@ msgid "A reference to an integer question in this form."
 msgstr "Una referencia a una pregunta de un entero en este formulario."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 #: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
 msgid "Case"
 msgstr "Caso"
@@ -2978,10 +2980,6 @@ msgstr ""
 "formulario. Por favor reporte un problema si este mensaje continúa "
 "apareciendo."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
-msgid "Switching project spaces..."
-msgstr ""
-
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
 msgid "Fetching your location..."
 msgstr ""
@@ -3578,6 +3576,28 @@ msgstr "ID Confidencial"
 msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#, fuzzy
+#| msgid "Group"
+msgid "No group"
+msgstr "Grupo"
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+#, fuzzy
+#| msgid "Select a group"
+msgid "Select group"
+msgstr "Seleccione un grupo"
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Group <%- groupCount %>"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid ""
+"Something went wrong processing <%- failedClusters %> groups. These groups "
+"will not be exported."
+msgstr ""
+
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "Name of the Area"
 msgstr ""
@@ -3585,6 +3605,10 @@ msgstr ""
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "All locations"
 msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Mobile Worker"
+msgstr "Usuario Móvil"
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"

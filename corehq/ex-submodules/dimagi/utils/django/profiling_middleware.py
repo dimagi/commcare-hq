@@ -36,7 +36,8 @@ class ProfileMiddleware(MiddlewareMixin):
     """
     def process_request(self, request):
         if (settings.DEBUG or request.user.is_superuser) and 'prof' in request.GET:
-            self.tmpfile = tempfile.mktemp()
+            fd, self.tmpfile = tempfile.mkstemp()
+            os.close(fd)
             self.prof = hotshot.Profile(self.tmpfile)
 
     def process_view(self, request, callback, callback_args, callback_kwargs):

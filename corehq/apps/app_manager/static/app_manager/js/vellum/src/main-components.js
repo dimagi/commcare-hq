@@ -28684,9 +28684,11 @@ define('vellum/tsv',[
 });
 
 define('vellum/exporter',[
-    'vellum/tsv'
+    'vellum/tsv',
+    'vellum/richText'
 ], function (
-    tsv
+    tsv,
+    richText
 ) {
     // todo: abstract out IText stuff into part of the plugin interface
     var generateExportTSV = function (form) {
@@ -28775,7 +28777,7 @@ define('vellum/exporter',[
 
             row["Hint Text"] = defaultOrNothing(mug.p.hintItext, defaultLanguage, 'default');
             row["Help Text"] = defaultOrNothing(mug.p.helpItext, defaultLanguage, 'default');
-            row.Comment = mug.p.comment;
+            row.Comment = richText.sanitizeInput(mug.p.comment);
 
             // make sure there aren't any null values
             for (var prop in row) {
@@ -48665,7 +48667,7 @@ define('vellum/core',[
             form = this.data.core.form,
             mugs = multiselect ? mug : [mug],
             $baseToolbar = $(question_toolbar({
-                comment: multiselect ? '' : mug.p.comment,
+                comment: multiselect ? '' : richText.sanitizeInput(mug.p.comment),
                 isDeleteable: mugs && mugs.length && _.every(mugs, function (mug) {
                     return _this.isMugRemoveable(mug, mug.hashtagPath);
                 }),

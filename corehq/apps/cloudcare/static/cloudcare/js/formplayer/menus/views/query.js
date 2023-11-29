@@ -457,6 +457,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initialize: function (options) {
             this.parentModel = options.collection.models || [];
+            this.dynamicSearchEnabled = options.hasDynamicSearch && this.options.sidebarEnabled;
 
             this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);
@@ -563,13 +564,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.performSubmit();
         },
 
-        performSubmit: function () {
+        performSubmit: function (initiatedBy) {
             var self = this;
             self.validateAllFields().done(function () {
                 FormplayerFrontend.trigger(
                     "menu:query",
                     self.getAnswers(),
-                    self.options.sidebarEnabled
+                    self.options.sidebarEnabled,
+                    initiatedBy
                 );
                 if (self.smallScreenEnabled && self.options.sidebarEnabled) {
                     $('#sidebar-region').collapse('hide');
@@ -587,7 +589,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
             });
             if (invalidRequiredFields.length === 0) {
-                self.performSubmit();
+                self.performSubmit("dynamicSearch");
             }
         },
 

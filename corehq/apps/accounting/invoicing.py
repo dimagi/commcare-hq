@@ -849,6 +849,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @property
     @memoized
     def unit_cost(self):
+        """Return aggregate cost of all the excess SMS"""
         total_excess = Decimal('0.0')
         if self.is_within_monthly_limit:
             return total_excess

@@ -10,7 +10,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar");
+        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var API = {
         queryFormplayer: function (params, route) {
@@ -148,6 +149,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "tz_from_browser": tzFromBrowser,
                     "selected_values": params.selectedValues,
                     "isShortDetail": params.isShortDetail,
+                    "isRefreshCaseSearch": params.isRefreshCaseSearch,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;
@@ -163,7 +165,21 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     message: "[request] " + route,
                     data: _.pick(sentryData, _.identity),
                 });
-                menus.fetch($.extend(true, {}, options));
+
+                var callStartTime = performance.now();
+                menus.fetch($.extend(true, {}, options)).always(function () {
+                    if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === "dynamicSearch") {
+                        var callEndTime = performance.now();
+                        var callResponseTime = callEndTime - callStartTime;
+                        $.ajax(initialPageData.reverse('api_histogram_metrics'), {
+                            method: 'POST',
+                            data: {responseTime: callResponseTime, metrics: "commcare.dynamic_search.response_time"},
+                            error: function () {
+                                console.log("API call failed to record metrics");
+                            },
+                        });
+                    }
+                });
             });
 
             return defer.promise();
@@ -180,7 +196,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         }
 
         var progressView = ProgressBar({
-            progressMessage: gettext("Switching project spaces..."),
+            progressMessage: gettext("Loading..."),
         });
         FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
 
@@ -200,10 +216,15 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         return API.queryFormplayer(options, "get_endpoint");
     });
 
-    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent, isShortDetail) {
+    FormplayerFrontend.getChannel().reply("icon:click", function (options) {
+        return API.queryFormplayer(options, "get_endpoint");
+    });
+
+    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent, isShortDetail, isRefreshCaseSearch) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         options.isShortDetail = isShortDetail;
+        options.isRefreshCaseSearch = isRefreshCaseSearch;
         return API.queryFormplayer(options, 'get_details');
     });
 

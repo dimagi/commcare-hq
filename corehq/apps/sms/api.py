@@ -454,7 +454,8 @@ def send_admin_registration_alert(domain, recipients, user):
         "domain": domain,
         "url": absolute_reverse(EditCommCareUserView.urlname, args=[domain, user.get_id])
     })
-    send_html_email_async.delay(subject, recipients, html_content, domain=domain)
+    send_html_email_async.delay(subject, recipients, html_content,
+                                domain=domain, use_domain_gateway=True)
 
 
 def is_registration_text(text):
@@ -484,9 +485,10 @@ def process_sms_registration(msg):
 
         1) Select "Enable Mobile Worker Registration via SMS" in project settings.
 
-        2) Text in "join <domain> worker <username>", where <domain> is the domain to join and <username> is the
-        requested username.  If the username doesn't exist it will be created, otherwise the registration will error.
-        If the username argument is not specified, the username will be the mobile number
+        2) Text in "join <domain> worker <username>", where <domain> is the domain to join
+        and <username> is the requested username. If the username doesn't exist it will be
+        created, otherwise the registration will error. If the username argument is not specified,
+        the username will be the mobile number
 
         The "join" and "worker" keywords can be any keyword in REGISTRATION_KEYWORDS and
         REGISTRATION_MOBILE_WORKER_KEYWORDS, respectively. This is meant to support multiple
@@ -781,9 +783,9 @@ def _process_incoming(msg):
 
     # If the sms queue is enabled, then the billable gets created in remove_from_queue()
     if (
-        not settings.SMS_QUEUE_ENABLED and
-        msg.domain and
-        domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
+        not settings.SMS_QUEUE_ENABLED
+        and msg.domain
+        and domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
     ):
         create_billable_for_sms(msg)
 

@@ -33,6 +33,7 @@ from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
+from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.users.dbaccessors import get_mobile_users_by_filters
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
@@ -89,6 +90,29 @@ def mapbox_routing_status(request, domain, poll_id):
     return routing_status(poll_id)
 
 
+def routing_status_view(request, domain, poll_id):
+    # Todo; handle HTTPErrors
+    return json_response({
+        'result': routing_status(poll_id)
+    })
+
+
+class CaseDisbursementAlgorithm(BaseDomainView):
+    urlname = "case_disbursement"
+
+    def post(self, request, domain, *args, **kwargs):
+        solver_class = GeoConfig.objects.get(domain=domain).disbursement_solver
+        request_json = json.loads(request.body.decode('utf-8'))
+        poll_id, result = solver_class(request_json).solve()
+        if poll_id is None:
+            return json_response(
+                {'result': result}
+            )
+        return json_response({
+            "poll_url": reverse("routing_status", args=[self.domain, poll_id])
+        })
+
+
 class GeoPolygonView(BaseDomainView):
     urlname = 'geo_polygon'
 
@@ -140,7 +164,7 @@ class GeoPolygonView(BaseDomainView):
 
 
 class BaseConfigView(BaseDomainView):
-    section_name = _("Geospatial")
+    section_name = _("Data")
 
     @method_decorator(toggles.GEOSPATIAL.required_decorator())
     def dispatch(self, request, *args, **kwargs):
@@ -223,7 +247,7 @@ class GPSCaptureView(BaseDomainView):
     template_name = 'gps_capture_view.html'
 
     page_name = _("Manage GPS Data")
-    section_name = _("Geospatial")
+    section_name = _("Data")
 
     fields = [
         'corehq.apps.reports.filters.case_list.CaseListFilter',
@@ -257,6 +281,7 @@ class GPSCaptureView(BaseDomainView):
         page_context = {
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'case_types_with_gps': list(case_types),
+            'couch_user_username': self.request.couch_user.raw_username,
         }
         page_context.update(self._case_filters_context())
         return page_context
@@ -290,7 +315,7 @@ class GPSCaptureView(BaseDomainView):
 
         if data_type == 'case':
             if create_case:
-                data_item['owner_id'] = request.couch_user.user_id
+                data_item['owner_id'] = data_item['owner_id'] or request.couch_user.user_id
                 create_case_with_gps_property(request.domain, data_item)
             else:
                 set_case_gps_property(request.domain, data_item)
@@ -304,7 +329,7 @@ class GPSCaptureView(BaseDomainView):
 
 @require_GET
 @login_and_domain_required
-def get_paginated_cases_or_users_without_gps(request, domain):
+def get_paginated_cases_or_users(request, domain):
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 5))
     query = request.GET.get('query', '')
@@ -313,7 +338,7 @@ def get_paginated_cases_or_users_without_gps(request, domain):
     if case_or_user == 'user':
         data = _get_paginated_users_without_gps(domain, page, limit, query)
     else:
-        data = GetPaginatedCases(request, domain).get_paginated_cases_without_gps(domain, page, limit, query)
+        data = GetPaginatedCases(request, domain).get_paginated_cases_without_gps(domain, page, limit)
     return JsonResponse(data)
 
 
@@ -334,7 +359,7 @@ class GetPaginatedCases(CaseListMixin):
             .domain(self.domain)
         )
 
-    def get_paginated_cases_without_gps(self, domain, page, limit, query):
+    def get_paginated_cases_without_gps(self, domain, page, limit):
         show_cases_with_missing_gps_data_only = True
 
         if GPSDataFilter(self.request, self.domain).show_all:
@@ -344,11 +369,12 @@ class GetPaginatedCases(CaseListMixin):
         location_prop_name = get_geo_case_property(domain)
         if show_cases_with_missing_gps_data_only:
             cases_query = cases_query.case_property_missing(location_prop_name)
-        cases_query = (
-            cases_query
-            .search_string_query(query, ['name'])
-            .sort('server_modified_on', desc=True)
-        )
+
+        search_string = CaseSearchFilter.get_value(self.request, self.domain)
+        if search_string:
+            cases_query = cases_query.set_query({"query_string": {"query": search_string}})
+
+        cases_query = cases_query.sort('server_modified_on', desc=True)
         case_ids = cases_query.get_ids()
 
         paginator = Paginator(case_ids, limit)

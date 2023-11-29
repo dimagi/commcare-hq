@@ -536,6 +536,8 @@ class SessionEndpoint(IdNode):
     arguments = NodeListField('argument', Argument)
     stack = NodeField('stack', Stack)
 
+    respect_relevancy = BooleanField('@respect-relevancy', required=False)
+
 
 class Assertion(XmlObject):
     ROOT_NAME = 'assert'
@@ -581,6 +583,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
     default_search = BooleanField("@default_search")
+    dynamic_search = BooleanField("@dynamic_search")
 
     @property
     def id(self):

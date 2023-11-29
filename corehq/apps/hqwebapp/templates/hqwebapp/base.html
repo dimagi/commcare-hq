@@ -136,6 +136,10 @@
       {% endcompress %}
     {% endif %}
 
+    <script>
+      window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
+    </script>
+
     {% if not requirejs_main %}
       {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
     {% endif %}
@@ -409,7 +413,11 @@
 
     {% if request.use_ko_validation and not requirejs_main %}
       <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
+      {% if use_bootstrap5 %}
+        <script src="{% static 'hqwebapp/js/bootstrap5/validators.ko.js' %}"></script>
+      {% else %}
+        <script src="{% static 'hqwebapp/js/bootstrap3/validators.ko.js' %}"></script>
+      {% endif %}
     {% endif %}
 
     {% if is_demo_visible %}

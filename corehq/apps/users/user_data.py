@@ -1,3 +1,5 @@
+from django.contrib.auth.models import User
+from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
@@ -7,9 +9,6 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsProfile,
     is_system_key,
 )
-from corehq.apps.users.views.mobile.custom_data_fields import (
-    CUSTOM_USER_DATA_FIELD_TYPE,
-)
 
 
 class UserDataError(Exception):
@@ -17,10 +16,40 @@ class UserDataError(Exception):
 
 
 class UserData:
-    def __init__(self, raw_user_data, domain, profile_id=None):
+    def __init__(self, raw_user_data, couch_user, domain, profile_id=None):
         self._local_to_user = raw_user_data
+        self._couch_user = couch_user
         self.domain = domain
         self._profile_id = profile_id or raw_user_data.get(PROFILE_SLUG, None)
+
+    @classmethod
+    def lazy_init(cls, couch_user, domain):
+        # To be used during initial rollout - lazily create user_data objs from
+        # existing couch data
+        raw_user_data = couch_user.user_data.copy()
+        raw_user_data.pop(COMMCARE_PROJECT, None)
+        profile_id = raw_user_data.pop(PROFILE_SLUG, None)
+        sql_data, _ = SQLUserData.objects.get_or_create(
+            user_id=couch_user.user_id,
+            domain=domain,
+            defaults={
+                'data': couch_user.user_data,
+                'django_user': couch_user.get_django_user(),
+                'profile_id': profile_id,
+            }
+        )
+        return cls(sql_data.data, couch_user, domain, profile_id=sql_data.profile_id)
+
+    def save(self):
+        SQLUserData.objects.update_or_create(
+            user_id=self._couch_user.user_id,
+            domain=self.domain,
+            defaults={
+                'data': self._local_to_user,
+                'django_user': self._couch_user.get_django_user(),
+                'profile_id': self.profile_id,
+            },
+        )
 
     @property
     def _provided_by_system(self):
@@ -60,7 +89,6 @@ class UserData:
             if set(new_profile.fields).intersection(non_empty_existing_fields):
                 raise UserDataError(_("Profile conflicts with existing data"))
         self._profile_id = profile_id
-        self._local_to_user[PROFILE_SLUG] = profile_id
 
     @cached_property
     def profile(self):
@@ -68,6 +96,9 @@ class UserData:
             return self._get_profile(self.profile_id)
 
     def _get_profile(self, profile_id):
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            CUSTOM_USER_DATA_FIELD_TYPE,
+        )
         try:
             return CustomDataFieldsProfile.objects.get(
                 id=profile_id,
@@ -105,9 +136,6 @@ class UserData:
             if value == self._provided_by_system[key]:
                 return
             raise UserDataError(_("'{}' cannot be set directly").format(key))
-        if key == PROFILE_SLUG:
-            # TODO disallow
-            self.profile_id = value
         self._local_to_user[key] = value
 
     def update(self, data, profile_id=...):
@@ -131,9 +159,6 @@ class UserData:
     def __delitem__(self, key):
         if key in self._provided_by_system:
             raise UserDataError(_("{} cannot be deleted").format(key))
-        if key == PROFILE_SLUG:
-            # TODO disallow
-            self.profile_id = None
         del self._local_to_user[key]
 
     def pop(self, key, default=...):
@@ -149,6 +174,17 @@ class UserData:
             del self._local_to_user[key]
             return ret
 
-    def save(self):
-        # TODO
-        ...
+
+class SQLUserData(models.Model):
+    domain = models.CharField(max_length=128)
+    user_id = models.CharField(max_length=36)
+    django_user = models.ForeignKey(User, on_delete=models.CASCADE)
+    modified_on = models.DateTimeField(auto_now=True)
+
+    profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
+                                on_delete=models.PROTECT, null=True)
+    data = models.JSONField()
+
+    class Meta:
+        unique_together = ("user_id", "domain")
+        indexes = [models.Index(fields=['user_id', 'domain'])]

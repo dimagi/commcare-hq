@@ -21,9 +21,10 @@ hqDefine('hqwebapp/js/components/bootstrap5/feedback', [
     $,
     initialPageData
 ) {
+    'use strict';
     return {
         viewModel: function (params) {
-            var self = {};
+            let self = {};
 
             if (!params.featureName) {
                 throw new Error("Please specify a featureName in params.");
@@ -61,11 +62,6 @@ hqDefine('hqwebapp/js/components/bootstrap5/feedback', [
                         if (data.success) {
                             self.showSuccess(true);
                         }
-                    })
-                    .always(function () {
-                        setTimeout(function () {
-                            $('#modal-feedback-form-widget').modal('hide');
-                        }, 1000);
                     });
             };
 

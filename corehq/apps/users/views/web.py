@@ -66,10 +66,14 @@ class UserInvitationView(object):
                                       "request a project administrator to send you the invitation again."))
             return HttpResponseRedirect(reverse("login"))
 
+        is_invited_user = (request.user.is_authenticated
+            and request.couch_user.username.lower() == invitation.email.lower())
+
         if invitation.is_accepted:
-            messages.error(request, _("Sorry, that invitation has already been used up. "
-                                      "If you feel this is a mistake please ask the inviter for "
-                                      "another invitation."))
+            if request.user.is_authenticated and not is_invited_user:
+                messages.error(request, _("Sorry, that invitation has already been used up. "
+                                          "If you feel this is a mistake, please ask the inviter for "
+                                          "another invitation."))
             return HttpResponseRedirect(reverse("login"))
 
         self.validate_invitation(invitation)
@@ -98,7 +102,6 @@ class UserInvitationView(object):
         else:
             context['current_page'] = {'page_name': _('Project Invitation, Account Required')}
         if request.user.is_authenticated:
-            is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
                 if is_invited_user:
                     # if this invite was actually for this user, just mark it accepted
@@ -144,12 +147,19 @@ class UserInvitationView(object):
                 })
                 return render(request, self.template, context)
         else:
+            domain_obj = Domain.get_by_name(invitation.domain)
+            allow_invite_email_only = domain_obj and domain_obj.allow_invite_email_only
+
             idp = None
             if settings.ENFORCE_SSO_LOGIN:
                 idp = IdentityProvider.get_required_identity_provider(invitation.email)
 
             if request.method == "POST":
-                form = WebUserInvitationForm(request.POST, is_sso=idp is not None)
+                form = WebUserInvitationForm(
+                    request.POST,
+                    is_sso=idp is not None,
+                    allow_invite_email_only=allow_invite_email_only,
+                    invite_email=invitation.email)
                 if form.is_valid():
                     # create the new user
                     invited_by_user = CouchUser.get_by_user_id(invitation.invited_by)
@@ -157,6 +167,12 @@ class UserInvitationView(object):
                     if idp:
                         signup_request = AsyncSignupRequest.create_from_invitation(invitation)
                         return HttpResponseRedirect(idp.get_login_url(signup_request.username))
+
+                    if allow_invite_email_only and \
+                            request.POST.get("email").lower() != invitation.email.lower():
+                        messages.error(request, _("You can only sign up with the email "
+                                                  "address your invitation was sent to."))
+                        return HttpResponseRedirect(reverse("login"))
 
                     user = activate_new_user_via_reg_form(
                         form,
@@ -199,6 +215,7 @@ class UserInvitationView(object):
                         'email': invitation.email,
                     },
                     is_sso=idp is not None,
+                    allow_invite_email_only=allow_invite_email_only
                 )
 
             context.update({

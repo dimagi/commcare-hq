@@ -329,11 +329,20 @@ def update_linked_app_and_notify(domain, app_id, master_app_id, user_id, email):
         send_html_email_async.delay(subject, email, _(
             "Something went wrong updating your linked app. "
             "Our team has been notified and will monitor the situation. "
-            "Please try again, and if the problem persists report it as an issue."))
+            "Please try again, and if the problem persists report it as an issue."),
+            domain=domain,
+            use_domain_gateway=True,
+        )
         raise
     else:
         message = _("Your linked application was successfully updated to the latest version.")
-    send_html_email_async.delay(subject, email, message)
+    send_html_email_async.delay(
+        subject,
+        email,
+        message,
+        domain=domain,
+        use_domain_gateway=True,
+    )
 
 
 def update_linked_app(app, master_app_id_or_build, user_id):

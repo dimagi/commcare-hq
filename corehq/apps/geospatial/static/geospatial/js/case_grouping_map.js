@@ -4,48 +4,40 @@ hqDefine("geospatial/js/case_grouping_map",[
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/alert_user',
+    'geospatial/js/models',
+    'geospatial/js/utils'
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    alertUser
+    alertUser,
+    models,
+    utils
 ) {
 
     const MAPBOX_LAYER_VISIBILITY = {
         None: 'none',
         Visible: 'visible',
     };
+    const DEFAULT_MARKER_OPACITY = 1.0;
+    const OBSCURING_OPACITY = 0.2;
+    const DEFAULT_GROUP_ID = "unassigned-group-id";
+    const DEFAULT_GROUP = {
+        groupId: DEFAULT_GROUP_ID,
+        name: gettext("No group"),
+        color: `rgba(128,128,128,${OBSCURING_OPACITY})`,
+    }
 
-    const DEFAULT_MARKER_COLOR = "rgba(128,128,128,0.25)";
     const MAP_CONTAINER_ID = 'case-grouping-map';
-    let map;
     const clusterStatsInstance = new clusterStatsModel();
     let exportModelInstance;
+    let groupLockModelInstance = new groupLockModel();
+    let caseGroupsInstance = new caseGroupSelectModel();
     let mapMarkers = [];
 
-    function caseModel(caseId, coordinates, caseLink) {
-        'use strict';
-        var self = {};
-        self.caseId = caseId;
-        self.coordinates = coordinates;
-        self.caseLink = caseLink;
-        self.groupId = null;
-        self.groupCoordinates = null;
-
-        self.toJson = function () {
-            const coordinates = (self.coordinates) ? `${self.coordinates.lng} ${self.coordinates.lat}` : "";
-            const groupCoordinates = (self.groupCoordinates) ? `${self.groupCoordinates.lng} ${self.groupCoordinates.lat}` : "";
-            return {
-                'groupId': self.groupId,
-                'groupCenterCoordinates': groupCoordinates,
-                'caseId': self.caseId,
-                'coordinates': coordinates,
-            };
-        }
-
-        return self;
-    }
+    let mapModel;
+    let polygonFilterInstance;
 
     function clusterStatsModel() {
         'use strict';
@@ -65,8 +57,17 @@ hqDefine("geospatial/js/case_grouping_map",[
             if (!self.casesToExport().length) {
                 return;
             }
+            // Only cases with belonging to groups should be exported
+            let exportableCases = self.casesToExport().filter(function(caseItem) {
+                return caseItem.groupId !== DEFAULT_GROUP_ID;
+            });
 
-            const casesToExport = _.map(self.casesToExport(), function (caseItem) {
+            if (!exportableCases.length) {
+                // If no case belongs to a group, we export all cases
+                exportableCases = self.casesToExport();
+            }
+
+            const casesToExport = _.map(exportableCases, function (caseItem) {
                 return caseItem.toJson();
             });
 
@@ -85,19 +86,32 @@ hqDefine("geospatial/js/case_grouping_map",[
             const hiddenElement = document.createElement('a');
             hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csvStr);
             hiddenElement.target = '_blank';
-            hiddenElement.download = `Grouped Cases (${getTodayDate()}).csv`;
+            hiddenElement.download = `Grouped Cases (${utils.getTodayDate()}).csv`;
             hiddenElement.click();
             hiddenElement.remove();
         };
 
-        self.loadCaseGroups = function(caseGroups) {
+        self.addGroupDataToCases = function(caseGroups, groupsData, assignDefaultGroup) {
+            const defaultGroup = groupsData.find((group) => {return group.groupId === DEFAULT_GROUP_ID});
             self.casesToExport().forEach(caseItem => {
-                const groupData = caseGroups[caseItem.caseId];
-                if (groupData !== undefined) {
-                    caseItem.groupId = groupData.groupId;
-                    caseItem.groupCoordinates = groupData.groupCoordinates;
+                const groupId = caseGroups[caseItem.itemId];
+                if (groupId !== undefined) {
+                    const group = groupsData.find((group) => {return group.groupId === groupId});
+                    self.setItemGroup(caseItem, groupId, group.coordinates);
+                } else if (assignDefaultGroup) {
+                    self.setItemGroup(caseItem, defaultGroup.groupId, {});
                 }
             });
+        }
+
+        self.setItemGroup = function(item, groupId, groupCoordinates) {
+            item.groupId = groupId;
+            item.groupCoordinates = groupCoordinates;
+        }
+
+        self.updateCaseGroup = function(itemId, groupData) {
+            var item = self.casesToExport().find((caseItem) => {return caseItem.itemId == itemId});
+            self.setItemGroup(item, groupData.groupId, groupData.coordinates);
         }
 
         self.clearCaseGroups = function() {
@@ -108,97 +122,16 @@ hqDefine("geospatial/js/case_grouping_map",[
                 }
             });
         }
+
+        self.groupsReady = function() {
+            return groupLockModelInstance.groupsLocked();
+        }
+
         return self;
     }
 
-    function getTodayDate() {
-        const todayDate = new Date();
-        return todayDate.toLocaleDateString();
-    }
-
-    function initMap() {
-        'use strict';
-
-        mapboxgl.accessToken = initialPageData.get('mapbox_access_token'); // eslint-disable-line no-undef
-        const centerCoordinates = [2.43333330, 9.750];
-
-        const mapboxInstance = new mapboxgl.Map({  // eslint-disable-line no-undef
-            container: MAP_CONTAINER_ID, // container ID
-            style: 'mapbox://styles/mapbox/streets-v12', // style URL
-            center: centerCoordinates, // starting position [lng, lat]
-            zoom: 6,
-            attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
-                         ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        });
-
-        mapboxInstance.on('load', () => {
-            map.addSource('caseWithGPS', {
-                type: 'geojson',
-                data: {
-                    "type": "FeatureCollection",
-                    "features": [],
-                },
-                cluster: true,
-                clusterMaxZoom: 14, // Max zoom to cluster points on
-                clusterRadius: 50, // Radius of each cluster when clustering points (defaults to 50)
-            });
-            map.addLayer({
-                id: 'clusters',
-                type: 'circle',
-                source: 'caseWithGPS',
-                filter: ['has', 'point_count'],
-                paint: {
-                    'circle-color': [
-                        'step',
-                        ['get', 'point_count'],
-                        '#51bbd6',
-                        100,
-                        '#f1f075',
-                        750,
-                        '#f28cb1',
-                    ],
-                    'circle-radius': [
-                        'step',
-                        ['get', 'point_count'],
-                        20,
-                        100,
-                        30,
-                        750,
-                        40,
-                    ],
-                },
-            });
-            map.addLayer({
-                id: 'cluster-count',
-                type: 'symbol',
-                source: 'caseWithGPS',
-                filter: ['has', 'point_count'],
-                layout: {
-                    'text-field': ['get', 'point_count_abbreviated'],
-                    'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-                    'text-size': 12,
-                },
-            });
-            map.addLayer({
-                id: 'unclustered-point',
-                type: 'circle',
-                source: 'caseWithGPS',
-                filter: ['!', ['has', 'point_count']],
-                paint: {
-                    'circle-color': 'red',
-                    'circle-radius': 10,
-                    'circle-stroke-width': 1,
-                    'circle-stroke-color': '#fff',
-                },
-            });
-        });
-        mapboxInstance.on('moveend', updateClusterStats);
-
-        return mapboxInstance;
-    }
-
     function updateClusterStats() {
-        const sourceFeatures = map.querySourceFeatures('caseWithGPS', {
+        const sourceFeatures = mapModel.mapInstance.querySourceFeatures('caseWithGPS', {
             sourceLayer: 'clusters',
             filter: ['==', 'cluster', true],
         });
@@ -241,28 +174,28 @@ hqDefine("geospatial/js/case_grouping_map",[
         };
 
         _.each(caseList, function (caseWithGPS) {
-            const coordinates = caseWithGPS.coordinates;
+            const coordinates = caseWithGPS.itemData.coordinates;
             if (coordinates && coordinates.lat && coordinates.lng) {
                 caseLocationsGeoJson["features"].push(
                     {
                         "type": "feature",
                         "properties": {
-                            "id": caseWithGPS.caseId,
+                            "id": caseWithGPS.itemId,
                         },
                         "geometry": {
                             "type": "Point",
                             "coordinates": [coordinates.lng, coordinates.lat],
                         },
-                    },
+                    }
                 );
             }
         });
 
-        if (map.getSource('caseWithGPS')) {
-            map.getSource('caseWithGPS').setData(caseLocationsGeoJson);
+        if (mapModel.mapInstance.getSource('caseWithGPS')) {
+            mapModel.mapInstance.getSource('caseWithGPS').setData(caseLocationsGeoJson);
         } else {
-            map.on('load', () => {
-                map.getSource('caseWithGPS').setData(caseLocationsGeoJson);
+            mapModel.mapInstance.on('load', () => {
+                mapModel.mapInstance.getSource('caseWithGPS').setData(caseLocationsGeoJson);
             });
         }
     }
@@ -280,85 +213,252 @@ hqDefine("geospatial/js/case_grouping_map",[
     }
 
     function setMapLayersVisibility(visibility) {
-        map.setLayoutProperty('clusters', 'visibility', visibility);
-        map.setLayoutProperty('cluster-count', 'visibility', visibility);
-        map.setLayoutProperty('unclustered-point', 'visibility', visibility);
+        mapModel.mapInstance.setLayoutProperty('clusters', 'visibility', visibility);
+        mapModel.mapInstance.setLayoutProperty('cluster-count', 'visibility', visibility);
+        mapModel.mapInstance.setLayoutProperty('unclustered-point', 'visibility', visibility);
     }
 
-    function getRandomRGBColor() {
-        var r = Math.floor(Math.random() * 256); // Random value between 0 and 255 for red
-        var g = Math.floor(Math.random() * 256); // Random value between 0 and 255 for green
-        var b = Math.floor(Math.random() * 256); // Random value between 0 and 255 for blue
+    function mapMarkerModel(itemId, itemData, marker, markerColors) {
+        'use strict';
+        var self = {};
+        self.title = gettext("Select group");
+        self.itemId = itemId;
+        self.itemData = itemData;
+        self.marker = marker;
+        self.selectCssId = "select" + itemId;
+        self.isSelected = ko.observable(false);
+        self.markerColors = markerColors;
 
-        return `rgba(${r},${g},${b},1)`;
+        self.groupsOptions = ko.observable(caseGroupsInstance.generatedGroups);
+        self.selectedGroup = ko.observable(itemData.groupId);
+
+        self.updateGroup = ko.computed(function () {
+            if (!self.itemId) {
+                return;
+            }
+            caseGroupsInstance.updateCaseGroup(self.itemId, self.selectedGroup());
+            const newGroup = caseGroupsInstance.getGroupByID(self.selectedGroup());
+            if (newGroup) {
+                changeMarkerColor(self, newGroup.color);
+                exportModelInstance.updateCaseGroup(self.itemId, newGroup);
+            }
+        });
+
+        function changeMarkerColor(selectedCase, newColor) {
+            let marker = selectedCase.marker;
+            let element = marker.getElement();
+            let svg = element.getElementsByTagName("svg")[0];
+            let path = svg.getElementsByTagName("path")[0];
+            path.setAttribute("fill", newColor);
+        }
+
+        return self;
     }
 
-    function collapseGroupsOnMap() {
+    function revealGroupsOnMap() {
         setMapLayersVisibility(MAPBOX_LAYER_VISIBILITY.None);
-        var groupColors = {};
-
+        mapMarkers.forEach((marker) => marker.remove());
+        mapMarkers = [];
         exportModelInstance.casesToExport().forEach(function (caseItem) {
-            if (!caseItem.coordinates) {
+            const coordinates = caseItem.itemData.coordinates;
+            if (!coordinates) {
+                return;
+            }
+            const caseGroupID = caseItem.groupId;
+            if (caseGroupsInstance.groupIDInVisibleGroupIds(caseGroupID)) {
+                let caseGroup = caseGroupsInstance.getGroupByID(caseGroupID);
+                color = caseGroup.color;
+                const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
+                marker.setLngLat([coordinates.lng, coordinates.lat]);
+
+                // Add the marker to the map
+                marker.addTo(mapModel.mapInstance);
+                mapMarkers.push(marker);
+
+                let popupDiv = document.createElement("div");
+                popupDiv.setAttribute("data-bind", "template: 'select-case'");
+
+                let popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
+                    .setLngLat(coordinates)
+                    .setDOMContent(popupDiv);
+
+                marker.setPopup(popup);
+
+                const markerDiv = marker.getElement();
+                // Show popup on hover
+                markerDiv.addEventListener('mouseenter', marker.togglePopup);
+
+                // Hide popup if mouse leaves marker and popup
+                var addLeaveEvent = function (fromDiv, toDiv) {
+                    fromDiv.addEventListener('mouseleave', function () {
+                        setTimeout(function () {
+                            if (!$(toDiv).is(':hover')) {
+                                // mouse left toDiv as well
+                                marker.togglePopup();
+                            }
+                        }, 100);
+                    });
+                };
+                addLeaveEvent(markerDiv, popupDiv);
+                addLeaveEvent(popupDiv, markerDiv);
+                const colors = {default: color, selected: color};
+
+                const mapMarkerInstance = new mapMarkerModel(caseItem.itemId, caseItem, marker, colors);
+                $(popupDiv).koApplyBindings(mapMarkerInstance);
+            }
+        });
+    }
+
+    function caseGroupSelectModel() {
+        'use strict';
+        var self = {};
+
+        self.groupsByCase;
+        // generatedGroups and caseGroupsForTable contains the same data, but there's weird knockoutjs behaviour
+        // if we're making generatedGroups an observable. caseGroupsForTable is populated by setCaseGroupsForTable
+        self.generatedGroups = [];
+        self.caseGroupsForTable = ko.observableArray([]);
+        self.visibleGroupIDs = ko.observableArray([]);
+        self.casePerGroup = {};
+
+        self.groupIDInVisibleGroupIds = function(groupID) {
+            return self.visibleGroupIDs().indexOf(groupID) !== -1;
+        };
+
+        self.getGroupByID = function(groupID) {
+            return self.generatedGroups.find((group) => group.groupId === groupID);
+        };
+
+        self.updateCaseGroup = function(itemId, newGroupId) {
+            self.groupsByCase[itemId] = newGroupId;
+        };
+
+        self.loadCaseGroups = function(caseGroups, groups) {
+            self.groupsByCase = caseGroups;
+            self.generatedGroups = groups;
+
+            self.showAllGroups();
+        };
+
+        self.clear = function() {
+            self.generatedGroups = [];
+            self.caseGroupsForTable([]);
+            self.visibleGroupIDs([]);
+        };
+
+        self.restoreMarkerOpacity = function() {
+            mapMarkers.forEach(function(marker) {
+                setMarkerOpacity(marker, DEFAULT_MARKER_OPACITY);
+            });
+        };
+
+        self.highlightGroup = function(group) {
+            exportModelInstance.casesToExport().forEach(caseItem => {
+                    let caseIsInGroup = caseItem.groupId === group.groupId;
+                    let opacity = DEFAULT_MARKER_OPACITY
+                    if (!caseIsInGroup) {
+                        opacity = OBSCURING_OPACITY;
+                    }
+                    let marker = mapMarkers.find((marker) => {
+                        let markerCoordinates = marker.getLngLat();
+                        let caseCoordinates = caseItem.itemData.coordinates;
+                        let latEqual = markerCoordinates.lat === caseCoordinates.lat;
+                        let lonEqual = markerCoordinates.lng === caseCoordinates.lng;
+                        return latEqual && lonEqual;
+                    });
+                    if (marker) {
+                        setMarkerOpacity(marker, opacity);
+                    }
+            });
+        };
+
+        function setMarkerOpacity(marker, opacity) {
+            let element = marker.getElement();
+            element.style.opacity = opacity;
+        };
+
+        self.showSelectedGroups = function() {
+            if (!self.groupsByCase) {
                 return;
             }
 
-            const groupId = caseItem.groupId;
-            let color = DEFAULT_MARKER_COLOR;
-
-            if (groupId) {
-                if (groupColors[groupId] === undefined) {
-                    groupColors[groupId] = getRandomRGBColor();
+            let filteredCaseGroups = {};
+            for (const caseID in self.groupsByCase) {
+                if (self.groupIDInVisibleGroupIds(self.groupsByCase[caseID])) {
+                    filteredCaseGroups[caseID] = self.groupsByCase[caseID];
                 }
-                color = groupColors[groupId];
             }
-            const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
-            marker.setLngLat([caseItem.coordinates.lng, caseItem.coordinates.lat]);
+            exportModelInstance.addGroupDataToCases(filteredCaseGroups, self.generatedGroups);
+            revealGroupsOnMap();
+        };
 
-            // Add the marker to the map
-            marker.addTo(map);
-            mapMarkers.push(marker);
-        });
-    }
+        self.showAllGroups = function() {
+            if (!self.groupsByCase) {
+                return;
+            }
+            self.visibleGroupIDs(_.map(self.generatedGroups, function(group) {return group.groupId}));
+            revealGroupsOnMap();
+            self.setCaseGroupsForTable();
+        };
 
-    function uuidv4() {
-        // https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid/2117523#2117523
-        return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
-            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16),
-        );
+        self.setCaseGroupsForTable = function() {
+            self.caseGroupsForTable(self.generatedGroups);
+        }
+
+        self.groupsReady = function() {
+            return groupLockModelInstance.groupsLocked() && self.caseGroupsForTable().length;
+        };
+
+        return self;
     }
 
     async function setCaseGroups() {
-        const sourceFeatures = map.querySourceFeatures('caseWithGPS', {
+        const sourceFeatures = mapModel.mapInstance.querySourceFeatures('caseWithGPS', {
             sourceLayer: 'clusters',
             filter: ['==', 'cluster', true],
         });
-        const clusterSource = map.getSource('caseWithGPS');
+        const clusterSource = mapModel.mapInstance.getSource('caseWithGPS');
         let caseGroups = {};
         let failedClustersCount = 0;
-        processedCluster = {}
+        processedCluster = {};
+
+        var groupCount = 1;
+        var groups = [DEFAULT_GROUP];
 
         for (const cluster of sourceFeatures) {
             const clusterId = cluster.properties.cluster_id;
-            if (processedCluster[clusterId]) {
-                continue;
-            } else {
+            if (processedCluster[clusterId] === undefined) {
                 processedCluster[clusterId] = true;
+            }
+            else {
+                continue;
             }
 
             const pointCount = cluster.properties.point_count;
 
             try {
                 const casePoints = await getClusterLeavesAsync(clusterSource, clusterId, pointCount);
-                const groupUUID = uuidv4();
-                for (const casePoint of casePoints) {
-                    const caseId = casePoint.properties.id;
-                    caseGroups[caseId] = {
+                const groupUUID =  utils.uuidv4();
+
+                if (casePoints.length) {
+                    groupName = _.template(gettext("Group <%- groupCount %>"))({
+                        groupCount: groupCount,
+                    });
+                    groupCount += 1;
+
+                    groups.push({
+                        name: groupName,
                         groupId: groupUUID,
-                        groupCoordinates: {
+                        color: utils.getRandomRGBColor(),
+                        coordinates: {
                             lng: cluster.geometry.coordinates[0],
                             lat: cluster.geometry.coordinates[1],
-                        },
-                    };
+                        }
+                    });
+                    for (const casePoint of casePoints) {
+                        const caseId = casePoint.properties.id;
+                        caseGroups[caseId] = groupUUID;
+                    }
                 }
             } catch (error) {
                 failedClustersCount += 1;
@@ -370,9 +470,8 @@ hqDefine("geospatial/js/case_grouping_map",[
             });
             alertUser.alert_user(message, 'danger');
         }
-
-        exportModelInstance.loadCaseGroups(caseGroups);
-        collapseGroupsOnMap();
+        exportModelInstance.addGroupDataToCases(caseGroups, groups, true);
+        caseGroupsInstance.loadCaseGroups(caseGroups, groups);
     }
 
     function clearCaseGroups() {
@@ -380,6 +479,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         mapMarkers.forEach((marker) => marker.remove());
         mapMarkers = [];
         exportModelInstance.clearCaseGroups();
+        caseGroupsInstance.clear();
     }
 
     function groupLockModel() {
@@ -389,12 +489,13 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.groupsLocked = ko.observable(false);
 
         self.toggleGroupLock = function () {
+            // reset the warning banner
             self.groupsLocked(!self.groupsLocked());
             if (self.groupsLocked()) {
-                map.scrollZoom.disable();
+                mapModel.mapInstance.scrollZoom.disable();
                 setCaseGroups();
             } else {
-                map.scrollZoom.enable();
+                mapModel.mapInstance.scrollZoom.enable();
                 clearCaseGroups();
             }
         };
@@ -420,19 +521,43 @@ hqDefine("geospatial/js/case_grouping_map",[
             const caseRowOrder = initialPageData.get('case_row_order');
             for (const caseItem of rawCaseData) {
                 const caseObj = parseCaseItem(caseItem, caseRowOrder);
-                const caseModelInstance = new caseModel(caseObj.case_id, caseObj.gps_point, caseObj.link);
+                const caseModelInstance = new models.GroupedCaseMapItem(caseObj.case_id, {coordinates: caseObj.gps_point}, caseObj.link);
                 caseModels.push(caseModelInstance);
             }
+            mapModel.caseMapItems(caseModels);
             exportModelInstance.casesToExport(caseModels);
+
+            mapModel.fitMapBounds(caseModels);
+        }
+
+        function initMap() {
+            mapModel = new models.Map(true);
+            mapModel.initMap(MAP_CONTAINER_ID);
+
+            mapModel.mapInstance.on('moveend', updateClusterStats);
+            mapModel.mapInstance.on("draw.update", (e) => {
+                polygonFilterInstance.addPolygonsToFilterList(e.features);
+            });
+            mapModel.mapInstance.on('draw.delete', function (e) {
+                polygonFilterInstance.removePolygonsFromFilterList(e.features);
+            });
+            mapModel.mapInstance.on('draw.create', function (e) {
+                polygonFilterInstance.addPolygonsToFilterList(e.features);
+            });
         }
 
         $(document).ajaxComplete(function (event, xhr, settings) {
             const isAfterReportLoad = settings.url.includes('geospatial/async/case_grouping_map/');
             if (isAfterReportLoad) {
                 $("#export-controls").koApplyBindings(exportModelInstance);
-                $("#lock-groups-controls").koApplyBindings(new groupLockModel());
-                map = initMap();
+                $("#lock-groups-controls").koApplyBindings(groupLockModelInstance);
+                initMap();
                 $("#clusterStats").koApplyBindings(clusterStatsInstance);
+                polygonFilterInstance = new models.PolygonFilter(mapModel, true, false);
+                polygonFilterInstance.loadPolygons(initialPageData.get('saved_polygons'));
+                $("#polygon-filters").koApplyBindings(polygonFilterInstance);
+
+                $("#caseGroupSelect").koApplyBindings(caseGroupsInstance);
                 return;
             }
 
