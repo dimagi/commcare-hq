@@ -267,21 +267,14 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         a transient setting once its set without restarting the cluster, so we
         explicitly set the default value (`all`) instead.
         """
-        self.adapter.cluster_routing(enabled=True)  # default value
+        try:
+            self.adapter._cluster_put_settings({"cluster.routing.allocation.enable": None})
+        except TransportError:
+            # TransportError(400, 'action_request_validation_exception', 'Validation Failed: 1: no settings to update;')  # noqa: E501
+            pass
         if verify:
             settings = self.adapter._es.cluster.get_settings(flat_settings=True)
-            self.assertEqual(settings["transient"]["cluster.routing.allocation.enable"], "all")
-        #
-        # The code below is better. Use it instead when able Elastic v5+
-        #
-        #try:
-        #    self.adapter._cluster_put_settings({"cluster.routing.allocation.enable": None})
-        #except TransportError:
-        #    # TransportError(400, 'action_request_validation_exception', 'Validation Failed: 1: no settings to update;')  # noqa: E501
-        #    pass
-        #if verify:
-        #    settings = self.adapter._es.cluster.get_settings(flat_settings=True)
-        #    self.assertIsNone(settings["transient"].get("cluster.routing.allocation.enable"))
+            self.assertIsNone(settings["transient"].get("cluster.routing.allocation.enable"))
 
     def test_get_node_info(self):
         info = self.adapter._es.nodes.info()
