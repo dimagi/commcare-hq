@@ -12,8 +12,8 @@ def get_customer_cards(username):
             web_user=username,
             method_type=PaymentMethodType.STRIPE
         )
-        stripe_customer = payment_method.customer
-        return dict(stripe_customer.cards)
+        cards = stripe.Customer.list_sources(customer=payment_method.customer.id, object="card")
+        return dict(cards)
     except StripePaymentMethod.DoesNotExist:
         pass
     except stripe.error.AuthenticationError:
