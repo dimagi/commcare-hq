@@ -233,7 +233,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
-            clickIcon: ".module-icon.btn",
+            clickIcon: ".module-icon.clickable-icon",
             selectRow: ".select-row-checkbox",
             showMore: ".show-more",
         },
