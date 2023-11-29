@@ -637,16 +637,18 @@ def get_detail_column_infos(detail_type, detail, include_sort):
     columns = []
     for column in detail_columns:
         sort_element, order = sort_columns.pop(column.field, (None, None))
-        if getattr(sort_element, 'type', None) == 'index' and "search" in detail_type:
-            columns.append(DetailColumnInfo(column, None, None))
-        else:
+        #if getattr(sort_element, 'type', None) == 'index' and "search" in detail_type:
+        #    columns.append(DetailColumnInfo(column, None, None))
+        #else:
+        if True:
             columns.append(DetailColumnInfo(column, sort_element, order))
 
     for field, sort_element, order in sort_only:
         column = create_temp_sort_column(sort_element, order)
-        if getattr(sort_element, 'type', None) == 'index' and "search" in detail_type:
-            columns.append(DetailColumnInfo(column, None, None))
-        else:
+        #if getattr(sort_element, 'type', None) == 'index' and "search" in detail_type:
+        #    columns.append(DetailColumnInfo(column, None, None))
+        #else:
+        if True:
             columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
 
