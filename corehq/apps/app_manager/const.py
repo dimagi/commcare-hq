@@ -96,4 +96,4 @@ DEFAULT_PAGE_LIMIT = 10
 
 CALCULATED_SORT_FIELD_RX = r'^_cc_calculated_(\d+)$'
 
-CASE_LIST_FILTER_LOCATIONS_FIXTURE = 'case_list_filter_locations_fixture'
+CASE_LIST_FILTER_LOCATIONS_FIXTURE = 'Locations Fixture'
