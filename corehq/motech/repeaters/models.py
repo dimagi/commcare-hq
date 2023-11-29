@@ -1249,6 +1249,7 @@ class SQLRepeatRecord(models.Model):
                                  related_name='repeat_records')
     state = models.PositiveSmallIntegerField(choices=State.choices, default=State.Pending)
     registered_at = models.DateTimeField()
+    next_check = models.DateTimeField(null=True, default=None)
 
     class Meta:
         db_table = 'repeaters_repeatrecord'
@@ -1257,6 +1258,21 @@ class SQLRepeatRecord(models.Model):
             models.Index(fields=['couch_id']),
             models.Index(fields=['payload_id']),
             models.Index(fields=['registered_at']),
+            models.Index(
+                name="next_check_not_null",
+                fields=["next_check"],
+                condition=models.Q(next_check__isnull=False),
+            )
+        ]
+        constraints = [
+            models.CheckConstraint(
+                name="next_check_pending_or_null",
+                check=(
+                    models.Q(next_check__isnull=True)
+                    | models.Q(next_check__isnull=False, state=State.Pending)
+                    | models.Q(next_check__isnull=False, state=State.Fail)
+                )
+            ),
         ]
         ordering = ['registered_at']
 
@@ -1265,10 +1281,10 @@ class SQLRepeatRecord(models.Model):
         # preserves the value of `self.failure_reason`.
         if self.state == State.Success:
             self.state = State.Pending
-            self.save()
         elif self.state == State.Cancelled:
             self.state = State.Fail
-            self.save()
+        self.next_check = datetime.utcnow()
+        self.save()
 
     def add_success_attempt(self, response):
         """
@@ -1281,6 +1297,7 @@ class SQLRepeatRecord(models.Model):
             message=format_response(response) or '',
         )
         self.state = State.Success
+        self.next_check = None
         self.save()
 
     def add_client_failure_attempt(self, message, retry=True):
@@ -1316,6 +1333,8 @@ class SQLRepeatRecord(models.Model):
             message=message,
         )
         self.state = state
+        if state == State.Cancelled:
+            self.next_check = None
         self.save()
 
     def add_payload_exception_attempt(self, message, tb_str):
@@ -1325,6 +1344,7 @@ class SQLRepeatRecord(models.Model):
             traceback=tb_str,
         )
         self.state = State.Cancelled
+        self.next_check = None
         self.save()
 
     @property

@@ -33,6 +33,30 @@ class Migration(migrations.Migration):
                 (16, 'Empty')
             ]),
         ),
+        migrations.AddField(
+            model_name='sqlrepeatrecord',
+            name='next_check',
+            field=models.DateTimeField(default=None, null=True),
+        ),
+        migrations.AddIndex(
+            model_name='sqlrepeatrecord',
+            index=models.Index(
+                condition=models.Q(('next_check__isnull', False)),
+                fields=['next_check'],
+                name='next_check_not_null'
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name='sqlrepeatrecord',
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ('next_check__isnull', True),
+                    models.Q(('next_check__isnull', False), ('state', 1)),
+                    models.Q(('next_check__isnull', False), ('state', 2)),
+                    _connector='OR'
+                ),
+                name='next_check_pending_or_null'),
+        ),
         migrations.SeparateDatabaseAndState(
             database_operations=[],
             state_operations=[
