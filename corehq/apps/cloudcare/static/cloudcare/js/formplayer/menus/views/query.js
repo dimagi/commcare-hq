@@ -81,6 +81,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 model.set('value', item.place_name);
                 initMapboxWidget(model);
+                const geocoderValues = JSON.parse(sessionStorage.geocoderValues);
+                geocoderValues[model.id] = item.place_name;
+                sessionStorage.geocoderValues = JSON.stringify(geocoderValues);
                 var broadcastObj = formEntryUtils.getBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
@@ -149,6 +152,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             $(function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Seen in Case Search");
             });
+            const queryKey = sessionStorage.queryKey;
+            const storedGeocoderValues = sessionStorage.geocoderValues;
+            const geoValues = storedGeocoderValues ? JSON.parse(storedGeocoderValues) : {};
+            if (!("queryKey" in geoValues) || geoValues["queryKey"] !== queryKey) {
+                geoValues["queryKey"] = queryKey;
+                sessionStorage.geocoderValues = JSON.stringify(geoValues);
+            }
             if ($field.find('.mapboxgl-ctrl-geocoder--input').length === 0) {
                 if (!initialPageData.get("has_geocoder_privs")) {
                     $("#" + inputId).addClass('unsupported alert alert-warning');
@@ -168,8 +178,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 divEl.css("width", "100%");
             }
 
-            if (model.get('value')) {
-                $field.find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
+            const geocoderValues = JSON.parse(sessionStorage.geocoderValues);
+            if (geocoderValues[id]) {
+                $field.find('.mapboxgl-ctrl-geocoder--input').val(geocoderValues[id]);
             }
         };
 
@@ -303,6 +314,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.model.set('error', null);
             self.errorMessage = null;
             self.model.set('searchForBlank', false);
+            sessionStorage.removeItem('geocoderValues');
             if (self.ui.date.length) {
                 self.ui.date.data("DateTimePicker").clear();
             }
