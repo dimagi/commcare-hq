@@ -782,6 +782,7 @@ repeaters
  0002_repeaters_db
  0003_id_fields
  0004_fix_whitelist_bug_repeaters
+ 0005_datasourcerepeater
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -1120,6 +1121,7 @@ userreports
  0018_ucrexpression
  0019_ucrexpression_upstream_id
  0020_delete_ucr_comparison_models
+ 0021_datasourcerowtransactionlog
 users
  0001_add_location_permission
  0002_domainrequest
