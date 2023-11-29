@@ -6,7 +6,7 @@
   </title>
 
   <field>
-    <style horz-align="left" vert-align="center" font-size="small">
+    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
       <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
     </style>
     <header>
@@ -25,7 +25,7 @@
   </field>
 
   <field>
-    <style horz-align="left" vert-align="center" font-size="small">
+    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
       <grid grid-height="1" grid-width="12" grid-x="0" grid-y="1"/>
     </style>
     <header>
@@ -44,7 +44,7 @@
   </field>
 
   <field>
-    <style horz-align="left" vert-align="center" font-size="small">
+    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
       <grid grid-height="1" grid-width="12" grid-x="0" grid-y="2"/>
     </style>
     <header>
@@ -198,7 +198,7 @@
   </field>
 
   <field>
-    <style horz-align="center" vert-align="center" font-size="small">
+    <style horz-align="center" vert-align="center" font-size="small" show-border="true">
       <grid grid-height="1" grid-width="12" grid-x="0" grid-y="7"/>
     </style>
     <header>
@@ -217,7 +217,7 @@
   </field>
 
   <field>
-    <style horz-align="center" vert-align="center" font-size="small">
+    <style horz-align="center" vert-align="center" font-size="small" show-border="true">
       <grid grid-height="1" grid-width="12" grid-x="0" grid-y="8"/>
     </style>
     <header>
@@ -260,6 +260,38 @@
       <text>
         <xpath function="{map_popup[xpath_function]}">
           {map_popup[variables]}
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
+      <grid grid-height="1" grid-width="12" grid-x="0" grid-y="4"/>
+    </style>
+    <header>
+      <text>
+      </text>
+    </header>
+    <template form="plain">
+      <text>
+          <xpath function="''">
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
+      <grid grid-height="2" grid-width="12" grid-x="0" grid-y="5"/>
+    </style>
+    <header>
+      <text>
+      </text>
+    </header>
+    <template form="plain">
+      <text>
+          <xpath function="''">
         </xpath>
       </text>
     </template>
