@@ -153,8 +153,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Seen in Case Search");
             });
             let queryKey = sessionStorage.queryKey;
-            if (!sessionStorage.geocoderValues || sessionStorage.geocoderValues.queryKey !== queryKey) {
-                sessionStorage.geocoderValues = JSON.stringify({ "queryKey": queryKey });
+            let storedGeocoderValues = sessionStorage.geocoderValues;
+            let geoValues = storedGeocoderValues ? JSON.parse(storedGeocoderValues) : {};
+            if (!geoValues.hasOwnProperty("queryKey") || geoValues["queryKey"] !== queryKey) {
+                geoValues["queryKey"] = queryKey;
+                sessionStorage.geocoderValues = JSON.stringify(geoValues);
             }
             if ($field.find('.mapboxgl-ctrl-geocoder--input').length === 0) {
                 if (!initialPageData.get("has_geocoder_privs")) {
