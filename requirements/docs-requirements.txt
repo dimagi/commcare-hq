@@ -602,7 +602,7 @@ sqlparse==0.4.4
     # via django
 stone==3.3.1
     # via dropbox
-stripe==4.1.0
+stripe==7.2.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
@@ -618,7 +618,7 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==7.12.0
     # via -r base-requirements.in
-typing-extensions==4.1.1
+typing-extensions==4.8.0
     # via
     #   bytecode
     #   cattrs
@@ -626,6 +626,7 @@ typing-extensions==4.1.1
     #   django-countries
     #   oic
     #   qrcode
+    #   stripe
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
