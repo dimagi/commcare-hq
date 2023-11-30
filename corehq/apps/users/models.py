@@ -101,6 +101,7 @@ from .models_role import (  # noqa
     StaticRole,
     UserRole,
 )
+from .user_data import SQLUserData  # noqa
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.locations.models import (
@@ -1103,7 +1104,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def get_user_data(self, domain):
         from .user_data import UserData
-        return UserData(self.user_data, domain)
+        if domain not in self._user_data_accessors:
+            self._user_data_accessors[domain] = UserData.lazy_init(self, domain)
+        return self._user_data_accessors[domain]
+
+    def _save_user_data(self):
+        for user_data in self._user_data_accessors.values():
+            user_data.save()
 
     def get_user_session_data(self, domain):
         from corehq.apps.custom_data_fields.models import (
@@ -1410,9 +1417,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def from_django_user(cls, django_user, strict=False):
         return cls.get_by_username(django_user.username, strict=strict)
 
+    def __init__(self, *args, **kwargs):
+        self._user_data_accessors = {}
+        super().__init__(*args, **kwargs)
+
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               first_name='', last_name='', **kwargs):
+               user_data=None, first_name='', last_name='', **kwargs):
         try:
             django_user = User.objects.using(router.db_for_write(User)).get(username=username)
         except User.DoesNotExist:
@@ -1424,9 +1435,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         if uuid:
             if not re.match(r'[\w-]+', uuid):
                 raise cls.InvalidID('invalid id %r' % uuid)
-            couch_user = cls(_id=uuid)
         else:
-            couch_user = cls()
+            uuid = uuid4().hex
+        couch_user = cls(_id=uuid)
 
         if date:
             couch_user.created_on = force_to_datetime(date)
@@ -1434,6 +1445,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             couch_user.created_on = datetime.utcnow()
 
         couch_user.sync_from_django_user(django_user)
+
+        if user_data:
+            couch_user.get_user_data(domain).update(user_data)
+
         return couch_user
 
     def to_be_deleted(self):
@@ -1466,6 +1481,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 django_user = self.sync_to_django_user()
                 django_user.save()
 
+            if not self.to_be_deleted():
+                self._save_user_data()
             super(CouchUser, self).save(**params)
 
         if fire_signals:
@@ -1715,7 +1732,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         Main entry point into creating a CommCareUser (mobile worker).
         """
-        uuid = uuid or uuid4().hex
         # if the account is not confirmed, also set is_active false so they can't login
         if 'is_active' not in kwargs:
             kwargs['is_active'] = is_account_confirmed
@@ -1723,7 +1739,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             assert not kwargs['is_active'], \
                 "it's illegal to create a user with is_active=True and is_account_confirmed=False"
         commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via,
-                                                        email, uuid, date, **kwargs)
+                                                        email, uuid, date, user_data, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
 
@@ -1734,8 +1750,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.registering_device_id = device_id
         commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
-        if user_data:
-            commcare_user.get_user_data(domain).update(user_data)
 
         if location:
             commcare_user.set_location(location, commit=False)
@@ -1792,6 +1806,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore Case Indexes that were removed
         - It will not restore the user's phone numbers
         - It will not restore reminders for cases
+        - It will not restore custom user data
         """
         from corehq.apps.users.model_log import UserModelAction
 
@@ -2371,11 +2386,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
                user_data=None, by_domain_required_for_log=True, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
-                                              date, **kwargs)
+                                              date, user_data, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
-        if user_data:
-            web_user.get_user_data(domain).update(user_data)
         web_user.save()
         web_user.log_user_create(domain, created_by, created_via,
                                  by_domain_required_for_log=by_domain_required_for_log)

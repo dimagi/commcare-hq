@@ -4,6 +4,7 @@ from contextlib import ExitStack
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from io import BytesIO
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
@@ -11,7 +12,6 @@ from django.db.transaction import TransactionManagementError
 from django.test import TestCase
 
 from dateutil.relativedelta import relativedelta
-from unittest.mock import patch
 
 from casexml.apps.phone.models import SyncLogSQL
 from couchforms.models import UnfinishedSubmissionStub
@@ -51,9 +51,16 @@ from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.consumption.models import DefaultConsumption
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+)
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
-from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
+from corehq.apps.data_dictionary.models import (
+    CaseProperty,
+    CasePropertyAllowedValue,
+    CaseType,
+)
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseRuleAction,
@@ -109,25 +116,23 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import (
     DomainRequest,
+    HqPermissions,
     Invitation,
     PermissionInfo,
-    HqPermissions,
     RoleAssignableBy,
     RolePermission,
-    UserRole,
     UserHistory,
+    UserRole,
     WebUser,
 )
+from corehq.apps.users.user_data import SQLUserData
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import CODES, NotFound, get_blob_db
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.form_processor.tests.utils import (
-    create_case,
-    create_form_for_test,
-)
+from corehq.form_processor.tests.utils import create_case, create_form_for_test
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import (
@@ -498,19 +503,22 @@ class TestDeleteDomain(TestCase):
         self._assert_consumption_counts(self.domain.name, 0)
         self._assert_consumption_counts(self.domain2.name, 1)
 
-    def _assert_custom_data_fields_counts(self, domain_name, count):
-        self._assert_queryset_count([
-            CustomDataFieldsDefinition.objects.filter(domain=domain_name),
-        ], count)
-
-    def test_custom_data_fields(self):
+    def test_user_data_cascading(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            CustomDataFieldsDefinition.get_or_create(domain_name, 'UserFields')
+            user = User.objects.create(username=f'mobileuser@{domain_name}.{HQ_ACCOUNT_ROOT}')
+            definition = CustomDataFieldsDefinition.get_or_create(domain_name, 'UserFields')
+            profile = CustomDataFieldsProfile.objects.create(name='myprofile', definition=definition)
+            SQLUserData.objects.create(domain=domain_name, user_id='123', django_user=user,
+                                       profile=profile, data={})
+
+        models = [User, CustomDataFieldsDefinition, CustomDataFieldsProfile, SQLUserData]
+        for model in models:
+            self.assertEqual(model.objects.count(), 2)
 
         self.domain.delete()
 
-        self._assert_custom_data_fields_counts(self.domain.name, 0)
-        self._assert_custom_data_fields_counts(self.domain2.name, 1)
+        for model in models:
+            self.assertEqual(model.objects.count(), 1)
 
     def _assert_data_analytics_counts(self, domain_name, count):
         self._assert_queryset_count([

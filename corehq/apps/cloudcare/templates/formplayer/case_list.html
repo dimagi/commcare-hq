@@ -135,7 +135,7 @@
         <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
       <% } else if (styles[index].displayFormat === 'ClickableIcon') { %>
         <td class="module-case-list-column">
-          <img class="module-icon btn" src="<%- resolveUri(datum) %>"/>
+          <img class="module-icon clickable-icon" src="<%- resolveUri(datum) %>"/>
           <i class="fa fa-spin fa-spinner" style="display:none"></i>
         </td>
       <% } else if (styles[index].displayFormat === 'Markdown') { %>
@@ -161,17 +161,17 @@
     <div class="<%- prefix %>-grid-style-<%- index %> box">
       <% if (styles[index].displayFormat === 'Image') {
       if(resolveUri(datum)) { %>
-      <img class="module-icon" src="<%- resolveUri(datum) %>"/>
+        <img class="module-icon" src="<%- resolveUri(datum) %>"/>
       <% } %>
       <% } else if (styles[index].displayFormat === 'ClickableIcon') {
       if(resolveUri(datum)) { %>
-      <img class="module-icon btn" src="<%- resolveUri(datum) %>"/>
-      <i class="fa fa-spin fa-spinner" style="display:none"></i>
+        <img class="module-icon clickable-icon" src="<%- resolveUri(datum) %>"/>
+        <i class="fa fa-spin fa-spinner" style="display:none"></i>
       <% } %>
       <% } else if(styles[index].widthHint === 0) { %>
-      <div style="display:none;"><%- datum %></div>
+        <div style="display:none;"><%- datum %></div>
       <% } else { %>
-      <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
+        <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
       <% } %>
     </div>
     <% }); %>
@@ -191,7 +191,7 @@
         <div class="<%- prefix %>-grid-style-<%- index %> box" >
           <% if (styles[index].displayFormat === 'ClickableIcon') {
           if(resolveUri(datum)) { %>
-            <img class="module-icon btn" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+            <img class="module-icon clickable-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
             <i class="fa fa-spin fa-spinner" style="display:none"></i>
           <% } %>
           <% } else if (styles[index].displayFormat === 'Image') {
@@ -219,7 +219,7 @@
                 <% } %>
               <% } else if (styles[index].displayFormat === 'ClickableIcon') {
                 if(resolveUri(datum)) { %>
-                  <img class="module-icon btn" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+                  <img class="module-icon clickable-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
                   <i class="fa fa-spin fa-spinner" style="display:none"></i>
                 <% } %>
               <% } else { %>
@@ -235,13 +235,30 @@
 
 <script type="text/template" id="cell-layout-style-template">
   <% _.each(models, function(model){ %>
-  .<%- model.id %> {
-  grid-area: <%- model.gridStyle %>;
-  font-size: <%- model.fontStyle %>;
-  justify-self: <%- model.horizontalAlign %>;
-  text-align: <%- model.horizontalAlign %>;
-  align-self: <%- model.verticalAlign %>;
-  }
+    .<%- model.id %> {
+      grid-area: <%- model.gridStyle %>;
+      font-size: <%- model.fontStyle %>;
+      text-align: <%- model.horizontalAlign %>;
+      <% if (!model.borderInTile) { %>
+        justify-self: <%- model.horizontalAlign %>;
+        align-self: <%- model.verticalAlign %>;
+      <% } else { %>
+        <% if (model.showBorder) { %>
+          border: 1px solid #685c53;
+          border-radius: 8px;
+          padding-top: 5px;
+          padding-bottom: 0px;
+          padding-left: 5px;
+          padding-right: 5px;
+          justify-self: stretch;
+          margin: 2px;
+        <% } else { %>
+          margin: 7px;
+          justify-self: <%- model.horizontalAlign %>;
+          align-self: <%- model.verticalAlign %>;
+        <% } %>
+      <% } %>
+    }
   <% }); %>
 </script>
 
