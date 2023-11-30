@@ -2,6 +2,10 @@
 +++ 
 @@ -1,127 +1,127 @@
 -@import "@{b3-import-variables}";
++$prefix: bs;
+ 
+-// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
+-@font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 +// Grid Containers
 +// we will want to adapt the defaults in a full redesign
 +$container-max-widths: (
@@ -12,11 +16,9 @@
 +  xxl: 1160px
 +);
  
--// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
--@font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
- 
 -@font-size-base:  12px;
 -@icon-font-path:  "../../bootstrap/fonts/";
++
 +// Typography Overrides
 +$font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 +$font-size-base: .75rem; // approx 12px
@@ -50,9 +52,6 @@
 +
 +// Badges
 +$badge-border-radius: .25em;
-+
-+
-+// Custom colors we created (in Bootstrap 3 stylesheets)
  
  // Main background & text
 -@cc-bg:     #f2f2f1;
@@ -158,26 +157,61 @@
 -@cc-dark-warm-accent-hi:  #ffe3c2;
 -@cc-dark-warm-accent-mid: #ff8400;
 -@cc-dark-warm-accent-low: #994f00;
--
++$cc-dark-warm-accent-hi:  #ffe3c2;
++$cc-dark-warm-accent-mid: #ff8400;
++$cc-dark-warm-accent-low: #994f00;
+ 
 -// Main TWBS Colors
 -@brand-primary:   @cc-brand-mid;
 -@brand-success:   @cc-att-pos-mid;
 -@brand-info:      @cc-light-cool-accent-mid;
 -@brand-warning:   @cc-dark-warm-accent-mid;
 -@brand-danger:    @cc-att-neg-mid;
--
++// Grays from default stylesheet — needed for reference
++$gray-100: #f8f9fa;
++$gray-200: #e9ecef;
++$gray-600: #6c757d;
++$gray-800: #343a40;
+ 
 -@text-color: @cc-text;
--
++// Base color overrides
++$blue: #5D70D2;
++$green: #3FA12A;
++$red: #E73C27;
++$teal: #01A2A9;
++$yellow: #EEAE00;
+ 
 -@link-hover-color: @cc-brand-low;
--
++// for determining when to show black or white text on top of color
++$min-contrast-ratio: 3;
+ 
 -@btn-default-color:              @cc-text;
 -@btn-default-bg:                 @cc-bg;
 -@btn-default-border:             @cc-neutral-hi;
--
++// Theme Colors
++$primary:   $blue;
++$secondary: $gray-600;
++$success:   $green;
++$danger:    $red;
++$info:      $teal;
++$warning:   $yellow;
++$light:     $gray-100;
++$dark:      $gray-800;
+ 
 -@navbar-height:                  60px;
 -@navbar-padding-vertical:        ((@navbar-height - @line-height-computed) / 2);
 -@navbar-default-bg:              @cc-bg;
--
++$theme-colors: (
++  "primary":    $primary,
++  "success":    $success,
++  "info":       $info,
++  "warning":    $warning,
++  "danger":     $danger,
++  "dark":       $dark,
++  "secondary":  $secondary,
++  "light":      $light,
++);
+ 
 -@navbar-footer-height:            38px;
 -@navbar-footer-link-color:        mix(darken(#ffffff, 10), @brand-primary, 90);
 -@navbar-footer-link-color-hover:  @gray-lighter;
@@ -207,23 +241,56 @@
 -@zindex-formplayer-progress:          990;
 -@zindex-cloudcare-debugger:           1005;
 -@zindex-formplayer-scroll-to-bottom:     5;
-+$cc-dark-warm-accent-hi:  #ffe3c2;
-+$cc-dark-warm-accent-mid: #ff8400;
-+$cc-dark-warm-accent-low: #994f00;
++$body-color: $dark;
++$link-color: darken($primary, 10);
++$link-hover-color: darken($primary, 50);
++$border-color: $gray-200;
  
  
 -@input-border-radius-large:       5px;
 -@input-color:                     #000;
 -@cursor-disabled:                 'not-allowed';
-+////// Bootstrap 5 Color Overrides
-+$primary:   #5c6ac5;
-+$success:   $cc-att-pos-mid;
-+$info:      $cc-light-cool-accent-mid;
-+$danger:    $cc-att-neg-mid;
++// Form Sates
 +
-+$body-color: $cc-text;
++$form-feedback-valid-color:         $success;
++$form-feedback-invalid-color:       $danger;
++$form-feedback-icon-valid-color:    $form-feedback-valid-color;
++$form-feedback-icon-valid:          url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path fill='#{$form-feedback-icon-valid-color}' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/></svg>");
++$form-feedback-icon-invalid-color:  $form-feedback-invalid-color;
++$form-feedback-icon-invalid:        url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='#{$form-feedback-icon-invalid-color}'><circle cx='6' cy='6' r='4.5'/><path stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/><circle cx='6' cy='8.2' r='.6' fill='#{$form-feedback-icon-invalid-color}' stroke='none'/></svg>");
 +
-+$link-color: $cc-brand-mid;
-+$link-hover-color: $cc-brand-low;
++$focus-ring-blur:        0;
++$focus-ring-width:      .25rem;
++$focus-ring-opacity:    .25;
 +
-+$link-hover-color: $cc-brand-low;
++$input-btn-focus-blur:          $focus-ring-blur;
++$input-btn-focus-width:         $focus-ring-width;
++$input-focus-width:             $input-btn-focus-width;
++$input-btn-focus-color-opacity: $focus-ring-opacity;
++
++$form-validation-states: (
++  "valid": (
++    "color": var(--#{$prefix}form-valid-color),
++    "icon": $form-feedback-icon-valid,
++    "tooltip-color": #fff,
++    "tooltip-bg-color": var(--#{$prefix}success),
++    "focus-box-shadow": 0 0 $input-btn-focus-blur $input-focus-width rgba(var(--#{$prefix}success-rgb), $input-btn-focus-color-opacity),
++    "border-color": var(--#{$prefix}form-valid-border-color),
++  ),
++  "invalid": (
++    "color": var(--#{$prefix}form-invalid-color),
++    "icon": $form-feedback-icon-invalid,
++    "tooltip-color": #fff,
++    "tooltip-bg-color": var(--#{$prefix}danger),
++    "focus-box-shadow": 0 0 $input-btn-focus-blur $input-focus-width rgba(var(--#{$prefix}danger-rgb), $input-btn-focus-color-opacity),
++    "border-color": var(--#{$prefix}form-invalid-border-color),
++  ),
++  "validating": (
++    "color": $secondary,
++    "icon": "",
++    "tooltip-color": #fff,
++    "tooltip-bg-color": var(--#{$prefix}dark),
++    "focus-box-shadow": 0 0 $input-btn-focus-blur $input-focus-width rgba(var(--#{$prefix}dark-rgb), $input-btn-focus-color-opacity),
++    "border-color": $dark,
++  )
++);
