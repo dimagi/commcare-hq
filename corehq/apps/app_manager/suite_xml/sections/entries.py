@@ -48,6 +48,7 @@ from corehq.apps.app_manager.xpath import (
     CaseIDXPath,
     ItemListFixtureXpath,
     ProductInstanceXpath,
+    LocationInstanceXpath,
     UsercaseXPath,
     XPath,
     interpolate_xpath,
@@ -594,7 +595,7 @@ class EntriesHelper(object):
             fixture_select_filter = ''
             if datum['module'].fixture_select.active:
                 if datum['module'].fixture_select.fixture_type == CASE_LIST_FILTER_LOCATIONS_FIXTURE:
-                    nodeset = XPath("instance('locations')/locations/location")
+                    nodeset = LocationInstanceXpath().instance()
                 else:
                     nodeset = ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance()
                 datums.append(FormDatumMeta(
