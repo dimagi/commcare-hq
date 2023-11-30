@@ -34,7 +34,7 @@ class UserData:
             domain=domain,
             defaults={
                 'data': raw_user_data,
-                'django_user': couch_user.get_django_user(),
+                'django_user': couch_user.get_django_user,
                 'profile_id': profile_id,
             }
         )
@@ -46,7 +46,7 @@ class UserData:
             domain=self.domain,
             defaults={
                 'data': self._local_to_user,
-                'django_user': self._couch_user.get_django_user(),
+                'django_user': self._couch_user.get_django_user,
                 'profile_id': self.profile_id,
             },
         )
