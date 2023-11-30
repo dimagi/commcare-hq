@@ -507,6 +507,19 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             });
         };
 
+        self.getTranslation = function (translationKey, defaultTranslation) {
+            // Find the root level element which contains the translations.
+            var translations = self.translations;
+
+            if (translations) {
+                var translationText = ko.toJS(translations[translationKey]);
+                if (translationText) {
+                    return translationText;
+                }
+            }
+            return defaultTranslation;
+        };
+
         self.afterRender = function () {
             $(document).on("click", ".help-text-trigger", function (event) {
                 event.preventDefault();
@@ -673,20 +686,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             $.publish('formplayer.dirty');
             $('.add').trigger('blur');
         };
-
-        self.getTranslation = function (translationKey, defaultTranslation) {
-            // Find the root level element which contains the translations.
-            var curParent = getParentForm(self);
-            var translations = curParent.translations;
-
-            if (translations) {
-                var addNewRepeatTranslation = ko.toJS(translations[translationKey]);
-                if (addNewRepeatTranslation) {
-                    return addNewRepeatTranslation;
-                }
-            }
-            return defaultTranslation;
-        };
     }
     Repeat.prototype = Object.create(Container.prototype);
     Repeat.prototype.constructor = Container;
@@ -763,7 +762,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return self.error() === null && self.serverError() === null;
         };
 
-        self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
+        self.isButton = self.datatype() === 'select' && self.stylesContains(constants.BUTTON_SELECT);
         self.isLabel = self.datatype() === 'info';
         self.entry = entries.getEntry(self);
         self.entryTemplate = function () {

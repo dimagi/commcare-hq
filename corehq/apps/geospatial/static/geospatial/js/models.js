@@ -13,6 +13,7 @@ hqDefine('geospatial/js/models', [
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
+    const DISBURSEMENT_LAYER_PREFIX = 'route-';
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -304,29 +305,31 @@ hqDefine('geospatial/js/models', [
         }
 
         self.getLineFeatureId = function (itemId) {
-            return "route-" + itemId;
+            return DISBURSEMENT_LAYER_PREFIX + itemId;
         };
 
         self.selectAllMapItems = function (featuresArr) {
             // See https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#drawselectionchange
-            if (!featuresArr.length) {
-                return;
+            for (const caseItem of self.caseMapItems()) {
+                self.selectMapItemInPolygons(featuresArr, caseItem);
             }
-
-            for (const feature of featuresArr) {
-                if (feature.geometry.type === 'Polygon') {
-                    self.selectMapItemsInPolygon(feature, self.caseMapItems());
-                    self.selectMapItemsInPolygon(feature, self.userMapItems());
-                }
+            for (const userItem of self.userMapItems()) {
+                self.selectMapItemInPolygons(featuresArr, userItem);
             }
         };
 
-        self.selectMapItemsInPolygon = function (polygonFeature, mapItems) {
-            _.values(mapItems).filter(function (mapItem) {
-                if (mapItem.itemData.coordinates) {
-                    mapItem.isSelected(isMapItemInPolygon(polygonFeature, mapItem.itemData.coordinates));
+        self.selectMapItemInPolygons = function (polygonArr, mapItem) {
+            let isSelected = false;
+            for (const polygon of polygonArr) {
+                if (polygon.geometry.type !== 'Polygon') {
+                    continue;
                 }
-            });
+                if (isMapItemInPolygon(polygon, mapItem.itemData.coordinates)) {
+                    isSelected = true;
+                    break;
+                }
+            }
+            mapItem.isSelected(isSelected);
         };
 
         function isMapItemInPolygon(polygonFeature, coordinates) {
@@ -375,6 +378,15 @@ hqDefine('geospatial/js/models', [
                 padding: 50,  // in pixels
                 duration: 500,  // in ms
                 maxZoom: 10,  // 0-23
+            });
+        };
+
+        self.removeDisbursementLayers = function () {
+            const mapLayers = self.mapInstance.getStyle().layers;
+            mapLayers.forEach(function (layer) {
+                if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
+                    self.mapInstance.removeLayer(layer.id);
+                }
             });
         };
     };
@@ -499,7 +511,8 @@ hqDefine('geospatial/js/models', [
             self.btnExportDisabled(false);
             self.btnSaveDisabled(true);
             if (self.shouldSelectAfterFilter) {
-                self.mapObj.selectAllMapItems(polygonObj.geoJson.features);
+                const features = polygonObj.geoJson.features.concat(mapObj.drawControls.getAll().features);
+                self.mapObj.selectAllMapItems(features);
             }
         });
 
