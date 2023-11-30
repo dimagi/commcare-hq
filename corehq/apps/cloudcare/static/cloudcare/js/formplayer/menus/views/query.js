@@ -535,16 +535,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         _getChildren: function () {
-            return _.flatten(_.map(
-                Array.from(this.children),
-                function(item) {
-                    if (item.children) {
-                        return Array.from(item.children);
-                    } else {
-                        return [item];
-                    }
+            const children = [];
+            this.children.each(function (childView) {
+                if (childView.children) {
+                    childView.children.each(function (grandChildView) {
+                        children.push(grandChildView);
+                    });
+                } else {
+                    children.push(childView);
                 }
-            ));
+            });
+            return children
         },
 
         _getChildModels: function () {
@@ -562,8 +563,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         getAnswers: function () {
             var answers = {};
-            const getChildren = this._getChildren();
-            getChildren.each(function (childView) {
+            const children = this._getChildren();
+            children.forEach(function (childView) {
                 var encodedValue = childView.getEncodedValue();
                 if (encodedValue !== undefined) {
                     answers[childView.model.get('id')] = encodedValue;
@@ -597,9 +598,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             value: value,
                         });
 
-                        self.children.findByIndex(i)._setItemset(choices, response.models[i].get('itemsetChoicesKey'));
+                        self._getChildren().findByIndex(i)._setItemset(choices, response.models[i].get('itemsetChoicesKey'));
 
-                        self.children.findByIndex(i)._render();      // re-render with new choice values
+                        self._getChildren().findByIndex(i)._render();      // re-render with new choice values
                     }
                 }
             });
@@ -610,7 +611,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         clearAction: function () {
             var self = this;
-            this.children.each(function (childView) {
+            this._getChildren().forEach(function (childView) {
                 childView.clear();
             });
             self.setStickyQueryInputs();
@@ -643,7 +644,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         updateSearchResults: function () {
             var self = this;
             var invalidRequiredFields = [];
-            self.children.each(function (childView) {
+            self._getChildren().forEach(function (childView) {
                 if (childView.hasRequiredError()) {
                     invalidRequiredFields.push(childView.model.get('text'));
                 }
@@ -659,7 +660,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
             self._updateModelsForValidation().done(function (response) {
                 //Gather error messages
-                self.children.each(function (childView) {
+                self._getChildren().forEach(function (childView) {
                     //Filter out empty required fields and check for validity
                     if (!childView.hasRequiredError() || childView === changedChildView) { childView.isValid(); }
                 });
@@ -681,7 +682,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
             $.when(updatingModels).done(function (response) {
                 // Gather error messages
-                self.children.each(function (childView) {
+                self._getChildren().forEach(function (childView) {
                     if (!childView.isValid()) {
                         invalidFields.push(childView.model.get('text'));
                     }
