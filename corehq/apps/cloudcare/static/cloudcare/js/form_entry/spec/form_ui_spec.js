@@ -146,7 +146,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             assert.equal(form.children()[0].children()[0].headerBackgroundColor(), ''); //[g0-0]
             assert.equal(form.children()[0].children()[0].children()[2].headerBackgroundColor(), '#38437e'); //[g1]
             assert.equal(form.children()[0].children()[0].children()[2].children()[0].headerBackgroundColor(), '#4a5aa8'); //[g1-0]
-            assert.equal(form.children()[0].children()[0].children()[2].children()[0].children()[2].headerBackgroundColor(), '#4a5aa8'); //[r1]
+            assert.equal(form.children()[0].children()[0].children()[2].children()[0].children()[2].headerBackgroundColor(), '#252d54'); //[r1]
             assert.equal(form.children()[0].children()[0].children()[2].children()[0].children()[2].children()[0].headerBackgroundColor(), ''); //[r1-0]
         });
 
