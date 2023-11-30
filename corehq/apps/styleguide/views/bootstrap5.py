@@ -12,6 +12,7 @@ from corehq.apps.styleguide.context import (
     CrispyFormsDemo,
     CrispyFormsWithJsDemo,
     get_js_example_context,
+    get_gradient_colors,
 )
 from corehq.apps.styleguide.examples.bootstrap5.checkbox_form import CheckboxDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_basic import BasicCrispyExampleForm
@@ -56,6 +57,7 @@ def styleguide_atoms_colors(request):
     context.update({
         'interaction': get_interaction_colors(),
         'neutral': get_neutral_colors(),
+        'gradient': get_gradient_colors(),
     })
     return render(request, 'styleguide/bootstrap5/atoms/colors.html', context)
 
