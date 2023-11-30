@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,121 +1,121 @@
+@@ -1,122 +1,121 @@
 -@import "@{b3-import-variables}";
 +// Grid Containers
 +// we will want to adapt the defaults in a full redesign
@@ -181,6 +181,7 @@
 -@checkbox-default-color: @call-to-action-mid;
 -
 -@breadcrumb-separator: '>';
+-@breadcrumb-height-cloudcare: 46px;
 -
 -@grid-gutter-width: 20px;
 -
