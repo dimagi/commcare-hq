@@ -12,14 +12,16 @@ requirejs.config({
         "knockout": "knockout/build/output/knockout-latest.debug",
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
         "datatables": "datatables.net/js/jquery.dataTables.min",
-        "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
-        "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
+        "datatables.fixedColumns": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
+        "datatables.fixedColumns.bootstrap": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
+        "datatables.bootstrap": "datatables.net-bs5/js/dataTables.bootstrap5.min",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/bootstrap5/hq.helpers": { deps: ['jquery', 'knockout', 'underscore'] },
         "datatables.bootstrap": { deps: ['datatables'] },
+        "datatables.fixedColumns.bootstrap": { deps: ['datatables.fixedColumns'] },
         "jquery.rmi/jquery.rmi": {
             deps: ['jquery', 'knockout', 'underscore'],
             exports: 'RMI',
