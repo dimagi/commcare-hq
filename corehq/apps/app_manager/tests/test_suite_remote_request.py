@@ -987,19 +987,34 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
 
     def test_group(self):
         self.module.search_config.properties = [
-            CaseSearchProperty(is_group=True, name='group_header_1', label={'en': 'Personal Information'}),
+            CaseSearchProperty(is_group=True, group_key='group_header_0', label={'en': 'Personal Information'}),
+            CaseSearchProperty(name='name', group_key='group_header_0', label={'en': 'Name'}),
         ]
         suite = self.app.create_suite()
         expected = """
           <partial>
-            <group key="group_header_1">
+            <group key="group_header_0">
               <display>
                 <text>
-                  <locale id="search_property.m0.group_header_1"/>
+                  <locale id="search_property.m0.group_header_0"/>
                 </text>
               </display>
             </group>
           </partial>
         """
         self.assertXmlPartialEqual(expected, suite,
-                                  "./remote-request[1]/session/query/group[@key='group_header_1']")
+                                  "./remote-request[1]/session/query/group[@key='group_header_0']")
+
+        expected = """
+          <partial>
+            <prompt key="name">
+              <display>
+                <text>
+                  <locale id="search_property.m0.name"/>
+                </text>
+              </display>
+            </prompt>
+          </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite,
+                                  "./remote-request[1]/session/query/prompt[@key='name']")
