@@ -11,6 +11,8 @@ from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
+from freezegun import freeze_time
+
 from nose.tools import assert_in, assert_raises
 
 from testil import eq
@@ -772,6 +774,29 @@ class TestRepeatRecordMethods(RepeaterTestCase):
 
         self.assertEqual(record.state, State.Pending)
         self.assertLessEqual(record.next_check, datetime.utcnow())
+
+    def test_get_payload(self):
+        record = self.model_class(
+            domain="test",
+            repeater_id=self.repeater.id.hex,
+            payload_id="abc123",
+        )
+        with patch.object(Repeater, "get_payload") as mock:
+            record.get_payload()
+        mock.assert_called_once_with(record)
+
+    def test_postpone_by(self):
+        now = datetime.utcnow()
+        hour = timedelta(hours=1)
+        record = self.model_class(
+            domain="test",
+            repeater_id=self.repeater.id.hex,
+            payload_id="abc123",
+            registered_at=now - hour,
+        )
+        with freeze_time(now):
+            record.postpone_by(3 * hour)
+        self.assertEqual(record.next_check, now + 3 * hour)
 
 
 class TestSQLRepeatRecordMethods(TestRepeatRecordMethods):

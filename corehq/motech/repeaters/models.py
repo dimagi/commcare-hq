@@ -1637,6 +1637,13 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
         self.state = State.Cancelled
         self.next_check = None
 
+    def get_payload(self):
+        return self.repeater.get_payload(self)
+
+    def postpone_by(self, duration):
+        self.next_check = datetime.utcnow() + duration
+        self.save()
+
 
 class SQLRepeatRecordAttempt(models.Model):
     repeat_record = models.ForeignKey(
