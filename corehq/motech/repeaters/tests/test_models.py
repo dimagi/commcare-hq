@@ -618,6 +618,16 @@ class TestRepeatRecordManager(RepeaterTestCase):
         pending = SQLRepeatRecord.objects.count_pending_records_for_domain("test")
         self.assertEqual(pending, 4)
 
+    def test_count_overdue(self):
+        now = datetime.utcnow()
+        self.new_record(next_check=now - timedelta(hours=2))
+        self.new_record(next_check=now - timedelta(hours=1))
+        self.new_record(next_check=now - timedelta(minutes=15))
+        self.new_record(next_check=now - timedelta(minutes=5))
+        self.new_record(next_check=None, state=State.Success)
+        overdue = SQLRepeatRecord.objects.count_overdue()
+        self.assertEqual(overdue, 3)
+
     def new_record(self, next_check=before_now, state=State.Pending, domain="test"):
         return SQLRepeatRecord.objects.create(
             domain=domain,

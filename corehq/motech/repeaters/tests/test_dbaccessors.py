@@ -8,7 +8,6 @@ from corehq.motech.repeaters.dbaccessors import (
     get_cancelled_repeat_record_count,
     get_domains_that_have_repeat_records,
     get_failure_repeat_record_count,
-    get_overdue_repeat_record_count,
     get_paged_repeat_records,
     get_pending_repeat_record_count,
     get_repeat_record_count,
@@ -172,10 +171,6 @@ class TestRepeatRecordDBAccessors(TestCase):
     def test_iterate_repeat_records(self):
         records = list(iterate_repeat_record_ids(datetime.utcnow(), chunk_size=2))
         self.assertEqual(len(records), 4)  # Should grab all but the succeeded one
-
-    def test_get_overdue_repeat_record_count(self):
-        overdue_count = get_overdue_repeat_record_count()
-        self.assertEqual(overdue_count, 1)
 
     def test_get_all_repeat_records_by_domain_wrong_domain(self):
         records = list(iter_repeat_records_by_domain("wrong-domain"))

@@ -1342,6 +1342,12 @@ class RepeatRecordManager(models.Manager):
     def count_pending_records_for_domain(self, domain):
         return self.filter(domain=domain, next_check__isnull=False).count()
 
+    def count_overdue(self, threshold=timedelta(minutes=10)):
+        return self.filter(
+            next_check__isnull=False,
+            next_check__lt=datetime.utcnow() - threshold
+        ).count()
+
 
 class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     domain = models.CharField(max_length=126)

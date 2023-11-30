@@ -29,7 +29,6 @@ from .const import (
     State,
 )
 from .dbaccessors import (
-    get_overdue_repeat_record_count,
     iterate_repeat_record_ids,
     iterate_repeat_records_for_ids,
 )
@@ -204,7 +203,7 @@ def _process_repeat_record(repeat_record):
 
 metrics_gauge_task(
     'commcare.repeaters.overdue',
-    get_overdue_repeat_record_count,
+    SQLRepeatRecord.objects.count_overdue,
     run_every=crontab(),  # every minute
     multiprocess_mode=MPM_MAX
 )

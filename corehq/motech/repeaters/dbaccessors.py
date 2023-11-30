@@ -1,5 +1,3 @@
-import datetime
-
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
 
@@ -45,18 +43,6 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
     if state is not None:
         queryset = queryset.filter(state=state)
     return queryset.count()
-
-
-def get_overdue_repeat_record_count(overdue_threshold=datetime.timedelta(minutes=10)):
-    from .models import RepeatRecord
-    overdue_datetime = datetime.datetime.utcnow() - overdue_threshold
-    results = RepeatRecord.view(
-        "repeaters/repeat_records_by_next_check",
-        startkey=[None],
-        endkey=[None, json_format_datetime(overdue_datetime)],
-        reduce=True,
-    ).one()
-    return results['value'] if results else 0
 
 
 def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None):
