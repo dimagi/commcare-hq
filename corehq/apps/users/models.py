@@ -1170,7 +1170,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         queryset = User.objects
         if use_primary_db:
             queryset = queryset.using(router.db_for_write(User))
-        return queryset.get(username__iexact=self.username)
+        return queryset.get(username=self.username)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
