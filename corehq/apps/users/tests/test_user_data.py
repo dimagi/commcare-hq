@@ -38,19 +38,8 @@ class TestUserData(TestCase):
             'cruise': 'control',
             'this': 'road',
         })
-        # Normally you shouldn't use `user.user_data` directly - I'm demonstrating that it's updated
-        self.assertEqual(user.user_data, {
-            'cruise': 'control',
-            'this': 'road',
-        })
-        del user_data['cruise']
-        self.assertEqual(user.user_data, {
-            'this': 'road',
-        })
-        user_data.update({'this': 'field'})
-        self.assertEqual(user.user_data, {
-            'this': 'field',
-        })
+        # Normally you shouldn't use `user.user_data` directly - I'm demonstrating that it's not updated
+        self.assertEqual(user.user_data, {})
 
     def test_web_users(self):
         # This behavior is bad - data isn't fully scoped to domain
@@ -67,33 +56,18 @@ class TestUserData(TestCase):
             'commcare_profile': '',
             'start': 'sometimes',
         })
+        # Only the original domain was modified
         self.assertEqual(web_user.get_user_data('ANOTHER_DOMAIN').to_dict(), {
             'commcare_project': 'ANOTHER_DOMAIN',
             'commcare_profile': '',
-            'start': 'sometimes',  # whoops, domain 1 affects other domains!
-        })
-        web_user.save()
-        # at this point, user data has been initialized for each domain, and
-        # will no longer share a namespace
-        web_user = WebUser.get_by_user_id(web_user.user_id)
-        user_data = web_user.get_user_data(self.domain)['new_field'] = 'not_cross_domain'
-        self.assertEqual(web_user.get_user_data(self.domain).to_dict(), {
-            'commcare_project': self.domain,
-            'commcare_profile': '',
-            'start': 'sometimes',
-            'new_field': 'not_cross_domain',
-        })
-        self.assertEqual(web_user.get_user_data('ANOTHER_DOMAIN').to_dict(), {
-            'commcare_project': 'ANOTHER_DOMAIN',
-            'commcare_profile': '',
-            'start': 'sometimes',
         })
 
     def test_lazy_init_and_save(self):
         # Mimic user created the old way, with data stored in couch
         user = CommCareUser.create(self.domain, 'riggan', '***', None, None)
         self.addCleanup(user.delete, self.domain, deleted_by=None)
-        user['user_data'] = {'favorite_color': 'purple'}
+        user['user_data'] = {'favorite_color': 'purple',
+                             'start_date': '2023-01-01T00:00:00.000000Z'}
         user.save()
         with self.assertRaises(SQLUserData.DoesNotExist):
             SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
@@ -102,6 +76,7 @@ class TestUserData(TestCase):
         self.assertEqual(user.get_user_data(self.domain)['favorite_color'], 'purple')
         sql_data = SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
         self.assertEqual(sql_data.data['favorite_color'], 'purple')
+        self.assertEqual(sql_data.data['start_date'], '2023-01-01T00:00:00.000000Z')
 
         # Making a modification works immediately, but isn't persisted until user save
         user.get_user_data(self.domain)['favorite_color'] = 'blue'
@@ -111,10 +86,6 @@ class TestUserData(TestCase):
         user.save()
         sql_data.refresh_from_db()
         self.assertEqual(sql_data.data['favorite_color'], 'blue')
-
-        # The modification is also propagated back to couch for now
-        user_doc = CommCareUser.get_db().get(user.user_id)
-        self.assertEqual(user_doc['user_data']['favorite_color'], 'blue')
 
     def test_get_users_without_user_data(self):
         users_without_data = [
