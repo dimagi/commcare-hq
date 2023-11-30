@@ -37,26 +37,6 @@ def get_cancelled_repeat_record_count(domain, repeater_id):
 
 
 def get_repeat_record_count(domain, repeater_id=None, state=None):
-    from .models import are_repeat_records_migrated
-
-    if are_repeat_records_migrated(domain):
-        return get_sql_repeat_record_count(domain, repeater_id, state)
-    return get_couch_repeat_record_count(domain, repeater_id, state)
-
-
-def get_couch_repeat_record_count(domain, repeater_id=None, state=None):
-    from .models import RepeatRecord
-    kwargs = dict(
-        include_docs=False,
-        reduce=True,
-        descending=True,
-    )
-    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
-    result = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).one()
-    return result['value'] if result else 0
-
-
-def get_sql_repeat_record_count(domain, repeater_id=None, state=None):
     from .models import SQLRepeatRecord
 
     queryset = SQLRepeatRecord.objects.filter(domain=domain)
