@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,121 +1,121 @@
+@@ -1,122 +1,121 @@
 -@import "@{b3-import-variables}";
 +// Grid Containers
 +// we will want to adapt the defaults in a full redesign
@@ -197,7 +197,8 @@
 -@zindex-navbar-cloudcare:             995;
 -@zindex-formplayer-progress:          990;
 -@zindex-cloudcare-debugger:           1005;
--@zindex-formplayer-scroll-to-bottom:     5;
+-@zindex-formplayer-scroll-to-bottom:    5;
+-@zindex-formplayer-anchored-submit:     2;
 +$cc-dark-warm-accent-hi:  #ffe3c2;
 +$cc-dark-warm-accent-mid: #ff8400;
 +$cc-dark-warm-accent-low: #994f00;
