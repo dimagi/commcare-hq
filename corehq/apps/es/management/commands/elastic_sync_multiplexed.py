@@ -42,8 +42,7 @@ class ESSyncUtil:
         self.es = get_client()
 
     def start_reindex(self, cname, reindex_batch_size=1000,
-                      purge_ids=False, requests_per_second=None,
-                      source_query_json=None, script_json=None):
+                      purge_ids=False, requests_per_second=None):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -60,8 +59,7 @@ class ESSyncUtil:
         task_id = es_manager.reindex(
             source_index, destination_index,
             batch_size=reindex_batch_size, purge_ids=purge_ids,
-            requests_per_second=requests_per_second,
-            source_query_json=source_query_json, script_json=script_json
+            requests_per_second=requests_per_second
         )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
         task_number = task_id.split(':')[1]
@@ -461,21 +459,6 @@ class Command(BaseCommand):
                     index operations by padding each batch with a wait time"""
         )
 
-        start_cmd.add_argument(
-            "--source_query_json",
-            default=None,
-            help="""path to a json painless script file that maps to "source.query" field
-                    in the reindex API
-                    """
-        )
-
-        start_cmd.add_argument(
-            "--script_json",
-            default=None,
-            help="""path to a json painless script file that maps to "script" field
-                    in the reindex API"""
-        )
-
         # Get ReIndex Process Status
         status_cmd = subparsers.add_parser("status")
         status_cmd.set_defaults(func=self.es_helper.reindex_status)
@@ -553,8 +536,7 @@ class Command(BaseCommand):
         if sub_cmd == 'start':
             cmd_func(
                 options['index_cname'], options['batch_size'],
-                options['purge_ids'], options['requests_per_second'],
-                options['source_query_json'], options['script_json']
+                options['purge_ids'], options['requests_per_second']
             )
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
