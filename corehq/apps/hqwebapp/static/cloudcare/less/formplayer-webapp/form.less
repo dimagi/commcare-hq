@@ -18,10 +18,17 @@
     padding-right: 25px;
     padding-top: 3px;
   }
+
   .form-actions {
-    margin-top: 30px;
+    margin: 30px 0 0 0;
     background-color: lighten(@cc-brand-hi, 10);
     .border-bottom-radius(0);
+
+    .btn {
+      font-size: 20px;
+      padding: 13px 24px;
+      .transition(all .5s);
+    }
   }
 
   .form-group {
@@ -70,12 +77,6 @@
     border-top-right-radius: 0px;
   }
 
-}
-
-.form-container .form-actions .btn {
-  font-size: 20px;
-  padding: 13px 24px;
-  .transition(all .5s);
 }
 
 .form-group-required-label {
