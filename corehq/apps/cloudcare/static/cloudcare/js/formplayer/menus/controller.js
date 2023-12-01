@@ -113,7 +113,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
 
         displays.forEach(display => {
-            const groupKey = display.get('groupKey')
+            const groupKey = typeof display.get === 'function'?  display.get('groupKey'): display['groupKey']
             if (currentGroup.groupKey !== groupKey) {
                 if (currentGroup.groupKey != null) {
                     groupedDisplays.push(currentGroup);
@@ -156,10 +156,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         var queryResponse = menuResponse.queryResponse;
         if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
-            var queryCollection = new Collection(queryResponse.displays);
-            // if (queryResponse.hasOwnProperty("groupHeaders")) {
-            //     queryCollection = new Collection(groupDisplays(queryResponse.displays));
-            // }
+            let queryCollection = new Collection(queryResponse.displays);
+            if (queryResponse.hasOwnProperty("groupHeaders")) {
+                queryCollection = new Collection(groupDisplays(queryResponse.displays, queryResponse.groupHeaders));
+            }
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 QueryListView({
                     collection: queryCollection,
