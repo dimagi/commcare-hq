@@ -449,10 +449,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     });
 
     var GroupedQueryView = Marionette.CollectionView.extend({
-        tagName: "div",
+        tagName: "tr",
         template: _.template($("#query-view-group-template").html() || ""),
         childView: QueryView,
-        childViewContainer: "#query-properties",
+        childViewContainer: "#group-content",
 
         childViewOptions: function () {
             return {parentView: this.options.parentView};
