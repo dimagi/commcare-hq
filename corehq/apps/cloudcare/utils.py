@@ -7,6 +7,7 @@ from six.moves.urllib.parse import quote
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.util.quickcache import quickcache
 
 
 def should_show_preview_app(request, app, username):
@@ -37,6 +38,7 @@ def webapps_module(domain, app_id, module_id):
     return _webapps_url(domain, app_id, selections=[module_id])
 
 
+@quickcache(['domain'], timeout=24 * 60 * 60)
 def get_mobile_ucr_count(domain):
     """
     Obtains the count of UCRs referenced across all applications in the specificed domain
