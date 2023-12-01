@@ -272,6 +272,37 @@ class FindingDuplicatesTest(TestCase):
         # When you go to the dark side, you are no longer the same jedi.
         self.assertNotIn(cases[3].case_id, find_duplicate_case_ids(self.domain, cases[2], ["name"]))
 
+    @patch("corehq.apps.data_interfaces.deduplication.DUPLICATE_LIMIT", 2)
+    def test_find_maximum_number_of_results(self):
+        cases = [
+            self.factory.create_case(case_name='Padme Amidala', update={'dob': '1901-05-01'}) for i in range(3)
+        ]
+
+        self._prime_es_index(cases)
+
+        results = find_duplicate_case_ids(self.domain, cases[0], ["name", "dob"])
+        self.assertItemsEqual(results, [cases[0].case_id, cases[1].case_id])
+
+    def test_limit_is_respected(self):
+        cases = [
+            self.factory.create_case(case_name='Padme Amidala', update={'dob': '1901-05-01'}) for i in range(3)
+        ]
+
+        self._prime_es_index(cases)
+
+        results = find_duplicate_case_ids(self.domain, cases[0], ["name", "dob"], limit=2)
+        self.assertItemsEqual(results, [cases[0].case_id, cases[1].case_id])
+
+    @patch("corehq.apps.data_interfaces.deduplication.DUPLICATE_LIMIT", 2)
+    def test_limit_overrides_default_maximum(self):
+        cases = [
+            self.factory.create_case(case_name='Padme Amidala', update={'dob': '1901-05-01'}) for i in range(4)
+        ]
+
+        self._prime_es_index(cases)
+        results = find_duplicate_case_ids(self.domain, cases[0], ["name", "dob"], limit=3)
+        self.assertItemsEqual(results, [cases[0].case_id, cases[1].case_id, cases[2].case_id])
+
     def test_duplicates_different_case_types(self):
         """Should not return duplicates
         """

@@ -67,12 +67,16 @@ def find_duplicate_case_ids(
     case_properties,
     include_closed=False,
     match_type="ALL",
-    case_filter_criteria=None
+    case_filter_criteria=None,
+    limit=0
 ):
     if case_filter_criteria is None:
         case_filter_criteria = []
 
     es = _get_es_filtered_case_query(domain, case, case_filter_criteria=case_filter_criteria)
+
+    if limit:
+        es = es.size(limit)
 
     if not include_closed:
         es = es.is_closed(False)
