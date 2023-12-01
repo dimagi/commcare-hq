@@ -50,6 +50,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
                     propObj.dataType.subscribe(changeSaveButton);
                     propObj.deprecated.subscribe(changeSaveButton);
+                    propObj.deleted.subscribe(changeSaveButton);
                     propObj.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
                     propObj.allowedValues.on('change', changeSaveButton);
                     groupObj.properties.push(propObj);
@@ -222,6 +223,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'fhir_resource_prop_path': (
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
                             'deprecated': element.deprecated(),
+                            'deleted': element.deleted(),
                             'removeFHIRResourcePropertyPath': element.removeFHIRResourcePropertyPath(),
                             'allowed_values': pureAllowedValues,
                         };
