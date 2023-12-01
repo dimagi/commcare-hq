@@ -1255,7 +1255,6 @@ class SQLRepeatRecord(models.Model):
         db_table = 'repeaters_repeatrecord'
         indexes = [
             models.Index(fields=['domain']),
-            models.Index(fields=['couch_id']),
             models.Index(fields=['payload_id']),
             models.Index(fields=['registered_at']),
             models.Index(
@@ -1265,6 +1264,11 @@ class SQLRepeatRecord(models.Model):
             )
         ]
         constraints = [
+            models.UniqueConstraint(
+                name="unique_couch_id",
+                fields=['couch_id'],
+                condition=models.Q(couch_id__isnull=False),
+            ),
             models.CheckConstraint(
                 name="next_check_pending_or_null",
                 check=(

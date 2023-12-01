@@ -57,6 +57,18 @@ class Migration(migrations.Migration):
                 ),
                 name='next_check_pending_or_null'),
         ),
+        migrations.RemoveIndex(
+            model_name='sqlrepeatrecord',
+            name='repeaters_r_couch_i_ea5782_idx',
+        ),
+        migrations.AddConstraint(
+            model_name='sqlrepeatrecord',
+            constraint=models.UniqueConstraint(
+                condition=models.Q(('couch_id__isnull', False)),
+                fields=('couch_id',),
+                name='unique_couch_id',
+            ),
+        ),
         migrations.SeparateDatabaseAndState(
             database_operations=[],
             state_operations=[
