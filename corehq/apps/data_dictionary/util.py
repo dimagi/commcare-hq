@@ -16,6 +16,8 @@ from corehq.apps.data_dictionary.models import (
     CasePropertyGroup,
     CaseType,
 )
+from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
+from corehq.apps.es.case_search import CaseSearchES, CASE_PROPERTIES_PATH, PROPERTY_KEY
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
