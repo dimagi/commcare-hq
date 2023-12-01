@@ -360,3 +360,19 @@ def is_case_type_deprecated(domain, case_type):
         return case_type_obj.is_deprecated
     except CaseType.DoesNotExist:
         return False
+
+
+@quickcache(['domain'], timeout=24 * 60)
+def used_case_props_by_domain(domain):
+    # TODO: This needs a unit test
+    case_prop_agg = NestedAggregation('case_props', CASE_PROPERTIES_PATH).aggregation(
+        TermsAggregation('props', PROPERTY_KEY)
+    )
+    query = (
+        CaseSearchES()
+        .domain(domain)
+        .size(0)
+        .aggregation(case_prop_agg)
+    )
+    used_case_props = query.run().aggregations.case_props.props.keys
+    return set(used_case_props)
