@@ -570,6 +570,8 @@ class QueryPrompt(DisplayNode):
 
     itemset = NodeField('itemset', Itemset)
 
+    group_key = StringField('@group_key', required=False)
+
 
 class QueryPromptGroup(DisplayNode):
     ROOT_NAME = 'group'

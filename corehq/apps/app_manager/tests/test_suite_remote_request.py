@@ -1007,7 +1007,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
 
         expected = """
           <partial>
-            <prompt key="name">
+            <prompt key="name" group_key="group_header_0">
               <display>
                 <text>
                   <locale id="search_property.m0.name"/>

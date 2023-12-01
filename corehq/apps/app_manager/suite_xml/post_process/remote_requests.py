@@ -364,6 +364,8 @@ class RemoteRequestFactory(object):
                     )
                     for i, validation in enumerate(prop.validations)
                 ]
+            if prop.group_key:
+                kwargs['group_key'] = prop.group_key
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 
