@@ -104,6 +104,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.deprecated = ko.observable(deprecated || false);
         self.isGeoCaseProp = ko.observable(isGeoCaseProp);
         self.containsCaseData = ko.observable(containsCaseData);
+        self.deleted = ko.observable(false);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
         let subTitle;
         if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
@@ -161,6 +162,15 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.canHaveAllowedValues = ko.computed(function () {
             return self.dataType() === 'select';
         });
+
+        self.confirmDeleteProperty = function () {
+            const $modal = $("#delete-case-prop-modal").modal('show');
+            $("#delete-case-prop-btn").off("click").on("click", () => {
+                self.deleted(true);
+                $modal.modal('hide');
+                console.log("Prop deleted");
+            });
+        };
 
         return self;
     };
