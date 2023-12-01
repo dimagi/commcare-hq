@@ -989,6 +989,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.module.search_config.properties = [
             CaseSearchProperty(is_group=True, group_key='group_header_0', label={'en': 'Personal Information'}),
             CaseSearchProperty(name='name', group_key='group_header_0', label={'en': 'Name'}),
+            CaseSearchProperty(name='dob', group_key='group_header_0',
+                               label={'en': 'Date of birth'}, input_="date"),
+            CaseSearchProperty(is_group=True, group_key='group_header_3', label={'en': 'Authorization'}),
+            CaseSearchProperty(name='consent', group_key='group_header_3',
+                               label={'en': 'Consent to search'}, input_="checkbox"),
         ]
         suite = self.app.create_suite()
         expected = """
@@ -1000,10 +1005,17 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 </text>
               </display>
             </group>
+            <group key="group_header_3">
+              <display>
+                <text>
+                  <locale id="search_property.m0.group_header_3"/>
+                </text>
+              </display>
+            </group>
           </partial>
         """
         self.assertXmlPartialEqual(expected, suite,
-                                  "./remote-request[1]/session/query/group[@key='group_header_0']")
+                                  "./remote-request[1]/session/query/group")
 
         expected = """
           <partial>
@@ -1014,7 +1026,21 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 </text>
               </display>
             </prompt>
+            <prompt group_key="group_header_0" input="date" key="dob">
+              <display>
+                <text>
+                  <locale id="search_property.m0.dob"/>
+                </text>
+              </display>
+            </prompt>
+            <prompt group_key="group_header_3" input="checkbox" key="consent">
+              <display>
+                <text>
+                  <locale id="search_property.m0.consent"/>
+                </text>
+              </display>
+            </prompt>
           </partial>
         """
         self.assertXmlPartialEqual(expected, suite,
-                                  "./remote-request[1]/session/query/prompt[@key='name']")
+                                  "./remote-request[1]/session/query/prompt")
