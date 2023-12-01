@@ -41,7 +41,10 @@
 </script>
 
 <script type="text/template" id="query-view-group-template">
-    <table class="table table-hover table-striped table-bordered" role="presentation">
+    <div data-toggle="collapse" data-target="#group-<%- groupKey %>" aria-expanded="true" aria-controls="group-<%- groupKey %>">
+      <%- groupName %>
+    </div>
+    <table id="group-<%- groupKey %>" class="table table-hover table-striped table-bordered" role="presentation">
       <tbody id="query-properties">
       </tbody>
     </table>

@@ -457,8 +457,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         childViewOptions: function () {
             return {parentView: this.options.parentView};
         },
+
         initialize: function (options) {
             console.log('groupedQueryView');
+        },
+
+        templateContext: function () {
+            return {
+                groupName: this.options.groupName,
+                groupKey: this.options.groupKey,
+            };
         },
     });
 
@@ -478,7 +486,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
             if (child.has("groupName")) {
                 const childList = new Backbone.Collection(child.get('displays'));
-                options = _.extend({collection: childList}, childViewOptions);
+                options = _.extend(
+                    {
+                        collection: childList,
+                        groupName: child.get('groupName'),
+                        groupKey: child.get('groupKey'),
+                    },
+                    childViewOptions
+                );
             } else {
                 options = _.extend({model: child}, childViewOptions);
             }
