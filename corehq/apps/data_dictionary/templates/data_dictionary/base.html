@@ -316,6 +316,9 @@
               </div>
             {% endif %}
             {% if not request.is_view_only %}
+              <div class="row-item-small" data-bind="hidden: containsCaseData() || isGeoCaseProp()">
+                <button title="{% trans_html_attr 'Delete Property' %}" data-bind="click: confirmDeleteProperty" class="fa fa-trash"></button>
+              </div>
               <div class="row-item-small">
                 <!-- ko if: !deprecated() -->
                 <button title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="fa fa-archive"></button>
