@@ -614,7 +614,7 @@ class TestUpdateIndexMapping(BaseCase):
             {"prop": {"type": "integer"}},
         ))
         literal = (
-            "TransportError(400, 'illegal_argument_exception', 'mapper [prop] "
+            "RequestError(400, 'illegal_argument_exception', 'mapper [prop] "
             "of different type, current_type [text], merged_type [integer]')"
         )
         with self.assertRaisesRegex(RequestError, f"^{re.escape(literal)}$"):
@@ -631,7 +631,7 @@ class TestUpdateIndexMapping(BaseCase):
             {"prop": {"type": "keyword"}},
         ))
         literal = (
-            "TransportError(400, 'illegal_argument_exception', "
+            "RequestError(400, 'illegal_argument_exception', "
             "'mapper [prop] of different type, current_type [text], merged_type [keyword]')"
         )
         with self.assertRaisesRegex(RequestError, f"^{re.escape(literal)}$"):
