@@ -44,7 +44,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     const isGeoCaseProp = (self.geoCaseProp === prop.name && prop.data_type === 'gps');
                     var propObj = propertyListItem(prop.name, prop.label, false, group.name, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath, isGeoCaseProp);
+                        prop.removeFHIRResourcePropertyPath, isGeoCaseProp, prop.contains_case_data);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.label.subscribe(changeSaveButton);
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
@@ -89,7 +89,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     var propertyListItem = function (name, label, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeoCaseProp) {
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeoCaseProp, containsCaseData) {
         var self = {};
         self.name = name;
         self.label = ko.observable(label);
@@ -103,6 +103,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
         self.isGeoCaseProp = ko.observable(isGeoCaseProp);
+        self.containsCaseData = ko.observable(containsCaseData);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
         let subTitle;
         if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
