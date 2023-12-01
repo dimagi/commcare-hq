@@ -63,7 +63,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_applicatio
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
-from corehq.apps.cloudcare.utils import should_restrict_web_apps_usage
+from corehq.apps.cloudcare.utils import get_mobile_ucr_count, should_restrict_web_apps_usage
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -170,7 +170,8 @@ class FormplayerMain(View):
         return request.couch_user, set_cookie
 
     def get(self, request, domain):
-        if should_restrict_web_apps_usage(domain):
+        mobile_ucr_count = get_mobile_ucr_count(domain)
+        if should_restrict_web_apps_usage(domain, mobile_ucr_count):
             return redirect('block_web_apps', domain=domain)
 
         option = request.GET.get('option')
@@ -303,7 +304,8 @@ class PreviewAppView(TemplateView):
     @use_daterangepicker
     @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
-        if should_restrict_web_apps_usage(request.domain):
+        mobile_ucr_count = get_mobile_ucr_count(request.domain)
+        if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
             context = get_context_for_ucr_limit_error(request.domain)
             return render(request, 'preview_app/block_app_preview.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))

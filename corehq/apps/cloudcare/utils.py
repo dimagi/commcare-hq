@@ -37,18 +37,17 @@ def webapps_module(domain, app_id, module_id):
     return _webapps_url(domain, app_id, selections=[module_id])
 
 
-def should_restrict_web_apps_usage(domain):
+def get_mobile_ucr_count(domain):
     """
-    This check is only applicable to domains that have both the MOBILE_UCR and ALLOW_WEB_APPS_RESTRICTION
-    feature flags enabled.
-    Checks the number of UCRs referenced across all applications in a domain
-    :returns: True if the total number exceeds the limit set in settings.MAX_MOBILE_UCR_LIMIT
+    Obtains the count of UCRs referenced across all applications in the specificed domain
+    If the MOBILE_UCR feature flag is not enabled, returns zero
+    If the ALLOW_WEB_APPS_RESTRICTION is not enabled, returns zero
     """
     if not toggles.MOBILE_UCR.enabled(domain):
-        return False
+        return 0
 
     if not toggles.ALLOW_WEB_APPS_RESTRICTION.enabled(domain):
-        return False
+        return 0
 
     apps = get_apps_in_domain(domain, include_remote=False)
     ucrs = [
@@ -57,4 +56,20 @@ def should_restrict_web_apps_usage(domain):
         for module in app.get_report_modules()
         for ucr in module.report_configs
     ]
-    return len(ucrs) > settings.MAX_MOBILE_UCR_LIMIT
+    return len(ucrs)
+
+
+def should_restrict_web_apps_usage(domain, ucr_count):
+    """
+    This check is only applicable to domains that have both the MOBILE_UCR and ALLOW_WEB_APPS_RESTRICTION
+    feature flags enabled.
+    Given the number of UCRs referenced in applications across a domain, returns True if above
+    the MAX_MOBILE_UCR_LIMIT or False otherwise.
+    """
+    if not toggles.MOBILE_UCR.enabled(domain):
+        return False
+
+    if not toggles.ALLOW_WEB_APPS_RESTRICTION.enabled(domain):
+        return False
+
+    return ucr_count > settings.MAX_MOBILE_UCR_LIMIT
