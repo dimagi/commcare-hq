@@ -370,6 +370,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
             ko.utils.arrayForEach(newProperties, function (property, index) {
                 if (property.isGroup) {
                     groupKey = `group_header_${index}`
+                    if (property.name != groupKey){
+                        property.name(groupKey)
+                    }
                 }
                 if(property.groupKey != groupKey) {
                     property.groupKey = groupKey
