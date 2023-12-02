@@ -44,7 +44,7 @@ class BaseStripePaymentHandler(object):
         """
         raise NotImplementedError("you must implement cost_item_name")
 
-    def create_charge(self, amount, card=None, customer=None):
+    def create_charge(self, amount, card, customer):
         """Process the HTTPRequest used to make this payment
 
         returns a dict to be used as the json response for the request.
@@ -177,10 +177,10 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
     def cost_item_name(self):
         return _("Invoice #%s") % self.invoice.id
 
-    def create_charge(self, amount, card=None, customer=None):
+    def create_charge(self, amount, card, customer):
         return charge_through_stripe(
             card=card,
-            customer=customer,
+            customer=customer.id,
             amount_in_dollars=amount,
             currency=settings.DEFAULT_CURRENCY,
             description="Payment for Invoice %s" % self.invoice.invoice_number,
@@ -239,10 +239,10 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
     def cost_item_name(self):
         return _('Bulk Payment for project space %s' % self.domain)
 
-    def create_charge(self, amount, card=None, customer=None):
+    def create_charge(self, amount, card, customer):
         return charge_through_stripe(
             card=card,
-            customer=customer,
+            customer=customer.id,
             amount_in_dollars=amount,
             currency=settings.DEFAULT_CURRENCY,
             description=self.cost_item_name,
@@ -340,10 +340,10 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
     def get_charge_amount(self, request):
         return Decimal(request.POST['amount'])
 
-    def create_charge(self, amount, card=None, customer=None):
+    def create_charge(self, amount, card, customer):
         return charge_through_stripe(
             card=card,
-            customer=customer,
+            customer=customer.id,
             amount_in_dollars=amount,
             currency=settings.DEFAULT_CURRENCY,
             description="Payment for %s" % self.cost_item_name,

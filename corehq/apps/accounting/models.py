@@ -3858,7 +3858,7 @@ class StripePaymentMethod(PaymentMethod):
         """ Charges a stripe card and returns a transaction id """
         transaction_record = charge_through_stripe(
             card=card,
-            customer=self.customer,
+            customer=self.customer.id,
             amount_in_dollars=amount_in_dollars,
             currency=settings.DEFAULT_CURRENCY,
             description=description,
