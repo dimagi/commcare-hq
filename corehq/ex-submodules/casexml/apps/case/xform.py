@@ -234,7 +234,7 @@ def get_case_updates(xform, for_case=None):
 
     if for_case:
         updates = [update for update in updates if update.id == for_case]
-        by_case_id = [(for_case, updates,)]
+        by_case_id = [(for_case, updates)]
     else:
         updates = sorted(
             updates,
