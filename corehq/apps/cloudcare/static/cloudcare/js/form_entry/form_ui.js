@@ -879,13 +879,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         function setCustomInputWidth() {
             const shortWidth = new RegExp(constants.SHORT_WIDTH);
             const mediumWidth = new RegExp(constants.MEDIUM_WIDTH);
-            $(document).ready(function() {
+            $(document).ready(function () {
                 const entryWidgetContainer = $(`#${self.entry.entryId}`).closest('.widget-container');
                 if (self.stylesContains(shortWidth)) {
-                    entryWidgetContainer.removeClass(constants.CONTROL_WIDTH)
+                    entryWidgetContainer.removeClass(constants.CONTROL_WIDTH);
                     entryWidgetContainer.addClass('col-sm-2');
                 } else if (self.stylesContains(mediumWidth)) {
-                    entryWidgetContainer.removeClass(constants.CONTROL_WIDTH)
+                    entryWidgetContainer.removeClass(constants.CONTROL_WIDTH);
                     entryWidgetContainer.addClass('col-sm-4');
                 }
             });
