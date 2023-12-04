@@ -14,7 +14,10 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleCriteria,
     CaseRuleAction,
     AutomaticUpdateRule,
+    CaseDuplicate,
+    CaseDeduplicationMatchTypeChoices,
 )
+from corehq.form_processor.models import CommCareCase
 
 
 class MatchPropertyDefinitionTests(SimpleTestCase):
@@ -244,6 +247,48 @@ class AutomaticUpdateRuleTests(SimpleTestCase):
         action_patcher = patch.object(AutomaticUpdateRule, 'caseruleaction_set', action_set_mock)
         action_patcher.start()
         self.addCleanup(action_patcher.stop)
+
+
+class CaseDuplicateTests(SimpleTestCase):
+    def test_hash_arguments_hashes_single_argument(self):
+        result = CaseDuplicate.hash_arguments('one')
+        self.assertTrue(type(result), str)
+
+    def test_hash_arguments_hashes_multiple_arguments(self):
+        single_result = CaseDuplicate.hash_arguments('one')
+        multiple_result = CaseDuplicate.hash_arguments('one', 'two')
+        self.assertTrue(type(multiple_result), str)
+        self.assertNotEqual(single_result, multiple_result)
+
+    def test_hash_arguments_same_input_produces_same_output(self):
+        result1 = CaseDuplicate.hash_arguments('test')
+        result2 = CaseDuplicate.hash_arguments('test')
+        self.assertEqual(result1, result2)
+
+    def test_hash_arguments_different_inputs_produce_different_output(self):
+        result1 = CaseDuplicate.hash_arguments('test1')
+        result2 = CaseDuplicate.hash_arguments('test2')
+        self.assertNotEqual(result1, result2)
+
+    def test_hash_arguments_respects_all_arguments(self):
+        multiple_result1 = CaseDuplicate.hash_arguments('one', 'two')
+        multiple_result2 = CaseDuplicate.hash_arguments('one', 'two')
+        self.assertEqual(multiple_result1, multiple_result2)
+
+    def test_can_create_duplicate_from_case(self):
+        case = CommCareCase(case_json={'test': '123'})
+        action = self._create_action_detecting_duplicates_on('test')
+        duplicate = CaseDuplicate.create(case, action)
+
+        expected_hash = CaseDuplicate.hash_arguments('123')
+        self.assertEqual(duplicate.match_values, expected_hash)
+
+    def _create_action_detecting_duplicates_on(self, *props):
+        action = CaseDeduplicationActionDefinition(
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=props
+        )
+        return action
 
 
 def create_dict_mock(class_, data):

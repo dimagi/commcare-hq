@@ -69,6 +69,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
+import hashlib
 
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
@@ -1224,12 +1225,18 @@ class CaseDuplicate(models.Model):
     case_id = models.CharField(max_length=126, null=True, db_index=True)
     action = models.ForeignKey("CaseDeduplicationActionDefinition", on_delete=models.CASCADE)
     potential_duplicates = models.ManyToManyField('self', symmetrical=True)
+    match_values = models.CharField(max_length=256, null=True)
 
     class Meta:
         unique_together = ('case_id', 'action')
 
     def __str__(self):
         return f"CaseDuplicate(id={self.id}, case_id={self.case_id}, action_id={self.action_id})"
+
+    @classmethod
+    def create(cls, case, action):
+        match_values = cls.case_and_action_to_hash(case, action)
+        return cls(case_id=case.case_id, action=action, match_values=match_values)
 
     @classmethod
     def get_case_ids(cls, rule_id):
@@ -1287,11 +1294,7 @@ class CaseDuplicate(models.Model):
     def bulk_create_duplicate_relationships(cls, action, initial_case, duplicate_case_ids):
         existing_case_duplicates = CaseDuplicate.objects.filter(case_id__in=duplicate_case_ids, action=action)
         existing_case_duplicate_case_ids = [case.case_id for case in existing_case_duplicates]
-        case_duplicates = cls.objects.bulk_create([
-            cls(case_id=duplicate_case_id, action=action)
-            for duplicate_case_id in duplicate_case_ids
-            if duplicate_case_id not in existing_case_duplicate_case_ids
-        ])
+        case_duplicates = cls.create_models(duplicate_case_ids, existing_case_duplicate_case_ids, action)
         case_duplicates += existing_case_duplicates
         initial_case_duplicate = next(
             duplicate for duplicate in case_duplicates if duplicate.case_id == initial_case.case_id
@@ -1314,6 +1317,37 @@ class CaseDuplicate(models.Model):
             )
         ]
         cls.potential_duplicates.through.objects.bulk_create(through_models)
+
+    @classmethod
+    def create_models(cls, case_ids, existing_case_ids, action):
+        case_duplicates = ([
+            cls(case_id=duplicate_case_id, action=action)
+            for duplicate_case_id in case_ids
+            if duplicate_case_id not in existing_case_ids
+        ])
+
+        for duplicate in case_duplicates:
+            case = CommCareCase.objects.get_case(duplicate.case_id)
+            duplicate.match_values = cls.case_and_action_to_hash(case, action)
+
+        return cls.objects.bulk_create(case_duplicates)
+
+    @classmethod
+    def case_and_action_to_hash(cls, case, action):
+        current_values = []
+        for prop in action.case_properties:
+            properties = case.resolve_case_property(prop)
+            current_values.extend([prop.value for prop in properties])
+
+        return cls.hash_arguments(*current_values)
+
+    @classmethod
+    def hash_arguments(cls, *args):
+        combined = hashlib.sha256()
+        for arg in args:
+            combined.update(str(arg).encode('utf8'))
+
+        return combined.hexdigest()
 
 
 class VisitSchedulerIntegrationHelper(object):
