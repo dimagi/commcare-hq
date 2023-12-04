@@ -1,6 +1,7 @@
 alembic
 architect
 attrs>=21.4
+beautifulsoup4
 boto3
 celery
 CommcareTranslationChecker>=0.9.7

@@ -615,3 +615,91 @@ class FCMNotificationContent(Content):
         if not devices_fcm_tokens:
             raise FCMTokenValidationException(MessagingEvent.ERROR_NO_FCM_TOKENS)
         return devices_fcm_tokens
+
+
+def _meta_property(name):
+    def fget(self):
+        return getattr(self._meta, name)
+    return property(fget)
+
+
+class EmailImage(object):
+    """EmailImage is a thin wrapper around BlobMeta"""
+    id = _meta_property("id")
+    domain = _meta_property("parent_id")
+    filename = _meta_property("name")
+    blob_id = _meta_property("key")
+    content_type = _meta_property("content_type")
+    content_length = _meta_property("content_length")
+    delete_after = _meta_property("expires_on")
+
+    def __init__(self, meta):
+        self._meta = meta
+
+    @classmethod
+    def get(cls, domain, pk):
+        return cls(cls.meta_query(domain).get(pk=pk))
+
+    @classmethod
+    def get_by_key(cls, domain, key):
+        return cls(cls.meta_query(domain).get(key=key))
+
+    @classmethod
+    def get_by_keys(cls, keys, domain=None):
+        return [cls(m) for m in cls.meta_query(domain).filter(key__in=keys).all()]
+
+    @staticmethod
+    def meta_query(domain=None):
+        Q = models.Q
+        query = BlobMeta.objects.partitioned_query(domain).filter(
+            Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
+            type_code=CODES.email_multimedia,
+        )
+        if domain is not None:
+            query = query.filter(parent_id=domain)
+        return query
+
+    @classmethod
+    def get_all(cls, domain=None):
+        return [cls(meta) for meta in cls.meta_query(domain).order_by("name")]
+
+    @classmethod
+    def get_all_blob_ids(cls, domain=None):
+        return cls.meta_query(domain).values_list('key', flat=True)
+
+    @classmethod
+    def get_total_size(cls, domain):
+        return cls.meta_query(domain).aggregate(total=models.Sum('content_length'))["total"]
+
+    @classmethod
+    def save_blob(cls, file_obj, domain, filename, content_type, delete_after):
+        return cls(get_blob_db().put(
+            file_obj,
+            domain=domain,
+            parent_id=domain,
+            type_code=CODES.email_multimedia,
+            name=filename,
+            key=random_url_id(16),
+            content_type=content_type,
+            expires_on=delete_after,
+        ))
+
+    def get_blob(self):
+        db = get_blob_db()
+        try:
+            blob = db.get(meta=self._meta)
+        except (KeyError, NotFound) as err:
+            raise NotFound(str(err))
+        return blob
+
+    @classmethod
+    def bulk_delete(cls, keys):
+        get_blob_db().bulk_delete([c._meta for c in cls.get_by_keys(keys)])
+
+    def delete(self):
+        get_blob_db().delete(key=self._meta.key)
+
+    def get_url(self):
+        return absolute_reverse("download_messaging_image", args=[self.domain, self.blob_id])
+
+    DoesNotExist = BlobMeta.DoesNotExist
