@@ -229,7 +229,7 @@ class TestESSyncUtil(SimpleTestCase):
 
         # Create an index and close it
         type_ = "test_doc"
-        mappings = {"properties": {"value": {"type": "string"}}}
+        mappings = {"properties": {"value": {"type": "text"}}}
         settings = {
             "number_of_replicas": "0",
             "number_of_shards": "1",
@@ -264,7 +264,7 @@ class TestESSyncUtil(SimpleTestCase):
 
         # Create some residual indices
         type_ = "test_doc"
-        mappings = {"properties": {"value": {"type": "string"}}}
+        mappings = {"properties": {"value": {"type": "text"}}}
         settings = {
             "number_of_replicas": "0",
             "number_of_shards": "1",
