@@ -2,10 +2,13 @@ alembic
 architect
 attrs>=21.4
 beautifulsoup4
+bleach
+bleach[css]
 boto3
 celery
 CommcareTranslationChecker>=0.9.7
 csiphash
+css_inline
 datadog
 ddtrace
 decorator==4.0.11  # required by django-digest

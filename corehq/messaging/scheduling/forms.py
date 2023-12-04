@@ -22,9 +22,12 @@ from django.forms.widgets import (
 )
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
+from django.utils.html import strip_tags
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
+import bleach
+from bleach.css_sanitizer import CSSSanitizer
 from couchdbkit import ResourceNotFound
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -63,6 +66,9 @@ from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.const import (
+    ALLOWED_CSS_PROPERTIES,
+    ALLOWED_HTML_ATTRIBUTES,
+    ALLOWED_HTML_TAGS,
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
     VISIT_WINDOW_START,
@@ -267,6 +273,11 @@ class ContentForm(Form):
         return self._clean_message_field('subject')
 
     def clean_message(self):
+        if (
+                RICH_TEXT_EMAILS.enabled(self.domain)
+                and self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_EMAIL
+        ):
+            return None
         if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
                 and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
             cleaned_value = self._clean_message_field('message')
@@ -277,6 +288,11 @@ class ContentForm(Form):
             return None
 
         return self._clean_message_field('message')
+
+    def clean_html_message(self):
+        if not RICH_TEXT_EMAILS.enabled(self.domain):
+            return None
+        return self._clean_message_field('html_message')
 
     def _clean_message_field(self, field_name):
         value = json.loads(self.cleaned_data[field_name])
@@ -406,10 +422,13 @@ class ContentForm(Form):
                 message=self.cleaned_data['message']
             )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_EMAIL:
-            return EmailContent(
-                subject=self.cleaned_data['subject'],
-                message=self.cleaned_data['message'],
-            )
+            if RICH_TEXT_EMAILS.enabled(self.domain):
+                return self._distill_rich_text_email()
+            else:
+                return EmailContent(
+                    subject=self.cleaned_data['subject'],
+                    message=self.cleaned_data['message'],
+                )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_SMS_SURVEY:
             combined_id = self.cleaned_data['app_and_form_unique_id']
             app_id, form_unique_id = split_combined_id(combined_id)
@@ -436,6 +455,24 @@ class ContentForm(Form):
             )
         else:
             raise ValueError("Unexpected value for content: '%s'" % self.schedule_form.cleaned_data['content'])
+
+    def _distill_rich_text_email(self):
+        plaintext_message = {}
+        html_message = {}
+        css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
+        for lang, content in self.cleaned_data['html_message'].items():
+            plaintext_message[lang] = strip_tags(content)
+            html_message[lang] = bleach.clean(
+                content,
+                attributes=ALLOWED_HTML_ATTRIBUTES,
+                tags=ALLOWED_HTML_TAGS,
+                css_sanitizer=css_sanitizer
+            )
+        return EmailContent(
+            subject=self.cleaned_data['subject'],
+            message=plaintext_message,
+            html_message=html_message,
+        )
 
     def get_layout_fields(self):
         if RICH_TEXT_EMAILS.enabled(self.domain):
