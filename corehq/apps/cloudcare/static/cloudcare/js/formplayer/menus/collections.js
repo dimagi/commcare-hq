@@ -74,7 +74,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
         ],
 
         queryProperties: [
-            'groupHeaders'
+            'groupHeaders',
         ],
 
         parse: function (response) {

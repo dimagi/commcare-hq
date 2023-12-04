@@ -104,24 +104,24 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
     };
 
-    const groupDisplays = function(displays, groupHeaders) {
+    const groupDisplays = function (displays, groupHeaders) {
         const groupedDisplays = [];
         let currentGroup = {
             groupKey: null,
             groupName: null,
-            displays: []
-        }
+            displays: [],
+        };
 
         displays.forEach(display => {
-            const groupKey = typeof display.get === 'function'?  display.get('groupKey'): display['groupKey']
+            const groupKey = typeof display.get === 'function' ?  display.get('groupKey') : display['groupKey'];
             if (currentGroup.groupKey !== groupKey) {
-                if (currentGroup.groupKey != null) {
+                if (currentGroup.groupKey !== null) {
                     groupedDisplays.push(currentGroup);
                 }
                 currentGroup = {
                     groupKey: groupKey,
                     groupName: groupHeaders[groupKey],
-                    displays: [display]
+                    displays: [display],
                 };
             } else {
                 currentGroup.displays.push(display);
