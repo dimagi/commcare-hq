@@ -174,14 +174,18 @@ class SubmissionPost(object):
         return "\n\n".join(messages)
 
     def get_message_translation(self, instance, user):
-        translations = Application.get(self.app_id).translations
-        if instance.build_id:
+        translations = self._get_app_translations()
+        if instance.build_id and translations:
             default_language, _ = _get_form_name_info(instance.domain, instance.build_id)
             if user and user.language and translations.get(user.language):
                 return translations[user.language]['notification.form.submission.success']
             if translations.get(default_language):
                 return translations[default_language]['notification.form.submission.success']
         return "'{form_name}' successfully saved!".format(form_name=self._get_form_name(instance, user))
+
+    def _get_app_translations(self):
+        app = Application.get(self.app_id)
+        return app.translations if app else None
 
     def _get_form_name(self, instance, user):
         if instance.build_id:
