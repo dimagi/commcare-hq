@@ -981,7 +981,7 @@ def _get_linkable_forms_context(module, langs):
 def get_form_datums(request, domain, app_id):
     form_id = request.GET.get('form_id')
     try:
-        datums = _get_form_datums(domain, app_id, form_id)
+        datums = _get_form_link_datums(domain, app_id, form_id)
     except Exception:
         notify_exception(request, "Error fetching form datums", details={
             "domain": domain, "app_id": app_id, "form_id": form_id
@@ -990,7 +990,7 @@ def get_form_datums(request, domain, app_id):
     return JsonResponse(datums, safe=False)
 
 
-def _get_form_datums(domain, app_id, form_id):
+def _get_form_link_datums(domain, app_id, form_id):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     app = get_app(domain, app_id)
 
