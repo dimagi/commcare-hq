@@ -381,19 +381,19 @@ class ChunkedUCRProcessorTest(TestCase):
 
 class IndicatorPillowTest(BaseRepeaterTest):
 
+    domain = "user-reports"
+
     @classmethod
     def setUpClass(cls):
         super(IndicatorPillowTest, cls).setUpClass()
         cls.config = get_sample_data_source()
-        cls.domain_obj.name = cls.config.domain
-        cls.domain_obj.save()
         cls.config.save()
         cls.adapter = get_indicator_adapter(cls.config)
         cls.adapter.build_table()
         cls.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
         cls.pillow = _get_pillow([cls.config])
         cls.conn_setting = ConnectionSettings.objects.create(
-            domain=cls.config.domain,
+            domain=cls.domain,
             name="TestConnectionSetting",
             url="http://example.test",
         )
