@@ -652,6 +652,16 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             }
             return Container.prototype.headerBackgroundColor.call(self);
         };
+
+        const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
+        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
+        var styleStr = (self.style) ? ko.utils.unwrapObservable(self.style.raw) : null;
+
+        if (getMatchingStyles(perRowPattern, styleStr)) {
+            this.questionTileWidth = `col-sm-${columnWidth}`;
+        }
+
+
     }
     Group.prototype = Object.create(Container.prototype);
     Group.prototype.constructor = Container;
