@@ -54,7 +54,7 @@ RUN git config --global url."https://".insteadOf git:// \
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
 #   executablePath: 'google-chrome-unstable'
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
+ENV PUPPETEER_SKIP_DOWNLOAD true
 
 RUN npm -g install \
     yarn \

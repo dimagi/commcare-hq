@@ -186,7 +186,7 @@ def _get_expected_changes_json(user):
         'status': None,
         'subscribed_to_commcare_users': False,
         'two_factor_auth_disabled_until': None,
-        'user_data': {'commcare_project': 'test'},
+        'user_data': {},
         'user_location_id': None,
         'username': user_json['username']
     }

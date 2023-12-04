@@ -188,7 +188,7 @@ class TestGPSCaptureView(BaseGeospatialViewClass):
 @es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
 class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
 
-    urlname = 'get_paginated_cases_or_users_without_gps'
+    urlname = 'get_paginated_cases_or_users'
 
     @classmethod
     def setUpClass(cls):
@@ -219,7 +219,7 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
             password='1234',
             created_by=None,
             created_via=None,
-            metadata={GPS_POINT_CASE_PROPERTY: '12.34 45.67'}
+            user_data={GPS_POINT_CASE_PROPERTY: '12.34 45.67'}
         )
         cls.user_b = CommCareUser.create(
             cls.domain,
@@ -303,7 +303,7 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
             password='1234',
             created_by=None,
             created_via=None,
-            metadata={GPS_POINT_CASE_PROPERTY: '12.34 45.67'},
+            user_data={GPS_POINT_CASE_PROPERTY: '12.34 45.67'},
             location=cls.country_a,
         )
         cls.user_b = CommCareUser.create(
@@ -320,7 +320,7 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
             password='1234',
             created_by=None,
             created_via=None,
-            metadata={GPS_POINT_CASE_PROPERTY: '45.67 12.34'},
+            user_data={GPS_POINT_CASE_PROPERTY: '45.67 12.34'},
         )
 
         user_adapter.bulk_index([cls.user_a, cls.user_b, cls.user_c], refresh=True)

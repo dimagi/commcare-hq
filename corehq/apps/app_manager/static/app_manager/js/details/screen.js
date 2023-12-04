@@ -413,6 +413,18 @@ hqDefine("app_manager/js/details/screen", function () {
             self.initColumnAsColumn(self.columns()[i]);
         }
 
+        self.caseTileRowMax = ko.computed(() => _.max([self.columns().length + 1, 7]));
+        self.caseTileRowMax.subscribe(function (newValue) {
+            self.updateTileRowMaxForColumns(newValue);
+        });
+
+        self.updateTileRowMaxForColumns = function (newValue) {
+            _.each(self.columns(), function (column) {
+                column.tileRowMax(newValue);
+            });
+        };
+        self.updateTileRowMaxForColumns(self.caseTileRowMax());
+
         self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
             unsavedMessage: gettext('You have unsaved detail screen configurations.'),
             save: function () {

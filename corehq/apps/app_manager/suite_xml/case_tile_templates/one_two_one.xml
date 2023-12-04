@@ -21,6 +21,7 @@
         </xpath>
       </text>
     </template>
+    {header[endpoint_action]}
   </field>
 
   <field>
@@ -51,6 +52,7 @@
         </xpath>
       </text>
     </template>
+    {map_popup[endpoint_action]}
   </field>
 
   <field>
@@ -69,6 +71,7 @@
         </xpath>
       </text>
     </template>
+    {top_left[endpoint_action]}
   </field>
 
   <field>
@@ -87,6 +90,7 @@
         </xpath>
       </text>
     </template>
+    {top_right[endpoint_action]}
   </field>
 
   <field>
@@ -105,6 +109,7 @@
         </xpath>
       </text>
     </template>
+    {bottom[endpoint_action]}
   </field>
 
 </detail>

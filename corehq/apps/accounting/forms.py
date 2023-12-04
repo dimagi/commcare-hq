@@ -625,10 +625,10 @@ class SubscriptionForm(forms.Form):
             is_most_recent_version = subscription.plan_version.plan.get_version() == subscription.plan_version
             most_recent_version_text = ("is most recent version" if is_most_recent_version
                                         else "not most recent version")
-            self.fields['most_recent_version'].initial = most_recent_version_text
+            self.fields['most_recent_version'].initial = is_most_recent_version
             most_recent_version_field = hqcrispy.B3TextField(
                 'most_recent_version',
-                self.fields['most_recent_version'].initial
+                most_recent_version_text
             )
             self.fields['domain'].choices = [
                 (subscription.subscriber.domain, subscription.subscriber.domain)

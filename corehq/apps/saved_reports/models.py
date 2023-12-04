@@ -848,9 +848,10 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def _send_email(self, title, email, body, excel_files):
         send_HTML_email(
             title, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL,
             file_attachments=excel_files,
-            smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
+            smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES,
+            domain=self.domain,
+            use_domain_gateway=True,)
 
     def _send_only_attachments(self, title, emails, excel_files):
         message = _("Unable to generate email report. Excel files are attached.")
@@ -858,8 +859,9 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             title,
             emails,
             message,
-            email_from=settings.DEFAULT_FROM_EMAIL,
-            file_attachments=excel_files
+            file_attachments=excel_files,
+            domain=self.domain,
+            use_domain_gateway=True,
         )
 
     def _export_report(self, emails, title):

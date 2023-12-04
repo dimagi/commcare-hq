@@ -144,7 +144,7 @@ def _ensure_valid_restore_as_user(domain, couch_user, as_user_obj):
     if _limit_login_as(domain, couch_user):
         # Functionality should match the ES query.
         # See corehq.apps.cloudcare.esaccessors.login_as_user_query
-        login_as_username = as_user_obj.metadata.get('login_as_user') or ''
+        login_as_username = as_user_obj.get_user_data(domain).get('login_as_user') or ''
         candidates = login_as_username.lower().split()
         if couch_user.username.lower() not in candidates:
             is_default = 'default' in candidates

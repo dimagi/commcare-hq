@@ -16,6 +16,7 @@
 {% block additional_initial_page_data %}{{ block.super }}
     {% initial_page_data "saved_polygons" saved_polygons %}
     {% registerurl 'geo_polygon' domain %}
+    {% registerurl 'case_disbursement' domain %}
     {% registerurl 'get_users_with_gps' domain %}
     {% registerurl 'edit_commcare_user' domain '---' %}
     {% registerurl 'location_search' domain %}

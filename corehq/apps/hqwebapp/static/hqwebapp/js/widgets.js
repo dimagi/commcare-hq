@@ -15,6 +15,12 @@ hqDefine("hqwebapp/js/widgets",[
                 $(element).select2({
                     width: '100%',
                 });
+                if (window.USE_BOOTSTRAP5 && $(element).hasClass('is-invalid')) {
+                    $(element).data('select2').$container.addClass('is-invalid');
+                }
+                if (window.USE_BOOTSTRAP5 && $(element).hasClass('is-valid')) {
+                    $(element).data('select2').$container.addClass('is-valid');
+                }
             });
 
             // .hqwebapp-autocomplete also allows for free text entry

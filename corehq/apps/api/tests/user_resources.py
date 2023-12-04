@@ -100,7 +100,7 @@ class TestCommCareUserResource(APIResourceTest):
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
-            'user_data': {'commcare_project': 'qwerty'},
+            'user_data': {'commcare_project': 'qwerty', PROFILE_SLUG: ''},
             'username': 'fake_user'
         })
 
@@ -126,7 +126,7 @@ class TestCommCareUserResource(APIResourceTest):
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
-            'user_data': {'commcare_project': 'qwerty'},
+            'user_data': {'commcare_project': 'qwerty', PROFILE_SLUG: ''},
             'username': 'fake_user',
         })
 
@@ -169,7 +169,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.email, "jdoe@example.org")
         self.assertEqual(user_back.language, "en")
         self.assertEqual(user_back.get_group_ids()[0], group._id)
-        self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
+        self.assertEqual(user_back.get_user_data(self.domain.name)["chw_id"], "13/43/DFA")
         self.assertEqual(user_back.default_phone_number, "50253311399")
 
     @flag_enabled('COMMCARE_CONNECT')
@@ -283,9 +283,10 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(modified.email, "tlast@example.org")
         self.assertEqual(modified.language, "pol")
         self.assertEqual(modified.get_group_ids()[0], group._id)
-        self.assertEqual(modified.metadata["chw_id"], "13/43/DFA")
-        self.assertEqual(modified.metadata[PROFILE_SLUG], self.profile.id)
-        self.assertEqual(modified.metadata["imaginary"], "yes")
+        user_data = modified.get_user_data(self.domain.name)
+        self.assertEqual(user_data["chw_id"], "13/43/DFA")
+        self.assertEqual(user_data.profile_id, self.profile.id)
+        self.assertEqual(user_data["imaginary"], "yes")
         self.assertEqual(modified.default_phone_number, "50253311399")
 
         # test user history audit
@@ -298,11 +299,7 @@ class TestCommCareUserResource(APIResourceTest):
                 'language': 'pol',
                 'last_name': 'last',
                 'first_name': 'test',
-                'user_data': {
-                    'chw_id': '13/43/DFA',
-                    'commcare_profile': self.profile.id,
-                    'commcare_project': 'qwerty'
-                }
+                'user_data': {'chw_id': '13/43/DFA'},
             }
         )
         self.assertTrue("50253311398" in

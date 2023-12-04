@@ -129,20 +129,20 @@ class CCUserLocationAssignmentTest(TestCase):
 
     def assertPrimaryLocation(self, expected):
         self.assertEqual(self.user.location_id, expected)
-        self.assertEqual(self.user.user_data.get('commcare_location_id'), expected)
+        self.assertEqual(self.user.get_user_data(self.domain).get('commcare_location_id'), expected)
         self.assertTrue(expected in self.user.assigned_location_ids)
 
     def assertAssignedLocations(self, expected_location_ids):
         user = CommCareUser.get(self.user._id)
         self.assertListEqual(user.assigned_location_ids, expected_location_ids)
-        actual_ids = user.user_data.get('commcare_location_ids', '')
+        actual_ids = user.get_user_data(self.domain).get('commcare_location_ids', '')
         actual_ids = actual_ids.split(' ') if actual_ids else []
         self.assertListEqual(actual_ids, expected_location_ids)
 
     def assertNonPrimaryLocation(self, expected):
         self.assertNotEqual(self.user.location_id, expected)
         self.assertTrue(expected in self.user.assigned_location_ids)
-        self.assertTrue(expected in self.user.user_data.get('commcare_location_ids'))
+        self.assertTrue(expected in self.user.get_user_data(self.domain).get('commcare_location_ids'))
 
 
 class WebUserLocationAssignmentTest(TestCase):

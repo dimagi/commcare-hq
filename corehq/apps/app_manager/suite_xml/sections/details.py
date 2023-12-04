@@ -485,6 +485,7 @@ class DetailContributor(SectionContributor):
                     grid_width=12,
                     grid_x=0,
                     grid_y=0,
+                    show_border=False,
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath_function=xml)),
@@ -507,6 +508,7 @@ class DetailContributor(SectionContributor):
                     grid_width=12,
                     grid_x=0,
                     grid_y=0,
+                    show_border=False,
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath=TextXPath(

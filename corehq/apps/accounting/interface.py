@@ -945,7 +945,7 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
         'corehq.apps.accounting.interface.IsHiddenFilter',
     ]
 
-    account = None
+    subscription = None
 
     @property
     def headers(self):

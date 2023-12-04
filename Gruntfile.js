@@ -73,7 +73,7 @@ module.exports = function (grunt) {
             };
 
         // For running in docker/travis
-        if (process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD) {
+        if (process.env.PUPPETEER_SKIP_DOWNLOAD) {
             runnerOptions.executablePath = 'google-chrome-unstable';
         }
 

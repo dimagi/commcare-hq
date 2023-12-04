@@ -14,7 +14,6 @@ from corehq.apps.domain.models import Domain
 
 from ..analytics import users_have_locations
 from ..dbaccessors import (
-    generate_user_ids_from_primary_location_ids_from_couch,
     get_all_users_by_location,
     get_one_user_at_location,
     get_user_docs_by_location,
@@ -22,9 +21,8 @@ from ..dbaccessors import (
     get_users_assigned_to_locations,
     get_users_by_location_id,
     get_users_location_ids,
+    user_ids_at_locations,
     mobile_user_ids_at_locations,
-    get_user_ids_from_assigned_location_ids,
-    get_user_ids_from_primary_location_ids,
 )
 from .util import make_loc, delete_all_locations
 from ..dbaccessors import get_filtered_locations_count
@@ -111,32 +109,6 @@ class TestUsersByLocation(TestCase):
         )
         other_user.delete(self.domain, deleted_by=None)
 
-    def test_generate_user_ids_from_primary_location_ids_from_couch(self):
-        self.assertItemsEqual(
-            list(
-                generate_user_ids_from_primary_location_ids_from_couch(
-                    self.domain, [self.pentos.location_id, self.meereen.location_id]
-                )
-            ),
-            [self.varys._id, self.tyrion._id, self.daenerys._id]
-        )
-
-    def test_generate_user_ids_from_primary_location_ids_es(self):
-        self.assertItemsEqual(
-            get_user_ids_from_primary_location_ids(
-                self.domain, [self.pentos.location_id, self.meereen.location_id]
-            ).keys(),
-            [self.varys._id, self.tyrion._id, self.daenerys._id]
-        )
-
-    def test_get_user_ids_from_assigned_location_ids(self):
-        self.assertItemsEqual(
-            get_user_ids_from_assigned_location_ids(
-                self.domain, [self.meereen.location_id]
-            ).keys(),
-            [self.tyrion._id, self.daenerys._id]
-        )
-
     def test_get_users_location_ids(self):
         self.assertItemsEqual(
             get_users_location_ids(self.domain, [self.varys._id, self.tyrion._id]),
@@ -147,6 +119,12 @@ class TestUsersByLocation(TestCase):
         self.assertItemsEqual(
             mobile_user_ids_at_locations([self.meereen._id]),
             [self.daenerys._id, self.tyrion._id]
+        )
+
+    def test_all_user_ids_at_locations(self):
+        self.assertItemsEqual(
+            user_ids_at_locations([self.meereen._id]),
+            [self.daenerys._id, self.tyrion._id, self.george._id]
         )
 
 

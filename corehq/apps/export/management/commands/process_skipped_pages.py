@@ -105,6 +105,7 @@ class Command(BaseCommand):
         final_dir, orig_name = os.path.split(export_archive_path)
         if not error_pages:
             fd, final_path = tempfile.mkstemp()
+            os.close(fd)
         else:
             final_name = 'INCOMPLETE_{}_{}.zip'.format(orig_name, datetime.utcnow().isoformat())
             final_path = os.path.join(final_dir, final_name)

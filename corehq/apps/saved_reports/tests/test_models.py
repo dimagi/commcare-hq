@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from django.http.request import QueryDict
-from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 from smtplib import SMTPSenderRefused
 from dimagi.utils.dates import DateSpan
@@ -227,8 +226,8 @@ class TestSendEmails(SimpleTestCase):
         self.mock_send_email.assert_called_with('Test Report',
             ['test1@dimagi.com', 'test2@dimagi.com'],
             'Unable to generate email report. Excel files are attached.',
-            email_from=settings.DEFAULT_FROM_EMAIL,
-            file_attachments=['abba'])
+            file_attachments=['abba'],
+            domain='test-domain', use_domain_gateway=True)
 
     def test_failing_emails_are_logged(self):
         self.mock_send_email.side_effect = Exception('Email failed to send')

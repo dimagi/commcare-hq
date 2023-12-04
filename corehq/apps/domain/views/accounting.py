@@ -83,13 +83,13 @@ from corehq.apps.accounting.user_text import (
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
-    get_customer_cards,
     is_downgrade,
     log_accounting_error,
     quantize_accounting_decimal,
     get_paused_plan_context,
     pause_current_subscription,
 )
+from corehq.apps.accounting.utils.stripe import get_customer_cards
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
@@ -227,7 +227,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         cards = None
         trial_length = None
         if subscription:
-            cards = get_customer_cards(self.request.user.username, self.domain)
+            cards = get_customer_cards(self.request.user.username)
             date_end = (subscription.date_end.strftime(USER_DATE_FORMAT)
                         if subscription.date_end is not None else "--")
 
@@ -457,7 +457,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
 
     @property
     def stripe_cards(self):
-        return get_customer_cards(self.request.user.username, self.domain)
+        return get_customer_cards(self.request.user.username)
 
     @property
     def show_hidden(self):
@@ -1150,7 +1150,6 @@ class SelectedAnnualPlanView(SelectPlanView):
     template_name = 'domain/selected_annual_plan.html'
     urlname = 'annual_plan_request_quote'
     step_title = gettext_lazy("Contact Dimagi")
-    edition = None
 
     @property
     def steps(self):

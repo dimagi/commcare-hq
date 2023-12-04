@@ -951,7 +951,7 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'first_name': '',
                 'last_name': '',
                 'default_phone_number': None,
-                'user_data': {'commcare_project': self.domain},
+                'user_data': {'commcare_project': self.domain, 'commcare_profile': ''},
                 'groups': [],
                 'phone_numbers': [],
                 'email': '',

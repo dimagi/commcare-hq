@@ -1,6 +1,6 @@
 import uuid
 from datetime import date, datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 import pytz
 
 from django.test import TestCase
@@ -8,7 +8,7 @@ from django.test.testcases import SimpleTestCase
 
 from couchforms.geopoint import GeoPoint
 
-from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
+from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.case_search.xpath_functions.comparison import adjust_input_date_by_timezone
 from corehq.apps.es import queries
@@ -260,7 +260,6 @@ class TestCaseSearchHitConversions(SimpleTestCase):
     def test_wrap_case_search_hit_include_score(self):
         case = wrap_case_search_hit(self.make_hit(), include_score=True)
         self.assertEqual(case.case_json[RELEVANCE_SCORE], "1.095")
-
 
     @staticmethod
     def make_hit():
@@ -516,7 +515,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
     @patch('corehq.pillows.case_search.get_gps_properties', return_value={'coords'})
-    def test_geopoint_query(self, _):
+    def test_geopoint_query_for_gps_properties(self, _):
         self._bootstrap_cases_in_es_for_domain(self.domain, [
             {'_id': 'c1', 'coords': "42.373611 -71.110558 0 0"},
             {'_id': 'c2', 'coords': "42 Wallaby Way"},
@@ -527,6 +526,18 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             case_property_geo_distance('coords', GeoPoint(-33.1, 151.8), kilometers=1000),
         ).get_ids()
         self.assertItemsEqual(res, ['c3', 'c4'])
+
+    @flag_enabled('GEOSPATIAL')
+    @patch('corehq.pillows.case_search.get_geo_case_property', return_value='domain_coord')
+    def test_geopoint_query_for_domain_geo_case_property(self, *args):
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'domain_coord': "42 Wallaby Way"},
+            {'_id': 'c2', 'domain_coord': "-33.856159 151.215256 0 0"},
+        ])
+        res = CaseSearchES().domain(self.domain).set_query(
+            case_property_geo_distance('domain_coord', GeoPoint(-33.1, 151.8), kilometers=1000),
+        ).get_ids()
+        self.assertItemsEqual(res, ['c2'])
 
     def test_starts_with_query(self):
         self._assert_query_runs_correctly(

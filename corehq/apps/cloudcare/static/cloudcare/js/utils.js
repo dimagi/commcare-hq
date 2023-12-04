@@ -37,6 +37,11 @@ hqDefine('cloudcare/js/utils', [
 
     var showError = function (message, $el, reportToHq) {
         message = getErrorMessage(message);
+        // Make message more user friendly since html isn't useful here
+        if (message.includes('500') && message.includes('<!DOCTYPE html>')) {
+            message = 'Sorry, something went wrong. Please try again in a few minutes. ' +
+            'If this problem persists, please report it to CommCare Support.';
+        }
         _show(message, $el, null, "alert alert-danger");
         if (reportToHq === undefined || reportToHq) {
             reportFormplayerErrorToHQ({

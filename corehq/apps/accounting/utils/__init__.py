@@ -218,28 +218,6 @@ def fmt_dollar_amount(decimal_value):
     return _("USD %s") % quantize_accounting_decimal(decimal_value)
 
 
-def get_customer_cards(username, domain):
-    from corehq.apps.accounting.models import (
-        StripePaymentMethod, PaymentMethodType,
-    )
-    import stripe
-    try:
-        payment_method = StripePaymentMethod.objects.get(
-            web_user=username,
-            method_type=PaymentMethodType.STRIPE
-        )
-        stripe_customer = payment_method.customer
-        return dict(stripe_customer.cards)
-    except StripePaymentMethod.DoesNotExist:
-        pass
-    except stripe.error.AuthenticationError:
-        if not settings.STRIPE_PRIVATE_KEY:
-            log_accounting_info("Private key is not defined in settings")
-        else:
-            raise
-    return None
-
-
 def is_accounting_admin(user):
     accounting_privilege = Role.get_privilege(privileges.ACCOUNTING_ADMIN)
     if accounting_privilege is None:

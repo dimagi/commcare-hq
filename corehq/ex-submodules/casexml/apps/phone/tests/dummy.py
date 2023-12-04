@@ -26,6 +26,7 @@ def dummy_user_xml(user=None):
             <data key="commcare_first_name"/>
             <data key="commcare_last_name"/>
             <data key="commcare_phone_number"/>
+            <data key="commcare_profile"/>
             <data key="commcare_project">{}</data>
             <data key="commcare_user_type">{}</data>
             <data key="something">arbitrary</data>

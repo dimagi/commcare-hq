@@ -4,7 +4,7 @@ from django.urls import reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_views import BaseAutocompleteTest
-from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 
@@ -129,7 +129,9 @@ class TestMaintenanceAlertsView(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestMaintenanceAlertsView, cls).setUpClass()
-        create_domain(cls.domain)
+        cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+
         cls.user = WebUser.create(
             cls.domain,
             'maintenance-user',
@@ -139,6 +141,7 @@ class TestMaintenanceAlertsView(TestCase):
         )
         cls.user.is_superuser = True
         cls.user.save()
+        cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
 
     def _alert_with_timezone(self):
         self.client.login(username=self.user.username, password='***')
@@ -149,17 +152,17 @@ class TestMaintenanceAlertsView(TestCase):
             'timezone': 'US/Eastern'
         }
         self.client.post(reverse('create_alert'), params)
-        return MaintenanceAlert.objects.latest('created')
+        return Alert.objects.latest('created')
 
     def test_create_alert(self):
         self.client.login(username=self.user.username, password='***')
-        self.client.post(reverse('create_alert'), {'alert_text': "Maintenance alert"})
-        alert = MaintenanceAlert.objects.latest('created')
+        self.assertEqual(Alert.objects.count(), 0)
 
-        self.assertEqual(
-            repr(alert),
-            "MaintenanceAlert(text='Maintenance alert', active='False', domains='All Domains')"
-        )
+        self.client.post(reverse('create_alert'), {'alert_text': "Maintenance alert"})
+        alert = Alert.objects.first()
+
+        self.assertEqual(alert.text, 'Maintenance alert')
+        self.assertIsNone(alert.domains)
 
     def test_create_converts_to_utc(self):
         alert = self._alert_with_timezone()
@@ -180,13 +183,49 @@ class TestMaintenanceAlertsView(TestCase):
     def test_post_commands(self):
         self.client.login(username=self.user.username, password='***')
         self.client.post(reverse('create_alert'), {'alert_text': "Maintenance alert"})
-        alert = MaintenanceAlert.objects.latest('created')
+        alert = Alert.objects.latest('created')
         self.assertFalse(alert.active)
 
         self.client.post(reverse('alerts'), {'command': 'activate', 'alert_id': alert.id})
-        alert = MaintenanceAlert.objects.get(id=alert.id)
+        alert = Alert.objects.get(id=alert.id)
         self.assertTrue(alert.active)
 
         self.client.post(reverse('alerts'), {'command': 'deactivate', 'alert_id': alert.id})
-        alert = MaintenanceAlert.objects.get(id=alert.id)
+        alert = Alert.objects.get(id=alert.id)
         self.assertFalse(alert.active)
+
+    def test_view_access_to_global_alerts_only(self):
+        global_alert = Alert.objects.create(text='Test!', domains=['test1', 'test2'])
+        self.addCleanup(global_alert.delete)
+
+        domain_alert = Alert.objects.create(created_by_domain='dummy_domain')
+        self.addCleanup(domain_alert.delete)
+        assert domain_alert.pk
+
+        self.client.login(username=self.user.username, password='***')
+        response = self.client.get(reverse('alerts'))
+
+        self.assertListEqual(
+            response.context['alerts'],
+            [{
+                'active': False,
+                'created': str(global_alert.created),
+                'created_by_user': None,
+                'domains': 'test1, test2',
+                'end_time': None,
+                'expired': None,
+                'html': 'Test!',
+                'id': global_alert.id,
+                'start_time': None
+
+            }]
+        )
+
+    def test_update_restricted_to_global_alerts(self):
+        domain_alert = Alert.objects.create(created_by_domain='dummy_domain')
+        self.addCleanup(domain_alert.delete)
+
+        self.client.login(username=self.user.username, password='***')
+        with self.assertRaisesMessage(Alert.DoesNotExist,
+                                      'Alert matching query does not exist'):
+            self.client.post(reverse('alerts'), {'command': 'activate', 'alert_id': domain_alert.id})

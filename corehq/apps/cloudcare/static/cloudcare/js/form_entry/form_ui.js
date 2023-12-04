@@ -242,6 +242,36 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     /**
+     * Calculates background color for nested Group and Repeat headers.
+     * Recursively determines nesting level (considering only Group and Repeat),
+     * starting at 0 for the Form level and cycling colors for each level.
+     *
+     * @returns {string} - Background color for the header's nesting level.
+     */
+    Container.prototype.headerBackgroundColor = function () {
+        let currentNode = this;
+        let nestedDepthCount = 0;
+        while (currentNode.parent) {
+            let isCollapsibleGroup = currentNode.type() === constants.GROUP_TYPE && currentNode.collapsible;
+            if (isCollapsibleGroup || currentNode.type() === constants.REPEAT_TYPE) {
+                nestedDepthCount += 1;
+            }
+            currentNode = currentNode.parent;
+        }
+
+        // Colors are ordered from lightest to darkest with the lightest color for the highest level.
+        // Colors are based on Bootstrap provided tint/shades of #5D70D2 (CommCare Cornflower Blue)
+        // shade(#5D70D2, 20%): #4a5aa8
+        // shade(#5D70D2, 40%): #38437e
+        // shade(#5D70D2, 60%); #252d54
+        const repeatColor = ["#4a5aa8", "#38437e", "#252d54"];
+        const repeatColorCount = repeatColor.length;
+        const index = (nestedDepthCount - 1) % repeatColorCount;
+
+        return repeatColor[index];
+    };
+
+    /**
      * Recursively groups sequential "question" items in a nested JSON structure.
      *
      * This function takes a JSON object as input and searches for sequential "question"
@@ -474,6 +504,19 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             });
         };
 
+        self.getTranslation = function (translationKey, defaultTranslation) {
+            // Find the root level element which contains the translations.
+            var translations = self.translations;
+
+            if (translations) {
+                var translationText = ko.toJS(translations[translationKey]);
+                if (translationText) {
+                    return translationText;
+                }
+            }
+            return defaultTranslation;
+        };
+
         self.afterRender = function () {
             $(document).on("click", ".help-text-trigger", function (event) {
                 event.preventDefault();
@@ -602,6 +645,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             const hasLabel = !!ko.utils.unwrapObservable(self.caption_markdown) || !!self.caption();
             return hasChildren && hasLabel;
         };
+
+        self.headerBackgroundColor = function () {
+            if (self.isRepetition || !self.collapsible) {
+                return '';
+            }
+            return Container.prototype.headerBackgroundColor.call(self);
+        };
     }
     Group.prototype = Object.create(Container.prototype);
     Group.prototype.constructor = Container;
@@ -632,20 +682,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             $.publish('formplayer.' + constants.NEW_REPEAT, self);
             $.publish('formplayer.dirty');
             $('.add').trigger('blur');
-        };
-
-        self.getTranslation = function (translationKey, defaultTranslation) {
-            // Find the root level element which contains the translations.
-            var curParent = getParentForm(self);
-            var translations = curParent.translations;
-
-            if (translations) {
-                var addNewRepeatTranslation = ko.toJS(translations[translationKey]);
-                if (addNewRepeatTranslation) {
-                    return addNewRepeatTranslation;
-                }
-            }
-            return defaultTranslation;
         };
     }
     Repeat.prototype = Object.create(Container.prototype);
@@ -707,9 +743,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.dirty = ko.computed(function () {
             return self.pendingAnswer() !== constants.NO_PENDING_ANSWER;
         });
-        self.clean = ko.computed(function () {
-            return !self.dirty() && !self.error() && !self.serverError() && self.hasAnswered;
-        });
         self.hasError = ko.computed(function () {
             return (self.error() || self.serverError()) && !self.dirty();
         });
@@ -726,7 +759,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return self.error() === null && self.serverError() === null;
         };
 
-        self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
+        self.isButton = self.datatype() === 'select' && self.stylesContains(constants.BUTTON_SELECT);
         self.isLabel = self.datatype() === 'info';
         self.entry = entries.getEntry(self);
         self.entryTemplate = function () {
@@ -829,15 +862,16 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
     Question.prototype.setWidths = function () {
         const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
+        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
 
-        if (columnWidth === constants.GRID_COLUMNS) {
-            this.controlWidth = constants.CONTROL_WIDTH;
-            this.labelWidth = constants.LABEL_WIDTH;
-            this.questionTileWidth = constants.FULL_WIDTH;
-        } else {
+        if (this.stylesContains(perRowPattern)) {
             this.controlWidth = constants.FULL_WIDTH;
             this.labelWidth = constants.FULL_WIDTH;
             this.questionTileWidth = `col-sm-${columnWidth}`;
+        } else {
+            this.controlWidth = constants.CONTROL_WIDTH;
+            this.labelWidth = constants.LABEL_WIDTH;
+            this.questionTileWidth = constants.FULL_WIDTH;
         }
     };
 
