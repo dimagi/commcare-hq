@@ -28684,9 +28684,11 @@ define('vellum/tsv',[
 });
 
 define('vellum/exporter',[
-    'vellum/tsv'
+    'vellum/tsv',
+    'vellum/richText'
 ], function (
-    tsv
+    tsv,
+    richText
 ) {
     // todo: abstract out IText stuff into part of the plugin interface
     var generateExportTSV = function (form) {
@@ -28775,7 +28777,7 @@ define('vellum/exporter',[
 
             row["Hint Text"] = defaultOrNothing(mug.p.hintItext, defaultLanguage, 'default');
             row["Help Text"] = defaultOrNothing(mug.p.helpItext, defaultLanguage, 'default');
-            row.Comment = mug.p.comment;
+            row.Comment = richText.sanitizeInput(mug.p.comment);
 
             // make sure there aren't any null values
             for (var prop in row) {
@@ -48665,7 +48667,7 @@ define('vellum/core',[
             form = this.data.core.form,
             mugs = multiselect ? mug : [mug],
             $baseToolbar = $(question_toolbar({
-                comment: multiselect ? '' : mug.p.comment,
+                comment: multiselect ? '' : richText.sanitizeInput(mug.p.comment),
                 isDeleteable: mugs && mugs.length && _.every(mugs, function (mug) {
                     return _this.isMugRemoveable(mug, mug.hashtagPath);
                 }),
@@ -95542,6 +95544,20 @@ define('vellum/commcareConnect',[
                 // allows the parser to know which mug to associate with this node
                 "vellum:role": mug.__className,
             }),
+            getBindList: mug => {
+                // return list of bind elements to add to the form
+                let mugConfig = mugConfigs[mug.__className];
+                let binds = [{
+                    nodeset: mug.hashtagPath,
+                    relevant: mug.p.relevantAttr,
+                }];
+                return binds.concat(mugConfig.childNodes.filter(child => !child.writeToData).map(child => {
+                    return {
+                        nodeset: `${mug.absolutePath}/${mugConfig.rootName}/${child.id}`,
+                        calculate: mug.p[child.id],
+                    };
+                }));
+            },
             parseDataNode: (mug, node) => {
                 let children = node.children(),
                     mugConfig = mugConfigs[mug.__className];
@@ -95602,7 +95618,6 @@ define('vellum/commcareConnect',[
                         mug.p.description = "";
                         mug.p.time_estimate = "";
                     },
-                    getBindList: () => [],
                     spec: util.extend(baseSpec, {
                         nodeID: {
                             lstring: gettext('Module ID'),
@@ -95629,17 +95644,29 @@ define('vellum/commcareConnect',[
                                 return val && val.match(/^\d+$/) ? "pass" : gettext("Must be an integer");
                             },
                             help: gettext('Estimated time to complete the module in hours.'),
+                        },
+                        relevantAttr: {
+                            visibility: 'visible',
+                            presence: 'optional',
+                            widget: widgets.xPath,
+                            xpathType: "bool",
+                            serialize: mugs.serializeXPath,
+                            deserialize: mugs.deserializeXPath,
+                            lstring: gettext('Display Condition'),
                         }
                     })
                 }),
-                sections: [_.extend({}, baseSection, {
-                    properties: [
-                        "nodeID",
-                        "name",
-                        "description",
-                        "time_estimate",
-                    ],
-                })],
+                sections: [
+                    _.extend({}, baseSection, {
+                        properties: [
+                            "nodeID",
+                            "name",
+                            "description",
+                            "time_estimate",
+                        ],
+                    }),
+                    _.clone(logicSection),
+                ],
             },
             ConnectAssessment: {
                 rootName: "assessment",
@@ -95651,20 +95678,6 @@ define('vellum/commcareConnect',[
                     icon: 'fa fa-leanpub',
                     init: mug => {
                         mug.p.user_score = "";
-                    },
-                    getBindList: mug => {
-                        // return list of bind elements to add to the form
-                        let mugConfig = mugConfigs[mug.__className];
-                        let binds = [{
-                            nodeset: mug.hashtagPath,
-                            relevant: mug.p.relevantAttr,
-                        }];
-                        return binds.concat(mugConfig.childNodes.map(child => {
-                            return {
-                                nodeset: `${mug.absolutePath}/${mugConfig.rootName}/${child.id}`,
-                                calculate: mug.p[child.id],
-                            };
-                        }));
                     },
                     spec: util.extend(baseSpec, {
                         nodeID: {
@@ -95714,20 +95727,6 @@ define('vellum/commcareConnect',[
                         mug.p.name = "";
                         mug.p.entity_id = "";
                         mug.p.entity_name = "";
-                    },
-                    getBindList: mug => {
-                        // return list of bind elements to add to the form
-                        let mugConfig = mugConfigs[mug.__className];
-                        let binds = [{
-                            nodeset: mug.hashtagPath,
-                            relevant: mug.p.relevantAttr,
-                        }];
-                        return binds.concat(mugConfig.childNodes.filter(child => !child.writeToData).map(child => {
-                            return {
-                                nodeset: `${mug.absolutePath}/${mugConfig.rootName}/${child.id}`,
-                                calculate: mug.p[child.id],
-                            };
-                        }));
                     },
                     spec: util.extend(baseSpec, {
                         nodeID: {

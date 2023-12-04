@@ -32,6 +32,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'title',
             'type',
             'noItemsText',
+            'dynamicSearch',
         ],
 
         entityProperties: [
@@ -56,6 +57,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'hasDetails',
             'groupHeaderRows',
             'queryResponse',
+            'endpointActions',
         ],
 
         commandProperties: [

@@ -1,6 +1,9 @@
 
 GPS_POINT_CASE_PROPERTY = 'gps_point'
 
+# Max number of cases per geohash
+MAX_GEOHASH_DOC_COUNT = 10_000
+
 # Modified version of https://geojson.org/schema/FeatureCollection.json
 #   Modification 1 - Added top-level name attribute
 #   Modification 2 - geometry is limited to a polygon

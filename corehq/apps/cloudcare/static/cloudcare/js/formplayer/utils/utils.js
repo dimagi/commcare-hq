@@ -264,18 +264,23 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
         };
 
-        this.setQueryData = function ({ inputs, execute, forceManualSearch, selectValuesByKeys = false }) {
+        this.setQueryData = function ({ inputs, execute, forceManualSearch, initiatedBy}) {
             var selections = Utils.currentUrlToObject().selections;
             this.queryData = this.queryData || {};
-            this.queryData[sessionStorage.queryKey] = _.defaults({
+
+            const queryDataEntry = _.defaults({
                 inputs: inputs,
-                // only here to maintain backward compatibility and can be removed
-                // once web apps fully transition using keys to convey select prompt selection.
-                select_values_by_key: selectValuesByKeys,
                 execute: execute,
                 force_manual_search: forceManualSearch,
                 selections: selections,
             }, this.queryData[sessionStorage.queryKey]);
+
+            if (initiatedBy !== null && initiatedBy !== undefined) {
+                queryDataEntry.initiatedBy = initiatedBy;
+            }
+
+            this.queryData[sessionStorage.queryKey] = queryDataEntry;
+
             this.page = null;
             this.search = null;
         };
@@ -297,10 +302,13 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.search = null;
             this.queryData = null;
             this.sessionId = null;
+            sessionStorage.removeItem('submitPerformed');
+            sessionStorage.removeItem('geocoderValues');
         };
 
         this.onSubmit = function () {
             sessionStorage.removeItem('selectedValues');
+            sessionStorage.removeItem('geocoderValues');
             this.page = null;
             this.sortIndex = null;
             this.search = null;
@@ -328,6 +336,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.search = null;
             this.sortIndex = null;
             sessionStorage.removeItem('selectedValues');
+            sessionStorage.removeItem('geocoderValues');
             this.sessionId = null;
         };
 

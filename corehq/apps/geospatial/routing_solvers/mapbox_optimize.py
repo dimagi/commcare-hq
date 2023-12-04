@@ -2,6 +2,7 @@ import json
 import jsonschema
 import requests
 from django.conf import settings
+from corehq.apps.geospatial.routing_solvers.base import DisbursementAlgorithmSolverInterface
 
 
 def validate_routing_request(request_json):
@@ -127,3 +128,9 @@ def routing_status(poll_id):
         location_ids.pop(-1)
         mapping_dict[user_id] = location_ids
     return mapping_dict
+
+
+class MapboxVRPSolver(DisbursementAlgorithmSolverInterface):
+
+    def solve(self):
+        return submit_routing_request(self.request_json), None

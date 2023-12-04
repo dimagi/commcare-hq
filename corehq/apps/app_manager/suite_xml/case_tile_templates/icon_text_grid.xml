@@ -19,6 +19,7 @@
         </xpath>
       </text>
     </template>
+    {top_left_image[endpoint_action]}
   </field>
 
   <field>
@@ -38,6 +39,7 @@
         </xpath>
       </text>
     </template>
+    {top_left_text[endpoint_action]}
   </field>
 
   <field>
@@ -54,6 +56,7 @@
         </xpath>
       </text>
     </template>
+    {top_right_image[endpoint_action]}
   </field>
 
   <field>
@@ -73,6 +76,7 @@
         </xpath>
       </text>
     </template>
+    {top_right_text[endpoint_action]}
   </field>
 
   <field>
@@ -89,6 +93,7 @@
         </xpath>
       </text>
     </template>
+    {middle_left_image[endpoint_action]}
   </field>
 
   <field>
@@ -108,6 +113,7 @@
         </xpath>
       </text>
     </template>
+    {middle_left_text[endpoint_action]}
   </field>
 
   <field>
@@ -124,6 +130,7 @@
         </xpath>
       </text>
     </template>
+    {middle_right_image[endpoint_action]}
   </field>
 
   <field>
@@ -143,6 +150,7 @@
         </xpath>
       </text>
     </template>
+    {middle_right_text[endpoint_action]}
   </field>
 
   <field>
@@ -159,6 +167,7 @@
         </xpath>
       </text>
     </template>
+    {bottom_left_image[endpoint_action]}
   </field>
 
   <field>
@@ -178,5 +187,6 @@
         </xpath>
       </text>
     </template>
+    {bottom_left_text[endpoint_action]}
   </field>
 </detail>

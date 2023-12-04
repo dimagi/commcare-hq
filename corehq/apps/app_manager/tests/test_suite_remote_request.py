@@ -11,6 +11,7 @@ from corehq.apps.app_manager.models import (
     Assertion,
     CaseSearch,
     CaseSearchAgainLabel,
+    CaseSearchCustomSortProperty,
     CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
@@ -240,7 +241,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
     @flag_enabled('USH_SEARCH_FILTER')
-    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite', lambda _: None)
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite',
+           lambda _: None)
     def test_duplicate_remote_request(self):
         """
         Adding a second search config should not affect the initial one.
@@ -482,6 +484,32 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.app = Application.wrap(self.app.to_json())
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_blacklisted_owners'), suite, "./remote-request[1]")
+
+    def test_custom_sort_properties(self):
+        self.module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+            custom_sort_properties=[
+                CaseSearchCustomSortProperty(
+                    property_name='name'
+                ), CaseSearchCustomSortProperty(
+                    property_name='date_of_birth',
+                    sort_type='date',
+                    direction='descending'
+                )
+            ],
+        )
+        expected = """
+        <partial>
+          <data key="commcare_sort" ref="'+name:exact,-date_of_birth:date'"/>
+        </partial>
+        """
+
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+        suite = self.app.create_suite()
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/data[@key='commcare_sort']")
 
     def test_prompt_hint(self):
         self.module.search_config.properties[0].hint = {'en': 'Search against name'}

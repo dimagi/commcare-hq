@@ -35,7 +35,6 @@ def submit_feedback(request, domain):
     send_mail_async.delay(
         '{} Feedback Received'.format(feature_name),
         message,
-        settings.DEFAULT_FROM_EMAIL,
         [settings.FEEDBACK_EMAIL],
     )
     return HttpResponse(json.dumps({

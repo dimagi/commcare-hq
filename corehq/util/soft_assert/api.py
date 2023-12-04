@@ -80,7 +80,6 @@ def soft_assert(to=None, notify_admins=False,
             # but not send mail
             subject=settings.EMAIL_SUBJECT_PREFIX + subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=to,
         )
 

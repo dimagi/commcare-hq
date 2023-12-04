@@ -1,4 +1,5 @@
 import re
+import os
 import tempfile
 from collections import OrderedDict
 
@@ -297,6 +298,7 @@ def dump_locations(domain, download_id, include_consumption, headers_only,
                                 headers_only=headers_only, async_task=task, **kwargs)
 
     fd, path = tempfile.mkstemp()
+    os.close(fd)
     writer = Excel2007ExportWriter()
     writer.open(header_table=exporter.get_headers(), file=path)
     with writer:

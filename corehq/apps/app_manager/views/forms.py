@@ -455,6 +455,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         raw_endpoint_id = request.POST['session_endpoint_id']
         set_session_endpoint(form, raw_endpoint_id, app)
 
+    if should_edit('access_hidden_forms'):
+        form.respect_relevancy = not ('true' in request.POST.getlist('access_hidden_forms'))
+
     if should_edit('function_datum_endpoints'):
         if request.POST['function_datum_endpoints']:
             form.function_datum_endpoints = request.POST['function_datum_endpoints'].replace(" ", "").split(",")

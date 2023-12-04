@@ -1,9 +1,17 @@
+from unittest.mock import patch
 from django.test import TestCase
 
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType, CasePropertyGroup
-from corehq.apps.reports.standard.cases.case_data import _get_dd_tables
+from corehq.apps.data_dictionary.models import (
+    CaseProperty,
+    CasePropertyGroup,
+    CaseType,
+)
+from corehq.apps.reports.standard.cases.case_data import (
+    _get_case_property_tables,
+)
 
 
+@patch('corehq.apps.reports.standard.cases.case_data.domain_has_privilege', lambda _, __: True)
 class TestCaseData(TestCase):
 
     def setUp(self) -> None:
@@ -16,6 +24,11 @@ class TestCaseData(TestCase):
         CasePropertyGroup.objects.all().delete()
         CaseType.objects.all().delete()
 
+    def test_no_data_dictionary(self):
+        dynamic_data = {"prop1": None, "prop2": None}
+        result = _get_case_property_tables(self.domain, self.case_type, dynamic_data, self.timezone)
+        self._assert_grouping_order_tables(result, [{"name": None, "properties": ["prop1", "prop2"]}])
+
     def test_dd_ordering_when_single_group(self):
         """
         Tests that when a data dictionary contains only one user defined group,
@@ -24,7 +37,7 @@ class TestCaseData(TestCase):
         # Create group1 properties
         self._create_case_property("prop1", "group1")
         self._create_case_property("prop2", "group1")
-        result = _get_dd_tables(self.domain, self.case_type, {}, self.timezone)
+        result = _get_case_property_tables(self.domain, self.case_type, {}, self.timezone)
         self._assert_grouping_order_tables(result, [{"name": "group1", "properties": ["prop1", "prop2"]}])
 
     def test_dd_ordering_when_multiple_groups(self):
@@ -37,7 +50,7 @@ class TestCaseData(TestCase):
         self._create_case_property("prop2", "group1")
         self._create_case_property("prop3", "group2")
         self._create_case_property("prop4", "group2")
-        result = _get_dd_tables(self.domain, self.case_type, {}, self.timezone)
+        result = _get_case_property_tables(self.domain, self.case_type, {}, self.timezone)
         self._assert_grouping_order_tables(result, [{"name": "group1", "properties": ["prop1", "prop2"]},
                                                     {"name": "group2", "properties": ["prop3", "prop4"]}])
 
@@ -56,7 +69,7 @@ class TestCaseData(TestCase):
         # Dynamic data with additional property not present in any of the groups
         dynamic_data = {"prop1": None, "prop2": None, "prop3": None, "prop4": None, "prop5": None, "prop6": None}
 
-        result = _get_dd_tables(self.domain, self.case_type, dynamic_data, self.timezone)
+        result = _get_case_property_tables(self.domain, self.case_type, dynamic_data, self.timezone)
         self._assert_grouping_order_tables(result, [{"name": "group1", "properties": ["prop1", "prop2"]},
                                                     {"name": "group2", "properties": ["prop3", "prop4"]},
                                                     {"name": "Unrecognized", "properties": ["prop5", "prop6"]}
@@ -77,7 +90,7 @@ class TestCaseData(TestCase):
             self.assertEqual(group_name_expected, group_name_actual)
             rows_actual = group_data.get("rows")[0]
             props_actual = [prop.get("name") for prop in rows_actual]
-            if group_name_actual == "Unrecognized":
+            if not group_name_actual or group_name_actual == "Unrecognized":
                 # Ordering of properties in unrecognized group is not user defined
                 self.assertEqual(set(expected_group_data.get("properties")), set(props_actual))
             else:
@@ -88,4 +101,4 @@ class TestCaseData(TestCase):
         group_obj = None
         if group:
             group_obj, _ = CasePropertyGroup.objects.get_or_create(name=group, case_type=case_type_obj)
-        CaseProperty.objects.get_or_create(case_type=case_type_obj, name=prop_name, group_obj=group_obj)
+        CaseProperty.objects.get_or_create(case_type=case_type_obj, name=prop_name, group=group_obj)

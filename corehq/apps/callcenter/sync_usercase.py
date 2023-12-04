@@ -101,7 +101,7 @@ def _domain_has_new_fields(domain, field_names):
 
 
 def _get_sync_usercase_helper(user, domain, case_type, owner_id, case=None):
-    fields = _get_user_case_fields(user, case_type, owner_id)
+    fields = _get_user_case_fields(user, case_type, owner_id, domain)
     case = case or CommCareCase.objects.get_case_by_external_id(domain, user.user_id, case_type)
     close = user.to_be_deleted() or not user.is_active
     user_case_helper = _UserCaseHelper(domain, owner_id, user.user_id)
@@ -121,7 +121,7 @@ def _get_sync_usercase_helper(user, domain, case_type, owner_id, case=None):
     return user_case_helper
 
 
-def _get_user_case_fields(user, case_type, owner_id):
+def _get_user_case_fields(user, case_type, owner_id, domain):
 
     def valid_element_name(name):
         try:
@@ -131,7 +131,7 @@ def _get_user_case_fields(user, case_type, owner_id):
             return False
 
     # remove any keys that aren't valid XML element names
-    fields = {k: v for k, v in user.metadata.items() if
+    fields = {k: v for k, v in user.get_user_data(domain).items() if
               valid_element_name(k)}
     # language or phone_number can be null and will break
     # case submission

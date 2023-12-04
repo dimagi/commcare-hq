@@ -2,7 +2,6 @@ import datetime
 import functools
 import json
 import os
-import re
 import tempfile
 from collections import OrderedDict, namedtuple
 
@@ -431,7 +430,6 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
                 domain,
                 self.plan_name
             ),
-            settings.DEFAULT_FROM_EMAIL,
             [settings.SALES_EMAIL],
         )
         update_hubspot_properties.delay(request.couch_user.get_id, {'report_builder_subscription_request': 'yes'})
@@ -748,8 +746,8 @@ class ConfigureReport(ReportBuilderView):
         is necessary in case they navigated directly to this view either
         maliciously or with a bookmark perhaps.
         """
-        if (number_of_report_builder_reports(self.domain) >=
-                allowed_report_builder_reports(self.request)):
+        if (number_of_report_builder_reports(self.domain)
+                >= allowed_report_builder_reports(self.request)):
             raise Http404()
 
 

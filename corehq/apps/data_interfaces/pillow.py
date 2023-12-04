@@ -43,11 +43,7 @@ class CaseDeduplicationProcessor(PillowProcessor):
         return AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
 
     def _process_case_update(self, domain, case_update):
-        changed_properties = set()
-        if case_update.get_create_action() is not None:
-            changed_properties.update(set(case_update.get_create_action().raw_block.keys()))
-        if case_update.get_update_action() is not None:
-            changed_properties.update(set(case_update.get_update_action().raw_block.keys()))
+        changed_properties = case_update.get_normalized_update_property_names()
 
         for rule in self._get_rules(domain):
             for action in rule.memoized_actions:

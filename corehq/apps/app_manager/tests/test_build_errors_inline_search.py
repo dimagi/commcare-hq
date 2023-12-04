@@ -19,7 +19,7 @@ from corehq.util.test_utils import flag_enabled
 class BuildErrorsInlineSearchTest(SimpleTestCase):
 
     def test_inline_search_as_parent(self, *args):
-        """an inline search module can't be a parent module"""
+        """a parent module and its submodule can not have the same instance_name"""
         factory = AppFactory(build_version='2.51.0')
         m0, _ = factory.new_basic_module('first', 'case')
         m1, _ = factory.new_basic_module('second', 'case', parent_module=m0)
@@ -29,9 +29,14 @@ class BuildErrorsInlineSearchTest(SimpleTestCase):
             properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
             auto_launch=True,
             inline_search=True,
+            instance_name="instance_name"
         )
 
-        self.assertIn("inline search as parent module", _get_error_types(factory.app))
+        m1.search_config = CaseSearch(
+            inline_search=True,
+            instance_name="instance_name"
+        )
+        self.assertIn("non-unique instance name with parent module", _get_error_types(factory.app))
 
     @flag_enabled('DATA_REGISTRY')
     @patch.object(Application, 'supports_data_registry', lambda: True)

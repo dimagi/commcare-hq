@@ -52,25 +52,27 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
         registry_slug=config.data_registry,
         custom_related_case_property=config.custom_related_case_property,
         include_all_related_cases=config.include_all_related_cases,
+        commcare_sort=config.commcare_sort,
     )
 
 
 def get_case_search_results(domain, case_types, criteria,
-                            app_id=None, couch_user=None, registry_slug=None,
-                            custom_related_case_property=None, include_all_related_cases=None):
+                            app_id=None, couch_user=None, registry_slug=None, custom_related_case_property=None,
+                            include_all_related_cases=None, commcare_sort=None
+                            ):
     helper = _get_helper(couch_user, domain, case_types, registry_slug)
 
-    cases = get_primary_case_search_results(helper, domain, case_types, criteria)
+    cases = get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort)
     if app_id:
         cases.extend(get_and_tag_related_cases(helper, app_id, case_types, cases,
             custom_related_case_property, include_all_related_cases))
     return cases
 
 
-def get_primary_case_search_results(helper, domain, case_types, criteria):
+def get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort=None):
     builder = CaseSearchQueryBuilder(domain, case_types, helper.query_domains)
     try:
-        search_es = builder.build_query(criteria)
+        search_es = builder.build_query(criteria, commcare_sort)
     except TooManyRelatedCasesError:
         raise CaseSearchUserError(_('Search has too many results. Please try a more specific search.'))
     except CaseFilterError as e:
@@ -103,6 +105,7 @@ def _get_helper(couch_user, domain, case_types, registry_slug):
         else:
             helper = _RegistryQueryHelper(domain, couch_user, registry_helper)
     return helper
+
 
 class _QueryHelper:
     def __init__(self, domain):
@@ -171,8 +174,9 @@ class CaseSearchQueryBuilder:
             config = CaseSearchConfig(domain=self.request_domain)
         return config
 
-    def build_query(self, search_criteria):
+    def build_query(self, search_criteria, commcare_sort=None):
         search_es = self._get_initial_search_es()
+        search_es = self._apply_sort(search_es, commcare_sort)
         for criteria in search_criteria:
             search_es = self._apply_filter(search_es, criteria)
         return search_es
@@ -182,8 +186,21 @@ class CaseSearchQueryBuilder:
                 .domain(self.query_domains)
                 .case_type(self.case_types)
                 .is_closed(False)
-                .size(CASE_SEARCH_MAX_RESULTS)
-                .set_sorting_block(['_score', '_doc']))
+                .size(CASE_SEARCH_MAX_RESULTS))
+
+    def _apply_sort(self, search_es, commcare_sort=None):
+        if commcare_sort:
+            return self._sort_by_case_properties(search_es, commcare_sort)
+        return search_es.set_sorting_block(['_score', '_doc'])
+
+    def _sort_by_case_properties(self, search_es, commcare_sort_properties):
+        for sort_property in commcare_sort_properties:
+            search_es = search_es.sort_by_case_property(
+                sort_property.property_name,
+                desc=sort_property.is_descending,
+                sort_type=sort_property.sort_type
+            )
+        return search_es
 
     def _apply_filter(self, search_es, criteria):
         if criteria.key == CASE_SEARCH_XPATH_QUERY_KEY:
@@ -310,7 +327,6 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
     for case in results:
         _tag_is_related_case(case)
     return results
-
 
 
 def get_related_cases_result(helper, app, case_types, source_cases, include_all_related_cases):
@@ -444,6 +460,7 @@ def get_expanded_case_results(helper, custom_related_case_property, cases):
 def _get_case_search_cases(helper, case_ids):
     results = helper.get_base_queryset().case_ids(case_ids).run().hits
     return [helper.wrap_case(result) for result in results]
+
 
 # Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
 def _tag_is_related_case(case):

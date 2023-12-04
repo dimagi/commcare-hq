@@ -34,6 +34,7 @@ body {
     color: @cc-neutral-mid;
     padding-left: 1.5rem;
     font-weight: bold;
+    margin-top: 0px;
   }
 }
 
@@ -119,4 +120,15 @@ body {
   video {
     border: 1px solid #ddd;
   }
+}
+
+.collapsed-tile-content {
+  height: 100px;
+  overflow-y: clip;
+  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent);
+}
+
+.show-more {
+  text-align: center;
+  font-size: large;
 }

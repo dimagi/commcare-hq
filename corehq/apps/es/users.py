@@ -50,7 +50,6 @@ class UserES(HQESQuery):
             mobile_users,
             web_users,
             user_ids,
-            primary_location,
             location,
             last_logged_in,
             analytics_enabled,
@@ -58,8 +57,8 @@ class UserES(HQESQuery):
             role_id,
             is_active,
             username,
-            metadata,
-            missing_or_empty_metadata_property,
+            user_data,
+            missing_or_empty_user_data_property,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -105,9 +104,10 @@ class ElasticUser(ElasticDocumentAdapter):
         user_dict['__group_ids'] = [res.id for res in results]
         user_dict['__group_names'] = [res.name for res in results]
         user_dict['user_data_es'] = []
-        if 'user_data' in user_dict:
+        if user_dict.get('base_doc') == 'CouchUser' and user_dict['doc_type'] == 'CommCareUser':
             user_obj = self.model_cls.wrap_correctly(user_dict)
-            for key, value in user_obj.metadata.items():
+            user_data = user_obj.get_user_data(user_obj.domain)
+            for key, value in user_data.items():
                 user_dict['user_data_es'].append({
                     'key': key,
                     'value': value,
@@ -195,22 +195,10 @@ def user_ids(user_ids):
     return filters.term("_id", list(user_ids))
 
 
-def primary_location(location_id):
-    # by primary location
-    return filters.OR(
-        filters.AND(mobile_users(), filters.term('location_id', location_id)),
-        filters.AND(
-            web_users(),
-            filters.term('domain_memberships.location_id', location_id)
-        ),
-    )
-
-
 def location(location_id):
     # by any assigned-location primary or not
     return filters.OR(
         filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
-        # todo; this actually doesn't get applied since the below field is not indexed
         filters.AND(
             web_users(),
             filters.term('domain_memberships.assigned_location_ids', location_id)
@@ -233,10 +221,7 @@ def is_active(active=True):
     return filters.term("is_active", active)
 
 
-def metadata(key, value):
-    # Note that this dict is stored in ES under the `user_data` field, and
-    # transformed into a queryable format (in ES) as `user_data_es`, but it's
-    # referenced in python as `metadata`
+def user_data(key, value):
     return queries.nested(
         'user_data_es',
         filters.AND(
@@ -246,9 +231,9 @@ def metadata(key, value):
     )
 
 
-def _missing_metadata_property(property_name):
+def _missing_user_data_property(property_name):
     """
-    A metadata property doesn't exist.
+    A user_data property doesn't exist.
     """
     return filters.NOT(
         queries.nested(
@@ -258,9 +243,9 @@ def _missing_metadata_property(property_name):
     )
 
 
-def _missing_metadata_value(property_name):
+def _missing_user_data_value(property_name):
     """
-    A metadata property exists but has an empty string value.
+    A user_data property exists but has an empty string value.
     """
     return queries.nested(
         'user_data_es',
@@ -273,11 +258,11 @@ def _missing_metadata_value(property_name):
     )
 
 
-def missing_or_empty_metadata_property(property_name):
+def missing_or_empty_user_data_property(property_name):
     """
-    A metadata property doesn't exist, or does exist but has an empty string value.
+    A user_data property doesn't exist, or does exist but has an empty string value.
     """
     return filters.OR(
-        _missing_metadata_property(property_name),
-        _missing_metadata_value(property_name),
+        _missing_user_data_property(property_name),
+        _missing_user_data_value(property_name),
     )

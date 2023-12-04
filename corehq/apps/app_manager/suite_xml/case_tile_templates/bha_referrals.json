@@ -1,0 +1,21 @@
+{
+    "slug": "bha_referrals",
+    "filename": "bha_referrals.xml",
+    "has_map": false,
+    "fields": ["header", "top_left", "top_center", "top_right",
+        "middle0_left", "middle0_right", "middle1_left", "middle1_right",
+        "middle2", "bottom_left_img", "bottom_right"],
+    "grid": {
+        "header": {"height": 1, "width": 12, "x": 0, "y": 0, "horz-align":"left", "vert-align":"center"},
+        "top_left": {"height": 1, "width": 4, "x": 0, "y": 1, "horz-align":"left", "vert-align":"center"},
+        "top_center": {"height": 1, "width": 4, "x": 4, "y": 1, "horz-align":"left", "vert-align":"center"},
+        "top_right": {"height": 1, "width": 4, "x": 8, "y": 1, "horz-align":"left", "vert-align":"center"},
+        "middle0_left": {"height": 1, "width": 4, "x": 0, "y": 2, "horz-align":"left", "vert-align":"center"},
+        "middle0_right": {"height": 1, "width": 8, "x": 4, "y": 2, "horz-align":"left", "vert-align":"center"},
+        "middle1_left": {"height": 1, "width": 6, "x": 0, "y": 3, "horz-align":"left", "vert-align":"center"},
+        "middle1_right": {"height": 1, "width": 6, "x": 6, "y": 3, "horz-align":"left", "vert-align":"center"},
+        "middle2": {"height": 1, "width": 12, "x": 0, "y": 4, "horz-align":"left", "vert-align":"center"},
+        "bottom_left_img": {"height": 1, "width": 1, "x": 0, "y": 5, "horz-align":"center", "vert-align":"start"},
+        "bottom_right": {"height": 1, "width": 11, "x": 1, "y": 5, "horz-align":"left", "vert-align":"start"}
+    }
+}

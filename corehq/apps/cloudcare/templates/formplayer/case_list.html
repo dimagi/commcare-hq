@@ -6,17 +6,25 @@
     <button id="scroll-to-bottom" class="btn btn-lg btn-circle btn-primary hidden-md hidden-lg" type="button" aria-label="{% trans 'Scroll to bottom' %}" style="display: none;">
       <i class="fa fa-lg fa-arrow-down" aria-hidden="true"></i>
     </button>
-    <div class="page-header menu-header" id="case-list-menu-header">
-      <% if (sidebarEnabled) {%>
+    <div class="page-header menu-header clearfix" id="case-list-menu-header">
+      <div class="pull-right">
+      <% if (showMap) { %>
+        <button id="hide-map-button" class="btn btn-primary pull-right" type="button"
+           aria-expanded="true" aria-controls="module-case-list-map">
+          {% trans "Hide Map" %}
+        </button>
+      <% } %>
+      <% if (sidebarEnabled) { %>
         <button id="search-more" class="btn btn-primary visible-xs visible-sm pull-right" type="button"
           data-toggle="collapse" data-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
           {% trans "Refine search" %}
         </button>
       <% } %>
-      <% if (title.length > 0) {%>
-      <h1  aria-label="<%- title %>" tabindex="0" class="page-title"><%- title %></h1>
+        </div>
+      <% if (title.length > 0) { %>
+        <h1  aria-label="<%- title %>" tabindex="0" class="page-title"><%- title %></h1>
       <% } %>
-      <% if (sidebarEnabled && description.length > 0) {%>
+      <% if (sidebarEnabled && description.length > 0) { %>
         <div aria-label="<%- description %>" tabindex="0" class="query-description"><%= description %></div>
       <% } %>
     </div>
@@ -97,7 +105,7 @@
     <% if (actions || isMultiSelect) { %>
     <div class="case-list-actions">
       <% if (isMultiSelect) { %>
-      <button type="button" class="btn btn-success btn-lg formplayer-request" disabled="true" id="multi-select-continue-btn">{% trans "Continue" %} (<span id="multi-select-btn-text"><%- selectedCaseIds.length %></span>)</button>
+      <button type="button" class="btn btn-success btn-lg formplayer-request" disabled="true" id="multi-select-continue-btn">{% trans "Continue" %} <span id="multi-select-btn-text" class="badge"><%- selectedCaseIds.length %></span></button>
       <% } %>
       <% if (actions) { %>
         <% _.each(actions, function(action, index) { %>
@@ -126,7 +134,10 @@
       <% if (styles[index].displayFormat === 'Image') { %>
         <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
       <% } else if (styles[index].displayFormat === 'ClickableIcon') { %>
-        <td class="module-case-list-column"><img class="module-icon btn" src="<%- resolveUri(datum) %>"/></td>
+        <td class="module-case-list-column">
+          <img class="module-icon clickable-icon" src="<%- resolveUri(datum) %>"/>
+          <i class="fa fa-spin fa-spinner" style="display:none"></i>
+        </td>
       <% } else if (styles[index].displayFormat === 'Markdown') { %>
         <td class="module-case-list-column webapp-markdown-output"><%= renderMarkdown(datum) %></td>
       <% } else if (styles[index].displayFormat === 'Graph') { %>
@@ -145,17 +156,22 @@
       </div>
     <% } %>
 
-  <div class="<%- prefix %>-cell-grid-style">
+  <div class="<%- prefix %>-cell-grid-style collapsible-tile-content">
     <% _.each(data, function(datum, index) { %>
     <div class="<%- prefix %>-grid-style-<%- index %> box">
       <% if (styles[index].displayFormat === 'Image') {
       if(resolveUri(datum)) { %>
-      <img class="module-icon" src="<%- resolveUri(datum) %>"/>
+        <img class="module-icon" src="<%- resolveUri(datum) %>"/>
+      <% } %>
+      <% } else if (styles[index].displayFormat === 'ClickableIcon') {
+      if(resolveUri(datum)) { %>
+        <img class="module-icon clickable-icon" src="<%- resolveUri(datum) %>"/>
+        <i class="fa fa-spin fa-spinner" style="display:none"></i>
       <% } %>
       <% } else if(styles[index].widthHint === 0) { %>
-      <div style="display:none;"><%- datum %></div>
+        <div style="display:none;"><%- datum %></div>
       <% } else { %>
-      <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
+        <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
       <% } %>
     </div>
     <% }); %>
@@ -169,11 +185,16 @@
     </div>
   <% } %>
 
-  <div class="group-data">
+  <div class="group-data collapsible-tile-content">
     <div class="<%- prefix %>-cell-grid-style">
       <% for (let [index, datum] of Object.entries(indexedHeaderData)) { %>
         <div class="<%- prefix %>-grid-style-<%- index %> box" >
-          <% if (styles[index].displayFormat === 'Image') {
+          <% if (styles[index].displayFormat === 'ClickableIcon') {
+          if(resolveUri(datum)) { %>
+            <img class="module-icon clickable-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+            <i class="fa fa-spin fa-spinner" style="display:none"></i>
+          <% } %>
+          <% } else if (styles[index].displayFormat === 'Image') {
           if(resolveUri(datum)) { %>
             <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
           <% } %>
@@ -196,7 +217,12 @@
                 if(resolveUri(datum)) { %>
                   <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
                 <% } %>
-                <% } else { %>
+              <% } else if (styles[index].displayFormat === 'ClickableIcon') {
+                if(resolveUri(datum)) { %>
+                  <img class="module-icon clickable-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+                  <i class="fa fa-spin fa-spinner" style="display:none"></i>
+                <% } %>
+              <% } else { %>
                   <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
               <% } %>
             </div>
@@ -209,13 +235,30 @@
 
 <script type="text/template" id="cell-layout-style-template">
   <% _.each(models, function(model){ %>
-  .<%- model.id %> {
-  grid-area: <%- model.gridStyle %>;
-  font-size: <%- model.fontStyle %>;
-  justify-self: <%- model.horizontalAlign %>;
-  text-align: <%- model.horizontalAlign %>;
-  align-self: <%- model.verticalAlign %>;
-  }
+    .<%- model.id %> {
+      grid-area: <%- model.gridStyle %>;
+      font-size: <%- model.fontStyle %>;
+      text-align: <%- model.horizontalAlign %>;
+      <% if (!model.borderInTile) { %>
+        justify-self: <%- model.horizontalAlign %>;
+        align-self: <%- model.verticalAlign %>;
+      <% } else { %>
+        <% if (model.showBorder) { %>
+          border: 1px solid #685c53;
+          border-radius: 8px;
+          padding-top: 5px;
+          padding-bottom: 0px;
+          padding-left: 5px;
+          padding-right: 5px;
+          justify-self: stretch;
+          margin: 2px;
+        <% } else { %>
+          margin: 7px;
+          justify-self: <%- model.horizontalAlign %>;
+          align-self: <%- model.verticalAlign %>;
+        <% } %>
+      <% } %>
+    }
   <% }); %>
 </script>
 

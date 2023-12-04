@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.conf import settings
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils.translation import gettext as _
 
 import stripe
@@ -21,6 +21,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     log_accounting_info,
 )
+from corehq.apps.accounting.utils.stripe import charge_through_stripe
 from corehq.const import USER_DATE_FORMAT
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
@@ -59,11 +60,6 @@ class BaseStripePaymentHandler(object):
         """Updates any relevant Credit lines
         """
         raise NotImplementedError("you must implement update_credits")
-
-    @staticmethod
-    def get_amount_in_cents(amount):
-        amt_cents = amount * Decimal('100')
-        return int(amt_cents.quantize(Decimal(10)))
 
     def update_payment_information(self, account):
         account.last_payment_method = LastPayment.CC_ONE_TIME
@@ -182,10 +178,10 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
         return _("Invoice #%s") % self.invoice.id
 
     def create_charge(self, amount, card=None, customer=None):
-        return stripe.Charge.create(
+        return charge_through_stripe(
             card=card,
             customer=customer,
-            amount=self.get_amount_in_cents(amount),
+            amount_in_dollars=amount,
             currency=settings.DEFAULT_CURRENCY,
             description="Payment for Invoice %s" % self.invoice.invoice_number,
         )
@@ -244,10 +240,10 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
         return _('Bulk Payment for project space %s' % self.domain)
 
     def create_charge(self, amount, card=None, customer=None):
-        return stripe.Charge.create(
+        return charge_through_stripe(
             card=card,
             customer=customer,
-            amount=self.get_amount_in_cents(amount),
+            amount_in_dollars=amount,
             currency=settings.DEFAULT_CURRENCY,
             description=self.cost_item_name,
         )
@@ -345,10 +341,10 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         return Decimal(request.POST['amount'])
 
     def create_charge(self, amount, card=None, customer=None):
-        return stripe.Charge.create(
+        return charge_through_stripe(
             card=card,
             customer=customer,
-            amount=self.get_amount_in_cents(amount),
+            amount_in_dollars=amount,
             currency=settings.DEFAULT_CURRENCY,
             description="Payment for %s" % self.cost_item_name,
         )
@@ -400,24 +396,27 @@ class AutoPayInvoicePaymentHandler(object):
             return
 
         try:
-            with transaction.atomic():
-                payment_record = PaymentRecord.create_record(payment_method, 'temp_transaction_id', amount)
-                invoice.pay_invoice(payment_record)
-                invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
-                invoice.account.save()
-                transaction_id = payment_method.create_charge(
-                    autopay_card,
-                    amount_in_dollars=amount,
-                    description='Auto-payment for Invoice %s' % invoice.invoice_number,
-                )
+            log_accounting_info("[Autopay] Attempt to charge autopay invoice {} through Stripe".format(invoice.id))
+            transaction_id = payment_method.create_charge(
+                autopay_card,
+                amount_in_dollars=amount,
+                description='Auto-payment for Invoice %s' % invoice.invoice_number,
+                idempotency_key=f"{invoice.invoice_number}_{amount}"
+            )
         except stripe.error.CardError as e:
             self._handle_card_declined(invoice, e)
         except payment_method.STRIPE_GENERIC_ERROR as e:
             self._handle_card_errors(invoice, e)
         else:
-            payment_record.transaction_id = transaction_id
-            payment_record.save()
-            self._send_payment_receipt(invoice, payment_record)
+            try:
+                payment_record = PaymentRecord.create_record(payment_method, transaction_id, amount)
+            except IntegrityError:
+                log_accounting_error("[Autopay] Attempt to double charge invoice {}".format(invoice.id))
+            else:
+                invoice.pay_invoice(payment_record)
+                invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
+                invoice.account.save()
+                self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):
         from corehq.apps.accounting.tasks import send_purchase_receipt
@@ -435,7 +434,7 @@ class AutoPayInvoicePaymentHandler(object):
             send_purchase_receipt.delay(
                 payment_record.id, domain, receipt_email_template, receipt_email_template_plaintext, context,
             )
-        except:
+        except Exception:
             self._handle_email_failure(payment_record.id)
 
     @staticmethod

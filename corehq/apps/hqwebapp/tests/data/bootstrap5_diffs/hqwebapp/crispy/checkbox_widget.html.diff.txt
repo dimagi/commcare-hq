@@ -1,0 +1,8 @@
+--- 
++++ 
+@@ -1 +1,4 @@
+-<label class="checkbox"><input {{ attrs }} /> {{ inline_label }}</label>
++<div class="form-check">
++  <input {{ attrs }} />
++  <label class="form-check-label" for="{{ input_id }}">{{ inline_label }}</label>
++</div>

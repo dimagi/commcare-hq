@@ -19,6 +19,7 @@ import jsonfield
 import stripe
 from django_prbac.models import Role
 from memoized import memoized
+from corehq.apps.accounting.utils.stripe import charge_through_stripe
 
 from corehq.apps.domain.shortcuts import publish_domain_saved
 from dimagi.ext.couchdbkit import (
@@ -74,6 +75,7 @@ from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
+from django.db.models import OuterRef, Subquery
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -561,6 +563,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
             email,
             render_to_string('accounting/email/autopay_card_removed.html', context),
             text_content=strip_tags(render_to_string('accounting/email/autopay_card_removed.html', context)),
+            domain=domain,
+            use_domain_gateway=True,
         )
 
     def _send_autopay_card_added_email(self, domain):
@@ -592,6 +596,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
             email,
             render_to_string('accounting/email/invoice_autopay_setup.html', context),
             text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
+            domain=domain,
+            use_domain_gateway=True,
         )
 
     @staticmethod
@@ -888,6 +894,38 @@ class SoftwarePlanVersion(models.Model):
     def save(self, *args, **kwargs):
         super(SoftwarePlanVersion, self).save(*args, **kwargs)
         SoftwarePlan.get_version.clear(self.plan)
+
+    @staticmethod
+    def filter_version_query(query, edition=None, visibility=None, is_plan_query=False):
+        prefix = "plan__" if not is_plan_query else ""
+
+        if edition:
+            query = query.filter(**{f"{prefix}edition": edition})
+        if visibility:
+            query = query.filter(**{f"{prefix}visibility": visibility})
+        return query
+
+    @classmethod
+    def get_most_recent_version(cls, edition=None, visibility=None):
+        plan_versions_query = cls.objects.all()
+        plan_versions_query = cls.filter_version_query(plan_versions_query, edition, visibility)
+
+        latest_versions_date = plan_versions_query.filter(
+            plan=OuterRef('pk')
+        ).order_by('-date_created').values('date_created')[:1]
+
+        software_plans_query = SoftwarePlan.objects.all()
+        software_plans_query = cls.filter_version_query(software_plans_query, edition, visibility,
+                                                        is_plan_query=True)
+
+        latest_versions = software_plans_query.annotate(
+            latest_version_date=Subquery(latest_versions_date)
+        ).values('id', 'name', 'latest_version_date')
+
+        return cls.objects.filter(
+            plan__in=[item['id'] for item in latest_versions],
+            date_created__in=[item['latest_version_date'] for item in latest_versions]
+        )
 
     @property
     def version(self):
@@ -3737,16 +3775,31 @@ class StripePaymentMethod(PaymentMethod):
                 account.remove_autopay_user()
 
     def create_card(self, stripe_token, billing_account, domain, autopay=False):
+        """
+        Creates and associates a new card with the Stripe customer.
+
+        This method uses a Stripe token (usually generated on the client side)
+        to securely create a new card and associate it with the customer
+        represented by this instance. Additionally, if the 'autopay' flag is
+        set to True, it sets the card to be used for automatic payments for
+        a specific billing account and domain.
+
+        Parameters:
+        - stripe_token (str): The token representing the card details, typically
+                            generated using Stripe.js on the client side.
+        - billing_account (BillingAccount): The account for which the card might
+                                            be set for automatic payments.
+        - domain (str): The domain associated with the billing account.
+        - autopay (bool, optional): Flag indicating if the card should be set for
+                                    automatic payments. Default is False.
+
+        Returns:
+        - card (stripe.Card): The newly created Stripe card object.
+        """
         customer = self.customer
         card = customer.cards.create(card=stripe_token)
-        self.set_default_card(card)
         if autopay:
             self.set_autopay(card, billing_account, domain)
-        return card
-
-    def set_default_card(self, card):
-        self.customer.default_card = card
-        self.customer.save()
         return card
 
     def set_autopay(self, card, billing_account, domain):
@@ -3803,15 +3856,15 @@ class StripePaymentMethod(PaymentMethod):
         """
         return 'auto_pay_{billing_account_id}'.format(billing_account_id=billing_account.id)
 
-    def create_charge(self, card, amount_in_dollars, description):
+    def create_charge(self, card, amount_in_dollars, description, idempotency_key=None):
         """ Charges a stripe card and returns a transaction id """
-        amount_in_cents = int((amount_in_dollars * Decimal('100')).quantize(Decimal(10)))
-        transaction_record = stripe.Charge.create(
+        transaction_record = charge_through_stripe(
             card=card,
             customer=self.customer,
-            amount=amount_in_cents,
+            amount_in_dollars=amount_in_dollars,
             currency=settings.DEFAULT_CURRENCY,
             description=description,
+            idempotency_key=idempotency_key
         )
         return transaction_record.id
 

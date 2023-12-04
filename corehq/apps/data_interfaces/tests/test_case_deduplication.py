@@ -716,48 +716,21 @@ class DeduplicationPillowTest(TestCase):
         cls.factory = CaseFactory(cls.domain)
         cls.pillow = get_xform_pillow(skip_ucr=True)
 
-        cls.rule = AutomaticUpdateRule.objects.create(
-            domain=cls.domain,
-            name='test',
-            case_type=cls.case_type,
-            active=True,
-            deleted=False,
-            filter_on_server_modified=False,
-            server_modified_boundary=None,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
-        )
-        _, cls.action = cls.rule.add_action(
-            CaseDeduplicationActionDefinition,
-            match_type=CaseDeduplicationMatchTypeChoices.ALL,
-            case_properties=["case_name", "age"],
-        )
-        cls.action.set_properties_to_update([
-            CaseDeduplicationActionDefinition.PropertyDefinition(
-                name='age',
-                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
-                value='5',
-            ),
-            CaseDeduplicationActionDefinition.PropertyDefinition(
-                name='case_name',
-                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
-                value='Herman Miller',
-            )
-        ])
-        cls.action.save()
-        AutomaticUpdateRule.clear_caches(cls.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+    def setUp(self):
+        self.kafka_offset = get_topic_offset(topics.FORM_SQL)
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
     def test_pillow_processes_changes(self, find_duplicate_cases_mock):
-        kafka_sec = get_topic_offset(topics.FORM_SQL)
+        rule = self._create_rule('test', ["age"])
+        self._configure_properties_to_update(rule, {"name": "Herman Miller", "age": "5"})
 
-        case1 = self.factory.create_case(case_name="foo", case_type=self.case_type, update={"age": 2})
-        case2 = self.factory.create_case(case_name="foo", case_type=self.case_type, update={"age": 2})
+        case1 = self.factory.create_case(case_type=self.case_type, update={"age": 2})
+        case2 = self.factory.create_case(case_type=self.case_type, update={"age": 2})
+
         find_duplicate_cases_mock.return_value = [case1.case_id, case2.case_id]
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
-
         new_kafka_sec = get_topic_offset(topics.FORM_SQL)
-        self.pillow.process_changes(since=kafka_sec, forever=False)
+        self.pillow.process_changes(since=self.kafka_offset, forever=False)
 
         self._assert_case_duplicate_pair(case1.case_id, [case2.case_id])
         self._assert_case_duplicate_pair(case2.case_id, [case1.case_id])
@@ -771,15 +744,26 @@ class DeduplicationPillowTest(TestCase):
             self.pillow.process_changes(since=new_kafka_sec, forever=False)
             p.assert_not_called()
 
+    @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
+    def test_pillow_processes_normalized_system_properties(self, find_duplicate_cases_mock):
+        self._create_rule('system_prop_test', ['name'])
+
+        case = self.factory.create_case(case_name="foo", case_type=self.case_type)
+
+        find_duplicate_cases_mock.return_value = [case.case_id, 'duplicate_case_id']
+
+        self.pillow.process_changes(since=self.kafka_offset, forever=False)
+
+        self._assert_case_duplicate_pair(case.case_id, ['duplicate_case_id'])
+
     def test_deleted_form_returns_before_processing(self):
         case = self.factory.create_case(case_name="test",
                                         case_type=self.case_type,
                                         update={"age": 2})
-        kafka_sec = get_topic_offset(topics.FORM_SQL)
         XFormInstance.objects.hard_delete_forms(self.domain, case.xform_ids)
 
         with patch.object(CaseDeduplicationProcessor, '_process_case_update') as p:
-            self.pillow.process_changes(since=kafka_sec, forever=False)
+            self.pillow.process_changes(since=self.kafka_offset, forever=False)
             p.assert_not_called()
 
     def _assert_case_duplicate_pair(self, case_id_to_check, expected_duplicates):
@@ -789,6 +773,41 @@ class DeduplicationPillowTest(TestCase):
             .potential_duplicates.values_list('case_id', flat=True)
         )
         self.assertItemsEqual(potential_duplicates, expected_duplicates)
+
+    def _create_rule(self, name='test', match_on=None):
+        rule = AutomaticUpdateRule.objects.create(
+            domain=self.domain,
+            name=name,
+            case_type=self.case_type,
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE
+        )
+
+        match_on = match_on or []
+
+        rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=match_on
+        )
+
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+
+        return rule
+
+    def _configure_properties_to_update(self, rule, prop_map):
+        action = rule.memoized_actions[0].definition
+        action.set_properties_to_update([
+            CaseDeduplicationActionDefinition.PropertyDefinition(
+                name=name,
+                value=value,
+                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
+            ) for (name, value) in prop_map.items()
+        ])
+        action.save()
 
 
 @es_test(requires=[case_search_adapter, user_adapter])

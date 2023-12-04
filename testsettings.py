@@ -18,6 +18,27 @@ ES_FOR_TEST_INDEX_MULTIPLEXED = False
 ES_FOR_TEST_INDEX_SWAPPED = False
 
 
+# Set multiplexed settings to false for test runs
+
+ES_APPS_INDEX_MULTIPLEXED = False
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
+ES_CASES_INDEX_MULTIPLEXED = False
+ES_DOMAINS_INDEX_MULTIPLEXED = False
+ES_FORMS_INDEX_MULTIPLEXED = False
+ES_GROUPS_INDEX_MULTIPLEXED = False
+ES_SMS_INDEX_MULTIPLEXED = False
+ES_USERS_INDEX_MULTIPLEXED = False
+
+
+ES_APPS_INDEX_SWAPPED = False
+ES_CASE_SEARCH_INDEX_SWAPPED = False
+ES_CASES_INDEX_SWAPPED = False
+ES_DOMAINS_INDEX_SWAPPED = False
+ES_FORMS_INDEX_SWAPPED = False
+ES_GROUPS_INDEX_SWAPPED = False
+ES_SMS_INDEX_SWAPPED = False
+ES_USERS_INDEX_SWAPPED = False
+
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
 # it can be reverted whenever that's figured out.
@@ -139,3 +160,6 @@ FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"
 
 # A workaround to test the messaging framework. See: https://stackoverflow.com/a/60218100
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+
+if os.environ.get("STRIPE_PRIVATE_KEY"):
+    STRIPE_PRIVATE_KEY = os.environ.get("STRIPE_PRIVATE_KEY")

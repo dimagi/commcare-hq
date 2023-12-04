@@ -312,6 +312,7 @@ HQ_APPS = (
     'corehq.apps.groups',
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
+    'corehq.apps.email',
     'corehq.apps.events',
     'corehq.apps.geospatial',
     'corehq.apps.smsforms',
@@ -477,7 +478,7 @@ DATA_EMAIL = 'datatree@example.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
 BILLING_EMAIL = 'billing-comm@example.com'
-INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
+INVOICING_CONTACT_EMAIL = 'accounts@example.com'
 GROWTH_EMAIL = 'growth@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 SALES_EMAIL = 'sales@example.com'
@@ -859,14 +860,14 @@ ES_SEARCH_TIMEOUT = 30
 # The variables should be used while reindexing an index.
 # When the variables are set to true the data will be written to both primary and secondary indexes.
 
-ES_APPS_INDEX_MULTIPLEXED = False
-ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
-ES_CASES_INDEX_MULTIPLEXED = False
-ES_DOMAINS_INDEX_MULTIPLEXED = False
-ES_FORMS_INDEX_MULTIPLEXED = False
-ES_GROUPS_INDEX_MULTIPLEXED = False
-ES_SMS_INDEX_MULTIPLEXED = False
-ES_USERS_INDEX_MULTIPLEXED = False
+ES_APPS_INDEX_MULTIPLEXED = True
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = True
+ES_CASES_INDEX_MULTIPLEXED = True
+ES_DOMAINS_INDEX_MULTIPLEXED = True
+ES_FORMS_INDEX_MULTIPLEXED = True
+ES_GROUPS_INDEX_MULTIPLEXED = True
+ES_SMS_INDEX_MULTIPLEXED = True
+ES_USERS_INDEX_MULTIPLEXED = True
 
 
 # Setting the variable to True would mean that the primary index would become secondary and vice-versa
@@ -1041,6 +1042,8 @@ COMMCARE_NAME = {
     "default": "CommCare",
 }
 
+ALLOW_MAKE_SUPERUSER_COMMAND = True
+
 ENTERPRISE_MODE = False
 
 RESTRICT_DOMAIN_CREATION = False
@@ -1150,6 +1153,18 @@ FCM_CREDS = None
 
 CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 
+MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
+
+# used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
+PERMANENT_DELETION_WINDOW = 30  # days
+
+# GSheets related work that was dropped, but should be picked up in the near future
+GOOGLE_OATH_CONFIG = {}
+GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+GOOGLE_SHEETS_API_NAME = "sheets"
+GOOGLE_SHEETS_API_VERSION = "v4"
+DAYS_KEEP_GSHEET_STATUS = 14
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -1228,8 +1243,6 @@ for database in DATABASES.values():
 _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
-
-ALLOW_MAKE_SUPERUSER_COMMAND = True
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -1937,10 +1950,6 @@ for k, v in LOCAL_PILLOWTOPS.items():
     PILLOWTOPS[k] = plist
 
 COUCH_CACHE_BACKENDS = [
-    'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
-    'corehq.apps.cachehq.cachemodels.UserGenerationCache',
-    'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
-    'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
@@ -2082,15 +2091,5 @@ os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'F
 
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
-# Config settings for the google oauth handshake to get a user token
-# Google Cloud Platform secret settings config file
-GOOGLE_OATH_CONFIG = {}
-# Scopes to give read/write access to the code that generates the spreadsheets
-GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-
-GOOGLE_SHEETS_API_NAME = "sheets"
-GOOGLE_SHEETS_API_VERSION = "v4"
-
-DAYS_KEEP_GSHEET_STATUS = 14
-
-PERMANENT_DELETION_WINDOW = 30  # days
+# NOTE: if you are adding a new setting that you intend to have other environments override,
+# make sure you add it before localsettings are imported (from localsettings import *)

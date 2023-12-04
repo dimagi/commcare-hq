@@ -2,6 +2,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django import forms
 from corehq.apps.geospatial.models import GeoConfig
@@ -19,7 +20,12 @@ class GeospatialConfigForm(forms.ModelForm):
         model = GeoConfig
         fields = [
             "user_location_property_name",
-            "case_location_property_name"
+            "case_location_property_name",
+            "selected_grouping_method",
+            "max_cases_per_group",
+            "min_cases_per_group",
+            "target_group_count",
+            "selected_disbursement_algorithm",
         ]
 
     user_location_property_name = forms.CharField(
@@ -32,6 +38,43 @@ class GeospatialConfigForm(forms.ModelForm):
         widget=forms.widgets.Select(choices=[]),
         required=True,
         help_text=_("The name of the case property storing the geo-location data of your cases."),
+    )
+
+    selected_grouping_method = forms.ChoiceField(
+        label=_("Grouping method"),
+        # TODO: Add relevant documentation link to help_text when geospatial feature is GA'ed
+        help_text=_("Determines which parameter to use for grouping cases"),
+        required=False,
+        choices=GeoConfig.VALID_GROUPING_METHODS,
+    )
+    max_cases_per_group = forms.IntegerField(
+        label=_("Maximum group size"),
+        help_text=_("The maximum number of cases that can be in a group"),
+        required=False,
+        min_value=1,
+    )
+    min_cases_per_group = forms.IntegerField(
+        label=("Minimum group size"),
+        help_text=_("The minimum number of cases that can be in a group"),
+        required=False,
+        min_value=1,
+    )
+    target_group_count = forms.IntegerField(
+        label=_("Target group count"),
+        help_text=_("The desired number of groups. Cases will be divided equally to create this many groups"),
+        required=False,
+        min_value=1,
+    )
+    selected_disbursement_algorithm = forms.ChoiceField(
+        label=_("Disbursement algorithm"),
+        # TODO: Uncomment once linked documentation becomes public (geospatial feature is GA'ed)
+        # help_text=format_html_lazy(
+        #     _('For more information on these algorithms please look at our '
+        #       '<a href="{}" target="_blank">support documentation</a>.'),
+        #     'https://confluence.dimagi.com/pages/viewpage.action?pageId=164694245'
+        # ),
+        choices=GeoConfig.VALID_DISBURSEMENT_ALGORITHMS,
+        required=True,
     )
 
     def __init__(self, *args, **kwargs):
@@ -75,6 +118,23 @@ class GeospatialConfigForm(forms.ModelForm):
                         data_bind="visible: hasGeoCasePropChanged"
                     ),
                 ),
+                crispy.Fieldset(
+                    _('Case Grouping Parameters'),
+                    crispy.Field('selected_grouping_method', data_bind="value: selectedGroupMethod"),
+                    crispy.Div(
+                        crispy.Field('max_cases_per_group'),
+                        crispy.Field('min_cases_per_group'),
+                        data_bind='visible: isMinMaxGrouping',
+                    ),
+                    crispy.Div(
+                        crispy.Field('target_group_count'),
+                        data_bind='visible: isTargetGrouping',
+                    ),
+                ),
+                crispy.Fieldset(
+                    _('Algorithms'),
+                    crispy.Field('selected_disbursement_algorithm'),
+                ),
                 hqcrispy.FormActions(
                     StrictButton(
                         _('Save'),
@@ -85,3 +145,23 @@ class GeospatialConfigForm(forms.ModelForm):
                 )
             )
         )
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        grouping_method = cleaned_data['selected_grouping_method']
+        if grouping_method == GeoConfig.MIN_MAX_GROUPING:
+            max_group_size = cleaned_data['max_cases_per_group']
+            min_group_size = cleaned_data['min_cases_per_group']
+            if not max_group_size:
+                raise ValidationError(_("Value for maximum group size required"))
+            if not min_group_size:
+                raise ValidationError(_("Value for minimum group size required"))
+            if min_group_size > max_group_size:
+                raise ValidationError(_(
+                    "Maximum group size should be greater than or equal to minimum group size"
+                ))
+        elif grouping_method == GeoConfig.TARGET_SIZE_GROUPING:
+            if not cleaned_data['target_group_count']:
+                raise ValidationError(_("Value for target group count required"))
+
+        return cleaned_data

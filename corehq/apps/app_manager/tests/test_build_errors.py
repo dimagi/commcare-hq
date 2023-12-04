@@ -2,7 +2,7 @@ import json
 import os
 from unittest.mock import patch
 
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 from corehq import privileges
 from corehq.apps.app_manager.const import (
@@ -27,7 +27,7 @@ from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
-class BuildErrorsTest(SimpleTestCase):
+class BuildErrorsTest(TestCase):
 
     @staticmethod
     def _clean_unique_id(errors):
@@ -146,6 +146,26 @@ class BuildErrorsTest(SimpleTestCase):
             errors = app.validate_app()
             self._clean_unique_id(errors)
             self.assertIn(case_tile_error, errors)
+
+    def test_clickable_icon_configuration_errors(self, *args):
+        case_tile_error = {
+            'type': "invalid clickable icon configuration",
+            'module': {'id': 0, 'name': {'en': 'first module'}},
+            'reason': 'Column/Field "field": Clickable Icons require a form to be configured.'
+        }
+        factory = AppFactory(build_version='2.51.0')
+        app = factory.app
+        module = factory.new_basic_module('first', 'case', with_form=False)
+        module.case_details.short.columns.append(DetailColumn(
+            format='clickable-icon',
+            field='field',
+            header={'en': 'Column'},
+            model='case',
+        ))
+
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertIn(case_tile_error, errors)
 
     def test_case_list_form_advanced_module_different_case_config(self, *args):
         case_tile_error = {

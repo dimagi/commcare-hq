@@ -81,6 +81,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 model.set('value', item.place_name);
                 initMapboxWidget(model);
+                const geocoderValues = JSON.parse(sessionStorage.geocoderValues);
+                geocoderValues[model.id] = item.place_name;
+                sessionStorage.geocoderValues = JSON.stringify(geocoderValues);
                 var broadcastObj = formEntryUtils.getBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
@@ -149,6 +152,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             $(function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Seen in Case Search");
             });
+            const queryKey = sessionStorage.queryKey;
+            const storedGeocoderValues = sessionStorage.geocoderValues;
+            const geoValues = storedGeocoderValues ? JSON.parse(storedGeocoderValues) : {};
+            if (!("queryKey" in geoValues) || geoValues["queryKey"] !== queryKey) {
+                geoValues["queryKey"] = queryKey;
+                sessionStorage.geocoderValues = JSON.stringify(geoValues);
+            }
             if ($field.find('.mapboxgl-ctrl-geocoder--input').length === 0) {
                 if (!initialPageData.get("has_geocoder_privs")) {
                     $("#" + inputId).addClass('unsupported alert alert-warning');
@@ -161,15 +171,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     divId: inputId,
                     itemCallback: geocoderItemCallback(id, model),
                     clearCallBack: geocoderOnClearCallback(id),
-                    responseDataTypes: 'address,region,place,postcode'
+                    responseDataTypes: 'address,region,place,postcode',
                 });
                 var divEl = $field.find('.mapboxgl-ctrl-geocoder');
                 divEl.css("max-width", "none");
                 divEl.css("width", "100%");
             }
 
-            if (model.get('value')) {
-                $field.find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
+            const geocoderValues = JSON.parse(sessionStorage.geocoderValues);
+            if (geocoderValues[id]) {
+                $field.find('.mapboxgl-ctrl-geocoder--input').val(geocoderValues[id]);
             }
         };
 
@@ -231,17 +242,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         _setItemset: function (itemsetChoices, itemsetChoicesKey) {
             itemsetChoices = itemsetChoices || [];
+            itemsetChoicesKey = itemsetChoicesKey || [];
             let itemsetChoicesDict = {};
 
-            if (this.parentView.selectValuesByKeys) {
-                itemsetChoicesKey = itemsetChoicesKey || [];
-                itemsetChoicesKey.forEach((key,i) => itemsetChoicesDict[key] = itemsetChoices[i]);
-                this.model.set({
-                    itemsetChoicesKey: itemsetChoicesKey,
-                });
-            } else {
-                itemsetChoices.forEach((value,i) => itemsetChoicesDict[i] = value);
-            }
+            itemsetChoicesKey.forEach((key,i) => itemsetChoicesDict[key] = itemsetChoices[i]);
+            this.model.set({
+                itemsetChoicesKey: itemsetChoicesKey,
+            });
+
             this.model.set({
                 itemsetChoices: itemsetChoices,
                 itemsetChoicesDict: itemsetChoicesDict,
@@ -306,6 +314,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.model.set('error', null);
             self.errorMessage = null;
             self.model.set('searchForBlank', false);
+            sessionStorage.removeItem('geocoderValues');
             if (self.ui.date.length) {
                 self.ui.date.data("DateTimePicker").clear();
             }
@@ -344,16 +353,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
-            this.notifyParentOfFieldChange(e);
+            var useDynamicSearch = Date(this.model._previousAttributes.value) !== Date($(e.currentTarget).val());
+            this.notifyParentOfFieldChange(e, useDynamicSearch);
             this.parentView.setStickyQueryInputs();
         },
 
-        notifyParentOfFieldChange: function (e) {
+        notifyParentOfFieldChange: function (e, useDynamicSearch = true) {
             if (this.model.get('input') === 'address') {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
             }
-            this.parentView.notifyFieldChange(e, this);
+            this.parentView.notifyFieldChange(e, this, useDynamicSearch);
         },
 
         toggleBlankSearch: function (e) {
@@ -396,7 +406,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onRender: function () {
             this._initializeSelect2Dropdown();
-            this.ui.hqHelp.hqHelp();
+            this.ui.hqHelp.hqHelp({
+                placement: () => {
+                    if (this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled) {
+                        return 'auto bottom';
+                    } else {
+                        return 'auto right';
+                    }
+                },
+            });
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.daterangepicker({
                 locale: {
@@ -451,24 +469,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initialize: function (options) {
             this.parentModel = options.collection.models || [];
+            this.dynamicSearchEnabled = options.hasDynamicSearch && this.options.sidebarEnabled;
 
-            // whether the select prompt selection is passed as itemset keys
-            // only here to maintain backward compatibility and can be removed
-            // once web apps fully transition using keys to convey select prompt selection.
-            this.selectValuesByKeys = false;
-            this.dynamicSearchEnabled = options.disableDynamicSearch ? false :
-                (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
-
-            for (let model of this.parentModel) {
-                if ("itemsetChoicesKey" in model.attributes) {
-                    this.selectValuesByKeys = true;
-                    break;
-                }
-            }
             this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);
             });
             this.smallScreenListener.listen();
+
+            this.dynamicSearchEnabled = !(options.disableDynamicSearch || this.smallScreenEnabled) &&
+                (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
         },
 
         templateContext: function () {
@@ -514,7 +523,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return answers;
         },
 
-        notifyFieldChange: function (e, changedChildView) {
+        notifyFieldChange: function (e, changedChildView, useDynamicSearch) {
             e.preventDefault();
             var self = this;
             self.validateFieldChange(changedChildView).always(function (response) {
@@ -545,7 +554,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
-            if (self.dynamicSearchEnabled) {
+            if (self.dynamicSearchEnabled && useDynamicSearch) {
                 self.updateSearchResults();
             }
         },
@@ -567,18 +576,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.performSubmit();
         },
 
-        performSubmit: function () {
+        performSubmit: function (initiatedBy) {
             var self = this;
             self.validateAllFields().done(function () {
                 FormplayerFrontend.trigger(
                     "menu:query",
                     self.getAnswers(),
-                    self.selectValuesByKeys,
-                    self.options.sidebarEnabled
+                    self.options.sidebarEnabled,
+                    initiatedBy
                 );
                 if (self.smallScreenEnabled && self.options.sidebarEnabled) {
                     $('#sidebar-region').collapse('hide');
                 }
+                sessionStorage.submitPerformed = true;
             });
         },
 
@@ -591,7 +601,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
             });
             if (invalidRequiredFields.length === 0) {
-                self.performSubmit();
+                self.performSubmit("dynamicSearch");
             }
         },
 
@@ -658,7 +668,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             urlObject.setQueryData({
                 inputs: self.getAnswers(),
                 execute: false,
-                selectValuesByKeys: self.selectValuesByKeys,
             });
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {

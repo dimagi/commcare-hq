@@ -187,11 +187,9 @@
                 uses smart links and is configured to make search input available after search.
                 These two features are not compatible.
               {% endblocktrans %}
-            {% case "inline search as parent module" %}
+            {% case "non-unique instance name with parent module" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                has a Parent Menu configured with "make search input available after search",
-                This workflow is unsupported.
+              The case list in <a href="{{ module_url }}">{{ module_name }}</a> can not use the same "search input instance name" as its Parent Menu.
               {% endblocktrans %}
             {% case "inline search to display only forms" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
@@ -504,25 +502,10 @@
                 <a href="{{ module_url }}">{{ module_name }}</a> has a case search property
                 <code>{{ property }}</code> that references an invalid instance.
               {% endblocktrans %}
-            {% case "case list field action form missing" %}
+            {% case "case list field action endpoint missing" %}
               {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
                 <a href="{{ module_url }}">{{ module_name }}</a> has a case list property
-                that references a missing form: <code>{{ column.header|trans:langs }}</code>.
-              {% endblocktrans %}
-            {% case "case list field action form must require case" %}
-              {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
-                <a href="{{ module_url }}">{{ module_name }}</a> has a case list property
-                that references form with a different case type: <code>{{ column.header|trans:langs }}</code>.
-              {% endblocktrans %}
-            {% case "case list field action form must have same root module" %}
-              {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
-                <a href="{{ module_url }}">{{ module_name }}</a> has a case list property
-                that references form with a different parent module: <code>{{ column.header|trans:langs }}</code>.
-              {% endblocktrans %}
-            {% case "case list field action form must have same case type" %}
-              {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
-                <a href="{{ module_url }}">{{ module_name }}</a> has a case list property
-                that references form with a different case type: <code>{{ column.header|trans:langs }}</code>.
+                that references a missing form endpoint: <code>{{ column.header|trans:langs }}</code>.
               {% endblocktrans %}
             {% case "error" %}
               Details: {{ error.message }}

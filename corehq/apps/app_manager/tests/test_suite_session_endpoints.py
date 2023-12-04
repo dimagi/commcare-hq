@@ -627,6 +627,36 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
 
         del self.factory.app.modules[0]
 
+    def test_session_endpoint_respect_relevancy_on_followup_form(self):
+        self.form.session_endpoint_id = 'my_form'
+        self.form.respect_relevancy = False
+        self.factory.form_requires_case(self.form, case_type=self.parent_case_type)
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <endpoint id="my_form" respect-relevancy="false">
+                    <argument id="case_id"/>
+                    <stack>
+                        <push>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'claim_command.my_form.case_id'"/>
+                        </push>
+                        <push>
+                            <command value="'m0'"/>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'m0-f0'"/>
+                        </push>
+                    </stack>
+                </endpoint>
+            </partial>
+            """,
+            suite,
+            "./endpoint",
+        )
+
 
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()

@@ -184,14 +184,8 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                         {
                             "geo_bounding_box": {
                                 "location": {
-                                    "top_left": {
-                                        "lat": 40.73,
-                                        "lon": -74.1
-                                    },
-                                    "bottom_right": {
-                                        "lat": 40.01,
-                                        "lon": -71.12
-                                    }
+                                    "top_left": "40.73 -74.1",
+                                    "bottom_right": "40.01 -71.12",
                                 }
                             }
                         },
@@ -213,6 +207,85 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
             query,
             json_output,
             validate_query=False,  # Avoid creating an index just for this test
+        )
+
+    def test_geo_shape(self):
+        points_list = [
+            {"lat": 40.73, "lon": -74.1},
+            {"lat": 40.01, "lon": -71.12},
+        ]
+
+        query = CaseSearchES().filter(
+            filters.geo_shape('case_gps', points_list)
+        )
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "geo_shape": {
+                                "case_gps": {
+                                    "shape": [
+                                        {
+                                            "lat": 40.73,
+                                            "lon": -74.1
+                                        },
+                                        {
+                                            "lat": 40.01,
+                                            "lon": -71.12
+                                        }
+                                    ],
+                                    "relation": "intersects"
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        self.checkQuery(
+            query,
+            json_output,
+            validate_query=False,
+        )
+
+    def test_geo_grid(self):
+        query = CaseSearchES().filter(
+            filters.geo_grid('location', 'u0')
+        )
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "geo_grid": {
+                                "location": {
+                                    "geohash": "u0"
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        self.checkQuery(
+            query,
+            json_output,
+            validate_query=False,
         )
 
 

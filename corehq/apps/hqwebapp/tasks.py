@@ -5,6 +5,7 @@ from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
 from django.core.management import call_command
 from django.utils.translation import gettext as _
+from dimagi.utils.django.email import get_email_configuration
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
@@ -19,8 +20,7 @@ from corehq.apps.celery import periodic_task, task
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.email_event_utils import get_bounced_system_emails
 from corehq.util.log import send_HTML_email
-from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
-from corehq.util.metrics.const import MPM_MAX
+from corehq.util.metrics import metrics_track_errors
 from corehq.util.models import TransientBounceEmail
 
 
@@ -43,8 +43,9 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
 
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_mail_async(self, subject, message, from_email, recipient_list,
-                    messaging_event_id=None, domain=None):
+def send_mail_async(self, subject, message, recipient_list, from_email=settings.DEFAULT_FROM_EMAIL,
+                    messaging_event_id=None, filename: str = None, content=None, domain: str = None,
+                    use_domain_gateway=False):
     """ Call with send_mail_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -61,6 +62,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
         }
     )
 
+    configuration = get_email_configuration(domain, use_domain_gateway, from_email)
     recipient_list = [_f for _f in recipient_list if _f]
 
     # todo deal with recipients marked as bounced
@@ -78,22 +80,25 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
 
     headers = {}
 
-    if settings.RETURN_PATH_EMAIL:
-        headers['Return-Path'] = settings.RETURN_PATH_EMAIL
+    if configuration.return_path_email:
+        headers['Return-Path'] = configuration.return_path_email
 
     if messaging_event_id is not None:
         headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
-    if settings.SES_CONFIGURATION_SET is not None:
-        headers[SES_CONFIGURATION_SET_HEADER] = settings.SES_CONFIGURATION_SET
+    if configuration.SES_configuration_set is not None:
+        headers[SES_CONFIGURATION_SET_HEADER] = configuration.SES_configuration_set
 
     try:
         message = EmailMessage(
             subject=subject,
             body=message,
-            from_email=from_email,
+            from_email=configuration.from_email,
             to=filtered_recipient_list,
             headers=headers,
+            connection=configuration.connection
         )
+        if filename and content:
+            message.attach(filename=filename, content=content)
         return message.send()
     except SMTPDataError as e:
         # If the SES configuration has not been properly set up, resend the message
@@ -134,7 +139,8 @@ def send_html_email_async(self, subject, recipient, html_content,
                           file_attachments=None, bcc=None,
                           smtp_exception_skip_list=None,
                           messaging_event_id=None,
-                          domain=None):
+                          domain=None,
+                          use_domain_gateway=False):
     """ Call with send_HTML_email_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -152,7 +158,8 @@ def send_html_email_async(self, subject, recipient, html_content,
             bcc=bcc,
             smtp_exception_skip_list=smtp_exception_skip_list,
             messaging_event_id=messaging_event_id,
-            domain=domain
+            domain=domain,
+            use_domain_gateway=use_domain_gateway
         )
     except Exception as e:
         recipient = list(recipient) if not isinstance(recipient, str) else [recipient]
@@ -240,15 +247,6 @@ def clean_expired_transient_emails():
                 'error': e,
             }
         )
-
-
-def get_maintenance_alert_active():
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-    return 1 if MaintenanceAlert.get_active_alerts() else 0
-
-
-metrics_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,
-                   run_every=crontab(minute=1), multiprocess_mode=MPM_MAX)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=4))

@@ -5,6 +5,7 @@ from corehq.apps.es import filters
 # Case properties nested documents
 CASE_PROPERTIES_PATH = 'case_properties'
 VALUE = 'value'
+GEOPOINT_VALUE = 'geopoint_value'
 
 # Case indices nested documents
 INDICES_PATH = 'indices'

@@ -61,7 +61,6 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
                    backend=TEST_BACKEND, first_name='', last_name='',
                    home_loc=None, user_data=None,
                    ):
-    user_data = user_data or {}
     user = CommCareUser.create(
         domain,
         username,
@@ -69,7 +68,7 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
         created_by=None,
         created_via=None,
         phone_numbers=[TEST_NUMBER],
-        metadata=user_data,
+        user_data=user_data,
         first_name=first_name,
         last_name=last_name
     )
