@@ -18,6 +18,8 @@ from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestoreP
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
     CaseValueError
+
+from corehq.apps.app_manager.models import Application
 from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
@@ -166,11 +168,20 @@ class SubmissionPost(object):
             return '   √   '
 
         user = CouchUser.get_by_user_id(instance.user_id)
-        messages = [_("'{form_name}' successfully saved!")
-                    .format(form_name=self._get_form_name(instance, user))]
+        messages = [self.get_message_translation(instance, user)]
         if user and user.is_web_user():
             messages.extend(self._success_message_links(user, instance, cases))
         return "\n\n".join(messages)
+
+    def get_message_translation(self, instance, user):
+        translations = Application.get(self.app_id).translations
+        if instance.build_id:
+            default_language, _ = _get_form_name_info(instance.domain, instance.build_id)
+            if user and user.language and translations.get(user.language):
+                return translations[user.language]['notification.form.submission.success']
+            if translations.get(default_language):
+                return translations[default_language]['notification.form.submission.success']
+        return "'{form_name}' successfully saved!".format(form_name=self._get_form_name(instance, user))
 
     def _get_form_name(self, instance, user):
         if instance.build_id:
