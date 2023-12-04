@@ -20,6 +20,7 @@ from django.forms.widgets import (
     Select,
     SelectMultiple,
 )
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -92,7 +93,11 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
     ScheduleInstance,
 )
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, FCM_NOTIFICATION
+from corehq.toggles import (
+    EXTENSION_CASES_SYNC_ENABLED,
+    FCM_NOTIFICATION,
+    RICH_TEXT_EMAILS,
+)
 
 
 def validate_time(value):
@@ -175,6 +180,10 @@ class ContentForm(Form):
         required=False,
         widget=HiddenInput,
     )
+    html_message = CharField(
+        required=False,
+        widget=HiddenInput,
+    )
     # The app id and form unique id of this form, separated by '|'
     app_and_form_unique_id = ChoiceField(
         required=False,
@@ -232,11 +241,19 @@ class ContentForm(Form):
             raise ValueError("Expected schedule_form in kwargs")
 
         self.schedule_form = kwargs.pop('schedule_form')
+        self.domain = self.schedule_form.domain
         super(ContentForm, self).__init__(*args, **kwargs)
         self.set_app_and_form_unique_id_choices()
+        self.set_message_template()
 
     def set_app_and_form_unique_id_choices(self):
         self.fields['app_and_form_unique_id'].choices = [('', '')] + self.schedule_form.form_choices
+
+    def set_message_template(self):
+        if RICH_TEXT_EMAILS.enabled(self.domain):
+            self.fields['html_message'].initial = {
+                '*': render_to_string('scheduling/partials/rich_text_email_template.html')
+            }
 
     def clean_subject(self):
         if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
@@ -421,6 +438,63 @@ class ContentForm(Form):
             raise ValueError("Unexpected value for content: '%s'" % self.schedule_form.cleaned_data['content'])
 
     def get_layout_fields(self):
+        if RICH_TEXT_EMAILS.enabled(self.domain):
+            message_fields = [
+                hqcrispy.B3MultiField(
+                    _("Rich Text Message"),
+                    crispy.Field(
+                        'html_message',
+                        data_bind='value: html_message.htmlMessagesJSONString',
+                    ),
+                    crispy.Div(
+                        crispy.Div(template='scheduling/partials/rich_text_message_configuration.html'),
+                        data_bind='with: html_message',
+                    ),
+                    data_bind="visible: $root.content() === '%s' || ($root.content() === '%s' "
+                    "&& fcm_message_type() === '%s')" %
+                    (ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_FCM_NOTIFICATION,
+                     FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
+                ),
+                hqcrispy.B3MultiField(
+                    _("Message"),
+                    crispy.Field(
+                        'message',
+                        data_bind='value: message.messagesJSONString',
+                    ),
+                    crispy.Div(
+                        crispy.Div(template='scheduling/partials/message_configuration.html'),
+                        data_bind='with: message',
+                    ),
+                    data_bind=(
+                        "visible: $root.content() === '%s' || $root.content() === '%s' "
+                        "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
+                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_SMS_CALLBACK,
+                         ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
+                    ),
+                )
+            ]
+        else:
+            message_fields = [
+                hqcrispy.B3MultiField(
+                    _("Message"),
+                    crispy.Field(
+                        'message',
+                        data_bind='value: message.messagesJSONString',
+                    ),
+                    crispy.Div(
+                        crispy.Div(template='scheduling/partials/message_configuration.html'),
+                        data_bind='with: message',
+                    ),
+                    data_bind=(
+                        "visible: $root.content() === '%s' || $root.content() === '%s' "
+                        "|| $root.content() === '%s' "
+                        "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
+                        (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
+                         ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
+                    ),
+                ),
+            ]
+
         return [
             hqcrispy.B3MultiField(
                 _('Message type'),
@@ -450,23 +524,7 @@ class ContentForm(Form):
                           (ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_FCM_NOTIFICATION,
                            FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
             ),
-            hqcrispy.B3MultiField(
-                _("Message"),
-                crispy.Field(
-                    'message',
-                    data_bind='value: message.messagesJSONString',
-                ),
-                crispy.Div(
-                    crispy.Div(template='scheduling/partials/message_configuration.html'),
-                    data_bind='with: message',
-                ),
-                data_bind=(
-                    "visible: $root.content() === '%s' || $root.content() === '%s' || $root.content() === '%s' "
-                    "|| ($root.content() === '%s' && fcm_message_type() === '%s')" %
-                    (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK,
-                     ScheduleForm.CONTENT_FCM_NOTIFICATION, FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION)
-                ),
-            ),
+            *message_fields,
             crispy.Div(
                 crispy.Field(
                     'app_and_form_unique_id',
@@ -544,6 +602,7 @@ class ContentForm(Form):
         elif isinstance(content, EmailContent):
             result['subject'] = content.subject
             result['message'] = content.message
+            result['html_message'] = content.html_message
         elif isinstance(content, SMSSurveyContent):
             result['app_and_form_unique_id'] = get_combined_id(
                 content.app_id,
