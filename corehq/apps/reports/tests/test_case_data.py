@@ -15,6 +15,8 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
 )
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.reports.standard.cases.case_data import (
     _get_case_property_tables,
@@ -131,6 +133,7 @@ def _delete_all_cases_and_forms(domain):
     call_command('hard_delete_forms_and_cases_in_domain', domain, noinput=True, ignore_domain_in_use=True)
 
 
+@es_test(requires=[form_adapter])
 class TestCaseDeletion(TestCase):
     # For more form archiving related tests see test_rebuild.py
 
