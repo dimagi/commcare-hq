@@ -51,6 +51,6 @@ class TestReleaseBuild(TestCase):
         with self.assertRaises(Http404):
             _get_form_link_datums(self.domain_name, self.app._id, f'{self.module_id}.missing')
 
-    def test_get_form_link_datums_missing_bad_form_id(self):
-        with self.assertRaises(Http400):
-            _get_form_link_datums(self.domain_name, self.app._id, 'missing')
+    def test_get_form_link_datums_for_module(self):
+        datums = _get_form_link_datums(self.domain_name, self.app._id, self.module_id)
+        self.assertEqual(datums, [{'name': 'case_id', 'case_type': 'cheeto'}])
