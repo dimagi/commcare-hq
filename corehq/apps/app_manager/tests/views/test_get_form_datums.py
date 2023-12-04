@@ -15,14 +15,19 @@ class TestReleaseBuild(TestCase):
 
         cls.domain_name = "fandago"
 
-        factory = AppFactory(cls.domain_name, name="cheeto")
-        m0, f0 = factory.new_basic_module("register", "cheeto")
+        factory = AppFactory(cls.domain_name, name="My App")
+        m0, f0 = factory.new_basic_module("households", "household")
         f0.source = get_simple_form(xmlns=f0.unique_id)
         factory.form_requires_case(f0)
+
+        m1, f1 = factory.new_basic_module("patients", "patient", parent_module=m0)
+        factory.form_requires_case(f1)
+
         cls.app = factory.app
         cls.app.save()
 
         cls.module_id = m0.unique_id
+        cls.child_module_id = m1.unique_id
         cls.form_id = f0.unique_id
         cls.disambiguated_form_id = f"{m0.unique_id}.{f0.unique_id}"
 
@@ -33,7 +38,7 @@ class TestReleaseBuild(TestCase):
 
     def test_get_form_link_datums(self):
         datums = _get_form_link_datums(self.domain_name, self.app._id, self.disambiguated_form_id)
-        self.assertEqual(datums, [{'name': 'case_id', 'case_type': 'cheeto'}])
+        self.assertEqual(datums, [{'name': 'case_id', 'case_type': 'household'}])
 
     def test_get_form_link_datums_wrong_domain(self):
         with self.assertRaises(Http404):
@@ -53,4 +58,8 @@ class TestReleaseBuild(TestCase):
 
     def test_get_form_link_datums_for_module(self):
         datums = _get_form_link_datums(self.domain_name, self.app._id, self.module_id)
-        self.assertEqual(datums, [{'name': 'case_id', 'case_type': 'cheeto'}])
+        self.assertEqual(datums, [{'name': 'case_id', 'case_type': 'household'}])
+
+    def test_get_form_link_datums_for_child_module(self):
+        datums = _get_form_link_datums(self.domain_name, self.app._id, self.child_module_id)
+        self.assertEqual(datums, [{'name': 'case_id', 'case_type': 'patient'}])
