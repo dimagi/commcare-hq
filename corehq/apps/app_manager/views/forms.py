@@ -946,20 +946,13 @@ def _get_linkable_forms_context(module, langs):
             parent_name = ""
             if candidate_module.root_module_id:
                 parent_name = _module_name(candidate_module.root_module) + " > "
-            if is_top_level or is_child_match:
-                linkable_items.append({
-                    'unique_id': candidate_module.unique_id,
-                    'name': parent_name + _module_name(candidate_module),
-                    'auto_link': True,
-                    'allow_manual_linking': False,
-                })
-            else:
-                linkable_items.append({
-                    'unique_id': candidate_module.unique_id,
-                    'name': parent_name + _module_name(candidate_module),
-                    'auto_link': True,
-                    'allow_manual_linking': True,
-                })
+            auto_link = is_top_level or is_child_match
+            linkable_items.append({
+                'unique_id': candidate_module.unique_id,
+                'name': parent_name + _module_name(candidate_module),
+                'auto_link': auto_link,
+                'allow_manual_linking': not auto_link,
+            })
 
         for candidate_form in candidate_module.get_suite_forms():
             # Forms can be linked automatically if their module is the same case type as this module,
