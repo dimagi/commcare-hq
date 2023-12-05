@@ -1439,6 +1439,13 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
+RICH_TEXT_EMAILS = StaticToggle(
+    'rich_text_emails',
+    'Enable sending rich text HTML emails in conditional alerts and broadcasts',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
