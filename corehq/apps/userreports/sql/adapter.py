@@ -20,7 +20,7 @@ from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.test_utils import unit_testing_only
-
+from corehq.apps.userreports.util import register_data_source_change
 logger = logging.getLogger(__name__)
 
 
@@ -177,6 +177,13 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             for query in queries:
                 session.execute(query)
 
+        register_data_source_change(
+            domain=self.config.domain,
+            data_source_id=self.config._id,
+            row_changes=[{key: str(value) for key, value in row.items()} for row in formatted_rows],
+            action="upsert"
+        )
+
     def supports_upsert(self):
         """Return True if supports UPSERTS else False
 
@@ -207,6 +214,13 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         delete = table.delete(table.c.doc_id.in_(doc_ids))
         with self.session_context() as session:
             session.execute(delete)
+
+        register_data_source_change(
+            domain=self.config.domain,
+            data_source_id=self.config._id,
+            row_changes=[{"doc_id": doc['_id']} for doc in docs],
+            action="delete"
+        )
 
     def delete(self, doc, use_shard_col=True):
         self.bulk_delete([doc], use_shard_col)
