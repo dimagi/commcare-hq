@@ -424,7 +424,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         module = self.app.add_module(Module.new_module("Followup2", None))
         form = self.app.new_form(2, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
         form.requires = 'case'
-        module.case_type = 'case'
+        module.case_type = 'parent_case'
 
         self.module.parent_select.active = True
         self.module.parent_select.relationship = 'parent'
@@ -452,7 +452,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             <instance id="commcaresession" src="jr://instance/session"/>
             <instance id="results:inline" src="jr://instance/remote/results:inline"/>
             <session>
-              <datum id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']"
+              <datum id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='parent_case'][@status='open']"
                 value="./@case_id" detail-select="m2_case_short"/>
               <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                 storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false" dynamic_search="false">
@@ -462,6 +462,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                   </text>
                 </title>
                 <data key="case_type" ref="'case'"/>
+                <data key="_xpath_query" ref="ancestor-exists(parent, @case_type=parent_case)"/>
                 <prompt key="name">
                   <display>
                     <text>
