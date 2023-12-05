@@ -871,8 +871,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     Question.prototype.setWidths = function () {
+        const self = this;
         const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
         const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
+        const shortWidth = new RegExp(constants.SHORT_WIDTH);
+        const mediumWidth = new RegExp(constants.MEDIUM_WIDTH);
 
         if (this.stylesContains(perRowPattern)) {
             this.controlWidth = constants.FULL_WIDTH;
@@ -882,6 +885,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             this.controlWidth = constants.CONTROL_WIDTH;
             this.labelWidth = constants.LABEL_WIDTH;
             this.questionTileWidth = constants.FULL_WIDTH;
+        }
+
+        if (self.stylesContains(shortWidth)) {
+            self.controlWidth = 'col-sm-2';
+        } else if (self.stylesContains(mediumWidth)) {
+            self.controlWidth = 'col-sm-4';
         }
     };
 
