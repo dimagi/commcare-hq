@@ -587,7 +587,7 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
             instance_name="parent_instance",
         )
 
-        self.m1, f1 = factory.new_basic_module("child case list", "case", parent_module=self.m0)
+        self.m1, f1 = factory.new_basic_module("child case list", "child_case", parent_module=self.m0)
         self.m1.parent_select = ParentSelect(active=True, relationship='parent',
                                              module_id=self.m0.get_or_create_unique_id())
         f2 = factory.new_form(self.m1)
@@ -616,9 +616,9 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
         <partial>
           <entry>
             <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
-                relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case]) = 0">
-              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case]) != 0"
-                key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+                relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_child_case]) = 0">
+              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_child_case]) != 0"
+                key="case_id" ref="instance('commcaresession')/session/data/case_id_child_case"/>
               <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/parent_id]) != 0"
                 key="case_id" ref="instance('commcaresession')/session/data/parent_id"/>
               <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) != 0"
@@ -658,7 +658,8 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
                       <locale id="case_search.m1.inputs"/>
                   </text>
                 </title>
-                <data key="case_type" ref="'case'"/>
+                <data key="case_type" ref="'child_case'"/>
+                <data key="_xpath_query" ref="ancestor-exists(parent, @case_type=case)"/>
                 <prompt key="name">
                   <display>
                     <text>
@@ -667,8 +668,8 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
                   </display>
                 </prompt>
               </query>
-              <datum id="case_id_case"
-                nodeset="instance('{self.m1.search_config.get_instance_name()}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/case_id]"
+              <datum id="case_id_child_case"
+                nodeset="instance('{self.m1.search_config.get_instance_name()}')/results/case[@case_type='child_case'][@status='open'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/case_id]"
                 value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
             </session>
           </entry>
@@ -695,10 +696,10 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
             <command value="'m1'"/>
             <query id="results:child_instance" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
-              <data key="case_type" ref="'case'"/>
-              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+              <data key="case_type" ref="'child_case'"/>
+              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_child_case"/>
             </query>
-            <datum id="case_id_case" value="instance('commcaresession')/session/data/case_id_case"/>
+            <datum id="case_id_child_case" value="instance('commcaresession')/session/data/case_id_child_case"/>
             <command value="'m1-f1'"/>
           </create>
         </partial>"""  # noqa: E501
