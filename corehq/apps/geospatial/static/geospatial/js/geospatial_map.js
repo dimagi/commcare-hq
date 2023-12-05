@@ -245,6 +245,7 @@ hqDefine("geospatial/js/geospatial_map", [
             polygonFilterModel.btnSaveDisabled(!mapModel.mapHasPolygons());
         });
         loadMapBoxStreetsLayers(mapModel.mapInstance);
+        setPanelsForLayers(mapModel.mapInstance);
     }
 
     function loadMapBoxStreetsLayers(map) {
@@ -348,35 +349,47 @@ hqDefine("geospatial/js/geospatial_map", [
 //                }
 //            });
             // landuse_overlay; minzoom: 5 [Works]
-//            map.addLayer({
-//                id: 'landuse_overlay',
-//                source: 'mapbox-streets',
-//                'source-layer': 'landuse_overlay',
-//                type: 'line',
-//                paint: {
-//                    'line-color': '#800080' // purple
-//                }
-//            });
+            map.addLayer({
+                id: 'landuse_overlay',
+                source: 'mapbox-streets',
+                'source-layer': 'landuse_overlay',
+                type: 'line',
+                paint: {
+                    'line-color': '#800080' // purple
+                },
+                'layout': {
+                    // Make the layer visible by default.
+                    'visibility': 'visible'
+                }
+            });
               // road; minzoom: 3 [Works]
-//            map.addLayer({
-//                id: 'road',
-//                source: 'mapbox-streets',
-//                'source-layer': 'road',
-//                type: 'line',
-//                paint: {
-//                    'line-color': '#023020' // dark green
-//                }
-//            });
+            map.addLayer({
+                id: 'road',
+                source: 'mapbox-streets',
+                'source-layer': 'road',
+                type: 'line',
+                paint: {
+                    'line-color': '#000000' // black
+                },
+                'layout': {
+                    // Make the layer visible by default.
+                    'visibility': 'visible'
+                }
+            });
             // admin; minzoom: 0 [Works]
-//            map.addLayer({
-//                id: 'admin',
-//                source: 'mapbox-streets',
-//                'source-layer': 'admin',
-//                type: 'line',
-//                paint: {
-//                    'line-color': '#800080' // purple
-//                }
-//            });
+            map.addLayer({
+                id: 'admin',
+                source: 'mapbox-streets',
+                'source-layer': 'admin',
+                type: 'line',
+                paint: {
+                    'line-color': '#800080' // purple
+                },
+                'layout': {
+                    // Make the layer visible by default.
+                    'visibility': 'visible'
+                }
+            });
             // place_label; minzoom: 0 [No changes to map; possibly already present]
 //            map.addLayer({
 //                id: 'place_label',
@@ -410,6 +423,115 @@ hqDefine("geospatial/js/geospatial_map", [
 //                    "circle-stroke-width": 1
 //                }
 //            });
+
+            // housenum_label; minzoom: 16 [Error in JS: Tile not found]
+//            map.addLayer({
+//                id: 'housenum_label',
+//                source: 'mapbox-streets',
+//                'source-layer': 'housenum_label',
+//                "type": "circle",
+//                "paint": {
+//                    "circle-radius": 3,
+//                    "circle-color": "rgba(238,78,139, 0.4)",
+//                    "circle-stroke-color": "rgba(238,78,139, 1)",
+//                    "circle-stroke-width": 1
+//                }
+//            });
+            // motorway_junction: minzoom 11 [No changes to map]
+//            map.addLayer({
+//                id: 'motorway_junction',
+//                source: 'mapbox-streets',
+//                'source-layer': 'motorway_junction',
+//                type: 'line',
+//                paint: {
+//                    'line-color': '#800080' // purple
+//                }
+//            });
+
+            // natural_label; minzoom: 0 [No changes to map]
+//            map.addLayer({
+//                id: 'natural_label',
+//                source: 'mapbox-streets',
+//                'source-layer': 'natural_label',
+//                "type": "circle",
+//                "paint": {
+//                    "circle-radius": 3,
+//                    "circle-color": "rgba(238,78,139, 0.4)",
+//                    "circle-stroke-color": "rgba(238,78,139, 1)",
+//                    "circle-stroke-width": 1
+//                }
+//            });
+
+            // poi_label; minzoom: 5 [No changes to map]
+//            map.addLayer({
+//                id: 'poi_label',
+//                source: 'mapbox-streets',
+//                'source-layer': 'poi_label',
+//                "type": "circle",
+//                "paint": {
+//                    "circle-radius": 3,
+//                    "circle-color": "rgba(238,78,139, 0.4)",
+//                    "circle-stroke-color": "rgba(238,78,139, 1)",
+//                    "circle-stroke-width": 1
+//                }
+//            });
+        });
+    }
+
+    // Using example at https://docs.mapbox.com/mapbox-gl-js/example/toggle-layers/
+    // After the last frame rendered before the map enters an "idle" state.
+    function setPanelsForLayers(map) {
+        map.on('idle', () => {
+            // If these layers were not added to the map, abort
+            if (!map.getLayer('landuse_overlay') || !map.getLayer('admin') || !map.getLayer('road')) {
+                return;
+            }
+
+            // Enumerate ids of the layers.
+            const toggleableLayerIds = ['landuse_overlay', 'admin', 'road'];
+
+            // Set up the corresponding toggle button for each layer.
+            for (const id of toggleableLayerIds) {
+                // return if button already present
+                if(document.getElementById(id)) {
+                    return;
+                }
+
+                // Create a link.
+                const link = document.createElement('a');
+                link.id = id;
+                link.href = '#';
+                link.textContent = id;
+                link.className = 'active';
+
+                // Show or hide layer when the toggle is clicked.
+                link.onclick = function (e) {
+                    const clickedLayer = this.textContent;
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const visibility = map.getLayoutProperty(
+                        clickedLayer,
+                        'visibility'
+                    );
+
+                    // Toggle layer visibility by changing the layout object's visibility property.
+                    if (visibility === 'visible') {
+                        map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+                        this.className = '';
+                    } else {
+                        this.className = 'active';
+                        map.setLayoutProperty(
+                            clickedLayer,
+                            'visibility',
+                            'visible'
+                        );
+                    }
+                };
+
+                const layers = document.getElementById('menu');
+                layers.appendChild(link);
+            }
         });
     }
 
