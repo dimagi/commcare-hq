@@ -203,7 +203,7 @@ class TestCaseDeletion(TestCase):
         """
         case_id = self.make_complex_case()
 
-        delete_dict, _ = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
+        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
         for form in delete_dict['form_delete_list']:
             self.assertTrue(archive_form(self.request, self.domain, form, is_case_delete=True))
 
@@ -216,7 +216,7 @@ class TestCaseDeletion(TestCase):
         case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertFalse(case.is_deleted)
 
-        delete_dict, _ = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
+        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
         case_list = delete_dict['case_delete_list']
         self.assertEqual(len(case_list), 1)
 
@@ -231,7 +231,7 @@ class TestCaseDeletion(TestCase):
         """
         case_id = self.make_simple_case()
 
-        delete_dict, _ = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
+        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
         form_list = delete_dict['form_delete_list']
         self.assertEqual(len(form_list), 2)
 
@@ -247,7 +247,7 @@ class TestCaseDeletion(TestCase):
         """
         case_id = self.make_complex_case()
 
-        delete_dict, _ = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
+        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
         case_list = delete_dict['case_delete_list']
         self.assertEqual(len(case_list), 5)
 
@@ -279,7 +279,7 @@ class TestCaseDeletion(TestCase):
         other_case = CommCareCase.objects.get_case(other_case_id, self.domain)
         self.assertTrue(other_case.closed)
 
-        delete_dict, _ = get_cases_and_forms_for_deletion(self.request, self.domain, main_case_id)
+        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, main_case_id)
         self.assertEqual(len(delete_dict['reopened_cases']), 1)
         soft_delete_cases_and_forms(self.request, self.domain,
                                     delete_dict['case_delete_list'], delete_dict['form_delete_list'])
@@ -310,7 +310,7 @@ class TestCaseDeletion(TestCase):
         other_case = CommCareCase.objects.get_case(other_case_id, self.domain)
         self.assertEqual(len(other_case.xform_ids), 2)
 
-        delete_dict, _ = get_cases_and_forms_for_deletion(self.request, self.domain, main_case_id)
+        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, main_case_id)
         self.assertEqual(len(delete_dict['affected_cases']), 1)
         soft_delete_cases_and_forms(self.request, self.domain,
                                     delete_dict['case_delete_list'], delete_dict['form_delete_list'])
@@ -335,8 +335,8 @@ class TestCaseDeletion(TestCase):
             ], self.domain)
         self.addCleanup(_delete_all_cases_and_forms, self.domain)
 
-        _, redirect = get_cases_and_forms_for_deletion(request, self.domain, main_case_id)
-        self.assertTrue(redirect)
+        return_dict = get_cases_and_forms_for_deletion(request, self.domain, main_case_id)
+        self.assertTrue(return_dict['redirect'])
 
     def test_case_deletion_errors_if_too_many_subcases(self):
         """
@@ -354,5 +354,5 @@ class TestCaseDeletion(TestCase):
             ], self.domain)
         self.addCleanup(_delete_all_cases_and_forms, self.domain)
 
-        _, redirect = get_cases_and_forms_for_deletion(request, self.domain, cases[0])
-        self.assertTrue(redirect)
+        return_dict = get_cases_and_forms_for_deletion(request, self.domain, cases[0])
+        self.assertTrue(return_dict['redirect'])

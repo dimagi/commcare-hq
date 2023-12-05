@@ -15,7 +15,7 @@ from django.http import (
     JsonResponse,
 )
 from django.utils.decorators import method_decorator
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import get_language
 from django.utils.translation import gettext as _
@@ -68,6 +68,7 @@ from corehq.apps.locations.permissions import (
 )
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.exceptions import TooManyCases
 from corehq.apps.reports.view_helpers import case_hierarchy_context
 from corehq.apps.reports.views import (
     archive_form,
@@ -584,10 +585,10 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
     def get_forms_for_deletion_from_case(case, subcase_count):
         delete_cases.append(case.case_id)
         if len(delete_cases) > MAX_CASE_COUNT or subcase_count >= MAX_SUBCASE_DEPTH:
-            raise ValueError("Too many cases to delete")
+            raise TooManyCases("Too many cases to delete")
         if case.case_id not in cases:
             cases[case.case_id] = {}
-            case_names[case.case_id] = case.name
+            case_names[case.case_id] = escape(case.name)
             if len(case_names) == 1:  # only add primary label to first/main case
                 case_names[case.case_id] += ' <span class="label label-default">primary case</span>'
         case_xforms = case.xform_ids
@@ -607,13 +608,13 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
                     form_names[form_id] = ' > '.join(form_name)
             case_db = FormProcessorInterface(domain).casedb_cache(
                 domain=domain,
-                load_src="process_stock",
+                load_src="get_cases_and_forms_for_deletion",
             )
             touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, [form_object])
 
             case_actions = {}
             for touched_id in touched_cases:
-                case_object = safely_get_case(request, domain, touched_id)
+                case_object = touched_cases[touched_id].case
                 actions = list(touched_cases[touched_id].actions)
                 if touched_id == case.case_id:
                     case_actions['current'] = actions
@@ -621,9 +622,7 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
                     if touched_id not in case_actions:
                         case_actions[case_object.name] = actions
                     if const.CASE_ACTION_CREATE in actions and touched_id != case.case_id:
-                        subcase_count += 1
-                        get_forms_for_deletion_from_case(case_object, subcase_count)
-                        subcase_count -= 1
+                        get_forms_for_deletion_from_case(case_object, subcase_count + 1)
                     if const.CASE_ACTION_CLOSE in actions:
                         reopened_cases[touched_id] = form_id
                         case_names[touched_id] = case_object.name
@@ -633,25 +632,24 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
                         affected_cases[touched_id][form_id] = ', '.join(actions)
                         case_names[touched_id] = case_object.name
             cases[case.case_id][form_id] = case_actions
-        return
 
     case_instance = safely_get_case(request, domain, case_id)
     subcase_count = 0
     try:
         get_forms_for_deletion_from_case(case_instance, subcase_count)
-    except ValueError:
+    except TooManyCases:
         messages.error(request, _("Deleting this case would delete too many related cases. "
                                   "Please delete some of this cases' subcases before attempting"
                                   "to delete this case."))
-        return {}, True
+        return {'redirect': True}
 
     def get_case_link(caseid):
         url = reverse('case_data', args=[domain, caseid])
-        return mark_safe('<a href="{}"> {} </a>'.format(url, case_names[caseid]))
+        return mark_safe('<a href="{}"> {} </a>'.format(url, case_names[caseid]))  # case names are already escaped
 
     def get_form_link(formid):
         url = reverse('render_form_data', args=[domain, formid])
-        return mark_safe('<a href="{}"> {} </a>'.format(url, form_names[formid]))
+        return mark_safe('<a href="{}"> {} </a>'.format(url, escape(form_names[formid])))
 
     prepared_cases = {}
     for case in cases:
@@ -683,7 +681,8 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
         'reopened_cases': prepared_reopened_cases,
         'case_delete_list': delete_cases,
         'form_delete_list': delete_forms,
-    }, False
+        'redirect': False
+    }
 
 
 @location_safe
@@ -695,8 +694,8 @@ class DeleteCaseView(BaseProjectReportSectionView):
 
     @method_decorator(require_case_view_permission)
     def dispatch(self, request, *args, **kwargs):
-        self.delete_dict, redirect = get_cases_and_forms_for_deletion(request, self.domain, self.case_id)
-        if redirect:
+        self.delete_dict = get_cases_and_forms_for_deletion(request, self.domain, self.case_id)
+        if self.delete_dict['redirect']:
             return HttpResponseRedirect(reverse('case_data', args=[self.domain, self.case_id]))
         return super(DeleteCaseView, self).dispatch(request, *args, **kwargs)
 
@@ -740,8 +739,8 @@ class DeleteCaseView(BaseProjectReportSectionView):
 @require_permission(HqPermissions.edit_data)
 def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_list):
     """
-    Archiving the form that created the case will automatically "unmake" the case, but won't delete
-    the case from the database. This deletion will happen 90 days from the deletion date by an
+    Archiving the form that created the case will automatically "unmake" the case, but won't soft-delete
+    the case. After soft deletion, hard deletion will happen 90 days from the deletion date by an
     automated deletion task.
     """
     error = False
