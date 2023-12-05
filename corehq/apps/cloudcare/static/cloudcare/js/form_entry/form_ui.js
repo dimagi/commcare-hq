@@ -587,6 +587,17 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
 
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
+        self.stripeRepeats = _.contains(styles, constants.STRIPE_REPEATS);
+        self.styleClass = function () {
+            let classStr = '';
+            if (self.isRepetition) {
+                classStr = 'repetition';
+            } else if (self.stripeRepeats) {
+                classStr = 'stripe-repeats';
+            }
+            return classStr;
+        };
+
         self.collapsible = _.contains(styles, constants.COLLAPSIBLE);
         self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN));
         self.toggleChildren = function () {
