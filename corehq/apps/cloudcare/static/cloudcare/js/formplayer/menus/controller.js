@@ -104,34 +104,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
     };
 
-    const groupDisplays = function (displays, groupHeaders) {
-        const groupedDisplays = [];
-        let currentGroup = {
-            groupKey: null,
-            groupName: null,
-            displays: [],
-        };
-
-        displays.forEach(display => {
-            const groupKey = typeof display.get === 'function' ?  display.get('groupKey') : display['groupKey'];
-            if (currentGroup.groupKey !== groupKey) {
-                if (currentGroup.groupKey !== null) {
-                    groupedDisplays.push(currentGroup);
-                }
-                currentGroup = {
-                    groupKey: groupKey,
-                    groupName: groupHeaders[groupKey],
-                    displays: [display],
-                };
-            } else {
-                currentGroup.displays.push(display);
-            }
-        });
-        groupedDisplays.push(currentGroup);
-
-        return groupedDisplays;
-    };
-
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
@@ -158,7 +130,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
             let queryCollection = new Collection(queryResponse.displays);
             if (Object.keys(queryResponse.groupHeaders).length > 0) {
-                queryCollection = new Collection(groupDisplays(queryResponse.displays, queryResponse.groupHeaders));
+                queryCollection = new Collection(menusUtils.groupDisplays(queryResponse.displays, queryResponse.groupHeaders));
             }
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 QueryListView({
@@ -173,7 +145,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         } else if (sidebarEnabled && menuResponse.type === "query") {
             var queryCollection = menuResponse;
             if (Object.keys(menuResponse.groupHeaders).length > 0) {
-                queryCollection = new Collection(groupDisplays(menuResponse, menuResponse.groupHeaders));
+                queryCollection = new Collection(menusUtils.groupDisplays(menuResponse, menuResponse.groupHeaders));
             }
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 QueryListView({
@@ -329,7 +301,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     return {
         selectDetail: selectDetail,
         selectMenu: selectMenu,
-        showMenu: showMenu,
-        groupDisplays: groupDisplays,
+        showMenu: showMenu
     };
 });
