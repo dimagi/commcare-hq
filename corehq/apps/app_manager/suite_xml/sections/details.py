@@ -167,6 +167,10 @@ class DetailContributor(SectionContributor):
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
         d = Detail(id=id, title=title, nodeset=nodeset, print_template=print_template, relevant=relevant)
+        if (detail_type == 'case_short' or detail_type == 'search_short') \
+                and module.lazy_load_case_list_fields:
+            d.lazy_loading = module.lazy_load_case_list_fields
+
         self._add_custom_variables(detail, d)
         if tabs:
             tab_spans = detail.get_tab_spans()
