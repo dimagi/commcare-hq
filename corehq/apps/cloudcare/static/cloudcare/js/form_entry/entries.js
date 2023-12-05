@@ -215,17 +215,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             return null;
         };
 
-        self.helpText = function () {
-            if (isPassword) {
-                return gettext('Password');
-            }
-            switch (self.datatype) {
-                case constants.BARCODE:
-                    return gettext('Barcode');
-                default:
-                    return gettext('Free response');
-            }
-        };
         self.enableReceiver(question, options);
     }
     FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -302,7 +291,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 divId: self.entryId,
                 itemCallback: self.geocoderItemCallback,
                 clearCallBack: self.geocoderOnClearCallback,
-                inputOnKeyDown: self._inputOnKeyDown
+                inputOnKeyDown: self._inputOnKeyDown,
             });
         };
 
@@ -338,10 +327,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             return null;
         };
 
-        self.helpText = function () {
-            return gettext('Number');
-        };
-
         self.enableReceiver(question, options);
     }
     IntEntry.prototype = Object.create(FreeTextEntry.prototype);
@@ -370,10 +355,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             return (!(/^[+-]?\d*(\.\d+)?$/.test(rawAnswer)) ? "This does not appear to be a valid phone/numeric number" : null);
         };
 
-        this.helpText = function () {
-            return gettext('Phone number or Numeric ID');
-        };
-
         this.enableReceiver(question, options);
     }
     PhoneEntry.prototype = Object.create(FreeTextEntry.prototype);
@@ -397,10 +378,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 return gettext("Number is too large");
             }
             return null;
-        };
-
-        this.helpText = function () {
-            return gettext('Decimal');
         };
     }
     FloatEntry.prototype = Object.create(IntEntry.prototype);
@@ -458,10 +435,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         MultiSelectEntry.call(this, question, options);
         self.templateType = 'multidropdown';
         self.placeholderText = gettext('Please choose an item');
-
-        self.helpText = function () {
-            return "";
-        };
 
         self.afterRender = function () {
             select2ify(self, {});
@@ -524,6 +497,32 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     };
 
     /**
+     * Represents a single button that cycles through choices
+     */
+    function ButtonSelectEntry(question, options) {
+        var self = this;
+        SingleSelectEntry.call(this, question, options);
+        self.templateType = 'button';
+
+        self.buttonLabel = function () {
+            const choices = self.choices();
+            const answer = self.answer() || 0;
+            return answer < choices.length ? choices[answer] : choices[0];
+        };
+
+        self.onClick = function () {
+            const answer = self.answer();
+            if (answer && answer < self.choices().length) {
+                self.answer(answer + 1);
+            } else {
+                self.answer(1);
+            }
+        };
+    }
+    ButtonSelectEntry.prototype = Object.create(SingleSelectEntry.prototype);
+    ButtonSelectEntry.prototype.constructor = SingleSelectEntry;
+
+    /**
      * This is used for the labels and inputs in a Combined Multiple Choice question in a Question
      * List Group. It is also used for labels in a Combined Checkbox question.
      */
@@ -569,10 +568,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.templateType = 'dropdown';
         self.placeholderText = gettext('Please choose an item');
 
-        self.helpText = function () {
-            return "";
-        };
-
         self.options = ko.computed(function () {
             return [{text: "", id: undefined}].concat(_.map(question.choices(), function (choice, idx) {
                 return {
@@ -617,10 +612,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         // Specifies the type of matching we will do when a user types a query
         self.matchType = options.matchType;
-
-        self.helpText = function () {
-            return gettext('Combobox');
-        };
 
         self.additionalSelect2Options = function () {
             return {
@@ -791,16 +782,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
     function TimeEntry(question, options) {
         this.templateType = 'time';
-        let is12Hour = false;
         if (question.style) {
             if (question.stylesContains(constants.TIME_12_HOUR)) {
                 this.clientFormat = 'h:mm a';
-                is12Hour = true;
             }
         }
-        this.helpText = function () {
-            return is12Hour ? gettext("12-hour clock") : gettext("24-hour clock");
-        };
         DateTimeEntryBase.call(this, question, options);
     }
     TimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
@@ -965,11 +951,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var self = this;
         FileEntry.call(this, question, options);
         self.accept = "image/*,.pdf";
-
-        self.helpText = function () {
-            return gettext("Upload image");
-        };
-
     }
     ImageEntry.prototype = Object.create(FileEntry.prototype);
     ImageEntry.prototype.constructor = FileEntry;
@@ -981,11 +962,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var self = this;
         FileEntry.call(this, question, options);
         self.accept = "audio/*";
-
-        self.helpText = function () {
-            return gettext("Upload audio file");
-        };
-
     }
     AudioEntry.prototype = Object.create(FileEntry.prototype);
     AudioEntry.prototype.constructor = FileEntry;
@@ -997,11 +973,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var self = this;
         FileEntry.call(this, question, options);
         self.accept = "video/*";
-
-        self.helpText = function () {
-            return gettext("Upload video file");
-        };
-
     }
     VideoEntry.prototype = Object.create(FileEntry.prototype);
     VideoEntry.prototype.constructor = FileEntry;
@@ -1051,10 +1022,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 width = self.$wrapper.width() - 2; // otherwise misaligned by 2px
             self.$canvas[0].width = width;
             self.$canvas[0].height = width / aspectRatio;
-        };
-
-        self.helpText = function () {
-            return gettext("Draw signature");
         };
     }
     SignatureEntry.prototype = Object.create(FileEntry.prototype);
@@ -1168,13 +1135,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var options = {};
         var isMinimal = false;
         var isCombobox = false;
-        var isLabel = false;
+        var isButton = false;
+        var isChoiceLabel = false;
         var hideLabel = false;
-        var style;
-
-        if (question.style) {
-            style = ko.utils.unwrapObservable(question.style.raw);
-        }
 
         var displayOptions = _getDisplayOptions(question);
         var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
@@ -1225,13 +1188,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 break;
             case constants.SELECT:
                 isMinimal = question.stylesContains(constants.MINIMAL);
-                if (style) {
-                    isCombobox = question.stylesContains(constants.COMBOBOX);
-                }
-                if (style) {
-                    isLabel = question.stylesContains(constants.LABEL) || question.stylesContains(constants.LIST_NOLABEL);
-                    hideLabel = question.stylesContains(constants.LIST_NOLABEL);
-                }
+                isCombobox = question.stylesContains(constants.COMBOBOX);
+                isButton = question.stylesContains(constants.BUTTON_SELECT);
+                isChoiceLabel = question.stylesContains(constants.LABEL) || question.stylesContains(constants.LIST_NOLABEL);
+                hideLabel = question.stylesContains(constants.LIST_NOLABEL);
 
                 if (isMinimal) {
                     entry = new DropdownEntry(question, {});
@@ -1249,7 +1209,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                         matchType: question.style.raw().split(' ')[1],
                         receiveStyle: receiveStyle,
                     });
-                } else if (isLabel) {
+                } else if (isButton) {
+                    entry = new ButtonSelectEntry(question, {});
+                } else if (isChoiceLabel) {
                     entry = new ChoiceLabelEntry(question, {
                         hideLabel: hideLabel,
                     });
@@ -1273,14 +1235,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 break;
             case constants.MULTI_SELECT:
                 isMinimal = question.stylesContains(constants.MINIMAL);
-                if (style) {
-                    isLabel = question.stylesContains(constants.LABEL);
-                    hideLabel = question.stylesContains(constants.LIST_NOLABEL);
-                }
+                isChoiceLabel = question.stylesContains(constants.LABEL);
+                hideLabel = question.stylesContains(constants.LIST_NOLABEL);
 
                 if (isMinimal) {
                     entry = new MultiDropdownEntry(question, {});
-                } else if (isLabel) {
+                } else if (isChoiceLabel) {
                     entry = new ChoiceLabelEntry(question, {
                         hideLabel: false,
                     });
@@ -1398,6 +1358,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         getEntry: getEntry,
         AddressEntry: AddressEntry,
         AudioEntry: AudioEntry,
+        ButtonSelectEntry: ButtonSelectEntry,
         ComboboxEntry: ComboboxEntry,
         DateEntry: DateEntry,
         DropdownEntry: DropdownEntry,
