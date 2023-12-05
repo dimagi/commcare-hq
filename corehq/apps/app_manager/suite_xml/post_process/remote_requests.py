@@ -44,6 +44,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     PushFrame,
     QueryData,
     QueryPrompt,
+    QueryPromptGroup,
     RemoteRequest,
     RemoteRequestPost,
     RemoteRequestQuery,
@@ -212,6 +213,7 @@ class RemoteRequestFactory(object):
                 description=self.build_description() if self.module.search_config.description != {} else None,
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
+                prompt_groups=self.build_query_prompt_groups(),
                 default_search=self.module.search_config.default_search,
                 dynamic_search=self.app.split_screen_dynamic_search and not self.module.is_auto_select(),
             )
@@ -301,8 +303,17 @@ class RemoteRequestFactory(object):
 
     def build_query_prompts(self):
         prompts = []
-        for prop in self.module.search_config.properties:
+        prompt_properties = [prop for prop in self.module.search_config.properties if not prop.is_group]
+        for prop in prompt_properties:
             text = Text(locale_id=id_strings.search_property_locale(self.module, prop.name))
+
+            if prop.is_group:
+                prompts.append(QueryPromptGroup(**{
+                    'key': prop.name,
+                    'display': Display(text=text)
+                }))
+                continue
+
             if prop.hint:
                 display = Display(
                     text=text,
@@ -355,7 +366,21 @@ class RemoteRequestFactory(object):
                     )
                     for i, validation in enumerate(prop.validations)
                 ]
+            if prop.group_key:
+                kwargs['group_key'] = prop.group_key
             prompts.append(QueryPrompt(**kwargs))
+        return prompts
+
+    def build_query_prompt_groups(self):
+        prompts = []
+        prompt_group_properties = [prop for prop in self.module.search_config.properties if prop.is_group]
+        for prop in prompt_group_properties:
+            if prop.is_group:
+                text = Text(locale_id=id_strings.search_property_locale(self.module, prop.group_key))
+                prompts.append(QueryPromptGroup(**{
+                    'key': prop.group_key,
+                    'display': Display(text=text)
+                }))
         return prompts
 
     def build_stack(self):
