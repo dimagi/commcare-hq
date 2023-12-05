@@ -39,8 +39,8 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         TEXT_ALIGN_CENTER: 'text-align-center',
         TEXT_ALIGN_RIGHT: 'text-align-right',
         BUTTON_SELECT: 'button-select',
-        SHORT_WIDTH: 'short',
-        MEDIUM_WIDTH: 'medium',
+        SHORT: 'short',
+        MEDIUM: 'medium',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
@@ -54,6 +54,8 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         BLOCK_SUBMIT: 'block-submit',
         BLOCK_ALL: 'block-all',
         FULL_WIDTH: 'col-sm-12',
+        SHORT_WIDTH: 'col-sm-2',
+        MEDIUM_WIDTH: 'col-sm-4',
 
         // XForm Navigation
         QUESTIONS_FOR_INDEX: 'questions_for_index',

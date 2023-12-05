@@ -875,10 +875,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             this.questionTileWidth = constants.FULL_WIDTH;
         }
 
-        if (self.stylesContains(constants.SHORT_WIDTH)) {
-            self.controlWidth = 'col-sm-2';
-        } else if (self.stylesContains(constants.MEDIUM_WIDTH)) {
-            self.controlWidth = 'col-sm-4';
+        if (self.stylesContains(constants.SHORT)) {
+            self.controlWidth = constants.SHORT_WIDTH;
+        } else if (self.stylesContains(constants.MEDIUM)) {
+            self.controlWidth = constants.MEDIUM_WIDTH;
         }
     };
 
