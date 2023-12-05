@@ -174,7 +174,7 @@ django-phonenumber-field==6.4.0
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-prbac==1.0.1
+django-prbac==1.1.0
     # via -r base-requirements.in
 django-recaptcha==3.0.0
     # via -r base-requirements.in
