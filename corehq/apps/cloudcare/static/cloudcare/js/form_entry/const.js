@@ -39,6 +39,8 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         TEXT_ALIGN_CENTER: 'text-align-center',
         TEXT_ALIGN_RIGHT: 'text-align-right',
         BUTTON_SELECT: 'button-select',
+        SHORT_WIDTH: 'short',
+        MEDIUM_WIDTH: 'medium',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
