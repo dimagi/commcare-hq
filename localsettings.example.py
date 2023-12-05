@@ -1,13 +1,13 @@
 from dev_settings import *
 
-####### Database config #######
+"""####### Database config #######"""
 
 USE_PARTITIONED_DATABASE = False
 
 # example partitioned DB set up
 if USE_PARTITIONED_DATABASE:
 
-    DATABASES.update({
+    DATABASES.update({  # noqa f405
         'proxy': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_proxy',
@@ -57,12 +57,12 @@ if USE_PARTITIONED_DATABASE:
 # Identify the target type of this running environment
 SERVER_ENVIRONMENT = 'changeme'
 
-####### Less/Django Compressor ########
+"""####### Less/Django Compressor ########"""
 
 COMPRESS_ENABLED = False
 COMPRESS_OFFLINE = False
 
-####### Misc / HQ-specific Config ########
+"""####### Misc / HQ-specific Config ########"""
 
 # Set to something like "192.168.1.5:8000" (with your IP address) to enable submitting
 # data to your local environment from an android phone.
@@ -86,8 +86,8 @@ MAPS_LAYERS = {
     },
 }
 
-LOCAL_APPS += (
-#    'debug_toolbar',   # Adds a retractable panel to every page giving profiling & debugging info
+LOCAL_APPS += ( # noqa f405
+    # 'debug_toolbar',   # Adds a retractable panel to every page giving profiling & debugging info
 )
 
 LOCAL_MIDDLEWARE = [
@@ -95,6 +95,6 @@ LOCAL_MIDDLEWARE = [
 ]
 
 LOCAL_PILLOWTOPS = {
-#    'my_pillows': ['some.pillow.Class', ],
-#    'and_more': []
+    # 'my_pillows': ['some.pillow.Class', ],
+    # 'and_more': []
 }
