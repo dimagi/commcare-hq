@@ -86,6 +86,29 @@ MAPS_LAYERS = {
     },
 }
 
+# Temprory settings that are being used during the reindex
+# The settings signifies the current state of migration.
+
+ES_APPS_INDEX_SWAPPED = True
+ES_CASE_SEARCH_INDEX_SWAPPED = True
+ES_CASES_INDEX_SWAPPED = True
+ES_DOMAINS_INDEX_SWAPPED = True
+ES_FORMS_INDEX_SWAPPED = True
+ES_GROUPS_INDEX_SWAPPED = True
+ES_SMS_INDEX_SWAPPED = True
+ES_USERS_INDEX_SWAPPED = True
+
+
+ES_APPS_INDEX_MULTIPLEXED = False
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
+ES_CASES_INDEX_MULTIPLEXED = False
+ES_DOMAINS_INDEX_MULTIPLEXED = False
+ES_FORMS_INDEX_MULTIPLEXED = False
+ES_GROUPS_INDEX_MULTIPLEXED = False
+ES_SMS_INDEX_MULTIPLEXED = False
+ES_USERS_INDEX_MULTIPLEXED = False
+
+
 LOCAL_APPS += ( # noqa f405
     # 'debug_toolbar',   # Adds a retractable panel to every page giving profiling & debugging info
 )
