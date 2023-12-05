@@ -860,6 +860,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     Question.prototype.setWidths = function () {
+        const self = this;
         const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
         const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
 
@@ -871,6 +872,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             this.controlWidth = constants.CONTROL_WIDTH;
             this.labelWidth = constants.LABEL_WIDTH;
             this.questionTileWidth = constants.FULL_WIDTH;
+        }
+
+        if (self.stylesContains(constants.SHORT)) {
+            self.controlWidth = constants.SHORT_WIDTH;
+        } else if (self.stylesContains(constants.MEDIUM)) {
+            self.controlWidth = constants.MEDIUM_WIDTH;
         }
     };
 
