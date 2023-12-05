@@ -443,9 +443,9 @@ class IndicatorPillowTest(BaseRepeaterTest):
 
     @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.motech.repeaters.models.Repeater.allowed_to_forward', True)
-    @mock.patch('corehq.motech.repeaters.models.RepeatRecord.attempt_forward_now')
+    @mock.patch('corehq.motech.repeaters.signals.create_repeat_records')
     @mock.patch('corehq.apps.userreports.specs.datetime')
-    def test_datasource_change_triggers_change_signal(self, datetime_mock, attempt_forward_now_mock):
+    def test_datasource_change_triggers_change_signal(self, datetime_mock, create_repeat_records_mock):
         data_source_id = self.config._id
         num_repeaters = 2
         self._setup_data_source_subscription(self.config.domain, data_source_id, num_repeaters=num_repeaters)
@@ -460,7 +460,7 @@ class IndicatorPillowTest(BaseRepeaterTest):
         transaction_log = transaction_logs[0]
         self.assertEqual(transaction_log.row_id, sample_doc["_id"])
         self.assertEqual(transaction_log.action, DataSourceRowTransactionLog.UPSERT)
-        self.assertEqual(attempt_forward_now_mock.call_count, 2)
+        create_repeat_records_mock.assert_called()
 
     @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.apps.userreports.specs.datetime')
