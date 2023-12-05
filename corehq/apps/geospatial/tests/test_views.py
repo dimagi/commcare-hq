@@ -188,7 +188,7 @@ class TestGPSCaptureView(BaseGeospatialViewClass):
 @es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
 class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
 
-    urlname = 'get_paginated_cases_or_users_without_gps'
+    urlname = 'get_paginated_cases_or_users'
 
     @classmethod
     def setUpClass(cls):

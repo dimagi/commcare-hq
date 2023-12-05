@@ -12,12 +12,16 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
-from django.shortcuts import render
+from django.shortcuts import (
+    redirect,
+    render
+)
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.views.generic import View
 from django.views.generic.base import TemplateView
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -25,6 +29,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 import urllib.parse
 from text_unidecode import unidecode
 
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
 from couchforms.const import VALID_ATTACHMENT_FILE_EXTENSION_MAP
@@ -58,6 +63,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_applicatio
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
+from corehq.apps.cloudcare.utils import should_restrict_web_apps_usage
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -77,6 +83,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
+from corehq.util.metrics import metrics_histogram
 from xml2json.lib import xml2json
 
 from langcodes import get_name
@@ -163,6 +170,9 @@ class FormplayerMain(View):
         return request.couch_user, set_cookie
 
     def get(self, request, domain):
+        if should_restrict_web_apps_usage(domain):
+            return redirect('block_web_apps', domain=domain)
+
         option = request.GET.get('option')
         if option == 'apps':
             return self.get_option_apps(request, domain)
@@ -293,6 +303,9 @@ class PreviewAppView(TemplateView):
     @use_daterangepicker
     @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
+        if should_restrict_web_apps_usage(request.domain):
+            context = get_context_for_ucr_limit_error(request.domain)
+            return render(request, 'preview_app/block_app_preview.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
@@ -605,3 +618,43 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
         })
     cloudcare_state = json.dumps(state)
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
+
+
+class BlockWebAppsView(BaseDomainView):
+
+    urlname = 'block_web_apps'
+    template_name = 'block_web_apps.html'
+
+    def get(self, request, *args, **kwargs):
+        context = get_context_for_ucr_limit_error(request.domain)
+        return render(request, self.template_name, context)
+
+
+def get_context_for_ucr_limit_error(domain):
+    return {
+        'domain': domain,
+        'ucr_limit': settings.MAX_MOBILE_UCR_LIMIT,
+        'error_message': _("""You have the MOBILE_UCR feature flag enabled, and have exceeded the maximum limit
+                           of {ucr_limit} total User Configurable Reports used across all of your applications.
+                           To resolve, you must remove references to UCRs in your applications until you are under
+                           the limit. If you believe this is a mistake, please reach out to support.
+                           """).format(ucr_limit=settings.MAX_MOBILE_UCR_LIMIT)
+    }
+
+
+@login_and_domain_required
+@require_POST
+def api_histogram_metrics(request, domain):
+    request_dict = request.POST
+
+    metric_name = request_dict.get("metrics")
+    duration = float(request_dict.get("responseTime"))
+
+    if metric_name and duration:
+        metrics_histogram(metric_name,
+                          duration,
+                          bucket_tag='duration_bucket',
+                          buckets=(1000, 2000, 5000),
+                          bucket_unit='ms',
+                          tags={'domain': domain})
+    return HttpResponse("Success!!")

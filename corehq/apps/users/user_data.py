@@ -26,15 +26,15 @@ class UserData:
     def lazy_init(cls, couch_user, domain):
         # To be used during initial rollout - lazily create user_data objs from
         # existing couch data
-        raw_user_data = couch_user.user_data.copy()
+        raw_user_data = couch_user.to_json().get('user_data', {}).copy()
         raw_user_data.pop(COMMCARE_PROJECT, None)
         profile_id = raw_user_data.pop(PROFILE_SLUG, None)
         sql_data, _ = SQLUserData.objects.get_or_create(
             user_id=couch_user.user_id,
             domain=domain,
             defaults={
-                'data': couch_user.user_data,
-                'django_user': couch_user.get_django_user(),
+                'data': raw_user_data,
+                'django_user': couch_user.get_django_user,
                 'profile_id': profile_id,
             }
         )
@@ -46,7 +46,7 @@ class UserData:
             domain=self.domain,
             defaults={
                 'data': self._local_to_user,
-                'django_user': self._couch_user.get_django_user(),
+                'django_user': self._couch_user.get_django_user,
                 'profile_id': self.profile_id,
             },
         )
