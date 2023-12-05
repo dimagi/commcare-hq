@@ -77,7 +77,6 @@ hqDefine("cloudcare/js/formplayer/spec/controller_spec", function () {
                         ],
                     },
                 ]
-                console.log(grouped);
                 assert.deepEqual(expected, grouped, JSON.stringify(grouped));
             });
 

@@ -464,7 +464,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         tagName: "tr",
         template: _.template($("#query-view-group-template").html() || ""),
         childView: QueryView,
-        childViewContainer: "#group-content",
+        childViewContainer: "#query-group-content",
 
         childViewOptions: function () {
             return {parentView: this.options.parentView};
@@ -625,9 +625,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             value: value,
                         });
 
-                        self._getChildren().findByIndex(i)._setItemset(choices, response.models[i].get('itemsetChoicesKey'));
-
-                        self._getChildren().findByIndex(i)._render();      // re-render with new choice values
+                        var childByIndex = self._getChildren().findByIndex(i);
+                        childByIndex._setItemset(choices, response.models[i].get('itemsetChoicesKey'));
+                        childByIndex._render();      // re-render with new choice values
                     }
                 }
             });
@@ -638,7 +638,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         clearAction: function () {
             var self = this;
-            this._getChildren().forEach(function (childView) {
+            self._getChildren().forEach(function (childView) {
                 childView.clear();
             });
             self.setStickyQueryInputs();
@@ -751,7 +751,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Update models based on response
                 if (response.queryResponse) {
                     _.each(response.queryResponse.displays, function (responseModel, i) {
-                        self._getChildModels().set({
+                        self._getChildModels()[i].set({
                             error: responseModel.error,
                             required: responseModel.required,
                             required_msg: responseModel.required_msg,

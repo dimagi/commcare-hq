@@ -157,7 +157,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var queryResponse = menuResponse.queryResponse;
         if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
             let queryCollection = new Collection(queryResponse.displays);
-            if (queryResponse.hasOwnProperty("groupHeaders")) {
+            if (Object.keys(queryResponse.groupHeaders).length > 0) {
                 queryCollection = new Collection(groupDisplays(queryResponse.displays, queryResponse.groupHeaders));
             }
             FormplayerFrontend.regions.getRegion('sidebar').show(
@@ -172,7 +172,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             );
         } else if (sidebarEnabled && menuResponse.type === "query") {
             var queryCollection = menuResponse;
-            if (menuResponse.hasOwnProperty("groupHeaders")) {
+            if (Object.keys(menuResponse.groupHeaders).length > 0) {
                 queryCollection = new Collection(groupDisplays(menuResponse, menuResponse.groupHeaders));
             }
             FormplayerFrontend.regions.getRegion('sidebar').show(
