@@ -42,12 +42,16 @@
   }
 
   .panel-body {
-    padding-left: 0px;
-    padding-right: 0px;
+    padding-left: 5px;
+    padding-right: 5px;
     // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
     .row {
       margin-left: 0px;
       margin-right: 0px;
+    }
+    @media (max-width: @screen-xs-max) {
+      padding-left: 0px;
+      padding-right: 0px;
     }
   }
 
