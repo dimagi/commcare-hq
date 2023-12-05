@@ -13,7 +13,9 @@ class ChangeMeta(jsonobject.JsonObject):
 
     This is only used in kafka-based pillows.
     """
-    _allow_dynamic_properties = False
+    # Allow dynamic properties, so that if a new property needs to be rolled back,
+    # changes pushed with that property do not create errors
+    _allow_dynamic_properties = True
 
     document_id = DefaultProperty(required=True)
 
