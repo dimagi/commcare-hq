@@ -148,7 +148,7 @@ class CaseTileHelper(object):
             )
 
         if (self.detail_type == 'case_short' or self.detail_type == 'search_short') \
-                and self.module.lazy_load_case_list_fields:
+                and hasattr(self.module, 'lazy_load_case_list_fields') and self.module.lazy_load_case_list_fields:
             detail.lazy_loading = self.module.lazy_load_case_list_fields
         return detail
 
