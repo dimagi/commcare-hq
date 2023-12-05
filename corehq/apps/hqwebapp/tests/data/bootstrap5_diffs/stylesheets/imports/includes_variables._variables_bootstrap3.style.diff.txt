@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,121 +1,67 @@
+@@ -1,122 +1,67 @@
 -@import "@{b3-import-variables}";
 +/*
 +These are Boostrap 3 variables that were carried over in the
@@ -137,6 +137,7 @@
 -@checkbox-default-color: @call-to-action-mid;
 -
 -@breadcrumb-separator: '>';
+-@breadcrumb-height-cloudcare: 46px;
 -
 -@grid-gutter-width: 20px;
 +$checkbox-default-color: $call-to-action-mid;
