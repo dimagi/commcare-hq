@@ -10,7 +10,6 @@ from .const import (
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
     RECORD_EMPTY_STATE,
-    COUCH_STATES,
 )
 
 
@@ -45,79 +44,17 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
     return queryset.count()
 
 
-def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None):
-    kwargs = {}
-    if state is not None:
-        state = COUCH_STATES[state]
-
-    if repeater_id and not state:
-        kwargs['endkey'] = [domain, repeater_id]
-        kwargs['startkey'] = [domain, repeater_id, {}]
-    elif repeater_id and state:
-        kwargs['endkey'] = [domain, repeater_id, state]
-        kwargs['startkey'] = [domain, repeater_id, state, {}]
-    elif not repeater_id and state:
-        kwargs['endkey'] = [domain, None, state]
-        kwargs['startkey'] = [domain, None, state, {}]
-    elif not repeater_id and not state:
-        kwargs['endkey'] = [domain, None]
-        kwargs['startkey'] = [domain, None, {}]
-
-    return kwargs
-
-
-def iter_repeat_record_ids_by_repeater(domain, repeater_id, chunk_size=1000):
-    return _iter_repeat_records_by_repeater(domain, repeater_id, chunk_size,
-                                            include_docs=False)
-
-
-def _iter_repeat_records_by_repeater(domain, repeater_id, chunk_size,
-                                     include_docs):
-    from corehq.motech.repeaters.models import RepeatRecord
-    kwargs = {
-        'include_docs': include_docs,
-        'reduce': False,
-        'descending': True,
-    }
-    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id))
-    for doc in paginate_view(
-            RepeatRecord.get_db(),
-            'repeaters/repeat_records',
-            chunk_size,
-            **kwargs):
-        if include_docs:
-            yield RepeatRecord.wrap(doc['doc'])
-        else:
-            yield doc['id']
-
-
 def get_repeat_records_by_payload_id(domain, payload_id):
-    return get_couch_repeat_records_by_payload_id(domain, payload_id)
-
-
-def get_couch_repeat_records_by_payload_id(domain, payload_id):
-    return _get_couch_repeat_records_by_payload_id(domain, payload_id,
-                                                   include_docs=True)
-
-
-def get_couch_repeat_record_ids_by_payload_id(domain, payload_id):
-    return _get_couch_repeat_records_by_payload_id(domain, payload_id,
-                                                   include_docs=False)
-
-
-def _get_couch_repeat_records_by_payload_id(domain, payload_id, include_docs):
     from .models import RepeatRecord
     results = RepeatRecord.get_db().view(
         'repeaters/repeat_records_by_payload_id',
         startkey=[domain, payload_id],
         endkey=[domain, payload_id],
-        include_docs=include_docs,
+        include_docs=True,
         reduce=False,
         descending=True
     ).all()
-    if include_docs:
-        return [RepeatRecord.wrap(result['doc']) for result in results]
-    return [result['id'] for result in results]
+    return [RepeatRecord.wrap(result['doc']) for result in results]
 
 
 def get_sql_repeat_records_by_payload_id(domain, payload_id):
