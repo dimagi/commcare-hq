@@ -31,7 +31,11 @@
   <hr class="my-2 ms-3">
   <nav id="TableOfContents">
     <ul>
-      <li><a href="#overview">Overview</a></li>
+      <li><a href="#overview">Overview</a>
+        <ul>
+          <li><a href="#tables-layout">Tables and Layout?</a></li>
+        </ul>
+      </li>
       <li><a href="#basic-table">Basic Table</a></li>
       <li><a href="#sectioned-table">Sectioned Table</a></li>
       <li><a href="#datatables">Report Tables (Datatables)</a>
@@ -51,6 +55,10 @@
     are best suited to tabular data, so if that's not what you're working with,
     consider other design options.
   </p>
+  <div class="alert alert-primary">
+    Tabular data is data that is organized in a table with rows and columns&mdash;like Excel or GSheets.
+    There are generally several columns with headings and several rows of repeating data related to those headings.
+  </div>
   <p>
     To increase "scannability" it's best to observe the following guidelines:
   </p>
@@ -91,6 +99,45 @@
     Important External Documentation: <a href="https://getbootstrap.com/docs/5.3/content/tables/" target="_blank">Bootstrap 5 Tables</a>
   </div>
 
+  <h3 id="tables-layout" class="pt-3">
+    Tables and Layout?
+  </h3>
+  <p>
+    Due to the nature of table cells and the ability to stack them horizontally, vertically, and apply certain
+    alignment rules to their contents, it can be very appealing to use tables to for layout.
+  </p>
+  <p>
+    <strong>Please do not do this.</strong>
+  </p>
+  <p>
+    As mentioned in the first sentence of the overview, tables are for <strong>tabular data</strong>. They are
+    <strong>not</strong> for aligning form fields or creating page sections and layouts.
+  </p>
+  <p>
+    Here are pointers toward more optimal decisions:
+  </p>
+  <ul>
+    <li>
+      <p>
+        Need to create vertical "columns" of sections within a page?
+        Bootstrap 5's <a href="https://getbootstrap.com/docs/5.3/layout/grid/" target="_blank">Grid</a> and
+        <a href="https://getbootstrap.com/docs/5.3/layout/columns/" target="_blank">Column</a> guides can help.
+      </p>
+    </li>
+    <li>
+      <p>
+        Tempted to use a table with form labels and fields? Please don't. We have great documentation on how to
+        <a href="{% url "styleguide_organisms_forms_b5" %}#html-forms">horizontally style forms properly</a>.
+      </p>
+    </li>
+    <li>
+      <p>
+        "What if my data doesn't fit the grid system? Tables seem so much more flexible for things like vertical alignment
+        and dynamic widths." If this sounds familiar, then perhaps Bootstrap 5's
+        <a href="https://getbootstrap.com/docs/5.3/utilities/flex/" target="_blank">flex utilities</a> are what you need.
+      </p>
+    </li>
+  </ul>
   <h2 id="basic-table" class="pt-4">
     Basic Table
   </h2>
