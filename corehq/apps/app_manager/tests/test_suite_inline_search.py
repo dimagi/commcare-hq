@@ -619,8 +619,6 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
                 relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_child_case]) = 0">
               <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_child_case]) != 0"
                 key="case_id" ref="instance('commcaresession')/session/data/case_id_child_case"/>
-              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/parent_id]) != 0"
-                key="case_id" ref="instance('commcaresession')/session/data/parent_id"/>
               <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) != 0"
                 key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
             </post>

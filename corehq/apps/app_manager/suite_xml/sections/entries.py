@@ -257,7 +257,7 @@ class EntriesHelper(object):
             None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
             exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
         e.post = remote_request_factory.build_remote_request_post()
-        datum_ids = [form_datum.datum.id for form_datum in self.get_datum_meta_module(module, use_filter=True)
+        datum_ids = [form_datum.datum.id for form_datum in self.get_case_datums_basic_module(module, form)
                      if form_datum.datum.id != case_session_var]
         if hasattr(module, 'parent_select') and module.parent_select.active:
             for datum_id in datum_ids:
