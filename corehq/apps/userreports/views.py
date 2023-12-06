@@ -7,6 +7,7 @@ import tempfile
 from collections import OrderedDict, namedtuple
 from urllib.parse import urlparse
 
+from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError
@@ -1540,6 +1541,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
         return export_response(Temp(path), params.format, adapter.display_name)
 
 
+@csrf_exempt
 @require_POST
 @api_auth()
 @require_permission(HqPermissions.view_reports)
@@ -1550,7 +1552,7 @@ def subscribe_to_data_source_changes(request, domain, config_id):
     from corehq.motech.const import OAUTH2_CLIENT
     from django.utils.translation import gettext as _
 
-    for param in ['webhook_url', 'client_id', 'client_secret', 'token_url', 'refresh_url']:
+    for param in ['webhook_url', 'client_id', 'client_secret', 'token_url']:
         if param not in request.POST:
             return HttpResponse(status=422, content=f"Missing parameter: {param}")
 
@@ -1565,8 +1567,8 @@ def subscribe_to_data_source_changes(request, domain, config_id):
         auth_type=OAUTH2_CLIENT,
     )
     conn_settings.client_secret = request.POST['client_secret']
+    conn_settings.url = webhook_url
     conn_settings.token_url = request.POST['token_url']
-    conn_settings.refresh_url = request.POST['refresh_url']
     conn_settings.save()
 
     DataSourceRepeater.objects.create(
