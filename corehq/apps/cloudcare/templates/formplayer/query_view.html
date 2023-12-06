@@ -41,12 +41,12 @@
 </script>
 
 <script type="text/template" id="query-view-group-template">
-  <td>
+  <td style="background: white; margin-bottom: 10px">
     <div data-toggle="collapse" data-target="#group-<%- groupKey %>" aria-expanded="true" aria-controls="group-<%- groupKey %>">
       <label><%- groupName %></label>
     </div>
     <div id="group-<%- groupKey %>" class="in">
-      <table  class="table table-hover table-striped table-bordered" role="presentation">
+      <table  class="table" role="presentation" style="border-collapse: separate; border-spacing: 0 10px; margin-bottom: 0px;">
         <tbody id="query-group-content">
         </tbody>
       </table>
