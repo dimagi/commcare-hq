@@ -378,8 +378,6 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
               <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) != 0"
               key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
-              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case]) != 0"
-              key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
             </post>
             <command id="m0-f0">
               <text>

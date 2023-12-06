@@ -38,6 +38,7 @@ from corehq.apps.app_manager.util import (
     module_loads_registry_case,
     module_offers_search,
     module_uses_inline_search,
+    module_uses_inline_search_with_parent_relationship_parent_select,
 )
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
@@ -257,7 +258,7 @@ class EntriesHelper(object):
             None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
             exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
         e.post = remote_request_factory.build_remote_request_post()
-        if hasattr(module, 'parent_select') and module.parent_select.active:
+        if module_uses_inline_search_with_parent_relationship_parent_select(module):
             case_datum_ids = [form_datum.datum.id for form_datum in self.get_case_datums_basic_module(module, form)
                      if form_datum.datum.id != case_session_var]
             for case_datum_id in case_datum_ids:
