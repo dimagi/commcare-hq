@@ -143,6 +143,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         self.formId = ko.observable(formId);
         self.autoLink = ko.observable();
         self.allowManualLinking = ko.observable();
+        self.advancedMode = hqImport("hqwebapp/js/toggles").toggleEnabled('FORM_LINK_ADVANCED_MODE');
         self.forms = workflow.forms || [];
         self.datums = ko.observableArray();
         self.manualDatums = ko.observable(false);
