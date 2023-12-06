@@ -1,3 +1,4 @@
+import csv
 import re
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
@@ -1293,7 +1294,7 @@ class CaseDuplicate(models.Model):
     @classmethod
     def bulk_create_duplicate_relationships(cls, action, initial_case, duplicate_case_ids):
         existing_case_duplicates = CaseDuplicate.objects.filter(case_id__in=duplicate_case_ids, action=action)
-        existing_case_duplicate_case_ids = [case.case_id for case in existing_case_duplicates]
+        existing_case_duplicate_case_ids = {case.case_id for case in existing_case_duplicates}
         case_duplicates = cls.create_models(duplicate_case_ids, existing_case_duplicate_case_ids, action)
         case_duplicates += existing_case_duplicates
         initial_case_duplicate = next(
@@ -1320,11 +1321,11 @@ class CaseDuplicate(models.Model):
 
     @classmethod
     def create_models(cls, case_ids, existing_case_ids, action):
-        case_duplicates = ([
+        case_duplicates = [
             cls(case_id=duplicate_case_id, action=action)
             for duplicate_case_id in case_ids
             if duplicate_case_id not in existing_case_ids
-        ])
+        ]
 
         for duplicate in case_duplicates:
             case = CommCareCase.objects.get_case(duplicate.case_id)
@@ -1337,7 +1338,7 @@ class CaseDuplicate(models.Model):
         current_values = []
         for prop in action.case_properties:
             properties = case.resolve_case_property(prop)
-            current_values.extend([prop.value for prop in properties])
+            current_values.extend(prop.value for prop in properties)
 
         return cls.hash_arguments(*current_values)
 
