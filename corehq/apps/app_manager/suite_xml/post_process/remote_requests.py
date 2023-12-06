@@ -64,6 +64,7 @@ from corehq.apps.app_manager.util import (
     module_offers_registry_search,
     module_uses_inline_search,
     module_uses_include_all_related_cases,
+    module_uses_inline_search_with_parent_relationship_parent_select,
 )
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
@@ -82,6 +83,7 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
     CASE_SEARCH_SORT_KEY,
+    CASE_SEARCH_XPATH_QUERY_KEY,
 )
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
@@ -153,6 +155,8 @@ class RemoteRequestFactory(object):
                 data.exclude = self._get_multi_select_exclude()
         else:
             data.ref = QuerySessionXPath(self.case_session_var).instance()
+            if not self.exclude_relevant:
+                data.exclude = CaseIDXPath(data.ref).case().count().neq(0)
         return data
 
     def _get_multi_select_nodeset(self):
@@ -295,6 +299,17 @@ class RemoteRequestFactory(object):
                     ref=f"'{','.join(refs)}'",
                 )
             )
+        if module_uses_inline_search_with_parent_relationship_parent_select(self.module):
+            parent_module_id = self.module.parent_select.module_id
+            parent_module = self.app.get_module_by_unique_id(parent_module_id)
+            parent_case_type = parent_module.case_type
+            datums.append(
+                QueryData(
+                    key=CASE_SEARCH_XPATH_QUERY_KEY,
+                    ref=f"ancestor-exists(parent, @case_type={parent_case_type})"
+                )
+            )
+
         return datums
 
     def build_query_prompts(self):
