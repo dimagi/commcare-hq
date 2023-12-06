@@ -306,7 +306,7 @@ class RemoteRequestFactory(object):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_XPATH_QUERY_KEY,
-                    ref=f"ancestor-exists(parent, @case_type={parent_case_type})"
+                    ref=f"ancestor-exists(parent, @case_type='{parent_case_type}')"
                 )
             )
 
