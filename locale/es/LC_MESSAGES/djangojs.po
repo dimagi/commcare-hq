@@ -3568,10 +3568,8 @@ msgid "All locations"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/gps_capture.js
-#, fuzzy
-#| msgid "Current"
 msgid "current user"
-msgstr "Actual"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Mobile Worker"
