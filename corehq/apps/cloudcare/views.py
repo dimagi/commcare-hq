@@ -12,7 +12,7 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -170,8 +170,7 @@ class FormplayerMain(View):
     def get(self, request, domain):
         mobile_ucr_count = get_mobile_ucr_count(domain)
         if should_restrict_web_apps_usage(domain, mobile_ucr_count):
-            context = get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
-            return render(request, 'block_web_apps.html', context)
+            return redirect('block_web_apps', domain=domain)
 
         option = request.GET.get('option')
         if option == 'apps':
@@ -627,7 +626,8 @@ class BlockWebAppsView(BaseDomainView):
     template_name = 'block_web_apps.html'
 
     def get(self, request, *args, **kwargs):
-        context = get_context_for_ucr_limit_error(request.domain)
+        mobile_ucr_count = get_mobile_ucr_count(request.domain)
+        context = get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
         return render(request, self.template_name, context)
 
 
