@@ -166,6 +166,10 @@ hqDefine("app_manager/js/modules/module_view", function () {
             });
         }
 
+        $('#lazy-load-case-list-fields').koApplyBindings({
+            lazy_load_case_list_fields: ko.observable(initial_page_data('lazy_load_case_list_fields')),
+        });
+
         // Registration in case list
         if ($('#case-list-form').length) {
             var caseListFormModel = function (originalFormId, formOptions, postFormWorkflow) {
