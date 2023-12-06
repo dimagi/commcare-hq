@@ -564,8 +564,17 @@ MAX_CASE_COUNT = 10
 MAX_SUBCASE_DEPTH = 3
 
 
-@location_safe
-def get_cases_and_forms_for_deletion(request, domain, case_id):
+def get_case_and_display_data(case_obj, domain):
+    """
+    Given a case object, recursively checks the case's related submission forms and for each form, the related
+    cases it has affected, and so on, until it goes through all related cases and their related forms.
+    This recursion is capped at the MAX_CASE_COUNT and MAX_SUBCASE_DEPTH values defined above.
+
+    :param case_obj: The main case object targeted for deletion.
+    :return: Returns 2 dictionaries: one with the complete list of cases and forms to reference for soft deletion
+    once the user confirms the action and another with organized dictionaries of case data to be parsed by the
+    html template. The latter will be further modified in format_case_data_for_display.
+    """
     delete_cases = []  # list of cases to be soft deleted
     delete_forms = []  # list of forms to be soft deleted
 
@@ -582,17 +591,18 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
                       const.CASE_ACTION_COMMTRACK,
                       const.CASE_ACTION_REBUILD]
 
-    def get_forms_for_deletion_from_case(case, subcase_count):
+    def walk_case_relations(case, subcase_count):
         delete_cases.append(case.case_id)
         if len(delete_cases) > MAX_CASE_COUNT or subcase_count >= MAX_SUBCASE_DEPTH:
             raise TooManyCases("Too many cases to delete")
         if case.case_id not in cases:
             cases[case.case_id] = {}
             case_names[case.case_id] = escape(case.name)
-            if len(case_names) == 1:  # only add primary label to first/main case
+            if len(case_names) == 1:  # only add primary label to the main case
                 case_names[case.case_id] += ' <span class="label label-default">primary case</span>'
         case_xforms = case.xform_ids
 
+        # iterating through all non-archived forms related to the case
         for form_id in case_xforms:
             if form_id not in delete_forms:
                 delete_forms.insert(0, form_id)
@@ -608,11 +618,12 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
                     form_names[form_id] = ' > '.join(form_name)
             case_db = FormProcessorInterface(domain).casedb_cache(
                 domain=domain,
-                load_src="get_cases_and_forms_for_deletion",
+                load_src="get_case_and_display_data",
             )
             touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, [form_object])
-
             case_actions = {}
+
+            # iterating through all cases affected by the current form
             for touched_id in touched_cases:
                 case_object = touched_cases[touched_id].case
                 actions = list(touched_cases[touched_id].actions)
@@ -622,7 +633,7 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
                     if touched_id not in case_actions:
                         case_actions[case_object.name] = actions
                     if const.CASE_ACTION_CREATE in actions and touched_id != case.case_id:
-                        get_forms_for_deletion_from_case(case_object, subcase_count + 1)
+                        walk_case_relations(case_object, subcase_count + 1)
                     if const.CASE_ACTION_CLOSE in actions:
                         reopened_cases[touched_id] = form_id
                         case_names[touched_id] = case_object.name
@@ -633,25 +644,45 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
                         case_names[touched_id] = case_object.name
             cases[case.case_id][form_id] = case_actions
 
-    case_instance = safely_get_case(request, domain, case_id)
-    subcase_count = 0
-    try:
-        get_forms_for_deletion_from_case(case_instance, subcase_count)
-    except TooManyCases:
-        messages.error(request, _("Deleting this case would delete too many related cases. "
-                                  "Please delete some of this cases' subcases before attempting"
-                                  "to delete this case."))
-        return {'redirect': True}
+    walk_case_relations(case_obj, subcase_count=0)
+
+    for case in list(affected_cases.keys()):
+        if case in delete_cases:
+            del affected_cases[case]
+
+    return {
+        'case_delete_list': delete_cases,
+        'form_delete_list': delete_forms,
+    }, {
+        'case_names': case_names,
+        'form_names': form_names,
+        'delete_cases': cases,
+        'reopened_cases': reopened_cases,
+        'affected_cases': affected_cases
+    }
+
+
+def format_case_data_for_display(display_data, domain):
+    """
+    Converts all form and case names into clickable links.
+
+    :param display_data: Dictionary containing correctly organized case delete/reopen/rollback for parsing
+    by the template. These will be reconstructed to have links as keys in place of case/form names.
+    :return: A dictionary containing the fully formatted dictionaries.
+    """
 
     def get_case_link(caseid):
         url = reverse('case_data', args=[domain, caseid])
+        case_names = display_data['case_names']
         return mark_safe('<a href="{}"> {} </a>'.format(url, case_names[caseid]))  # case names are already escaped
 
     def get_form_link(formid):
         url = reverse('render_form_data', args=[domain, formid])
+        form_names = display_data['form_names']
         return mark_safe('<a href="{}"> {} </a>'.format(url, escape(form_names[formid])))
 
-    prepared_cases = {}
+    formatted_delete_cases = {}
+    cases = display_data['delete_cases']
     for case in cases:
         prepared_forms = {}
         for form in cases[case]:
@@ -659,30 +690,46 @@ def get_cases_and_forms_for_deletion(request, domain, case_id):
             prepared_forms[form_link] = {}
             for case_action in cases[case][form]:
                 prepared_forms[form_link][case_action] = ', '.join(cases[case][form][case_action])
-        prepared_cases[get_case_link(case)] = prepared_forms
+        formatted_delete_cases[get_case_link(case)] = prepared_forms
 
-    prepared_reopened_cases = {}
+    formatted_reopened_cases = {}
+    reopened_cases = display_data['reopened_cases']
     for case in reopened_cases:
-        prepared_reopened_cases[get_case_link(case)] = get_form_link(reopened_cases[case])
+        formatted_reopened_cases[get_case_link(case)] = get_form_link(reopened_cases[case])
 
-    prepared_affected_cases = {}
+    formatted_affected_cases = {}
+    affected_cases = display_data['affected_cases']
     for case in affected_cases:
-        if case in delete_cases:
-            continue
         prepared_forms = {}
         for form in affected_cases[case]:
             prepared_forms[get_form_link(form)] = affected_cases[case][form]
-        prepared_affected_cases[get_case_link(case)] = prepared_forms
+        formatted_affected_cases[get_case_link(case)] = prepared_forms
 
     return {
-        'main_case_name': case_instance.name,
-        'delete_dict': prepared_cases,
-        'affected_cases': prepared_affected_cases,
-        'reopened_cases': prepared_reopened_cases,
-        'case_delete_list': delete_cases,
-        'form_delete_list': delete_forms,
-        'redirect': False
+        'delete_cases': formatted_delete_cases,
+        'affected_cases': formatted_affected_cases,
+        'reopened_cases': formatted_reopened_cases
     }
+
+
+@location_safe
+def get_cases_and_forms_for_deletion(request, domain, case_id):
+    case_instance = safely_get_case(request, domain, case_id)
+    try:
+        case_data, raw_display_data = get_case_and_display_data(case_instance, domain)
+    except TooManyCases:
+        messages.error(request, _("Deleting this case would delete too many related cases. "
+                                  "Please delete some of this cases' subcases before attempting"
+                                  "to delete this case."))
+        return {'redirect': True}
+
+    prepared_display_data = format_case_data_for_display(raw_display_data, domain)
+    case_data.update(prepared_display_data)
+    case_data.update({
+        'main_case_name': case_instance.name,
+        'redirect': False
+    })
+    return case_data
 
 
 @location_safe

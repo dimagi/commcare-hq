@@ -20,6 +20,8 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.reports.standard.cases.case_data import (
     _get_case_property_tables,
+    get_case_and_display_data,
+    format_case_data_for_display,
     get_cases_and_forms_for_deletion,
     soft_delete_cases_and_forms,
     MAX_CASE_COUNT,
@@ -195,73 +197,7 @@ class TestCaseDeletion(TestCase):
 
         return main_case_id
 
-    def test_form_list_archives_without_error(self):
-        """
-        Ensure that for a case with mulitple subcases, each with their own subcases, the archive_form function
-        doesn't throw an error, which means that the list of forms returned by get_cases_and_forms_for_deletion are
-        correctly ordered such that the create form for each case is the last of that case's forms to be archived.
-        """
-        case_id = self.make_complex_case()
-
-        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
-        for form in delete_dict['form_delete_list']:
-            self.assertTrue(archive_form(self.request, self.domain, form, is_case_delete=True))
-
-    def test_delete_case(self):
-        """
-        Ensure that a single case with two forms is soft deleted
-        """
-        case_id = self.make_simple_case()
-
-        case = CommCareCase.objects.get_case(case_id, self.domain)
-        self.assertFalse(case.is_deleted)
-
-        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
-        case_list = delete_dict['case_delete_list']
-        self.assertEqual(len(case_list), 1)
-
-        soft_delete_cases_and_forms(self.request, self.domain, case_list, delete_dict['form_delete_list'])
-
-        case = CommCareCase.objects.get_case(case_id, self.domain)
-        self.assertTrue(case.is_deleted)
-
-    def test_delete_submission_forms(self):
-        """
-        Ensure that a single case with two forms have the two forms archived and soft deleted
-        """
-        case_id = self.make_simple_case()
-
-        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
-        form_list = delete_dict['form_delete_list']
-        self.assertEqual(len(form_list), 2)
-
-        soft_delete_cases_and_forms(self.request, self.domain, delete_dict['case_delete_list'], form_list)
-
-        for form in form_list:
-            form = XFormInstance.objects.get_form(form, self.domain)
-            self.assertTrue(form.is_deleted)
-
-    def test_delete_multiple_related_cases(self):
-        """
-        Ensure that a case with mulitple subcases, each with their own subcases are all soft deleted
-        """
-        case_id = self.make_complex_case()
-
-        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
-        case_list = delete_dict['case_delete_list']
-        self.assertEqual(len(case_list), 5)
-
-        soft_delete_cases_and_forms(self.request, self.domain, case_list, delete_dict['form_delete_list'])
-
-        for case in case_list:
-            case_obj = CommCareCase.objects.get_case(case, self.domain)
-            self.assertTrue(case_obj.is_deleted)
-
-    def test_delete_case_that_closes_another_case(self):
-        """
-        Ensure that when a case with a submission form that closed another case is deleted, that other
-        case is re-opened. This is really testing form archiving but here for completeness.
-        """
+    def make_closed_case(self):
         main_case_id = uuid.uuid4().hex
         other_case_id = uuid.uuid4().hex
         submit_case_blocks([
@@ -276,23 +212,9 @@ class TestCaseDeletion(TestCase):
         ], self.domain)
         self.addCleanup(_delete_all_cases_and_forms, self.domain)
 
-        other_case = CommCareCase.objects.get_case(other_case_id, self.domain)
-        self.assertTrue(other_case.closed)
+        return main_case_id, other_case_id
 
-        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, main_case_id)
-        self.assertEqual(len(delete_dict['reopened_cases']), 1)
-        soft_delete_cases_and_forms(self.request, self.domain,
-                                    delete_dict['case_delete_list'], delete_dict['form_delete_list'])
-
-        other_case = CommCareCase.objects.get_case(other_case_id, self.domain)
-        self.assertFalse(other_case.closed)
-
-    def test_delete_case_that_updates_another_case(self):
-        """
-        Ensure that when a case with a submission form that updates another case is deleted, that form doesn't
-        appear in the other case's xform_ids. This is really testing form archiving but here for completeness.
-        """
-
+    def make_affected_case(self):
         main_case_id = uuid.uuid4().hex
         other_case_id = uuid.uuid4().hex
         submit_case_blocks([
@@ -307,17 +229,160 @@ class TestCaseDeletion(TestCase):
         ], self.domain)
         self.addCleanup(_delete_all_cases_and_forms, self.domain)
 
+        return main_case_id, other_case_id
+
+    # Testing case data retrieval
+    def test_case_walk_returns_right_number_of_cases(self):
+        case_id = self.make_complex_case()
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        case_data, _ = get_case_and_display_data(case, self.domain)
+
+        self.assertEqual(len(case_data['case_delete_list']), 5)
+
+    def test_case_walk_returns_right_number_of_forms(self):
+        case_id = self.make_complex_case()
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        case_data, _ = get_case_and_display_data(case, self.domain)
+
+        self.assertEqual(len(case_data['form_delete_list']), 4)
+
+    def test_form_list_archives_without_error(self):
+        """
+        Ensure that for a case with mulitple subcases, each with their own subcases, the archive_form function
+        doesn't throw an error, which means that the list of forms returned by get_cases_and_forms_for_deletion are
+        correctly ordered such that the create form for each case is the last of that case's forms to be archived.
+        """
+        case_id = self.make_complex_case()
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        case_data, _ = get_case_and_display_data(case, self.domain)
+
+        for form in case_data['form_delete_list']:
+            self.assertTrue(archive_form(self.request, self.domain, form, is_case_delete=True))
+
+    def test_case_walk_returns_right_number_of_affected_cases(self):
+        main_case_id, _ = self.make_affected_case()
+        case = CommCareCase.objects.get_case(main_case_id, self.domain)
+        _, raw_display_data = get_case_and_display_data(case, self.domain)
+
+        self.assertEqual(len(raw_display_data['affected_cases']), 1)
+
+    def test_case_walk_returns_right_number_of_reopened_cases(self):
+        main_case_id, _ = self.make_closed_case()
+        case = CommCareCase.objects.get_case(main_case_id, self.domain)
+        _, raw_display_data = get_case_and_display_data(case, self.domain)
+
+        self.assertEqual(len(raw_display_data['reopened_cases']), 1)
+
+    def test_delete_dict_formatted_correctly(self):
+        case_id = self.make_simple_case()
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        _, raw_display_data = get_case_and_display_data(case, self.domain)
+        prepared_display_data = format_case_data_for_display(raw_display_data, self.domain)
+
+        for case in prepared_display_data['delete_cases']:
+            for form in prepared_display_data['delete_cases'][case]:
+                self.assertIn(prepared_display_data['delete_cases'][case][form],
+                              ({'current': 'create'}, {'current': 'update'}))
+
+    def test_affected_dict_formatted_correctly(self):
+        case_id, other_case_id = self.make_affected_case()
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        _, raw_display_data = get_case_and_display_data(case, self.domain)
+        prepared_display_data = format_case_data_for_display(raw_display_data, self.domain)
+
+        for case in prepared_display_data['affected_cases']:
+            for form in prepared_display_data['affected_cases'][case]:
+                self.assertEqual(prepared_display_data['affected_cases'][case][form], 'update')
+
+    def test_reopened_dict_formatted_correctly(self):
+        case_id, other_case_id = self.make_closed_case()
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        _, raw_display_data = get_case_and_display_data(case, self.domain)
+        prepared_display_data = format_case_data_for_display(raw_display_data, self.domain)
+
+        self.assertTrue(prepared_display_data['reopened_cases'][
+                        '<a href="/a/test-domain/reports/case_data/{}/">  </a>'.format(other_case_id)
+                        ].startswith('<a href="/a/test-domain/reports/form_data/'))
+
+    # Testing deletion
+    def test_delete_case(self):
+        """
+        Ensure that a single case with two forms is soft deleted
+        """
+        case_id = self.make_simple_case()
+
+        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
+        soft_delete_cases_and_forms(self.request, self.domain,
+                                    delete_dict['case_delete_list'], delete_dict['form_delete_list'])
+
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        self.assertTrue(case.is_deleted)
+
+    def test_delete_submission_forms(self):
+        """
+        Ensure that for a case with mulitple subcases, each with their own subcases, all related submission
+        forms are archived and soft deleted
+        """
+        case_id = self.make_complex_case()
+
+        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
+        soft_delete_cases_and_forms(self.request, self.domain,
+                                    delete_dict['case_delete_list'], delete_dict['form_delete_list'])
+
+        for form in delete_dict['form_delete_list']:
+            form = XFormInstance.objects.get_form(form, self.domain)
+            self.assertTrue(form.is_archived)
+            self.assertTrue(form.is_deleted)
+
+    def test_delete_multiple_related_cases(self):
+        """
+        Ensure that a case with mulitple subcases, each with their own subcases are all soft deleted
+        """
+        case_id = self.make_complex_case()
+
+        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, case_id)
+        soft_delete_cases_and_forms(self.request, self.domain,
+                                    delete_dict['case_delete_list'], delete_dict['form_delete_list'])
+
+        for case in delete_dict['case_delete_list']:
+            case_obj = CommCareCase.objects.get_case(case, self.domain)
+            self.assertTrue(case_obj.is_deleted)
+
+    def test_delete_case_that_closes_another_case(self):
+        """
+        Ensure that when a case with a submission form that closed another case is deleted, that other
+        case is re-opened. This is really testing form archiving but here for completeness.
+        """
+        main_case_id, other_case_id = self.make_closed_case()
+
+        other_case = CommCareCase.objects.get_case(other_case_id, self.domain)
+        self.assertTrue(other_case.closed)
+
+        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, main_case_id)
+        soft_delete_cases_and_forms(self.request, self.domain,
+                                    delete_dict['case_delete_list'], delete_dict['form_delete_list'])
+
+        other_case = CommCareCase.objects.get_case(other_case_id, self.domain)
+        self.assertFalse(other_case.closed)
+
+    def test_delete_case_that_updates_another_case(self):
+        """
+        Ensure that when a case with a submission form that updates another case is deleted, that form doesn't
+        appear in the other case's xform_ids. This is really testing form archiving but here for completeness.
+        """
+        main_case_id, other_case_id = self.make_affected_case()
+
         other_case = CommCareCase.objects.get_case(other_case_id, self.domain)
         self.assertEqual(len(other_case.xform_ids), 2)
 
         delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, main_case_id)
-        self.assertEqual(len(delete_dict['affected_cases']), 1)
         soft_delete_cases_and_forms(self.request, self.domain,
                                     delete_dict['case_delete_list'], delete_dict['form_delete_list'])
 
         other_case = CommCareCase.objects.get_case(other_case_id, self.domain)
         self.assertEqual(len(other_case.xform_ids), 1)
 
+    # Test error handling
     def test_case_deletion_errors_if_too_many_cases(self):
         """
         Ensure that a case with more than 10 related cases throws an error
