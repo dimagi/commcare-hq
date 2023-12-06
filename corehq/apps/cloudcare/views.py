@@ -304,7 +304,7 @@ class PreviewAppView(TemplateView):
     def get(self, request, *args, **kwargs):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
         if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
-            context = get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
+            context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
             return render(request, 'preview_app/block_app_preview.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
@@ -627,21 +627,21 @@ class BlockWebAppsView(BaseDomainView):
 
     def get(self, request, *args, **kwargs):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
-        context = get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
+        context = self.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
         return render(request, self.template_name, context)
 
-
-def get_context_for_ucr_limit_error(domain, mobile_ucr_count):
-    return {
-        'domain': domain,
-        'ucr_limit': settings.MAX_MOBILE_UCR_LIMIT,
-        'error_message': _("""You have the MOBILE_UCR feature flag enabled, and have {ucr_count} mobile UCRs which
-                           exceeds the maximum limit of {ucr_limit} total User Configurable Reports used across
-                           all of your applications. To resolve, you must remove references to UCRs in your
-                           applications until you are under the limit. If you believe this is a mistake, please
-                           reach out to support.
-                           """).format(ucr_count=mobile_ucr_count, ucr_limit=settings.MAX_MOBILE_UCR_LIMIT)
-    }
+    @classmethod
+    def get_context_for_ucr_limit_error(cls, domain, mobile_ucr_count):
+        return {
+            'domain': domain,
+            'ucr_limit': settings.MAX_MOBILE_UCR_LIMIT,
+            'error_message': _("""You have the MOBILE_UCR feature flag enabled, and have {ucr_count} mobile UCRs
+                               which exceeds the maximum limit of {ucr_limit} total User Configurable Reports used
+                               across all of your applications. To resolve, you must remove references to UCRs in
+                               your applications until you are under the limit. If you believe this is a mistake,
+                               please reach out to support.
+                            """).format(ucr_count=mobile_ucr_count, ucr_limit=settings.MAX_MOBILE_UCR_LIMIT)
+        }
 
 
 @login_and_domain_required
