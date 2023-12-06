@@ -250,31 +250,6 @@ class AutomaticUpdateRuleTests(SimpleTestCase):
 
 
 class CaseDuplicateTests(SimpleTestCase):
-    def test_hash_arguments_hashes_single_argument(self):
-        result = CaseDuplicate.hash_arguments('one')
-        self.assertTrue(type(result), str)
-
-    def test_hash_arguments_hashes_multiple_arguments(self):
-        single_result = CaseDuplicate.hash_arguments('one')
-        multiple_result = CaseDuplicate.hash_arguments('one', 'two')
-        self.assertTrue(type(multiple_result), str)
-        self.assertNotEqual(single_result, multiple_result)
-
-    def test_hash_arguments_same_input_produces_same_output(self):
-        result1 = CaseDuplicate.hash_arguments('test')
-        result2 = CaseDuplicate.hash_arguments('test')
-        self.assertEqual(result1, result2)
-
-    def test_hash_arguments_different_inputs_produce_different_output(self):
-        result1 = CaseDuplicate.hash_arguments('test1')
-        result2 = CaseDuplicate.hash_arguments('test2')
-        self.assertNotEqual(result1, result2)
-
-    def test_hash_arguments_respects_all_arguments(self):
-        multiple_result1 = CaseDuplicate.hash_arguments('one', 'two')
-        multiple_result2 = CaseDuplicate.hash_arguments('one', 'two')
-        self.assertEqual(multiple_result1, multiple_result2)
-
     def test_can_create_duplicate_from_case(self):
         case = CommCareCase(case_json={'test': '123'})
         action = self._create_action_detecting_duplicates_on('test')
@@ -289,6 +264,48 @@ class CaseDuplicateTests(SimpleTestCase):
             case_properties=props
         )
         return action
+
+
+class CaseDuplicate_HashArguments_Tests(SimpleTestCase):
+    def test_hashes_single_argument(self):
+        result = CaseDuplicate.hash_arguments('one')
+        self.assertTrue(type(result), str)
+
+    def test_hashes_multiple_arguments(self):
+        single_result = CaseDuplicate.hash_arguments('one')
+        multiple_result = CaseDuplicate.hash_arguments('one', 'two')
+        self.assertTrue(type(multiple_result), str)
+        self.assertNotEqual(single_result, multiple_result)
+
+    def test_same_input_produces_same_output(self):
+        result1 = CaseDuplicate.hash_arguments('test')
+        result2 = CaseDuplicate.hash_arguments('test')
+        self.assertEqual(result1, result2)
+
+    def test_different_inputs_produce_different_output(self):
+        result1 = CaseDuplicate.hash_arguments('test1')
+        result2 = CaseDuplicate.hash_arguments('test2')
+        self.assertNotEqual(result1, result2)
+
+    def test_respects_all_arguments(self):
+        multiple_result1 = CaseDuplicate.hash_arguments('one', 'two')
+        multiple_result2 = CaseDuplicate.hash_arguments('one', 'two')
+        self.assertEqual(multiple_result1, multiple_result2)
+
+    def test_deals_with_similar_combinations(self):
+        result1 = CaseDuplicate.hash_arguments('mans', 'laughter')
+        result2 = CaseDuplicate.hash_arguments('man', 'slaughter')
+        self.assertNotEqual(result1, result2)
+
+    def test_converts_non_string_arguments_to_strings(self):
+        result1 = CaseDuplicate.hash_arguments(1, 2)
+        result2 = CaseDuplicate.hash_arguments('1', '2')
+        self.assertEqual(result1, result2)
+
+    def test_handle_delimiter_character(self):
+        result1 = CaseDuplicate.hash_arguments('1', '2')
+        result2 = CaseDuplicate.hash_arguments('1\t2')
+        self.assertNotEqual(result1, result2)
 
 
 def create_dict_mock(class_, data):

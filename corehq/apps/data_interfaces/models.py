@@ -1343,11 +1343,27 @@ class CaseDuplicate(models.Model):
 
     @classmethod
     def hash_arguments(cls, *args):
-        combined = hashlib.sha256()
-        for arg in args:
-            combined.update(str(arg).encode('utf8'))
+        # mimic file-like object
+        class Updater:
+            def __init__(self):
+                self.combined = hashlib.sha256()
 
-        return combined.hexdigest()
+            def write(self, value):
+                self.combined.update(value.encode('utf8'))
+
+        updater = Updater()
+
+        writer = csv.writer(
+            updater,
+            delimiter='\t',
+            quotechar=None,
+            escapechar='|',
+            quoting=csv.QUOTE_NONE,
+        )
+
+        writer.writerow(args)
+
+        return updater.combined.hexdigest()
 
 
 class VisitSchedulerIntegrationHelper(object):
