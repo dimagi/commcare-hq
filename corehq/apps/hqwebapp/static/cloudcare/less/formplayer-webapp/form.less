@@ -25,6 +25,17 @@
     .border-bottom-radius(0);
   }
 
+  .anchored-submit {
+    background-color: @call-to-action-low;
+    width: 100vw;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    position: fixed;
+    bottom: 30px; // data preview bar
+    left: 0;
+    z-index: @zindex-formplayer-anchored-submit;
+  }
+
   .form-group {
     padding-left: 25px;
     padding-right: 20px;
