@@ -66,11 +66,6 @@ def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None):
     return kwargs
 
 
-def iter_repeat_records_by_repeater(domain, repeater_id, chunk_size=1000):
-    return _iter_repeat_records_by_repeater(domain, repeater_id, chunk_size,
-                                            include_docs=True)
-
-
 def iter_repeat_record_ids_by_repeater(domain, repeater_id, chunk_size=1000):
     return _iter_repeat_records_by_repeater(domain, repeater_id, chunk_size,
                                             include_docs=False)
