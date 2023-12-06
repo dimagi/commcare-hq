@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Optional
 from urllib.parse import urljoin
 
 from django.utils.translation import gettext_lazy as _
+from datetime import datetime
 
 import attr
 import requests
@@ -205,16 +206,19 @@ class OAuth2ClientGrantManager(AuthManager):
         self.connection_settings.last_token = value
         self.connection_settings.save()
 
+    @property
+    def should_request_token(self):
+        def token_has_expired(token):
+            return datetime.fromtimestamp(token.get('expires_at')) < datetime.utcnow()
+
+        return not self.last_token or token_has_expired(self.last_token)
+
     def get_session(self, domain_name: str) -> Session:
         def set_last_token(token):
             # Used by OAuth2Session
             self.last_token = token
 
-        # This adds an extra round trip for all access tokens without refresh tokens.
-        # That is not ideal, but is the only way to ensure that we are able to guarantee
-        # the token will work without error, or refactoring the way sessions are used across
-        # all repeaters.
-        if not self.last_token or self.last_token.get('refresh_token') is None:
+        if self.should_request_token:
             client = BackendApplicationClient(client_id=self.client_id)
             session = OAuth2Session(client=client)
             self.last_token = session.fetch_token(
