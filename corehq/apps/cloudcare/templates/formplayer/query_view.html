@@ -40,7 +40,20 @@
   </form>
 </script>
 
+<script type="text/template" id="query-view-group-template">
+  <td style="background: white; margin-bottom: 10px">
+    <div data-toggle="collapse" data-target="#group-<%- groupKey %>" aria-expanded="true" aria-controls="group-<%- groupKey %>">
+      <label><%- groupName %></label>
+    </div>
+    <div id="group-<%- groupKey %>" class="in">
+      <table  class="table" role="presentation" style="border-collapse: separate; border-spacing: 0 10px; margin-bottom: 0px;">
+        <tbody id="query-group-content">
+        </tbody>
+      </table>
+    </div>
 
+  </td>
+</script>
 
 <script type="text/template" id="query-view-item-template">
   <<%- contentTag %>
