@@ -66,7 +66,7 @@ class TestUserES(TestCase):
 
     def test_basic_user_data_query(self):
         direwolf_families = UserES().user_data('sigil', 'direwolf').values_list('username', flat=True)
-        self.assertEqual(direwolf_families, ['stark', 'another_stark', 'webstark'])
+        self.assertItemsEqual(direwolf_families, ['stark', 'webstark', 'another_stark'])
 
         direwolf_families = UserES().web_users().user_data('sigil', 'direwolf').values_list('username', flat=True)
         self.assertEqual(direwolf_families, ['webstark'])

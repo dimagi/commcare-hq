@@ -768,7 +768,7 @@ def paginate_enterprise_users(request, domain):
     )
     mobile_users = defaultdict(list)
     for hit in mobile_result.hits:
-        login_as_user = {data['key']: data['value'] for data in hit['user_data_es']}.get('login_as_user')
+        login_as_user = {data['key']: data['value'] for data in hit['user_data_es']['data']}.get('login_as_user')
         mobile_users[login_as_user].append(CommCareUser.wrap(hit))
     users = []
     allowed_domains = set(domains) - {domain}
