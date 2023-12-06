@@ -41,6 +41,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         BUTTON_SELECT: 'button-select',
         SHORT: 'short',
         MEDIUM: 'medium',
+        STRIPE_REPEATS: 'stripe-repeats',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
