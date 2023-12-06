@@ -67,30 +67,6 @@ def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None):
 
 
 def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
-    from .models import are_repeat_records_migrated
-
-    if are_repeat_records_migrated(domain):
-        return get_paged_sql_repeat_records(domain, skip, limit, repeater_id, state)
-    return get_paged_couch_repeat_records(domain, skip, limit, repeater_id, state)
-
-
-def get_paged_couch_repeat_records(domain, skip, limit, repeater_id=None, state=None):
-    from .models import RepeatRecord
-    kwargs = {
-        'include_docs': True,
-        'reduce': False,
-        'limit': limit,
-        'skip': skip,
-        'descending': True,
-    }
-    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
-
-    results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
-
-    return [RepeatRecord.wrap(result['doc']) for result in results]
-
-
-def get_paged_sql_repeat_records(domain, skip, limit, repeater_id=None, state=None):
     from .models import SQLRepeatRecord
 
     queryset = SQLRepeatRecord.objects.filter(domain=domain)
