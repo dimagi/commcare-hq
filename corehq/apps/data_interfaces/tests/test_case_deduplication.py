@@ -14,6 +14,7 @@ from corehq.apps.data_interfaces.deduplication import (
     _get_es_filtered_case_query,
     backfill_deduplicate_rule,
     find_duplicate_case_ids,
+    case_exists_in_es
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
@@ -235,6 +236,50 @@ class FindingDuplicatesQueryTest(TestCase):
             server_modified_boundary=None,
             workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
         )
+
+
+@es_test(requires=[case_search_adapter])
+class EnsureCaseExistsTest(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.domain = 'naboo'
+        self.factory = CaseFactory(self.domain)
+
+    def _prime_es_index(self, cases):
+        case_search_adapter.bulk_index(cases, refresh=True)
+
+    def test_when_case_is_not_in_elasticsearch_returns_false(self):
+        case = self._create_case()
+        self._prime_es_index([])
+        self.assertFalse(case_exists_in_es(self.domain, case, ['case_name']))
+
+    def test_when_case_exists_returns_true(self):
+        case = self._create_case()
+        self._prime_es_index([case])
+        self.assertTrue(case_exists_in_es(self.domain, case, ['case_name']))
+
+    def test_when_case_parameters_do_not_match_returns_false(self):
+        case = self._create_case(name='Anakin Skywalker')
+        updated_case = self.factory.update_case(case.case_id, update={'case_name': 'Darth Vader'})
+        self._prime_es_index([case])
+
+        self.assertFalse(case_exists_in_es(self.domain, updated_case, ['case_name']))
+
+    def test_case_requires_matching_on_case_id(self):
+        cases = [self._create_case() for i in range(2)]
+
+        self._prime_es_index([cases[0]])
+        self.assertFalse(case_exists_in_es(self.domain, cases[1], ['case_name']))
+
+    def test_when_case_parameters_match_returns_true(self):
+        case = self._create_case(name='Anakin Skywalker')
+        updated_case = self.factory.update_case(case.case_id, update={'age': 27})
+        self._prime_es_index([case])
+
+        self.assertTrue(case_exists_in_es(self.domain, updated_case, ['case_name']))
+
+    def _create_case(self, name='Anakin Skywalker'):
+        return self.factory.create_case(case_name=name, update={})
 
 
 @es_test(requires=[case_search_adapter])
