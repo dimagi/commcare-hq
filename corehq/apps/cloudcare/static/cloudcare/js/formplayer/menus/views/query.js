@@ -470,8 +470,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return {parentView: this.options.parentView};
         },
 
-        initialize: function (options) {
-            console.log('groupedQueryView');
+        onAttach: function () {
+            const headers = $('.search-query-group-header');
+            headers.on('click', function (e) {
+                const arrow = $(e.target).children('i')
+                if (arrow.hasClass('fa-chevron-down')) {
+                    arrow.removeClass('fa-chevron-down');
+                    arrow.addClass('fa-chevron-up');
+                } else {
+                    arrow.removeClass('fa-chevron-up');
+                    arrow.addClass('fa-chevron-down');
+                }
+                arrow.render();
+            });
         },
 
         templateContext: function () {
