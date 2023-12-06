@@ -42,7 +42,6 @@ from corehq.motech.models import RequestLog
 from ..const import State, RECORD_CANCELLED_STATE
 from ..dbaccessors import (
     get_cancelled_repeat_record_count,
-    get_paged_repeat_records,
     get_pending_repeat_record_count,
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
@@ -162,7 +161,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
             end = self.pagination.start + self.pagination.count
             records = self._get_all_records_by_payload()[self.pagination.start:end]
         else:
-            records = get_paged_repeat_records(
+            records = SQLRepeatRecord.objects.page(
                 self.domain,
                 self.pagination.start,
                 self.pagination.count,

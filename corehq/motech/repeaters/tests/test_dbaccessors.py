@@ -8,7 +8,6 @@ from corehq.motech.repeaters.dbaccessors import (
     get_cancelled_repeat_record_count,
     get_domains_that_have_repeat_records,
     get_failure_repeat_record_count,
-    get_paged_repeat_records,
     get_pending_repeat_record_count,
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
@@ -16,7 +15,7 @@ from corehq.motech.repeaters.dbaccessors import (
     iter_repeat_records_by_domain,
     iterate_repeat_record_ids,
 )
-from corehq.motech.repeaters.models import ConnectionSettings, FormRepeater, RepeatRecord
+from corehq.motech.repeaters.models import ConnectionSettings, FormRepeater, RepeatRecord, SQLRepeatRecord
 
 
 class TestRepeatRecordDBAccessors(TestCase):
@@ -144,28 +143,28 @@ class TestRepeatRecordDBAccessors(TestCase):
         count = get_repeat_record_count(self.domain, repeater_id=self.other_id)
         self.assertEqual(count, 1)
 
-    def test_get_paged_repeat_records_with_state_and_no_records(self):
+    def test_get_repeat_record_count_with_state_and_no_records(self):
         count = get_repeat_record_count('wrong-domain', state=RECORD_PENDING_STATE)
         self.assertEqual(count, 0)
 
     def test_get_paged_repeat_records(self):
-        records = get_paged_repeat_records(self.domain, 0, 2)
+        records = SQLRepeatRecord.objects.page(self.domain, 0, 2)
         self.assertEqual(len(records), 2)
 
     def test_get_paged_repeat_records_with_repeater_id(self):
-        records = get_paged_repeat_records(self.domain, 0, 2, repeater_id=self.other_id)
+        records = SQLRepeatRecord.objects.page(self.domain, 0, 2, repeater_id=self.other_id)
         self.assertEqual(len(records), 1)
 
     def test_get_paged_repeat_records_with_state(self):
-        records = get_paged_repeat_records(self.domain, 0, 10, state=RECORD_PENDING_STATE)
+        records = SQLRepeatRecord.objects.page(self.domain, 0, 10, state=RECORD_PENDING_STATE)
         self.assertEqual(len(records), 3)
 
     def test_get_paged_repeat_records_wrong_domain(self):
-        records = get_paged_repeat_records('wrong-domain', 0, 2)
+        records = SQLRepeatRecord.objects.page('wrong-domain', 0, 2)
         self.assertEqual(len(records), 0)
 
     def test_get_all_paged_repeat_records(self):
-        records = get_paged_repeat_records(self.domain, 0, 10)
+        records = SQLRepeatRecord.objects.page(self.domain, 0, 10)
         self.assertEqual(len(records), len(self.records))  # get all the records that were created
 
     def test_iterate_repeat_records(self):

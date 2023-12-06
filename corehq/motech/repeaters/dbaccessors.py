@@ -66,19 +66,6 @@ def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None):
     return kwargs
 
 
-def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
-    from .models import SQLRepeatRecord
-
-    queryset = SQLRepeatRecord.objects.filter(domain=domain)
-    if repeater_id:
-        queryset = queryset.filter(repeater__id=repeater_id)
-    if state is not None:
-        queryset = queryset.filter(state=state)
-    return (queryset.order_by('-registered_at')[skip:skip + limit]
-            .select_related('repeater')
-            .prefetch_related('attempt_set'))
-
-
 def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, chunk_size=1000):
     from .models import RepeatRecord
     kwargs = {

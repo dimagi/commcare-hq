@@ -1348,6 +1348,20 @@ class RepeatRecordManager(models.Manager):
             next_check__lt=datetime.utcnow() - threshold
         ).count()
 
+    def page(self, domain, skip, limit, repeater_id=None, state=None):
+        """Get a page of repeat records
+
+        WARNING this is inefficient for large skip values.
+        """
+        queryset = self.filter(domain=domain)
+        if repeater_id:
+            queryset = queryset.filter(repeater__id=repeater_id)
+        if state is not None:
+            queryset = queryset.filter(state=state)
+        return (queryset.order_by('-registered_at')[skip:skip + limit]
+                .select_related('repeater')
+                .prefetch_related('attempt_set'))
+
 
 class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     domain = models.CharField(max_length=126)
