@@ -1343,7 +1343,7 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     def requeue(self):
         # Changing "success" to "pending" and "cancelled" to "failed"
         # preserves the value of `self.failure_reason`.
-        if self.state == State.Success:
+        if self.state == State.Success or self.state == State.Empty:
             self.state = State.Pending
         elif self.state == State.Cancelled:
             self.state = State.Fail

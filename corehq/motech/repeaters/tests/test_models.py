@@ -25,11 +25,13 @@ from ..const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
+    State,
 )
 from ..models import (
     FormRepeater,
     Repeater,
     RepeatRecord,
+    SQLRepeatRecord,
     format_response,
     get_all_repeater_types,
     is_response,
@@ -628,3 +630,26 @@ class TestCouchRepeatRecordMethods(TestCase):
             domain=cls.domain,
             connection_settings=cls.conn_settings,
         )
+
+
+class TestRepeatRecordMethods(RepeaterTestCase):
+    # TODO combine with TestCouchRepeatRecordMethods after SQL migration
+    model_class = RepeatRecord
+
+    def test_requeue(self):
+        now = datetime.utcnow()
+        record = self.model_class(
+            domain="test",
+            repeater_id=self.repeater.id.hex,
+            payload_id="abc123",
+            state=State.Empty,
+            registered_at=now - timedelta(hours=1),
+        )
+        record.requeue()
+
+        self.assertEqual(record.state, State.Pending)
+        self.assertLessEqual(record.next_check, datetime.utcnow())
+
+
+class TestSQLRepeatRecordMethods(TestRepeatRecordMethods):
+    model_class = SQLRepeatRecord
