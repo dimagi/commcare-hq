@@ -27,7 +27,7 @@ from corehq.apps.accounting.tests.generator import (
 )
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from django.db import transaction
-from corehq.apps.accounting.tests.utils import mocked_stripe_api_decorator
+from corehq.apps.accounting.tests.utils import mocked_stripe_api
 
 
 class TestBillingAutoPay(BaseInvoiceTestCase):
@@ -94,7 +94,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         tasks.calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices_based_on_date(invoice_date)
 
-    @mocked_stripe_api_decorator
+    @mocked_stripe_api()
     @mock.patch.object(StripePaymentMethod, 'customer')
     def test_get_autopayable_invoices(self, fake_customer):
         """
@@ -119,7 +119,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
 
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(stripe.Charge, 'create')
-    @mocked_stripe_api_decorator
+    @mocked_stripe_api()
     def test_pay_autopayable_invoices(self, fake_charge, fake_customer):
         self._create_autopay_method(fake_customer)
         fake_charge.return_value = StripeObject(id='transaction_id')
@@ -143,7 +143,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
 
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(stripe.Charge, 'create')
-    @mocked_stripe_api_decorator
+    @mocked_stripe_api()
     def test_double_charge_is_prevented_and_only_one_payment_record_created(self, fake_charge,
                                                                             fake_customer):
         self._create_autopay_method(fake_customer)
@@ -163,7 +163,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
 
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(stripe.Charge, 'create')
-    @mocked_stripe_api_decorator
+    @mocked_stripe_api()
     def test_when_stripe_fails_no_payment_record_exists(self, fake_create, fake_customer):
         fake_create.side_effect = Exception
         self._create_autopay_method(fake_customer)

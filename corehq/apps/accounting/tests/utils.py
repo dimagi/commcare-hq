@@ -14,7 +14,6 @@ from corehq.apps.accounting.tests.generator import (
     FakeStripeCardManager,
     FakeStripeCustomerManager,
 )
-from functools import wraps
 
 
 class DomainSubscriptionMixin(object):
@@ -65,19 +64,11 @@ class DomainSubscriptionMixin(object):
 
 
 @contextmanager
-def mocked_stripe_api_context(*args, **kwargs):
+def mocked_stripe_api():
     with mock.patch.object(stripe.Customer, 'modify_source') as mock_modify_source, \
          mock.patch.object(stripe.Customer, 'list_sources') as mock_list_sources:
         setup_stripe_common_mocks(mock_list_sources, mock_modify_source)
         yield
-
-
-def mocked_stripe_api_decorator(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        with mocked_stripe_api_context():
-            return func(*args, **kwargs)
-    return wrapper
 
 
 def setup_stripe_common_mocks(mock_list_sources, mock_modify_source):
