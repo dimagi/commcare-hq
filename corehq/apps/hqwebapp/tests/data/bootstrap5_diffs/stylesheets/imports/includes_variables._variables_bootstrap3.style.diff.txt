@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,122 +1,67 @@
+@@ -1,123 +1,68 @@
 -@import "@{b3-import-variables}";
 +/*
 +These are Boostrap 3 variables that were carried over in the
