@@ -128,7 +128,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         var queryResponse = menuResponse.queryResponse;
         if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
-            var queryCollection = new Collection(queryResponse.displays);
+            let queryCollection = new Collection(queryResponse.displays);
+            if (Object.keys(queryResponse.groupHeaders).length > 0) {
+                queryCollection = new Collection(menusUtils.groupDisplays(queryResponse.displays, queryResponse.groupHeaders));
+            }
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 QueryListView({
                     collection: queryCollection,
@@ -140,9 +143,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 }).render()
             );
         } else if (sidebarEnabled && menuResponse.type === "query") {
+            var queryCollection = menuResponse;
+            if (Object.keys(menuResponse.groupHeaders).length < 0) {
+                queryCollection = new Collection(menusUtils.groupDisplays(menuResponse, menuResponse.groupHeaders));
+            }
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 QueryListView({
-                    collection: menuResponse,
+                    collection: queryCollection,
                     title: menuResponse.title,
                     description: menuResponse.description,
                     hasDynamicSearch: menuResponse.dynamicSearch,
@@ -294,6 +301,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     return {
         selectDetail: selectDetail,
         selectMenu: selectMenu,
-        showMenu: showMenu,
+        showMenu: showMenu
     };
 });

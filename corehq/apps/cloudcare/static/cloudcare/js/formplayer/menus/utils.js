@@ -7,7 +7,8 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         QueryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views");
+        views = hqImport("cloudcare/js/formplayer/menus/views"),
+        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
 
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
@@ -155,6 +156,34 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         }
     };
 
+    var groupDisplays = function (displays, groupHeaders) {
+        const groupedDisplays = [];
+        let currentGroup = {
+            groupKey: null,
+            groupName: null,
+            displays: [],
+        };
+
+        displays.forEach(display => {
+            const groupKey = typeof display.get === 'function' ?  display.get('groupKey') : display['groupKey'];
+            if (currentGroup.groupKey !== groupKey) {
+                if (currentGroup.groupKey) {
+                    groupedDisplays.push(currentGroup);
+                }
+                currentGroup = {
+                    groupKey: groupKey,
+                    groupName: groupHeaders[groupKey],
+                    displays: [display],
+                };
+            } else {
+                currentGroup.displays.push(display);
+            }
+        });
+        groupedDisplays.push(currentGroup);
+
+        return groupedDisplays;
+    };
+
     var getMenuView = function (menuResponse) {
         var menuData = getMenuData(menuResponse);
         var urlObject = utils.currentUrlToObject();
@@ -175,6 +204,10 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 execute: false,
                 forceManualSearch: false,
             });
+            if (Object.keys(menuResponse.groupHeaders).length > 0) {
+                var groupedDisplays = groupDisplays(menuResponse, menuResponse.groupHeaders);
+                menuData.collection = new Collection(groupedDisplays);
+            }
             return QueryView(menuData);
         } else if (menuResponse.type === "entities") {
             var searchText = urlObject.search;
@@ -205,6 +238,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
     };
 
     return {
+        groupDisplays: groupDisplays,
         getMenuView: getMenuView,
         getMenuData: getMenuData,
         getCaseListView: getCaseListView,
