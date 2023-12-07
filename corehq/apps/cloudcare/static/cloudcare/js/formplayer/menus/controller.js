@@ -144,7 +144,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             );
         } else if (sidebarEnabled && menuResponse.type === "query") {
             var queryCollection = menuResponse;
-            if (Object.keys(menuResponse.groupHeaders).length < 0) {
+            if (Object.keys(menuResponse.groupHeaders).length > 0) {
                 queryCollection = new Collection(menusUtils.groupDisplays(menuResponse, menuResponse.groupHeaders));
             }
             FormplayerFrontend.regions.getRegion('sidebar').show(

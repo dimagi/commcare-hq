@@ -471,9 +471,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         onAttach: function () {
-            const headers = $('.search-query-group-header');
-            headers.on('click', function (e) {
-                const arrow = $(e.target).children('i')
+            const header = $(this.el).find('.search-query-group-header');
+            header.on('click', function (e) {
+                const arrow = $(e.currentTarget).children('i')
                 if (arrow.hasClass('fa-chevron-down')) {
                     arrow.removeClass('fa-chevron-down');
                     arrow.addClass('fa-chevron-up');
@@ -481,7 +481,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     arrow.removeClass('fa-chevron-up');
                     arrow.addClass('fa-chevron-down');
                 }
-                arrow.render();
             });
         },
 
