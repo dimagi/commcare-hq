@@ -1,6 +1,6 @@
 from dev_settings import *
 
-"""####### Database config #######"""
+# ####### Database config #######
 
 USE_PARTITIONED_DATABASE = False
 
@@ -57,12 +57,12 @@ if USE_PARTITIONED_DATABASE:
 # Identify the target type of this running environment
 SERVER_ENVIRONMENT = 'changeme'
 
-"""####### Less/Django Compressor ########"""
+# ####### Less/Django Compressor ########
 
 COMPRESS_ENABLED = False
 COMPRESS_OFFLINE = False
 
-"""####### Misc / HQ-specific Config ########"""
+# ####### Misc / HQ-specific Config ########
 
 # Set to something like "192.168.1.5:8000" (with your IP address) to enable submitting
 # data to your local environment from an android phone.
