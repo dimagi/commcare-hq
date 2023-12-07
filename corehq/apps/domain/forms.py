@@ -577,14 +577,14 @@ class DomainGlobalSettingsForm(forms.Form):
         return self._clean_image(
             'logo',
             self.can_use_custom_logo,
-            _("Logo exceeds {} MB size limit").format(f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}")
+            _("Logo exceeds {} MB size limit").format(upload_size_limit)
         )
 
     def clean_logo_for_system_emails(self):
         return self._clean_image(
             'logo_for_system_emails',
             self.system_emails_logo_enabled,
-            _("Logo for systems emails exceeds {} MB size limit").format(f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT}")
+            _("Logo for systems emails exceeds {} MB size limit").format(upload_size_limit)
         )
 
     def clean_confirmation_link_expiry(self):
