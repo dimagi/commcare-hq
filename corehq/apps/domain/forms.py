@@ -641,16 +641,16 @@ class DomainGlobalSettingsForm(forms.Form):
             elif self.cleaned_data['delete_logo']:
                 domain.delete_attachment(LOGO_ATTACHMENT)
 
-    def _save_logo_for_system_emails(self, domain):
+    def _save_logo_for_system_emails(self, domain_obj):
         logo = self.cleaned_data['logo_for_system_emails']
         if logo:
             image_data = logo.read()
             image = CommCareImage.get_by_data(image_data)
             image.attach_data(image_data, original_filename='logo_for_systems_emails.png')
-            image.add_domain(domain.name)
+            image.add_domain(domain_obj.name)
             image.save()
             LogoForSystemEmailsReference.objects.update_or_create(
-                domain=domain,
+                domain=domain_obj.name,
                 image_id=image._id
             )
 
