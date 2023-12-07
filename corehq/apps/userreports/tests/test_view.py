@@ -464,6 +464,7 @@ class TestSubscribeToDataSource(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.user.delete(deleted_by_domain=cls.domain, deleted_by=None)
         cls.project.delete()
         super().tearDownClass()
 
