@@ -39,12 +39,14 @@
                   data-bind="click: addProperty">
             <i class="fa fa-plus"></i> {% trans "Add Search Property" %}
           </button>
-          <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu">
-            <li data-bind="click: addGroupProperty"><a>{% trans "Add Group" %}</a></li>
-          </ul>
+          {% if app.supports_grouped_case_search_properties %}
+            <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li data-bind="click: addGroupProperty"><a>{% trans "Add Group" %}</a></li>
+            </ul>
+          {% endif %}
         </div>
       </div>
     </div>
