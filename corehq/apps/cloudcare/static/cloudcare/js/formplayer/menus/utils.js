@@ -204,9 +204,11 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 execute: false,
                 forceManualSearch: false,
             });
-            if (Object.keys(menuResponse.groupHeaders).length < 0) {
+            if (Object.keys(menuResponse.groupHeaders).length > 0) {
                 var groupedDisplays = groupDisplays(menuResponse, menuResponse.groupHeaders);
-                menuData.collection = new Collection(groupedDisplays);
+                var displayCollection = new Collection(groupedDisplays);
+                displayCollection.description = menuResponse.description;
+                menuData.collection = displayCollection;
             }
             return QueryView(menuData);
         } else if (menuResponse.type === "entities") {
