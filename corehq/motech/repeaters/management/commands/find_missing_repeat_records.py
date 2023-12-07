@@ -104,8 +104,11 @@ def find_missing_form_repeat_records_for_form(form, domain, repeaters, enddate, 
 
     missing_count = 0
     successful_count = 0
-    repeat_records = SQLRepeatRecord.objects.filter(domain=domain, payload_id=form.get_id)
-    triggered_repeater_ids = [record.repeater_id for record in repeat_records]
+    triggered_repeater_ids = set(
+        SQLRepeatRecord.objects
+        .filter(domain=domain, payload_id=form.get_id)
+        .values_list("repeater_id", flat=True)
+    )
     for repeater in repeaters:
         if not repeater.allowed_to_forward(form):
             continue
@@ -398,19 +401,18 @@ def find_missing_repeat_records_in_domain(domain, repeaters, payload, enddate, s
     NOTE: Assumes the payload passed in was modified since the startdate
     """
     missing_count = 0
-    repeat_records = SQLRepeatRecord.objects.filter(domain=domain, payload_id=payload.get_id)
-    records_since_last_modified_date = [record for record in repeat_records
-                                        if record.registered_on.date() >= payload.last_modified.date()]
-    fired_repeater_ids_and_counts = defaultdict(int)
-    for record in records_since_last_modified_date:
-        fired_repeater_ids_and_counts[record.repeater_id] += 1
+    fired_repeater_ids = set(SQLRepeatRecord.objects.filter(
+        domain=domain,
+        payload_id=payload.get_id,
+        registered_at__gte=payload.last_modified.date(),
+    ).values_list("repeater_id", flat=True))
 
     for repeater in repeaters:
         # if repeater.started_at.date() >= enddate:
         #     # don't count a repeater that was created after the outage
         #     continue
 
-        if fired_repeater_ids_and_counts.get(repeater.repeater_id, 0) > 0:
+        if repeater.repeater_id in fired_repeater_ids:
             # no need to trigger a repeater if it has fired since startdate
             continue
 
