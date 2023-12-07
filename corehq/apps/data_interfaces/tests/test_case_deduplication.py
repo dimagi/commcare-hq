@@ -33,7 +33,7 @@ from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.pillows.xform import get_xform_pillow
+from corehq.pillows.case import get_case_pillow
 from corehq.util.test_utils import flag_enabled, set_parent_case
 
 
@@ -714,10 +714,10 @@ class DeduplicationPillowTest(TestCase):
         cls.domain = 'naboo'
         cls.case_type = 'people'
         cls.factory = CaseFactory(cls.domain)
-        cls.pillow = get_xform_pillow(skip_ucr=True)
+        cls.pillow = get_case_pillow(skip_ucr=True)
 
     def setUp(self):
-        self.kafka_offset = get_topic_offset(topics.FORM_SQL)
+        self.kafka_offset = get_topic_offset(topics.CASE_SQL)
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
     def test_pillow_processes_changes(self, find_duplicate_cases_mock):
@@ -729,7 +729,7 @@ class DeduplicationPillowTest(TestCase):
 
         find_duplicate_cases_mock.return_value = [case1.case_id, case2.case_id]
 
-        new_kafka_sec = get_topic_offset(topics.FORM_SQL)
+        new_kafka_sec = get_topic_offset(topics.CASE_SQL)
         self.pillow.process_changes(since=self.kafka_offset, forever=False)
 
         self._assert_case_duplicate_pair(case1.case_id, [case2.case_id])

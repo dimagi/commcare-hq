@@ -151,9 +151,9 @@
           {% endif %}
           <div id="submit-button" class="form-actions form-group noprint-sub-container" data-bind="visible: showSubmitButton">
             <div data-bind="css: submitClass">
-              <button class="submit btn btn-primary"
-                     type="submit"
-                     data-bind="enable: enableSubmitButton">
+              <button class="submit btn btn-lg btn-primary"
+                      type="submit"
+                      data-bind="enable: enableSubmitButton">
                 <i class="fa fa-spin fa-refresh"
                    data-bind="visible: !enableSubmitButton(){% if environment == "web-apps" %} && erroredQuestions.length != 0{% endif %}"
                 ></i>
