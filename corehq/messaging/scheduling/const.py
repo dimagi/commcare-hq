@@ -38,6 +38,12 @@ ALLOWED_HTML_TAGS = {
     "tbody",
     "tr",
     "td",
+    "html",
+    "head",
+    "meta",
+    "title",
+    "body",
+    "style",
 }
 
 
@@ -52,6 +58,7 @@ ALLOWED_HTML_ATTRIBUTES = {
     'figure': ['style', 'class'],
     'table': ['class', 'role','cellspacing', 'cellpadding', 'border', 'align', 'width'],
     'td': ['valign'],
+    'meta': ['charset', 'name', 'viewport', 'content', 'initial-scale']
 }
 
 ALLOWED_CSS_PROPERTIES = {

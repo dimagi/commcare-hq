@@ -163,6 +163,12 @@ class EmailContent(Content):
                 self.html_message,
                 recipient.get_language_code()
             )
+            # Add extra css added by CKEditor, and inline css styles from template
+            email_css_filepath = os.path.join(
+                "corehq", "messaging", "scheduling", "templates", "scheduling", "rich_text_email_styles.css")
+            with open(email_css_filepath, 'r') as css_file:
+                css_inliner = css_inline.CSSInliner(extra_css=css_file.read())
+            html_message = css_inliner.inline(html_message)
 
         try:
             subject, message, html_message = self.render_subject_and_message(
@@ -192,8 +198,13 @@ class EmailContent(Content):
 
         metrics_counter('commcare.messaging.email.sent', tags={'domain': domain})
         if toggles.RICH_TEXT_EMAILS.enabled(domain) and html_message:
-            self._send_rich_text_email(
-                domain, email_address, subject, message, html_message, logged_subevent)
+            send_html_email_async.delay(
+                subject,
+                email_address,
+                html_message,
+                text_content=message,
+                messaging_event_id=logged_subevent.id,
+                domain=domain)
         else:
             send_mail_async.delay(
                 subject,
@@ -217,29 +228,6 @@ class EmailContent(Content):
         email.save()
 
         email_usage.update_count()
-
-    def _send_rich_text_email(
-            self,
-            domain,
-            email_address,
-            subject,
-            plaintext_message,
-            html_message,
-            logged_subevent
-    ):
-        # Add extra css added by CKEditor, and inline other css styles
-        email_css_filepath = os.path.join(
-            "corehq", "messaging", "scheduling", "templates", "scheduling", "rich_text_email_styles.css")
-        with open(email_css_filepath, 'r') as css_file:
-            css_inliner = css_inline.CSSInliner(extra_css=css_file.read())
-        inlined_message = css_inliner.inline(html_message)
-        send_html_email_async.delay(
-            subject,
-            email_address,
-            inlined_message,
-            text_content=plaintext_message,
-            messaging_event_id=logged_subevent.id,
-            domain=domain)
 
     def get_recipient_email(self, recipient):
         email_address = recipient.get_email()

@@ -28,6 +28,7 @@ from django.utils.translation import gettext_lazy
 
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
+from bs4 import BeautifulSoup
 from couchdbkit import ResourceNotFound
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -461,12 +462,18 @@ class ContentForm(Form):
         html_message = {}
         css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
         for lang, content in self.cleaned_data['html_message'].items():
-            plaintext_message[lang] = strip_tags(content)
+            # remove everything except the body for plaintext
+            soup = BeautifulSoup(content, features='lxml')
+            try:
+                plaintext_message[lang] = soup.find("body").get_text()
+            except AttributeError:
+                plaintext_message[lang] = strip_tags(content)
             html_message[lang] = bleach.clean(
                 content,
                 attributes=ALLOWED_HTML_ATTRIBUTES,
                 tags=ALLOWED_HTML_TAGS,
-                css_sanitizer=css_sanitizer
+                css_sanitizer=css_sanitizer,
+                strip=True,
             )
         return EmailContent(
             subject=self.cleaned_data['subject'],
