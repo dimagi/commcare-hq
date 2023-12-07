@@ -6,7 +6,6 @@ from django.utils.translation import gettext as _
 
 from dateutil.relativedelta import relativedelta
 
-from corehq.apps.users.role_utils import get_custom_roles_for_domain
 from couchforms.analytics import (
     domain_has_submission_in_last_30_days,
     get_first_form_submission_received,
@@ -42,10 +41,12 @@ from corehq.apps.users.dbaccessors import (
     get_web_user_count,
 )
 from corehq.apps.users.models import CouchUser, UserRole
+from corehq.apps.users.role_utils import get_custom_roles_for_domain
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq.motech.repeaters.models import Repeater
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.metrics import metrics_histogram_timer
 from corehq.util.quickcache import quickcache
 
 
@@ -61,7 +62,13 @@ DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
 
 def active_mobile_users(domain, days=30):
-    return _mobile_users(domain, int(days), inactive=False)
+    buckets = (0.1, 1, 5, 10, 30, 60, 120, 60 * 5, 60 * 10, 60 * 15, 60 * 30)
+    with metrics_histogram_timer(
+            'commcare.calculated_properties.mobile_users.timing',
+            buckets,
+            tags={'days': days}
+    ):
+        return _mobile_users(domain, int(days), inactive=False)
 
 
 def inactive_mobile_users(domain, days=30):
