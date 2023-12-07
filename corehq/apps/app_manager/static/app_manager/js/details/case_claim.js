@@ -394,7 +394,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return _.map(
                 _.filter(
                     self.search_properties(),
-                    function (p) { return p.name().length > 0 || p.isGroup; }  // Skip properties where name is blank
+                    function (p) { return p.name().length > 0;}  // Skip properties where name is blank
                 ),
                 function (p) {
                     var ifSupportsValidation = function (val) {
