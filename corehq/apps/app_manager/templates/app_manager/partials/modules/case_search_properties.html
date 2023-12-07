@@ -33,18 +33,19 @@
             {% include "app_manager/partials/modules/case_search_property.html" %}
           </tbody>
         </table>
-        <p>
-          <button type="button"
-                  class="btn btn-default"
-                  data-bind="click: addGroupProperty">
-            <i class="fa fa-plus"></i> {% trans "Add group" %}
-          </button>
+        <div class="btn-group">
           <button type="button"
                   class="btn btn-default"
                   data-bind="click: addProperty">
-            <i class="fa fa-plus"></i> {% trans "Add search property" %}
+            <i class="fa fa-plus"></i> {% trans "Add Search Property" %}
           </button>
-        </p>
+          <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li data-bind="click: addGroupProperty"><a>{% trans "Add Group" %}</a></li>
+          </ul>
+        </div>
       </div>
     </div>
     <div class="panel panel-appmanager">
