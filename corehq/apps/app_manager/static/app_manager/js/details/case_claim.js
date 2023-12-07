@@ -91,7 +91,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             validationTest: '',
             validationText: '',
             isGroup: false,
-            groupKey:'',
+            groupKey: '',
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -366,16 +366,16 @@ hqDefine("app_manager/js/details/case_claim", function () {
         );
 
         self.search_properties.subscribe(function (newProperties) {
-            let groupKey = ''
+            let groupKey = '';
             ko.utils.arrayForEach(newProperties, function (property, index) {
                 if (property.isGroup) {
-                    groupKey = `group_header_${index}`
-                    if (property.name != groupKey){
-                        property.name(groupKey)
+                    groupKey = `group_header_${index}`;
+                    if (property.name !== groupKey) {
+                        property.name(groupKey);
                     }
                 }
-                if(property.groupKey != groupKey) {
-                    property.groupKey = groupKey
+                if (property.groupKey !== groupKey) {
+                    property.groupKey = groupKey;
                 }
             });
         });
@@ -384,7 +384,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             self.search_properties.push(searchPropertyModel({}, saveButton));
         };
         self.addGroupProperty = function () {
-            self.search_properties.push(searchPropertyModel({isGroup:true}, saveButton));
+            self.search_properties.push(searchPropertyModel({isGroup: true}, saveButton));
         };
         self.removeProperty = function (property) {
             self.search_properties.remove(property);
