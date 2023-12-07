@@ -1560,16 +1560,17 @@ def subscribe_to_data_source_changes(request, domain, config_id):
     client_hostname = urlparse(webhook_url).hostname
     connection_settings_name = f"{_('Connection')} - {client_hostname}"
 
-    conn_settings, _ = ConnectionSettings.objects.get_or_create(
-        domain=domain,
-        name=connection_settings_name,
+    conn_settings, _ = ConnectionSettings.objects.update_or_create(
         client_id=request.POST['client_id'],
-        auth_type=OAUTH2_CLIENT,
+        defaults={
+            'domain': domain,
+            'name': connection_settings_name,
+            'auth_type': OAUTH2_CLIENT,
+            'client_secret': request.POST['client_secret'],
+            'url': webhook_url,
+            'token_url': request.POST['token_url'],
+        }
     )
-    conn_settings.client_secret = request.POST['client_secret']
-    conn_settings.url = webhook_url
-    conn_settings.token_url = request.POST['token_url']
-    conn_settings.save()
 
     DataSourceRepeater.objects.create(
         name=f"{client_hostname}_{config_id}",
