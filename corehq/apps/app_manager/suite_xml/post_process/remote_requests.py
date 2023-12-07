@@ -305,13 +305,6 @@ class RemoteRequestFactory(object):
         for prop in prompt_properties:
             text = Text(locale_id=id_strings.search_property_locale(self.module, prop.name))
 
-            if prop.is_group:
-                prompts.append(QueryPromptGroup(**{
-                    'key': prop.name,
-                    'display': Display(text=text)
-                }))
-                continue
-
             if prop.hint:
                 display = Display(
                     text=text,
