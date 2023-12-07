@@ -167,7 +167,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         displays.forEach(display => {
             const groupKey = typeof display.get === 'function' ?  display.get('groupKey') : display['groupKey'];
             if (currentGroup.groupKey !== groupKey) {
-                if (currentGroup.groupKey !== null) {
+                if (currentGroup.groupKey) {
                     groupedDisplays.push(currentGroup);
                 }
                 currentGroup = {
