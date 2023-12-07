@@ -36,6 +36,11 @@
         <p>
           <button type="button"
                   class="btn btn-default"
+                  data-bind="click: addGroupProperty">
+            <i class="fa fa-plus"></i> {% trans "Add group" %}
+          </button>
+          <button type="button"
+                  class="btn btn-default"
                   data-bind="click: addProperty">
             <i class="fa fa-plus"></i> {% trans "Add search property" %}
           </button>
