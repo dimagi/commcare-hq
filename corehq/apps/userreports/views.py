@@ -181,6 +181,8 @@ from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.motech.repeaters.models import DataSourceRepeater
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.const import OAUTH2_CLIENT
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -1548,8 +1550,6 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
 @toggles.SUPERSET_ANALYTICS.required_decorator()
 @api_throttle
 def subscribe_to_data_source_changes(request, domain, config_id):
-    from corehq.motech.models import ConnectionSettings
-    from corehq.motech.const import OAUTH2_CLIENT
     from django.utils.translation import gettext as _
 
     for param in ['webhook_url', 'client_id', 'client_secret', 'token_url']:
