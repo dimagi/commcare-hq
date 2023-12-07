@@ -946,20 +946,13 @@ def _get_linkable_forms_context(module, langs):
             parent_name = ""
             if candidate_module.root_module_id:
                 parent_name = _module_name(candidate_module.root_module) + " > "
-            if is_top_level or is_child_match:
-                linkable_items.append({
-                    'unique_id': candidate_module.unique_id,
-                    'name': parent_name + _module_name(candidate_module),
-                    'auto_link': True,
-                    'allow_manual_linking': False,
-                })
-            else:
-                linkable_items.append({
-                    'unique_id': candidate_module.unique_id,
-                    'name': parent_name + _module_name(candidate_module),
-                    'auto_link': True,
-                    'allow_manual_linking': True,
-                })
+            auto_link = is_top_level or is_child_match
+            linkable_items.append({
+                'unique_id': candidate_module.unique_id,
+                'name': parent_name + _module_name(candidate_module),
+                'auto_link': auto_link,
+                'allow_manual_linking': not auto_link,
+            })
 
         for candidate_form in candidate_module.get_suite_forms():
             # Forms can be linked automatically if their module is the same case type as this module,
@@ -981,7 +974,7 @@ def _get_linkable_forms_context(module, langs):
 def get_form_datums(request, domain, app_id):
     form_id = request.GET.get('form_id')
     try:
-        datums = _get_form_datums(domain, app_id, form_id)
+        datums = _get_form_link_datums(domain, app_id, form_id)
     except Exception:
         notify_exception(request, "Error fetching form datums", details={
             "domain": domain, "app_id": app_id, "form_id": form_id
@@ -990,31 +983,31 @@ def get_form_datums(request, domain, app_id):
     return JsonResponse(datums, safe=False)
 
 
-def _get_form_datums(domain, app_id, form_id):
+def _get_form_link_datums(domain, app_id, form_id):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     app = get_app(domain, app_id)
+    helper = EntriesHelper(app)
 
     try:
-        module_id, form_id = form_id.split('.')
-    except ValueError:
-        raise Http400
-
-    try:
+        if '.' in form_id:
+            module_id, form_id = form_id.split('.')
+            form = app.get_form(form_id)
+        else:
+            module_id = form_id
+            form = None
         module = app.get_module_by_unique_id(module_id)
-        form = app.get_form(form_id)
     except (ModuleNotFoundException, FormNotFoundException) as e:
         raise Http404(str(e))
 
-    def make_datum(datum):
-        return {'name': datum.id, 'case_type': datum.case_type}
+    if form:
+        datums = helper.get_datums_meta_for_form_generic(form, module)
+    else:
+        datums = helper.get_datum_meta_module(module)
 
-    helper = EntriesHelper(app)
-    datums = [
-        make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form, module)
-        if datum.requires_selection
+    return [
+        {'name': datum.id, 'case_type': datum.case_type}
+        for datum in datums if datum.requires_selection
     ]
-    return datums
-
 
 @require_GET
 @require_deploy_apps
