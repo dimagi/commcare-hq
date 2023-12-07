@@ -537,6 +537,17 @@ class ModuleBaseValidator(object):
                             "details": search_config.get_instance_name()
                         }
 
+            contains_ungrouped_properties = any(not prop.group_key for prop in search_config.properties)
+            contains_grouping_property = any(prop.is_group for prop in search_config.properties)
+            if contains_ungrouped_properties and contains_grouping_property:
+                for prop in search_config.properties:
+                    if not prop.group_key:
+                        yield {
+                            "type": "invalid grouping from ungrouped search property",
+                            "module": self.get_module_info(),
+                            'property': prop.name,
+                        }
+
     def validate_case_list_field_actions(self):
         if hasattr(self.module, 'case_details'):
             columns = [column for column in self.module.case_details.short.columns if column.endpoint_action_id]
