@@ -141,7 +141,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         # Keys for idempotent requests can only be used with the same parameters they were first used with.
         # So introduce randomness in idempotency key to avoid clashes
         for line_item in invoice.lineitem_set.all():
-            line_item.unit_cost = Decimal(random.randint(1, 50))
+            line_item.unit_cost = Decimal(random.randint(1, 10000))
             line_item.save()
         invoice.update_balance()
         invoice.save()
