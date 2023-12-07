@@ -649,10 +649,9 @@ class DomainGlobalSettingsForm(forms.Form):
             image.attach_data(image_data, original_filename='logo_for_systems_emails.png')
             image.add_domain(domain_obj.name)
             image.save()
-            LogoForSystemEmailsReference.objects.update_or_create(
-                domain=domain_obj.name,
-                image_id=image._id
-            )
+            ref, created = LogoForSystemEmailsReference.objects.get_or_create(domain=domain_obj.name)
+            ref.image_id = image._id
+            ref.save()
 
     def _save_call_center_configuration(self, domain):
         cc_config = domain.call_center_config
