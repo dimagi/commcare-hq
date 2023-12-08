@@ -742,7 +742,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const self = this;
             $(document).ready( function () {
                 const count = $('input.query-field').length;
-                if (count === 1) {
+                if (count < 1) {
                     self.options.sidebarEnabled = false;
                     $('#sidebar-region').remove();
                     $('#menu-region').css('margin-left', '0px');
