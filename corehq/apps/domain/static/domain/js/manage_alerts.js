@@ -13,7 +13,9 @@ hqDefine("domain/js/manage_alerts",[
     var alertsViewModel = function () {
         var self = {};
 
-        const activeAlerts = initialPageData.get('alerts').filter((alert) => {return alert.active});
+        const activeAlerts = initialPageData.get('alerts').filter((alert) => {
+            return alert.active;
+        });
         var totalActiveAlerts = activeAlerts.length;
 
         var alerts = [];
