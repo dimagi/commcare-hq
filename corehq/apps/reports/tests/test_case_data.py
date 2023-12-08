@@ -21,7 +21,6 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.reports.standard.cases.case_data import (
     _get_case_property_tables,
     get_case_and_display_data,
-    format_case_data_for_display,
     get_cases_and_forms_for_deletion,
     soft_delete_cases_and_forms,
     MAX_CASE_COUNT,
@@ -235,14 +234,14 @@ class TestCaseDeletion(TestCase):
     def test_case_walk_returns_right_number_of_cases(self):
         case_id = self.make_complex_case()
         case = CommCareCase.objects.get_case(case_id, self.domain)
-        case_data, _ = get_case_and_display_data(case, self.domain)
+        case_data = get_case_and_display_data(case, self.domain)
 
         self.assertEqual(len(case_data['case_delete_list']), 5)
 
     def test_case_walk_returns_right_number_of_forms(self):
         case_id = self.make_complex_case()
         case = CommCareCase.objects.get_case(case_id, self.domain)
-        case_data, _ = get_case_and_display_data(case, self.domain)
+        case_data = get_case_and_display_data(case, self.domain)
 
         self.assertEqual(len(case_data['form_delete_list']), 4)
 
@@ -254,7 +253,7 @@ class TestCaseDeletion(TestCase):
         """
         case_id = self.make_complex_case()
         case = CommCareCase.objects.get_case(case_id, self.domain)
-        case_data, _ = get_case_and_display_data(case, self.domain)
+        case_data = get_case_and_display_data(case, self.domain)
 
         for form in case_data['form_delete_list']:
             self.assertTrue(archive_form(self.request, self.domain, form, is_case_delete=True))
@@ -262,47 +261,16 @@ class TestCaseDeletion(TestCase):
     def test_case_walk_returns_right_number_of_affected_cases(self):
         main_case_id, _ = self.make_affected_case()
         case = CommCareCase.objects.get_case(main_case_id, self.domain)
-        _, raw_display_data = get_case_and_display_data(case, self.domain)
+        case_data = get_case_and_display_data(case, self.domain)
 
-        self.assertEqual(len(raw_display_data['affected_cases']), 1)
+        self.assertEqual(len(case_data['affected_cases']), 1)
 
     def test_case_walk_returns_right_number_of_reopened_cases(self):
         main_case_id, _ = self.make_closed_case()
         case = CommCareCase.objects.get_case(main_case_id, self.domain)
-        _, raw_display_data = get_case_and_display_data(case, self.domain)
+        case_data = get_case_and_display_data(case, self.domain)
 
-        self.assertEqual(len(raw_display_data['reopened_cases']), 1)
-
-    def test_delete_dict_formatted_correctly(self):
-        case_id = self.make_simple_case()
-        case = CommCareCase.objects.get_case(case_id, self.domain)
-        _, raw_display_data = get_case_and_display_data(case, self.domain)
-        prepared_display_data = format_case_data_for_display(raw_display_data, self.domain)
-
-        for case in prepared_display_data['delete_cases']:
-            for form in prepared_display_data['delete_cases'][case]:
-                self.assertIn(prepared_display_data['delete_cases'][case][form],
-                              ({'current': 'create'}, {'current': 'update'}))
-
-    def test_affected_dict_formatted_correctly(self):
-        case_id, other_case_id = self.make_affected_case()
-        case = CommCareCase.objects.get_case(case_id, self.domain)
-        _, raw_display_data = get_case_and_display_data(case, self.domain)
-        prepared_display_data = format_case_data_for_display(raw_display_data, self.domain)
-
-        for case in prepared_display_data['affected_cases']:
-            for form in prepared_display_data['affected_cases'][case]:
-                self.assertEqual(prepared_display_data['affected_cases'][case][form], 'update')
-
-    def test_reopened_dict_formatted_correctly(self):
-        case_id, other_case_id = self.make_closed_case()
-        case = CommCareCase.objects.get_case(case_id, self.domain)
-        _, raw_display_data = get_case_and_display_data(case, self.domain)
-        prepared_display_data = format_case_data_for_display(raw_display_data, self.domain)
-
-        self.assertTrue(prepared_display_data['reopened_cases'][
-                        '<a href="/a/test-domain/reports/case_data/{}/">  </a>'.format(other_case_id)
-                        ].startswith('<a href="/a/test-domain/reports/form_data/'))
+        self.assertEqual(len(case_data['reopened_cases']), 1)
 
     # Testing deletion
     def test_delete_case(self):

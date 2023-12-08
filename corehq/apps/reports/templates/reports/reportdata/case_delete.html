@@ -24,28 +24,32 @@
       The following Cases and their Form Submissions will be deleted:
     {% endblocktrans %}
     <ul>
-      {% for case_link, forms in delete_cases.items %}
+      {% for case in delete_cases %}
         <li>
-          <h4><i class="fa fa-list-alt"></i><strong>{{ case_link }}</strong></h4>
-            <ul class="list-group">
-              {% for form_link, form_actions in forms.items %}
+          <h4><i class="fa fa-list-alt"></i><strong><a href="{{ case.url }}"> {{ case.name }} </a></strong>
+            {% if case.is_primary %}
+              <span class="label label-default">primary case</span>
+            {% endif %}
+          </h4>
+          <ul class="list-group">
+            {% for form in case.delete_forms %}
               <li class="list-group-item">
-                <h5><i class="fa fa-file"></i>{{ form_link }}</h5>
+                <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name }} </a></h5>
                 Actions taken by this form on:
                 <ul>
-                  {% for case_name, actions in form_actions.items %}
+                  {% for case in form.affected_cases %}
                     <li>
-                      {% if case_name == 'current' %}
-                        This case: {{ actions }}
+                      {% if case.is_current_case %}
+                        This case: {{ case.actions }}
                       {% else %}
-                        Related case: <strong>{{ case_name }}</strong>: {{ actions }}
+                        Related case: <strong>{{ case.case_name }}</strong>: {{ case.actions }}
                       {% endif %}
                     </li>
                   {% endfor %}
                 </ul>
               </li>
-              {% endfor %}
-            </ul>
+            {% endfor %}
+          </ul>
         </li>
       {% endfor %}
     </ul>
@@ -56,14 +60,14 @@
         taken by that form, on the case. These cases will <strong>not</strong> be deleted.
       {% endblocktrans %}
       <ol>
-        {% for case_link, forms in affected_cases.items %}
+        {% for cases in affected_cases %}
           <li>
-            <h5><strong>{{ case_link }}</strong></h5>
+            <h5><strong><a href="{{ case.url }}"> {{ case.name }} </a></strong></h5>
             <ul>
-              {% for form_link, form_actions in forms.items %}
+              {% for form in case.affected_forms %}
                 <li>
                   <i class="fa fa-file"> </i>
-                  {{ form_link }} ({{ form_actions }})
+                  <a href="{{ form.url }}"> {{ form.name }} </a> ({{ form.actions }})
                 </li>
               {% endfor %}
             </ul>
@@ -77,9 +81,10 @@
         The following Cases will be reopened but <strong>not</strong> deleted.
       {% endblocktrans %}
       <ol>
-      {% for case_link, form_link in reopened_cases.items %}
+      {% for case in reopened_cases %}
         <li>
-          <h5><strong>{{ case_link }}</strong></h5> Closed by: {{ form_link }}
+          <h5><strong><a href="{{ case.url }}"> {{ case.name }} </a></strong></h5>
+          Closed by: ><a href="{{ form.url }}"> {{ form.name }} </a>
         </li>
       {% endfor %}
       </ol>
@@ -87,7 +92,7 @@
     </br>
     <div class="clearfix form-actions">
       <div class="col-sm-12">
-        <a class="btn btn-default pull-left" href="{% url 'case_data' domain case_id %}">
+        <a class="btn btn-default pull-left" href="{% url 'case_data' domain main_case_id %}">
           {% trans 'Cancel' %}
         </a>
         <button class="btn btn-danger" data-toggle="modal" data-target="#delete_case_confirmation">
