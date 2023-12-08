@@ -60,6 +60,8 @@ from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
 
+MAX_ACTIVE_ALERTS = 3
+
 
 class BaseProjectSettingsView(BaseDomainView):
     section_name = gettext_lazy("Project Settings")
@@ -611,6 +613,10 @@ def _load_alert(alert_id, domain):
 
 def _apply_update(request, alert):
     command = request.POST.get('command')
+    if command == "activate" and len(Alert.get_active_alerts()) >= MAX_ACTIVE_ALERTS:
+        messages.error(request, _("Only 3 active alerts allowed!"))
+        return
+
     if command in ['activate', 'deactivate']:
         _update_alert(alert, command)
         messages.success(request, _("Alert updated!"))
