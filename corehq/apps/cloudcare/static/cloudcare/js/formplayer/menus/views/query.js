@@ -489,6 +489,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 groupName: this.options.groupName,
                 groupKey: this.options.groupKey,
                 required: this.options.required,
+                named: this.options.groupName.length > 0,
             };
         },
     });

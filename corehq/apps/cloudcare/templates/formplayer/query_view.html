@@ -41,12 +41,14 @@
 </script>
 
 <script type="text/template" id="query-view-group-template">
-  <td style="background: #f2f2f1;">
+  <td class="search-query-group">
+    <% if (named) { %>
     <div class="search-query-group-header <% if (required) { %> required<% } %>" data-toggle="collapse" data-target="#group-<%- groupKey %>" aria-expanded="true" aria-controls="group-<%- groupKey %>">
       <label class="search-query-group-header-label"><%- groupName %></label><i class="fa fa-chevron-down pull-right"></i>
     </div>
+    <% } %>
     <div id="group-<%- groupKey %>" class="in">
-      <table  class="table" role="presentation" style="border-collapse: separate; margin-bottom: 0px;">
+      <table class="table" role="presentation">
         <tbody id="query-group-content">
         </tbody>
       </table>
