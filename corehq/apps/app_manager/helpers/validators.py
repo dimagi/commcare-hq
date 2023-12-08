@@ -547,7 +547,7 @@ class ModuleBaseValidator(object):
                         yield {
                             "type": "invalid grouping from ungrouped search property",
                             "module": self.get_module_info(),
-                            'property': prop.name,
+                            "property": prop.name,
                         }
 
     def validate_case_list_field_actions(self):
