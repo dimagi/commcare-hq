@@ -474,12 +474,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             const header = $(this.el).find('.search-query-group-header');
             header.on('click', function (e) {
                 const arrow = $(e.currentTarget).children('i')
-                if (arrow.hasClass('fa-chevron-down')) {
-                    arrow.removeClass('fa-chevron-down');
-                    arrow.addClass('fa-chevron-up');
+                if (arrow.hasClass('fa-angle-double-down')) {
+                    arrow.removeClass('fa-angle-double-down');
+                    arrow.addClass('fa-angle-double-up');
                 } else {
-                    arrow.removeClass('fa-chevron-up');
-                    arrow.addClass('fa-chevron-down');
+                    arrow.removeClass('fa-angle-double-up');
+                    arrow.addClass('fa-angle-double-down');
                 }
             });
         },
@@ -549,6 +549,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 title: this.options.title.trim(),
                 description: DOMPurify.sanitize(description),
                 sidebarEnabled: this.options.sidebarEnabled,
+                grouped: Boolean(this.collection.find(c => c.has("groupKey")))
             };
         },
 

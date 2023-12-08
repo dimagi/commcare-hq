@@ -26,7 +26,7 @@
       </div>
     <% } %>
     <table class="table table-hover" role="presentation">
-      <tbody id="query-properties">
+      <tbody id="query-properties" class="<% if (!sidebarEnabled && grouped) { %>bg-white<%} %>">
       </tbody>
     </table>
     <% if (!sidebarEnabled) {%>
@@ -44,11 +44,12 @@
   <td class="search-query-group">
     <% if (named) { %>
     <div class="search-query-group-header <% if (required) { %> required<% } %>" data-toggle="collapse" data-target="#group-<%- groupKey %>" aria-expanded="true" aria-controls="group-<%- groupKey %>">
-      <label class="search-query-group-header-label"><%- groupName %></label><i class="fa fa-chevron-down pull-right"></i>
+      <label class="search-query-group-header-label"><%- groupName %></label>
+      <i class="fa fa-angle-double-down pull-right" style="font-size: larger"></i>
     </div>
     <% } %>
     <div id="group-<%- groupKey %>" class="in">
-      <table class="table" role="presentation">
+      <table class="table table-hover" role="presentation">
         <tbody id="query-group-content">
         </tbody>
       </table>
