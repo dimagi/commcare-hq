@@ -54,14 +54,14 @@
                         class="btn btn-primary"
                         name="command"
                         value="activate"
-                        data-bind="visible: !active">
+                        data-bind="visible: !active, disable: isDisabled">
                   <span>{% trans "Activate Alert" %}</span>
                 </button>
                 <button type="submit"
                         class="btn btn-outline-danger"
                         name="command"
                         value="deactivate"
-                        data-bind="visible: active">
+                        data-bind="visible: active, disable: isDisabled">
                   {% trans "De-activate Alert" %}
                 </button>
               </form>
