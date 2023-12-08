@@ -8,12 +8,12 @@ hqDefine("domain/js/manage_alerts",[
         var self = alertData;
         self.isDisabled = disabled;
         return self;
-    }
+    };
 
-    var alertsViewModel = function() {
+    var alertsViewModel = function () {
         var self = {};
 
-        var totalActiveAlerts = 0
+        var totalActiveAlerts = 0;
         initialPageData.get('alerts').forEach(function (alert) {
             if (alert.active) {
                 totalActiveAlerts += 1;
@@ -22,7 +22,7 @@ hqDefine("domain/js/manage_alerts",[
 
         var alerts = [];
         initialPageData.get('alerts').forEach(function (alert) {
-            disabled = false;
+            var disabled = false;
             if (totalActiveAlerts >= 3 && !alert.active) {
                 disabled = true;
             }
@@ -32,7 +32,7 @@ hqDefine("domain/js/manage_alerts",[
         });
         self.alerts = ko.observable(alerts);
         return self;
-    }
+    };
 
     $(function () {
         $('#ko-alert-container').koApplyBindings(
