@@ -13,12 +13,8 @@ hqDefine("domain/js/manage_alerts",[
     var alertsViewModel = function () {
         var self = {};
 
-        var totalActiveAlerts = 0;
-        initialPageData.get('alerts').forEach(function (alert) {
-            if (alert.active) {
-                totalActiveAlerts += 1;
-            }
-        });
+        const activeAlerts = initialPageData.get('alerts').filter((alert) => {return alert.active});
+        var totalActiveAlerts = activeAlerts.length;
 
         var alerts = [];
         initialPageData.get('alerts').forEach(function (alert) {
