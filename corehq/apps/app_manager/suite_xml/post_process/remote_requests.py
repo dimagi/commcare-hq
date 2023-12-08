@@ -366,12 +366,11 @@ class RemoteRequestFactory(object):
         prompts = []
         prompt_group_properties = [prop for prop in self.module.search_config.properties if prop.is_group]
         for prop in prompt_group_properties:
-            if prop.is_group:
-                text = Text(locale_id=id_strings.search_property_locale(self.module, prop.group_key))
-                prompts.append(QueryPromptGroup(**{
-                    'key': prop.group_key,
-                    'display': Display(text=text)
-                }))
+            text = Text(locale_id=id_strings.search_property_locale(self.module, prop.group_key))
+            prompts.append(QueryPromptGroup(**{
+                'key': prop.group_key,
+                'display': Display(text=text)
+            }))
         return prompts
 
     def build_stack(self):
