@@ -156,16 +156,21 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         }
     };
 
+    var myGet = function (obj, fieldName) {
+        return typeof obj.get === 'function' ?  obj.get(fieldName) : obj[fieldName];
+    }
+
     var groupDisplays = function (displays, groupHeaders) {
         const groupedDisplays = [];
         let currentGroup = {
             groupKey: null,
             groupName: null,
             displays: [],
+            required: false,
         };
 
         displays.forEach(display => {
-            const groupKey = typeof display.get === 'function' ?  display.get('groupKey') : display['groupKey'];
+            const groupKey = myGet(display, 'groupKey');
             if (currentGroup.groupKey !== groupKey) {
                 if (currentGroup.groupKey) {
                     groupedDisplays.push(currentGroup);
@@ -174,9 +179,11 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                     groupKey: groupKey,
                     groupName: groupHeaders[groupKey],
                     displays: [display],
+                    required: myGet(display, 'required'),
                 };
             } else {
                 currentGroup.displays.push(display);
+                currentGroup.required = currentGroup.required || myGet(display, 'required');
             }
         });
         groupedDisplays.push(currentGroup);

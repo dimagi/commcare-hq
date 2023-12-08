@@ -488,6 +488,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return {
                 groupName: this.options.groupName,
                 groupKey: this.options.groupKey,
+                required: this.options.required,
             };
         },
     });
@@ -513,6 +514,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                         collection: childList,
                         groupName: child.get('groupName'),
                         groupKey: child.get('groupKey'),
+                        required: child.get('required'),
                     },
                     childViewOptions
                 );
