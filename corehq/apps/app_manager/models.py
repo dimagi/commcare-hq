@@ -1048,6 +1048,9 @@ class FormBase(DocumentSchema):
     # computed datums IDs that are allowed in endpoints
     function_datum_endpoints = StringListProperty()
 
+    submit_label = DictProperty(default={})
+    submit_notification_label = DictProperty(default={})
+
     def __repr__(self):
         return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
 
