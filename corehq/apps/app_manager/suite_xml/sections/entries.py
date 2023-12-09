@@ -46,6 +46,7 @@ from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_subcase,
 )
 from corehq.apps.app_manager.xpath import (
+    CaseClaimXpath,
     CaseIDXPath,
     ItemListFixtureXpath,
     ProductInstanceXpath,
@@ -266,6 +267,7 @@ class EntriesHelper(object):
                 data.ref = QuerySessionXPath(case_datum_id).instance()
                 data.exclude = CaseIDXPath(data.ref).case().count().neq(0)
                 e.post.data.append(data)
+            e.post.relevant = CaseClaimXpath.multi_select_relevant()
 
     def entry_for_module(self, module):
         # avoid circular dependency
