@@ -460,7 +460,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                   </text>
                 </title>
                 <data key="case_type" ref="'case'"/>
-                <data key="_xpath_query" ref="ancestor-exists(parent, @case_type='parent_case')"/>
+                <data key="_xpath_query" ref="&quot;ancestor-exists(parent, @case_type='parent_case')&quot;"/>
                 <prompt key="name">
                   <display>
                     <text>
@@ -655,7 +655,7 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
                   </text>
                 </title>
                 <data key="case_type" ref="'child_case'"/>
-                <data key="_xpath_query" ref="ancestor-exists(parent, @case_type='case')"/>
+                <data key="_xpath_query" ref="&quot;ancestor-exists(parent, @case_type='case')&quot;"/>
                 <prompt key="name">
                   <display>
                     <text>
