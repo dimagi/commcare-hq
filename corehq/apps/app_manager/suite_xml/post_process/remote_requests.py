@@ -155,7 +155,8 @@ class RemoteRequestFactory(object):
                 data.exclude = self._get_multi_select_exclude()
         else:
             data.ref = QuerySessionXPath(self.case_session_var).instance()
-            if not self.exclude_relevant:
+            if (not self.exclude_relevant
+            and module_uses_inline_search_with_parent_relationship_parent_select(self.module)):
                 data.exclude = CaseIDXPath(data.ref).case().count().neq(0)
         return data
 
