@@ -570,6 +570,14 @@ class QueryPrompt(DisplayNode):
 
     itemset = NodeField('itemset', Itemset)
 
+    group_key = StringField('@group_key', required=False)
+
+
+class QueryPromptGroup(DisplayNode):
+    ROOT_NAME = 'group'
+
+    key = StringField('@key')
+
 
 class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'query'
@@ -582,6 +590,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     description = NodeField('description', DisplayNode)
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
+    prompt_groups = NodeListField('group', QueryPromptGroup)
     default_search = BooleanField("@default_search")
     dynamic_search = BooleanField("@dynamic_search")
 
