@@ -2118,6 +2118,9 @@ class CaseSearchProperty(DocumentSchema):
     receiver_expression = StringProperty(exclude_if_none=True)
     itemset = SchemaProperty(Itemset)
 
+    is_group = BooleanProperty(default=False)
+    group_key = StringProperty(exclude_if_none=True)
+
 
 class DefaultCaseSearchProperty(DocumentSchema):
     """Case Properties with fixed value to search on"""
