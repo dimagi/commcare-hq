@@ -191,22 +191,14 @@
               {% blocktrans with module_name=error.module.name|trans:langs %}
               The case list in <a href="{{ module_url }}">{{ module_name }}</a> can not use the same "search input instance name" as its Parent Menu.
               {% endblocktrans %}
+            {% case "non-unique instance name with parent select module" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+              The case list in <a href="{{ module_url }}">{{ module_name }}</a> can not use the same "search input instance name" as its Parent Select Menu.
+              {% endblocktrans %}
             {% case "inline search to display only forms" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 uses "Display only forms" and is also configured with
-                "make search input available after search". This workflow is unsupported.
-              {% endblocktrans %}
-            {% case "parent select is inline search module" %}
-              {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                uses parent case selection but parent case list is using
-                "make search input available after search". This workflow is unsupported.
-              {% endblocktrans %}
-            {% case "inline search parent select relationship" %}
-              {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                uses parent case selection and is configured with
                 "make search input available after search". This workflow is unsupported.
               {% endblocktrans %}
             {% case "circular case hierarchy" %}
