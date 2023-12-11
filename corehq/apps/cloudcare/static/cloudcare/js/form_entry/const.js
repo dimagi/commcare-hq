@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         REPEAT_TYPE: 'repeat-juncture',
         QUESTION_TYPE: 'question',
         GROUPED_QUESTION_TILE_ROW_TYPE: 'grouped-question-tile-row',
+        GROUPED_GROUP_TILE_ROW_TYPE: 'grouped-group-tile-row',
 
         // Entry types
         STRING: 'str',

@@ -171,7 +171,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var self = this;
 
         if (!json.type) {
-            Container.groupQuestions(json);
+            Container.groupElements(json, constants.QUESTION_TYPE);
+            Container.groupElements(json, constants.GROUP_TYPE);
         }
 
         var mapping = {
@@ -192,7 +193,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 create: function (options) {
                     if (options.data.type === constants.GROUPED_QUESTION_TILE_ROW_TYPE) {
                         return new GroupedQuestionTileRow(options.data, self);
-                    } else if (options.data.type === constants.QUESTION_TYPE) {
+                    } else  if (options.data.type === constants.GROUPED_GROUP_TILE_ROW_TYPE) {
+                        return new GroupedGroupTileRow(options.data, self);
+                    }else if (options.data.type === constants.QUESTION_TYPE) {
                         return new Question(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
                         return new Group(options.data, self);
@@ -272,17 +275,17 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     /**
-     * Recursively groups sequential "question" items in a nested JSON structure.
+     * Recursively groups sequential "question" or "group" items in a nested JSON structure.
      *
-     * This function takes a JSON object as input and searches for sequential "question"
+     * This function takes a JSON object as input and searches for sequential "question" or "group"
      * items within the 'children' arrays of the input and its nested 'group' objects.
-     * It groups these sequential "question" items into "GroupedQuestionTileRow" objects while
-     * maintaining the original structure of the JSON.
+     * It groups these sequential "question" items into "GroupedQuestionTileRow" and "group"
+     * items into "GroupedGroupTileRow" objects while maintaining the original structure of the JSON.
      *
      * @param {Object} json - The JSON object to process, containing 'children' arrays.
      * @returns {Object} - A new JSON object with sequential "question" items grouped into "GroupedQuestionTileRow".
      */
-    Container.groupQuestions = function (json) {
+    Container.groupElements= function (json, elementType) {
         if (!json || !json.children || !Array.isArray(json.children)) {
             return json;
         }
@@ -312,22 +315,52 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             usedWidth = 0;
         }
 
-        for (let child of json.children) {
-            if (child.type === constants.QUESTION_TYPE) {
-                const questionTileWidth = Question.calculateColumnWidthForPerRowStyle(child.style);
+        function pushChildAndResetGroup(child) {
+            newChildren.push(child);
+            resetCurrentGroup();
+        }
+
+        function groupElementsAndResetGroup(child) {
+            const newGroup = Container.groupElements(child, elementType);
+            newChildren.push(newGroup);
+            resetCurrentGroup();
+        }
+
+        function addToGroupForAllowedWidth(child) {
+            const questionTileWidth = Question.calculateColumnWidthForPerRowStyle(child.style);
+            usedWidth += questionTileWidth;
+            if (usedWidth > constants.GRID_COLUMNS) {
+                resetCurrentGroup();
                 usedWidth += questionTileWidth;
-                if (usedWidth > constants.GRID_COLUMNS) {
-                    resetCurrentGroup();
-                    usedWidth += questionTileWidth;
-                }
-                addToCurrentGroup(child);
+            }
+            addToCurrentGroup(child);
+        }
+
+        function processChildForGroupingQuestions(child, usedWidth, currentGroup, newChildren) {
+            if (child.type === constants.QUESTION_TYPE) {
+                addToGroupForAllowedWidth(child);
             } else if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
-                const newGroup = Container.groupQuestions(child);
-                newChildren.push(newGroup);
-                resetCurrentGroup();
+                groupElementsAndResetGroup(child);
             } else {
-                newChildren.push(child);
-                resetCurrentGroup();
+                pushChildAndResetGroup(child);
+            }
+        }
+
+        function processChildForGroupingGroups(child, usedWidth, currentGroup, newChildren) {
+            if (child.type === constants.GROUP_TYPE) {
+                addToGroupForAllowedWidth(child);
+            } else if (child.type === constants.REPEAT_TYPE) {
+                groupElementsAndResetGroup(child);
+            } else {
+                pushChildAndResetGroup(child);
+            }
+        }
+
+        for (let child of json.children) {
+            if (elementType === constants.QUESTION_TYPE) {
+                processChildForGroupingQuestions(child, usedWidth, currentGroup, newChildren);
+            } else if (elementType === constants.GROUP_TYPE) {
+                processChildForGroupingGroups(child, usedWidth, currentGroup, newChildren);
             }
         }
         resetCurrentGroup();
@@ -717,6 +750,23 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     }
     GroupedQuestionTileRow.prototype = Object.create(Container.prototype);
     GroupedQuestionTileRow.prototype.constructor = Container;
+
+
+    function GroupedGroupTileRow(json, parent) {
+        var self = this;
+        self.parent = parent;
+        Container.call(self, json);
+
+        self.required = ko.observable(0);
+        self.childrenRequired = ko.computed(function () {
+            return _.find(self.children(), function (child) {
+                return child.required();
+            });
+        });
+    }
+    GroupedGroupTileRow.prototype = Object.create(Container.prototype);
+    GroupedGroupTileRow.prototype.constructor = Container;
+
 
     /**
      * Represents a Question. A Question contains an Entry which is the widget that is displayed for that question
