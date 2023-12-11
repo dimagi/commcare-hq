@@ -261,7 +261,7 @@ class EntriesHelper(object):
         e.post = remote_request_factory.build_remote_request_post()
         if module_uses_inline_search_with_parent_relationship_parent_select(module):
             case_datum_ids = [form_datum.datum.id for form_datum in self.get_case_datums_basic_module(module, form)
-                     if form_datum.datum.id != case_session_var]
+                     if (form_datum.datum.id != case_session_var and not form_datum.is_new_case_id)]
             for case_datum_id in case_datum_ids:
                 data = QueryData(key='case_id')
                 data.ref = QuerySessionXPath(case_datum_id).instance()
