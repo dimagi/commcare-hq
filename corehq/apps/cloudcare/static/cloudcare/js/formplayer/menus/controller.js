@@ -130,7 +130,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
             let queryCollection = new Collection(queryResponse.displays);
             if (Object.keys(queryResponse.groupHeaders).length > 0) {
-                queryCollection = new Collection(menusUtils.groupDisplays(queryResponse.displays, queryResponse.groupHeaders));
+                queryCollection = new Collection(menusUtils.groupDisplays(new Collection(queryResponse.displays), queryResponse.groupHeaders));
             }
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 QueryListView({
