@@ -193,7 +193,11 @@ class SQLUserData(models.Model):
 
 
 def prime_user_data_caches(users, domain):
-    """Lookup and prime caches of user data in chunks"""
+    """
+    Enriches a set of users by looking up and priming user data caches in
+    chunks, for use in bulk workflows.
+    :return: generator that yields the enriched user objects
+    """
     for chunk in chunked(users, 100):
         user_ids = [user.user_id for user in chunk]
         sql_data_by_user_id = {
