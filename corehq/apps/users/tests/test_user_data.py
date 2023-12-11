@@ -150,7 +150,7 @@ class TestUserData(TestCase):
         for user in users:
             user._user_data_accessors = {}  # wipe cache
         with patch('corehq.apps.users.user_data.UserData.lazy_init') as lazy_init:
-            prime_user_data_caches(users, self.domain)
+            users = prime_user_data_caches(users, self.domain)
             for user in users:
                 user.get_user_data(self.domain)
             self.assertEqual(lazy_init.call_count, 0)

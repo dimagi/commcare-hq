@@ -28,9 +28,8 @@ class UserQuerySetAdapter(object):
         if isinstance(item, slice):
             limit = item.stop - item.start
             result = self._query.size(limit).start(item.start).run()
-            users = [WrappedUser.wrap(user) for user in result.hits]
-            prime_user_data_caches(users, self.domain)
-            return users
+            users = (WrappedUser.wrap(user) for user in result.hits)
+            return list(prime_user_data_caches(users, self.domain))
         raise ValueError(
             'Invalid type of argument. Item should be an instance of slice class.')
 

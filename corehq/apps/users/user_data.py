@@ -209,3 +209,4 @@ def prime_user_data_caches(users, domain):
                 user_data = UserData({}, user, domain)
             # prime the user.get_user_data cache
             user._user_data_accessors[domain] = user_data
+            yield user
