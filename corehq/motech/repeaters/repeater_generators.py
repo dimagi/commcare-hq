@@ -739,3 +739,20 @@ class LocationPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, location):
         return json.dumps(location.to_json())
+
+
+class DataSourcePayloadGenerator(BasePayloadGenerator):
+    format_name = 'json'
+    format_label = _('JSON')
+
+    @property
+    def content_type(self):
+        return 'application/json'
+
+    def get_payload(self, repeat_record, transaction_log):
+        data = {
+            "data": transaction_log.row_data,
+            "action": transaction_log.action,
+            "data_source_id": transaction_log.data_source_id
+        }
+        return json.dumps(data, cls=DjangoJSONEncoder)
