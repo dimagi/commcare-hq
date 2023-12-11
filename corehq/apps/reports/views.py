@@ -1569,15 +1569,15 @@ def restore_edit(request, domain, instance_id):
 @require_permission(HqPermissions.edit_data)
 @require_POST
 @location_safe
-def archive_form(request, domain, instance_id):
+def archive_form(request, domain, instance_id, is_case_delete=False):
     instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
-    case_id_from_request, redirect = _get_case_id_and_redirect_url(domain, request)
 
     notify_level = messages.SUCCESS
     if instance.is_normal:
         cases_with_other_forms = _get_cases_with_other_forms(domain, instance)
         if cases_with_other_forms:
+            case_id_from_request, redirect = _get_case_id_and_redirect_url(domain, request)
             notify_msg = _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request)
             notify_level = messages.ERROR
         else:
@@ -1589,6 +1589,9 @@ def archive_form(request, domain, instance_id):
     else:
         notify_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
         notify_level = messages.ERROR
+
+    if is_case_delete:
+        return instance.is_archived
 
     params = {
         "notif": notify_msg,
