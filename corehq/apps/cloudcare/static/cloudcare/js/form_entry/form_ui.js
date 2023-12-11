@@ -484,7 +484,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         self.showSubmitButton = ko.computed(function () {
-            return !self.showInFormNavigation() && !self.shouldAutoSubmit;
+            return !self.isSubmitting() && !self.showInFormNavigation() && !self.shouldAutoSubmit;
         });
 
         self.submitForm = function () {
