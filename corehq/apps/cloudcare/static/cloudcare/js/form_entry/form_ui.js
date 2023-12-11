@@ -195,7 +195,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                         return new GroupedQuestionTileRow(options.data, self);
                     } else  if (options.data.type === constants.GROUPED_GROUP_TILE_ROW_TYPE) {
                         return new GroupedGroupTileRow(options.data, self);
-                    }else if (options.data.type === constants.QUESTION_TYPE) {
+                    } else if (options.data.type === constants.QUESTION_TYPE) {
                         return new Question(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
                         return new Group(options.data, self);
@@ -284,7 +284,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      * @param {Object} json - The JSON object to process, containing 'children' arrays.
      * @returns {Object} - A new JSON object with sequential "question" items grouped into "GroupedQuestionTileRow".
      */
-    Container.groupElements= function (json, elementType) {
+    Container.groupElements = function (json, elementType) {
         if (!json || !json.children || !Array.isArray(json.children)) {
             return json;
         }
@@ -335,7 +335,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             addToCurrentGroup(child);
         }
 
-        function processChildForGroupingQuestions(child, usedWidth, currentGroup, newChildren) {
+        function processChildForGroupingQuestions(child) {
             if (child.type === constants.QUESTION_TYPE) {
                 addToGroupForAllowedWidth(child);
             } else if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
@@ -345,7 +345,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             }
         }
 
-        function processChildForGroupingGroups(child, usedWidth, currentGroup, newChildren) {
+        function processChildForGroupingGroups(child) {
             if (child.type === constants.GROUP_TYPE) {
                 addToGroupForAllowedWidth(child);
             } else if (child.type === constants.REPEAT_TYPE) {
@@ -357,9 +357,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         for (let child of json.children) {
             if (elementType === constants.QUESTION_TYPE) {
-                processChildForGroupingQuestions(child, usedWidth, currentGroup, newChildren);
+                processChildForGroupingQuestions(child);
             } else if (elementType === constants.GROUP_TYPE) {
-                processChildForGroupingGroups(child, usedWidth, currentGroup, newChildren);
+                processChildForGroupingGroups(child);
             }
         }
         resetCurrentGroup();
