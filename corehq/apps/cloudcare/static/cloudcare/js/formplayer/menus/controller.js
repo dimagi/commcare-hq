@@ -129,7 +129,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var queryResponse = menuResponse.queryResponse;
         if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
             let queryCollection = new Collection(queryResponse.displays);
-            if (Object.keys(queryResponse.groupHeaders).length > 0) {
+            // hasOwnProperty check only required temporarily for transient moment during deploy when response will not contain groupHeaders
+            if (queryResponse.hasOwnProperty("groupHeaders") && Object.keys(queryResponse.groupHeaders).length > 0) {
                 queryCollection = new Collection(menusUtils.groupDisplays(new Collection(queryResponse.displays), queryResponse.groupHeaders));
             }
             FormplayerFrontend.regions.getRegion('sidebar').show(
@@ -144,7 +145,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             );
         } else if (sidebarEnabled && menuResponse.type === "query") {
             var queryCollection = menuResponse;
-            if (Object.keys(menuResponse.groupHeaders).length > 0) {
+            // hasOwnProperty check only required temporarily for transient moment during deploy when response will not contain groupHeaders
+            if (menuResponse.hasOwnProperty("groupHeaders") && Object.keys(menuResponse.groupHeaders).length > 0) {
                 queryCollection = new Collection(menusUtils.groupDisplays(menuResponse, menuResponse.groupHeaders));
             }
             FormplayerFrontend.regions.getRegion('sidebar').show(
