@@ -262,12 +262,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             currentNode = currentNode.parent;
         }
 
-        // Colors are ordered from lightest to darkest with the lightest color for the highest level.
-        // Colors are based on Bootstrap provided tint/shades of #5D70D2 (CommCare Cornflower Blue)
-        // shade(#5D70D2, 20%): #4a5aa8
-        // shade(#5D70D2, 40%): #38437e
-        // shade(#5D70D2, 60%); #252d54
-        const repeatColor = ["#4a5aa8", "#38437e", "#252d54"];
+        // Colors are ordered from darkest to lightest with the darkest color for the highest level.
+        // Colors are based on shades of @cc-brand-mid.
+        // shade(#004EBC, 20%) #003e96
+        // shade(#004EBC, 40%) #002f71
+        const repeatColor = ["#002f71", "#003e96", "#004EBC"];
         const repeatColorCount = repeatColor.length;
         const index = (nestedDepthCount - 1) % repeatColorCount;
 
@@ -381,7 +380,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.blockSubmit = ko.observable(false);
         self.hasSubmitAttempted = ko.observable(false);
         self.isSubmitting = ko.observable(false);
-        self.submitClass = constants.LABEL_OFFSET + ' ' + constants.CONTROL_WIDTH;
+        self.submitClass = constants.FULL_WIDTH + ' text-center';
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('WEB_APPS_ANCHORED_SUBMIT')) {
+            self.submitClass += ' anchored-submit';
+        }
 
         self.currentIndex = ko.observable("0");
         self.atLastIndex = ko.observable(false);
@@ -921,6 +923,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     Question.prototype.setWidths = function () {
+        const self = this;
         const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
         const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
 
@@ -932,6 +935,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             this.controlWidth = constants.CONTROL_WIDTH;
             this.labelWidth = constants.LABEL_WIDTH;
             this.questionTileWidth = constants.FULL_WIDTH;
+        }
+
+        if (self.stylesContains(constants.SHORT)) {
+            self.controlWidth = constants.SHORT_WIDTH;
+        } else if (self.stylesContains(constants.MEDIUM)) {
+            self.controlWidth = constants.MEDIUM_WIDTH;
         }
     };
 

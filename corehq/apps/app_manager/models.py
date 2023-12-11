@@ -2553,6 +2553,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
     display_style = StringProperty(default='list')
+    lazy_load_case_list_fields = BooleanProperty(default=False)
 
     @classmethod
     def new_module(cls, name, lang):

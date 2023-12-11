@@ -13,7 +13,9 @@ class ChangeMeta(jsonobject.JsonObject):
 
     This is only used in kafka-based pillows.
     """
-    _allow_dynamic_properties = False
+    # Allow dynamic properties, so that if a new property needs to be rolled back,
+    # changes pushed with that property do not create errors
+    _allow_dynamic_properties = True
 
     document_id = DefaultProperty(required=True)
 
@@ -39,6 +41,9 @@ class ChangeMeta(jsonobject.JsonObject):
 
     # track when first published (will not get updated on retry, unlike publish_timestamp)
     original_publication_datetime = jsonobject.DateTimeProperty(default=datetime.utcnow)
+
+    # available to hold any associated document. For cases, this is the form ID responsible for the change
+    associated_document_id = jsonobject.StringProperty()
 
 
 class Change(object):
@@ -119,10 +124,10 @@ class Change(object):
         return self._dict[key]
 
     def __setitem__(self, key, value):
-        raise NotImplemented('This is a read-only dictionary!')
+        raise NotImplementedError('This is a read-only dictionary!')
 
     def __delitem__(self, key, value):
-        raise NotImplemented('This is a read-only dictionary!')
+        raise NotImplementedError('This is a read-only dictionary!')
 
     def __iter__(self):
         return iter(self._dict)
@@ -134,7 +139,7 @@ class Change(object):
         return self._dict.get(key, default)
 
     def pop(self, key, default):
-        raise NotImplemented('This is a read-only dictionary!')
+        raise NotImplementedError('This is a read-only dictionary!')
 
     def to_dict(self):
         return self._dict

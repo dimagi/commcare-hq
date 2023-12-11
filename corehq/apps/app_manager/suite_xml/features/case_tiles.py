@@ -147,6 +147,9 @@ class CaseTileHelper(object):
                 header_rows=self.detail.case_tile_group.header_rows
             )
 
+        if (self.detail_type == 'case_short' or self.detail_type == 'search_short') \
+                and hasattr(self.module, 'lazy_load_case_list_fields') and self.module.lazy_load_case_list_fields:
+            detail.lazy_loading = self.module.lazy_load_case_list_fields
         return detail
 
     def _get_matched_detail_column(self, case_tile_field):
