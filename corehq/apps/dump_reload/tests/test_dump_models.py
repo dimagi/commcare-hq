@@ -117,7 +117,6 @@ UNKNOWN_MODELS = {
     "couchforms.UnfinishedArchiveStub",
     "couchforms.UnfinishedSubmissionStub",
     "data_interfaces.CaseDeduplicationActionDefinition",
-    "data_interfaces.CaseDuplicate",
     "dhis2.SQLDataSetMap",
     "dhis2.SQLDataValueMap",
     "fhir.FHIRImportConfig",
