@@ -8,7 +8,6 @@ import attr
 from django.core.serializers.json import DjangoJSONEncoder
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
-from corehq.apps.dump_reload.sql.serialization import CommCareJSONEncoder
 from casexml.apps.case.const import CASE_INDEX_IDENTIFIER_HOST
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -754,6 +753,5 @@ class DataSourcePayloadGenerator(BasePayloadGenerator):
             "data": transaction_log.row_data,
             "action": transaction_log.action,
             "data_source_id": transaction_log.data_source_id,
-            "date_created": transaction_log.date_created
         }
-        return json.dumps(data, cls=CommCareJSONEncoder)
+        return json.dumps(data, cls=DjangoJSONEncoder)
