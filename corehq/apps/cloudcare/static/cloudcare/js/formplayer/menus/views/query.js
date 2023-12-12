@@ -639,7 +639,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             value: value,
                         });
 
-                        var childByIndex = self._getChildren().findByIndex(i);
+                        var childByIndex = self._getChildren()[i];
                         childByIndex._setItemset(choices, response.models[i].get('itemsetChoicesKey'));
                         childByIndex._render();      // re-render with new choice values
                     }
