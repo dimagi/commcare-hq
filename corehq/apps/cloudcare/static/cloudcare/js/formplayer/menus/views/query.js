@@ -635,7 +635,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                                 value = _.isEmpty(value) ? null : value[0];
                             }
                         }
-                        self.collection.models[i].set({
+                        self._getChildModels()[i].set({
                             value: value,
                         });
 
@@ -802,7 +802,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initGeocoders: function () {
             var self = this;
-            _.each(self.collection.models, function (model, i) {
+            _.each(self._getChildModels(), function (model, i) {
                 var $field = $($(".query-field")[i]);
 
                 // Set geocoder receivers to subscribe
