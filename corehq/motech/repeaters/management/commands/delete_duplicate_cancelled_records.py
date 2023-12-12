@@ -10,8 +10,7 @@ from corehq.motech.repeaters.const import (
     RECORD_CANCELLED_STATE,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.models import RepeatRecord, Repeater, SQLRepeatRecord
-from corehq.util.couch import IterDB
+from corehq.motech.repeaters.models import Repeater, SQLRepeatRecord
 
 
 class Command(BaseCommand):
@@ -108,23 +107,19 @@ class Command(BaseCommand):
 class RepeatRecordDeleter:
 
     def __enter__(self):
-        instance = IterDB(RepeatRecord.get_db())
-        self.iterdb = instance.__enter__()
-        assert instance is self.iterdb, (instance, self.iterdb)
         self.ids_to_delete = []
         return self
 
     def delete(self, record):
-        self.iterdb.delete(record)
-        self.ids_to_delete.append(record._migration_couch_id)
+        self.ids_to_delete.append(record.id)
         if len(self.ids_to_delete) > 100:
             self.flush()
 
     def flush(self):
-        SQLRepeatRecord.objects.filter(couch_id__in=self.ids_to_delete).delete()
-        self.ids_to_delete = []
+        if self.ids_to_delete:
+            SQLRepeatRecord.objects.filter(id__in=self.ids_to_delete).delete()
+            self.ids_to_delete = []
 
     def __exit__(self, *exc_info):
         self.flush()
         del self.ids_to_delete
-        return self.iterdb.__exit__(*exc_info)
