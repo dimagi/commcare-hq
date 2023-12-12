@@ -50,6 +50,7 @@ from corehq.motech.repeaters.models import (
     Repeater,
     RepeatRecord,
     ShortFormRepeater,
+    SQLRepeatRecord,
     UserRepeater,
     _get_retry_interval,
     format_response,
@@ -1082,7 +1083,8 @@ class TestRepeaterPause(BaseRepeaterTest):
 
     def test_trigger_when_paused(self):
         # not paused
-        with patch.object(RepeatRecord, 'fire') as mock_fire:
+        with patch.object(RepeatRecord, 'fire') as mock_fire, \
+                patch.object(SQLRepeatRecord, 'fire', mock_fire):
             with patch.object(RepeatRecord, 'postpone_by') as mock_postpone_fire:
                 # calls _process_repeat_record():
                 self.repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
