@@ -69,7 +69,7 @@ def case_exists_in_es(
     match_type="ALL",
     case_filter_criteria=None
 ):
-    es = _get_es_filtered_case_query(domain, case, case_filter_criteria)
+    es = _get_es_filtered_case_query(domain, case, case_filter_criteria).size(1)
 
     if not include_closed:
         es = es.is_closed(False)
@@ -161,9 +161,11 @@ def reset_deduplicate_rule(rule):
     from corehq.apps.data_interfaces.models import (
         CaseDeduplicationActionDefinition,
         CaseDuplicate,
+        CaseDuplicateNew,
     )
     deduplicate_action = CaseDeduplicationActionDefinition.from_rule(rule)
     CaseDuplicate.objects.filter(action=deduplicate_action).delete()
+    CaseDuplicateNew.objects.filter(action=deduplicate_action).delete()
 
 
 def backfill_deduplicate_rule(domain, rule):
