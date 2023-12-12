@@ -60,7 +60,7 @@ from corehq.apps.ota.models import MobileRecoveryMeasure
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
-from corehq.util.timezones.conversions import UserTime
+from corehq.util.timezones.conversions import UserTime, ServerTime
 
 
 class BaseProjectSettingsView(BaseDomainView):
@@ -538,6 +538,10 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
             'form': self.form,
             'alerts': [
                 {
+                    'start_time': ServerTime(alert.start_time).user_time(pytz.timezone(alert.timezone))
+                        .ui_string() if alert.start_time else None,
+                    'end_time': ServerTime(alert.end_time).user_time(pytz.timezone(alert.timezone))
+                        .ui_string() if alert.end_time else None,
                     'active': alert.active,
                     'html': alert.html,
                     'id': alert.id,

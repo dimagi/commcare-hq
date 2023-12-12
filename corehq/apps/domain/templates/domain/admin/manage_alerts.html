@@ -8,7 +8,7 @@
 {% block page_content %}
     {% initial_page_data 'alerts' alerts %}
 
-    <form method="post">
+    <form class="form form-horizontal" method="post">
       {% crispy form %}
     </form>
     <div id="ko-alert-container">
@@ -18,6 +18,12 @@
       <table class="table">
         <thead>
           <tr>
+            <th>
+              {% trans "Start Time" %}
+            </th>
+            <th>
+              {% trans "End Time" %}
+            </th>
             <th>
               {% trans "Message" %}
             </th>
@@ -35,6 +41,8 @@
         {% if alerts %}
         <tbody data-bind="foreach: alerts">
           <tr>
+            <td data-bind="text: start_time"></td>
+            <td data-bind="text: end_time"></td>
             <td>
               <div class="alert alert-warning"
                    data-bind="html: html"></div>
