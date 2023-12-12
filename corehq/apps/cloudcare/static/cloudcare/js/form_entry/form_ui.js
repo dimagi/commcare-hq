@@ -138,7 +138,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     }
 
     /**
-     * Base abstract prototype for Repeat, Group, GroupedQuestionTileRow, and Form. Adds methods to
+     * Base abstract prototype for Repeat, Group, GroupedElementTileRow, and Form. Adds methods to
      * objects that contain a children array for rendering nested questions.
      * @param {Object} json - The JSON returned from touchforms to represent the container
      */
@@ -171,8 +171,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var self = this;
 
         if (!json.type) {
-            Container.groupElements(json, constants.QUESTION_TYPE);
-            Container.groupElements(json, constants.GROUP_TYPE);
+            Container.groupElements(json);
         }
 
         var mapping = {
@@ -191,10 +190,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             },
             children: {
                 create: function (options) {
-                    if (options.data.type === constants.GROUPED_QUESTION_TILE_ROW_TYPE) {
-                        return new GroupedQuestionTileRow(options.data, self);
-                    } else  if (options.data.type === constants.GROUPED_GROUP_TILE_ROW_TYPE) {
-                        return new GroupedGroupTileRow(options.data, self);
+                    if (options.data.type === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
+                        return new GroupedElementTileRow(options.data, self);
                     } else if (options.data.type === constants.QUESTION_TYPE) {
                         return new Question(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
@@ -278,13 +275,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      *
      * This function takes a JSON object as input and searches for sequential "question" or "group"
      * items within the 'children' arrays of the input and its nested 'group' objects.
-     * It groups these sequential "question" items into "GroupedQuestionTileRow" and "group"
+     * It groups these sequential "question" items into "GroupedElementTileRow" and "group"
      * items into "GroupedGroupTileRow" objects while maintaining the original structure of the JSON.
      *
      * @param {Object} json - The JSON object to process, containing 'children' arrays.
-     * @returns {Object} - A new JSON object with sequential "question" items grouped into "GroupedQuestionTileRow".
+     * @returns {Object} - A new JSON object with sequential "question" items grouped into "GroupedElementTileRow".
      */
-    Container.groupElements = function (json, elementType) {
+    Container.groupElements = function (json) {
         if (!json || !json.children || !Array.isArray(json.children)) {
             return json;
         }
@@ -296,7 +293,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         function addToCurrentGroup(child) {
             if (!currentGroup) {
                 currentGroup = {
-                    type: constants.GROUPED_QUESTION_TILE_ROW_TYPE,
+                    type: constants.GROUPED_ELEMENT_TILE_ROW_TYPE,
                     children: [],
                     ix: null,
                 };
@@ -314,52 +311,25 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             usedWidth = 0;
         }
 
-        function pushChildAndResetGroup(child) {
-            newChildren.push(child);
-            resetCurrentGroup();
-        }
-
-        function groupElementsAndResetGroup(child) {
-            const newGroup = Container.groupElements(child, elementType);
-            newChildren.push(newGroup);
-            resetCurrentGroup();
-        }
-
-        function addToGroupForAllowedWidth(child) {
-            const questionTileWidth = Question.calculateColumnWidthForPerRowStyle(child.style);
-            usedWidth += questionTileWidth;
-            if (usedWidth > constants.GRID_COLUMNS) {
-                resetCurrentGroup();
-                usedWidth += questionTileWidth;
-            }
-            addToCurrentGroup(child);
-        }
-
-        function processChildForGroupingQuestions(child) {
-            if (child.type === constants.QUESTION_TYPE) {
-                addToGroupForAllowedWidth(child);
-            } else if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
-                groupElementsAndResetGroup(child);
-            } else {
-                pushChildAndResetGroup(child);
-            }
-        }
-
-        function processChildForGroupingGroups(child) {
-            if (child.type === constants.GROUP_TYPE) {
-                addToGroupForAllowedWidth(child);
-            } else if (child.type === constants.REPEAT_TYPE) {
-                groupElementsAndResetGroup(child);
-            } else {
-                pushChildAndResetGroup(child);
-            }
-        }
-
         for (let child of json.children) {
-            if (elementType === constants.QUESTION_TYPE) {
-                processChildForGroupingQuestions(child);
-            } else if (elementType === constants.GROUP_TYPE) {
-                processChildForGroupingGroups(child);
+            if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE) {
+                const elementTileWidth = Question.calculateColumnWidthForPerRowStyle(child.style);
+                usedWidth += elementTileWidth;
+                if (usedWidth > constants.GRID_COLUMNS) {
+                    resetCurrentGroup();
+                    usedWidth += elementTileWidth;
+                }
+                if (child.type === constants.GROUP_TYPE) {
+                    child = Container.groupElements(child);
+                }
+                addToCurrentGroup(child);
+            } else if (child.type === constants.REPEAT_TYPE) {
+                const newGroup = Container.groupElements(child);
+                newChildren.push(newGroup);
+                resetCurrentGroup();
+            } else {
+                newChildren.push(child);
+                resetCurrentGroup();
             }
         }
         resetCurrentGroup();
@@ -592,7 +562,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Form.prototype.constructor = Container;
 
     /**
-     * Represents a group of GroupedQuestionTileRow which contains questions.
+     * Represents a group of GroupedElementTileRow which contains questions.
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
      */
@@ -668,7 +638,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
-                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE || d.type() === constants.GROUPED_QUESTION_TILE_ROW_TYPE) {
+                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE || d.type() === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
                     return true;
                 } else if (d.type() === constants.GROUP_TYPE) {
                     return d.hasAnyNestedQuestions();
@@ -703,7 +673,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Group.prototype.constructor = Container;
 
     /**
-     * Represents a repeat group. A repeat only has Group objects as children. Each child Group contains GroupedQuestionTileRow
+     * Represents a repeat group. A repeat only has Group objects as children. Each child Group contains GroupedElementTileRow
      * objects which contains the child questions to be rendered
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
@@ -739,7 +709,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
      */
-    function GroupedQuestionTileRow(json, parent) {
+    function GroupedElementTileRow(json, parent) {
         var self = this;
         self.parent = parent;
         Container.call(self, json);
@@ -751,25 +721,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             });
         });
     }
-    GroupedQuestionTileRow.prototype = Object.create(Container.prototype);
-    GroupedQuestionTileRow.prototype.constructor = Container;
-
-
-    function GroupedGroupTileRow(json, parent) {
-        var self = this;
-        self.parent = parent;
-        Container.call(self, json);
-
-        self.required = ko.observable(0);
-        self.childrenRequired = ko.computed(function () {
-            return _.find(self.children(), function (child) {
-                return child.required();
-            });
-        });
-    }
-    GroupedGroupTileRow.prototype = Object.create(Container.prototype);
-    GroupedGroupTileRow.prototype.constructor = Container;
-
+    GroupedElementTileRow.prototype = Object.create(Container.prototype);
+    GroupedElementTileRow.prototype.constructor = Container;
 
     /**
      * Represents a Question. A Question contains an Entry which is the widget that is displayed for that question
