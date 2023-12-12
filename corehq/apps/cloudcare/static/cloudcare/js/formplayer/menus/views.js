@@ -1090,6 +1090,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         handleSmallScreenChange: function (enabled) {
             CaseTileListView.__super__.handleSmallScreenChange.apply(this, arguments);
+            if (enabled) {
+                $('#content-container').addClass('full-width');
+            } else if (!this.options.sidebarEnabled) {
+                $('#content-container').removeClass('full-width');
+            }
         },
 
         childViewOptions: function () {
@@ -1121,6 +1126,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         onBeforeDetach: function () {
             CaseTileListView.__super__.onBeforeDetach.apply(this, arguments);
+            $('#content-container').removeClass('full-width');
         },
     });
 

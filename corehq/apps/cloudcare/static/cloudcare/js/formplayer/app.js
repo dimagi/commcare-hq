@@ -47,9 +47,11 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         FormplayerFrontend.regions = new RegionContainer();
         let sidebar = FormplayerFrontend.regions.getRegion('sidebar');
         sidebar.on('show', function () {
+            $('#content-container').addClass('full-width');
             $('#menu-region').addClass('sidebar-push');
         });
         sidebar.on('hide empty', function () {
+            $('#content-container').removeClass('full-width');
             $('#menu-region').removeClass('sidebar-push');
         });
 
