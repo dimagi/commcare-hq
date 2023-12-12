@@ -872,6 +872,21 @@ class DataSourceRepeater(Repeater):
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
 
+    def fire_for_record(self, repeat_record):
+        from corehq.apps.userreports.models import DataSourceRowTransactionLog
+        # TODO: Remove after repeat records are migrated to SQL
+        # After repeat records are moved to SQL, it will always fire in the correct sequence, but for now we don't
+        # have that guarentee, so we need to check that we're firing the latest transaction log entry only
+        transaction_log = DataSourceRowTransactionLog.objects.get(id=repeat_record.payload_id)
+        if transaction_log.is_latest:
+            return super().fire_for_record(repeat_record)
+
+        return RepeatRecordAttempt(
+            cancelled=True,
+            datetime=datetime.utcnow(),
+            info="Outdated",
+        )
+
     @staticmethod
     @quickcache(['domain', 'data_source_id'], timeout=15 * 60)
     def datasource_is_subscribed_to(domain, data_source_id):

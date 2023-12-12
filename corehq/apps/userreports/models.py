@@ -165,6 +165,17 @@ class DataSourceRowTransactionLog(models.Model):
     def get_id(self):
         return str(self.id)
 
+    @property
+    def is_latest(self):
+        """Checks to see if this transaction log is the latest one. This is determined by the `data_source_id` and
+        `row_id`
+        """
+        ds = DataSourceRowTransactionLog.objects.filter(
+            data_source_id=self.data_source_id,
+            row_id=self.row_id
+        ).order_by("-date_created").first()
+        return ds.id == self.id
+
 
 class SQLColumnIndexes(DocumentSchema):
     column_ids = StringListProperty()

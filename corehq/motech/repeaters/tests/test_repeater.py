@@ -1310,6 +1310,35 @@ class DataSourceRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         doc_id = "some-doc-id"
         row_data = {"doc_id": doc_id, "datum1": "value1"}
         expected_payload = {"data": row_data, "action": "upsert", "data_source_id": self.data_source_id}
+        repeat_record = self._create_log_and_repeat_record(doc_id, row_data)
+        repeat_record.save()
+        payload = self.repeater.get_payload(repeat_record)
+        self.assertEqual(json.loads(payload), expected_payload)
+
+    @patch("corehq.motech.repeaters.models.RepeatRecord._already_processed", return_value=False)
+    @patch("corehq.motech.repeaters.models.RepeatRecord._is_ready", return_value=True)
+    @patch("corehq.motech.repeaters.models.Repeater.fire_for_record")
+    def test_only_latest_transaction_logs_are_sent(self, fire_for_record_mock, _is_ready, _already_processed):
+        doc_id = "some-doc-id"
+        row_data = {"doc_id": doc_id, "datum1": "value1"}
+
+        repeat_record_1 = self._create_log_and_repeat_record(doc_id, row_data)
+        repeat_record_2 = self._create_log_and_repeat_record(doc_id, row_data)
+        first_log = DataSourceRowTransactionLog.objects.get(id=repeat_record_1.payload_id)
+        second_log = DataSourceRowTransactionLog.objects.get(id=repeat_record_2.payload_id)
+        second_log.date_created = first_log.date_created + timedelta(minutes=5)
+        second_log.save()
+
+        self.assertFalse(first_log.is_latest)
+        self.assertTrue(second_log.is_latest)
+
+        repeat_record_1.attempt_forward_now(fire_synchronously=True)
+        fire_for_record_mock.assert_not_called()
+
+        repeat_record_2.attempt_forward_now(fire_synchronously=True)
+        fire_for_record_mock.assert_called()
+
+    def _create_log_and_repeat_record(self, doc_id, row_data):
         transaction_log = DataSourceRowTransactionLog.objects.create(
             domain=self.domain,
             data_source_id=self.data_source_id,
@@ -1317,16 +1346,15 @@ class DataSourceRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             row_data=row_data,
             action=DataSourceRowTransactionLog.UPSERT
         )
-        repeat_record = RepeatRecord(
+        record = RepeatRecord(
             domain=self.domain,
             repeater_id=self.repeater.repeater_id,
             repeater_type='DataSourceRepeater',
             payload_id=transaction_log.get_id,
             registered_on=datetime.utcnow(),
         )
-        repeat_record.save()
-        payload = self.repeater.get_payload(repeat_record)
-        self.assertEqual(json.loads(payload), expected_payload)
+        record.save()
+        return record
 
     def tearDown(self):
         delete_all_repeat_records()
