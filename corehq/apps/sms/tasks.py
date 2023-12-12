@@ -3,7 +3,7 @@ import math
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.db import DataError, transaction
+from django.db import transaction
 
 from celery.schedules import crontab
 
@@ -137,9 +137,11 @@ def time_within_windows(domain_now, windows):
     time = domain_now.time()
 
     for window in windows:
-        if (window.day in [weekday, -1] and
-            (window.start_time is None or time >= window.start_time) and
-            (window.end_time is None or time <= window.end_time)):
+        if (
+            window.day in [weekday, -1]
+            and (window.start_time is None or time >= window.start_time)
+            and (window.end_time is None or time <= window.end_time)
+        ):
             return True
 
     return False
@@ -282,7 +284,7 @@ def handle_incoming(msg):
         handle_successful_processing_attempt(msg)
     except DelayProcessing:
         raise
-    except:
+    except Exception:
         log_sms_exception(msg)
         handle_unsuccessful_processing_attempt(msg)
 
@@ -407,10 +409,10 @@ def process_sms(queued_sms_pk):
         # can cause us to miss sending the message the first time and
         # result in an unnecessary delay.
         if (
-            isinstance(msg.processed, bool) and
-            not msg.processed and
-            not msg.error and
-            msg.datetime_to_process < (utcnow + timedelta(seconds=10))
+            isinstance(msg.processed, bool)
+            and not msg.processed
+            and not msg.error
+            and msg.datetime_to_process < (utcnow + timedelta(seconds=10))
         ):
             if recipient_block:
                 recipient_lock = get_lock(
@@ -419,10 +421,10 @@ def process_sms(queued_sms_pk):
 
             if msg.direction == OUTGOING:
                 if (
-                    msg.domain and
-                    msg.couch_recipient_doc_type and
-                    msg.couch_recipient and
-                    not is_contact_active(msg.domain, msg.couch_recipient_doc_type, msg.couch_recipient)
+                    msg.domain
+                    and msg.couch_recipient_doc_type
+                    and msg.couch_recipient
+                    and not is_contact_active(msg.domain, msg.couch_recipient_doc_type, msg.couch_recipient)
                 ):
                     msg.set_system_error(SMS.ERROR_CONTACT_IS_INACTIVE)
                     remove_from_queue(msg)
@@ -517,9 +519,9 @@ def sync_case_phone_number(contact_case):
             phone_number = None
 
         if (
-            phone_number and
-            phone_number.contact_last_modified and
-            phone_number.contact_last_modified >= contact_case.server_modified_on
+            phone_number
+            and phone_number.contact_last_modified
+            and phone_number.contact_last_modified >= contact_case.server_modified_on
         ):
             return
 
