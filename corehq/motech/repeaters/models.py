@@ -1390,6 +1390,9 @@ class RepeatRecordManager(models.Manager):
                 "id__gt": result[-1].id,
             }
 
+    def get_domains_having_records(self):
+        return self.order_by().values_list("domain", flat=True).distinct()
+
 
 class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     domain = models.CharField(max_length=126)

@@ -6,7 +6,6 @@ from django.test import TestCase
 from corehq.motech.repeaters.const import RECORD_PENDING_STATE
 from corehq.motech.repeaters.dbaccessors import (
     get_cancelled_repeat_record_count,
-    get_domains_that_have_repeat_records,
     get_failure_repeat_record_count,
     get_pending_repeat_record_count,
     get_repeat_record_count,
@@ -184,19 +183,3 @@ class TestRepeatRecordDBAccessors(TestCase):
         id_2_records = list(SQLRepeatRecord.objects.filter(domain=self.domain, payload_id=self.payload_id_2))
         self.assertEqual(len(id_2_records), 6)
         self.assertItemsEqual([r.couch_id for r in id_2_records], [r._id for r in self.records[2:]])
-
-
-class TestOtherDBAccessors(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(TestOtherDBAccessors, cls).setUpClass()
-        cls.records = [
-            RepeatRecord(domain='a'),
-            RepeatRecord(domain='b'),
-            RepeatRecord(domain='c'),
-        ]
-        RepeatRecord.bulk_save(cls.records)
-        cls.addClassCleanup(RepeatRecord.bulk_delete, cls.records)
-
-    def test_get_domains_that_have_repeat_records(self):
-        self.assertEqual(get_domains_that_have_repeat_records(), ['a', 'b', 'c'])

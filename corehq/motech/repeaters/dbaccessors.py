@@ -40,14 +40,6 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
     return queryset.count()
 
 
-def get_domains_that_have_repeat_records():
-    from .models import RepeatRecord
-    return [
-        row['key'][0]
-        for row in RepeatRecord.view('repeaters/repeat_records', group_level=1).all()
-    ]
-
-
 @unit_testing_only
 def delete_all_repeat_records():
     from .models import RepeatRecord

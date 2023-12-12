@@ -13,9 +13,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.repeaters.dbaccessors import (
-    get_domains_that_have_repeat_records,
-)
 from corehq.motech.repeaters.models import CreateCaseRepeater, Repeater, UpdateCaseRepeater, SQLRepeatRecord
 from corehq.util.argparse_types import date_type
 
@@ -556,10 +553,12 @@ class Command(BaseCommand):
         elif domain:
             domains_to_inspect = [domain]
         elif startswith:
-            all_domains = get_domains_that_have_repeat_records()
-            domains_to_inspect = [d for d in all_domains if d.startswith(startswith)]
+            domains_to_inspect = list(
+                SQLRepeatRecord.objects.get_domains_having_records()
+                .filter(domain__startswith=startswith)
+            )
         else:
-            domains_to_inspect = get_domains_that_have_repeat_records()
+            domains_to_inspect = list(SQLRepeatRecord.objects.get_domains_having_records())
 
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
         if command == CASES:

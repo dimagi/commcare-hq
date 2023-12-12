@@ -676,6 +676,24 @@ class TestRepeatRecordManager(RepeaterTestCase):
         ids = {r.id for r in iter_partition(start, 0, 1)}
         self.assertEqual(ids, all_ids)
 
+    def test_get_domains_having_records(self):
+        self.new_record(domain='a')
+        self.new_record(domain='b')
+        self.new_record(domain='c')
+        self.assertEqual(
+            set(SQLRepeatRecord.objects.get_domains_having_records()),
+            {'a', 'b', 'c'},
+        )
+
+    def test_get_domains_having_records_with_filter(self):
+        self.new_record(domain='alex')
+        self.new_record(domain='alice')
+        self.new_record(domain='carl')
+        self.assertEqual(
+            set(SQLRepeatRecord.objects.get_domains_having_records().filter(domain__startswith="al")),
+            {'alex', 'alice'},
+        )
+
     def new_record(self, next_check=before_now, state=State.Pending, domain="test"):
         return SQLRepeatRecord.objects.create(
             domain=domain,
