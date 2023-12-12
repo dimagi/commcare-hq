@@ -562,7 +562,7 @@ class TestRepeaterModelMethods(RepeaterTestCase):
         self.assertEqual(repeat_record.payload_id, payload.get_id)
         all_records = list(SQLRepeatRecord.objects.iterate(DOMAIN))
         self.assertEqual(len(all_records), 1)
-        self.assertEqual(all_records[0].couch_id, repeat_record._id)
+        self.assertEqual(all_records[0].id, repeat_record.id)
 
     def test_send_request(self):
         case_id = uuid.uuid4().hex

@@ -15,7 +15,6 @@ from requests import RequestException
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 from casexml.apps.case.xform import get_case_ids_from_form
 from couchforms.const import DEVICE_LOG_XMLNS
-from dimagi.ext.couchdbkit import Document
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
@@ -359,7 +358,7 @@ class RepeaterTest(BaseRepeaterTest):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         rr = self.case_repeater.register(case)
         # Fetch the revision that was updated:
-        repeat_record = RepeatRecord.get(rr.record_id)
+        repeat_record = RepeatRecord.get(rr.couch_id)
         self.assertEqual(1, repeat_record.overall_tries)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=Exception('Boom!')):
             for __ in range(repeat_record.max_possible_tries - repeat_record.overall_tries):
@@ -712,14 +711,14 @@ class RepeaterFailureTest(BaseRepeaterTest):
                 repeat_record.fire()
 
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
-        self.assertFalse(repeat_record.succeeded)
+        self.assertEqual(repeat_record.state, State.Cancelled)
 
     def test_payload_exception(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch.object(Repeater, "get_payload", side_effect=Exception('Payload error')):
             rr = self.repeater.register(case)
 
-        repeat_record = RepeatRecord.get(rr.record_id)
+        repeat_record = RepeatRecord.get(rr.couch_id)
         self.assertTrue(repeat_record.cancelled)
         self.assertEqual(repeat_record.failure_reason, "Payload error")
 
@@ -729,7 +728,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             rr = self.repeater.register(case)  # calls repeat_record.fire()
 
         # Fetch the repeat_record revision that was updated
-        repeat_record = RepeatRecord.get(rr.record_id)
+        repeat_record = RepeatRecord.get(rr.couch_id)
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
         self.assertFalse(repeat_record.succeeded)
 
@@ -738,7 +737,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=Exception('Boom!')):
             rr = self.repeater.register(case)
 
-        repeat_record = RepeatRecord.get(rr.record_id)
+        repeat_record = RepeatRecord.get(rr.couch_id)
         self.assertEqual(repeat_record.failure_reason, 'Internal Server Error')
         self.assertFalse(repeat_record.succeeded)
 
@@ -749,7 +748,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             mock_simple_post.return_value.status_code = 200
             rr = self.repeater.register(case)
 
-        repeat_record = RepeatRecord.get(rr.record_id)
+        repeat_record = RepeatRecord.get(rr.couch_id)
         self.assertTrue(repeat_record.succeeded)
 
     def test_empty(self):
@@ -759,7 +758,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             mock_simple_post.return_value.status_code = 204
             rr = self.repeater.register(case)
 
-        repeat_record = RepeatRecord.get(rr.record_id)
+        repeat_record = RepeatRecord.get(rr.couch_id)
         self.assertEqual(repeat_record.state, State.Empty)
 
 
@@ -882,7 +881,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             mock_manager.return_value = 'MockAuthManager'
             rr = self.repeater.register(case)
 
-            repeat_record = RepeatRecord.get(rr.record_id)
+            repeat_record = RepeatRecord.get(rr.couch_id)
             headers = self.repeater.get_headers(repeat_record)
             mock_request.assert_called_with(
                 self.domain,
@@ -1103,7 +1102,7 @@ class TestRepeaterPause(BaseRepeaterTest):
                 # paused
                 self.repeater.pause()
                 # re fetch repeat record
-                repeat_record_id = self.repeat_record.get_id
+                repeat_record_id = self.repeat_record.couch_id
                 self.repeat_record = RepeatRecord.get(repeat_record_id)
                 _process_repeat_record(self.repeat_record)
                 self.assertEqual(mock_fire.call_count, 1)
@@ -1145,19 +1144,11 @@ class TestRepeaterDeleted(BaseRepeaterTest):
         self.repeater.retire()
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:
-            self.repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
-            self.repeat_record = reloaded(self.repeat_record)
-            _process_repeat_record(self.repeat_record)
+            repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+            repeat_record = RepeatRecord.get(repeat_record.couch_id)
+            _process_repeat_record(repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
-            self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
-
-
-def reloaded(couch_doc: Document) -> Document:
-    """
-    Returns a reloaded Couch document to avoid a ResourceConflict error.
-    """
-    class_ = type(couch_doc)
-    return class_.get(couch_doc.get_id)
+            self.assertEqual(repeat_record.doc_type, "RepeatRecord-Deleted")
 
 
 @attr.s

@@ -396,11 +396,10 @@ class Repeater(RepeaterSuperProxy):
         if not self.allowed_to_forward(payload):
             return
         now = datetime.utcnow()
-        repeat_record = RepeatRecord(
-            repeater_id=self.repeater_id,
-            repeater_type=self.repeater_type,
+        repeat_record = SQLRepeatRecord(
+            repeater_id=self.id,
             domain=self.domain,
-            registered_on=now,
+            registered_at=now,
             next_check=now,
             payload_id=payload.get_id
         )
