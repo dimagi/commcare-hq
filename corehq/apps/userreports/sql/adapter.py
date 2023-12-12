@@ -20,7 +20,7 @@ from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.test_utils import unit_testing_only
-from corehq.apps.userreports.util import register_data_source_change
+from corehq.apps.userreports.util import register_data_source_row_change
 logger = logging.getLogger(__name__)
 
 
@@ -177,7 +177,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             for query in queries:
                 session.execute(query)
 
-        register_data_source_change(
+        register_data_source_row_change(
             domain=self.config.domain,
             data_source_id=self.config._id,
             row_changes=[{key: str(value) for key, value in row.items()} for row in formatted_rows],
@@ -215,7 +215,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         with self.session_context() as session:
             session.execute(delete)
 
-        register_data_source_change(
+        register_data_source_row_change(
             domain=self.config.domain,
             data_source_id=self.config._id,
             row_changes=[{"doc_id": doc['_id']} for doc in docs],
