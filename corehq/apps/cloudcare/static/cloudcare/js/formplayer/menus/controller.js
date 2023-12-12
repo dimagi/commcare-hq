@@ -303,6 +303,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     return {
         selectDetail: selectDetail,
         selectMenu: selectMenu,
-        showMenu: showMenu
+        showMenu: showMenu,
     };
 });

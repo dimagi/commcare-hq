@@ -1,5 +1,4 @@
 /* eslint-env mocha */
-/* global Backbone */
 hqDefine("cloudcare/js/formplayer/spec/controller_spec", function () {
     describe('Controller', function () {
 
@@ -29,7 +28,7 @@ hqDefine("cloudcare/js/formplayer/spec/controller_spec", function () {
                         "text": "Capacity",
                         "groupKey": "unnamed",
                     },
-	            ]
+                ];
                 const groupHeaders =  {
                     "unit": "Unit",
                     "facility": "Facility",

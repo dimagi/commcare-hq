@@ -473,7 +473,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         onAttach: function () {
             const header = $(this.el).find('.search-query-group-header');
             header.on('click', function (e) {
-                const arrow = $(e.currentTarget).children('i')
+                const arrow = $(e.currentTarget).children('i');
                 if (arrow.hasClass('fa-angle-double-down')) {
                     arrow.removeClass('fa-angle-double-down');
                     arrow.addClass('fa-angle-double-up');
@@ -526,7 +526,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
 
             return new ChildViewClass(options);
-          },
+        },
 
         childViewContainer: "#query-properties",
         childViewOptions: function () { return {parentView: this}; },
@@ -551,7 +551,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 title: this.options.title.trim(),
                 description: DOMPurify.sanitize(description),
                 sidebarEnabled: this.options.sidebarEnabled,
-                grouped: Boolean(this.collection.find(c => c.has("groupKey")))
+                grouped: Boolean(this.collection.find(c => c.has("groupKey"))),
             };
         },
 
@@ -588,13 +588,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     children.push(childView);
                 }
             });
-            return children
+            return children;
         },
 
         _getChildModels: function () {
             return _.flatten(_.map(
                 Array.from(this.collection),
-                function(item) {
+                function (item) {
                     if (item.has("displays")) {
                         return item.get("displays");
                     } else {
