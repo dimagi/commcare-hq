@@ -371,7 +371,7 @@ def _process_reporting_metadata_staging():
                 record.delete()
 
 
-@retry_on(ResourceConflict, delays=[0])
+@retry_on(ResourceConflict, delays=[0, 0.5])
 def _process_record_with_retry(record):
     """
     It is possible that an unrelated user update is saved to the db while we are processing the record

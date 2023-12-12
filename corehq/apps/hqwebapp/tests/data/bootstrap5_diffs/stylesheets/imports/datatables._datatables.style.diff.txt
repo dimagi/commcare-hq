@@ -1,52 +1,144 @@
 --- 
 +++ 
-@@ -9,10 +9,10 @@
+@@ -1,102 +1,54 @@
+-.dataTables_info,
+-.dataTables_length {
+-  display: inline-block;
+-}
+-.dataTables_info {
+-  padding-top: 24px;
+-  padding-right: 5px;
++div.dataTables_wrapper div.dataTables_info {
++  padding-top: 9px !important;
+ }
  
- .datatable thead th,
- .dataTable thead th {
+-.datatable thead th,
+-.dataTable thead th {
 -  background-color: desaturate(@cc-brand-low, 50%);
-+  background-color: desaturate($cc-brand-low, 50%);
-   color: #ffffff;
-   &:nth-child(odd) {
+-  color: #ffffff;
+-  &:nth-child(odd) {
 -    background-color: lighten(desaturate(@cc-brand-low, 50%), 10%);
-+    background-color: lighten(desaturate($cc-brand-low, 50%), 10%);
-   }
+-  }
++div.dataTables_wrapper div.dataTables_length label {
++  padding-top: 6px !important;
  }
  
-@@ -20,7 +20,7 @@
- .datatable tfoot th,
- .dataTable tfoot td,
- .dataTable tfoot th{
+-.datatable tfoot td,
+-.datatable tfoot th,
+-.dataTable tfoot td,
+-.dataTable tfoot th{
 -  background-color: lighten(desaturate(@cc-brand-low, 60%), 10%);
-+  background-color: lighten(desaturate($cc-brand-low, 60%), 10%);
-   color: #ffffff;
-   padding: 8px;
+-  color: #ffffff;
+-  padding: 8px;
++table.dataTable.table-hq-report {
++  margin-top: 0 !important;
  }
-@@ -49,13 +49,13 @@
+ 
+-.datatable .header,
+-.dataTable .header {
+-  .dt-sort-icon:before{
+-    font-family: "Glyphicons Halflings";
+-    vertical-align: bottom;
+-  }
+-  &.headerSort {
+-    .dt-sort-icon:before {
+-      content: "\e150";
+-      opacity: 0.2;
++.table-hq-report {
++  thead th {
++    background-color: $blue-800;
++    color: $white;
++    white-space: nowrap;
++
++    &:nth-child(odd) {
++      background-color: $blue-700;
++    }
++
++    &.dtfc-fixed-left,
++    &.dtfc-fixed-right {
++      background-color: $blue !important;
++    }
++
++    &.sorting_asc::before,
++    &.sorting_desc::after {
++      opacity: 1.0 !important;
++      color: $white !important;
++    }
++
++    &::after,
++    &::before {
++      opacity: 0.3 !important;
+     }
    }
-   &.headerSortDesc,
-   &.headerSortAsc {
+-  &.headerSortDesc {
+-    .dt-sort-icon:before {
+-      content: "\e156";
++
++  tbody tr {
++    &.odd td.dtfc-fixed-left,
++    &.odd td.dtfc-fixed-right {
++      background-color: lighten($gray-200, 5%);
+     }
+-  }
+-  &.headerSortAsc {
+-    .dt-sort-icon:before {
+-      content: "\e155";
+-    }
+-  }
+-  &.headerSortDesc,
+-  &.headerSortAsc {
 -    background-color: @cc-brand-mid;
-+    background-color: $cc-brand-mid;
+-  }
+-}
+ 
+-.datatable .sorting_1,
+-.dataTable .sorting_1 {
+-  background-color: @cc-bg;
+-}
+-
+-.panel-body-datatable {
+-  padding: 0;
+-  .dataTables_control {
+-    padding: 10px 15px;
+-    .dataTables_info {
+-      padding-top: 0;
+-    }
+-    .dataTables_paginate {
+-      .pagination {
+-        margin: 0;
+-      }
++    &.even td.dtfc-fixed-left {
++      background-color: $gray-100;
+     }
    }
  }
  
- .datatable .sorting_1,
- .dataTable .sorting_1 {
--  background-color: @cc-bg;
-+  background-color: $cc-bg;
+-.dataTable td.text-xs {
+-  font-size: .8em;
++.dtfc-right-top-blocker:last-child {
++  display: none !important;
  }
- 
- .panel-body-datatable {
-@@ -94,9 +94,9 @@
- }
- 
- .dataTable td.text-red {
+-
+-.dataTable td.text-sm {
+-  font-size: .9em;
+-}
+-
+-.dataTable td.text-lg {
+-  font-size: 1.1em;
+-}
+-
+-.dataTable td.text-xl {
+-  font-size: 1.2em;
+-}
+-
+-.dataTable td.text-bold {
+-  font-weight: bold;
+-}
+-
+-.dataTable td.text-red {
 -  color: @cc-att-neg-mid;
-+  color: $cc-att-neg-mid;
- }
- 
- .dataTable td.text-green {
+-}
+-
+-.dataTable td.text-green {
 -  color: @cc-att-pos-mid;
-+  color: $cc-att-pos-mid;
- }
+-}

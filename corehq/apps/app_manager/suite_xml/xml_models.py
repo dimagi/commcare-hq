@@ -792,6 +792,7 @@ class Style(XmlObject):
     grid_width = StringField("grid/@grid-width")
     grid_x = StringField("grid/@grid-x")
     grid_y = StringField("grid/@grid-y")
+    show_border = BooleanField("@show-border")
 
 
 class Extra(XmlObject):
@@ -890,7 +891,7 @@ class TileGroup(XmlObject):
 
 class Detail(OrderedXmlObject, IdNode):
     """
-    <detail id="">
+    <detail id="" lazy_loading="false">
         <title><text/></title>
         <lookup action="" image="" name="">
             <extra key="" value = "" />
@@ -908,6 +909,9 @@ class Detail(OrderedXmlObject, IdNode):
     """
 
     ROOT_NAME = 'detail'
+
+    lazy_loading = BooleanField('@lazy_loading')
+
     ORDER = ('title', 'lookup', 'no_items_text', 'details', 'fields')
 
     nodeset = StringField('@nodeset')

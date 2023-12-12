@@ -199,12 +199,13 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled) {
+    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiatedBy) {
         var urlObject = utils.currentUrlToObject();
         var queryObject = _.extend(
             {
                 inputs: queryDict,
                 execute: true,
+                initiatedBy: initiatedBy,
             },
             // force manual search in split screen case search for workflow compatibility
             sidebarEnabled ? { forceManualSearch: true } : {}

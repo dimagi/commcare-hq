@@ -354,7 +354,7 @@
  }
  
  .form-hide-actions .form-actions {
-@@ -355,15 +12,34 @@
+@@ -355,15 +12,38 @@
    .validationMessage {
      display: block;
      padding-top: 8px;
@@ -395,4 +395,8 @@
 +  div {
 +    padding-left: 6px;
 +  }
++}
++
++.ms-header .btn {
++  margin-top: -3px;
 +}

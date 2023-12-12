@@ -146,6 +146,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     };
     // generate the case tile's style block and insert
     const buildCellLayout = function (tiles, styles, prefix) {
+        const borderInTile = Boolean(_.find(styles, s => s.showBorder));
         const tileModels = _.chain(tiles || [])
             .map(function (tile, idx) {
                 if (tile === null || tile === undefined) {
@@ -158,6 +159,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     fontStyle: tile.fontSize,
                     verticalAlign: getValidFieldAlignment(style.verticalAlign),
                     horizontalAlign: getValidFieldAlignment(style.horizontalAlign),
+                    showBorder: style.showBorder,
+                    borderInTile: borderInTile,
                 };
             })
             .filter(function (tile) {
@@ -230,7 +233,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
-            clickIcon: ".module-icon.btn",
+            clickIcon: ".module-icon.clickable-icon",
             selectRow: ".select-row-checkbox",
             showMore: ".show-more",
         },
@@ -323,7 +326,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const self = this;
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
-            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
+            urlObject.clickedIcon = true;
+            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
                 self.updateModelFromDetailResponse(caseId, detailResponse);
             }).fail(function () {
@@ -332,7 +336,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
-            this.model.set("data", detailResponse.models[0].attributes.details);
+            if (detailResponse.removeCaseRow) {
+                this.destroy();
+            } else {
+                this.model.set("data", detailResponse.models[0].attributes.details);
+            }
         },
 
         modelChanged: function () {
@@ -441,7 +449,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
-            CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+            if (detailResponse.removeCaseRow) {
+                this.destroy();
+            } else {
+                CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+            }
         },
 
         getFieldIndexFromEvent: function (e) {
@@ -501,14 +513,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
-            this.model.set('updating', true);
-            CaseTileGroupedView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
-            this.model.set('updatedCaseId', caseId);
-            this.model.set('updatedRowData', this.options.bodyRowIndices.reduce((acc, index) => {
-                acc[index] = detailResponse.models[0].attributes.details[index];
-                return acc;
-            }, {}));
-            this.model.set('updating', false);
+            if (detailResponse.removeCaseRow) {
+                this.destroy();
+            } else {
+                this.model.set('updating', true);
+                CaseTileGroupedView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+                this.model.set('updatedCaseId', caseId);
+                this.model.set('updatedRowData', this.options.bodyRowIndices.reduce((acc, index) => {
+                    acc[index] = detailResponse.models[0].attributes.details[index];
+                    return acc;
+                }, {}));
+                this.model.set('updating', false);
+            }
         },
     });
 
@@ -989,7 +1005,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const MultiSelectCaseListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {
             selectAllCheckbox: "#select-all-checkbox",
-            continueButton: "#multi-select-continue-btn",
+            continueButton: ".multi-select-continue-btn",
             continueButtonText: "#multi-select-btn-text",
         }),
 
@@ -1041,7 +1057,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const CaseTileListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {
             selectAllCheckbox: "#select-all-tile-checkbox",
-            continueButton: "#multi-select-continue-btn",
+            continueButton: ".multi-select-continue-btn",
             continueButtonText: "#multi-select-btn-text",
         }),
         childView: CaseTileView,
