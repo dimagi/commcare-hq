@@ -259,8 +259,12 @@ You can view the %s here: %s""" % (
         logging.warning("Can't send email, but the message was:\n%s" % message)
 
 
-def project_logo_emails_context(domain):
-    if USE_LOGO_IN_SYSTEM_EMAILS.enabled(domain):
+def project_logo_emails_context(domain, couch_user=None):
+    if couch_user:
+        user_domains = getattr(couch_user, 'domains', None)
+        if user_domains:
+            domain = user_domains[0]
+    if domain and USE_LOGO_IN_SYSTEM_EMAILS.enabled(domain):
         try:
             image_reference = LogoForSystemEmailsReference.objects.get(domain=domain)
             return {
@@ -272,7 +276,7 @@ def project_logo_emails_context(domain):
     return {}
 
 
-def send_mobile_experience_reminder(recipient, full_name, domain):
+def send_mobile_experience_reminder(recipient, full_name, additional_email_context={}):
     url = absolute_reverse("login")
 
     params = {
@@ -280,7 +284,7 @@ def send_mobile_experience_reminder(recipient, full_name, domain):
         "url": url,
         'url_prefix': get_static_url_prefix(),
     }
-    params.update(project_logo_emails_context(domain))
+    params.update(additional_email_context)
     message_plaintext = render_to_string(
         'registration/email/mobile_signup_reminder.txt', params)
     message_html = render_to_string(

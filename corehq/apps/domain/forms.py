@@ -1496,9 +1496,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
                 'token': token_generator.make_token(user),
                 'protocol': 'https' if use_https else 'http',
             }
-            user_domains = getattr(couch_user, 'domains', None)
-            if user_domains:
-                c.update(project_logo_emails_context(user_domains[0]))
+            c.update(project_logo_emails_context(None, couch_user=couch_user))
             subject = render_to_string(subject_template_name, c)
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
