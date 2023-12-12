@@ -1157,12 +1157,12 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         return all_match or any_match
 
     def when_case_matches(self, case, rule):
-        self._handle_case_duplicate_new(case, rule)
-        result = self._handle_case_duplicate(case, rule)
+        result = self._handle_case_duplicate_new(case, rule)
+        self._handle_case_duplicate(case, rule)
 
         return result
 
-    def _handle_case_duplicate_new(self, case, rule, process_updates=False):
+    def _handle_case_duplicate_new(self, case, rule):
         if not case_matching_rule_exists_in_es(case, rule):
             # If the case isn't found, any duplicate information is unreliable
             # Just queue this specific record up manually via resave_case
@@ -1186,11 +1186,8 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 existing_duplicate.delete()
             duplicate_ids = self._create_duplicates(case, rule, current_hash)
 
-        if process_updates:
-            num_updates = self._update_duplicates(duplicate_ids, case, rule)
-            return CaseRuleActionResult(num_updates=num_updates)
-        else:
-            return CaseRuleActionResult(num_updates=0)
+        num_updates = self._update_duplicates(duplicate_ids, case, rule)
+        return CaseRuleActionResult(num_updates=num_updates)
 
     def _create_duplicates(self, case, rule, current_hash):
         # Handle whether or not this gets inserted as a new duplicate
@@ -1253,11 +1250,8 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             if self._handle_existing_duplicates(case.case_id, new_duplicate_case_ids):
                 return CaseRuleActionResult(num_updates=0)
             CaseDuplicate.bulk_create_duplicate_relationships(self, case, new_duplicate_case_ids)
-        if self.properties_to_update:
-            num_updates = self._update_cases(domain, rule, new_duplicate_case_ids)
-        else:
-            num_updates = 0
-        return CaseRuleActionResult(num_updates=num_updates)
+
+        return CaseRuleActionResult(0)
 
     def _handle_existing_duplicates(self, case_id, new_duplicate_case_ids):
         """Handles existing duplicate objects.
