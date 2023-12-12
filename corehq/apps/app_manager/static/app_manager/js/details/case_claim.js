@@ -402,7 +402,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     };
                     return {
                         name: p.name(),
-                        label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
+                        label: (p.label().length || p.isGroup) ? p.label() : p.name(),  // If label isn't set, use name
                         hint: p.hint(),
                         appearance: p.appearanceFinal(),
                         is_multiselect: p.isMultiselect(),
