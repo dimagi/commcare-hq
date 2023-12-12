@@ -485,8 +485,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         templateContext: function () {
+            let groupName = this.options.groupName === undefined ?
+                "" : markdown.render(this.options.groupName.trim());
             return {
-                groupName: this.options.groupName,
+                groupName: DOMPurify.sanitize(groupName),
                 groupKey: this.options.groupKey,
                 required: this.options.required,
                 named: this.options.groupName.length > 0,
