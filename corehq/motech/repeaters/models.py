@@ -875,6 +875,7 @@ class DataSourceRepeater(Repeater):
     def fire_for_record(self, repeat_record):
         from corehq.apps.userreports.models import DataSourceRowTransactionLog
         # TODO: Remove after repeat records are migrated to SQL
+        # We need to send repeat record in the correct order.
         # After repeat records are moved to SQL, it will always fire in the correct sequence, but for now we don't
         # have that guarentee, so we need to check that we're firing the latest transaction log entry only
         transaction_log = DataSourceRowTransactionLog.objects.get(id=repeat_record.payload_id)
