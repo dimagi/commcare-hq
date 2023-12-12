@@ -171,7 +171,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var self = this;
 
         if (!json.type) {
+            //debugger;
             Container.groupQuestions(json);
+            //debugger;
         }
 
         var mapping = {
@@ -312,15 +314,18 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
 
         for (let child of json.children) {
-            if (child.type === constants.QUESTION_TYPE) {
+            if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE) {
                 const questionTileWidth = Question.calculateColumnWidthForPerRowStyle(child.style);
                 usedWidth += questionTileWidth;
                 if (usedWidth > constants.GRID_COLUMNS) {
                     resetCurrentGroup();
                     usedWidth += questionTileWidth;
                 }
+                if (child.type === constants.GROUP_TYPE) {
+                    child = Container.groupQuestions(child);
+                }
                 addToCurrentGroup(child);
-            } else if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
+            } else if (child.type === constants.REPEAT_TYPE) {
                 const newGroup = Container.groupQuestions(child);
                 newChildren.push(newGroup);
                 resetCurrentGroup();
@@ -655,6 +660,18 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             }
             return Container.prototype.headerBackgroundColor.call(self);
         };
+
+        console.log("this.style " + JSON.stringify(this.style));
+        const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
+        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
+        var styleStr = (self.style) ? ko.utils.unwrapObservable(self.style.raw) : null;
+
+        if (getMatchingStyles(perRowPattern, styleStr)) {
+            this.questionTileWidth = `col-sm-${columnWidth}`;
+            //debugger;
+            console.log(" this.questionTileWidth " + this.questionTileWidth);
+        }
+
     }
     Group.prototype = Object.create(Container.prototype);
     Group.prototype.constructor = Container;
