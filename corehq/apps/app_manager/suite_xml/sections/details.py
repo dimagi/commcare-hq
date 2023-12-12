@@ -198,7 +198,13 @@ class DetailContributor(SectionContributor):
             if len(d.details):
                 helper = EntriesHelper(self.app)
                 datums = helper.get_datum_meta_module(module)
-                d.variables.extend([DetailVariable(name=datum.id, function=datum.datum.value) for datum in datums])
+                d.variables.extend([
+                    DetailVariable(name=datum.id, function=datum.datum.value)
+                    for datum in datums
+                    # FixtureSelect isn't supported under variables
+                    # More context here: https://github.com/dimagi/commcare-hq/pull/33769#discussion_r1410315708
+                    if datum.action != 'fixture_select'
+                ])
                 return d
             else:
                 return None
