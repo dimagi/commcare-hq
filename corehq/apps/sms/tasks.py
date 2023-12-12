@@ -601,7 +601,7 @@ def _sync_user_phone_numbers(couch_user_id):
 @no_result_task(queue='background_queue', acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def publish_sms_change(self, sms_id):
-    sms = SMS.objects.get(sms_id)
+    sms = SMS.objects.get(pk=sms_id)
     try:
         publish_sms_saved(sms)
     except Exception as e:
