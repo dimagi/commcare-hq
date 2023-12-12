@@ -750,6 +750,16 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return (self.error() || self.serverError()) && !self.dirty();
         });
 
+        self.hasLabelContent = ko.computed(function() {
+            return (
+                self.caption()
+                || self.caption_markdown()
+                || self.help()
+                || self.hint()
+                || self.required()
+            );
+        });
+
         self.form = function () {
             var parent = self.parent;
             while (parent.type && parent.type() !== null) {
