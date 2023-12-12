@@ -323,9 +323,13 @@ class FindingDuplicatesTest(TestCase):
             self.factory.create_case(case_name='Padme Amidala', update={'dob': '1901-05-01'}) for i in range(3)
         ]
 
+        case_ids = [case.case_id for case in cases]
+
         self._prime_es_index(cases)
 
         results = find_duplicate_case_ids(self.domain, cases[0], ["name", "dob"])
+        print(f'case_ids are: {case_ids}')
+        print(f'results are: {results}')
         self.assertItemsEqual(results, [cases[0].case_id, cases[1].case_id])
 
     def test_limit_is_respected(self):
