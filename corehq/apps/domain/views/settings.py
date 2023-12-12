@@ -1,3 +1,4 @@
+import pytz
 import json
 from collections import defaultdict
 from functools import cached_property
@@ -59,6 +60,7 @@ from corehq.apps.ota.models import MobileRecoveryMeasure
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
+from corehq.util.timezones.conversions import UserTime
 
 
 class BaseProjectSettingsView(BaseDomainView):
@@ -561,12 +563,29 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
         return HttpResponseRedirect(self.page_url)
 
     def _create_alert(self):
+        start_time = self.form.cleaned_data['start_time']
+        end_time = self.form.cleaned_data['end_time']
+        timezone = self.request.project.default_timezone
+
+        start_time = self._convert_timestamp_to_utc(start_time, timezone) if start_time else None
+        end_time = self._convert_timestamp_to_utc(end_time, timezone) if end_time else None
+
         Alert.objects.create(
             created_by_domain=self.domain,
             domains=[self.domain],
             text=self.form.cleaned_data['text'],
+            start_time=start_time,
+            end_time=end_time,
+            timezone=timezone,
             created_by_user=self.request.couch_user.username,
         )
+
+    @staticmethod
+    def _convert_timestamp_to_utc(timestamp, timezone):
+        return UserTime(
+            timestamp,
+            tzinfo=pytz.timezone(timezone)
+        ).server_time().done()
 
 
 @toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
