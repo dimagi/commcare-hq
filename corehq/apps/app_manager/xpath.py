@@ -427,6 +427,11 @@ class SearchSelectedCasesInstanceXpath(InstanceXpath):
         return self or self.default_id
 
 
+class LocationInstanceXpath(InstanceXpath):
+    id = 'locations'
+    path = 'locations/location'
+
+
 class CommCareSession(object):
     username = SessionInstanceXpath().instance().slash("username")
     userid = SessionInstanceXpath().instance().slash("userid")
