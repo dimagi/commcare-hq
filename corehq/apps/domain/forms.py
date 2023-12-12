@@ -2681,8 +2681,13 @@ class DomainAlertForm(forms.Form):
         required=False
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, request, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        datetime_local_widget_helptext = f"Using project's timezone: {request.project.default_timezone}"
+        self.fields['start_time'].help_text = datetime_local_widget_helptext
+        self.fields['end_time'].help_text = datetime_local_widget_helptext
+
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper.layout = Layout(
             crispy.Fieldset(

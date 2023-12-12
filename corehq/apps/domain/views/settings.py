@@ -550,8 +550,8 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
     @cached_property
     def form(self):
         if self.request.method == 'POST':
-            return DomainAlertForm(self.request.POST)
-        return DomainAlertForm()
+            return DomainAlertForm(self.request, self.request.POST)
+        return DomainAlertForm(self.request)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
