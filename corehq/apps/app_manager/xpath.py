@@ -353,7 +353,7 @@ class CaseClaimXpath(object):
         return CaseIDXPath(session_var(self.session_var_name)).case().count().eq(0)
 
     @classmethod
-    def multi_select_relevant(cls):
+    def multi_case_relevant(cls):
         # Verifies that there's at least one case that isn't yet owned by the user
         return XPath("$case_id").neq(XPath.string(""))
 

@@ -267,7 +267,7 @@ class EntriesHelper(object):
                 data.ref = QuerySessionXPath(case_datum_id).instance()
                 data.exclude = CaseIDXPath(data.ref).case().count().neq(0)
                 e.post.data.append(data)
-            e.post.relevant = CaseClaimXpath.multi_select_relevant()
+            e.post.relevant = CaseClaimXpath.multi_case_relevant()
 
     def entry_for_module(self, module):
         # avoid circular dependency
