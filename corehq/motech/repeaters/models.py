@@ -141,12 +141,6 @@ from .const import (
     RECORD_SUCCESS_STATE,
     State,
 )
-from .dbaccessors import (
-    get_cancelled_repeat_record_count,
-    get_failure_repeat_record_count,
-    get_pending_repeat_record_count,
-    get_success_repeat_record_count,
-)
 from .exceptions import RequestConnectionError, UnknownRepeater
 from .repeater_generators import (
     AppStructureGenerator,
@@ -443,16 +437,32 @@ class Repeater(RepeaterSuperProxy):
         self.save()
 
     def get_pending_record_count(self):
-        return get_pending_repeat_record_count(self.domain, self.repeater_id)
+        return SQLRepeatRecord.objects.filter(
+            domain=self.domain,
+            repeater_id=self.repeater_id,
+            state=State.Pending,
+        ).count()
 
     def get_failure_record_count(self):
-        return get_failure_repeat_record_count(self.domain, self.repeater_id)
+        return SQLRepeatRecord.objects.filter(
+            domain=self.domain,
+            repeater_id=self.repeater_id,
+            state=State.Fail,
+        ).count()
 
     def get_success_record_count(self):
-        return get_success_repeat_record_count(self.domain, self.repeater_id)
+        return SQLRepeatRecord.objects.filter(
+            models.Q(state=State.Success) | models.Q(state=State.Empty),
+            domain=self.domain,
+            repeater_id=self.repeater_id,
+        ).count()
 
     def get_cancelled_record_count(self):
-        return get_cancelled_repeat_record_count(self.domain, self.repeater_id)
+        return SQLRepeatRecord.objects.filter(
+            domain=self.domain,
+            repeater_id=self.repeater_id,
+            state=State.Cancelled,
+        ).count()
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)

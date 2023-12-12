@@ -1,6 +1,7 @@
 import json
 import re
 
+from django.db.models import Q
 from django.http import (
     Http404,
     HttpRequest,
@@ -40,11 +41,6 @@ from corehq.motech.dhis2.parse_response import get_errors, get_diagnosis_message
 from corehq.motech.models import RequestLog
 
 from ..const import State, RECORD_CANCELLED_STATE
-from ..dbaccessors import (
-    get_cancelled_repeat_record_count,
-    get_pending_repeat_record_count,
-    get_repeat_record_count,
-)
 from ..models import SQLRepeatRecord, are_repeat_records_migrated, is_queued, is_sql_id
 from .repeat_record_display import RepeatRecordDisplay
 
@@ -124,8 +120,12 @@ class BaseRepeatRecordReport(GenericTabularReport):
     def total_records(self):
         if self.payload_id:
             return len(self._get_all_records_by_payload())
-        else:
-            return get_repeat_record_count(self.domain, self.repeater_id, self.state)
+        query = SQLRepeatRecord.objects.filter(domain=self.domain)
+        if self.repeater_id:
+            query = query.filter(repeater_id=self.repeater_id)
+        if self.state:
+            query = query.filter(state=self.state)
+        return query.count()
 
     @property
     def shared_pagination_GET_params(self):
@@ -240,9 +240,12 @@ class BaseRepeatRecordReport(GenericTabularReport):
     def report_context(self):
         context = super().report_context
 
-        total = get_repeat_record_count(self.domain, self.repeater_id)
-        total_pending = get_pending_repeat_record_count(self.domain, self.repeater_id)
-        total_cancelled = get_cancelled_repeat_record_count(self.domain, self.repeater_id)
+        where = Q(domain=self.domain)
+        if self.repeater_id:
+            where &= Q(repeater_id=self.repeater_id)
+        total = SQLRepeatRecord.objects.filter(where).count()
+        total_pending = SQLRepeatRecord.objects.filter(where, state=State.Pending).count()  # include State.Fail?
+        total_cancelled = SQLRepeatRecord.objects.filter(where, state=State.Cancelled).count()
 
         form_query_string = self.request.GET.urlencode()
         form_query_string_cancelled = _change_record_state(
