@@ -455,13 +455,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
 
         self.enableSubmitButton = ko.computed(function () {
-            return !self.isSubmitting() && self.erroredQuestions().length === 0;
+            return self.erroredQuestions().length === 0;
         });
 
         self.submitText = ko.computed(function () {
-            if (self.isSubmitting()) {
-                return gettext('Submitting...');
-            }
             return gettext('Submit');
         });
 
