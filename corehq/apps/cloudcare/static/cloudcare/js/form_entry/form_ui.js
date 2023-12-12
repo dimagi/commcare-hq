@@ -455,13 +455,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
 
         self.enableSubmitButton = ko.computed(function () {
-            return !self.isSubmitting() && self.erroredQuestions().length === 0;
+            return self.erroredQuestions().length === 0;
         });
 
         self.submitText = ko.computed(function () {
-            if (self.isSubmitting()) {
-                return gettext('Submitting...');
-            }
             return gettext('Submit');
         });
 
@@ -484,7 +481,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         self.showSubmitButton = ko.computed(function () {
-            return !self.showInFormNavigation() && !self.shouldAutoSubmit;
+            return !self.isSubmitting() && !self.showInFormNavigation() && !self.shouldAutoSubmit;
         });
 
         self.submitForm = function () {
