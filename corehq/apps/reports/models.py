@@ -231,17 +231,18 @@ class TableauConnectedApp(models.Model):
         return token
 
     @classmethod
-    def is_server_setup(cls, domain):
+    def get_server(cls, domain):
+        """Gets the server for a domain, while checking whether a related server and connected app exist."""
         try:
             server = TableauServer.objects.get(domain=domain)
         except TableauServer.DoesNotExist:
-            return False
+            return None
         try:
             if server.server_name and cls.objects.get(server=server):
-                return True
+                return server
         except TableauConnectedApp.DoesNotExist:
             pass
-        return False
+        return None
 
 
 class TableauUser(models.Model):
