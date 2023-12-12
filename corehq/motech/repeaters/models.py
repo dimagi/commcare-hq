@@ -1160,19 +1160,19 @@ class RepeatRecord(Document):
         self.next_check = None
         self.cancelled = True
 
+    def _is_ready(self):
+        return self.next_check < datetime.utcnow()
+
+    def _already_processed(self):
+        return self.succeeded or self.cancelled or self.next_check is None
+
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
             process_repeat_record,
             retry_process_repeat_record,
         )
 
-        def is_ready():
-            return self.next_check < datetime.utcnow()
-
-        def already_processed():
-            return self.succeeded or self.cancelled or self.next_check is None
-
-        if already_processed() or not is_ready():
+        if self._already_processed() or not self._is_ready():
             return
 
         # Set the next check to happen an arbitrarily long time from now.
