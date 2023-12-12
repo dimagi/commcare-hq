@@ -58,7 +58,7 @@ from corehq.apps.data_interfaces.forms import (
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
-    CaseDuplicateNew,
+    CaseDuplicate,
     DomainCaseRuleRun,
 )
 from corehq.apps.data_interfaces.tasks import (
@@ -1145,7 +1145,7 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 total_cases=progress_helper.get_total_cases_to_process(),
             )
         action = CaseDeduplicationActionDefinition.from_rule(rule)
-        return CaseDuplicateNew.objects.filter(action=action).count()
+        return CaseDuplicate.objects.filter(action=action).count()
 
 
 @method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')

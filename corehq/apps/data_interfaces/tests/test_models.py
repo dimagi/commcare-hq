@@ -16,7 +16,7 @@ from corehq.apps.data_interfaces.models import (
     MatchPropertyDefinition,
     UCRFilterDefinition,
     UpdateCaseDefinition,
-    CaseDuplicateNew,
+    CaseDuplicate,
     CaseDeduplicationMatchTypeChoices,
 )
 from corehq.apps.domain.models import Domain
@@ -361,7 +361,7 @@ class AutomaticUpdateRuleTests(SimpleTestCase):
         self.addCleanup(action_patcher.stop)
 
 
-class CaseDuplicateNewTests(TestCase):
+class CaseDuplicateTests(TestCase):
     def setUp(self):
         rule = create_dedupe_rule(name='rule1')
         self.action = CaseDeduplicationActionDefinition.from_rule(rule)
@@ -369,78 +369,78 @@ class CaseDuplicateNewTests(TestCase):
     def test_get_case_ids(self):
         rule = create_dedupe_rule()
         action = CaseDeduplicationActionDefinition.from_rule(rule)
-        CaseDuplicateNew.objects.create(case_id='1', action=action, match_values='111')
-        CaseDuplicateNew.objects.create(case_id='2', action=action, match_values='111')
-        CaseDuplicateNew.objects.create(case_id='3', action=action, match_values='111')
-        self.assertEqual(set(CaseDuplicateNew.get_case_ids(rule.id)), {'1', '2', '3'})
+        CaseDuplicate.objects.create(case_id='1', action=action, match_values='111')
+        CaseDuplicate.objects.create(case_id='2', action=action, match_values='111')
+        CaseDuplicate.objects.create(case_id='3', action=action, match_values='111')
+        self.assertEqual(set(CaseDuplicate.get_case_ids(rule.id)), {'1', '2', '3'})
 
     def test_get_case_ids_with_missing_rule_returns_empty_list(self):
         invalid_rule_id = '123'
-        self.assertEqual(CaseDuplicateNew.get_case_ids(invalid_rule_id), [])
+        self.assertEqual(CaseDuplicate.get_case_ids(invalid_rule_id), [])
 
     def test_create_creates_duplicate_from_case(self):
         case = CommCareCase(case_json={'test': '123'})
         action = self._create_action_detecting_duplicates_on('test')
-        duplicate = CaseDuplicateNew.create(case, action, save=False)
+        duplicate = CaseDuplicate.create(case, action, save=False)
 
-        expected_hash = CaseDuplicateNew.hash_arguments('123')
+        expected_hash = CaseDuplicate.hash_arguments('123')
         self.assertEqual(duplicate.match_values, expected_hash)
 
     def test_removing_record_deletes_orphaned_duplicate(self):
-        entry = CaseDuplicateNew.objects.create(case_id='1', action=self.action, match_values='123')
-        duplicate = CaseDuplicateNew.objects.create(case_id='2', action=self.action, match_values='123')
+        entry = CaseDuplicate.objects.create(case_id='1', action=self.action, match_values='123')
+        duplicate = CaseDuplicate.objects.create(case_id='2', action=self.action, match_values='123')
 
         entry.delete()
 
-        entry_exists = CaseDuplicateNew.objects.filter(
+        entry_exists = CaseDuplicate.objects.filter(
             case_id=entry.case_id, action=self.action).count() > 0
-        duplicate_exists = CaseDuplicateNew.objects.filter(
+        duplicate_exists = CaseDuplicate.objects.filter(
             case_id=duplicate.case_id, action=self.action).count() > 0
         self.assertFalse(entry_exists)
         self.assertFalse(duplicate_exists)
 
     def test_removing_record_with_multiple_existing_leaves_duplicates(self):
-        entry = CaseDuplicateNew.objects.create(case_id='1', action=self.action, match_values='123')
-        CaseDuplicateNew.objects.create(case_id='2', action=self.action, match_values='123')
-        CaseDuplicateNew.objects.create(case_id='3', action=self.action, match_values='123')
+        entry = CaseDuplicate.objects.create(case_id='1', action=self.action, match_values='123')
+        CaseDuplicate.objects.create(case_id='2', action=self.action, match_values='123')
+        CaseDuplicate.objects.create(case_id='3', action=self.action, match_values='123')
 
         entry.delete()
 
-        entry_exists = CaseDuplicateNew.objects.filter(
+        entry_exists = CaseDuplicate.objects.filter(
             case_id=entry.case_id, action=self.action).count() > 0
-        remaining_duplicate_count = CaseDuplicateNew.objects.filter(
+        remaining_duplicate_count = CaseDuplicate.objects.filter(
             action=self.action, match_values=entry.match_values).count()
         self.assertFalse(entry_exists)
         self.assertEqual(remaining_duplicate_count, 2)
 
     def test_remove_duplicates_for_case_ids_handles_multiple_actions(self):
         action1 = CaseDeduplicationActionDefinition.from_rule(create_dedupe_rule(name='rule1'))
-        CaseDuplicateNew.objects.create(case_id='1', action=action1, match_values='123')
+        CaseDuplicate.objects.create(case_id='1', action=action1, match_values='123')
 
         action2 = CaseDeduplicationActionDefinition.from_rule(create_dedupe_rule(name='rule2'))
-        CaseDuplicateNew.objects.create(case_id='1', action=action2, match_values='123')
+        CaseDuplicate.objects.create(case_id='1', action=action2, match_values='123')
 
-        CaseDuplicateNew.remove_duplicates_for_case_ids(['1'])
+        CaseDuplicate.remove_duplicates_for_case_ids(['1'])
 
-        self.assertEqual(CaseDuplicateNew.objects.filter(case_id='1').count(), 0)
+        self.assertEqual(CaseDuplicate.objects.filter(case_id='1').count(), 0)
 
     def test_remove_duplicates_removes_orphaned_records(self):
         action = CaseDeduplicationActionDefinition.from_rule(create_dedupe_rule(name='rule1'))
-        CaseDuplicateNew.objects.create(case_id='1', action=action, match_values='123')
-        CaseDuplicateNew.objects.create(case_id='2', action=action, match_values='123')
+        CaseDuplicate.objects.create(case_id='1', action=action, match_values='123')
+        CaseDuplicate.objects.create(case_id='2', action=action, match_values='123')
 
-        CaseDuplicateNew.remove_duplicates_for_case_ids(['1'])
+        CaseDuplicate.remove_duplicates_for_case_ids(['1'])
 
-        self.assertEqual(CaseDuplicateNew.objects.filter(action=action, match_values='123').count(), 0)
+        self.assertEqual(CaseDuplicate.objects.filter(action=action, match_values='123').count(), 0)
 
     def test_remove_duplicates_missing_ids_are_ignored(self):
         action = CaseDeduplicationActionDefinition.from_rule(create_dedupe_rule(name='rule1'))
-        CaseDuplicateNew.objects.create(case_id='1', action=action, match_values='123')
-        CaseDuplicateNew.objects.create(case_id='3', action=action, match_values='456')
+        CaseDuplicate.objects.create(case_id='1', action=action, match_values='123')
+        CaseDuplicate.objects.create(case_id='3', action=action, match_values='456')
 
-        CaseDuplicateNew.remove_duplicates_for_case_ids(['1', 'missing', '3'])
+        CaseDuplicate.remove_duplicates_for_case_ids(['1', 'missing', '3'])
 
-        self.assertEqual(CaseDuplicateNew.objects.filter(action=action, case_id__in=['1', '3']).count(), 0)
+        self.assertEqual(CaseDuplicate.objects.filter(action=action, case_id__in=['1', '3']).count(), 0)
 
     def _create_action_detecting_duplicates_on(self, *props):
         action = CaseDeduplicationActionDefinition(
@@ -452,43 +452,43 @@ class CaseDuplicateNewTests(TestCase):
 
 class CaseDuplicate_HashArguments_Tests(SimpleTestCase):
     def test_hashes_single_argument(self):
-        result = CaseDuplicateNew.hash_arguments('one')
+        result = CaseDuplicate.hash_arguments('one')
         self.assertTrue(type(result), str)
 
     def test_hashes_multiple_arguments(self):
-        single_result = CaseDuplicateNew.hash_arguments('one')
-        multiple_result = CaseDuplicateNew.hash_arguments('one', 'two')
+        single_result = CaseDuplicate.hash_arguments('one')
+        multiple_result = CaseDuplicate.hash_arguments('one', 'two')
         self.assertTrue(type(multiple_result), str)
         self.assertNotEqual(single_result, multiple_result)
 
     def test_same_input_produces_same_output(self):
-        result1 = CaseDuplicateNew.hash_arguments('test')
-        result2 = CaseDuplicateNew.hash_arguments('test')
+        result1 = CaseDuplicate.hash_arguments('test')
+        result2 = CaseDuplicate.hash_arguments('test')
         self.assertEqual(result1, result2)
 
     def test_different_inputs_produce_different_output(self):
-        result1 = CaseDuplicateNew.hash_arguments('test1')
-        result2 = CaseDuplicateNew.hash_arguments('test2')
+        result1 = CaseDuplicate.hash_arguments('test1')
+        result2 = CaseDuplicate.hash_arguments('test2')
         self.assertNotEqual(result1, result2)
 
     def test_respects_all_arguments(self):
-        multiple_result1 = CaseDuplicateNew.hash_arguments('one', 'two')
-        multiple_result2 = CaseDuplicateNew.hash_arguments('one', 'two')
+        multiple_result1 = CaseDuplicate.hash_arguments('one', 'two')
+        multiple_result2 = CaseDuplicate.hash_arguments('one', 'two')
         self.assertEqual(multiple_result1, multiple_result2)
 
     def test_deals_with_similar_combinations(self):
-        result1 = CaseDuplicateNew.hash_arguments('mans', 'laughter')
-        result2 = CaseDuplicateNew.hash_arguments('man', 'slaughter')
+        result1 = CaseDuplicate.hash_arguments('mans', 'laughter')
+        result2 = CaseDuplicate.hash_arguments('man', 'slaughter')
         self.assertNotEqual(result1, result2)
 
     def test_converts_non_string_arguments_to_strings(self):
-        result1 = CaseDuplicateNew.hash_arguments(1, 2)
-        result2 = CaseDuplicateNew.hash_arguments('1', '2')
+        result1 = CaseDuplicate.hash_arguments(1, 2)
+        result2 = CaseDuplicate.hash_arguments('1', '2')
         self.assertEqual(result1, result2)
 
     def test_handle_delimiter_character(self):
-        result1 = CaseDuplicateNew.hash_arguments('1', '2')
-        result2 = CaseDuplicateNew.hash_arguments('1\t2')
+        result1 = CaseDuplicate.hash_arguments('1', '2')
+        result2 = CaseDuplicate.hash_arguments('1\t2')
         self.assertNotEqual(result1, result2)
 
 

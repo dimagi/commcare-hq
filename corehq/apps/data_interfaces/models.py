@@ -1168,11 +1168,11 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             return CaseRuleActionResult(num_updates=0)
 
         try:
-            existing_duplicate = CaseDuplicateNew.objects.get(case_id=case.case_id, action=self)
-        except CaseDuplicateNew.DoesNotExist:
+            existing_duplicate = CaseDuplicate.objects.get(case_id=case.case_id, action=self)
+        except CaseDuplicate.DoesNotExist:
             existing_duplicate = None
 
-        current_hash = CaseDuplicateNew.case_and_action_to_hash(case, self)
+        current_hash = CaseDuplicate.case_and_action_to_hash(case, self)
 
         # Check if the new parameters have changed.
         if existing_duplicate and existing_duplicate.match_values == current_hash:
@@ -1196,21 +1196,21 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             # This isn't a duplicate, just return
             return []
 
-        duplicates = [CaseDuplicateNew(case_id=case.case_id, action=self, match_values=current_hash)]
+        duplicates = [CaseDuplicate(case_id=case.case_id, action=self, match_values=current_hash)]
         missing_ids = self._get_case_ids_not_recorded_as_duplicates(other_duplicate_ids)
         if missing_ids:
             # create a new duplicate for anything that currently isn't registered as one
             new_duplicates = [
-                CaseDuplicateNew(case_id=missing_id, action=self, match_values=current_hash)
+                CaseDuplicate(case_id=missing_id, action=self, match_values=current_hash)
                 for missing_id in missing_ids
             ]
             duplicates.extend(new_duplicates)
 
-        CaseDuplicateNew.objects.bulk_create(duplicates)
+        CaseDuplicate.objects.bulk_create(duplicates)
         return [duplicate.case_id for duplicate in duplicates]
 
     def _get_case_ids_not_recorded_as_duplicates(self, all_ids):
-        existing_ids = set(CaseDuplicateNew.objects.filter(
+        existing_ids = set(CaseDuplicate.objects.filter(
             action=self, case_id__in=all_ids
         ).values_list('case_id', flat=True))
         return all_ids - existing_ids
@@ -1254,7 +1254,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         }
 
 
-class CaseDuplicateNew(models.Model):
+class CaseDuplicate(models.Model):
     id = models.BigAutoField(primary_key=True)
     case_id = models.CharField(max_length=126, db_index=True)
     action = models.ForeignKey("CaseDeduplicationActionDefinition", on_delete=models.CASCADE)
@@ -1269,14 +1269,14 @@ class CaseDuplicateNew(models.Model):
 
     def __str__(self):
         return (
-            f"CaseDuplicateNew("
+            f"CaseDuplicate("
             f"case_id={self.case_id}, action_id={self.action_id}, match_values={self.match_values})"
         )
 
     def delete(self, *args, check_for_orphans=True, **kwargs):
         with transaction.atomic():
             if check_for_orphans:
-                other_records = CaseDuplicateNew.objects.filter(
+                other_records = CaseDuplicate.objects.filter(
                     action=self.action, match_values=self.match_values).exclude(case_id=self.case_id)[:2]
 
                 if other_records.count() == 1:
