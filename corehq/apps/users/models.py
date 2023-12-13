@@ -225,6 +225,8 @@ class HqPermissions(DocumentSchema):
     view_data_registry_contents_list = StringListProperty(default=[])
     manage_attendance_tracking = BooleanProperty(default=False)
 
+    manage_domain_alerts = BooleanProperty(default=False)
+
     @classmethod
     def from_permission_list(cls, permission_list):
         """Converts a list of Permission objects into a Permissions object"""
@@ -1103,6 +1105,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         self.last_name = ' '.join(data)
 
     def get_user_data(self, domain):
+        # To do this in bulk, try bulk_populate_user_data
         from .user_data import UserData
         if domain not in self._user_data_accessors:
             self._user_data_accessors[domain] = UserData.lazy_init(self, domain)

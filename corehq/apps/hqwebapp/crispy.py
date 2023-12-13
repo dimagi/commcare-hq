@@ -1,5 +1,6 @@
 import re
 from contextlib import contextmanager
+from django.forms.widgets import DateTimeInput
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
@@ -350,6 +351,10 @@ class FieldsetAccordionGroup(AccordionGroup):
 
 class RadioSelect(Field):
     template = "hqwebapp/crispy/radioselect.html"
+
+
+class DatetimeLocalWidget(DateTimeInput):
+    input_type = "datetime-local"
 
 
 def make_form_readonly(form):

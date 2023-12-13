@@ -19,6 +19,7 @@ from django.forms.fields import (
     BooleanField,
     CharField,
     ChoiceField,
+    DateTimeField,
     Field,
     ImageField,
     IntegerField,
@@ -110,7 +111,7 @@ from corehq.apps.domain.models import (
     all_restricted_ucr_expressions,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.hqwebapp.crispy import DatetimeLocalWidget, HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.widgets import (
@@ -2669,9 +2670,26 @@ class DomainAlertForm(forms.Form):
         widget=forms.Textarea,
         required=True,
     )
+    start_time = DateTimeField(
+        label="Start Time",
+        widget=DatetimeLocalWidget,
+        required=False
+    )
+    end_time = DateTimeField(
+        label="End Time",
+        widget=DatetimeLocalWidget,
+        required=False
+    )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, request, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        datetime_local_widget_helptext = _("Using project's timezone: {}").format(
+            request.project.default_timezone
+        )
+        self.fields['start_time'].help_text = datetime_local_widget_helptext
+        self.fields['end_time'].help_text = datetime_local_widget_helptext
+
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper.layout = Layout(
             crispy.Fieldset(

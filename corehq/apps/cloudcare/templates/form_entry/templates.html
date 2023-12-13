@@ -214,7 +214,7 @@
                 on: $root.forceRequiredVisible,
             }
         ">
-    <label class="caption control-label" data-bind="css: labelWidth, attr: {'for': entry.entryId}">
+    <label class="caption control-label" data-bind="css: labelWidth, attr: {'for': entry.entryId}, visible: hasLabelContent">
       {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
       <div data-bind="css: {
           'row': help(),
