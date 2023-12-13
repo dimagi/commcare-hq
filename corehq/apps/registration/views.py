@@ -49,6 +49,7 @@ from corehq.apps.registration.models import (
 )
 from corehq.apps.registration.utils import (
     activate_new_user_via_reg_form,
+    project_logo_emails_context,
     request_new_domain,
     send_domain_registration_email,
     send_mobile_experience_reminder,
@@ -570,5 +571,6 @@ def eula_agreement(request):
 @login_required
 @require_POST
 def send_mobile_reminder(request):
-    send_mobile_experience_reminder(request.couch_user.get_email(), request.couch_user.full_name)
+    send_mobile_experience_reminder(request.couch_user.get_email(), request.couch_user.full_name,
+                                    additional_email_context=project_logo_emails_context(None, request.couch_user))
     return HttpResponse()
