@@ -108,7 +108,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         var queryResponse = menuResponse.queryResponse;
-        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview && queryResponse && queryResponse.displays.length;
+        const hasSearchInputs = menuResponse.type === "query" ? menuResponse.length > 0 : (menuResponse.queryResponse != null && menuResponse.queryResponse.displays.length > 0);
+        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview && hasSearchInputs;
         if (sidebarEnabled && menuResponse.type === "query") {
             var menuData = menusUtils.getMenuData(menuResponse);
             menuData["triggerEmptyCaseList"] = true;
