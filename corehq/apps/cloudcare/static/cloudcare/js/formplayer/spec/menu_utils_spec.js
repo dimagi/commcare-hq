@@ -1,9 +1,9 @@
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/controller_spec", function () {
-    describe('Controller', function () {
+    describe('Menu Utils', function () {
 
         describe('groupDisplays', function () {
-            const controller = hqImport("cloudcare/js/formplayer/menus/controller");
+            const utils = hqImport("cloudcare/js/formplayer/menus/utils");
 
 
             it('should return the displays grouped by their groupKey', function () {
@@ -35,7 +35,7 @@ hqDefine("cloudcare/js/formplayer/spec/controller_spec", function () {
                     "unnamed": "",
                 }
 
-                const grouped = controller.groupDisplays(displays, groupHeaders);
+                const grouped = utils.groupDisplays(displays, groupHeaders);
                 const expected = [
                     {
                         "groupKey": "facility",
@@ -76,7 +76,7 @@ hqDefine("cloudcare/js/formplayer/spec/controller_spec", function () {
                         ],
                     },
                 ]
-                assert.deepEqual(expected, grouped, JSON.stringify(grouped));
+                assert.deepEqual(JSON.stringify(expected), JSON.stringify(grouped));
             });
 
         });
