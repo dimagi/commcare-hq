@@ -170,7 +170,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         };
 
         displays.forEach(display => {
-            const groupKey = myGet(display, 'groupKey');
+            const groupKey = getField(display, 'groupKey');
             if (currentGroup.groupKey !== groupKey) {
                 if (currentGroup.groupKey) {
                     groupedDisplays.push(currentGroup);
