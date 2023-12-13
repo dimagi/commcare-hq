@@ -13,11 +13,7 @@ from corehq.apps.data_interfaces.utils import (
     operate_on_payloads,
 )
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import (
-    FormRepeater,
-    RepeatRecord,
-    SQLRepeatRecord,
-)
+from corehq.motech.repeaters.models import FormRepeater, SQLRepeatRecord
 from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 
 DOMAIN = 'test-domain'
@@ -511,30 +507,16 @@ class TestGetRepeatRecordIDs(TestCase):
         cls.repeater.save()
         cls.create_repeat_records()
 
-        def delete_couch_records():
-            for record in cls.couch_records:
-                record.delete(sync_to_sql=False)
-        cls.addClassCleanup(delete_couch_records)
-
     @classmethod
     def create_repeat_records(cls):
         now = datetime.now()
-        cls.couch_records = []
-        cls.sql_records = []
-        for __ in range(3):
-            couch_record = RepeatRecord(
-                domain=DOMAIN,
-                repeater_id=cls.repeater.repeater_id,
-                repeater_type='FormRepeater',
-                payload_id=cls.instance_id,
-                registered_on=now,
-            )
-            couch_record.save()
-            cls.couch_records.append(couch_record)
-        cls.sql_records = list(SQLRepeatRecord.objects.filter(
+        cls.sql_records = [SQLRepeatRecord(
             domain=DOMAIN,
-            repeater_id=cls.repeater.repeater_id,
-        ))
+            repeater_id=cls.repeater.id,
+            payload_id=cls.instance_id,
+            registered_at=now,
+        ) for __ in range(3)]
+        SQLRepeatRecord.objects.bulk_create(cls.sql_records)
 
     def test_no_payload_id_no_repeater_id_sql(self):
         result = _get_repeat_record_ids(payload_id=None, repeater_id=None,
