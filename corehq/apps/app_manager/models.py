@@ -2189,7 +2189,7 @@ class CaseSearch(DocumentSchema):
 
     def get_relevant(self, case_session_var, multi_select=False):
         xpath = CaseClaimXpath(case_session_var)
-        default_condition = xpath.multi_select_relevant() if multi_select else xpath.default_relevant()
+        default_condition = xpath.multi_case_relevant() if multi_select else xpath.default_relevant()
         if self.additional_relevant:
             return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition
