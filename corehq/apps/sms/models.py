@@ -2678,3 +2678,4 @@ class Email(models.Model):
     recipient_address = models.CharField(max_length=255, db_index=True)
     subject = models.TextField(null=True)
     body = models.TextField(null=True)
+    html_body = models.TextField(null=True)
