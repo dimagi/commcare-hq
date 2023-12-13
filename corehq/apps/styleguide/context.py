@@ -19,6 +19,7 @@ def get_navigation_context(current_page):
                 pages=[
                     Page("Introduction", 'styleguide_home_b5'),
                     Page("Code Guidelines", 'styleguide_code_guidelines_b5'),
+                    Page("Migration Guide", 'styleguide_migration_guide_b5'),
                 ],
             ),
             NavigationGroup(

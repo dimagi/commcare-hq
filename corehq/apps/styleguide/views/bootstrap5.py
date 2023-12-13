@@ -42,6 +42,11 @@ def styleguide_code_guidelines(request):
                   get_navigation_context("styleguide_code_guidelines_b5"))
 
 
+def styleguide_migration_guide(request):
+    return render(request, 'styleguide/bootstrap5/migration_guide.html',
+                  get_navigation_context("styleguide_migration_guide_b5"))
+
+
 def styleguide_atoms_accessibility(request):
     return render(request, 'styleguide/bootstrap5/atoms/accessibility.html',
                   get_navigation_context("styleguide_atoms_accessibility_b5"))
