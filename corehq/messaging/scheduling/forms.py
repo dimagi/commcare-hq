@@ -22,7 +22,7 @@ from django.forms.widgets import (
 )
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
-from django.utils.html import strip_tags
+from django.utils.html import escape, strip_tags
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -2120,6 +2120,12 @@ class ScheduleForm(Form):
             result += list(self.initial_schedule.memoized_language_set - set(result))
 
         return result
+
+    def html_message_template(self):
+        if RICH_TEXT_EMAILS.enabled(self.domain):
+            return escape(render_to_string('scheduling/partials/rich_text_email_template.html'))
+        else:
+            return ''
 
     @property
     def use_case(self):

@@ -156,6 +156,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
                 time: '12:00',
                 minutes_to_wait: 0,
                 deleted: false,
+                html_message: { '*': initialPageData.get('html_message_template') },
             };
         }
 
