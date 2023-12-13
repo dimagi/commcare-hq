@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 
-from corehq.motech.repeaters.const import RECORD_PENDING_STATE
-from corehq.motech.repeaters.models import ConnectionSettings, FormRepeater, RepeatRecord, SQLRepeatRecord
+from corehq.motech.repeaters.const import State
+from corehq.motech.repeaters.models import ConnectionSettings, FormRepeater, SQLRepeatRecord
 
 
 class TestRepeatRecordDBAccessors(TestCase):
@@ -35,59 +35,61 @@ class TestRepeatRecordDBAccessors(TestCase):
         )
         cls.payload_id_1 = uuid.uuid4().hex
         cls.payload_id_2 = uuid.uuid4().hex
-        failed = RepeatRecord(
+        failed = SQLRepeatRecord(
             domain=cls.domain,
-            failure_reason='Some python error',
             repeater_id=cls.repeater_id,
+            registered_at=before,
             next_check=before,
             payload_id=cls.payload_id_1,
+            state=State.Fail,
         )
-        failed_hq_error = RepeatRecord(
+        failed_hq_error = SQLRepeatRecord(
             domain=cls.domain,
-            failure_reason='Some python error',
             repeater_id=cls.repeater_id,
+            registered_at=before,
             next_check=before,
             payload_id=cls.payload_id_1,
+            state=State.Fail,
         )
-        failed_hq_error.doc_type += '-Failed'
-        success = RepeatRecord(
+        success = SQLRepeatRecord(
             domain=cls.domain,
-            succeeded=True,
             repeater_id=cls.repeater_id,
+            registered_at=before,
             payload_id=cls.payload_id_2,
+            state=State.Success,
         )
-        pending = RepeatRecord(
+        pending = SQLRepeatRecord(
             domain=cls.domain,
-            succeeded=False,
             repeater_id=cls.repeater_id,
+            registered_at=before,
             next_check=before,
             payload_id=cls.payload_id_2,
         )
-        overdue = RepeatRecord(
+        overdue = SQLRepeatRecord(
             domain=cls.domain,
-            succeeded=False,
             repeater_id=cls.repeater_id,
+            registered_at=before,
             next_check=before - timedelta(minutes=10),
             payload_id=cls.payload_id_2,
         )
-        cancelled = RepeatRecord(
+        cancelled = SQLRepeatRecord(
             domain=cls.domain,
-            succeeded=False,
-            cancelled=True,
             repeater_id=cls.repeater_id,
+            registered_at=before,
             payload_id=cls.payload_id_2,
+            state=State.Cancelled,
         )
-        empty = RepeatRecord(
+        empty = SQLRepeatRecord(
             domain=cls.domain,
-            succeeded=True,
-            cancelled=True,
             repeater_id=cls.repeater_id,
+            registered_at=before,
             payload_id=cls.payload_id_2,
+            state=State.Empty,
         )
-        other_id = RepeatRecord(
+        other_id = SQLRepeatRecord(
             domain=cls.domain,
-            succeeded=False,
             repeater_id=cls.other_id,
+            registered_at=before,
             next_check=before,
             payload_id=cls.payload_id_2,
         )
@@ -102,11 +104,7 @@ class TestRepeatRecordDBAccessors(TestCase):
             empty,
             other_id,
         ]
-        cls.addClassCleanup(RepeatRecord.bulk_delete, cls.records)
-
-        for record in cls.records:
-            record.registered_on = before
-            record.save()
+        SQLRepeatRecord.objects.bulk_create(cls.records)
 
     def test_get_paged_repeat_records(self):
         records = SQLRepeatRecord.objects.page(self.domain, 0, 2)
@@ -117,7 +115,7 @@ class TestRepeatRecordDBAccessors(TestCase):
         self.assertEqual(len(records), 1)
 
     def test_get_paged_repeat_records_with_state(self):
-        records = SQLRepeatRecord.objects.page(self.domain, 0, 10, state=RECORD_PENDING_STATE)
+        records = SQLRepeatRecord.objects.page(self.domain, 0, 10, state=State.Pending)
         self.assertEqual(len(records), 3)
 
     def test_get_paged_repeat_records_wrong_domain(self):
@@ -143,8 +141,8 @@ class TestRepeatRecordDBAccessors(TestCase):
     def test_get_repeat_records_by_payload_id(self):
         id_1_records = list(SQLRepeatRecord.objects.filter(domain=self.domain, payload_id=self.payload_id_1))
         self.assertEqual(len(id_1_records), 2)
-        self.assertItemsEqual([r.couch_id for r in id_1_records], [r._id for r in self.records[:2]])
+        self.assertItemsEqual([r.id for r in id_1_records], [r.id for r in self.records[:2]])
 
         id_2_records = list(SQLRepeatRecord.objects.filter(domain=self.domain, payload_id=self.payload_id_2))
         self.assertEqual(len(id_2_records), 6)
-        self.assertItemsEqual([r.couch_id for r in id_2_records], [r._id for r in self.records[2:]])
+        self.assertItemsEqual([r.id for r in id_2_records], [r.id for r in self.records[2:]])
