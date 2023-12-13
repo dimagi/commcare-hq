@@ -521,7 +521,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                              <command value="'m0'"/>
                              <query id="results:inline" value="http://localhost:8000/a/test-domain/phone/case_fixture/None/">
                                <data key="case_type" ref="'mother'"/>
-                               <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+                               <data key="case_id" ref="$case_id"/>
                              </query>
                             <datum id="case_id" value="$case_id"/>
                         </push>

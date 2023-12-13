@@ -1855,6 +1855,7 @@ class DetailColumn(IndexedSchema):
     horizontal_align = StringProperty(exclude_if_none=True)
     vertical_align = StringProperty(exclude_if_none=True)
     font_size = StringProperty(exclude_if_none=True)
+    show_border = BooleanProperty(exclude_if_none=True)
 
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
@@ -2552,6 +2553,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
     display_style = StringProperty(default='list')
+    lazy_load_case_list_fields = BooleanProperty(default=False)
 
     @classmethod
     def new_module(cls, name, lang):

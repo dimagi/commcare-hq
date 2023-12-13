@@ -10,7 +10,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar");
+        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var API = {
         queryFormplayer: function (params, route) {
@@ -54,22 +55,26 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             }, gettext('Waiting for server progress'));
                         } else if (_.has(response, 'exception')) {
                             FormplayerFrontend.trigger('clearProgress');
-                            FormplayerFrontend.trigger(
-                                'showError',
-                                response.exception,
-                                response.type === 'html'
-                            );
-
-                            var currentUrl = FormplayerFrontend.getCurrentRoute();
-                            if (FormplayerFrontend.lastError === currentUrl) {
-                                FormplayerFrontend.lastError = null;
-                                FormplayerFrontend.trigger('navigateHome');
+                            if (params.clickedIcon && response.statusCode === 404) {
+                                parsedMenus.removeCaseRow = true;
+                                defer.resolve(parsedMenus);
                             } else {
-                                FormplayerFrontend.lastError = currentUrl;
-                                FormplayerFrontend.trigger('navigation:back');
-                            }
-                            defer.reject();
+                                FormplayerFrontend.trigger(
+                                    'showError',
+                                    response.exception,
+                                    response.type === 'html'
+                                );
 
+                                var currentUrl = FormplayerFrontend.getCurrentRoute();
+                                if (FormplayerFrontend.lastError === currentUrl) {
+                                    FormplayerFrontend.lastError = null;
+                                    FormplayerFrontend.trigger('navigateHome');
+                                } else {
+                                    FormplayerFrontend.lastError = currentUrl;
+                                    FormplayerFrontend.trigger('navigation:back');
+                                }
+                                defer.reject();
+                            }
                         } else {
                             if (response.smartLinkRedirect) {
                                 if (user.environment === constants.PREVIEW_APP_ENVIRONMENT) {
@@ -164,7 +169,21 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     message: "[request] " + route,
                     data: _.pick(sentryData, _.identity),
                 });
-                menus.fetch($.extend(true, {}, options));
+
+                var callStartTime = performance.now();
+                menus.fetch($.extend(true, {}, options)).always(function () {
+                    if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === "dynamicSearch") {
+                        var callEndTime = performance.now();
+                        var callResponseTime = callEndTime - callStartTime;
+                        $.ajax(initialPageData.reverse('api_histogram_metrics'), {
+                            method: 'POST',
+                            data: {responseTime: callResponseTime, metrics: "commcare.dynamic_search.response_time"},
+                            error: function () {
+                                console.log("API call failed to record metrics");
+                            },
+                        });
+                    }
+                });
             });
 
             return defer.promise();

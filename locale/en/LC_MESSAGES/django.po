@@ -2861,6 +2861,7 @@ msgid "\"Do Not Invoice\" Reason"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
@@ -5890,6 +5891,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/odk_install.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
@@ -8373,7 +8375,7 @@ msgid "Width/Height"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
-msgid "Align/Text Size"
+msgid "Style"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_setting.html
@@ -9169,6 +9171,26 @@ msgid ""
 "the last time UCR data\n"
 "          was synced.\n"
 "        "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
+msgid "Edit Field Style"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
+msgid "Horizontal Align"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
+msgid "Vertial Align"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
+msgid "Font Size"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
+msgid "Border"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
@@ -11691,6 +11713,14 @@ msgstr ""
 msgid "Not found application by name: %s"
 msgstr ""
 
+#: corehq/apps/cloudcare/templates/block_web_apps.html
+msgid "Blocked"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/block_web_apps.html
+msgid "You are currently blocked from using Web Apps"
+msgstr ""
+
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
 msgid "Manage Web Apps Permissions"
 msgstr ""
@@ -11913,6 +11943,10 @@ msgid "Scroll to bottom"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
+msgid "Hide Map"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html
 msgid "Refine search"
 msgstr ""
 
@@ -12059,6 +12093,20 @@ msgstr ""
 
 #: corehq/apps/cloudcare/views.py
 msgid "This user cannot access this link."
+msgstr ""
+
+#: corehq/apps/cloudcare/views.py
+#, python-brace-format
+msgid ""
+"You have the MOBILE_UCR feature flag enabled, and have exceeded the maximum "
+"limit\n"
+"                           of {ucr_limit} total User Configurable Reports "
+"used across all of your applications.\n"
+"                           To resolve, you must remove references to UCRs in "
+"your applications until you are under\n"
+"                           the limit. If you believe this is a mistake, "
+"please reach out to support.\n"
+"                           "
 msgstr ""
 
 #: corehq/apps/commtrack/forms.py
@@ -13198,6 +13246,7 @@ msgid "Case Name"
 msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
@@ -16549,7 +16598,9 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/renew_plan.html
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/_wizard_actions.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/ko_pagination.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/pagination.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_pagination.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/pagination.html
 #: corehq/apps/registration/forms.py
 #: corehq/apps/reports/templates/reports/filters/drilldown_options.html
@@ -21561,7 +21612,7 @@ msgid "Create New Case"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
-msgid "Confirm Case Location"
+msgid "Save Case"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
@@ -21654,6 +21705,15 @@ msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Running disbursement algorithm..."
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid ""
+"\n"
+"        Please ensure that the filtered area includes both cases and mobile "
+"workers before\n"
+"        attempting to run disbursement.\n"
+"    "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
@@ -24191,6 +24251,13 @@ msgstr ""
 msgid "Submit Feedback"
 msgstr ""
 
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/ko_pagination.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/pagination.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_pagination.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/pagination.html
+msgid "Previous"
+msgstr ""
+
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/mobile_ux_warning.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/mobile_ux_warning.html
 msgid "CommCare HQ looks better on desktop!"
@@ -24242,11 +24309,6 @@ msgid ""
 "\n"
 "            Check out this video to get an introduction to CommCare HQ.\n"
 "          "
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/pagination.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/pagination.html
-msgid "Previous"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
@@ -27381,51 +27443,51 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"              For individuals learning<br/> about data collection.\n"
-"            "
+"            For organizations exploring CommCare.\n"
+"          "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"              Free for personal use.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"                Create Account\n"
-"              "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"              For organizations<br /> exploring CommCare.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
-msgid ""
-"\n"
-"              See <a href=\"https://dimagi.com/commcare/pricing/\" "
+"            See <a href=\"https://dimagi.com/commcare/pricing/\" "
 "target=\"_blank\">pricing</a> options.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"              Request Custom Trial\n"
 "            "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"                Request Custom Trial\n"
+"                Watch Demo\n"
 "              "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"                  Watch Demo\n"
-"                "
+"            For individuals learning about data collection.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"            Free for personal use.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
+msgid ""
+"\n"
+"              Create Account\n"
+"            "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/server_errors.html
@@ -39066,7 +39128,7 @@ msgstr ""
 #: corehq/apps/users/views/web.py
 msgid ""
 "Sorry, that invitation has already been used up. If you feel this is a "
-"mistake please ask the inviter for another invitation."
+"mistake, please ask the inviter for another invitation."
 msgstr ""
 
 #: corehq/apps/users/views/web.py
