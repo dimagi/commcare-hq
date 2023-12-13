@@ -313,7 +313,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         for (let child of json.children) {
             if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE) {
-                const elementTileWidth = Question.calculateColumnWidthForPerRowStyle(child.style);
+                const elementTileWidth = GroupedElementTileRow.calculateElementWidth(child.style);
                 usedWidth += elementTileWidth;
                 if (usedWidth > constants.GRID_COLUMNS) {
                     resetCurrentGroup();
@@ -659,7 +659,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return Container.prototype.headerBackgroundColor.call(self);
         };
 
-        const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
+        const columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
         const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
         var styleStr = (self.style) ? ko.utils.unwrapObservable(self.style.raw) : null;
 
@@ -723,6 +723,21 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     }
     GroupedElementTileRow.prototype = Object.create(Container.prototype);
     GroupedElementTileRow.prototype.constructor = Container;
+
+    /**
+     * Matches "<n>-per-row" style attributes. If a match if found, it calculates the column width
+     * based on Bootstrap's 12 column grid system and returns the column width.
+     * @param {Object} style - the appearance attributes
+     */
+    GroupedElementTileRow.calculateElementWidth = function (style) {
+        const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
+        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
+        const matchingPerRowStyles = getMatchingStyles(perRowPattern, styleStr);
+        const perRowStyle = matchingPerRowStyles.length === 0 ? null : matchingPerRowStyles[0];
+        const itemsPerRow = perRowStyle !== null ? parseInt(perRowStyle.split("-")[0], 10) : null;
+
+        return itemsPerRow !== null ? Math.round(constants.GRID_COLUMNS / itemsPerRow) : constants.GRID_COLUMNS;
+    };
 
     /**
      * Represents a Question. A Question contains an Entry which is the widget that is displayed for that question
@@ -878,7 +893,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
     Question.prototype.setWidths = function () {
         const self = this;
-        const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
+        const columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
         const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
 
         if (this.stylesContains(perRowPattern)) {
@@ -896,21 +911,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         } else if (self.stylesContains(constants.MEDIUM)) {
             self.controlWidth = constants.MEDIUM_WIDTH;
         }
-    };
-
-    /**
-     * Matches "<n>-per-row" style attributes. If a match if found, it calculates the column width
-     * based on Bootstrap's 12 column grid system and returns the column width.
-     * @param {Object} style - the appearance attributes
-     */
-    Question.calculateColumnWidthForPerRowStyle = function (style) {
-        const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
-        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
-        const matchingPerRowStyles = getMatchingStyles(perRowPattern, styleStr);
-        const perRowStyle = matchingPerRowStyles.length === 0 ? null : matchingPerRowStyles[0];
-        const itemsPerRow = perRowStyle !== null ? parseInt(perRowStyle.split("-")[0], 10) : null;
-
-        return itemsPerRow !== null ? Math.round(constants.GRID_COLUMNS / itemsPerRow) : constants.GRID_COLUMNS;
     };
 
     return {
