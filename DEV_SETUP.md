@@ -705,6 +705,8 @@ development environment, it is recommended to install `sass` with homebrew:
 brew install sass/sass/sass
 ```
 
+You can also view [alternative installation instructions](https://sass-lang.com/install/) if homebrew doesn't work for you.
+
 #### Option 1: Compile CSS on page-load without compression
 
 This is the setup most developers use. If you don't know which option to use,
