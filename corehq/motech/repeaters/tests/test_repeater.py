@@ -2,11 +2,11 @@ import json
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
 
 import attr
-from unittest.mock import Mock, patch
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
@@ -26,6 +26,7 @@ from corehq.apps.receiverwrapper.exceptions import (
     IgnoreDocument,
 )
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.userreports.models import DataSourceRowTransactionLog
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -35,15 +36,14 @@ from corehq.motech.repeaters.const import (
     MIN_RETRY_WAIT,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.dbaccessors import (
-    delete_all_repeat_records,
-)
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import (
-    RepeatRecord,
     CaseRepeater,
+    DataSourceRepeater,
     FormRepeater,
     LocationRepeater,
     Repeater,
+    RepeatRecord,
     ShortFormRepeater,
     UserRepeater,
     _get_retry_interval,
@@ -54,8 +54,8 @@ from corehq.motech.repeaters.repeater_generators import (
     RegisterGenerator,
 )
 from corehq.motech.repeaters.tasks import (
-    check_repeaters,
     _process_repeat_record,
+    check_repeaters,
 )
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
@@ -1282,6 +1282,85 @@ class TestGetRetryInterval(SimpleTestCase):
         ]:
             interval = _get_retry_interval(last_checked, now)
             self.assertEqual(interval, timedelta(hours=expected_interval_hours))
+
+
+class DataSourceRepeaterTest(BaseRepeaterTest, TestXmlMixin):
+    domain = "case-rep"
+
+    def setUp(self):
+        super().setUp()
+        self.connx = ConnectionSettings.objects.create(
+            domain=self.domain,
+            url="case-repeater-url",
+        )
+        self.data_source_id = str(uuid.uuid4())
+        self.repeater = DataSourceRepeater(
+            domain=self.domain,
+            connection_settings_id=self.connx.id,
+            repeater_id=uuid.uuid4().hex,
+            data_source_id=self.data_source_id,
+        )
+        self.repeater.save()
+
+    def test_datasource_is_subscribed_to(self):
+        self.assertTrue(self.repeater.datasource_is_subscribed_to(self.domain, self.data_source_id))
+        self.assertFalse(self.repeater.datasource_is_subscribed_to("malicious-domain", self.data_source_id))
+
+    def test_payload_format(self):
+        doc_id = "some-doc-id"
+        row_data = {"doc_id": doc_id, "datum1": "value1"}
+        expected_payload = {"data": row_data, "action": "upsert", "data_source_id": self.data_source_id}
+        repeat_record = self._create_log_and_repeat_record(doc_id, row_data)
+        repeat_record.save()
+        payload = self.repeater.get_payload(repeat_record)
+        self.assertEqual(json.loads(payload), expected_payload)
+
+    @patch("corehq.motech.repeaters.models.RepeatRecord._already_processed", return_value=False)
+    @patch("corehq.motech.repeaters.models.RepeatRecord._is_ready", return_value=True)
+    @patch("corehq.motech.repeaters.models.Repeater.fire_for_record")
+    def test_only_latest_transaction_logs_are_sent(self, fire_for_record_mock, _is_ready, _already_processed):
+        doc_id = "some-doc-id"
+        row_data = {"doc_id": doc_id, "datum1": "value1"}
+
+        repeat_record_1 = self._create_log_and_repeat_record(doc_id, row_data)
+        repeat_record_2 = self._create_log_and_repeat_record(doc_id, row_data)
+        first_log = DataSourceRowTransactionLog.objects.get(id=repeat_record_1.payload_id)
+        second_log = DataSourceRowTransactionLog.objects.get(id=repeat_record_2.payload_id)
+        second_log.date_created = first_log.date_created + timedelta(minutes=5)
+        second_log.save()
+
+        self.assertFalse(first_log.is_latest)
+        self.assertTrue(second_log.is_latest)
+
+        repeat_record_1.attempt_forward_now(fire_synchronously=True)
+        fire_for_record_mock.assert_not_called()
+
+        repeat_record_2.attempt_forward_now(fire_synchronously=True)
+        fire_for_record_mock.assert_called()
+
+    def _create_log_and_repeat_record(self, doc_id, row_data):
+        transaction_log = DataSourceRowTransactionLog.objects.create(
+            domain=self.domain,
+            data_source_id=self.data_source_id,
+            row_id=doc_id,
+            row_data=row_data,
+            action=DataSourceRowTransactionLog.UPSERT
+        )
+        record = RepeatRecord(
+            domain=self.domain,
+            repeater_id=self.repeater.repeater_id,
+            repeater_type='DataSourceRepeater',
+            payload_id=transaction_log.get_id,
+            registered_on=datetime.utcnow(),
+        )
+        record.save()
+        return record
+
+    def tearDown(self):
+        delete_all_repeat_records()
+        self.repeater.delete()
+        self.connx.delete()
+        super().tearDown()
 
 
 def fromisoformat(isoformat):
