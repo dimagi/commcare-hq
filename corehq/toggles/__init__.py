@@ -726,6 +726,15 @@ CASE_LIST_MAP = StaticToggle(
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
+CASE_LIST_LAZY = StaticToggle(
+    'case_list_lazy',
+    'USH: Add option to lazy load case list',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?'
+              'spaceKey=saas&title=Allow+Configuration+of+Case+List+Lazy',
+)
+
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
     'show_persist_case_context_setting',
     'Allow toggling the persistent case context tile',
@@ -938,6 +947,13 @@ WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
     TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Jenny Schweers',
+)
+
+WEB_APPS_ANCHORED_SUBMIT = StaticToggle(
+    'web_apps_anchored_submit',
+    'USH: Keep submit button anchored at the bottom of screen for forms in Web Apps',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(

@@ -3,13 +3,14 @@
 
 <script type="text/html" id="sub-group-fullform-ko-template">
   <div tabindex="-1" class ="gr" data-bind="
-        class: isRepetition ? 'repetition' : '',
         css: {
           'gr-no-children': $data.children().length === 0,
           'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'grouped-question-tile-row' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'panel panel-default': collapsible,
+          'repetition': isRepetition,
           'required-group': !showChildren() && childrenRequired(),
+          'stripe-repeats': stripeRepeats,
         }">
     <fieldset class="gr-header" data-bind="
         css: {
@@ -151,9 +152,9 @@
           {% endif %}
           <div id="submit-button" class="form-actions form-group noprint-sub-container" data-bind="visible: showSubmitButton">
             <div data-bind="css: submitClass">
-              <button class="submit btn btn-primary"
-                     type="submit"
-                     data-bind="enable: enableSubmitButton">
+              <button class="submit btn btn-lg btn-primary"
+                      type="submit"
+                      data-bind="enable: enableSubmitButton">
                 <i class="fa fa-spin fa-refresh"
                    data-bind="visible: !enableSubmitButton(){% if environment == "web-apps" %} && erroredQuestions.length != 0{% endif %}"
                 ></i>
