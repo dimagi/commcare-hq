@@ -729,7 +729,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
         self.throttle = 200;
-        self.setWidths();
         // If the question has ever been answered, set this to true.
         self.hasAnswered = false;
 
@@ -756,6 +755,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 || self.required()
             );
         });
+        self.setWidths(self.hasLabelContent());
 
         self.form = function () {
             var parent = self.parent;
@@ -870,7 +870,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         return this.stylesContaining(pattern).length > 0;
     };
 
-    Question.prototype.setWidths = function () {
+    Question.prototype.setWidths = function (hasLabel) {
         const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
         const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
 
@@ -882,6 +882,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             this.controlWidth = constants.CONTROL_WIDTH;
             this.labelWidth = constants.LABEL_WIDTH;
             this.questionTileWidth = constants.FULL_WIDTH;
+            if (!hasLabel) {
+                this.controlWidth += ' ' + constants.LABEL_OFFSET;
+            }
         }
     };
 
