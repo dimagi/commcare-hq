@@ -2684,7 +2684,9 @@ class DomainAlertForm(forms.Form):
     def __init__(self, request, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        datetime_local_widget_helptext = f"Using project's timezone: {request.project.default_timezone}"
+        datetime_local_widget_helptext = _("Using project's timezone: {}").format(
+            request.project.default_timezone
+        )
         self.fields['start_time'].help_text = datetime_local_widget_helptext
         self.fields['end_time'].help_text = datetime_local_widget_helptext
 
