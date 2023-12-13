@@ -12,7 +12,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
-from corehq.motech.repeaters.models import RepeatRecord, AppStructureRepeater
+from corehq.motech.repeaters.models import AppStructureRepeater, SQLRepeatRecord
 
 
 class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
@@ -51,7 +51,7 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
 
         # Enqueued repeat records have next_check set 48 hours in the future.
         later = datetime.utcnow() + timedelta(hours=48 + 1)
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=later)
+        repeat_records = SQLRepeatRecord.objects.filter(domain=self.domain, next_check__lt=later)
         self.assertEqual(len(repeat_records), 0)
 
     def test_repeat_record_created(self):
@@ -67,7 +67,7 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         self.addCleanup(self.application.delete)
 
         later = datetime.utcnow() + timedelta(hours=48 + 1)
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=later)
+        repeat_records = SQLRepeatRecord.objects.filter(domain=self.domain, next_check__lt=later)
         self.assertEqual(len(repeat_records), 1)
 
     def test_repeat_record_forwarded(self):
