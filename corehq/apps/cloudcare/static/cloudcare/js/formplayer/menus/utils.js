@@ -182,7 +182,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             if (searchText) {
                 event = "Searched Case List";
             }
-            if (menuResponse.queryResponse) {
+            if (menuResponse.queryResponse && menuResponse.queryResponse.displays.length) {
                 menuData.sidebarEnabled = true;
             }
             var eventData = {
