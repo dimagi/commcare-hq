@@ -1473,7 +1473,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         # When updating this method, please also ensure that your updates also
         # carry over to bulk_auto_deactivate_commcare_users.
         self.last_modified = datetime.utcnow()
-        self.clear_quickcache_for_user()
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
@@ -1488,6 +1487,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 self._save_user_data()
             super(CouchUser, self).save(**params)
 
+        # wait to clear cache until the user has been successfully saved to couch
+        # otherwise a method could trigger caching the previous value of the user despite the save
+        self.clear_quickcache_for_user()
         if fire_signals:
             self.fire_signals()
 
