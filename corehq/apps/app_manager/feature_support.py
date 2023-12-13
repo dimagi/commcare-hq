@@ -241,3 +241,9 @@ class CommCareFeatureSupportMixin(object):
             toggles.CASE_LIST_CLICKABLE_ICON.enabled(self.domain)
             and self._require_minimum_version('2.54')
         )
+
+    @property
+    def supports_grouped_case_search_properties(self):
+        return (
+            self._require_minimum_version('2.54')
+        )
