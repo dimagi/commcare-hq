@@ -1,10 +1,13 @@
+import uuid
 import datetime
 import functools
 import json
 import os
 import tempfile
 from collections import OrderedDict, namedtuple
+from urllib.parse import urlparse
 
+from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError
@@ -177,6 +180,9 @@ from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
+from corehq.motech.repeaters.models import DataSourceRepeater
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.const import OAUTH2_CLIENT
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -651,7 +657,8 @@ class ConfigureReport(ReportBuilderView):
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
         report_form = form_type(
-            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report, self.registry_slug,
+            self.domain, self.page_name, self.app_id, self.source_type, self.source_id,
+            self.existing_report, self.registry_slug,
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
         return {
@@ -1534,6 +1541,45 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             )
             return HttpResponse(msg, status=400)
         return export_response(Temp(path), params.format, adapter.display_name)
+
+
+@csrf_exempt
+@require_POST
+@api_auth()
+@require_permission(HqPermissions.view_reports)
+@toggles.SUPERSET_ANALYTICS.required_decorator()
+@api_throttle
+def subscribe_to_data_source_changes(request, domain, config_id):
+    from django.utils.translation import gettext as _
+
+    for param in ['webhook_url', 'client_id', 'client_secret', 'token_url']:
+        if param not in request.POST:
+            return HttpResponse(status=422, content=f"Missing parameter: {param}")
+
+    webhook_url = request.POST['webhook_url']
+    client_hostname = urlparse(webhook_url).hostname
+    connection_settings_name = f"{_('Connection')} - {client_hostname}"
+
+    conn_settings, _ = ConnectionSettings.objects.update_or_create(
+        client_id=request.POST['client_id'],
+        defaults={
+            'domain': domain,
+            'name': connection_settings_name,
+            'auth_type': OAUTH2_CLIENT,
+            'client_secret': request.POST['client_secret'],
+            'url': webhook_url,
+            'token_url': request.POST['token_url'],
+        }
+    )
+
+    DataSourceRepeater.objects.create(
+        name=f"{client_hostname}_{config_id}",
+        domain=domain,
+        data_source_id=config_id,
+        repeater_id=uuid.uuid4().hex,
+        connection_settings_id=conn_settings.id,
+    )
+    return HttpResponse(status=201)
 
 
 def _get_report_filter(domain, report_id, filter_id):
