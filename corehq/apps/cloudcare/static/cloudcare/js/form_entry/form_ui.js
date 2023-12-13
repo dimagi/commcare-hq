@@ -714,6 +714,18 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.parent = parent;
         Container.call(self, json);
 
+        self.isRepetition = parent instanceof Repeat;
+
+        self.hasAnyNestedQuestions = function () {
+            return _.any(self.children(), function (d) {
+                if (d.type() === constants.QUESTION_TYPE) {
+                    return true;
+                } else if (d.type() === constants.GROUP_TYPE) {
+                    return d.hasAnyNestedQuestions();
+                }
+            });
+        };
+
         self.required = ko.observable(0);
         self.childrenRequired = ko.computed(function () {
             return _.find(self.children(), function (child) {
