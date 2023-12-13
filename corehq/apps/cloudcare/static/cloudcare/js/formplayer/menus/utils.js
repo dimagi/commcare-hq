@@ -95,11 +95,11 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
 
         if (langs && langs.length > 1) {
             langModels = _.map(langs, function (lang) {
-            let matchingLanguage = langCodeNameMapping[lang];
-            return {
-                lang_code: lang,
-                lang_label: matchingLanguage ? matchingLanguage : lang,
-            };
+                let matchingLanguage = langCodeNameMapping[lang];
+                return {
+                    lang_code: lang,
+                    lang_label: matchingLanguage ? matchingLanguage : lang,
+                };
             });
             langCollection = new Backbone.Collection(langModels);
         } else {
