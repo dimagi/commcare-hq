@@ -630,8 +630,8 @@ class BlockWebAppsView(BaseDomainView):
         context = self.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
         return render(request, self.template_name, context)
 
-    @classmethod
-    def get_context_for_ucr_limit_error(cls, domain, mobile_ucr_count):
+    @staticmethod
+    def get_context_for_ucr_limit_error(domain, mobile_ucr_count):
         return {
             'domain': domain,
             'ucr_limit': settings.MAX_MOBILE_UCR_LIMIT,
