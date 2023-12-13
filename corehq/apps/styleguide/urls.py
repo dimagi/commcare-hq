@@ -46,6 +46,8 @@ urlpatterns = [
         name="styleguide_paginated_table_data"),
     url(r'^b5/guidelines/$', bootstrap5.styleguide_code_guidelines,
         name="styleguide_code_guidelines_b5"),
+    url(r'^b5/migration/$', bootstrap5.styleguide_migration_guide,
+        name="styleguide_migration_guide_b5"),
     url(r'^b5/atoms/accessibility/$', bootstrap5.styleguide_atoms_accessibility,
         name="styleguide_atoms_accessibility_b5"),
     url(r'^b5/atoms/typography/$', bootstrap5.styleguide_atoms_typography,
