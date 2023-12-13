@@ -353,7 +353,7 @@ class TestCaseDeletion(TestCase):
     # Test error handling
     def test_case_deletion_errors_if_too_many_cases(self):
         """
-        Ensure that a case with more than 10 related cases throws an error
+        Ensure that a case with more than 100 related cases throws an error
         """
         request = deepcopy(self.request)
         setattr(request, 'session', 'session')
