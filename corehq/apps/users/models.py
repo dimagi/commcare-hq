@@ -225,6 +225,8 @@ class HqPermissions(DocumentSchema):
     view_data_registry_contents_list = StringListProperty(default=[])
     manage_attendance_tracking = BooleanProperty(default=False)
 
+    manage_domain_alerts = BooleanProperty(default=False)
+
     @classmethod
     def from_permission_list(cls, permission_list):
         """Converts a list of Permission objects into a Permissions object"""
