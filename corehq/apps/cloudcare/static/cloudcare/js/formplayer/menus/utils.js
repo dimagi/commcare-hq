@@ -7,7 +7,8 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         QueryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views");
+        views = hqImport("cloudcare/js/formplayer/menus/views"),
+        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
 
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
@@ -95,11 +96,11 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
 
         if (langs && langs.length > 1) {
             langModels = _.map(langs, function (lang) {
-            let matchingLanguage = langCodeNameMapping[lang];
-            return {
-                lang_code: lang,
-                lang_label: matchingLanguage ? matchingLanguage : lang,
-            };
+                let matchingLanguage = langCodeNameMapping[lang];
+                return {
+                    lang_code: lang,
+                    lang_label: matchingLanguage ? matchingLanguage : lang,
+                };
             });
             langCollection = new Backbone.Collection(langModels);
         } else {
@@ -155,6 +156,41 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         }
     };
 
+    var getField = function (obj, fieldName) {
+        return typeof obj.get === 'function' ?  obj.get(fieldName) : obj[fieldName];
+    };
+
+    var groupDisplays = function (displays, groupHeaders) {
+        const groupedDisplays = [];
+        let currentGroup = {
+            groupKey: null,
+            groupName: null,
+            displays: [],
+            required: false,
+        };
+
+        displays.forEach(display => {
+            const groupKey = getField(display, 'groupKey');
+            if (currentGroup.groupKey !== groupKey) {
+                if (currentGroup.groupKey) {
+                    groupedDisplays.push(currentGroup);
+                }
+                currentGroup = {
+                    groupKey: groupKey,
+                    groupName: groupHeaders[groupKey],
+                    displays: [display],
+                    required: getField(display, 'required'),
+                };
+            } else {
+                currentGroup.displays.push(display);
+                currentGroup.required = currentGroup.required || getField(display, 'required');
+            }
+        });
+        groupedDisplays.push(currentGroup);
+
+        return groupedDisplays;
+    };
+
     var getMenuView = function (menuResponse) {
         var menuData = getMenuData(menuResponse);
         var urlObject = utils.currentUrlToObject();
@@ -175,6 +211,12 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 execute: false,
                 forceManualSearch: false,
             });
+            if (Object.keys(menuResponse.groupHeaders).length > 0) {
+                var groupedDisplays = groupDisplays(menuResponse, menuResponse.groupHeaders);
+                var displayCollection = new Collection(groupedDisplays);
+                displayCollection.description = menuResponse.description;
+                menuData.collection = displayCollection;
+            }
             return QueryView(menuData);
         } else if (menuResponse.type === "entities") {
             var searchText = urlObject.search;
@@ -205,6 +247,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
     };
 
     return {
+        groupDisplays: groupDisplays,
         getMenuView: getMenuView,
         getMenuData: getMenuData,
         getCaseListView: getCaseListView,
