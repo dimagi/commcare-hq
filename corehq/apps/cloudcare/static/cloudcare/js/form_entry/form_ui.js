@@ -875,19 +875,19 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
     Question.prototype.setWidths = function (hasLabel) {
         const self = this;
-        const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
+        const columnWidth = Question.calculateColumnWidthForPerRowStyle(self.style);
         const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
 
-        if (this.stylesContains(perRowPattern)) {
-            this.controlWidth = constants.FULL_WIDTH;
-            this.labelWidth = constants.FULL_WIDTH;
-            this.questionTileWidth = `col-sm-${columnWidth}`;
+        if (self.stylesContains(perRowPattern)) {
+            self.controlWidth = constants.FULL_WIDTH;
+            self.labelWidth = constants.FULL_WIDTH;
+            self.questionTileWidth = `col-sm-${columnWidth}`;
         } else {
-            this.controlWidth = constants.CONTROL_WIDTH;
-            this.labelWidth = constants.LABEL_WIDTH;
-            this.questionTileWidth = constants.FULL_WIDTH;
+            self.controlWidth = constants.CONTROL_WIDTH;
+            self.labelWidth = constants.LABEL_WIDTH;
+            self.questionTileWidth = constants.FULL_WIDTH;
             if (!hasLabel) {
-                this.controlWidth += ' ' + constants.LABEL_OFFSET;
+                self.controlWidth += ' ' + constants.LABEL_OFFSET;
             }
         }
 
