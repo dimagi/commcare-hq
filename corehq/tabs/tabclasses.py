@@ -2069,12 +2069,14 @@ def _get_administration_section(domain):
 
 def _get_manage_domain_alerts_section(domain):
     from corehq.apps.domain.views.settings import ManageDomainAlertsView
+    section = []
 
     if toggles.CUSTOM_DOMAIN_BANNER_ALERTS.enabled(domain):
-        return [{
+        section.append({
             'title': _(ManageDomainAlertsView.page_title),
             'url': reverse(ManageDomainAlertsView.urlname, args=[domain])
-        }]
+        })
+    return section
 
 
 def _get_integration_section(domain, couch_user):
