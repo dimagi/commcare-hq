@@ -162,7 +162,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         } else if (menuResponse.type === constants.ENTITIES) {
             return menuResponse.queryResponse && menuResponse.queryResponse.displays.length > 0;
         }
-    }
+    };
 
     var getMenuView = function (menuResponse) {
         var menuData = getMenuData(menuResponse);
