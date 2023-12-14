@@ -20,7 +20,7 @@ from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.test_utils import unit_testing_only
-
+from corehq.apps.userreports.util import register_data_source_row_change
 logger = logging.getLogger(__name__)
 
 
@@ -177,6 +177,12 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             for query in queries:
                 session.execute(query)
 
+        register_data_source_row_change(
+            domain=self.config.domain,
+            data_source_id=self.config._id,
+            row_changes=[{key: str(value) for key, value in row.items()} for row in formatted_rows],
+        )
+
     def supports_upsert(self):
         """Return True if supports UPSERTS else False
 
@@ -208,6 +214,12 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         with self.session_context() as session:
             session.execute(delete)
 
+        register_data_source_row_change(
+            domain=self.config.domain,
+            data_source_id=self.config._id,
+            row_changes=[{"doc_id": doc['_id']} for doc in docs],
+        )
+
     def delete(self, doc, use_shard_col=True):
         self.bulk_delete([doc], use_shard_col)
 
@@ -215,6 +227,30 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         with self.session_context() as session:
             query = session.query(self.get_table()).filter_by(doc_id=doc['_id'])
             return session.query(query.exists()).scalar()
+
+    def get_docs(self, doc_id):
+        """Returns a list of entries from the datasource matching the `doc_id`. Each entry is a dictionary with
+        the column name as the key and value as the value
+        """
+        table = self.get_table()
+        with self.session_context() as session:
+            query = session.query(self.get_table()).filter_by(doc_id=doc_id)
+
+        def get_table(query):
+            yield list(table.columns.keys())
+            for row in query:
+                yield row
+
+        table_ = get_table(query)
+        headers = next(table_)
+
+        named_entries = []
+        for row in table_:
+            columns_data = {}
+            for column_name, column_value in zip(headers, row):
+                columns_data[column_name] = column_value
+            named_entries.append(columns_data)
+        return named_entries
 
 
 class MultiDBSqlAdapter(object):
