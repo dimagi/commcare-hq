@@ -862,8 +862,8 @@ class DataSourceRepeater(Repeater):
 
     payload_generator_classes = (DataSourcePayloadGenerator,)
 
-    def allowed_to_forward(self, transaction_log):
-        return transaction_log.data_source_id == self.data_source_id
+    def allowed_to_forward(self, update_log):
+        return update_log.data_source_id == self.data_source_id
 
     def payload_doc(self, repeat_record):
         from corehq.apps.userreports.models import DataSourceRowTransactionLog

@@ -181,7 +181,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             domain=self.config.domain,
             data_source_id=self.config._id,
             row_changes=[{key: str(value) for key, value in row.items()} for row in formatted_rows],
-            action="upsert"
         )
 
     def supports_upsert(self):
@@ -219,7 +218,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             domain=self.config.domain,
             data_source_id=self.config._id,
             row_changes=[{"doc_id": doc['_id']} for doc in docs],
-            action="delete"
         )
 
     def delete(self, doc, use_shard_col=True):

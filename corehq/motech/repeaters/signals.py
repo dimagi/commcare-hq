@@ -11,7 +11,6 @@ from couchforms.signals import successful_form_received
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCase
-from corehq.apps.userreports.models import DataSourceRowTransactionLog
 from corehq.motech.repeaters.models import (
     CreateCaseRepeater,
     DataSourceRepeater,
@@ -106,14 +105,7 @@ def fire_synchronous_case_repeaters(sender, case, **kwargs):
 
 def create_data_source_transaction_log_entry(sender, **kwargs):
     """Creates a transaction log for the datasource that changed"""
-    transaction_log = DataSourceRowTransactionLog.objects.create(
-        domain=kwargs["domain"],
-        data_source_id=kwargs["data_source_id"],
-        row_id=kwargs["doc_id"],
-        row_data=kwargs["row_change"],
-        action=kwargs["action"]
-    )
-    create_repeat_records(DataSourceRepeater, transaction_log)
+    create_repeat_records(DataSourceRepeater, kwargs["update_log"])
 
 
 successful_form_received.connect(create_form_repeat_records)
