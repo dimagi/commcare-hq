@@ -3,9 +3,10 @@ import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
+from corehq.util.test_utils import flag_enabled
 
 from django.test import SimpleTestCase, TestCase
-
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
 import attr
 from requests import RequestException
 
@@ -25,8 +26,10 @@ from corehq.apps.receiverwrapper.exceptions import (
     DuplicateFormatException,
     IgnoreDocument,
 )
+from corehq.pillows.case import get_case_pillow
+from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.userreports.models import DataSourceRowTransactionLog
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -1285,15 +1288,22 @@ class TestGetRetryInterval(SimpleTestCase):
 
 
 class DataSourceRepeaterTest(BaseRepeaterTest, TestXmlMixin):
-    domain = "case-rep"
+    domain = "user-reports"
 
     def setUp(self):
         super().setUp()
+        self.config = get_sample_data_source()
+        self.config.save()
+        self.adapter = get_indicator_adapter(self.config)
+        self.adapter.build_table()
+        self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
+        self.pillow = _get_pillow([self.config], processor_chunk_size=100)
+
         self.connx = ConnectionSettings.objects.create(
             domain=self.domain,
             url="case-repeater-url",
         )
-        self.data_source_id = str(uuid.uuid4())
+        self.data_source_id = self.config._id
         self.repeater = DataSourceRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
@@ -1306,55 +1316,28 @@ class DataSourceRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertTrue(self.repeater.datasource_is_subscribed_to(self.domain, self.data_source_id))
         self.assertFalse(self.repeater.datasource_is_subscribed_to("malicious-domain", self.data_source_id))
 
+    @flag_enabled('SUPERSET_ANALYTICS')
     def test_payload_format(self):
-        doc_id = "some-doc-id"
-        row_data = {"doc_id": doc_id, "datum1": "value1"}
-        expected_payload = {"data": row_data, "action": "upsert", "data_source_id": self.data_source_id}
-        repeat_record = self._create_log_and_repeat_record(doc_id, row_data)
-        repeat_record.save()
+        doc_id = self._create_log_and_repeat_record()
+        later = datetime.utcnow() + timedelta(hours=50)
+        repeat_record = RepeatRecord.all(domain=self.domain, due_before=later).first()
         payload = self.repeater.get_payload(repeat_record)
-        self.assertEqual(json.loads(payload), expected_payload)
+        payload = json.loads(payload)
+        self.assertEqual(payload["data_source_id"], self.data_source_id)
+        self.assertTrue(isinstance(payload["data"], list))
+        self.assertEqual(payload["doc_id"], doc_id)
+        self.assertEqual(payload["data"][0]["doc_id"], doc_id)
 
-    @patch("corehq.motech.repeaters.models.RepeatRecord._already_processed", return_value=False)
-    @patch("corehq.motech.repeaters.models.RepeatRecord._is_ready", return_value=True)
-    @patch("corehq.motech.repeaters.models.Repeater.fire_for_record")
-    def test_only_latest_transaction_logs_are_sent(self, fire_for_record_mock, _is_ready, _already_processed):
-        doc_id = "some-doc-id"
-        row_data = {"doc_id": doc_id, "datum1": "value1"}
+    def _create_log_and_repeat_record(self):
+        from corehq.apps.userreports.tests.test_pillow import _save_sql_case
+        with patch('corehq.apps.userreports.specs.datetime') as datetime_mock:
+            datetime_mock.utcnow.return_value = self.fake_time_now
+            sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
+            since = self.pillow.get_change_feed().get_latest_offsets()
+            _save_sql_case(sample_doc)
+            self.pillow.process_changes(since=since, forever=False)
 
-        repeat_record_1 = self._create_log_and_repeat_record(doc_id, row_data)
-        repeat_record_2 = self._create_log_and_repeat_record(doc_id, row_data)
-        first_log = DataSourceRowTransactionLog.objects.get(id=repeat_record_1.payload_id)
-        second_log = DataSourceRowTransactionLog.objects.get(id=repeat_record_2.payload_id)
-        second_log.date_created = first_log.date_created + timedelta(minutes=5)
-        second_log.save()
-
-        self.assertFalse(first_log.is_latest)
-        self.assertTrue(second_log.is_latest)
-
-        repeat_record_1.attempt_forward_now(fire_synchronously=True)
-        fire_for_record_mock.assert_not_called()
-
-        repeat_record_2.attempt_forward_now(fire_synchronously=True)
-        fire_for_record_mock.assert_called()
-
-    def _create_log_and_repeat_record(self, doc_id, row_data):
-        transaction_log = DataSourceRowTransactionLog.objects.create(
-            domain=self.domain,
-            data_source_id=self.data_source_id,
-            row_id=doc_id,
-            row_data=row_data,
-            action=DataSourceRowTransactionLog.UPSERT
-        )
-        record = RepeatRecord(
-            domain=self.domain,
-            repeater_id=self.repeater.repeater_id,
-            repeater_type='DataSourceRepeater',
-            payload_id=transaction_log.get_id,
-            registered_on=datetime.utcnow(),
-        )
-        record.save()
-        return record
+        return sample_doc["_id"]
 
     def tearDown(self):
         delete_all_repeat_records()
@@ -1375,3 +1358,15 @@ def fromisoformat(isoformat):
         return datetime.fromisoformat(isoformat)  # Python >= 3.7
     except AttributeError:
         return datetime.strptime(isoformat, "%Y-%m-%d %H:%M:%S")
+
+
+def _get_pillow(configs, processor_chunk_size=0):
+    pillow = get_case_pillow(processor_chunk_size=processor_chunk_size)
+    # overwrite processors since we're only concerned with UCR here
+    table_manager = ConfigurableReportTableManager(data_source_providers=[])
+    ucr_processor = ConfigurableReportPillowProcessor(
+        table_manager
+    )
+    table_manager.bootstrap(configs)
+    pillow.processors = [ucr_processor]
+    return pillow
