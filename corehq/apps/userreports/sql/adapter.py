@@ -228,7 +228,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             query = session.query(self.get_table()).filter_by(doc_id=doc['_id'])
             return session.query(query.exists()).scalar()
 
-    def get_docs(self, doc_id):
+    def get_rows(self, doc_id):
         """Returns a list of entries from the datasource matching the `doc_id`. Each entry is a dictionary with
         the column name as the key and value as the value
         """

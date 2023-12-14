@@ -873,7 +873,7 @@ class DataSourceRepeater(Repeater):
             domain=self.domain
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
-        return datasource_adapter.get_docs(repeat_record.payload_id)
+        return datasource_adapter.get_rows(repeat_record.payload_id)
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
