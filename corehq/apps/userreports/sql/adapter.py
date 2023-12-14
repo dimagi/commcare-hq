@@ -217,7 +217,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         register_data_source_row_change(
             domain=self.config.domain,
             data_source_id=self.config._id,
-            doc_ids=[doc['_id'] for doc in docs],
+            doc_ids=set([doc['_id'] for doc in docs]),
         )
 
     def delete(self, doc, use_shard_col=True):
