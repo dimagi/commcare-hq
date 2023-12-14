@@ -749,7 +749,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return (self.error() || self.serverError()) && !self.dirty();
         });
 
-        self.hasLabelContent = ko.computed(function() {
+        self.hasLabelContent = ko.computed(function () {
             return (
                 ko.utils.unwrapObservable(self.caption)
                 || ko.utils.unwrapObservable(self.caption_markdown)
