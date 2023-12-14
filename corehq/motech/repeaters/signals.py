@@ -103,7 +103,7 @@ def fire_synchronous_case_repeaters(sender, case, **kwargs):
     _create_repeat_records(DataRegistryCaseUpdateRepeater, case, fire_synchronously=True)
 
 
-def create_data_source_transaction_log_entry(sender, **kwargs):
+def create_data_source_updated_repeat_record(sender, **kwargs):
     """Creates a transaction log for the datasource that changed"""
     create_repeat_records(DataSourceRepeater, kwargs["update_log"])
 
@@ -111,4 +111,4 @@ def create_data_source_transaction_log_entry(sender, **kwargs):
 successful_form_received.connect(create_form_repeat_records)
 successful_form_received.connect(create_short_form_repeat_records)
 sql_case_post_save.connect(create_case_repeat_records, CommCareCase)
-ucr_data_source_updated.connect(create_data_source_transaction_log_entry)
+ucr_data_source_updated.connect(create_data_source_updated_repeat_record)
