@@ -371,7 +371,7 @@ def get_domain_for_ucr_table_name(table_name):
     raise ValueError(f"Expected {table_name} to start with {UCR_TABLE_PREFIX} or {LEGACY_UCR_TABLE_PREFIX}")
 
 
-def register_data_source_row_change(domain, data_source_id, row_changes):
+def register_data_source_row_change(domain, data_source_id, doc_ids):
     from corehq.motech.repeaters.models import DataSourceRepeater
     from corehq.motech.repeaters.signals import ucr_data_source_updated
     try:
@@ -381,8 +381,8 @@ def register_data_source_row_change(domain, data_source_id, row_changes):
         ):
             return
 
-        for row_change in row_changes:
-            update_log = DataSourceUpdateLog(domain, data_source_id=data_source_id, doc_id=row_change["doc_id"])
+        for doc_id in doc_ids:
+            update_log = DataSourceUpdateLog(domain, data_source_id=data_source_id, doc_id=doc_id)
             ucr_data_source_updated.send_robust(sender=None, update_log=update_log)
 
     except Exception as e:
