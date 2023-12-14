@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-hqDefine("cloudcare/js/formplayer/spec/controller_spec", function () {
+hqDefine("cloudcare/js/formplayer/spec/menu_utils_spec", function () {
     describe('Menu Utils', function () {
 
         describe('groupDisplays', function () {

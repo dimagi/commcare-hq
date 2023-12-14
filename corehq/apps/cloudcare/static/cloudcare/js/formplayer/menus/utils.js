@@ -211,7 +211,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 execute: false,
                 forceManualSearch: false,
             });
-            if (Object.keys(menuResponse.groupHeaders).length > 0) {
+            if (menuResponse.hasOwnProperty("groupHeaders") && Object.keys(menuResponse.groupHeaders).length > 0) {
                 var groupedDisplays = groupDisplays(menuResponse, menuResponse.groupHeaders);
                 var displayCollection = new Collection(groupedDisplays);
                 displayCollection.description = menuResponse.description;
