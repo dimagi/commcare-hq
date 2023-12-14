@@ -1,7 +1,7 @@
 hqDefine("cloudcare/js/formplayer/spec/fixtures/split_screen_case_list", function () {
     const FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer");
 
-    return FakeFormplayer.makeEntitiesResponse({
+    const options = {
         "title": "Search All Cases",
         "description": "",
         "actions": [
@@ -34,6 +34,9 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/split_screen_case_list", functio
                 "details": null,
             },
         ],
+        "groupHeaders": {
+            "groupKey": "group name",
+        },
         "headers": [
             "Name",
             "Sex",
@@ -52,6 +55,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/split_screen_case_list", functio
                     "hint": "Enter a name",
                     "required": true,
                     "required_msg": "This field is required",
+                    "groupKey": "groupKey",
                 },
             ],
             "queryKey": "search_command.m0",
@@ -76,5 +80,10 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/split_screen_case_list", functio
             20,
             20,
         ],
-    });
+    };
+
+    return  {
+        entities: FakeFormplayer.makeEntitiesResponse(options),
+        query: FakeFormplayer.makeQueryResponse(options),
+    };
 });
