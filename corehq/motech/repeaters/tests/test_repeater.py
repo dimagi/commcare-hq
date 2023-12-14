@@ -2,11 +2,12 @@ import json
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
+from corehq.util.test_utils import flag_enabled
 
 from django.test import SimpleTestCase, TestCase
-
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
 import attr
-from unittest.mock import Mock, patch
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
@@ -25,6 +26,9 @@ from corehq.apps.receiverwrapper.exceptions import (
     DuplicateFormatException,
     IgnoreDocument,
 )
+from corehq.pillows.case import get_case_pillow
+from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
@@ -35,15 +39,14 @@ from corehq.motech.repeaters.const import (
     MIN_RETRY_WAIT,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.dbaccessors import (
-    delete_all_repeat_records,
-)
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import (
-    RepeatRecord,
     CaseRepeater,
+    DataSourceRepeater,
     FormRepeater,
     LocationRepeater,
     Repeater,
+    RepeatRecord,
     ShortFormRepeater,
     UserRepeater,
     _get_retry_interval,
@@ -54,8 +57,8 @@ from corehq.motech.repeaters.repeater_generators import (
     RegisterGenerator,
 )
 from corehq.motech.repeaters.tasks import (
-    check_repeaters,
     _process_repeat_record,
+    check_repeaters,
 )
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
@@ -1284,6 +1287,65 @@ class TestGetRetryInterval(SimpleTestCase):
             self.assertEqual(interval, timedelta(hours=expected_interval_hours))
 
 
+class DataSourceRepeaterTest(BaseRepeaterTest, TestXmlMixin):
+    domain = "user-reports"
+
+    def setUp(self):
+        super().setUp()
+        self.config = get_sample_data_source()
+        self.config.save()
+        self.adapter = get_indicator_adapter(self.config)
+        self.adapter.build_table()
+        self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
+        self.pillow = _get_pillow([self.config], processor_chunk_size=100)
+
+        self.connx = ConnectionSettings.objects.create(
+            domain=self.domain,
+            url="case-repeater-url",
+        )
+        self.data_source_id = self.config._id
+        self.repeater = DataSourceRepeater(
+            domain=self.domain,
+            connection_settings_id=self.connx.id,
+            repeater_id=uuid.uuid4().hex,
+            data_source_id=self.data_source_id,
+        )
+        self.repeater.save()
+
+    def test_datasource_is_subscribed_to(self):
+        self.assertTrue(self.repeater.datasource_is_subscribed_to(self.domain, self.data_source_id))
+        self.assertFalse(self.repeater.datasource_is_subscribed_to("malicious-domain", self.data_source_id))
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    def test_payload_format(self):
+        doc_id = self._create_log_and_repeat_record()
+        later = datetime.utcnow() + timedelta(hours=50)
+        repeat_record = RepeatRecord.all(domain=self.domain, due_before=later).first()
+        payload = self.repeater.get_payload(repeat_record)
+        payload = json.loads(payload)
+        self.assertEqual(payload["data_source_id"], self.data_source_id)
+        self.assertTrue(isinstance(payload["data"], list))
+        self.assertEqual(payload["doc_id"], doc_id)
+        self.assertEqual(payload["data"][0]["doc_id"], doc_id)
+
+    def _create_log_and_repeat_record(self):
+        from corehq.apps.userreports.tests.test_pillow import _save_sql_case
+        with patch('corehq.apps.userreports.specs.datetime') as datetime_mock:
+            datetime_mock.utcnow.return_value = self.fake_time_now
+            sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
+            since = self.pillow.get_change_feed().get_latest_offsets()
+            _save_sql_case(sample_doc)
+            self.pillow.process_changes(since=since, forever=False)
+
+        return sample_doc["_id"]
+
+    def tearDown(self):
+        delete_all_repeat_records()
+        self.repeater.delete()
+        self.connx.delete()
+        super().tearDown()
+
+
 def fromisoformat(isoformat):
     """
     Return a datetime from a string in ISO 8601 date time format
@@ -1296,3 +1358,15 @@ def fromisoformat(isoformat):
         return datetime.fromisoformat(isoformat)  # Python >= 3.7
     except AttributeError:
         return datetime.strptime(isoformat, "%Y-%m-%d %H:%M:%S")
+
+
+def _get_pillow(configs, processor_chunk_size=0):
+    pillow = get_case_pillow(processor_chunk_size=processor_chunk_size)
+    # overwrite processors since we're only concerned with UCR here
+    table_manager = ConfigurableReportTableManager(data_source_providers=[])
+    ucr_processor = ConfigurableReportPillowProcessor(
+        table_manager
+    )
+    table_manager.bootstrap(configs)
+    pillow.processors = [ucr_processor]
+    return pillow
