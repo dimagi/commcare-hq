@@ -751,11 +751,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.hasLabelContent = ko.computed(function() {
             return (
-                self.caption()
-                || self.caption_markdown()
-                || self.help()
-                || self.hint()
-                || self.required()
+                ko.utils.unwrapObservable(self.caption)
+                || ko.utils.unwrapObservable(self.caption_markdown)
+                || ko.utils.unwrapObservable(self.help)
+                || ko.utils.unwrapObservable(self.hint)
+                || ko.utils.unwrapObservable(self.required)
             );
         });
         self.setWidths(self.hasLabelContent());
