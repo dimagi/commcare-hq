@@ -4,6 +4,8 @@ import re
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
+from dataclasses import dataclass
+
 
 from corehq import privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -18,9 +20,21 @@ from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
 from corehq.util.metrics.load_counters import ucr_load_counter
 from dimagi.utils.couch.undo import is_deleted, remove_deleted_doc_type_suffix
+import logging
 
 UCR_TABLE_PREFIX = 'ucr_'
 LEGACY_UCR_TABLE_PREFIX = 'config_report_'
+
+
+@dataclass
+class DataSourceUpdateLog:
+    domain: str
+    data_source_id: str
+    doc_id: str
+
+    @property
+    def get_id(self):
+        return self.doc_id
 
 
 def localize(value, lang):
@@ -355,3 +369,21 @@ def get_domain_for_ucr_table_name(table_name):
         # double-unescape because corehq.apps.userreports.util.get_table_name escapes twice
         return unescape(unescape(match.group(1)))
     raise ValueError(f"Expected {table_name} to start with {UCR_TABLE_PREFIX} or {LEGACY_UCR_TABLE_PREFIX}")
+
+
+def register_data_source_row_change(domain, data_source_id, row_changes):
+    from corehq.motech.repeaters.models import DataSourceRepeater
+    from corehq.motech.repeaters.signals import ucr_data_source_updated
+    try:
+        if not (
+            toggles.SUPERSET_ANALYTICS.enabled(domain)
+            and DataSourceRepeater.datasource_is_subscribed_to(domain, data_source_id)
+        ):
+            return
+
+        for row_change in row_changes:
+            update_log = DataSourceUpdateLog(domain, data_source_id=data_source_id, doc_id=row_change["doc_id"])
+            ucr_data_source_updated.send_robust(sender=None, update_log=update_log)
+
+    except Exception as e:
+        logging.exception(str(e))
