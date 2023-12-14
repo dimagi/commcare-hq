@@ -16,7 +16,8 @@ from corehq.apps.cleanup.tests.util import is_monday
 from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import mail_admins_async
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
+
 
 UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
 
@@ -30,12 +31,19 @@ def permanently_delete_eligible_data(dry_run=False):
     the cutoff date returned from ``get_cutoff_date_for_data_deletion``.
     :param dry_run: if True, no changes will be committed to the database
     """
+    """
+    NOTE: In the interest of keeping deletion records for future reference, data won't be hard deleted
+    but will be converted into a tombstone after the 90 day safety period. This will be a future PR.
+    """
     dry_run_tag = '[DRY RUN] ' if dry_run else ''
     cutoff_date = get_cutoff_date_for_data_deletion()
     form_counts = XFormInstance.objects.hard_delete_forms_before_cutoff(cutoff_date, dry_run=dry_run)
+    case_counts = CommCareCase.objects.hard_delete_cases_before_cutoff(cutoff_date, dry_run=dry_run)
 
     logger.info(f"{dry_run_tag}'permanently_delete_eligible_data' ran with the following results:\n")
     for table, count in form_counts.items():
+        logger.info(f"{dry_run_tag}{count} {table} objects were deleted.")
+    for table, count in case_counts.items():
         logger.info(f"{dry_run_tag}{count} {table} objects were deleted.")
 
 
