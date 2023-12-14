@@ -33,8 +33,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_utils_spec", function () {
                     "unit": "Unit",
                     "facility": "Facility",
                     "unnamed": "",
-                }
-
+                };
                 const grouped = utils.groupDisplays(displays, groupHeaders);
                 const expected = [
                     {
@@ -75,7 +74,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_utils_spec", function () {
                             },
                         ],
                     },
-                ]
+                ];
                 assert.deepEqual(JSON.stringify(expected), JSON.stringify(grouped));
             });
 

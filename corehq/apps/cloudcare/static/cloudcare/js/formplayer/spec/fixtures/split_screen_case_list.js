@@ -84,6 +84,6 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/split_screen_case_list", functio
 
     return  {
         entities: FakeFormplayer.makeEntitiesResponse(options),
-        query: FakeFormplayer.makeQueryResponse(options)
-    }
+        query: FakeFormplayer.makeQueryResponse(options),
+    };
 });
