@@ -321,7 +321,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
         it('Should find nested questions', function () {
             var form = formUI.Form(nestedGroupJSON);
             assert.isTrue(form.children()[0].children()[0].hasAnyNestedQuestions());
-            assert.isFalse(form.children()[1].children()[0].children()[0].children()[0].hasAnyNestedQuestions());
+            assert.isFalse(form.children()[1].children()[0].hasAnyNestedQuestions());
         });
 
         it('Should not reconcile outdated data', function () {
