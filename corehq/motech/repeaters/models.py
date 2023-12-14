@@ -119,6 +119,7 @@ from corehq.util.metrics import metrics_counter
 from corehq.util.models import ForeignObject, foreign_init
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.util.quickcache import quickcache
 
 from ..repeater_helpers import RepeaterResponse
 from .const import (
@@ -151,6 +152,7 @@ from .repeater_generators import (
     ReferCasePayloadGenerator,
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
+    DataSourcePayloadGenerator,
 )
 
 
@@ -183,7 +185,12 @@ class RepeaterSuperProxy(models.Model):
     class Meta:
         abstract = True
 
+    def clear_caches(self):
+        """Override this to clear any cache that the repeater type might be using"""
+        pass
+
     def save(self, *args, **kwargs):
+        self.clear_caches()
         self.repeater_type = self._repeater_type
         # For first save when reepater is created
         # If repeater_id is not set then set one
@@ -388,7 +395,6 @@ class Repeater(RepeaterSuperProxy):
     def register(self, payload, fire_synchronously=False):
         if not self.allowed_to_forward(payload):
             return
-
         now = datetime.utcnow()
         repeat_record = RepeatRecord(
             repeater_id=self.repeater_id,
@@ -409,7 +415,6 @@ class Repeater(RepeaterSuperProxy):
             # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
             # to prevent serializing the repeater in the celery task payload
             RepeatRecord.repeater.fget.get_cache(repeat_record)[()] = self
-
         repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
@@ -1126,19 +1131,19 @@ class RepeatRecord(Document):
         self.next_check = None
         self.cancelled = True
 
+    def _is_ready(self):
+        return self.next_check < datetime.utcnow()
+
+    def _already_processed(self):
+        return self.succeeded or self.cancelled or self.next_check is None
+
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
             process_repeat_record,
             retry_process_repeat_record,
         )
 
-        def is_ready():
-            return self.next_check < datetime.utcnow()
-
-        def already_processed():
-            return self.succeeded or self.cancelled or self.next_check is None
-
-        if already_processed() or not is_ready():
+        if self._already_processed() or not self._is_ready():
             return
 
         # Set the next check to happen an arbitrarily long time from now.
