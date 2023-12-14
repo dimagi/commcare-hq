@@ -352,6 +352,7 @@ def calced_props(domain_obj, id, all_stats):
         "_id": id,
         "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
         "cp_n_active_cc_users": int(CALC_FNS["active_mobile_users"](dom)),
+        "cp_n_active_cc_users_365_days": int(CALC_FNS["active_mobile_users"](dom, 365)),
         "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
         "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
         "cp_n_users_submitted_form": total_distinct_users(dom),
