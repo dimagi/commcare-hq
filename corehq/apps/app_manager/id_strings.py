@@ -205,8 +205,7 @@ def module_locale(module):
 
 @pattern('forms.m%df%d')
 def form_locale(form):
-    return "forms.m{module.id}f{form.id}".format(module=form.get_module(),
-                                                  form=form)
+    return "forms.m{module.id}f{form.id}".format(module=form.get_module(), form=form)
 
 
 @pattern('training.root.title')

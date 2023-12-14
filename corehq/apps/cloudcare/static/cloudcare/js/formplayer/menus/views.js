@@ -1005,7 +1005,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const MultiSelectCaseListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {
             selectAllCheckbox: "#select-all-checkbox",
-            continueButton: "#multi-select-continue-btn",
+            continueButton: ".multi-select-continue-btn",
             continueButtonText: "#multi-select-btn-text",
         }),
 
@@ -1057,7 +1057,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const CaseTileListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {
             selectAllCheckbox: "#select-all-tile-checkbox",
-            continueButton: "#multi-select-continue-btn",
+            continueButton: ".multi-select-continue-btn",
             continueButtonText: "#multi-select-btn-text",
         }),
         childView: CaseTileView,
@@ -1182,11 +1182,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#breadcrumb-item-template").html() || ""),
         className: "breadcrumb-text",
         attributes: function () {
-            return {
+            let attributes = {
                 "role": "link",
                 "tabindex": "0",
                 "style": this.buildMaxWidth(),
             };
+            if (this.options.model.get('ariaCurrentPage')) {
+                attributes['aria-current'] = 'page';
+            }
+            return attributes;
         },
         events: {
             "click": "crumbClick",

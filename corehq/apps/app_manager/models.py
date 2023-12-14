@@ -154,6 +154,7 @@ from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildRecord, BuildSpec
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.cleanup.models import DeletedCouchDoc
+from corehq.apps.cloudcare.utils import get_mobile_ucr_count
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import (
     ApplicationMediaMixin,
@@ -2197,7 +2198,7 @@ class CaseSearch(DocumentSchema):
 
     def get_relevant(self, case_session_var, multi_select=False):
         xpath = CaseClaimXpath(case_session_var)
-        default_condition = xpath.multi_select_relevant() if multi_select else xpath.default_relevant()
+        default_condition = xpath.multi_case_relevant() if multi_select else xpath.default_relevant()
         if self.additional_relevant:
             return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition
@@ -2561,6 +2562,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
     display_style = StringProperty(default='list')
+    lazy_load_case_list_fields = BooleanProperty(default=False)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -4504,6 +4506,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_app_languages.clear(self.domain)
         get_apps_in_domain.clear(self.domain, True)
         get_apps_in_domain.clear(self.domain, False)
+        get_mobile_ucr_count.clear(self.domain)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
@@ -4530,6 +4533,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_app_languages.clear(self.domain)
         get_apps_in_domain.clear(self.domain, True)
         get_apps_in_domain.clear(self.domain, False)
+        get_mobile_ucr_count.clear(self.domain)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
