@@ -88,7 +88,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         # Update the translations
         for lang in self.langs:
             translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
-            assert(translation_node.exists())
+            assert translation_node.exists()
 
             for row in rows:
                 if row['label'] in label_ids_to_skip:
@@ -178,8 +178,8 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             if self.is_multi_sheet and not new_translation:
                 # If the cell corresponding to the label for this question
                 # in this language is empty, fall back to another language
-                for l in self.langs:
-                    key = self._get_col_key(trans_type, l)
+                for language in self.langs:
+                    key = self._get_col_key(trans_type, language)
                     if key not in row:
                         continue
                     fallback = row[key]
