@@ -866,27 +866,17 @@ class DataSourceRepeater(Repeater):
         return update_log.data_source_id == self.data_source_id
 
     def payload_doc(self, repeat_record):
-        from corehq.apps.userreports.models import DataSourceRowTransactionLog
-        return DataSourceRowTransactionLog.objects.get(id=repeat_record.payload_id)
+        from corehq.apps.userreports.models import get_datasource_config
+        from corehq.apps.userreports.util import get_indicator_adapter
+        config, _ = get_datasource_config(
+            config_id=self.data_source_id,
+            domain=self.domain
+        )
+        datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
+        return datasource_adapter.get_docs(repeat_record.payload_id)
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
-
-    def fire_for_record(self, repeat_record):
-        from corehq.apps.userreports.models import DataSourceRowTransactionLog
-        # TODO: Remove after repeat records are migrated to SQL
-        # We need to send repeat record in the correct order.
-        # After repeat records are moved to SQL, it will always fire in the correct sequence, but for now we don't
-        # have that guarentee, so we need to check that we're firing the latest transaction log entry only
-        transaction_log = DataSourceRowTransactionLog.objects.get(id=repeat_record.payload_id)
-        if transaction_log.is_latest:
-            return super().fire_for_record(repeat_record)
-
-        return RepeatRecordAttempt(
-            cancelled=True,
-            datetime=datetime.utcnow(),
-            info="Outdated",
-        )
 
     @staticmethod
     @quickcache(['domain', 'data_source_id'], timeout=15 * 60)

@@ -22,6 +22,8 @@ from corehq.form_processor.models import CommCareCase
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.motech.repeaters.exceptions import ReferralError, DataRegistryCaseUpdateError
 from dimagi.utils.parsing import json_format_datetime
+from corehq.util.json import CommCareJSONEncoder
+
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 
@@ -748,10 +750,10 @@ class DataSourcePayloadGenerator(BasePayloadGenerator):
     def content_type(self):
         return 'application/json'
 
-    def get_payload(self, repeat_record, transaction_log):
+    def get_payload(self, repeat_record, docs: list):
         data = {
-            "data": transaction_log.row_data,
-            "action": transaction_log.action,
-            "data_source_id": transaction_log.data_source_id,
+            "data": docs,
+            "data_source_id": repeat_record.repeater.data_source_id,
+            "doc_id": repeat_record.payload_id,
         }
-        return json.dumps(data, cls=DjangoJSONEncoder)
+        return json.dumps(data, cls=CommCareJSONEncoder)
