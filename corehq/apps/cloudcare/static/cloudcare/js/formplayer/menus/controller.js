@@ -108,9 +108,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         var queryResponse = menuResponse.queryResponse;
-        const hasSearchInputs = menuResponse.type === "query" ? (menuResponse.models && menuResponse.models.length > 0) : (queryResponse && queryResponse.displays.length > 0);
-        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview && hasSearchInputs;
-        if (sidebarEnabled && menuResponse.type === "query") {
+        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview && menusUtils.sidebarEnabled(menuResponse);
+        if (sidebarEnabled && menuResponse.type === constants.QUERY) {
             var menuData = menusUtils.getMenuData(menuResponse);
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
@@ -127,7 +126,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
         }
 
-        if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
+        if (sidebarEnabled && menuResponse.type === constants.ENTITIES && queryResponse)  {
             var queryCollection = new Collection(queryResponse.displays);
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 QueryListView({
@@ -139,7 +138,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     disableDynamicSearch: !sessionStorage.submitPerformed,
                 }).render()
             );
-        } else if (sidebarEnabled && menuResponse.type === "query") {
+        } else if (sidebarEnabled && menuResponse.type === constants.QUERY) {
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 QueryListView({
                     collection: menuResponse,
@@ -161,7 +160,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 if (isFormEntry) {
                     menusUtils.showMenuDropdown(menuResponse.langs, initialPageData('lang_code_name_mapping'));
                 }
-                if (menuResponse.type === "entities") {
+                if (menuResponse.type === constants.ENTITIES) {
                     menusUtils.showMenuDropdown();
                 }
             }

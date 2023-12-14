@@ -7,7 +7,8 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         QueryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views");
+        views = hqImport("cloudcare/js/formplayer/menus/views"),
+        constants = hqImport("cloudcare/js/formplayer/constants");
 
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
@@ -155,6 +156,14 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         }
     };
 
+    var sidebarEnabled = function (menuResponse) {
+        if (menuResponse.type === constants.QUERY) {
+            return menuResponse.models && menuResponse.models.length > 0;
+        } else if (menuResponse.type === constants.ENTITIES) {
+            return menuResponse.queryResponse && menuResponse.queryResponse.displays.length > 0;
+        }
+    }
+
     var getMenuView = function (menuResponse) {
         var menuData = getMenuData(menuResponse);
         var urlObject = utils.currentUrlToObject();
@@ -162,7 +171,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         sessionStorage.queryKey = menuResponse.queryKey;
         if (menuResponse.type === "commands") {
             return views.MenuListView(menuData);
-        } else if (menuResponse.type === "query") {
+        } else if (menuResponse.type === constants.QUERY) {
             var props = {
                 domain: FormplayerFrontend.getChannel().request('currentUser').domain,
             };
@@ -176,13 +185,13 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 forceManualSearch: false,
             });
             return QueryView(menuData);
-        } else if (menuResponse.type === "entities") {
+        } else if (menuResponse.type === constants.ENTITIES) {
             var searchText = urlObject.search;
             var event = "Viewed Case List";
             if (searchText) {
                 event = "Searched Case List";
             }
-            if (menuResponse.queryResponse && menuResponse.queryResponse.displays.length) {
+            if (sidebarEnabled(menuResponse)) {
                 menuData.sidebarEnabled = true;
             }
             var eventData = {
@@ -212,5 +221,6 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         showBreadcrumbs: showBreadcrumbs,
         showMenuDropdown: showMenuDropdown,
         startOrStopLocationWatching: startOrStopLocationWatching,
+        sidebarEnabled: sidebarEnabled,
     };
 });
