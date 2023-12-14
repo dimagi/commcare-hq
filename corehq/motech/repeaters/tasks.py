@@ -167,7 +167,7 @@ def _process_repeat_record(repeat_record):
         repeat_record.save()
         return
 
-    if repeat_record.is_repeater_deleted():
+    if repeat_record.repeater.is_deleted:
         repeat_record.cancel()
         with _delete_couch_record(repeat_record):
             repeat_record.save()

@@ -1617,11 +1617,6 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     def repeater_type(self):
         return self.repeater.repeater_type
 
-    def is_repeater_deleted(self):
-        # TODO change to query since self.repeater may be None?
-        # OTOH, self.repeater should never be None because of FK constraint with cascading delete
-        return self.repeater.is_deleted
-
     def fire(self, force_send=False):
         if self.try_now() or force_send:
             self.overall_tries += 1
