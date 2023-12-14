@@ -46,7 +46,6 @@ from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq.motech.repeaters.models import Repeater
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.metrics import metrics_histogram_timer
 from corehq.util.quickcache import quickcache
 
 
@@ -62,13 +61,7 @@ DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
 
 def active_mobile_users(domain, days=30):
-    buckets = (0.1, 1, 5, 10, 30, 60, 120, 60 * 5, 60 * 10, 60 * 15, 60 * 30)
-    with metrics_histogram_timer(
-            'commcare.calculated_properties.mobile_users.timing',
-            buckets,
-            tags={'days': days}
-    ):
-        return _mobile_users(domain, int(days), inactive=False)
+    return _mobile_users(domain, int(days), inactive=False)
 
 
 def inactive_mobile_users(domain, days=30):
