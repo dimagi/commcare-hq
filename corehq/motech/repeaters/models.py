@@ -852,6 +852,41 @@ def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 
+class DataSourceRepeater(Repeater):
+    class Meta:
+        proxy = True
+
+    data_source_id = OptionValue(default=None)
+
+    friendly_name = _("Forward Data Source Data")
+
+    payload_generator_classes = (DataSourcePayloadGenerator,)
+
+    def allowed_to_forward(self, update_log):
+        return update_log.data_source_id == self.data_source_id
+
+    def payload_doc(self, repeat_record):
+        from corehq.apps.userreports.models import get_datasource_config
+        from corehq.apps.userreports.util import get_indicator_adapter
+        config, _ = get_datasource_config(
+            config_id=self.data_source_id,
+            domain=self.domain
+        )
+        datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
+        return datasource_adapter.get_docs(repeat_record.payload_id)
+
+    def clear_caches(self):
+        DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
+
+    @staticmethod
+    @quickcache(['domain', 'data_source_id'], timeout=15 * 60)
+    def datasource_is_subscribed_to(domain, data_source_id):
+        # Since Repeater.options is not a native django JSON field, we cannot query it like a django json field
+        return DataSourceRepeater.objects.filter(
+            domain=domain, options={"data_source_id": data_source_id}
+        ).exists()
+
+
 class RepeatRecordAttempt(DocumentSchema):
     cancelled = BooleanProperty(default=False)
     datetime = DateTimeProperty()
