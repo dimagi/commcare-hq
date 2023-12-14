@@ -146,37 +146,6 @@ class DataSourceActionLog(models.Model):
     skip_destructive = models.BooleanField(default=False)
 
 
-class DataSourceRowTransactionLog(models.Model):
-    UPSERT = "upsert"
-    DELETE = "delete"
-
-    id = models.BigAutoField(primary_key=True)
-    domain = models.CharField(max_length=126, null=False, db_index=True)
-    date_created = models.DateTimeField(auto_now_add=True)
-    action = models.CharField(max_length=32, choices=(
-        (UPSERT, UPSERT),
-        (DELETE, DELETE),
-    ), null=False, blank=False)
-    data_source_id = models.CharField(db_index=True, max_length=255, null=False, blank=False)
-    row_id = models.CharField(null=False, blank=False, max_length=255, db_index=True)
-    row_data = models.JSONField(null=True, blank=True)
-
-    @property
-    def get_id(self):
-        return str(self.id)
-
-    @property
-    def is_latest(self):
-        """Checks to see if this transaction log is the latest one. This is determined by the `data_source_id` and
-        `row_id`
-        """
-        ds = DataSourceRowTransactionLog.objects.filter(
-            data_source_id=self.data_source_id,
-            row_id=self.row_id
-        ).order_by("-date_created").first()
-        return ds.id == self.id
-
-
 class SQLColumnIndexes(DocumentSchema):
     column_ids = StringListProperty()
 
