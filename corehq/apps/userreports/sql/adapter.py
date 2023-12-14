@@ -216,6 +216,30 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             query = session.query(self.get_table()).filter_by(doc_id=doc['_id'])
             return session.query(query.exists()).scalar()
 
+    def get_docs(self, doc_id):
+        """Returns a list of entries from the datasource matching the `doc_id`. Each entry is a dictionary with
+        the column name as the key and value as the value
+        """
+        table = self.get_table()
+        with self.session_context() as session:
+            query = session.query(self.get_table()).filter_by(doc_id=doc_id)
+
+        def get_table(query):
+            yield list(table.columns.keys())
+            for row in query:
+                yield row
+
+        table_ = get_table(query)
+        headers = next(table_)
+
+        named_entries = []
+        for row in table_:
+            columns_data = {}
+            for column_name, column_value in zip(headers, row):
+                columns_data[column_name] = column_value
+            named_entries.append(columns_data)
+        return named_entries
+
 
 class MultiDBSqlAdapter(object):
 
