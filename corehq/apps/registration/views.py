@@ -522,7 +522,7 @@ def confirm_domain(request, guid=''):
 
         # Has guid already been confirmed?
         if requested_domain.is_active:
-            assert(req.confirm_time is not None and req.confirm_ip is not None)
+            assert (req.confirm_time is not None and req.confirm_ip is not None)
             messages.success(request, 'Your account %s has already been activated. '
                 'No further validation is required.' % req.new_user_username)
             return HttpResponseRedirect(reverse(view_name, args=view_args))
