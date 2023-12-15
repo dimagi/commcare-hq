@@ -381,8 +381,10 @@ def get_form_question_label_name_media(langs, form):
                 itext_items[text_id][(lang, value_form)] = value
 
     itext_items['submit_label'] = {}
+    itext_items['submit_notification_label'] = {}
     for lang in langs:
         itext_items['submit_label'][(lang, 'default')] = form.get_submit_label(lang)
+        itext_items['submit_notification_label'][(lang, 'default')] = form.get_submit_notification_label(lang)
 
     app = form.get_app()
     for text_id, values in itext_items.items():
