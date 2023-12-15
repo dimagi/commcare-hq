@@ -156,7 +156,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         }
     };
 
-    var sidebarEnabled = function (menuResponse) {
+    var isSidebarEnabled = function (menuResponse) {
         const splitScreenCaseSearchEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH');
         if (menuResponse.type === constants.QUERY) {
             return splitScreenCaseSearchEnabled && menuResponse.models && menuResponse.models.length > 0;
@@ -192,7 +192,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             if (searchText) {
                 event = "Searched Case List";
             }
-            if (sidebarEnabled(menuResponse)) {
+            if (isSidebarEnabled(menuResponse)) {
                 menuData.sidebarEnabled = true;
             }
             var eventData = {
@@ -222,6 +222,6 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         showBreadcrumbs: showBreadcrumbs,
         showMenuDropdown: showMenuDropdown,
         startOrStopLocationWatching: startOrStopLocationWatching,
-        sidebarEnabled: sidebarEnabled,
+        isSidebarEnabled: isSidebarEnabled,
     };
 });
