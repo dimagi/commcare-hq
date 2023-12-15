@@ -3,6 +3,8 @@ import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
+
+from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import flag_enabled
 
 from django.test import SimpleTestCase, TestCase
@@ -1287,7 +1289,7 @@ class TestGetRetryInterval(SimpleTestCase):
             self.assertEqual(interval, timedelta(hours=expected_interval_hours))
 
 
-class DataSourceRepeaterTest(BaseRepeaterTest, TestXmlMixin):
+class DataSourceRepeaterTest(BaseRepeaterTest):
     domain = "user-reports"
 
     def setUp(self):
@@ -1318,15 +1320,24 @@ class DataSourceRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 
     @flag_enabled('SUPERSET_ANALYTICS')
     def test_payload_format(self):
-        doc_id = self._create_log_and_repeat_record()
+        sample_doc, expected_indicators = self._create_log_and_repeat_record()
         later = datetime.utcnow() + timedelta(hours=50)
         repeat_record = RepeatRecord.all(domain=self.domain, due_before=later).first()
-        payload = self.repeater.get_payload(repeat_record)
-        payload = json.loads(payload)
-        self.assertEqual(payload["data_source_id"], self.data_source_id)
-        self.assertTrue(isinstance(payload["data"], list))
-        self.assertEqual(payload["doc_id"], doc_id)
-        self.assertEqual(payload["data"][0]["doc_id"], doc_id)
+        json_payload = self.repeater.get_payload(repeat_record)
+        payload = json.loads(json_payload)
+
+        # Clean expected_indicators:
+        # expected_indicators includes 'repeat_iteration'
+        del expected_indicators['repeat_iteration']
+        # Decimal expected indicator is not rounded, and will not match
+        del expected_indicators['estimate']
+        del payload['data'][0]['estimate']
+
+        self.assertEqual(payload, {
+            'data_source_id': self.data_source_id,
+            'doc_id': sample_doc['_id'],
+            'data': [expected_indicators]
+        })
 
     def _create_log_and_repeat_record(self):
         from corehq.apps.userreports.tests.test_pillow import _save_sql_case
@@ -1336,8 +1347,10 @@ class DataSourceRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             since = self.pillow.get_change_feed().get_latest_offsets()
             _save_sql_case(sample_doc)
             self.pillow.process_changes(since=since, forever=False)
-
-        return sample_doc["_id"]
+        # Serialize and deserialize to get objects as strings
+        json_indicators = json.dumps(expected_indicators, cls=CommCareJSONEncoder)
+        expected_indicators = json.loads(json_indicators)
+        return sample_doc, expected_indicators
 
     def tearDown(self):
         delete_all_repeat_records()
