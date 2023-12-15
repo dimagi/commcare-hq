@@ -750,10 +750,14 @@ class DataSourcePayloadGenerator(BasePayloadGenerator):
     def content_type(self):
         return 'application/json'
 
-    def get_payload(self, repeat_record, docs: list):
+    def get_payload(self, repeat_record, payload_doc):
+        """
+        Returns the request body to be forwarded to CommCare Analytics
+        for ``payload_doc``, which is a ``DataSourceUpdateLog``.
+        """
         data = {
-            "data": docs,
-            "data_source_id": repeat_record.repeater.data_source_id,
-            "doc_id": repeat_record.payload_id,
+            "data": payload_doc.rows,
+            "data_source_id": payload_doc.data_source_id,
+            "doc_id": payload_doc.doc_id,
         }
         return json.dumps(data, cls=CommCareJSONEncoder)

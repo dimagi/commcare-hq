@@ -1,11 +1,11 @@
 import collections
 import hashlib
 import re
+from typing import Any, Optional
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from dataclasses import dataclass
-
 
 from corehq import privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -31,6 +31,7 @@ class DataSourceUpdateLog:
     domain: str
     data_source_id: str
     doc_id: str
+    rows: Optional[list[dict[str, Any]]] = None
 
     @property
     def get_id(self):
@@ -382,7 +383,14 @@ def register_data_source_row_change(domain, data_source_id, doc_ids):
             return
 
         for doc_id in doc_ids:
-            update_log = DataSourceUpdateLog(domain, data_source_id=data_source_id, doc_id=doc_id)
+            update_log = DataSourceUpdateLog(
+                domain,
+                data_source_id=data_source_id,
+                doc_id=doc_id,
+                # We don't need to set `rows` here. We will determine
+                # them at send time. See DataSourceRepeater.payload_doc()
+                rows=None,
+            )
             ucr_data_source_updated.send_robust(sender=None, update_log=update_log)
 
     except Exception as e:

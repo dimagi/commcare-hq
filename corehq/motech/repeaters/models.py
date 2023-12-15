@@ -861,6 +861,12 @@ def get_all_repeater_types():
 
 
 class DataSourceRepeater(Repeater):
+    """
+    Forwards the UCR data source rows that are updated by a form
+    submission or a case update.
+
+    A ``DataSourceRepeater`` is responsible for a single data source.
+    """
     class Meta:
         proxy = True
 
@@ -870,19 +876,31 @@ class DataSourceRepeater(Repeater):
 
     payload_generator_classes = (DataSourcePayloadGenerator,)
 
-    def allowed_to_forward(self, update_log):
-        return update_log.data_source_id == self.data_source_id
+    def allowed_to_forward(
+        self,
+        payload,  # type: DataSourceUpdateLog
+    ):
+        return payload.data_source_id == self.data_source_id
 
     def payload_doc(self, repeat_record):
         from corehq.apps.userreports.models import get_datasource_config
-        from corehq.apps.userreports.util import get_indicator_adapter
+        from corehq.apps.userreports.util import (
+            DataSourceUpdateLog,
+            get_indicator_adapter,
+        )
 
         config, _ = get_datasource_config(
             config_id=self.data_source_id,
             domain=self.domain
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
-        return datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
+        rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
+        return DataSourceUpdateLog(
+            domain=self.domain,
+            data_source_id=self.data_source_id,
+            doc_id=repeat_record.payload_id,
+            rows=rows,
+        )
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
