@@ -458,11 +458,17 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return !self.isSubmitting() && self.erroredQuestions().length === 0;
         });
 
+        self.getSubmitTranslation = function () {
+            var translations = self.translations;
+            const [key, _] = Object.entries(translations).find(([k]) => k.includes("submit_label"));
+            return ko.toJS(translations[key]);
+        };
+
         self.submitText = ko.computed(function () {
             if (self.isSubmitting()) {
                 return gettext('Submitting...');
             }
-            return gettext('Submit');
+            return gettext(self.getSubmitTranslation());
         });
 
         self.forceRequiredVisible = ko.observable(false);
