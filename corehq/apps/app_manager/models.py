@@ -1347,6 +1347,11 @@ class FormBase(DocumentSchema):
             return self.submit_label[lang]
         return 'Submit'
 
+    def get_submit_notification_label(self, lang):
+        if lang in self.submit_notification_label:
+            return self.get_submit_notification_label[lang]
+        return None
+
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
 
