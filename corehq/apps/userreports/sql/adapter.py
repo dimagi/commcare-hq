@@ -228,23 +228,23 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             query = session.query(self.get_table()).filter_by(doc_id=doc['_id'])
             return session.query(query.exists()).scalar()
 
-    def get_rows(self, doc_id):
-        """Returns a list of entries from the datasource matching the `doc_id`. Each entry is a dictionary with
-        the column name as the key and value as the value
+    def get_rows_by_doc_id(self, doc_id):
+        """
+        Returns the rows of the data source for the form submission or
+        case identified by ``doc_id``.
+
+        The return value is a list of dictionaries with column names as
+        keys.
         """
         table = self.get_table()
         headers = list(table.columns.keys())
-
-        named_entries = []
+        rows = []
         with self.session_context() as session:
             query = session.query(self.get_table()).filter_by(doc_id=doc_id)
-            for row in query:
-                columns_data = {}
-                for column_name, column_value in zip(headers, row):
-                    columns_data[column_name] = column_value
-                named_entries.append(columns_data)
-
-        return named_entries
+            for row_values in query:
+                row_dict = {k: v for k, v in zip(headers, row_values)}
+                rows.append(row_dict)
+        return rows
 
 
 class MultiDBSqlAdapter(object):
