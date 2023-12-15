@@ -176,6 +176,8 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
                 label={'en': 'Get them all'}
             ),
             properties=[
+                CaseSearchProperty(is_group=True, name='group_header_0',
+                                   group_key='group_header_0', label={'en': 'Personal Information'}),
                 CaseSearchProperty(name="name", label={'en': 'Name'})
             ]
         )
@@ -203,6 +205,8 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             self.assertEqual(en_app_strings['case_search.m0.icon'], 'jr://file/commcare/image/1.png')
             self.assertEqual(en_app_strings['case_search.m0.audio'], 'jr://file/commcare/image/2.mp3')
             self.assertEqual(en_app_strings['case_search.m0.again'], 'Get them all')
+            self.assertEqual(en_app_strings['search_property.m0.name'], 'Name')
+            self.assertEqual(en_app_strings['search_property.m0.group_header_0'], 'Personal Information')
 
             # non-default language
             es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
