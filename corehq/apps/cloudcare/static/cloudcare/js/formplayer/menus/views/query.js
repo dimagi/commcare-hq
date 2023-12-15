@@ -470,18 +470,23 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return {parentView: this.options.parentView};
         },
 
-        onAttach: function () {
-            const header = $(this.el).find('.search-query-group-header');
-            header.on('click', function (e) {
-                const arrow = $(e.currentTarget).children('i');
-                if (arrow.hasClass('fa-angle-double-down')) {
-                    arrow.removeClass('fa-angle-double-down');
-                    arrow.addClass('fa-angle-double-up');
-                } else {
-                    arrow.removeClass('fa-angle-double-up');
-                    arrow.addClass('fa-angle-double-down');
-                }
-            });
+        ui: {
+            groupHeader: '.search-query-group-header',
+        },
+
+        events: {
+            'click @ui.groupHeader': 'updateArrow',
+        },
+
+        updateArrow: function (e) {
+            const arrow = $(e.currentTarget).children('i');
+            if (arrow.hasClass('fa-angle-double-down')) {
+                arrow.removeClass('fa-angle-double-down');
+                arrow.addClass('fa-angle-double-up');
+            } else {
+                arrow.removeClass('fa-angle-double-up');
+                arrow.addClass('fa-angle-double-down');
+            }
         },
 
         templateContext: function () {
