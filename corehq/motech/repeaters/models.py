@@ -108,8 +108,13 @@ from corehq.form_processor.models import (
     CommCareCase,
     XFormInstance,
 )
-from corehq.motech.const import MAX_REQUEST_LOG_LENGTH, REQUEST_METHODS, REQUEST_POST
+from corehq.motech.const import (
+    MAX_REQUEST_LOG_LENGTH,
+    REQUEST_METHODS,
+    REQUEST_POST,
+)
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.repeaters.apps import REPEATER_CLASS_MAP
 from corehq.motech.repeaters.optionvalue import OptionValue
 from corehq.motech.requests import simple_request
@@ -117,21 +122,21 @@ from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.sql_db.fields import CharIdField
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import ForeignObject, foreign_init
+from corehq.util.quickcache import quickcache
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
-from ..repeater_helpers import RepeaterResponse
 from .const import (
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
     RECORD_CANCELLED_STATE,
+    RECORD_EMPTY_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
     RECORD_STATES,
     RECORD_SUCCESS_STATE,
-    RECORD_EMPTY_STATE,
 )
 from .dbaccessors import (
     get_cancelled_repeat_record_count,
@@ -145,6 +150,7 @@ from .repeater_generators import (
     CaseRepeaterJsonPayloadGenerator,
     CaseRepeaterXMLPayloadGenerator,
     DataRegistryCaseUpdatePayloadGenerator,
+    DataSourcePayloadGenerator,
     FormRepeaterJsonPayloadGenerator,
     FormRepeaterXMLPayloadGenerator,
     LocationPayloadGenerator,
@@ -183,7 +189,12 @@ class RepeaterSuperProxy(models.Model):
     class Meta:
         abstract = True
 
+    def clear_caches(self):
+        """Override this to clear any cache that the repeater type might be using"""
+        pass
+
     def save(self, *args, **kwargs):
+        self.clear_caches()
         self.repeater_type = self._repeater_type
         # For first save when reepater is created
         # If repeater_id is not set then set one
@@ -193,6 +204,10 @@ class RepeaterSuperProxy(models.Model):
             self.id = uuid.UUID(self.repeater_id)
         self.name = self.name or self.connection_settings.name
         return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clear_caches()
+        return super().delete(*args, **kwargs)
 
     def __new__(cls, *args, **kwargs):
         repeater_class = cls
@@ -388,7 +403,6 @@ class Repeater(RepeaterSuperProxy):
     def register(self, payload, fire_synchronously=False):
         if not self.allowed_to_forward(payload):
             return
-
         now = datetime.utcnow()
         repeat_record = RepeatRecord(
             repeater_id=self.repeater_id,
@@ -409,7 +423,6 @@ class Repeater(RepeaterSuperProxy):
             # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
             # to prevent serializing the repeater in the celery task payload
             RepeatRecord.repeater.fget.get_cache(repeat_record)[()] = self
-
         repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
@@ -847,6 +860,60 @@ def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 
+class DataSourceRepeater(Repeater):
+    """
+    Forwards the UCR data source rows that are updated by a form
+    submission or a case update.
+
+    A ``DataSourceRepeater`` is responsible for a single data source.
+    """
+    class Meta:
+        proxy = True
+
+    data_source_id = OptionValue(default=None)
+
+    friendly_name = _("Forward Data Source Data")
+
+    payload_generator_classes = (DataSourcePayloadGenerator,)
+
+    def allowed_to_forward(
+        self,
+        payload,  # type: DataSourceUpdateLog
+    ):
+        return payload.data_source_id == self.data_source_id
+
+    def payload_doc(self, repeat_record):
+        from corehq.apps.userreports.models import get_datasource_config
+        from corehq.apps.userreports.util import (
+            DataSourceUpdateLog,
+            get_indicator_adapter,
+        )
+
+        config, _ = get_datasource_config(
+            config_id=self.data_source_id,
+            domain=self.domain
+        )
+        datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
+        rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
+        return DataSourceUpdateLog(
+            domain=self.domain,
+            data_source_id=self.data_source_id,
+            doc_id=repeat_record.payload_id,
+            rows=rows,
+        )
+
+    def clear_caches(self):
+        DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
+
+    @staticmethod
+    @quickcache(['domain', 'data_source_id'], timeout=15 * 60)
+    def datasource_is_subscribed_to(domain, data_source_id):
+        # Since Repeater.options is not a native django JSON field, we cannot query it like a django json field
+        return DataSourceRepeater.objects.filter(
+            domain=domain, options={"data_source_id": data_source_id}
+        ).exists()
+
+
 class RepeatRecordAttempt(DocumentSchema):
     cancelled = BooleanProperty(default=False)
     datetime = DateTimeProperty()
@@ -1126,19 +1193,19 @@ class RepeatRecord(Document):
         self.next_check = None
         self.cancelled = True
 
+    def _is_ready(self):
+        return self.next_check < datetime.utcnow()
+
+    def _already_processed(self):
+        return self.succeeded or self.cancelled or self.next_check is None
+
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
             process_repeat_record,
             retry_process_repeat_record,
         )
 
-        def is_ready():
-            return self.next_check < datetime.utcnow()
-
-        def already_processed():
-            return self.succeeded or self.cancelled or self.next_check is None
-
-        if already_processed() or not is_ready():
+        if self._already_processed() or not self._is_ready():
             return
 
         # Set the next check to happen an arbitrarily long time from now.
