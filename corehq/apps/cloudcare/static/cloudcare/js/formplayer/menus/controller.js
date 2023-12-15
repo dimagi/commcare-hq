@@ -108,7 +108,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         var queryResponse = menuResponse.queryResponse;
-        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview && menusUtils.sidebarEnabled(menuResponse);
+        var sidebarEnabled = !appPreview && menusUtils.sidebarEnabled(menuResponse);
         if (sidebarEnabled && menuResponse.type === constants.QUERY) {
             var menuData = menusUtils.getMenuData(menuResponse);
             menuData["triggerEmptyCaseList"] = true;

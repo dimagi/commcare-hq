@@ -157,10 +157,11 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
     };
 
     var sidebarEnabled = function (menuResponse) {
+        const splitScreenCaseSearchEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH');
         if (menuResponse.type === constants.QUERY) {
-            return menuResponse.models && menuResponse.models.length > 0;
+            return splitScreenCaseSearchEnabled && menuResponse.models && menuResponse.models.length > 0;
         } else if (menuResponse.type === constants.ENTITIES) {
-            return menuResponse.queryResponse && menuResponse.queryResponse.displays.length > 0;
+            return splitScreenCaseSearchEnabled && menuResponse.queryResponse && menuResponse.queryResponse.displays.length > 0;
         }
     };
 
