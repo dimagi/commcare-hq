@@ -1,3 +1,4 @@
+import pytz
 import json
 from collections import defaultdict
 from functools import cached_property
@@ -56,9 +57,13 @@ from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
+from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
+from corehq.util.timezones.conversions import UserTime, ServerTime
+
+MAX_ACTIVE_ALERTS = 3
 
 
 class BaseProjectSettingsView(BaseDomainView):
@@ -524,8 +529,9 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
     urlname = 'domain_manage_mobile_workers'
 
 
-@method_decorator(toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator(), name='dispatch')
-class ManageDomainAlertsView(BaseAdminProjectSettingsView):
+@method_decorator([toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator(),
+                   require_can_manage_domain_alerts], name='dispatch')
+class ManageDomainAlertsView(BaseProjectSettingsView):
     template_name = 'domain/admin/manage_alerts.html'
     urlname = 'domain_manage_alerts'
     page_title = gettext_lazy("Manage Project Alerts")
@@ -536,6 +542,10 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
             'form': self.form,
             'alerts': [
                 {
+                    'start_time': ServerTime(alert.start_time).user_time(pytz.timezone(alert.timezone))
+                        .ui_string() if alert.start_time else None,
+                    'end_time': ServerTime(alert.end_time).user_time(pytz.timezone(alert.timezone))
+                        .ui_string() if alert.end_time else None,
                     'active': alert.active,
                     'html': alert.html,
                     'id': alert.id,
@@ -548,8 +558,8 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
     @cached_property
     def form(self):
         if self.request.method == 'POST':
-            return DomainAlertForm(self.request.POST)
-        return DomainAlertForm()
+            return DomainAlertForm(self.request, self.request.POST)
+        return DomainAlertForm(self.request)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
@@ -561,16 +571,33 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
         return HttpResponseRedirect(self.page_url)
 
     def _create_alert(self):
+        start_time = self.form.cleaned_data['start_time']
+        end_time = self.form.cleaned_data['end_time']
+        timezone = self.request.project.default_timezone
+
+        start_time = self._convert_timestamp_to_utc(start_time, timezone) if start_time else None
+        end_time = self._convert_timestamp_to_utc(end_time, timezone) if end_time else None
+
         Alert.objects.create(
             created_by_domain=self.domain,
             domains=[self.domain],
             text=self.form.cleaned_data['text'],
+            start_time=start_time,
+            end_time=end_time,
+            timezone=timezone,
             created_by_user=self.request.couch_user.username,
         )
 
+    @staticmethod
+    def _convert_timestamp_to_utc(timestamp, timezone):
+        return UserTime(
+            timestamp,
+            tzinfo=pytz.timezone(timezone)
+        ).server_time().done()
+
 
 @toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
-@domain_admin_required
+@require_can_manage_domain_alerts
 @require_POST
 def update_domain_alert_status(request, domain):
     alert_id = request.POST.get('alert_id')
@@ -585,7 +612,7 @@ def update_domain_alert_status(request, domain):
 
 
 @toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
-@domain_admin_required
+@require_can_manage_domain_alerts
 @require_POST
 def delete_domain_alert(request, domain):
     alert_id = request.POST.get('alert_id')
@@ -611,6 +638,11 @@ def _load_alert(alert_id, domain):
 
 def _apply_update(request, alert):
     command = request.POST.get('command')
+    domain_alerts = Alert.objects.filter(created_by_domain=request.domain)
+    if command == "activate" and len(domain_alerts) >= MAX_ACTIVE_ALERTS:
+        messages.error(request, _("Only 3 active alerts allowed!"))
+        return
+
     if command in ['activate', 'deactivate']:
         _update_alert(alert, command)
         messages.success(request, _("Alert updated!"))

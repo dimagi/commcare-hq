@@ -172,7 +172,10 @@ class TestManageDomainAlertsView(TestBaseDomainAlertView):
         self.assertListEqual(
             response.context['alerts'],
             [
-                {'active': False, 'html': 'Test Alert 1!', 'id': alert.id, 'created_by_user': self.username}
+                {
+                    'start_time': None, 'end_time': None,
+                    'active': False, 'html': 'Test Alert 1!', 'id': alert.id, 'created_by_user': self.username
+                }
             ]
         )
         self.assertEqual(response.status_code, 200)
