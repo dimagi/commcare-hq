@@ -201,6 +201,10 @@ class RepeaterSuperProxy(models.Model):
         self.name = self.name or self.connection_settings.name
         return super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        self.clear_caches()
+        return super().delete(*args, **kwargs)
+
     def __new__(cls, *args, **kwargs):
         repeater_class = cls
         # get proxy name, either from kwargs or from args
