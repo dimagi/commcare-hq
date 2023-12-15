@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
         toggles = hqImport("hqwebapp/js/toggles"),
-        QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
+        queryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
         Collection = hqImport("cloudcare/js/formplayer/menus/collections");
     var selectMenu = function (options) {
@@ -128,35 +128,38 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         var queryResponse = menuResponse.queryResponse;
         if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
-            let queryCollection = new Collection(queryResponse.displays);
+            var queryCollection = new Collection(queryResponse.displays);
             // hasOwnProperty check only required temporarily for transient moment during deploy when response will not contain groupHeaders
-            if (queryResponse.hasOwnProperty("groupHeaders") && Object.keys(queryResponse.groupHeaders).length > 0) {
-                queryCollection = new Collection(menusUtils.groupDisplays(new Collection(queryResponse.displays), queryResponse.groupHeaders));
+            let myGroupHeaders = {};
+            if (queryResponse.hasOwnProperty("groupHeaders")) {
+                myGroupHeaders = queryResponse.groupHeaders;
             }
             FormplayerFrontend.regions.getRegion('sidebar').show(
-                QueryListView({
+                queryView.queryListView({
                     collection: queryCollection,
                     title: menuResponse.title,
                     description: menuResponse.description,
                     hasDynamicSearch: queryResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: !sessionStorage.submitPerformed,
+                    groupHeaders: myGroupHeaders,
                 }).render()
             );
         } else if (sidebarEnabled && menuResponse.type === "query") {
-            var queryCollection = menuResponse;
             // hasOwnProperty check only required temporarily for transient moment during deploy when response will not contain groupHeaders
-            if (menuResponse.hasOwnProperty("groupHeaders") && Object.keys(menuResponse.groupHeaders).length > 0) {
-                queryCollection = new Collection(menusUtils.groupDisplays(menuResponse, menuResponse.groupHeaders));
+            let groupHeaders = {};
+            if (menuResponse.hasOwnProperty("groupHeaders")) {
+                groupHeaders = menuResponse.groupHeaders
             }
             FormplayerFrontend.regions.getRegion('sidebar').show(
-                QueryListView({
-                    collection: queryCollection,
+                queryView.queryListView({
+                    collection: menuResponse,
                     title: menuResponse.title,
                     description: menuResponse.description,
                     hasDynamicSearch: menuResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: true,
+                    groupHeaders: groupHeaders,
                 }).render()
             );
         } else {

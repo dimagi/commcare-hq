@@ -11,7 +11,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles");
+        toggles = hqImport("hqwebapp/js/toggles"),
+        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
 
     var separator = " to ",
         serverSeparator = "__",
@@ -24,6 +25,41 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     };
     var toUiDate = function (dateString) {
         return cloudcareUtils.parseInputDate(dateString).format(dateFormat);
+    };
+
+    var getField = function (obj, fieldName) {
+        return typeof obj.get === 'function' ?  obj.get(fieldName) : obj[fieldName];
+    };
+
+    var groupDisplays = function (displays, groupHeaders) {
+        const groupedDisplays = [];
+        let currentGroup = {
+            groupKey: null,
+            groupName: null,
+            displays: [],
+            required: false,
+        };
+
+        displays.forEach(display => {
+            const groupKey = getField(display, 'groupKey');
+            if (currentGroup.groupKey !== groupKey) {
+                if (currentGroup.groupKey) {
+                    groupedDisplays.push(currentGroup);
+                }
+                currentGroup = {
+                    groupKey: groupKey,
+                    groupName: groupHeaders[groupKey],
+                    displays: [display],
+                    required: getField(display, 'required'),
+                };
+            } else {
+                currentGroup.displays.push(display);
+                currentGroup.required = currentGroup.required || getField(display, 'required');
+            }
+        });
+        groupedDisplays.push(currentGroup);
+
+        return groupedDisplays;
     };
 
     var encodeValue = function (model, searchForBlank) {
@@ -504,6 +540,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     var QueryListView = Marionette.CollectionView.extend({
         tagName: "div",
         template: _.template($("#query-view-list-template").html() || ""),
+
         childView(item) {
             if (item.has("groupName")) {
                 return GroupedQueryView;
@@ -547,6 +584,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
             this.dynamicSearchEnabled = !(options.disableDynamicSearch || this.smallScreenEnabled) &&
                 (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
+
+            if (Object.keys(options.groupHeaders).length > 0) {
+                const groupedCollection = groupDisplays(options.collection, options.groupHeaders);
+                this.collection = new Collection(groupedCollection);
+            } else {
+                this.collection = options.collection
+            }
         },
 
         templateContext: function () {
@@ -827,7 +871,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
     });
 
-    return function (data) {
-        return new QueryListView(data);
+    return {
+        queryListView: function (data) {
+            return new QueryListView(data);
+        },
+        groupDisplays: groupDisplays,
     };
 });

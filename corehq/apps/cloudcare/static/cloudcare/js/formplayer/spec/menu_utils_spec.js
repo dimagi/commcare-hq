@@ -3,8 +3,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_utils_spec", function () {
     describe('Menu Utils', function () {
 
         describe('groupDisplays', function () {
-            const utils = hqImport("cloudcare/js/formplayer/menus/utils");
-
+            const view = hqImport("cloudcare/js/formplayer/menus/views/query");
 
             it('should return the displays grouped by their groupKey', function () {
                 const displays = [
@@ -34,7 +33,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_utils_spec", function () {
                     "facility": "Facility",
                     "unnamed": "",
                 };
-                const grouped = utils.groupDisplays(displays, groupHeaders);
+                const grouped = view.groupDisplays(displays, groupHeaders);
                 const expected = [
                     {
                         "groupKey": "facility",
