@@ -7,8 +7,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         view = hqImport("cloudcare/js/formplayer/menus/views/query"),
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views"),
-        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
+        views = hqImport("cloudcare/js/formplayer/menus/views");
 
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;

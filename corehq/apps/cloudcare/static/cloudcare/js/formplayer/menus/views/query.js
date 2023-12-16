@@ -589,7 +589,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 const groupedCollection = groupDisplays(options.collection, options.groupHeaders);
                 this.collection = new Collection(groupedCollection);
             } else {
-                this.collection = options.collection
+                this.collection = options.collection;
             }
         },
 

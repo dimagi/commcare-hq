@@ -149,7 +149,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             // hasOwnProperty check only required temporarily for transient moment during deploy when response will not contain groupHeaders
             let groupHeaders = {};
             if (menuResponse.hasOwnProperty("groupHeaders")) {
-                groupHeaders = menuResponse.groupHeaders
+                groupHeaders = menuResponse.groupHeaders;
             }
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 queryView.queryListView({
