@@ -172,7 +172,11 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
     )
 
     modified_before = AutomaticUpdateRule.get_boundary_date(rules, now)
-    iterator = AutomaticUpdateRule.iter_cases(domain, case_type, db=db, modified_lte=modified_before)
+    modified_after = AutomaticUpdateRule.get_oldest_rule_run(rules)
+    iterator = AutomaticUpdateRule.iter_cases(domain, case_type, db=db,
+                                              modified_lte=modified_before,
+                                              modified_gte=modified_after)
+
     run = iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db)
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:

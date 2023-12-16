@@ -363,6 +363,26 @@ class AutomaticUpdateRuleTests(SimpleTestCase):
 
         self.assertEqual(result, datetime(2020, 5, 31, 0, 0))
 
+    def test_get_oldest_rule_run_returns_none_if_rule_has_never_been_run(self):
+        rules = [
+            AutomaticUpdateRule(last_run=datetime(2020, 1, 1, 0, 0)),
+            AutomaticUpdateRule(),  # last_run defaults to None
+        ]
+
+        result = AutomaticUpdateRule.get_oldest_rule_run(rules)
+
+        self.assertIsNone(result)
+
+    def test_get_oldest_rule_run_returns_oldest_last_run_if_all_rules_have_been_run(self):
+        rules = [
+            AutomaticUpdateRule(last_run=datetime(2020, 1, 1, 0, 0)),
+            AutomaticUpdateRule(last_run=datetime(2010, 12, 1, 0, 0)),
+        ]
+
+        result = AutomaticUpdateRule.get_oldest_rule_run(rules)
+
+        self.assertEqual(result, datetime(2010, 12, 1, 0, 0))
+
     def setUp(self):
         self.actions = []
         self.criteria = []

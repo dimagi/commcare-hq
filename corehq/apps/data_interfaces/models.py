@@ -237,8 +237,23 @@ class AutomaticUpdateRule(models.Model):
                 min_boundary = rule.server_modified_boundary
         return now - timedelta(days=min_boundary)
 
+    @staticmethod
+    def get_oldest_rule_run(rules):
+        """
+        :returns: ``datetime`` based on oldest last_run value or None if a rule has never been run
+        """
+        oldest_run = None
+        for rule in rules:
+            if not rule.last_run:
+                return None
+            elif not oldest_run:
+                oldest_run = rule.last_run
+            elif rule.last_run < oldest_run:
+                oldest_run = rule.last_run
+        return oldest_run
+
     @classmethod
-    def iter_cases(cls, domain, case_type, db=None, modified_lte=None, include_closed=False):
+    def iter_cases(cls, domain, case_type, db=None, modified_lte=None, modified_gte=None, include_closed=False):
         q_expression = Q(domain=domain, type=case_type, deleted=False)
 
         if not include_closed:
@@ -246,6 +261,9 @@ class AutomaticUpdateRule(models.Model):
 
         if modified_lte:
             q_expression = q_expression & Q(server_modified_on__lte=modified_lte)
+
+        if modified_gte:
+            q_expression = q_expression & Q(server_modified_on__gte=modified_gte)
 
         if db:
             return paginate_query(db, CommCareCase, q_expression, load_source='auto_update_rule')
