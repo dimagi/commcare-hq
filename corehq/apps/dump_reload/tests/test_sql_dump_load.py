@@ -777,7 +777,7 @@ class TestSqlLoadWithError(BaseDumpLoadTest):
         self.assertEqual(actual_model_counts['products.sqlproduct'], 3)
 
         loader = SqlDataLoader()
-        with self.assertRaises(IntegrityError),\
+        with self.assertRaises(IntegrityError), \
              mock.patch("corehq.apps.dump_reload.sql.load.CHUNK_SIZE", chunk_size):
             # patch the chunk size so that the queue blocks
             loader.load_objects(dump_lines)
