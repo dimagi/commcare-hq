@@ -736,8 +736,44 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
     def test_lookup_table(self):
         from corehq.apps.fixtures.models import LookupTable, LookupTableRow, LookupTableRowOwner, OwnerType
-        table = LookupTable.objects.create(domain=self.domain_name, tag="dump-load")
-        row = LookupTableRow.objects.create(domain=self.domain_name, table_id=table.id, sort_key=0)
+        table = LookupTable.objects.create(
+            domain=self.domain_name,
+            tag="dump-load",
+            fields=[
+                {
+                    "name": "country",
+                    "properties": [],
+                    "is_indexed": True,
+                },
+                {
+                    "name": "state_name",
+                    "properties": ["lang"],
+                    "is_indexed": False,
+                },
+                {
+                    "name": "state_id",
+                    "properties": [],
+                    "is_indexed": False,
+                },
+            ]
+        )
+        row = LookupTableRow.objects.create(
+            domain=self.domain_name,
+            table_id=table.id,
+            fields={
+                "country": [
+                    {"value": "India", "properties": {}},
+                ],
+                "state_name": [
+                    {"value": "Delhi_IN_ENG", "properties": {"lang": "eng"}},
+                    {"value": "Delhi_IN_HIN", "properties": {"lang": "hin"}},
+                ],
+                "state_id": [
+                    {"value": "DEL", "properties": {}}
+                ],
+            },
+            sort_key=0,
+        )
         LookupTableRowOwner.objects.create(
             domain=self.domain_name,
             row_id=row.id,
