@@ -67,9 +67,9 @@
                   <span> {% trans "Sort By" %} </span><i class="fa fa-sort" aria-hidden="true"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="case-list-sort-by">
-                  <%  _.each(sortIndices, function(sortIndex) { %>
-                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- sortIndex %>" role="menuitem">
-                      <a><%= headers[sortIndex] %></a>
+                  <%  _.each(sortOptions, function(sortOption) { %>
+                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- sortOption.index %>" role="menuitem">
+                      <a><%= sortOption.sortOrder %> <%= sortOption.header %></a>
                     </li>
                   <% }); %>
                 </ul>
