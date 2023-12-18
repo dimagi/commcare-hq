@@ -1164,8 +1164,10 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
 
     def _handle_case_duplicate_new(self, case, rule, process_updates=False):
         if not case_matching_rule_exists_in_es(case, rule):
-            # If the case isn't found, any duplicate information is unreliable
-            # Just queue this specific record up manually via resave_case
+            # If the case isn't found in elasticsearch, any duplicate information is unreliable
+            # Resaving this case will give our pillows a chance to process it again,
+            # Doing so will 1) insert the case into elasticsearch and 2) run this case through
+            # the duplicate pillow again
             resave_case(rule.domain, case, send_post_save_signal=False)
             return CaseRuleActionResult(num_updates=0)
 
@@ -1196,8 +1198,8 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         # Handle whether or not this gets inserted as a new duplicate
         matching_ids = find_matching_case_ids_in_es(case, rule, limit=3)
 
-        other_duplicate_ids = set([case_id for case_id in matching_ids if case_id != case.case_id])
-        if len(other_duplicate_ids) == 0:
+        other_duplicate_ids = {[case_id for case_id in matching_ids if case_id != case.case_id]}
+        if not other_duplicate_ids:
             # This isn't a duplicate, just return
             return []
 
@@ -1223,7 +1225,6 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     def _update_duplicates(self, duplicate_ids, case, rule):
         num_updates = 0
         if duplicate_ids and self.properties_to_update:
-            num_updates = len(duplicate_ids)
             num_updates = self._update_cases(case.domain, rule, duplicate_ids)
 
         return num_updates

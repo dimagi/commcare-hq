@@ -56,12 +56,11 @@ class CaseDeduplicationProcessor(PillowProcessor):
             applicable_rules = rules
         else:
             associated_form = self._get_associated_form(change)
-            if not associated_form or is_dedupe_xmlns(associated_form.xmlns):
-                case_updates = []
+            if associated_form and not is_dedupe_xmlns(associated_form.xmlns):
+                case_updates = get_case_updates(associated_form, form_case=change.id)
+                applicable_rules = [rule for rule in rules if self._has_applicable_changes(case_updates, rule)]
             else:
-                case_updates = get_case_updates(associated_form, for_case=change.id)
-
-            applicable_rules = [rule for rule in rules if self._has_applicable_changes(case_updates, rule)]
+                applicable_rules = []
 
         return applicable_rules
 

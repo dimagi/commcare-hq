@@ -573,7 +573,7 @@ class CaseDeduplicationActionTest(TestCase):
         resulting_case_ids = CaseDuplicateNew.objects.filter(
             action=self.action).all().values_list('case_id', flat=True)
         self.assertIn(duplicates[0].case_id, resulting_case_ids)
-        self.assertTrue(len(resulting_case_ids) > 1)
+        self.assertGreater(len(resulting_case_ids), 1)
 
     def test_calls_resave_cases_for_case_not_in_elasticsearch(self):
         duplicates, _ = self._create_cases(num_cases=1)
