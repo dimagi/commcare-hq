@@ -476,6 +476,7 @@ class TestSubscribeToDataSource(TestCase):
         return self.client.post(path, data=data, **extras)
 
     @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
     def test_subscribe_successful(self):
         data_source_id = "data_source_id"
         client_id = "client_id"
@@ -504,6 +505,7 @@ class TestSubscribeToDataSource(TestCase):
         self.assertEqual(repeater.connection_settings_id, conn_settings.id)
         self.assertEqual(repeater.data_source_id, data_source_id)
 
+    @flag_enabled('API_THROTTLE_WHITELIST')
     def test_subscribe_unsuccessful_without_ff(self):
         data_source_id = "data_source_id"
         request = self._post_request(
@@ -515,6 +517,7 @@ class TestSubscribeToDataSource(TestCase):
         self.assertEqual(request.status_code, 404)
 
     @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
     def test_subscribe_unsuccessful_with_missing_data(self):
         data_source_id = "data_source_id"
         post_data = {
