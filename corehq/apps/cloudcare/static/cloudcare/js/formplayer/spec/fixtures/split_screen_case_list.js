@@ -1,7 +1,7 @@
 hqDefine("cloudcare/js/formplayer/spec/fixtures/split_screen_case_list", function () {
     const FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer");
 
-    const options = {
+    return FakeFormplayer.makeEntitiesResponse({
         "title": "Search All Cases",
         "description": "",
         "actions": [
@@ -80,10 +80,5 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/split_screen_case_list", functio
             20,
             20,
         ],
-    };
-
-    return  {
-        entities: FakeFormplayer.makeEntitiesResponse(options),
-        query: FakeFormplayer.makeQueryResponse(options),
-    };
+    });
 });

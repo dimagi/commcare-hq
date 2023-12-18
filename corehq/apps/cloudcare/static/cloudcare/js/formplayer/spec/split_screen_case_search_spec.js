@@ -58,7 +58,7 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
 
         describe('Controller actions', function () {
             it('should show sidebar and main regions with entities type split screen case search', function () {
-                Controller.showMenu(splitScreenCaseListResponse.entities);
+                Controller.showMenu(splitScreenCaseListResponse);
 
                 assert.isTrue(stubs.regions['sidebar'].show.called);
                 assert.isTrue(stubs.regions['main'].show.called);
@@ -66,7 +66,7 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
             });
 
             it('should show sidebar and main regions with query type split screen case search', function () {
-                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse.query, { 'type': 'query' , 'models': [{}]});
+                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, { 'type': 'query' , 'models': [{}]});
                 Controller.showMenu(responseWithTypeQuery);
 
                 assert.isTrue(stubs.regions['sidebar'].show.called);
@@ -74,7 +74,7 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
             });
 
             it('should explicitly set sidebarEnabled and triggerEmptyCaseList with query type split screen case search', function () {
-                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse.query, { 'type': 'query', 'models': [{}] });
+                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, { 'type': 'query', 'models': [{}] });
                 Controller.showMenu(responseWithTypeQuery);
 
                 assert.isTrue(stubs.regions['main'].show.called);
@@ -101,20 +101,20 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
 
             it('should empty sidebar if in app preview', function () {
                 FormplayerFrontend.currentUser.displayOptions.singleAppMode = true;
-                Controller.showMenu(splitScreenCaseListResponse.entities);
+                Controller.showMenu(splitScreenCaseListResponse);
 
                 assert.isTrue(stubs.regions['sidebar'].empty.called);
             });
 
             it('should empty sidebar if response type neither entities nor query', function () {
-                const responseWithTypeEmpty = _.extend({}, splitScreenCaseListResponse.entities, { 'type': '' });
+                const responseWithTypeEmpty = _.extend({}, splitScreenCaseListResponse, { 'type': '' });
                 Controller.showMenu(responseWithTypeEmpty);
 
                 assert.isTrue(stubs.regions['sidebar'].empty.called);
             });
 
             it('should empty sidebar if no queryResponse present', function () {
-                const responseWithoutQueryResponse = _.omit(splitScreenCaseListResponse.entities, 'queryResponse');
+                const responseWithoutQueryResponse = _.omit(splitScreenCaseListResponse, 'queryResponse');
                 Controller.showMenu(responseWithoutQueryResponse);
 
                 assert.isTrue(stubs.regions['sidebar'].empty.called);
@@ -122,7 +122,7 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
 
             it('should empty sidebar if feature flag disabled', function () {
                 stubs.splitScreenToggleEnabled.returns(false);
-                Controller.showMenu(splitScreenCaseListResponse.entities);
+                Controller.showMenu(splitScreenCaseListResponse);
 
                 assert.isTrue(stubs.regions['sidebar'].empty.called);
             });
