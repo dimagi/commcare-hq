@@ -1,0 +1,27 @@
+<div class="col-sm-4">
+  <div class="card text-bg-{{ swatch.main_color.slug }} rounded-3 mb-2">
+    <div class="card-body">
+      <h4>{{ swatch.title }}</h4>
+      <div>
+        <span class="badge text-bg-light">
+          ${{ swatch.main_color.slug }}: #{{ swatch.main_color.hex }}
+        </span>
+      </div>
+      {% if swatch.subtle_color %}
+      <div>
+        <span class="badge text-dark bg-{{ swatch.subtle_color.slug }}">
+          ${{ swatch.subtle_color.slug }}: #{{ swatch.subtle_color.hex }}
+        </span>
+      </div>
+      {% endif %}
+      {% if swatch.emphasis_color %}
+      <div>
+        <span class="badge bg-light text-{{ swatch.emphasis_color.slug }}">
+          ${{ swatch.emphasis_color.slug }}: <span class="text-dark"> #{{ swatch.emphasis_color.hex }}</span>
+        </span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <p>{{ swatch.description }}</p>
+</div>
