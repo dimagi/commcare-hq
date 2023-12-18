@@ -1198,7 +1198,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         # Handle whether or not this gets inserted as a new duplicate
         matching_ids = find_matching_case_ids_in_es(case, rule, limit=3)
 
-        other_duplicate_ids = {[case_id for case_id in matching_ids if case_id != case.case_id]}
+        other_duplicate_ids = {case_id for case_id in matching_ids if case_id != case.case_id}
         if not other_duplicate_ids:
             # This isn't a duplicate, just return
             return []
