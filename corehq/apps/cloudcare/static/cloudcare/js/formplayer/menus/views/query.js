@@ -1,4 +1,4 @@
-/*global DOMPurify, Marionette */
+/*global Backbone, DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/bootstrap3/hq.helpers' is a dependency. It needs to be added
