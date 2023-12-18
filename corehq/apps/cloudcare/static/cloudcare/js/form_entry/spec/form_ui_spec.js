@@ -179,7 +179,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             });
             let r1 = fixtures.repeatNestJSON();
             g1.children[0].style = styleObj;
-            r1.children[0].style = styleObj;
+            r1.children[0].children[0].style = styleObj;
             g1.children[0].children.push(r1);
             g0.children[0].children.push(g1);
 
@@ -203,6 +203,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].headerBackgroundColor(), '#003e96'); //[g1]
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].headerBackgroundColor(), '#004EBC'); //[g1-0]
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].children()[2].headerBackgroundColor(), '#002f71'); //[r1]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].headerBackgroundColor(), ''); //[r1-0]
         });
 
         it('Should reconcile question choices', function () {
