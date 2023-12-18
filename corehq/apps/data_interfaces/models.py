@@ -109,6 +109,7 @@ class AutomaticUpdateRule(models.Model):
     deleted = models.BooleanField(default=False)
     deleted_on = models.DateTimeField(null=True)
     last_run = models.DateTimeField(null=True)
+    modified_on = models.DateTimeField(auto_now=True)
     filter_on_server_modified = models.BooleanField(default=True)
     workflow = models.CharField(max_length=126, choices=WORKFLOW_CHOICES)
 
