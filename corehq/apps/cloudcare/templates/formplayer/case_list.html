@@ -69,7 +69,12 @@
                 <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="case-list-sort-by">
                   <%  _.each(sortOptions, function(sortOption) { %>
                     <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- sortOption.index %>" role="menuitem">
-                      <a><%= sortOption.sortOrder %> <%= sortOption.header %></a>
+                      <a>
+                        <%= sortOption.header %>
+                        <% if (sortOption.sortOrder) { %>
+                          <i class="fa fa-arrow-<%= sortOption.sortOrder === 'V' ? 'down' : 'up' %> pull-right"></i>
+                        <% } %>
+                      </a>
                     </li>
                   <% }); %>
                 </ul>
