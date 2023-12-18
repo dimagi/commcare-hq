@@ -686,7 +686,7 @@ class CaseDeduplicationActionTest(TestCase):
         duplicates, uniques = self._create_cases()
         CaseDuplicateNew.objects.bulk_create([
             CaseDuplicateNew(
-                case_id=case.case_id, action=self.action, match_values="abc"
+                case_id=case.case_id, action=self.action, hash="abc"
             ) for case in duplicates])
 
         self.rule.soft_delete()
@@ -699,7 +699,7 @@ class CaseDeduplicationActionTest(TestCase):
         duplicates, _ = self._create_cases()
         duplicate_case_ids = [c.case_id for c in duplicates]
         duplicate_entries = [
-            CaseDuplicateNew(case_id=case.case_id, action=self.action, match_values='abc') for case in duplicates
+            CaseDuplicateNew(case_id=case.case_id, action=self.action, hash='abc') for case in duplicates
         ]
         CaseDuplicateNew.objects.bulk_create(duplicate_entries)
 
@@ -725,7 +725,7 @@ class CaseDeduplicationActionTest(TestCase):
 
         duplicate = CaseDuplicateNew.objects.get(action=self.action, case_id=duplicates[0].case_id)
         results = set(CaseDuplicateNew.objects.filter(
-            action=self.action, match_values=duplicate.match_values).values_list('case_id', flat=True))
+            action=self.action, hash=duplicate.hash).values_list('case_id', flat=True))
         duplicate_case_ids = {c.case_id for c in duplicates}
         self.assertSetEqual(results, duplicate_case_ids)
 
@@ -822,9 +822,9 @@ class DeduplicationPillowTest(TestCase):
 
         self.pillow.process_changes(since=self.kafka_offset, forever=False)
 
-        match_values = CaseDuplicateNew.case_and_action_to_hash(case, action)
+        hash = CaseDuplicateNew.case_and_action_to_hash(case, action)
         results = CaseDuplicateNew.objects.filter(
-            action=action, match_values=match_values).values_list('case_id', flat=True)
+            action=action, hash=hash).values_list('case_id', flat=True)
 
         self.assertSetEqual(set(results), {case.case_id, 'duplicate_case_id'})
 
@@ -840,9 +840,9 @@ class DeduplicationPillowTest(TestCase):
 
         self.pillow.process_changes(since=new_kafka_sec, forever=False)
 
-        match_values = CaseDuplicateNew.case_and_action_to_hash(case, action)
+        hash = CaseDuplicateNew.case_and_action_to_hash(case, action)
         results = CaseDuplicateNew.objects.filter(
-            action=action, match_values=match_values).values_list('case_id', flat=True)
+            action=action, hash=hash).values_list('case_id', flat=True)
 
         self.assertSetEqual(set(results), {case.case_id, 'duplicate_case_id'})
 
