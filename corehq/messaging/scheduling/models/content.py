@@ -204,7 +204,8 @@ class EmailContent(Content):
                 html_message,
                 text_content=message,
                 messaging_event_id=logged_subevent.id,
-                domain=domain)
+                domain=domain,
+                use_domain_gateway=True)
         else:
             send_mail_async.delay(
                 subject,
