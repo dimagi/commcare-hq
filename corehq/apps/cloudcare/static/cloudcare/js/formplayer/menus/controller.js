@@ -129,11 +129,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var queryResponse = menuResponse.queryResponse;
         if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
             var queryCollection = new Collection(queryResponse.displays);
-            // hasOwnProperty check only required temporarily for transient moment during deploy when response will not contain groupHeaders
-            let myGroupHeaders = {};
-            if (queryResponse.hasOwnProperty("groupHeaders")) {
-                myGroupHeaders = queryResponse.groupHeaders;
-            }
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 queryView.queryListView({
                     collection: queryCollection,
@@ -142,15 +137,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     hasDynamicSearch: queryResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: !sessionStorage.submitPerformed,
-                    groupHeaders: myGroupHeaders,
+                    groupHeaders: queryResponse.groupHeaders,
                 }).render()
             );
         } else if (sidebarEnabled && menuResponse.type === "query") {
-            // hasOwnProperty check only required temporarily for transient moment during deploy when response will not contain groupHeaders
-            let groupHeaders = {};
-            if (menuResponse.hasOwnProperty("groupHeaders")) {
-                groupHeaders = menuResponse.groupHeaders;
-            }
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 queryView.queryListView({
                     collection: menuResponse,
@@ -159,7 +149,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     hasDynamicSearch: menuResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: true,
-                    groupHeaders: groupHeaders,
+                    groupHeaders: menuResponse.groupHeaders,
                 }).render()
             );
         } else {
