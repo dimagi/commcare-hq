@@ -17,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/spec/query_spec", function () {
             let keyViewCollection = new QueryViewCollection([keyModel]);
 
             sinon.stub(Utils, 'getStickyQueryInputs').callsFake(function () { return 'fake_value'; });
-            let keyQueryListView =  QueryListView({ collection: keyViewCollection}),
+            let keyQueryListView =  QueryListView.queryListView({ collection: keyViewCollection}),
                 keyQueryView = new keyQueryListView.childView({ parentView: keyQueryListView, model: keyModel});
 
             it('should create dictionary with either keys', function () {
