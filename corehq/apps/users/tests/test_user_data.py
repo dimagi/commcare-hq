@@ -10,7 +10,12 @@ from corehq.apps.users.management.commands.populate_sql_user_data import (
     populate_user_data,
 )
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.apps.users.user_data import SQLUserData, UserData, UserDataError
+from corehq.apps.users.user_data import (
+    SQLUserData,
+    UserData,
+    UserDataError,
+    prime_user_data_caches,
+)
 
 
 class TestUserData(TestCase):
@@ -128,6 +133,27 @@ class TestUserData(TestCase):
         populate_user_data(user)
         sql_data = SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
         self.assertEqual(sql_data.data, {})
+
+    def test_prime_user_data_caches(self):
+        users = [
+            self.make_commcare_user(),
+            self.make_commcare_user(),
+            self.make_commcare_user(),
+            self.make_web_user(),
+            self.make_web_user(),
+        ]
+        for user in users:
+            user.get_user_data(self.domain).save()
+        users.append(self.make_web_user())  # add user without data
+        self.assertEqual(SQLUserData.objects.count(), 5)
+
+        for user in users:
+            user._user_data_accessors = {}  # wipe cache
+        with patch('corehq.apps.users.user_data.UserData.lazy_init') as lazy_init:
+            users = prime_user_data_caches(users, self.domain)
+            for user in users:
+                user.get_user_data(self.domain)
+            self.assertEqual(lazy_init.call_count, 0)
 
 
 def _get_profile(self, profile_id):
