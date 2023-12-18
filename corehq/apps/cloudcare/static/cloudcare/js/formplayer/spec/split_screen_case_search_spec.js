@@ -83,6 +83,22 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
                 assert.isTrue(showMain.args[0].options.triggerEmptyCaseList);
             });
 
+            it('should hide sidebar if there are no search inputs in query response', function () {
+                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, { 'type': 'query'});
+                Controller.showMenu(responseWithTypeQuery);
+
+                assert.isTrue(stubs.regions['sidebar'].empty.called);
+            })
+
+            it('should hide sidebar if there are no search inputs in entities response', function () {
+                let queryResponse = splitScreenCaseListResponse.queryResponse;
+                queryResponse = _.extend({}, queryResponse, {'displays': {}});
+                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, {'queryResponse': queryResponse});
+                Controller.showMenu(responseWithTypeQuery);
+
+                assert.isTrue(stubs.regions['sidebar'].empty.called);
+            })
+
             it('should empty sidebar if in app preview', function () {
                 FormplayerFrontend.currentUser.displayOptions.singleAppMode = true;
                 Controller.showMenu(splitScreenCaseListResponse);
