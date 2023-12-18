@@ -26,6 +26,9 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
         FORMAT_ADDRESS_POPUP: "AddressPopup",
         FORMAT_CLICKABLE_ICON: "ClickableIcon",
 
+        ENTITIES: "entities",
+        QUERY: "query",
+
         SMALL_SCREEN_WIDTH_PX: 992,
 
         BREADCRUMB_HEIGHT_PX: 46.125,
