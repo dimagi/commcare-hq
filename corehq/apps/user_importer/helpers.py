@@ -169,9 +169,6 @@ class BaseUserImporter(object):
 
 
 class CommCareUserImporter(BaseUserImporter):
-    def update_password(self, password):
-        self.user.set_password(password)
-        self.logger.add_change_message(UserChangeMessage.password_reset())
 
     def update_phone_numbers(self, phone_numbers):
         """
@@ -191,14 +188,14 @@ class CommCareUserImporter(BaseUserImporter):
         self.user.set_full_name(str(name))
         self.logger.add_changes({'first_name': self.user.first_name, 'last_name': self.user.last_name})
 
-    def update_user_data(self, data, uncategorized_data, profile_name, domain_info):
+    def update_user_data(self, data, uncategorized_data, profile_name, profiles_by_name):
         from corehq.apps.users.user_data import UserDataError
         user_data = self.user.get_user_data(self.user_domain)
         old_profile_id = user_data.profile_id
         if PROFILE_SLUG in data:
             raise UserUploadError(_("You cannot set {} directly").format(PROFILE_SLUG))
         if profile_name:
-            profile_id = domain_info.profiles_by_name[profile_name].pk
+            profile_id = profiles_by_name[profile_name].pk
 
         try:
             user_data.update(data, profile_id=profile_id if profile_name else ...)
