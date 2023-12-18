@@ -494,6 +494,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         self.submitForm = function () {
+            $(document).onvisibilitychange = () => {
+                if (document.visibilityState === "hidden") {
+                    self.showSubmitButton = false;
+                }
+             };
             self.hasSubmitAttempted(true);
             $.publish('formplayer.' + constants.SUBMIT, self);
         };
