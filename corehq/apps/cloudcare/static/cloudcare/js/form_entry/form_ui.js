@@ -488,6 +488,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         self.submitForm = function () {
+            $(document).onvisibilitychange = () => {
+                if (document.visibilityState === "hidden") {
+                    self.showSubmitButton = false;
+                }
+             };
             self.hasSubmitAttempted(true);
             $.publish('formplayer.' + constants.SUBMIT, self);
         };
@@ -590,6 +595,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
 
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
+        self.stripeRepeats = _.contains(styles, constants.STRIPE_REPEATS);
         self.collapsible = _.contains(styles, constants.COLLAPSIBLE);
         self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN));
         self.toggleChildren = function () {

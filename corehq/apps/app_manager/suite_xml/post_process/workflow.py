@@ -736,7 +736,7 @@ class WorkflowSessionMeta:
     def clone_to_match(self, source_id=None):
         raise NotImplementedError
 
-    def to_stack_datum(self):
+    def to_stack_datum(self, is_endpoint=False):
         raise NotImplementedError
 
 
@@ -788,7 +788,7 @@ class WorkflowDatumMeta(WorkflowSessionMeta):
         new_meta.source_id = source_id or self.id
         return new_meta
 
-    def to_stack_datum(self):
+    def to_stack_datum(self, is_endpoint=False):
         value = session_var(self.source_id) if self.requires_selection else self.function
         return StackDatum(id=self.id, value=value)
 
@@ -837,7 +837,7 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
         new_meta.source_id = source_id or self.id
         return new_meta
 
-    def to_stack_datum(self):
+    def to_stack_datum(self, is_endpoint=False):
         wanted = (CASE_SEARCH_REGISTRY_ID_KEY, "case_type", "case_id")
         keys = {el.key for el in self.query.data}
         data = [QueryData(key=el.key, ref=el.ref) for el in self.query.data if el.key in wanted]
@@ -845,7 +845,8 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
             if getattr(self.next_datum, "is_instance", False):
                 data.append(QueryData(key="case_id", ref=".", nodeset=self._get_multi_select_nodeset()))
             else:
-                data.append(QueryData(key="case_id", ref=session_var(self.source_id)))
+                ref_val = "$case_id" if is_endpoint else session_var(self.source_id)
+                data.append(QueryData(key="case_id", ref=ref_val))
         url = self.query.url
         if self.is_case_search:
             # we don't need the full search results, just the case that's been selected

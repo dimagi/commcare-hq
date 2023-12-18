@@ -1181,6 +1181,7 @@ users
  0053_userreportingmetadatastaging_fcm_token
  0054_connectiduserlink
  0055_add_user_data
+ 0056_add_manage_domain_alerts_permission
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
