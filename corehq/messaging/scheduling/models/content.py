@@ -736,7 +736,7 @@ class EmailImage(object):
         return cls.meta_query(domain).aggregate(total=models.Sum('content_length'))["total"]
 
     @classmethod
-    def save_blob(cls, file_obj, domain, filename, content_type, delete_after):
+    def save_blob(cls, file_obj, domain, filename, content_type, delete_after=None):
         return cls(get_blob_db().put(
             file_obj,
             domain=domain,

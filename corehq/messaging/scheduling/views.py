@@ -1125,7 +1125,6 @@ def messaging_image_upload_view(request, domain):
             domain=request.domain,
             filename=image_file.name,
             content_type=image_file.content_type,
-            delete_after=datetime.utcnow() + timedelta(days=365),
         )
         return JsonResponse({
             'url': absolute_reverse("download_messaging_image", args=[domain, image.blob_id])
