@@ -1142,12 +1142,6 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         actual_headers = get_bulk_app_sheet_headers(self.app)
         actual_sheets = get_bulk_app_sheets_by_name(self.app)
 
-        print()
-        print()
-        print(title for title, headers in actual_headers)
-        print()
-
-
         actual_workbook = [
             {'name': title,
              'rows': [dict(zip(headers, row)) for row in actual_sheets[title]]}
