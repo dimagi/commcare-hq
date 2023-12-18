@@ -863,7 +863,7 @@ def get_all_repeater_types():
 class DataSourceRepeater(Repeater):
     """
     Forwards the UCR data source rows that are updated by a form
-    submission or a case update.
+    submission or a case creation/update.
 
     A ``DataSourceRepeater`` is responsible for a single data source.
     """
