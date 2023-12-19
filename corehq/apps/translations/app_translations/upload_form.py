@@ -39,7 +39,6 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         # These attributes get populated by update
         self.markdowns = None
         self.markdown_vetoes = None
-        self.submit_notification_label = None
 
     def _get_xform(self):
         if not isinstance(self.form, ShadowForm) and self.form.source:
@@ -86,9 +85,6 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         # Skip labels that have no translation provided
         label_ids_to_skip = self._get_label_ids_to_skip(rows)
 
-        if self.submit_notification_label:
-            self._update_translation(self.submit_notification_label, self.form.submit_notification_label)
-
         # Update the translations
         for lang in self.langs:
             translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
@@ -100,6 +96,12 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 if row['label'] == 'submit_label':
                     try:
                         self.form.submit_label[lang] = row[self._get_col_key('default', lang)]
+                    except KeyError:
+                        pass
+                    continue
+                if row['label'] == 'submit_notification_label':
+                    try:
+                        self.form.submit_notification_label[lang] = row[self._get_col_key('default', lang)]
                     except KeyError:
                         pass
                     continue
