@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.core import mail
 from django.test import TestCase
 
@@ -15,6 +17,8 @@ from corehq.apps.users.models import (
 from ...models import ReportConfig, ReportNotification
 
 
+@patch('corehq.apps.reports.standard.monitoring.util.get_simplified_users',
+       new=lambda q: [])
 @es_test(requires=[case_adapter, form_adapter], setup_class=True)
 class TestScheduledReports(TestCase):
 
