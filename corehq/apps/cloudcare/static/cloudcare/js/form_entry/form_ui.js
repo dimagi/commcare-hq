@@ -10,7 +10,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         ko.bindingHandlers.renderMarkdown = {
             update: function (element, valueAccessor) {
                 var value = ko.unwrap(valueAccessor());
-                value = markdown.render(value || '');
+                value = markdown.render(value);
                 $(element).html(value);
             },
         };
@@ -884,7 +884,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             },
             help: {
                 update: function (options) {
-                    return options.data ? markdown.render(DOMPurify.sanitize(options.data)) : null;
+                    return options.data ? markdown.render(options.data) : null;
                 },
             },
         };
