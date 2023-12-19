@@ -9,7 +9,7 @@ class ResetDuplicateRuleTests(TestCase):
     def test_removes_all_existing_entries(self):
         rule = create_dedupe_rule()
         action = CaseDeduplicationActionDefinition.from_rule(rule)
-        CaseDuplicateNew.objects.create(case_id='1234', action=action, match_values='123')
+        CaseDuplicateNew.objects.create(case_id='1234', action=action, hash='123')
 
         reset_deduplicate_rule(rule)
 
