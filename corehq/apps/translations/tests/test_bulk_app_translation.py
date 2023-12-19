@@ -398,6 +398,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ('remove_markdown-label', 'no longer markdown', 'just plain text', '', '', '', '', '', ''),
             ('vetoed_markdown-label', '*i just happen to like stars a lot*', '*i just happen to like stars a lot*',
              '', '', '', '', '', ''),
+            ("submit_label", "new submit", "nouveau", "", "", "", "", "", ""),
         ))
     )
 
@@ -784,6 +785,16 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ]
         )
 
+    def test_form_submit_label_on_upload(self):
+        form = self.app.get_module(0).get_form(0)
+        form.submit_label = {'en': 'old label', 'fra': 'passé'}
+        self.assertEqual(form.submit_label, {'en': 'old label', 'fra': 'passé'})
+
+        # note changes on upload with new value
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
+        self.assertEqual(form.submit_label, {'en': 'new submit', 'fra': 'nouveau'})
+
+
     def test_case_search_labels_on_upload(self):
         module = self.app.get_module(0)
 
@@ -1141,12 +1152,6 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     def test_bulk_app_sheet_rows(self):
         actual_headers = get_bulk_app_sheet_headers(self.app)
         actual_sheets = get_bulk_app_sheets_by_name(self.app)
-
-        print()
-        print()
-        print(title for title, headers in actual_headers)
-        print()
-
 
         actual_workbook = [
             {'name': title,
