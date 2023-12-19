@@ -93,6 +93,18 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             for row in rows:
                 if row['label'] in label_ids_to_skip:
                     continue
+                if row['label'] == 'submit_label':
+                    try:
+                        self.form.submit_label[lang] = row[self._get_col_key('default', lang)]
+                    except KeyError:
+                        pass
+                    continue
+                if row['label'] == 'submit_notification_label':
+                    try:
+                        self.form.submit_notification_label[lang] = row[self._get_col_key('default', lang)]
+                    except KeyError:
+                        pass
+                    continue
                 try:
                     self._add_or_remove_translations(lang, row)
                 except BulkAppTranslationsException as e:
