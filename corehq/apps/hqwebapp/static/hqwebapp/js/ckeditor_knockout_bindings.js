@@ -1,5 +1,8 @@
 /* global CKEditor5 */
 
+// When adding a ckeditor binding, be sure to also add the name of an image upload url. 
+// For example <textarea data-bind="ckeditor: message" data-image-upload-url="upload_messaging_image"></textarea>
+
 hqDefine('hqwebapp/js/ckeditor_knockout_bindings', [
     'jquery',
     'underscore',
