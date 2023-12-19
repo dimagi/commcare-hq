@@ -9,7 +9,7 @@ from corehq.apps.reports.standard.cases.filters import (
     XPathCaseSearchFilter,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.data_interfaces.models import CaseDuplicate
+from corehq.apps.data_interfaces.models import CaseDuplicateNew
 
 
 class DuplicateCasesExplorer(CaseListExplorer):
@@ -27,7 +27,7 @@ class DuplicateCasesExplorer(CaseListExplorer):
         case_rule_id = DuplicateCaseRuleFilter.get_value(self.request, self.domain)
         if not case_rule_id:
             raise BadRequestError(_("Please select a duplicate case rule to filter by above."))
-        return CaseDuplicate.get_case_ids(case_rule_id)
+        return CaseDuplicateNew.get_case_ids(case_rule_id)
 
     def _build_query(self, sort=True):
         query = super()._build_query(sort)
