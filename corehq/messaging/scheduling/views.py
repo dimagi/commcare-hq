@@ -27,7 +27,10 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.parsing import json_format_date
 
 from corehq import privileges
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.accounting.decorators import (
+    requires_privilege_json_response,
+    requires_privilege_with_fallback,
+)
 from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -89,6 +92,7 @@ from corehq.messaging.scheduling.view_helpers import (
 )
 from corehq.messaging.tasks import initiate_messaging_rule_run
 from corehq.messaging.util import MessagingRuleProgressHelper
+from corehq.toggles import RICH_TEXT_EMAILS
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse
@@ -1094,7 +1098,8 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
         return self.get(request, *args, **kwargs)
 
 
-@login_and_domain_required
+@requires_privilege_json_response(privileges.REMINDERS_FRAMEWORK)
+@RICH_TEXT_EMAILS.required_decorator()
 def messaging_image_upload_view(request, domain):
     if request.method == 'POST' and request.FILES.get('upload'):
         image_file = request.FILES['upload']
@@ -1120,7 +1125,6 @@ def messaging_image_upload_view(request, domain):
             domain=request.domain,
             filename=image_file.name,
             content_type=image_file.content_type,
-            delete_after=datetime.utcnow() + timedelta(days=365),
         )
         return JsonResponse({
             'url': absolute_reverse("download_messaging_image", args=[domain, image.blob_id])
@@ -1129,6 +1133,10 @@ def messaging_image_upload_view(request, domain):
 
 
 def messaging_image_download_view(request, domain, image_key):
+    """This view is intentionally left unauthenticated, as it returns images
+    that are sent in rich-text email messages.
+
+    """
     try:
         image_meta = EmailImage.get_by_key(domain, image_key)
         image_blob = image_meta.get_blob()
