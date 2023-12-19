@@ -1348,7 +1348,7 @@ class FormBase(DocumentSchema):
         return 'Submit'
 
     def get_submit_notification_label(self, lang):
-        if lang in self.submit_notification_label:
+        if self.submit_notification_label and lang in self.submit_notification_label:
             return self.get_submit_notification_label[lang]
         return None
 
