@@ -16,14 +16,22 @@ hqDefine("cloudcare/js/formplayer/spec/query_spec", function () {
                 const keyModel = new QueryViewModel({
                     "itemsetChoicesKey": ["CA", "MA", "FL"],
                     "itemsetChoices": ["California", "Massachusetts", "Florida"],
+                    "groupKey": "test",
                 });
 
                 const keyViewCollection = new QueryViewCollection([keyModel]);
 
                 sinon.stub(Utils, 'getStickyQueryInputs').callsFake(function () { return 'fake_value'; });
 
-                const keyQueryListView = QueryListView({ collection: keyViewCollection});
-                keyQueryView = new keyQueryListView.childView({ parentView: keyQueryListView, model: keyModel});
+                const keyQueryListView = QueryListView.queryListView({
+                    collection: keyViewCollection,
+                    groupHeaders: {
+                        "test": "Test"
+                    },
+                });
+
+                const childViewConstructor = keyQueryListView.childView(new Backbone.Model({}));
+                keyQueryView = new childViewConstructor({ parentView: keyQueryListView, model: keyModel});
             });
 
             it('should create dictionary with either keys', function () {
