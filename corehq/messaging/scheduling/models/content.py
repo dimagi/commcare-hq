@@ -54,6 +54,7 @@ from corehq.messaging.fcm.exceptions import FCMTokenValidationException
 from corehq.messaging.fcm.utils import FCMUtil
 from corehq.messaging.scheduling.exceptions import EmailValidationException
 from corehq.messaging.scheduling.models.abstract import Content
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import NullJsonField
 from corehq.util.view_utils import absolute_reverse
@@ -204,7 +205,8 @@ class EmailContent(Content):
                 html_message,
                 text_content=message,
                 messaging_event_id=logged_subevent.id,
-                domain=domain)
+                domain=domain,
+                use_domain_gateway=True)
         else:
             send_mail_async.delay(
                 subject,
@@ -688,33 +690,53 @@ class EmailImage(object):
 
     @classmethod
     def get_by_keys(cls, keys, domain=None):
+        if domain is None:
+            results = []
+            for db in get_db_aliases_for_partitioned_query():
+                results.extend(cls.db_meta_query(db).filter(key__in=keys).all())
+            return [cls(m) for m in results]
         return [cls(m) for m in cls.meta_query(domain).filter(key__in=keys).all()]
 
     @staticmethod
-    def meta_query(domain=None):
+    def meta_query(domain):
         Q = models.Q
         query = BlobMeta.objects.partitioned_query(domain).filter(
             Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
             type_code=CODES.email_multimedia,
+        ).filter(parent_id=domain)
+        return query
+
+    @staticmethod
+    def db_meta_query(db):
+        Q = models.Q
+        query = BlobMeta.objects.using(db).filter(
+            Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
+            type_code=CODES.email_multimedia,
         )
-        if domain is not None:
-            query = query.filter(parent_id=domain)
         return query
 
     @classmethod
     def get_all(cls, domain=None):
+        if domain is None:
+            results = []
+            for db in get_db_aliases_for_partitioned_query():
+                results.extend(cls.db_meta_query(db).order_by("name"))
+            return [cls(meta) for meta in results]
         return [cls(meta) for meta in cls.meta_query(domain).order_by("name")]
 
     @classmethod
-    def get_all_blob_ids(cls, domain=None):
-        return cls.meta_query(domain).values_list('key', flat=True)
+    def get_all_blob_ids(cls):
+        results = []
+        for db in get_db_aliases_for_partitioned_query():
+            results.extend(cls.db_meta_query(db).values_list('key', flat=True))
+        return results
 
     @classmethod
     def get_total_size(cls, domain):
         return cls.meta_query(domain).aggregate(total=models.Sum('content_length'))["total"]
 
     @classmethod
-    def save_blob(cls, file_obj, domain, filename, content_type, delete_after):
+    def save_blob(cls, file_obj, domain, filename, content_type, delete_after=None):
         return cls(get_blob_db().put(
             file_obj,
             domain=domain,
