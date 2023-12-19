@@ -57,6 +57,7 @@ from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
+from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
@@ -528,8 +529,9 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
     urlname = 'domain_manage_mobile_workers'
 
 
-@method_decorator(toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator(), name='dispatch')
-class ManageDomainAlertsView(BaseAdminProjectSettingsView):
+@method_decorator([toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator(),
+                   require_can_manage_domain_alerts], name='dispatch')
+class ManageDomainAlertsView(BaseProjectSettingsView):
     template_name = 'domain/admin/manage_alerts.html'
     urlname = 'domain_manage_alerts'
     page_title = gettext_lazy("Manage Project Alerts")
@@ -595,7 +597,7 @@ class ManageDomainAlertsView(BaseAdminProjectSettingsView):
 
 
 @toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
-@domain_admin_required
+@require_can_manage_domain_alerts
 @require_POST
 def update_domain_alert_status(request, domain):
     alert_id = request.POST.get('alert_id')
@@ -610,7 +612,7 @@ def update_domain_alert_status(request, domain):
 
 
 @toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
-@domain_admin_required
+@require_can_manage_domain_alerts
 @require_POST
 def delete_domain_alert(request, domain):
     alert_id = request.POST.get('alert_id')

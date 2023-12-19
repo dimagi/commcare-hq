@@ -72,9 +72,11 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             ('क्लिक', '<value>क्लिक</value>'),
             ('&#39', '<value>&amp;#39</value>'),
             ('question1 is <output value="/data/question1" vellum:value="#form/question1"/> !',
-             '<value>question1 is &lt;output value="/data/question1" vellum:value="#form/question1"/&gt; !</value>'),
+             '<value>question1 is &lt;output value="/data/question1" '
+             'vellum:value="#form/question1"/&gt; !</value>'),
             ('Here is a ref <output value="/data/no_media"/> with some "trailing" text & that\'s some bad < xml.',
-             '<value>Here is a ref &lt;output value="/data/no_media"/&gt; with some "trailing" text &amp; that\'s some bad &lt; xml.</value>')
+             '<value>Here is a ref &lt;output value="/data/no_media"/&gt; with some "trailing" text &amp; that\'s'
+             ' some bad &lt; xml.</value>')
 
         ]
         for input, expected_output in test_cases:
@@ -174,6 +176,8 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
                 label={'en': 'Get them all'}
             ),
             properties=[
+                CaseSearchProperty(is_group=True, name='group_header_0',
+                                   group_key='group_header_0', label={'en': 'Personal Information'}),
                 CaseSearchProperty(name="name", label={'en': 'Name'})
             ]
         )
@@ -201,6 +205,8 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             self.assertEqual(en_app_strings['case_search.m0.icon'], 'jr://file/commcare/image/1.png')
             self.assertEqual(en_app_strings['case_search.m0.audio'], 'jr://file/commcare/image/2.mp3')
             self.assertEqual(en_app_strings['case_search.m0.again'], 'Get them all')
+            self.assertEqual(en_app_strings['search_property.m0.name'], 'Name')
+            self.assertEqual(en_app_strings['search_property.m0.group_header_0'], 'Personal Information')
 
             # non-default language
             es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
