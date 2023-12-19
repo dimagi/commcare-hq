@@ -2,6 +2,7 @@ import json
 from datetime import date
 
 from attrs import asdict, define, field
+from attrs.exceptions import NotAnAttrsClassError
 from django.db import models
 from testil import assert_raises, eq
 
@@ -114,6 +115,18 @@ def test_value_to_string_returns_json_serializable():
         Check._meta.get_field("events").value_to_string(check),
         [{"day": "2022-07-19"}],
     )
+
+
+def test_invalid_value_does_not_save():
+    @unregistered_django_model
+    class Check(models.Model):
+        events = AttrsList(Event)
+
+    check = Check(events=[{"monday": "2022-07-20"}])
+    with assert_raises(NotAnAttrsClassError, msg=(
+        "<class 'dict'> is not an attrs-decorated class."
+    )):
+        get_json_value(check, "events")
 
 
 def get_json_value(model, field_name):

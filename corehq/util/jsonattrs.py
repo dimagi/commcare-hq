@@ -81,32 +81,43 @@ Things that may be added in the future:
 - Support for migrating/converting the outer collection of `AttrsDict` and
   `AttrsList`.
 """
-from attr.exceptions import NotAnAttrsClassError
 from attrs import asdict, define, field
 
+from django.core.exceptions import ValidationError
 from django.db.models import JSONField
+from django.utils.translation import gettext_lazy as _
 
 __all__ = ["AttrsDict", "AttrsList", "dict_of", "list_of"]
 
 
 class JsonAttrsField(JSONField):
+    default_error_messages = {
+        'invalid': _("'%(field)s' field value has an invalid format: %(exc)s"),
+    }
 
     def __init__(self, *args, builder, **kw):
         super().__init__(*args, **kw)
         self.builder = builder
 
     def get_prep_value(self, value):
+        return super().get_prep_value(self.builder.jsonify(value))
+
+    def to_python(self, value):
         try:
-            prep_value = super().get_prep_value(self.builder.jsonify(value))
-        except NotAnAttrsClassError:
-            # `self.builder.jsonify()` expected a subclass of `attrs`
-            # but `value` is not. e.g. It is loaded from a data dump.
-            prep_value = super().get_prep_value(value)
-        return prep_value
+            return self.builder.attrify(value)
+        except Exception as exc:
+            raise ValidationError(
+                self.error_messages['invalid'],
+                code='invalid',
+                params={
+                    'field': self.name,
+                    'exc': f"{type(exc).__name__}: {exc}",
+                },
+            )
 
     def from_db_value(self, value, expression, connection):
         value = super().from_db_value(value, expression, connection)
-        return self.builder.attrify(value)
+        return self.to_python(value)
 
     def value_to_string(self, obj):
         # Returns a JSON-serializable object for compatibility with
