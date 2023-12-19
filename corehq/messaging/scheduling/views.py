@@ -52,6 +52,8 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.sms.tasks import OutboundDailyCounter, time_within_windows
 from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
 from corehq.blobs.exceptions import NotFound
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.messaging.scheduling.async_handlers import (
@@ -1099,6 +1101,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
 
 
 @requires_privilege_json_response(privileges.REMINDERS_FRAMEWORK)
+@require_permission(HqPermissions.edit_messaging)
 @RICH_TEXT_EMAILS.required_decorator()
 def messaging_image_upload_view(request, domain):
     if request.method == 'POST' and request.FILES.get('upload'):
