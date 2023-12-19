@@ -66,7 +66,11 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
             });
 
             it('should show sidebar and main regions with query type split screen case search', function () {
-                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, { 'type': 'query' , 'models': [{}]});
+                const responseWithTypeQuery = _.extend(
+                    {},
+                    splitScreenCaseListResponse,
+                    { 'type': 'query'},
+                    new Backbone.Collection(splitScreenCaseListResponse.queryResponse.displays));
                 Controller.showMenu(responseWithTypeQuery);
 
                 assert.isTrue(stubs.regions['sidebar'].show.called);
@@ -74,7 +78,11 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
             });
 
             it('should explicitly set sidebarEnabled and triggerEmptyCaseList with query type split screen case search', function () {
-                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, { 'type': 'query', 'models': [{}] });
+                const responseWithTypeQuery = _.extend(
+                    {},
+                    splitScreenCaseListResponse,
+                    { 'type': 'query'},
+                    new Backbone.Collection(splitScreenCaseListResponse.queryResponse.displays));
                 Controller.showMenu(responseWithTypeQuery);
 
                 assert.isTrue(stubs.regions['main'].show.called);
@@ -84,7 +92,11 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
             });
 
             it('should hide sidebar if there are no search inputs in query response', function () {
-                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, { 'type': 'query'});
+                const responseWithTypeQuery = _.extend(
+                    {},
+                    splitScreenCaseListResponse,
+                    { 'type': 'query'},
+                    new Backbone.Collection([]));
                 Controller.showMenu(responseWithTypeQuery);
 
                 assert.isTrue(stubs.regions['sidebar'].empty.called);
