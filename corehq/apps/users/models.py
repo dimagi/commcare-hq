@@ -1485,11 +1485,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
             if not self.to_be_deleted():
                 self._save_user_data()
-            super(CouchUser, self).save(**params)
+            try:
+                super(CouchUser, self).save(**params)
+            finally:
+                # ensure the cache is cleared even if something goes wrong while saving the user to couch
+                self.clear_quickcache_for_user()
 
-        # wait to clear cache until the user has been successfully saved to couch
-        # otherwise a method could trigger caching the previous value of the user despite the save
-        self.clear_quickcache_for_user()
         if fire_signals:
             self.fire_signals()
 
