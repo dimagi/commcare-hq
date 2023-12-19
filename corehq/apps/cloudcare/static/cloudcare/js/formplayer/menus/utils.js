@@ -4,7 +4,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         kissmetrics = hqImport("analytix/js/kissmetrix"),
         ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        QueryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
+        view = hqImport("cloudcare/js/formplayer/menus/views/query"),
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
@@ -138,6 +138,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             multiSelectMaxSelectValue: menuResponse.maxSelectValue,
             dynamicSearch: menuResponse.dynamicSearch,
             endpointActions: menuResponse.endpointActions,
+            groupHeaders: menuResponse.groupHeaders,
         };
     };
 
@@ -186,7 +187,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 execute: false,
                 forceManualSearch: false,
             });
-            return QueryView(menuData);
+            return view.queryListView(menuData);
         } else if (menuResponse.type === constants.ENTITIES) {
             var searchText = urlObject.search;
             var event = "Viewed Case List";
