@@ -398,6 +398,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ('remove_markdown-label', 'no longer markdown', 'just plain text', '', '', '', '', '', ''),
             ('vetoed_markdown-label', '*i just happen to like stars a lot*', '*i just happen to like stars a lot*',
              '', '', '', '', '', ''),
+            ("submit_label", "new submit", "nouveau", "", "", "", "", "", ""),
         ))
     )
 
@@ -783,6 +784,16 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'App Translations Updated!'
             ]
         )
+
+    def test_form_submit_label_on_upload(self):
+        form = self.app.get_module(0).get_form(0)
+        form.submit_label = {'en': 'old label', 'fra': 'passé'}
+        self.assertEqual(form.submit_label, {'en': 'old label', 'fra': 'passé'})
+
+        # note changes on upload with new value
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
+        self.assertEqual(form.submit_label, {'en': 'new submit', 'fra': 'nouveau'})
+
 
     def test_case_search_labels_on_upload(self):
         module = self.app.get_module(0)
