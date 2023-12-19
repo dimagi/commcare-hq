@@ -460,13 +460,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.getSubmitTranslation = function () {
             var translations = self.translations;
-            console.log(translations)
             if (translations) {
                 const result = Object.entries(translations).find(([k]) => k.includes("submit_label"));
-                console.log(result)
                 if (result) {
-                    const [key, _] = result; // Destructuring the found entry
-                    console.log(ko.toJS(translations[key]))
+                    const key = result[0];
                     return ko.toJS(translations[key]);
                 }
             }
