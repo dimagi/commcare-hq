@@ -262,3 +262,28 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
                 en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
             except AttributeError:
                 self.fail("_generate_app_strings raised AttributeError unexpectedly")
+
+    def test_form_submit_label(self):
+        factory = AppFactory(build_version='2.40.0')
+        factory.app.langs = ['en', 'es']
+        module, form = factory.new_basic_module('my_module', 'cases')
+        form.submit_label = {
+            'en': 'Submit Button',
+            'es': 'Botón de Enviar',
+        }
+        form.submit_notification_label = {
+            'en': 'You submitted the form!',
+            'es': '¡Enviaste el formulario!',
+        }
+        en_strings = self._generate_app_strings(factory.app, 'en')
+        self.assertEqual(en_strings['forms.m0f0.submit_label'], form.submit_label['en'])
+        self.assertEqual(en_strings['forms.m0f0.submit_notification_label'], form.submit_notification_label['en'])
+
+        es_strings = self._generate_app_strings(factory.app, 'es')
+        self.assertEqual(es_strings['forms.m0f0.submit_label'], form.submit_label['es'])
+        self.assertEqual(es_strings['forms.m0f0.submit_notification_label'], form.submit_notification_label['es'])
+
+        default_strings = self._generate_app_strings(factory.app, 'default')
+        self.assertEqual(default_strings['forms.m0f0.submit_label'], form.submit_label['en'])
+        self.assertEqual(default_strings['forms.m0f0.submit_notification_label'],
+                         form.submit_notification_label['en'])
