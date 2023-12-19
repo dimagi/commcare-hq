@@ -461,11 +461,23 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return !self.isSubmitting() && self.erroredQuestions().length === 0;
         });
 
+        self.getSubmitTranslation = function () {
+            var translations = self.translations;
+            if (translations) {
+                const result = Object.entries(translations).find(([k]) => k.includes("submit_label"));
+                if (result) {
+                    const key = result[0];
+                    return ko.toJS(translations[key]);
+                }
+            }
+            return "Submit";
+        };
+
         self.submitText = ko.computed(function () {
             if (self.isSubmitting()) {
                 return gettext('Submitting...');
             }
-            return gettext('Submit');
+            return gettext(self.getSubmitTranslation());
         });
 
         self.forceRequiredVisible = ko.observable(false);
