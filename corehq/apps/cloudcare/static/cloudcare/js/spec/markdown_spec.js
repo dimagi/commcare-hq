@@ -21,10 +21,10 @@ hqDefine("cloudcare/js/spec/markdown_spec", function () {
                 assert.equal(render("plain text"), "<p>plain text</p>\n");
             });
 
-            it('should render links with _blank target', function () {
+            it('should render links with _blank target and underlined text', function () {
                 assert.equal(
                     render("[link](http://example.com)"),
-                    "<p><a href=\"http://example.com\" target=\"_blank\">link</a></p>\n"
+                    "<p><a href=\"http://example.com\" target=\"_blank\"><u>link</u></a></p>\n"
                 );
             });
 
@@ -67,7 +67,7 @@ hqDefine("cloudcare/js/spec/markdown_spec", function () {
                 initialPageData.registerUrl('dialer_view', '/dialer');
                 assert.equal(
                     render("[link](tel://1234567890)"),
-                    "<p><a href=\"/dialer?callout_number=1234567890\" target=\"dialer\">link</a></p>\n"
+                    "<p><a href=\"/dialer?callout_number=1234567890\" target=\"dialer\"><u>link</u></a></p>\n"
                 );
             });
 
@@ -76,7 +76,7 @@ hqDefine("cloudcare/js/spec/markdown_spec", function () {
                 initialPageData.registerUrl('gaen_otp_view', '/gaen/');
                 assert.equal(
                     render("[link](cchq://passthrough/gaen_otp/?otp=otp)"),
-                    "<p><a href=\"/gaen/?otp=otp\" target=\"gaen_otp\">link</a></p>\n"
+                    "<p><a href=\"/gaen/?otp=otp\" target=\"gaen_otp\"><u>link</u></a></p>\n"
                 );
             });
 
@@ -101,7 +101,7 @@ hqDefine("cloudcare/js/spec/markdown_spec", function () {
                 initialPageData.register('hmac_root_url', '/hmac/');
                 assert.equal(
                     render("[link](/hmac/to/somewhere/?with=params)"),
-                    "<p><a href=\"/hmac/to/somewhere/?with=params\" target=\"hmac_callout\">link</a></p>\n"
+                    "<p><a href=\"/hmac/to/somewhere/?with=params\" target=\"hmac_callout\"><u>link</u></a></p>\n"
                 );
             });
 
