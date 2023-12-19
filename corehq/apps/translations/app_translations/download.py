@@ -402,5 +402,8 @@ def get_form_question_label_name_media(langs, form):
         # Don't add empty rows:
         if any(row[1:]):
             rows.append(row)
+        # allow empty for submit_notification_label row
+        if row[0] == 'submit_notification_label' and not any(row[1:]):
+            rows.append(row)
 
     return rows

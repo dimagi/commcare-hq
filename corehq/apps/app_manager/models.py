@@ -1350,7 +1350,7 @@ class FormBase(DocumentSchema):
     def get_submit_notification_label(self, lang):
         if self.submit_notification_label and lang in self.submit_notification_label:
             return self.submit_notification_label[lang]
-        return 'Successfully saved!'  # TODO: figure our default value since setting to None cause build issues
+        return ''
 
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):

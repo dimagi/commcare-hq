@@ -100,10 +100,13 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                         pass
                     continue
                 if row['label'] == 'submit_notification_label':
+                    notification_value = ''
                     try:
-                        self.form.submit_notification_label[lang] = row[self._get_col_key('default', lang)]
+                        notification_value = row[self._get_col_key('default', lang)]
                     except KeyError:
                         pass
+                    if notification_value:
+                        self.form.submit_notification_label[lang] = notification_value
                     continue
                 try:
                     self._add_or_remove_translations(lang, row)
