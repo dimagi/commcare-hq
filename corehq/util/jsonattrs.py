@@ -81,6 +81,7 @@ Things that may be added in the future:
 - Support for migrating/converting the outer collection of `AttrsDict` and
   `AttrsList`.
 """
+from attr.exceptions import NotAnAttrsClassError
 from attrs import asdict, define, field
 
 from django.db.models import JSONField
@@ -95,7 +96,13 @@ class JsonAttrsField(JSONField):
         self.builder = builder
 
     def get_prep_value(self, value):
-        return super().get_prep_value(self.builder.jsonify(value))
+        try:
+            prep_value = super().get_prep_value(self.builder.jsonify(value))
+        except NotAnAttrsClassError:
+            # `self.builder.jsonify()` expected a subclass of `attrs`
+            # but `value` is not. e.g. It is loaded from a data dump.
+            prep_value = super().get_prep_value(value)
+        return prep_value
 
     def from_db_value(self, value, expression, connection):
         value = super().from_db_value(value, expression, connection)
