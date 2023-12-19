@@ -489,6 +489,11 @@
               {% if not not_actual_build %}The shadow form is {% include "app_manager/partials/form_error_message.html" %}{% endif %}
             {% case "password_format" %}
               {# Do nothing; the full message is contained in error.message #}
+            {% case "invalid grouping from ungrouped search property" %}
+              {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
+                <a href="{{ module_url }}">{{ module_name }}</a> has a case search property
+                <code>{{ property }}</code> that is not assigned to a group.
+              {% endblocktrans %}
             {% case "case search nodeset invalid" %}
               {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
                 <a href="{{ module_url }}">{{ module_name }}</a> has a case search property
