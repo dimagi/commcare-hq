@@ -73,6 +73,10 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'session_id',
         ],
 
+        queryProperties: [
+            'groupHeaders',
+        ],
+
         parse: function (response) {
             _.extend(this, _.pick(response, this.commonProperties));
 
@@ -112,6 +116,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
                 return response.entities;
             } else if (response.type === "query") {
                 addBreadcrumb(this, "query", sentryData);
+                _.extend(this, _.pick(response, this.queryProperties));
                 return response.displays;
             } else if (response.details) {
                 addBreadcrumb(this, "details", sentryData);

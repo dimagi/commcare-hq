@@ -7,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
-        QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
+        queryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
         Collection = hqImport("cloudcare/js/formplayer/menus/collections");
     var selectMenu = function (options) {
@@ -128,24 +128,26 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         if (sidebarEnabled && menuResponse.type === constants.ENTITIES && queryResponse)  {
             var queryCollection = new Collection(queryResponse.displays);
             FormplayerFrontend.regions.getRegion('sidebar').show(
-                QueryListView({
+                queryView.queryListView({
                     collection: queryCollection,
                     title: menuResponse.title,
                     description: menuResponse.description,
                     hasDynamicSearch: queryResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: !sessionStorage.submitPerformed,
+                    groupHeaders: menuResponse.groupHeaders,
                 }).render()
             );
         } else if (sidebarEnabled && menuResponse.type === constants.QUERY) {
             FormplayerFrontend.regions.getRegion('sidebar').show(
-                QueryListView({
+                queryView.queryListView({
                     collection: menuResponse,
                     title: menuResponse.title,
                     description: menuResponse.description,
                     hasDynamicSearch: menuResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: true,
+                    groupHeaders: menuResponse.groupHeaders,
                 }).render()
             );
         } else {
