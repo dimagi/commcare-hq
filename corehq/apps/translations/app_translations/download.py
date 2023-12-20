@@ -381,8 +381,10 @@ def get_form_question_label_name_media(langs, form):
                 itext_items[text_id][(lang, value_form)] = value
 
     itext_items['submit_label'] = {}
+    itext_items['submit_notification_label'] = {}
     for lang in langs:
         itext_items['submit_label'][(lang, 'default')] = form.get_submit_label(lang)
+        itext_items['submit_notification_label'][(lang, 'default')] = form.get_submit_notification_label(lang)
 
     app = form.get_app()
     for text_id, values in itext_items.items():
@@ -399,6 +401,9 @@ def get_form_question_label_name_media(langs, form):
                 row.append(values.get((lang, value_form), fallback))
         # Don't add empty rows:
         if any(row[1:]):
+            rows.append(row)
+        # allow empty for submit_notification_label row
+        if row[0] == 'submit_notification_label' and not any(row[1:]):
             rows.append(row)
 
     return rows

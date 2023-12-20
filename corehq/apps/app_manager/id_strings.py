@@ -422,6 +422,14 @@ def form_submit_label_locale(form):
     )
 
 
+@pattern('forms.m%df%d.submit_notification_label')
+def form_submit_notification_label_locale(form):
+    return "forms.m{module.id}f{form.id}.submit_notification_label".format(
+        module=form.get_module(),
+        form=form
+    )
+
+
 @pattern('case_list_form.m%d.icon')
 def case_list_form_icon_locale(module):
     return "case_list_form.m{module.id}.icon".format(module=module)

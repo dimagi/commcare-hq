@@ -480,7 +480,7 @@ def _create_forms_app_strings(
             )
 
         yield id_strings.form_submit_label_locale(form), form.get_submit_label(lang)
-
+        yield id_strings.form_submit_notification_label_locale(form), form.get_submit_notification_label(lang)
 
 def _create_case_list_form_app_strings(
     app,
