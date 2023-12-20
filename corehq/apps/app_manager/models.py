@@ -1342,6 +1342,16 @@ class FormBase(DocumentSchema):
             updates_by_case_type[case_type].update(save_to_case_update.properties)
         return updates_by_case_type
 
+    def get_submit_label(self, lang):
+        if lang in self.submit_label:
+            return self.submit_label[lang]
+        return 'Submit'
+
+    def get_submit_notification_label(self, lang):
+        if self.submit_notification_label and lang in self.submit_notification_label:
+            return self.submit_notification_label[lang]
+        return ''
+
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
 
