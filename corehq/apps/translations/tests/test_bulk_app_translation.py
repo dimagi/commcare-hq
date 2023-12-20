@@ -96,11 +96,13 @@ EXCEL_DATA = (
       ('no_media-label', 'No media', '', '', ''),
       ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text '
                          'and "bad" &lt; xml.', '', '', ''),
-      ('submit_label', 'Submit', '', '', ''))),
+      ('submit_label', 'Submit', '', '', ''),
+      ('submit_notification_label', '', '', '', ''))),
     ('menu2', (('no_items_text', 'list', 'List is empty.'), ('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
     ('menu2_form1',
      (('name_of_series-label', 'Name of series', '', '', ''),
-     ('submit_label', 'Submit', '', '', ''))),
+      ('submit_label', 'Submit', '', '', ''),
+      ('submit_notification_label', '', '', '', ''))),
     ('menu3',
      (('no_items_text', 'list', 'List is empty.'),
       ('name', 'list', 'Name'),
@@ -117,7 +119,8 @@ EXCEL_DATA = (
     ('menu3_form1',
      (('x-label', 'x', '', '' ''),
       ('y-label', 'y', '', '', ''),
-      ('submit_label', 'Submit', '', '', ''))),
+      ('submit_label', 'Submit', '', '', ''),
+      ('submit_notification_label', '', '', '', ''))),
     ('menu4',
      (('no_items_text', 'list', 'List is empty.'),
       ('x', 'list', 'X'),
@@ -131,12 +134,14 @@ EXCEL_DATA = (
        'Swipe to remove the point at (<output value="instance(\'casedb\')/casedb/case[@case_id = '
        'instance(\'commcaresession\')/session/data/case_id]/x"/>  ,<output value="instance(\'casedb\')'
        '/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/y"/>).', '', '', ''),
-     ('submit_label', 'Submit', '', '', ''))),
+      ('submit_label', 'Submit', '', '', ''),
+      ('submit_notification_label', '', '', '', ''))),
     ('menu5', ()),
     ('menu6', (('no_items_text', 'list', 'List is empty.'), ('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
     ('menu6_form1',
      (('this_form_does_nothing-label', 'This form does nothing.', '', '', ''),
-      ('submit_label', 'Submit', '', '', ''))),
+      ('submit_label', 'Submit', '', '', ''),
+      ('submit_notification_label', '', '', '', ''))),
 )
 
 
@@ -405,56 +410,56 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
 
     single_sheet_upload_data = (
         (SINGLE_SHEET_NAME, (
-          ("menu1", "", "", "", "My & awesome module", "", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
-          ("menu1", "case_list_form_label", "list", "", "Register Mother", "", "", "", ""),
-          ("menu1", "case_list_menu_item_label", "list", "",
-           "List Stethoscopes", "French List of Stethoscopes", "", "", ""),
-          ("menu1", "search_label", "list", "", "Find a Mother", "", "", "", ""),
-          ("menu1", "search_again_label", "list", "", "Find Another Mother", "", "", "", ""),
-          ("menu1", "title_label", "list", "Find a Mom", "Maman!", "", "", "", ""),
-          ("menu1", "description", "list", "More information", "Plus d'information", "", "", "", ""),
-          ("menu1", "no_items_text", "list", "Empty List", "Lista Vacía", "", "", "", ""),
-          ("menu1", "name", "list", "", "Name", "", "", "", ""),
-          ("menu1", "Tab 0", "detail", "", "Name", "", "", "", ""),
-          ("menu1", "Tab 1", "detail", "", "Other", "", "", "", ""),
-          ("menu1", "name", "detail", "", "Name", "", "", "", ""),
-          ("menu1", "other-prop (ID Mapping Text)", "detail", "", "Other Prop", "", "", "", ""),
-          ("menu1", "foo (ID Mapping Value)", "detail", "", "bar", "", "", "", ""),
-          ("menu1", "baz (ID Mapping Value)", "detail", "", "quz", "", "", "", ""),
-          ("menu1", "mood (ID Mapping Text)", "detail", "", "Mood", "", "", "", ""),
-          ("menu1", ". < 3 (ID Mapping Value)", "detail", "", ":(", "", "", "", ""),
-          ("menu1", ". >= 3 (ID Mapping Value)", "detail", "", ":)", "", "", "", ""),
-          ("menu1", "energy (ID Mapping Text)", "detail", "", "Energy", "", "", "", ""),
-          ("menu1", ". < 3 (ID Mapping Value)", "detail", "",
-              "jr://file/commcare/image/module1_list_icon_energy_high_english.jpg", "", "", "", ""),
-          ("menu1", ". >= 3 (ID Mapping Value)", "detail", "",
-              "jr://file/commcare/image/module1_list_icon_energy_low_english.jpg", "", "", "", ""),
-          ("menu1", 'line_graph (graph)', 'detail', "", 'Velocity', "", "", "", ""),
-          ("menu1", 'x-title (graph config)', 'detail', "", 'Time', "", "", "", ""),
-          ("menu1", 'y-title (graph config)', 'detail', "", 'Speed', "", "", "", ""),
-          ("menu1", 'name 0 (graph series config)', 'detail', "", 'Bird', "", "", "", ""),
-          ("menu1", 'name 1 (graph series config)', 'detail', "", 'Cheetah', "", "", "", ""),
-          ("menu1_form1", "", "", "", "My more & awesome form", "", "", "",
-              "6c6c6315b3c514c616b6c57d48f7cf7c963f1714"),
-          ("menu1_form1", "", "", "question1-label", "in english", "", "", "", ""),
-          ("menu1_form1", "", "", "question2-label", "one &lt; two", "", "", "", ""),
-          ("menu1_form1", "", "", "question2-item1-label", "item1", "", "", "", ""),
-          ("menu1_form1", "", "", "question2-item2-label", "", "", "", "", ""),
-          ("menu1_form1", "", "", "question3-label", "question3", "", "", "", ""),
-          ("menu1_form1", "", "", "blank_value_node-label", "", "", "en-audio.mp3", "", ""),
-          ("menu1_form1", "", "", "question3/question4-label",
-              'question6: <output value="/data/question6"/>', "", "", "", ""),
-          ("menu1_form1", "", "", "question3/question5-label", "English Label", "", "", "", ""),
-          ("menu1_form1", "", "", "question7-label",
-              'question1: <output value="/data/question1"/> &lt; 5', "", "", "", ""),
-          ("menu1_form1", "", "", 'add_markdown-label',
-              'add_markdown: ~~new \\u0939\\u093f markdown~~', "", "", "", ""),
-          ("menu1_form1", "", "", 'update_markdown-label',
-              '## smaller_markdown', "", "", "", ""),
-          ("menu1_form1", "", "", 'remove_markdown-label',
-              'no longer markdown', "", "", "", ""),
-          ("menu1_form1", "", "", 'vetoed_markdown-label',
-              '*i just happen to like stars a lot*', "", "", "", ""),
+            ("menu1", "", "", "", "My & awesome module", "", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
+            ("menu1", "case_list_form_label", "list", "", "Register Mother", "", "", "", ""),
+            ("menu1", "case_list_menu_item_label", "list", "",
+             "List Stethoscopes", "French List of Stethoscopes", "", "", ""),
+            ("menu1", "search_label", "list", "", "Find a Mother", "", "", "", ""),
+            ("menu1", "search_again_label", "list", "", "Find Another Mother", "", "", "", ""),
+            ("menu1", "title_label", "list", "Find a Mom", "Maman!", "", "", "", ""),
+            ("menu1", "description", "list", "More information", "Plus d'information", "", "", "", ""),
+            ("menu1", "no_items_text", "list", "Empty List", "Lista Vacía", "", "", "", ""),
+            ("menu1", "name", "list", "", "Name", "", "", "", ""),
+            ("menu1", "Tab 0", "detail", "", "Name", "", "", "", ""),
+            ("menu1", "Tab 1", "detail", "", "Other", "", "", "", ""),
+            ("menu1", "name", "detail", "", "Name", "", "", "", ""),
+            ("menu1", "other-prop (ID Mapping Text)", "detail", "", "Other Prop", "", "", "", ""),
+            ("menu1", "foo (ID Mapping Value)", "detail", "", "bar", "", "", "", ""),
+            ("menu1", "baz (ID Mapping Value)", "detail", "", "quz", "", "", "", ""),
+            ("menu1", "mood (ID Mapping Text)", "detail", "", "Mood", "", "", "", ""),
+            ("menu1", ". < 3 (ID Mapping Value)", "detail", "", ":(", "", "", "", ""),
+            ("menu1", ". >= 3 (ID Mapping Value)", "detail", "", ":)", "", "", "", ""),
+            ("menu1", "energy (ID Mapping Text)", "detail", "", "Energy", "", "", "", ""),
+            ("menu1", ". < 3 (ID Mapping Value)", "detail", "",
+             "jr://file/commcare/image/module1_list_icon_energy_high_english.jpg", "", "", "", ""),
+            ("menu1", ". >= 3 (ID Mapping Value)", "detail", "",
+             "jr://file/commcare/image/module1_list_icon_energy_low_english.jpg", "", "", "", ""),
+            ("menu1", 'line_graph (graph)', 'detail', "", 'Velocity', "", "", "", ""),
+            ("menu1", 'x-title (graph config)', 'detail', "", 'Time', "", "", "", ""),
+            ("menu1", 'y-title (graph config)', 'detail', "", 'Speed', "", "", "", ""),
+            ("menu1", 'name 0 (graph series config)', 'detail', "", 'Bird', "", "", "", ""),
+            ("menu1", 'name 1 (graph series config)', 'detail', "", 'Cheetah', "", "", "", ""),
+            ("menu1_form1", "", "", "", "My more & awesome form", "", "", "",
+             "6c6c6315b3c514c616b6c57d48f7cf7c963f1714"),
+            ("menu1_form1", "", "", "question1-label", "in english", "", "", "", ""),
+            ("menu1_form1", "", "", "question2-label", "one &lt; two", "", "", "", ""),
+            ("menu1_form1", "", "", "question2-item1-label", "item1", "", "", "", ""),
+            ("menu1_form1", "", "", "question2-item2-label", "", "", "", "", ""),
+            ("menu1_form1", "", "", "question3-label", "question3", "", "", "", ""),
+            ("menu1_form1", "", "", "blank_value_node-label", "", "", "en-audio.mp3", "", ""),
+            ("menu1_form1", "", "", "question3/question4-label",
+             'question6: <output value="/data/question6"/>', "", "", "", ""),
+            ("menu1_form1", "", "", "question3/question5-label", "English Label", "", "", "", ""),
+            ("menu1_form1", "", "", "question7-label",
+             'question1: <output value="/data/question1"/> &lt; 5', "", "", "", ""),
+            ("menu1_form1", "", "", 'add_markdown-label',
+             'add_markdown: ~~new \\u0939\\u093f markdown~~', "", "", "", ""),
+            ("menu1_form1", "", "", 'update_markdown-label',
+             '## smaller_markdown', "", "", "", ""),
+            ("menu1_form1", "", "", 'remove_markdown-label',
+             'no longer markdown', "", "", "", ""),
+            ("menu1_form1", "", "", 'vetoed_markdown-label',
+             '*i just happen to like stars a lot*', "", "", "", ""),
         )),
     )
 
@@ -499,7 +504,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ('remove_markdown-label', '# remove_markdown', '# remove_markdown', '', '', '', '', '', ''),
           ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '', '', '',
            '', '', ''),
-        ))
+          ))
     )
 
     single_sheet_upload_no_change_data = (
@@ -804,7 +809,6 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
         self.assertEqual(form.submit_notification_label, {'en': 'new submit notification', 'fra': 'nouveau'})
 
-
     def test_case_search_labels_on_upload(self):
         module = self.app.get_module(0)
 
@@ -887,7 +891,8 @@ class MismatchedItextReferenceTest(BulkAppTranslationTestBaseWithApp):
         data = (
             (MODULES_AND_FORMS_SHEET_NAME,
              (('Menu', 'menu1', 'Untitled Module', '', '', '', '', '', 'ecdcc5bb280f043a23f39eca52369abaa9e49bf9'),
-              ('Form', 'menu1_form1', 'Untitled Form', '', '', '', '', '', 'e1af3f8e947dad9862a4d7c32f5490cfff9edfda'))),
+              ('Form', 'menu1_form1', 'Untitled Form', '', '', '', '', '',
+               'e1af3f8e947dad9862a4d7c32f5490cfff9edfda'))),
             ('menu1',
              (('name', 'list', 'Name', ''),
               ('name', 'detail', 'Name', ''))),
@@ -1033,13 +1038,15 @@ class BulkAppTranslationFormTest(BulkAppTranslationTestBaseWithApp):
         data = (
             (MODULES_AND_FORMS_SHEET_NAME,
              (('Menu', 'menu1', 'Untitled Module', '', '', '', '', '', '765f110eb62fd26240a6d8bcdccca91b246b96c9'),
-              ('Form', 'menu1_form1', 'Untitled Form', '', '', '', '', '', 'fffea2c32b7902a3efcb6b84c94e824820d11856'))),
+              ('Form', 'menu1_form1', 'Untitled Form', '', '', '', '', '',
+               'fffea2c32b7902a3efcb6b84c94e824820d11856'))),
             ('menu1',
              (('name', 'list', 'Name', ''),
               ('name', 'detail', 'Name', ''))),
             ('menu1_form1',
              (('question1-label', '', 'french', '', 'jr://file/commcare/image/data/question1.png', '', '', '', ''),
-              ('question2-label', 'english', '', 'jr://file/commcare/image/data/question2.png', '', '', '', '', ''),
+              ('question2-label', 'english', '', 'jr://file/commcare/image/data/question2.png', '', '', '',
+               '', ''),
               ('question3-label', '', '', '', '', '', '', '', ''))),
         )
 
@@ -1155,7 +1162,8 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['has_refs-label',
              'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.',
              '', '', ''],
-            ['submit_label', 'Submit', '', '', '']
+            ['submit_label', 'Submit', '', '', ''],
+            ['submit_notification_label', '', '', '', '']
         ])
 
     @patch.object(Application, 'supports_empty_case_list_text', lambda: True)
@@ -1230,6 +1238,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
              'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '',
              '', ''],
             ['menu1_form1', '', '', 'submit_label', 'Submit', '', '', '', ''],
+            ['menu1_form1', '', '', 'submit_notification_label', '', '', '', '', ''],
 
             ['menu2', '', '', '', 'Register Series', '', '', '', 'b9c25abe21054632a3623199debd7cfa'],
             ['menu2', 'name', 'list', '', 'Name', '', '', '', ''],
@@ -1238,6 +1247,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu2_form1', '', '', '', 'Registration Form', None, None, '', '280b1b06d1b442b9bba863453ba30bc3'],
             ['menu2_form1', '', '', 'name_of_series-label', 'Name of series', '', '', '', ''],
             ['menu2_form1', '', '', 'submit_label', 'Submit', '', '', '', ''],
+            ['menu2_form1', '', '', 'submit_notification_label', '', '', '', '', ''],
 
             ['menu3', '', '', '', 'Followup Series', '', '', '', '217e1c8de3dd46f98c7d2806bc19b580'],
             ['menu3', 'name', 'list', '', 'Name', '', '', '', ''],
@@ -1256,6 +1266,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu3_form1', '', '', 'x-label', 'x', '', '', '', ''],
             ['menu3_form1', '', '', 'y-label', 'y', '', '', '', ''],
             ['menu3_form1', '', '', 'submit_label', 'Submit', '', '', '', ''],
+            ['menu3_form1', '', '', 'submit_notification_label', '', '', '', '', ''],
 
             ['menu4', '', '', '', 'Remove Point', '', '', '', '17195132472446ed94bd91ba19a2b379'],
             ['menu4', 'x', 'list', '', 'X', '', '', '', ''],
@@ -1271,6 +1282,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
              'session/data/case_id]/x"/>  ,<output value="instance(\'casedb\')/casedb/case[@case_id = '
              'instance(\'commcaresession\')/session/data/case_id]/y"/>).', '', '', '', ''],
             ['menu4_form1', '', '', 'submit_label', 'Submit', '', '', '', ''],
+            ['menu4_form1', '', '', 'submit_notification_label', '', '', '', '', ''],
 
             ['menu5', '', '', '', 'Empty Reports Module', '', '', '', '703eb807ae584d1ba8bf9457d7ac7590'],
 
@@ -1281,6 +1293,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu6_form1', '', '', '', 'Advanced Form', None, None, '', '2b9c856ba2ea4ec1ab8743af299c1627'],
             ['menu6_form1', '', '', 'this_form_does_nothing-label', 'This form does nothing.', '', '', '', ''],
             ['menu6_form1', '', '', 'submit_label', 'Submit', '', '', '', ''],
+            ['menu6_form1', '', '', 'submit_notification_label', '', '', '', '', ''],
             ['menu6_form2', '', '', '', 'Shadow Form', '', '', '', 'c42e1a50123c43f2bd1e364f5fa61379']])
 
     def test_bulk_app_single_sheet_blacklisted(self):
