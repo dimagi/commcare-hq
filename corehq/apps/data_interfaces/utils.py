@@ -1,3 +1,4 @@
+import time
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -214,6 +215,23 @@ def _get_sql_repeat_record(domain, record_id):
         return None
 
 
+def _throttle_case_iterator(case_iterator):
+    """
+    Throttles slower queries that hog pgshard resources by sleeping for the amount of time the query took. Used
+    only in iter_cases_and_run_rules to reduce load on db when running through all update rules.
+    We currently aren't able to iterate through all cases on the largest domains within the alloted time,
+    so this .
+    """
+    start_time = time.time()
+    for case in case_iterator:
+        end_time = time.time()
+        query_time = end_time - start_time
+        if query_time > 0.08:
+            time.sleep(query_time)
+        yield case
+        start_time = time.time()
+
+
 def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_type, db=None, progress_helper=None):
     from corehq.apps.data_interfaces.models import (
         CaseRuleActionResult,
@@ -229,7 +247,7 @@ def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_typ
     cases_checked = 0
     last_migration_check_time = None
 
-    for case in case_iterator:
+    for case in _throttle_case_iterator(case_iterator):
         migration_in_progress, last_migration_check_time = _check_data_migration_in_progress(
             domain, last_migration_check_time
         )
