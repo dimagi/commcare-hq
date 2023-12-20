@@ -25,7 +25,7 @@
         <%= description %>
       </div>
     <% } %>
-    <table class="table table-hover" role="presentation">
+    <table class="table table-hover <%= grouped ? '' : 'table-striped table-bordered' %>" role="presentation">
       <tbody id="query-properties" class="<% if (!sidebarEnabled && grouped) { %>bg-white<%} %>">
       </tbody>
     </table>
