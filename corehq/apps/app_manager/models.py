@@ -1049,6 +1049,9 @@ class FormBase(DocumentSchema):
     # computed datums IDs that are allowed in endpoints
     function_datum_endpoints = StringListProperty()
 
+    submit_label = LabelProperty(default={})
+    submit_notification_label = LabelProperty(default={})
+
     def __repr__(self):
         return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
 
@@ -1338,6 +1341,16 @@ class FormBase(DocumentSchema):
             case_type = save_to_case_update.case_type
             updates_by_case_type[case_type].update(save_to_case_update.properties)
         return updates_by_case_type
+
+    def get_submit_label(self, lang):
+        if lang in self.submit_label:
+            return self.submit_label[lang]
+        return 'Submit'
+
+    def get_submit_notification_label(self, lang):
+        if self.submit_notification_label and lang in self.submit_notification_label:
+            return self.submit_notification_label[lang]
+        return ''
 
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):

@@ -95,10 +95,12 @@ EXCEL_DATA = (
        'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''),
       ('no_media-label', 'No media', '', '', ''),
       ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text '
-                         'and "bad" &lt; xml.', '', '', ''))),
+                         'and "bad" &lt; xml.', '', '', ''),
+      ('submit_label', 'Submit', '', '', ''))),
     ('menu2', (('no_items_text', 'list', 'List is empty.'), ('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
     ('menu2_form1',
-     ('name_of_series-label', 'Name of series', '', '', '')),
+     (('name_of_series-label', 'Name of series', '', '', ''),
+     ('submit_label', 'Submit', '', '', ''))),
     ('menu3',
      (('no_items_text', 'list', 'List is empty.'),
       ('name', 'list', 'Name'),
@@ -114,7 +116,8 @@ EXCEL_DATA = (
       ('graph annotation 1', 'detail', 'This is (2, 2)'))),
     ('menu3_form1',
      (('x-label', 'x', '', '' ''),
-      ('y-label', 'y', '', '', ''))),
+      ('y-label', 'y', '', '', ''),
+      ('submit_label', 'Submit', '', '', ''))),
     ('menu4',
      (('no_items_text', 'list', 'List is empty.'),
       ('x', 'list', 'X'),
@@ -127,12 +130,13 @@ EXCEL_DATA = (
      (('confirm_remove-label',
        'Swipe to remove the point at (<output value="instance(\'casedb\')/casedb/case[@case_id = '
        'instance(\'commcaresession\')/session/data/case_id]/x"/>  ,<output value="instance(\'casedb\')'
-       '/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/y"/>).'),
-      '', '', '')),
+       '/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/y"/>).', '', '', ''),
+     ('submit_label', 'Submit', '', '', ''))),
     ('menu5', ()),
     ('menu6', (('no_items_text', 'list', 'List is empty.'), ('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
     ('menu6_form1',
-     (('this_form_does_nothing-label', 'This form does nothing.', '', '', ''),)),
+     (('this_form_does_nothing-label', 'This form does nothing.', '', '', ''),
+      ('submit_label', 'Submit', '', '', ''))),
 )
 
 
@@ -394,6 +398,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ('remove_markdown-label', 'no longer markdown', 'just plain text', '', '', '', '', '', ''),
             ('vetoed_markdown-label', '*i just happen to like stars a lot*', '*i just happen to like stars a lot*',
              '', '', '', '', '', ''),
+            ("submit_label", "new submit", "nouveau", "", "", "", "", "", ""),
+            ("submit_notification_label", "new submit notification", "nouveau", "", "", "", "", "", ""),
         ))
     )
 
@@ -780,6 +786,25 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ]
         )
 
+    def test_form_submit_label_on_upload(self):
+        form = self.app.get_module(0).get_form(0)
+        form.submit_label = {'en': 'old label', 'fra': 'passé'}
+        self.assertEqual(form.submit_label, {'en': 'old label', 'fra': 'passé'})
+
+        # note changes on upload with new value
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
+        self.assertEqual(form.submit_label, {'en': 'new submit', 'fra': 'nouveau'})
+
+    def test_submit_notification_label_on_upload(self):
+        form = self.app.get_module(0).get_form(0)
+        form.submit_notification_label = {'en': 'old submission label', 'fra': 'passé'}
+        self.assertEqual(form.submit_notification_label, {'en': 'old submission label', 'fra': 'passé'})
+
+        # note changes on upload with new value
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
+        self.assertEqual(form.submit_notification_label, {'en': 'new submit notification', 'fra': 'nouveau'})
+
+
     def test_case_search_labels_on_upload(self):
         module = self.app.get_module(0)
 
@@ -1130,6 +1155,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['has_refs-label',
              'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.',
              '', '', ''],
+            ['submit_label', 'Submit', '', '', '']
         ])
 
     @patch.object(Application, 'supports_empty_case_list_text', lambda: True)
@@ -1203,6 +1229,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu1_form1', '', '', 'has_refs-label',
              'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '',
              '', ''],
+            ['menu1_form1', '', '', 'submit_label', 'Submit', '', '', '', ''],
 
             ['menu2', '', '', '', 'Register Series', '', '', '', 'b9c25abe21054632a3623199debd7cfa'],
             ['menu2', 'name', 'list', '', 'Name', '', '', '', ''],
@@ -1210,6 +1237,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
             ['menu2_form1', '', '', '', 'Registration Form', None, None, '', '280b1b06d1b442b9bba863453ba30bc3'],
             ['menu2_form1', '', '', 'name_of_series-label', 'Name of series', '', '', '', ''],
+            ['menu2_form1', '', '', 'submit_label', 'Submit', '', '', '', ''],
 
             ['menu3', '', '', '', 'Followup Series', '', '', '', '217e1c8de3dd46f98c7d2806bc19b580'],
             ['menu3', 'name', 'list', '', 'Name', '', '', '', ''],
@@ -1227,6 +1255,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu3_form1', '', '', '', 'Add Point to Series', None, None, '', 'a01b55fd2c1a483492c1166029946249'],
             ['menu3_form1', '', '', 'x-label', 'x', '', '', '', ''],
             ['menu3_form1', '', '', 'y-label', 'y', '', '', '', ''],
+            ['menu3_form1', '', '', 'submit_label', 'Submit', '', '', '', ''],
 
             ['menu4', '', '', '', 'Remove Point', '', '', '', '17195132472446ed94bd91ba19a2b379'],
             ['menu4', 'x', 'list', '', 'X', '', '', '', ''],
@@ -1241,6 +1270,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
              '(<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/'
              'session/data/case_id]/x"/>  ,<output value="instance(\'casedb\')/casedb/case[@case_id = '
              'instance(\'commcaresession\')/session/data/case_id]/y"/>).', '', '', '', ''],
+            ['menu4_form1', '', '', 'submit_label', 'Submit', '', '', '', ''],
 
             ['menu5', '', '', '', 'Empty Reports Module', '', '', '', '703eb807ae584d1ba8bf9457d7ac7590'],
 
@@ -1250,6 +1280,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
             ['menu6_form1', '', '', '', 'Advanced Form', None, None, '', '2b9c856ba2ea4ec1ab8743af299c1627'],
             ['menu6_form1', '', '', 'this_form_does_nothing-label', 'This form does nothing.', '', '', '', ''],
+            ['menu6_form1', '', '', 'submit_label', 'Submit', '', '', '', ''],
             ['menu6_form2', '', '', '', 'Shadow Form', '', '', '', 'c42e1a50123c43f2bd1e364f5fa61379']])
 
     def test_bulk_app_single_sheet_blacklisted(self):
