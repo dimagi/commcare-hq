@@ -217,17 +217,17 @@ def _get_sql_repeat_record(domain, record_id):
 
 def _throttle_case_iterator(case_iterator):
     """
-    Throttles slower queries that hog pgshard resources by sleeping for the amount of time the query took. Used
-    only in iter_cases_and_run_rules to reduce load on db when running through all update rules.
-    We currently aren't able to iterate through all cases on the largest domains within the alloted time,
-    so this .
+    When processing case update rules, case queries spend most of their time waiting in the db to execute. The
+    logic here moves that time spent waiting from the database to application code, and gently increases wait
+    times in the application the longer the query takes. This prioritizes realtime workloads such as form
+    submissions and restores over asynchronous tasks like case update rules.
     """
     start_time = time.time()
     for case in case_iterator:
         end_time = time.time()
         query_time = end_time - start_time
         if query_time > 0.08:
-            time.sleep(query_time)
+            time.sleep(2 * (query_time - 0.08))
         yield case
         start_time = time.time()
 
