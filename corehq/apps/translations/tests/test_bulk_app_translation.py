@@ -1188,7 +1188,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             menu1_id = self.app.modules[0].unique_id
             return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}}
 
-        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda foo, bar, baz: False), \
                 patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_without_display_text):
             menu1_sheet = get_bulk_app_sheets_by_name(self.app, eligible_for_transifex_only=True)['menu1']
         self.assertNotIn(('name', 'detail', 'Name'), menu1_sheet)
@@ -1200,7 +1200,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             menu1_id = self.app.modules[0].unique_id
             return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}}
 
-        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda foo, bar, baz: False), \
                 patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_with_display_text):
             menu1_sheet = get_bulk_app_sheets_by_name(self.app, eligible_for_transifex_only=True)['menu1']
         self.assertNotIn(('name', 'detail', 'Name'), menu1_sheet)
@@ -1302,7 +1302,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             menu1_id = self.app.modules[0].unique_id
             return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}}
 
-        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda foo, bar, baz: False), \
                 patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_without_display_text):
             sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
                                                       eligible_for_transifex_only=True)[SINGLE_SHEET_NAME]
@@ -1315,7 +1315,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             menu1_id = self.app.modules[0].unique_id
             return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}}
 
-        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda foo, bar, baz: False), \
                 patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_with_display_text):
             sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
                                                       eligible_for_transifex_only=True)[SINGLE_SHEET_NAME]
