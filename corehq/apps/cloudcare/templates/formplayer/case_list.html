@@ -67,10 +67,15 @@
                   <span> {% trans "Sort By" %} </span><i class="fa fa-sort" aria-hidden="true"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="case-list-sort-by">
-                  <%  _.each(headers, function(header, index) { %>
-                    <% if (columnSortable(index)) { %>
-                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- index %>" role="menuitem"><a><%= header %></a></li>
-                    <% } %>
+                  <%  _.each(sortOptions, function(sortOption) { %>
+                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- sortOption.index %>" role="menuitem">
+                      <a>
+                        <%= sortOption.header %>
+                        <% if (sortOption.sortOrder) { %>
+                          <i class="fa fa-arrow-<%= sortOption.sortOrder === 'V' ? 'down' : 'up' %> pull-right"></i>
+                        <% } %>
+                      </a>
+                    </li>
                   <% }); %>
                 </ul>
               </div>

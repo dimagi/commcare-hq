@@ -10,7 +10,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         ko.bindingHandlers.renderMarkdown = {
             update: function (element, valueAccessor) {
                 var value = ko.unwrap(valueAccessor());
-                value = markdown.render(value || '');
+                value = markdown.render(value);
                 $(element).html(value);
             },
         };
@@ -749,7 +749,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
         self.throttle = 200;
-        self.setWidths();
         // If the question has ever been answered, set this to true.
         self.hasAnswered = false;
 
@@ -766,6 +765,17 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.hasError = ko.computed(function () {
             return (self.error() || self.serverError()) && !self.dirty();
         });
+
+        self.hasLabelContent = ko.computed(function () {
+            return (
+                ko.utils.unwrapObservable(self.caption)
+                || ko.utils.unwrapObservable(self.caption_markdown)
+                || ko.utils.unwrapObservable(self.help)
+                || ko.utils.unwrapObservable(self.hint)
+                || ko.utils.unwrapObservable(self.required)
+            );
+        });
+        self.setWidths(self.hasLabelContent());
 
         self.form = function () {
             var parent = self.parent;
@@ -852,7 +862,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             },
             help: {
                 update: function (options) {
-                    return options.data ? markdown.render(DOMPurify.sanitize(options.data)) : null;
+                    return options.data ? markdown.render(options.data) : null;
                 },
             },
         };
@@ -880,19 +890,22 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         return this.stylesContaining(pattern).length > 0;
     };
 
-    Question.prototype.setWidths = function () {
+    Question.prototype.setWidths = function (hasLabel) {
         const self = this;
-        const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
+        const columnWidth = Question.calculateColumnWidthForPerRowStyle(self.style);
         const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
 
-        if (this.stylesContains(perRowPattern)) {
-            this.controlWidth = constants.FULL_WIDTH;
-            this.labelWidth = constants.FULL_WIDTH;
-            this.questionTileWidth = `col-sm-${columnWidth}`;
+        if (self.stylesContains(perRowPattern)) {
+            self.controlWidth = constants.FULL_WIDTH;
+            self.labelWidth = constants.FULL_WIDTH;
+            self.questionTileWidth = `col-sm-${columnWidth}`;
         } else {
-            this.controlWidth = constants.CONTROL_WIDTH;
-            this.labelWidth = constants.LABEL_WIDTH;
-            this.questionTileWidth = constants.FULL_WIDTH;
+            self.controlWidth = constants.CONTROL_WIDTH;
+            self.labelWidth = constants.LABEL_WIDTH;
+            self.questionTileWidth = constants.FULL_WIDTH;
+            if (!hasLabel) {
+                self.controlWidth += ' ' + constants.LABEL_OFFSET;
+            }
         }
 
         if (self.stylesContains(constants.SHORT)) {
