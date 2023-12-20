@@ -171,6 +171,8 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 if not self._has_translation(row):
                     label_ids_to_skip.add(row['label'])
             for label in label_ids_to_skip:
+                if label == 'submit_notification_label':
+                    continue
                 self.msgs.append((
                     messages.error,
                     _("You must provide at least one translation for the label '{}'.").format(label)))
