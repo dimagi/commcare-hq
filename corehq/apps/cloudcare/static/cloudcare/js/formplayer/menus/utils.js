@@ -80,7 +80,9 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         });
 
         detailCollection = new Backbone.Collection(breadcrumbModels);
-        detailCollection.last().set('ariaCurrentPage', true);
+        if (detailCollection.length) {
+            detailCollection.last().set('ariaCurrentPage', true);
+        }
         var breadcrumbView = views.BreadcrumbListView({
             collection: detailCollection,
         });
