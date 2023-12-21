@@ -496,6 +496,7 @@ class DetailContributor(SectionContributor):
                     grid_x=0,
                     grid_y=0,
                     show_border=False,
+                    show_shading=False,
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath_function=xml)),
@@ -519,6 +520,7 @@ class DetailContributor(SectionContributor):
                     grid_x=0,
                     grid_y=0,
                     show_border=False,
+                    show_shading=False,
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath=TextXPath(
