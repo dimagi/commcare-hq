@@ -53,6 +53,7 @@ from corehq.apps.domain.forms import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
@@ -126,6 +127,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
         return context
 
 
+@waf_allow('XSS_BODY')
 class EditBasicProjectInfoView(BaseEditProjectInfoView):
     template_name = 'domain/admin/info_basic.html'
     urlname = 'domain_basic_info'
