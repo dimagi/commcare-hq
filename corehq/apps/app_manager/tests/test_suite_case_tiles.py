@@ -368,7 +368,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
                         <text/>
                     </title>
                     <field>
-                        <style font-size="large" horz-align="center" show-border="false">
+                        <style font-size="large" horz-align="center" show-border="false" show-shading="false">
                             <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
                         </style>
                         <header>
