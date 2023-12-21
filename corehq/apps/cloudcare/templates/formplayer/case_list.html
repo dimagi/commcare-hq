@@ -244,12 +244,11 @@
       grid-area: <%- model.gridStyle %>;
       font-size: <%- model.fontStyle %>;
       text-align: <%- model.horizontalAlign %>;
-      <% if (!model.borderInTile) { %>
+      <% if (!model.borderInTile && !model.shadingInTile) { %>
         justify-self: <%- model.horizontalAlign %>;
         align-self: <%- model.verticalAlign %>;
       <% } else { %>
-        <% if (model.showBorder) { %>
-          border: 1px solid #685c53;
+        <% if (model.showBorder || model.showShading) { %>
           border-radius: 8px;
           padding-top: 5px;
           padding-bottom: 0px;
@@ -257,6 +256,13 @@
           padding-right: 5px;
           justify-self: stretch;
           margin: 2px;
+          <% if (model.showBorder) { %>
+            border: 1px solid #685c53;
+          <% } %>
+          <% if (model.showShading) { %>
+            background-color: white;
+            z-index: -1;
+          <% } %>
         <% } else { %>
           margin: 7px;
           justify-self: <%- model.horizontalAlign %>;
