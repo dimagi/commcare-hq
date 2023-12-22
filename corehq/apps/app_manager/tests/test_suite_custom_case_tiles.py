@@ -21,7 +21,8 @@ def add_columns_for_case_details(_module, field='a', format='plain', useXpathExp
         grid_y=1,
         width=3,
         height=1,
-        show_border=False)
+        show_border=False,
+        show_shading=False)
     column.useXpathExpression = useXpathExpression
     _module.case_details.short.columns = [
         column,
@@ -47,7 +48,7 @@ class SuiteCustomCaseTilesTest(SimpleTestCase, SuiteMixin):
             """
             <partial>
                 <field>
-                    <style show-border="false">
+                    <style show-border="false" show-shading="false">
                         <grid grid-height="1" grid-width="3" grid-x="1" grid-y="1"/>
                     </style>
                     <header width="13%">
@@ -94,7 +95,7 @@ class SuiteCustomCaseTilesTest(SimpleTestCase, SuiteMixin):
             """
             <partial>
                 <field>
-                    <style show-border="false">
+                    <style show-border="false" show-shading="false">
                         <grid grid-height="1" grid-width="3" grid-x="1" grid-y="1"/>
                     </style>
                     <header>
