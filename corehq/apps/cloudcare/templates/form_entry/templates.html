@@ -151,7 +151,14 @@
             </div>
           {% endif %}
           <div id="submit-button" class="form-actions form-group noprint-sub-container" data-bind="visible: showSubmitButton">
-            <div data-bind="css: submitClass">
+            <div data-bind="
+              css: {
+                [submitClass]: true,
+                'anchored-submit': isAnchoredSubmitStyle,
+              },
+              style: {
+                'bottom':isAnchoredSubmitStyle && {{ request.couch_user.can_edit_data|yesno:'true,false' }} ? '30px' : '' {# data preview bar #}
+              }">
               <button class="submit btn btn-lg btn-primary"
                       type="submit"
                       data-bind="enable: enableSubmitButton">
