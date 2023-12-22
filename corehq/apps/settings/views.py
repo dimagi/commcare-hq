@@ -34,6 +34,7 @@ from two_factor.plugins.phonenumber.views import (
     PhoneDeleteView,
     PhoneSetupView
 )
+from two_factor.plugins.registry import registry
 
 from dimagi.utils.web import json_response
 
@@ -57,14 +58,13 @@ from corehq.apps.hqwebapp.views import (
     not_found,
 )
 from corehq.apps.settings.exceptions import DuplicateApiKeyName
+from corehq.apps.settings.method import HQGeneratorMethod, HQPhoneCallMethod, HQSMSMethod
 from corehq.apps.settings.forms import (
     HQApiKeyForm,
     HQDeviceValidationForm,
     HQEmptyForm,
     HQPasswordChangeForm,
-    HQPhoneNumberForm,
     HQPhoneNumberMethodForm,
-    HQTOTPDeviceForm,
     HQTwoFactorMethodForm,
 )
 from corehq.apps.sso.models import IdentityProvider
@@ -409,26 +409,21 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     page_title = gettext_lazy("Two Factor Authentication Setup")
 
     form_list = (
-        ('welcome_setup', HQEmptyForm),
+        ('welcome', HQEmptyForm),
         ('method', HQTwoFactorMethodForm),
-        ('generator', HQTOTPDeviceForm),
-        ('sms', HQPhoneNumberForm),
-        ('call', HQPhoneNumberForm),
-        ('validation', HQDeviceValidationForm),
+        # other forms are dynamically added
     )
 
     @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        # this is only here to add the login_required decorator
+        registry.unregister('generator')
+        registry.register(HQGeneratorMethod())
+        if _user_can_use_phone(request.user):
+            registry.register(HQSMSMethod())
+            registry.register(HQPhoneCallMethod())
+
         return super(TwoFactorSetupView, self).dispatch(request, *args, **kwargs)
-
-    def get_form_kwargs(self, step=None):
-        kwargs = super().get_form_kwargs(step)
-        if step == 'method':
-            kwargs.setdefault('allow_phone_2fa', _user_can_use_phone(self.request.couch_user))
-
-        return kwargs
 
 
 class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
@@ -544,17 +539,11 @@ class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
 class TwoFactorResetView(TwoFactorSetupView):
     urlname = 'reset'
 
-    form_list = (
-        ('welcome_reset', HQEmptyForm),
-        ('method', HQTwoFactorMethodForm),
-        ('generator', HQTOTPDeviceForm),
-        ('sms', HQPhoneNumberForm),
-        ('call', HQPhoneNumberForm),
-        ('validation', HQDeviceValidationForm),
-    )
-
     def get(self, request, *args, **kwargs):
         default_device(request.user).delete()
+        # django-two-factor-auth caches the default device on the user so clear that too
+        from two_factor.utils import USER_DEFAULT_DEVICE_ATTR_NAME
+        delattr(request.user, USER_DEFAULT_DEVICE_ATTR_NAME)
         return super(TwoFactorResetView, self).get(request, *args, **kwargs)
 
 
