@@ -152,16 +152,18 @@
           {% endif %}
           <div id="submit-button" class="form-actions form-group noprint-sub-container" data-bind="visible: showSubmitButton">
             <div data-bind="
-              css: {
-                [submitClass]: true,
-                'anchored-submit': isAnchoredSubmitStyle,
-              },
+              css: submitClass,
               style: {
                 'bottom':isAnchoredSubmitStyle && {{ request.couch_user.can_edit_data|yesno:'true,false' }} ? '30px' : '' {# data preview bar #}
               }">
-              <button class="submit btn btn-lg btn-primary"
+              <button class="submit btn btn-primary"
                       type="submit"
-                      data-bind="enable: enableSubmitButton">
+                      data-bind="
+                        enable: enableSubmitButton,
+                        css: {
+                          'btn-lg': !isAnchoredSubmitStyle,
+                          'btn-sm': isAnchoredSubmitStyle,
+                        }">
                 <i class="fa fa-spin fa-refresh"
                    data-bind="visible: !enableSubmitButton(){% if environment == "web-apps" %} && erroredQuestions.length != 0{% endif %}"
                 ></i>
