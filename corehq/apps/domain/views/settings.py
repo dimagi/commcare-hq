@@ -641,6 +641,38 @@ class EditDomainAlertView(BaseProjectSettingsView):
         except Alert.DoesNotExist:
             return None
 
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            alert = self._get_alert()
+            if not alert:
+                messages.error(request, _("Alert not found!"))
+            else:
+                self._update_alert(alert)
+                messages.success(request, _("Alert saved!"))
+        else:
+            messages.error(request, _("There was an error saving your alert. Please try again!"))
+            return self.get(request, *args, **kwargs)
+        return HttpResponseRedirect(self.page_url)
+
+    def _update_alert(self, alert):
+        alert.text = self.form.cleaned_data['text']
+
+        start_time = self.form.cleaned_data['start_time']
+        end_time = self.form.cleaned_data['end_time']
+        timezone = self.request.project.default_timezone
+
+        alert.start_time = self._convert_timestamp_to_utc(start_time, timezone) if start_time else None
+        alert.end_time = self._convert_timestamp_to_utc(end_time, timezone) if end_time else None
+
+        alert.save()
+
+    @staticmethod
+    def _convert_timestamp_to_utc(timestamp, timezone):
+        return UserTime(
+            timestamp,
+            tzinfo=pytz.timezone(timezone)
+        ).server_time().done()
+
 
 @toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
 @require_can_manage_domain_alerts
