@@ -537,11 +537,11 @@ class BaseDomainAlertsView(BaseProjectSettingsView):
         return UserTime(
             timestamp,
             tzinfo=pytz.timezone(timezone)
-        ).server_time().done()
+        ).server_time()
 
     @staticmethod
     def _convert_server_time_to_user_time(timestamp, timezone):
-        return ServerTime(timestamp).user_time(pytz.timezone(timezone)).done()
+        return ServerTime(timestamp).user_time(pytz.timezone(timezone))
 
 
 class ManageDomainAlertsView(BaseDomainAlertsView):
@@ -555,10 +555,14 @@ class ManageDomainAlertsView(BaseDomainAlertsView):
             'form': self.form,
             'alerts': [
                 {
-                    'start_time': ServerTime(alert.start_time).user_time(pytz.timezone(alert.timezone))
-                        .ui_string() if alert.start_time else None,
-                    'end_time': ServerTime(alert.end_time).user_time(pytz.timezone(alert.timezone))
-                        .ui_string() if alert.end_time else None,
+                    'start_time': (
+                        self._convert_server_time_to_user_time(alert.start_time, alert.timezone).ui_string()
+                        if alert.start_time else None
+                    ),
+                    'end_time': (
+                        self._convert_server_time_to_user_time(alert.end_time, alert.timezone).ui_string()
+                        if alert.end_time else None
+                    ),
                     'active': alert.active,
                     'html': alert.html,
                     'id': alert.id,
@@ -588,8 +592,14 @@ class ManageDomainAlertsView(BaseDomainAlertsView):
         end_time = self.form.cleaned_data['end_time']
         timezone = self.request.project.default_timezone
 
-        start_time = self._convert_user_time_to_server_time(start_time, timezone) if start_time else None
-        end_time = self._convert_user_time_to_server_time(end_time, timezone) if end_time else None
+        start_time = (
+            self._convert_user_time_to_server_time(start_time, timezone).done()
+            if start_time else None
+        )
+        end_time = (
+            self._convert_user_time_to_server_time(end_time, timezone).done()
+            if end_time else None
+        )
 
         Alert.objects.create(
             created_by_domain=self.domain,
@@ -629,11 +639,11 @@ class EditDomainAlertView(BaseDomainAlertsView):
         initial = {
             'text': alert.text,
             'start_time': (
-                self._convert_server_time_to_user_time(alert.start_time, alert.timezone)
+                self._convert_server_time_to_user_time(alert.start_time, alert.timezone).done()
                 if alert.start_time else None
             ),
             'end_time': (
-                self._convert_server_time_to_user_time(alert.end_time, alert.timezone)
+                self._convert_server_time_to_user_time(alert.end_time, alert.timezone).done()
                 if alert.end_time else None
             ),
         }
@@ -665,8 +675,14 @@ class EditDomainAlertView(BaseDomainAlertsView):
         end_time = self.form.cleaned_data['end_time']
         timezone = self.request.project.default_timezone
 
-        alert.start_time = self._convert_user_time_to_server_time(start_time, timezone) if start_time else None
-        alert.end_time = self._convert_user_time_to_server_time(end_time, timezone) if end_time else None
+        alert.start_time = (
+            self._convert_user_time_to_server_time(start_time, timezone).done()
+            if start_time else None
+        )
+        alert.end_time = (
+            self._convert_user_time_to_server_time(end_time, timezone).done()
+            if end_time else None
+        )
 
         alert.save()
 
