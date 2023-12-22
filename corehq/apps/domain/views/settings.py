@@ -616,8 +616,30 @@ class EditDomainAlertView(BaseProjectSettingsView):
 
     @cached_property
     def form(self):
-        # ToDo: Add form
-        return None
+        if self.request.method == 'POST':
+            return DomainAlertForm(self.request, self.request.POST)
+
+        alert = self._get_alert()
+        assert alert, "Alert not found"
+
+        initial = {
+            'text': alert.text,
+            'start_time': (
+                ServerTime(alert.start_time).user_time(pytz.timezone(alert.timezone)).done()
+                if alert.start_time else None
+            ),
+            'end_time': (
+                ServerTime(alert.end_time).user_time(pytz.timezone(alert.timezone)).done()
+                if alert.end_time else None
+            ),
+        }
+        return DomainAlertForm(self.request, initial=initial)
+
+    def _get_alert(self):
+        try:
+            return Alert.objects.get(created_by_domain=self.domain, pk=self.kwargs.get('alert_id'))
+        except Alert.DoesNotExist:
+            return None
 
 
 @toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
