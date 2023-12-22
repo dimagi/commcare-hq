@@ -596,6 +596,30 @@ class ManageDomainAlertsView(BaseProjectSettingsView):
         ).server_time().done()
 
 
+@method_decorator([toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator(),
+                   require_can_manage_domain_alerts], name='dispatch')
+class EditDomainAlertView(BaseProjectSettingsView):
+    template_name = 'domain/admin/edit_alert.html'
+    urlname = 'domain_edit_alert'
+    page_title = gettext_lazy("Edit Project Alert")
+
+    @property
+    @memoized
+    def page_url(self):
+        return reverse(ManageDomainAlertsView.urlname, args=[self.domain])
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.form
+        }
+
+    @cached_property
+    def form(self):
+        # ToDo: Add form
+        return None
+
+
 @toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
 @require_can_manage_domain_alerts
 @require_POST

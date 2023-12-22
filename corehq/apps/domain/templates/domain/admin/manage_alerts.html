@@ -7,6 +7,7 @@
 
 {% block page_content %}
     {% initial_page_data 'alerts' alerts %}
+    {% registerurl 'domain_edit_alert' domain '---' %}
 
     <form class="form form-horizontal" method="post">
       {% crispy form %}
@@ -37,7 +38,7 @@
               {% trans "Activate or De-activate" %}
             </th>
             <th>
-              {% trans "Delete" %}
+              {% trans "Actions" %}
             </th>
           </tr>
         </thead>
@@ -75,6 +76,9 @@
               </form>
             </td>
             <td>
+              <a class="btn btn-default" data-bind="attr: {href: editUrl}">
+                {% trans "Edit" %}
+              </a>
               <form action="{% url 'delete_domain_alert' domain %}" method="post">
                 {% csrf_token %}
                 <input name="alert_id"
