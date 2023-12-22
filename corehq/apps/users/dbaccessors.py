@@ -399,7 +399,8 @@ def get_all_user_search_query(search_string):
              .remove_default_filters()
              .OR(web_users(), mobile_users()))
     if search_string:
-        fields = ['username', 'first_name', 'last_name', 'phone_numbers',
-                  'domain_membership.domain', 'domain_memberships.domain']
-        query = query.search_string_query(search_string, fields)
+        fields = ['username', 'first_name', 'last_name', 'phone_numbers']
+        query = query.search_string_query(
+            search_string, fields, [('domain_memberships', 'domain')]
+        )
     return query

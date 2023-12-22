@@ -115,44 +115,15 @@ USER_MAPPING = {
             },
             "type": "text"
         },
+        # CommCareUser.domain_membership is indexed
+        #   as a single list domain_memberships
         "domain_membership": {
-            "dynamic": False,
-            "type": "object",
-            "properties": {
-                "assigned_location_ids": {
-                    "type": "text"
-                },
-                "doc_type": {
-                    "type": "keyword"
-                },
-                "domain": {
-                    "fields": {
-                        "exact": {
-                            "type": "keyword"
-                        }
-                    },
-                    "type": "text"
-                },
-                "is_admin": {
-                    "type": "boolean"
-                },
-                "location_id": {
-                    "type": "keyword"
-                },
-                "override_global_tz": {
-                    "type": "boolean"
-                },
-                "role_id": {
-                    "type": "text"
-                },
-                "timezone": {
-                    "type": "text"
-                }
-            }
+            "enabled": False,
+            "type": "object"
         },
         "domain_memberships": {
             "dynamic": False,
-            "type": "object",
+            "type": "nested",
             "properties": {
                 "assigned_location_ids": {
                     "type": "text"
@@ -434,11 +405,21 @@ USER_MAPPING = {
             "dynamic": False,
             "type": "nested",
             "properties": {
-                "key": {
-                    "type": "keyword"
-                },
-                "value": {
+                "domain": {
+                    "fields": {"exact": {"type": "keyword"}},
                     "type": "text"
+                },
+                "data": {
+                    "dynamic": False,
+                    "type": "nested",
+                    "properties": {
+                        "key": {
+                            "type": "keyword"
+                        },
+                        "value": {
+                            "type": "text"
+                        }
+                    }
                 }
             }
         },

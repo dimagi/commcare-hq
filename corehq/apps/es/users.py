@@ -22,6 +22,7 @@ of all unknown users, web users, and demo users on a domain.
 
     owner_ids = query.get_ids()
 """
+from copy import copy
 
 from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
@@ -74,6 +75,7 @@ class ElasticUser(ElasticDocumentAdapter):
 
     settings_key = IndexSettingsKey.USERS
     canonical_name = HQ_USERS_INDEX_CANONICAL_NAME
+    single_domain_types = ['CommCareUser', 'UnknownUser', 'AdminUser']
 
     @property
     def model_cls(self):
@@ -104,14 +106,26 @@ class ElasticUser(ElasticDocumentAdapter):
         user_dict['__group_ids'] = [res.id for res in results]
         user_dict['__group_names'] = [res.name for res in results]
         user_dict['user_data_es'] = []
-        if user_dict.get('base_doc') == 'CouchUser' and user_dict['doc_type'] == 'CommCareUser':
+        if user_dict.get('base_doc') == 'CouchUser':
             user_obj = self.model_cls.wrap_correctly(user_dict)
-            user_data = user_obj.get_user_data(user_obj.domain)
-            for key, value in user_data.items():
-                user_dict['user_data_es'].append({
-                    'key': key,
-                    'value': value,
-                })
+            for domain in user_obj.domains:
+                user_data = user_obj.get_user_data(domain)
+                data = []
+                for key, value in user_data.items():
+                    data.append({
+                        'key': key,
+                        'value': value,
+                    })
+                user_dict['user_data_es'].append(
+                    {
+                        "domain": domain,
+                        "data": data
+                    }
+                )
+
+        if user_dict['doc_type'] in self.single_domain_types:
+            user_dict['domain_memberships'] = [copy(user_dict['domain_membership'])]
+
         return super()._from_dict(user_dict)
 
 
@@ -136,7 +150,7 @@ def domain(domain, allow_enterprise=False):
 def domains(domains):
     return filters.OR(
         filters.term("domain.exact", domains),
-        filters.term("domain_memberships.domain.exact", domains)
+        domain_memberships_filter("domain.exact", domains)
     )
 
 
@@ -201,7 +215,7 @@ def location(location_id):
         filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
         filters.AND(
             web_users(),
-            filters.term('domain_memberships.assigned_location_ids', location_id)
+            domain_memberships_filter('assigned_location_ids', location_id)
         ),
     )
 
@@ -211,22 +225,36 @@ def is_practice_user(practice_mode=True):
 
 
 def role_id(role_id):
-    return filters.OR(
-        filters.term("domain_membership.role_id", role_id),     # mobile users
-        filters.term("domain_memberships.role_id", role_id)     # web users
-    )
+    return domain_memberships_filter("role_id", role_id)
 
 
 def is_active(active=True):
     return filters.term("is_active", active)
 
 
-def user_data(key, value):
-    return queries.nested(
-        'user_data_es',
+def user_data(key, value, domain=None):
+    if isinstance(value, list):
+        return filters.OR([_user_data_filter(key, v, domain=domain) for v in value])
+    else:
+        return _user_data_filter(key, value, domain=domain)
+
+
+def _user_data_filter(key, value, domain=None):
+    data_filter = [queries.nested(
+        "user_data_es.data",
         filters.AND(
-            filters.term(field='user_data_es.key', value=key),
-            queries.match(field='user_data_es.value', search_string=value),
+            filters.term("user_data_es.data.key", key),
+            queries.match(field='user_data_es.data.value', search_string=value)
+        )
+    )]
+    domain_filter = [
+        filters.term('user_data_es.domain.exact', domain)
+    ] if domain else []
+
+    return queries.nested(
+        "user_data_es",
+        filters.AND(
+            *(data_filter + domain_filter)
         )
     )
 
@@ -235,10 +263,13 @@ def _missing_user_data_property(property_name):
     """
     A user_data property doesn't exist.
     """
-    return filters.NOT(
-        queries.nested(
-            'user_data_es',
-            filters.term(field='user_data_es.key', value=property_name),
+    return queries.nested(
+        "user_data_es",
+        filters.NOT(
+            queries.nested(
+                "user_data_es.data",
+                filters.term("user_data_es.data.key", property_name)
+            )
         )
     )
 
@@ -248,11 +279,12 @@ def _missing_user_data_value(property_name):
     A user_data property exists but has an empty string value.
     """
     return queries.nested(
-        'user_data_es',
-        filters.AND(
-            filters.term('user_data_es.key', property_name),
-            filters.NOT(
-                filters.wildcard(field='user_data_es.value', value='*')
+        "user_data_es",
+        queries.nested(
+            "user_data_es.data",
+            filters.AND(
+                filters.term("user_data_es.data.key", property_name),
+                filters.NOT(filters.wildcard(field='user_data_es.data.value', value='*'))
             )
         )
     )
@@ -265,4 +297,12 @@ def missing_or_empty_user_data_property(property_name):
     return filters.OR(
         _missing_user_data_property(property_name),
         _missing_user_data_value(property_name),
+    )
+
+
+def domain_memberships_filter(field_name, value):
+    # return filters.term(f'domain_memberships.{field_name}', value)
+    return filters.nested(
+        'domain_memberships',
+        filters.term(f'domain_memberships.{field_name}', value)
     )

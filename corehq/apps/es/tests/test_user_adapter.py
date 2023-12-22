@@ -44,3 +44,5 @@ class TestFromPythonInElasticUser(TestCase):
         es_user = user_adapter.search({})['hits']['hits'][0]['_source']
 
         self.assertEqual(es_user, commcare_user)
+        # Make sure es_user can be wrapped as CommCareUser
+        CommCareUser.wrap(es_user)

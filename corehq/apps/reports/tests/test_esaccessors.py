@@ -1008,7 +1008,7 @@ class TestUserESAccessors(TestCase):
         results = get_user_stubs([self.user._id], ['user_data_es'])
 
         self.assertEqual(len(results), 1)
-        metadata = results[0].pop('user_data_es')
+        metadata = results[0].pop('user_data_es', {}).pop('data')
         self.assertEqual({
             'commcare_project': 'user-esaccessors-test',
             PROFILE_SLUG: self.profile.id,

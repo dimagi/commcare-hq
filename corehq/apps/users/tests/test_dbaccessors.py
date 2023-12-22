@@ -86,6 +86,8 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='webuser@example.com',
         )
+        cls.web_user.set_role(cls.ccdomain.name, cls.custom_role.get_qualified_id())
+        cls.web_user.save()
         cls.location_restricted_web_user = WebUser.create(
             domain=cls.ccdomain.name,
             username='LRWU',
@@ -199,6 +201,11 @@ class AllCommCareUsersTest(TestCase):
             [self.ccuser_2.username]
         )
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 1)
+
+        self.assertItemsEqual(
+            usernames(get_web_users_by_filters(self.ccdomain.name, filters)),
+            [self.web_user.username]
+        )
 
         # can search by location
         filters = {'location_id': self.loc1._id}
