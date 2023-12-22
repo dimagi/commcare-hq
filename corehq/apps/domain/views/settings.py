@@ -531,7 +531,20 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
 
 @method_decorator([toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator(),
                    require_can_manage_domain_alerts], name='dispatch')
-class ManageDomainAlertsView(BaseProjectSettingsView):
+class BaseDomainAlertsView(BaseProjectSettingsView):
+    @staticmethod
+    def _convert_user_time_to_server_time(timestamp, timezone):
+        return UserTime(
+            timestamp,
+            tzinfo=pytz.timezone(timezone)
+        ).server_time().done()
+
+    @staticmethod
+    def _convert_server_time_to_user_time(timestamp, timezone):
+        return ServerTime(timestamp).user_time(pytz.timezone(timezone)).done()
+
+
+class ManageDomainAlertsView(BaseDomainAlertsView):
     template_name = 'domain/admin/manage_alerts.html'
     urlname = 'domain_manage_alerts'
     page_title = gettext_lazy("Manage Project Alerts")
@@ -575,8 +588,8 @@ class ManageDomainAlertsView(BaseProjectSettingsView):
         end_time = self.form.cleaned_data['end_time']
         timezone = self.request.project.default_timezone
 
-        start_time = self._convert_timestamp_to_utc(start_time, timezone) if start_time else None
-        end_time = self._convert_timestamp_to_utc(end_time, timezone) if end_time else None
+        start_time = self._convert_user_time_to_server_time(start_time, timezone) if start_time else None
+        end_time = self._convert_user_time_to_server_time(end_time, timezone) if end_time else None
 
         Alert.objects.create(
             created_by_domain=self.domain,
@@ -588,17 +601,8 @@ class ManageDomainAlertsView(BaseProjectSettingsView):
             created_by_user=self.request.couch_user.username,
         )
 
-    @staticmethod
-    def _convert_timestamp_to_utc(timestamp, timezone):
-        return UserTime(
-            timestamp,
-            tzinfo=pytz.timezone(timezone)
-        ).server_time().done()
 
-
-@method_decorator([toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator(),
-                   require_can_manage_domain_alerts], name='dispatch')
-class EditDomainAlertView(BaseProjectSettingsView):
+class EditDomainAlertView(BaseDomainAlertsView):
     template_name = 'domain/admin/edit_alert.html'
     urlname = 'domain_edit_alert'
     page_title = gettext_lazy("Edit Project Alert")
@@ -625,11 +629,11 @@ class EditDomainAlertView(BaseProjectSettingsView):
         initial = {
             'text': alert.text,
             'start_time': (
-                ServerTime(alert.start_time).user_time(pytz.timezone(alert.timezone)).done()
+                self._convert_server_time_to_user_time(alert.start_time, alert.timezone)
                 if alert.start_time else None
             ),
             'end_time': (
-                ServerTime(alert.end_time).user_time(pytz.timezone(alert.timezone)).done()
+                self._convert_server_time_to_user_time(alert.end_time, alert.timezone)
                 if alert.end_time else None
             ),
         }
@@ -661,17 +665,10 @@ class EditDomainAlertView(BaseProjectSettingsView):
         end_time = self.form.cleaned_data['end_time']
         timezone = self.request.project.default_timezone
 
-        alert.start_time = self._convert_timestamp_to_utc(start_time, timezone) if start_time else None
-        alert.end_time = self._convert_timestamp_to_utc(end_time, timezone) if end_time else None
+        alert.start_time = self._convert_user_time_to_server_time(start_time, timezone) if start_time else None
+        alert.end_time = self._convert_user_time_to_server_time(end_time, timezone) if end_time else None
 
         alert.save()
-
-    @staticmethod
-    def _convert_timestamp_to_utc(timestamp, timezone):
-        return UserTime(
-            timestamp,
-            tzinfo=pytz.timezone(timezone)
-        ).server_time().done()
 
 
 @toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
