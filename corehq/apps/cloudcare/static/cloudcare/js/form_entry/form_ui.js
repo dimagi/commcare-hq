@@ -655,9 +655,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
-                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE) {
+                if (d.type() === constants.REPEAT_TYPE) {
                     return true;
-                } else if (d.type() === constants.GROUP_TYPE || d.type() === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
+                } else if (d.type() === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
                     return d.hasAnyNestedQuestions();
                 }
             });
@@ -676,16 +676,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return Container.prototype.headerBackgroundColor.call(self);
         };
 
-        const columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
-        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
-        var styleStr = (self.style) ? ko.utils.unwrapObservable(self.style.raw) : null;
-
-        if (getMatchingStyles(perRowPattern, styleStr)) {
-            this.questionTileWidth = `col-sm-${columnWidth}`;
-        }
-
-
+        let columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
+        this.elementTile = `col-sm-${columnWidth}`;
     }
+
     Group.prototype = Object.create(Container.prototype);
     Group.prototype.constructor = Container;
 
