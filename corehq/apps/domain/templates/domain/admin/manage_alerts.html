@@ -76,10 +76,10 @@
               </form>
             </td>
             <td>
-              <a class="btn btn-default" data-bind="attr: {href: editUrl}">
+              <a class="btn btn-default" data-bind="attr: {href: editUrl}" style="float: left; margin-right: 5px;">
                 {% trans "Edit" %}
               </a>
-              <form action="{% url 'delete_domain_alert' domain %}" method="post">
+              <form action="{% url 'delete_domain_alert' domain %}" method="post" style="float: left">
                 {% csrf_token %}
                 <input name="alert_id"
                        type="hidden"
