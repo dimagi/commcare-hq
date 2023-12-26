@@ -1,4 +1,4 @@
-hqDefine("cloudcare/js/form_entry/spec/case_list_pagination_spec", function () {
+hqDefine("cloudcare/js/formplayer/spec/case_list_pagination_spec", function () {
     describe('#paginateOptions', function () {
         var paginateItems = hqImport("cloudcare/js/formplayer/utils/utils");
         it('Should return paginateOptions', function () {
