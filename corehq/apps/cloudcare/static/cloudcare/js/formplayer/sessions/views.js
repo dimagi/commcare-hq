@@ -123,7 +123,11 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
         },
         templateContext: function () {
             var user = FormplayerFrontend.getChannel().request('currentUser');
-            var paginationConfig = utils.paginateOptions(this.options.pageNumber, this.options.totalPages);
+            var paginationConfig = utils.paginateOptions(
+                this.options.pageNumber,
+                this.options.totalPages,
+                this.collection.totalSessions
+            );
             return _.extend(paginationConfig, {
                 total: this.collection.totalSessions,
                 totalPages: this.options.totalPages,

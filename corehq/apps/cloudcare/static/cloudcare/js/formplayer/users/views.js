@@ -139,7 +139,11 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
         },
         templateContext: function () {
-            var paginationOptions = formplayerUtils.paginateOptions(this.model.get('page') - 1, this.totalPages());
+            var paginationOptions = formplayerUtils.paginateOptions(
+                this.model.get('page') - 1,
+                this.totalPages(),
+                this.collection.total
+            );
             return _.extend(paginationOptions, {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
