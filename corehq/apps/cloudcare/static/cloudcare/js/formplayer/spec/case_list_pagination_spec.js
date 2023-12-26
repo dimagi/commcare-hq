@@ -14,11 +14,6 @@ hqDefine("cloudcare/js/formplayer/spec/case_list_pagination_spec", function () {
             assert.equal(case1.endPage, 5);
             assert.equal(case1.pageCount, 15);
 
-            //Asserting not equal
-            assert.notEqual(case1.startPage, 5);
-            assert.notEqual(case1.endPage, 10);
-            assert.notEqual(case1.pageCount, 20);
-
             var case2 = paginateItems.paginateOptions(4, 10, 7);
 
             //Asserting equal
@@ -26,11 +21,6 @@ hqDefine("cloudcare/js/formplayer/spec/case_list_pagination_spec", function () {
             assert.equal(case2.endPage, 6);
             assert.equal(case2.pageCount, 10);
             assert.equal(case2.showPagination, true);
-
-            //Asserting not equal
-            assert.notEqual(case2.startPage, 7);
-            assert.notEqual(case2.endPage, 9);
-            assert.notEqual(case2.pageCount, 3);
 
             var case3 = paginateItems.paginateOptions(-1, 10, 5);
 
