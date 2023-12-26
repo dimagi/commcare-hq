@@ -133,7 +133,6 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
                 totalPages: this.options.totalPages,
                 currentPage: this.model.get('page') - 1,
                 limit: this.model.get("limit"),
-                pageNumLabel: _.template(gettext("Page <%-num%>")),
                 isPreviewEnv: user.environment === constants.PREVIEW_APP_ENVIRONMENT,
             });
         },

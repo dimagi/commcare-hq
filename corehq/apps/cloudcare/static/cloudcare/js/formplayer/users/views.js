@@ -149,7 +149,6 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 totalPages: this.totalPages(),
                 limit: this.limit,
                 currentPage: this.model.get('page') - 1,
-                pageNumLabel: _.template(gettext("Page <%- num %>")),
             });
         },
         navigate: function () {

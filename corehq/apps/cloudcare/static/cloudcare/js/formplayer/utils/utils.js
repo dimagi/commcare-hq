@@ -173,6 +173,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             pageCount: totalPages,
             rowRange: rowRange,
             showPagination: showPagination,
+            pageNumLabel: _.template(gettext("Page <%- num %>")),
         };
     };
 
