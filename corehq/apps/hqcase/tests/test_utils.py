@@ -1,14 +1,19 @@
+import uuid
 from datetime import datetime
 
 from django.test import TestCase
 from contextlib import contextmanager
-from casexml.apps.case.mock import CaseFactory
-from corehq.apps.export.const import DEID_ID_TRANSFORM, DEID_DATE_TRANSFORM
+from casexml.apps.case.mock import CaseFactory, CaseBlock
 
+from corehq.apps.export.const import DEID_ID_TRANSFORM, DEID_DATE_TRANSFORM
 from corehq.apps.hqcase.utils import (
     get_case_value,
     get_deidentified_data,
+    submit_case_blocks,
 )
+from corehq.apps.hqcase.case_deletion_utils import get_ordered_case_xforms
+from corehq.apps.reports.tests.test_case_data import _delete_all_cases_and_forms
+from corehq.form_processor.models import CommCareCase
 
 DOMAIN = 'test-domain'
 
@@ -98,6 +103,37 @@ class TestGetCensoredCaseData(TestCase):
 
         self.assertTrue(censored_attrs == {})
         self.assertTrue(censored_props['captain'] == '')
+
+
+class TestCaseDeletionUtil(TestCase):
+
+    def test_xform_order(self):
+        main_case_id = uuid.uuid4().hex
+        child_case1_id = uuid.uuid4().hex
+        child_case2_id = uuid.uuid4().hex
+        child_case3_id = uuid.uuid4().hex
+        submit_case_blocks([
+            CaseBlock(main_case_id, case_name="main_case", create=True).as_text(),
+            CaseBlock(child_case1_id, case_name="child1", create=True).as_text(),
+        ], DOMAIN)
+        submit_case_blocks([
+            CaseBlock(main_case_id, update={}).as_text(),
+            CaseBlock(child_case2_id, case_name="child2", create=True).as_text(),
+        ], DOMAIN)
+        submit_case_blocks([
+            CaseBlock(main_case_id, update={}).as_text(),
+            CaseBlock(child_case3_id, case_name="child3", create=True).as_text(),
+        ], DOMAIN)
+        self.addCleanup(_delete_all_cases_and_forms, DOMAIN)
+
+        main_case = CommCareCase.objects.get_case(main_case_id, DOMAIN)
+        xforms = get_ordered_case_xforms(main_case, DOMAIN)
+
+        for xform in xforms:
+            self.assertEqual(xforms.count(xform), 1)
+
+        for i in range(2):
+            self.assertGreater(xforms[i + 1].received_on, xforms[i].received_on)
 
 
 @contextmanager
