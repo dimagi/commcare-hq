@@ -128,7 +128,6 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
                 total: this.collection.totalSessions,
                 totalPages: this.options.totalPages,
                 currentPage: this.model.get('page') - 1,
-                rowRange: [10, 25, 50, 100],
                 limit: this.model.get("limit"),
                 pageNumLabel: _.template(gettext("Page <%-num%>")),
                 isPreviewEnv: user.environment === constants.PREVIEW_APP_ENVIRONMENT,

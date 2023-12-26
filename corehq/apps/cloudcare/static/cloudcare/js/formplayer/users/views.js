@@ -144,7 +144,6 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
                 limit: this.limit,
-                rowRange: [10, 25, 50, 100],
                 currentPage: this.model.get('page') - 1,
                 pageNumLabel: _.template(gettext("Page <%- num %>")),
             });
