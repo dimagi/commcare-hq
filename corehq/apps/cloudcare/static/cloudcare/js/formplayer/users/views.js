@@ -140,17 +140,14 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         },
         templateContext: function () {
             var paginationOptions = formplayerUtils.paginateOptions(this.model.get('page') - 1, this.totalPages());
-            return {
+            return _.extend(paginationOptions, {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
                 limit: this.limit,
                 rowRange: [10, 25, 50, 100],
-                startPage: paginationOptions.startPage,
-                endPage: paginationOptions.endPage,
-                pageCount: paginationOptions.pageCount,
                 currentPage: this.model.get('page') - 1,
                 pageNumLabel: _.template(gettext("Page <%- num %>")),
-            };
+            });
         },
         navigate: function () {
             FormplayerFrontend.navigate(

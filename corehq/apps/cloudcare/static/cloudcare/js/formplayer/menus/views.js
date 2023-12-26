@@ -946,16 +946,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 description = this.options.collection.queryResponse.description;
                 title = this.options.collection.queryResponse.title;
             }
-            return {
-                startPage: paginateItems.startPage,
+            return _.extend(paginateItems, {
                 title: title.trim(),
                 description: description === undefined ? "" : markdown.render(description.trim()),
                 headers: this.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
-                endPage: paginateItems.endPage,
-                pageCount: paginateItems.pageCount,
                 rowRange: [5, 10, 25, 50, 100],
                 limit: casesPerPage,
                 styles: this.options.styles,
@@ -979,7 +976,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
                 pageNumLabel: _.template(gettext("Page <%-num%>")),
-            };
+            });
         },
     });
 
