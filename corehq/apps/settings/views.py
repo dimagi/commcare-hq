@@ -20,7 +20,6 @@ from django.views.decorators.debug import sensitive_post_parameters
 import langcodes
 import qrcode
 from memoized import memoized
-from two_factor.plugins.phonenumber.models import PhoneDevice
 from two_factor.utils import default_device
 from two_factor.plugins.phonenumber.utils import backup_phones
 from two_factor.views import (
@@ -492,7 +491,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     page_title = gettext_lazy("Two Factor Authentication Phone Setup")
 
     form_list = (
-        ('method', HQPhoneNumberMethodForm),
+        ('setup', HQPhoneNumberMethodForm),
         ('validation', HQDeviceValidationForm),
     )
 
@@ -515,15 +514,6 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         self.get_device(user=self.request.user, name='backup').save()
         messages.add_message(self.request, messages.SUCCESS, _("Phone number added."))
         return redirect(reverse(TwoFactorProfileView.urlname))
-
-    def get_device(self, **kwargs):
-        """
-        Uses the data from the setup step and generated key to recreate device, gets the 'method' step
-        in the form_list.
-        """
-        kwargs = kwargs or {}
-        kwargs.update(self.storage.validated_step_data.get('method', {}))
-        return PhoneDevice(key=self.get_key(), **kwargs)
 
 
 class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):

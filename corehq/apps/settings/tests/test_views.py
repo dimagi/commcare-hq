@@ -157,6 +157,7 @@ class TwoFactorSetupView_RegisteredMethods_Tests(SimpleTestCase):
 
 @override_settings(ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE=True)
 class TwoFactorPhoneSetupViewTests(SimpleTestCase):
+
     @override_settings(ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE=False)
     def test_when_settings_are_disabled_view_returns_404(self):
         user = self._create_user(belongs_to_messaging_domain=True)
