@@ -490,7 +490,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     page_title = gettext_lazy("Two Factor Authentication Phone Setup")
 
     form_list = (
-        ('method', HQPhoneNumberMethodForm),
+        ('setup', HQPhoneNumberMethodForm),
         ('validation', HQDeviceValidationForm),
     )
 
