@@ -165,6 +165,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             endPage: endPage,
             pageCount: totalPages,
             rowRange: [5, 10, 25, 50, 100],
+            showPagination: false,
         };
     };
 
