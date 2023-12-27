@@ -35,7 +35,7 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
                 textInGroup = fixtures.textJSON({ix: "1,0"}),
                 group = fixtures.groupJSON({ix: "1", children: [textInGroup]}),
                 textInRepeat = fixtures.textJSON({ix: "2_0,0"}),
-                groupInRepeat = fixtures.groupJSON({ix: "2_0", children: [textInRepeat]}),
+                groupInRepeat = fixtures.groupJSON({ix: "2_0", children: [textInRepeat], caption: null}),
                 repeat = fixtures.repeatJSON({ix: "2", children: [groupInRepeat]}),
                 form = formUI.Form({
                     tree: [text, group, repeat],
@@ -45,7 +45,7 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
             [groupInRepeat] = repeat.children();
             [textInRepeat] = groupInRepeat.children();
 
-            assert.equal(groupInRepeat.caption(), null);
+            assert.equal(groupInRepeat.children()[0].caption(), null);
             assert.equal(utils.getRootForm(text), form);
             assert.equal(utils.getRootForm(groupInRepeat), form);
             assert.equal(utils.getRootForm(textInRepeat), form);
