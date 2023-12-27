@@ -8917,10 +8917,8 @@ msgid "Other Options"
 msgstr "Otras Opciones"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#, fuzzy
-#| msgid "Add search property"
 msgid "Add Search Property"
-msgstr "Agregar propiedad de búsqueda"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/data_interfaces/forms.py
@@ -9741,6 +9739,12 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
 msgid "Border"
 msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
+#, fuzzy
+#| msgid "Shadow Menu"
+msgid "Shade"
+msgstr "Menú Sombra"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
 msgid "Loading Multimedia Sizes..."
@@ -12651,7 +12655,7 @@ msgstr "Iniciar"
 
 #: corehq/apps/cloudcare/templates/formplayer/menu_list.html
 msgid "Home"
-msgstr ""
+msgstr "Hogar"
 
 #: corehq/apps/cloudcare/templates/formplayer/menu_list.html
 msgid "Dropdown toggle"
@@ -15280,6 +15284,19 @@ msgid "Delete your custom logo and use the standard one."
 msgstr "Eliminar su logo personalizado y utilizar el estándar."
 
 #: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Look up user by email"
+msgid "Logo to use in systems emails"
+msgstr "Buscar usuario por correo electrónico"
+
+#: corehq/apps/domain/forms.py
+#, python-brace-format
+msgid ""
+"Upload an image to display in system emails from CommCare. It will be "
+"displayed in a square format. The upload size limit is {size_limit} MB."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Call Center Application"
 msgstr "Aplicación de Centro de Llamadas"
 
@@ -15437,6 +15454,10 @@ msgid "Logo exceeds {} MB size limit"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Logo for systems emails exceeds {} MB size limit"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Release Mode Visibility should be a boolean."
 msgstr ""
 
@@ -15456,7 +15477,7 @@ msgstr ""
 "otros campos."
 
 #: corehq/apps/domain/forms.py
-msgid "Unable to save custom logo: {}"
+msgid "Unable to save logo: {}"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -16310,10 +16331,8 @@ msgid "Start Time"
 msgstr "Tiempo de Inicio"
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#, fuzzy
-#| msgid "Day and Time"
 msgid "End Time"
-msgstr "Día y Hora"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
@@ -28254,7 +28273,7 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/registration/templates/registration/email/_base.html
+#: corehq/apps/registration/templates/registration/email/base_templates/_base.html
 msgid ""
 "\n"
 "            on <a href=\"http://www.commcarehq.org/\" style=\"color: "
@@ -39810,10 +39829,8 @@ msgid "Select which other roles can assign this role:"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
-#, fuzzy
-#| msgid "Allow this role to report issues."
 msgid "Allow this role to manage project alerts."
-msgstr "Permitirle reportar problemas a este rol. "
+msgstr ""
 
 #: corehq/apps/users/templates/users/partials/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
@@ -41121,10 +41138,8 @@ msgid ""
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-#, fuzzy
-#| msgid "Test SMS Message"
 msgid "Rich Text Message"
-msgstr "Prueba de Mensaje SMS"
+msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Message type"
@@ -42227,10 +42242,8 @@ msgid "You can only upload {image_extensions} images"
 msgstr ""
 
 #: corehq/messaging/scheduling/views.py
-#, fuzzy
-#| msgid "Invalid Parent ID"
 msgid "Invalid request"
-msgstr "ID de Padre Inválido"
+msgstr ""
 
 #: corehq/messaging/smsbackends/airtel_tcl/forms.py
 msgid "Host:Port"
@@ -44721,6 +44734,16 @@ msgstr ""
 
 #: corehq/trans_override.py
 msgid "Token generator"
+msgstr ""
+
+#: corehq/util/jsonattrs.py
+#, python-format
+msgid "'%(field)s' field value has an invalid format: %(exc)s"
+msgstr ""
+
+#: corehq/util/jsonattrs.py
+#, python-brace-format
+msgid "Cannot construct {type_name} with {cause}"
 msgstr ""
 
 #: corehq/util/workbook_json/excel.py
