@@ -35,3 +35,20 @@
 .btn-outline-danger:hover {
   color: #ffffff;
 }
+
+.btn-default {
+  @include button-variant(white, $call-to-action-mid,  $call-to-action-mid);
+}
+
+.btn-group-xs > .btn, .btn-xs {
+  padding: 1px 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 3px;
+  }
+
+input::file-selector-button {
+  @extend .btn;
+  @extend .btn-xs;
+  @extend .btn-default;
+}
