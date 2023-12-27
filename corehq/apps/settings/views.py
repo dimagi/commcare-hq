@@ -419,7 +419,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     def dispatch(self, request, *args, **kwargs):
         registry.unregister('generator')
         registry.register(HQGeneratorMethod())
-        if _user_can_use_phone(request.user):
+        if _user_can_use_phone(request.couch_user):
             registry.register(HQSMSMethod())
             registry.register(HQPhoneCallMethod())
 
