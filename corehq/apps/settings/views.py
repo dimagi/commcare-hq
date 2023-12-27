@@ -51,6 +51,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import sign
+from corehq.apps.hqwebapp.utils.two_factor import user_can_use_phone
 from corehq.apps.hqwebapp.views import (
     BaseSectionPageView,
     CRUDPaginatedViewMixin,
@@ -364,13 +365,6 @@ class ChangeMyPasswordView(BaseMyAccountView):
         return self.get(request, *args, **kwargs)
 
 
-def _user_can_use_phone(user):
-    if not settings.ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE:
-        return False
-
-    return user.belongs_to_messaging_domain()
-
-
 class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     urlname = 'two_factor_settings'
     template_name = 'two_factor/profile/profile.html'
@@ -397,7 +391,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
             # Default device means the user has 2FA already enabled
             has_existing_backup_phones = bool(context.get('backup_phones'))
             context.update({
-                'allow_phone_2fa': has_existing_backup_phones or _user_can_use_phone(self.request.couch_user),
+                'allow_phone_2fa': has_existing_backup_phones or user_can_use_phone(self.request.couch_user),
             })
 
         return context
@@ -420,13 +414,13 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        # this is only here to add the login_required decorator
+        # this is only here to add decorators
         return super(TwoFactorSetupView, self).dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         if step == 'method':
-            kwargs.setdefault('allow_phone_2fa', _user_can_use_phone(self.request.couch_user))
+            kwargs.setdefault('allow_phone_2fa', user_can_use_phone(self.request.couch_user))
 
         return kwargs
 
@@ -502,7 +496,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         has_backup_phones = bool(backup_phones(self.request.user))
-        if not (has_backup_phones or _user_can_use_phone(request.couch_user)):
+        if not (has_backup_phones or user_can_use_phone(request.couch_user)):
             # NOTE: this behavior could be seen as un-intuitive. If a domain is not authorized to use phone/sms,
             # we are still allowing full functionality if they have an existing backup phone. The primary reason
             # is so that a user can delete a backup number if needed. The ability to add in a new number is still

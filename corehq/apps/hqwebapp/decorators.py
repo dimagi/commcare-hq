@@ -4,6 +4,7 @@ from functools import wraps
 from django.urls import get_resolver
 
 from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
+from corehq.apps.hqwebapp.utils.two_factor import register_two_factor_methods
 
 
 def use_daterangepicker(view_func):
@@ -233,6 +234,22 @@ def use_bootstrap5(view_func):
     def _inner(request, *args, **kwargs):
         set_bootstrap_version5()
         return view_func(request, *args, **kwargs)
+    return _inner
+
+
+def setup_two_factor(view_func):
+    """
+    Use this decorator on the dispatch method of a TemplateView subclass
+
+    We use custom forms for two factor setup and authentication
+    This decorate should be use on any view that depends on two factor
+    methods of authentication.
+    """
+    @wraps(view_func)
+    def _inner(view, request, *args, **kwargs):
+        user = request.couch_user if hasattr(request, 'couch_user') else None
+        register_two_factor_methods(user)
+        return view_func(view, request, *args, **kwargs)
     return _inner
 
 
