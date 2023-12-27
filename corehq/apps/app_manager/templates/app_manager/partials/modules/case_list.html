@@ -111,7 +111,7 @@
       {% if request|toggle_enabled:'CASE_LIST_TILE' %}
         {% with app|get_available_modules_for_case_tile_configuration:module as available_modules %}
           {% if available_modules %}
-            <div class="row">
+            <div class="row" data-bind="visible: persistTileOnForms">
               <div class="col-sm-6">
                 <label>
                   {% trans "Use persistent case tile from menu" %}
