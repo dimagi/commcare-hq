@@ -401,7 +401,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
     ).run()
 
 
-class UserRowMixin:
+class BaseUserRow:
     def __init__(self, importer, row):
         self.importer = importer
         self.row = row
@@ -418,7 +418,7 @@ class UserRowMixin:
             validator(self.row)
 
 
-class CCUserRow(UserRowMixin):
+class CCUserRow(BaseUserRow):
 
     def process(self):
         if not self._process_column_values():
@@ -426,11 +426,10 @@ class CCUserRow(UserRowMixin):
 
         try:
             self.validate_row()
-            user, import_helper = self._set_user_importer()
             self._process_simple_fields()
 
             try:
-                user.save(fail_hard=True)
+                self.user.save(fail_hard=True)
             except Exception as e:
                 # HACK: Catching all exception here is temporary. We believe that user critical sections
                 # are not behaving properly, and this catch-all is here to identify the problem
@@ -443,19 +442,18 @@ class CCUserRow(UserRowMixin):
                 )
                 return False
 
-            log = import_helper.save_log()
+            log = self.import_helper.save_log()
 
             self._process_web_user()
-
 
             if is_password(self.column_values["password"]):
                 # Without this line, digest auth doesn't work.
                 # With this line, digest auth works.
                 # Other than that, I'm not sure what's going on
                 # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
-                user.get_django_user(use_primary_db=True).check_password(self.column_values["password"])
+                self.user.get_django_user(use_primary_db=True).check_password(self.column_values["password"])
 
-            group_change_message = import_helper.update_user_groups(
+            group_change_message = self.import_helper.update_user_groups(
                 self.domain_info, self.column_values["group_names"]
             )
 
@@ -477,7 +475,7 @@ class CCUserRow(UserRowMixin):
                 log.change_messages.update(group_change_message)
                 log.save()
             elif group_change_message:
-                log = commcare_user_importer.logger.save_only_group_changes(group_change_message)
+                log = self.import_helper.logger.save_only_group_changes(group_change_message)
 
         except ValidationError as e:
             self.status_row['flag'] = e.message
@@ -541,44 +539,48 @@ class CCUserRow(UserRowMixin):
         self._parse_password()
         return True
 
-    def _set_user_importer(self):
-        from corehq.apps.user_importer.helpers import CommCareUserImporter
+    @property
+    @memoized
+    def user(self):
         cv = self.column_values
-
-        self.user = _get_or_create_commcare_user(
+        self.status_row['flag'] = 'updated' if cv['user_id'] else 'created'
+        return _get_or_create_commcare_user(
             self.domain, cv["user_id"], cv["username"], cv["is_account_confirmed"],
             cv["web_user_username"], cv["password"], self.importer.upload_user
         )
-        self.commcare_user_importer = CommCareUserImporter(
+
+    @property
+    @memoized
+    def import_helper(self):
+        from corehq.apps.user_importer.helpers import CommCareUserImporter
+        return CommCareUserImporter(
             self.importer.upload_domain, self.domain, self.user, self.importer.upload_user,
-            is_new_user=not bool(cv["user_id"]),
+            is_new_user=not bool(self.column_values["user_id"]),
             via=USER_CHANGE_VIA_BULK_IMPORTER,
             upload_record_id=self.importer.upload_record_id
         )
-        self.status_row['flag'] = 'updated' if cv['user_id'] else 'created'
-
-        return self.user, self.commcare_user_importer
 
     def _process_simple_fields(self):
-        import_helper = self.commcare_user_importer
         cv = self.column_values
         # process password
         if cv["user_id"] and is_password(cv["password"]):
             self.user.set_password(cv["password"])
-            import_helper.logger.add_change_message(UserChangeMessage.password_reset())
+            self.import_helper.logger.add_change_message(UserChangeMessage.password_reset())
 
         # process phone_numbers
         if cv["phone_numbers"] is not None:
             phone_numbers = clean_phone_numbers(cv["phone_numbers"])
-            import_helper.update_phone_numbers(phone_numbers)
+            self.import_helper.update_phone_numbers(phone_numbers)
 
         # process name
         if cv["name"]:
             self.user.set_full_name(str(cv["name"]))
-            import_helper.logger.add_changes({'first_name': self.user.first_name, 'last_name': self.user.last_name})
+            self.import_helper.logger.add_changes(
+                {'first_name': self.user.first_name, 'last_name': self.user.last_name}
+            )
 
         # process user_data
-        import_helper.update_user_data(
+        self.import_helper.update_user_data(
             cv["data"], cv["uncategorized_data"], cv["profile_name"],
             self.domain_info.profiles_by_name
         )
@@ -588,27 +590,27 @@ class CCUserRow(UserRowMixin):
             if isinstance(deactivate_after, datetime):
                 deactivate_after = deactivate_after.strftime("%m-%Y")
 
-            import_helper.update_deactivate_after(deactivate_after)
+            self.import_helper.update_deactivate_after(deactivate_after)
 
         if cv["language"]:
-            import_helper.update_language(cv["language"])
+            self.import_helper.update_language(cv["language"])
         if cv["email"]:
-            import_helper.update_email(cv["email"])
+            self.import_helper.update_email(cv["email"])
         if cv["is_active"] is not None:
-            import_helper.update_status(cv["is_active"])
+            self.import_helper.update_status(cv["is_active"])
 
         # Do this here so that we validate the location code before we
         # save any other information to the user, this way either all of
         # the user's information is updated, or none of it
         # Do not update location info if the column is not included at all
         if self.domain_info.can_assign_locations and cv["location_codes"] is not None:
-            import_helper.update_locations(cv["location_codes"], self.domain_info)
+            self.import_helper.update_locations(cv["location_codes"], self.domain_info)
 
         if cv["role"]:
             role_qualified_id = self.domain_info.roles_by_name[cv["role"]]
-            import_helper.update_role(role_qualified_id)
-        elif not import_helper.logger.is_new_user and cv["role"]:
-            import_helper.update_role('none')
+            self.import_helper.update_role(role_qualified_id)
+        elif not self.import_helper.logger.is_new_user and cv["role"]:
+            self.import_helper.update_role('none')
 
         if cv["web_user_username"]:
             self.user.get_user_data(self.domain)['login_as_user'] = cv["web_user_username"]
@@ -663,7 +665,7 @@ class CCUserRow(UserRowMixin):
                 send_account_confirmation_sms_if_necessary(self.user)
 
 
-class WebUserRow(UserRowMixin):
+class WebUserRow(BaseUserRow):
 
     def process(self):
         try:
@@ -776,10 +778,9 @@ class WebImporter:
     def run(self):
         ret = {"errors": [], "rows": []}
         current = 0
-        for row in self.user_specs:
+        for i, row in enumerate(self.user_specs):
             if self.update_progress:
-                self.update_progress(current)
-                current += 1
+                self.update_progress(i)
             user_row = self.row_cls(self, row)
             user_row.process()
             ret["rows"].append(user_row.status_row)
@@ -798,6 +799,7 @@ class CCImporter(WebImporter):
         self.is_web_upload = False
 
     @property
+    @memoized
     def update_deactivate_after_date(self):
         return EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
             self.upload_domain
@@ -812,6 +814,7 @@ class DomainInfo:
         self.is_web_upload = is_web_upload
 
     @property
+    @memoized
     def domain_obj(self):
         domain_obj = Domain.get_by_name(self.domain)
         if domain_obj is None:
@@ -819,6 +822,7 @@ class DomainInfo:
         return domain_obj
 
     @property
+    @memoized
     def group_memoizer(self):
         if self.domain == self.importer.upload_domain:
             memoizer = self.importer._group_memoizer or GroupMemoizer(self.domain)
@@ -828,6 +832,7 @@ class DomainInfo:
         return memoizer
 
     @property
+    @memoized
     def roles_by_name(self):
         from corehq.apps.users.views.utils import get_editable_role_choices
         if self.is_web_upload:
@@ -837,10 +842,12 @@ class DomainInfo:
             return {role.name: role.get_qualified_id() for role in UserRole.objects.get_by_domain(self.domain)}
 
     @property
+    @memoized
     def can_assign_locations(self):
         return domain_has_privilege(self.domain, privileges.LOCATIONS)
 
     @property
+    @memoized
     def location_cache(self):
         if self.can_assign_locations:
             return SiteCodeToLocationCache(self.domain)
@@ -848,6 +855,7 @@ class DomainInfo:
             return None
 
     @property
+    @memoized
     def profiles_by_name(self):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         if self.is_web_upload:
@@ -863,6 +871,7 @@ class DomainInfo:
             return {}
 
     @property
+    @memoized
     def validators(self):
         roles_by_name = list(self.roles_by_name)
         domain_user_specs = [
