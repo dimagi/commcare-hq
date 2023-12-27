@@ -10,7 +10,10 @@
     {% registerurl 'domain_edit_alert' domain '---' %}
 
     <form class="form form-horizontal" method="post">
-      {% crispy form %}
+      <fieldset>
+        <legend>{% trans 'Add New Alert' %}</legend>
+        {% crispy form %}
+      </fieldset>
     </form>
     <div id="ko-alert-container">
       <h3>
