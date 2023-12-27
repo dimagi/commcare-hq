@@ -1,4 +1,6 @@
-hqDefine('app_manager/js/forms/form_workflow', function () {
+hqDefine('app_manager/js/forms/form_workflow', [
+    'hqwebapp/js/bootstrap3/components.ko', // for key-value-list
+], function () {
     'use strict';
 
     var FormWorkflow = function (options) {
@@ -144,6 +146,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         self.autoLink = ko.observable();
         self.allowManualLinking = ko.observable();
         self.advancedMode = hqImport("hqwebapp/js/toggles").toggleEnabled('FORM_LINK_ADVANCED_MODE');
+        var enabled = hqImport("hqwebapp/js/toggles").toggleEnabled;
         self.forms = workflow.forms || [];
         self.datums = ko.observableArray();
         self.manualDatums = ko.observable(false);
@@ -154,6 +157,12 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         self.get_form_by_id = function (form_id) {
             return _.find(self.forms, function (form) { return form.uniqueId === form_id; });
         };
+
+        if (self.advancedMode) {
+            self.advancedModeDatums = ko.observableArray(_.map(datums, function (datum) {
+                return {key: datum.name, value: datum.xpath}
+            }));
+        }
 
         self.serializeDatums = function () {
             var jsonDatums = JSON.stringify(_.map(self.datums(), function (datum) {

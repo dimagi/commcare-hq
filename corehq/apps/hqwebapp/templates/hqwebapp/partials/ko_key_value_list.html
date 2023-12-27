@@ -1,0 +1,17 @@
+{% load i18n %}
+<script type="text/html" id="ko-key-value-list-template">
+  <div data-bind="foreach: collection">
+    <div class="row">
+      <div class="col-xs-4">
+        <input data-bind="value: key, attr: { placeholder: $parent.keyHeader }" class="form-control">
+      </div>
+      <div class="col-xs-8">
+        <textarea data-bind="value: value, attr: { placeholder: $parent.valueHeader }"
+          rows="1" class="form-control vertical-resize" spellcheck="false"></textarea>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-primary" data-bind="click: addRow">
+    <i class="fa fa-plus"></i> <span data-bind="text: btnText" />
+  </button>
+</script>

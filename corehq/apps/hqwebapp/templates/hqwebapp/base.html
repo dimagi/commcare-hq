@@ -438,6 +438,8 @@
       {% include 'hqwebapp/partials/bootstrap3/ko_select_toggle.html' %}
       {% include 'hqwebapp/partials/bootstrap3/ko_feedback.html' %}
     {% endif %}
+    <!-- TODO make b3 and b5 versions? -->
+    {% include 'hqwebapp/partials/ko_key_value_list.html' %}
 
     {% if show_overdue_invoice_modal and not requirejs_main %}
       {% if use_bootstrap5 %}

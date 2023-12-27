@@ -8,7 +8,7 @@
               Here you can set the application to navigate automatically to a different location in the app.{% endblocktrans %}"
     ></span>
   </label>
-  <div id="form-workflow" class="col-sm-4 commcare-feature" data-since-version="2.10">
+  <div id="form-workflow" class="col-sm-10 commcare-feature" data-since-version="2.10">
     <div class="form-group" data-bind="css: {'has-error': hasError, 'has-warning': hasWarning}">
       <select name="post_form_workflow" class="form-control" data-bind="
                 optstr: workflowOptions(),
@@ -143,8 +143,12 @@
             </div>
           <!-- /ko -->
           <!-- ko if: formLink.advancedMode && formLink.showLinkDatums() -->
-            <h1>Here be dragons</h1>
-          <!-- /ko -->
+            <key-value-list params="keyHeader: '{% trans "Datum ID" %}',
+                                    valueHeader: '{% trans "XPath Expression" %}',
+                                    btnText: '{% trans "Add Datum" %}',
+                                    collection: formLink.advancedModeDatums
+            "></key-value-list>
+            <!-- /ko -->
         </div>
       </div>
     </div>
@@ -156,7 +160,7 @@
     </div>
 
     <button class="btn btn-danger btn-xs"
-            data-bind="click: $parent.onDestroyFormLink.bind($parent)">
+      data-bind="click: $parent.onDestroyFormLink.bind($parent)">
       <i class="fa fa-remove"></i>
       {% trans "Remove this link" %}
     </button>
