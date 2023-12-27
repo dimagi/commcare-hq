@@ -49,6 +49,7 @@ from django.views.generic.base import View
 from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.views import LoginView
+from two_factor.plugins.registry import registry
 
 from corehq.apps.accounting.decorators import (
     always_allow_project_access,
@@ -105,6 +106,7 @@ from corehq.util.metrics.utils import sanitize_url
 from corehq.util.public_only_requests.public_only_requests import get_public_only_session
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import reverse
+from corehq.apps.settings.method import HQGeneratorMethod, HQPhoneCallMethod, HQSMSMethod
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
@@ -483,6 +485,14 @@ class HQLoginView(LoginView):
         ('backup', HQBackupTokenForm),
     ]
     extra_context = {}
+
+    def __init__(self, *args, **kwargs):
+        registry.unregister('generator')
+        # register all methods to enable login via whichever method the user has setup
+        registry.register(HQGeneratorMethod())
+        registry.register(HQSMSMethod())
+        registry.register(HQPhoneCallMethod())
+        return super().__init__(*args, **kwargs)
 
     def post(self, *args, **kwargs):
         if settings.ENFORCE_SSO_LOGIN and self.steps.current == 'auth':
