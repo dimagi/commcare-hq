@@ -205,6 +205,7 @@ class FakeStripeCard(mock.MagicMock):
         super(FakeStripeCard, self).__init__()
         self._metadata = {}
         self.last4 = '1234'
+        self.id = uuid.uuid4().hex.lower()[:15]
 
     @property
     def metadata(self):
@@ -226,3 +227,31 @@ class FakeStripeCustomer(mock.MagicMock):
         self.id = uuid.uuid4().hex.lower()[:25]
         self.cards = mock.MagicMock()
         self.cards.data = cards
+
+
+class FakeStripeCardManager:
+    _cards = {}
+
+    @classmethod
+    def create_card(cls):
+        card = FakeStripeCard()
+        cls._cards[card.id] = card
+        return card
+
+    @classmethod
+    def get_card_by_id(cls, card_id):
+        return cls._cards.get(card_id)
+
+
+class FakeStripeCustomerManager:
+    _customers = {}
+
+    @classmethod
+    def create_customer(cls, cards):
+        customer = FakeStripeCustomer(cards)
+        cls._customers[customer.id] = customer
+        return customer
+
+    @classmethod
+    def get_customer_by_id(cls, customer_id):
+        return cls._customers.get(customer_id)
