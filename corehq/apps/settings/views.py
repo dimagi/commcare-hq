@@ -49,7 +49,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, setup_two_factor
 from corehq.apps.hqwebapp.utils import sign
 from corehq.apps.hqwebapp.utils.two_factor import user_can_use_phone
 from corehq.apps.hqwebapp.views import (
@@ -63,9 +63,7 @@ from corehq.apps.settings.forms import (
     HQDeviceValidationForm,
     HQEmptyForm,
     HQPasswordChangeForm,
-    HQPhoneNumberForm,
     HQPhoneNumberMethodForm,
-    HQTOTPDeviceForm,
     HQTwoFactorMethodForm,
 )
 from corehq.apps.sso.models import IdentityProvider
@@ -403,13 +401,15 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     page_title = gettext_lazy("Two Factor Authentication Setup")
 
     form_list = (
-        ('welcome_setup', HQEmptyForm),
+        ('welcome', HQEmptyForm),
         ('method', HQTwoFactorMethodForm),
-        ('generator', HQTOTPDeviceForm),
-        ('sms', HQPhoneNumberForm),
-        ('call', HQPhoneNumberForm),
-        ('validation', HQDeviceValidationForm),
+        # other forms are dynamically added via setup_two_factor decorator
     )
+
+    @setup_two_factor
+    def setup(self, request, *args, **kwargs):
+        # this is only here to add decorators
+        return super(TwoFactorSetupView, self).setup(request, *args, **kwargs)
 
     @method_decorator(active_domains_required)
     @method_decorator(login_required)
@@ -417,12 +417,15 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
         # this is only here to add decorators
         return super(TwoFactorSetupView, self).dispatch(request, *args, **kwargs)
 
-    def get_form_kwargs(self, step=None):
-        kwargs = super().get_form_kwargs(step)
-        if step == 'method':
-            kwargs.setdefault('allow_phone_2fa', user_can_use_phone(self.request.couch_user))
-
-        return kwargs
+    def get_form_list(self):
+        # It would be cool if we could specify the validation form in the custom method
+        # but SetupView.get_form_list hard codes the default validation form for 'sms'
+        # and 'call' methods.
+        # https://github.com/jazzband/django-two-factor-auth/blob/1.15.5/two_factor/views/core.py#L510-L511
+        form_list = super(TwoFactorSetupView, self).get_form_list()
+        if {'sms', 'call'} & set(form_list.keys()):
+            form_list['validation'] = HQDeviceValidationForm
+        return form_list
 
 
 class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
@@ -538,17 +541,11 @@ class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
 class TwoFactorResetView(TwoFactorSetupView):
     urlname = 'reset'
 
-    form_list = (
-        ('welcome_reset', HQEmptyForm),
-        ('method', HQTwoFactorMethodForm),
-        ('generator', HQTOTPDeviceForm),
-        ('sms', HQPhoneNumberForm),
-        ('call', HQPhoneNumberForm),
-        ('validation', HQDeviceValidationForm),
-    )
-
     def get(self, request, *args, **kwargs):
         default_device(request.user).delete()
+        # django-two-factor-auth caches the default device on the user so clear that after deleting
+        from two_factor.utils import USER_DEFAULT_DEVICE_ATTR_NAME
+        delattr(request.user, USER_DEFAULT_DEVICE_ATTR_NAME)
         return super(TwoFactorResetView, self).get(request, *args, **kwargs)
 
 
