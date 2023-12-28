@@ -667,29 +667,32 @@ class CCUserRow(BaseUserRow):
 
 class WebUserRow(BaseUserRow):
 
+    def _process_column_values(self):
+        self.column_values = {
+            'username': self.row.get('username'),
+            'role': self.row.get('role'),
+            'status': self.row.get('status'),
+            'location_codes': format_location_codes(self.row.get('location_code', [])),
+            'remove': spec_value_to_boolean_or_none(self.row, 'remove')
+        }
+
     def process(self):
         try:
             self.validate_row()
-            role = self.row.get('role')
-            status = self.row.get('status')
-            location_codes = self.row.get('location_code', [])
-            location_codes = format_location_codes(location_codes)
-            remove = spec_value_to_boolean_or_none(self.row, 'remove')
-
-            self.process_row(role, status, location_codes, remove)
+            self._process_column_values()
+            self.process_row()
         except UserUploadError as e:
             self.status_row['flag'] = str(e)
 
-    def process_row(self, role, status, location_codes, remove):
-        username = self.row.get('username')
-        user = CouchUser.get_by_username(username, strict=True)
+    def process_row(self):
+        user = CouchUser.get_by_username(self.column_values['username'], strict=True)
 
         if user:
-            self.process_existing_user(user, role, status, location_codes, remove)
+            self.process_existing_user(user)
         else:
-            self.process_new_user(role, status, location_codes, remove)
+            self.process_new_user()
 
-    def process_existing_user(self, user, role, status, location_codes, remove):
+    def process_existing_user(self, user):
         from corehq.apps.user_importer.helpers import WebUserImporter
         check_changing_username(user, user.username)
         web_user_importer = WebUserImporter(
@@ -698,19 +701,18 @@ class WebUserRow(BaseUserRow):
         )
         user_change_logger = web_user_importer.logger
 
-        if remove:
+        if self.column_values['remove']:
             remove_web_user_from_domain(
                 self.domain, user, user.username, self.importer.upload_user, user_change_logger, is_web_upload=True
             )
             self.status_row['flag'] = 'updated'
         else:
             membership = user.get_domain_membership(self.domain)
-            role_qualified_id = self.domain_info.roles_by_name[role]
+            role_qualified_id = self.domain_info.roles_by_name[self.column_values['role']]
 
             if membership:
-                modify_existing_user_in_domain(
-                    self.importer.upload_domain, self.domain, self.domain_info, location_codes, membership,
-                    role_qualified_id, self.importer.upload_user, user, web_user_importer
+                self._modify_existing_user_in_domain(
+                    membership, role_qualified_id, user, web_user_importer
                 )
             else:
                 create_or_update_web_user_invite(
@@ -720,26 +722,47 @@ class WebUserRow(BaseUserRow):
         web_user_importer.save_log()
         self.status_row['flag'] = 'updated'
 
-    def process_new_user(self, role, status, location_codes, remove):
-        username = self.row.get('username')
+    def _modify_existing_user_in_domain(self, membership, role_qualified_id,
+                                       current_user, web_user_importer,
+                                       max_tries=3):
+        location_codes = self.column_values['location_codes']
+        if self.domain_info.can_assign_locations and location_codes is not None:
+            web_user_importer.update_locations(location_codes, membership, self.domain_info)
+        web_user_importer.update_role(role_qualified_id)
+        try:
+            current_user.save()
+        except ResourceConflict:
+            notify_exception(None, message="ResouceConflict during web user import",
+                             details={'domain': self.domain, 'username': current_user.username})
+            if max_tries > 0:
+                current_user.clear_quickcache_for_user()
+                updated_user = CouchUser.get_by_username(current_user.username, strict=True)
+                self._modify_existing_user_in_domain(
+                    membership, role_qualified_id,
+                    updated_user, web_user_importer, max_tries=max_tries - 1)
+            else:
+                raise
 
-        if remove:
-            remove_invited_web_user(self.domain, username)
+    def process_new_user(self):
+        cv = self.column_values
+
+        if cv['remove']:
+            remove_invited_web_user(self.domain, cv['username'])
             self.status_row['flag'] = 'updated'
         else:
-            if status == "Invited":
-                self.check_invitation_status(self.domain, username)
+            if cv['status'] == "Invited":
+                self.check_invitation_status(self.domain, cv['username'])
 
             user_invite_loc_id = None
-            if self.domain_info.can_assign_locations and location_codes:
-                if len(location_codes) > 0:
+            if self.domain_info.can_assign_locations and cv['location_codes']:
+                if len(cv['location_codes']) > 0:
                     user_invite_loc = get_location_from_site_code(
-                        location_codes[0], self.domain_info.location_cache
+                        cv['location_codes'][0], self.domain_info.location_cache
                     )
                     user_invite_loc_id = user_invite_loc.location_id
 
             create_or_update_web_user_invite(
-                username, self.domain, self.domain_info.roles_by_name[role], self.importer.upload_user,
+                cv['username'], self.domain, self.domain_info.roles_by_name[cv['role']], self.importer.upload_user,
                 user_invite_loc_id
             )
             self.status_row['flag'] = 'invited'
@@ -925,26 +948,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
         upload_domain, user_specs, upload_user, upload_record_id,
         update_progress=update_progress
     ).run()
-
-
-def modify_existing_user_in_domain(upload_domain, domain, domain_info, location_codes, membership,
-                                   role_qualified_id, upload_user, current_user, web_user_importer,
-                                   max_tries=3):
-    if domain_info.can_assign_locations and location_codes is not None:
-        web_user_importer.update_locations(location_codes, membership, domain_info)
-    web_user_importer.update_role(role_qualified_id)
-    try:
-        current_user.save()
-    except ResourceConflict:
-        notify_exception(None, message="ResouceConflict during web user import",
-                         details={'domain': domain, 'username': current_user.username})
-        if max_tries > 0:
-            current_user.clear_quickcache_for_user()
-            updated_user = CouchUser.get_by_username(current_user.username, strict=True)
-            modify_existing_user_in_domain(domain, domain_info, location_codes, membership, role_qualified_id,
-                                           upload_user, updated_user, web_user_importer, max_tries=max_tries - 1)
-        else:
-            raise
 
 
 def check_user_role(username, role):
