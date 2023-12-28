@@ -162,7 +162,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             }
         }
 
-        let rowRange = [5, 10, 25, 50, 100],
+        const rowRange = [5, 10, 25, 50, 100],
             hasMultiplePages = totalPages > 1,
             hasAtLeastMinimumItemsPerPage = totalItems > rowRange[0],
             showPagination = hasMultiplePages || hasAtLeastMinimumItemsPerPage;
