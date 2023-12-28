@@ -74,6 +74,23 @@ hqDefine("app_manager/js/details/screen", function () {
         self.caseTileFieldsForTemplate = ko.computed(function () {
             return (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).fields;
         });
+        self.caseTilePreviewColumns = ko.computed(function () {
+            const grid = (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).grid;
+            if (grid) {
+                return _.map(grid, function (value, key) {
+                    return {
+                        showInTilePreview: true,
+                        tileRowStart: value.y + 1,
+                        tileRowEnd: value.y + value.height + 1,
+                        tileColumnStart: value.x + 1,
+                        tileColumnEnd: value.x + value.width + 1,
+                        tileContent: key,
+                    };
+                });
+            }
+
+            return self.columns();
+        });
         self.caseTilePreviewForTemplate = ko.computed(function () {
             const grid = (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).grid;
             if (!grid) {

@@ -6,8 +6,8 @@
   {% trans "Reset Grid" %}
 </button>
 
-<div data-bind="visible: showCaseTileConfigColumns()" id="preview-box">
-  <div id="case-tile-preview" data-bind="foreach: columns">
+<div data-bind="visible: caseTileTemplate()">
+  <div id="case-tile-preview" data-bind="foreach: caseTilePreviewColumns">
     <div class="cell" data-bind="visible: showInTilePreview, style: {
           'grid-row-start': tileRowStart,
           'grid-row-end': tileRowEnd,
@@ -15,11 +15,13 @@
           'grid-column-end': tileColumnEnd,
       }">
       <div class="content">
-        #<span data-bind="text: $index()"></span>:
+        <!-- ko if: $data.original -->
+          #<span data-bind="text: $index()"></span>:
+        <!-- /ko -->
         <span data-bind="text: tileContent"></span>
       </div>
       <!-- TODO: align less terribly, this gets messed up as screen/tiles resize -->
-      <div class="controls">
+      <div class="controls" data-bind="if: $data.original">
         <table style="width: 100%;"><tbody><tr><td style="text-align: center;">
           <div class="btn-group" role="group">
             <button type="button" class="btn btn-xs btn-default"
