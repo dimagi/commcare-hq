@@ -695,6 +695,28 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             PROFILE_SLUG: self.profile.id,
         })
 
+    def test_required_field_optional_if_profile_set(self):
+        required_field = [f for f in self.definition.get_fields() if f.slug == 'mode'][0]
+        required_field.is_required = True
+        required_field.save()
+        import_users_and_groups(
+            self.domain.name,
+            # mode is marked as is_required but provided via profile
+            [self._get_spec(user_profile=self.profile.name)],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )
+        self.assert_user_data_equals({
+            'commcare_project': 'mydomain',
+            'mode': 'minor',
+            PROFILE_SLUG: self.profile.id,
+        })
+        # cleanup
+        required_field.is_required = False
+        required_field.save()
+
     def test_user_data_profile_conflict(self):
         rows = import_users_and_groups(
             self.domain.name,

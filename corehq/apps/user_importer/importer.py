@@ -883,14 +883,14 @@ class DomainInfo:
             profiles = None
         else:
             allowed_group_names = [group.name for group in self.group_memoizer.groups]
-            profiles = list(self.profiles_by_name)
+            profiles = self.profiles_by_name
         return get_user_import_validators(
             self.domain_obj,
             domain_user_specs,
             self.is_web_upload,
             allowed_group_names,
             allowed_roles=roles_by_name,
-            allowed_profiles=profiles,
+            profiles_by_name=profiles,
             upload_domain=self.importer.upload_domain,
         )
 
