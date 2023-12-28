@@ -85,7 +85,7 @@
           <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}">
           <div data-bind="jqueryElement: nodeset_extra.ui"></div>
           <span class="help-block"
-                data-bind="text: 'Please enter an expression.', visible: showWarning"></span>
+                data-bind="text: gettext('Please enter an expression.'), visible: showWarning"></span>
           </td>
         <!--/ko-->
         <!--ko ifnot: $data.hasNodeset -->
