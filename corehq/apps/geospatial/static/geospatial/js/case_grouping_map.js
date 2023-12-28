@@ -74,7 +74,15 @@ hqDefine("geospatial/js/case_grouping_map",[
             let csvStr = "";
 
             // Write headers first
-            csvStr = Object.keys(casesToExport[0]).join(",");
+            let headers = [
+                gettext('Group ID'),
+                gettext('Group Center Coordinates'),
+                gettext('Case Name'),
+                gettext('Case Owner Name'),
+                gettext('Case Coordinates'),
+                gettext('Case ID'),
+            ]
+            csvStr = (headers).join(",");
             csvStr += "\n";
 
             _.forEach(casesToExport, function (itemRow) {
