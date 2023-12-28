@@ -9,6 +9,7 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_PREVIOUS,
     WORKFLOW_ROOT,
 )
+from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import FormDatum, FormLink
 from corehq.apps.app_manager.suite_xml.post_process.workflow import (
     CommandId,
@@ -292,6 +293,30 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), factory.app.create_suite(), "./entry")
+
+    def test_manual_form_link_bad_datums(self, *args):
+        factory = AppFactory(build_version='2.9.0')
+
+        m0, m0f0 = factory.new_basic_module('child visit', 'child')
+        factory.form_requires_case(m0f0)
+        factory.form_opens_case(m0f0, case_type='visit', is_subcase=True)
+
+        m1, m1f0 = factory.new_advanced_module('visit history', 'visit', parent_module=m0)
+        factory.form_requires_case(m1f0, 'child')
+        factory.form_requires_case(m1f0, 'visit', parent_case_type='child')
+
+        m0f0.post_form_workflow = WORKFLOW_FORM
+        m0f0.form_links = [
+            FormLink(xpath="true()", form_id=m1f0.unique_id, form_module_id=m1.unique_id, datums=[
+                FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id"),
+                # There should be a case_id_load_visit_0 datum defined here
+            ]),
+        ]
+
+        with self.assertRaises(SuiteValidationError) as e:
+            factory.app.create_suite()
+        self.assertIn("Unable to link form 'child visit form 0', missing "
+                      "variable 'case_id_load_visit_0'", str(e.exception))
 
     def test_manual_form_link_with_fallback(self, *args):
         factory = AppFactory(build_version='2.9.0')
