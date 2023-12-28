@@ -740,7 +740,8 @@ FORM_LINK_ADVANCED_MODE = StaticToggle(
     [NAMESPACE_DOMAIN],
     description=(
         "Switches manual datum configuration for form linking to a UI where app "
-        "builders must specify the datum IDs to provide"
+        "builders must specify the datum IDs to provide. Allows for linking to "
+        "more targets, but is way harder to use."
     ),
 )
 
