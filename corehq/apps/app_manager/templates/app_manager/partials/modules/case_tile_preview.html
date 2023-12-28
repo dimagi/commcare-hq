@@ -14,11 +14,15 @@
           'grid-column-start': tileColumnStart,
           'grid-column-end': tileColumnEnd,
       }">
-      <div class="content">
+      <div class="content" data-bind="style: {
+        'justify-self': horizontalAlign,
+        'text-align': horizontalAlign,
+        'align-self': verticalAlign,
+      }">
         <!-- ko if: $data.original -->
           #<span data-bind="text: $index()"></span>:
         <!-- /ko -->
-        <span data-bind="text: tileContent"></span>
+        <!-- ko text: tileContent --><!-- /ko -->
       </div>
       <!-- TODO: align less terribly, this gets messed up as screen/tiles resize -->
       <div class="controls" data-bind="if: $data.original">

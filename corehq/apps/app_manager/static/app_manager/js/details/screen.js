@@ -80,6 +80,8 @@ hqDefine("app_manager/js/details/screen", function () {
                 return _.map(grid, function (value, key) {
                     return {
                         showInTilePreview: true,
+                        horizontalAlign: value["horz-align"],
+                        verticalAlign: value["vert-align"],
                         tileRowStart: value.y + 1,
                         tileRowEnd: value.y + value.height + 1,
                         tileColumnStart: value.x + 1,
