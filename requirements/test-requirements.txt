@@ -10,7 +10,7 @@ amqp==5.1.1
     # via kombu
 architect==0.6.0
     # via -r base-requirements.in
-asgiref==3.5.0
+asgiref==3.7.2
     # via django
 async-timeout==4.0.2
     # via redis
@@ -628,6 +628,7 @@ twilio==7.12.0
     # via -r base-requirements.in
 typing-extensions==4.1.1
     # via
+    #   asgiref
     #   bytecode
     #   cattrs
     #   ddtrace
