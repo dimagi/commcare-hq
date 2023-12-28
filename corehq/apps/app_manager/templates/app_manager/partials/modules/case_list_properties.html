@@ -98,7 +98,7 @@
       <!--/ko-->
       <!-- ko if: $parent.showCaseTileMappingColumn() && $parent.caseTileFieldsForTemplate() -->
         <td class="col-sm-2">
-          <select class="form-control" data-bind="value: case_tile_field, options: $parent.caseTileFieldsForTemplate"></select>
+          <select class="form-control" data-bind="value: case_tile_field, options: $parent.caseTileFieldsForTemplate, visible: !$data.isTab"></select>
         </td>
       <!-- /ko -->
       <td class="col-sm-1 text-center">
