@@ -40,7 +40,7 @@ django-transfer
 django-two-factor-auth
 django-user-agents
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
-django>=3.2.18,<4.0
+django==4.2.8
 djangorestframework
 dropbox
 elasticsearch5>=5.0.0,<6.0.0
