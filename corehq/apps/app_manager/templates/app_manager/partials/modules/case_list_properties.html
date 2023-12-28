@@ -63,15 +63,15 @@
                               'col-sm-2': !$parent.showCaseTileMappingColumn(),
                           }"></td>
         <!-- ko if: $parent.showCaseTileConfigColumns() -->
-          <td>
+          <td class="col-sm-1">
             <select class="form-control" data-bind="value: tileRowStart, options: tileRowOptions, visible: coordinatesVisible"></select>
             <select class="form-control" data-bind="value: tileColumnStart, options: tileColumnOptions, visible: coordinatesVisible"></select>
           </td>
-          <td>
+          <td class="col-sm-1">
             <select class="form-control" data-bind="value: tileWidth, options: tileWidthOptions, visible: coordinatesVisible"></select>
             <select class="form-control" data-bind="value: tileHeight, options: tileHeightOptions, visible: coordinatesVisible"></select>
           </td>
-          <td>
+          <td class="col-sm-1">
             <button class="btn btn-default" data-bind="click: openStyleModal, visible: coordinatesVisible">{% trans "Edit" %}</button>
           </td>
         <!--/ko-->
@@ -94,6 +94,11 @@
             <div data-bind="jqueryElement: relevant.ui"></div>
           </td>
           <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
+        <!--/ko-->
+        <!-- ko if: $parent.showCaseTileConfigColumns() -->
+          <td class="col-sm-1"></td>
+          <td class="col-sm-1"></td>
+          <td class="col-sm-1"></td>
         <!--/ko-->
       <!--/ko-->
       <!-- ko if: $parent.showCaseTileMappingColumn() && $parent.caseTileFieldsForTemplate() -->
