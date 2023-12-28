@@ -521,7 +521,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             const caseRowOrder = initialPageData.get('case_row_order');
             for (const caseItem of rawCaseData) {
                 const caseObj = parseCaseItem(caseItem, caseRowOrder);
-                const caseModelInstance = new models.GroupedCaseMapItem(caseObj.case_id, {coordinates: caseObj.gps_point}, caseObj.link);
+                const caseModelInstance = new models.GroupedCaseMapItem(caseObj.case_id, caseObj, caseObj.link);
                 caseModels.push(caseModelInstance);
             }
             mapModel.caseMapItems(caseModels);

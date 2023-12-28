@@ -125,17 +125,27 @@ class CaseGroupingReport(BaseCaseMapReport):
 
     default_rows = 1
     force_page_size = True
+    sortable = False
 
     @property
     def headers(self):
-        headers = []
-        # ToDo: populate headers
-        return headers
+        from corehq.apps.reports.datatables import (
+            DataTablesColumn,
+            DataTablesHeader,
+        )
+        return DataTablesHeader(
+            DataTablesColumn(_("Case ID"), prop_name='case_id'),
+            DataTablesColumn(_("Case Name"), prop_name='case_name'),
+            DataTablesColumn(_("Owner ID"), prop_name='owner_id'),
+            DataTablesColumn(_("Owner Name"), prop_name='owner_name'),
+            DataTablesColumn(_("Case Coordinates"), prop_name='coordinates'),
+            DataTablesColumn(_("Link"), prop_name='link'),
+        )
 
     @property
     def template_context(self):
         context = super().template_context
-        context['case_row_order'] = {val.html: idx for idx, val in enumerate(self.headers)}
+        context['case_row_order'] = {column.prop_name: index for index, column in enumerate(self.headers)}
         return context
 
     def _base_query(self):
@@ -217,8 +227,12 @@ class CaseGroupingReport(BaseCaseMapReport):
             )
             case = wrap_case_search_hit(row)
             coordinates = self._get_geo_location(case)
+            case_owner_type, case_owner = display.owner
             cases.append([
                 display.case_id,
+                display.case_name,
+                display.owner_id,
+                case_owner['name'],
                 coordinates,
                 display.case_link
             ])
