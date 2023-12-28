@@ -85,8 +85,15 @@ hqDefine("geospatial/js/case_grouping_map",[
             csvStr = (headers).join(",");
             csvStr += "\n";
 
-            _.forEach(casesToExport, function (itemRow) {
-                csvStr += Object.keys(itemRow).map(key => itemRow[key]).join(",");
+            _.forEach(casesToExport, function (caseToExport) {
+                csvStr += [
+                    caseToExport.groupId,
+                    caseToExport.groupCenterCoordinates,
+                    caseToExport.caseName,
+                    caseToExport.owner_name,
+                    caseToExport.coordinates,
+                    caseToExport.caseId,
+                ].join(",");
                 csvStr += "\n";
             });
 
