@@ -1578,6 +1578,49 @@ class CommCareUserFormSet(object):
         )
 
 
+class WebUserFormSet(object):
+    """Combines UpdateUserRoleForm and the Custom Data form"""
+
+    def __init__(self, domain, editable_user, request, data=None):
+        self.domain = domain
+        self.editable_user = editable_user
+        self.request = request
+        self.data = data
+
+    @cached_property
+    def user_role_form(self):
+        return UpdateUserRoleForm(data=self.data, domain=self.domain,
+                                  existing_user=self.editable_user, request=self.request)
+
+    @cached_property
+    def custom_data(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            UserFieldsView,
+        )
+        return CustomDataEditor(
+            domain=self.domain,
+            field_view=UserFieldsView,
+            existing_custom_data=self.editable_user.get_user_data(self.domain).to_dict(),
+            post_dict=self.data,
+            ko_model="custom_fields",
+        )
+
+    def is_valid(self):
+        return (self.data is not None
+                and all([self.user_role_form.is_valid(), self.custom_data.is_valid()]))
+
+    def update_user(self):
+        user_data = self.user_role_form.existing_user.get_user_data(self.domain)
+        old_profile_id = user_data.profile_id
+        new_user_data = self.custom_data.get_data_to_save()
+        new_profile_id = new_user_data.pop(PROFILE_SLUG, ...)
+        changed = user_data.update(new_user_data, new_profile_id)
+        return self.user_role_form.update_user(
+            metadata_updated=changed,
+            profile_updated=old_profile_id != new_profile_id
+        )
+
+
 class UserFilterForm(forms.Form):
     USERNAMES_COLUMN_OPTION = 'usernames'
     COLUMNS_CHOICES = (

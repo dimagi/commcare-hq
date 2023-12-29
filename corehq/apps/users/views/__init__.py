@@ -94,8 +94,8 @@ from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
     SetUserPasswordForm,
-    UpdateUserRoleForm,
     TableauUserForm,
+    WebUserFormSet,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
 from corehq.apps.users.models import (
@@ -389,8 +389,7 @@ class EditWebUserView(BaseEditUserView):
             data = self.request.POST
         else:
             data = None
-        form = UpdateUserRoleForm(data=data, domain=self.domain, existing_user=self.editable_user,
-                                  request=self.request)
+        form = WebUserFormSet(self.domain, self.editable_user, self.request, data)
 
         if self.can_change_user_roles:
             try:
@@ -400,9 +399,9 @@ class EditWebUserView(BaseEditUserView):
                 messages.error(self.request, _("""
                     This user has no role. Please assign this user a role and save.
                 """))
-            form.load_roles(current_role=existing_role, role_choices=self.user_role_choices)
+            form.user_role_form.load_roles(current_role=existing_role, role_choices=self.user_role_choices)
         else:
-            del form.fields['role']
+            del form.user_role_form.fields['role']
 
         return form
 
