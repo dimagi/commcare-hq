@@ -18,6 +18,7 @@ from corehq.apps.es.case_search import (
 )
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
+from corehq.apps.reports.standard.cases.case_list_explorer import XpathCaseSearchFilterMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.util.quickcache import quickcache
 
@@ -38,7 +39,14 @@ from .utils import (
 )
 
 
-class BaseCaseMapReport(ProjectReport, CaseListMixin):
+class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin):
+    fields = [
+        'corehq.apps.reports.standard.cases.filters.XPathCaseSearchFilter',
+        'corehq.apps.reports.filters.case_list.CaseListFilter',
+        'corehq.apps.reports.filters.select.CaseTypeFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+    ]
+
     section_name = gettext_noop("Data")
 
     dispatcher = CaseManagementMapDispatcher
@@ -72,6 +80,11 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin):
         )
         headers.custom_sort = [[2, 'desc']]
         return headers
+
+    def _build_query(self):
+        query = super()._build_query()
+        query = self.apply_xpath_case_search_filter(query)
+        return query
 
     def _get_geo_location(self, case):
         geo_case_property = get_geo_case_property(self.domain)
