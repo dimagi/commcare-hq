@@ -280,6 +280,11 @@ hqDefine("geospatial/js/case_grouping_map",[
         setMapLayersVisibility(MAPBOX_LAYER_VISIBILITY.None);
         mapMarkers.forEach((marker) => marker.remove());
         mapMarkers = [];
+
+        let groupColorByID = _.object(_.map(caseGroupsInstance.generatedGroups, function(group) {
+            return [group.groupId, group.color]
+        }));
+
         exportModelInstance.casesToExport().forEach(function (caseItem) {
             const coordinates = caseItem.itemData.coordinates;
             if (!coordinates) {
@@ -287,8 +292,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             }
             const caseGroupID = caseItem.groupId;
             if (caseGroupsInstance.groupIDInVisibleGroupIds(caseGroupID)) {
-                let caseGroup = caseGroupsInstance.getGroupByID(caseGroupID);
-                color = caseGroup.color;
+                color = groupColorByID[caseGroupID];
                 const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
                 marker.setLngLat([coordinates.lng, coordinates.lat]);
 
