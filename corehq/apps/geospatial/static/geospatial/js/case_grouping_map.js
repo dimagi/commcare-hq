@@ -38,6 +38,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     let mapModel;
     let polygonFilterInstance;
+    let currentPage = 1;
 
     function clusterStatsModel() {
         'use strict';
@@ -72,10 +73,14 @@ hqDefine("geospatial/js/case_grouping_map",[
             });
 
             let csvStr = "";
+            let groupNameByID = _.object(_.map(caseGroupsInstance.generatedGroups, function(group) {
+                return [group.groupId, group.name]
+            }));
 
             // Write headers first
             let headers = [
                 gettext('Group ID'),
+                gettext('Group Name'),
                 gettext('Group Center Coordinates'),
                 gettext('Case Name'),
                 gettext('Case Owner Name'),
@@ -88,6 +93,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             _.forEach(casesToExport, function (caseToExport) {
                 csvStr += [
                     caseToExport.groupId,
+                    groupNameByID[caseToExport.groupId],
                     caseToExport.groupCenterCoordinates,
                     caseToExport.caseName,
                     caseToExport.owner_name,
@@ -456,8 +462,9 @@ hqDefine("geospatial/js/case_grouping_map",[
                 const groupUUID =  utils.uuidv4();
 
                 if (casePoints.length) {
-                    groupName = _.template(gettext("Group <%- groupCount %>"))({
+                    groupName = _.template(gettext("Group <%- pageNumber %>-<%- groupCount %>"))({
                         groupCount: groupCount,
+                        pageNumber: currentPage,
                     });
                     groupCount += 1;
 
@@ -585,6 +592,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             $('.dataTables_scroll').hide();
 
             const caseData = xhr.responseJSON.aaData;
+            currentPage = xhr.responseJSON.sEcho;
             if (caseData.length) {
                 loadCases(caseData);
                 loadMapClusters(caseModels);
