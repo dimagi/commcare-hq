@@ -1,4 +1,3 @@
-import json
 import uuid
 from datetime import datetime, timedelta
 
@@ -549,13 +548,7 @@ def delete_unused_messaging_images():
     present_image_ids = set()
     # There is no easy way of figuring out the domain from EmailContent
     # directly, so we only fetch those EmailContents that have html.
-    email_messages = [
-        json.loads(message)
-        for message in (EmailContent.objects
-                        .values_list("html_message", flat=True)
-                        .filter(html_message__isnull=False))
-    ]
-
+    email_messages = EmailContent.objects.values_list("html_message", flat=True).filter(html_message__isnull=False)
     for messages in email_messages:
         for lang, content in messages.items():
             soup = BeautifulSoup(content, features='lxml')
