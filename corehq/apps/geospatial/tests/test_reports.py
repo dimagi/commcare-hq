@@ -71,7 +71,7 @@ class TestCaseGroupingReport(BaseReportTest):
         report_obj = CaseGroupingReport(request, domain=DOMAIN)
         report_obj.rendered_as = 'view'
         context_data = report_obj.template_context
-        expected_columns = ['case_id', 'gps_point', 'link']
+        expected_columns = ['case_id', 'case_name', 'owner_id', 'owner_name', 'coordinates', 'link']
         self.assertEqual(
             list(context_data['case_row_order'].keys()),
             expected_columns
