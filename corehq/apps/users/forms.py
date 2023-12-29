@@ -12,6 +12,7 @@ from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
@@ -21,7 +22,6 @@ from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
-from memoized import memoized
 
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
@@ -1078,8 +1078,7 @@ class MultipleSelectionForm(forms.Form):
     Usage::
 
         # views.py
-        @property
-        @memoized
+        @cached_property
         def users_form(self):
             form = MultipleSelectionForm(
                 initial={'selected_ids': self.users_at_location},
@@ -1225,8 +1224,7 @@ class CommtrackUserForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
-    @property
-    @memoized
+    @cached_property
     def commtrack_enabled(self):
         return Domain.get_by_name(self.domain).commtrack_enabled
 
@@ -1537,14 +1535,12 @@ class CommCareUserFormSet(object):
             privileges.LOADTEST_USERS,
         )
 
-    @property
-    @memoized
+    @cached_property
     def user_form(self):
         return UpdateCommCareUserInfoForm(
             data=self.data, domain=self.domain, existing_user=self.editable_user, request=self.request)
 
-    @property
-    @memoized
+    @cached_property
     def action_form(self):
         return CommCareUserActionForm(
             data=self.data,
@@ -1553,8 +1549,7 @@ class CommCareUserFormSet(object):
             request=self.request,
         )
 
-    @property
-    @memoized
+    @cached_property
     def custom_data(self):
         from corehq.apps.users.views.mobile.custom_data_fields import (
             UserFieldsView,
