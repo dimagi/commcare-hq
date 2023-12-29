@@ -87,13 +87,14 @@ class TestCaseGroupingReport(BaseReportTest):
                 in_testing=True,
             )
             json_data = report.json_dict['aaData']
+
         case_data_by_id = {row[0]: row for row in json_data}
         case_ids = set(case_data_by_id)
 
-        self.assertEqual(len(json_data), 3)
-        self.assertIn(porto_novo.case_id, case_ids)
-        self.assertIn(bohicon.case_id, case_ids)
-        self.assertIn(lagos.case_id, case_ids)
+        self.assertSetEqual(
+            case_ids,
+            {porto_novo.case_id, bohicon.case_id, lagos.case_id}
+        )
 
         case_data = case_data_by_id[porto_novo.case_id]
         self.assertListEqual(
