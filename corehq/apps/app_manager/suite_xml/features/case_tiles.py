@@ -133,29 +133,30 @@ class CaseTileHelper(object):
                 self.app, self.module, detail.actions, self.build_profile_id, self.entries_helper)
 
         # Add case search action if needed
-        if module_offers_search(self.module) and not module_uses_inline_search(self.module):
-            if (case_search_action := DetailContributor.get_case_search_action(
-                self.module,
-                self.build_profile_id,
-                self.detail_id
-            )) is not None:
-                detail.actions.append(case_search_action)
+        if self.detail_type.endswith('short'):
+            if module_offers_search(self.module) and not module_uses_inline_search(self.module):
+                if (case_search_action := DetailContributor.get_case_search_action(
+                    self.module,
+                    self.build_profile_id,
+                    self.detail_id
+                )) is not None:
+                    detail.actions.append(case_search_action)
 
-        #  Excludes legacy tile template to preserve behavior of existing apps using this template.
-        if self.detail.case_tile_template not in [CaseTileTemplates.PERSON_SIMPLE.value, CUSTOM]:
-            self._populate_sort_elements_in_detail(detail)
+            #  Excludes legacy tile template to preserve behavior of existing apps using this template.
+            if self.detail.case_tile_template not in [CaseTileTemplates.PERSON_SIMPLE.value, CUSTOM]:
+                self._populate_sort_elements_in_detail(detail)
 
-        DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
+            DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
 
-        if self.module.has_grouped_tiles():
-            detail.tile_group = TileGroup(
-                function=f"string(./index/{self.detail.case_tile_group.index_identifier})",
-                header_rows=self.detail.case_tile_group.header_rows
-            )
+            if self.module.has_grouped_tiles():
+                detail.tile_group = TileGroup(
+                    function=f"string(./index/{self.detail.case_tile_group.index_identifier})",
+                    header_rows=self.detail.case_tile_group.header_rows
+                )
 
-        if (self.detail_type == 'case_short' or self.detail_type == 'search_short') \
-                and hasattr(self.module, 'lazy_load_case_list_fields') and self.module.lazy_load_case_list_fields:
-            detail.lazy_loading = self.module.lazy_load_case_list_fields
+            if hasattr(self.module, 'lazy_load_case_list_fields') and self.module.lazy_load_case_list_fields:
+                detail.lazy_loading = self.module.lazy_load_case_list_fields
+
         return detail
 
     def _get_matched_detail_column(self, case_tile_field):
