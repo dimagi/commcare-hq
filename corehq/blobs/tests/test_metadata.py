@@ -54,11 +54,13 @@ class TestMetaDB(TestCase):
         self.db.put(BytesIO(b"content"), meta=meta)
         self.assertEqual(get_meta(meta).properties, {"mood": "Vangelis"})
 
-    def test_save_empty_properties(self):
+    def test_save_empty_properties_returns_none(self):
         meta = new_meta()
         self.assertEqual(meta.properties, {})
+
         self.db.put(BytesIO(b"content"), meta=meta)
-        self.assertEqual(get_meta(meta).properties, {})
+        self.assertIsNone(get_meta(meta).properties)
+
         query = BlobMeta.objects.partitioned_query(meta.parent_id)
         results = query.filter(id=meta.id).values_list('id', 'properties')
         self.assertEqual(list(results), [(meta.id, None)])
