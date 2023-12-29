@@ -11,7 +11,7 @@ from xml.sax.saxutils import escape
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import (
-    Detail, XPathVariable, Text, TileGroup, Style, EndpointAction
+    Detail, XPathVariable, TileGroup, Style, EndpointAction
 )
 from corehq.apps.app_manager.util import (
     module_offers_search,
@@ -75,7 +75,7 @@ class CaseTileHelper(object):
         self.detail_column_infos = detail_column_infos
         self.entries_helper = entries_helper
 
-    def build_case_tile_detail(self):
+    def build_case_tile_detail(self, detail, start, end):
         from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
         """
         Return a Detail node from an apps.app_manager.models.Detail that is
@@ -87,10 +87,10 @@ class CaseTileHelper(object):
 
         if self.detail.case_tile_template == CUSTOM:
             from corehq.apps.app_manager.detail_screen import get_column_generator
-            title = Text(locale_id=id_strings.detail_title_locale(self.detail_type))
-            detail = Detail(id=self.detail_id, title=title)
 
-            for column_info in self.detail_column_infos:
+            start = start or 0
+            end = end or len(self.detail_column_infos)
+            for column_info in self.detail_column_infos[start:end]:
                 # column_info is an instance of DetailColumnInfo named tuple.
                 style = None
                 if any(field is not None for field in [column_info.column.grid_x, column_info.column.grid_y,
