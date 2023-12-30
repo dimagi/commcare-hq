@@ -35,7 +35,8 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowe
         EmailValidator(domain, 'email'),
         RoleValidator(domain, allowed_roles),
         ExistingUserValidator(domain, all_specs),
-        TargetDomainValidator(upload_domain)
+        TargetDomainValidator(upload_domain),
+        ProfileValidator(domain, list(profiles_by_name)),
     ]
     if is_web_user_import:
         return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs),
@@ -52,7 +53,6 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowe
             NewUserPasswordValidator(domain),
             PasswordValidator(domain) if validate_passwords else noop,
             GroupValidator(domain, allowed_groups),
-            ProfileValidator(domain, list(profiles_by_name)),
             ConfirmationSmsValidator(domain)
         ]
 

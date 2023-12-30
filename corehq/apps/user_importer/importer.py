@@ -673,7 +673,10 @@ class WebUserRow(BaseUserRow):
             'role': self.row.get('role'),
             'status': self.row.get('status'),
             'location_codes': format_location_codes(self.row.get('location_code', [])),
-            'remove': spec_value_to_boolean_or_none(self.row, 'remove')
+            'remove': spec_value_to_boolean_or_none(self.row, 'remove'),
+            "data": self.row.get('data', {}),
+            "uncategorized_data": self.row.get('uncategorized_data', {}),
+            "profile_name": self.row.get('user_profile', None),
         }
 
     def process(self):
@@ -686,7 +689,6 @@ class WebUserRow(BaseUserRow):
 
     def process_row(self):
         user = CouchUser.get_by_username(self.column_values['username'], strict=True)
-
         if user:
             self.process_existing_user(user)
         else:
@@ -725,10 +727,22 @@ class WebUserRow(BaseUserRow):
     def _modify_existing_user_in_domain(self, membership, role_qualified_id,
                                        current_user, web_user_importer,
                                        max_tries=3):
-        location_codes = self.column_values['location_codes']
+        cv = self.column_values
+        # set locations
+        location_codes = cv['location_codes']
         if self.domain_info.can_assign_locations and location_codes is not None:
             web_user_importer.update_locations(location_codes, membership, self.domain_info)
+
+        # set role
         web_user_importer.update_role(role_qualified_id)
+
+        # set user_data
+        web_user_importer.update_user_data(
+            cv["data"], cv["uncategorized_data"], cv["profile_name"],
+            self.domain_info.profiles_by_name
+        )
+
+        # Try saving
         try:
             current_user.save()
         except ResourceConflict:
@@ -881,8 +895,6 @@ class DomainInfo:
     @memoized
     def profiles_by_name(self):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-        if self.is_web_upload:
-            return {}
         definition = CustomDataFieldsDefinition.get(self.domain, UserFieldsView.field_type)
         if definition:
             profiles = definition.get_profiles()
@@ -903,17 +915,15 @@ class DomainInfo:
         ]
         if self.is_web_upload:
             allowed_group_names = None
-            profiles = None
         else:
             allowed_group_names = [group.name for group in self.group_memoizer.groups]
-            profiles = self.profiles_by_name
         return get_user_import_validators(
             self.domain_obj,
             domain_user_specs,
             self.is_web_upload,
             allowed_group_names,
             allowed_roles=roles_by_name,
-            profiles_by_name=profiles,
+            profiles_by_name=self.profiles_by_name,
             upload_domain=self.importer.upload_domain,
         )
 
