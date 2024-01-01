@@ -119,6 +119,8 @@ CASE_LIST_EXPLORER = 'case_list_explorer'
 
 CASE_COPY = 'case_copy'
 
+CUSTOM_DOMAIN_ALERTS = 'custom_domain_alerts'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -181,6 +183,7 @@ MAX_PRIVILEGES = [
     DATA_DICTIONARY,
     CASE_LIST_EXPLORER,
     CASE_COPY,
+    CUSTOM_DOMAIN_ALERTS,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -258,4 +261,5 @@ class Titles(object):
             DATA_DICTIONARY: _("Project level data dictionary of cases"),
             CASE_LIST_EXPLORER: _("Case List Explorer"),
             CASE_COPY: _("Allow case copy from one user to another"),
+            CUSTOM_DOMAIN_ALERTS: _("Custom domain banners"),
         }.get(privilege, privilege)
