@@ -596,9 +596,9 @@ class ManageDomainAlertsView(BaseProjectSettingsView):
         ).server_time().done()
 
 
+@require_POST
 @requires_privilege_with_fallback(privileges.CUSTOM_DOMAIN_ALERTS)
 @require_can_manage_domain_alerts
-@require_POST
 def update_domain_alert_status(request, domain):
     alert_id = request.POST.get('alert_id')
     assert alert_id, 'Missing alert ID'
@@ -611,9 +611,9 @@ def update_domain_alert_status(request, domain):
     return HttpResponseRedirect(reverse(ManageDomainAlertsView.urlname, kwargs={'domain': domain}))
 
 
+@require_POST
 @requires_privilege_with_fallback(privileges.CUSTOM_DOMAIN_ALERTS)
 @require_can_manage_domain_alerts
-@require_POST
 def delete_domain_alert(request, domain):
     alert_id = request.POST.get('alert_id')
     assert alert_id, 'Missing alert ID'
