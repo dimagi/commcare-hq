@@ -242,10 +242,8 @@ class TestUpdateRoleFromView(TestCase):
             _update_role_from_view(self.domain, role_data)
 
     def test_update_role(self):
-        role = self.test_create_role()
-
         role_data = deepcopy(self.BASE_JSON)
-        role_data["_id"] = role.get_id
+        role_data["_id"] = self.role.get_id
         role_data["name"] = "role1"  # duplicate name during update is OK for now
         role_data["default_landing_page"] = None
         role_data["is_non_admin_editable"] = True
