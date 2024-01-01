@@ -40,6 +40,12 @@ from corehq.util.test_utils import (
 )
 
 
+def get_default_available_permissions(**kwargs):
+    permissions = HqPermissions(**kwargs).to_json()
+    permissions.pop('manage_domain_alerts')
+    return permissions
+
+
 class TestMobileWorkerListView(TestCase):
     domain = 'mobile-worker-list-view'
     web_username = 'test-webuser'
@@ -195,7 +201,7 @@ class TestUpdateRoleFromView(TestCase):
         'is_non_admin_editable': False,
         'is_archived': False,
         'upstream_id': None,
-        'permissions': HqPermissions(edit_web_users=True).to_json(),
+        'permissions': get_default_available_permissions(edit_web_users=True),
         'assignable_by': []
     }
 
@@ -218,7 +224,7 @@ class TestUpdateRoleFromView(TestCase):
                 role.delete()
 
     def test_create_role(self):
-        role_data = self.BASE_JSON.copy()
+        role_data = deepcopy(self.BASE_JSON)
         role_data["name"] = "role2"
         role_data["assignable_by"] = [self.role.couch_id]
         role = _update_role_from_view(self.domain, role_data)
@@ -230,7 +236,7 @@ class TestUpdateRoleFromView(TestCase):
         return role
 
     def test_create_role_duplicate_name(self):
-        role_data = self.BASE_JSON.copy()
+        role_data = deepcopy(self.BASE_JSON)
         role_data["name"] = "role1"
         with self.assertRaises(ValueError):
             _update_role_from_view(self.domain, role_data)
@@ -238,12 +244,14 @@ class TestUpdateRoleFromView(TestCase):
     def test_update_role(self):
         role = self.test_create_role()
 
-        role_data = self.BASE_JSON.copy()
+        role_data = deepcopy(self.BASE_JSON)
         role_data["_id"] = role.get_id
         role_data["name"] = "role1"  # duplicate name during update is OK for now
         role_data["default_landing_page"] = None
         role_data["is_non_admin_editable"] = True
-        role_data["permissions"] = HqPermissions(edit_reports=True, view_report_list=["report1"]).to_json()
+        role_data["permissions"] = get_default_available_permissions(
+            edit_reports=True, view_report_list=["report1"]
+        )
         updated_role = _update_role_from_view(self.domain, role_data)
         self.assertEqual(updated_role.name, "role1")
         self.assertIsNone(updated_role.default_landing_page)
@@ -271,7 +279,7 @@ class TestUpdateRoleFromView(TestCase):
         self.assertTrue(self.role.permissions.to_json()['manage_domain_alerts'])
 
     def test_landing_page_validation(self):
-        role_data = self.BASE_JSON.copy()
+        role_data = deepcopy(self.BASE_JSON)
         role_data["default_landing_page"] = "bad value"
         with self.assertRaises(ValueError):
             _update_role_from_view(self.domain, role_data)
