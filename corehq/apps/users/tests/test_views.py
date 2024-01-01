@@ -1,5 +1,6 @@
 import json
 from contextlib import contextmanager
+from copy import deepcopy
 from unittest.mock import patch
 
 from django.http import Http404
@@ -7,6 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.es.users import user_adapter
@@ -248,6 +250,25 @@ class TestUpdateRoleFromView(TestCase):
         self.assertTrue(updated_role.is_non_admin_editable)
         self.assertEqual(updated_role.assignable_by, [])
         self.assertEqual(updated_role.permissions.to_json(), role_data['permissions'])
+
+    def test_update_role_for_manage_domain_alerts(self):
+        def patch_privilege_check(_domain, privilege_slug):
+            if privilege_slug == privileges.CUSTOM_DOMAIN_ALERTS:
+                return True
+            return domain_has_privilege(_domain, privilege_slug)
+
+        role_data = deepcopy(self.BASE_JSON)
+        role_data['_id'] = self.role.get_id
+        role_data['permissions']['manage_domain_alerts'] = True
+        self.assertFalse(self.role.permissions.to_json()['manage_domain_alerts'])
+
+        with self.assertRaisesMessage(ValueError, "Update subscription to set access for custom domain alerts"):
+            _update_role_from_view(self.domain, role_data)
+
+        with patch('corehq.apps.users.views.domain_has_privilege', side_effect=patch_privilege_check):
+            _update_role_from_view(self.domain, role_data)
+        self.role.refresh_from_db()
+        self.assertTrue(self.role.permissions.to_json()['manage_domain_alerts'])
 
     def test_landing_page_validation(self):
         role_data = self.BASE_JSON.copy()
