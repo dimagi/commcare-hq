@@ -152,6 +152,14 @@ class TestBaseDomainAlertView(TestCase):
         self.client = Client()
         self.client.login(username=self.username, password=self.password)
 
+    def ensure_valid_access_only(self):
+        response = self.client.get(self.url)
+        self.assertEqual(type(response.context['view']), SubscriptionUpgradeRequiredView)
+        self.assertEqual(
+            response.context['current_page']['page_name'],
+            'Sorry, you do not have access to Custom domain banners'
+        )
+
 
 class TestManageDomainAlertsView(TestBaseDomainAlertView):
     @classmethod
@@ -163,12 +171,7 @@ class TestManageDomainAlertsView(TestBaseDomainAlertView):
         })
 
     def test_valid_access_only(self):
-        response = self.client.get(self.url)
-        self.assertEqual(type(response.context['view']), SubscriptionUpgradeRequiredView)
-        self.assertEqual(
-            response.context['current_page']['page_name'],
-            'Sorry, you do not have access to Custom domain banners'
-        )
+        self.ensure_valid_access_only()
 
     @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_only_domain_alerts_listed(self):
@@ -236,12 +239,7 @@ class TestUpdateDomainAlertStatusView(TestBaseDomainAlertView):
         })
 
     def test_valid_access_only(self):
-        response = self.client.post(self.url)
-        self.assertEqual(type(response.context['view']), SubscriptionUpgradeRequiredView)
-        self.assertEqual(
-            response.context['current_page']['page_name'],
-            'Sorry, you do not have access to Custom domain banners'
-        )
+        self.ensure_valid_access_only()
 
     @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_post_access_only(self):
@@ -330,12 +328,7 @@ class TestDeleteDomainAlertView(TestBaseDomainAlertView):
         })
 
     def test_valid_access_only(self):
-        response = self.client.post(self.url)
-        self.assertEqual(type(response.context['view']), SubscriptionUpgradeRequiredView)
-        self.assertEqual(
-            response.context['current_page']['page_name'],
-            'Sorry, you do not have access to Custom domain banners'
-        )
+        self.ensure_valid_access_only()
 
     @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_post_access_only(self):
