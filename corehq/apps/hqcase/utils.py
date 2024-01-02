@@ -20,6 +20,7 @@ from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.dhis2.const import XMLNS_DHIS2
+from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
 
 CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
@@ -224,7 +225,7 @@ def bulk_update_cases(domain, case_changes, device_id, xmlns=None):
 
 def resave_case(domain, case, send_post_save_signal=True):
     from corehq.form_processor.change_publishers import publish_case_saved
-    publish_case_saved(case, send_post_save_signal=send_post_save_signal)
+    publish_case_saved(case, associated_form_id=UPDATE_REASON_RESAVE, send_post_save_signal=send_post_save_signal)
 
 
 def get_last_non_blank_value(case, case_property):
