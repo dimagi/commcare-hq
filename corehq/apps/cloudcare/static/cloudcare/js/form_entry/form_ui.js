@@ -347,10 +347,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.blockSubmit = ko.observable(false);
         self.hasSubmitAttempted = ko.observable(false);
         self.isSubmitting = ko.observable(false);
-        self.submitClass = constants.FULL_WIDTH + ' text-center';
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('WEB_APPS_ANCHORED_SUBMIT')) {
-            self.submitClass += ' anchored-submit';
-        }
+        self.isAnchoredSubmitStyle = hqImport('hqwebapp/js/toggles').toggleEnabled('WEB_APPS_ANCHORED_SUBMIT');
+        self.submitClass = constants.FULL_WIDTH + ' text-center' +
+          (self.isAnchoredSubmitStyle ? ' anchored-submit' : ' nonanchored-submit');
 
         self.currentIndex = ko.observable("0");
         self.atLastIndex = ko.observable(false);
