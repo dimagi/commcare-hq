@@ -218,7 +218,7 @@ django-tastypie==0.14.4
     # via -r base-requirements.in
 django-transfer==0.4
     # via -r base-requirements.in
-django-two-factor-auth==1.13.2
+django-two-factor-auth==1.15.5
     # via -r base-requirements.in
 django-user-agents==0.4.0
     # via -r base-requirements.in
