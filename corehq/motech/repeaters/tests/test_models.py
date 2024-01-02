@@ -290,7 +290,7 @@ class FormatResponseTests(SimpleTestCase):
                                                 '<h1>Hello World</h1>')
 
 
-class AddAttemptsTests(RepeaterTestCase):
+class AttemptsTests(RepeaterTestCase):
 
     def setUp(self):
         super().setUp()
@@ -409,6 +409,28 @@ class AddAttemptsTests(RepeaterTestCase):
                          RECORD_CANCELLED_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, tb_str)
+
+    def test_cached_attempts(self):
+        def clear_attempts_cache():
+            # can be removed with RepeatRecord (Couch model)
+            # the cache is populated when the couch record is saved
+            self.repeat_record.attempts._result_cache = None
+
+        self.repeat_record.add_client_failure_attempt(message="Fail")
+        clear_attempts_cache()
+
+        with self.assertNumQueries(1):
+            self.assertEqual(len(self.repeat_record.attempts), 1)
+        with self.assertNumQueries(0):
+            self.assertEqual(len(self.repeat_record.attempts), 1)
+
+        self.repeat_record.add_client_failure_attempt(message="Fail")
+        clear_attempts_cache()
+
+        with self.assertNumQueries(1):
+            self.assertEqual(len(self.repeat_record.attempts), 2)
+        with self.assertNumQueries(0):
+            self.assertEqual(len(self.repeat_record.attempts), 2)
 
 
 class TestConnectionSettingsUsedBy(TestCase):

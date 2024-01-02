@@ -75,6 +75,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.db import models, router
 from django.db.models.base import Deferred
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -1543,7 +1544,12 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
 
     @property
     def attempts(self):
-        return self.attempt_set.all()
+        try:
+            attempts = self._prefetched_objects_cache['attempt_set']
+        except (AttributeError, KeyError):
+            self.__dict__.setdefault("_prefetched_objects_cache", {})
+            attempts = self._prefetched_objects_cache['attempt_set'] = self.attempt_set.all()
+        return attempts
 
     @property
     def num_attempts(self):
@@ -1716,6 +1722,24 @@ class SQLRepeatRecordAttempt(models.Model):
     class Meta:
         db_table = 'repeaters_repeatrecordattempt'
         ordering = ['created_at']
+
+
+@receiver(models.signals.pre_save, sender=SQLRepeatRecordAttempt)
+def _register_new_attempt_to_clear_cache(sender, instance, **kwargs):
+    record = instance._meta.get_field("repeat_record").get_cached_value(instance, None)
+    if instance._state.adding and record is not None:
+        instance._record_with_new_attempt = record
+
+
+@receiver(models.signals.post_save, sender=SQLRepeatRecordAttempt)
+def _clear_attempts_cache_after_save_new_attempt(sender, instance, **kwargs):
+    # Clear cache in post_save because it may get populated by save
+    # logic before the save is complete. The post_save signal by itself
+    # is insufficient because it cannot identify a new attempt (by the
+    # time post_save is called, instance._state.adding is false).
+    record = instance.__dict__.pop("_record_with_new_attempt", None)
+    if record is not None:
+        record.attempt_set._remove_prefetched_objects()
 
 
 def _get_retry_interval(last_checked, now):
