@@ -282,6 +282,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
         return views.PersistentCaseTileView({
             model: detailModel,
+            headers: detailObject.headers,
             styles: detailObject.styles,
             tiles: detailObject.tiles,
             maxWidth: detailObject.maxWidth,
