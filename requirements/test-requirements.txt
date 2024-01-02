@@ -326,7 +326,7 @@ jsonobject==2.0.0
     # via
     #   -r base-requirements.in
     #   jsonobject-couchdbkit
-jsonobject-couchdbkit==1.0.1
+jsonobject-couchdbkit==1.1.0
     # via -r base-requirements.in
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
