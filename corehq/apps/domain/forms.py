@@ -2734,11 +2734,7 @@ class DomainAlertForm(forms.Form):
         self.fields['end_time'].help_text = datetime_local_widget_helptext
 
         self.helper = hqcrispy.HQFormHelper(self)
-        self.helper.layout = Layout(
-            crispy.Fieldset(
-                _('Add New Alert'),
-                *self.fields
-            ),
+        self.helper.layout.append(
             hqcrispy.FormActions(
                 StrictButton(
                     _('Save'),
