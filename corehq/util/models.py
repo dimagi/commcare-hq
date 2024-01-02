@@ -243,6 +243,10 @@ class NullJsonField(jsonfield_JSONField):
         value = super().to_python(value)
         return self.get_default() if value is None else value
 
+    def from_db_value(self, value, expression, connection):
+        value = super().from_db_value(value, expression, connection)
+        return self.get_default() if value is None else value
+
     def pre_init(self, value, obj):
         value = super().pre_init(value, obj)
         return self.get_default() if value is None else value
