@@ -749,7 +749,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         updateSubmitButtonStatus: function (disabled) {
-            if (self.options.sidebarEnabled) {
+            if (this.options.sidebarEnabled) {
                 $('##query-submit-button').disabled = disabled;
             }
         },
