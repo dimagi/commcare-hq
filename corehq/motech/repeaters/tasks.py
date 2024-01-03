@@ -179,7 +179,7 @@ def _process_repeat_record(repeat_record):
             # in the next check to process repeat records, which helps to avoid
             # clogging the queue
             repeat_record.postpone_by(MAX_RETRY_WAIT)
-        elif repeat_record.state == State.Pending or repeat_record.state == State.Fail:
+        elif repeat_record.is_queued():
             repeat_record.fire()
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))

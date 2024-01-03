@@ -1597,6 +1597,9 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     def succeeded(self):
         return self.state == State.Success or self.state == State.Empty
 
+    def is_queued(self):
+        return self.state == State.Pending or self.state == State.Fail
+
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Members below this line have been added to support the
     # Couch repeater processing logic.
@@ -1841,10 +1844,6 @@ def send_request(
                 retry = allow_retries(response)
                 repeat_record.add_client_failure_attempt(message, retry)
     return repeat_record.state in (State.Success, State.Cancelled, State.Empty)  # Don't retry
-
-
-def is_queued(record):
-    return record.state in (State.Pending, State.Fail)
 
 
 def has_failed(record):
