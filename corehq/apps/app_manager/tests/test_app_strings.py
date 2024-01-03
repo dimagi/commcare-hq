@@ -176,6 +176,8 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
                 label={'en': 'Get them all'}
             ),
             properties=[
+                CaseSearchProperty(is_group=True, name='group_header_0',
+                                   group_key='group_header_0', label={'en': 'Personal Information'}),
                 CaseSearchProperty(name="name", label={'en': 'Name'})
             ]
         )
@@ -203,6 +205,8 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             self.assertEqual(en_app_strings['case_search.m0.icon'], 'jr://file/commcare/image/1.png')
             self.assertEqual(en_app_strings['case_search.m0.audio'], 'jr://file/commcare/image/2.mp3')
             self.assertEqual(en_app_strings['case_search.m0.again'], 'Get them all')
+            self.assertEqual(en_app_strings['search_property.m0.name'], 'Name')
+            self.assertEqual(en_app_strings['search_property.m0.group_header_0'], 'Personal Information')
 
             # non-default language
             es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
@@ -258,3 +262,28 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
                 en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
             except AttributeError:
                 self.fail("_generate_app_strings raised AttributeError unexpectedly")
+
+    def test_form_submit_label(self):
+        factory = AppFactory(build_version='2.40.0')
+        factory.app.langs = ['en', 'es']
+        module, form = factory.new_basic_module('my_module', 'cases')
+        form.submit_label = {
+            'en': 'Submit Button',
+            'es': 'Botón de Enviar',
+        }
+        form.submit_notification_label = {
+            'en': 'You submitted the form!',
+            'es': '¡Enviaste el formulario!',
+        }
+        en_strings = self._generate_app_strings(factory.app, 'en')
+        self.assertEqual(en_strings['forms.m0f0.submit_label'], form.submit_label['en'])
+        self.assertEqual(en_strings['forms.m0f0.submit_notification_label'], form.submit_notification_label['en'])
+
+        es_strings = self._generate_app_strings(factory.app, 'es')
+        self.assertEqual(es_strings['forms.m0f0.submit_label'], form.submit_label['es'])
+        self.assertEqual(es_strings['forms.m0f0.submit_notification_label'], form.submit_notification_label['es'])
+
+        default_strings = self._generate_app_strings(factory.app, 'default')
+        self.assertEqual(default_strings['forms.m0f0.submit_label'], form.submit_label['en'])
+        self.assertEqual(default_strings['forms.m0f0.submit_notification_label'],
+                         form.submit_notification_label['en'])

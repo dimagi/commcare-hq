@@ -10,7 +10,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         ko.bindingHandlers.renderMarkdown = {
             update: function (element, valueAccessor) {
                 var value = ko.unwrap(valueAccessor());
-                value = markdown.render(value || '');
+                value = markdown.render(value);
                 $(element).html(value);
             },
         };
@@ -461,11 +461,23 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return !self.isSubmitting() && self.erroredQuestions().length === 0;
         });
 
+        self.getSubmitTranslation = function () {
+            var translations = self.translations;
+            if (translations) {
+                const result = Object.entries(translations).find(([k]) => k.includes("submit_label"));
+                if (result) {
+                    const key = result[0];
+                    return ko.toJS(translations[key]);
+                }
+            }
+            return gettext("Submit");
+        };
+
         self.submitText = ko.computed(function () {
             if (self.isSubmitting()) {
                 return gettext('Submitting...');
             }
-            return gettext('Submit');
+            return self.getSubmitTranslation();
         });
 
         self.forceRequiredVisible = ko.observable(false);
@@ -788,13 +800,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return (self.error() || self.serverError()) && !self.dirty();
         });
 
-        self.hasLabelContent = ko.computed(function() {
+        self.hasLabelContent = ko.computed(function () {
             return (
-                self.caption()
-                || self.caption_markdown()
-                || self.help()
-                || self.hint()
-                || self.required()
+                ko.utils.unwrapObservable(self.caption)
+                || ko.utils.unwrapObservable(self.caption_markdown)
+                || ko.utils.unwrapObservable(self.help)
+                || ko.utils.unwrapObservable(self.hint)
+                || ko.utils.unwrapObservable(self.required)
             );
         });
         self.setWidths(self.hasLabelContent());
@@ -884,7 +896,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             },
             help: {
                 update: function (options) {
-                    return options.data ? markdown.render(DOMPurify.sanitize(options.data)) : null;
+                    return options.data ? markdown.render(options.data) : null;
                 },
             },
         };

@@ -67,10 +67,15 @@
                   <span> {% trans "Sort By" %} </span><i class="fa fa-sort" aria-hidden="true"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="case-list-sort-by">
-                  <%  _.each(headers, function(header, index) { %>
-                    <% if (columnSortable(index)) { %>
-                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- index %>" role="menuitem"><a><%= header %></a></li>
-                    <% } %>
+                  <%  _.each(sortOptions, function(sortOption) { %>
+                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- sortOption.index %>" role="menuitem">
+                      <a>
+                        <%= sortOption.header %>
+                        <% if (sortOption.sortOrder) { %>
+                          <i class="fa fa-arrow-<%= sortOption.sortOrder === 'V' ? 'down' : 'up' %> pull-right"></i>
+                        <% } %>
+                      </a>
+                    </li>
                   <% }); %>
                 </ul>
               </div>
@@ -244,12 +249,11 @@
       grid-area: <%- model.gridStyle %>;
       font-size: <%- model.fontStyle %>;
       text-align: <%- model.horizontalAlign %>;
-      <% if (!model.borderInTile) { %>
+      <% if (!model.borderInTile && !model.shadingInTile) { %>
         justify-self: <%- model.horizontalAlign %>;
         align-self: <%- model.verticalAlign %>;
       <% } else { %>
-        <% if (model.showBorder) { %>
-          border: 1px solid #685c53;
+        <% if (model.showBorder || model.showShading) { %>
           border-radius: 8px;
           padding-top: 5px;
           padding-bottom: 0px;
@@ -257,6 +261,13 @@
           padding-right: 5px;
           justify-self: stretch;
           margin: 2px;
+          <% if (model.showBorder) { %>
+            border: 1px solid #685c53;
+          <% } %>
+          <% if (model.showShading) { %>
+            background-color: white;
+            z-index: -1;
+          <% } %>
         <% } else { %>
           margin: 7px;
           justify-self: <%- model.horizontalAlign %>;
