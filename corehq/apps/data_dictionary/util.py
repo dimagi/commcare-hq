@@ -363,7 +363,7 @@ def is_case_type_deprecated(domain, case_type):
         return False
 
 
-def is_case_property_name_valid(case_prop_name):
+def is_case_type_or_prop_name_valid(case_prop_name):
     pattern = '^[a-zA-Z][a-zA-Z0-9-_]*$'
     match_obj = re.match(pattern, case_prop_name)
     return match_obj is not None
