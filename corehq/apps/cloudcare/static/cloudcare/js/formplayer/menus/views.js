@@ -869,10 +869,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                         const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, false, false, true);
                                         $.when(fetchingDetails).done(function (detailResponse) {
                                             const attributes = Array.from(detailResponse)[0].attributes;
-                                            const popupIndex = _.findIndex(attributes.styles, (style) => style.displayFormat === constants.FORMAT_ADDRESS_POPUP);
-                                            if (popupIndex >= 0) {
-                                                const popupText = markdown.render(attributes.details[popupIndex]);
-                                                const p = L.popup().setContent(popupText);
+                                            const popupIndexOnClick =
+                                                _.findIndex(attributes.styles, (style) => style.displayFormat === constants.FORMAT_ADDRESS_POPUP);
+                                            if (popupIndexOnClick >= 0) {
+                                                const popupTextOnClick = markdown.render(attributes.details[popupIndexOnClick]);
+                                                const p = L.popup().setContent(popupTextOnClick);
                                                 marker.bindPopup(p).openPopup();
                                             }
                                         }).fail(function () {
