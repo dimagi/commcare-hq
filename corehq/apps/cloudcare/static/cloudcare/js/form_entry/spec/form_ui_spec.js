@@ -75,7 +75,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             assert.equal(form.children()[0].children().length, 1);
             assert.equal(form.children()[0].children()[0].type(), constants.GROUPED_ELEMENT_TILE_ROW_TYPE);
             assert.equal(form.children()[0].children()[0].children()[0].type(), constants.GROUP_TYPE);
-            assert.isTrue(form.children()[0].children()[0].isRepetition);
+            assert.isTrue(form.children()[0].children()[0].children()[0].isRepetition);
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].type(), constants.GROUPED_ELEMENT_TILE_ROW_TYPE);
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);
         });

@@ -590,7 +590,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
-        self.isRepetition = parent instanceof Repeat;
+        self.isRepetition = parent.parent instanceof Repeat;
         let parentForm = getParentForm(self);
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
 
@@ -724,8 +724,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var self = this;
         self.parent = parent;
         Container.call(self, json);
-
-        self.isRepetition = parent instanceof Repeat;
 
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
