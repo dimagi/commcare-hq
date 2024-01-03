@@ -275,11 +275,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      *
      * This function takes a JSON object as input and searches for sequential "question" or "group"
      * items within the 'children' arrays of the input and its nested 'group' objects.
-     * It groups these sequential "question" items into "GroupedElementTileRow" and "group"
-     * items into "GroupedGroupTileRow" objects while maintaining the original structure of the JSON.
+     * It groups the sequential "question" items and "group"
+     * items into "GroupedElementTileRow" objects while maintaining the original structure of the JSON.
      *
      * @param {Object} json - The JSON object to process, containing 'children' arrays.
-     * @returns {Object} - A new JSON object with sequential "question" items grouped into "GroupedElementTileRow".
+     * @returns {Object} - A new JSON object with sequential "question" items and sequential
+     * "group" items grouped into "GroupedElementTileRow".
      */
     Container.groupElements = function (json) {
         if (!json || !json.children || !Array.isArray(json.children)) {
@@ -684,7 +685,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Group.prototype.constructor = Container;
 
     /**
-     * Represents a repeat group. A repeat only has Group objects as children. Each child Group contains GroupedElementTileRow
+     * Represents a repeat group. A repeat only has Group objects as children, which are contained
+     * within a GroupedElementTileRow. Each child Group contains GroupedElementTileRow
      * objects which contains the child questions to be rendered
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
