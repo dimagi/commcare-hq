@@ -13,7 +13,7 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views.settings import ManageDomainAlertsView
+from corehq.apps.domain.views.settings import EditDomainAlertView, ManageDomainAlertsView
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
@@ -359,6 +359,69 @@ class TestDeleteDomainAlertView(TestBaseDomainAlertView):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(messages[0].message, 'Alert was removed!')
         self.assertEqual(response.status_code, 302)
+
+
+class TestEditDomainAlertView(TestBaseDomainAlertView):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.url = reverse(EditDomainAlertView.urlname, kwargs={
+            'domain': cls.domain_name, 'alert_id': cls.domain_alert.id
+        })
+
+    def test_feature_flag_access_only(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    def test_only_domain_alerts_accessible(self):
+        url = reverse(EditDomainAlertView.urlname, kwargs={
+            'domain': self.domain_name, 'alert_id': self.other_domain_alert.id
+        })
+
+        with self.assertRaisesMessage(AssertionError, 'Alert not found'):
+            self.client.get(url)
+
+    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    def test_only_domain_alerts_accessible_for_update(self):
+        url = reverse(EditDomainAlertView.urlname, kwargs={
+            'domain': self.domain_name, 'alert_id': self.other_domain_alert.id
+        })
+        response = self.client.post(url, data={'text': 'Bad text'})
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert not found!')
+        self.assertEqual(response.status_code, 302)
+
+    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    def test_updating_alert(self):
+        text = self.domain_alert.text + ". Updated!"
+        response = self.client.post(
+            self.url,
+            data={
+                'text': text,
+            },
+        )
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert saved!')
+        self.assertEqual(response.status_code, 302)
+        self.domain_alert.refresh_from_db()
+        self.assertEqual(self.domain_alert.text, 'Test Alert 1!. Updated!')
+
+    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    def test_updating_alert_with_errors(self):
+        response = self.client.post(
+            self.url,
+            data={
+                'text': '',
+            },
+        )
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'There was an error saving your alert. Please try again!')
+        self.assertEqual(response.status_code, 200)
 
 
 @contextmanager
