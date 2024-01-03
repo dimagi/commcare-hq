@@ -119,7 +119,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
     # Keys for idempotent requests can only be used with the same parameters they were first used with.
     # So introduce randomness in idempotency key to avoid clashes
     @patch('corehq.apps.accounting.models.Invoice.invoice_number', new_callable=lambda: str(uuid.uuid4()))
-    def test_pay_autopayable_invoices(self):
+    def test_pay_autopayable_invoices(self, fake_invoice_id):
         original_outbox_length = len(mail.outbox)
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription).first()
         date_due = autopayable_invoice.date_due
