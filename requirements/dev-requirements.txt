@@ -368,7 +368,7 @@ jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-jsonfield==2.1.1
+jsonfield==3.1.0
     # via
     #   -r base-requirements.in
     #   django-prbac
@@ -676,7 +676,6 @@ six==1.16.0
     #   google-auth
     #   google-auth-httplib2
     #   isodate
-    #   jsonfield
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
