@@ -45,8 +45,9 @@ from ..models import SQLRepeatRecord, are_repeat_records_migrated, is_queued, is
 from .repeat_record_display import RepeatRecordDisplay
 
 
-class BaseRepeatRecordReport(GenericTabularReport):
+class DomainForwardingRepeatRecords(GenericTabularReport):
     name = 'Repeat Records'
+    slug = 'repeat_record_report'
     base_template = 'repeaters/repeat_record_report.html'
     section_name = 'Project Settings'
 
@@ -199,9 +200,9 @@ class BaseRepeatRecordReport(GenericTabularReport):
             self._make_resend_payload_button(record.id),
         ]
 
-        if self._is_cancelled(record):
+        if record.state == RECORD_CANCELLED_STATE:
             row.append(self._make_requeue_payload_button(record.id))
-        elif self._is_queued(record):
+        elif is_queued(record):
             row.append(self._make_cancel_payload_button(record.id))
         else:
             row.append(None)
@@ -262,32 +263,6 @@ class BaseRepeatRecordReport(GenericTabularReport):
             form_query_string_cancelled=form_query_string_cancelled,
         )
         return context
-
-    def _is_cancelled(self, record):
-        raise NotImplementedError
-
-    def _is_queued(self, record):
-        raise NotImplementedError
-
-
-class DomainForwardingRepeatRecords(BaseRepeatRecordReport):
-    slug = 'couch_repeat_record_report'
-
-    def _is_cancelled(self, record):
-        return record.cancelled and not record.succeeded
-
-    def _is_queued(self, record):
-        return not record.cancelled and not record.succeeded
-
-
-class SQLRepeatRecordReport(BaseRepeatRecordReport):
-    slug = 'repeat_record_report'
-
-    def _is_cancelled(self, record):
-        return record.state == RECORD_CANCELLED_STATE
-
-    def _is_queued(self, record):
-        return is_queued(record)
 
 
 @method_decorator(domain_admin_required, name='dispatch')
