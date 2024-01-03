@@ -21,7 +21,6 @@ from .util import (
     save_case_property,
     get_column_headings,
     map_row_values_to_column_names,
-    is_case_property_name_valid,
 )
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
@@ -165,11 +164,6 @@ def _process_sheets(domain, workbook, allowed_value_info):
                 row_vals['name'], row_vals['description'], row_vals['label'], row_vals['group'],
                 row_vals['deprecated'])
             data_type_display = row_vals['data_type_display'] if data_validation_enabled else None
-
-            if not is_case_property_name_valid(name):
-                errors.append(_('Invalid case property "{}" in "{}" sheet. The case property name should start '
-                                'with a letter, and only contain letters, '
-                                'numbers, "-", and "_"').format(name, case_type))
 
             # Fall back to value from file if data_type_display is not found in the map.
             # This allows existing error path to report accurately the value that isn't found,
