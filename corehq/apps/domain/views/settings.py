@@ -655,4 +655,4 @@ def _update_alert(alert, command):
         alert.active = True
     elif command == 'deactivate':
         alert.active = False
-    alert.save(update_fields=['active'])
+    alert.save()
