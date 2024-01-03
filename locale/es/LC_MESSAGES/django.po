@@ -8358,10 +8358,6 @@ msgid "Custom Case List XML"
 msgstr "Lista de Caso XML Personalizada"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Case Tile Template"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid ""
 "Show some information about the case at the top of the screen when filling "
 "out forms"
@@ -8403,10 +8399,6 @@ msgid "Embed case details in case tile pull-down from the menu"
 msgstr ""
 "Insertar los detalles de caso en las fichas de caso desplegables desde el "
 "menú"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Reset Grid"
-msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Filtering and Sorting"
@@ -9267,6 +9259,14 @@ msgstr "Listo"
 msgid "Group Name"
 msgstr "Nombre del Grupo"
 
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_tile_preview.html
+msgid "Reset Grid"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_tile_templates.html
+msgid "Case Tile Template"
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/custom_detail_variables.html
 msgid "Custom Detail Variables"
 msgstr "Variables de Detalle Personalizables"
@@ -9741,10 +9741,8 @@ msgid "Border"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
-#, fuzzy
-#| msgid "Shadow Menu"
 msgid "Shade"
-msgstr "Menú Sombra"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
 msgid "Loading Multimedia Sizes..."
@@ -15284,10 +15282,8 @@ msgid "Delete your custom logo and use the standard one."
 msgstr "Eliminar su logo personalizado y utilizar el estándar."
 
 #: corehq/apps/domain/forms.py
-#, fuzzy
-#| msgid "Look up user by email"
 msgid "Logo to use in systems emails"
-msgstr "Buscar usuario por correo electrónico"
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 #, python-brace-format
