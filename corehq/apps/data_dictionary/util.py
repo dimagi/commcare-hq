@@ -1,6 +1,7 @@
 from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
+import re
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext
@@ -360,3 +361,9 @@ def is_case_type_deprecated(domain, case_type):
         return case_type_obj.is_deprecated
     except CaseType.DoesNotExist:
         return False
+
+
+def is_case_property_name_valid(case_prop_name):
+    pattern = '^[a-zA-Z][a-zA-Z0-9-_]*$'
+    match_obj = re.match(pattern, case_prop_name)
+    return match_obj is not None
