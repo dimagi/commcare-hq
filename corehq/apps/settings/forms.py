@@ -21,6 +21,7 @@ from two_factor.plugins.phonenumber.forms import (
     PhoneNumberForm,
     PhoneNumberMethodForm,
 )
+from two_factor.plugins.phonenumber.utils import get_available_phone_methods
 from two_factor.utils import totp_digits
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -140,9 +141,17 @@ class HQDeviceValidationForm(DeviceValidationForm):
 
 
 class HQTwoFactorMethodForm(MethodForm):
+    def __init__(self, *, allow_phone_2fa, **kwargs):
+        super().__init__(**kwargs)
+        if not allow_phone_2fa:
+            # Block people from setting up the phone method as their default
+            phone_methods = [method for method, _ in get_available_phone_methods()]
+            self.fields['method'].choices = [
+                (method, display_name)
+                for method, display_name in self.fields['method'].choices
+                if method not in phone_methods
+            ]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
