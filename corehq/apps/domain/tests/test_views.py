@@ -13,7 +13,7 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views.settings import ManageDomainAlertsView
+from corehq.apps.domain.views.settings import ManageDomainAlertsView, MAX_ACTIVE_ALERTS
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
@@ -308,6 +308,33 @@ class TestUpdateDomainAlertStatusView(TestBaseDomainAlertView):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(messages[0].message, 'Alert not found!')
         self.assertEqual(response.status_code, 302)
+
+    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    def test_limiting_active_alerts(self):
+        new_alerts = [
+            self._create_alert_for_domain(self.domain_name, 'New Alert 1!', self.username),
+            self._create_alert_for_domain(self.domain_name, 'New Alert 2!', self.username),
+            self._create_alert_for_domain(self.domain_name, 'New Alert 3!', self.username),
+        ]
+        for alert in new_alerts:
+            alert.active = True
+            alert.save()
+
+        self.assertEqual(
+            Alert.objects.filter(created_by_domain=self.domain, active=True).count(),
+            MAX_ACTIVE_ALERTS
+        )
+
+        response = self.client.post(
+            self.url,
+            data={
+                'command': 'activate',
+                'alert_id': self.domain_alert.id,
+            },
+        )
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert not updated. Only 3 active alerts allowed.')
 
 
 class TestDeleteDomainAlertView(TestBaseDomainAlertView):
