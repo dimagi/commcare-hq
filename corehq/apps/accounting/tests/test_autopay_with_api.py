@@ -1,5 +1,3 @@
-from decimal import Decimal
-import random
 from django.core import mail
 
 from django_prbac.models import Role
@@ -24,6 +22,8 @@ from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from django.db import transaction
 from unittest import SkipTest
 from django.conf import settings
+from unittest.mock import patch
+import uuid
 
 
 class TestBillingAutoPay(BaseInvoiceTestCase):
@@ -116,35 +116,26 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
         self.assertCountEqual(autopayable_invoices, [])
 
+    # Keys for idempotent requests can only be used with the same parameters they were first used with.
+    # So introduce randomness in idempotency key to avoid clashes
+    @patch('corehq.apps.accounting.models.Invoice.invoice_number', new_callable=lambda: str(uuid.uuid4()))
     def test_pay_autopayable_invoices(self):
         original_outbox_length = len(mail.outbox)
-
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription).first()
         date_due = autopayable_invoice.date_due
 
-        # Keys for idempotent requests can only be used with the same parameters they were first used with.
-        # So introduce randomness in idempotency key to avoid clashes
-        for line_item in autopayable_invoice.lineitem_set.all():
-            line_item.unit_cost = Decimal(random.randint(1, 50))
-            line_item.save()
-        autopayable_invoice.update_balance()
-        autopayable_invoice.save()
-
         AutoPayInvoicePaymentHandler().pay_autopayable_invoices(date_due)
+
         self.assertAlmostEqual(autopayable_invoice.get_total(), 0)
         self.assertEqual(len(PaymentRecord.objects.all()), 1)
         self.assertEqual(len(mail.outbox), original_outbox_length + 1)
 
-    def test_double_charge_is_prevented_and_only_one_payment_record_created(self):
+    # Keys for idempotent requests can only be used with the same parameters they were first used with.
+    # So introduce randomness in idempotency key to avoid clashes
+    @patch('corehq.apps.accounting.models.Invoice.invoice_number', new_callable=lambda: str(uuid.uuid4()))
+    def test_double_charge_is_prevented_and_only_one_payment_record_created(self, fake_invoice_id):
         self.original_outbox_length = len(mail.outbox)
         invoice = Invoice.objects.get(subscription=self.subscription)
-        # Keys for idempotent requests can only be used with the same parameters they were first used with.
-        # So introduce randomness in idempotency key to avoid clashes
-        for line_item in invoice.lineitem_set.all():
-            line_item.unit_cost = Decimal(random.randint(1, 10000))
-            line_item.save()
-        invoice.update_balance()
-        invoice.save()
         balance = invoice.balance
         self._run_autopay()
         # Add balance to the same invoice so it gets paid again
