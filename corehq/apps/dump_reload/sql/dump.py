@@ -4,6 +4,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core import serializers
 from django.db import router
+from memoized import memoized
 
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
@@ -224,17 +225,25 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
 ]]
 
 
+@memoized
+def is_pk_type_int(model_class):
+    return model_class._meta.pk.get_internal_type() in ('AutoField', 'BigAutoField')
+
+
 class SqlDataDumper(DataDumper):
     slug = 'sql'
+    max_pk_slug = 'sql_max_pks'
 
     def dump(self, output_stream):
         stats = Counter()
+        max_pks = defaultdict(int)
         objects = get_objects_to_dump(
             self.domain,
             self.excludes,
             self.includes,
             stats_counter=stats,
             stdout=self.stdout,
+            max_pks=max_pks,
         )
         JsonLinesSerializer().serialize(
             objects,
@@ -242,10 +251,10 @@ class SqlDataDumper(DataDumper):
             use_natural_primary_keys=True,
             stream=output_stream
         )
-        return stats
+        return stats, max_pks
 
 
-def get_objects_to_dump(domain, excludes, includes, stats_counter=None, stdout=None):
+def get_objects_to_dump(domain, excludes, includes, stats_counter=None, stdout=None, max_pks=None):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
@@ -253,16 +262,21 @@ def get_objects_to_dump(domain, excludes, includes, stats_counter=None, stdout=N
     :return: generator yielding models objects
     """
     builders = get_model_iterator_builders_to_dump(domain, excludes, includes)
-    yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout)
+    yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout, max_pks=max_pks)
 
 
-def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None):
+def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None, max_pks=None):
     if stats_counter is None:
         stats_counter = Counter()
+    if max_pks is None:
+        max_pks = defaultdict(int)
     for model_class, builder in builders:
         model_label = get_model_label(model_class)
+
         for iterator in builder.iterators():
             for obj in iterator:
+                if is_pk_type_int(model_class):
+                    max_pks[model_label] = max(obj.pk, max_pks[model_label])
                 stats_counter.update([model_label])
                 yield obj
         if stdout:

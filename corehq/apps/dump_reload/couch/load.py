@@ -29,7 +29,7 @@ class CouchDataLoader(DataLoader):
         self._dbs = {}
         self._success_counter = Counter()
 
-    def load_objects(self, object_strings, force=False, dry_run=False):
+    def load_objects(self, object_strings, force=False, dry_run=False, **kwargs):
         for obj_string in object_strings:
             doc = json.loads(obj_string)
             doc_type = drop_suffix(doc['doc_type'])
@@ -90,7 +90,7 @@ class LoaderCallback(IterDBCallback):
 class ToggleLoader(DataLoader):
     slug = 'toggles'
 
-    def load_objects(self, object_strings, force=False, dry_run=False):
+    def load_objects(self, object_strings, force=False, dry_run=False, **kwargs):
         from corehq.toggles.models import Toggle
         count = 0
         for toggle_json in object_strings:
@@ -120,7 +120,7 @@ class ToggleLoader(DataLoader):
 class DomainLoader(DataLoader):
     slug = 'domain'
 
-    def load_objects(self, object_strings, force=False, dry_run=False):
+    def load_objects(self, object_strings, force=False, dry_run=False, **kwargs):
         from corehq.apps.domain.models import Domain
         objects = list(object_strings)
         assert len(objects) == 1, "Only 1 domain allowed per dump"
