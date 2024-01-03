@@ -81,6 +81,9 @@ hqDefine('geospatial/js/models', [
                 'groupId': self.groupId,
                 'groupCenterCoordinates': groupCoordinates,
                 'caseId': self.itemId,
+                'caseName': self.itemData.case_name,
+                'owner_id': self.itemData.owner_id,
+                'owner_name': self.itemData.owner_name,
                 'coordinates': coordinates,
             };
         };

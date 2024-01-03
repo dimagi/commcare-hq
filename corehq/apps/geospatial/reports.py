@@ -59,27 +59,12 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
         context = super(BaseCaseMapReport, self).template_context
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
-            'case_row_order': {val.html: idx for idx, val in enumerate(self.headers)},
             'saved_polygons': [
                 {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
                 for p in GeoPolygon.objects.filter(domain=self.domain).all()
             ],
         })
         return context
-
-    @property
-    def headers(self):
-        from corehq.apps.reports.datatables import (
-            DataTablesColumn,
-            DataTablesHeader,
-        )
-        headers = DataTablesHeader(
-            DataTablesColumn(_("case_id"), prop_name="type.exact"),
-            DataTablesColumn(_("gps_point"), prop_name="type.exact"),
-            DataTablesColumn(_("link"), prop_name="name.exact", css_class="case-name-link"),
-        )
-        headers.custom_sort = [[2, 'desc']]
-        return headers
 
     def _build_query(self):
         query = super()._build_query()
@@ -114,6 +99,20 @@ class CaseManagementMap(BaseCaseMapReport):
         return reverse('geospatial_default', args=[self.request.project.name])
 
     @property
+    def headers(self):
+        from corehq.apps.reports.datatables import (
+            DataTablesColumn,
+            DataTablesHeader,
+        )
+        headers = DataTablesHeader(
+            DataTablesColumn(_("case_id"), prop_name="type.exact"),
+            DataTablesColumn(_("gps_point"), prop_name="type.exact"),
+            DataTablesColumn(_("link"), prop_name="name.exact", css_class="case-name-link"),
+        )
+        headers.custom_sort = [[2, 'desc']]
+        return headers
+
+    @property
     def rows(self):
         cases = []
         for row in self.es_results['hits'].get('hits', []):
@@ -139,6 +138,28 @@ class CaseGroupingReport(BaseCaseMapReport):
 
     default_rows = 1
     force_page_size = True
+    sortable = False
+
+    @property
+    def headers(self):
+        from corehq.apps.reports.datatables import (
+            DataTablesColumn,
+            DataTablesHeader,
+        )
+        return DataTablesHeader(
+            DataTablesColumn(_("Case ID"), prop_name='case_id'),
+            DataTablesColumn(_("Case Name"), prop_name='case_name'),
+            DataTablesColumn(_("Owner ID"), prop_name='owner_id'),
+            DataTablesColumn(_("Owner Name"), prop_name='owner_name'),
+            DataTablesColumn(_("Case Coordinates"), prop_name='coordinates'),
+            DataTablesColumn(_("Link"), prop_name='link'),
+        )
+
+    @property
+    def template_context(self):
+        context = super().template_context
+        context['case_row_order'] = {column.prop_name: index for index, column in enumerate(self.headers)}
+        return context
 
     def _base_query(self):
         # Override function to skip default pagination
@@ -219,8 +240,12 @@ class CaseGroupingReport(BaseCaseMapReport):
             )
             case = wrap_case_search_hit(row)
             coordinates = self._get_geo_location(case)
+            case_owner_type, case_owner = display.owner
             cases.append([
                 display.case_id,
+                display.case_name,
+                display.owner_id,
+                case_owner['name'],
                 coordinates,
                 display.case_link
             ])
