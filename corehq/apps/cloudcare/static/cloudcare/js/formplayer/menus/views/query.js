@@ -808,6 +808,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             urlObject.setQueryData({
                 inputs: self.getAnswers(),
                 execute: false,
+                forceManualSearch: true,
+
             });
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {

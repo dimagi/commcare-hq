@@ -10,7 +10,7 @@ amqp==5.1.1
     # via kombu
 architect==0.6.0
     # via -r base-requirements.in
-asgiref==3.5.0
+asgiref==3.7.2
     # via django
 async-timeout==4.0.2
     # via redis
@@ -326,7 +326,7 @@ jsonobject==2.0.0
     # via
     #   -r base-requirements.in
     #   jsonobject-couchdbkit
-jsonobject-couchdbkit==1.0.1
+jsonobject-couchdbkit==1.1.0
     # via -r base-requirements.in
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
@@ -628,6 +628,7 @@ twilio==7.12.0
     # via -r base-requirements.in
 typing-extensions==4.1.1
     # via
+    #   asgiref
     #   bytecode
     #   cattrs
     #   ddtrace

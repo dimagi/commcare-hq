@@ -100,7 +100,8 @@ class CaseTileHelper(object):
                                   horz_align=column_info.column.horizontal_align,
                                   vert_align=column_info.column.vertical_align,
                                   font_size=column_info.column.font_size,
-                                  show_border=column_info.column.show_border)
+                                  show_border=column_info.column.show_border,
+                                  show_shading=column_info.column.show_shading)
                 fields = get_column_generator(
                     self.app, self.module, self.detail,
                     detail_type=self.detail_type,

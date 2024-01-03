@@ -147,6 +147,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     // generate the case tile's style block and insert
     const buildCellLayout = function (tiles, styles, prefix) {
         const borderInTile = Boolean(_.find(styles, s => s.showBorder));
+        const shadingInTile = Boolean(_.find(styles, s => s.showShading));
         const tileModels = _.chain(tiles || [])
             .map(function (tile, idx) {
                 if (tile === null || tile === undefined) {
@@ -161,6 +162,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     horizontalAlign: getValidFieldAlignment(style.horizontalAlign),
                     showBorder: style.showBorder,
                     borderInTile: borderInTile,
+                    showShading: style.showShading,
+                    shadingInTile: shadingInTile,
                 };
             })
             .filter(function (tile) {
