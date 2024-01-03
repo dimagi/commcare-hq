@@ -2701,11 +2701,11 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
-msgid "Submitting..."
+msgid "Submit"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
-msgid "Submit"
+msgid "Submitting..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js

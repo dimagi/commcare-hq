@@ -9234,6 +9234,10 @@ msgstr ""
 msgid "Border"
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
+msgid "Shade"
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
 msgid "Loading Multimedia Sizes..."
 msgstr ""
@@ -14643,6 +14647,17 @@ msgid "Delete your custom logo and use the standard one."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Logo to use in systems emails"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+#, python-brace-format
+msgid ""
+"Upload an image to display in system emails from CommCare. It will be "
+"displayed in a square format. The upload size limit is {size_limit} MB."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Call Center Application"
 msgstr ""
 
@@ -14788,6 +14803,10 @@ msgid "Logo exceeds {} MB size limit"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Logo for systems emails exceeds {} MB size limit"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Release Mode Visibility should be a boolean."
 msgstr ""
 
@@ -14803,7 +14822,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-msgid "Unable to save custom logo: {}"
+msgid "Unable to save logo: {}"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -27223,7 +27242,7 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/registration/templates/registration/email/_base.html
+#: corehq/apps/registration/templates/registration/email/base_templates/_base.html
 msgid ""
 "\n"
 "            on <a href=\"http://www.commcarehq.org/\" style=\"color: "
@@ -43249,6 +43268,16 @@ msgstr ""
 
 #: corehq/trans_override.py
 msgid "Token generator"
+msgstr ""
+
+#: corehq/util/jsonattrs.py
+#, python-format
+msgid "'%(field)s' field value has an invalid format: %(exc)s"
+msgstr ""
+
+#: corehq/util/jsonattrs.py
+#, python-brace-format
+msgid "Cannot construct {type_name} with {cause}"
 msgstr ""
 
 #: corehq/util/workbook_json/excel.py
