@@ -863,7 +863,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                 }
 
                                 marker.on('click', () => {
-                                    if (!marker.getPopup()) {
+                                    if (popupIndex < 0) {
                                         const urlObject = formplayerUtils.currentUrlToObject();
                                         urlObject.addSelection(model.get('id'));
                                         const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, false, false, true);
