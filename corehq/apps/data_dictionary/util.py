@@ -210,9 +210,6 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     if not is_case_type_or_prop_name_valid(name):
         return gettext('Invalid case property name. It should start with a letter, and only contain letters, '
                        'numbers, "-", and "_"')
-    if not is_case_type_or_prop_name_valid(case_type):
-        return gettext('Invalid case type name. It should start with a letter, and only contain letters, '
-                       'numbers, "-", and "_"')
 
     try:
         prop = CaseProperty.get_or_create(
