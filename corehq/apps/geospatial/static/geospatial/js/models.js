@@ -504,6 +504,7 @@ hqDefine('geospatial/js/models', [
                 return;
             }
 
+            mapObj.removeDisbursementLayers();
             self.clearActivePolygon();
 
             removeActivePolygonLayer();
