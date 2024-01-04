@@ -36,7 +36,7 @@
  }
  
  .btn-full-width {
-@@ -38,25 +9,39 @@
+@@ -38,25 +9,35 @@
  // Separated button groups in toolbars need more space between them,
  // since the buttons within the group have space between them
  .btn-toolbar > .btn-group-separated:not(:first-child) {
@@ -83,12 +83,8 @@
 +  color: #ffffff;
 +}
 +
-+.btn-default {
-+  @include button-variant(white, $call-to-action-mid,  $call-to-action-mid);
-+}
-+
 +input::file-selector-button {
 +  @extend .btn;
 +  @extend .btn-sm;
-+  @extend .btn-default;
++  @extend .btn-outline-primary;
 +}

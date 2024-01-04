@@ -36,12 +36,8 @@
   color: #ffffff;
 }
 
-.btn-default {
-  @include button-variant(white, $call-to-action-mid,  $call-to-action-mid);
-}
-
 input::file-selector-button {
   @extend .btn;
   @extend .btn-sm;
-  @extend .btn-default;
+  @extend .btn-outline-primary;
 }
