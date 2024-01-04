@@ -36,7 +36,7 @@
  }
  
  .btn-full-width {
-@@ -38,25 +9,46 @@
+@@ -38,25 +9,39 @@
  // Separated button groups in toolbars need more space between them,
  // since the buttons within the group have space between them
  .btn-toolbar > .btn-group-separated:not(:first-child) {
@@ -87,15 +87,8 @@
 +  @include button-variant(white, $call-to-action-mid,  $call-to-action-mid);
 +}
 +
-+.btn-group-xs > .btn, .btn-xs {
-+  padding: 1px 5px;
-+  font-size: 12px;
-+  line-height: 1.5;
-+  border-radius: 3px;
-+  }
-+
 +input::file-selector-button {
 +  @extend .btn;
-+  @extend .btn-xs;
++  @extend .btn-sm;
 +  @extend .btn-default;
 +}
