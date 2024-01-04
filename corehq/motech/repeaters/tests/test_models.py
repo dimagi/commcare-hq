@@ -627,6 +627,55 @@ class TestRepeatRecordManager(RepeaterTestCase):
         overdue = SQLRepeatRecord.objects.count_overdue()
         self.assertEqual(overdue, 3)
 
+    iter_partition = SQLRepeatRecord.objects.iter_partition
+
+    def test_one_partition(self):
+        iter_partition = type(self).iter_partition
+        all_ids = self.make_records(5)
+        start = datetime.utcnow()
+        ids = {r.record_id for r in iter_partition(start, 0, 1)}
+        self.assertEqual(ids, all_ids)
+
+    def test_four_partitions(self):
+        iter_partition = type(self).iter_partition
+        all_ids = self.make_records(16)
+        start = datetime.utcnow()
+        ids0 = {r.record_id for r in iter_partition(start, 0, 4)}
+        ids1 = {r.record_id for r in iter_partition(start, 1, 4)}
+        ids2 = {r.record_id for r in iter_partition(start, 2, 4)}
+        ids3 = {r.record_id for r in iter_partition(start, 3, 4)}
+
+        self.assertEqual(ids0 | ids1 | ids2 | ids3, all_ids)
+
+        self.assertTrue(ids0)
+        self.assertTrue(ids1)
+        self.assertTrue(ids2)
+        self.assertTrue(ids3)
+
+        self.assertFalse(ids0 & ids1)
+        self.assertFalse(ids0 & ids2)
+        self.assertFalse(ids0 & ids3)
+
+        self.assertFalse(ids1 & ids0)
+        self.assertFalse(ids1 & ids2)
+        self.assertFalse(ids1 & ids3)
+
+        self.assertFalse(ids2 & ids0)
+        self.assertFalse(ids2 & ids1)
+        self.assertFalse(ids2 & ids3)
+
+        self.assertFalse(ids3 & ids0)
+        self.assertFalse(ids3 & ids1)
+        self.assertFalse(ids3 & ids2)
+
+    def test_partition_start(self):
+        iter_partition = type(self).iter_partition
+        all_ids = self.make_records(5)
+        self.new_record(next_check=datetime.utcnow() + timedelta(hours=1))
+        start = datetime.utcnow()
+        ids = {r.record_id for r in iter_partition(start, 0, 1)}
+        self.assertEqual(ids, all_ids)
+
     def new_record(self, next_check=before_now, state=State.Pending, domain="test"):
         return SQLRepeatRecord.objects.create(
             domain=domain,
@@ -636,6 +685,17 @@ class TestRepeatRecordManager(RepeaterTestCase):
             next_check=next_check,
             state=state,
         )
+
+    def make_records(self, n):
+        now = timezone.now() - timedelta(seconds=10)
+        records = SQLRepeatRecord.objects.bulk_create(SQLRepeatRecord(
+            domain="test",
+            repeater=self.repeater,
+            payload_id="c0ffee",
+            registered_at=now,
+            next_check=now,
+        ) for i in range(n))
+        return {r.record_id for r in records}
 
     def tearDown(self):
         from ..dbaccessors import delete_all_repeat_records

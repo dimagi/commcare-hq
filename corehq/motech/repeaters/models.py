@@ -1372,6 +1372,24 @@ class RepeatRecordManager(models.Manager):
                 .select_related('repeater')
                 .prefetch_related('attempt_set'))
 
+    def iter_partition(self, start, partition, total_partitions):
+        from django.db.models import F
+        query = self.annotate(partition_id=F("id") % total_partitions).filter(
+            partition_id=partition,
+            next_check__isnull=False,
+            next_check__lt=start,
+        ).order_by("next_check", "id")
+        offset = {}
+        while True:
+            result = list(query.filter(**offset)[:1000])
+            yield from result
+            if len(result) < 1000:
+                break
+            offset = {
+                "next_check__gte": result[-1].next_check,
+                "id__gt": result[-1].id,
+            }
+
 
 class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     domain = models.CharField(max_length=126)
