@@ -1,13 +1,20 @@
+from datetime import date
+
+from abdm_integrator.const import IdentifierType
+from abdm_integrator.hip.exceptions import (
+    DiscoveryMultiplePatientsFoundError,
+    DiscoveryNoPatientFoundError,
+)
+
+from corehq.apps.es import queries
+from corehq.apps.es.case_search import (
+    CaseSearchES,
+    case_property_range_query,
+    sounds_like_text_query,
+)
 from corehq.form_processor.models import CommCareCase
 from corehq.toggles import ABDM_INTEGRATION
 from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
-from corehq.apps.es.case_search import CaseSearchES, case_property_range_query, sounds_like_text_query
-from corehq.apps.es import queries
-
-from abdm_integrator.hip.exceptions import DiscoveryNoPatientFoundError, DiscoveryMultiplePatientsFoundError
-
-from datetime import date
-from abdm_integrator.const import IdentifierType
 
 PATIENT_CASE_TYPE = 'abdm_patient_discovery_data'
 HIP_ID_PROPERTY = 'hip_id'
@@ -96,7 +103,7 @@ def care_context_details_from_cases(care_context_cases):
 
 
 def case_property_value_by_key(case_properties, key):
-    return any(case_property['value'] for case_property in case_properties if case_property['key'] == key)
+    return next((case_property['value'] for case_property in case_properties if case_property['key'] == key), None)
 
 
 def _get_data_to_match(patient_record):
