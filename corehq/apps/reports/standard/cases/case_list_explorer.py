@@ -91,7 +91,7 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
     def _build_query(self, sort=True):
         query = super(CaseListExplorer, self)._build_query()
         query = self._populate_sort(query, sort)
-        query = self.apply_xpath_case_search_filter(self, query)
+        query = self.apply_xpath_case_search_filter(query)
         return query
 
     def _populate_sort(self, query, sort):
