@@ -384,13 +384,26 @@ hqDefine('geospatial/js/models', [
             });
         };
 
-        self.removeDisbursementLayers = function () {
+        self.hasDisbursementLayers = function () {
             const mapLayers = self.mapInstance.getStyle().layers;
             mapLayers.forEach(function (layer) {
                 if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
-                    self.mapInstance.removeLayer(layer.id);
+                    return true;
                 }
             });
+            return false;
+        };
+
+        self.removeDisbursementLayers = function () {
+            const mapLayers = self.mapInstance.getStyle().layers;
+            let layerRemoved = false;
+            mapLayers.forEach(function (layer) {
+                if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
+                    self.mapInstance.removeLayer(layer.id);
+                    layerRemoved = true;
+                }
+            });
+            return layerRemoved;
         };
     };
 
@@ -504,7 +517,13 @@ hqDefine('geospatial/js/models', [
                 return;
             }
 
-            mapObj.removeDisbursementLayers();
+            if (mapObj.hasDisbursementLayers()) {
+                if (mapObj.removeDisbursementLayers()) {
+                    $('#disbursement-clear-message').show();
+                }
+            } else {
+                $('#disbursement-clear-message').hide();
+            }
             self.clearActivePolygon();
 
             removeActivePolygonLayer();
