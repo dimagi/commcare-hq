@@ -2876,6 +2876,7 @@ msgid "\"Do Not Invoice\" Reason"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
@@ -5905,6 +5906,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/odk_install.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
@@ -6223,30 +6225,18 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"              The case list in <a href=\"%(module_url)s\">%(module_name)s</"
+"a> can not use the same \"search input instance name\" as its Parent Select "
+"Menu.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
 "                uses \"Display only forms\" and is also configured with\n"
-"                \"make search input available after search\". This workflow "
-"is unsupported.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses parent case selection but parent case list is using\n"
-"                \"make search input available after search\". This workflow "
-"is unsupported.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-#, python-format
-msgid ""
-"\n"
-"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-"                uses parent case selection and is configured with\n"
 "                \"make search input available after search\". This workflow "
 "is unsupported.\n"
 "              "
@@ -6649,6 +6639,16 @@ msgid ""
 "                can <a href=\"%(domain_url)s\">change your subscription</a>, "
 "or\n"
 "                remove the feature as follows.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a> has a case "
+"search property\n"
+"                <code>%(property)s</code> that is not assigned to a group.\n"
 "              "
 msgstr ""
 
@@ -7650,7 +7650,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 #: corehq/apps/cloudcare/templates/formplayer/case_detail.html
-#: corehq/apps/cloudcare/templates/formplayer/case_list.html
+#: corehq/apps/cloudcare/templates/formplayer/multi_select_continue_button.html
 #: corehq/apps/domain/templates/domain/confirm_plan.html
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_continue.html
@@ -8201,6 +8201,20 @@ msgid ""
 "          "
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_lazy_loading.html
+msgid "Lazy load Case List fields"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_lazy_loading.html
+msgid "Incrementally load case list fields"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_lazy_loading.html
+msgid ""
+"Case list only calculates display properties for a case if the user sees it "
+"on the page"
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_lookup.html
 msgid "Case List Search Callout"
 msgstr ""
@@ -8388,7 +8402,7 @@ msgid "Width/Height"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
-msgid "Align/Text Size"
+msgid "Style"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_setting.html
@@ -8422,7 +8436,13 @@ msgid "Other Options"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-msgid "Add search property"
+msgid "Add Search Property"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#: corehq/apps/data_interfaces/forms.py
+#: corehq/apps/groups/templates/groups/all_groups.html
+msgid "Add Group"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
@@ -8755,6 +8775,14 @@ msgstr ""
 #: corehq/apps/users/views/mobile/users.py
 msgid "Done"
 msgstr "समाप्त"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#: corehq/apps/data_interfaces/forms.py corehq/apps/data_interfaces/views.py
+#: corehq/apps/groups/templates/groups/all_groups.html
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/reminders/forms.py
+msgid "Group Name"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/custom_detail_variables.html
 msgid "Custom Detail Variables"
@@ -9184,6 +9212,26 @@ msgid ""
 "the last time UCR data\n"
 "          was synced.\n"
 "        "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
+msgid "Edit Field Style"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
+msgid "Horizontal Align"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
+msgid "Vertial Align"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
+msgid "Font Size"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
+msgid "Border"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
@@ -11706,6 +11754,14 @@ msgstr ""
 msgid "Not found application by name: %s"
 msgstr ""
 
+#: corehq/apps/cloudcare/templates/block_web_apps.html
+msgid "Blocked"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/block_web_apps.html
+msgid "You are currently blocked from using Web Apps"
+msgstr ""
+
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
 msgid "Manage Web Apps Permissions"
 msgstr ""
@@ -11990,6 +12046,10 @@ msgid "Start"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/menu_list.html
+msgid "Home"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/formplayer/menu_list.html
 msgid "Dropdown toggle"
 msgstr ""
 
@@ -12078,6 +12138,21 @@ msgstr ""
 
 #: corehq/apps/cloudcare/views.py
 msgid "This user cannot access this link."
+msgstr ""
+
+#: corehq/apps/cloudcare/views.py
+#, python-brace-format
+msgid ""
+"You have the MOBILE_UCR feature flag enabled, and have {ucr_count} mobile "
+"UCRs\n"
+"                               which exceeds the maximum limit of "
+"{ucr_limit} total User Configurable Reports used\n"
+"                               across all of your applications. To resolve, "
+"you must remove references to UCRs in\n"
+"                               your applications until you are under the "
+"limit. If you believe this is a mistake,\n"
+"                               please reach out to support.\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/commtrack/forms.py
@@ -13099,18 +13174,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py
 msgid "Please enter a number of days greater than or equal to zero"
-msgstr ""
-
-#: corehq/apps/data_interfaces/forms.py corehq/apps/data_interfaces/views.py
-#: corehq/apps/groups/templates/groups/all_groups.html
-#: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/reminders/forms.py
-msgid "Group Name"
-msgstr ""
-
-#: corehq/apps/data_interfaces/forms.py
-#: corehq/apps/groups/templates/groups/all_groups.html
-msgid "Add Group"
 msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py
@@ -15167,6 +15230,10 @@ msgid "Restriction for profile {profile} failed: {message}"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Using project's timezone: {}"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Add New Alert"
 msgstr ""
 
@@ -15539,6 +15606,19 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "Available Alerts"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+msgid "You can only have 3 alerts activated at any one time"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/reports/templates/reports/messaging/survey_detail.html
+msgid "Start Time"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+msgid "End Time"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
@@ -17677,6 +17757,7 @@ msgid "Manage Mobile Workers"
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Manage Project Alerts"
 msgstr ""
 
@@ -17694,6 +17775,10 @@ msgstr ""
 
 #: corehq/apps/domain/views/settings.py
 msgid "Alert was removed!"
+msgstr ""
+
+#: corehq/apps/domain/views/settings.py
+msgid "Only 3 active alerts allowed!"
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
@@ -21583,10 +21668,8 @@ msgid "Create New Case"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
-#, fuzzy
-#| msgid "Manage Case"
 msgid "Save Case"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
 msgid "Capturing location for:"
@@ -21678,6 +21761,15 @@ msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Running disbursement algorithm..."
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid ""
+"\n"
+"        Please ensure that the filtered area includes both cases and mobile "
+"workers before\n"
+"        attempting to run disbursement.\n"
+"    "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
@@ -30682,10 +30774,6 @@ msgid "IVR"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/messaging/survey_detail.html
-msgid "Start Time"
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/messaging/survey_detail.html
 msgid "Form Submission"
 msgstr ""
 
@@ -38335,6 +38423,10 @@ msgstr ""
 msgid "Select which other roles can assign this role:"
 msgstr ""
 
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow this role to manage project alerts."
+msgstr ""
+
 #: corehq/apps/users/templates/users/partials/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 msgid "Registered Phone Numbers"
@@ -39573,6 +39665,10 @@ msgid ""
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
+msgid "Rich Text Message"
+msgstr ""
+
+#: corehq/messaging/scheduling/forms.py
 msgid "Message type"
 msgstr ""
 
@@ -40501,6 +40597,7 @@ msgid "and send"
 msgstr ""
 
 #: corehq/messaging/scheduling/templates/scheduling/partials/message_configuration.html
+#: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_message_configuration.html
 msgid "Translate this message"
 msgstr ""
 
@@ -40515,6 +40612,7 @@ msgid ""
 msgstr ""
 
 #: corehq/messaging/scheduling/templates/scheduling/partials/message_configuration.html
+#: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_message_configuration.html
 msgid "Translation"
 msgstr ""
 
@@ -40659,6 +40757,19 @@ msgstr ""
 
 #: corehq/messaging/scheduling/views.py
 msgid "SMS alert content"
+msgstr ""
+
+#: corehq/messaging/scheduling/views.py
+msgid "Image file is too large. Images must be smaller than 1MB"
+msgstr ""
+
+#: corehq/messaging/scheduling/views.py
+#, python-brace-format
+msgid "You can only upload {image_extensions} images"
+msgstr ""
+
+#: corehq/messaging/scheduling/views.py
+msgid "Invalid request"
 msgstr ""
 
 #: corehq/messaging/smsbackends/airtel_tcl/forms.py

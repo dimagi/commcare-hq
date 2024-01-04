@@ -15,14 +15,23 @@
  ) {
      var getHash = function () {
          if (window.location.hash) {
-@@ -21,16 +21,21 @@
-         var tabSelector = "a[data-toggle='tab']",
+@@ -16,21 +16,28 @@
+         }
+         return "";
+     };
+-
+     $(function () {
+-        var tabSelector = "a[data-toggle='tab']",
++        var tabSelector = "a[data-bs-toggle='tab']",
              navSelector = ".nav.sticky-tabs",
              hash = getHash(),
 -            $tabFromUrl = hash ? $("a[href='" + hash + "']") : undefined;
 +            $tabFromUrl = hash ? $("a[href='" + hash + "']") : undefined,
 +            $altTabSelector = $(navSelector + ' ' + tabSelector).first(),
 +            tabController;
++
++        // make sure we don't treat all anchor tags as a sticky tab
++        if ($tabFromUrl && $tabFromUrl.parents('.sticky-tabs').length === 0) return;
  
          if ($tabFromUrl && $tabFromUrl.length) {
 -            $tabFromUrl.tab('show');
@@ -42,7 +51,7 @@
              if (!$link.closest(navSelector).length) {
                  return true;
              }
-@@ -42,13 +47,18 @@
+@@ -42,13 +49,18 @@
                  window.location.hash = tabName;
              }
  

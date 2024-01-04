@@ -726,6 +726,15 @@ CASE_LIST_MAP = StaticToggle(
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
+CASE_LIST_LAZY = StaticToggle(
+    'case_list_lazy',
+    'USH: Add option to lazy load case list',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?'
+              'spaceKey=saas&title=Allow+Configuration+of+Case+List+Lazy',
+)
+
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
     'show_persist_case_context_setting',
     'Allow toggling the persistent case context tile',
@@ -938,6 +947,13 @@ WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
     TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Jenny Schweers',
+)
+
+WEB_APPS_ANCHORED_SUBMIT = StaticToggle(
+    'web_apps_anchored_submit',
+    'USH: Keep submit button anchored at the bottom of screen for forms in Web Apps',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
@@ -1437,6 +1453,13 @@ MESSAGE_LOG_METADATA = StaticToggle(
     'Include message id in Message Log export.',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+)
+
+RICH_TEXT_EMAILS = StaticToggle(
+    'rich_text_emails',
+    'Enable sending rich text HTML emails in conditional alerts and broadcasts',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
 )
 
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
@@ -2676,4 +2699,12 @@ CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow projects to add banners visible to their users on HQ on every login',
+)
+
+USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
+    slug='use_logo_in_system_emails',
+    label='Use the project\'s logo in emails sent from HQ',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='The project logo replaces the CommCare logo.',
 )

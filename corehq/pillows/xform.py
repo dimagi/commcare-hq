@@ -5,7 +5,6 @@ from django.conf import settings
 
 from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.apps.es.forms import form_adapter
@@ -141,8 +140,6 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         processors.append(unknown_user_form_processor)
     if settings.RUN_FORM_META_PILLOW:
         processors.append(form_meta_processor)
-    if settings.RUN_DEDUPLICATION_PILLOW:
-        processors.append(CaseDeduplicationProcessor())
     if not skip_ucr:
         processors.append(ucr_processor)
 

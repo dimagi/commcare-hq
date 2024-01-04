@@ -3,13 +3,14 @@
 
 <script type="text/html" id="sub-group-fullform-ko-template">
   <div tabindex="-1" class ="gr" data-bind="
-        class: isRepetition ? 'repetition' : '',
         css: {
           'gr-no-children': $data.children().length === 0,
           'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'grouped-question-tile-row' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'panel panel-default': collapsible,
+          'repetition': isRepetition,
           'required-group': !showChildren() && childrenRequired(),
+          'stripe-repeats': stripeRepeats,
         }">
     <fieldset class="gr-header" data-bind="
         css: {
@@ -49,7 +50,7 @@
               css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
           "></i>
         </div>
-        <span class="webapp-markdown-output caption" data-bind="html: caption_markdown(), attr: {id: captionId()}"></span>
+        <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
         <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
         <button class="btn btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
@@ -151,9 +152,9 @@
           {% endif %}
           <div id="submit-button" class="form-actions form-group noprint-sub-container" data-bind="visible: showSubmitButton">
             <div data-bind="css: submitClass">
-              <button class="submit btn btn-primary"
-                     type="submit"
-                     data-bind="enable: enableSubmitButton">
+              <button class="submit btn btn-lg btn-primary"
+                      type="submit"
+                      data-bind="enable: enableSubmitButton">
                 <i class="fa fa-spin fa-refresh"
                    data-bind="visible: !enableSubmitButton(){% if environment == "web-apps" %} && erroredQuestions.length != 0{% endif %}"
                 ></i>
@@ -197,7 +198,7 @@
 
 <script type="text/html" id="grouped-question-tile-row-fullform-ko-template">
   <div class="row">
-    <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+    <div data-bind="template: { name: childTemplate, foreach: $data.children }" class="question-tile-row"/>
   </div>
 </script>
 
@@ -212,7 +213,7 @@
                 on: $root.forceRequiredVisible,
             }
         ">
-    <label class="caption control-label" data-bind="css: labelWidth, attr: {'for': entry.entryId}">
+    <label class="caption control-label" data-bind="css: labelWidth, attr: {'for': entry.entryId}, visible: hasLabelContent">
       {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
       <div data-bind="css: {
           'row': help(),
