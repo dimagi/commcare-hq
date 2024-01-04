@@ -7,8 +7,11 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
 
-from two_factor.views import PhoneSetupView, ProfileView, SetupView
+from two_factor.views import ProfileView
+from two_factor.plugins.phonenumber.views import PhoneSetupView
+from two_factor.plugins.registry import registry
 
+from corehq.apps.hqwebapp.two_factor_methods import HQGeneratorMethod, HQPhoneCallMethod, HQSMSMethod
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import UserHistory, WebUser
@@ -104,29 +107,39 @@ class TwoFactorProfileView_Context_Tests(SimpleTestCase):
 
 
 @override_settings(ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE=True)
-class TwoFactorSetupView_FormKwargs_Tests(SimpleTestCase):
+class TwoFactorSetupView_RegisteredMethods_Tests(SimpleTestCase):
+
     @override_settings(ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE=False)
-    def test_phone_methods_are_prohibited_when_settings_are_disabled(self):
+    def test_phone_methods_are_not_registered_when_settings_are_disabled(self):
         user = self._create_user(belongs_to_messaging_domain=True)
-        view = self._create_view_for_user(user)
-        self.assertFalse(view.get_form_kwargs(step='method')['allow_phone_2fa'])
+        self._create_view_for_user(user)
+        self.assertCountEqual(['generator'], [m.code for m in registry.get_methods()])
 
-    def test_phone_methods_are_allowed_when_user_belongs_to_messaging_domain(self):
+    def test_phone_methods_are_registered_when_user_belongs_to_messaging_domain(self):
         user = self._create_user(belongs_to_messaging_domain=True)
-        view = self._create_view_for_user(user)
-        self.assertTrue(view.get_form_kwargs(step='method')['allow_phone_2fa'])
+        self._create_view_for_user(user)
+        self.assertCountEqual(['generator', 'sms', 'call'], [m.code for m in registry.get_methods()])
 
-    def test_phone_methods_are_prohibited_when_user_does_not_belongs_to_messaging_domain(self):
+    def test_phone_methods_are_not_registered_when_user_does_not_belongs_to_messaging_domain(self):
         user = self._create_user(belongs_to_messaging_domain=False)
-        view = self._create_view_for_user(user)
-        self.assertFalse(view.get_form_kwargs(step='method')['allow_phone_2fa'])
+        self._create_view_for_user(user)
+        self.assertCountEqual(['generator'], [m.code for m in registry.get_methods()])
+
+    def test_custom_methods_are_registsered(self):
+        user = self._create_user(belongs_to_messaging_domain=True)
+        self._create_view_for_user(user)
+
+        generator_method = registry.get_method('generator')
+        self.assertEqual(HQGeneratorMethod, type(generator_method))
+
+        call_method = registry.get_method('call')
+        self.assertEqual(HQPhoneCallMethod, type(call_method))
+
+        sms_method = registry.get_method('sms')
+        self.assertEqual(HQSMSMethod, type(sms_method))
 
     def setUp(self):
         self.factory = RequestFactory()
-        mock_2fa_form_kwargs_patcher = patch.object(SetupView, 'get_form_kwargs', return_value={})
-        mock_2fa_form_kwargs_patcher.start()
-
-        self.addCleanup(mock_2fa_form_kwargs_patcher.stop)
 
     def _create_user(self, belongs_to_messaging_domain=True):
         user = Mock(is_authenticated=True, is_active=True)
@@ -144,6 +157,7 @@ class TwoFactorSetupView_FormKwargs_Tests(SimpleTestCase):
 
 @override_settings(ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE=True)
 class TwoFactorPhoneSetupViewTests(SimpleTestCase):
+
     @override_settings(ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE=False)
     def test_when_settings_are_disabled_view_returns_404(self):
         user = self._create_user(belongs_to_messaging_domain=True)
