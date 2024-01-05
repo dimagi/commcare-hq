@@ -384,13 +384,26 @@ hqDefine('geospatial/js/models', [
             });
         };
 
+        self.hasDisbursementLayers = function () {
+            const mapLayers = self.mapInstance.getStyle().layers;
+            for (const layer of mapLayers) {
+                if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
         self.removeDisbursementLayers = function () {
             const mapLayers = self.mapInstance.getStyle().layers;
+            let layerRemoved = false;
             mapLayers.forEach(function (layer) {
                 if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
                     self.mapInstance.removeLayer(layer.id);
+                    layerRemoved = true;
                 }
             });
+            return layerRemoved;
         };
     };
 
@@ -504,6 +517,23 @@ hqDefine('geospatial/js/models', [
                 return;
             }
 
+            // hide it by default and show it only if necessary
+            $('#disbursement-clear-message').hide();
+            if (mapObj.hasDisbursementLayers()) {
+                let confirmation = confirm(
+                    gettext("Warning! This action will clear the current disbursement. " +
+                            "Please confirm if you want to proceed.")
+                    );
+                if (confirmation) {
+                    if(mapObj.removeDisbursementLayers()) {
+                        $('#disbursement-clear-message').show();
+                    }
+                } else {
+                    return;
+                }
+            } else {
+                $('#disbursement-clear-message').hide();
+            }
             self.clearActivePolygon();
 
             removeActivePolygonLayer();
