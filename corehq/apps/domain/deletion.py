@@ -301,7 +301,7 @@ def _delete_demo_user_restores(domain_name):
 DOMAIN_DELETE_OPERATIONS = [
     DjangoUserRelatedModelDeletion('otp_static', 'StaticDevice', 'user__username', ['StaticToken']),
     DjangoUserRelatedModelDeletion('otp_totp', 'TOTPDevice', 'user__username'),
-    DjangoUserRelatedModelDeletion('two_factor', 'PhoneDevice', 'user__username'),
+    DjangoUserRelatedModelDeletion('phonenumber', 'PhoneDevice', 'user__username'),
     DjangoUserRelatedModelDeletion('users', 'HQApiKey', 'user__username'),
     CustomDeletion('auth', _delete_django_users, ['User']),
     ModelDeletion('products', 'SQLProduct', 'domain'),
