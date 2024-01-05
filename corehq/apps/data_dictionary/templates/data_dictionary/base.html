@@ -316,8 +316,10 @@
               </div>
             {% endif %}
             {% if not request.is_view_only %}
-              <div class="row-item-small" data-bind="hidden: containsCaseData() || isGeoCaseProp()">
-                <button title="{% trans_html_attr 'Delete Property' %}" data-bind="click: confirmDeleteProperty" class="fa fa-trash"></button>
+              <div class="row-item-small">
+                <button title="{% trans_html_attr 'Delete Property' %}"
+                        data-bind="click: confirmDeleteProperty, hidden: containsCaseData() || isGeoCaseProp()"
+                        class="fa fa-trash"></button>
               </div>
               <div class="row-item-small">
                 <!-- ko if: !deprecated() -->
