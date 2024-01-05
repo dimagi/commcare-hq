@@ -1,8 +1,6 @@
 from django.http import Http404
 from django.test import TestCase
 
-from no_exceptions.exceptions import Http400
-
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import get_simple_form
 from corehq.apps.app_manager.views.forms import _get_form_link_datums
