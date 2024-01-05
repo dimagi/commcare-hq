@@ -428,6 +428,7 @@ hqDefine('geospatial/js/models', [
         self.savedPolygons = ko.observableArray([]);
         self.selectedSavedPolygonId = ko.observable('');
         self.oldSelectedSavedPolygonId = ko.observable('');
+        self.resettingSavedPolygon = false;
         self.activeSavedPolygon;
 
         self.addPolygonsToFilterList = function (featureList) {
@@ -514,6 +515,13 @@ hqDefine('geospatial/js/models', [
         }, null, "beforeChange");
 
         self.selectedSavedPolygonId.subscribe(() => {
+            // avoid running actions expected on user interactions if resetting saved polygon
+            // and update resettingSavedPolygon back to false
+            if (self.resettingSavedPolygon) {
+                self.resettingSavedPolygon = false;
+                return;
+            }
+
             const selectedId = parseInt(self.selectedSavedPolygonId());
             const polygonObj = self.savedPolygons().find(
                 function (o) { return o.id === selectedId; }
@@ -534,6 +542,8 @@ hqDefine('geospatial/js/models', [
                         $('#disbursement-clear-message').show();
                     }
                 } else {
+                    // set flag
+                    self.resettingSavedPolygon = true;
                     self.selectedSavedPolygonId(self.oldSelectedSavedPolygonId());
                     return;
                 }
