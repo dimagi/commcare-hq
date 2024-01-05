@@ -1,11 +1,13 @@
 hqDefine('geospatial/js/models', [
     'jquery',
     'knockout',
+    'underscore',
     'hqwebapp/js/initial_page_data',
     'geospatial/js/utils',
 ], function (
     $,
     ko,
+    _,
     initialPageData,
     utils
 ) {
@@ -386,12 +388,10 @@ hqDefine('geospatial/js/models', [
 
         self.hasDisbursementLayers = function () {
             const mapLayers = self.mapInstance.getStyle().layers;
-            for (const layer of mapLayers) {
-                if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
-                    return true;
-                }
-            }
-            return false;
+            return _.any(
+                mapLayers,
+                function(layer) { return layer.id.includes(DISBURSEMENT_LAYER_PREFIX) }
+            )
         };
 
         self.removeDisbursementLayers = function () {
