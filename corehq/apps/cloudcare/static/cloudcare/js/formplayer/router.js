@@ -201,18 +201,21 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
     FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiatedBy) {
         var urlObject = utils.currentUrlToObject();
-        var queryObject = _.extend(
-            {
-                inputs: queryDict,
-                execute: true,
-                initiatedBy: initiatedBy,
-            },
-            // force manual search in split screen case search for workflow compatibility
-            sidebarEnabled ? { forceManualSearch: true } : {}
-        );
+        var queryObject = {
+            execute: true,
+            initiatedBy: initiatedBy,
+        };
+        // force manual search in split screen case search for workflow compatibility
+        if (sidebarEnabled) {
+            queryObject.forceManualSearch = true;
+        }
         urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
-        API.listMenus();
+
+        // add inputs after setting browser url to keep sensitive info out of address bar
+        queryObject.inputs = queryDict;
+        urlObject.setQueryData(queryObject);
+        API.listMenus(urlObject.toJson());
     });
 
     FormplayerFrontend.on('restore_as:list', function () {
