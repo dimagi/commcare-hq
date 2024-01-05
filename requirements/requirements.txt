@@ -408,7 +408,7 @@ pycparser==2.20
     # via cffi
 pycryptodome==3.10.1
     # via -r base-requirements.in
-pycryptodomex==3.14.1
+pycryptodomex==3.19.1
     # via
     #   oic
     #   pyjwkest
