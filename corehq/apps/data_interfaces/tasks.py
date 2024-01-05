@@ -37,6 +37,7 @@ from .interfaces import FormManagementMode
 from .models import (
     AutomaticUpdateRule,
     CaseDuplicate,
+    CaseDuplicateNew,
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
@@ -89,6 +90,8 @@ def reset_and_backfill_deduplicate_rule_task(domain, rule_id):
 def delete_duplicates_for_cases(case_ids):
     CaseDuplicate.bulk_remove_unique_cases(case_ids)
     CaseDuplicate.remove_duplicates_for_case_ids(case_ids)
+
+    CaseDuplicateNew.remove_duplicates_for_case_ids(case_ids)
 
 
 @task(serializer='pickle', ignore_result=True)
