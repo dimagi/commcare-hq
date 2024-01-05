@@ -22,7 +22,7 @@ from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from django.db import transaction
 from unittest import SkipTest
 from django.conf import settings
-from unittest.mock import PropertyMock, patch
+from unittest.mock import patch
 import uuid
 
 
@@ -118,9 +118,8 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
 
     # Keys for idempotent requests can only be used with the same parameters they were first used with.
     # So introduce randomness in idempotency key to avoid clashes
-    @patch('corehq.apps.accounting.models.Invoice.invoice_number', new_callable=PropertyMock)
-    def test_pay_autopayable_invoices(self, fake_invoice_id):
-        fake_invoice_id.return_value = str(uuid.uuid4())
+    @patch('corehq.apps.accounting.models.Invoice.invoice_number', str(uuid.uuid4()))
+    def test_pay_autopayable_invoices(self):
         original_outbox_length = len(mail.outbox)
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription).first()
         date_due = autopayable_invoice.date_due
@@ -133,9 +132,8 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
 
     # Keys for idempotent requests can only be used with the same parameters they were first used with.
     # So introduce randomness in idempotency key to avoid clashes
-    @patch('corehq.apps.accounting.models.Invoice.invoice_number', new_callable=PropertyMock)
-    def test_double_charge_is_prevented_and_only_one_payment_record_created(self, fake_invoice_id):
-        fake_invoice_id.return_value = str(uuid.uuid4())
+    @patch('corehq.apps.accounting.models.Invoice.invoice_number', str(uuid.uuid4()))
+    def test_double_charge_is_prevented_and_only_one_payment_record_created(self):
         self.original_outbox_length = len(mail.outbox)
         invoice = Invoice.objects.get(subscription=self.subscription)
         balance = invoice.balance
