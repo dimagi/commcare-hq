@@ -528,9 +528,9 @@ hqDefine('geospatial/js/models', [
                 let confirmation = confirm(
                     gettext("Warning! This action will clear the current disbursement. " +
                             "Please confirm if you want to proceed.")
-                    );
+                );
                 if (confirmation) {
-                    if(mapObj.removeDisbursementLayers()) {
+                    if (mapObj.removeDisbursementLayers()) {
                         $('#disbursement-clear-message').show();
                     }
                 } else {
