@@ -390,8 +390,8 @@ hqDefine('geospatial/js/models', [
             const mapLayers = self.mapInstance.getStyle().layers;
             return _.any(
                 mapLayers,
-                function(layer) { return layer.id.includes(DISBURSEMENT_LAYER_PREFIX) }
-            )
+                function (layer) { return layer.id.includes(DISBURSEMENT_LAYER_PREFIX); }
+            );
         };
 
         self.removeDisbursementLayers = function () {
@@ -510,7 +510,7 @@ hqDefine('geospatial/js/models', [
             }
         };
 
-        self.selectedSavedPolygonId.subscribe(function(selectedPolygonID) {
+        self.selectedSavedPolygonId.subscribe(function (selectedPolygonID) {
             self.oldSelectedSavedPolygonId(selectedPolygonID);
         }, null, "beforeChange");
 
