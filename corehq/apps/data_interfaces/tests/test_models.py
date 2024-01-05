@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
@@ -339,6 +339,29 @@ class AutomaticUpdateRuleTests(SimpleTestCase):
             'criteria': ['criteria1', 'criteria2'],
             'actions': ['action1', 'action2'],
         })
+
+    def test_get_boundary_date_returns_none_if_any_rule_does_not_filter_on_server_modified(self):
+        now = datetime(2020, 6, 1, 0, 0)
+        rules = [
+            AutomaticUpdateRule(filter_on_server_modified=True),
+            AutomaticUpdateRule(filter_on_server_modified=False),
+        ]
+
+        result = AutomaticUpdateRule.get_boundary_date(rules, now)
+
+        self.assertIsNone(result)
+
+    def test_get_boundary_date_returns_most_recent_date_if_all_rules_filter_on_server_modified(self):
+        now = datetime(2020, 6, 1, 0, 0)
+        rules = [
+            # filter_on_server_modified is True by default
+            AutomaticUpdateRule(server_modified_boundary=30),
+            AutomaticUpdateRule(server_modified_boundary=1),
+        ]
+
+        result = AutomaticUpdateRule.get_boundary_date(rules, now)
+
+        self.assertEqual(result, datetime(2020, 5, 31, 0, 0))
 
     def setUp(self):
         self.actions = []
