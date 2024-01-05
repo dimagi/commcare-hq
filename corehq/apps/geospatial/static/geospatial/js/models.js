@@ -427,6 +427,7 @@ hqDefine('geospatial/js/models', [
 
         self.savedPolygons = ko.observableArray([]);
         self.selectedSavedPolygonId = ko.observable('');
+        self.oldSelectedSavedPolygonId = ko.observable('');
         self.activeSavedPolygon;
 
         self.addPolygonsToFilterList = function (featureList) {
@@ -508,6 +509,10 @@ hqDefine('geospatial/js/models', [
             }
         };
 
+        self.selectedSavedPolygonId.subscribe(function(selectedPolygonID) {
+            self.oldSelectedSavedPolygonId(selectedPolygonID);
+        }, null, "beforeChange");
+
         self.selectedSavedPolygonId.subscribe(() => {
             const selectedId = parseInt(self.selectedSavedPolygonId());
             const polygonObj = self.savedPolygons().find(
@@ -529,6 +534,7 @@ hqDefine('geospatial/js/models', [
                         $('#disbursement-clear-message').show();
                     }
                 } else {
+                    self.selectedSavedPolygonId(self.oldSelectedSavedPolygonId());
                     return;
                 }
             }
