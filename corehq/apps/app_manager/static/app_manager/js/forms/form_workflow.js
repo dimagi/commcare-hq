@@ -1,9 +1,6 @@
-hqDefine('app_manager/js/forms/form_workflow', [
-    "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list",
-], function (
-    uiElementKeyValueList
-) {
+hqDefine('app_manager/js/forms/form_workflow', function () {
     'use strict';
+    const uiElementKeyValueList = hqImport("cloudcare/js/formplayer/constants"),
 
     var FormWorkflow = function (options) {
         var self = this;
