@@ -72,6 +72,7 @@ class SessionDetailsView(View):
             domains.update(EnterprisePermissions.get_domains(member_domain))
 
         enabled_toggles = toggles_enabled_for_user(user.username) | toggles_enabled_for_domain(domain)
+        enabled_previews = previews_enabled_for_domain(domain)
         end_time = datetime.now()
         metrics_histogram("commcare.session_details.processing_time",
                       int((end_time - start_time).total_seconds() * 1000),
@@ -87,5 +88,5 @@ class SessionDetailsView(View):
             'domains': list(domains),
             'anonymous': False,
             'enabled_toggles': list(enabled_toggles),
-            'enabled_previews': list(previews_enabled_for_domain(domain))
+            'enabled_previews': list(enabled_previews)
         })
