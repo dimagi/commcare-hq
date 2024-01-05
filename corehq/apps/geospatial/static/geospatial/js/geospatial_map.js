@@ -288,6 +288,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
         var $runDisbursement = $("#btnRunDisbursement");
         $runDisbursement.click(function () {
+            $('#disbursement-clear-message').hide();
             if (mapModel && mapModel.mapInstance && !polygonFilterModel.btnRunDisbursementDisabled()) {
                 let selectedCases = mapModel.caseMapItems();
                 let selectedUsers = mapModel.userMapItems();
