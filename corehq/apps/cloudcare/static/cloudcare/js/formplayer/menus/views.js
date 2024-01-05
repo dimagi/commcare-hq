@@ -330,7 +330,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
             urlObject.clickedIcon = true;
-            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true, true);
+            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
                 self.updateModelFromDetailResponse(caseId, detailResponse);
             }).fail(function () {
@@ -866,7 +866,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                     if (popupIndex < 0) {
                                         const urlObject = formplayerUtils.currentUrlToObject();
                                         urlObject.addSelection(model.get('id'));
-                                        const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, false, false, true);
+                                        const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, false, false);
                                         $.when(fetchingDetails).done(function (detailResponse) {
                                             const attributes = Array.from(detailResponse)[0].attributes;
                                             const popupIndexOnClick =
