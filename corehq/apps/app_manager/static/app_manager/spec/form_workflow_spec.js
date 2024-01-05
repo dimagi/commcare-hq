@@ -4,7 +4,7 @@ describe('Form Workflow', function () {
 
     describe('#workflowOptions', function () {
         const Toggles = hqImport('hqwebapp/js/toggles'),
-              sandbox = sinon.sandbox.create();
+            sandbox = sinon.sandbox.create();
 
         sandbox.stub(Toggles, 'toggleEnabled').withArgs('FORM_LINK_ADVANCED_MODE').returns(true);
 
