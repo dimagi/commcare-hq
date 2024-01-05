@@ -27,7 +27,7 @@ def register_two_factor_methods():
     registry.register(HQGeneratorMethod())
 
     # default phone methods are registered when django starts up
-    # https://github.com/jazzband/django-two-factor-auth/blob/master/two_factor/plugins/phonenumber/apps.py#L19-L30
+    # https://github.com/jazzband/django-two-factor-auth/blob/1.15.5/two_factor/plugins/phonenumber/apps.py#L19-L30
     if not settings.ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE:
         registry.unregister('call')
         registry.unregister('sms')
