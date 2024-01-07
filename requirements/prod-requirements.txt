@@ -10,7 +10,7 @@ amqp==5.1.1
     # via kombu
 architect==0.6.0
     # via -r base-requirements.in
-asgiref==3.5.0
+asgiref==3.7.2
     # via django
 asttokens==2.0.5
     # via stack-data
@@ -321,7 +321,7 @@ jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-jsonfield==2.1.1
+jsonfield==3.1.0
     # via
     #   -r base-requirements.in
     #   django-prbac
@@ -329,7 +329,7 @@ jsonobject==2.0.0
     # via
     #   -r base-requirements.in
     #   jsonobject-couchdbkit
-jsonobject-couchdbkit==1.0.1
+jsonobject-couchdbkit==1.1.0
     # via -r base-requirements.in
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
@@ -579,7 +579,6 @@ six==1.16.0
     #   google-auth
     #   google-auth-httplib2
     #   isodate
-    #   jsonfield
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
@@ -605,7 +604,7 @@ stack-data==0.1.4
     # via ipython
 stone==3.3.1
     # via dropbox
-stripe==4.1.0
+stripe==7.2.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
@@ -629,14 +628,16 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==7.12.0
     # via -r base-requirements.in
-typing-extensions==4.1.1
+typing-extensions==4.8.0
     # via
+    #   asgiref
     #   bytecode
     #   cattrs
     #   ddtrace
     #   django-countries
     #   oic
     #   qrcode
+    #   stripe
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
