@@ -148,7 +148,7 @@ class Command(BaseCommand):
 
     def get_doc_count_delta_percent(self, cname):
         """
-        For the given cname the function reutrn difference in count of primary and secondary indices
+        For the given cname the function returns the difference in count of primary and secondary indices
         """
         primary_adapter, secondary_adapter = self.get_both_adapters_for_cname(cname)
         primary_adapter.delete_tombstones()
@@ -157,8 +157,8 @@ class Command(BaseCommand):
         primary_count = primary_adapter.count({})
         secondary_count = secondary_adapter.count({})
 
-        print(f"\nDoc Count in old Index {primary_adapter.index_name} - {primary_count}")
-        print(f"\nDoc Count in new Index {secondary_adapter.index_name} - {secondary_count}")
+        print(f"\nDoc Count in old Index {primary_adapter.index_name}: {primary_count}")
+        print(f"\nDoc Count in new Index {secondary_adapter.index_name}: {secondary_count}")
 
         diff = abs(primary_count - secondary_count)
         delta = (diff / primary_count) * 100 if primary_count != 0 else 0
