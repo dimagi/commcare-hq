@@ -345,6 +345,20 @@ hqDefine("data_dictionary/js/data_dictionary", [
             });
         };
 
+        self.deleteCaseType = function () {
+            $("#case-type-error").hide();
+            $.ajax({
+                url: initialPageData.reverse('delete_case_type', self.getActiveCaseType().name),
+                method: 'POST',
+                success: function () {
+                    window.location.href = initialPageData.reverse('data_dictionary');
+                },
+                error: function () {
+                    $("#case-type-error").show();
+                },
+            });
+        };
+
         self.goToCaseType = function (caseType) {
             if (self.saveButton.state === 'save') {
                 var dialog = confirm(gettext('You have unsaved changes to this case type. Are you sure you would like to continue?'));
