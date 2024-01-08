@@ -113,27 +113,24 @@
             <div class="modal-body">
                 <p>
                     {% blocktrans %}
-                    There are currently no cases that store data with this case property, and so it is safe to delete.
+                        There are currently no cases that store data with this case property, and so it is safe to delete.
                     {% endblocktrans %}
                 </p>
                 <p>
                     {% blocktrans %}
-                    Please note however, that the following effects will take place after deleting this case property:
+                        Please note however, that the following effects will take place after deleting this case property:
                     {% endblocktrans %}
                 <ul>
-                    <li>{% trans 'Custom descriptions for the case property will no longer show up in the form builder
-                        or case exports.' %}</li>
-                    <li>{% trans 'Any validation rules set up on this case property will no longer be applied on case
-                        imports.' %}</li>
+                    <li>{% trans 'Custom descriptions for the case property will no longer show up in the form builder or case exports.' %}</li>
+                    <li>{% trans 'Any validation rules set up on this case property will no longer be applied on case imports.' %}</li>
                     {% if request|toggle_enabled:"GEOSPATIAL" %}
-                    <li>{% trans 'This case property will no longer be usable as the geolocation property for the
-                        geospatial feature.' %}</li>
+                        <li>{% trans 'This case property will no longer be usable as the geolocation property for the geospatial feature.' %}</li>
                     {% endif %}
                 </ul>
                 </p>
                 <p>
                     {% blocktrans %}
-                    Would you like to proceed with deleting this case property?
+                        Would you like to proceed with deleting this case property?
                     {% endblocktrans %}
                 </p>
             </div>
