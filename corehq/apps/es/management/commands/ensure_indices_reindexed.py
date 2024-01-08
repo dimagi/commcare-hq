@@ -23,16 +23,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--only_run_for_es_version', type=int, choices=[2, 5], required=True,
+            'only_run_for_es_version', type=int, choices=[2, 5],
             help="""A valid ES major version from which the data is being migrated from
             For eg - If you are upgrading from 2 to 5 the only_run_for_es_version should be 2
             """
         )
 
-        parser.add_argument(
-            '--changelog', required=True,
-            help="Changelog entry for the upgrade that outlines reindex steps"
-        )
+        parser.add_argument('changelog', help="Changelog entry for the upgrade that outlines reindex steps")
 
     def handle(self, only_run_for_es_version, changelog, **kwargs):
         if manager.elastic_major_version != only_run_for_es_version:

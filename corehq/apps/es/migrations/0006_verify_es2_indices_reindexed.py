@@ -11,9 +11,7 @@ def _verify_reindex_status(apps, schema_editor):
     only_run_for_es_version = 2
 
     call_command(
-        'ensure_indices_reindexed',
-        '--only_run_for_es_version', only_run_for_es_version,
-        '--changelog', changelog_url
+        'ensure_indices_reindexed', only_run_for_es_version, changelog_url
     )
 
 
