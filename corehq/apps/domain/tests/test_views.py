@@ -407,9 +407,8 @@ class TestEditDomainAlertView(TestBaseDomainAlertView):
             'domain': cls.domain_name, 'alert_id': cls.domain_alert.id
         })
 
-    def test_feature_flag_access_only(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 404)
+    def test_valid_access_only(self):
+        self.ensure_valid_access_only()
 
     @privilege_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
     def test_only_domain_alerts_accessible(self):
