@@ -386,3 +386,16 @@ def used_case_props_by_domain(domain):
     )
     used_case_props = query.run().aggregations.case_props.props.keys
     return set(used_case_props)
+
+
+@quickcache(['domain'], timeout=24 * 60)
+def used_case_types_by_domain(domain):
+    case_type_agg = TermsAggregation('case_types', 'type.exact')
+    query = (
+        CaseSearchES()
+        .domain(domain)
+        .size(0)
+        .aggregation(case_type_agg)
+    )
+    used_case_types = query.run().aggregations.case_types.keys
+    return set(used_case_types)
