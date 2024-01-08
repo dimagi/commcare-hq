@@ -67,7 +67,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         },
         onClickUser: function () {
             formplayerUtils.confirmationModal({
-                title: _.template(gettext('Log in as <%= username %>?'))({username: this.model.get('username')}),
+                title: _.template(gettext('Log in as <%- username %>?'))({username: this.model.get('username')}),
                 message: _.template($('#user-data-template').html())(
                     { user: this.model.toJSON() }
                 ),
