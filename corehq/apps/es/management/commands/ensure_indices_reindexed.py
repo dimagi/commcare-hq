@@ -23,7 +23,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--only_run_for_es_version', type=int, choices=[1, 2, 5], required=True,
+            '--only_run_for_es_version', type=int, choices=[2, 5], required=True,
             help="""A valid ES major version from which the data is being migrated from
             For eg - If you are upgrading from 2 to 5 the only_run_for_es_version should be 2
             """
