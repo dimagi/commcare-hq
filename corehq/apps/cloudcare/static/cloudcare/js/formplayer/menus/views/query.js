@@ -585,12 +585,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.dynamicSearchEnabled = !(options.disableDynamicSearch || this.smallScreenEnabled) &&
                 (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
 
-            this.updateSubmitButtonStatus(true);
-
             if (Object.keys(options.groupHeaders).length > 0) {
                 const groupedCollection = groupDisplays(options.collection, options.groupHeaders);
                 this.collection = new Collection(groupedCollection);
             }
+            this.submitDisabled = options.submitDisabled;
+            this.listenTo(this.model, 'change:submitDisabled', this.render);
         },
 
         templateContext: function () {
@@ -600,8 +600,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 title: this.options.title.trim(),
                 description: DOMPurify.sanitize(description),
                 sidebarEnabled: this.options.sidebarEnabled,
+                submitDisabled: this.submitDisabled,
                 grouped: Boolean(this.collection.find(c => c.has("groupKey"))),
             };
+        },
+
+        onRender: function () {
+            if (this.submitDisabled) {
+                this.$('#query-submit-button').prop('disabled', true);
+            } else {
+                this.$('#query-submit-button').prop('disabled', false);
+            }
         },
 
         ui: {
@@ -668,7 +677,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         notifyFieldChange: function (e, changedChildView, useDynamicSearch) {
             e.preventDefault();
             var self = this;
-            this.updateSubmitButtonStatus(false);
+            self.updateSubmitButtonStatus(false);
             self.validateFieldChange(changedChildView).always(function (response) {
                 var $fields = $(".query-field");
                 for (var i = 0; i < response.models.length; i++) {
@@ -750,7 +759,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         updateSubmitButtonStatus: function (disabled) {
             if (this.options.sidebarEnabled) {
-                $('##query-submit-button').disabled = disabled;
+                console.log("updated to...");
+                console.log(disabled);
+                this.submitDisabled = disabled;
+                this.render();
             }
         },
 
