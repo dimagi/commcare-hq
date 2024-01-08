@@ -1,6 +1,7 @@
 import doctest
 import json
 from contextlib import contextmanager
+from decimal import Decimal
 
 from nose.tools import assert_equal, assert_raises
 
@@ -71,7 +72,7 @@ class TestCaseGroupingReport(BaseReportTest):
         report_obj = CaseGroupingReport(request, domain=DOMAIN)
         report_obj.rendered_as = 'view'
         context_data = report_obj.template_context
-        expected_columns = ['case_id', 'gps_point', 'link']
+        expected_columns = ['case_id', 'case_name', 'owner_id', 'owner_name', 'coordinates', 'link']
         self.assertEqual(
             list(context_data['case_row_order'].keys()),
             expected_columns
@@ -86,12 +87,26 @@ class TestCaseGroupingReport(BaseReportTest):
                 in_testing=True,
             )
             json_data = report.json_dict['aaData']
-        case_ids = [row[0] for row in json_data]
 
-        self.assertEqual(len(json_data), 3)
-        self.assertIn(porto_novo.case_id, case_ids)
-        self.assertIn(bohicon.case_id, case_ids)
-        self.assertIn(lagos.case_id, case_ids)
+        case_data_by_id = {row[0]: row for row in json_data}
+        case_ids = set(case_data_by_id)
+
+        self.assertSetEqual(
+            case_ids,
+            {porto_novo.case_id, bohicon.case_id, lagos.case_id}
+        )
+
+        case_data = case_data_by_id[porto_novo.case_id]
+        self.assertListEqual(
+            case_data[0:-1],
+            [
+                porto_novo.case_id,
+                'Porto-Novo',
+                self.couch_user.user_id,
+                self.couch_user.username,
+                {'lat': Decimal('6.497222'), 'lng': Decimal('2.605')}
+            ]
+        )
 
     def test_bucket_and_polygon_with_hole(self):
         with self.get_cases() as (porto_novo, bohicon, lagos):
@@ -119,7 +134,8 @@ class TestCaseGroupingReport(BaseReportTest):
                 'case_name': name,
                 'properties': {
                     geo_property: f'{coordinates} 0 0',
-                }
+                },
+                'owner_id': self.couch_user.get_id,
             })
             return helper.case
 

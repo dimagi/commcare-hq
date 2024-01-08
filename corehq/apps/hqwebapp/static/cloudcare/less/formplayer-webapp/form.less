@@ -24,7 +24,7 @@
     background-color: lighten(@cc-brand-hi, 10);
     .border-bottom-radius(0);
 
-    &.nonanchored-submit .btn {
+    .nonanchored-submit .btn {
       font-size: 20px;
       padding: 13px 24px;
       .transition(all .5s);
@@ -37,7 +37,7 @@
     padding-top: 5px;
     padding-bottom: 5px;
     position: fixed;
-    bottom: 0px; // data preview bar
+    bottom: 0px;
     left: 0;
     z-index: @zindex-formplayer-anchored-submit;
   }
@@ -205,10 +205,13 @@
   }
 }
 
+.question-tile-row:has(div.q) {
+  margin-bottom: 15px;
+}
+
 .question-tile-row {
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
   * .form-group, * p, * .control-label {
     padding-top: 0px !important;
     padding-bottom: 0px !important;
