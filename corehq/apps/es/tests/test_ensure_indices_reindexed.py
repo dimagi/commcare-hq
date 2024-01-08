@@ -125,7 +125,7 @@ class TestEnsureIndicesReindexed(SimpleTestCase):
     def test_command_skips_if_current_es_version_greater(self, patched_fn):
         with patch_elastic_version(manager, "5"):
             call_command(
-                'ensure_indices_reindexed', '--target_es_version', 2,
+                'ensure_indices_reindexed', '--only_run_for_es_version', 2,
                 '--changelog', 'http://somechangelog.com'
             )
         self.assertFalse(patched_fn.called)
@@ -140,7 +140,7 @@ class TestEnsureIndicesReindexed(SimpleTestCase):
         with patch_elastic_version(manager, "2"):
             with self.assertRaises(CommandError):
                 call_command(
-                    'ensure_indices_reindexed', '--target_es_version', 2,
+                    'ensure_indices_reindexed', '--only_run_for_es_version', 2,
                     '--changelog', 'http://somechangelog.com'
                 )
         # adding for the cleanup to continue error free
@@ -160,7 +160,7 @@ class TestEnsureIndicesReindexed(SimpleTestCase):
 
         with patch_elastic_version(manager, "2"):
             call_command(
-                'ensure_indices_reindexed', '--target_es_version', 2,
+                'ensure_indices_reindexed', '--only_run_for_es_version', 2,
                 '--changelog', 'http://somechangelog.com'
             )
 
@@ -180,6 +180,6 @@ class TestEnsureIndicesReindexed(SimpleTestCase):
         with patch_elastic_version(manager, "2"):
             with self.assertRaises(CommandError):
                 call_command(
-                    'ensure_indices_reindexed', '--target_es_version', 2,
+                    'ensure_indices_reindexed', '--only_run_for_es_version', 2,
                     '--changelog', 'http://somechangelog.com'
                 )
