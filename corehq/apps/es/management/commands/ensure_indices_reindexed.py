@@ -35,8 +35,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, only_run_for_es_version, changelog, **kwargs):
-        if manager.elastic_major_version > only_run_for_es_version:
-            print("Environment already on desired ElasticSearch version! Skipping")
+        if manager.elastic_major_version != only_run_for_es_version:
+            print(f"""
+                Skipping Reindex verify checks!
+                Environment's ElasticSearch version is {manager.elastic_major_version}
+            """)
             return
         if not self.check_indices_are_consistent():
             raise CommandError(
