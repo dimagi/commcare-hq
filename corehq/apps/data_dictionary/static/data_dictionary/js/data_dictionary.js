@@ -304,6 +304,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return (activeCaseType) ? activeCaseType.deprecated : false;
         };
 
+        self.canDeleteActiveCaseType = function () {
+            const activeCaseType = self.getActiveCaseType();
+            return (activeCaseType) ? activeCaseType.canDelete : false;
+        };
+
         self.activeCaseTypeModuleCount = function () {
             const activeCaseType = self.getActiveCaseType();
             return (activeCaseType) ? activeCaseType.appCount : 0;
