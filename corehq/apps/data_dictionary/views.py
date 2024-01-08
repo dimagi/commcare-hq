@@ -27,6 +27,9 @@ from corehq.apps.data_dictionary.models import (
 from corehq.apps.data_dictionary.util import (
     save_case_property,
     save_case_property_group,
+    used_case_props_by_domain,
+    delete_case_property,
+    used_case_types_by_domain,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -71,6 +74,8 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    case_props_with_data = used_case_props_by_domain(domain)
+    case_types_with_data = used_case_types_by_domain(domain)
     for case_type in queryset:
         module_count = case_type_app_module_count.get(case_type.name, 0)
         p = {
@@ -80,6 +85,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
             "is_deprecated": case_type.is_deprecated,
             "module_count": module_count,
             "properties": [],
+            "contains_case_data": case_type.name in case_types_with_data,
         }
         grouped_properties = {
             group: [
@@ -91,6 +97,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                     ),
                     'name': prop.name,
                     'deprecated': prop.deprecated,
+                    'contains_case_data': prop.name in case_props_with_data,
                 }
                 | (
                     {
@@ -163,6 +170,15 @@ def deprecate_or_restore_case_type(request, domain, case_type_name):
     return JsonResponse({'status': 'success'})
 
 
+@login_and_domain_required
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
+@require_permission(HqPermissions.edit_data_dict)
+def delete_case_type(request, domain, case_type_name):
+    case_type_obj = CaseType.objects.get(domain=domain, name=case_type_name)
+    case_type_obj.delete()
+    return JsonResponse({'status': 'success'})
+
+
 # atomic decorator is a performance optimization for looped saves
 # as per http://stackoverflow.com/questions/3395236/aggregating-saves-in-django#comment38715164_3397586
 @atomic
@@ -197,21 +213,25 @@ def update_case_property(request, domain):
         for property in property_list:
             case_type = property.get('caseType')
             name = property.get('name')
-            label = property.get('label')
-            index = property.get('index')
-            description = property.get('description')
-            data_type = property.get('data_type') if data_validation_enabled else None
-            group = property.get('group')
-            deprecated = property.get('deprecated')
-            allowed_values = property.get('allowed_values') if data_validation_enabled else None
-            if update_fhir_resources:
-                fhir_resource_prop_path = property.get('fhir_resource_prop_path')
-                remove_path = property.get('removeFHIRResourcePropertyPath', False)
+            deleted = property.get('deleted')
+            if deleted:
+                error = delete_case_property(name, case_type, domain)
             else:
-                fhir_resource_prop_path, remove_path = None, None
-            error = save_case_property(name, case_type, domain, data_type, description, label, group, deprecated,
-                                       fhir_resource_prop_path, fhir_resource_type_obj, remove_path,
-                                       allowed_values, index)
+                label = property.get('label')
+                index = property.get('index')
+                description = property.get('description')
+                data_type = property.get('data_type') if data_validation_enabled else None
+                group = property.get('group')
+                deprecated = property.get('deprecated')
+                allowed_values = property.get('allowed_values') if data_validation_enabled else None
+                if update_fhir_resources:
+                    fhir_resource_prop_path = property.get('fhir_resource_prop_path')
+                    remove_path = property.get('removeFHIRResourcePropertyPath', False)
+                else:
+                    fhir_resource_prop_path, remove_path = None, None
+                error = save_case_property(name, case_type, domain, data_type, description, label, group,
+                                           deprecated, fhir_resource_prop_path, fhir_resource_type_obj,
+                                           remove_path, allowed_values, index)
             if error:
                 errors.append(error)
 
