@@ -589,6 +589,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 const groupedCollection = groupDisplays(options.collection, options.groupHeaders);
                 this.collection = new Collection(groupedCollection);
             }
+            this.submitDisabled = options.submitDisabled;
+            this.listenTo(this.model, 'change:submitDisabled', this.render);
         },
 
         templateContext: function () {
@@ -598,8 +600,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 title: this.options.title.trim(),
                 description: DOMPurify.sanitize(description),
                 sidebarEnabled: this.options.sidebarEnabled,
+                submitDisabled: this.submitDisabled,
                 grouped: Boolean(this.collection.find(c => c.has("groupKey"))),
             };
+        },
+
+        onRender: function () {
+            if (this.submitDisabled) {
+                this.$('#query-submit-button').prop('disabled', true);
+            } else {
+                this.$('#query-submit-button').prop('disabled', false);
+            }
         },
 
         ui: {
@@ -666,6 +677,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         notifyFieldChange: function (e, changedChildView, useDynamicSearch) {
             e.preventDefault();
             var self = this;
+            self.updateSubmitButtonStatus(false);
             self.validateFieldChange(changedChildView).always(function (response) {
                 var $fields = $(".query-field");
                 for (var i = 0; i < response.models.length; i++) {
@@ -742,6 +754,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
             if (invalidRequiredFields.length === 0) {
                 self.performSubmit("dynamicSearch");
+            }
+        },
+
+        updateSubmitButtonStatus: function (disabled) {
+            if (this.options.sidebarEnabled) {
+                console.log("updated to...");
+                console.log(disabled);
+                this.submitDisabled = disabled;
+                this.render();
             }
         },
 

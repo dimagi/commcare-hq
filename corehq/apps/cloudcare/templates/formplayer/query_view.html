@@ -12,7 +12,7 @@
         <button class="btn btn-default" type="button" id="query-clear-button">
           <div>{% trans "Clear" %}</div>
         </button>
-        <button class="btn btn-primary" type="submit" id="query-submit-button">
+        <button class="btn btn-primary <% if (submitDisabled) { %>disabled<% } %>" type="submit" id="query-submit-button">
           <div>{% trans "Search" %}</div>
         </button>
       </div>
