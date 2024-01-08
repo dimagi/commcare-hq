@@ -73,10 +73,12 @@ class Command(BaseCommand):
             return True
         elif missing_primary and not missing_secondary:
             user_input = input(
-                f"""It looks like you have followed custom process for reindex.
-                We found that that following old indices are missing from your CommCare setup -
-                {missing_primary}
-                Press 'y' or 'Y' to confirm
+                f"""We've identified that certain old indices are absent from your CommCare setup.
+                Missing Indices - {missing_primary}
+
+                Can you confirm whether a custom reindexing approach has been implemented? -
+
+                Press 'y' or 'Y' to confirm. Press any other key to abort!
             """)
 
             if user_input.lower() == 'y':
