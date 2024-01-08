@@ -271,16 +271,16 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     /**
-     * Recursively groups sequential "question" or "group" items in a nested JSON structure.
+     * Recursively groups sequential "Question" or "Group" items in a nested JSON structure.
      *
-     * This function takes a JSON object as input and searches for sequential "question" or "group"
-     * items within the 'children' arrays of the input and its nested 'group' objects.
-     * It groups the sequential "question" items and "group"
+     * This function takes a JSON object as input and searches for sequential "Question" or "Group"
+     * items within the 'children' arrays of the input and its nested "Group" objects.
+     * It groups the sequential "Question" items and "Group"
      * items into "GroupedElementTileRow" objects while maintaining the original structure of the JSON.
      *
      * @param {Object} json - The JSON object to process, containing 'children' arrays.
-     * @returns {Object} - A new JSON object with sequential "question" items and sequential
-     * "group" items grouped into "GroupedElementTileRow".
+     * @returns {Object} - A new JSON object with sequential "Question" items and sequential
+     * "Group" items grouped into "GroupedElementTileRow".
      */
     Container.groupElements = function (json) {
         if (!json || !json.children || !Array.isArray(json.children)) {
@@ -579,7 +579,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Form.prototype.constructor = Container;
 
     /**
-     * Represents a group of GroupedElementTileRow which contains questions.
+     * Represents a group of GroupedElementTileRow which contains Question or Group objects.
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
      */
@@ -716,7 +716,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Repeat.prototype.constructor = Container;
 
     /**
-     * Represents a group of questions. Questions are grouped such that all questions are
+     * Represents a group of Questions. Questions are grouped such that all questions are
      * contained in the same row.
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
