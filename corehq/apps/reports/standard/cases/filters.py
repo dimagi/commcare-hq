@@ -74,6 +74,9 @@ class DuplicateCaseRuleFilter(BaseSingleOptionFilter):
 
 
 class XPathCaseSearchFilter(BaseSimpleFilter):
+    """
+    For report views use XpathCaseSearchFilterMixin to support this filter
+    """
     slug = 'search_xpath'
     label = gettext_lazy("Search")
     template = "reports/filters/xpath_textarea.html"

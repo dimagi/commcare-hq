@@ -17,6 +17,7 @@ from corehq.apps.data_dictionary.util import (
     map_row_values_to_column_names,
     is_case_type_deprecated,
     get_data_dict_deprecated_case_types,
+    is_case_type_or_prop_name_valid,
     delete_case_property,
     used_case_props_by_domain,
     used_case_types_by_domain,
@@ -230,6 +231,23 @@ class MiscUtilTest(TestCase):
         deprecated_case_types = get_data_dict_deprecated_case_types(self.domain)
         self.assertEqual(len(deprecated_case_types), 1)
         self.assertEqual(deprecated_case_types, {self.deprecated_case_type_name})
+
+    def test_is_case_type_or_prop_name_valid(self):
+        valid_names = [
+            'foobar',
+            'f00bar32',
+            'foo-bar_32',
+        ]
+        invalid_names = [
+            'foo bar',
+            '32foobar',
+            'foob@r',
+            '_foobar',
+        ]
+        for valid_name in valid_names:
+            self.assertTrue(is_case_type_or_prop_name_valid(valid_name))
+        for invalid_name in invalid_names:
+            self.assertFalse(is_case_type_or_prop_name_valid(invalid_name))
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
