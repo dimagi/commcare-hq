@@ -320,7 +320,7 @@ class TestUpdateDomainAlertStatusView(TestBaseDomainAlertView):
         self.assertEqual(messages[0].message, 'Alert not found!')
         self.assertEqual(response.status_code, 302)
 
-    @privilege_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_limiting_active_alerts(self):
         new_alerts = [
             self._create_alert_for_domain(self.domain_name, 'New Alert 1!', self.username),
@@ -410,7 +410,7 @@ class TestEditDomainAlertView(TestBaseDomainAlertView):
     def test_valid_access_only(self):
         self.ensure_valid_access_only()
 
-    @privilege_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_only_domain_alerts_accessible(self):
         url = reverse(EditDomainAlertView.urlname, kwargs={
             'domain': self.domain_name, 'alert_id': self.other_domain_alert.id
@@ -419,7 +419,7 @@ class TestEditDomainAlertView(TestBaseDomainAlertView):
         with self.assertRaisesMessage(AssertionError, 'Alert not found'):
             self.client.get(url)
 
-    @privilege_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_only_domain_alerts_accessible_for_update(self):
         url = reverse(EditDomainAlertView.urlname, kwargs={
             'domain': self.domain_name, 'alert_id': self.other_domain_alert.id
@@ -430,7 +430,7 @@ class TestEditDomainAlertView(TestBaseDomainAlertView):
         self.assertEqual(messages[0].message, 'Alert not found!')
         self.assertEqual(response.status_code, 302)
 
-    @privilege_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_updating_alert(self):
         text = self.domain_alert.text + ". Updated!"
         response = self.client.post(
@@ -446,7 +446,7 @@ class TestEditDomainAlertView(TestBaseDomainAlertView):
         self.domain_alert.refresh_from_db()
         self.assertEqual(self.domain_alert.text, 'Test Alert 1!. Updated!')
 
-    @privilege_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_updating_alert_with_errors(self):
         response = self.client.post(
             self.url,
