@@ -46,6 +46,11 @@ class Command(BaseCommand):
                 """
             )
 
+        missing_primary, missing_secondary = self._return_missing_index_names()
+        if missing_primary and not missing_secondary:
+            # User has confirmed that they have followed manual reindex. So we can ignore the further checks
+            return
+
         inconsistent_doc_count = []
         for index_cname in CANONICAL_NAME_ADAPTER_MAP.keys():
             if not self.is_doc_count_difference_reasonable(index_cname):
@@ -68,7 +73,6 @@ class Command(BaseCommand):
             - If there are missing secondary indices
         """
         missing_primary, missing_secondary = cls._return_missing_index_names()
-        print(missing_primary, missing_secondary)
         if not missing_primary and not missing_secondary:
             return True
         elif missing_primary and not missing_secondary:
