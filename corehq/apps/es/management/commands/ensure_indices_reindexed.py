@@ -114,14 +114,10 @@ class Command(BaseCommand):
         high_frequency_indices = {'case_search', 'cases', 'forms'}
         primary_adapter, secondary_adapter = self.get_both_adapters_for_cname(cname)
         delta_perc = self.get_doc_count_delta_percent(cname)
-        if delta_perc == 0:
-            return True
-        elif (
+        return delta_perc == 0 or (
             primary_adapter.canonical_name in high_frequency_indices
             and delta_perc <= self.REASONABLE_DIFF_PERCENT
-        ):
-            return True
-        return False
+        )
 
     @classmethod
     def _primary_index_name(cls, cname):
@@ -141,8 +137,8 @@ class Command(BaseCommand):
         primary_index_name = cls._primary_index_name(cname)
         secondary_index_name = cls._secondary_index_name(cname)
 
-        primary_adapter = adapter.__class__(primary_index_name, adapter.type)
-        secondary_adapter = adapter.__class__(secondary_index_name, adapter.type)
+        primary_adapter = type(adapter)(primary_index_name, adapter.type)
+        secondary_adapter = type(adapter)(secondary_index_name, adapter.type)
 
         return (primary_adapter, secondary_adapter)
 

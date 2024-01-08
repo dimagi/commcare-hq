@@ -163,7 +163,7 @@ class TestEnsureIndicesReindexed(SimpleTestCase):
 
     @patch.object(EnsureIndicesReindexedCommand, '_secondary_index_name')
     @patch.object(EnsureIndicesReindexedCommand, '_primary_index_name')
-    def test_command_raises_if_indices_count_match(self, primary_index_patch, secondary_index_patch):
+    def test_command_raises_if_indices_count_does_not_match(self, primary_index_patch, secondary_index_patch):
         primary_index_patch.return_value = self.primary_index_name
         secondary_index_patch.return_value = self.secondary_index_name
 
