@@ -4,6 +4,8 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.utils.translation import gettext
 
+from casexml.apps.case.mock import CaseBlock
+
 from corehq.util.workbook_reading.datamodels import Cell
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -16,6 +18,13 @@ from corehq.apps.data_dictionary.util import (
     is_case_type_deprecated,
     get_data_dict_deprecated_case_types,
     delete_case_property,
+    used_case_props_by_domain,
+    used_case_types_by_domain,
+)
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.tests.utils import (
+    case_search_es_setup,
+    es_test,
 )
 
 
@@ -221,3 +230,44 @@ class MiscUtilTest(TestCase):
         deprecated_case_types = get_data_dict_deprecated_case_types(self.domain)
         self.assertEqual(len(deprecated_case_types), 1)
         self.assertEqual(deprecated_case_types, {self.deprecated_case_type_name})
+
+
+@es_test(requires=[case_search_adapter], setup_class=True)
+class UsedCaseTypesOrPropsTest(TestCase):
+
+    domain = uuid.uuid4().hex
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.case_type_obj = CaseType(name='my-case-type', domain=cls.domain)
+        cls.case_type_obj.save()
+        cls.used_case_type_obj = CaseType(name='other-case-type', domain=cls.domain)
+        cls.used_case_type_obj.save()
+        cls.case_prop_obj = CaseProperty(case_type=cls.case_type_obj, name='my-prop')
+        cls.case_prop_obj.save()
+        cls.used_case_prop_obj = CaseProperty(case_type=cls.used_case_type_obj, name='other-prop')
+        cls.used_case_prop_obj.save()
+
+        case_block = CaseBlock(
+            case_id=uuid.uuid4().hex,
+            case_type='other-case-type',
+            case_name='Case A',
+            update={'other-prop': True},
+        )
+        case_search_es_setup(cls.domain, [case_block])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.case_type_obj.delete()
+        cls.used_case_type_obj.delete()
+        super().tearDownClass()
+
+    def test_used_case_props_by_domain(self):
+        used_props = used_case_props_by_domain(self.domain)
+        self.assertTrue('other-prop' in used_props)
+
+    def test_used_case_types_by_domain(self):
+        used_case_types = used_case_types_by_domain(self.domain)
+        expected_output = {'other-case-type'}
+        self.assertEqual(used_case_types, expected_output)

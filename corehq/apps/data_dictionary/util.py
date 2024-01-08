@@ -374,7 +374,6 @@ def is_case_type_deprecated(domain, case_type):
 
 @quickcache(['domain'], timeout=24 * 60)
 def used_case_props_by_domain(domain):
-    # TODO: This needs a unit test
     case_prop_agg = NestedAggregation('case_props', CASE_PROPERTIES_PATH).aggregation(
         TermsAggregation('props', PROPERTY_KEY)
     )
