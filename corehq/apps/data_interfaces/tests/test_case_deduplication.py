@@ -579,14 +579,9 @@ class CaseDeduplicationActionTest(TestCase):
         duplicates, _ = self._create_cases(num_cases=1)
         self.case_exists_mock.return_value = False
 
-        # Remove these lines when the old model is removed
-        from corehq.apps.data_interfaces.models import CaseRuleActionResult
-        with patch.object(CaseDeduplicationActionDefinition, '_handle_case_duplicate') as handle_case_duplicate:
-            handle_case_duplicate.return_value = CaseRuleActionResult(num_updates=0)
-
-            with patch('corehq.apps.data_interfaces.models.resave_case') as resave_case_mock:
-                self.rule.run_actions_when_case_matches(duplicates[0])
-                resave_case_mock.assert_called()
+        with patch('corehq.apps.data_interfaces.models.resave_case') as resave_case_mock:
+            self.rule.run_actions_when_case_matches(duplicates[0])
+            resave_case_mock.assert_called()
 
     @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
     def test_case_no_longer_duplicate(self, find_duplicates_mock):
