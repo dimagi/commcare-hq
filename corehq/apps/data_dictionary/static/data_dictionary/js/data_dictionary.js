@@ -423,6 +423,17 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.removefhirResourceType(false);
         };
 
+        self.toggleShowDeprecatedCaseTypes = function () {
+            self.showDeprecatedCaseTypes(!self.showDeprecatedCaseTypes());
+            const pageUrl = new URL(window.location.href);
+            if (self.showDeprecatedCaseTypes()) {
+                pageUrl.searchParams.append('load_deprecated_case_types', true);
+            } else {
+                pageUrl.searchParams.delete('load_deprecated_case_types');
+            }
+            window.location.href = pageUrl;
+        };
+
         // CREATE workflow
         self.name = ko.observable("").extend({
             rateLimit: { method: "notifyWhenChangesStop", timeout: 400 },
