@@ -176,6 +176,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
         self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
+
+        const params = new URLSearchParams(document.location.search);
+        self.showDeprecatedCaseTypes = ko.observable(params.get("load_deprecated_case_types") !== null);
         self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function () {
