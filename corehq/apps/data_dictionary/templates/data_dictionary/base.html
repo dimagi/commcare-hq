@@ -17,6 +17,18 @@
 {% block page_navigation %}
   <h2 class="text-hq-nav-header">{% trans "Data Dictionary" %}</h2>
   <ul class="nav nav-hq-sidebar">
+    <li>
+      <a class="hidden deprecate-case-type" data-bind="click: $root.toggleShowDeprecatedCaseTypes">
+        <div data-bind="hidden: $root.showDeprecatedCaseTypes">
+          <i class="fa fa-eye"></i>
+          {% trans 'Show Deprecated Case Types' %}
+        </div>
+        <div data-bind="visible: $root.showDeprecatedCaseTypes">
+          <i class="fa fa-eye-slash"></i>
+          {% trans 'Hide Deprecated Case Types' %}
+        </div>
+      </a>
+    </li>
     <!-- ko foreach: caseTypes -->
     <li data-bind="css: { active: $data.name == $root.activeCaseType() }">
       {# navigation handle by URL hash #}
