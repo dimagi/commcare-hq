@@ -417,4 +417,10 @@ class DataDictionaryJsonTest(TestCase):
         self.assertEqual(response.status_code, 200)
         expected_response = self._get_case_type_json()
         self.assertEqual(response.json(), expected_response)
+
+    @patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
+    def test_get_json_success_with_deprecated_case_types(self, *args):
+        self.client.login(username='test', password='foobar')
+        response = self.client.get(self.endpoint, data={'load_deprecated_case_types': 'true'})
+        expected_response = self._get_case_type_json(with_deprecated=True)
         self.assertEqual(response.json(), expected_response)
