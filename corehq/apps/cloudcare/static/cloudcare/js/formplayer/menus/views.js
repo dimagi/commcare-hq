@@ -938,7 +938,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
+            const paginateItems = formplayerUtils.paginateOptions(
+                this.options.currentPage,
+                this.options.pageCount,
+                this.options.collection.length
+            );
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
             let description = this.options.description;
             let title = this.options.title;
@@ -946,17 +950,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 description = this.options.collection.queryResponse.description;
                 title = this.options.collection.queryResponse.title;
             }
-            return {
-                startPage: paginateItems.startPage,
+            return _.extend(paginateItems, {
                 title: title.trim(),
                 description: description === undefined ? "" : markdown.render(description.trim()),
                 headers: this.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
-                endPage: paginateItems.endPage,
-                pageCount: paginateItems.pageCount,
-                rowRange: [5, 10, 25, 50, 100],
                 limit: casesPerPage,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
@@ -978,8 +978,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
-                pageNumLabel: _.template(gettext("Page <%-num%>")),
-            };
+            });
         },
     });
 
