@@ -78,6 +78,11 @@ class Migration(migrations.Migration):
                 name='unique_couch_id',
             ),
         ),
+        migrations.AddField(
+            model_name='sqlrepeatrecord',
+            name='max_possible_tries',
+            field=models.IntegerField(default=6),
+        ),
         migrations.SeparateDatabaseAndState(
             database_operations=[],
             state_operations=[

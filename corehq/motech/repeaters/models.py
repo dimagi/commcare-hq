@@ -1250,6 +1250,7 @@ class SQLRepeatRecord(models.Model):
     state = models.PositiveSmallIntegerField(choices=State.choices, default=State.Pending)
     registered_at = models.DateTimeField()
     next_check = models.DateTimeField(null=True, default=None)
+    max_possible_tries = models.IntegerField(default=MAX_BACKOFF_ATTEMPTS)
 
     class Meta:
         db_table = 'repeaters_repeatrecord'
