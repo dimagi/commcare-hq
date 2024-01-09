@@ -1,11 +1,13 @@
 hqDefine('geospatial/js/models', [
     'jquery',
     'knockout',
+    'underscore',
     'hqwebapp/js/initial_page_data',
     'geospatial/js/utils',
 ], function (
     $,
     ko,
+    _,
     initialPageData,
     utils
 ) {
@@ -13,6 +15,7 @@ hqDefine('geospatial/js/models', [
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
+    const DISBURSEMENT_LAYER_PREFIX = 'route-';
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -80,6 +83,9 @@ hqDefine('geospatial/js/models', [
                 'groupId': self.groupId,
                 'groupCenterCoordinates': groupCoordinates,
                 'caseId': self.itemId,
+                'caseName': self.itemData.case_name,
+                'owner_id': self.itemData.owner_id,
+                'owner_name': self.itemData.owner_name,
                 'coordinates': coordinates,
             };
         };
@@ -304,29 +310,31 @@ hqDefine('geospatial/js/models', [
         }
 
         self.getLineFeatureId = function (itemId) {
-            return "route-" + itemId;
+            return DISBURSEMENT_LAYER_PREFIX + itemId;
         };
 
         self.selectAllMapItems = function (featuresArr) {
             // See https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#drawselectionchange
-            if (!featuresArr.length) {
-                return;
+            for (const caseItem of self.caseMapItems()) {
+                self.selectMapItemInPolygons(featuresArr, caseItem);
             }
-
-            for (const feature of featuresArr) {
-                if (feature.geometry.type === 'Polygon') {
-                    self.selectMapItemsInPolygon(feature, self.caseMapItems());
-                    self.selectMapItemsInPolygon(feature, self.userMapItems());
-                }
+            for (const userItem of self.userMapItems()) {
+                self.selectMapItemInPolygons(featuresArr, userItem);
             }
         };
 
-        self.selectMapItemsInPolygon = function (polygonFeature, mapItems) {
-            _.values(mapItems).filter(function (mapItem) {
-                if (mapItem.itemData.coordinates) {
-                    mapItem.isSelected(isMapItemInPolygon(polygonFeature, mapItem.itemData.coordinates));
+        self.selectMapItemInPolygons = function (polygonArr, mapItem) {
+            let isSelected = false;
+            for (const polygon of polygonArr) {
+                if (polygon.geometry.type !== 'Polygon') {
+                    continue;
                 }
-            });
+                if (isMapItemInPolygon(polygon, mapItem.itemData.coordinates)) {
+                    isSelected = true;
+                    break;
+                }
+            }
+            mapItem.isSelected(isSelected);
         };
 
         function isMapItemInPolygon(polygonFeature, coordinates) {
@@ -377,6 +385,26 @@ hqDefine('geospatial/js/models', [
                 maxZoom: 10,  // 0-23
             });
         };
+
+        self.hasDisbursementLayers = function () {
+            const mapLayers = self.mapInstance.getStyle().layers;
+            return _.any(
+                mapLayers,
+                function (layer) { return layer.id.includes(DISBURSEMENT_LAYER_PREFIX); }
+            );
+        };
+
+        self.removeDisbursementLayers = function () {
+            const mapLayers = self.mapInstance.getStyle().layers;
+            let layerRemoved = false;
+            mapLayers.forEach(function (layer) {
+                if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
+                    self.mapInstance.removeLayer(layer.id);
+                    layerRemoved = true;
+                }
+            });
+            return layerRemoved;
+        };
     };
 
     var PolygonFilter = function (mapObj, shouldUpdateQueryParam, shouldSelectAfterFilter) {
@@ -399,6 +427,8 @@ hqDefine('geospatial/js/models', [
 
         self.savedPolygons = ko.observableArray([]);
         self.selectedSavedPolygonId = ko.observable('');
+        self.oldSelectedSavedPolygonId = ko.observable('');
+        self.resettingSavedPolygon = false;
         self.activeSavedPolygon;
 
         self.addPolygonsToFilterList = function (featureList) {
@@ -480,7 +510,18 @@ hqDefine('geospatial/js/models', [
             }
         };
 
+        self.selectedSavedPolygonId.subscribe(function (selectedPolygonID) {
+            self.oldSelectedSavedPolygonId(selectedPolygonID);
+        }, null, "beforeChange");
+
         self.selectedSavedPolygonId.subscribe(() => {
+            // avoid running actions expected on user interactions if resetting saved polygon
+            // and update resettingSavedPolygon back to false
+            if (self.resettingSavedPolygon) {
+                self.resettingSavedPolygon = false;
+                return;
+            }
+
             const selectedId = parseInt(self.selectedSavedPolygonId());
             const polygonObj = self.savedPolygons().find(
                 function (o) { return o.id === selectedId; }
@@ -489,6 +530,24 @@ hqDefine('geospatial/js/models', [
                 return;
             }
 
+            // hide it by default and show it only if necessary
+            $('#disbursement-clear-message').hide();
+            if (mapObj.hasDisbursementLayers()) {
+                let confirmation = confirm(
+                    gettext("Warning! This action will clear the current disbursement. " +
+                            "Please confirm if you want to proceed.")
+                );
+                if (confirmation) {
+                    if (mapObj.removeDisbursementLayers()) {
+                        $('#disbursement-clear-message').show();
+                    }
+                } else {
+                    // set flag
+                    self.resettingSavedPolygon = true;
+                    self.selectedSavedPolygonId(self.oldSelectedSavedPolygonId());
+                    return;
+                }
+            }
             self.clearActivePolygon();
 
             removeActivePolygonLayer();
@@ -499,7 +558,8 @@ hqDefine('geospatial/js/models', [
             self.btnExportDisabled(false);
             self.btnSaveDisabled(true);
             if (self.shouldSelectAfterFilter) {
-                self.mapObj.selectAllMapItems(polygonObj.geoJson.features);
+                const features = polygonObj.geoJson.features.concat(mapObj.drawControls.getAll().features);
+                self.mapObj.selectAllMapItems(features);
             }
         });
 

@@ -3,6 +3,7 @@ import string
 import random
 from collections import defaultdict, namedtuple
 from datetime import datetime
+from corehq.util.soft_assert.api import soft_assert
 
 from django.db import DEFAULT_DB_ALIAS
 
@@ -51,6 +52,8 @@ from corehq.apps.users.models import (
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, TABLEAU_USER_SYNCING
 from corehq.apps.sms.util import validate_phone_number
+
+from dimagi.utils.logging import notify_error
 
 required_headers = set(['username'])
 web_required_headers = set(['username', 'role'])
@@ -603,7 +606,21 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             if web_user_username:
                 user.get_user_data(domain)['login_as_user'] = web_user_username
 
-            user.save()
+            try:
+                user.save(fail_hard=True)
+            except Exception as e:
+                # HACK: Catching all exception here is temporary. We believe that user critical sections
+                # are not behaving properly, and this catch-all is here to identify the problem
+                status_row['flag'] = str(e)
+                notify_error(f'Error while processing bulk import: {str(e)}')
+                soft_assert(to='{}@{}'.format('mriley', 'dimagi.com'), send_to_ops=False)(
+                    False,
+                    'Error while processing bulk import',
+                    e
+                )
+                ret["rows"].append(status_row)
+                continue
+
             log = commcare_user_importer.save_log()
 
             if web_user_username:

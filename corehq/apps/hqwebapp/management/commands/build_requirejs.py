@@ -5,7 +5,6 @@ import re
 import subprocess
 from collections import defaultdict
 from pathlib import Path
-from uuid import uuid4
 from shutil import copyfile
 from subprocess import call
 
@@ -122,7 +121,8 @@ def _confirm_or_exit():
         if confirm[0].lower() != 'y':
             exit()
     confirm = input("You are running locally. Have you already run "
-                    "`./manage.py collectstatic --noinput && ./manage.py compilejsi18n` (y/n)? ")
+                    "`./manage.py resource_static && ./manage.py collectstatic "
+                    "--noinput && ./manage.py compilejsi18n` (y/n)? ")
     if confirm[0].lower() != 'y':
         exit()
 

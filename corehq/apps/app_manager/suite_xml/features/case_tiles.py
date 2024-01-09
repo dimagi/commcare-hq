@@ -20,6 +20,8 @@ from corehq.apps.app_manager.util import (
 
 TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
 
+CUSTOM = "custom"
+
 
 class CaseTileTemplates(models.TextChoices):
     PERSON_SIMPLE = ("person_simple", _("Person Simple"))
@@ -83,7 +85,7 @@ class CaseTileHelper(object):
         string.
         """
 
-        if self.detail.case_tile_template == 'custom':
+        if self.detail.case_tile_template == CUSTOM:
             from corehq.apps.app_manager.detail_screen import get_column_generator
             title = Text(locale_id=id_strings.detail_title_locale(self.detail_type))
             detail = Detail(id=self.detail_id, title=title)
@@ -97,7 +99,9 @@ class CaseTileHelper(object):
                                   grid_height=column_info.column.height, grid_width=column_info.column.width,
                                   horz_align=column_info.column.horizontal_align,
                                   vert_align=column_info.column.vertical_align,
-                                  font_size=column_info.column.font_size)
+                                  font_size=column_info.column.font_size,
+                                  show_border=column_info.column.show_border,
+                                  show_shading=column_info.column.show_shading)
                 fields = get_column_generator(
                     self.app, self.module, self.detail,
                     detail_type=self.detail_type,
@@ -137,7 +141,10 @@ class CaseTileHelper(object):
             )) is not None:
                 detail.actions.append(case_search_action)
 
-        self._populate_sort_elements_in_detail(detail)
+        #  Excludes legacy tile template to preserve behavior of existing apps using this template.
+        if self.detail.case_tile_template not in [CaseTileTemplates.PERSON_SIMPLE.value, CUSTOM]:
+            self._populate_sort_elements_in_detail(detail)
+
         DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
 
         if self.module.has_grouped_tiles():
@@ -146,6 +153,9 @@ class CaseTileHelper(object):
                 header_rows=self.detail.case_tile_group.header_rows
             )
 
+        if (self.detail_type == 'case_short' or self.detail_type == 'search_short') \
+                and hasattr(self.module, 'lazy_load_case_list_fields') and self.module.lazy_load_case_list_fields:
+            detail.lazy_loading = self.module.lazy_load_case_list_fields
         return detail
 
     def _get_matched_detail_column(self, case_tile_field):
@@ -239,19 +249,17 @@ class CaseTileHelper(object):
             return f.read()
 
     def _populate_sort_elements_in_detail(self, detail):
-        #  Excludes legacy tile template to preserve behavior of existing apps using this template.
-        if self.detail.case_tile_template != CaseTileTemplates.PERSON_SIMPLE.value:
-            xpath_to_field = self._get_xpath_mapped_to_field_containing_sort()
-            for field in detail.fields:
-                populated_xpath_function = self._escape_xpath_function(field.template.text.xpath_function)
-                if populated_xpath_function in xpath_to_field:
-                    # Adds sort element to the field
-                    field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
+        xpath_to_field = self._get_xpath_mapped_to_field_containing_sort()
+        for field in detail.fields:
+            populated_xpath_function = self._escape_xpath_function(field.template.text.xpath_function)
+            if populated_xpath_function in xpath_to_field:
+                # Adds sort element to the field
+                field.sort_node = xpath_to_field.pop(populated_xpath_function).sort_node
 
-            # detail.fields contains only display properties, not sort-only properties.
-            # This adds to detail, hidden fields that contain sort elements.
-            for field in xpath_to_field.values():
-                detail.fields.append(field)
+        # detail.fields contains only display properties, not sort-only properties.
+        # This adds to detail, hidden fields that contain sort elements.
+        for field in xpath_to_field.values():
+            detail.fields.append(field)
 
     def _get_xpath_mapped_to_field_containing_sort(self):
         xpath_to_field = {}

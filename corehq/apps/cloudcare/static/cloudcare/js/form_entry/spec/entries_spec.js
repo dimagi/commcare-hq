@@ -18,6 +18,7 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {
                 "toggles_dict",
                 {
                     WEB_APPS_UPLOAD_QUESTIONS: true,
+                    WEB_APPS_ANCHORED_SUBMIT: false,
                 }
             );
         });
@@ -321,6 +322,38 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {
             assert.isTrue(spy.calledOnce);
             assert.isNull(entry.answer());
             assert.isNull(entry.rawAnswer());
+        });
+
+        it('Should return ButtonSelectEntry', function () {
+            questionJSON.datatype = constants.SELECT;
+            questionJSON.style = { raw: constants.BUTTON_SELECT };
+            questionJSON.choices = ['a', 'b'];
+            questionJSON.answer = 1;
+
+            var entry = formUI.Question(questionJSON).entry;
+            assert.isTrue(entry instanceof entries.ButtonSelectEntry);
+            assert.equal(entry.templateType, 'button');
+            assert.equal(entry.rawAnswer(), 'a');
+        });
+
+        it('Should cycle through ButtonSelect choices on click', function () {
+            questionJSON.datatype = constants.SELECT;
+            questionJSON.style = { raw: constants.BUTTON_SELECT };
+            questionJSON.choices = ['a', 'b', 'c'];
+            questionJSON.answer = 1;
+
+            var entry = formUI.Question(questionJSON).entry;
+            // value 'a' shows label 'b' to indicate what will be selected when clicked
+            assert.equal(entry.rawAnswer(), 'a');
+            assert.equal(entry.buttonLabel(), 'b');
+
+            entry.onClick();
+            assert.equal(entry.rawAnswer(), 'b');
+            assert.equal(entry.buttonLabel(), 'c');
+
+            entry.onClick();
+            assert.equal(entry.rawAnswer(), 'c');
+            assert.equal(entry.buttonLabel(), 'a');
         });
 
         it('Should return DateEntry', function () {

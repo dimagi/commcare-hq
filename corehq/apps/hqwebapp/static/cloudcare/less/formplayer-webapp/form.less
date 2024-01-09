@@ -25,6 +25,17 @@
     .border-bottom-radius(0);
   }
 
+  .anchored-submit {
+    background-color: @call-to-action-low;
+    width: 100vw;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    position: fixed;
+    bottom: 0px;
+    left: 0;
+    z-index: @zindex-formplayer-anchored-submit;
+  }
+
   .form-group {
     padding-left: 25px;
     padding-right: 20px;
@@ -42,12 +53,30 @@
   }
 
   .panel-body {
-    padding-left: 0px;
-    padding-right: 0px;
+    padding-left: 5px;
+    padding-right: 5px;
     // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
     .row {
       margin-left: 0px;
       margin-right: 0px;
+    }
+    @media (max-width: @screen-xs-max) {
+      padding-left: 0px;
+      padding-right: 0px;
+    }
+  }
+
+  .stripe-repeats {
+    .gr {
+      &:nth-of-type(odd) {
+        background-color: @table-bg-accent;
+      }
+      &:nth-of-type(even) {
+        background-color: white;
+      }
+      &:hover {
+        background-color: @table-bg-hover;
+      }
     }
   }
 
@@ -73,7 +102,7 @@
 
 }
 
-.form-container .form-actions .btn {
+.form-container .form-actions .nonanchored-submit .btn {
   font-size: 20px;
   padding: 13px 24px;
   .transition(all .5s);
@@ -162,5 +191,20 @@
   .help-block {
     color: #52616f !important;
     font-size: 14px;
+  }
+}
+
+.question-tile-row:has(div.q) {
+  margin-bottom: 15px;
+}
+
+.question-tile-row {
+  display: flex;
+  align-items: center;
+  * .form-group, * p, * .control-label {
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
   }
 }

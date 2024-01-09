@@ -1,20 +1,27 @@
-from unittest.mock import patch, MagicMock
-from django.test import SimpleTestCase
-from datetime import date
+from datetime import date, datetime
+from unittest.mock import MagicMock, patch
+
+from django.test import SimpleTestCase, TestCase
+
 from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
+    CaseRuleAction,
+    CaseRuleCriteria,
     ClosedParentDefinition,
     CreateScheduleInstanceActionDefinition,
-    MatchPropertyDefinition,
-    CustomMatchDefinition,
-    UpdateCaseDefinition,
     CustomActionDefinition,
+    CustomMatchDefinition,
     LocationFilterDefinition,
+    MatchPropertyDefinition,
     UCRFilterDefinition,
-    CaseRuleCriteria,
-    CaseRuleAction,
-    AutomaticUpdateRule,
+    UpdateCaseDefinition,
 )
+from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.form_processor.models.cases import CommCareCase
 
 
 class MatchPropertyDefinitionTests(SimpleTestCase):
@@ -63,7 +70,7 @@ class CustomActionDefinitionTests(SimpleTestCase):
         })
 
 
-class LocationFilterDefinitionTests(SimpleTestCase):
+class LocationFilterDefinitionTests(TestCase):
     def test_to_dict_includes_all_fields(self):
         definition = LocationFilterDefinition(location_id='test_id', include_child_locations=False)
 
@@ -71,6 +78,110 @@ class LocationFilterDefinitionTests(SimpleTestCase):
             'location_id': 'test_id',
             'include_child_locations': False
         })
+
+    def test_when_case_and_definition_match_return_true(self):
+        case = CommCareCase(owner_id='location_id')
+
+        definition = LocationFilterDefinition(location_id='location_id', include_child_locations=False)
+
+        self.assertTrue(definition.matches(case, None))
+
+    def test_when_case_and_child_enabled_definition_match_return_true(self):
+        case = CommCareCase(owner_id='location_id')
+
+        definition = LocationFilterDefinition(location_id='location_id', include_child_locations=True)
+
+        self.assertTrue(definition.matches(case, None))
+
+    def test_when_case_belongs_to_matched_user_return_true(self):
+        user = self._create_user(location_id='location_id')
+        case = CommCareCase(owner_id=user._id)
+
+        definition = LocationFilterDefinition(location_id='location_id', include_child_locations=False)
+
+        self.assertTrue(definition.matches(case, None))
+
+    def test_when_case_belongs_to_mismatched_user_return_false(self):
+        user = self._create_user(location_id='other_location_id')
+        case = CommCareCase(owner_id=user._id)
+
+        definition = LocationFilterDefinition(location_id='location_id', include_child_locations=False)
+
+        self.assertFalse(definition.matches(case, None))
+
+    def test_when_case_belongs_to_matched_web_user_return_true(self):
+        user = self._create_user(location_id='location_id', is_web=True)
+        case = CommCareCase(owner_id=user._id)
+
+        definition = LocationFilterDefinition(location_id='location_id', include_child_locations=False)
+
+        self.assertTrue(definition.matches(case, None))
+
+    def test_when_case_belongs_to_mismatched_location_returns_false(self):
+        location = SQLLocation.objects.create(
+            location_id='other_location_id', location_type=self.loc_type, domain=self.domain)
+        case = CommCareCase(owner_id=location.location_id)
+
+        definition = LocationFilterDefinition(location_id='location_id', include_child_locations=False)
+
+        self.assertFalse(definition.matches(case, None))
+
+    def test_when_case_belongs_to_group_returns_false(self):
+        # Groups never belong to locations, so expect False
+        group = self._create_group()
+        case = CommCareCase(owner_id=group._id)
+
+        definition = LocationFilterDefinition(location_id='location_id', include_child_locations=False)
+
+        self.assertFalse(definition.matches(case, None))
+
+    @patch.object(SQLLocation, 'descendants_include_location')
+    def test_when_user_belongs_to_child_location_returns_true(self, mock_include_loc):
+        user = self._create_user(location_id='child_location_id')
+        case = CommCareCase(owner_id=user._id)
+
+        definition = LocationFilterDefinition(location_id='location_id', include_child_locations=True)
+
+        mock_include_loc.side_effect = lambda loc_id: loc_id == 'child_location_id'
+
+        self.assertTrue(definition.matches(case, None))
+
+    def test_when_group_checks_for_child_location_return_false(self):
+        group = self._create_group()
+        case = CommCareCase(owner_id=group._id)
+
+        definition = LocationFilterDefinition(location_id='location_id', include_child_locations=True)
+
+        self.assertFalse(definition.matches(case, None))
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = Domain.get_or_create_with_name(cls.domain, is_active=True)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        existing_user = WebUser.get_by_username('test-user')
+        if existing_user:
+            existing_user.delete('test-domain', deleted_by=None)
+
+        cls.loc_type = LocationType.objects.create(domain=cls.domain, name='loc_type')
+        cls.location = SQLLocation.objects.create(
+            location_id='location_id', location_type=cls.loc_type, domain=cls.domain)
+
+    def _create_user(self, name='test-user', location_id='location_id', is_web=False):
+        UserClass = WebUser if is_web else CommCareUser
+        user = UserClass.create(self.domain, name, 'password', None, None)
+        user.location_id = location_id
+        user.save()
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
+        return user
+
+    def _create_group(self, id='group_id'):
+        group = Group(_id='group_id')
+        group.save()
+        self.addCleanup(group.delete)
+        return group
 
 
 class UCRFilterDefinitionTests(SimpleTestCase):
@@ -228,6 +339,29 @@ class AutomaticUpdateRuleTests(SimpleTestCase):
             'criteria': ['criteria1', 'criteria2'],
             'actions': ['action1', 'action2'],
         })
+
+    def test_get_boundary_date_returns_none_if_any_rule_does_not_filter_on_server_modified(self):
+        now = datetime(2020, 6, 1, 0, 0)
+        rules = [
+            AutomaticUpdateRule(filter_on_server_modified=True),
+            AutomaticUpdateRule(filter_on_server_modified=False),
+        ]
+
+        result = AutomaticUpdateRule.get_boundary_date(rules, now)
+
+        self.assertIsNone(result)
+
+    def test_get_boundary_date_returns_most_recent_date_if_all_rules_filter_on_server_modified(self):
+        now = datetime(2020, 6, 1, 0, 0)
+        rules = [
+            # filter_on_server_modified is True by default
+            AutomaticUpdateRule(server_modified_boundary=30),
+            AutomaticUpdateRule(server_modified_boundary=1),
+        ]
+
+        result = AutomaticUpdateRule.get_boundary_date(rules, now)
+
+        self.assertEqual(result, datetime(2020, 5, 31, 0, 0))
 
     def setUp(self):
         self.actions = []

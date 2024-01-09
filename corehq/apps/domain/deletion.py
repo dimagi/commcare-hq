@@ -349,6 +349,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'StockLevelsConfig', 'StockRestoreConfig',
     ]),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
+    ModelDeletion('users', 'SQLUserData', 'domain'),
     ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', [
         'CustomDataFieldsProfile', 'Field',
     ]),
@@ -469,6 +470,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('events', 'AttendanceTrackingConfig', 'domain'),
     ModelDeletion('geospatial', 'GeoConfig', 'domain'),
     ModelDeletion('email', 'EmailSettings', 'domain'),
+    ModelDeletion('hqmedia', 'LogoForSystemEmailsReference', 'domain'),
     ModelDeletion('abdm', 'ABDMUser', 'domain'),
 ]
 
