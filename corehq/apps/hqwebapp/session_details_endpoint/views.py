@@ -39,7 +39,8 @@ class SessionDetailsView(View):
     urlname = 'session_details'
     http_method_names = ['post']
 
-    @profile_dump('commcare_session_details.prof', probability=1, limit=5)
+    @profile_dump('commcare_session_details.prof', probability=1, limit=5,
+                cumulative_time_threshold=3000)
     def post(self, request, *args, **kwargs):
         start_time = datetime.now()
         try:
