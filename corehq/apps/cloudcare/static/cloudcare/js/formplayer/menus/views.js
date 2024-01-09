@@ -532,7 +532,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const PersistentCaseTileView = CaseTileView.extend({
-        className: "formplayer-request",
+        className: "formplayer-request persistent-sticky",
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
