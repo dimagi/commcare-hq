@@ -313,6 +313,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
 
         for (let child of json.children) {
+
+            if (child.type === constants.GROUP_TYPE && child.style.raw === '2-per-row-repeat') {
+                for (let groupChild of child.children) {
+                    if (groupChild.type === constants.GROUP_TYPE) {
+                        groupChild.style.raw = '2-per-row';
+                    }
+                }
+            }
             if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE) {
                 const elementTileWidth = GroupedElementTileRow.calculateElementWidth(child.style);
                 usedWidth += elementTileWidth;
