@@ -127,9 +127,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         return defer.promise();
     };
 
-    // this method takes current page number on which user has clicked and total possible pages
+    // This method takes current page number on which user has clicked and total possible pages
     // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
-    Utils.paginateOptions = function (currentPage, totalPages) {
+    // totalItems can be either the total on the current page or across all pages.
+    Utils.paginateOptions = function (currentPage, totalPages, totalItems) {
         var maxPages = 5;
         // ensure current page isn't out of range
         if (currentPage < 1) {
@@ -160,10 +161,19 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 endPage = currentPage + maxPagesAfterCurrentPage;
             }
         }
+
+        const rowRange = [5, 10, 25, 50, 100],
+            hasMultiplePages = totalPages > 1,
+            hasAtLeastMinimumItemsPerPage = totalItems > rowRange[0],
+            showPagination = hasMultiplePages || hasAtLeastMinimumItemsPerPage;
+
         return {
             startPage: startPage,
             endPage: endPage,
             pageCount: totalPages,
+            rowRange: rowRange,
+            showPagination: showPagination,
+            pageNumLabel: _.template(gettext("Page <%- num %>")),
         };
     };
 

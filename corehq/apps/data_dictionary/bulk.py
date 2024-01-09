@@ -21,6 +21,7 @@ from .util import (
     save_case_property,
     get_column_headings,
     map_row_values_to_column_names,
+    is_case_type_or_prop_name_valid,
 )
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
@@ -137,7 +138,14 @@ def _process_sheets(domain, workbook, allowed_value_info):
                     domain, worksheet)
                 errors.extend(_errors)
             continue
+
         case_type = worksheet.title
+        if not is_case_type_or_prop_name_valid(case_type):
+            errors.append(
+                _('Invalid sheet name "{}". It should start with a letter, and only contain '
+                  'letters, numbers, "-", and "_"').format(case_type)
+            )
+            continue
 
         column_headings = []
         for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 0, None), start=1):
