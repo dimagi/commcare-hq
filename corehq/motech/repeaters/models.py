@@ -135,8 +135,8 @@ from .const import (
     RECORD_EMPTY_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
-    RECORD_STATES,
     RECORD_SUCCESS_STATE,
+    State,
 )
 from .dbaccessors import (
     get_cancelled_repeat_record_count,
@@ -242,8 +242,7 @@ class RepeaterManager(models.Manager):
             | models.Q(next_attempt_at__lte=timezone.now())
         )
         repeat_records_ready_to_send = models.Q(
-            repeat_records__state__in=(RECORD_PENDING_STATE,
-                                       RECORD_FAILURE_STATE)
+            repeat_records__state__in=(State.Pending, State.Fail)
         )
         return (self.get_queryset()
                 .filter(not_paused)
@@ -365,8 +364,7 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def repeat_records_ready(self):
-        return self.repeat_records.filter(state__in=(RECORD_PENDING_STATE,
-                                                     RECORD_FAILURE_STATE))
+        return self.repeat_records.filter(state__in=(State.Pending, State.Fail))
 
     @property
     def is_ready(self):
@@ -1249,8 +1247,7 @@ class SQLRepeatRecord(models.Model):
                                  on_delete=DB_CASCADE,
                                  db_column="repeater_id_",
                                  related_name='repeat_records')
-    state = models.TextField(choices=RECORD_STATES,
-                             default=RECORD_PENDING_STATE)
+    state = models.PositiveSmallIntegerField(choices=State.choices, default=State.Pending)
     registered_at = models.DateTimeField()
 
     class Meta:
@@ -1266,11 +1263,11 @@ class SQLRepeatRecord(models.Model):
     def requeue(self):
         # Changing "success" to "pending" and "cancelled" to "failed"
         # preserves the value of `self.failure_reason`.
-        if self.state == RECORD_SUCCESS_STATE:
-            self.state = RECORD_PENDING_STATE
+        if self.state == State.Success:
+            self.state = State.Pending
             self.save()
-        elif self.state == RECORD_CANCELLED_STATE:
-            self.state = RECORD_FAILURE_STATE
+        elif self.state == State.Cancelled:
+            self.state = State.Fail
             self.save()
 
     def add_success_attempt(self, response):
@@ -1280,10 +1277,10 @@ class SQLRepeatRecord(models.Model):
         """
         self.repeater.reset_next_attempt()
         self.sqlrepeatrecordattempt_set.create(
-            state=RECORD_SUCCESS_STATE,
+            state=State.Success,
             message=format_response(response) or '',
         )
-        self.state = RECORD_SUCCESS_STATE
+        self.state = State.Success
         self.save()
 
     def add_client_failure_attempt(self, message, retry=True):
@@ -1311,9 +1308,9 @@ class SQLRepeatRecord(models.Model):
 
     def _add_failure_attempt(self, message, max_attempts, retry=True):
         if retry and self.num_attempts < max_attempts:
-            state = RECORD_FAILURE_STATE
+            state = State.Fail
         else:
-            state = RECORD_CANCELLED_STATE
+            state = State.Cancelled
         self.sqlrepeatrecordattempt_set.create(
             state=state,
             message=message,
@@ -1323,11 +1320,11 @@ class SQLRepeatRecord(models.Model):
 
     def add_payload_exception_attempt(self, message, tb_str):
         self.sqlrepeatrecordattempt_set.create(
-            state=RECORD_CANCELLED_STATE,
+            state=State.Cancelled,
             message=message,
             traceback=tb_str,
         )
-        self.state = RECORD_CANCELLED_STATE
+        self.state = State.Cancelled
         self.save()
 
     @property
@@ -1380,7 +1377,7 @@ class SQLRepeatRecord(models.Model):
 
 class SQLRepeatRecordAttempt(models.Model):
     repeat_record = models.ForeignKey(SQLRepeatRecord, on_delete=DB_CASCADE)
-    state = models.TextField(choices=RECORD_STATES)
+    state = models.PositiveSmallIntegerField(choices=State.choices)
     message = models.TextField(blank=True, default='')
     traceback = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(default=timezone.now)
@@ -1494,16 +1491,15 @@ def send_request(
             else:
                 retry = allow_retries(response)
                 repeat_record.add_client_failure_attempt(message, retry)
-    return repeat_record.state in (RECORD_SUCCESS_STATE,
-                                   RECORD_CANCELLED_STATE)  # Don't retry
+    return repeat_record.state in (State.Success, State.Cancelled, State.Empty)  # Don't retry
 
 
 def is_queued(record):
-    return record.state in (RECORD_PENDING_STATE, RECORD_FAILURE_STATE)
+    return record.state in (State.Pending, State.Fail)
 
 
 def has_failed(record):
-    return record.state in (RECORD_FAILURE_STATE, RECORD_CANCELLED_STATE)
+    return record.state in (State.Fail, State.Cancelled)
 
 
 def format_response(response) -> Optional[str]:

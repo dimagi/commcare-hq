@@ -11,6 +11,28 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name='sqlrepeatrecord',
+            name='state',
+            field=models.PositiveSmallIntegerField(choices=[
+                (1, 'Pending'),
+                (2, 'Failed'),
+                (4, 'Succeeded'),
+                (8, 'Cancelled'),
+                (16, 'Empty')
+            ], default=1),
+        ),
+        migrations.AlterField(
+            model_name='sqlrepeatrecordattempt',
+            name='state',
+            field=models.PositiveSmallIntegerField(choices=[
+                (1, 'Pending'),
+                (2, 'Failed'),
+                (4, 'Succeeded'),
+                (8, 'Cancelled'),
+                (16, 'Empty')
+            ]),
+        ),
         migrations.SeparateDatabaseAndState(
             database_operations=[],
             state_operations=[
