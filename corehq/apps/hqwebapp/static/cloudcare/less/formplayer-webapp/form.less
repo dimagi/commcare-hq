@@ -164,14 +164,16 @@
 
 }
 
-.case-tile-container {
-    position: sticky;
-    top: @breadcrumb-height-cloudcare;
-    z-index: @zindex-navbar-cloudcare;
+@media screen {
+    .case-tile-container {
+        position: sticky;
+        top: @breadcrumb-height-cloudcare;
+        z-index: @zindex-navbar-cloudcare;
 
-    #persistent-case-tile .persistent-sticky {
-        box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
-        border-bottom: 1px solid @cc-neutral-hi;
+        #persistent-case-tile .persistent-sticky {
+            box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid @cc-neutral-hi;
+        }
     }
 }
 
