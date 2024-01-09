@@ -1606,7 +1606,7 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
 
     @property
     def exceeded_max_retries(self):
-        return self.num_attempts >= self.max_possible_tries
+        return self.state == State.Fail and self.num_attempts >= self.max_possible_tries
 
     @property
     def repeater_type(self):

@@ -33,7 +33,6 @@ from ..const import (
 from ..models import (
     FormRepeater,
     Repeater,
-    RepeatRecord,
     SQLRepeatRecord,
     format_response,
     get_all_repeater_types,
@@ -217,7 +216,7 @@ def make_repeat_record(repeater, state):
     try:
         yield repeat_record
     finally:
-        repeat_record.delete()
+        repeat_record._migration_get_couch_object().delete()
 
 
 @contextmanager
@@ -454,19 +453,14 @@ class TestRepeaterConnectionSettings(RepeaterTestCase):
 
 
 def test_attempt_forward_now_kwargs():
-    def test(cls):
-        rr = cls()
-        with assert_raises(TypeError):
-            rr.attempt_forward_now(True)
-
-    yield test, RepeatRecord
-    yield test, SQLRepeatRecord
+    rr = SQLRepeatRecord()
+    with assert_raises(TypeError):
+        rr.attempt_forward_now(True)
 
 
 @patch("corehq.motech.repeaters.tasks.retry_process_repeat_record")
 @patch("corehq.motech.repeaters.tasks.process_repeat_record")
 class TestAttemptForwardNow(RepeaterTestCase):
-    model_class = RepeatRecord
     before_now = datetime.utcnow() - timedelta(seconds=1)
 
     def test_future_next_check(self, process, retry_process):
@@ -511,7 +505,7 @@ class TestAttemptForwardNow(RepeaterTestCase):
     def test_optimistic_lock(self, process, retry_process):
         rec = self.new_record()
 
-        two = self.get_fresh_copy(rec.record_id)
+        two = SQLRepeatRecord.objects.get(id=rec.id)
         two.next_check = datetime.utcnow() - timedelta(days=1)
         two.save()
 
@@ -528,7 +522,7 @@ class TestAttemptForwardNow(RepeaterTestCase):
                 raise AssertionError(f"{task} unexpectedly called:\n{err}")
 
     def new_record(self, next_check=before_now, state=RECORD_PENDING_STATE):
-        rec = self.model_class(
+        rec = SQLRepeatRecord(
             domain="test",
             repeater_id=self.repeater.repeater_id,
             payload_id="c0ffee",
@@ -539,16 +533,6 @@ class TestAttemptForwardNow(RepeaterTestCase):
         rec.save()
         return rec
 
-    def get_fresh_copy(self, record_id):
-        return self.model_class.get(record_id)
-
-
-class TestSQLAttemptForwardNow(TestAttemptForwardNow):
-    model_class = SQLRepeatRecord
-
-    def get_fresh_copy(self, record_id):
-        return self.model_class.objects.get(id=record_id)
-
 
 class TestRepeaterModelMethods(RepeaterTestCase):
 
@@ -558,7 +542,7 @@ class TestRepeaterModelMethods(RepeaterTestCase):
             domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
         )
         repeat_record = self.repeater.register(payload, fire_synchronously=True)
-        self.addCleanup(repeat_record.delete)
+        self.addCleanup(repeat_record._migration_get_couch_object().delete)
         self.assertEqual(repeat_record.payload_id, payload.get_id)
         all_records = list(SQLRepeatRecord.objects.iterate(DOMAIN))
         self.assertEqual(len(all_records), 1)
@@ -570,7 +554,7 @@ class TestRepeaterModelMethods(RepeaterTestCase):
             domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
         )
         repeat_record = self.repeater.register(payload, fire_synchronously=True)
-        self.addCleanup(repeat_record.delete)
+        self.addCleanup(repeat_record._migration_get_couch_object().delete)
         from corehq.motech.repeaters.tests.test_models_slow import ResponseMock
         resp = ResponseMock(status_code=200, reason='OK')
         # Basic test checks if send_request is called
@@ -720,7 +704,7 @@ class TestRepeatRecordManager(RepeaterTestCase):
         delete_all_repeat_records()
 
 
-class TestCouchRepeatRecordMethods(TestCase):
+class TestRepeatRecordMethods(TestCase):
 
     def test_repeater_returns_active_repeater(self):
         repeater = Repeater.objects.create(
@@ -728,106 +712,42 @@ class TestCouchRepeatRecordMethods(TestCase):
             connection_settings=self.conn_settings,
             is_deleted=False
         )
-        repeat_record = RepeatRecord(
+        repeat_record = SQLRepeatRecord.objects.create(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
             repeater_id=repeater.repeater_id
         )
-        repeat_record.save()
-        self.addCleanup(repeat_record.delete)
+        self.addCleanup(repeat_record._migration_get_couch_object().delete)
 
         self.assertIsNotNone(repeat_record.repeater)
 
-    def test_repeater_does_not_return_deleted_repeater(self):
+    def test_repeater_returns_deleted_repeater(self):
         repeater = Repeater.objects.create(
             domain=self.domain,
             connection_settings=self.conn_settings,
             is_deleted=True
         )
-        repeat_record = RepeatRecord(
+        repeat_record = SQLRepeatRecord.objects.create(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
             repeater_id=repeater.repeater_id
         )
-        repeat_record.save()
-        self.addCleanup(repeat_record.delete)
+        self.addCleanup(repeat_record._migration_get_couch_object().delete)
 
-        self.assertIsNone(repeat_record.repeater)
+        self.assertTrue(repeat_record.repeater.is_deleted)
 
-    def test_repeater_returns_none_if_not_found(self):
-        repeat_record = RepeatRecord(
+    def test_repeater_raises_if_not_found(self):
+        repeat_record = SQLRepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
             repeater_id='404aaaaaaaaaaaaaaaaaaaaaaaaaa404',
         )
-        repeat_record.save()
-        self.addCleanup(repeat_record.delete)
 
-        self.assertIsNone(repeat_record.repeater)
-
-    def test_exceeded_max_retries_returns_false_if_fewer_tries_than_possible(self):
-        repeat_record = RepeatRecord(
-            domain=self.domain,
-            payload_id='abc123',
-            registered_at=datetime.utcnow(),
-            repeater_id=self.repeater.repeater_id,
-            failure_reason='test',
-            overall_tries=0,
-            max_possible_tries=1
-        )
-        repeat_record.save()
-        self.addCleanup(repeat_record.delete)
-
-        self.assertFalse(repeat_record.exceeded_max_retries)
-
-    def test_exceeded_max_retries_returns_true_if_equal(self):
-        repeat_record = RepeatRecord(
-            domain=self.domain,
-            payload_id='abc123',
-            registered_at=datetime.utcnow(),
-            repeater_id=self.repeater.repeater_id,
-            failure_reason='test',
-            overall_tries=1,
-            max_possible_tries=1
-        )
-        repeat_record.save()
-        self.addCleanup(repeat_record.delete)
-
-        self.assertTrue(repeat_record.exceeded_max_retries)
-
-    def test_exceeded_max_retries_returns_true_if_more_tries_than_possible(
-            self):
-        repeat_record = RepeatRecord(
-            domain=self.domain,
-            payload_id='abc123',
-            registered_at=datetime.utcnow(),
-            repeater_id=self.repeater.repeater_id,
-            failure_reason='test',
-            overall_tries=2,
-            max_possible_tries=1
-        )
-        repeat_record.save()
-        self.addCleanup(repeat_record.delete)
-
-        self.assertTrue(repeat_record.exceeded_max_retries)
-
-    def test_exceeded_max_retries_returns_false_if_not_failure_state(
-            self):
-        repeat_record = RepeatRecord(
-            domain=self.domain,
-            payload_id='abc123',
-            registered_at=datetime.utcnow(),
-            repeater_id=self.repeater.repeater_id,
-            overall_tries=2,
-            max_possible_tries=1
-        )
-        repeat_record.save()
-        self.addCleanup(repeat_record.delete)
-
-        self.assertFalse(repeat_record.exceeded_max_retries)
+        with self.assertRaises(Repeater.DoesNotExist):
+            repeat_record.repeater
 
     @classmethod
     def setUpClass(cls):
@@ -843,14 +763,9 @@ class TestCouchRepeatRecordMethods(TestCase):
             connection_settings=cls.conn_settings,
         )
 
-
-class TestRepeatRecordMethods(RepeaterTestCase):
-    # TODO combine with TestCouchRepeatRecordMethods after SQL migration
-    model_class = RepeatRecord
-
     def test_requeue(self):
         now = datetime.utcnow()
-        record = self.model_class(
+        record = SQLRepeatRecord(
             domain="test",
             repeater_id=self.repeater.id.hex,
             payload_id="abc123",
@@ -863,7 +778,7 @@ class TestRepeatRecordMethods(RepeaterTestCase):
         self.assertLessEqual(record.next_check, datetime.utcnow())
 
     def test_get_payload(self):
-        record = self.model_class(
+        record = SQLRepeatRecord(
             domain="test",
             repeater_id=self.repeater.id.hex,
             payload_id="abc123",
@@ -875,7 +790,7 @@ class TestRepeatRecordMethods(RepeaterTestCase):
     def test_postpone_by(self):
         now = datetime.utcnow()
         hour = timedelta(hours=1)
-        record = self.model_class(
+        record = SQLRepeatRecord(
             domain="test",
             repeater_id=self.repeater.id.hex,
             payload_id="abc123",
@@ -886,8 +801,57 @@ class TestRepeatRecordMethods(RepeaterTestCase):
         self.assertEqual(record.next_check, now + 3 * hour)
 
 
-class TestSQLRepeatRecordMethods(TestRepeatRecordMethods):
-    model_class = SQLRepeatRecord
+class TestRepeatRecordMethodsNoDB(SimpleTestCase):
+    domain = 'repeat-record-tests'
+
+    def test_exceeded_max_retries_returns_false_if_fewer_tries_than_possible(self):
+        repeat_record = SQLRepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            state=State.Fail
+        )
+
+        with patch.object(SQLRepeatRecord, "num_attempts", 0), \
+                patch.object(repeat_record, "max_possible_tries", 1):
+            self.assertFalse(repeat_record.exceeded_max_retries)
+
+    def test_exceeded_max_retries_returns_true_if_equal(self):
+        repeat_record = SQLRepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            state=State.Fail
+        )
+
+        with patch.object(SQLRepeatRecord, "num_attempts", 1), \
+                patch.object(repeat_record, "max_possible_tries", 1):
+            self.assertTrue(repeat_record.exceeded_max_retries)
+
+    def test_exceeded_max_retries_returns_true_if_more_tries_than_possible(self):
+        repeat_record = SQLRepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            state=State.Fail
+        )
+
+        with patch.object(SQLRepeatRecord, "num_attempts", 2), \
+                patch.object(repeat_record, "max_possible_tries", 1):
+            self.assertTrue(repeat_record.exceeded_max_retries)
+
+    def test_exceeded_max_retries_returns_false_if_not_failure_state(
+            self):
+        repeat_record = SQLRepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            state=State.Success,
+        )
+
+        with patch.object(SQLRepeatRecord, "num_attempts", 2), \
+                patch.object(repeat_record, "max_possible_tries", 1):
+            self.assertFalse(repeat_record.exceeded_max_retries)
 
 
 def test_is_sql_id():
