@@ -78,7 +78,7 @@ class Command(BaseCommand):
         elif missing_primary and not missing_secondary:
             user_input = input(
                 f"""We've identified that certain old indices are absent from your CommCare setup.
-                Missing Indices - {missing_primary}
+                Missing Indices: {missing_primary}
 
                 Can you confirm whether a custom reindexing approach has been implemented? -
 
