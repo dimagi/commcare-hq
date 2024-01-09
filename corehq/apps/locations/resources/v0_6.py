@@ -4,6 +4,8 @@ from corehq.apps.users.models import HqPermissions
 
 from corehq.apps.locations.resources import v0_5
 
+from tastypie.exceptions import BadRequest, NotFound
+
 
 class LocationResource(v0_5.LocationResource):
     resource_name = 'location'
@@ -55,6 +57,40 @@ class LocationResource(v0_5.LocationResource):
             bundle.obj.location_type = self._get_location_type(bundle.data['location_type_code'])
         if 'parent_location_id' in bundle.data:
             bundle.obj.parent = self._get_parent_location(bundle.data['parent_location_id'])
+
+        bundle.obj.save()
+        return bundle
+
+    def obj_update(self, bundle, **kwargs):
+        bundle.obj = SQLLocation.objects.get(location_id=kwargs['location_id'])
+        data = bundle.data
+
+        if bundle.obj.domain != kwargs.pop('domain'):
+            raise NotFound('Location could not be found.')
+
+        # Invalid fields that might be common
+        if data.pop('location_type_name', False):
+            raise BadRequest('Location type name is not editable.')
+        if data.pop('last_modified', False):
+            raise BadRequest('\"last_modified\" field is not editable.')
+
+        easy_field_names = ['name', 'site_code', 'latitude', 'longitude']
+        for field_name in easy_field_names:
+            if field_name in data:
+                setattr(bundle.obj, field_name, data.pop(field_name))
+
+        if 'location_data' in data:
+            for key, value in data['location_data'].items():
+                if not isinstance(key, str) or not isinstance(value, str):
+                    raise BadRequest("Location data keys and values must be strings.")
+            setattr(bundle.obj, 'metadata', data.pop('location_data'))
+        if 'location_type_code' in data:
+            bundle.obj.location_type = self._get_location_type(data.pop('location_type_code'))
+        if 'parent_location_id' in data:
+            bundle.obj.parent = self._get_parent_location(data.pop('parent_location_id'))
+
+        if len(bundle.data):
+            raise BadRequest("Invalid fields were included in request.")
 
         bundle.obj.save()
         return bundle

@@ -130,3 +130,44 @@ class LocationV6Test(APIResourceTest):
 
         created_location = SQLLocation.objects.get(name="Fairplay")
         all(key_value_pair in created_location.to_json().items() for key_value_pair in post_data.items())
+
+    def test_put(self):
+        self.county = LocationType.objects.create(
+            domain=self.domain.name,
+            name="County",
+            code="county",
+            parent_type=self.parent_type
+        )
+        self.south_park = SQLLocation.objects.create(
+            domain=self.domain.name,
+            location_id="22",
+            name="south park",
+            site_code="south_park",
+            location_type=self.county
+        )
+
+        put_data = {
+            "name": "New Denver",
+            "site_code": "new denver",
+            "longitude": 33.9012,
+            "parent_location_id": self.south_park.location_id
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
+                                                   put_data, method='PUT')
+        self.assertEqual(response.status_code, 200)
+
+        self.location2_updated = SQLLocation.objects.get(location_id=self.location2.location_id)
+        self.assertEqual(self.location2_updated.name, "New Denver")
+        self.assertEqual(self.location2_updated.site_code, "new denver")
+        self.assertEqual(float(self.location2_updated.longitude), 33.9012)
+        self.assertEqual(self.location2_updated.parent.location_id, self.south_park.location_id)
+
+        put_data = {
+            "location_type_code": self.county.code
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
+                                                   put_data, method='PUT')
+        self.assertTrue(response.status_code, 200)
+
+        self.location2_updated = SQLLocation.objects.get(location_id=self.location2.location_id)
+        self.assertEqual(self.location2_updated.location_type.code, self.county.code)
