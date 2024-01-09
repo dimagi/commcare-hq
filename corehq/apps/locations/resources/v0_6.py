@@ -37,6 +37,7 @@ class LocationResource(v0_5.LocationResource):
             bundle.data['parent_location_id'] = ''
         bundle.data['location_type_name'] = bundle.obj.location_type.name
         bundle.data['location_type_code'] = bundle.obj.location_type.code
+        bundle.data['location_data'] = bundle.obj.metadata
         return bundle
 
     def _get_location_type(self, type_code):
