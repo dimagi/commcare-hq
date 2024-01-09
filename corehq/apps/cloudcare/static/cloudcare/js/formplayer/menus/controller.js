@@ -179,7 +179,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var showDetail = function (model, detailTabIndex, caseId, isMultiSelect) {
-        var detailObjects = model.filter(function(d){
+        var detailObjects = model.filter(function (d) {
             const styles = d.get('styles');
             const visibleStyle = _.find(styles, s => s.displayFormat !== constants.FORMAT_ADDRESS_POPUP);
             return typeof visibleStyle !== 'undefined';
