@@ -244,7 +244,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.init = function (callback) {
-            $.getJSON(dataUrl)
+            $.getJSON(dataUrl, {load_deprecated_case_types: self.showDeprecatedCaseTypes()})
                 .done(function (data) {
                     _.each(data.case_types, function (caseTypeData) {
                         var caseTypeObj = caseType(
