@@ -23,16 +23,16 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'only_run_for_es_version', type=int, choices=[2, 5],
+            'current_es_version', type=int, choices=[2, 5],
             help="""A valid ES major version from which the data is being migrated from
-            For eg - If you are upgrading from 2 to 5 the only_run_for_es_version should be 2
+            For eg - If you are upgrading from 2 to 5 the current_es_version should be 2
             """
         )
 
         parser.add_argument('changelog', help="Changelog entry for the upgrade that outlines reindex steps")
 
-    def handle(self, only_run_for_es_version, changelog, **kwargs):
-        if manager.elastic_major_version != only_run_for_es_version:
+    def handle(self, current_es_version, changelog, **kwargs):
+        if manager.elastic_major_version != current_es_version:
             print(f"""
                 Skipping Reindex verify checks!
                 Environment's ElasticSearch version is {manager.elastic_major_version}

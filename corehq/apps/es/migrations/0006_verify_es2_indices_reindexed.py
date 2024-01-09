@@ -8,10 +8,10 @@ from corehq.util.django_migrations import skip_on_fresh_install
 @skip_on_fresh_install
 def _verify_reindex_status(apps, schema_editor):
     changelog_url = 'https://commcare-cloud.readthedocs.io/en/latest/changelog/0075-reindex-all-indexes-for-es-upgrade.html'
-    only_run_for_es_version = 2
+    current_es_version = 2
 
     call_command(
-        'ensure_indices_reindexed', only_run_for_es_version, changelog_url
+        'ensure_indices_reindexed', current_es_version, changelog_url
     )
 
 
