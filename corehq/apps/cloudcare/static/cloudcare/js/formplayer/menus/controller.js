@@ -179,7 +179,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var showDetail = function (model, detailTabIndex, caseId, isMultiSelect) {
-        var detailObjects = model.models;
+        var detailObjects = model.filter(function(d){
+            const styles = d.get('styles');
+            const visibleStyle = _.find(styles, s => s.displayFormat !== constants.FORMAT_ADDRESS_POPUP);
+            return typeof visibleStyle !== 'undefined';
+        });
+
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
             if (isMultiSelect) {
