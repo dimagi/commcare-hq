@@ -14,7 +14,10 @@ from corehq.apps.users.models import CouchUser
 from corehq.feature_previews import previews_enabled_for_domain
 from corehq.middleware import TimeoutMiddleware
 from corehq.toggles import toggles_enabled_for_user, toggles_enabled_for_domain
-from corehq.util.metrics import metrics_histogram
+from corehq.util.metrics import (
+    limit_domains,
+    metrics_histogram
+)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -77,9 +80,9 @@ class SessionDetailsView(View):
         metrics_histogram("commcare.session_details.processing_time",
                       int((end_time - start_time).total_seconds() * 1000),
                       bucket_tag='duration_bucket',
-                      buckets=(100, 250, 500, 1000, 2000, 3000, 4000),
+                      buckets=(250, 1000, 3000),
                       bucket_unit='ms',
-                      tags={'domain': domain})
+                      tags={'domain': limit_domains(domain)})
         return JsonResponse({
             'username': user.username,
             'djangoUserId': user.pk,
