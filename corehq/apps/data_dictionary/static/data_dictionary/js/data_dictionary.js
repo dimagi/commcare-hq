@@ -179,6 +179,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         const params = new URLSearchParams(document.location.search);
         self.showDeprecatedCaseTypes = ko.observable(params.get("load_deprecated_case_types") !== null);
+
+        // Elements with this class have a hidden class to hide them on page load. If we don't do this, then the elements
+        // will flash on the page for a bit while the KO bindings are being applied.
+        $(".deprecate-case-type").removeClass('hidden');
+
         self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function () {
