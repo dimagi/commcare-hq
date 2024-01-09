@@ -12,7 +12,9 @@ class LocationResource(v0_5.LocationResource):
         queryset = SQLLocation.active_objects.all()
         detail_uri_name = 'location_id'
         authentication = RequirePermissionAuthentication(HqPermissions.edit_locations)
-        allowed_methods = ['get']
+        list_allowed_methods = ['get', 'post']
+        detail_allowed_methods = ['get', 'put']
+        always_return_data = True
         include_resource_uri = False
         fields = {
             'domain',
