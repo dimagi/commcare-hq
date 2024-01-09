@@ -40,6 +40,25 @@ class LocationResource(v0_5.LocationResource):
         bundle.data['location_data'] = bundle.obj.metadata
         return bundle
 
+    def obj_create(self, bundle, **kwargs):
+        domain = bundle.data['domain']
+        if SQLLocation.objects.filter(domain=domain, site_code=bundle.data['site_code']).exists():
+            raise Exception("Location on domain with site code already exists.")
+
+        # Easy fields
+        easy_data_keys = ('domain', 'latitude', 'longitude', 'name', 'site_code')
+        bundle.obj = SQLLocation(**{key: bundle.data.get(key, None) for key in easy_data_keys})
+
+        # Fields that require specific intervention
+        bundle.obj.metadata = bundle.data.get('location_data', None)
+        if 'location_type_code' in bundle.data:
+            bundle.obj.location_type = self._get_location_type(bundle.data['location_type_code'])
+        if 'parent_location_id' in bundle.data:
+            bundle.obj.parent = self._get_parent_location(bundle.data['parent_location_id'])
+
+        bundle.obj.save()
+        return bundle
+
     def _get_location_type(self, type_code):
         try:
             return LocationType.objects.get(

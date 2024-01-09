@@ -111,3 +111,22 @@ class LocationV6Test(APIResourceTest):
             "parent_location_id": "1",
             "site_code": "denver"
         }, response.json())
+
+    def test_post(self):
+        post_data = {
+            "domain": self.domain.name,
+            "latitude": 31.1234,
+            "location_data": {
+                "city_pop": 729
+            },
+            "location_type_code": "city",
+            "longitude": 32.5678,
+            "name": "Fairplay",
+            "parent_location_id": "1",
+            "site_code": "fairplay"
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint, post_data)
+        self.assertEqual(response.status_code, 201)
+
+        created_location = SQLLocation.objects.get(name="Fairplay")
+        all(key_value_pair in created_location.to_json().items() for key_value_pair in post_data.items())
