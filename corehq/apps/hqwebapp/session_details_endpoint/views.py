@@ -6,6 +6,8 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
+from dimagi.utils.decorators.profile import profile_dump
+
 from corehq import toggles
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.enterprise.models import EnterprisePermissions
@@ -37,6 +39,7 @@ class SessionDetailsView(View):
     urlname = 'session_details'
     http_method_names = ['post']
 
+    @profile_dump('commcare_session_details.prof', probability=1, limit=5)
     def post(self, request, *args, **kwargs):
         start_time = datetime.now()
         try:
