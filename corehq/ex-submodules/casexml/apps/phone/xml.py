@@ -1,13 +1,19 @@
 import logging
 from xml.sax import saxutils
-from lxml import etree as ElementTree
-from casexml.apps.case import const
-from casexml.apps.case.xml import check_version, V1
-from casexml.apps.case.xml.generator import get_generator, date_to_xml_string,\
-    safe_element, CaseDBXMLGenerator
-import six
 
+import six
+from lxml import etree as ElementTree
+
+from casexml.apps.case import const
+from casexml.apps.case.xml import V1, check_version
+from casexml.apps.case.xml.generator import (
+    CaseDBXMLGenerator,
+    date_to_xml_string,
+    get_generator,
+    safe_element,
+)
 from casexml.apps.phone.exceptions import RestoreException
+
 from corehq.extensions import extension_point
 
 USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user-registration"
@@ -51,7 +57,7 @@ def get_case_element(case, updates, version=V1):
     # update block
     do_create = const.CASE_ACTION_CREATE in updates
     do_update = const.CASE_ACTION_UPDATE in updates
-    do_index = do_update # NOTE: we may want to differentiate this eventually
+    do_index = do_update  # NOTE: we may want to differentiate this eventually
     do_attach = do_update
     do_purge = const.CASE_ACTION_PURGE in updates or const.CASE_ACTION_CLOSE in updates
     if do_create:
