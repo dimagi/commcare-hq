@@ -135,7 +135,7 @@ def get_paged_sql_repeat_records(domain, skip, limit, repeater_id=None, state=No
         queryset = queryset.filter(state=state)
     return (queryset.order_by('-registered_at')[skip:skip + limit]
             .select_related('repeater')
-            .prefetch_related('sqlrepeatrecordattempt_set'))
+            .prefetch_related('attempt_set'))
 
 
 def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, chunk_size=1000):

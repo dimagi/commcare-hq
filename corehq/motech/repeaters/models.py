@@ -1296,7 +1296,7 @@ class SQLRepeatRecord(models.Model):
         payload did not result in an API call.
         """
         self.repeater.reset_next_attempt()
-        self.sqlrepeatrecordattempt_set.create(
+        self.attempt_set.create(
             state=State.Success,
             message=format_response(response) or '',
         )
@@ -1332,17 +1332,14 @@ class SQLRepeatRecord(models.Model):
             state = State.Fail
         else:
             state = State.Cancelled
-        self.sqlrepeatrecordattempt_set.create(
-            state=state,
-            message=message,
-        )
+        self.attempt_set.create(state=state, message=message)
         self.state = state
         if state == State.Cancelled:
             self.next_check = None
         self.save()
 
     def add_payload_exception_attempt(self, message, tb_str):
-        self.sqlrepeatrecordattempt_set.create(
+        self.attempt_set.create(
             state=State.Cancelled,
             message=message,
             traceback=tb_str,
@@ -1353,7 +1350,7 @@ class SQLRepeatRecord(models.Model):
 
     @property
     def attempts(self):
-        return self.sqlrepeatrecordattempt_set.all()
+        return self.attempt_set.all()
 
     @property
     def num_attempts(self):
@@ -1400,7 +1397,8 @@ class SQLRepeatRecord(models.Model):
 
 
 class SQLRepeatRecordAttempt(models.Model):
-    repeat_record = models.ForeignKey(SQLRepeatRecord, on_delete=DB_CASCADE)
+    repeat_record = models.ForeignKey(
+        SQLRepeatRecord, on_delete=DB_CASCADE, related_name="attempt_set")
     state = models.PositiveSmallIntegerField(choices=State.choices)
     message = models.TextField(blank=True, default='')
     traceback = models.TextField(blank=True, default='')

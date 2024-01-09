@@ -33,6 +33,15 @@ class Migration(migrations.Migration):
                 (16, 'Empty')
             ]),
         ),
+        migrations.AlterField(
+            model_name='sqlrepeatrecordattempt',
+            name='repeat_record',
+            field=models.ForeignKey(
+                on_delete=models.deletion.DO_NOTHING,
+                related_name='attempt_set',
+                to='repeaters.sqlrepeatrecord',
+            ),
+        ),
         migrations.AddField(
             model_name='sqlrepeatrecord',
             name='next_check',

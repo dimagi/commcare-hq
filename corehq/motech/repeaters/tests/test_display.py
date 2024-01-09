@@ -43,10 +43,7 @@ class RepeaterTestCase(TestCase):
 
     def test_record_display_sql(self):
         with make_repeat_record(self.repeater, RECORD_SUCCESS_STATE) as record:
-            record.sqlrepeatrecordattempt_set.create(
-                state=RECORD_SUCCESS_STATE,
-                message='',
-            )
+            record.attempt_set.create(state=RECORD_SUCCESS_STATE)
             self._check_display(record)
 
     def _check_display(self, record):
