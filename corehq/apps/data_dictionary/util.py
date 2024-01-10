@@ -17,6 +17,8 @@ from corehq.apps.data_dictionary.models import (
     CasePropertyGroup,
     CaseType,
 )
+from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
+from corehq.apps.es.case_search import CaseSearchES, CASE_PROPERTIES_PATH, PROPERTY_KEY
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
@@ -264,6 +266,14 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         return gettext('Unable to save valid values longer than {} characters').format(max_len)
 
 
+def delete_case_property(name, case_type, domain):
+    try:
+        prop = CaseProperty.objects.get(name=name, case_type__name=case_type, case_type__domain=domain)
+    except CaseProperty.DoesNotExist:
+        return gettext('Case property does not exist and might have already been deleted.')
+    prop.delete()
+
+
 @quickcache(vary_on=['domain', 'exclude_deprecated'], timeout=24 * 60 * 60)
 def get_data_dict_props_by_case_type(domain, exclude_deprecated=True):
     filter_kwargs = {'case_type__domain': domain}
@@ -370,3 +380,31 @@ def is_case_type_or_prop_name_valid(case_prop_name):
     pattern = '^[a-zA-Z][a-zA-Z0-9-_]*$'
     match_obj = re.match(pattern, case_prop_name)
     return match_obj is not None
+
+
+@quickcache(['domain'], timeout=24 * 60)
+def used_case_props_by_domain(domain):
+    case_prop_agg = NestedAggregation('case_props', CASE_PROPERTIES_PATH).aggregation(
+        TermsAggregation('props', PROPERTY_KEY)
+    )
+    query = (
+        CaseSearchES()
+        .domain(domain)
+        .size(0)
+        .aggregation(case_prop_agg)
+    )
+    used_case_props = query.run().aggregations.case_props.props.keys
+    return set(used_case_props)
+
+
+@quickcache(['domain'], timeout=24 * 60)
+def used_case_types_by_domain(domain):
+    case_type_agg = TermsAggregation('case_types', 'type.exact')
+    query = (
+        CaseSearchES()
+        .domain(domain)
+        .size(0)
+        .aggregation(case_type_agg)
+    )
+    used_case_types = query.run().aggregations.case_types.keys
+    return set(used_case_types)
