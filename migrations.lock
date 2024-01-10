@@ -401,6 +401,7 @@ es
  0003_add_assigned_location_ids
  0004_make_new_indexes
  0005_add_epoch_as_valid_date_to_forms
+ 0006_verify_es2_indices_reindexed
 events
  0001_add_events_model
  0002_attendancetrackingconfig
