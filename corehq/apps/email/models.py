@@ -11,6 +11,7 @@ class EmailSettings(models.Model):
     server = models.CharField(max_length=255)
     port = models.IntegerField(default=0)
     from_email = models.EmailField()
+    return_path_email = models.EmailField(default='')
     use_this_gateway = models.BooleanField(default=False)
     use_tracking_headers = models.BooleanField(default=False)
     sns_secret = models.CharField(max_length=100)

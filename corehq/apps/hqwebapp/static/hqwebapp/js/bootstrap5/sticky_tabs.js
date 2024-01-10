@@ -16,14 +16,16 @@ hqDefine("hqwebapp/js/bootstrap5/sticky_tabs", [
         }
         return "";
     };
-
     $(function () {
-        var tabSelector = "a[data-toggle='tab']",
+        var tabSelector = "a[data-bs-toggle='tab']",
             navSelector = ".nav.sticky-tabs",
             hash = getHash(),
             $tabFromUrl = hash ? $("a[href='" + hash + "']") : undefined,
             $altTabSelector = $(navSelector + ' ' + tabSelector).first(),
             tabController;
+
+        // make sure we don't treat all anchor tags as a sticky tab
+        if ($tabFromUrl && $tabFromUrl.parents('.sticky-tabs').length === 0) return;
 
         if ($tabFromUrl && $tabFromUrl.length) {
             tabController = new bootstrap.Tab($tabFromUrl);

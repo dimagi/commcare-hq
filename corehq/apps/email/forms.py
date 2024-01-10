@@ -32,8 +32,14 @@ class EmailSMTPSettingsForm(forms.ModelForm):
     )
 
     from_email = forms.EmailField(
-        label=_("Sender's email"),
+        label=_("Sender's Email"),
         required=True,
+    )
+
+    return_path_email = forms.EmailField(
+        label=_("Return Path Email"),
+        required=False,
+        help_text=_("The email address to which message bounces and complaints should be sent")
     )
 
     use_this_gateway = forms.BooleanField(
@@ -73,6 +79,7 @@ class EmailSMTPSettingsForm(forms.ModelForm):
             'server',
             'port',
             'from_email',
+            'return_path_email',
             'use_this_gateway',
             'use_tracking_headers',
             'sns_secret',
@@ -99,6 +106,7 @@ class EmailSMTPSettingsForm(forms.ModelForm):
             crispy.Field('server'),
             crispy.Field('port'),
             crispy.Field('from_email'),
+            crispy.Field('return_path_email'),
             twbscrispy.PrependedText('use_tracking_headers', ''),
             crispy.Field('sns_secret'),
             crispy.Field('ses_config_set_name'),

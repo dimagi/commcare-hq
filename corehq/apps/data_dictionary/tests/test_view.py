@@ -32,9 +32,9 @@ class UpdateCasePropertyViewTest(TestCase):
         cls.case_type_obj.save()
         CaseProperty(case_type=cls.case_type_obj, name='property').save()
 
-        group_obj = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
-        group_obj.id = 1
-        group_obj.save()
+        group = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
+        group.id = 1
+        group.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -176,8 +176,7 @@ class UpdateCasePropertyViewTest(TestCase):
 
     def test_update_with_group_name(self):
         prop = self._get_property()
-        self.assertEqual(prop.group, '')
-        self.assertIsNone(prop.group_obj)
+        self.assertIsNone(prop.group)
         post_data = {
             "groups": '[{"id": 1, "caseType": "caseType", "name": "group", "description": ""}]',
             "properties": '[{"caseType": "caseType", "name": "property", "group": "group"}]'
@@ -185,14 +184,13 @@ class UpdateCasePropertyViewTest(TestCase):
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 200)
         prop = self._get_property()
-        self.assertEqual(prop.group_obj.name, 'group')
-        self.assertIsNotNone(prop.group_obj)
+        self.assertEqual(prop.group.name, 'group')
+        self.assertIsNotNone(prop.group)
 
     def test_update_with_no_group_name(self):
         prop = self._get_property()
         group = CasePropertyGroup.objects.filter(case_type=self.case_type_obj, name='group').first()
-        prop.group = group.name
-        prop.group_obj = group
+        prop.group = group
         prop.save()
         post_data = {
             "groups": '[]',
@@ -201,7 +199,7 @@ class UpdateCasePropertyViewTest(TestCase):
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 200)
         prop = self._get_property()
-        self.assertIsNone(prop.group_obj)
+        self.assertIsNone(prop.group)
 
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
@@ -332,13 +330,13 @@ class DataDictionaryJsonTest(TestCase):
         cls.couch_user.save()
         cls.case_type_obj = CaseType(name='caseType', domain=cls.domain_name)
         cls.case_type_obj.save()
-        cls.case_prop_group_obj = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
-        cls.case_prop_group_obj.save()
+        cls.case_prop_group = CasePropertyGroup(case_type=cls.case_type_obj, name='group')
+        cls.case_prop_group.save()
         cls.case_prop_obj = CaseProperty(
             case_type=cls.case_type_obj,
             name='property',
             data_type='number',
-            group_obj=cls.case_prop_group_obj
+            group=cls.case_prop_group
         )
         cls.case_prop_obj.save()
         cls.client = Client()
@@ -369,7 +367,7 @@ class DataDictionaryJsonTest(TestCase):
                     "fhir_resource_type": None,
                     "groups": [
                         {
-                            "id": self.case_prop_group_obj.id,
+                            "id": self.case_prop_group.id,
                             "name": "group",
                             "description": "",
                             "deprecated": False,

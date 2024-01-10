@@ -10,7 +10,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         ko.bindingHandlers.renderMarkdown = {
             update: function (element, valueAccessor) {
                 var value = ko.unwrap(valueAccessor());
-                value = markdown.render(value || '');
+                value = markdown.render(value);
                 $(element).html(value);
             },
         };
@@ -242,6 +242,35 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     /**
+     * Calculates background color for nested Group and Repeat headers.
+     * Recursively determines nesting level (considering only Group and Repeat),
+     * starting at 0 for the Form level and cycling colors for each level.
+     *
+     * @returns {string} - Background color for the header's nesting level.
+     */
+    Container.prototype.headerBackgroundColor = function () {
+        let currentNode = this;
+        let nestedDepthCount = 0;
+        while (currentNode.parent) {
+            let isCollapsibleGroup = currentNode.type() === constants.GROUP_TYPE && currentNode.collapsible;
+            if (isCollapsibleGroup || currentNode.type() === constants.REPEAT_TYPE) {
+                nestedDepthCount += 1;
+            }
+            currentNode = currentNode.parent;
+        }
+
+        // Colors are ordered from darkest to lightest with the darkest color for the highest level.
+        // Colors are based on shades of @cc-brand-mid.
+        // shade(#004EBC, 20%) #003e96
+        // shade(#004EBC, 40%) #002f71
+        const repeatColor = ["#002f71", "#003e96", "#004EBC"];
+        const repeatColorCount = repeatColor.length;
+        const index = (nestedDepthCount - 1) % repeatColorCount;
+
+        return repeatColor[index];
+    };
+
+    /**
      * Recursively groups sequential "question" items in a nested JSON structure.
      *
      * This function takes a JSON object as input and searches for sequential "question"
@@ -318,7 +347,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.blockSubmit = ko.observable(false);
         self.hasSubmitAttempted = ko.observable(false);
         self.isSubmitting = ko.observable(false);
-        self.submitClass = constants.LABEL_OFFSET + ' ' + constants.CONTROL_WIDTH;
+        self.isAnchoredSubmitStyle = hqImport('hqwebapp/js/toggles').toggleEnabled('WEB_APPS_ANCHORED_SUBMIT');
+        self.submitClass = constants.FULL_WIDTH + ' text-center' +
+          (self.isAnchoredSubmitStyle ? ' anchored-submit' : ' nonanchored-submit');
 
         self.currentIndex = ko.observable("0");
         self.atLastIndex = ko.observable(false);
@@ -426,11 +457,23 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return !self.isSubmitting() && self.erroredQuestions().length === 0;
         });
 
+        self.getSubmitTranslation = function () {
+            var translations = self.translations;
+            if (translations) {
+                const result = Object.entries(translations).find(([k]) => k.includes("submit_label"));
+                if (result) {
+                    const key = result[0];
+                    return ko.toJS(translations[key]);
+                }
+            }
+            return gettext("Submit");
+        };
+
         self.submitText = ko.computed(function () {
             if (self.isSubmitting()) {
                 return gettext('Submitting...');
             }
-            return gettext('Submit');
+            return self.getSubmitTranslation();
         });
 
         self.forceRequiredVisible = ko.observable(false);
@@ -456,6 +499,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         self.submitForm = function () {
+            $(document).onvisibilitychange = () => {
+                if (document.visibilityState === "hidden") {
+                    self.showSubmitButton = false;
+                }
+             };
             self.hasSubmitAttempted(true);
             $.publish('formplayer.' + constants.SUBMIT, self);
         };
@@ -472,6 +520,19 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 callback: _updateIndexCallback,
                 title: self.title(),
             });
+        };
+
+        self.getTranslation = function (translationKey, defaultTranslation) {
+            // Find the root level element which contains the translations.
+            var translations = self.translations;
+
+            if (translations) {
+                var translationText = ko.toJS(translations[translationKey]);
+                if (translationText) {
+                    return translationText;
+                }
+            }
+            return defaultTranslation;
         };
 
         self.afterRender = function () {
@@ -545,7 +606,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
 
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
+        self.stripeRepeats = _.contains(styles, constants.STRIPE_REPEATS);
         self.collapsible = _.contains(styles, constants.COLLAPSIBLE);
+        self.groupBorder = _.contains(styles, constants.GROUP_BORDER);
         self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN));
         self.toggleChildren = function () {
             if (self.collapsible) {
@@ -602,6 +665,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             const hasLabel = !!ko.utils.unwrapObservable(self.caption_markdown) || !!self.caption();
             return hasChildren && hasLabel;
         };
+
+        self.headerBackgroundColor = function () {
+            if (self.isRepetition || !self.collapsible) {
+                return '';
+            }
+            return Container.prototype.headerBackgroundColor.call(self);
+        };
     }
     Group.prototype = Object.create(Container.prototype);
     Group.prototype.constructor = Container;
@@ -632,20 +702,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             $.publish('formplayer.' + constants.NEW_REPEAT, self);
             $.publish('formplayer.dirty');
             $('.add').trigger('blur');
-        };
-
-        self.getTranslation = function (translationKey, defaultTranslation) {
-            // Find the root level element which contains the translations.
-            var curParent = getParentForm(self);
-            var translations = curParent.translations;
-
-            if (translations) {
-                var addNewRepeatTranslation = ko.toJS(translations[translationKey]);
-                if (addNewRepeatTranslation) {
-                    return addNewRepeatTranslation;
-                }
-            }
-            return defaultTranslation;
         };
     }
     Repeat.prototype = Object.create(Container.prototype);
@@ -693,7 +749,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
         self.throttle = 200;
-        self.setWidths();
         // If the question has ever been answered, set this to true.
         self.hasAnswered = false;
 
@@ -707,12 +762,20 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.dirty = ko.computed(function () {
             return self.pendingAnswer() !== constants.NO_PENDING_ANSWER;
         });
-        self.clean = ko.computed(function () {
-            return !self.dirty() && !self.error() && !self.serverError() && self.hasAnswered;
-        });
         self.hasError = ko.computed(function () {
             return (self.error() || self.serverError()) && !self.dirty();
         });
+
+        self.hasLabelContent = ko.computed(function () {
+            return (
+                ko.utils.unwrapObservable(self.caption)
+                || ko.utils.unwrapObservable(self.caption_markdown)
+                || ko.utils.unwrapObservable(self.help)
+                || ko.utils.unwrapObservable(self.hint)
+                || ko.utils.unwrapObservable(self.required)
+            );
+        });
+        self.setWidths(self.hasLabelContent());
 
         self.form = function () {
             var parent = self.parent;
@@ -726,7 +789,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return self.error() === null && self.serverError() === null;
         };
 
-        self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
+        self.isButton = self.datatype() === 'select' && self.stylesContains(constants.BUTTON_SELECT);
         self.isLabel = self.datatype() === 'info';
         self.entry = entries.getEntry(self);
         self.entryTemplate = function () {
@@ -799,7 +862,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             },
             help: {
                 update: function (options) {
-                    return options.data ? markdown.render(DOMPurify.sanitize(options.data)) : null;
+                    return options.data ? markdown.render(options.data) : null;
                 },
             },
         };
@@ -827,17 +890,28 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         return this.stylesContaining(pattern).length > 0;
     };
 
-    Question.prototype.setWidths = function () {
-        const columnWidth = Question.calculateColumnWidthForPerRowStyle(this.style);
+    Question.prototype.setWidths = function (hasLabel) {
+        const self = this;
+        const columnWidth = Question.calculateColumnWidthForPerRowStyle(self.style);
+        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
 
-        if (columnWidth === constants.GRID_COLUMNS) {
-            this.controlWidth = constants.CONTROL_WIDTH;
-            this.labelWidth = constants.LABEL_WIDTH;
-            this.questionTileWidth = constants.FULL_WIDTH;
+        if (self.stylesContains(perRowPattern)) {
+            self.controlWidth = constants.FULL_WIDTH;
+            self.labelWidth = constants.FULL_WIDTH;
+            self.questionTileWidth = `col-sm-${columnWidth}`;
         } else {
-            this.controlWidth = constants.FULL_WIDTH;
-            this.labelWidth = constants.FULL_WIDTH;
-            this.questionTileWidth = `col-sm-${columnWidth}`;
+            self.controlWidth = constants.CONTROL_WIDTH;
+            self.labelWidth = constants.LABEL_WIDTH;
+            self.questionTileWidth = constants.FULL_WIDTH;
+            if (!hasLabel) {
+                self.controlWidth += ' ' + constants.LABEL_OFFSET;
+            }
+        }
+
+        if (self.stylesContains(constants.SHORT)) {
+            self.controlWidth = constants.SHORT_WIDTH;
+        } else if (self.stylesContains(constants.MEDIUM)) {
+            self.controlWidth = constants.MEDIUM_WIDTH;
         }
     };
 

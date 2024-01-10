@@ -31,6 +31,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
 )
 from corehq.apps.app_manager.const import (
+    CASE_LIST_FILTER_LOCATIONS_FIXTURE,
     MOBILE_UCR_VERSION_1,
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
@@ -215,6 +216,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         if case_list_map_enabled or not option_to_config[1]['has_map']
     ]
 
+    fixture_column_options = _get_fixture_columns_options(app.domain)
+
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
@@ -230,7 +233,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             (REGISTRY_WORKFLOW_SMART_LINK, _("Smart link to external domain")),
         ),
         'js_options': {
-            'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
+            'fixture_columns_by_type': fixture_column_options,
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
             'has_geocoder_privs': (
@@ -278,6 +281,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'inline_search': module.search_config.inline_search,
                 'instance_name': module.search_config.instance_name or "",
                 'include_all_related_cases': module.search_config.include_all_related_cases,
+                'dynamic_search': app.split_screen_dynamic_search,
             },
         },
     }
@@ -420,6 +424,14 @@ def _get_report_module_context(app, module):
         'uuids_by_instance_id': get_uuids_by_instance_id(app),
     }
     return context
+
+
+def _get_fixture_columns_options(domain):
+    fixture_column_options = _get_fixture_columns_by_type(domain)
+    fixture_column_options[CASE_LIST_FILTER_LOCATIONS_FIXTURE] = [
+        '@id', 'name', 'site_code'
+    ]
+    return fixture_column_options
 
 
 def _get_fixture_columns_by_type(domain):
@@ -668,6 +680,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "session_endpoint_id": None,
         "case_list_session_endpoint_id": None,
         'custom_assertions': None,
+        'lazy_load_case_list_fields': None,
     }
 
     if attr not in attributes:
@@ -822,6 +835,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     if should_edit('case_list_session_endpoint_id'):
         raw_endpoint_id = request.POST['case_list_session_endpoint_id']
         set_case_list_session_endpoint(module, raw_endpoint_id, app)
+
+    if should_edit('lazy_load_case_list_fields'):
+        module["lazy_load_case_list_fields"] = request.POST.get("lazy_load_case_list_fields") == 'true'
 
     if should_edit('custom_assertions'):
         module.custom_assertions = validate_custom_assertions(
@@ -1133,6 +1149,10 @@ def _update_search_properties(module, search_properties, lang='en'):
                 'text': _update_translation(current.validations[0] if current and current.validations else None,
                                             prop, "text", "validation_text"),
             }]
+        if prop.get('is_group'):
+            ret['is_group'] = prop['is_group']
+        if prop.get('group_key'):
+            ret['group_key'] = prop['group_key']
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'
@@ -1370,7 +1390,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 custom_related_case_property=search_properties.get('custom_related_case_property', ""),
                 inline_search=search_properties.get('inline_search', False),
                 instance_name=instance_name,
-                include_all_related_cases=search_properties.get('include_all_related_cases', False)
+                include_all_related_cases=search_properties.get('include_all_related_cases', False),
+                dynamic_search=app.split_screen_dynamic_search and not module.is_auto_select(),
             )
 
     resp = {}

@@ -95,6 +95,17 @@
     {% trans "Running disbursement algorithm..." %}
   </h4>
 </div>
+<div id="disbursement-error" class="alert alert-danger" data-bind="visible: hasMissingData()">
+    {% blocktrans %}
+        Please ensure that the filtered area includes both cases and mobile workers before
+        attempting to run disbursement.
+    {% endblocktrans %}
+</div>
+<div id="disbursement-clear-message" class="alert alert-info" style="display: none">
+    {% blocktrans %}
+        Previous disbursement was cleared.
+    {% endblocktrans %}
+</div>
 <div id="geospatial-map" style="height: 500px"></div>
 
 <!-- For Pagination -->

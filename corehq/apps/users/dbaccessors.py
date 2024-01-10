@@ -42,7 +42,7 @@ def get_display_name_for_user_id(domain, user_id, default=None):
 def get_user_id_and_doc_type_by_domain(domain):
     key = ['active', domain]
     return [
-        {"id": u['id'], "doc_type":u['key'][2]}
+        {"id": u['id'], "doc_type": u['key'][2]}
         for u in CouchUser.view(
             'users/by_domain',
             reduce=False,

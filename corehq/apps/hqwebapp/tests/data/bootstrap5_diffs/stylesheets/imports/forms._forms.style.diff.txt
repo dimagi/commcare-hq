@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,350 +1,7 @@
+@@ -1,356 +1,7 @@
 -// FORM ACTIONS from TWBS 2
 -// ------------
 -
@@ -41,6 +41,12 @@
 -  font-size: .8em;
 -  color: lighten(@cc-text, 40%);
 -  padding-bottom: 5px;
+-}
+-
+-.checkbox, .radio {
+-  input[type="checkbox"], input[type="radio"] {
+-    margin-top: 1.5px;
+-  }
 -}
 -
 -.checkbox-table-cell {
@@ -354,7 +360,7 @@
  }
  
  .form-hide-actions .form-actions {
-@@ -355,15 +12,21 @@
+@@ -361,15 +12,38 @@
    .validationMessage {
      display: block;
      padding-top: 8px;
@@ -382,4 +388,21 @@
 +  border-bottom: 1px solid $border-color;
 +  padding-bottom: $spacer * .25;
 +  margin-bottom: $spacer * 1.25;
++}
++
++.form-actions {
++  border-top: 1px solid $border-color;
++  background-color: $light;
++  border-bottom-left-radius: $border-radius;
++  border-bottom-right-radius: $border-radius;
++  padding: $spacer 0;
++  margin: 0 0 $spacer 0;
++
++  div {
++    padding-left: 6px;
++  }
++}
++
++.ms-header .btn {
++  margin-top: -3px;
 +}

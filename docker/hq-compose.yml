@@ -18,6 +18,7 @@ services:
       JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
       NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
       REUSE_DB: "${REUSE_DB}"
+      STRIPE_PRIVATE_KEY: "${STRIPE_PRIVATE_KEY}"
       TRAVIS: "${TRAVIS}"
       TRAVIS_BRANCH: "${TRAVIS_BRANCH}"
       TRAVIS_BUILD_ID: "${TRAVIS_BUILD_ID}"
@@ -170,9 +171,6 @@ services:
         else
           echo "Wait script download failed"
         fi
-    depends_on:
-      zookeeper:
-        condition: service_healthy
     healthcheck:
       test: bash -c 'exec 6<>/dev/tcp/kafka/9092'
       start_period: 15s

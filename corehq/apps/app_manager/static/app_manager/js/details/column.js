@@ -40,6 +40,8 @@ hqDefine("app_manager/js/details/column", function () {
             horizontal_align: "left",
             vertical_align: "start",
             font_size: "medium",
+            show_border: false,
+            show_shading: false,
         };
         _.each(_.keys(defaults), function (key) {
             self.original[key] = self.original[key] || defaults[key];
@@ -54,10 +56,10 @@ hqDefine("app_manager/js/details/column", function () {
         self.tileColumnMax = ko.observable(13);
         self.tileRowStart = ko.observable(self.original.grid_y + 1 || 1); // converts from 0 to 1-based for UI
         self.tileRowOptions = ko.computed(function () {
-            return [""].concat(_.range(1, self.tileRowMax()));
+            return _.range(1, self.tileRowMax());
         });
         self.tileColumnStart = ko.observable(self.original.grid_x + 1 || 1); // converts from 0 to 1-based for UI
-        self.tileColumnOptions = [""].concat(_.range(1, self.tileColumnMax()));
+        self.tileColumnOptions = _.range(1, self.tileColumnMax());
         self.tileWidth = ko.observable(self.original.width || self.tileRowMax() - 1);
         self.tileWidthOptions = ko.computed(function () {
             return _.range(1, self.tileColumnMax() + 1 - (self.tileColumnStart() || 1));
@@ -74,6 +76,21 @@ hqDefine("app_manager/js/details/column", function () {
 
         self.fontSize = ko.observable(self.original.font_size || 'medium');
         self.fontSizeOptions = ['small', 'medium', 'large'];
+
+        self.showBorder = ko.observable(self.original.show_border || false);
+        self.showShading = ko.observable(self.original.show_shading || false);
+
+        self.openStyleModal = function () {
+            const $modalDiv = $(document.createElement("div"));
+            $modalDiv.attr("data-bind", "template: 'style_configuration_modal'");
+            $modalDiv.koApplyBindings(self);
+            const $modal = $modalDiv.find('.modal');
+            $modal.appendTo('body');
+            $modal.modal('show');
+            $modal.on('hidden.bs.modal', function () {
+                $modal.remove();
+            });
+        };
 
         self.tileRowEnd = ko.computed(function () {
             return Number(self.tileRowStart()) + Number(self.tileHeight());
@@ -341,6 +358,8 @@ hqDefine("app_manager/js/details/column", function () {
         self.horizontalAlign.subscribe(fireChange);
         self.verticalAlign.subscribe(fireChange);
         self.fontSize.subscribe(fireChange);
+        self.showBorder.subscribe(fireChange);
+        self.showShading.subscribe(fireChange);
 
         self.$format = $('<div/>').append(self.format.ui);
         self.$format.find("select").css("margin-bottom", "5px");
@@ -432,6 +451,8 @@ hqDefine("app_manager/js/details/column", function () {
             column.horizontal_align = self.horizontalAlign();
             column.vertical_align = self.verticalAlign();
             column.font_size = self.fontSize();
+            column.show_border = self.showBorder();
+            column.show_shading = self.showShading();
             column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;
             column.late_flag = parseInt(self.late_flag_extra.val(), 10);
             column.time_ago_interval = parseFloat(self.time_ago_extra.val());

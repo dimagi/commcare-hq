@@ -1,6 +1,7 @@
 from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
+import re
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext
@@ -177,24 +178,24 @@ def save_case_property_group(id, name, case_type, domain, description, index, de
 
     case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
     if id is not None:
-        group_obj = CasePropertyGroup.objects.get(id=id, case_type=case_type_obj)
+        group = CasePropertyGroup.objects.get(id=id, case_type=case_type_obj)
     else:
-        group_obj = CasePropertyGroup(case_type=case_type_obj)
+        group = CasePropertyGroup(case_type=case_type_obj)
 
-    group_obj.name = name
+    group.name = name
     if description is not None:
-        group_obj.description = description
+        group.description = description
     if index is not None:
-        group_obj.index = index
+        group.index = index
     if deprecated is not None:
-        group_obj.deprecated = deprecated
+        group.deprecated = deprecated
 
     try:
-        group_obj.full_clean(validate_unique=True)
+        group.full_clean(validate_unique=True)
     except ValidationError as e:
         return str(e)
 
-    group_obj.save()
+    group.save()
 
 
 def save_case_property(name, case_type, domain=None, data_type=None,
@@ -206,6 +207,9 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     """
     if not name:
         return gettext('Case property must have a name')
+    if not is_case_type_or_prop_name_valid(name):
+        return gettext('Invalid case property name. It should start with a letter, and only contain letters, '
+                       'numbers, "-", and "_"')
 
     try:
         prop = CaseProperty.get_or_create(
@@ -219,9 +223,9 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         prop.description = description
 
     if group:
-        prop.group_obj, created = CasePropertyGroup.objects.get_or_create(name=group, case_type=prop.case_type)
+        prop.group, created = CasePropertyGroup.objects.get_or_create(name=group, case_type=prop.case_type)
     else:
-        prop.group_obj = None
+        prop.group = None
 
     if deprecated is not None:
         prop.deprecated = deprecated
@@ -360,3 +364,9 @@ def is_case_type_deprecated(domain, case_type):
         return case_type_obj.is_deprecated
     except CaseType.DoesNotExist:
         return False
+
+
+def is_case_type_or_prop_name_valid(case_prop_name):
+    pattern = '^[a-zA-Z][a-zA-Z0-9-_]*$'
+    match_obj = re.match(pattern, case_prop_name)
+    return match_obj is not None

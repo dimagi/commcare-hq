@@ -167,11 +167,12 @@ def run_case_update_rules_for_domain(domain, now=None):
     serializer='pickle',
 )
 def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=None):
-    all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
-    rules = list(all_rules.filter(case_type=case_type))
+    rules = list(
+        AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case_type)
+    )
 
-    boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-    iterator = AutomaticUpdateRule.iter_cases(domain, case_type, boundary_date, db=db)
+    modified_before = AutomaticUpdateRule.get_boundary_date(rules, now)
+    iterator = AutomaticUpdateRule.iter_cases(domain, case_type, db=db, modified_lte=modified_before)
     run = iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db)
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:
@@ -295,6 +296,8 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
             user.get_email(),
             render_to_string("data_interfaces/partials/case_reassign_complete_email.html", context),
             text_content=text_content,
+            domain=domain,
+            use_domain_gateway=True,
         )
 
     _send_email()
@@ -339,6 +342,8 @@ def bulk_case_copy_async(domain, user_id, owner_id, download_id, report_url, **k
             user.get_email(),
             render_to_string("data_interfaces/partials/case_copy_complete_email.html", context),
             text_content=text_content,
+            domain=domain,
+            use_domain_gateway=True,
         )
 
     _send_email()

@@ -19,6 +19,7 @@ import jsonfield
 import stripe
 from django_prbac.models import Role
 from memoized import memoized
+from corehq.apps.accounting.utils.stripe import charge_through_stripe
 
 from corehq.apps.domain.shortcuts import publish_domain_saved
 from dimagi.ext.couchdbkit import (
@@ -562,6 +563,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
             email,
             render_to_string('accounting/email/autopay_card_removed.html', context),
             text_content=strip_tags(render_to_string('accounting/email/autopay_card_removed.html', context)),
+            domain=domain,
+            use_domain_gateway=True,
         )
 
     def _send_autopay_card_added_email(self, domain):
@@ -593,6 +596,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
             email,
             render_to_string('accounting/email/invoice_autopay_setup.html', context),
             text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
+            domain=domain,
+            use_domain_gateway=True,
         )
 
     @staticmethod
@@ -3731,7 +3736,8 @@ class StripePaymentMethod(PaymentMethod):
     @property
     def all_cards(self):
         try:
-            return [card for card in self.customer.cards.data if card is not None]
+            cards = stripe.Customer.list_sources(customer=self.customer.id, object="card")
+            return [card for card in cards.data if card is not None]
         except stripe.error.AuthenticationError:
             if not settings.STRIPE_PRIVATE_KEY:
                 log_accounting_info("Private key is not defined in settings")
@@ -3750,7 +3756,7 @@ class StripePaymentMethod(PaymentMethod):
         } for card in self.all_cards]
 
     def get_card(self, card_token):
-        return self.customer.cards.retrieve(card_token)
+        return stripe.Customer.retrieve_source(self.customer.id, id=card_token)
 
     def get_autopay_card(self, billing_account):
         return next((
@@ -3761,25 +3767,39 @@ class StripePaymentMethod(PaymentMethod):
     def remove_card(self, card_token):
         card = self.get_card(card_token)
         self._remove_card_from_all_accounts(card)
-        card.delete()
+        stripe.Customer.delete_source(self.customer.id, id=card.id)
 
     def _remove_card_from_all_accounts(self, card):
         accounts = BillingAccount.objects.filter(auto_pay_user=self.web_user)
         for account in accounts:
-            if account.autopay_card == card:
+            if account.autopay_card.id == card.id:
                 account.remove_autopay_user()
 
     def create_card(self, stripe_token, billing_account, domain, autopay=False):
-        customer = self.customer
-        card = customer.cards.create(card=stripe_token)
-        self.set_default_card(card)
+        """
+        Creates and associates a new card with the Stripe customer.
+
+        This method uses a Stripe token (usually generated on the client side)
+        to securely create a new card and associate it with the customer
+        represented by this instance. Additionally, if the 'autopay' flag is
+        set to True, it sets the card to be used for automatic payments for
+        a specific billing account and domain.
+
+        Parameters:
+        - stripe_token (str): The token representing the card details, typically
+                            generated using Stripe.js on the client side.
+        - billing_account (BillingAccount): The account for which the card might
+                                            be set for automatic payments.
+        - domain (str): The domain associated with the billing account.
+        - autopay (bool, optional): Flag indicating if the card should be set for
+                                    automatic payments. Default is False.
+
+        Returns:
+        - card (stripe.Card): The newly created Stripe card object.
+        """
+        card = stripe.Customer.create_source(self.customer.id, source=stripe_token)
         if autopay:
             self.set_autopay(card, billing_account, domain)
-        return card
-
-    def set_default_card(self, card):
-        self.customer.default_card = card
-        self.customer.save()
         return card
 
     def set_autopay(self, card, billing_account, domain):
@@ -3803,10 +3823,8 @@ class StripePaymentMethod(PaymentMethod):
             billing_account.remove_autopay_user()
 
     def _update_autopay_status(self, card, billing_account, autopay):
-        metadata = card.metadata.copy()
-        metadata.update({self._auto_pay_card_metadata_key(billing_account): autopay})
-        card.metadata = metadata
-        card.save()
+        stripe.Customer.modify_source(customer=self.customer.id, id=card.id,
+                                      metadata={self._auto_pay_card_metadata_key(billing_account): autopay})
 
     def _remove_autopay_card(self, billing_account):
         autopay_card = self.get_autopay_card(billing_account)
@@ -3838,11 +3856,10 @@ class StripePaymentMethod(PaymentMethod):
 
     def create_charge(self, card, amount_in_dollars, description, idempotency_key=None):
         """ Charges a stripe card and returns a transaction id """
-        amount_in_cents = int((amount_in_dollars * Decimal('100')).quantize(Decimal(10)))
-        transaction_record = stripe.Charge.create(
+        transaction_record = charge_through_stripe(
             card=card,
             customer=self.customer,
-            amount=amount_in_cents,
+            amount_in_dollars=amount_in_dollars,
             currency=settings.DEFAULT_CURRENCY,
             description=description,
             idempotency_key=idempotency_key

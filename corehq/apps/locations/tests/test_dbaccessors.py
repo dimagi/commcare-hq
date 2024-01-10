@@ -109,7 +109,6 @@ class TestUsersByLocation(TestCase):
         )
         other_user.delete(self.domain, deleted_by=None)
 
-
     def test_get_users_location_ids(self):
         self.assertItemsEqual(
             get_users_location_ids(self.domain, [self.varys._id, self.tyrion._id]),

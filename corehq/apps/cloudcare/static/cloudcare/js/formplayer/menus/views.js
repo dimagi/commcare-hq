@@ -1,4 +1,4 @@
-/*globals DOMPurify, Marionette */
+/*globals Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const kissmetrics = hqImport("analytix/js/kissmetrix"),
@@ -146,6 +146,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     };
     // generate the case tile's style block and insert
     const buildCellLayout = function (tiles, styles, prefix) {
+        const borderInTile = Boolean(_.find(styles, s => s.showBorder));
+        const shadingInTile = Boolean(_.find(styles, s => s.showShading));
         const tileModels = _.chain(tiles || [])
             .map(function (tile, idx) {
                 if (tile === null || tile === undefined) {
@@ -158,6 +160,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     fontStyle: tile.fontSize,
                     verticalAlign: getValidFieldAlignment(style.verticalAlign),
                     horizontalAlign: getValidFieldAlignment(style.horizontalAlign),
+                    showBorder: style.showBorder,
+                    borderInTile: borderInTile,
+                    showShading: style.showShading,
+                    shadingInTile: shadingInTile,
                 };
             })
             .filter(function (tile) {
@@ -230,7 +236,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
-            clickIcon: ".module-icon.btn",
+            clickIcon: ".module-icon.clickable-icon",
             selectRow: ".select-row-checkbox",
             showMore: ".show-more",
         },
@@ -323,7 +329,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const self = this;
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
-            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
+            urlObject.clickedIcon = true;
+            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
                 self.updateModelFromDetailResponse(caseId, detailResponse);
             }).fail(function () {
@@ -332,7 +339,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
-            this.model.set("data", detailResponse.models[0].attributes.details);
+            if (detailResponse.removeCaseRow) {
+                this.destroy();
+            } else {
+                this.model.set("data", detailResponse.models[0].attributes.details);
+            }
         },
 
         modelChanged: function () {
@@ -441,7 +452,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
-            CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+            if (detailResponse.removeCaseRow) {
+                this.destroy();
+            } else {
+                CaseTileView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+            }
         },
 
         getFieldIndexFromEvent: function (e) {
@@ -501,14 +516,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
-            this.model.set('updating', true);
-            CaseTileGroupedView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
-            this.model.set('updatedCaseId', caseId);
-            this.model.set('updatedRowData', this.options.bodyRowIndices.reduce((acc, index) => {
-                acc[index] = detailResponse.models[0].attributes.details[index];
-                return acc;
-            }, {}));
-            this.model.set('updating', false);
+            if (detailResponse.removeCaseRow) {
+                this.destroy();
+            } else {
+                this.model.set('updating', true);
+                CaseTileGroupedView.__super__.updateModelFromDetailResponse.apply(this, [caseId, detailResponse]);
+                this.model.set('updatedCaseId', caseId);
+                this.model.set('updatedRowData', this.options.bodyRowIndices.reduce((acc, index) => {
+                    acc[index] = detailResponse.models[0].attributes.details[index];
+                    return acc;
+                }, {}));
+                this.model.set('updating', false);
+            }
         },
     });
 
@@ -535,12 +554,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             casesPerPageLimit: '.per-page-limit',
             searchMoreButton: '#search-more',
             scrollToBottomButton: '#scroll-to-bottom',
+            mapShowHideButton: '#hide-map-button',
         };
     };
 
     const CaseListViewEvents = function () {
         return {
             'click @ui.actionButton': 'caseListAction',
+            'click @ui.mapShowHideButton': 'showHideMap',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
             'click @ui.paginationGoButton': 'paginationGoAction',
@@ -701,6 +722,24 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        showHideMap: function (e) {
+            const mapDiv = $('#module-case-list-map');
+            const moduleCaseList = $('#module-case-list');
+            const hideButton = $('#hide-map-button');
+            if (!mapDiv.hasClass('hide')) {
+                mapDiv.addClass('hide');
+                moduleCaseList.removeClass('col-md-7 col-md-pull-5').addClass('col-md');
+                hideButton.text(gettext('Show Map'));
+                $(e.target).attr('aria-expanded', 'false');
+            } else {
+                mapDiv.removeClass('hide');
+                moduleCaseList.addClass('col-md-7 col-md-pull-5').removeClass('col-md');
+                hideButton.text(gettext('Hide Map'));
+                $(e.target).attr('aria-expanded', 'true');
+            }
+
+        },
+
         _allCaseIds: function () {
             const caseIds = [];
             this.children.each(function (childView) {
@@ -744,7 +783,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         verifySelectedCaseIdsLessThanMaxSelectValue: function () {
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
-                    "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
+                    "of <%- value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
                 hqRequire(["hqwebapp/js/bootstrap3/alert_user"], function (alertUser) {
                     alertUser.alert_user(errorMessage, 'danger');
                 });
@@ -899,33 +938,25 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
+            const paginateItems = formplayerUtils.paginateOptions(
+                this.options.currentPage,
+                this.options.pageCount,
+                this.options.collection.length
+            );
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
-            const boldSortedCharIcon = (header) => {
-                const headerWords = header.trim().split(' ');
-                const lastChar = headerWords.pop();
-
-                return lastChar === "Λ" || lastChar === "V"
-                    ? `${headerWords.join(' ')} <b>${lastChar}</b>`
-                    : header;
-            };
             let description = this.options.description;
             let title = this.options.title;
             if (this.options.sidebarEnabled && this.options.collection.queryResponse) {
                 description = this.options.collection.queryResponse.description;
                 title = this.options.collection.queryResponse.title;
             }
-            return {
-                startPage: paginateItems.startPage,
+            return _.extend(paginateItems, {
                 title: title.trim(),
-                description: description === undefined ? "" : DOMPurify.sanitize(markdown.render(description.trim())),
-                headers: this.headers.map(boldSortedCharIcon),
+                description: description === undefined ? "" : markdown.render(description.trim()),
+                headers: this.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
-                endPage: paginateItems.endPage,
-                pageCount: paginateItems.pageCount,
-                rowRange: [5, 10, 25, 50, 100],
                 limit: casesPerPage,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
@@ -947,8 +978,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
-                pageNumLabel: _.template(gettext("Page <%-num%>")),
-            };
+            });
         },
     });
 
@@ -969,7 +999,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const MultiSelectCaseListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {
             selectAllCheckbox: "#select-all-checkbox",
-            continueButton: "#multi-select-continue-btn",
+            continueButton: ".multi-select-continue-btn",
             continueButtonText: "#multi-select-btn-text",
         }),
 
@@ -1021,7 +1051,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const CaseTileListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {
             selectAllCheckbox: "#select-all-tile-checkbox",
-            continueButton: "#multi-select-continue-btn",
+            continueButton: ".multi-select-continue-btn",
             continueButtonText: "#multi-select-btn-text",
         }),
         childView: CaseTileView,
@@ -1072,6 +1102,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const dict = CaseTileListView.__super__.templateContext.apply(this, arguments);
             dict.useTiles = true;
             dict.isMultiSelect = this.options.isMultiSelect;
+            dict.sortOptions = _.map(dict.sortIndices, function (sortIndex) {
+                let header = dict.headers[sortIndex],
+                    sortOrder = null,
+                    headerWords = header.trim().split(' '),
+                    lastChar = headerWords.pop();
+                if (lastChar === "Λ" || lastChar === "V") {
+                    header = headerWords.join(' ');
+                    sortOrder = lastChar;
+                }
+                return {
+                    index: sortIndex,
+                    header: header,
+                    sortOrder: sortOrder,
+                };
+            });
             return dict;
         },
 
@@ -1146,11 +1191,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#breadcrumb-item-template").html() || ""),
         className: "breadcrumb-text",
         attributes: function () {
-            return {
+            let attributes = {
                 "role": "link",
                 "tabindex": "0",
                 "style": this.buildMaxWidth(),
             };
+            if (this.options.model.get('ariaCurrentPage')) {
+                attributes['aria-current'] = 'page';
+            }
+            return attributes;
         },
         events: {
             "click": "crumbClick",

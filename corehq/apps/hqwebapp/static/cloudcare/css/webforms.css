@@ -81,6 +81,10 @@ input:invalid {
   isolation: isolate;
 }
 
+.widget button p {
+  margin-bottom: 0;
+}
+
 .coordinate {
   font-weight: bold;
   width: 8em;

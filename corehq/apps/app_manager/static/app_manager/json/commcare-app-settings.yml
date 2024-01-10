@@ -169,3 +169,12 @@
     - ['only_flat_fixture', 'Only Flat Fixture']
     - ['only_hierarchical_fixture', 'Only Hierarchical Fixture']
   default: 'project_default'
+
+
+- id: split_screen_dynamic_search
+  name: Dynamic Search for Split Screen Case Search
+  description: Enable searching as input values change after initial Split Screen Case Search
+  toggle: DYNAMICALLY_UPDATE_SEARCH_RESULTS
+  widget: bool
+  default: false
+  since: '2.54'

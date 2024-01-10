@@ -570,6 +570,14 @@ class QueryPrompt(DisplayNode):
 
     itemset = NodeField('itemset', Itemset)
 
+    group_key = StringField('@group_key', required=False)
+
+
+class QueryPromptGroup(DisplayNode):
+    ROOT_NAME = 'group'
+
+    key = StringField('@key')
+
 
 class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'query'
@@ -582,7 +590,9 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     description = NodeField('description', DisplayNode)
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
+    prompt_groups = NodeListField('group', QueryPromptGroup)
     default_search = BooleanField("@default_search")
+    dynamic_search = BooleanField("@dynamic_search")
 
     @property
     def id(self):
@@ -791,6 +801,8 @@ class Style(XmlObject):
     grid_width = StringField("grid/@grid-width")
     grid_x = StringField("grid/@grid-x")
     grid_y = StringField("grid/@grid-y")
+    show_border = BooleanField("@show-border")
+    show_shading = BooleanField("@show-shading")
 
 
 class Extra(XmlObject):
@@ -889,7 +901,7 @@ class TileGroup(XmlObject):
 
 class Detail(OrderedXmlObject, IdNode):
     """
-    <detail id="">
+    <detail id="" lazy_loading="false">
         <title><text/></title>
         <lookup action="" image="" name="">
             <extra key="" value = "" />
@@ -907,6 +919,9 @@ class Detail(OrderedXmlObject, IdNode):
     """
 
     ROOT_NAME = 'detail'
+
+    lazy_loading = BooleanField('@lazy_loading')
+
     ORDER = ('title', 'lookup', 'no_items_text', 'details', 'fields')
 
     nodeset = StringField('@nodeset')

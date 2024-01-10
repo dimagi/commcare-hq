@@ -100,8 +100,13 @@ hqDefine("reports/js/hq_report", [
         self.handleTabularReportCookies = function (reportDatatable) {
             var defaultRowsCookieName = 'hqreport.tabularSetting.defaultRows',
                 savedPath = window.location.pathname;
-            var defaultRowsCookie = '' + $.cookie(defaultRowsCookieName);
-            reportDatatable.defaultRows = parseInt(defaultRowsCookie) || reportDatatable.defaultRows;
+
+            if (!reportDatatable.forcePageSize) {
+                // set the current pagination page size to be equal to page size
+                // used by the user last time for any report on HQ
+                var defaultRowsCookie = '' + $.cookie(defaultRowsCookieName);
+                reportDatatable.defaultRows = parseInt(defaultRowsCookie) || reportDatatable.defaultRows;
+            }
 
             $(reportDatatable.dataTableElem).on('hqreport.tabular.lengthChange', function (event, value) {
                 $.cookie(defaultRowsCookieName, value, {

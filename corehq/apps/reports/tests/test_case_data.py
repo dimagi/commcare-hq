@@ -101,4 +101,4 @@ class TestCaseData(TestCase):
         group_obj = None
         if group:
             group_obj, _ = CasePropertyGroup.objects.get_or_create(name=group, case_type=case_type_obj)
-        CaseProperty.objects.get_or_create(case_type=case_type_obj, name=prop_name, group_obj=group_obj)
+        CaseProperty.objects.get_or_create(case_type=case_type_obj, name=prop_name, group=group_obj)

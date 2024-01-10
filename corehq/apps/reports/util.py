@@ -6,7 +6,6 @@ from collections import defaultdict, namedtuple
 from datetime import datetime
 import pytz
 
-from django.conf import settings
 from django.core.cache import cache
 from django.db.transaction import atomic
 from django.http import Http404
@@ -383,7 +382,7 @@ def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     return user_es_query.count() > USER_QUERY_LIMIT
 
 
-def send_report_download_email(title, recipient, link, subject=None):
+def send_report_download_email(title, recipient, link, subject=None, domain=None):
     if subject is None:
         subject = _("%s: Requested export excel data") % title
     body = "The export you requested for the '%s' report is ready.<br>" \
@@ -394,7 +393,8 @@ def send_report_download_email(title, recipient, link, subject=None):
         subject,
         recipient,
         _(body) % (title, "<a href='%s'>%s</a>" % (link, link)),
-        email_from=settings.DEFAULT_FROM_EMAIL
+        domain=domain,
+        use_domain_gateway=True,
     )
 
 
@@ -619,7 +619,9 @@ def _get_hq_group_id(session):
 def sync_all_tableau_users():
     domains_grouped_by_server = defaultdict(list)  # Looks like {(server name, tableau site): [domains]...}
     for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
-        server = TableauServer.objects.get(domain=domain)
+        server = TableauConnectedApp.get_server(domain)
+        if not server:
+            continue
         server_details = (server.server_name, server.target_site)
         domains_grouped_by_server[server_details].append(domain)
     for list_of_domains_for_server in domains_grouped_by_server.values():
