@@ -342,6 +342,13 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return pattern.test(nameStr);
         }
 
+        self.newPropertyNameValid = ko.computed(function () {
+            if (!self.newPropertyName()) {
+                return true;
+            }
+            return isNameValid(self.newPropertyName());
+        });
+
         self.newPropertyNameUnique = ko.computed(function () {
             if (!self.newPropertyName()) {
                 return true;
@@ -350,11 +357,18 @@ hqDefine("data_dictionary/js/data_dictionary", [
             const propertyNameFormatted = self.newPropertyName().toLowerCase().trim();
             const activeCaseTypeData = self.activeCaseTypeData();
             for (const group of activeCaseTypeData) {
-                if (group.properties().some(v => v.name.toLowerCase() === propertyNameFormatted)) {
+                if (group.properties().find(v => v.name.toLowerCase() === propertyNameFormatted)) {
                     return false;
                 }
             }
             return true;
+        });
+
+        self.newGroupNameValid = ko.computed(function () {
+            if (!self.newGroupName()) {
+                return true;
+            }
+            return isNameValid(self.newGroupName());
         });
 
         self.newGroupNameUnique = ko.computed(function () {
