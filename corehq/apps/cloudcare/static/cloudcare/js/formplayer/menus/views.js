@@ -443,7 +443,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseTileView = CaseView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style",
+        className: "formplayer-request list-cell-wrapper-style panel panel-default",
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
@@ -467,7 +467,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseTileGroupedView = CaseTileView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style case-tile-group",
+        className: "formplayer-request list-cell-wrapper-style case-tile-group panel panel-default",
         template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
