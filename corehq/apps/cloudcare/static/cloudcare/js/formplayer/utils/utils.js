@@ -290,6 +290,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.queryData = this.queryData || {};
 
             const queryDataEntry = _.defaults({
+                inputs: inputs,
                 execute: execute,
                 force_manual_search: forceManualSearch,
                 selections: selections,
