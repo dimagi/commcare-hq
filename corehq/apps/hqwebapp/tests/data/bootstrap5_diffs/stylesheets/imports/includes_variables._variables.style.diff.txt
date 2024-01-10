@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,123 +1,194 @@
+@@ -1,124 +1,194 @@
 -@import "@{b3-import-variables}";
 +$prefix: bs;
  
@@ -230,6 +230,7 @@
 -@zindex-report-loading:               100;
 -@zindex-app-preview:                  998;
 -@zindex-navbar-cloudcare:             995;
+-@zindex-persistent-tile-cloudcare:    993;
 -@zindex-formplayer-progress:          990;
 -@zindex-cloudcare-debugger:           1005;
 -@zindex-formplayer-scroll-to-bottom:    5;
