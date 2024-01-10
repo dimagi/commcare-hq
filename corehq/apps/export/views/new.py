@@ -2,7 +2,6 @@ import json
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import SuspiciousOperation
 from django.http import Http404, HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -148,13 +147,20 @@ class BaseExportView(BaseProjectDataView):
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
             'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,
             'owner_name': WebUser.get_by_user_id(owner_id).username if owner_id else None,
-            'format_options': ["xls", "xlsx", "csv"],
+            'format_options': self.format_options,
             'number_of_apps_to_process': number_of_apps_to_process,
             'sharing_options': sharing_options,
             'terminology': self.terminology,
             'is_all_case_types_export': is_all_case_types_export,
             'disable_table_checkbox': (table_count < 2)
         }
+
+    @property
+    def format_options(self):
+        format_options = ["xls", "xlsx", "csv"]
+        if toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain):
+            format_options.append("geojson")
+        return format_options
 
     @property
     def parent_pages(self):

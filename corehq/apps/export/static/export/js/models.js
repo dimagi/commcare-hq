@@ -325,6 +325,8 @@ hqDefine('export/js/models', [
             return gettext('Excel (older versions)');
         } else if (format === constants.EXPORT_FORMATS.XLSX) {
             return gettext('Excel 2007+');
+        } else if (format === constants.EXPORT_FORMATS.GEOJSON) {
+            return gettext('GeoJSON');
         }
     };
 
