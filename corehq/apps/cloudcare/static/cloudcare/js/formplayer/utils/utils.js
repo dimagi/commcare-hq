@@ -52,13 +52,15 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     Utils.currentUrlToObject = function () {
         var url = Backbone.history.getFragment();
         try {
-            const decodedUrl = Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
+            const cloudcareUrl = Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
             if (sessionStorage.queryInputs) {
                 // populate query input data from sessionStorage
                 const queryInputs = JSON.parse(sessionStorage.queryInputs);
-                decodedUrl.queryData[sessionStorage.queryKey].inputs = queryInputs[sessionStorage.queryKey];
+                const queryKey = sessionStorage.queryKey;
+                cloudcareUrl.queryData[queryKey] = cloudcareUrl.queryData[queryKey] || {};
+                cloudcareUrl.queryData[queryKey].inputs = queryInputs[queryKey];
             }
-            return decodedUrl;
+            return cloudcareUrl;
         } catch (e) {
             // This means that we're on the homepage
             sessionStorage.removeItem('queryInputs');
