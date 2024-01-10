@@ -77,9 +77,6 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
     def _get_geo_location(self, case):
         geo_case_property = get_geo_case_property(self.domain)
         geo_point = case.get_case_property(geo_case_property)
-        if not geo_point:
-            return
-
         try:
             geo_point = GeoPoint.from_string(geo_point, flexible=True)
             return {"lat": geo_point.latitude, "lng": geo_point.longitude}
