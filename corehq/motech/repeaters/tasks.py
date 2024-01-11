@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -167,10 +168,9 @@ def _process_repeat_record(repeat_record):
         return
 
     if repeat_record.is_repeater_deleted():
-        if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
-            repeat_record.doc_type += DELETED_SUFFIX
         repeat_record.cancel()
-        repeat_record.save()
+        with _delete_couch_record(repeat_record):
+            repeat_record.save()
         return
 
     try:
@@ -183,6 +183,27 @@ def _process_repeat_record(repeat_record):
             repeat_record.fire()
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
+
+
+@contextmanager
+def _delete_couch_record(repeat_record):
+    from django.db.models import Model
+
+    def delete(_, couch_object):
+        if not couch_object.doc_type.endswith(DELETED_SUFFIX):
+            couch_object.doc_type += DELETED_SUFFIX
+
+    if isinstance(repeat_record, Model):
+        assert not repeat_record._migration_get_custom_sql_to_couch_functions()
+        repeat_record._migration_get_custom_sql_to_couch_functions = lambda: [delete]
+        try:
+            yield
+        finally:
+            del repeat_record._migration_get_custom_sql_to_couch_functions
+            assert not repeat_record._migration_get_custom_sql_to_couch_functions()
+    else:
+        delete(..., repeat_record)
+        yield
 
 
 metrics_gauge_task(

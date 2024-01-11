@@ -1476,6 +1476,7 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
         elif self.state == State.Cancelled:
             self.state = State.Fail
         self.next_check = datetime.utcnow()
+        self.max_possible_tries = self.num_attempts + MAX_BACKOFF_ATTEMPTS
         self.save()
 
     def add_success_attempt(self, response):
@@ -1524,12 +1525,12 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     def _add_failure_attempt(self, message, max_attempts, retry=True):
         if retry and self.num_attempts < max_attempts:
             state = State.Fail
+            wait = _get_retry_interval(self.last_checked, datetime.utcnow())
         else:
             state = State.Cancelled
-        self.attempt_set.create(state=state, message=message)
+        attempt = self.attempt_set.create(state=state, message=message)
         self.state = state
-        if state == State.Cancelled:
-            self.next_check = None
+        self.next_check = (attempt.created_at + wait) if state == State.Fail else None
         self.save()
 
     def add_payload_exception_attempt(self, message, tb_str):
@@ -1562,14 +1563,12 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
             yield i, attempt
 
     @property
-    def record_id(self):
-        # Used by Repeater.get_url() ... by SQLRepeatRecordReport._make_row()
-        return self.pk
-
-    @property
     def last_checked(self):
         # Used by .../case/partials/repeat_records.html
-        return self.repeater.last_attempt_at
+        try:
+            return max(a.created_at for a in self.attempts)
+        except ValueError:
+            return None
 
     @property
     def next_attempt_at(self):
