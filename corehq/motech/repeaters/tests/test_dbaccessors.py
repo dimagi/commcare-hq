@@ -11,7 +11,6 @@ from corehq.motech.repeaters.dbaccessors import (
     get_pending_repeat_record_count,
     get_repeat_record_count,
     get_success_repeat_record_count,
-    iterate_repeat_record_ids,
 )
 from corehq.motech.repeaters.models import ConnectionSettings, FormRepeater, RepeatRecord, SQLRepeatRecord
 
@@ -164,10 +163,6 @@ class TestRepeatRecordDBAccessors(TestCase):
     def test_get_all_paged_repeat_records(self):
         records = SQLRepeatRecord.objects.page(self.domain, 0, 10)
         self.assertEqual(len(records), len(self.records))  # get all the records that were created
-
-    def test_iterate_repeat_records(self):
-        records = list(iterate_repeat_record_ids(datetime.utcnow(), chunk_size=2))
-        self.assertEqual(len(records), 4)  # Should grab all but the succeeded one
 
     def test_get_all_repeat_records_by_domain_wrong_domain(self):
         records = list(SQLRepeatRecord.objects.iterate("wrong-domain"))

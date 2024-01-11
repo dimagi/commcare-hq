@@ -633,17 +633,17 @@ class TestRepeatRecordManager(RepeaterTestCase):
         iter_partition = type(self).iter_partition
         all_ids = self.make_records(5)
         start = datetime.utcnow()
-        ids = {r.record_id for r in iter_partition(start, 0, 1)}
+        ids = {r.id for r in iter_partition(start, 0, 1)}
         self.assertEqual(ids, all_ids)
 
     def test_four_partitions(self):
         iter_partition = type(self).iter_partition
         all_ids = self.make_records(16)
         start = datetime.utcnow()
-        ids0 = {r.record_id for r in iter_partition(start, 0, 4)}
-        ids1 = {r.record_id for r in iter_partition(start, 1, 4)}
-        ids2 = {r.record_id for r in iter_partition(start, 2, 4)}
-        ids3 = {r.record_id for r in iter_partition(start, 3, 4)}
+        ids0 = {r.id for r in iter_partition(start, 0, 4)}
+        ids1 = {r.id for r in iter_partition(start, 1, 4)}
+        ids2 = {r.id for r in iter_partition(start, 2, 4)}
+        ids3 = {r.id for r in iter_partition(start, 3, 4)}
 
         self.assertEqual(ids0 | ids1 | ids2 | ids3, all_ids)
 
@@ -673,7 +673,7 @@ class TestRepeatRecordManager(RepeaterTestCase):
         all_ids = self.make_records(5)
         self.new_record(next_check=datetime.utcnow() + timedelta(hours=1))
         start = datetime.utcnow()
-        ids = {r.record_id for r in iter_partition(start, 0, 1)}
+        ids = {r.id for r in iter_partition(start, 0, 1)}
         self.assertEqual(ids, all_ids)
 
     def new_record(self, next_check=before_now, state=State.Pending, domain="test"):
@@ -695,7 +695,7 @@ class TestRepeatRecordManager(RepeaterTestCase):
             registered_at=now,
             next_check=now,
         ) for i in range(n))
-        return {r.record_id for r in records}
+        return {r.id for r in records}
 
     def tearDown(self):
         from ..dbaccessors import delete_all_repeat_records

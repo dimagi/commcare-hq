@@ -16,7 +16,6 @@ from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import FormRepeater, RepeatRecord, Repeater
 from corehq.motech.repeaters.tasks import (
-    _iterate_repeat_records_for_partition,
     _process_repeat_record,
     delete_old_request_logs,
     process_repeater,
@@ -312,51 +311,3 @@ class TestProcessRepeatRecord(TestCase):
         self.mock_domain_can_forward = patch_domain_can_forward.start()
         self.mock_domain_can_forward.return_value = True
         self.addCleanup(patch_domain_can_forward.stop)
-
-
-class TestPartitionIteration(TestCase):
-    from . import test_models as mod
-    before_now = timezone.now() - timedelta(seconds=10)
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        connection_settings = ConnectionSettings.objects.create(
-            domain=DOMAIN,
-            name='Test API',
-            url="http://localhost/api/"
-        )
-        cls.repeater = FormRepeater.objects.create(
-            domain=DOMAIN,
-            format='form_xml',
-            connection_settings=connection_settings
-        )
-
-    iter_partition = _iterate_repeat_records_for_partition
-    test_one_partition = mod.TestRepeatRecordManager.test_one_partition
-    test_four_partitions = mod.TestRepeatRecordManager.test_four_partitions
-    test_partition_start = mod.TestRepeatRecordManager.test_partition_start
-
-    def make_records(self, n):
-        records = [RepeatRecord(
-            domain="test",
-            repeater_id=self.repeater.repeater_id,
-            payload_id="c0ffee",
-            registered_on=self.before_now,
-            next_check=self.before_now,
-        ) for i in range(n)]
-        self.addCleanup(delete_all_repeat_records)
-        RepeatRecord.bulk_save(records)
-        return {r._id for r in records}
-
-    def new_record(self, next_check, state=RECORD_PENDING_STATE):
-        rec = RepeatRecord(
-            domain="test",
-            repeater_id=self.repeater.repeater_id,
-            payload_id="c0ffee",
-            registered_on=self.before_now,
-            next_check=next_check,
-            state=state,
-        )
-        rec.save()
-        return rec

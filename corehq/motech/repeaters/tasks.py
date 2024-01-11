@@ -5,7 +5,6 @@ from django.conf import settings
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
-from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection, get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -27,10 +26,6 @@ from .const import (
     MAX_RETRY_WAIT,
     RECORDS_AT_A_TIME,
     State,
-)
-from .dbaccessors import (
-    iterate_repeat_record_ids,
-    iterate_repeat_records_for_ids,
 )
 from .models import (
     Repeater,
@@ -86,18 +81,6 @@ def check_repeaters():
         check_repeaters_in_partition.delay(current_partition)
 
 
-def _iterate_record_ids_for_partition(start, partition, total_partitions):
-    for record_id in iterate_repeat_record_ids(start, chunk_size=10000):
-        if hash(record_id) % total_partitions == partition:
-            yield record_id
-
-
-def _iterate_repeat_records_for_partition(start, partition, total_partitions):
-    # chunk the fetching of documents from couch
-    for chunked_ids in chunked(_iterate_record_ids_for_partition(start, partition, total_partitions), 1000):
-        yield from iterate_repeat_records_for_ids(chunked_ids)
-
-
 @task(queue=settings.CELERY_PERIODIC_QUEUE)
 def check_repeaters_in_partition(partition):
     """
@@ -124,7 +107,8 @@ def check_repeaters_in_partition(partition):
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for record in _iterate_repeat_records_for_partition(start, partition, CHECK_REPEATERS_PARTITION_COUNT):
+            for record in SQLRepeatRecord.objects.iter_partition(
+                    start, partition, CHECK_REPEATERS_PARTITION_COUNT):
                 if not _soft_assert(
                     datetime.utcnow() < twentythree_hours_later,
                     "I've been iterating repeat records for 23 hours. I quit!"
