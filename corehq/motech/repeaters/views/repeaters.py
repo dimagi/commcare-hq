@@ -26,7 +26,7 @@ from corehq.motech.models import ConnectionSettings
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
 from ..models import (
     Repeater,
-    RepeatRecord,
+    SQLRepeatRecord,
     are_repeat_records_migrated,
     get_all_repeater_types,
 )
@@ -67,7 +67,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
         return {
             'report': report,
             'repeater_types_info': self.repeater_types_info,
-            'pending_record_count': RepeatRecord.count(self.domain),
+            'pending_record_count': SQLRepeatRecord.objects.count_pending_records_for_domain(self.domain),
             'user_can_configure': (
                 self.request.couch_user.is_superuser
                 or self.request.couch_user.can_edit_motech()

@@ -1317,6 +1317,10 @@ class RepeatRecord(SyncCouchToSQLMixin, Document):
         self.next_check = datetime.utcnow()
 
 
+def is_sql_id(value):
+    return not isinstance(value, str) or (value.isdigit() and len(value) != 32)
+
+
 @contextmanager
 def enable_attempts_sync_to_sql(obj, value):
     assert not hasattr(obj, "_should_sync_attempts")
@@ -1333,6 +1337,12 @@ def enable_attempts_sync_to_sql(obj, value):
 DB_CASCADE = models.DO_NOTHING
 
 
+class RepeatRecordManager(models.Manager):
+
+    def count_pending_records_for_domain(self, domain):
+        return self.filter(domain=domain, next_check__isnull=False).count()
+
+
 class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     domain = models.CharField(max_length=126)
     couch_id = models.CharField(max_length=36, null=True, blank=True)
@@ -1345,6 +1355,8 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     registered_at = models.DateTimeField()
     next_check = models.DateTimeField(null=True, default=None)
     max_possible_tries = models.IntegerField(default=MAX_BACKOFF_ATTEMPTS)
+
+    objects = RepeatRecordManager()
 
     class Meta:
         db_table = 'repeaters_repeatrecord'
@@ -1667,7 +1679,7 @@ def is_response(duck):
 
 
 def are_repeat_records_migrated(domain) -> bool:
-    return False
+    return True
 
 
 def domain_can_forward(domain):

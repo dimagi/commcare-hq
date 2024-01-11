@@ -17,7 +17,7 @@ from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
     get_repeat_records_by_payload_id
 )
-from corehq.motech.repeaters.models import CreateCaseRepeater, Repeater, UpdateCaseRepeater, RepeatRecord
+from corehq.motech.repeaters.models import CreateCaseRepeater, Repeater, UpdateCaseRepeater, SQLRepeatRecord
 from corehq.util.argparse_types import date_type
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -514,11 +514,10 @@ def create_case_repeater_register(repeater, domain, payload):
         return
 
     now = datetime.utcnow()
-    repeat_record = RepeatRecord(
-        repeater_id=repeater.repeater_id,
-        repeater_type=repeater.repeater_type,
+    repeat_record = SQLRepeatRecord.objects.create(
+        repeater_id=repeater.id,
         domain=domain,
-        registered_on=now,
+        registered_at=now,
         next_check=now,
         payload_id=payload.get_id
     )
@@ -526,7 +525,6 @@ def create_case_repeater_register(repeater, domain, payload):
         'domain': domain,
         'doc_type': repeater.repeater_type
     })
-    repeat_record.save()
     repeat_record.attempt_forward_now()
     return repeat_record
 

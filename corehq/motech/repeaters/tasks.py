@@ -35,10 +35,11 @@ from .dbaccessors import (
     iterate_repeat_records_for_ids,
 )
 from .models import (
-    RepeatRecord,
     Repeater,
+    SQLRepeatRecord,
     domain_can_forward,
     get_payload,
+    is_sql_id,
     send_request,
 )
 
@@ -150,7 +151,7 @@ def process_repeat_record(repeat_record_id, domain):
     NOTE: Keep separate from retry_process_repeat_record for monitoring purposes
     Domain is present here for domain tagging in datadog
     """
-    repeat_record = RepeatRecord.get(repeat_record_id)
+    repeat_record = _get_repeat_record(repeat_record_id)
     _process_repeat_record(repeat_record)
 
 
@@ -160,8 +161,15 @@ def retry_process_repeat_record(repeat_record_id, domain):
     NOTE: Keep separate from process_repeat_record for monitoring purposes
     Domain is present here for domain tagging in datadog
     """
-    repeat_record = RepeatRecord.get(repeat_record_id)
+    repeat_record = _get_repeat_record(repeat_record_id)
     _process_repeat_record(repeat_record)
+
+
+def _get_repeat_record(repeat_record_id):
+    if not is_sql_id(repeat_record_id):
+        # can be removed after all in-flight tasks with Couch ids have been processed
+        return SQLRepeatRecord.objects.get(couch_id=repeat_record_id)
+    return SQLRepeatRecord.objects.get(id=repeat_record_id)
 
 
 def _process_repeat_record(repeat_record):

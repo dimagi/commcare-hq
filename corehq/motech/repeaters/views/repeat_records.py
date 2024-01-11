@@ -16,7 +16,6 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 from django.template.loader import render_to_string
 
-from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from soil.util import expose_cached_download
@@ -48,7 +47,7 @@ from ..dbaccessors import (
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
 )
-from ..models import RepeatRecord, are_repeat_records_migrated, is_queued
+from ..models import SQLRepeatRecord, are_repeat_records_migrated, is_queued, is_sql_id
 from .repeat_record_display import RepeatRecordDisplay
 
 
@@ -296,9 +295,10 @@ class RepeatRecordView(View):
 
     @staticmethod
     def get_record_or_404(domain, record_id):
+        where = {"id": record_id} if is_sql_id(record_id) else {"couch_id": record_id}
         try:
-            record = RepeatRecord.get(record_id)
-        except ResourceNotFound:
+            record = SQLRepeatRecord.objects.get(**where)
+        except SQLRepeatRecord.DoesNotExist:
             raise Http404()
 
         if record.domain != domain:
@@ -309,13 +309,7 @@ class RepeatRecordView(View):
     def get(self, request, domain):
         record_id = request.GET.get('record_id')
         record = self.get_record_or_404(domain, record_id)
-        repeater = record.repeater
-        if not repeater:
-            return JsonResponse({
-                'error': 'Repeater with id {} could not be found'.format(
-                    record.repeater_id)
-            }, status=404)
-        content_type = repeater.generator.content_type
+        content_type = record.repeater.generator.content_type
         try:
             payload = record.get_payload()
         except XFormNotFound:

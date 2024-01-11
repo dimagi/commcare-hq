@@ -13,6 +13,8 @@ from django.utils import timezone
 
 from nose.tools import assert_in, assert_raises
 
+from testil import eq
+
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from corehq.util.test_utils import _create_case
@@ -35,6 +37,7 @@ from ..models import (
     format_response,
     get_all_repeater_types,
     is_response,
+    is_sql_id,
 )
 
 DOMAIN = 'test-domain'
@@ -508,6 +511,35 @@ class TestFormRepeaterAllowedToForward(RepeaterTestCase):
         self.assertFalse(self.repeater.allowed_to_forward(payload))
 
 
+class TestRepeatRecordManager(RepeaterTestCase):
+    before_now = datetime.utcnow() - timedelta(days=1)
+
+    def test_count_pending_records_for_domain(self):
+        now = datetime.utcnow()
+        self.new_record(next_check=now - timedelta(hours=2))
+        self.new_record(next_check=now - timedelta(hours=1))
+        self.new_record(next_check=now - timedelta(minutes=15))
+        self.new_record(next_check=now - timedelta(minutes=5))
+        self.new_record(next_check=None, state=State.Success)
+        self.new_record(next_check=now - timedelta(hours=1), domain="other")
+        pending = SQLRepeatRecord.objects.count_pending_records_for_domain("test")
+        self.assertEqual(pending, 4)
+
+    def new_record(self, next_check=before_now, state=State.Pending, domain="test"):
+        return SQLRepeatRecord.objects.create(
+            domain=domain,
+            repeater_id=self.repeater.repeater_id,
+            payload_id="c0ffee",
+            registered_at=self.before_now,
+            next_check=next_check,
+            state=state,
+        )
+
+    def tearDown(self):
+        from ..dbaccessors import delete_all_repeat_records
+        delete_all_repeat_records()
+
+
 class TestCouchRepeatRecordMethods(TestCase):
 
     def test_repeater_returns_active_repeater(self):
@@ -653,3 +685,17 @@ class TestRepeatRecordMethods(RepeaterTestCase):
 
 class TestSQLRepeatRecordMethods(TestRepeatRecordMethods):
     model_class = SQLRepeatRecord
+
+
+def test_is_sql_id():
+    def test(value, expect):
+        eq(is_sql_id(value), expect, f"value was: {value!r}")
+
+    yield test, 1234, True
+    yield test, '1234', True
+    yield test, 'b6859ae05fd94dccbc3dfd25cdc6cb2c', False
+    yield test, 'b6859ae0-5fd9-4dcc-bc3d-fd25cdc6cb2c', False
+
+    # numeric str is considered UUID if number of digits is 32
+    yield test, '40400000000000000000000000000404', False
+    yield test, '40400000-0000-0000-0000-000000000404', False
