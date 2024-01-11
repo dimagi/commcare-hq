@@ -10,7 +10,6 @@ from corehq.motech.repeaters.dbaccessors import (
     get_failure_repeat_record_count,
     get_pending_repeat_record_count,
     get_repeat_record_count,
-    get_repeat_records_by_payload_id,
     get_success_repeat_record_count,
     iterate_repeat_record_ids,
 )
@@ -183,13 +182,13 @@ class TestRepeatRecordDBAccessors(TestCase):
         self.assertEqual(len(records), len(self.records))
 
     def test_get_repeat_records_by_payload_id(self):
-        id_1_records = list(get_repeat_records_by_payload_id(self.domain, self.payload_id_1))
+        id_1_records = list(SQLRepeatRecord.objects.filter(domain=self.domain, payload_id=self.payload_id_1))
         self.assertEqual(len(id_1_records), 2)
-        self.assertItemsEqual([r._id for r in id_1_records], [r._id for r in self.records[:2]])
+        self.assertItemsEqual([r.couch_id for r in id_1_records], [r._id for r in self.records[:2]])
 
-        id_2_records = list(get_repeat_records_by_payload_id(self.domain, self.payload_id_2))
+        id_2_records = list(SQLRepeatRecord.objects.filter(domain=self.domain, payload_id=self.payload_id_2))
         self.assertEqual(len(id_2_records), 6)
-        self.assertItemsEqual([r._id for r in id_2_records], [r._id for r in self.records[2:]])
+        self.assertItemsEqual([r.couch_id for r in id_2_records], [r._id for r in self.records[2:]])
 
 
 class TestOtherDBAccessors(TestCase):

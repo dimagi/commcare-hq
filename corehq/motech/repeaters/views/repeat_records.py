@@ -44,7 +44,6 @@ from ..dbaccessors import (
     get_cancelled_repeat_record_count,
     get_pending_repeat_record_count,
     get_repeat_record_count,
-    get_repeat_records_by_payload_id,
 )
 from ..models import SQLRepeatRecord, are_repeat_records_migrated, is_queued, is_sql_id
 from .repeat_record_display import RepeatRecordDisplay
@@ -138,13 +137,15 @@ class BaseRepeatRecordReport(GenericTabularReport):
 
     @memoized
     def _get_all_records_by_payload(self):
-        # It is assumed that there are relatively few repeat records for a given payload,
-        # so this is just filtered in memory.  If that changes, we should filter in the db.
-        return [
-            r for r in get_repeat_records_by_payload_id(self.domain, self.payload_id)
-            if (not self.repeater_id or r.repeater_id == self.repeater_id)
-            and (not self.state or r.state == self.state)
-        ]
+        query = SQLRepeatRecord.objects.filter(
+            domain=self.domain,
+            payload_id=self.payload_id,
+        )
+        if self.repeater_id:
+            query = query.filter(repeater_id=self.repeater_id)
+        if self.state:
+            query = query.filter(state=self.state)
+        return list(query)
 
     @property
     def payload_id(self):
@@ -187,21 +188,21 @@ class BaseRepeatRecordReport(GenericTabularReport):
         display = RepeatRecordDisplay(record, self.timezone, date_format='%b %d, %Y %H:%M:%S %Z')
         checkbox = format_html(
             '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
-            record.record_id)
+            record.id)
         row = [
             checkbox,
             display.state,
             display.remote_service,
             display.next_attempt_at,
-            self._make_view_attempts_button(record.record_id),
-            self._make_view_payload_button(record.record_id),
-            self._make_resend_payload_button(record.record_id),
+            self._make_view_attempts_button(record.id),
+            self._make_view_payload_button(record.id),
+            self._make_resend_payload_button(record.id),
         ]
 
         if self._is_cancelled(record):
-            row.append(self._make_requeue_payload_button(record.record_id))
+            row.append(self._make_requeue_payload_button(record.id))
         elif self._is_queued(record):
-            row.append(self._make_cancel_payload_button(record.record_id))
+            row.append(self._make_cancel_payload_button(record.id))
         else:
             row.append(None)
 

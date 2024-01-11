@@ -15,7 +15,6 @@ from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
-    get_repeat_records_by_payload_id
 )
 from corehq.motech.repeaters.models import CreateCaseRepeater, Repeater, UpdateCaseRepeater, SQLRepeatRecord
 from corehq.util.argparse_types import date_type
@@ -105,7 +104,7 @@ def find_missing_form_repeat_records_for_form(form, domain, repeaters, enddate, 
 
     missing_count = 0
     successful_count = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, form.get_id)
+    repeat_records = SQLRepeatRecord.objects.filter(domain=domain, payload_id=form.get_id)
     triggered_repeater_ids = [record.repeater_id for record in repeat_records]
     for repeater in repeaters:
         if not repeater.allowed_to_forward(form):
@@ -193,16 +192,16 @@ def find_missing_case_repeat_records_for_domain(domain, startdate, enddate, shou
 def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate, enddate, should_create=False):
     successful_count = missing_all_count = missing_create_count = missing_update_count = 0
 
-    repeat_records = get_repeat_records_by_payload_id(domain, case.get_id)
+    repeat_records = SQLRepeatRecord.objects.filter(domain=domain, payload_id=case.get_id)
     # grab repeat records that were registered during the date range
     records_during_daterange = [record for record in repeat_records
-                                if startdate <= record.registered_on.date() <= enddate]
+                                if startdate <= record.registered_at.date() <= enddate]
     fired_repeater_ids_and_counts_during_daterange = defaultdict(int)
     for record in records_during_daterange:
         fired_repeater_ids_and_counts_during_daterange[record.repeater_id] += 1
 
     # grab repeat records that were registered after the enddate
-    records_after_daterange = [record for record in repeat_records if record.registered_on.date() >= enddate]
+    records_after_daterange = [record for record in repeat_records if record.registered_at.date() >= enddate]
     fired_repeater_ids_and_counts_after_enddate = defaultdict(int)
     for record in records_after_daterange:
         fired_repeater_ids_and_counts_after_enddate[record.repeater_id] += 1
@@ -399,7 +398,7 @@ def find_missing_repeat_records_in_domain(domain, repeaters, payload, enddate, s
     NOTE: Assumes the payload passed in was modified since the startdate
     """
     missing_count = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, payload.get_id)
+    repeat_records = SQLRepeatRecord.objects.filter(domain=domain, payload_id=payload.get_id)
     records_since_last_modified_date = [record for record in repeat_records
                                         if record.registered_on.date() >= payload.last_modified.date()]
     fired_repeater_ids_and_counts = defaultdict(int)

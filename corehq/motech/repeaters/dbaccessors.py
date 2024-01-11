@@ -44,28 +44,6 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
     return queryset.count()
 
 
-def get_repeat_records_by_payload_id(domain, payload_id):
-    from .models import RepeatRecord
-    results = RepeatRecord.get_db().view(
-        'repeaters/repeat_records_by_payload_id',
-        startkey=[domain, payload_id],
-        endkey=[domain, payload_id],
-        include_docs=True,
-        reduce=False,
-        descending=True
-    ).all()
-    return [RepeatRecord.wrap(result['doc']) for result in results]
-
-
-def get_sql_repeat_records_by_payload_id(domain, payload_id):
-    from corehq.motech.repeaters.models import SQLRepeatRecord
-
-    return (SQLRepeatRecord.objects
-            .filter(domain=domain, payload_id=payload_id)
-            .order_by('-registered_at')
-            .all())
-
-
 def iterate_repeat_records_for_ids(doc_ids):
     from .models import RepeatRecord
     return (RepeatRecord.wrap(doc) for doc in iter_docs(RepeatRecord.get_db(), doc_ids))
