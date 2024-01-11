@@ -199,7 +199,7 @@ def _process_repeat_record(repeat_record):
         elif repeat_record.state == State.Pending or repeat_record.state == State.Fail:
             repeat_record.fire()
     except Exception:
-        logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
+        logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
 
 
 metrics_gauge_task(

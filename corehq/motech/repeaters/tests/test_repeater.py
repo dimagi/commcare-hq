@@ -714,6 +714,15 @@ class RepeaterFailureTest(BaseRepeaterTest):
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
         self.assertFalse(repeat_record.succeeded)
 
+    def test_payload_exception(self):
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
+        with patch.object(Repeater, "get_payload", side_effect=Exception('Payload error')):
+            rr = self.repeater.register(case)
+
+        repeat_record = RepeatRecord.get(rr.record_id)
+        self.assertTrue(repeat_record.cancelled)
+        self.assertEqual(repeat_record.failure_reason, "Payload error")
+
     def test_failure(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=RequestException('Boom!')):
