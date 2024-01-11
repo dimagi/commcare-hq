@@ -27,7 +27,7 @@ from corehq.motech.repeaters.dbaccessors import (
 from corehq.apps.case_importer.do_import import SubmitCaseBlockHandler, RowAndCase
 from corehq.motech.repeaters.models import SQLRepeatRecord
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.toggles import CASE_DEDUPE, DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
+from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
@@ -37,6 +37,7 @@ from .interfaces import FormManagementMode
 from .models import (
     AutomaticUpdateRule,
     CaseDuplicate,
+    CaseDuplicateNew,
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
@@ -65,9 +66,6 @@ def _get_upload_progress_tracker(upload_id):
 @no_result_task(queue='case_rule_queue', acks_late=True,
                 soft_time_limit=15 * settings.CELERY_TASK_SOFT_TIME_LIMIT)
 def reset_and_backfill_deduplicate_rule_task(domain, rule_id):
-    if not CASE_DEDUPE.enabled(domain):
-        return
-
     try:
         rule = AutomaticUpdateRule.objects.get(
             id=rule_id,
@@ -89,6 +87,8 @@ def reset_and_backfill_deduplicate_rule_task(domain, rule_id):
 def delete_duplicates_for_cases(case_ids):
     CaseDuplicate.bulk_remove_unique_cases(case_ids)
     CaseDuplicate.remove_duplicates_for_case_ids(case_ids)
+
+    CaseDuplicateNew.remove_duplicates_for_case_ids(case_ids)
 
 
 @task(serializer='pickle', ignore_result=True)
