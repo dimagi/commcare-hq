@@ -53,26 +53,22 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         var url = Backbone.history.getFragment();
         try {
             const cloudcareUrl = Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
-            const queryKey = sessionStorage.queryKey;
-            if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
-                // populate query input data from sessionStorage
-                const currentQueryInputs = Utils.getCurrentQueryInputs();
-                cloudcareUrl.queryData[queryKey] = cloudcareUrl.queryData[queryKey] || {};
-                cloudcareUrl.queryData[queryKey].inputs = currentQueryInputs;
+            for (const queryKey in cloudcareUrl.queryData) {
+                // retrieve query inputs from Utils object
+                cloudcareUrl.queryData[queryKey].inputs = Utils.getCurrentQueryInputs(queryKey);
             }
             return cloudcareUrl;
         } catch (e) {
             // This means that we're on the homepage
-            sessionStorage.removeItem('queryInputs');
             return new Utils.CloudcareUrl({});
         }
     };
 
     Utils.setUrlToObject = function (urlObject, replace) {
         replace = replace || false;
-        if (_.has(urlObject.queryData, sessionStorage.queryKey)) {
+        for (const queryKey in urlObject.queryData) {
             // don't store query inputs in url
-            delete urlObject.queryData[sessionStorage.queryKey].inputs;
+            delete urlObject.queryData[queryKey].inputs;
         }
         var encodedUrl = Utils.objectToEncodedUrl(urlObject.toJson());
         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
@@ -199,35 +195,27 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     };
 
     Utils.getQueryInputs = function () {
-        return JSON.parse(sessionStorage.queryInputs || "{}");
+        return this.queryInputs || {};
     };
 
     Utils.setQueryInputs = function (inputs) {
         const queryInputs = Utils.getQueryInputs();
         queryInputs[sessionStorage.queryKey] = inputs;
-        sessionStorage.queryInputs = JSON.stringify(queryInputs);
+        this.queryInputs = queryInputs;
     };
 
-    Utils.getCurrentQueryInputs = function () {
-        const queryInputs = Utils.getQueryInputs();
-        return queryInputs[sessionStorage.queryKey] || {};
+    Utils.getCurrentQueryInputs = function (queryKey) {
+        const queryInputs = this.getQueryInputs();
+        queryKey = queryKey || sessionStorage.queryKey;
+        return queryInputs[queryKey];
     };
 
     Utils.getStickyQueryInputs = function () {
-        if (!toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
-            return {};
-        }
-        if (!this.stickyQueryInputs) {
-            return {};
-        }
-        return this.stickyQueryInputs[sessionStorage.queryKey] || {};
+        return toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH') ? Utils.getCurrentQueryInputs() : {};
     };
 
     Utils.setStickyQueryInputs = function (inputs) {
-        if (!this.stickyQueryInputs) {
-            this.stickyQueryInputs = {};
-        }
-        this.stickyQueryInputs[sessionStorage.queryKey] = inputs;
+        Utils.setQueryInputs(inputs);
     };
 
     Utils.setSelectedValues = function (selections) {
@@ -308,7 +296,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             if (initiatedBy !== null && initiatedBy !== undefined) {
                 queryDataEntry.initiatedBy = initiatedBy;
             }
-
             Utils.setQueryInputs(inputs);
             this.queryData[sessionStorage.queryKey] = queryDataEntry;
 
@@ -335,13 +322,11 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sessionId = null;
             sessionStorage.removeItem('submitPerformed');
             sessionStorage.removeItem('geocoderValues');
-            sessionStorage.removeItem('queryInputs');
         };
 
         this.onSubmit = function () {
             sessionStorage.removeItem('selectedValues');
             sessionStorage.removeItem('geocoderValues');
-            sessionStorage.removeItem('queryInputs');
             this.page = null;
             this.sortIndex = null;
             this.search = null;
@@ -370,7 +355,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
             sessionStorage.removeItem('selectedValues');
             sessionStorage.removeItem('geocoderValues');
-            sessionStorage.removeItem('queryInputs');
             this.sessionId = null;
         };
 
