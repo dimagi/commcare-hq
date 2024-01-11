@@ -19,8 +19,7 @@ from corehq.apps.data_dictionary.util import (
     get_data_dict_deprecated_case_types,
     is_case_type_or_prop_name_valid,
     delete_case_property,
-    used_case_props_by_domain,
-    used_case_types_by_domain,
+    get_used_props_by_case_type,
 )
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
@@ -251,22 +250,13 @@ class MiscUtilTest(TestCase):
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
-class UsedCaseTypesOrPropsTest(TestCase):
+class UsedPropsByCaseTypeTest(TestCase):
 
     domain = uuid.uuid4().hex
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.case_type_obj = CaseType(name='my-case-type', domain=cls.domain)
-        cls.case_type_obj.save()
-        cls.used_case_type_obj = CaseType(name='other-case-type', domain=cls.domain)
-        cls.used_case_type_obj.save()
-        cls.case_prop_obj = CaseProperty(case_type=cls.case_type_obj, name='my-prop')
-        cls.case_prop_obj.save()
-        cls.used_case_prop_obj = CaseProperty(case_type=cls.used_case_type_obj, name='other-prop')
-        cls.used_case_prop_obj.save()
-
         case_block = CaseBlock(
             case_id=uuid.uuid4().hex,
             case_type='other-case-type',
@@ -275,17 +265,7 @@ class UsedCaseTypesOrPropsTest(TestCase):
         )
         case_search_es_setup(cls.domain, [case_block])
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.case_type_obj.delete()
-        cls.used_case_type_obj.delete()
-        super().tearDownClass()
-
-    def test_used_case_props_by_domain(self):
-        used_props = used_case_props_by_domain(self.domain)
-        self.assertTrue('other-prop' in used_props)
-
-    def test_used_case_types_by_domain(self):
-        used_case_types = used_case_types_by_domain(self.domain)
-        expected_output = {'other-case-type'}
-        self.assertEqual(used_case_types, expected_output)
+    def test_get_used_props_by_case_type(self):
+        used_props_by_case_type = get_used_props_by_case_type(self.domain)
+        self.assertEqual(len(used_props_by_case_type), 1)
+        self.assertTrue('other-prop' in used_props_by_case_type['other-case-type'])
