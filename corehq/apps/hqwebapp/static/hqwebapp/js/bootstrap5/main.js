@@ -118,7 +118,6 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
         });
 
         $("input[type='text'], input[type='password'], textarea", $elem);
-        $('.container', $elem).addClass('ui-widget ui-widget-content');
         $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
 
         $('.hq-help-template').each(function () {

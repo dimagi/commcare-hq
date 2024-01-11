@@ -118,7 +118,6 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
         $(".button", $elem).button().wrap('<span />');
         $("input[type='submit']", $elem).button();
         $("input[type='text'], input[type='password'], textarea", $elem);
-        $('.container', $elem).addClass('ui-widget ui-widget-content');
         $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
 
         $('.hq-help-template').each(function () {
