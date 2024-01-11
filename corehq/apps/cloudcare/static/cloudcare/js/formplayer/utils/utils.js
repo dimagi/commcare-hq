@@ -52,15 +52,28 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     Utils.currentUrlToObject = function () {
         var url = Backbone.history.getFragment();
         try {
-            return Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
+            const cloudcareUrl = Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
+            const queryKey = sessionStorage.queryKey;
+            if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
+                // populate query input data from sessionStorage
+                const currentQueryInputs = Utils.getCurrentQueryInputs();
+                cloudcareUrl.queryData[queryKey] = cloudcareUrl.queryData[queryKey] || {};
+                cloudcareUrl.queryData[queryKey].inputs = currentQueryInputs;
+            }
+            return cloudcareUrl;
         } catch (e) {
             // This means that we're on the homepage
+            sessionStorage.removeItem('queryInputs');
             return new Utils.CloudcareUrl({});
         }
     };
 
     Utils.setUrlToObject = function (urlObject, replace) {
         replace = replace || false;
+        if (_.has(urlObject.queryData, sessionStorage.queryKey)) {
+            // don't store query inputs in url
+            delete urlObject.queryData[sessionStorage.queryKey].inputs;
+        }
         var encodedUrl = Utils.objectToEncodedUrl(urlObject.toJson());
         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
             FormplayerFrontend.navigate(encodedUrl, { replace: replace });
@@ -185,12 +198,19 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         }
     };
 
+    Utils.getQueryInputs = function () {
+        return JSON.parse(sessionStorage.queryInputs || "{}");
+    };
+
+    Utils.setQueryInputs = function (inputs) {
+        const queryInputs = Utils.getQueryInputs();
+        queryInputs[sessionStorage.queryKey] = inputs;
+        sessionStorage.queryInputs = JSON.stringify(queryInputs);
+    };
+
     Utils.getCurrentQueryInputs = function () {
-        var queryData = Utils.currentUrlToObject().queryData[sessionStorage.queryKey];
-        if (queryData) {
-            return queryData.inputs || {};
-        }
-        return {};
+        const queryInputs = Utils.getQueryInputs();
+        return queryInputs[sessionStorage.queryKey] || {};
     };
 
     Utils.getStickyQueryInputs = function () {
@@ -289,6 +309,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 queryDataEntry.initiatedBy = initiatedBy;
             }
 
+            Utils.setQueryInputs(inputs);
             this.queryData[sessionStorage.queryKey] = queryDataEntry;
 
             this.page = null;
@@ -314,11 +335,13 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sessionId = null;
             sessionStorage.removeItem('submitPerformed');
             sessionStorage.removeItem('geocoderValues');
+            sessionStorage.removeItem('queryInputs');
         };
 
         this.onSubmit = function () {
             sessionStorage.removeItem('selectedValues');
             sessionStorage.removeItem('geocoderValues');
+            sessionStorage.removeItem('queryInputs');
             this.page = null;
             this.sortIndex = null;
             this.search = null;
@@ -347,6 +370,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
             sessionStorage.removeItem('selectedValues');
             sessionStorage.removeItem('geocoderValues');
+            sessionStorage.removeItem('queryInputs');
             this.sessionId = null;
         };
 
