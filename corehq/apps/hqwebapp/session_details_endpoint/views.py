@@ -1,10 +1,13 @@
 import json
 from datetime import datetime
 
+from django.conf import settings
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+
+from dimagi.utils.decorators.profile import profile_dump
 
 from corehq import toggles
 from corehq.apps.domain.auth import formplayer_auth
@@ -18,6 +21,9 @@ from corehq.util.metrics import (
     limit_domains,
     metrics_histogram
 )
+
+PROFILE_LIMIT = settings.COMMCARE_PROFILE_SESSION_DETAILS_LIMIT
+PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -37,6 +43,7 @@ class SessionDetailsView(View):
     urlname = 'session_details'
     http_method_names = ['post']
 
+    @profile_dump('commcare_session_details.prof', limit=PROFILE_LIMIT, cumulative_time_threshold=3000)
     def post(self, request, *args, **kwargs):
         start_time = datetime.now()
         try:
