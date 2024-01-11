@@ -443,6 +443,7 @@ class FindingDuplicatesTest(TestCase):
                               find_duplicate_case_ids(self.domain, cases[0], ["name", "dob"], match_type="ANY"))
 
 
+@flag_enabled('CASE_DEDUPE')
 class CaseDeduplicationActionTest(TestCase):
     def setUp(self):
         super().setUp()
@@ -692,7 +693,6 @@ class CaseDeduplicationActionTest(TestCase):
         self.rule.soft_delete()
         self.assertEqual(CaseDuplicateNew.objects.filter(action=self.action).count(), 0)
 
-    @flag_enabled('CASE_DEDUPE')
     def test_case_deletion(self):
         """Test that deleting cases also deletes Duplicate Relationships
         """
@@ -882,6 +882,7 @@ class DeduplicationPillowTest(TestCase):
         action.save()
 
 
+@flag_enabled('CASE_DEDUPE')
 @es_test(requires=[case_search_adapter, user_adapter])
 class TestDeduplicationRuleRuns(TestCase):
     def setUp(self):

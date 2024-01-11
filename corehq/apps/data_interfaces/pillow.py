@@ -10,7 +10,6 @@ from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.models.forms import XFormInstance
 from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
-from corehq.toggles import CASE_DEDUPE
 from corehq.util.soft_assert import soft_assert
 
 
@@ -28,8 +27,6 @@ class CaseDeduplicationProcessor(PillowProcessor):
 
     def process_change(self, change):
         domain = change.metadata.domain
-        if not CASE_DEDUPE.enabled(domain):
-            return
 
         if change.deleted:
             # TODO: If a case gets deleted, we don't remove the duplicates for this case?
