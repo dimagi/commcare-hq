@@ -35,14 +35,13 @@
       </li>
       <li>
         <a class="hidden deprecate-case-type" data-bind="click: $root.toggleShowDeprecatedCaseTypes">
-          <div data-bind="hidden: $root.showDeprecatedCaseTypes">
-            <i class="fa fa-eye"></i>
-            {% trans 'Show Deprecated Case Types' %}
-          </div>
-          <div data-bind="visible: $root.showDeprecatedCaseTypes">
-            <i class="fa fa-eye-slash"></i>
-            {% trans 'Hide Deprecated Case Types' %}
-          </div>
+            <i class="fa fa-archive"></i>
+            <span data-bind="hidden: $root.showDeprecatedCaseTypes">
+              {% trans 'Show Deprecated Case Types' %}
+            </span>
+            <span data-bind="visible: $root.showDeprecatedCaseTypes">
+              {% trans 'Hide Deprecated Case Types' %}
+            </span>
         </a>
       </li>
     {% endif %}
