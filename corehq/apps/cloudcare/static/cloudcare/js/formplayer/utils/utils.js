@@ -53,12 +53,12 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         var url = Backbone.history.getFragment();
         try {
             const cloudcareUrl = Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
-            if (sessionStorage.queryInputs) {
+            const currentQueryInputs = Utils.getCurrentQueryInputs();
+            if (!_.isEmpty(currentQueryInputs)) {
                 // populate query input data from sessionStorage
-                const queryInputs = JSON.parse(sessionStorage.queryInputs);
                 const queryKey = sessionStorage.queryKey;
                 cloudcareUrl.queryData[queryKey] = cloudcareUrl.queryData[queryKey] || {};
-                cloudcareUrl.queryData[queryKey].inputs = queryInputs[queryKey];
+                cloudcareUrl.queryData[queryKey].inputs = currentQueryInputs;
             }
             return cloudcareUrl;
         } catch (e) {
@@ -198,10 +198,21 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         }
     };
 
+    Utils.getQueryInputs = function () {
+        return JSON.parse(sessionStorage.queryInputs || "{}");
+    };
+
+    Utils.setQueryInputs = function (inputs) {
+        // store query inputs in sessionStorage
+        const queryInputs = Utils.getQueryInputs();
+        queryInputs[sessionStorage.queryKey] = inputs;
+        sessionStorage.queryInputs = JSON.stringify(queryInputs);
+    };
+
     Utils.getCurrentQueryInputs = function () {
-        var queryData = Utils.currentUrlToObject().queryData[sessionStorage.queryKey];
-        if (queryData) {
-            return queryData.inputs || {};
+        const queryInputs = Utils.getQueryInputs();
+        if (_.has(queryInputs, sessionStorage.queryKey)) {
+            return queryInputs[sessionStorage.queryKey] || {};
         }
         return {};
     };
@@ -302,13 +313,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 queryDataEntry.initiatedBy = initiatedBy;
             }
 
-            // store query inputs in sessionStorage
-            const queryInputs = JSON.parse(sessionStorage.queryInputs || "{}");
-            if (inputs) {
-                queryInputs[sessionStorage.queryKey] = inputs;
-            }
-            sessionStorage.queryInputs = JSON.stringify(queryInputs);
-
+            Utils.setQueryInputs(inputs);
             this.queryData[sessionStorage.queryKey] = queryDataEntry;
 
             this.page = null;
@@ -340,6 +345,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         this.onSubmit = function () {
             sessionStorage.removeItem('selectedValues');
             sessionStorage.removeItem('geocoderValues');
+            sessionStorage.removeItem('queryInputs');
             this.page = null;
             this.sortIndex = null;
             this.search = null;
@@ -368,6 +374,8 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
             sessionStorage.removeItem('selectedValues');
             sessionStorage.removeItem('geocoderValues');
+            sessionStorage.removeItem('queryInputs');
+
             this.sessionId = null;
         };
 
