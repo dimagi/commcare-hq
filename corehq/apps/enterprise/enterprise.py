@@ -17,8 +17,6 @@ from corehq.apps.domain.calculations import sms_in_last
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
 from corehq.apps.export.dbaccessors import ODataExportFetcher
-from corehq.apps.reports.filters.users import \
-    ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.dbaccessors import (
     get_all_user_rows,
     get_mobile_user_count,
@@ -26,6 +24,7 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.util.quickcache import quickcache
+from corehq.apps.es.users import UserES
 
 
 class EnterpriseReport:
@@ -224,10 +223,9 @@ class EnterpriseFormReport(EnterpriseReport):
         time_filter = form_es.submitted
         datespan = DateSpan(datetime.now() - timedelta(days=self.window), datetime.utcnow())
 
-        users_filter = form_es.user_id(EMWF.user_es_query(domain_name,
-                                       ['t__0'],  # All mobile workers
-                                       self.couch_user)
-                        .values_list('_id', flat=True))
+        users_filter = form_es.user_id(UserES().domain(domain_name).mobile_users().show_inactive()
+                                    .values_list('_id', flat=True))
+
         query = (form_es.FormES()
                  .domain(domain_name)
                  .filter(time_filter(gte=datespan.startdate,
