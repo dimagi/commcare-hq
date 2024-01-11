@@ -478,9 +478,9 @@ def iframe_sso_login_pending(request):
 
 class HQLoginView(LoginView):
     form_list = [
-        ('auth', EmailAuthenticationForm),
-        ('token', HQAuthenticationTokenForm),
-        ('backup', HQBackupTokenForm),
+        (LoginView.AUTH_STEP, EmailAuthenticationForm),
+        (LoginView.TOKEN_STEP, HQAuthenticationTokenForm),
+        (LoginView.BACKUP_STEP, HQBackupTokenForm),
     ]
     extra_context = {}
 
@@ -516,9 +516,9 @@ class HQLoginView(LoginView):
 
 class CloudCareLoginView(HQLoginView):
     form_list = [
-        ('auth', CloudCareAuthenticationForm),
-        ('token', HQAuthenticationTokenForm),
-        ('backup', HQBackupTokenForm),
+        (HQLoginView.AUTH_STEP, CloudCareAuthenticationForm),
+        (HQLoginView.TOKEN_STEP, HQAuthenticationTokenForm),
+        (HQLoginView.BACKUP_STEP, HQBackupTokenForm),
     ]
 
 
