@@ -343,11 +343,6 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
                     'gps_point': '12.34 45.67',
                 },
                 {
-                    'id': self.user_b.user_id,
-                    'username': self.user_b.raw_username,
-                    'gps_point': '',
-                },
-                {
                     'id': self.user_c.user_id,
                     'username': self.user_c.raw_username,
                     'gps_point': '45.67 12.34',
