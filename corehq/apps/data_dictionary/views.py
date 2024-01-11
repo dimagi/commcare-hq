@@ -27,9 +27,8 @@ from corehq.apps.data_dictionary.models import (
 from corehq.apps.data_dictionary.util import (
     save_case_property,
     save_case_property_group,
-    used_case_props_by_domain,
     delete_case_property,
-    used_case_types_by_domain,
+    get_used_props_by_case_type,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -74,10 +73,10 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
-    case_props_with_data = used_case_props_by_domain(domain)
-    case_types_with_data = used_case_types_by_domain(domain)
+    used_props_by_case_type = get_used_props_by_case_type(domain)
     for case_type in queryset:
         module_count = case_type_app_module_count.get(case_type.name, 0)
+        used_props = used_props_by_case_type[case_type.name] if case_type.name in used_props_by_case_type else []
         p = {
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
@@ -85,7 +84,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
             "is_deprecated": case_type.is_deprecated,
             "module_count": module_count,
             "properties": [],
-            "contains_case_data": case_type.name in case_types_with_data,
+            "contains_case_data": len(used_props) > 0,
         }
         grouped_properties = {
             group: [
@@ -97,7 +96,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                     ),
                     'name': prop.name,
                     'deprecated': prop.deprecated,
-                    'contains_case_data': prop.name in case_props_with_data,
+                    'contains_case_data': prop.name in used_props,
                 }
                 | (
                     {
