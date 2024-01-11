@@ -1,4 +1,3 @@
-import json
 import uuid
 from datetime import datetime, timedelta
 
@@ -200,8 +199,8 @@ class TimedScheduleInstanceRefresher(ScheduleInstanceRefresher):
 
     def handle_existing_instance(self, instance):
         if (
-            (self.start_date and self.start_date != instance.start_date) or
-            (instance.schedule_revision != self.schedule_revision)
+            (self.start_date and self.start_date != instance.start_date)
+            or (instance.schedule_revision != self.schedule_revision)
         ):
             new_start_date = self.start_date or instance.start_date
             instance.recalculate_schedule(self.schedule, new_start_date=new_start_date)
@@ -287,8 +286,8 @@ class CaseTimedScheduleInstanceRefresher(ScheduleInstanceRefresher):
                 return True
 
         if (
-            (self.start_date and self.start_date != instance.start_date) or
-            (instance.schedule_revision != self.schedule_revision)
+            (self.start_date and self.start_date != instance.start_date)
+            or (instance.schedule_revision != self.schedule_revision)
         ):
             new_start_date = self.start_date or instance.start_date
             instance.recalculate_schedule(self.schedule, new_start_date=new_start_date)
@@ -442,8 +441,11 @@ def _handle_schedule_instance(instance, save_function):
     :return: True if the event was handled, otherwise False
     """
     if (
-        instance.memoized_schedule.deleted or
-        (isinstance(instance, CaseScheduleInstanceMixin) and (instance.case is None or instance.case.is_deleted))
+        instance.memoized_schedule.deleted
+        or (
+            isinstance(instance, CaseScheduleInstanceMixin)
+            and (instance.case is None or instance.case.is_deleted)
+        )
     ):
         instance.delete()
         return False
@@ -549,13 +551,7 @@ def delete_unused_messaging_images():
     present_image_ids = set()
     # There is no easy way of figuring out the domain from EmailContent
     # directly, so we only fetch those EmailContents that have html.
-    email_messages = [
-        json.loads(message)
-        for message in (EmailContent.objects
-                        .values_list("html_message", flat=True)
-                        .filter(html_message__isnull=False))
-    ]
-
+    email_messages = EmailContent.objects.values_list("html_message", flat=True).filter(html_message__isnull=False)
     for messages in email_messages:
         for lang, content in messages.items():
             soup = BeautifulSoup(content, features='lxml')
