@@ -39,10 +39,6 @@ class RepeaterTestCase(TestCase):
         self.repeater.last_attempt_at = self.last_checked
         self.repeater.save()
 
-    def tearDown(self):
-        self.repeater.delete()
-        super().tearDown()
-
     def test_record_display_sql(self):
         with make_repeat_record(self.repeater, RECORD_SUCCESS_STATE) as record:
             record.sqlrepeatrecordattempt_set.create(
