@@ -16,6 +16,7 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.calculations import sms_in_last
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
+from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import ODataExportFetcher
 from corehq.apps.users.dbaccessors import (
     get_all_user_rows,
@@ -24,7 +25,6 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.util.quickcache import quickcache
-from corehq.apps.es.users import UserES
 
 
 class EnterpriseReport:
