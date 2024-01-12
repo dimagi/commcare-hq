@@ -205,6 +205,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         this.queryInputs = queryInputs;
     };
 
+    Utils.clearQueryInputs = function () {
+        this.queryInputs = null;
+    };
+
     Utils.getCurrentQueryInputs = function (queryKey) {
         const queryInputs = this.getQueryInputs();
         queryKey = queryKey || sessionStorage.queryKey;
@@ -320,6 +324,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sessionId = null;
             sessionStorage.removeItem('submitPerformed');
             sessionStorage.removeItem('geocoderValues');
+            Utils.clearQueryInputs();
         };
 
         this.onSubmit = function () {
@@ -330,6 +335,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.search = null;
             this.queryData = null;
             this.sessionId = null;
+            Utils.clearQueryInputs();
         };
 
         this.spliceSelections = function (index) {
@@ -338,6 +344,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 this.selections = null;
                 this.sessionId = null;
                 this.queryData = null;
+                Utils.clearQueryInputs();
             } else {
                 this.selections = this.selections.splice(0, index);
                 var key = this.selections.join(",");
