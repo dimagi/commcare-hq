@@ -215,10 +215,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         return toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH') ? Utils.getCurrentQueryInputs() : {};
     };
 
-    Utils.setStickyQueryInputs = function (inputs) {
-        Utils.setQueryInputs(inputs);
-    };
-
     Utils.setSelectedValues = function (selections) {
         if (selections !== undefined) {
             let selectedValues = (sessionStorage.selectedValues !== undefined) ? JSON.parse(sessionStorage.selectedValues) : {};
