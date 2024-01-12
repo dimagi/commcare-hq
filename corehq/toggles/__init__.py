@@ -1471,7 +1471,7 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
 
 CASE_DEDUPE = StaticToggle(
     'case_dedupe',
-    'Case deduplication feature',
+    'Allow Case deduplication update actions',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
