@@ -874,7 +874,7 @@ class DataSourceRepeater(Repeater):
 
     def allowed_to_forward(
         self,
-        payload,  # type: DataSourceUpdateLog
+        payload,  # type DataSourceUpdateLog
     ):
         return payload.data_source_id == self.data_source_id
 
