@@ -151,7 +151,6 @@ class RepeaterTest(BaseRepeaterTest):
             domain=self.domain,
             connection_settings_id=self.case_connx.id,
             format='case_json',
-            repeater_id=uuid.uuid4().hex
         )
         self.case_repeater.save()
 
@@ -163,7 +162,6 @@ class RepeaterTest(BaseRepeaterTest):
             domain=self.domain,
             connection_settings_id=self.form_connx.id,
             format='form_json',
-            repeater_id=uuid.uuid4().hex
         )
         self.form_repeater.save()
         self.log = []
@@ -445,7 +443,6 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
             format='form_xml',
-            repeater_id=uuid.uuid4().hex,
         )
         cls.repeatergenerator = FormRepeaterXMLPayloadGenerator(
             repeater=cls.repeater
@@ -484,7 +481,6 @@ class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
             format='form_xml',
-            repeater_id=uuid.uuid4().hex
         )
         cls.repeater.save()
 
@@ -520,7 +516,6 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         cls.repeater = ShortFormRepeater(
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
-            repeater_id=uuid.uuid4().hex
         )
         cls.repeater.save()
 
@@ -559,7 +554,6 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='case_xml',
-            repeater_id=uuid.uuid4().hex,
         )
         self.repeater.save()
 
@@ -697,7 +691,6 @@ class RepeaterFailureTest(BaseRepeaterTest):
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='case_json',
-            repeater_id=uuid.uuid4().hex
         )
         self.repeater.save()
 
@@ -773,7 +766,6 @@ class IgnoreDocumentTest(BaseRepeaterTest):
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='new_format',
-            repeater_id=uuid.uuid4().hex
         )
         self.repeater.save()
 
@@ -910,7 +902,6 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
         self.repeater = UserRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
-            repeater_id=uuid.uuid4().hex
         )
         self.repeater.save()
 
@@ -1064,11 +1055,10 @@ class TestRepeaterPause(BaseRepeaterTest):
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='case_json',
-            repeater_id=uuid.uuid4().hex,
         )
         self.repeater.save()
         self.post_xml(self.xform_xml, self.domain)
-        self.repeater = Repeater.objects.get(repeater_id=self.repeater.repeater_id)
+        self.repeater = Repeater.objects.get(id=self.repeater.id)
 
     def tearDown(self):
         self.repeater.delete()
@@ -1310,7 +1300,6 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         self.repeater = DataSourceRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
-            repeater_id=uuid.uuid4().hex,
             data_source_id=self.data_source_id,
         )
         self.repeater.save()

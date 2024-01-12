@@ -75,7 +75,7 @@ class Command(BaseCommand):
         success_message = options.get('success_message')
         response_status = options.get('response_status')
 
-        repeater = Repeater.objects.get(repeater_id=repeater_id)
+        repeater = Repeater.objects.get(id=repeater_id)
         print("Looking up repeat records for '{}'".format(repeater.friendly_name))
 
         def meets_filter(record):

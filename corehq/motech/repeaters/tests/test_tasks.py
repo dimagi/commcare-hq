@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
-import uuid
 
 from django.test import TestCase
 from django.utils import timezone
@@ -87,7 +86,6 @@ class TestProcessRepeater(TestCase):
     def setUp(self):
         self.repeater = FormRepeater.objects.create(
             domain=DOMAIN,
-            repeater_id=uuid.uuid4().hex,
             format='form_xml',
             connection_settings=self.connection_settings
         )
