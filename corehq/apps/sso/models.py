@@ -143,6 +143,12 @@ class IdentityProvider(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
     last_modified_by = models.EmailField()
 
+    # for auto-deactivation web user purposes
+    enable_user_deactivation = models.BooleanField(default=False)
+    api_id = models.TextField(blank=True, null=True)  # application (client) id in Azure AD
+    api_secret = models.TextField(blank=True, null=True)
+    date_api_secret_expiration = models.DateField(blank=True, null=True)
+
     class Meta:
         app_label = 'sso'
 
