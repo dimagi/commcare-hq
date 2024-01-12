@@ -1167,6 +1167,8 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 DAYS_KEEP_GSHEET_STATUS = 14
 
+COMMCARE_PROFILE_SESSION_DETAILS_LIMIT = None
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
