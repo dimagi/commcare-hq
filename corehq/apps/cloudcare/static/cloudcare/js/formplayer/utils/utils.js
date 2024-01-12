@@ -201,8 +201,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     Utils.setQueryInputs = function (inputs, queryKey) {
         const queryInputs = Utils.getQueryInputs();
         queryKey = queryKey || sessionStorage.queryKey;
-        queryInputs[queryKey] = inputs;
-        this.queryInputs = queryInputs;
+        if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
+            queryInputs[queryKey] = inputs;
+            this.queryInputs = queryInputs;
+        }
     };
 
     Utils.clearQueryInputs = function () {
