@@ -199,11 +199,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     };
 
     Utils.setQueryInputs = function (inputs, queryKey) {
-        const queryInputs = Utils.getQueryInputs();
         queryKey = queryKey || sessionStorage.queryKey;
         if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
-            queryInputs[queryKey] = inputs;
-            this.queryInputs = queryInputs;
+            this.queryInputs = this.queryInputs || {};
+            this.queryInputs[queryKey] = inputs;
         }
     };
 
