@@ -198,9 +198,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         return this.queryInputs || {};
     };
 
-    Utils.setQueryInputs = function (inputs) {
+    Utils.setQueryInputs = function (inputs, queryKey) {
         const queryInputs = Utils.getQueryInputs();
-        queryInputs[sessionStorage.queryKey] = inputs;
+        queryKey = queryKey || sessionStorage.queryKey;
+        queryInputs[queryKey] = inputs;
         this.queryInputs = queryInputs;
     };
 
@@ -284,6 +285,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
 
         this.setQueryData = function ({ inputs, execute, forceManualSearch, initiatedBy}) {
             var selections = Utils.currentUrlToObject().selections;
+            var queryKey = sessionStorage.queryKey;
             this.queryData = this.queryData || {};
 
             const queryDataEntry = _.defaults({
@@ -291,13 +293,13 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 execute: execute,
                 force_manual_search: forceManualSearch,
                 selections: selections,
-            }, this.queryData[sessionStorage.queryKey]);
+            }, this.queryData[queryKey]);
 
             if (initiatedBy !== null && initiatedBy !== undefined) {
                 queryDataEntry.initiatedBy = initiatedBy;
             }
-            Utils.setQueryInputs(inputs);
-            this.queryData[sessionStorage.queryKey] = queryDataEntry;
+            Utils.setQueryInputs(inputs, queryKey);
+            this.queryData[queryKey] = queryDataEntry;
 
             this.page = null;
             this.search = null;
