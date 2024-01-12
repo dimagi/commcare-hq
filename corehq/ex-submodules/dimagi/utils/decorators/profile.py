@@ -63,7 +63,7 @@ def profile(func=None, stream=sys.stderr, limit=100):
     return do_profile() if func is None else do_profile()(func)
 
 
-def profile_dump(log_file, probability=1, limit=None):
+def profile_dump(log_file, probability=1, limit=None, cumulative_time_threshold: float = 0):
     """Profile some callable.
 
     This decorator uses the hotshot profiler to profile some callable (like
@@ -78,6 +78,8 @@ def profile_dump(log_file, probability=1, limit=None):
         This makes it easy to run and compare multiple trials.
     :param probability: A number N between 0 and 1 such that P(profile) ~= N
     :param limit: The maximum number of profiles to record.
+    :param max_cumtime: The profile will be recorded only if the cumulative time
+        exceeds this threshold (in milliseconds).
     """
     assert isinstance(probability, (int, float)), 'probability must be numeric'
     assert 0 <= probability <= 1, 'probability must be in range [0, 1]'
@@ -113,7 +115,6 @@ def profile_dump(log_file, probability=1, limit=None):
             if hit_limit or random.random() > probability:
                 return f(*args, **kwargs)
             else:
-                Scope.profile_count += 1
                 # Add a timestamp to the profile output when the callable
                 # is actually called.
                 final_log_file = '{}-{}{}'.format(base, datetime.now().isoformat(), ext)
@@ -122,7 +123,11 @@ def profile_dump(log_file, probability=1, limit=None):
                 try:
                     ret = prof.runcall(f, *args, **kwargs)
                 finally:
-                    prof.dump_stats(final_log_file)
+                    cumulative_time_miliseconds = max(prof.getstats(),
+                                                     key=lambda entry: entry.totaltime).totaltime * 1000
+                    if cumulative_time_miliseconds >= cumulative_time_threshold:
+                        Scope.profile_count += 1
+                        prof.dump_stats(final_log_file)
                 return ret
 
         return _inner
