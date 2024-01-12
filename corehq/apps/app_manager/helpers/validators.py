@@ -593,10 +593,10 @@ class ModuleDetailValidatorMixin(object):
         errors: list
     ):
         fields_with_address_format = \
-            [c.field for c in self.module.case_details.short.columns if c.format == self.__address_popup]
+            {c.field for c in self.module.case_details.short.columns if c.format == self.__address_popup}
         if len(fields_with_address_format) > 0:
             errors.append({
-                'type': self.__invalid_tile_configuration_type,
+                'type': self.__deprecated_popup_configuration,
                 'module': self.get_module_info(),
                 'reason': _('Format "{}" should be used in the Case Detail not Case List.'
                             .format(self.__address_popup_display))
