@@ -5,7 +5,7 @@
   {# hidden submit button to enable [enter] key #}
   <div style="display: none"><input type="submit" value=""/></div>
 
-  {% if other_devices %}
+  {% if device.name == "default" and other_devices %}
     <p>{% trans "Or, alternatively, use one of your backup phones:" %}</p>
     {% for other in other_devices %}
       <p>
