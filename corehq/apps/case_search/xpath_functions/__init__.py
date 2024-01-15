@@ -5,7 +5,8 @@ from .query_functions import (
     selected_any,
     within_distance,
     phonetic_match,
-    starts_with
+    starts_with,
+    match_all
 )
 from .subcase_functions import subcase
 from .ancestor_functions import ancestor_exists
@@ -32,4 +33,5 @@ XPATH_QUERY_FUNCTIONS = {
     'phonetic-match': phonetic_match,
     'starts-with': starts_with,
     'ancestor-exists': ancestor_exists,
+    'match-all': match_all
 }
