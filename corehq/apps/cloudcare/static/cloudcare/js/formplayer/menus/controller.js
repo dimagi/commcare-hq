@@ -150,7 +150,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     groupHeaders: menuResponse.groupHeaders,
                 }).render()
             );
-        } else {
+        } else if (!sidebarEnabled) {
             FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
 
