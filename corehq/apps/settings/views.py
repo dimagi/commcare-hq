@@ -19,8 +19,8 @@ from django.views.decorators.debug import sensitive_post_parameters
 
 import langcodes
 import qrcode
+from django_otp import devices_for_user
 from memoized import memoized
-from two_factor.utils import default_device
 from two_factor.plugins.phonenumber.utils import backup_phones
 from two_factor.views import (
     BackupTokensView,
@@ -533,10 +533,13 @@ class TwoFactorResetView(TwoFactorSetupView):
     urlname = 'reset'
 
     def get(self, request, *args, **kwargs):
-        default_device(request.user).delete()
-        # django-two-factor-auth caches the default device on the user so clear that after deleting
-        from two_factor.utils import USER_DEFAULT_DEVICE_ATTR_NAME
-        delattr(request.user, USER_DEFAULT_DEVICE_ATTR_NAME)
+        # avoid using django-two-factor-auth default_devices method because it adds a dynamic attribute
+        # to the user object that we then have to cleanup before calling super
+        # https://github.com/jazzband/django-two-factor-auth/blob/1.15.5/two_factor/utils.py#L9-L17
+        for device in devices_for_user(request.user):
+            if device.name == 'default':
+                device.delete()
+                break
         return super(TwoFactorResetView, self).get(request, *args, **kwargs)
 
 
