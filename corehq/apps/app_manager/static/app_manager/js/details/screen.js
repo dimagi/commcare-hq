@@ -64,8 +64,11 @@ hqDefine("app_manager/js/details/screen", function () {
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM')) {
             baseCaseTileTemplateOptions = baseCaseTileTemplateOptions.concat([["custom", gettext("Manually configure Case Tiles")]]);
         }
+        if (self.columnKey === 'short') {
+            baseCaseTileTemplateOptions = baseCaseTileTemplateOptions.concat(options.caseTileTemplateOptions);
+        }
 
-        self.caseTileTemplateOptions = baseCaseTileTemplateOptions.concat(options.caseTileTemplateOptions);
+        self.caseTileTemplateOptions = baseCaseTileTemplateOptions;
         self.caseTileTemplateOptions = self.caseTileTemplateOptions.map(function (templateOption) {
             return {templateValue: templateOption[0], templateName: templateOption[1]};
         });

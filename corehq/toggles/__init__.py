@@ -724,7 +724,7 @@ CASE_DETAIL_TILE = StaticToggle(
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
-    parent_toggles=[CASE_LIST_TILE],
+    parent_toggles=[CASE_LIST_TILE, CASE_LIST_TILE_CUSTOM],
 )
 
 CASE_LIST_MAP = StaticToggle(

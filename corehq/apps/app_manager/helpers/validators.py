@@ -642,13 +642,19 @@ class ModuleDetailValidatorMixin(object):
 
         for detail in [self.module.case_details.short, self.module.case_details.long]:
             if detail.case_tile_template:
+                if detail.display != "short" and detail.case_tile_template != "custom":
+                    errors.append({
+                        'type': self.__invalid_tile_configuration_type,
+                        'module': self.get_module_info(),
+                        'reason': _('Case tiles on the case detail must be manually configured.'),
+                    })
                 col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
                 for field in case_tile_template_config(detail.case_tile_template).fields:
                     if field not in col_by_tile_field:
                         errors.append({
                             'type': self.__invalid_tile_configuration_type,
                             'module': self.get_module_info(),
-                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
+                            'reason': _('A case property must be assigned to the "{}" tile field.').format(field)
                         })
             self._validate_fields_with_format_duplicate('address', 'Address', detail.columns, errors)
             self._validate_clickable_icons(detail.columns, errors)

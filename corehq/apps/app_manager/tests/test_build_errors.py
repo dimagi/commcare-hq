@@ -132,7 +132,7 @@ class BuildErrorsTest(TestCase):
             self._clean_unique_id(errors)
             self.assertIn(cycle_error, errors)
 
-    def test_case_tile_configuration_errors(self, *args):
+    def test_case_tile_mapping_errors(self, *args):
         case_tile_error = {
             'type': "invalid tile configuration",
             'module': {'id': 0, 'name': {'en': 'View'}},
@@ -146,6 +146,31 @@ class BuildErrorsTest(TestCase):
             errors = app.validate_app()
             self._clean_unique_id(errors)
             self.assertIn(case_tile_error, errors)
+
+    def test_case_tile_case_detail(self, *args):
+        case_tile_error = {
+            'type': 'invalid tile configuration',
+            'module': {'id': 0, 'name': {'en': 'Add Song module'}},
+            'reason': 'Case tiles on the case detail must be manually configured.',
+        }
+        factory = AppFactory(build_version='2.51.0')
+        app = factory.app
+        module = factory.new_basic_module('Add Song', 'song', with_form=False)
+        module.case_details.long.case_tile_template = "one_3X_two_4X_one_2X"
+        module.case_details.long.columns.append(DetailColumn(
+            format='plain',
+            field='artist',
+            header={'en': 'Artist'},
+        ))
+
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertIn(case_tile_error, errors)
+
+        module.case_details.long.case_tile_template = "custom"
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertNotIn(case_tile_error, errors)
 
     def create_app_with_module(self):
         factory = AppFactory(build_version='2.51.0')
