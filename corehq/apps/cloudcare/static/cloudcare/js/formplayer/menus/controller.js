@@ -108,14 +108,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         var queryResponse = menuResponse.queryResponse;
         var sidebarEnabled = !appPreview && menusUtils.isSidebarEnabled(menuResponse);
-        if (sidebarEnabled && menuResponse.type === constants.QUERY) {
-            var menuData = menusUtils.getMenuData(menuResponse);
-            menuData["triggerEmptyCaseList"] = true;
-            menuData["sidebarEnabled"] = true;
-            menuData["description"] = menuResponse.description;
-
-            var caseListView = menusUtils.getCaseListView(menuResponse);
-            FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
+        if (sidebarEnabled) {
+            showSplitScreenQuery(menuResponse);
         } else if (menuListView) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
         }
@@ -171,6 +165,17 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         if (menuResponse.appVersion) {
             FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
         }
+    };
+
+    var showSplitScreenQuery = function (menuResponse) {
+        var menuData = menusUtils.getMenuData(menuResponse);
+        if (menuResponse.type === constants.QUERY) {
+            menuData["triggerEmptyCaseList"] = true;
+            menuData["sidebarEnabled"] = true;
+            menuData["description"] = menuResponse.description;
+        }
+        var caseListView = menusUtils.getCaseListView(menuResponse);
+        FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
     };
 
     var showPersistentCaseTile = function (persistentCaseTile) {
