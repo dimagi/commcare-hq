@@ -485,7 +485,7 @@ class HQLoginView(LoginView):
     extra_context = {}
 
     def post(self, *args, **kwargs):
-        if settings.ENFORCE_SSO_LOGIN and self.steps.current == 'auth':
+        if settings.ENFORCE_SSO_LOGIN and self.steps.current == self.AUTH_STEP:
             # catch anyone who by-passes the javascript and tries to log in directly
             username = self.request.POST.get('auth-username')
             idp = IdentityProvider.get_required_identity_provider(username) if username else None
@@ -504,7 +504,7 @@ class HQLoginView(LoginView):
         context.update(self.extra_context)
         context['enforce_sso_login'] = (
             settings.ENFORCE_SSO_LOGIN
-            and self.steps.current == 'auth'
+            and self.steps.current == self.AUTH_STEP
         )
         domain = context.get('domain')
         if domain and not is_domain_using_sso(domain):

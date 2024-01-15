@@ -414,7 +414,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         if step == 'method':
-            kwargs.setdefault('allow_phone_2fa', user_can_use_phone(self.request.couch_user))
+            kwargs['allow_phone_2fa'] = user_can_use_phone(self.request.couch_user)
 
         return kwargs
 
@@ -422,7 +422,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
         # It would be cool if we could specify our custom validation form in the form_list property
         # but SetupView.get_form_list hard codes the default validation form for 'sms' and 'call' methods.
         # https://github.com/jazzband/django-two-factor-auth/blob/1.15.5/two_factor/views/core.py#L510-L511
-        form_list = super(TwoFactorSetupView, self).get_form_list()
+        form_list = super().get_form_list()
         if {'sms', 'call'} & set(form_list.keys()):
             form_list['validation'] = HQDeviceValidationForm
         return form_list
