@@ -595,6 +595,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             self.styles = options.styles;
             self.hasNoItems = options.collection.length === 0 || options.triggerEmptyCaseList;
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
+            self.selectText = this.options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
@@ -950,6 +951,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 startPage: paginateItems.startPage,
                 title: title.trim(),
                 description: description === undefined ? "" : markdown.render(description.trim()),
+                selectText: this.selectText === undefined ? "" : this.selectText.trim(),
                 headers: this.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
