@@ -106,46 +106,19 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var queryResponse = menuResponse.queryResponse;
         var sidebarEnabled = !appPreview && menusUtils.isSidebarEnabled(menuResponse);
+        if (menuListView) {
+            FormplayerFrontend.regions.getRegion('main').show(menuListView);
+        }
         if (sidebarEnabled) {
             showSplitScreenQuery(menuResponse);
-        } else if (menuListView) {
-            FormplayerFrontend.regions.getRegion('main').show(menuListView);
+        } else {
+            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
         if (menuResponse.persistentCaseTile && !appPreview) {
             showPersistentCaseTile(menuResponse.persistentCaseTile);
         } else {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
-        }
-
-        if (sidebarEnabled && menuResponse.type === constants.ENTITIES && queryResponse)  {
-            var queryCollection = new Collection(queryResponse.displays);
-            FormplayerFrontend.regions.getRegion('sidebar').show(
-                queryView.queryListView({
-                    collection: queryCollection,
-                    title: menuResponse.title,
-                    description: menuResponse.description,
-                    hasDynamicSearch: queryResponse.dynamicSearch,
-                    sidebarEnabled: true,
-                    disableDynamicSearch: !sessionStorage.submitPerformed,
-                    groupHeaders: queryResponse.groupHeaders,
-                }).render()
-            );
-        } else if (sidebarEnabled && menuResponse.type === constants.QUERY) {
-            FormplayerFrontend.regions.getRegion('sidebar').show(
-                queryView.queryListView({
-                    collection: menuResponse,
-                    title: menuResponse.title,
-                    description: menuResponse.description,
-                    hasDynamicSearch: menuResponse.dynamicSearch,
-                    sidebarEnabled: true,
-                    disableDynamicSearch: true,
-                    groupHeaders: menuResponse.groupHeaders,
-                }).render()
-            );
-        } else if (!sidebarEnabled) {
-            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
 
         if (menuResponse.breadcrumbs) {
@@ -169,10 +142,37 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
     var showSplitScreenQuery = function (menuResponse) {
         var menuData = menusUtils.getMenuData(menuResponse);
+        var queryResponse = menuResponse.queryResponse;
         if (menuResponse.type === constants.QUERY) {
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
             menuData["description"] = menuResponse.description;
+        }
+        if (menuResponse.type === constants.ENTITIES && queryResponse)  {
+            var queryCollection = new Collection(queryResponse.displays);
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                queryView.queryListView({
+                    collection: queryCollection,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    hasDynamicSearch: queryResponse.dynamicSearch,
+                    sidebarEnabled: true,
+                    disableDynamicSearch: !sessionStorage.submitPerformed,
+                    groupHeaders: queryResponse.groupHeaders,
+                }).render()
+            );
+        } else if (menuResponse.type === constants.QUERY) {
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                queryView.queryListView({
+                    collection: menuResponse,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    hasDynamicSearch: menuResponse.dynamicSearch,
+                    sidebarEnabled: true,
+                    disableDynamicSearch: true,
+                    groupHeaders: menuResponse.groupHeaders,
+                }).render()
+            );
         }
         var caseListView = menusUtils.getCaseListView(menuResponse);
         FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
