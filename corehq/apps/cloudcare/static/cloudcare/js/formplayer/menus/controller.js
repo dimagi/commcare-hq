@@ -143,11 +143,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showSplitScreenQuery = function (menuResponse) {
         var menuData = menusUtils.getMenuData(menuResponse);
         var queryResponse = menuResponse.queryResponse;
-        if (menuResponse.type === constants.QUERY) {
-            menuData["triggerEmptyCaseList"] = true;
-            menuData["sidebarEnabled"] = true;
-            menuData["description"] = menuResponse.description;
-        }
         if (menuResponse.type === constants.ENTITIES && queryResponse)  {
             var queryCollection = new Collection(queryResponse.displays);
             FormplayerFrontend.regions.getRegion('sidebar').show(
@@ -173,6 +168,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     groupHeaders: menuResponse.groupHeaders,
                 }).render()
             );
+
+            menuData["triggerEmptyCaseList"] = true;
+            menuData["sidebarEnabled"] = true;
+            menuData["description"] = menuResponse.description;
         }
         var caseListView = menusUtils.getCaseListView(menuResponse);
         FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
