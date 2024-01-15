@@ -83,12 +83,17 @@ Things that may be added in the future:
 """
 from attrs import asdict, define, field
 
+from django.core.exceptions import ValidationError
 from django.db.models import JSONField
+from django.utils.translation import gettext_lazy as _
 
 __all__ = ["AttrsDict", "AttrsList", "dict_of", "list_of"]
 
 
 class JsonAttrsField(JSONField):
+    default_error_messages = {
+        'invalid': _("'%(field)s' field value has an invalid format: %(exc)s"),
+    }
 
     def __init__(self, *args, builder, **kw):
         super().__init__(*args, **kw)
@@ -97,9 +102,22 @@ class JsonAttrsField(JSONField):
     def get_prep_value(self, value):
         return super().get_prep_value(self.builder.jsonify(value))
 
+    def to_python(self, value):
+        try:
+            return self.builder.attrify(value)
+        except Exception as exc:
+            raise ValidationError(
+                self.error_messages['invalid'],
+                code='invalid',
+                params={
+                    'field': self.name,
+                    'exc': BadValue.format(value, exc),
+                },
+            )
+
     def from_db_value(self, value, expression, connection):
         value = super().from_db_value(value, expression, connection)
-        return self.builder.attrify(value)
+        return self.to_python(value)
 
     def value_to_string(self, obj):
         # Returns a JSON-serializable object for compatibility with
@@ -157,10 +175,8 @@ class AttrsListBuilder:
         attrs_type = self.attrs_type
         if items is None:
             return items
-        if hasattr(attrs_type, "__jsonattrs_from_json__"):
-            from_json = attrs_type.__jsonattrs_from_json__
-            return [from_json(item) for item in items]
-        return [attrs_type(**item) for item in items]
+        from_json = make_from_json(attrs_type)
+        return [from_json(item) for item in items]
 
     def jsonify(self, value):
         if not value:
@@ -180,10 +196,8 @@ class AttrsDictBuilder:
         attrs_type = self.attrs_type
         if values is None:
             return values
-        if hasattr(attrs_type, "__jsonattrs_from_json__"):
-            from_json = attrs_type.__jsonattrs_from_json__
-            return {key: from_json(value) for key, value in values.items()}
-        return {key: attrs_type(**value) for key, value in values.items()}
+        from_json = make_from_json(attrs_type)
+        return {key: from_json(value) for key, value in values.items()}
 
     def jsonify(self, value):
         if not value:
@@ -193,6 +207,36 @@ class AttrsDictBuilder:
         else:
             to_json = asdict
         return {k: to_json(v) for k, v in value.items()}
+
+
+def make_from_json(attrs_type):
+    def from_json(value):
+        try:
+            return transform(value)
+        except BadValue:
+            raise
+        except Exception as exc:
+            msg = _("Cannot construct {type_name} with {cause}")
+            raise BadValue(msg.format(
+                type_name=getattr(attrs_type, "__name__", attrs_type),
+                cause=BadValue.format(value, exc),
+            ))
+
+    if hasattr(attrs_type, "__jsonattrs_from_json__"):
+        transform = attrs_type.__jsonattrs_from_json__
+    else:
+        def transform(value):
+            return attrs_type(**value)
+    return from_json
+
+
+class BadValue(ValueError):
+
+    @classmethod
+    def format(cls, value, exc):
+        if isinstance(exc, cls):
+            return str(exc)
+        return f"{value!r} -> {type(exc).__name__}: {exc}"
 
 
 @define
@@ -218,6 +262,12 @@ class dict_of:
             typename = self.value_type.__name__
             raise ValueError(f"expected dict with {typename} values, got None")
 
+    @property
+    def __name__(self):
+        value_name = self.value_type.__name__
+        key = f", {self.key_type.__name__}" if self.key_type != str else ''
+        return f"{type(self).__name__}({value_name}{key})"
+
 
 @define
 class list_of:
@@ -240,3 +290,7 @@ class list_of:
         if value is None:
             typename = self.item_type.__name__
             raise ValueError(f"expected list of {typename}, got None")
+
+    @property
+    def __name__(self):
+        return f"{type(self).__name__}({self.item_type.__name__})"

@@ -1455,6 +1455,13 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
+RICH_TEXT_EMAILS = StaticToggle(
+    'rich_text_emails',
+    'Enable sending rich text HTML emails in conditional alerts and broadcasts',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
@@ -2692,4 +2699,12 @@ CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow projects to add banners visible to their users on HQ on every login',
+)
+
+USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
+    slug='use_logo_in_system_emails',
+    label='Use the project\'s logo in emails sent from HQ',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='The project logo replaces the CommCare logo.',
 )

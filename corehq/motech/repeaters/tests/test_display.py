@@ -1,5 +1,4 @@
 from datetime import datetime
-import uuid
 
 from django.test import TestCase
 
@@ -27,7 +26,6 @@ class RepeaterTestCase(TestCase):
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,
-            repeater_id=uuid.uuid4().hex
         )
         self.repeater.save()
         self.date_format = "%Y-%m-%d %H:%M:%S"
@@ -39,16 +37,9 @@ class RepeaterTestCase(TestCase):
         self.repeater.last_attempt_at = self.last_checked
         self.repeater.save()
 
-    def tearDown(self):
-        self.repeater.delete()
-        super().tearDown()
-
     def test_record_display_sql(self):
         with make_repeat_record(self.repeater, RECORD_SUCCESS_STATE) as record:
-            record.sqlrepeatrecordattempt_set.create(
-                state=RECORD_SUCCESS_STATE,
-                message='',
-            )
+            record.attempt_set.create(state=RECORD_SUCCESS_STATE)
             self._check_display(record)
 
     def _check_display(self, record):

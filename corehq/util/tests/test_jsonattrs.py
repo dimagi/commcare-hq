@@ -2,6 +2,8 @@ import json
 from datetime import date
 
 from attrs import asdict, define, field
+from attrs.exceptions import NotAnAttrsClassError
+from django.core.exceptions import ValidationError
 from django.db import models
 from testil import assert_raises, eq
 
@@ -25,6 +27,15 @@ def test_attrsdict():
     assert check.points is not xydict, xydict
     eq(check.points, {"north": Point(0, 1)})
 
+    with assert_raises(ValidationError, msg=(
+        '["'
+        "'points' field value has an invalid format: "
+        "Cannot construct Point with {} -> "
+        "TypeError: __init__() missing 2 required positional arguments: 'x' and 'y'"
+        '"]'
+    )):
+        set_json_value(check, "points", {"north": {}})
+
 
 def test_attrsdict_list_of():
     @unregistered_django_model
@@ -46,6 +57,15 @@ def test_attrsdict_list_of():
     with assert_raises(ValueError, msg="expected list of Point, got None"):
         get_json_value(check, "point_lists")
 
+    with assert_raises(ValidationError, msg=(
+        '["'
+        "'point_lists' field value has an invalid format: "
+        "Cannot construct list_of(Point) with 500 -> "
+        "TypeError: 'int' object is not iterable"
+        '"]'
+    )):
+        set_json_value(check, "point_lists", {"north": 500})
+
 
 def test_attrslist():
     @unregistered_django_model
@@ -62,6 +82,16 @@ def test_attrslist():
     set_json_value(check, "values", [{"name": "abby"}])
     assert check.values is not abbylist, abbylist
     eq(check.values, [Value("abby")])
+
+    with assert_raises(ValidationError, msg=(
+        '["'
+        "'values' field value has an invalid format: "
+        "Cannot construct Value with 'bad value' -> "
+        "TypeError: corehq.util.tests.test_jsonattrs.Value() "
+        "argument after ** must be a mapping, not str"
+        '"]'
+    )):
+        set_json_value(check, "values", ["bad value"])
 
 
 def test_attrslist_dict_of():
@@ -83,6 +113,15 @@ def test_attrslist_dict_of():
     check.value_items = [None]
     with assert_raises(ValueError, msg="expected dict with Value values, got None"):
         get_json_value(check, "value_items")
+
+    with assert_raises(ValidationError, msg=(
+        '["'
+        "'value_items' field value has an invalid format: "
+        "Cannot construct dict_of(Value) with 'bad' -> "
+        "AttributeError: 'str' object has no attribute 'items'"
+        '"]'
+    )):
+        set_json_value(check, "value_items", {"bad": "value"})
 
 
 def test_jsonattrs_to_json():
@@ -114,6 +153,18 @@ def test_value_to_string_returns_json_serializable():
         Check._meta.get_field("events").value_to_string(check),
         [{"day": "2022-07-19"}],
     )
+
+
+def test_invalid_value_does_not_save():
+    @unregistered_django_model
+    class Check(models.Model):
+        events = AttrsList(Event)
+
+    check = Check(events=[{"monday": "2022-07-20"}])
+    with assert_raises(NotAnAttrsClassError, msg=(
+        "<class 'dict'> is not an attrs-decorated class."
+    )):
+        get_json_value(check, "events")
 
 
 def get_json_value(model, field_name):

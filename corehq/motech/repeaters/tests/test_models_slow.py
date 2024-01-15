@@ -33,7 +33,10 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.addClassCleanup(clear_plan_version_cache)
         cls.domain_obj = create_domain(DOMAIN)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.addClassCleanup(cls.teardown_subscriptions)
         cls.setup_subscription(DOMAIN, SoftwarePlanEdition.PRO)
 
         url = 'https://www.example.com/api/'
@@ -42,19 +45,10 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,
-            repeater_id=uuid4().hex
         )
         cls.repeater.save()
         cls.instance_id = str(uuid4())
         post_xform(cls.instance_id)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.repeater.delete()
-        cls.teardown_subscriptions()
-        cls.domain_obj.delete()
-        clear_plan_version_cache()
-        super().tearDownClass()
 
     def setUp(self):
         super().setUp()
@@ -63,10 +57,6 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             payload_id=self.instance_id,
             registered_at=timezone.now(),
         )
-
-    def tearDown(self):
-        self.repeat_record.delete()
-        super().tearDown()
 
     def reget_repeater(self):
         return FormRepeater.objects.get(pk=self.repeater.pk)

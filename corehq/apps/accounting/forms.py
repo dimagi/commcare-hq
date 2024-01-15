@@ -885,7 +885,7 @@ class ChangeSubscriptionForm(forms.Form):
         label=gettext_lazy("Visibility"), initial=SoftwarePlanVisibility.PUBLIC,
         choices=SoftwarePlanVisibility.CHOICES,
     )
-    most_recent_version = forms.ChoiceField(
+    new_plan_most_recent_version = forms.ChoiceField(
         label=gettext_lazy("Version"), initial="True",
         choices=(("True", "Show Most Recent Version"), ("False", "Show All Versions"))
     )
@@ -933,7 +933,7 @@ class ChangeSubscriptionForm(forms.Form):
                             % _("Software Plan"),),
                     'new_plan_edition',
                     'new_plan_visibility',
-                    'most_recent_version',
+                    'new_plan_most_recent_version',
                     crispy.Field(
                         'new_plan_version', css_class="input-xxlarge",
                         placeholder="Search for Software Plan",
