@@ -150,6 +150,21 @@ hqDefine("app_manager/js/details/screen", function () {
             });
         };
 
+        // Given a column model, return a boolean indicating whether the column is on an odd
+        // or an even tab, for the sake of being able to differentiate in the case tile preview
+        // which rows go with which tab.
+        self.tabPolarity = function (column) {
+            var self = this,
+                flag = false;
+            _.find(self.columns(), function (c, i) {
+                if (c.isTab) {
+                    flag = !flag;
+                }
+                return c === column;
+            });
+            return flag;
+        };
+
         self.adjustTileGridArea = function (activeColumnIndex, rowDelta, columnDelta, widthDelta, heightDelta) {
             let matrix = self._buildMatrix();
             matrix = self._adjustTileGridArea(matrix, activeColumnIndex, rowDelta, columnDelta, widthDelta, heightDelta);
