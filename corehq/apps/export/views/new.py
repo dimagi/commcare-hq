@@ -174,7 +174,8 @@ class BaseExportView(BaseProjectDataView):
 
         if (self.domain != export.domain
                 or (export.export_format == "html" and not domain_has_privilege(self.domain, EXCEL_DASHBOARD))
-                or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))):
+                or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))
+                or (export.export_format == "geojson" and not toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain))):
             raise BadExportConfiguration()
 
         if not export._rev:

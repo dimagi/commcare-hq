@@ -245,7 +245,7 @@ class ExportWriter(object):
         """
         Close any open file references, do any cleanup.
         """
-        assert(self._isopen)
+        assert self._isopen
         self._close()
         self._isopen = False
 
@@ -554,3 +554,12 @@ class ZippedHtmlExportWriter(ZippedExportWriter):
     writer_class = HtmlFileWriter
     table_file_extension = ".html"
     format = Format.ZIPPED_HTML
+
+
+class GeoJSONWriter(JsonExportWriter):
+    format = Format.GEOJSON
+    table_file_extension = ".geojson"
+
+    def _close(self):
+        # Todo
+        self.file.write({})

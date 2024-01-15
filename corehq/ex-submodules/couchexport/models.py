@@ -14,6 +14,7 @@ class Format(object):
     JSON = "json"
     PYTHON_DICT = "dict"
     UNZIPPED_CSV = 'unzipped-csv'
+    GEOJSON = 'geojson'
 
     FORMAT_DICT = {CSV: {"mimetype": "application/zip",
                          "extension": "zip",
