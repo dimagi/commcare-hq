@@ -41,7 +41,7 @@ from corehq.motech.dhis2.parse_response import get_errors, get_diagnosis_message
 from corehq.motech.models import RequestLog
 
 from ..const import State, RECORD_CANCELLED_STATE
-from ..models import SQLRepeatRecord, is_sql_id
+from ..models import SQLRepeatRecord
 from .repeat_record_display import RepeatRecordDisplay
 
 
@@ -273,9 +273,8 @@ class RepeatRecordView(View):
 
     @staticmethod
     def get_record_or_404(domain, record_id):
-        where = {"id": record_id} if is_sql_id(record_id) else {"couch_id": record_id}
         try:
-            record = SQLRepeatRecord.objects.get(**where)
+            record = SQLRepeatRecord.objects.get(id=record_id)
         except SQLRepeatRecord.DoesNotExist:
             raise Http404()
 

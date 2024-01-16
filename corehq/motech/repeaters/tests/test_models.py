@@ -15,8 +15,6 @@ from freezegun import freeze_time
 
 from nose.tools import assert_in, assert_raises
 
-from testil import eq
-
 from corehq.motech.models import ConnectionSettings
 from corehq.util.test_utils import _create_case
 
@@ -37,7 +35,6 @@ from ..models import (
     format_response,
     get_all_repeater_types,
     is_response,
-    is_sql_id,
 )
 
 DOMAIN = 'test-domain'
@@ -828,17 +825,3 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
         with patch.object(SQLRepeatRecord, "num_attempts", 2), \
                 patch.object(repeat_record, "max_possible_tries", 1):
             self.assertFalse(repeat_record.exceeded_max_retries)
-
-
-def test_is_sql_id():
-    def test(value, expect):
-        eq(is_sql_id(value), expect, f"value was: {value!r}")
-
-    yield test, 1234, True
-    yield test, '1234', True
-    yield test, 'b6859ae05fd94dccbc3dfd25cdc6cb2c', False
-    yield test, 'b6859ae0-5fd9-4dcc-bc3d-fd25cdc6cb2c', False
-
-    # numeric str is considered UUID if number of digits is 32
-    yield test, '40400000000000000000000000000404', False
-    yield test, '40400000-0000-0000-0000-000000000404', False

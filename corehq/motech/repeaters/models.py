@@ -905,10 +905,6 @@ class DataSourceRepeater(Repeater):
         ).exists()
 
 
-def is_sql_id(value):
-    return not isinstance(value, str) or (value.isdigit() and len(value) != 32)
-
-
 # on_delete=DB_CASCADE denotes ON DELETE CASCADE in the database. The
 # constraints are configured in a migration. Note that Django signals
 # will not fire on records deleted via cascade.
@@ -1420,10 +1416,6 @@ def is_response(duck):
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
-
-
-def are_repeat_records_migrated(domain) -> bool:
-    return True
 
 
 def domain_can_forward(domain):
