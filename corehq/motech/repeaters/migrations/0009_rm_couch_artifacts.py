@@ -37,4 +37,44 @@ class Migration(migrations.Migration):
             name='repeatrecordattempt',
             table=None,
         ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE "repeaters_repeater"
+                    DROP CONSTRAINT "repeaters_repeater_id_key",
+                    DROP CONSTRAINT "id_eq",
+                    DROP COLUMN "id" CASCADE,
+                    DROP COLUMN "repeater_id";
+                ALTER TABLE "repeaters_repeatrecord" DROP COLUMN "repeater_id";
+                DROP TRIGGER repeaters_repeater_default_id ON repeaters_repeater;
+                DROP FUNCTION set_default_repeaters_repeater_id();
+            """,
+            # NOTE reverse works only on databases with no repeaters (test databases)
+            reverse_sql="""
+                CREATE FUNCTION set_default_repeaters_repeater_id()
+                    RETURNS trigger LANGUAGE plpgsql AS $BODY$
+                    BEGIN
+                        IF NEW.id_ IS NULL THEN
+                            NEW.id_ = NEW.repeater_id::uuid;
+                        ELSIF NEW.repeater_id IS NULL THEN
+                            NEW.repeater_id = REPLACE(NEW.id_::varchar, '-', '');
+                        END IF;
+                        RETURN NEW;
+                    END
+                    $BODY$;
+                CREATE TRIGGER repeaters_repeater_default_id BEFORE INSERT ON repeaters_repeater
+                    FOR EACH ROW EXECUTE FUNCTION set_default_repeaters_repeater_id();
+                ALTER TABLE "repeaters_repeatrecord" ADD COLUMN "repeater_id" integer;
+                CREATE INDEX repeaters_repeatrecord_repeater_id_01b51f9d
+                    ON repeaters_repeatrecord USING btree (repeater_id);
+                ALTER TABLE "repeaters_repeater"
+                    ADD COLUMN "repeater_id" varchar(36) NOT NULL,
+                    ADD COLUMN "id" serial NOT NULL,
+                    ADD CONSTRAINT id_eq CHECK ("id_" = "repeater_id"::uuid),
+                    ADD CONSTRAINT "repeaters_repeater_id_key" UNIQUE ("id");
+                ALTER TABLE ONLY repeaters_repeater
+                    ADD CONSTRAINT repeaters_repeater_repeater_id_9ab445dc_uniq UNIQUE (repeater_id);
+                CREATE INDEX repeaters_repeater_repeater_id_9ab445dc_like
+                    ON repeaters_repeater USING btree (repeater_id varchar_pattern_ops);
+            """,
+        ),
     ]
