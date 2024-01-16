@@ -322,7 +322,7 @@ class RepeaterTest(BaseRepeaterTest):
         # all records should be in SUCCESS state after force try
         for repeat_record in self.repeat_records():
             self.assertEqual(repeat_record.state, State.Success)
-            self.assertEqual(repeat_record.overall_tries, 1)
+            self.assertEqual(repeat_record.num_attempts, 1)
 
         # not trigger records succeeded triggered after cancellation
         with patch('corehq.motech.repeaters.models.simple_request') as mock_fire:
@@ -352,13 +352,13 @@ class RepeaterTest(BaseRepeaterTest):
         rr = self.case_repeater.register(case)
         # Fetch the revision that was updated:
         repeat_record = SQLRepeatRecord.objects.get(id=rr.id)
-        self.assertEqual(1, repeat_record.overall_tries)
+        self.assertEqual(1, repeat_record.num_attempts)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=Exception('Boom!')):
-            for __ in range(repeat_record.max_possible_tries - repeat_record.overall_tries):
+            for __ in range(repeat_record.max_possible_tries - repeat_record.num_attempts):
                 repeat_record.fire()
         self.assertEqual(repeat_record.state, State.Cancelled)
         repeat_record.requeue()
-        self.assertEqual(repeat_record.max_possible_tries - repeat_record.overall_tries, MAX_BACKOFF_ATTEMPTS)
+        self.assertEqual(repeat_record.max_possible_tries - repeat_record.num_attempts, MAX_BACKOFF_ATTEMPTS)
         self.assertNotEqual(None, repeat_record.next_check)
 
     def test_check_repeat_records_ignores_future_retries_using_multiple_partitions(self):
@@ -395,7 +395,7 @@ class RepeaterTest(BaseRepeaterTest):
         # all records should be in SUCCESS state after force try
         for repeat_record in self.repeat_records():
             self.assertEqual(repeat_record.state, State.Success)
-            self.assertEqual(repeat_record.overall_tries, 1)
+            self.assertEqual(repeat_record.num_attempts, 1)
 
         # not trigger records succeeded triggered after cancellation
         with patch('corehq.motech.repeaters.models.simple_request') as mock_fire, \

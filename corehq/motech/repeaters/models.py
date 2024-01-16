@@ -1156,14 +1156,6 @@ class SQLRepeatRecord(models.Model):
     # Couch repeater processing logic.
 
     @property
-    def overall_tries(self):
-        return self.num_attempts
-
-    @overall_tries.setter
-    def overall_tries(self, ignored):
-        pass
-
-    @property
     def exceeded_max_retries(self):
         return self.state == State.Fail and self.num_attempts >= self.max_possible_tries
 
@@ -1173,7 +1165,6 @@ class SQLRepeatRecord(models.Model):
 
     def fire(self, force_send=False):
         if self.try_now() or force_send:
-            self.overall_tries += 1
             try:
                 attempt = self.repeater.fire_for_record(self)
             except Exception as e:
