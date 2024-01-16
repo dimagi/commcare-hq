@@ -969,7 +969,6 @@ class RepeatRecordManager(models.Manager):
 
 class SQLRepeatRecord(models.Model):
     domain = models.CharField(max_length=126)
-    couch_id = models.CharField(max_length=36, null=True, blank=True)
     payload_id = models.CharField(max_length=255)
     repeater = models.ForeignKey(Repeater,
                                  on_delete=DB_CASCADE,
@@ -995,11 +994,6 @@ class SQLRepeatRecord(models.Model):
             )
         ]
         constraints = [
-            models.UniqueConstraint(
-                name="unique_couch_id",
-                fields=['couch_id'],
-                condition=models.Q(couch_id__isnull=False),
-            ),
             models.CheckConstraint(
                 name="next_check_pending_or_null",
                 check=(
