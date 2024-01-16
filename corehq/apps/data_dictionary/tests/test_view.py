@@ -406,6 +406,7 @@ class DataDictionaryJsonTest(TestCase):
                 {
                     "name": "depCaseType",
                     "fhir_resource_type": None,
+                    "contains_case_data": False,
                     "groups": [
                         {
                             "name": '',
@@ -424,6 +425,7 @@ class DataDictionaryJsonTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
     @patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
+    @patch('corehq.apps.data_dictionary.views.get_used_props_by_case_type', return_value={})
     def test_get_json_success(self, *args):
         self.client.login(username='test', password='foobar')
         response = self.client.get(self.endpoint)
@@ -432,6 +434,7 @@ class DataDictionaryJsonTest(TestCase):
         self.assertEqual(response.json(), expected_response)
 
     @patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
+    @patch('corehq.apps.data_dictionary.views.get_used_props_by_case_type', return_value={})
     def test_get_json_success_with_deprecated_case_types(self, *args):
         self.client.login(username='test', password='foobar')
         response = self.client.get(self.endpoint, data={'load_deprecated_case_types': 'true'})
