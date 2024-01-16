@@ -823,6 +823,7 @@ repeaters
  0008_sqlrepeatrecords
  0009_add_domain_to_indexes
  0010_rm_couch_artifacts
+ 0011_remove_obsolete_entities
 reports
  0001_initial
  0002_auto_20171121_1803
