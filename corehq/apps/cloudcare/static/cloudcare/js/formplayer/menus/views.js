@@ -473,6 +473,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const CaseTileViewUnclickable = CaseTileView.extend({
+        events: {},
+        className: "list-cell-wrapper-style panel panel-default",
+        rowClick: function () {},
+    });
+
     var initCaseTileList = function (options) {
         const numEntitiesPerRow = options.numEntitiesPerRow || 1;
         const numRows = options.maxHeight;
@@ -562,7 +568,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const PersistentCaseTileView = CaseTileView.extend({
-        className: "formplayer-request persistent-sticky",
+        className: function () {
+            return "persistent-sticky" + (this.options.hasInlineTile ? " formplayer-request": "");
+        },
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
@@ -1214,10 +1222,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-list-detail-template").html() || ""),
         childView: CaseViewUnclickable,
     });
-    // TODO: Tiles show a hand cursor and are clickable, and clicking throws an error
     const CaseTileDetailView = CaseListView.extend({
         template: _.template($("#case-view-tile-detail-template").html() || ""),
-        childView: CaseTileView,
+        childView: CaseTileViewUnclickable,
 
         initialize: function (options) {
             CaseTileDetailView.__super__.initialize.apply(this, arguments);
