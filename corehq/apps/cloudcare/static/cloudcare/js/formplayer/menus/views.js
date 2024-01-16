@@ -951,7 +951,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 startPage: paginateItems.startPage,
                 title: title.trim(),
                 description: description === undefined ? "" : markdown.render(description.trim()),
-                selectText: this.selectText === undefined ? "" : this.selectText.trim(),
+                selectText: this.selectText === undefined ? "" : this.selectText,
                 headers: this.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
