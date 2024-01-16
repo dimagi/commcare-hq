@@ -350,10 +350,9 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(self.endpoint)
         response_json = response.json()
-        self.assertTrue('user_data' in response_json)
-        for user in response_json['user_data']:
-            user_id = user['id']
-            self.assertEqual(user, expected_results[user_id])
+        self.assertIn('user_data', response_json)
+        user_data = {user['id']: user for user in response_json['user_data']}
+        self.assertEqual(user_data, expected_results)
 
     def test_get_location_filtered_users(self):
         self.client.login(username=self.username, password=self.password)
