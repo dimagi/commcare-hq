@@ -642,12 +642,28 @@ class ModuleDetailValidatorMixin(object):
 
         for detail in [self.module.case_details.short, self.module.case_details.long]:
             if detail.case_tile_template:
-                if detail.display != "short" and detail.case_tile_template != "custom":
-                    errors.append({
-                        'type': self.__invalid_tile_configuration_type,
-                        'module': self.get_module_info(),
-                        'reason': _('Case tiles on the case detail must be manually configured.'),
-                    })
+                if detail.display != "short":
+                    if detail.case_tile_template != "custom":
+                        errors.append({
+                            'type': self.__invalid_tile_configuration_type,
+                            'module': self.get_module_info(),
+                            'reason': _('Case tiles on the case detail must be manually configured.'),
+                        })
+
+                    tab_spans = detail.get_tab_spans()
+                    tile_rows = defaultdict(set)   # tile row index => {tabs that appear in that row}
+                    for index, span in enumerate(tab_spans):
+                        for col in detail.columns[span[0]:span[1]]:
+                            if col.grid_y is not None:
+                                tile_rows[col.grid_y].add(index)
+                    for row_index, tab_index_list in tile_rows.items():
+                        if len(tab_index_list) > 1:
+                            errors.append({
+                                'type': self.__invalid_tile_configuration_type,
+                                'module': self.get_module_info(),
+                                'reason': _('Each row of the tile may contain fields only from a single tab. '
+                                            'Row #{} contains fields from multiple tabs.').format(row_index + 1),
+                            })
                 col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
                 for field in case_tile_template_config(detail.case_tile_template).fields:
                     if field not in col_by_tile_field:
