@@ -210,9 +210,8 @@ class TestProcessRepeatRecord(TestCase):
 
         _process_repeat_record(repeat_record)
 
-        fetched_repeat_record = repeat_record._migration_get_couch_object()
-        self.assertEqual(fetched_repeat_record.doc_type, 'RepeatRecord-Deleted')
-        self.assertEqual(fetched_repeat_record.state, State.Cancelled)
+        repeat_record.refresh_from_db(fields=["state"])
+        self.assertEqual(repeat_record.state, State.Cancelled)
         self.assertEqual(self.mock_fire.call_count, 0)
         self.assertEqual(self.mock_postpone_by.call_count, 0)
 
