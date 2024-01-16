@@ -154,6 +154,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     sidebarEnabled: true,
                     disableDynamicSearch: !sessionStorage.submitPerformed,
                     groupHeaders: queryResponse.groupHeaders,
+                    searchOnClear: queryResponse.searchOnClear,
                 }).render()
             );
         } else if (menuResponse.type === constants.QUERY) {
@@ -166,6 +167,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     sidebarEnabled: true,
                     disableDynamicSearch: true,
                     groupHeaders: menuResponse.groupHeaders,
+                    searchOnClear: menuResponse.searchOnClear,
                 }).render()
             );
 
