@@ -203,7 +203,6 @@ def task_operate_on_payloads(
     record_ids: List[str],
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    use_sql: bool = True,
 ):
     return operate_on_payloads(record_ids, domain, action, task=task_operate_on_payloads)
 
@@ -214,7 +213,6 @@ def task_generate_ids_and_operate_on_payloads(
     repeater_id: Optional[str],
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    use_sql: bool = True,
 ) -> dict:
     repeat_record_ids = _get_repeat_record_ids(payload_id, repeater_id, domain)
     return operate_on_payloads(repeat_record_ids, domain, action,
