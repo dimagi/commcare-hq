@@ -4,6 +4,8 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.utils.translation import gettext
 
+from casexml.apps.case.mock import CaseBlock
+
 from corehq.util.workbook_reading.datamodels import Cell
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -16,6 +18,13 @@ from corehq.apps.data_dictionary.util import (
     is_case_type_deprecated,
     get_data_dict_deprecated_case_types,
     is_case_type_or_prop_name_valid,
+    delete_case_property,
+    get_used_props_by_case_type,
+)
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.tests.utils import (
+    case_search_es_setup,
+    es_test,
 )
 
 
@@ -96,6 +105,35 @@ class GenerateDictionaryTest(TestCase):
 
         self.assertEqual(CaseType.objects.filter(domain=self.domain).count(), 1)
         self.assertEqual(CaseProperty.objects.filter(case_type__domain=self.domain).count(), 1)
+
+
+class DeleteCasePropertyTest(TestCase):
+    domain = uuid.uuid4().hex
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.case_type = 'my-case-type'
+        cls.case_prop_name = 'my-prop'
+        cls.case_type_obj = CaseType(name=cls.case_type, domain=cls.domain)
+        cls.case_type_obj.save()
+        cls.case_prop_obj = CaseProperty(case_type=cls.case_type_obj, name=cls.case_prop_name)
+        cls.case_prop_obj.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.case_type_obj.delete()
+        super().tearDownClass()
+
+    def test_delete_case_property(self):
+        error = delete_case_property(self.case_prop_name, self.case_type, self.domain)
+        does_exist = CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            case_type__name=self.case_type,
+            name=self.case_prop_name,
+        ).exists()
+        self.assertFalse(does_exist)
+        self.assertEqual(error, None)
 
 
 class MiscUtilTest(TestCase):
@@ -209,3 +247,25 @@ class MiscUtilTest(TestCase):
             self.assertTrue(is_case_type_or_prop_name_valid(valid_name))
         for invalid_name in invalid_names:
             self.assertFalse(is_case_type_or_prop_name_valid(invalid_name))
+
+
+@es_test(requires=[case_search_adapter], setup_class=True)
+class UsedPropsByCaseTypeTest(TestCase):
+
+    domain = uuid.uuid4().hex
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        case_block = CaseBlock(
+            case_id=uuid.uuid4().hex,
+            case_type='other-case-type',
+            case_name='Case A',
+            update={'other-prop': True},
+        )
+        case_search_es_setup(cls.domain, [case_block])
+
+    def test_get_used_props_by_case_type(self):
+        used_props_by_case_type = get_used_props_by_case_type(self.domain)
+        self.assertEqual(len(used_props_by_case_type), 1)
+        self.assertTrue('other-prop' in used_props_by_case_type['other-case-type'])
