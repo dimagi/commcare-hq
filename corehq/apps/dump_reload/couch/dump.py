@@ -5,7 +5,6 @@ from couchdbkit import ResourceNotFound
 
 from corehq.apps.dump_reload.couch.id_providers import (
     DocTypeIDProvider,
-    DomainInListKeyGenerator,
     DomainKeyGenerator,
     WebUserIDProvider,
     ViewIDProvider,
@@ -36,7 +35,6 @@ DOC_PROVIDERS = {
     DocTypeIDProvider('ExportDataSchema'),
     DocTypeIDProvider('CaseExportInstance'),
     DocTypeIDProvider('CaseExportDataSchema'),
-    ViewIDProvider('RepeatRecord', 'repeaters/repeat_records', DomainInListKeyGenerator([None])),
 }
 
 DOC_PROVIDERS_BY_DOC_TYPE = {
