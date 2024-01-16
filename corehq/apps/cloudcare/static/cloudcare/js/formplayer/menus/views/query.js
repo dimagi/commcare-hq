@@ -384,14 +384,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 this.model.set('value', $(e.currentTarget).val());
             }
             this.notifyParentOfFieldChange(e);
-            this.parentView.setStickyQueryInputs();
+            this.parentView.setQueryInputs();
         },
 
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
             var useDynamicSearch = Date(this.model._previousAttributes.value) !== Date($(e.currentTarget).val());
             this.notifyParentOfFieldChange(e, useDynamicSearch);
-            this.parentView.setStickyQueryInputs();
+            this.parentView.setQueryInputs();
         },
 
         notifyParentOfFieldChange: function (e, useDynamicSearch = true) {
@@ -416,7 +416,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 });
                 initMapboxWidget(this.model);
             }
-            self.parentView.setStickyQueryInputs();
+            self.parentView.setQueryInputs();
         },
 
         _initializeSelect2Dropdown: function () {
@@ -704,7 +704,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self._getChildren().forEach(function (childView) {
                 childView.clear();
             });
-            self.setStickyQueryInputs();
+            self.setQueryInputs();
             if (self.dynamicSearchEnabled) {
                 self.updateSearchResults();
             }
@@ -839,8 +839,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return promise;
         },
 
-        setStickyQueryInputs: function () {
-            formplayerUtils.setStickyQueryInputs(this.getAnswers());
+        setQueryInputs: function () {
+            formplayerUtils.setQueryInputs(this.getAnswers());
         },
 
         onAttach: function () {
