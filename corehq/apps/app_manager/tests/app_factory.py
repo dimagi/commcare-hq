@@ -173,7 +173,10 @@ class AppFactory(object):
                 if not parent_tag:
                     parent_tag = form.actions.load_update_cases[-1].case_tag
 
-                action.case_indices = [CaseIndex(tag=parent_tag, relationship='extension' if is_extension else 'child')]
+                action.case_indices = [CaseIndex(
+                    tag=parent_tag,
+                    relationship='extension' if is_extension else 'child'
+                )]
 
             form.actions.open_cases.append(action)
 
