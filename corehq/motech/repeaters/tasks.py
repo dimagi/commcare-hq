@@ -28,7 +28,7 @@ from .const import (
 )
 from .models import (
     Repeater,
-    SQLRepeatRecord,
+    RepeatRecord,
     domain_can_forward,
     get_payload,
     send_request,
@@ -105,7 +105,7 @@ def check_repeaters_in_partition(partition):
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for record in SQLRepeatRecord.objects.iter_partition(
+            for record in RepeatRecord.objects.iter_partition(
                     start, partition, CHECK_REPEATERS_PARTITION_COUNT):
                 if not _soft_assert(
                     datetime.utcnow() < twentythree_hours_later,
@@ -131,7 +131,7 @@ def process_repeat_record(repeat_record_id, domain):
     NOTE: Keep separate from retry_process_repeat_record for monitoring purposes
     Domain is present here for domain tagging in datadog
     """
-    _process_repeat_record(SQLRepeatRecord.objects.get(id=repeat_record_id))
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -140,7 +140,7 @@ def retry_process_repeat_record(repeat_record_id, domain):
     NOTE: Keep separate from process_repeat_record for monitoring purposes
     Domain is present here for domain tagging in datadog
     """
-    _process_repeat_record(SQLRepeatRecord.objects.get(id=repeat_record_id))
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
 def _process_repeat_record(repeat_record):
@@ -174,7 +174,7 @@ def _process_repeat_record(repeat_record):
 
 metrics_gauge_task(
     'commcare.repeaters.overdue',
-    SQLRepeatRecord.objects.count_overdue,
+    RepeatRecord.objects.count_overdue,
     run_every=crontab(),  # every minute
     multiprocess_mode=MPM_MAX
 )
@@ -183,7 +183,7 @@ metrics_gauge_task(
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeater(repeater_id):
     """
-    Worker task to send SQLRepeatRecords in chronological order.
+    Worker task to send RepeatRecords in chronological order.
 
     This function assumes that ``repeater`` checks have already
     been performed. Call via ``models.attempt_forward_now()``.

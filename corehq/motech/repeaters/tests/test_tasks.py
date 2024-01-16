@@ -13,7 +13,7 @@ from corehq.form_processor.utils.xform import (
     TestFormMetadata,
 )
 from corehq.motech.models import ConnectionSettings, RequestLog
-from corehq.motech.repeaters.models import FormRepeater, SQLRepeatRecord, Repeater
+from corehq.motech.repeaters.models import FormRepeater, RepeatRecord, Repeater
 from corehq.motech.repeaters.tasks import (
     _process_repeat_record,
     delete_old_request_logs,
@@ -143,7 +143,7 @@ def form_context(form_ids):
 class TestProcessRepeatRecord(TestCase):
 
     def test_returns_if_record_is_cancelled(self):
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
@@ -160,7 +160,7 @@ class TestProcessRepeatRecord(TestCase):
     def test_cancels_and_returns_if_domain_cannot_forward(self):
         self.mock_domain_can_forward.return_value = False
 
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
@@ -169,13 +169,13 @@ class TestProcessRepeatRecord(TestCase):
 
         _process_repeat_record(repeat_record)
 
-        fetched_repeat_record = SQLRepeatRecord.objects.get(id=repeat_record.id)
+        fetched_repeat_record = RepeatRecord.objects.get(id=repeat_record.id)
         self.assertEqual(fetched_repeat_record.state, State.Cancelled)
         self.assertEqual(self.mock_fire.call_count, 0)
         self.assertEqual(self.mock_postpone_by.call_count, 0)
 
     def test_cancels_and_returns_if_repeat_record_exceeds_max_retries(self):
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
@@ -183,11 +183,11 @@ class TestProcessRepeatRecord(TestCase):
             state=State.Fail,
         )
 
-        with patch.object(SQLRepeatRecord, "num_attempts", 1), \
+        with patch.object(RepeatRecord, "num_attempts", 1), \
                 patch.object(repeat_record, "max_possible_tries", 1):
             _process_repeat_record(repeat_record)
 
-        fetched_repeat_record = SQLRepeatRecord.objects.get(id=repeat_record.id)
+        fetched_repeat_record = RepeatRecord.objects.get(id=repeat_record.id)
         self.assertEqual(fetched_repeat_record.state, State.Cancelled)
         self.assertEqual(self.mock_fire.call_count, 0)
         self.assertEqual(self.mock_postpone_by.call_count, 0)
@@ -199,7 +199,7 @@ class TestProcessRepeatRecord(TestCase):
             is_deleted=True
         )
 
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
@@ -220,7 +220,7 @@ class TestProcessRepeatRecord(TestCase):
             is_paused=True
         )
 
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
@@ -239,7 +239,7 @@ class TestProcessRepeatRecord(TestCase):
             is_paused=False
         )
 
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
@@ -259,7 +259,7 @@ class TestProcessRepeatRecord(TestCase):
             is_deleted=True,
         )
 
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
@@ -289,11 +289,11 @@ class TestProcessRepeatRecord(TestCase):
         self.patch()
 
     def patch(self):
-        patch_fire = patch.object(SQLRepeatRecord, 'fire')
+        patch_fire = patch.object(RepeatRecord, 'fire')
         self.mock_fire = patch_fire.start()
         self.addCleanup(patch_fire.stop)
 
-        patch_postpone_by = patch.object(SQLRepeatRecord, 'postpone_by')
+        patch_postpone_by = patch.object(RepeatRecord, 'postpone_by')
         self.mock_postpone_by = patch_postpone_by.start()
         self.addCleanup(patch_postpone_by.stop)
 
