@@ -41,7 +41,6 @@ from corehq.motech.repeaters.const import (
     MIN_RETRY_WAIT,
     State,
 )
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import (
     CaseRepeater,
     DataSourceRepeater,
@@ -172,12 +171,7 @@ class RepeaterTest(BaseRepeaterTest):
             self.initial_fire_call_count = mock_fire.call_count
 
     def tearDown(self):
-        self.case_repeater.delete()
-        self.case_connx.delete()
-        self.form_repeater.delete()
-        self.form_connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
-        delete_all_repeat_records()
         super(RepeaterTest, self).tearDown()
 
     def repeat_records(self):
@@ -451,15 +445,8 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
         )
         cls.repeater.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.repeater.delete()
-        cls.connx.delete()
-        super().tearDownClass()
-
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
-        delete_all_repeat_records()
         super().tearDown()
 
     def test_get_payload(self):
@@ -486,15 +473,8 @@ class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         )
         cls.repeater.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.repeater.delete()
-        cls.connx.delete()
-        super(FormRepeaterTest, cls).tearDownClass()
-
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain)
-        delete_all_repeat_records()
         super(FormRepeaterTest, self).tearDown()
 
     def test_payload(self):
@@ -521,15 +501,8 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         )
         cls.repeater.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.repeater.delete()
-        cls.connx.delete()
-        super().tearDownClass()
-
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain)
-        delete_all_repeat_records()
         super().tearDown()
 
     def test_payload(self):
@@ -561,9 +534,6 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain)
-        delete_all_repeat_records()
-        self.repeater.delete()
-        self.connx.delete()
         super().tearDown()
 
     def test_case_close_format(self):
@@ -697,10 +667,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         self.repeater.save()
 
     def tearDown(self):
-        self.repeater.delete()
-        self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
-        delete_all_repeat_records()
         super().tearDown()
 
     def test_get_payload_exception(self):
@@ -791,10 +758,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
         self.repeater.save()
 
     def tearDown(self):
-        self.repeater.delete()
-        self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
-        delete_all_repeat_records()
 
     def test_ignore_document(self):
         """
@@ -842,10 +806,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
         self.repeater.save()
 
     def tearDown(self):
-        self.repeater.delete()
-        self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
-        delete_all_repeat_records()
         super().tearDown()
 
     def test_new_format_same_name(self):
@@ -931,12 +892,6 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
         clear_plan_version_cache()
         super().tearDownClass()
 
-    def tearDown(self):
-        super().tearDown()
-        delete_all_repeat_records()
-        self.repeater.delete()
-        self.connx.delete()
-
     def repeat_records(self):
         # Enqueued repeat records have next_check set 48 hours in the future.
         later = datetime.utcnow() + timedelta(hours=48 + 1)
@@ -1012,10 +967,6 @@ class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
         clear_plan_version_cache()
         super().tearDownClass()
 
-    def tearDown(self):
-        super().tearDown()
-        delete_all_repeat_records()
-
     def repeat_records(self):
         # Enqueued repeat records have next_check set 48 hours in the future.
         later = datetime.utcnow() + timedelta(hours=48 + 1)
@@ -1080,10 +1031,7 @@ class TestRepeaterPause(BaseRepeaterTest):
         self.repeater = Repeater.objects.get(id=self.repeater.id)
 
     def tearDown(self):
-        self.repeater.delete()
-        self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
-        delete_all_repeat_records()
         super(TestRepeaterPause, self).tearDown()
 
     def test_trigger_when_paused(self):
@@ -1131,7 +1079,6 @@ class TestRepeaterDeleted(BaseRepeaterTest):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
-        delete_all_repeat_records()
         super().tearDown()
 
     def test_trigger_when_deleted(self):
@@ -1350,12 +1297,6 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         json_indicators = json.dumps(expected_indicators, cls=CommCareJSONEncoder)
         expected_indicators = json.loads(json_indicators)
         return sample_doc, expected_indicators
-
-    def tearDown(self):
-        delete_all_repeat_records()
-        self.repeater.delete()
-        self.connx.delete()
-        super().tearDown()
 
 
 def fromisoformat(isoformat):

@@ -14,7 +14,6 @@ from corehq.apps.data_interfaces.utils import (
 )
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import FormRepeater, SQLRepeatRecord
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 
 DOMAIN = 'test-domain'
 
@@ -66,19 +65,6 @@ class TestUtils(SimpleTestCase):
 
         mock_objects.get.assert_called_once_with(domain='test_domain', id='1234')
         self.assertEqual(response, mock_record)
-
-    @patch('corehq.motech.repeaters.models.SQLRepeatRecord.objects')
-    def test__validate_record_success_with_couch_id(self, mock_objects):
-        couch_id = 'b6859ae05fd94dccbc3dfd25cdc6cb2c'
-        mock_record = Mock()
-        mock_record.domain = 'test_domain'
-        mock_objects.get.return_value = mock_record
-        response = _get_sql_repeat_record('test_domain', couch_id)
-
-        mock_objects.get.assert_called_once_with(domain='test_domain', couch_id=couch_id)
-        self.assertEqual(response, mock_record)
-        assert issubclass(SQLRepeatRecord, SyncSQLToCouchMixin), \
-            "couch_id not supported? Should this test be removed?"
 
 
 class TestTasks(TestCase):

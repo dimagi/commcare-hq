@@ -9,7 +9,6 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import SQLRepeatRecord
 
 DOMAIN = 'zapier-case-forwarding-tests'
@@ -31,7 +30,6 @@ class TestZapierCaseForwarding(TestCase):
         super(TestZapierCaseForwarding, cls).tearDownClass()
 
     def tearDown(self):
-        delete_all_repeat_records()
         ZapierSubscription.objects.all().delete()
 
     def test_create_case_forwarding(self):

@@ -62,13 +62,6 @@ class RepeaterTestCase(TestCase):
         )
         self.repeater.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        # TODO remove when RepeatRecords are no longer in Couch
-        super().tearDownClass()
-        from ..dbaccessors import delete_all_repeat_records
-        delete_all_repeat_records()
-
 
 class TestSoftDeleteRepeaters(RepeaterTestCase):
     def setUp(self) -> None:
@@ -207,16 +200,12 @@ class RepeaterManagerTests(RepeaterTestCase):
 
 @contextmanager
 def make_repeat_record(repeater, state):
-    repeat_record = repeater.repeat_records.create(
+    yield repeater.repeat_records.create(
         domain=repeater.domain,
         payload_id=str(uuid4()),
         state=state,
         registered_at=timezone.now()
     )
-    try:
-        yield repeat_record
-    finally:
-        repeat_record._migration_get_couch_object().delete()
 
 
 @contextmanager
@@ -411,13 +400,7 @@ class AttemptsTests(RepeaterTestCase):
         self.assertEqual(self.repeat_record.attempts[0].traceback, tb_str)
 
     def test_cached_attempts(self):
-        def clear_attempts_cache():
-            # can be removed with RepeatRecord (Couch model)
-            # the cache is populated when the couch record is saved
-            self.repeat_record.attempts._result_cache = None
-
         self.repeat_record.add_client_failure_attempt(message="Fail")
-        clear_attempts_cache()
 
         with self.assertNumQueries(1):
             self.assertEqual(len(self.repeat_record.attempts), 1)
@@ -425,7 +408,6 @@ class AttemptsTests(RepeaterTestCase):
             self.assertEqual(len(self.repeat_record.attempts), 1)
 
         self.repeat_record.add_client_failure_attempt(message="Fail")
-        clear_attempts_cache()
 
         with self.assertNumQueries(1):
             self.assertEqual(len(self.repeat_record.attempts), 2)
@@ -564,7 +546,6 @@ class TestRepeaterModelMethods(RepeaterTestCase):
             domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
         )
         repeat_record = self.repeater.register(payload, fire_synchronously=True)
-        self.addCleanup(repeat_record._migration_get_couch_object().delete)
         self.assertEqual(repeat_record.payload_id, payload.get_id)
         all_records = list(SQLRepeatRecord.objects.iterate(DOMAIN))
         self.assertEqual(len(all_records), 1)
@@ -576,7 +557,6 @@ class TestRepeaterModelMethods(RepeaterTestCase):
             domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
         )
         repeat_record = self.repeater.register(payload, fire_synchronously=True)
-        self.addCleanup(repeat_record._migration_get_couch_object().delete)
         from corehq.motech.repeaters.tests.test_models_slow import ResponseMock
         resp = ResponseMock(status_code=200, reason='OK')
         # Basic test checks if send_request is called
@@ -701,10 +681,6 @@ class TestRepeatRecordManager(RepeaterTestCase):
         ) for i in range(n))
         return {r.id for r in records}
 
-    def tearDown(self):
-        from ..dbaccessors import delete_all_repeat_records
-        delete_all_repeat_records()
-
 
 class TestRepeatRecordMethods(TestCase):
 
@@ -720,7 +696,6 @@ class TestRepeatRecordMethods(TestCase):
             registered_at=datetime.utcnow(),
             repeater_id=repeater.repeater_id
         )
-        self.addCleanup(repeat_record._migration_get_couch_object().delete)
 
         self.assertIsNotNone(repeat_record.repeater)
 
@@ -736,7 +711,6 @@ class TestRepeatRecordMethods(TestCase):
             registered_at=datetime.utcnow(),
             repeater_id=repeater.repeater_id
         )
-        self.addCleanup(repeat_record._migration_get_couch_object().delete)
 
         self.assertTrue(repeat_record.repeater.is_deleted)
 
