@@ -43,31 +43,27 @@ class LocationResource(v0_5.LocationResource):
         return bundle
 
     def obj_create(self, bundle, **kwargs):
-        domain = bundle.data['domain']
+        if 'domain' not in bundle.data or 'name' not in bundle.data:
+            raise BadRequest("'domain' and 'name' are required fields.")
+        domain = bundle.data.pop('domain')
         if SQLLocation.objects.filter(domain=domain, site_code=bundle.data['site_code']).exists():
-            raise Exception("Location on domain with site code already exists.")
-
-        # Easy fields
-        easy_data_keys = ('domain', 'latitude', 'longitude', 'name', 'site_code')
-        bundle.obj = SQLLocation(**{key: bundle.data.get(key, None) for key in easy_data_keys})
-
-        # Fields that require specific intervention
-        bundle.obj.metadata = bundle.data.get('location_data', None)
-        if 'location_type_code' in bundle.data:
-            bundle.obj.location_type = self._get_location_type(bundle.data['location_type_code'])
-        if 'parent_location_id' in bundle.data:
-            bundle.obj.parent = self._get_parent_location(bundle.data['parent_location_id'])
-
-        bundle.obj.save()
+            raise BadRequest("Location on domain with site code already exists.")
+        bundle.obj = SQLLocation(domain=domain)
+        self._update(bundle)
         return bundle
 
     def obj_update(self, bundle, **kwargs):
-        bundle.obj = SQLLocation.objects.get(location_id=kwargs['location_id'])
-        data = bundle.data
-
+        try:
+            bundle.obj = SQLLocation.objects.get(location_id=kwargs['location_id'])
+        except SQLLocation.DoesNotExist:
+            raise BadRequest("Could not find location with given ID.")
         if bundle.obj.domain != kwargs.pop('domain'):
             raise NotFound('Location could not be found.')
+        self._update(bundle)
+        return bundle
 
+    def _update(self, bundle):
+        data = bundle.data
         # Invalid fields that might be common
         if data.pop('location_type_name', False):
             raise BadRequest('Location type name is not editable.')
@@ -79,6 +75,7 @@ class LocationResource(v0_5.LocationResource):
             if field_name in data:
                 setattr(bundle.obj, field_name, data.pop(field_name))
 
+        # Other, less "easy" fields
         if 'location_data' in data:
             for key, value in data['location_data'].items():
                 if not isinstance(key, str) or not isinstance(value, str):
@@ -89,11 +86,10 @@ class LocationResource(v0_5.LocationResource):
         if 'parent_location_id' in data:
             bundle.obj.parent = self._get_parent_location(data.pop('parent_location_id'))
 
-        if len(bundle.data):
+        if len(data):
             raise BadRequest("Invalid fields were included in request.")
 
         bundle.obj.save()
-        return bundle
 
     def _get_location_type(self, type_code):
         try:
