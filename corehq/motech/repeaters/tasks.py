@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -7,7 +6,6 @@ from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection, get_redis_lock
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.celery import periodic_task, task
 from corehq.motech.models import RequestLog
@@ -169,8 +167,7 @@ def _process_repeat_record(repeat_record):
 
     if repeat_record.repeater.is_deleted:
         repeat_record.cancel()
-        with _delete_couch_record(repeat_record):
-            repeat_record.save()
+        repeat_record.save()
         return
 
     try:
@@ -183,27 +180,6 @@ def _process_repeat_record(repeat_record):
             repeat_record.fire()
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
-
-
-@contextmanager
-def _delete_couch_record(repeat_record):
-    from django.db.models import Model
-
-    def delete(_, couch_object):
-        if not couch_object.doc_type.endswith(DELETED_SUFFIX):
-            couch_object.doc_type += DELETED_SUFFIX
-
-    if isinstance(repeat_record, Model):
-        assert not repeat_record._migration_get_custom_sql_to_couch_functions()
-        repeat_record._migration_get_custom_sql_to_couch_functions = lambda: [delete]
-        try:
-            yield
-        finally:
-            del repeat_record._migration_get_custom_sql_to_couch_functions
-            assert not repeat_record._migration_get_custom_sql_to_couch_functions()
-    else:
-        delete(..., repeat_record)
-        yield
 
 
 metrics_gauge_task(
