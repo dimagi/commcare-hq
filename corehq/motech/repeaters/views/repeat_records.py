@@ -40,7 +40,7 @@ from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.dhis2.parse_response import get_errors, get_diagnosis_message
 from corehq.motech.models import RequestLog
 
-from ..const import RECORD_CANCELLED_STATE
+from ..const import State, RECORD_CANCELLED_STATE
 from ..dbaccessors import (
     get_cancelled_repeat_record_count,
     get_paged_repeat_records,
@@ -67,6 +67,9 @@ class BaseRepeatRecordReport(GenericTabularReport):
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
         'corehq.apps.reports.filters.simple.RepeaterPayloadIdFilter',
     ]
+
+    # Keys match RepeatRecordStateFilter.options[*][0]
+    _state_map = {s.name.upper(): s for s in State}
 
     def _make_cancel_payload_button(self, record_id):
         return format_html('''
@@ -155,7 +158,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
 
     @property
     def rows(self):
-        self.state = self.request.GET.get('record_state', None)
+        self.state = self._state_map.get(self.request.GET.get('record_state'))
         if self.payload_id:
             end = self.pagination.start + self.pagination.count
             records = self._get_all_records_by_payload()[self.pagination.start:end]
