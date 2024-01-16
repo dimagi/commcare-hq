@@ -738,7 +738,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         built_filter = build_filter_from_ast(parsed, context)
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
-    def test_match_all_error(self):
+    def test_match_all(self):
         parsed = parse_xpath("match-all()")
         expected_filter = {
             "match_all": {}
