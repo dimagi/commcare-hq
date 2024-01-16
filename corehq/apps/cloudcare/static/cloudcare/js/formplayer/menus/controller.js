@@ -107,11 +107,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         var sidebarEnabled = !appPreview && menusUtils.isSidebarEnabled(menuResponse);
-        if (menuListView) {
+        if (menuListView && !sidebarEnabled) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
         }
         if (sidebarEnabled) {
-            showSplitScreenQuery(menuResponse);
+            showSplitScreenQuery(menuResponse, menuListView);
         } else {
             FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
@@ -140,7 +140,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
     };
 
-    var showSplitScreenQuery = function (menuResponse) {
+    var showSplitScreenQuery = function (menuResponse, menuListView) {
         var menuData = menusUtils.getMenuData(menuResponse);
         var queryResponse = menuResponse.queryResponse;
         if (menuResponse.type === constants.ENTITIES && queryResponse)  {
@@ -157,6 +157,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     searchOnClear: queryResponse.searchOnClear,
                 }).render()
             );
+            FormplayerFrontend.regions.getRegion('main').show(menuListView);
         } else if (menuResponse.type === constants.QUERY) {
             FormplayerFrontend.regions.getRegion('sidebar').show(
                 queryView.queryListView({
@@ -174,9 +175,10 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
             menuData["description"] = menuResponse.description;
+
+            var caseListView = menusUtils.getCaseListView(menuResponse);
+            FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
         }
-        var caseListView = menusUtils.getCaseListView(menuResponse);
-        FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
     };
 
     var showPersistentCaseTile = function (persistentCaseTile) {
