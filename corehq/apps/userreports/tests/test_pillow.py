@@ -43,7 +43,6 @@ from corehq.apps.userreports.tests.utils import (
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.signals import sql_case_post_save
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import (
     ConnectionSettings,
     DataSourceRepeater,
@@ -404,7 +403,6 @@ class IndicatorPillowTest(BaseRepeaterTest):
         super(IndicatorPillowTest, cls).tearDownClass()
 
     def tearDown(self):
-        delete_all_repeat_records()
         self.adapter.clear_table()
 
     @flaky_slow

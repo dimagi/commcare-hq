@@ -11,7 +11,6 @@ from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.expression.repeaters import CaseExpressionRepeater
 from corehq.motech.repeaters.models import SQLRepeatRecord
 from corehq.util.test_utils import flag_enabled
@@ -83,9 +82,6 @@ class CaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
         )
 
         cls.repeater.save()
-
-    def tearDown(self):
-        delete_all_repeat_records()
 
     @classmethod
     def repeat_records(cls, domain_name):

@@ -13,7 +13,6 @@ from corehq.form_processor.utils.xform import (
     TestFormMetadata,
 )
 from corehq.motech.models import ConnectionSettings, RequestLog
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import FormRepeater, SQLRepeatRecord, Repeater
 from corehq.motech.repeaters.tasks import (
     _process_repeat_record,
@@ -81,7 +80,6 @@ class TestProcessRepeater(TestCase):
             name='Test API',
             url="http://localhost/api/"
         )
-        cls.addClassCleanup(delete_all_repeat_records)
 
     def setUp(self):
         self.repeater = FormRepeater.objects.create(
@@ -286,7 +284,6 @@ class TestProcessRepeatRecord(TestCase):
             domain=cls.domain,
             connection_settings=cls.conn_settings,
         )
-        cls.addClassCleanup(delete_all_repeat_records)
 
     def setUp(self):
         self.patch()

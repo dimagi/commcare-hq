@@ -11,7 +11,6 @@ from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import AppStructureRepeater, SQLRepeatRecord
 
 
@@ -36,10 +35,6 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         cls.domain_obj.delete()
         clear_plan_version_cache()
         super().tearDownClass()
-
-    def tearDown(self):
-        delete_all_repeat_records()
-        super().tearDown()
 
     def test_repeat_record_not_created(self):
         """
