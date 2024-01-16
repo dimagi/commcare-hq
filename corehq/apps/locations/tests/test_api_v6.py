@@ -42,6 +42,20 @@ class LocationV6Test(APIResourceTest):
             metadata={"population": "715,522"}
         )
 
+        self.county = LocationType.objects.create(
+            domain=self.domain.name,
+            name="County",
+            code="county",
+            parent_type=self.parent_type
+        )
+        self.south_park = SQLLocation.objects.create(
+            domain=self.domain.name,
+            location_id="22",
+            name="south park",
+            site_code="south_park",
+            location_type=self.county
+        )
+
     def single_endpoint(self, location_id):
         return absolute_reverse('api_dispatch_detail', kwargs={
             'resource_name': self.resource._meta.resource_name,
@@ -117,7 +131,7 @@ class LocationV6Test(APIResourceTest):
             "domain": self.domain.name,
             "latitude": 31.1234,
             "location_data": {
-                "city_pop": 729
+                "city_pop": "729"
             },
             "location_type_code": "city",
             "longitude": 32.5678,
@@ -129,23 +143,16 @@ class LocationV6Test(APIResourceTest):
         self.assertEqual(response.status_code, 201)
 
         created_location = SQLLocation.objects.get(name="Fairplay")
-        all(key_value_pair in created_location.to_json().items() for key_value_pair in post_data.items())
+        post_data_location_data = post_data.pop('location_data')
+        created_location_json = created_location.to_json()
+        self.assertTrue(all(
+            key_value_pair in created_location_json.items()
+            for key_value_pair in post_data.items()))
+        self.assertTrue(all(
+            key_value_pair in created_location_json['metadata'].items()
+            for key_value_pair in post_data_location_data.items()))
 
-    def test_put(self):
-        self.county = LocationType.objects.create(
-            domain=self.domain.name,
-            name="County",
-            code="county",
-            parent_type=self.parent_type
-        )
-        self.south_park = SQLLocation.objects.create(
-            domain=self.domain.name,
-            location_id="22",
-            name="south park",
-            site_code="south_park",
-            location_type=self.county
-        )
-
+    def test_put_general(self):
         put_data = {
             "name": "New Denver",
             "site_code": "new denver",
@@ -162,6 +169,7 @@ class LocationV6Test(APIResourceTest):
         self.assertEqual(float(self.location2_updated.longitude), 33.9012)
         self.assertEqual(self.location2_updated.parent.location_id, self.south_park.location_id)
 
+    def test_put_location_type(self):
         put_data = {
             "location_type_code": self.county.code
         }
