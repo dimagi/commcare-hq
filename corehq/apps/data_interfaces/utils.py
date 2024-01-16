@@ -184,11 +184,9 @@ def operate_on_payloads(
 
 
 def _get_sql_repeat_record(domain, record_id):
-    from corehq.motech.repeaters.models import SQLRepeatRecord, is_sql_id
-
-    where = {"id": record_id} if is_sql_id(record_id) else {"couch_id": record_id}
+    from corehq.motech.repeaters.models import SQLRepeatRecord
     try:
-        return SQLRepeatRecord.objects.get(domain=domain, **where)
+        return SQLRepeatRecord.objects.get(domain=domain, id=record_id)
     except SQLRepeatRecord.DoesNotExist:
         return None
 
