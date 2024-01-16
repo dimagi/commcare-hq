@@ -1,4 +1,3 @@
-import ssl
 import sys
 
 from django.conf import settings
@@ -74,18 +73,15 @@ class SQLHttpBackend(SQLSMSBackend):
 
         url_params = urlencode(params)
         try:
-            unverified = ssl._create_unverified_context()
             if config.method == "GET":
                 urlopen(
                     "%s?%s" % (config.url, url_params),
-                    context=unverified,
                     timeout=settings.SMS_GATEWAY_TIMEOUT,
                 ).read()
             else:
                 urlopen(
                     config.url,
                     url_params,
-                    context=unverified,
                     timeout=settings.SMS_GATEWAY_TIMEOUT,
                 ).read()
         except Exception as e:
