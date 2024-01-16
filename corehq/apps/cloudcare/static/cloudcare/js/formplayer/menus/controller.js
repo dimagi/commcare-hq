@@ -203,7 +203,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         let contentView;
         const detailObject = detailObjects[detailTabIndex],
             usesCaseTiles = detailObject.get('usesCaseTiles');
-        if (usesCaseTiles) {
+        if (usesCaseTiles && !detailObject.get('entities')) {
             contentView = getCaseTile(detailObject.toJSON());
         } else {
             contentView = getDetailList(detailObject);
@@ -246,8 +246,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 collection: listCollection,
                 headers: detailObject.get('headers'),
                 styles: detailObject.get('styles'),
+                tiles: detailObject.get('tiles'),
                 title: detailObject.get('title'),
             };
+            if (detailObject.get('usesCaseTiles')) {
+                return views.CaseTileDetailView(menuData);
+            }
             return views.CaseListDetailView(menuData);
         }
 

@@ -1211,6 +1211,42 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-list-detail-template").html() || ""),
         childView: CaseViewUnclickable,
     });
+    // TODO: Share logic with CaseTileListView
+    // TODO: Tiles show a hand cursor and are clickable, and clicking throws an error
+    const CaseTileDetailView = CaseListView.extend({
+        template: _.template($("#case-view-tile-detail-template").html() || ""),
+        childView: CaseTileView,
+
+        initialize: function (options) {
+            CaseTileDetailView.__super__.initialize.apply(this, arguments);
+
+            const numEntitiesPerRow = options.numEntitiesPerRow || 1;
+            const numRows = options.maxHeight;
+            const numColumns = options.maxWidth;
+            const useUniformUnits = options.useUniformUnits;
+
+            const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
+                numEntitiesPerRow, useUniformUnits, 'list');
+
+            const gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
+
+            $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
+            $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
+            // If we have multiple cases per line, need to generate the outer grid style as well
+            if (caseTileStyles.cellWrapperStyle && caseTileStyles.cellContainerStyle) {
+                $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle).data("css-polyfilled", false);
+                $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle).data("css-polyfilled", false);
+            }
+
+            $.getScript(gridPolyfillPath);
+        },
+
+        childViewOptions: function () {
+            const dict = CaseTileDetailView.__super__.childViewOptions.apply(this, arguments);
+            dict.prefix = 'list';
+            return dict;
+        },
+    });
 
     const BreadcrumbView = Marionette.View.extend({
         tagName: "li",
@@ -1443,6 +1479,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         CaseListDetailView: function (options) {
             return new CaseListDetailView(options);
+        },
+        CaseTileDetailView: function (options) {
+            return new CaseTileDetailView(options);
         },
         CaseListView: function (options) {
             return new CaseListView(options);
