@@ -142,10 +142,11 @@ def _create_module_details_app_strings(module, langs):
             clean_trans(module.case_details.short.no_items_text, langs)
         )
 
-    yield (
-        id_strings.select_text_detail(module),
-        clean_trans(module.case_details.short.select_text, langs)
-    )
+    if hasattr(module, 'case_details'):
+        yield (
+            id_strings.select_text_detail(module),
+            clean_trans(module.case_details.short.select_text, langs)
+        )
 
     for detail_type, detail, _ in module.get_details():
         for column in detail.get_columns():
