@@ -41,7 +41,7 @@ from corehq.motech.dhis2.parse_response import get_errors, get_diagnosis_message
 from corehq.motech.models import RequestLog
 
 from ..const import State, RECORD_CANCELLED_STATE
-from ..models import SQLRepeatRecord, are_repeat_records_migrated, is_sql_id
+from ..models import SQLRepeatRecord, is_sql_id
 from .repeat_record_display import RepeatRecordDisplay
 
 
@@ -335,11 +335,10 @@ class RepeatRecordView(View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
-        use_sql = are_repeat_records_migrated(domain)
         if _get_flag(request):
-            _schedule_task_with_flag(request, domain, 'resend', use_sql)
+            _schedule_task_with_flag(request, domain, 'resend')
         else:
-            _schedule_task_without_flag(request, domain, 'resend', use_sql)
+            _schedule_task_without_flag(request, domain, 'resend')
         return JsonResponse({'success': True})
 
 
@@ -347,11 +346,10 @@ class RepeatRecordView(View):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def cancel_repeat_record(request, domain):
-    use_sql = are_repeat_records_migrated(domain)
     if _get_flag(request) == 'cancel_all':
-        _schedule_task_with_flag(request, domain, 'cancel', use_sql)
+        _schedule_task_with_flag(request, domain, 'cancel')
     else:
-        _schedule_task_without_flag(request, domain, 'cancel', use_sql)
+        _schedule_task_without_flag(request, domain, 'cancel')
 
     return HttpResponse('OK')
 
@@ -360,11 +358,10 @@ def cancel_repeat_record(request, domain):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def requeue_repeat_record(request, domain):
-    use_sql = are_repeat_records_migrated(domain)
     if _get_flag(request) == 'requeue_all':
-        _schedule_task_with_flag(request, domain, 'requeue', use_sql)
+        _schedule_task_with_flag(request, domain, 'requeue')
     else:
-        _schedule_task_without_flag(request, domain, 'requeue', use_sql)
+        _schedule_task_without_flag(request, domain, 'requeue')
 
     return HttpResponse('OK')
 
@@ -392,13 +389,12 @@ def _schedule_task_with_flag(
     request: HttpRequest,
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    use_sql: bool,
 ):
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
     payload_id = request.POST.get('payload_id') or None
     repeater_id = request.POST.get('repeater') or None
     task = task_generate_ids_and_operate_on_payloads.delay(
-        payload_id, repeater_id, domain, action, use_sql)
+        payload_id, repeater_id, domain, action)
     task_ref.set_task(task)
 
 
@@ -406,9 +402,8 @@ def _schedule_task_without_flag(
     request: HttpRequest,
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    use_sql: bool,
 ):
     record_ids = _get_record_ids_from_request(request)
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    task = task_operate_on_payloads.delay(record_ids, domain, action, use_sql)
+    task = task_operate_on_payloads.delay(record_ids, domain, action)
     task_ref.set_task(task)

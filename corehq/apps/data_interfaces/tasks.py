@@ -205,8 +205,7 @@ def task_operate_on_payloads(
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
     use_sql: bool = True,
 ):
-    return operate_on_payloads(record_ids, domain, action, use_sql,
-                               task=task_operate_on_payloads)
+    return operate_on_payloads(record_ids, domain, action, task=task_operate_on_payloads)
 
 
 @task(serializer='pickle')
@@ -217,12 +216,12 @@ def task_generate_ids_and_operate_on_payloads(
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
     use_sql: bool = True,
 ) -> dict:
-    repeat_record_ids = _get_repeat_record_ids(payload_id, repeater_id, domain, use_sql)
-    return operate_on_payloads(repeat_record_ids, domain, action, use_sql,
+    repeat_record_ids = _get_repeat_record_ids(payload_id, repeater_id, domain)
+    return operate_on_payloads(repeat_record_ids, domain, action,
                                task=task_generate_ids_and_operate_on_payloads)
 
 
-def _get_repeat_record_ids(payload_id, repeater_id, domain, use_sql=True):
+def _get_repeat_record_ids(payload_id, repeater_id, domain):
     if payload_id:
         queryset = SQLRepeatRecord.objects.filter(
             domain=domain,

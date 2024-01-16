@@ -128,7 +128,6 @@ def operate_on_payloads(
     repeat_record_ids: List,
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    use_sql: bool = True,
     task: Optional = None,
     from_excel: bool = False,
 ):

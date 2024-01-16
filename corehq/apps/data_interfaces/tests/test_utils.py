@@ -22,13 +22,13 @@ DOMAIN = 'test-domain'
 class TestUtils(SimpleTestCase):
 
     def test__get_ids_no_data(self):
-        response = _get_repeat_record_ids(None, None, 'test_domain', False)
+        response = _get_repeat_record_ids(None, None, 'test_domain')
         self.assertEqual(response, [])
 
     @patch('corehq.apps.data_interfaces.tasks.SQLRepeatRecord.objects.filter')
     def test__get_ids_payload_id_in_data(self, get_by_payload_id):
         payload_id = Mock()
-        _get_repeat_record_ids(payload_id, None, 'test_domain', False)
+        _get_repeat_record_ids(payload_id, None, 'test_domain')
 
         self.assertEqual(get_by_payload_id.call_count, 1)
         get_by_payload_id.assert_called_with(domain='test_domain', payload_id=payload_id)
@@ -36,7 +36,7 @@ class TestUtils(SimpleTestCase):
     @patch('corehq.apps.data_interfaces.tasks.SQLRepeatRecord.objects.filter')
     def test__get_ids_payload_id_not_in_data(self, iter_by_repeater):
         REPEATER_ID = 'c0ffee'
-        _get_repeat_record_ids(None, REPEATER_ID, 'test_domain', False)
+        _get_repeat_record_ids(None, REPEATER_ID, 'test_domain')
 
         iter_by_repeater.assert_called_with(domain='test_domain', repeater__id=REPEATER_ID)
         self.assertEqual(iter_by_repeater.call_count, 1)
@@ -100,15 +100,15 @@ class TestTasks(TestCase):
         payload_id = 'c0ffee'
         repeater_id = 'deadbeef'
         task_generate_ids_and_operate_on_payloads(
-            payload_id, repeater_id, 'test_domain', 'test_action', False)
+            payload_id, repeater_id, 'test_domain', 'test_action')
 
         mock__get_ids.assert_called_once()
         mock__get_ids.assert_called_with(
-            'c0ffee', 'deadbeef', 'test_domain', False)
+            'c0ffee', 'deadbeef', 'test_domain')
 
         mock_operate_on_payloads.assert_called_once()
         mock_operate_on_payloads.assert_called_with(
-            record_ids, 'test_domain', 'test_action', False,
+            record_ids, 'test_domain', 'test_action',
             task=task_generate_ids_and_operate_on_payloads)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
@@ -167,7 +167,7 @@ class TestTasks(TestCase):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
         response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
-                                       'resend', False, task=Mock())
+                                       'resend', task=Mock())
         expected_response = {
             'messages': {
                 'errors': [],
@@ -192,8 +192,7 @@ class TestTasks(TestCase):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
         response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
-                                       'resend', False, task=Mock(),
-                                       from_excel=True)
+                                       'resend', task=Mock(), from_excel=True)
         expected_response = {
             'errors': [],
             'success': ['Successfully resent repeat record '
@@ -260,7 +259,7 @@ class TestTasks(TestCase):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
         response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
-                                       'cancel', False, task=Mock())
+                                       'cancel', task=Mock())
         expected_response = {
             'messages': {
                 'errors': [],
@@ -285,8 +284,7 @@ class TestTasks(TestCase):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
         response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
-                                       'cancel', False, task=Mock(),
-                                       from_excel=True)
+                                       'cancel', task=Mock(), from_excel=True)
         expected_response = {
             'errors': [],
             'success': ['Successfully cancelled repeat record '
@@ -353,7 +351,7 @@ class TestTasks(TestCase):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
         response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
-                                       'requeue', False, task=Mock())
+                                       'requeue', task=Mock())
         expected_response = {
             'messages': {
                 'errors': [],
@@ -378,8 +376,7 @@ class TestTasks(TestCase):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
         response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
-                                       'requeue', False, task=Mock(),
-                                       from_excel=True)
+                                       'requeue', task=Mock(), from_excel=True)
         expected_response = {
             'errors': [],
             'success': ['Successfully requeued repeat record '
@@ -402,8 +399,7 @@ class TestTasks(TestCase):
         self.mock_payload_two.fire.side_effect = [Exception('Boom!')]
 
         response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
-                                       'resend', False, task=Mock(),
-                                       from_excel=True)
+                                       'resend', task=Mock(), from_excel=True)
         expected_response = {
             'errors': ['Could not perform action for repeat record '
                        f'(id={self.mock_payload_two.id}): Boom!'],
@@ -428,8 +424,7 @@ class TestTasks(TestCase):
         self.mock_payload_two.cancel.side_effect = [Exception('Boom!')]
 
         response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
-                                       'cancel', False, task=Mock(),
-                                       from_excel=True)
+                                       'cancel', task=Mock(), from_excel=True)
         expected_response = {
             'errors': ['Could not perform action for repeat record '
                        f'(id={self.mock_payload_two.id}): Boom!'],
@@ -456,8 +451,7 @@ class TestTasks(TestCase):
         self.mock_payload_two.requeue.side_effect = [Exception('Boom!')]
 
         response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
-                                       'requeue', False, task=Mock(),
-                                       from_excel=True)
+                                       'requeue', task=Mock(), from_excel=True)
         expected_response = {
             'errors': ['Could not perform action for repeat record '
                        f'(id={self.mock_payload_two.id}): Boom!'],
@@ -519,18 +513,13 @@ class TestGetRepeatRecordIDs(TestCase):
         SQLRepeatRecord.objects.bulk_create(cls.sql_records)
 
     def test_no_payload_id_no_repeater_id_sql(self):
-        result = _get_repeat_record_ids(payload_id=None, repeater_id=None,
-                                        domain=DOMAIN, use_sql=True)
+        result = _get_repeat_record_ids(payload_id=None, repeater_id=None, domain=DOMAIN)
         self.assertEqual(result, [])
 
     def test_payload_id_sql(self):
-        result = _get_repeat_record_ids(payload_id=self.instance_id,
-                                        repeater_id=None,
-                                        domain=DOMAIN, use_sql=True)
+        result = _get_repeat_record_ids(payload_id=self.instance_id, repeater_id=None, domain=DOMAIN)
         self.assertEqual(set(result), {r.pk for r in self.sql_records})
 
     def test_repeater_id_sql(self):
-        result = _get_repeat_record_ids(payload_id=None,
-                                        repeater_id=self.repeater.repeater_id,
-                                        domain=DOMAIN, use_sql=True)
+        result = _get_repeat_record_ids(payload_id=None, repeater_id=self.repeater.repeater_id, domain=DOMAIN)
         self.assertEqual(set(result), {r.pk for r in self.sql_records})
