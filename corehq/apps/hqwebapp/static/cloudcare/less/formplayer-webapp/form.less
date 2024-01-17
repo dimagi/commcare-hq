@@ -73,7 +73,7 @@
   }
 
   .stripe-repeats {
-    .gr {
+    > .row, .panel-body > .children > .row {
       &:nth-of-type(odd) {
         background-color: @table-bg-accent;
       }
@@ -222,10 +222,19 @@
 .question-tile-row {
   display: flex;
   align-items: top;
+  margin-left: 10px;
+  margin-right: 10px;
   * .form-group, * p, * .control-label {
     padding-top: 0px !important;
     padding-bottom: 0px !important;
     margin-top: 0px !important;
     margin-bottom: 0px !important;
+  }
+}
+
+.question-tile-row {
+  .gr {
+    padding-right: 0px !important;
+    padding-left: 0px !important;
   }
 }
