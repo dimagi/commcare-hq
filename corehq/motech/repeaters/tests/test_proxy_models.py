@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from django.test import TestCase
 
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
@@ -45,7 +43,7 @@ class TestRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):
         for r in self.repeater_classes:
             mock_data = self.repeater_data
             r(
-                domain=mock_data['domain'], connection_settings=self.conn, repeater_id=uuid4().hex
+                domain=mock_data['domain'], connection_settings=self.conn
             ).save()
 
     def test_repeater_all_returns_correct_instance(self):

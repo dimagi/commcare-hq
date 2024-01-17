@@ -69,7 +69,7 @@ import traceback
 import uuid
 import warnings
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.db import models
@@ -135,8 +135,8 @@ from .const import (
     RECORD_EMPTY_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
-    RECORD_STATES,
     RECORD_SUCCESS_STATE,
+    State,
 )
 from .dbaccessors import (
     get_cancelled_repeat_record_count,
@@ -196,12 +196,6 @@ class RepeaterSuperProxy(models.Model):
     def save(self, *args, **kwargs):
         self.clear_caches()
         self.repeater_type = self._repeater_type
-        # For first save when reepater is created
-        # If repeater_id is not set then set one
-        if not self.repeater_id:
-            self.repeater_id = uuid.uuid4().hex
-        if self.id is None:
-            self.id = uuid.UUID(self.repeater_id)
         self.name = self.name or self.connection_settings.name
         return super().save(*args, **kwargs)
 
@@ -248,8 +242,7 @@ class RepeaterManager(models.Manager):
             | models.Q(next_attempt_at__lte=timezone.now())
         )
         repeat_records_ready_to_send = models.Q(
-            repeat_records__state__in=(RECORD_PENDING_STATE,
-                                       RECORD_FAILURE_STATE)
+            repeat_records__state__in=(State.Pending, State.Fail)
         )
         return (self.get_queryset()
                 .filter(not_paused)
@@ -269,9 +262,8 @@ class RepeaterManager(models.Manager):
 
 @foreign_init
 class Repeater(RepeaterSuperProxy):
-    id = models.UUIDField(primary_key=True, db_column="id_")
+    id = models.UUIDField(primary_key=True, db_column="id_", default=uuid.uuid4)
     domain = CharIdField(max_length=126, db_index=True)
-    repeater_id = models.CharField(max_length=36, unique=True)
     name = models.CharField(max_length=255, null=True)
     format = models.CharField(max_length=64, null=True)
     request_method = models.CharField(
@@ -307,6 +299,10 @@ class Repeater(RepeaterSuperProxy):
         return ConnectionSettings.objects.get(id=id_, domain=self.domain)
 
     connection_settings = ForeignObject(connection_settings_id, _get_connection_settings)
+
+    @property
+    def repeater_id(self):
+        return self.id.hex
 
     @cached_property
     def _optionvalue_fields(self):
@@ -368,8 +364,7 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def repeat_records_ready(self):
-        return self.repeat_records.filter(state__in=(RECORD_PENDING_STATE,
-                                                     RECORD_FAILURE_STATE))
+        return self.repeat_records.filter(state__in=(State.Pending, State.Fail))
 
     @property
     def is_ready(self):
@@ -999,13 +994,13 @@ class RepeatRecord(Document):
     @memoized
     def repeater(self):
         try:
-            return Repeater.objects.get(repeater_id=self.repeater_id)
+            return Repeater.objects.get(id=self.repeater_id)
         except Repeater.DoesNotExist:
             return None
 
     def is_repeater_deleted(self):
         try:
-            return Repeater.all_objects.values_list("is_deleted", flat=True).get(repeater_id=self.repeater_id)
+            return Repeater.all_objects.values_list("is_deleted", flat=True).get(id=self.repeater_id)
         except Repeater.DoesNotExist:
             return True
 
@@ -1124,14 +1119,6 @@ class RepeatRecord(Document):
                 self.add_attempt(attempt)
                 self.save()
 
-    @staticmethod
-    def _format_response(response):
-        if not is_response(response):
-            return None
-        response_body = getattr(response, "text", "")[:MAX_REQUEST_LOG_LENGTH]
-        return '{}: {}.\n{}'.format(
-            response.status_code, response.reason, response_body)
-
     def handle_success(self, response):
         """
         Log success in Datadog and return a success RepeatRecordAttempt.
@@ -1155,7 +1142,7 @@ class RepeatRecord(Document):
             cancelled=(response.status_code == 204),
             datetime=now,
             failure_reason=None,
-            success_response=self._format_response(response),
+            success_response=format_response(response),
             next_check=None,
             succeeded=True,
             info=self.get_attempt_info(),
@@ -1164,7 +1151,7 @@ class RepeatRecord(Document):
     def handle_failure(self, response):
         """Do something with the response if the repeater fails
         """
-        return self._make_failure_attempt(self._format_response(response), response)
+        return self._make_failure_attempt(format_response(response), response)
 
     def handle_exception(self, exception):
         """handle internal exceptions
@@ -1252,29 +1239,49 @@ class SQLRepeatRecord(models.Model):
                                  on_delete=DB_CASCADE,
                                  db_column="repeater_id_",
                                  related_name='repeat_records')
-    state = models.TextField(choices=RECORD_STATES,
-                             default=RECORD_PENDING_STATE)
+    state = models.PositiveSmallIntegerField(choices=State.choices, default=State.Pending)
     registered_at = models.DateTimeField()
+    next_check = models.DateTimeField(null=True, default=None)
+    max_possible_tries = models.IntegerField(default=MAX_BACKOFF_ATTEMPTS)
 
     class Meta:
         db_table = 'repeaters_repeatrecord'
         indexes = [
             models.Index(fields=['domain']),
-            models.Index(fields=['couch_id']),
             models.Index(fields=['payload_id']),
             models.Index(fields=['registered_at']),
+            models.Index(
+                name="next_check_not_null",
+                fields=["next_check"],
+                condition=models.Q(next_check__isnull=False),
+            )
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                name="unique_couch_id",
+                fields=['couch_id'],
+                condition=models.Q(couch_id__isnull=False),
+            ),
+            models.CheckConstraint(
+                name="next_check_pending_or_null",
+                check=(
+                    models.Q(next_check__isnull=True)
+                    | models.Q(next_check__isnull=False, state=State.Pending)
+                    | models.Q(next_check__isnull=False, state=State.Fail)
+                )
+            ),
         ]
         ordering = ['registered_at']
 
     def requeue(self):
         # Changing "success" to "pending" and "cancelled" to "failed"
         # preserves the value of `self.failure_reason`.
-        if self.state == RECORD_SUCCESS_STATE:
-            self.state = RECORD_PENDING_STATE
-            self.save()
-        elif self.state == RECORD_CANCELLED_STATE:
-            self.state = RECORD_FAILURE_STATE
-            self.save()
+        if self.state == State.Success:
+            self.state = State.Pending
+        elif self.state == State.Cancelled:
+            self.state = State.Fail
+        self.next_check = datetime.utcnow()
+        self.save()
 
     def add_success_attempt(self, response):
         """
@@ -1282,11 +1289,12 @@ class SQLRepeatRecord(models.Model):
         payload did not result in an API call.
         """
         self.repeater.reset_next_attempt()
-        self.sqlrepeatrecordattempt_set.create(
-            state=RECORD_SUCCESS_STATE,
+        self.attempt_set.create(
+            state=State.Success,
             message=format_response(response) or '',
         )
-        self.state = RECORD_SUCCESS_STATE
+        self.state = State.Success
+        self.next_check = None
         self.save()
 
     def add_client_failure_attempt(self, message, retry=True):
@@ -1314,28 +1322,28 @@ class SQLRepeatRecord(models.Model):
 
     def _add_failure_attempt(self, message, max_attempts, retry=True):
         if retry and self.num_attempts < max_attempts:
-            state = RECORD_FAILURE_STATE
+            state = State.Fail
         else:
-            state = RECORD_CANCELLED_STATE
-        self.sqlrepeatrecordattempt_set.create(
-            state=state,
-            message=message,
-        )
+            state = State.Cancelled
+        self.attempt_set.create(state=state, message=message)
         self.state = state
+        if state == State.Cancelled:
+            self.next_check = None
         self.save()
 
     def add_payload_exception_attempt(self, message, tb_str):
-        self.sqlrepeatrecordattempt_set.create(
-            state=RECORD_CANCELLED_STATE,
+        self.attempt_set.create(
+            state=State.Cancelled,
             message=message,
             traceback=tb_str,
         )
-        self.state = RECORD_CANCELLED_STATE
+        self.state = State.Cancelled
+        self.next_check = None
         self.save()
 
     @property
     def attempts(self):
-        return self.sqlrepeatrecordattempt_set.all()
+        return self.attempt_set.all()
 
     @property
     def num_attempts(self):
@@ -1382,8 +1390,9 @@ class SQLRepeatRecord(models.Model):
 
 
 class SQLRepeatRecordAttempt(models.Model):
-    repeat_record = models.ForeignKey(SQLRepeatRecord, on_delete=DB_CASCADE)
-    state = models.TextField(choices=RECORD_STATES)
+    repeat_record = models.ForeignKey(
+        SQLRepeatRecord, on_delete=DB_CASCADE, related_name="attempt_set")
+    state = models.PositiveSmallIntegerField(choices=State.choices)
     message = models.TextField(blank=True, default='')
     traceback = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(default=timezone.now)
@@ -1497,21 +1506,20 @@ def send_request(
             else:
                 retry = allow_retries(response)
                 repeat_record.add_client_failure_attempt(message, retry)
-    return repeat_record.state in (RECORD_SUCCESS_STATE,
-                                   RECORD_CANCELLED_STATE)  # Don't retry
+    return repeat_record.state in (State.Success, State.Cancelled, State.Empty)  # Don't retry
 
 
 def is_queued(record):
-    return record.state in (RECORD_PENDING_STATE, RECORD_FAILURE_STATE)
+    return record.state in (State.Pending, State.Fail)
 
 
 def has_failed(record):
-    return record.state in (RECORD_FAILURE_STATE, RECORD_CANCELLED_STATE)
+    return record.state in (State.Fail, State.Cancelled)
 
 
-def format_response(response) -> Optional[str]:
+def format_response(response):
     if not is_response(response):
-        return None
+        return ''
     response_text = getattr(response, "text", "")[:MAX_REQUEST_LOG_LENGTH]
     if response_text:
         return f'{response.status_code}: {response.reason}\n{response_text}'
