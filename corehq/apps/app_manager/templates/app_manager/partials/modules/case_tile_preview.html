@@ -13,7 +13,9 @@
           'grid-row-end': tileRowEnd,
           'grid-column-start': tileColumnStart,
           'grid-column-end': tileColumnEnd,
-      }">
+      }, css: {
+          'odd-tab': $parent.tabPolarity($data),
+      },">
       <div class="content" data-bind="style: {
         'justify-self': horizontalAlign,
         'text-align': horizontalAlign,
