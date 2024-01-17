@@ -42,6 +42,20 @@ class LocationV6Test(APIResourceTest):
             metadata={"population": "715,522"}
         )
 
+        self.county = LocationType.objects.create(
+            domain=self.domain.name,
+            name="County",
+            code="county",
+            parent_type=self.parent_type
+        )
+        self.south_park = SQLLocation.objects.create(
+            domain=self.domain.name,
+            location_id="22",
+            name="south park",
+            site_code="south_park",
+            location_type=self.county
+        )
+
     def single_endpoint(self, location_id):
         return absolute_reverse('api_dispatch_detail', kwargs={
             'resource_name': self.resource._meta.resource_name,
@@ -111,3 +125,56 @@ class LocationV6Test(APIResourceTest):
             "parent_location_id": "1",
             "site_code": "denver"
         }, response.json())
+
+    def test_post(self):
+        post_data = {
+            "latitude": 31.1234,
+            "location_data": {
+                "city_pop": "729"
+            },
+            "location_type_code": "city",
+            "longitude": 32.5678,
+            "name": "Fairplay",
+            "parent_location_id": "1",
+            "site_code": "fairplay"
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint, post_data)
+        self.assertEqual(response.status_code, 201)
+
+        created_location = SQLLocation.objects.get(name="Fairplay")
+        post_data_location_data = post_data.pop('location_data')
+        created_location_json = created_location.to_json()
+        self.assertTrue(all(
+            key_value_pair in created_location_json.items()
+            for key_value_pair in post_data.items()))
+        self.assertTrue(all(
+            key_value_pair in created_location_json['metadata'].items()
+            for key_value_pair in post_data_location_data.items()))
+
+    def test_put_general(self):
+        put_data = {
+            "name": "New Denver",
+            "site_code": "new denver",
+            "longitude": 33.9012,
+            "parent_location_id": self.south_park.location_id
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
+                                                   put_data, method='PUT')
+        self.assertEqual(response.status_code, 200)
+
+        self.location2_updated = SQLLocation.objects.get(location_id=self.location2.location_id)
+        self.assertEqual(self.location2_updated.name, "New Denver")
+        self.assertEqual(self.location2_updated.site_code, "new denver")
+        self.assertEqual(float(self.location2_updated.longitude), 33.9012)
+        self.assertEqual(self.location2_updated.parent.location_id, self.south_park.location_id)
+
+    def test_put_location_type(self):
+        put_data = {
+            "location_type_code": self.county.code
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
+                                                   put_data, method='PUT')
+        self.assertTrue(response.status_code, 200)
+
+        self.location2_updated = SQLLocation.objects.get(location_id=self.location2.location_id)
+        self.assertEqual(self.location2_updated.location_type.code, self.county.code)
