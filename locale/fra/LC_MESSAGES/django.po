@@ -4106,6 +4106,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
+msgid "Format \"{}\" should be used in the Case Detail not Case List."
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
 msgid "Column/Field \"{}\": Clickable Icons require a form to be configured."
 msgstr ""
 
@@ -11813,7 +11817,7 @@ msgid "Success with warnings"
 msgstr "Succès avec les avertissements"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/reports/filters/select.py corehq/motech/repeaters/const.py
+#: corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Failed"
 msgstr "Échoué "
@@ -12410,12 +12414,12 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid ""
 "\n"
-"                  Please correct the answers below before submitting.\n"
-"                  <br>\n"
-"                  You can use the <strong><i class='fa fa-fast-forward'></i> "
+"              Please correct the answers below before submitting.\n"
+"              <br>\n"
+"              You can use the <strong><i class='fa fa-fast-forward'></i> "
 "Next Error</strong> button on the left-hand side of the screen to navigate "
 "between required fields.\n"
-"                "
+"            "
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
@@ -12429,11 +12433,11 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid ""
 "\n"
-"                  You can use this button to navigate between questions that "
-"are required but missing or that contain errors.\n"
-"                  You will also see a summary of questions that need "
-"attention at the bottom of the form.\n"
-"                "
+"              You can use this button to navigate between questions that are "
+"required but missing or that contain errors.\n"
+"              You will also see a summary of questions that need attention "
+"at the bottom of the form.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
@@ -13407,11 +13411,29 @@ msgid "Add Case Type"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid "Show Deprecated Properties"
+msgid "Show Deprecated Case Types"
+msgstr "Afficher les propriétés obsolètes"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid "Hide Deprecated Properties"
+msgid "Hide Deprecated Case Types"
+msgstr "Masquer les propriétés obsolètes"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Create a new Case Type"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "A case type with this name already exists."
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"Invalid case type name. It should start with a letter, and only contain "
+"letters, numbers, '-', and '_'"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -13495,11 +13517,23 @@ msgid "A case property with this name already exists."
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"Invalid case property name. It should start with a letter, and only contain "
+"letters, numbers, '-', and '_'"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add Case Property Group"
 msgstr "Ajouter un groupe de propriété de dossier"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "A case property group with this name already exists."
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"Invalid case group name. It should start with a letter, and only contain "
+"letters, numbers, '-', and '_'"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -16049,10 +16083,8 @@ msgid "Action Type"
 msgstr "Type d'action"
 
 #: corehq/apps/domain/templates/domain/admin/edit_alert.html
-#, fuzzy
-#| msgid "Edit Report"
 msgid "Edit Alert"
-msgstr "Editer rapport"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html
 #: corehq/apps/domain/views/settings.py corehq/apps/linked_domain/const.py
@@ -18486,10 +18518,8 @@ msgid "There was an error saving your alert. Please try again!"
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-#, fuzzy
-#| msgid "Edit Product"
 msgid "Edit Project Alert"
-msgstr "Modifier produit"
+msgstr ""
 
 #: corehq/apps/domain/views/settings.py
 msgid "Alert not found!"
@@ -22316,16 +22346,12 @@ msgid "Owner ID"
 msgstr "Identifiant de propriétaire"
 
 #: corehq/apps/geospatial/reports.py
-#, fuzzy
-#| msgid "User Name"
 msgid "Owner Name"
-msgstr "Nom d'utilisateur"
+msgstr ""
 
 #: corehq/apps/geospatial/reports.py
-#, fuzzy
-#| msgid "Coordinates"
 msgid "Case Coordinates"
-msgstr "Coordonnées "
+msgstr ""
 
 #: corehq/apps/geospatial/reports.py corehq/apps/linked_domain/views.py
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
@@ -22583,14 +22609,6 @@ msgid ""
 "\n"
 "        Previous disbursement was cleared.\n"
 "    "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/map_visualization.html
-msgid "Cases Missing GPS Data"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/map_visualization.html
-msgid "Mobile Workers Missing GPS Data"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
@@ -28920,8 +28938,8 @@ msgstr ""
 "La clé d'activation \"%s\" fournie n'est pas valide. Si vous pensez qu'il "
 "s'agit d'une erreur, veuillez contacter l'administrateur système."
 
-#: corehq/apps/registry/models.py corehq/apps/reports/filters/select.py
-#: corehq/apps/sms/models.py corehq/motech/repeaters/const.py
+#: corehq/apps/registry/models.py corehq/apps/sms/models.py
+#: corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Pending"
@@ -30197,16 +30215,6 @@ msgstr "Cliquez pour sélectionner des répéteurs"
 #: corehq/apps/reports/filters/select.py
 msgid "Record Status"
 msgstr "Statut du rapport"
-
-#: corehq/apps/reports/filters/select.py
-msgid "Successful"
-msgstr "Succès"
-
-#: corehq/apps/reports/filters/select.py corehq/motech/repeaters/const.py
-#: corehq/motech/repeaters/templates/repeaters/repeaters.html
-#: corehq/motech/repeaters/views/repeat_record_display.py
-msgid "Cancelled"
-msgstr "Annulé"
 
 #: corehq/apps/reports/filters/simple.py
 #: corehq/motech/repeaters/views/repeat_records.py
@@ -43809,6 +43817,12 @@ msgstr ""
 msgid "Succeeded"
 msgstr ""
 
+#: corehq/motech/repeaters/const.py
+#: corehq/motech/repeaters/templates/repeaters/repeaters.html
+#: corehq/motech/repeaters/views/repeat_record_display.py
+msgid "Cancelled"
+msgstr "Annulé"
+
 #: corehq/motech/repeaters/expression/forms.py
 msgid ""
 "Items to add to the end of the URL. Please see the documentation for more "
@@ -43906,6 +43920,12 @@ msgstr "Transférer les utilisateurs"
 #: corehq/motech/repeaters/models.py
 msgid "Forward Locations"
 msgstr "Transférer les sites"
+
+#: corehq/motech/repeaters/models.py
+#, fuzzy
+#| msgid "Create Data Source"
+msgid "Forward Data Source Data"
+msgstr "Créer source de données"
 
 #: corehq/motech/repeaters/repeater_generators.py
 msgid "XML"
@@ -45660,3 +45680,6 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "Successful"
+#~ msgstr "Succès"
