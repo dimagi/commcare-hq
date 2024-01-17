@@ -43,9 +43,9 @@ class LocationResource(v0_5.LocationResource):
         return bundle
 
     def obj_create(self, bundle, **kwargs):
-        if 'domain' not in bundle.data or 'name' not in bundle.data:
-            raise BadRequest("'domain' and 'name' are required fields.")
-        domain = bundle.data.pop('domain')
+        domain = kwargs['domain']
+        if 'name' not in bundle.data:
+            raise BadRequest("'name' is a required field.")
         if SQLLocation.objects.filter(domain=domain, site_code=bundle.data['site_code']).exists():
             raise BadRequest("Location on domain with site code already exists.")
         bundle.obj = SQLLocation(domain=domain)

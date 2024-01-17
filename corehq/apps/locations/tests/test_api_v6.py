@@ -128,7 +128,6 @@ class LocationV6Test(APIResourceTest):
 
     def test_post(self):
         post_data = {
-            "domain": self.domain.name,
             "latitude": 31.1234,
             "location_data": {
                 "city_pop": "729"
