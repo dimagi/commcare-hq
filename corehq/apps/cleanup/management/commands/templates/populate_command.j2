@@ -32,18 +32,3 @@ class Command(PopulateSQLCommand):
         helpers.
         """
         return None
-
-    def update_or_create_sql_object(self, doc):
-        model, created = self.sql_class().objects.update_or_create(
-            couch_id=doc['_id'],
-            defaults={
-                {%- for update in suggested_updates %}
-                {{ update }}
-                {%- endfor %}
-            })
-        {%- if submodels %}
-        {%- for model in submodels %}
-        # add code to migrate {{ class_name }}.{{ model }}
-        {%- endfor %}
-        {%- endif %}
-        return model, created
