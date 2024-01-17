@@ -179,7 +179,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var showDetail = function (model, detailTabIndex, caseId, isMultiSelect) {
-        var detailObjects = model.models;
+        var detailObjects = model.filter(function (d) {
+            const styles = d.get('styles');
+            const visibleStyle = _.find(styles, s => s.displayFormat !== constants.FORMAT_ADDRESS_POPUP);
+            return typeof visibleStyle !== 'undefined';
+        });
+
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
             if (isMultiSelect) {
@@ -252,10 +257,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.header = headers[i];
             obj.style = styles[i];
             obj.id = i;
-            if (obj.style.displayFormat === 'Markdown') {
+            if (obj.style.displayFormat === constants.FORMAT_MARKDOWN) {
                 obj.html = markdown.render(details[i]);
             }
-            detailModel.push(obj);
+            if (obj.style.displayFormat !== constants.FORMAT_ADDRESS_POPUP) {
+                detailModel.push(obj);
+            }
         }
         var detailCollection = new Backbone.Collection();
         detailCollection.reset(detailModel);
@@ -282,6 +289,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
         return views.PersistentCaseTileView({
             model: detailModel,
+            headers: detailObject.headers,
             styles: detailObject.styles,
             tiles: detailObject.tiles,
             maxWidth: detailObject.maxWidth,

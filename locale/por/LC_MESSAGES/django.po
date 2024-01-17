@@ -2923,6 +2923,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
@@ -5657,6 +5658,7 @@ msgstr "Organizador das Visitas"
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
@@ -9278,7 +9280,7 @@ msgid "Horizontal Align"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
-msgid "Vertial Align"
+msgid "Vertical Align"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
@@ -12884,6 +12886,12 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/bulk.py
 msgid ""
+"Invalid sheet name \"{}\". It should start with a letter, and only contain "
+"letters, numbers, \"-\", and \"_\""
+msgstr ""
+
+#: corehq/apps/data_dictionary/bulk.py
+msgid ""
 "The \"Data Type\" column values were ignored during the import as they are "
 "an unsupported format in the Data Dictionary"
 msgstr ""
@@ -13154,6 +13162,12 @@ msgid "Case property must have a name"
 msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
+msgid ""
+"Invalid case property name. It should start with a letter, and only contain "
+"letters, numbers, \"-\", and \"_\""
+msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
 msgid "Unable to save valid values longer than {} characters"
 msgstr ""
 
@@ -13360,7 +13374,7 @@ msgid "Reassign"
 msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/data_interfaces/views.py
+#: corehq/apps/data_interfaces/views.py corehq/apps/geospatial/reports.py
 #: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/geospatial/templates/map_visualization.html
 #: corehq/apps/reports/v2/reports/explore_case_data.py
@@ -15336,10 +15350,6 @@ msgstr ""
 msgid "Using project's timezone: {}"
 msgstr ""
 
-#: corehq/apps/domain/forms.py
-msgid "Add New Alert"
-msgstr ""
-
 #: corehq/apps/domain/models.py
 msgid "Transfer domain request is no longer active"
 msgstr ""
@@ -15518,6 +15528,12 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/commtrack_action_table.html
 msgid "Action Type"
 msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/edit_alert.html
+#, fuzzy
+#| msgid "Edit Report"
+msgid "Edit Alert"
+msgstr "Editar Relatório"
 
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html
 #: corehq/apps/domain/views/settings.py corehq/apps/linked_domain/const.py
@@ -15704,6 +15720,10 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/location_fixture.html
 msgid "Location Fixture Settings"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+msgid "Add New Alert"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
@@ -17874,6 +17894,12 @@ msgid "There was an error saving your alert. Please try again!"
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
+#, fuzzy
+#| msgid "Project Reports"
+msgid "Edit Project Alert"
+msgstr "Relatórios do Projecto"
+
+#: corehq/apps/domain/views/settings.py
 msgid "Alert not found!"
 msgstr ""
 
@@ -17882,7 +17908,7 @@ msgid "Alert was removed!"
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-msgid "Only 3 active alerts allowed!"
+msgid "Alert not updated. Only 3 active alerts allowed."
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
@@ -21654,6 +21680,10 @@ msgid "Target Size Grouping"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
+msgid "Case Management Map"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py
 msgid "case_id"
 msgstr ""
 
@@ -21666,11 +21696,34 @@ msgid "link"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
-msgid "Case Management Map"
+msgid "Case Grouping"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
-msgid "Case Grouping"
+#: corehq/apps/userreports/reports/builder/forms.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Case ID"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py corehq/motech/openmrs/forms.py
+msgid "Owner ID"
+msgstr ""
+
+#: corehq/apps/geospatial/reports.py
+#, fuzzy
+#| msgid "Owner"
+msgid "Owner Name"
+msgstr "Proprietário"
+
+#: corehq/apps/geospatial/reports.py
+#, fuzzy
+#| msgid "# Cases Created"
+msgid "Case Coordinates"
+msgstr "# Casos Criados"
+
+#: corehq/apps/geospatial/reports.py corehq/apps/linked_domain/views.py
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
+msgid "Link"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/case_grouping_map.html
@@ -21916,6 +21969,13 @@ msgid ""
 "        Please ensure that the filtered area includes both cases and mobile "
 "workers before\n"
 "        attempting to run disbursement.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid ""
+"\n"
+"        Previous disbursement was cleared.\n"
 "    "
 msgstr ""
 
@@ -25797,11 +25857,6 @@ msgid "Unknown Keyword"
 msgstr ""
 
 #: corehq/apps/linked_domain/views.py
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
-msgid "Link"
-msgstr ""
-
-#: corehq/apps/linked_domain/views.py
 msgid "Date ({})"
 msgstr ""
 
@@ -29626,6 +29681,10 @@ msgid "unknown product"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
+msgid "The part of your search query that caused this error is: "
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_list_explorer.py
 #: corehq/privileges.py
 msgid "Case List Explorer"
 msgstr "Explorador de Lista de Casos"
@@ -29634,10 +29693,6 @@ msgstr "Explorador de Lista de Casos"
 msgid ""
 "Use Case List Explorer to run deep searches on your cases by case "
 "properties.  "
-msgstr ""
-
-#: corehq/apps/reports/standard/cases/case_list_explorer.py
-msgid "The part of your search query that caused this error is: "
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/data_sources.py
@@ -35810,11 +35865,6 @@ msgstr "Proprietário do Caso"
 
 #: corehq/apps/userreports/reports/builder/forms.py
 msgid "Mobile Worker Last Updating Case"
-msgstr ""
-
-#: corehq/apps/userreports/reports/builder/forms.py
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Case ID"
 msgstr ""
 
 #: corehq/apps/userreports/reports/builder/forms.py
@@ -42408,10 +42458,6 @@ msgstr ""
 msgid ""
 "ID \"%(id_)s\" used in \"match_on_ids\" is missing from "
 "\"patient_identifiers\"."
-msgstr ""
-
-#: corehq/motech/openmrs/forms.py
-msgid "Owner ID"
 msgstr ""
 
 #: corehq/motech/openmrs/forms.py
