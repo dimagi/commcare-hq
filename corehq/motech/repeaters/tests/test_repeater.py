@@ -39,7 +39,7 @@ from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
-    RECORD_SUCCESS_STATE,
+    State,
 )
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import (
@@ -255,7 +255,8 @@ class RepeaterTest(BaseRepeaterTest):
         self.assertIsNone(record.last_checked)
 
         attempt = record.make_set_next_try_attempt(None)
-        record.add_attempt(attempt)
+        with patch.object(RepeatRecord, "_migration_do_sync"):
+            record.add_attempt(attempt)
         self.assertTrue(record.last_checked > now)
         self.assertEqual(record.next_check, record.last_checked + MIN_RETRY_WAIT)
 
@@ -311,6 +312,7 @@ class RepeaterTest(BaseRepeaterTest):
         # Do not trigger cancelled records
         for repeat_record in self.repeat_records():
             repeat_record.cancelled = True
+            repeat_record.next_check = None
             repeat_record.save()
         with patch('corehq.motech.repeaters.models.simple_request') as mock_fire:
             check_repeaters()
@@ -326,7 +328,7 @@ class RepeaterTest(BaseRepeaterTest):
 
         # all records should be in SUCCESS state after force try
         for repeat_record in self.repeat_records():
-            self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
+            self.assertEqual(repeat_record.state, State.Success)
             self.assertEqual(repeat_record.overall_tries, 1)
 
         # not trigger records succeeded triggered after cancellation
@@ -334,7 +336,7 @@ class RepeaterTest(BaseRepeaterTest):
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
             for repeat_record in self.repeat_records():
-                self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
+                self.assertEqual(repeat_record.state, State.Success)
 
     def test_retry_process_repeat_record_locking(self):
         self.assertEqual(len(self.repeat_records()), 2)
@@ -382,6 +384,7 @@ class RepeaterTest(BaseRepeaterTest):
         # Do not trigger cancelled records
         for repeat_record in self.repeat_records():
             repeat_record.cancelled = True
+            repeat_record.next_check = None
             repeat_record.save()
         with patch('corehq.motech.repeaters.models.simple_request') as mock_fire, \
              patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
@@ -398,7 +401,7 @@ class RepeaterTest(BaseRepeaterTest):
 
         # all records should be in SUCCESS state after force try
         for repeat_record in self.repeat_records():
-            self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
+            self.assertEqual(repeat_record.state, State.Success)
             self.assertEqual(repeat_record.overall_tries, 1)
 
         # not trigger records succeeded triggered after cancellation
@@ -407,7 +410,7 @@ class RepeaterTest(BaseRepeaterTest):
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
             for repeat_record in self.repeat_records():
-                self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
+                self.assertEqual(repeat_record.state, State.Success)
 
     def test_check_repeaters_successfully_retries_using_multiple_partitions(self):
         self._create_additional_repeat_records(9)
@@ -738,6 +741,16 @@ class RepeaterFailureTest(BaseRepeaterTest):
 
         repeat_record = RepeatRecord.get(rr.record_id)
         self.assertTrue(repeat_record.succeeded)
+
+    def test_empty(self):
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
+        # Should be marked as successful after a successful run
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
+            mock_simple_post.return_value.status_code = 204
+            rr = self.repeater.register(case)
+
+        repeat_record = RepeatRecord.get(rr.record_id)
+        self.assertEqual(repeat_record.state, State.Empty)
 
 
 class IgnoreDocumentTest(BaseRepeaterTest):
