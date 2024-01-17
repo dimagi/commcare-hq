@@ -209,7 +209,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     Utils.getCurrentQueryInputs = function (queryKey) {
         const queryInputs = this.getQueryInputs();
         queryKey = queryKey || sessionStorage.queryKey;
-        return queryInputs[queryKey];
+        return queryInputs[queryKey] || {};
     };
 
     Utils.getStickyQueryInputs = function () {
