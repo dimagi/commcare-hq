@@ -119,7 +119,7 @@ CASE_LIST_EXPLORER = 'case_list_explorer'
 
 CASE_COPY = 'case_copy'
 
-DEDUPE = 'case_deduplicate'
+CASE_DEDUPE = 'case_deduplicate'
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
@@ -183,7 +183,7 @@ MAX_PRIVILEGES = [
     DATA_DICTIONARY,
     CASE_LIST_EXPLORER,
     CASE_COPY,
-    DEDUPE,
+    CASE_DEDUPE,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -261,5 +261,5 @@ class Titles(object):
             DATA_DICTIONARY: _("Project level data dictionary of cases"),
             CASE_LIST_EXPLORER: _("Case List Explorer"),
             CASE_COPY: _("Allow case copy from one user to another"),
-            DEDUPE: _("Deduplication Rules"),
+            CASE_DEDUPE: _("Deduplication Rules"),
         }.get(privilege, privilege)
