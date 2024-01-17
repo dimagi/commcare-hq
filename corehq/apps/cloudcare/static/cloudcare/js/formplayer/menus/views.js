@@ -243,6 +243,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         events: {
             "click @ui.clickIcon": "iconClick",
+            "keydown @ui.clickIcon": "iconKeyAction",
             "click": "rowClick",
             "keydown": "rowKeyAction",
             'click @ui.selectRow': 'selectRowAction',
@@ -295,6 +296,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
         },
 
+        iconKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.iconClick(e);
+            }
+        },
+
         getFieldIndexFromEvent: function (e) {
             return $(e.currentTarget).parent().parent().children('.module-case-list-column').index($(e.currentTarget).parent());
         },
@@ -330,7 +337,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
             urlObject.clickedIcon = true;
-            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true, true);
+            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
                 self.updateModelFromDetailResponse(caseId, detailResponse);
             }).fail(function () {
@@ -412,6 +419,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
+                headers: this.options.headers,
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
@@ -443,7 +451,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseTileView = CaseView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style",
+        className: "formplayer-request list-cell-wrapper-style panel panel-default",
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
@@ -465,9 +473,37 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const CaseTileViewUnclickable = CaseTileView.extend({
+        events: {},
+        className: "list-cell-wrapper-style panel panel-default",
+        rowClick: function () {},
+    });
+
+    var initCaseTileList = function (options) {
+        const numEntitiesPerRow = options.numEntitiesPerRow || 1;
+        const numRows = options.maxHeight;
+        const numColumns = options.maxWidth;
+        const useUniformUnits = options.useUniformUnits;
+
+        const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
+            numEntitiesPerRow, useUniformUnits, 'list');
+
+        const gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
+
+        $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
+        $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
+        // If we have multiple cases per line, need to generate the outer grid style as well
+        if (caseTileStyles.cellWrapperStyle && caseTileStyles.cellContainerStyle) {
+            $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle).data("css-polyfilled", false);
+            $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle).data("css-polyfilled", false);
+        }
+
+        $.getScript(gridPolyfillPath);
+    };
+
     const CaseTileGroupedView = CaseTileView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style case-tile-group",
+        className: "formplayer-request list-cell-wrapper-style case-tile-group panel panel-default",
         template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
@@ -532,7 +568,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const PersistentCaseTileView = CaseTileView.extend({
-        className: "formplayer-request",
+        className: function () {
+            return "persistent-sticky" + (this.options.hasInlineTile ? " formplayer-request": "");
+        },
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
@@ -585,6 +623,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
+                headers: this.options.headers,
                 endpointActions: this.options.endpointActions,
             };
         },
@@ -784,7 +823,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         verifySelectedCaseIdsLessThanMaxSelectValue: function () {
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
-                    "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
+                    "of <%- value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
                 hqRequire(["hqwebapp/js/bootstrap3/alert_user"], function (alertUser) {
                     alertUser.alert_user(errorMessage, 'danger');
                 });
@@ -864,6 +903,23 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                 }
 
                                 marker.on('click', () => {
+                                    if (popupIndex < 0) {
+                                        const urlObject = formplayerUtils.currentUrlToObject();
+                                        urlObject.addSelection(model.get('id'));
+                                        const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, false, false);
+                                        $.when(fetchingDetails).done(function (detailResponse) {
+                                            const attributes = Array.from(detailResponse)[0].attributes;
+                                            const popupIndexOnClick =
+                                                _.findIndex(attributes.styles, (style) => style.displayFormat === constants.FORMAT_ADDRESS_POPUP);
+                                            if (popupIndexOnClick >= 0) {
+                                                const popupTextOnClick = markdown.render(attributes.details[popupIndexOnClick]);
+                                                const p = L.popup().setContent(popupTextOnClick);
+                                                marker.bindPopup(p).openPopup();
+                                            }
+                                        }).fail(function () {
+                                            console.log('could not get case details');
+                                        });
+                                    }
                                     // tiles
                                     $(`.list-cell-wrapper-style[id!='${rowId}']`)
                                         .removeClass("highlighted-case");
@@ -939,7 +995,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
+            const paginateItems = formplayerUtils.paginateOptions(
+                this.options.currentPage,
+                this.options.pageCount,
+                this.options.collection.length
+            );
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
             let description = this.options.description;
             let title = this.options.title;
@@ -947,8 +1007,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 description = this.options.collection.queryResponse.description;
                 title = this.options.collection.queryResponse.title;
             }
-            return {
-                startPage: paginateItems.startPage,
+            return _.extend(paginateItems, {
                 title: title.trim(),
                 description: description === undefined ? "" : markdown.render(description.trim()),
                 selectText: this.selectText === undefined ? "" : this.selectText,
@@ -956,9 +1015,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
-                endPage: paginateItems.endPage,
-                pageCount: paginateItems.pageCount,
-                rowRange: [5, 10, 25, 50, 100],
                 limit: casesPerPage,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
@@ -980,8 +1036,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
-                pageNumLabel: _.template(gettext("Page <%-num%>")),
-            };
+            });
         },
     });
 
@@ -1061,26 +1116,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         initialize: function (options) {
             CaseTileListView.__super__.initialize.apply(this, arguments);
-
-            const numEntitiesPerRow = options.numEntitiesPerRow || 1;
-            const numRows = options.maxHeight;
-            const numColumns = options.maxWidth;
-            const useUniformUnits = options.useUniformUnits;
-
-            const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
-                numEntitiesPerRow, useUniformUnits, 'list');
-
-            const gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
-
-            $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
-            $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
-            // If we have multiple cases per line, need to generate the outer grid style as well
-            if (caseTileStyles.cellWrapperStyle && caseTileStyles.cellContainerStyle) {
-                $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle).data("css-polyfilled", false);
-                $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle).data("css-polyfilled", false);
-            }
-
-            $.getScript(gridPolyfillPath);
+            initCaseTileList(options);
 
             registerContinueListener(this, options);
         },
@@ -1187,6 +1223,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const CaseListDetailView = CaseListView.extend({
         template: _.template($("#case-view-list-detail-template").html() || ""),
         childView: CaseViewUnclickable,
+    });
+    const CaseTileDetailView = CaseListView.extend({
+        template: _.template($("#case-view-tile-detail-template").html() || ""),
+        childView: CaseTileViewUnclickable,
+
+        initialize: function (options) {
+            CaseTileDetailView.__super__.initialize.apply(this, arguments);
+            initCaseTileList(options);
+        },
+
+        childViewOptions: function () {
+            const dict = CaseTileDetailView.__super__.childViewOptions.apply(this, arguments);
+            dict.prefix = 'list';
+            return dict;
+        },
     });
 
     const BreadcrumbView = Marionette.View.extend({
@@ -1420,6 +1471,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         CaseListDetailView: function (options) {
             return new CaseListDetailView(options);
+        },
+        CaseTileDetailView: function (options) {
+            return new CaseTileDetailView(options);
         },
         CaseListView: function (options) {
             return new CaseListView(options);

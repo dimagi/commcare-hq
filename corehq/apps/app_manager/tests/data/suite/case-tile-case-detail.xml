@@ -1,0 +1,39 @@
+<partial>
+  <detail id="m0_case_long">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <field>
+      <style show-border="false" show-shading="false">
+        <grid grid-height="1" grid-width="4" grid-x="0" grid-y="0"/>
+      </style>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_artist_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="artist"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <style show-border="false" show-shading="false">
+        <grid grid-height="1" grid-width="4" grid-x="5" grid-y="0"/>
+      </style>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_name_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+</partial>

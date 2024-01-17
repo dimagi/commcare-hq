@@ -179,7 +179,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var showDetail = function (model, detailTabIndex, caseId, isMultiSelect) {
-        var detailObjects = model.models;
+        var detailObjects = model.filter(function (d) {
+            const styles = d.get('styles');
+            const visibleStyle = _.find(styles, s => s.displayFormat !== constants.FORMAT_ADDRESS_POPUP);
+            return typeof visibleStyle !== 'undefined';
+        });
+
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
             if (isMultiSelect) {
@@ -189,14 +194,20 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             }
             return;
         }
-        var detailObject = detailObjects[detailTabIndex];
-        var menuListView = getDetailList(detailObject);
-
         var tabModels = _.map(detailObjects, function (detail, index) {
             return {title: detail.get('title'), id: index, active: index === detailTabIndex};
         });
         var tabCollection = new Backbone.Collection();
         tabCollection.reset(tabModels);
+
+        let contentView;
+        const detailObject = detailObjects[detailTabIndex],
+            usesCaseTiles = detailObject.get('usesCaseTiles');
+        if (usesCaseTiles && !detailObject.get('entities')) {
+            contentView = getCaseTile(detailObject.toJSON());
+        } else {
+            contentView = getDetailList(detailObject);
+        }
 
         var tabListView = views.DetailTabListView({
             collection: tabCollection,
@@ -210,7 +221,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             isMultiSelect: isMultiSelect,
         });
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
-        $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
+        $('#case-detail-modal').find('.js-detail-content').html(contentView.render().el);
         $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
         $('#case-detail-modal').modal('show');
 
@@ -235,8 +246,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 collection: listCollection,
                 headers: detailObject.get('headers'),
                 styles: detailObject.get('styles'),
+                tiles: detailObject.get('tiles'),
                 title: detailObject.get('title'),
             };
+            if (detailObject.get('usesCaseTiles')) {
+                return views.CaseTileDetailView(menuData);
+            }
             return views.CaseListDetailView(menuData);
         }
 
@@ -252,10 +267,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.header = headers[i];
             obj.style = styles[i];
             obj.id = i;
-            if (obj.style.displayFormat === 'Markdown') {
+            if (obj.style.displayFormat === constants.FORMAT_MARKDOWN) {
                 obj.html = markdown.render(details[i]);
             }
-            detailModel.push(obj);
+            if (obj.style.displayFormat !== constants.FORMAT_ADDRESS_POPUP) {
+                detailModel.push(obj);
+            }
         }
         var detailCollection = new Backbone.Collection();
         detailCollection.reset(detailModel);
@@ -264,7 +281,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
     };
 
-    // return a case tile from a detail object (for persistent case tile)
+    // return a case tile from a detail object (for persistent case tile and case tile in case detail)
     var getCaseTile = function (detailObject) {
         var detailModel = new Backbone.Model({
             data: detailObject.details,
@@ -282,6 +299,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
         return views.PersistentCaseTileView({
             model: detailModel,
+            headers: detailObject.headers,
             styles: detailObject.styles,
             tiles: detailObject.tiles,
             maxWidth: detailObject.maxWidth,
