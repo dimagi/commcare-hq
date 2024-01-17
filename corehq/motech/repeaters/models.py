@@ -1157,7 +1157,7 @@ class RepeatRecord(models.Model):
         return self.repeater.repeater_type
 
     def fire(self, force_send=False):
-        if self.try_now() or force_send:
+        if force_send or not self.succeeded:
             try:
                 attempt = self.repeater.fire_for_record(self)
             except Exception as e:
@@ -1171,10 +1171,6 @@ class RepeatRecord(models.Model):
                 # or handle_payload_exception raises an exception. I'm okay with that. -DMR
                 self.add_attempt(attempt)
                 self.save()
-
-    def try_now(self):
-        # TODO rename to should_try_now
-        return self.state != State.Success
 
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
