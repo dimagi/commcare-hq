@@ -3415,10 +3415,8 @@ msgid "Group Center Coordinates"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "Name"
 msgid "Case Name"
-msgstr "नाम"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "Case Owner Name"
