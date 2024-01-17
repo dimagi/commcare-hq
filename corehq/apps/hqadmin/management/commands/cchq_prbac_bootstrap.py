@@ -232,7 +232,7 @@ class Command(BaseCommand):
         Role(slug=privileges.CASE_COPY,
              name='Allow Case Copy',
              description='Allow case copy from one user to another'),
-        Role(slug=privileges.DEDUPE,
+        Role(slug=privileges.CASE_DEDUPE,
              name='Deduplication Rules',
              description='Support for finding duplicate cases'),
     ]
