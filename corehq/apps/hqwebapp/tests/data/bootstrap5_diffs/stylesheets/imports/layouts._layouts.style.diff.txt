@@ -23,4 +23,3 @@
 +  border-top: 1px solid $cc-neutral-hi;
    padding-top: 8px;
    margin-top:10px;
- 
