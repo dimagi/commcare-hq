@@ -119,7 +119,7 @@ CASE_LIST_EXPLORER = 'case_list_explorer'
 
 CASE_COPY = 'case_copy'
 
-DEDUPE = 'deduplicate'
+DEDUPE = 'case_deduplicate'
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
