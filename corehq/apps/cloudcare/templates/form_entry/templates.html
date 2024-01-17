@@ -5,7 +5,7 @@
   <div tabindex="-1" class ="gr" data-bind="
         css: {
           'gr-no-children': $data.children().length === 0,
-          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'grouped-question-tile-row' }),
+          'gr-has-no-questions': $data.children().every(function(d) { return d.type() !== 'grouped-question-tile-row' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'panel panel-default': collapsible,
           'repetition': isRepetition,
