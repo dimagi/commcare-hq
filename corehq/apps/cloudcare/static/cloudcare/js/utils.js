@@ -380,6 +380,22 @@ hqDefine('cloudcare/js/utils', [
         };
     };
 
+    var submitButtonListener = function (callback) {
+        var submitButtonDisabled = sessionStorage.submitDisabled;
+        var handleSubmitButtonChange = () => {
+                callback(submitButtonDisabled);
+        };
+        return {
+            listen: function () {
+                $(window).on('load', handleSubmitButtonChange);
+                callback(submitButtonDisabled);
+            },
+            stopListening: function () {
+                $(window).off('load', handleSubmitButtonChange);
+            },
+        };
+    };
+
     return {
         dateFormat: dateFormat,
         convertTwoDigitYear: convertTwoDigitYear,
@@ -400,5 +416,6 @@ hqDefine('cloudcare/js/utils', [
         reportFormplayerErrorToHQ: reportFormplayerErrorToHQ,
         smallScreenIsEnabled: smallScreenIsEnabled,
         smallScreenListener: smallScreenListener,
+        submitButtonListener: submitButtonListener,
     };
 });

@@ -613,6 +613,23 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'click @ui.submitButton': 'submitAction',
         },
 
+        onRender: function () {
+            this.submitButtonListener = cloudcareUtils.submitButtonListener(submitButtonDisabled => {
+                this.handleSubmitButtonChange(submitButtonDisabled);
+            });
+            this.submitButtonListener.listen();
+        },
+
+        handleSubmitButtonChange: function (disabled) {
+            var submitButton = this.ui.submitButton;
+            if (disabled === 'true' || disabled == true) {
+                submitButton.prop('disabled', true);
+            } else {
+                submitButton.prop('disabled', false);
+            }
+        },
+
+
         handleSmallScreenChange: function (enabled) {
             this.smallScreenEnabled = enabled;
             if (this.options.sidebarEnabled) {
