@@ -7,7 +7,7 @@
 # Jensen Daniel <jdaniel@dimagi.com>, 2019
 # Claire O'Grady <cogrady@dimagi.com>, 2019
 # Séfora Vazirna <seforan@gmail.com>, 2022
-# Dimagi Dev <devops@dimagi.com>, 2023
+# Dimagi Dev <devops@dimagi.com>, 2024
 #
 #, fuzzy
 msgid ""
@@ -15,7 +15,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2023\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2024\n"
 "Language-Team: Portuguese (https://app.transifex.com/dimagi/teams/9388/pt/)\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -3408,26 +3408,20 @@ msgid "No group"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "Group"
 msgid "Group ID"
-msgstr "Grupo"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "Group"
 msgid "Group Name"
-msgstr "Grupo"
+msgstr "Nome do Grupo"
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "Group Center Coordinates"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "Case Type"
 msgid "Case Name"
-msgstr "Tipo de Caso"
+msgstr "Nome do Caso"
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "Case Owner Name"
