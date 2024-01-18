@@ -114,3 +114,8 @@ def match_all(node, context):
             serialize(node)
         )
     return filters.match_all()
+
+
+def or_(node, context):
+    from corehq.apps.case_search.filter_dsl import build_filter_from_ast
+    return filters.OR([build_filter_from_ast(arg, context) for arg in node.args if arg])
