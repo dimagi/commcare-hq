@@ -158,7 +158,7 @@ hqDefine("app_manager/js/details/screen", function () {
         // which rows go with which tab.
         self.tabPolarity = function (column) {
             const self = this,
-                flag = false;
+            let flag = false;
             _.find(self.columns(), function (c) {
                 if (c.isTab) {
                     flag = !flag;
