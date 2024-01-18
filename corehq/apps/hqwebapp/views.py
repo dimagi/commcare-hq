@@ -855,6 +855,21 @@ class BugReportView(View):
             uploaded_file,
             to_email=settings.SUPPORT_EMAIL,
         )
+
+
+@method_decorator([login_required], name='dispatch')
+class SolutionsFeatureRequestView(View):
+    def post(self, request, *args, **kwargs):
+        email = _get_email_message_base(
+            post_params=request.POST,
+            couch_user=request.couch_user,
+            uploaded_file=request.FILES.get('feature_request'),
+            to_email=settings.SOLUTIONS_EMAIL,
+        )
+        email.send(fail_silently=False)
+        return HttpResponse()
+
+
 def render_static(request, template, page_name):
     """
     Takes an html file and renders it Commcare HQ's styling
