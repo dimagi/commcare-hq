@@ -333,7 +333,7 @@ jsonschema==4.17.3
     # via
     #   -r base-requirements.in
     #   ddtrace
-jwcrypto==1.4
+jwcrypto==1.5.1
     # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
@@ -426,7 +426,7 @@ pycryptodome==3.18.0
     # via
     #   -r base-requirements.in
     #   fidelius
-pycryptodomex==3.14.1
+pycryptodomex==3.19.1
     # via
     #   oic
     #   pyjwkest

@@ -515,14 +515,12 @@ class CaseLocationTests(LocationHierarchyTestCase):
         cape_town_repeater = OpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': self.locations['Cape Town'].location_id,
-            'repeater_id': uuid.uuid4().hex,
             'connection_settings_id': self.conn.id,
         })
         cape_town_repeater.save()
         western_cape_repeater = OpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': self.locations['Western Cape'].location_id,
-            'repeater_id': uuid.uuid4().hex,
             'connection_settings_id': self.conn.id,
         })
         western_cape_repeater.save()
@@ -551,7 +549,6 @@ class CaseLocationTests(LocationHierarchyTestCase):
             domain=self.domain,
             location_id=gardens.location_id,
             connection_settings=self.conn,
-            repeater_id=uuid.uuid4().hex,
         )
         gardens_repeater.save()
 
@@ -571,14 +568,12 @@ class CaseLocationTests(LocationHierarchyTestCase):
             domain=self.domain,
             location_id=self.locations['Cape Town'].location_id,
             connection_settings_id=self.conn.id,
-            repeater_id=uuid.uuid4().hex,
         )
         cape_town_repeater.save()
         western_cape_repeater = OpenmrsRepeater(
             domain=self.domain,
             location_id=self.locations['Western Cape'].location_id,
             connection_settings_id=self.conn.id,
-            repeater_id=uuid.uuid4().hex,
         )
         western_cape_repeater.save()
 
