@@ -745,6 +745,49 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
+    def test_OR(self):
+        parsed = parse_xpath("OR(wand_core='phoenix_feather', '')")
+        expected_filter = {
+            "bool": {
+                "should": [
+                    [
+                        {
+                            "nested": {
+                                "path": "case_properties",
+                                "query": {
+                                    "bool": {
+                                        "filter": [
+                                            {
+                                                "bool": {
+                                                    "filter": [
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key.exact": "wand_core"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "phoenix_feather"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ],
+                                        "must": {
+                                            "match_all": {}
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    ]
+                ]
+            }
+        }
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
 
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestFilterDslLookups(ElasticTestMixin, TestCase):
