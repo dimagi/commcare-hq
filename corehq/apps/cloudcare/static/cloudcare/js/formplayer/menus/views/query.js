@@ -589,8 +589,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 const groupedCollection = groupDisplays(options.collection, options.groupHeaders);
                 this.collection = new Collection(groupedCollection);
             }
-            this.submitDisabled = options.submitDisabled;
-            this.listenTo(this.model, 'change:submitDisabled', this.render);
+            if (sessionStorage.submitDisabled === undefined) {
+                sessionStorage.submitDisabled = true; // first iteration the button should be disabled
+            }
         },
 
         templateContext: function () {
@@ -605,14 +606,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             };
         },
 
-        onRender: function () {
-            if (this.submitDisabled) {
-                this.$('#query-submit-button').prop('disabled', true);
-            } else {
-                this.$('#query-submit-button').prop('disabled', false);
-            }
-        },
-
         ui: {
             clearButton: '#query-clear-button',
             submitButton: '#query-submit-button',
@@ -622,6 +615,22 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         events: {
             'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
+        },
+
+        onRender: function () {
+            this.submitButtonListener = cloudcareUtils.submitButtonListener(submitButtonDisabled => {
+                this.handleSubmitButtonChange(submitButtonDisabled);
+            });
+            this.submitButtonListener.listen();
+        },
+
+        handleSubmitButtonChange: function (disabled) {
+            var myButton = this.ui.submitButton;
+            if (disabled === 'true' || disabled == true) {
+                myButton.prop('disabled', true);
+            } else {
+                myButton.prop('disabled', false);
+            }
         },
 
         handleSmallScreenChange: function (enabled) {
@@ -677,7 +686,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         notifyFieldChange: function (e, changedChildView, useDynamicSearch) {
             e.preventDefault();
             var self = this;
-            self.updateSubmitButtonStatus(false);
             self.validateFieldChange(changedChildView).always(function (response) {
                 var $fields = $(".query-field");
                 for (var i = 0; i < response.models.length; i++) {
@@ -706,6 +714,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
+            self.updateSubmitButtonStatus(false);
             if (self.dynamicSearchEnabled && useDynamicSearch) {
                 self.updateSearchResults();
             }
@@ -720,12 +729,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (self.dynamicSearchEnabled) {
                 self.updateSearchResults();
             }
+            self.updateSubmitButtonStatus(false);
         },
 
         submitAction: function (e) {
             var self = this;
             e.preventDefault();
             self.performSubmit();
+            this.updateSubmitButtonStatus(true);
         },
 
         performSubmit: function (initiatedBy) {
@@ -759,10 +770,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         updateSubmitButtonStatus: function (disabled) {
             if (this.options.sidebarEnabled) {
-                console.log("updated to...");
-                console.log(disabled);
-                this.submitDisabled = disabled;
-                this.render();
+                sessionStorage.submitDisabled = disabled;
             }
         },
 
