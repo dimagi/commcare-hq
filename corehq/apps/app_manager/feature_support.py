@@ -217,13 +217,6 @@ class CommCareFeatureSupportMixin(object):
         )
 
     @property
-    def supports_select_text(self):
-        """
-        Ability to configure select button text through bulk translations
-        """
-        return self._require_minimum_version('2.54')
-
-    @property
     def supports_menu_instances(self):
         return self._require_minimum_version('2.54')
 
