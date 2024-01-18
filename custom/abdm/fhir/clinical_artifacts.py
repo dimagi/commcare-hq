@@ -41,7 +41,8 @@ class PrescriptionRecord(ABDMClinicalArtifact):
     AUTHOR_CHOICES = ['Practitioner', 'Organization']
     SECTION_ENTRY_CHOICES = ['MedicationRequest', 'Binary']
     BUNDLE_ENTRIES = (
-        [ABDMClinicalArtifact.SUBJECT] + AUTHOR_CHOICES
+        [ABDMClinicalArtifact.SUBJECT]
+        + AUTHOR_CHOICES
         + SECTION_ENTRY_CHOICES
         + ['Encounter', 'DocumentReference', 'MedicationStatement', 'Condition']
     )
@@ -49,6 +50,24 @@ class PrescriptionRecord(ABDMClinicalArtifact):
 
 class FHIRConfigValidationError(Exception):
     pass
+
+
+class FHIRMissingCasesError(Exception):
+    pass
+
+
+class FHIRConfigErrorMessage:
+    HEALTH_INFORMATION_NOT_SUPPORTED = "Health Information type {health_information_type} is not supported"
+    MISSING_DATA_DICT_CONFIG = "Missing data dictionary configuration"
+    MISSING_CASE = "Missing Case"
+    SUBJECT_CONFIG_ABSENT = MISSING_DATA_DICT_CONFIG + ": {subject} for {artifact}. Please contact Admin."
+    AUTHOR_CONFIG_ABSENT = MISSING_DATA_DICT_CONFIG + ": Author for {artifact}. Please contact Admin."
+    SECTION_ENTRY_CONFIG_ABSENT = MISSING_DATA_DICT_CONFIG + (": Section entry for {artifact}."
+                                                              " Please contact Admin.")
+    SUBJECT_CASE_ABSENT = MISSING_CASE + ": {subject} for {artifact}"
+    AUTHOR_CASE_ABSENT = MISSING_CASE + ": Author for {artifact}"
+    SECTION_ENTRY_CASE_ABSENT = MISSING_CASE + ": Section entry for {artifact}"
+    DATA_DICT_FHIR_CONFIG = "Data dictionary configuration error. Please notify admin."
 
 
 def artifact_from_health_information_type(health_information_type):
@@ -59,13 +78,40 @@ def artifact_from_health_information_type(health_information_type):
 def validate_fhir_configuration_for_artifact(clinical_artifact, configured_resource_types):
     if clinical_artifact.SUBJECT not in configured_resource_types:
         raise FHIRConfigValidationError(
-            f"Missing data dictionary configuration '{clinical_artifact.SUBJECT}' for subject"
+            FHIRConfigErrorMessage.SUBJECT_CONFIG_ABSENT.format(
+                subject=clinical_artifact.SUBJECT,
+                artifact=clinical_artifact
+            )
         )
     if not any(
         resource_type in clinical_artifact.AUTHOR_CHOICES for resource_type in configured_resource_types
     ):
-        raise FHIRConfigValidationError("Missing data dictionary configuration for author")
+        raise FHIRConfigValidationError(
+            FHIRConfigErrorMessage.AUTHOR_CONFIG_ABSENT.format(artifact=clinical_artifact)
+        )
     if not any(
         resource_type in clinical_artifact.SECTION_ENTRY_CHOICES for resource_type in configured_resource_types
     ):
-        raise FHIRConfigValidationError("Missing data dictionary configuration for section entry")
+        raise FHIRConfigValidationError(
+            FHIRConfigErrorMessage.AUTHOR_CONFIG_ABSENT.format(artifact=clinical_artifact)
+        )
+
+
+def validate_mandatory_case_types_for_artifact(clinical_artifact, cases_resources_types):
+    if clinical_artifact.SUBJECT not in cases_resources_types:
+        raise FHIRMissingCasesError(
+            FHIRConfigErrorMessage.SUBJECT_CASE_ABSENT.format(
+                subject=clinical_artifact.SUBJECT,
+                artifact=clinical_artifact
+            )
+        )
+    if not any(resource_type in clinical_artifact.AUTHOR_CHOICES for resource_type in cases_resources_types):
+        raise FHIRMissingCasesError(
+            FHIRConfigErrorMessage.AUTHOR_CASE_ABSENT.format(artifact=clinical_artifact)
+        )
+    if not any(
+        resource_type in clinical_artifact.SECTION_ENTRY_CHOICES for resource_type in cases_resources_types
+    ):
+        raise FHIRMissingCasesError(
+            FHIRConfigErrorMessage.SECTION_ENTRY_CASE_ABSENT.format(artifact=clinical_artifact)
+        )

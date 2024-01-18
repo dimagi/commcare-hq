@@ -1,13 +1,17 @@
 from datetime import datetime, timezone
 
+from django.conf import settings
+
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.fhir.models import FHIRResourceType, build_fhir_resource
 from custom.abdm.fhir.clinical_artifacts import (
     ABDM_FHIR_VERSION,
+    FHIRConfigErrorMessage,
     FHIRConfigValidationError,
     artifact_from_health_information_type,
     validate_fhir_configuration_for_artifact,
+    validate_mandatory_case_types_for_artifact,
 )
 
 
@@ -46,7 +50,7 @@ def cases_as_fhir_entries(cases, resource_type_to_case_type):
             resource_type = get_resource_type_from_case_type(case.type, resource_type_to_case_type)
             entries.setdefault(resource_type, []).append(fhir_data)
         except ConfigurationError as err:
-            raise Exception(f"FHIR configuration error. Please notify administrator: {str(err)}")
+            raise FHIRConfigValidationError(f"{FHIRConfigErrorMessage.DATA_DICT_FHIR_CONFIG} {str(err)}")
     return entries
 
 
@@ -66,7 +70,7 @@ class ABDMDocumentBundleGenerator:
 
     def _get_subject_resource(self):
         subject_resource = self.fhir_entries[self.clinical_artifact.SUBJECT][0]
-        self.generate_reference_from_resource(subject_resource)
+        return self.generate_reference_from_resource(subject_resource)
 
     def _get_author_resource(self):
         # First resource type from the list that is configured is considered here as author
@@ -133,7 +137,7 @@ class ABDMDocumentBundleGenerator:
                 "versionId": "1"
             },
             "identifier": {
-                "system": "https://india.commcare.org",
+                "system": f"https://{settings.SERVER_ENVIRONMENT}.commcare.org",
                 "value": self.care_context_reference
             },
             "entry": self.generate_bundle_entries(composition)
@@ -153,7 +157,11 @@ def fhir_health_data_from_hq(care_context_reference, health_information_types, d
     for health_information_type in health_information_types:
         clinical_artifact = artifact_from_health_information_type(health_information_type)
         if clinical_artifact is None:
-            raise FHIRConfigValidationError(f"Health Information type {health_information_type} is not supported.")
+            raise FHIRConfigValidationError(
+                FHIRConfigErrorMessage.HEALTH_INFORMATION_NOT_SUPPORTED.format(
+                    health_information_type=health_information_type
+                )
+            )
         validate_fhir_configuration_for_artifact(
             clinical_artifact, [resource_type.name for resource_type in configured_resource_types]
         )
@@ -178,6 +186,7 @@ def fhir_health_data_from_hq(care_context_reference, health_information_types, d
     fhir_data = []
     for health_information_type in health_information_types:
         clinical_artifact = artifact_from_health_information_type(health_information_type)
+        validate_mandatory_case_types_for_artifact(clinical_artifact, list(fhir_entries.keys()))
         fhir_data.append(
             ABDMDocumentBundleGenerator(care_context_reference, clinical_artifact, fhir_entries).generate()
         )
