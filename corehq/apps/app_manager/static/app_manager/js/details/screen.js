@@ -159,7 +159,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.tabPolarity = function (column) {
             var self = this,
                 flag = false;
-            _.find(self.columns(), function (c, i) {
+            _.find(self.columns(), function (c) {
                 if (c.isTab) {
                     flag = !flag;
                 }
