@@ -229,7 +229,6 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         query = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(expected_filter, query, is_raw_query=True)
 
-
     @freeze_time('2021-08-02')
     def test_date_comparison__today(self):
         parsed = parse_xpath("dob >= today()")
@@ -872,7 +871,8 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         }
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
-        self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+        self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(
+            built_filter).values_list('_id', flat=True))
 
     def test_nested_parent_lookups(self):
         parsed = parse_xpath("father/mother/house = 'Tyrell'")
@@ -909,7 +909,8 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         }
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
-        self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+        self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(
+            built_filter).values_list('_id', flat=True))
 
     def test_subcase_exists(self):
         parsed = parse_xpath("subcase-exists('father', name='Margaery')")
