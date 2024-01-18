@@ -383,7 +383,7 @@ hqDefine('cloudcare/js/utils', [
     var submitButtonListener = function (callback) {
         var submitButtonDisabled = sessionStorage.submitDisabled;
         var handleSubmitButtonChange = () => {
-                callback(submitButtonDisabled);
+            callback(submitButtonDisabled);
         };
         return {
             listen: function () {
