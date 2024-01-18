@@ -709,22 +709,12 @@ CASE_LIST_TILE = StaticToggle(
 
 CASE_LIST_TILE_CUSTOM = StaticToggle(
     'case_list_tile_custom',
-    'USH: Configure custom case tile',
+    'USH: Configure custom case tile for case list and case detail',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
     parent_toggles=[CASE_LIST_TILE],
-)
-
-CASE_DETAIL_TILE = StaticToggle(
-    'case_detail_tile',
-    'USH: Case detail tile',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/pages/viewpage.action?'
-              'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
-    parent_toggles=[CASE_LIST_TILE, CASE_LIST_TILE_CUSTOM],
 )
 
 CASE_LIST_MAP = StaticToggle(
