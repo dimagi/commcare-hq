@@ -991,6 +991,7 @@ class ViewCaseRuleView(EditCaseRuleView):
         return True
 
 
+@method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_deduplication_rules.html'
     urlname = 'deduplication_rules'
@@ -1147,6 +1148,7 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
         return CaseDuplicateNew.objects.filter(action=action).count()
 
 
+@method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleCreateView(DataInterfaceSection):
     template_name = "data_interfaces/edit_deduplication_rule.html"
     urlname = 'add_deduplication_rule'
@@ -1312,6 +1314,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         )
 
 
+@method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleEditView(DeduplicationRuleCreateView):
     urlname = 'edit_deduplication_rule'
     page_title = gettext_lazy("Edit Deduplication Rule")

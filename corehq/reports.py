@@ -108,7 +108,8 @@ def REPORTS(project):
     if toggles.CASE_LIST_EXPLORER.enabled(project.name) or domain_can_access_case_list_explorer:
         inspect_reports.append(CaseListExplorer)
 
-    inspect_reports.append(DuplicateCasesExplorer)
+    if domain_has_privilege(project.name, privileges.CASE_DEDUPE):
+        inspect_reports.append(DuplicateCasesExplorer)
 
     deployments_reports = (
         deployments.ApplicationStatusReport,
