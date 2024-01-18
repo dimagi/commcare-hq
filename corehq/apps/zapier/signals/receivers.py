@@ -55,9 +55,9 @@ def zapier_subscription_post_delete(sender, instance, *args, **kwargs):
     Deletes the repeater object when the corresponding zap is turned off
     """
     if instance.event_name == EventTypes.NEW_FORM:
-        repeater = FormRepeater.objects.get(repeater_id=instance.repeater_id)
+        repeater = FormRepeater.objects.get(id=instance.repeater_id)
     elif instance.event_name in CASE_TYPE_REPEATER_CLASS_MAP:
-        repeater = CASE_TYPE_REPEATER_CLASS_MAP[instance.event_name].objects.get(repeater_id=instance.repeater_id)
+        repeater = CASE_TYPE_REPEATER_CLASS_MAP[instance.event_name].objects.get(id=instance.repeater_id)
     else:
         raise ImmediateHttpResponse(
             HttpBadRequest('The passed event type is not valid.')
