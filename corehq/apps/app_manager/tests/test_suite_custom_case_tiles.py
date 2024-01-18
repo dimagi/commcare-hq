@@ -88,6 +88,8 @@ class SuiteCustomCaseTilesTest(SimpleTestCase, SuiteMixin):
 
     def test_custom_case_tile_address(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
+        from corehq.apps.builds.models import BuildSpec
+        app.build_spec = BuildSpec.from_string('2.51.0/latest')
 
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
