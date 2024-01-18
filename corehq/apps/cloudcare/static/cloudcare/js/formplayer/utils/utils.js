@@ -314,6 +314,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sessionId = null;
             sessionStorage.removeItem('submitPerformed');
             sessionStorage.removeItem('geocoderValues');
+            sessionStorage.removeItem('submitDisabled');
         };
 
         this.onSubmit = function () {
