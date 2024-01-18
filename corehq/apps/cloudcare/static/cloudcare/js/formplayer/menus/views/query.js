@@ -711,6 +711,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
+            self.updateSubmitButtonStatus(false);
             if (self.dynamicSearchEnabled && useDynamicSearch) {
                 self.updateSearchResults();
             }
@@ -725,12 +726,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (self.dynamicSearchEnabled) {
                 self.updateSearchResults();
             }
+            self.updateSubmitButtonStatus(false);
         },
 
         submitAction: function (e) {
             var self = this;
             e.preventDefault();
             self.performSubmit();
+            this.updateSubmitButtonStatus(true);
         },
 
         performSubmit: function (initiatedBy) {
@@ -759,6 +762,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
             if (invalidRequiredFields.length === 0) {
                 self.performSubmit("dynamicSearch");
+            }
+        },
+
+        updateSubmitButtonStatus: function (disabled) {
+            if (this.options.sidebarEnabled) {
+                sessionStorage.submitDisabled = disabled;
             }
         },
 
