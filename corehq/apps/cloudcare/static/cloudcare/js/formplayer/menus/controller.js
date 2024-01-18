@@ -135,7 +135,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     hasDynamicSearch: queryResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: !sessionStorage.submitPerformed,
-                    submitDisabled: true,
                     groupHeaders: queryResponse.groupHeaders,
                 }).render()
             );
@@ -148,7 +147,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     hasDynamicSearch: menuResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: true,
-                    submitDisabled: true,
                     groupHeaders: menuResponse.groupHeaders,
                 }).render()
             );
