@@ -116,9 +116,6 @@ class DetailContributor(SectionContributor):
                         )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
                         detail_id = id_strings.detail(module, detail_type)
-                        print_template_path = None
-                        if detail.print_template:
-                            print_template_path = detail.print_template['path']
                         locale_id = id_strings.detail_title_locale(detail_type)
                         title = Text(locale_id=locale_id) if locale_id else Text()
                         d = self.build_detail(
@@ -129,7 +126,7 @@ class DetailContributor(SectionContributor):
                             title,
                             tabs=list(detail.get_tabs()),
                             id=detail_id,
-                            print_template=print_template_path,
+                            print_template=detail.print_template['path'] if detail.print_template else None,
                         )
                         if d:
                             elements.append(d)
