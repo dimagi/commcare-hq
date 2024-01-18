@@ -222,7 +222,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             ['c1', 'c2', 'c3']
         )
 
-    def test_OR_two_postiive_conditions(self):
+    def test_OR_two_positive_conditions(self):
         self._create_case_search_config()
         cases = [
             {'_id': 'c1', 'case_type': 'wizard', 'first_name': 'Harry', 'last_name': 'Potter',
@@ -263,4 +263,25 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             ),
             None,
             ['c3']
+        )
+
+    def test_OR_no_positive_condition(self):
+        cases = [
+            {'_id': 'c1', 'case_type': 'wizard', 'first_name': 'Harry', 'last_name': 'Potter',
+             'wand_core': 'phoenix_feather'},
+            {'_id': 'c2', 'case_type': 'wizard', 'first_name': 'Tom', 'last_name': 'Riddle',
+             'wand_core': 'phoenix_feather'},
+            {'_id': 'c3', 'case_type': 'wizard', 'first_name': 'Ron', 'last_name': 'Weasley',
+             'wand_core': 'unicorn_hair'},
+        ]
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            get_case_search_query(
+                self.domain,
+                ['wizard'],
+                {'_xpath_query': "OR('', '')"},
+            ),
+            None,
+            []
         )
