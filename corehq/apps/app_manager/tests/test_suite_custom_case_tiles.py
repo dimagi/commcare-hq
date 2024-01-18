@@ -87,12 +87,9 @@ class SuiteCustomCaseTilesTest(SimpleTestCase, SuiteMixin):
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_case_short']/field[2]")
 
     def test_custom_case_tile_address(self, *args):
-        app = Application.new_app('domain', 'Untitled Application')
-        from corehq.apps.builds.models import BuildSpec
-        app.build_spec = BuildSpec.from_string('2.51.0/latest')
-
-        module = app.add_module(Module.new_module('Untitled Module', None))
-        module.case_type = 'patient'
+        factory = AppFactory(build_version='2.51.0')
+        app = factory.app
+        module = factory.new_basic_module('register', 'patient', with_form=False)
         module.case_details.short.case_tile_template = "custom"
         add_columns_for_case_details(module, format='address')
 
@@ -121,10 +118,9 @@ class SuiteCustomCaseTilesTest(SimpleTestCase, SuiteMixin):
         )
 
     def test_custom_case_tile_empty_style(self, *args):
-        app = Application.new_app('domain', 'Untitled Application')
-
-        module = app.add_module(Module.new_module('Untitled Module', None))
-        module.case_type = 'patient'
+        factory = AppFactory(build_version='2.51.0')
+        app = factory.app
+        module = factory.new_basic_module('register', 'patient', with_form=False)
         module.case_details.short.case_tile_template = "custom"
         module.case_details.short.columns = [
             DetailColumn(
