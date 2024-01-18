@@ -106,6 +106,9 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         } else if (defaultGeocoderLocation.coordinates) {
             geocoder.setProximity(defaultGeocoderLocation.coordinates);
         }
+        if (setProximity && defaultGeocoderLocation.bbox) {
+            geocoder.setBbox(defaultGeocoderLocation.bbox);
+        }
         geocoder.on('clear', clearCallBack);
         geocoder.on('result', (item) => itemCallback(item.result));
         geocoder.addTo('#' + divId);
