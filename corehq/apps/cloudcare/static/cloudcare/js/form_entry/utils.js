@@ -76,7 +76,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {function|undefined} inputOnKeyDown - inputOnKeyDown function (optional)
      * @param {boolean} showGeolocationButton - show geolocation button. Defaults to false. (optional)
      * @param {boolean} geolocateOnLoad - geolocate the user's location on load. Defaults to false. (optional)
-     * @param {boolean} setProximity - set proximity to user's location. Defaults to false. (optional)
+     * @param {boolean} setProximity - set proximity to user's location and use default locations bbox. Defaults to false. (optional)
      * @param {string} responseDataTypes - set Mapbox's data type response https://docs.mapbox.com/api/search/geocoding/#data-types (optional)
     */
     module.renderMapboxInput = function ({
