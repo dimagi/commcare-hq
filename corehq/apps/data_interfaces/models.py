@@ -129,10 +129,7 @@ class AutomaticUpdateRule(models.Model):
         default='ALL',
     )
 
-    # For performance reasons, the server_modified_boundary is a
-    # required part of the criteria and should be set to the minimum
-    # number of days old that a case's server_modified_on date must be
-    # before we run the rule against it.
+    # Minimum number of days old a case must be before the rule processes it
     server_modified_boundary = models.IntegerField(null=True)
 
     upstream_id = models.CharField(max_length=32, null=True)
@@ -229,9 +226,12 @@ class AutomaticUpdateRule(models.Model):
                 rules_by_case_type[rule.case_type].append(rule)
         return rules_by_case_type
 
-    # returns None if any of the rules do not filter on server modified
-    @classmethod
-    def get_boundary_date(cls, rules, now):
+    @staticmethod
+    def get_boundary_date(rules, now):
+        """
+        :returns: ``datetime`` based on smallest server_modified_boundary value or None if any rule does not filter
+        on server modified
+        """
         min_boundary = None
         for rule in rules:
             if not rule.filter_on_server_modified:
@@ -240,27 +240,17 @@ class AutomaticUpdateRule(models.Model):
                 min_boundary = rule.server_modified_boundary
             elif rule.server_modified_boundary < min_boundary:
                 min_boundary = rule.server_modified_boundary
-        date = now - timedelta(days=min_boundary)
-        return date
+        return now - timedelta(days=min_boundary)
 
     @classmethod
-    def iter_cases(cls, domain, case_type, boundary_date=None, db=None, include_closed=False):
-        return cls._iter_cases_from_postgres(
-            domain, case_type, boundary_date=boundary_date, db=db, include_closed=include_closed
-        )
+    def iter_cases(cls, domain, case_type, db=None, modified_lte=None, include_closed=False):
+        q_expression = Q(domain=domain, type=case_type, deleted=False)
 
-    @classmethod
-    def _iter_cases_from_postgres(cls, domain, case_type, boundary_date=None, db=None, include_closed=False):
-        q_expression = Q(
-            domain=domain,
-            type=case_type,
-            deleted=False,
-        )
         if not include_closed:
             q_expression = q_expression & Q(closed=False)
 
-        if boundary_date:
-            q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
+        if modified_lte:
+            q_expression = q_expression & Q(server_modified_on__lte=modified_lte)
 
         if db:
             return paginate_query(db, CommCareCase, q_expression, load_source='auto_update_rule')

@@ -3,12 +3,14 @@ hqDefine("geospatial/js/geospatial_map", [
     "hqwebapp/js/initial_page_data",
     "knockout",
     'geospatial/js/models',
+    'hqwebapp/js/bootstrap3/alert_user',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
     initialPageData,
     ko,
-    models
+    models,
+    alertUser
 ) {
     const caseMarkerColors = {
         'default': "#808080", // Gray
@@ -152,6 +154,12 @@ hqDefine("geospatial/js/geospatial_map", [
                         self.handleDisbursementResults(ret['result']);
                     }
                 },
+                error: function () {
+                    alertUser.alert_user(
+                        gettext("Oops! Something went wrong! Please contact admin if the problem persists."), 'danger'
+                    );
+                    self.setBusy(false);
+                },
             });
         };
 
@@ -280,6 +288,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
         var $runDisbursement = $("#btnRunDisbursement");
         $runDisbursement.click(function () {
+            $('#disbursement-clear-message').hide();
             if (mapModel && mapModel.mapInstance && !polygonFilterModel.btnRunDisbursementDisabled()) {
                 let selectedCases = mapModel.caseMapItems();
                 let selectedUsers = mapModel.userMapItems();

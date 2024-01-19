@@ -205,8 +205,7 @@ def module_locale(module):
 
 @pattern('forms.m%df%d')
 def form_locale(form):
-    return "forms.m{module.id}f{form.id}".format(module=form.get_module(),
-                                                  form=form)
+    return "forms.m{module.id}f{form.id}".format(module=form.get_module(), form=form)
 
 
 @pattern('training.root.title')
@@ -412,6 +411,22 @@ def form_custom_icon_locale(form, icon_form):
         module=form.get_module(),
         form=form,
         icon_form=icon_form,
+    )
+
+
+@pattern('forms.m%df%d.submit_label')
+def form_submit_label_locale(form):
+    return "forms.m{module.id}f{form.id}.submit_label".format(
+        module=form.get_module(),
+        form=form
+    )
+
+
+@pattern('forms.m%df%d.submit_notification_label')
+def form_submit_notification_label_locale(form):
+    return "forms.m{module.id}f{form.id}.submit_notification_label".format(
+        module=form.get_module(),
+        form=form
     )
 
 

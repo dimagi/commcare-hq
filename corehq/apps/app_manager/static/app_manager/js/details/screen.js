@@ -74,33 +74,24 @@ hqDefine("app_manager/js/details/screen", function () {
         self.caseTileFieldsForTemplate = ko.computed(function () {
             return (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).fields;
         });
-        self.caseTilePreviewForTemplate = ko.computed(function () {
+        self.caseTilePreviewColumns = ko.computed(function () {
             const grid = (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).grid;
-            if (!grid) {
-                return "";
-            }
-            return "<div class='case-tile-preview'>" + _.map(grid, (values, fieldName) => {
-                return _.template(`<div class='case-tile-preview-mapping'
-                                        style='
-                                            grid-area: <%= rowStart %> / <%= columnStart %> / <%= rowEnd %> / <%= columnEnd %>;
-                                        '>
-                                          <div style='
-                                            justify-self: <%= horzAlign %>;
-                                            text-align: <%= horzAlign %>;
-                                            align-self: <%= vertAlign %>;
-                                          '>
-                                            <%= field %>
-                                          </div>
-                                        </div>`)({
-                    rowStart: values.y + 1,
-                    columnStart: values.x + 1,
-                    rowEnd: values.y + values.height + 1,
-                    columnEnd: values.x + values.width + 1,
-                    horzAlign: values["horz-align"],
-                    vertAlign: values["vert-align"],
-                    field: fieldName,
+            if (grid) {
+                return _.map(grid, function (value, key) {
+                    return {
+                        showInTilePreview: true,
+                        horizontalAlign: value["horz-align"],
+                        verticalAlign: value["vert-align"],
+                        tileRowStart: value.y + 1,
+                        tileRowEnd: value.y + value.height + 1,
+                        tileColumnStart: value.x + 1,
+                        tileColumnEnd: value.x + value.width + 1,
+                        tileContent: key,
+                    };
                 });
-            }).join("") + "</div>";
+            }
+
+            return self.columns();
         });
         self.showCaseTileConfigColumns = ko.computed(function () {
             const featureFlag = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM');

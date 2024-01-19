@@ -27,7 +27,7 @@ import attr
 from memoized import memoized
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
+from corehq.apps.app_manager.const import CASE_LIST_FILTER_LOCATIONS_FIXTURE, USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ParentModuleReferenceError,
@@ -38,6 +38,7 @@ from corehq.apps.app_manager.util import (
     module_loads_registry_case,
     module_offers_search,
     module_uses_inline_search,
+    module_uses_inline_search_with_parent_relationship_parent_select,
 )
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
@@ -45,9 +46,11 @@ from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_subcase,
 )
 from corehq.apps.app_manager.xpath import (
+    CaseClaimXpath,
     CaseIDXPath,
     ItemListFixtureXpath,
     ProductInstanceXpath,
+    LocationInstanceXpath,
     UsercaseXPath,
     XPath,
     interpolate_xpath,
@@ -247,6 +250,7 @@ class EntriesHelper(object):
 
     def add_post_to_entry(self, form, module, e):
         from ..post_process.remote_requests import (
+            QuerySessionXPath,
             RemoteRequestFactory,
         )
         case_session_var = self.get_case_session_var_for_form(form)
@@ -256,6 +260,15 @@ class EntriesHelper(object):
             None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
             exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
         e.post = remote_request_factory.build_remote_request_post()
+        if module_uses_inline_search_with_parent_relationship_parent_select(module):
+            case_datum_ids = [form_datum.datum.id for form_datum in self.get_case_datums_basic_module(module, form)
+                     if (form_datum.datum.id != case_session_var and not form_datum.is_new_case_id)]
+            for case_datum_id in case_datum_ids:
+                data = QueryData(key='case_id')
+                data.ref = QuerySessionXPath(case_datum_id).instance()
+                data.exclude = CaseIDXPath(data.ref).case().count().neq(0)
+                e.post.data.append(data)
+            e.post.relevant = CaseClaimXpath.multi_case_relevant()
 
     def entry_for_module(self, module):
         # avoid circular dependency
@@ -593,10 +606,14 @@ class EntriesHelper(object):
 
             fixture_select_filter = ''
             if datum['module'].fixture_select.active:
+                if datum['module'].fixture_select.fixture_type == CASE_LIST_FILTER_LOCATIONS_FIXTURE:
+                    nodeset = LocationInstanceXpath().instance()
+                else:
+                    nodeset = ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance()
                 datums.append(FormDatumMeta(
                     datum=SessionDatum(
                         id=id_strings.fixture_session_var(datum['module']),
-                        nodeset=ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance(),
+                        nodeset=nodeset,
                         value=datum['module'].fixture_select.variable_column,
                         detail_select=id_strings.fixture_detail(detail_module)
                     ),
