@@ -88,7 +88,7 @@ EXCEL_DATA = (
     ('menu1',
      (('case_list_menu_item_label', 'list', 'Steth List'),
       ('no_items_text', 'list', 'Empty List'),
-      ('select_text', 'list', 'Continue'),
+      ('select_text', 'list', 'Continue with Case(s)'),
       ('name', 'list', 'Name'),
       ('name', 'detail', 'Name'))),
     ('menu1_form1',
@@ -1154,7 +1154,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     def test_module_detail_rows(self):
         self.assertListEqual(get_module_detail_rows(self.app.langs, self.app.modules[0]), [
             ('no_items_text', 'list', 'Empty List'),
-            ('select_text', 'list', 'Continue'),
+            ('select_text', 'list', 'Continue with Case(s)'),
             ('name', 'list', 'Name'),
             ('name', 'detail', 'Name'),
         ])
@@ -1240,7 +1240,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu1', '', '', '', 'Stethoscope', 'jr://file/commcare/image/module0.png', None, '',
              '58ce5c9cf6eda401526973773ef216e7980bc6cc'],
             ['menu1', 'case_list_menu_item_label', 'list', '', 'Steth List', '', '', '', ''],
-            ['menu1', 'select_text', 'list', '', 'Continue', '', '', '', ''],
+            ['menu1', 'select_text', 'list', '', 'Continue with Case(s)', '', '', '', ''],
             ['menu1', 'name', 'list', '', 'Name', '', '', '', ''],
             ['menu1', 'name', 'detail', '', 'Name', '', '', '', ''],
 
