@@ -62,6 +62,11 @@
         </push>
       </stack>
     </action>
+    <select_text>
+      <text>
+        <locale id="m0_select_text"/>
+      </text>
+    </select_text>
   </detail>
   <detail id="m0_case_long">
     <title>
@@ -100,6 +105,11 @@
         </text>
       </template>
     </field>
+    <select_text>
+      <text>
+        <locale id="m1_select_text"/>
+      </text>
+    </select_text>
   </detail>
   <detail id="m1_case_long">
     <title>
@@ -152,6 +162,11 @@
         </push>
       </stack>
     </action>
+    <select_text>
+      <text>
+        <locale id="m2_select_text"/>
+      </text>
+    </select_text>
   </detail>
   <detail id="m2_case_long">
     <title>

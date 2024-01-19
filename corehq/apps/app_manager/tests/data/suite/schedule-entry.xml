@@ -52,5 +52,10 @@
                 </text>
             </template>
         </field>
+        <select_text>
+            <text>
+                <locale id="m1_select_text"/>
+            </text>
+        </select_text>
     </detail>
 </partial>

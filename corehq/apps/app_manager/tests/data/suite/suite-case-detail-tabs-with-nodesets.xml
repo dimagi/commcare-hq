@@ -49,6 +49,11 @@
         </text>
       </sort>
     </field>
+    <select_text>
+      <text>
+        <locale id="m0_select_text"/>
+      </text>
+    </select_text>
   </detail>
   <detail id="m0_case_long">
     <title>
