@@ -593,6 +593,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     prompt_groups = NodeListField('group', QueryPromptGroup)
     default_search = BooleanField("@default_search")
     dynamic_search = BooleanField("@dynamic_search")
+    search_on_clear = BooleanField("@search_on_clear", required=False)
 
     @property
     def id(self):

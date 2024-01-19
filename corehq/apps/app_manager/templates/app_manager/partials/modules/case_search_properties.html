@@ -466,11 +466,23 @@
             </div>
           </div>
           {% endif %}
+          {% if request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' and not app.split_screen_dynamic_search%}
+          <div class="form-group">
+            <label class="control-label {% css_label_class %}">
+              {% trans "Clearing search terms resets search results" %}
+            </label>
+            <div class="{% css_field_class %} checkbox">
+              <label>
+                <input type="checkbox" data-bind="checked: search_on_clear" />
+              </label>
+            </div>
+          </div>
+          {% endif %}
           <span class="hide" id="searchFilterXpathErrorHtml">
             {% blocktrans %}
               This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.
             {% endblocktrans %}
-            </span>
+          </span>
         </div>
       </div>
     </div>
