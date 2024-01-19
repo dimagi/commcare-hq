@@ -1169,7 +1169,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 existing_duplicate.delete()
             duplicate_ids = self._create_duplicates(case, rule, current_hash)
 
-        if toggles.CASE_DEDUPE.enabled(rule.domain):
+        if toggles.CASE_DEDUPE_UPDATES.enabled(rule.domain):
             num_updates = self._update_duplicates(duplicate_ids, case, rule)
         else:
             num_updates = 0

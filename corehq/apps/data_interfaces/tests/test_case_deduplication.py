@@ -443,7 +443,7 @@ class FindingDuplicatesTest(TestCase):
                               find_duplicate_case_ids(self.domain, cases[0], ["name", "dob"], match_type="ANY"))
 
 
-@flag_enabled('CASE_DEDUPE')
+@flag_enabled('CASE_DEDUPE_UPDATES')
 class CaseDeduplicationActionTest(TestCase):
     def setUp(self):
         super().setUp()
@@ -756,7 +756,7 @@ class CaseDeduplicationActionTest(TestCase):
 
 @override_settings(RUN_UNKNOWN_USER_PILLOW=False)
 @override_settings(RUN_FORM_META_PILLOW=False)
-@flag_enabled('CASE_DEDUPE')
+@flag_enabled('CASE_DEDUPE_UPDATES')
 class DeduplicationPillowTest(TestCase):
 
     @classmethod
@@ -882,7 +882,7 @@ class DeduplicationPillowTest(TestCase):
         action.save()
 
 
-@flag_enabled('CASE_DEDUPE')
+@flag_enabled('CASE_DEDUPE_UPDATES')
 @es_test(requires=[case_search_adapter, user_adapter])
 class TestDeduplicationRuleRuns(TestCase):
     def setUp(self):
@@ -1175,7 +1175,7 @@ class TestDeduplicationRuleRuns(TestCase):
         self.assertEqual(refreshed_fake_cases[1].get_case_property('age'), '14')
 
 
-@flag_enabled('CASE_DEDUPE')
+@flag_enabled('CASE_DEDUPE_UPDATES')
 @es_test(requires=[case_search_adapter], setup_class=True)
 class DeduplicationBackfillTest(TestCase):
     @classmethod

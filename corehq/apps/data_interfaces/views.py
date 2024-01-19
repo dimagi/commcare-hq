@@ -1252,7 +1252,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             ],
             "include_closed": request.POST.get("include_closed") == "on",
         }
-        if toggles.CASE_DEDUPE.enabled(self.domain):
+        if toggles.CASE_DEDUPE_UPDATES.enabled(self.domain):
             properties_to_update = [
                 {"name": prop["name"], "value_type": prop["valueType"], "value": prop["value"]}
                 for prop in json.loads(request.POST.get("properties_to_update"))
