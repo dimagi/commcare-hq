@@ -1,0 +1,8 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-hqDefine("hqwebapp/js/bootstrap3/widgets",[
++hqDefine("hqwebapp/js/bootstrap5/widgets",[
+         'jquery',
+         'underscore',
+         '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
