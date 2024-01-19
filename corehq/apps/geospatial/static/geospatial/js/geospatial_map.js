@@ -335,8 +335,6 @@ hqDefine("geospatial/js/geospatial_map", [
                 url: initialPageData.reverse('get_users_with_gps'),
                 success: function (data) {
                     self.hasFiltersChanged(false);
-
-                    // TODO: There is a lot of indexing happening here. This should be replaced with a mapping to make reading it more explicit
                     const userData = _.object(_.map(data.user_data, function (userData) {
                         const gpsData = (userData.gps_point) ? userData.gps_point.split(' ') : [];
                         const lat = parseFloat(gpsData[0]);
