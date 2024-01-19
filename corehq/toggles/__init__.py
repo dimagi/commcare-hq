@@ -1025,7 +1025,7 @@ GEOCODER_USER_PROXIMITY = StaticToggle(
     description="""
     This has two effects on getting geo coder search results:
     1. Based on the bounding box of the project default location all result falling outside of it
-       will be filtered out.
+       will be filtered out when used in the case search.
     2. Proximity to the users location will be taken into account for the results order.
     """,
     parent_toggles=[USH_CASE_CLAIM_UPDATES],
