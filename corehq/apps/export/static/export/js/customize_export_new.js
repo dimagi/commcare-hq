@@ -4,12 +4,14 @@ hqDefine('export/js/customize_export_new', [
     'hqwebapp/js/initial_page_data',
     'export/js/models',
     'hqwebapp/js/toggles',
+    'export/js/const',
 ], function (
     $,
     ko,
     initialPageData,
     models,
     toggles,
+    constants,
 ) {
     $(function () {
         var customExportView = new models.ExportInstance(
@@ -32,9 +34,14 @@ hqDefine('export/js/customize_export_new', [
         $('.export-tooltip').tooltip();
 
         if (toggles.toggleEnabled('SUPPORT_GEO_JSON_EXPORT')) {
+            const exportFormat = initialPageData.get('export_instance').export_format;
+            if (exportFormat == constants.EXPORT_FORMATS.GEOJSON) {
+                $("#select-geo-property").show();
+            }
+
             $('#format-select').change(function () {
                 const selectedValue = $(this).val();
-                if (selectedValue == "geojson") {
+                if (selectedValue == constants.EXPORT_FORMATS.GEOJSON) {
                     $("#select-geo-property").show();
                 } else {
                     $("#select-geo-property").hide();
