@@ -19,6 +19,11 @@
     </h4>
   </div>
   <div class="panel-body" data-bind="with: longScreen">
+    {% if request|toggle_enabled:'CASE_LIST_TILE_CUSTOM' %}
+      {% include 'app_manager/partials/modules/case_tile_templates.html' %}
+      {% include 'app_manager/partials/modules/case_tile_preview.html' %}
+    {% endif %}
+
     {% include 'app_manager/partials/modules/case_list_properties.html' %}
   </div>
 </div>
