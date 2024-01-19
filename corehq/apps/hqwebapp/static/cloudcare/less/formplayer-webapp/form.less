@@ -28,10 +28,10 @@
   .anchored-submit {
     background-color: @call-to-action-low;
     width: 100vw;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
     position: fixed;
-    bottom: 30px; // data preview bar
+    bottom: 0px;
     left: 0;
     z-index: @zindex-formplayer-anchored-submit;
   }
@@ -66,6 +66,28 @@
     }
   }
 
+  .stripe-repeats {
+    .gr {
+      &:nth-of-type(odd) {
+        background-color: @table-bg-accent;
+      }
+      &:nth-of-type(even) {
+        background-color: white;
+      }
+      &:hover {
+        background-color: @table-bg-hover;
+      }
+    }
+  }
+
+  .group-border {
+    border: solid 1px @cc-neutral-mid;
+    border-radius: 8px;
+    margin: 2px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+
   .info {
     overflow-x: auto;
   }
@@ -88,7 +110,7 @@
 
 }
 
-.form-container .form-actions .btn {
+.form-container .form-actions .nonanchored-submit .btn {
   font-size: 20px;
   padding: 13px 24px;
   .transition(all .5s);
@@ -177,5 +199,20 @@
   .help-block {
     color: #52616f !important;
     font-size: 14px;
+  }
+}
+
+.question-tile-row:has(div.q) {
+  margin-bottom: 15px;
+}
+
+.question-tile-row {
+  display: flex;
+  align-items: top;
+  * .form-group, * p, * .control-label {
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
   }
 }

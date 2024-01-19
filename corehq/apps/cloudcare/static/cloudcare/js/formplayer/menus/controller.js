@@ -7,8 +7,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
+        queryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
         Collection = hqImport("cloudcare/js/formplayer/menus/collections");
     var selectMenu = function (options) {
@@ -107,9 +106,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview;
-
-        if (sidebarEnabled && menuResponse.type === "query") {
+        var queryResponse = menuResponse.queryResponse;
+        var sidebarEnabled = !appPreview && menusUtils.isSidebarEnabled(menuResponse);
+        if (sidebarEnabled && menuResponse.type === constants.QUERY) {
             var menuData = menusUtils.getMenuData(menuResponse);
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
@@ -126,28 +125,29 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
         }
 
-        var queryResponse = menuResponse.queryResponse;
-        if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
+        if (sidebarEnabled && menuResponse.type === constants.ENTITIES && queryResponse)  {
             var queryCollection = new Collection(queryResponse.displays);
             FormplayerFrontend.regions.getRegion('sidebar').show(
-                QueryListView({
+                queryView.queryListView({
                     collection: queryCollection,
                     title: menuResponse.title,
                     description: menuResponse.description,
                     hasDynamicSearch: queryResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: !sessionStorage.submitPerformed,
+                    groupHeaders: queryResponse.groupHeaders,
                 }).render()
             );
-        } else if (sidebarEnabled && menuResponse.type === "query") {
+        } else if (sidebarEnabled && menuResponse.type === constants.QUERY) {
             FormplayerFrontend.regions.getRegion('sidebar').show(
-                QueryListView({
+                queryView.queryListView({
                     collection: menuResponse,
                     title: menuResponse.title,
                     description: menuResponse.description,
                     hasDynamicSearch: menuResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: true,
+                    groupHeaders: menuResponse.groupHeaders,
                 }).render()
             );
         } else {
@@ -161,7 +161,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 if (isFormEntry) {
                     menusUtils.showMenuDropdown(menuResponse.langs, initialPageData('lang_code_name_mapping'));
                 }
-                if (menuResponse.type === "entities") {
+                if (menuResponse.type === constants.ENTITIES) {
                     menusUtils.showMenuDropdown();
                 }
             }

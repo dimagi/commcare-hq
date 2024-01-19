@@ -42,9 +42,8 @@ def _get_document_or_not_found_lite(cls, doc_id):
 def get_document_or_not_found(cls, domain, doc_id, additional_doc_types=None):
     allowed_doc_types = (additional_doc_types or []) + [cls.__name__]
     unwrapped = _get_document_or_not_found_lite(cls, doc_id)
-    if ((unwrapped.get('domain', None) != domain and
-         domain not in unwrapped.get('domains', [])) or
-        unwrapped['doc_type'] not in allowed_doc_types):
+    if ((unwrapped.get('domain', None) != domain and domain not in unwrapped.get('domains', []))
+       or unwrapped['doc_type'] not in allowed_doc_types):
         raise DocumentNotFound("Document {} of class {} not in domain {}!".format(
             doc_id,
             cls.__name__,
@@ -332,8 +331,8 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False, chunksize=100):
         if iter_db.error_ids:
             if try_num >= max_retries:
                 results.error_ids.update(iter_db.error_ids)
-                msg = ("The following documents did not correctly save:\n" +
-                       ", ".join(results.error_ids))
+                msg = ("The following documents did not correctly save:\n"
+                       + ", ".join(results.error_ids))
                 raise IterUpdateError(results, msg)
             else:
                 _iter_update(iter_db.error_ids, try_num + 1)
@@ -342,8 +341,8 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False, chunksize=100):
     if results.error_ids:
         msg = ("The following docs didn't correctly save.  Are you sure fn {} "
                "returned either None or an instance of DocUpdate?  Did you "
-               "change or remove the '_id' field?".format(fn.__name__) +
-               ", ".join(results.error_ids))
+               "change or remove the '_id' field?".format(fn.__name__)
+               + ", ".join(results.error_ids))
         raise IterUpdateError(results, msg)
 
     if verbose:

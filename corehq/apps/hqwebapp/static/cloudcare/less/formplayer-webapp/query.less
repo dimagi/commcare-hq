@@ -52,6 +52,9 @@
   &:last-of-type {
     margin-bottom: 0;
   }
+  input[type="checkbox"] {
+    margin-top: 2.5px;
+  }
 }
 
 .query-description {
@@ -61,4 +64,32 @@
   a:hover {
     color: @cc-brand-low;
   }
+}
+
+.query-caption.required .control-label::before, .search-query-group-header.required .search-query-group-header-label::before {
+  content: '*';
+  font-weight: bold;
+  color: #c0392b;
+  margin: 0 3px;
+  float: left;
+}
+
+.search-query-group-header-label {
+  font-size: larger;
+}
+
+.search-query-group {
+  background-color: @cc-bg;
+}
+
+#query-group-content > tr {
+  background-color: white;
+}
+
+#query-properties td {
+  border-top: 0px;
+}
+
+.search-query-group .table {
+  border-collapse: separate; margin-bottom: 0px;
 }
