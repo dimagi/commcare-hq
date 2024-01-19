@@ -159,6 +159,9 @@ class BaseExportView(BaseProjectDataView):
 
     @property
     def _possible_geo_properties(self):
+        if self.export_type == FORM_EXPORT:
+            return []
+
         geo_properties = CaseProperty.objects.filter(
             case_type__domain=self.domain,
             case_type__name=self.export_instance.case_type,
@@ -169,7 +172,7 @@ class BaseExportView(BaseProjectDataView):
     @property
     def format_options(self):
         format_options = ["xls", "xlsx", "csv"]
-        if toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain):
+        if self.export_type == CASE_EXPORT and toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain):
             format_options.append("geojson")
         return format_options
 

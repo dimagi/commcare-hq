@@ -571,9 +571,11 @@ class GeoJSONWriter(JsonExportWriter):
     def get_features(self, table, data):
         geo_property_name = table.selected_geo_property
         table_headers = data[0]
+        if geo_property_name not in table_headers:
+            return []
+
         geo_data_index = table_headers.index(geo_property_name)
         features = []
-
         for row in data[1:]:
             try:
                 lng, lat, _, _ = row[geo_data_index].split(" ")
