@@ -42,7 +42,11 @@ class Format(object):
                           "download": False},
                    UNZIPPED_CSV: {"mimetype": "text/csv",
                                   "extension": "csv",
-                                  "download": True}}
+                                  "download": True},
+                   GEOJSON: {"mimetype": "application/geo+json",
+                          "extension": "geojson",
+                          "download": False},
+                   }
 
     VALID_FORMATS = list(FORMAT_DICT)
 
