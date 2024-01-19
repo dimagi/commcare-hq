@@ -6,7 +6,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
         cloudcareUtils = hqImport("cloudcare/js/utils"),
         markdown = hqImport("cloudcare/js/markdown"),
-        constants = hqImport("cloudcare/js/form_entry/const"),
+        formEntryConstants = hqImport("cloudcare/js/form_entry/const"),
+        formplayerConstants = hqImport("cloudcare/js/formplayer/constants"),
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
@@ -128,7 +129,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         geocoderOnClearCallback = function (addressTopic) {
             return function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
-                $.publish(addressTopic, constants.NO_ANSWER);
+                $.publish(addressTopic, formEntryConstants.NO_ANSWER);
             };
         },
         updateReceiver = function (element) {
@@ -137,8 +138,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 var receiveExpression = element.data().receive;
                 var receiveField = receiveExpression.split("-")[1];
                 var value = null;
-                if (broadcastObj === undefined || broadcastObj === constants.NO_ANSWER) {
-                    value = constants.NO_ANSWER;
+                if (broadcastObj === undefined || broadcastObj === formEntryConstants.NO_ANSWER) {
+                    value = formEntryConstants.NO_ANSWER;
                 } else if (broadcastObj[receiveField]) {
                     value = broadcastObj[receiveField];
                 } else {
@@ -741,7 +742,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
             });
             if (invalidRequiredFields.length === 0) {
-                self.performSubmit("dynamicSearch");
+                self.performSubmit(formplayerConstants.queryInitiatedBy.DYNAMIC_SEARCH);
             }
         },
 

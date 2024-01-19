@@ -30,6 +30,10 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
         ENTITIES: "entities",
         QUERY: "query",
 
+        queryInitiatedBy: {
+            DYNAMIC_SEARCH: 'dynamicSearch',
+        },
+
         SMALL_SCREEN_WIDTH_PX: 992,
 
         BREADCRUMB_HEIGHT_PX: 46.125,
