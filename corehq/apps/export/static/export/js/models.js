@@ -80,6 +80,7 @@ hqDefine('export/js/models', [
         var self = this;
         ko.mapping.fromJS(instanceJSON, ExportInstance.mapping, self);
 
+        self.geoProperties = options.geoProperties;
         self.buildSchemaProgress = ko.observable(0);
         self.showBuildSchemaProgressBar = ko.observable(false);
         self.errorOnBuildSchema = ko.observable(false);

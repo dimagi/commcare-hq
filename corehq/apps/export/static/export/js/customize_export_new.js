@@ -22,6 +22,7 @@ hqDefine('export/js/customize_export_new', [
                 sharingOptions: initialPageData.get('sharing_options'),
                 hasOtherOwner: initialPageData.get('has_other_owner'),
                 numberOfAppsToProcess: initialPageData.get('number_of_apps_to_process'),
+                geoProperties: initialPageData.get('geo_properties'),
             }
         );
         initialPageData.registerUrl(
@@ -30,17 +31,7 @@ hqDefine('export/js/customize_export_new', [
         $('#customize-export').koApplyBindings(customExportView);
         $('.export-tooltip').tooltip();
 
-        // check feature flag here
         if (toggles.toggleEnabled('SUPPORT_GEO_JSON_EXPORT')) {
-            var exportTable = initialPageData.get('export_instance').tables.find(function(table) {
-                return table.doc_type && table.doc_type == "TableConfiguration";
-            });
-
-            var geoSelectElement = $('#geo-property-select');
-            $.each(exportTable.columns, function(index, column) {
-                geoSelectElement.append('<option value="' + column.label + '">' + column.label + '</option>');
-            });
-
             $('#format-select').change(function () {
                 const selectedValue = $(this).val();
                 if (selectedValue == "geojson") {

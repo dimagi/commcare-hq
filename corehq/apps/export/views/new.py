@@ -58,6 +58,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, API_ACCESS
+from corehq.apps.data_dictionary.models import CaseProperty
 
 
 class BaseExportView(BaseProjectDataView):
@@ -152,8 +153,18 @@ class BaseExportView(BaseProjectDataView):
             'sharing_options': sharing_options,
             'terminology': self.terminology,
             'is_all_case_types_export': is_all_case_types_export,
-            'disable_table_checkbox': (table_count < 2)
+            'disable_table_checkbox': (table_count < 2),
+            'geo_properties': self._possible_geo_properties,
         }
+
+    @property
+    def _possible_geo_properties(self):
+        geo_properties = CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            case_type__name=self.export_instance.case_type,
+            data_type=CaseProperty.DataType.GPS,
+        ).all()
+        return [prop.name for prop in geo_properties]
 
     @property
     def format_options(self):
@@ -172,10 +183,12 @@ class BaseExportView(BaseProjectDataView):
     def commit(self, request):
         export = self.export_instance_cls.wrap(json.loads(request.body.decode('utf-8')))
 
-        if (self.domain != export.domain
+        if (
+            self.domain != export.domain
                 or (export.export_format == "html" and not domain_has_privilege(self.domain, EXCEL_DASHBOARD))
                 or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))
-                or (export.export_format == "geojson" and not toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain))):
+                or (export.export_format == "geojson" and not toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain))
+        ):
             raise BadExportConfiguration()
 
         if not export._rev:
