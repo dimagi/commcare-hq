@@ -295,7 +295,6 @@ class TestDiscoveryRequest(TestCase):
         self.assertEqual(len(result['careContexts']), 0)
 
     def test_discover_by_demographics_multiple_patients_same_name_and_dob(self, *args):
-        # TODO for multiple patient scenario fix the match
         patient_info = dataclasses.replace(self.patient_2)
         new_patient_cases = self._add_patient_with_health_records(self.domain_1, self.hip_1, patient_info, 1)
         self._add_to_cleanup(new_patient_cases)

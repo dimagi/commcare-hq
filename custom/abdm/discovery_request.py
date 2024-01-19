@@ -30,13 +30,10 @@ YEARS_RANGE_TO_MATCH = 2
 
 
 def base_discover_query(domains, hip_id):
-    return CaseSearchES().filter(
-        {
-            'terms': {
-                'domain.exact': domains
-            }
-        }
-    ).case_type(PATIENT_CASE_TYPE).case_property_query(HIP_ID_PROPERTY, hip_id).sort('opened_on')
+    return CaseSearchES().domain(domains).case_type(PATIENT_CASE_TYPE).case_property_query(
+        HIP_ID_PROPERTY,
+        hip_id
+    ).sort('opened_on')
 
 
 def get_patient_by_health_id(patient_details, hip_id, abdm_enabled_domains):
