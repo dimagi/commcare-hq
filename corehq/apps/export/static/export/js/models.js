@@ -530,6 +530,7 @@ hqDefine('export/js/models', [
             'xmlns',
             'is_daily_saved_export',
             'show_det_config_download',
+            'selected_geo_property',
         ],
         tables: {
             create: function (options) {
