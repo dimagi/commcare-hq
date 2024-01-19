@@ -145,8 +145,9 @@ class IdentityProvider(models.Model):
 
     # for auto-deactivation web user purposes
     enable_user_deactivation = models.BooleanField(default=False)
-    api_id = models.TextField(blank=True, null=True)  # application (client) id in Azure AD
-    api_secret = models.TextField(blank=True, null=True)
+    api_host = models.TextField(default="")  # tenant id
+    api_id = models.TextField(default="")  # application (client) id in Azure AD
+    api_secret = models.TextField(default="")
     date_api_secret_expiration = models.DateField(blank=True, null=True)
 
     class Meta:
