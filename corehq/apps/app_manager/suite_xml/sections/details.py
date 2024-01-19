@@ -557,7 +557,7 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def add_select_text_to_detail(detail, app, detail_type, module):
-        if detail_type.endswith('short'):
+        if detail_type.endswith('short') and app.supports_select_text:
             detail.select_text = Text(locale_id=id_strings.select_text_detail(module))
 
 
