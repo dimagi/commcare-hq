@@ -727,8 +727,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.parent = parent;
         Container.call(self, json);
 
-        self.rel_ix = ko.observable(relativeIndex(self.ix()));
-
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
                 if (d.type() === constants.QUESTION_TYPE) {
