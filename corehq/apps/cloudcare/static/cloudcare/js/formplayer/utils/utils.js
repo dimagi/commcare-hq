@@ -295,7 +295,9 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             if (initiatedBy !== null && initiatedBy !== undefined) {
                 queryDataEntry.initiatedBy = initiatedBy;
             }
-            Utils.setQueryInputs(inputs, queryKey);
+            if (!_.isEmpty(inputs)) {
+                Utils.setQueryInputs(inputs, queryKey);
+            }
             this.queryData[queryKey] = queryDataEntry;
 
             this.page = null;
