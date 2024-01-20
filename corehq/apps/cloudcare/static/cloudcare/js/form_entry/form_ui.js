@@ -137,6 +137,22 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         return curr;
     }
 
+    function isStyleNPerRowRepeat(styleStr) {
+        const pattern = new RegExp(`\\d+${constants.PER_ROW_REPEAT}(\\s|$)`);
+        const matchingStyles = getMatchingStyles(pattern, styleStr);
+        return matchingStyles.length > 0;
+    }
+
+    function getNPerRowStyleFromRepeatStyle(style) {
+        var parts = style.split('-');
+        var integerPart = parts[0];
+        return integerPart + '-per-row';
+    }
+
+    function isNPerRowRepeatElement(element) {
+        return element.type === constants.GROUP_TYPE && element.hasOwnProperty('style') && element.style.hasOwnProperty('raw') && isStyleNPerRowRepeat(element.style.raw)
+    }
+
     /**
      * Base abstract prototype for Repeat, Group, GroupedElementTileRow, and Form. Adds methods to
      * objects that contain a children array for rendering nested questions.
@@ -313,6 +329,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
 
         for (let child of json.children) {
+            if (isNPerRowRepeatElement(child)) {
+                for (let groupChild of child.children) {
+                    if (groupChild.type === constants.GROUP_TYPE) {
+                        groupChild.style.raw = getNPerRowStyleFromRepeatStyle(child.style.raw);
+                    }
+                }
+            }
             if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE) {
                 const elementTileWidth = GroupedElementTileRow.calculateElementWidth(child.style);
                 usedWidth += elementTileWidth;
