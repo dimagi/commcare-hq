@@ -1,6 +1,7 @@
 import itertools
 
 from django.apps import apps
+from django.db.models.fields.related import ForeignKey
 
 from corehq.apps.dump_reload.sql.dump import _get_app_list
 from corehq.apps.dump_reload.util import get_model_label
@@ -195,3 +196,24 @@ def test_domain_dump_sql_models():
     ]
     assert not uncovered_models, ("Not all Django models are covered by domain dump.\n"
         + '\n'.join(sorted(uncovered_models)))
+
+
+def test_foreign_keys_for_dumped_sql_models_are_also_included():
+    dump_apps = _get_app_list(set(), set())
+    covered_models = set(itertools.chain.from_iterable(dump_apps.values()))
+
+    uncovered_fks_by_model = {}
+    for model in covered_models:
+        foreign_keys = {field.remote_field.model for field in model._meta.fields if isinstance(field, ForeignKey)}
+        uncovered_foreign_keys = foreign_keys - covered_models
+        if uncovered_foreign_keys:
+            uncovered_fks_by_model[get_model_label(model)] = [get_model_label(m) for m in uncovered_foreign_keys]
+
+    assert (
+        not uncovered_fks_by_model
+    ), "Not all foreign key relationships will not be included in the domain dump.\n\n" + "\n\n".join(
+        [
+            f"{model} foreign keys to these uncovered models:\n\t" + "\n\t".join(fks)
+            for model, fks in sorted(uncovered_fks_by_model.items())
+        ]
+    )
