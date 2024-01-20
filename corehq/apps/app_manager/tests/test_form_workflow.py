@@ -10,14 +10,27 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_ROOT,
 )
 from corehq.apps.app_manager.exceptions import SuiteValidationError
-from corehq.apps.app_manager.models import FormDatum, FormLink
+from corehq.apps.app_manager.models import (
+    CaseTileGroupConfig,
+    FormDatum,
+    FormLink,
+)
+from corehq.apps.app_manager.suite_xml.features.case_tiles import (
+    CaseTileTemplates,
+)
 from corehq.apps.app_manager.suite_xml.post_process.workflow import (
     CommandId,
     _replace_session_references_in_stack,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import StackDatum
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
+from corehq.apps.app_manager.tests.test_suite_case_tiles import (
+    add_columns_for_case_details,
+)
+from corehq.apps.app_manager.tests.util import (
+    TestXmlMixin,
+    patch_get_xform_resource_overrides,
+)
 from corehq.apps.app_manager.xpath import session_var
 
 
@@ -317,6 +330,50 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
             factory.app.create_suite()
         self.assertIn("Unable to link form 'child visit form 0', missing "
                       "variable 'case_id_load_visit_0'", str(e.exception))
+
+    def test_manual_datum_takes_precedence(self, *args):
+        # This test is based on a real issue that occurred, where manually
+        # specified datums were being replaced with datums from the target that
+        # didn't require selection
+        factory = AppFactory(build_version='2.9.0')
+
+        m0, m0f0 = factory.new_basic_module('module0', 'parent')
+        factory.form_requires_case(m0f0, 'parent')
+
+        # Set up a module with grouped case tiles - that use case isn't important,
+        # what matters is that this creates a datum that is autopopulated
+        m1, m1f0 = factory.new_basic_module('module1', 'child', parent_module=m0)
+        factory.form_requires_case(m1f0, 'parent')
+        factory.form_requires_case(m1f0, 'child')
+        m1.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
+        add_columns_for_case_details(m1)
+        m1.case_details.short.case_tile_group = CaseTileGroupConfig(
+            index_identifier="parent", header_rows=3)
+        m1.assign_references()
+
+        m2, m2f0 = factory.new_basic_module('module2', 'case')
+        m2f0.post_form_workflow = WORKFLOW_FORM
+        m2f0.form_links = [
+            FormLink(xpath="true()", form_id=m1f0.unique_id, form_module_id=m1.unique_id, datums=[
+                FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id"),
+                FormDatum(name='case_id_child', xpath="instance('commcaresession')/session/data/case_id"),
+                FormDatum(name='case_id_parent_ids', xpath="instance('commcaresession')/session/data/case_id"),
+            ]),
+        ]
+
+        expected = """<partial>
+            <stack>
+                <create if="true()">
+                <command value="'m0'"/>
+                <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+                <command value="'m1'"/>
+                <datum id="case_id_child" value="instance('commcaresession')/session/data/case_id"/>
+                <datum id="case_id_parent_ids" value="instance('commcaresession')/session/data/case_id"/>
+                <command value="'m1-f0'"/>
+                </create>
+            </stack>
+        </partial>"""
+        self.assertXmlPartialEqual(expected, factory.app.create_suite(), "./entry[3]/stack")
 
     def test_manual_form_link_with_fallback(self, *args):
         factory = AppFactory(build_version='2.9.0')
