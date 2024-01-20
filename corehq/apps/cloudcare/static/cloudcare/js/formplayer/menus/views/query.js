@@ -400,7 +400,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
             }
-            this.parentView.notifyFieldChange(e, this, useDynamicSearch);
+            this.parentView.notifyFieldChange(e, this, useDynamicSearch, formplayerConstants.queryInitiatedBy.FIELD_CHANGE);
         },
 
         toggleBlankSearch: function (e) {
@@ -664,10 +664,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return answers;
         },
 
-        notifyFieldChange: function (e, changedChildView, useDynamicSearch) {
+        notifyFieldChange: function (e, changedChildView, useDynamicSearch, initiatedBy) {
             e.preventDefault();
             var self = this;
-            self.validateFieldChange(changedChildView).always(function (response) {
+            self.validateFieldChange(changedChildView, initiatedBy).always(function (response) {
                 var $fields = $(".query-field");
                 for (var i = 0; i < response.models.length; i++) {
                     var choices = response.models[i].get('itemsetChoices');
@@ -746,11 +746,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
         },
 
-        validateFieldChange: function (changedChildView) {
+        validateFieldChange: function (changedChildView, initiatedBy) {
             var self = this;
             var promise = $.Deferred();
 
-            self._updateModelsForValidation().done(function (response) {
+            self._updateModelsForValidation(initiatedBy).done(function (response) {
                 //Gather error messages
                 self._getChildren().forEach(function (childView) {
                     //Filter out empty required fields and check for validity
@@ -800,7 +800,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return promise;
         },
 
-        _updateModelsForValidation: function () {
+        _updateModelsForValidation: function (initiatedBy) {
             var self = this;
             var promise = $.Deferred();
             self.updateModelsForValidation = promise;
@@ -810,7 +810,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 inputs: self.getAnswers(),
                 execute: false,
                 forceManualSearch: true,
-
+                initiatedBy: initiatedBy,
             });
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {

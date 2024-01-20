@@ -32,6 +32,7 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
 
         queryInitiatedBy: {
             DYNAMIC_SEARCH: 'dynamicSearch',
+            FIELD_CHANGE: "fieldChange",
         },
 
         SMALL_SCREEN_WIDTH_PX: 992,
