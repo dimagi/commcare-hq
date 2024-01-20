@@ -117,7 +117,6 @@ UNKNOWN_MODELS = {
     "blobs.DeletedBlobMeta",
     "couchforms.UnfinishedArchiveStub",
     "couchforms.UnfinishedSubmissionStub",
-    "data_interfaces.CaseDeduplicationActionDefinition",
     "data_interfaces.CaseDuplicate",
     "dhis2.SQLDataSetMap",
     "dhis2.SQLDataValueMap",
@@ -163,7 +162,6 @@ UNKNOWN_MODELS = {
     "userreports.AsyncIndicator",
     "userreports.DataSourceActionLog",
     "userreports.InvalidUCRData",
-    "userreports.UCRExpression",
     "users.HQApiKey",
     "users.UserHistory",
     "users.UserReportingMetadataStaging",
@@ -199,15 +197,25 @@ def test_domain_dump_sql_models():
 
 
 def test_foreign_keys_for_dumped_sql_models_are_also_included():
+    IGNORE_FK_MODELS = [
+        "scheduling.SMSCallbackContent",  # Model is no longer supported, so this would only impact old domains
+        "users.Permission",  # Permissions are created on fresh install
+        # -- If you add a model here, be sure to provide justification why it is safe to ignore --
+    ]
     dump_apps = _get_app_list(set(), set())
     covered_models = set(itertools.chain.from_iterable(dump_apps.values()))
 
     uncovered_fks_by_model = {}
     for model in covered_models:
         foreign_keys = {field.remote_field.model for field in model._meta.fields if isinstance(field, ForeignKey)}
-        uncovered_foreign_keys = foreign_keys - covered_models
+        uncovered_fk_models = foreign_keys - covered_models
+        uncovered_foreign_keys = [
+            label
+            for label in [get_model_label(model) for model in uncovered_fk_models]
+            if label not in IGNORE_FK_MODELS
+        ]
         if uncovered_foreign_keys:
-            uncovered_fks_by_model[get_model_label(model)] = [get_model_label(m) for m in uncovered_foreign_keys]
+            uncovered_fks_by_model[get_model_label(model)] = uncovered_foreign_keys
 
     assert (
         not uncovered_fks_by_model
