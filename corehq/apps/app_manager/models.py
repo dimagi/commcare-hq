@@ -2190,6 +2190,7 @@ class CaseSearch(DocumentSchema):
     description = LabelProperty(default={})
     include_all_related_cases = BooleanProperty(default=False)
     dynamic_search = BooleanProperty(default=False)
+    search_on_clear = BooleanProperty(default=False)
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
