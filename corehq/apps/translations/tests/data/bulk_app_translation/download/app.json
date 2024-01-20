@@ -283,6 +283,7 @@
           "persist_tile_on_forms": null,
           "display": "short",
           "no_items_text": {"en": "Empty List"},
+          "select_text": {"en": "Continue with Case(s)"},
           "columns": [
             {
               "case_tile_field": null,
