@@ -150,7 +150,16 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     }
 
     function isNPerRowRepeatElement(element) {
-        return element.type === constants.GROUP_TYPE && element.hasOwnProperty('style') && element.style.hasOwnProperty('raw') && isStyleNPerRowRepeat(element.style.raw)
+        return (
+            element &&
+            element.hasOwnProperty('type') &&
+            element.type === constants.GROUP_TYPE &&
+            element.hasOwnProperty('style') &&
+            element.style &&
+            element.style.hasOwnProperty('raw') &&
+            element.style.raw &&
+            isStyleNPerRowRepeat(element.style.raw)
+        );
     }
 
     /**
