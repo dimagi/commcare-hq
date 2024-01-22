@@ -221,3 +221,65 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             None,
             ['c1', 'c2', 'c3']
         )
+
+    def test_match_none(self):
+        self._create_case_search_config()
+        cases = [
+            {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
+            {'_id': 'c2', 'case_type': 'song', 'description': 'Manchester'},
+            {'_id': 'c3', 'case_type': 'song', 'description': 'Manchester Boston'},
+        ]
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            get_case_search_query(
+                self.domain,
+                ['song'],
+                {'_xpath_query': "match-none()"},
+            ),
+            None,
+            []
+        )
+
+    def test_OR_two_positive_conditions(self):
+        self._create_case_search_config()
+        cases = [
+            {'_id': 'c1', 'case_type': 'wizard', 'first_name': 'Harry', 'last_name': 'Potter',
+             'wand_core': 'phoenix_feather'},
+            {'_id': 'c2', 'case_type': 'wizard', 'first_name': 'Tom', 'last_name': 'Riddle',
+             'wand_core': 'phoenix_feather'},
+            {'_id': 'c3', 'case_type': 'wizard', 'first_name': 'Ron', 'last_name': 'Weasley',
+             'wand_core': 'unicorn_hair'},
+        ]
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            get_case_search_query(
+                self.domain,
+                ['wizard'],
+                {'_xpath_query': "OR(wand_core='phoenix_feather', last_name='Weasley')"},
+            ),
+            None,
+            ['c1', 'c2', 'c3']
+        )
+
+    def test_OR_one_positive_condition(self):
+        cases = [
+            {'_id': 'c1', 'case_type': 'wizard', 'first_name': 'Harry', 'last_name': 'Potter',
+             'wand_core': 'phoenix_feather'},
+            {'_id': 'c2', 'case_type': 'wizard', 'first_name': 'Tom', 'last_name': 'Riddle',
+             'wand_core': 'phoenix_feather'},
+            {'_id': 'c3', 'case_type': 'wizard', 'first_name': 'Ron', 'last_name': 'Weasley',
+             'wand_core': 'unicorn_hair'},
+        ]
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            get_case_search_query(
+                self.domain,
+                ['wizard'],
+                {'_xpath_query': "OR(wand_core='dragon_heartstring', last_name='Weasley', '')"},
+            ),
+            None,
+            ['c3']
+        )
