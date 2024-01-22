@@ -384,14 +384,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 this.model.set('value', $(e.currentTarget).val());
             }
             this.notifyParentOfFieldChange(e);
-            this.parentView.setStickyQueryInputs();
+            this.parentView.setQueryInputs();
         },
 
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
             var useDynamicSearch = Date(this.model._previousAttributes.value) !== Date($(e.currentTarget).val());
             this.notifyParentOfFieldChange(e, useDynamicSearch);
-            this.parentView.setStickyQueryInputs();
+            this.parentView.setQueryInputs();
         },
 
         notifyParentOfFieldChange: function (e, useDynamicSearch = true) {
@@ -416,7 +416,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 });
                 initMapboxWidget(this.model);
             }
-            self.parentView.setStickyQueryInputs();
+            self.parentView.setQueryInputs();
         },
 
         _initializeSelect2Dropdown: function () {
@@ -584,6 +584,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
             this.dynamicSearchEnabled = !(options.disableDynamicSearch || this.smallScreenEnabled) &&
                 (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
+            this.searchOnClear = (options.searchOnClear && !this.smallScreenEnabled);
 
             if (Object.keys(options.groupHeaders).length > 0) {
                 const groupedCollection = groupDisplays(options.collection, options.groupHeaders);
@@ -704,8 +705,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self._getChildren().forEach(function (childView) {
                 childView.clear();
             });
-            self.setStickyQueryInputs();
-            if (self.dynamicSearchEnabled) {
+            self.setQueryInputs();
+            if (self.dynamicSearchEnabled || this.searchOnClear) {
                 self.updateSearchResults();
             }
         },
@@ -839,8 +840,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return promise;
         },
 
-        setStickyQueryInputs: function () {
-            formplayerUtils.setStickyQueryInputs(this.getAnswers());
+        setQueryInputs: function () {
+            formplayerUtils.setQueryInputs(this.getAnswers());
         },
 
         onAttach: function () {
