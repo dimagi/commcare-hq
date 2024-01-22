@@ -3,7 +3,7 @@ hqDefine("dhis2/js/dataset_map", [
     "underscore",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap3/crud_paginated_list_init",
-    "hqwebapp/js/widgets",
+    "hqwebapp/js/bootstrap3/widgets",
 ], function (
     $,
     _,
