@@ -175,7 +175,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     console.log("In menus fetch")
                     console.log("data.query_data " + data.query_data);
                     console.log("data.query_data.results " + data.query_data.results);
-                    if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === "dynamicSearch") {
+                    if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === constants.queryInitiatedBy.DYNAMIC_SEARCH) {
                         var callEndTime = performance.now();
                         var callResponseTime = callEndTime - callStartTime;
                         $.ajax(initialPageData.reverse('api_histogram_metrics'), {
