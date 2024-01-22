@@ -1,7 +1,7 @@
 hqDefine('domain/js/internal_subscription_management', [
     'jquery',
     'knockout',
-    'hqwebapp/js/widgets',
+    'hqwebapp/js/bootstrap3/widgets',
 ], function (
     $,
     ko

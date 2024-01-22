@@ -347,10 +347,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.blockSubmit = ko.observable(false);
         self.hasSubmitAttempted = ko.observable(false);
         self.isSubmitting = ko.observable(false);
-        self.submitClass = constants.FULL_WIDTH + ' text-center';
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('WEB_APPS_ANCHORED_SUBMIT')) {
-            self.submitClass += ' anchored-submit';
-        }
+        self.isAnchoredSubmitStyle = hqImport('hqwebapp/js/toggles').toggleEnabled('WEB_APPS_ANCHORED_SUBMIT');
+        self.submitClass = constants.FULL_WIDTH + ' text-center' +
+          (self.isAnchoredSubmitStyle ? ' anchored-submit' : ' nonanchored-submit');
 
         self.currentIndex = ko.observable("0");
         self.atLastIndex = ko.observable(false);
@@ -609,6 +608,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
         self.stripeRepeats = _.contains(styles, constants.STRIPE_REPEATS);
         self.collapsible = _.contains(styles, constants.COLLAPSIBLE);
+        self.groupBorder = _.contains(styles, constants.GROUP_BORDER);
         self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN));
         self.toggleChildren = function () {
             if (self.collapsible) {

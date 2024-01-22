@@ -335,28 +335,24 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
         super().tearDownClass()
 
     def test_get_users_with_gps(self):
-        expected_output = {
-            'user_data': [
-                {
-                    'id': self.user_a.user_id,
-                    'username': self.user_a.raw_username,
-                    'gps_point': '12.34 45.67',
-                },
-                {
-                    'id': self.user_b.user_id,
-                    'username': self.user_b.raw_username,
-                    'gps_point': '',
-                },
-                {
-                    'id': self.user_c.user_id,
-                    'username': self.user_c.raw_username,
-                    'gps_point': '45.67 12.34',
-                },
-            ],
+        expected_results = {
+            self.user_a.user_id: {
+                'id': self.user_a.user_id,
+                'username': self.user_a.raw_username,
+                'gps_point': '12.34 45.67',
+            },
+            self.user_c.user_id: {
+                'id': self.user_c.user_id,
+                'username': self.user_c.raw_username,
+                'gps_point': '45.67 12.34',
+            }
         }
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(self.endpoint)
-        self.assertEqual(response.json(), expected_output)
+        response_json = response.json()
+        self.assertIn('user_data', response_json)
+        user_data = {user['id']: user for user in response_json['user_data']}
+        self.assertEqual(user_data, expected_results)
 
     def test_get_location_filtered_users(self):
         self.client.login(username=self.username, password=self.password)

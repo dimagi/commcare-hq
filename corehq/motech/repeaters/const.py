@@ -2,6 +2,7 @@ from datetime import timedelta
 from django.utils.translation import gettext_lazy as _
 
 from django.conf import settings
+from django.db.models import IntegerChoices
 
 MAX_RETRY_WAIT = timedelta(days=7)
 MIN_RETRY_WAIT = timedelta(minutes=60)
@@ -16,15 +17,25 @@ MAX_BACKOFF_ATTEMPTS = 6
 # can't hold up the rest.
 RECORDS_AT_A_TIME = 1000
 
-RECORD_PENDING_STATE = 'PENDING'
-RECORD_SUCCESS_STATE = 'SUCCESS'
-RECORD_FAILURE_STATE = 'FAIL'
-RECORD_CANCELLED_STATE = 'CANCELLED'
-RECORD_EMPTY_STATE = 'EMPTY'
-RECORD_STATES = [
-    (RECORD_PENDING_STATE, _('Pending')),
-    (RECORD_SUCCESS_STATE, _('Succeeded')),
-    (RECORD_FAILURE_STATE, _('Failed')),
-    (RECORD_CANCELLED_STATE, _('Cancelled')),
-    (RECORD_EMPTY_STATE, _('Empty')),
-]
+
+class State(IntegerChoices):
+    # powers of two to allow multiple simultaneous states (not currently used)
+    Pending = 1, _('Pending')
+    Fail = 2, _('Failed')
+    Success = 4, _('Succeeded')
+    Cancelled = 8, _('Cancelled')
+    Empty = 16, _('Empty')
+
+
+RECORD_PENDING_STATE = State.Pending
+RECORD_SUCCESS_STATE = State.Success
+RECORD_FAILURE_STATE = State.Fail
+RECORD_CANCELLED_STATE = State.Cancelled
+RECORD_EMPTY_STATE = State.Empty
+COUCH_STATES = {
+    State.Pending: 'PENDING',
+    State.Fail: 'FAIL',
+    State.Success: 'SUCCESS',
+    State.Cancelled: 'CANCELLED',
+    State.Empty: 'EMPTY',  # Not used in Couch, grouped with SUCCESS?
+}

@@ -222,7 +222,7 @@ exceptiongroup==1.1.1
     # via cattrs
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==19.12.0
+faker==22.0.0
     # via -r test-requirements.in
 firebase-admin==6.1.0
     # via -r base-requirements.in
@@ -318,7 +318,7 @@ jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-jsonfield==2.1.1
+jsonfield==3.1.0
     # via
     #   -r base-requirements.in
     #   django-prbac
@@ -326,7 +326,7 @@ jsonobject==2.0.0
     # via
     #   -r base-requirements.in
     #   jsonobject-couchdbkit
-jsonobject-couchdbkit==1.0.1
+jsonobject-couchdbkit==1.1.0
     # via -r base-requirements.in
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
@@ -334,7 +334,7 @@ jsonschema==4.17.3
     # via
     #   -r base-requirements.in
     #   ddtrace
-jwcrypto==1.4
+jwcrypto==1.5.1
     # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
@@ -439,9 +439,9 @@ pyasn1-modules==0.2.8
     # via google-auth
 pycparser==2.20
     # via cffi
-pycryptodome==3.10.1
+pycryptodome==3.19.1
     # via -r base-requirements.in
-pycryptodomex==3.14.1
+pycryptodomex==3.19.1
     # via
     #   oic
     #   pyjwkest
@@ -570,7 +570,6 @@ six==1.16.0
     #   google-auth
     #   google-auth-httplib2
     #   isodate
-    #   jsonfield
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
@@ -600,7 +599,7 @@ sqlparse==0.4.4
     # via django
 stone==3.3.1
     # via dropbox
-stripe==4.1.0
+stripe==7.2.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
@@ -626,7 +625,7 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==7.12.0
     # via -r base-requirements.in
-typing-extensions==4.1.1
+typing-extensions==4.8.0
     # via
     #   asgiref
     #   bytecode
@@ -635,6 +634,7 @@ typing-extensions==4.1.1
     #   django-countries
     #   oic
     #   qrcode
+    #   stripe
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
