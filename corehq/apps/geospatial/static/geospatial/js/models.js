@@ -220,7 +220,6 @@ hqDefine('geospatial/js/models', [
         }
 
         function createClusterLayers() {
-            // const mapInstance = self.mapInstance;
             self.mapInstance.on('load', () => {
                 self.mapInstance.addSource('caseWithGPS', {
                     type: 'geojson',
