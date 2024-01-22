@@ -765,7 +765,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         updateSubmitButtonStatus: function (disabled) {
             if (this.sidebarEnabled) {
                 sessionStorage.submitDisabled = disabled;
-                this.render()
+                this.render();
             }
         },
 
