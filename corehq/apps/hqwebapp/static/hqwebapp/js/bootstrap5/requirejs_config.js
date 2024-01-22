@@ -15,6 +15,9 @@ requirejs.config({
         "datatables.fixedColumns": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
         "datatables.fixedColumns.bootstrap": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
         "datatables.bootstrap": "datatables.net-bs5/js/dataTables.bootstrap5.min",
+        "popper": "@popperjs/core/dist/umd/popper.min",
+        "tempus-dominus": "eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
+        "datepicker": "@eonasdan/tempus-dominus/dist/js/jQuery-provider.min",  // import this if you need jquery plugin of tempus-dominus
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
@@ -36,6 +39,9 @@ requirejs.config({
         },
         "hqwebapp/js/lib/modernizr": {
             exports: 'Modernizr',
+        },
+        "datepicker": {
+            deps: ['popper', 'tempus-dominus'],
         },
     },
     packages: [{
