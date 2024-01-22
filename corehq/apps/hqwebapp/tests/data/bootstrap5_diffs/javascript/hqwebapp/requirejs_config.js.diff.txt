@@ -21,7 +21,7 @@
 +        "datatables.bootstrap": "datatables.net-bs5/js/dataTables.bootstrap5.min",
 +        "popper": "@popperjs/core/dist/umd/popper.min",
 +        "tempus-dominus": "eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
-+        "datepicker": "@eonasdan/tempus-dominus/dist/js/jQuery-provider.min",  // import this if you need jquery plugin of tempus-dominus
++        "datetimepicker": "@eonasdan/tempus-dominus/dist/js/jQuery-provider.min",  // import this if you need jquery plugin of tempus-dominus
      },
      shim: {
          "ace-builds/src-min-noconflict/ace": { exports: "ace" },
@@ -38,7 +38,7 @@
          "hqwebapp/js/lib/modernizr": {
              exports: 'Modernizr',
          },
-+        "datepicker": {
++        "datetimepicker": {
 +            deps: ['popper', 'tempus-dominus'],
 +        },
      },
