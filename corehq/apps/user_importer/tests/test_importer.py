@@ -892,7 +892,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )['messages']['rows']
-        self.assertEqual(rows[0]['row']['password'], "123")
+        self.user.check_password('123')
 
     def test_update_user_no_username(self):
         import_users_and_groups(

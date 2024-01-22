@@ -502,7 +502,7 @@ class CCUserRow(BaseUserRow):
         else:
             password = None
         self.column_values['password'] = password
-        self.status_row['row']['password'] = password
+        self.status_row['row']['password'] = ''
         if self.column_values['user_id'] and is_password(password):
             self.status_row['row']['password'] = 'REDACTED'
 
