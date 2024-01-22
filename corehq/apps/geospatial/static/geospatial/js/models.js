@@ -134,6 +134,7 @@ hqDefine('geospatial/js/models', [
             }
 
             loadMapBoxStreetsLayers();
+            addLayersToPanel();
         };
 
         function loadMapBoxStreetsLayers() {
@@ -179,6 +180,42 @@ hqDefine('geospatial/js/models', [
                         'visibility': 'none',
                     },
                 });
+            });
+        }
+
+        function addLayersToPanel() {
+            self.mapInstance.on('idle', () => {
+                const toggleableLayerIds = ['landuse_overlay', 'admin', 'road'];
+                const menuElement = document.getElementById('layer-toggle-menu');
+                for (const layerId of toggleableLayerIds) {
+                    // Skip if layer doesn't exist or button is already present
+                    if (!self.mapInstance.getLayer(layerId) || document.getElementById(layerId)) {
+                        continue;
+                    }
+
+                    const link = document.createElement('a');
+                    link.id = layerId;
+                    link.role = 'button';
+                    link.href = '#';
+                    link.textContent = layerId;
+                    link.className = 'btn btn-secondary';
+                    link.onclick = function (e) {
+                        const clickedLayer = this.textContent;
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const visibility = self.mapInstance.getLayoutProperty(clickedLayer, 'visibility');
+                        if (visibility === 'visible') {
+                            self.mapInstance.setLayoutProperty(clickedLayer, 'visibility', 'none');
+                            this.classList.remove('active');
+                        } else {
+                            this.classList.add('active');
+                            self.mapInstance.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+                        }
+                    };
+
+                    menuElement.appendChild(link);
+                }
             });
         }
 
