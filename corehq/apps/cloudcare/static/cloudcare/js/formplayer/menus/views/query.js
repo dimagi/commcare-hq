@@ -722,6 +722,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (self.dynamicSearchEnabled) {
                 self.updateSearchResults();
             }
+            this.updateSubmitButtonStatus(false);
         },
 
         submitAction: function (e) {
@@ -763,8 +764,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         updateSubmitButtonStatus: function (disabled) {
             if (this.options.sidebarEnabled) {
                 sessionStorage.submitDisabled = disabled;
+                this.render()
             }
-            this.render()
         },
 
         validateFieldChange: function (changedChildView) {
