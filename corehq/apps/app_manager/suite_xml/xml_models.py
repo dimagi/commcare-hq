@@ -933,6 +933,7 @@ class Detail(OrderedXmlObject, IdNode):
     fields = NodeListField('field', Field)
     actions = NodeListField('action', Action)
     details = NodeListField('detail', "self")
+    select_text = NodeField('select_text/text', Text)
     _variables = NodeField('variables', DetailVariableList)
     relevant = StringField('@relevant')
     tile_group = NodeField('group', TileGroup)
