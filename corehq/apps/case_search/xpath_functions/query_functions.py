@@ -127,4 +127,6 @@ def match_none(node, context):
 
 def or_(node, context):
     from corehq.apps.case_search.filter_dsl import build_filter_from_ast
+    if not node.args:
+        raise XPathFunctionException("OR() requires at least one argument.", serialize(node))
     return filters.OR([build_filter_from_ast(arg, context) for arg in node.args if arg])

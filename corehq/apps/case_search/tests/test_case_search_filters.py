@@ -283,3 +283,11 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             None,
             ['c3']
         )
+
+    def test_OR_no_arg_raises_XPath_Exception(self):
+        with self.assertRaises(XPathFunctionException):
+            get_case_search_query(
+                self.domain,
+                ['song'],
+                {'_xpath_query': "OR()"},
+            )
