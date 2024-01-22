@@ -219,7 +219,7 @@ def test_foreign_keys_for_dumped_sql_models_are_also_included():
 
     assert (
         not uncovered_fks_by_model
-    ), "Not all foreign key relationships will not be included in the domain dump.\n\n" + "\n\n".join(
+    ), "Not all foreign key relationships will be included in the domain dump.\n\n" + "\n\n".join(
         [
             f"{model} foreign keys to these uncovered models:\n\t" + "\n\t".join(fks)
             for model, fks in sorted(uncovered_fks_by_model.items())
