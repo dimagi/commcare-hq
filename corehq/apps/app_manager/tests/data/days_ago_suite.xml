@@ -72,6 +72,11 @@
         <header width="0"><text/></header>
         <template><text><xpath function="if(last_beer = '', '', format-date(date(last_beer), '%d/%m/%y'))"/></text></template>
     </field>
+    <select_text>
+      <text>
+        <locale id="m0_select_text"/>
+      </text>
+    </select_text>
 </detail>
 <detail id="m0_case_long">
     <title><text><locale id="cchq.case"/></text></title>
