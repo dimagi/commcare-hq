@@ -674,8 +674,7 @@ class ModuleDetailValidatorMixin(object):
             self.module.case_details.long.columns,
             errors)
 
-        # Temporarily comment out until migrate_address_popup has been run
-        # self._validate_address_popup_in_long(errors)
+        self._validate_address_popup_in_long(errors)
 
         return errors
 
