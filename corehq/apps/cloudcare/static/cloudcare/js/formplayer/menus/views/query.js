@@ -607,7 +607,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         onRender() {
             var submitButton = this.ui.submitButton;
             if (this.options.sidebarEnabled) {
-                submitButton.prop('disabled', sessionStorage.submitDisabled);
+                if (sessionStorage.submitDisabled === false || sessionStorage.submitDisabled === "false") {
+                    submitButton.prop('disabled', false);
+                } else {
+                    submitButton.prop('disabled', true);
+                }
             }
         },
 
