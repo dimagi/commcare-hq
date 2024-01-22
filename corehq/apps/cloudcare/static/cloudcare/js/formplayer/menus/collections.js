@@ -58,6 +58,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'groupHeaderRows',
             'queryResponse',
             'endpointActions',
+            'selectText',
         ],
 
         commandProperties: [
