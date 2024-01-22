@@ -118,7 +118,4 @@ def match_all(node, context):
 
 def or_(node, context):
     from corehq.apps.case_search.filter_dsl import build_filter_from_ast
-    child_filters = [build_filter_from_ast(arg, context) for arg in node.args if arg]
-    if child_filters:
-        return filters.OR(child_filters)
-    return filters.match_none()
+    return filters.OR([build_filter_from_ast(arg, context) for arg in node.args if arg])
