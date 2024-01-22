@@ -45,7 +45,7 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
             [groupInRepeat] = repeat.children();
             [textInRepeat] = groupInRepeat.children();
 
-            assert.equal(groupInRepeat.caption(), null);
+            assert.equal(groupInRepeat.children()[0].caption(), null);
             assert.equal(utils.getRootForm(text), form);
             assert.equal(utils.getRootForm(groupInRepeat), form);
             assert.equal(utils.getRootForm(textInRepeat), form);
