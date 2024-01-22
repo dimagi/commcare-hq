@@ -129,11 +129,15 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var formplayerLoading = function () {
-        showLoading();
+        if (!sessionStorage.validationInProgress) {
+            showLoading();
+        }
     };
 
     var formplayerLoadingComplete = function (isError, message) {
-        hideLoading();
+        if (!sessionStorage.validationInProgress) {
+            hideLoading();
+        }
         if (isError) {
             showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));
         }
