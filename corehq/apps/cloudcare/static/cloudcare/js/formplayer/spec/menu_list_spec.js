@@ -17,6 +17,10 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {
             sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });
         });
 
+        after(function () {
+            hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
+        });
+
         describe('#getMenuView', function () {
             let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
                 server,
