@@ -33,7 +33,7 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
         SMALL_SCREEN_WIDTH_PX: 992,
 
         BREADCRUMB_HEIGHT_PX: 46.125,
-        BREADCRUMB_WIDTH_OFFSET_PX: 106.5, // unavailable breadcrumb space i.e. padding, home and hamburger icons
+        BREADCRUMB_WIDTH_OFFSET_PX: 120.41, // unavailable breadcrumb space i.e. padding, home and hamburger icons
 
         COLLAPSIBLE_TILE_MAX_HEIGHT: 150,
     };
