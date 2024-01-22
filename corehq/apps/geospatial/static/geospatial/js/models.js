@@ -132,7 +132,55 @@ hqDefine('geospatial/js/models', [
             if (self.usesClusters) {
                 createClusterLayers();
             }
+
+            loadMapBoxStreetsLayers();
         };
+
+        function loadMapBoxStreetsLayers() {
+            self.mapInstance.on('load', () => {
+                self.mapInstance.addSource('mapbox-streets', {
+                    type: 'vector',
+                    url: 'mapbox://mapbox.mapbox-streets-v8',
+                });
+
+                self.mapInstance.addLayer({
+                    id: 'landuse_overlay',
+                    source: 'mapbox-streets',
+                    'source-layer': 'landuse_overlay',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#800080', // purple
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'road',
+                    source: 'mapbox-streets',
+                    'source-layer': 'road',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#000000', // black
+                    },
+                    'layout': {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'admin',
+                    source: 'mapbox-streets',
+                    'source-layer': 'admin',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#800080', // purple
+                    },
+                    'layout': {
+                        'visibility': 'none',
+                    },
+                });
+            });
+        }
 
         function createClusterLayers() {
             // const mapInstance = self.mapInstance;
