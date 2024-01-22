@@ -128,6 +128,15 @@
       {% endif %}
     {% endif %}
 
+    {% if request.use_datetimepicker and use_bootstrap5 %}
+      {% compress css %}
+        <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css" %}" />
+      {% endcompress %}
+    {% endif %}
+
     {% if request.use_multiselect %}
       {% compress css %}
         <link type="text/css"
@@ -397,6 +406,14 @@
       {% compress js %}
         <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
         <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
+      {% endcompress %}
+    {% endif %}
+
+    {% if request.use_datetimepicker and not requirejs_main and use_bootstrap5 %}
+      {% compress js %}
+        <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
+        <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
+        <script src="{% static '@eonasdan/tempus-dominus/dist/js/jQuery-provider.min.js' %}"></script>
       {% endcompress %}
     {% endif %}
 
