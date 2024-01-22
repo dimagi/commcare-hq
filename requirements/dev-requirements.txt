@@ -835,7 +835,7 @@ zope-interface==6.1
 # The following packages are considered to be unsafe in a requirements file:
 pip==23.3
     # via pip-tools
-setuptools==67.3.2
+setuptools==69.0.3
     # via
     #   django-websocket-redis
     #   gunicorn
