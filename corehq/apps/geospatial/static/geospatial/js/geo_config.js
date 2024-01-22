@@ -7,6 +7,8 @@ hqDefine("geospatial/js/geo_config", [
     ko,
     initialPageData
 ) {
+    const ROAD_NETWORK_ALGORITHM = 'road_network_algorithm';
+
     var geoConfigViewModel = function (configData) {
         'use strict';
         var self = {};
@@ -44,6 +46,11 @@ hqDefine("geospatial/js/geo_config", [
         });
         self.isMinMaxGrouping = ko.computed(function () {
             return self.selectedGroupMethod() === minMaxGroupingName;
+        });
+
+        self.selectedAlgorithm = ko.observable();
+        self.showTokenInput = ko.computed(function () {
+            return self.selectedAlgorithm() === ROAD_NETWORK_ALGORITHM;
         });
 
         return self;
