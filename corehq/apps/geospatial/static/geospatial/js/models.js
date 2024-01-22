@@ -219,6 +219,7 @@ hqDefine('geospatial/js/models', [
 
                     menuElement.appendChild(link);
                 }
+                menuElement.classList.remove('hidden');
             });
         }
 
