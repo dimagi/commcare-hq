@@ -52,6 +52,9 @@ ARCHIVE_FORM = "archive_form"
 
 class XFormInstanceManager(RequireDBManager):
 
+    def get_by_natural_key(self, form_id):
+        return self.partitioned_query(form_id).get(form_id=form_id)
+
     def get_form(self, form_id, domain=None):
         """Get form in domain
 
@@ -432,6 +435,9 @@ class XFormInstanceManager(RequireDBManager):
 
 class XFormOperationManager(RequireDBManager):
 
+    def get_by_natural_key(self, form_id, user_id, date):
+        return self.partitioned_query(form_id).get(form_id=form_id, user_id=user_id, date=date)
+
     def get_form_operations(self, form_id):
         return list(self.partitioned_query(form_id).filter(form_id=form_id).order_by('date'))
 
@@ -540,7 +546,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.form_id
+        return (self.form_id,)
 
     @classmethod
     def get_obj_id(cls, obj):

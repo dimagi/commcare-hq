@@ -54,6 +54,9 @@ CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties"
 
 class CommCareCaseManager(RequireDBManager):
 
+    def get_by_natural_key(self, case_id):
+        return self.partitioned_query(case_id).get(case_id=case_id)
+
     def get_case(self, case_id, domain=None):
         if not case_id:
             raise CaseNotFound(case_id)
@@ -344,7 +347,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.case_id
+        return (self.case_id,)
 
     @property
     def doc_type(self):
@@ -836,6 +839,9 @@ def get_index_map(indices):
 
 class CaseAttachmentManager(RequireDBManager):
 
+    def get_by_natural_key(self, case_id, attachment_id):
+        return self.partitioned_query(case_id).get(attachment_id=attachment_id)
+
     def get_attachments(self, case_id):
         return list(self.partitioned_query(case_id).filter(case_id=case_id))
 
@@ -903,7 +909,7 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.attachment_id
+        return self.case_id, self.attachment_id
 
     def from_form_attachment(self, attachment, attachment_src):
         """
@@ -965,6 +971,9 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
 
 
 class CommCareCaseIndexManager(RequireDBManager):
+
+    def get_by_natural_key(self, domain, case_id, identifier):
+        return self.partitioned_query(case_id).get(domain=domain, case_id=case_id, identifier=identifier)
 
     def get_indices(self, domain, case_id):
         query = self.partitioned_query(case_id)
@@ -1175,6 +1184,9 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
 
 
 class CaseTransactionManager(RequireDBManager):
+
+    def get_by_natural_key(self, case_id, form_id, transaction_type):
+        return self.partitioned_query(case_id).get(case_id=case_id, form_id=form_id, type=transaction_type)
 
     def get_transactions(self, case_id):
         return list(
