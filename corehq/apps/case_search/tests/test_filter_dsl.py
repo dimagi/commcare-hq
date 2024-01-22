@@ -745,6 +745,14 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
+    def test_match_none(self):
+        parsed = parse_xpath("match-none()")
+        expected_filter = {
+            "match_none": {}
+        }
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
     def test_OR(self):
         parsed = parse_xpath("OR(wand_core='phoenix_feather', '')")
         expected_filter = {
