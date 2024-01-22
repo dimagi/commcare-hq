@@ -172,6 +172,9 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                 var callStartTime = performance.now();
                 menus.fetch($.extend(true, {}, options)).always(function () {
+                    console.log("In menus fetch")
+                    console.log("data.query_data " + data.query_data);
+                    console.log("data.query_data.results " + data.query_data.results);
                     if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === "dynamicSearch") {
                         var callEndTime = performance.now();
                         var callResponseTime = callEndTime - callStartTime;
