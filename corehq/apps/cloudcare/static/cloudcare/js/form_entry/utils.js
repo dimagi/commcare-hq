@@ -87,7 +87,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         showGeolocationButton = false,
         geolocateOnLoad = false,
         useBoundingBox = false,
-        responseDataTypes = 'address'
+        responseDataTypes = 'address',
     }) {
         showGeolocationButton = showGeolocationButton || toggles.toggleEnabled('GEOCODER_MY_LOCATION_BUTTON');
         geolocateOnLoad = geolocateOnLoad || toggles.toggleEnabled('GEOCODER_AUTOLOAD_USER_LOCATION');
