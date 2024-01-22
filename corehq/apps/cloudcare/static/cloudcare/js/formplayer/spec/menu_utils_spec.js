@@ -1,10 +1,11 @@
-/* eslint-env mocha */
-hqDefine("cloudcare/js/formplayer/spec/menu_utils_spec", function () {
+hqDefine("cloudcare/js/formplayer/spec/menu_utils_spec", [
+    "cloudcare/js/formplayer/menus/views/query",
+], function (
+    view
+) {
     describe('Menu Utils', function () {
 
         describe('groupDisplays', function () {
-            const view = hqImport("cloudcare/js/formplayer/menus/views/query");
-
             it('should return the displays grouped by their groupKey', function () {
                 const displays = [
                     {
