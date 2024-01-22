@@ -237,9 +237,7 @@ class AppFactory(object):
         case_module.search_config.description = {
             'en': 'More information',
         }
-        case_module.search_config.select_text = {
-            'en': 'Continue with case',
-        }
+
         case_module.search_config.properties = [CaseSearchProperty(
             name='name',
             label={'en': 'Name of Mother'}

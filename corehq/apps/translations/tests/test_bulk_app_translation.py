@@ -146,7 +146,7 @@ EXCEL_DATA = (
     ('menu5', ()),
     ('menu6',
      (('no_items_text', 'list', 'List is empty.'),
-      ('select_text', 'list', 'Continue'),
+      ('select_text', 'list', 'Continue with Case(s)'),
       ('name', 'list', 'Name'),
       ('name', 'detail', 'Name'))),
     ('menu6_form1',
@@ -1305,7 +1305,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu5', '', '', '', 'Empty Reports Module', '', '', '', '703eb807ae584d1ba8bf9457d7ac7590'],
 
             ['menu6', '', '', '', 'Advanced Module', None, None, '', '7f75ed4c15be44509591f41b3d80746e'],
-            ['menu6', 'select_text', 'list', '', 'Continue', '', '', '', ''],
+            ['menu6', 'select_text', 'list', '', 'Continue with Case(s)', '', '', '', ''],
             ['menu6', 'name', 'list', '', 'Name', '', '', '', ''],
             ['menu6', 'name', 'detail', '', 'Name', '', '', '', ''],
 
