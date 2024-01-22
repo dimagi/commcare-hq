@@ -553,7 +553,6 @@ class IndicatorPillowTest(BaseRepeaterTest):
             DataSourceRepeater.objects.create(
                 data_source_id=data_source_id,
                 domain=domain,
-                repeater_id=str(uuid.uuid4()),
                 connection_settings_id=self.conn_setting.id,
             )
         self.assertTrue(DataSourceRepeater.datasource_is_subscribed_to(domain, data_source_id))

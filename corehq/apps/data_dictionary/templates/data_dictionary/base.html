@@ -22,7 +22,7 @@
       {# navigation handle by URL hash #}
       <a data-bind="attr: {href: $data.url}">
         <span data-bind="text: $data.name" style="display: inline-block"></span>
-        <span data-bind="visible: $data.deprecated" class="label label-warning">{% trans "deprecated" %}</span>
+        <span data-bind="visible: $data.deprecated" class="hidden deprecate-case-type label label-warning">{% trans "deprecated" %}</span>
       </a>
     </li>
     <!-- /ko -->
@@ -31,6 +31,17 @@
         <a href="#" data-bind="openModal: 'create-case-type'">
           <i class="fa fa-plus"></i>
           {% trans "Add Case Type" %}
+        </a>
+      </li>
+      <li>
+        <a class="hidden deprecate-case-type" data-bind="click: $root.toggleShowDeprecatedCaseTypes">
+            <i class="fa fa-archive"></i>
+            <span data-bind="hidden: $root.showDeprecatedCaseTypes">
+              {% trans 'Show Deprecated Case Types' %}
+            </span>
+            <span data-bind="visible: $root.showDeprecatedCaseTypes">
+              {% trans 'Hide Deprecated Case Types' %}
+            </span>
         </a>
       </li>
     {% endif %}
@@ -134,7 +145,7 @@
     <div class="col-md-12">
       <div>
         <h3 data-bind="text: $root.activeCaseType()" style="display: inline-block;"></h3>
-        <span data-bind="visible: $root.isActiveCaseTypeDeprecated()" class="label label-warning" style="display: inline-block;">{% trans "deprecated" %}</span>
+        <span data-bind="visible: $root.isActiveCaseTypeDeprecated()" class="deprecate-case-type hidden label label-warning" style="display: inline-block;">{% trans "deprecated" %}</span>
       </div>
       {% if fhir_integration_enabled %}
         <div id="fhir-resource-type-form" class="form-inline" data-bind="visible: fhirResourceTypes().length">
