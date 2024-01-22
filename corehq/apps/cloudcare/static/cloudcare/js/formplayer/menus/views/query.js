@@ -589,6 +589,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 const groupedCollection = groupDisplays(options.collection, options.groupHeaders);
                 this.collection = new Collection(groupedCollection);
             }
+            sessionStorage.submitDisabled = sessionStorage.submitDisabled === undefined ?
+                true : sessionStorage.submitDisabled;
         },
 
         templateContext: function () {
@@ -600,6 +602,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 sidebarEnabled: this.options.sidebarEnabled,
                 grouped: Boolean(this.collection.find(c => c.has("groupKey"))),
             };
+        },
+
+        onRender() {
+            var submitButton = this.ui.submitButton;
+            if (this.options.sidebarEnabled) {
+                submitButton.prop('disabled', sessionStorage.submitDisabled);
+            }
         },
 
         ui: {
@@ -694,6 +703,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
+            this.updateSubmitButtonStatus(false);
             if (self.dynamicSearchEnabled && useDynamicSearch) {
                 self.updateSearchResults();
             }
@@ -714,6 +724,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             e.preventDefault();
             self.performSubmit();
+            this.updateSubmitButtonStatus(true);
         },
 
         performSubmit: function (initiatedBy) {
@@ -743,6 +754,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (invalidRequiredFields.length === 0) {
                 self.performSubmit("dynamicSearch");
             }
+        },
+
+        updateSubmitButtonStatus: function (disabled) {
+            if (this.options.sidebarEnabled) {
+                sessionStorage.submitDisabled = disabled;
+            }
+            this.render()
         },
 
         validateFieldChange: function (changedChildView) {
