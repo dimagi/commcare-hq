@@ -14,6 +14,19 @@
  {{ block.super }}
  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css">
  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css" type="text/css">
+ <style>
+    #layer-toggle-menu {
+      background: #fff;
+      position: absolute;
+      z-index: 1;
+      top: 10px;
+      left: 10px;
+      max-height: 150px;
+      border: 1px solid rgba(0, 0, 0, 0.4);
+      overflow-y: auto;
+    }
+  </style>
+
  {% endblock %}
 
 
