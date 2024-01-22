@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django import forms
 from corehq.apps.geospatial.models import GeoConfig
+from corehq import toggles
 
 
 LOCATION_SOURCE_OPTIONS = [
@@ -15,6 +16,13 @@ LOCATION_SOURCE_OPTIONS = [
 
 
 class GeospatialConfigForm(forms.ModelForm):
+
+    RADIAL_ALGORITHM_OPTION = (GeoConfig.RADIAL_ALGORITHM, _('Radial Algorithm'))
+    ROAD_NETWORK_ALGORITHM_OPTION = (GeoConfig.ROAD_NETWORK_ALGORITHM, _('Road Network Algorithm'))
+
+    DISBURSEMENT_ALGORITHM_OPTIONS = [
+        RADIAL_ALGORITHM_OPTION,
+    ]
 
     class Meta:
         model = GeoConfig
@@ -73,12 +81,24 @@ class GeospatialConfigForm(forms.ModelForm):
         #       '<a href="{}" target="_blank">support documentation</a>.'),
         #     'https://confluence.dimagi.com/pages/viewpage.action?pageId=164694245'
         # ),
-        choices=GeoConfig.VALID_DISBURSEMENT_ALGORITHMS,
+        choices=DISBURSEMENT_ALGORITHM_OPTIONS,
         required=True,
+    )
+    mapbox_token = forms.CharField(
+        label=_("Enter mapbox token"),
+        help_text=_(
+            "Enter your Mapbox API token here. Make sure your token has the correct scope configured"
+            " for use of the Mapbox Matrix API."
+        ),
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if toggles.SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM.enabled(self.domain):
+            choices = self.fields['selected_disbursement_algorithm'].choices
+            choices.append(self.ROAD_NETWORK_ALGORITHM_OPTION)
+            self.fields['selected_disbursement_algorithm'].choices = choices
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.add_layout(
@@ -133,7 +153,14 @@ class GeospatialConfigForm(forms.ModelForm):
                 ),
                 crispy.Fieldset(
                     _('Algorithms'),
-                    crispy.Field('selected_disbursement_algorithm'),
+                    crispy.Field(
+                        'selected_disbursement_algorithm',
+                        data_bind='value: selectedAlgorithm',
+                    ),
+                    crispy.Div(
+                        crispy.Field('mapbox_token'),
+                        data_bind="visible: showTokenInput"
+                    ),
                 ),
                 hqcrispy.FormActions(
                     StrictButton(
@@ -145,6 +172,10 @@ class GeospatialConfigForm(forms.ModelForm):
                 )
             )
         )
+
+    @property
+    def domain(self):
+        return self.instance.domain
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -163,5 +194,10 @@ class GeospatialConfigForm(forms.ModelForm):
         elif grouping_method == GeoConfig.TARGET_SIZE_GROUPING:
             if not cleaned_data['target_group_count']:
                 raise ValidationError(_("Value for target group count required"))
+
+        algorithm = cleaned_data['selected_disbursement_algorithm']
+        token = cleaned_data['mapbox_token']
+        if algorithm == GeoConfig.ROAD_NETWORK_ALGORITHM and not token:
+            raise ValidationError(_("Mapbox API token required"))
 
         return cleaned_data
