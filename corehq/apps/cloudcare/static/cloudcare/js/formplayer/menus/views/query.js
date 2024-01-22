@@ -575,7 +575,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initialize: function (options) {
             this.parentModel = options.collection.models || [];
-            this.dynamicSearchEnabled = options.hasDynamicSearch && this.options.sidebarEnabled;
+            this.sidebarEnabled = this.options.sidebarEnabled;
+            this.dynamicSearchEnabled = options.hasDynamicSearch && this.sidebarEnabled;
 
             this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);
@@ -583,7 +584,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.smallScreenListener.listen();
 
             this.dynamicSearchEnabled = !(options.disableDynamicSearch || this.smallScreenEnabled) &&
-                (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
+                (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.sidebarEnabled);
 
             if (Object.keys(options.groupHeaders).length > 0) {
                 const groupedCollection = groupDisplays(options.collection, options.groupHeaders);
@@ -599,14 +600,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return {
                 title: this.options.title.trim(),
                 description: DOMPurify.sanitize(description),
-                sidebarEnabled: this.options.sidebarEnabled,
+                sidebarEnabled: this.sidebarEnabled,
                 grouped: Boolean(this.collection.find(c => c.has("groupKey"))),
             };
         },
 
         onRender() {
             var submitButton = this.ui.submitButton;
-            if (this.options.sidebarEnabled) {
+            if (this.sidebarEnabled) {
                 if (sessionStorage.submitDisabled === false || sessionStorage.submitDisabled === "false") {
                     submitButton.prop('disabled', false);
                 } else {
@@ -628,7 +629,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         handleSmallScreenChange: function (enabled) {
             this.smallScreenEnabled = enabled;
-            if (this.options.sidebarEnabled) {
+            if (this.sidebarEnabled) {
                 if (this.smallScreenEnabled) {
                     $('#sidebar-region').addClass('collapse');
                 } else {
@@ -762,7 +763,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         updateSubmitButtonStatus: function (disabled) {
-            if (this.options.sidebarEnabled) {
+            if (this.sidebarEnabled) {
                 sessionStorage.submitDisabled = disabled;
                 this.render()
             }
