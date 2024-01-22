@@ -11,7 +11,7 @@ hqDefine('export/js/customize_export_new', [
     initialPageData,
     models,
     toggles,
-    constants,
+    constants
 ) {
     $(function () {
         var customExportView = new models.ExportInstance(
@@ -35,13 +35,13 @@ hqDefine('export/js/customize_export_new', [
 
         if (toggles.toggleEnabled('SUPPORT_GEO_JSON_EXPORT')) {
             const exportFormat = initialPageData.get('export_instance').export_format;
-            if (exportFormat == constants.EXPORT_FORMATS.GEOJSON) {
+            if (exportFormat === constants.EXPORT_FORMATS.GEOJSON) {
                 $("#select-geo-property").show();
             }
 
             $('#format-select').change(function () {
                 const selectedValue = $(this).val();
-                if (selectedValue == constants.EXPORT_FORMATS.GEOJSON) {
+                if (selectedValue === constants.EXPORT_FORMATS.GEOJSON) {
                     $("#select-geo-property").show();
                 } else {
                     $("#select-geo-property").hide();
