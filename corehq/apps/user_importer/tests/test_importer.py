@@ -4,6 +4,7 @@ from copy import deepcopy
 from django.contrib.admin.models import LogEntry
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils.translation import gettext as _
+from django.test.utils import tag
 
 from unittest.mock import patch
 
@@ -1691,6 +1692,13 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         Invitation.objects.all().delete()
         delete_all_users()
 
+    def setUp(self):
+        method = getattr(self, self._testMethodName)
+        tags = getattr(method, 'tags', {})
+        if 'skip_setup_users' in tags:
+            return
+        self.setup_users()
+
     def setup_users(self):
         self.user1 = WebUser.create(self.domain_name, 'hello@world.com', 'password', None, None,
                                     email='hello@world.com', is_superuser=False, first_name='Sally',
@@ -1735,7 +1743,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         return spec
 
     def test_upload_with_missing_role(self):
-        self.setup_users()
         import_users_and_groups(
             self.domain.name,
             [self._get_invited_spec(role='')],
@@ -1747,7 +1754,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertIsNone(self.user_invite)
 
     def test_upload_existing_web_user(self):
-        self.setup_users()
         web_user = WebUser.create(self.other_domain.name, 'existing@user.com', 'abc', None, None,
                                   email='existing@user.com')
         self.assertIsNone(Invitation.objects.filter(email='existing@user.com').first())
@@ -1774,7 +1780,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertEqual(user_history.changes, {})
 
     def test_web_user_user_name_change(self):
-        self.setup_users()
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(first_name='', last_name='')],
@@ -1792,7 +1797,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertNotIn('last_name', user_history.changes)
 
     def test_upper_case_email(self):
-        self.setup_users()
         email = 'hELlo@WoRld.Com'
         import_users_and_groups(
             self.domain.name,
@@ -1809,47 +1813,36 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertNotIn('email', user_history.changes)
 
     def test_user_data(self):
-        self.setup_users()
         self._test_user_data(is_web_upload=True)
 
     def test_user_data_profile(self):
-        self.setup_users()
         self._test_user_data_profile(is_web_upload=True)
 
     def test_user_data_profile_redundant(self):
-        self.setup_users()
         self._test_user_data_profile_redundant(is_web_upload=True)
 
     def test_user_data_profile_blank(self):
-        self.setup_users()
         self._test_user_data_profile_blank(is_web_upload=True)
 
     def test_required_field_optional_if_profile_set(self):
-        self.setup_users()
         self._test_required_field_optional_if_profile_set(is_web_upload=True)
 
     def test_user_data_profile_conflict(self):
-        self.setup_users()
         self._test_user_data_profile_conflict(is_web_upload=True)
 
     def test_profile_cant_overwrite_existing_data(self):
-        self.setup_users()
         self._test_profile_cant_overwrite_existing_data(is_web_upload=True)
 
     def test_user_data_profile_unknown(self):
-        self.setup_users()
         self._test_user_data_profile_unknown(is_web_upload=True)
 
     def test_uncategorized_data(self):
-        self.setup_users()
         self._test_uncategorized_data(is_web_upload=True)
 
     def test_user_data_ignore_system_fields(self):
-        self.setup_users()
         self._test_user_data_ignore_system_fields(is_web_upload=True)
 
     def test_set_role(self):
-        self.setup_users()
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(role=self.role.name)],
@@ -1868,7 +1861,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertEqual(user_history.changes, {})
 
     def test_update_role_current_user(self):
-        self.setup_users()
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(role=self.role.name)],
@@ -1889,7 +1881,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertEqual(self.user.get_role(self.domain_name).name, self.other_role.name)
 
     def test_update_role_invited_user(self):
-        self.setup_users()
         import_users_and_groups(
             self.domain.name,
             [self._get_invited_spec(role=self.role.name)],
@@ -1911,7 +1902,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertEqual(self.user_invite.get_role_name(), self.other_role.name)
 
     def test_remove_user(self):
-        self.setup_users()
         username = 'a@a.com'
         WebUser.create(self.domain.name, username, 'password', None, None)
         import_users_and_groups(
@@ -1934,7 +1924,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
 
     def test_remove_invited_user(self):
         Invitation.objects.all().delete()
-        self.setup_users()
         import_users_and_groups(
             self.domain.name,
             [self._get_invited_spec()],
@@ -1955,7 +1944,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertIsNone(self.user_invite)
 
     def test_remove_uploading_user(self):
-        self.setup_users()
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(username=self.uploading_user.username, remove='True')],
@@ -1969,7 +1957,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
 
     @patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
     def test_upload_invite(self, mock_send_activation_email):
-        self.setup_users()
         import_users_and_groups(
             self.domain.name,
             [self._get_invited_spec()],
@@ -1981,7 +1968,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertEqual(mock_send_activation_email.call_count, 1)
 
     def test_multi_domain(self):
-        self.setup_users()
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(username='123@email.com',
@@ -1999,7 +1985,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_web_user_location_add(self):
-        self.setup_users()
         self.setup_locations()
         import_users_and_groups(
             self.domain.name,
@@ -2024,7 +2009,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_web_user_location_remove(self):
-        self.setup_users()
         self.setup_locations()
         import_users_and_groups(
             self.domain.name,
@@ -2061,7 +2045,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_invite_location_add(self):
-        self.setup_users()
         self.setup_locations()
         import_users_and_groups(
             self.domain.name,
@@ -2111,6 +2094,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             self.tableau_instance.add_user_to_group_response()
         ]
 
+    @tag('skip_setup_users')
     @flag_enabled('TABLEAU_USER_SYNCING')
     @patch('corehq.apps.reports.models.requests.request')
     def test_tableau_users(self, mock_request):
