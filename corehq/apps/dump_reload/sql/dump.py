@@ -8,6 +8,7 @@ from django.db import router
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
+    CaseIDFilter,
     FilteredModelIteratorBuilder,
     ManyFilters,
     SimpleFilter,
@@ -31,10 +32,10 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
 
     FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndex', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseAttachment', SimpleFilter('case__domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseTransaction', SimpleFilter('case__domain')),
+    FilteredModelIteratorBuilder('form_processor.CaseAttachment', CaseIDFilter()),
+    FilteredModelIteratorBuilder('form_processor.CaseTransaction', CaseIDFilter()),
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain')),
+    FilteredModelIteratorBuilder('form_processor.LedgerTransaction', CaseIDFilter()),
 
     FilteredModelIteratorBuilder('case_search.DomainsNotInCaseSearchIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),

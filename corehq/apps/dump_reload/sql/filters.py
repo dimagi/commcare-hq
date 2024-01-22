@@ -1,9 +1,12 @@
 from abc import ABCMeta, abstractmethod
 
 from django.db.models import Q
-from corehq.util.queries import queryset_to_iterator
 
 from dimagi.utils.chunked import chunked
+
+from corehq.form_processor.models.cases import CommCareCase
+from corehq.sql_db.util import paginate_query
+from corehq.util.queries import queryset_to_iterator
 
 
 class DomainFilter(metaclass=ABCMeta):
@@ -89,6 +92,24 @@ class UserIDFilter(IDFilter):
     def get_ids(self, domain_name, db_alias=None):
         from corehq.apps.users.dbaccessors import get_all_user_ids_by_domain
         return get_all_user_ids_by_domain(domain_name, include_web_users=self.include_web_users)
+
+
+class CaseIDFilter(IDFilter):
+    def __init__(self, case_field='case'):
+        super().__init__(case_field, None)
+
+    def count(self, domain_name):
+        active_case_count = len(CommCareCase.objects.get_case_ids_in_domain(domain_name))
+        deleted_case_count = len(CommCareCase.objects.get_deleted_case_ids_in_domain(domain_name))
+        return active_case_count + deleted_case_count
+
+    def get_ids(self, domain_name, db_alias=None):
+        assert db_alias, "Expected db_alias to be defined for CaseIDFilter"
+        source = 'dump_domain_data'
+        query = Q(domain=domain_name)
+        for row in paginate_query(db_alias, CommCareCase, query, values=['case_id'], load_source=source):
+            # there isn't a good way to return flattened results
+            yield row[0]
 
 
 class UnfilteredModelIteratorBuilder(object):
