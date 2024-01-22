@@ -91,10 +91,11 @@ hqDefine('geospatial/js/models', [
         };
     };
 
-    var Map = function (usesClusters) {
+    var Map = function (usesClusters, usesStreetsLayers) {
         var self = this;
 
         self.usesClusters = usesClusters;
+        self.usesStreetsLayers = usesStreetsLayers;
 
         self.mapInstance;
         self.drawControls;
@@ -133,8 +134,10 @@ hqDefine('geospatial/js/models', [
                 createClusterLayers();
             }
 
-            loadMapBoxStreetsLayers();
-            addLayersToPanel();
+            if (self.usesStreetsLayers) {
+                loadMapBoxStreetsLayers();
+                addLayersToPanel();
+            }
         };
 
         function loadMapBoxStreetsLayers() {
