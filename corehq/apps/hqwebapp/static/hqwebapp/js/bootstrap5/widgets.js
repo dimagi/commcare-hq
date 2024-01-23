@@ -4,7 +4,7 @@ hqDefine("hqwebapp/js/bootstrap5/widgets",[
     '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
     'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
-    'datepicker',  // jquery plugin for tempusDominus
+    'datetimepicker',  // jquery plugin for tempusDominus
 ], function ($, _, MapboxGeocoder, initialPageData) {
     var init = function () {
         var MAPBOX_ACCESS_TOKEN = initialPageData.get(
