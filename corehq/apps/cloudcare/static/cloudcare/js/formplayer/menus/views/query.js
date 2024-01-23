@@ -586,6 +586,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
             this.dynamicSearchEnabled = !(options.disableDynamicSearch || this.smallScreenEnabled) &&
                 (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
+            this.searchOnClear = (options.searchOnClear && !this.smallScreenEnabled);
 
             if (Object.keys(options.groupHeaders).length > 0) {
                 const groupedCollection = groupDisplays(options.collection, options.groupHeaders);
@@ -707,7 +708,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 childView.clear();
             });
             self.setStickyQueryInputs();
-            if (self.dynamicSearchEnabled) {
+            if (self.dynamicSearchEnabled || this.searchOnClear) {
                 self.updateSearchResults();
             }
         },

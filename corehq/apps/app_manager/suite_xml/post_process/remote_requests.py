@@ -207,19 +207,23 @@ class RemoteRequestFactory(object):
         )
 
     def build_remote_request_queries(self):
+        kwargs = {
+            "url": absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
+            "storage_instance": self.storage_instance,
+            "template": 'case',
+            "title": self.build_title() if self.app.enable_case_search_title_translation else None,
+            "description": self.build_description() if self.module.search_config.description != {} else None,
+            "data": self._remote_request_query_datums,
+            "prompts": self.build_query_prompts(),
+            "prompt_groups": self.build_query_prompt_groups(),
+            "default_search": self.module.search_config.default_search,
+            "dynamic_search": self.app.split_screen_dynamic_search and not self.module.is_auto_select()
+        }
+        if self.module.search_config.search_on_clear and toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.app.domain):
+            kwargs["search_on_clear"] = (self.module.search_config.search_on_clear
+                and not self.module.is_auto_select())
         return [
-            RemoteRequestQuery(
-                url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
-                storage_instance=self.storage_instance,
-                template='case',
-                title=self.build_title() if self.app.enable_case_search_title_translation else None,
-                description=self.build_description() if self.module.search_config.description != {} else None,
-                data=self._remote_request_query_datums,
-                prompts=self.build_query_prompts(),
-                prompt_groups=self.build_query_prompt_groups(),
-                default_search=self.module.search_config.default_search,
-                dynamic_search=self.app.split_screen_dynamic_search and not self.module.is_auto_select(),
-            )
+            RemoteRequestQuery(**kwargs)
         ]
 
     def build_remote_request_datums(self):
