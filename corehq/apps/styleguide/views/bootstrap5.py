@@ -310,3 +310,17 @@ def styleguide_organisms_tables(request):
         },
     })
     return render(request, 'styleguide/bootstrap5/organisms/tables.html', context)
+
+
+@use_bootstrap5
+def styleguide_pages_navigation(request):
+    context = get_navigation_context("styleguide_pages_navigation_b5")
+    context.update({
+        'examples': {
+            'page_title_block': get_example_context('styleguide/bootstrap5/examples/page_title_block.html'),
+            'page_header': get_example_context('styleguide/bootstrap5/examples/page_header.html'),
+            'navs_cards': get_example_context('styleguide/bootstrap5/examples/navs_cards.html'),
+            'navs_tabs': get_example_context('styleguide/bootstrap5/examples/navs_tabs.html'),
+        },
+    })
+    return render(request, 'styleguide/bootstrap5/pages/navigation.html', context)

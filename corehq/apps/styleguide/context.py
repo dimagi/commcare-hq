@@ -53,6 +53,12 @@ def get_navigation_context(current_page):
                     Page("Tables", 'styleguide_organisms_tables_b5'),
                 ],
             ),
+            NavigationGroup(
+                name="Pages",
+                pages=[
+                    Page("Navigation", 'styleguide_pages_navigation_b5'),
+                ],
+            ),
         ],
     }
 
