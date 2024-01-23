@@ -1185,16 +1185,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     provided in the request. Components are short, long, filter, parent_select,
     fixture_select and sort_elements.
     """
-    # HELPME
-    #
-    # This method has been flagged for refactoring due to its complexity and
-    # frequency of touches in changesets
-    #
-    # If you are writing code that touches this method, your changeset
-    # should leave the method better than you found it.
-    #
-    # Please remove this flag when this method no longer triggers an 'E' or 'F'
-    # classification from the radon code static analysis
 
     params = json_request(request.POST)
     detail_type = params.get('type')
