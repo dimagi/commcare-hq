@@ -209,7 +209,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     Utils.getCurrentQueryInputs = function (queryKey) {
         const queryInputs = this.getQueryInputs();
         queryKey = queryKey || sessionStorage.queryKey;
-        return queryInputs[queryKey] || {};
+        return queryInputs[queryKey];
     };
 
     Utils.getStickyQueryInputs = function () {
@@ -306,9 +306,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             if (initiatedBy !== null && initiatedBy !== undefined) {
                 queryDataEntry.initiatedBy = initiatedBy;
             }
-            if (!_.isEmpty(inputs)) {
-                Utils.setQueryInputs(inputs, queryKey);
-            }
+            Utils.setQueryInputs(inputs, queryKey);
             this.queryData[queryKey] = queryDataEntry;
 
             this.page = null;
