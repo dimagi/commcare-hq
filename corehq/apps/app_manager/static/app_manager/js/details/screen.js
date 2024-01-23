@@ -157,7 +157,7 @@ hqDefine("app_manager/js/details/screen", function () {
         // or an even tab, for the sake of being able to differentiate in the case tile preview
         // which rows go with which tab.
         self.tabPolarity = function (column) {
-            const self = this,
+            const self = this;
             let flag = false;
             _.find(self.columns(), function (c) {
                 if (c.isTab) {
