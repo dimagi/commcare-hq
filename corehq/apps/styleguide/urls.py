@@ -80,4 +80,6 @@ urlpatterns = [
         name="styleguide_organisms_forms_b5"),
     url(r'^b5/organisms/tables/$', bootstrap5.styleguide_organisms_tables,
         name="styleguide_organisms_tables_b5"),
+    url(r'^b5/pages/navigation/$', bootstrap5.styleguide_pages_navigation,
+        name="styleguide_pages_navigation_b5"),
 ]
