@@ -232,6 +232,15 @@
     the standard  Bootstrap table styles. Tables that require pagination but do not have advanced
     filtering capabilities of the Report views should use the Paginated Table style.
   </p>
+
+  <div class="alert alert-primary">
+    <strong>Important Usage Note:</strong> To use Datatables on a page, you will need to apply the
+    <code>@use_datatables</code> decorator to your view to ensure that the CSS (on all views) and javascript
+    (on non-requirejs views) are included.
+    If you are using requirejs, make sure that <code>datatables.bootstrap</code> is in your list of dependencies.
+    If you are using the <code>fixedColumns</code> extension, make sure that <code>datatables.fixedColumns.bootstrap</code>
+    is in your list of dependencies.
+  </div>
   {% registerurl "styleguide_datatables_data" %}
   {% include 'styleguide/bootstrap5/code_example.html' with content=examples.datatables %}
 
