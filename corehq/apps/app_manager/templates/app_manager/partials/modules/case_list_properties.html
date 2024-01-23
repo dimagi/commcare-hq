@@ -7,13 +7,12 @@
     <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
       <th class="col-sm-1"></th>
       <th class="col-sm-2">{% trans "Property" %}</th>
+      <th class="col-sm-2">{% trans "Display Text" %}</th>
       <!-- ko if: showCaseTileMappingColumn() -->
-        <th class="col-sm-2">{% trans "Display Text" %}</th>
         <th class="col-sm-3">{% trans "Format" %}</th>
         <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
       <!--/ko-->
       <!-- ko ifnot: showCaseTileMappingColumn() -->
-        <th class="col-sm-2">{% trans "Display Text" %}</th>
         <th class="col-sm-2">{% trans "Format" %}</th>
       <!-- /ko -->
       <!-- ko if: showCaseTileConfigColumns() -->
@@ -58,24 +57,21 @@
             </span>
           </div>
         </td>
-        <td data-bind="jqueryElement: header.ui, css: {
-                              'col-sm-2': $parent.showCaseTileMappingColumn(),
-                              'col-sm-2': !$parent.showCaseTileMappingColumn(),
-                          }"></td>
+        <td data-bind="jqueryElement: header.ui"></td>
         <td data-bind="jqueryElement: $format, css: {
                               'col-sm-3': $parent.showCaseTileMappingColumn(),
                               'col-sm-2': !$parent.showCaseTileMappingColumn(),
                           }"></td>
         <!-- ko if: $parent.showCaseTileConfigColumns() -->
-          <td>
+          <td class="col-sm-1">
             <select class="form-control" data-bind="value: tileRowStart, options: tileRowOptions, visible: coordinatesVisible"></select>
             <select class="form-control" data-bind="value: tileColumnStart, options: tileColumnOptions, visible: coordinatesVisible"></select>
           </td>
-          <td>
+          <td class="col-sm-1">
             <select class="form-control" data-bind="value: tileWidth, options: tileWidthOptions, visible: coordinatesVisible"></select>
             <select class="form-control" data-bind="value: tileHeight, options: tileHeightOptions, visible: coordinatesVisible"></select>
           </td>
-          <td>
+          <td class="col-sm-1">
             <button class="btn btn-default" data-bind="click: openStyleModal, visible: coordinatesVisible">{% trans "Edit" %}</button>
           </td>
         <!--/ko-->
@@ -89,7 +85,7 @@
           <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}">
           <div data-bind="jqueryElement: nodeset_extra.ui"></div>
           <span class="help-block"
-                data-bind="text: 'Please enter an expression.', visible: showWarning"></span>
+                data-bind="text: gettext('Please enter an expression.'), visible: showWarning"></span>
           </td>
         <!--/ko-->
         <!--ko ifnot: $data.hasNodeset -->
@@ -99,10 +95,15 @@
           </td>
           <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
         <!--/ko-->
+        <!-- ko if: $parent.showCaseTileConfigColumns() -->
+          <td class="col-sm-1"></td>
+          <td class="col-sm-1"></td>
+          <td class="col-sm-1"></td>
+        <!--/ko-->
       <!--/ko-->
       <!-- ko if: $parent.showCaseTileMappingColumn() && $parent.caseTileFieldsForTemplate() -->
         <td class="col-sm-2">
-          <select class="form-control" data-bind="value: case_tile_field, options: $parent.caseTileFieldsForTemplate"></select>
+          <select class="form-control" data-bind="value: case_tile_field, options: $parent.caseTileFieldsForTemplate, visible: !$data.isTab"></select>
         </td>
       <!-- /ko -->
       <td class="col-sm-1 text-center">
