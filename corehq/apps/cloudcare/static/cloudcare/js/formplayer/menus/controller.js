@@ -126,7 +126,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             if (!appPreview) {
                 let isFormEntry = !menuResponse.queryKey;
                 if (isFormEntry) {
-                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData('lang_code_name_mapping'));
+                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
                 }
                 if (menuResponse.type === constants.ENTITIES) {
                     menusUtils.showMenuDropdown();
