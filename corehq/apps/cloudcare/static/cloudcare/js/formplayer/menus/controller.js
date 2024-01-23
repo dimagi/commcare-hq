@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
         queryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         Collection = hqImport("cloudcare/js/formplayer/menus/collections");
     var selectMenu = function (options) {
 

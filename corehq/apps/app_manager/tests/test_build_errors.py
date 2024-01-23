@@ -173,25 +173,23 @@ class BuildErrorsTest(TestCase):
         self._clean_unique_id(errors)
         self.assertIn(case_tile_error, errors)
 
-    # Temporarily comment out until migrate_address_popup has been run and
-    # _validate_address_popup_in_long has been added back in
-    # def test_address_popup_defined_in_case_list(self, *args):
-    #     case_tile_error = {
-    #         'type': "invalid tile configuration",
-    #         'module': {'id': 0, 'name': {'en': 'first module'}},
-    #         'reason': 'Format "Address Popup" should be used in the Case Detail not Case List.'
-    #     }
-    #     app, module = self.create_app_with_module()
-    #     module.case_details.short.columns.append(DetailColumn(
-    #         format='address-popup',
-    #         field='field',
-    #         header={'en': 'Column'},
-    #         model='case',
-    #     ))
-    #
-    #     errors = app.validate_app()
-    #     self._clean_unique_id(errors)
-    #     self.assertIn(case_tile_error, errors)
+    def test_address_popup_defined_in_case_list(self, *args):
+        case_tile_error = {
+            'type': "deprecated popup configuration",
+            'module': {'id': 0, 'name': {'en': 'first module'}},
+            'reason': 'Format "Address Popup" should be used in the Case Detail not Case List.'
+        }
+        app, module = self.create_app_with_module()
+        module.case_details.short.columns.append(DetailColumn(
+            format='address-popup',
+            field='field',
+            header={'en': 'Column'},
+            model='case',
+        ))
+
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertIn(case_tile_error, errors)
 
     def test_address__defined_twice(self, *args):
         case_tile_error = {
