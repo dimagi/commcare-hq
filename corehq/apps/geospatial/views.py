@@ -104,7 +104,7 @@ class CaseDisbursementAlgorithm(BaseDomainView):
     def post(self, request, domain, *args, **kwargs):
         solver_class = GeoConfig.objects.get(domain=domain).disbursement_solver
         request_json = json.loads(request.body.decode('utf-8'))
-        poll_id, result = solver_class(request_json).solve()
+        poll_id, result = solver_class(request_json).solve(self.domain)
         if poll_id is None:
             return json_response(
                 {'result': result}
