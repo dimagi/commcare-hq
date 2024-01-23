@@ -87,6 +87,7 @@
           {% crispy criteria_form %}
         </div>
       </div>
+      {% if update_actions_enabled %}
       <fieldset {% if readonly %} disabled="disabled" {% endif %}>
         <legend>{% trans "Actions" %}</legend>
         <div data-bind="template: {name: 'update-case-property-action', foreach: propertiesToUpdate, as: 'propertyToUpdate'} "></div>
@@ -101,6 +102,7 @@
           <input type="text" hidden name="properties_to_update" data-bind="value: serializedPropertiesToUpdate" />
         </div>
       </fieldset>
+      {%  endif %}
       {% if not readonly %}
         <div class="form-actions">
           <div class="col-xs-1">

@@ -484,6 +484,11 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_use_dedupe(self):
+        return domain_has_privilege(self.domain, privileges.CASE_DEDUPE)
+
+    @property
+    @memoized
     def can_export_data(self):
         return (self.project and not self.project.is_snapshot
                 and self.couch_user.can_access_any_exports(self.domain))
@@ -573,11 +578,6 @@ class ProjectDataTab(UITab):
     def can_view_ecd_preview(self):
         return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self._request)
                 and is_eligible_for_ecd_preview(self._request))
-
-    @property
-    @memoized
-    def can_deduplicate_cases(self):
-        return toggles.CASE_DEDUPE.enabled_for_request(self._request)
 
     @property
     def _can_view_geospatial(self):
@@ -943,7 +943,7 @@ class ProjectDataTab(UITab):
             else:
                 edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
 
-        if self.can_deduplicate_cases:
+        if self.can_use_dedupe:
             from corehq.apps.data_interfaces.views import (
                 DeduplicationRuleListView,
             )
@@ -952,6 +952,7 @@ class ProjectDataTab(UITab):
                 'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
             }
             edit_section[0][1].append(deduplication_list_view)
+
         return edit_section
 
     def _get_explore_data_views(self):
