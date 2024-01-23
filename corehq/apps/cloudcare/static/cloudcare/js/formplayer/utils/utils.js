@@ -213,7 +213,18 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     };
 
     Utils.getStickyQueryInputs = function () {
-        return toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH') ? Utils.getCurrentQueryInputs() : {};
+        if (toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH') && this.stickyQueryInputs) {
+            return this.stickyQueryInputs[sessionStorage.queryKey] || {};
+        }
+        return {};
+    };
+
+    Utils.setStickyQueryInputs = function (inputs) {
+        const queryKey = sessionStorage.queryKey;
+        if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
+            this.stickyQueryInputs = this.stickyQueryInputs || {};
+            this.stickyQueryInputs[queryKey] = inputs;
+        }
     };
 
     Utils.setSelectedValues = function (selections) {

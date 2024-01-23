@@ -27,7 +27,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
-            utils.setQueryInputs({});
+            utils.setStickyQueryInputs({});
             appsController.listApps();
         },
         singleApp: function (appId) {
