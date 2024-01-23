@@ -10,6 +10,10 @@
 
     {% include 'hqwebapp/includes/bootstrap5/core_stylesheets.html' %}
     {% compress css %}
+      <link type="text/css"
+            rel="stylesheet"
+            media="all"
+            href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}" />
       <link type="text/scss"
             rel="stylesheet"
             media="all"
@@ -26,6 +30,10 @@
             rel="stylesheet"
             media="screen"
             href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
+      <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css" %}" />
     {% endcompress %}
 
     {% block stylesheets %}
@@ -102,7 +110,6 @@
     {% include 'hqwebapp/partials/bootstrap5/ko_feedback.html' %}
 
     {% compress js %}
-      <script src="{% static 'jquery-ui/ui/widgets/datepicker.js' %}"></script>
       <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
       <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
       <script src="{% static 'hqwebapp/js/bootstrap5/widgets.js' %}"></script>
@@ -118,6 +125,9 @@
       <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
       <script src="{% static 'hqwebapp/js/bootstrap5/validators.ko.js' %}"></script>
       <script src="{% static 'hqwebapp/js/password_validators.ko.js' %}"></script>
+      <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
+      <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
+      <script src="{% static '@eonasdan/tempus-dominus/dist/js/jQuery-provider.min.js' %}"></script>
     {% endcompress %}
 
     {% block javascript %}
