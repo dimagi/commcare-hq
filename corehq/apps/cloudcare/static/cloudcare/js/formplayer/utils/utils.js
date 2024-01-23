@@ -194,11 +194,13 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         }
     };
 
-    Utils.getQueryInputs = function () {
-        return this.queryInputs || {};
+    Utils.getCurrentQueryInputs = function (queryKey) {
+        queryKey = queryKey || sessionStorage.queryKey;
+        const queryInputs = this.queryInputs || {};
+        return queryInputs[queryKey];
     };
 
-    Utils.setQueryInputs = function (inputs, queryKey) {
+    Utils.setCurrentQueryInputs = function (inputs, queryKey) {
         queryKey = queryKey || sessionStorage.queryKey;
         if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
             this.queryInputs = this.queryInputs || {};
@@ -206,14 +208,19 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         }
     };
 
-    Utils.getCurrentQueryInputs = function (queryKey) {
-        const queryInputs = this.getQueryInputs();
-        queryKey = queryKey || sessionStorage.queryKey;
-        return queryInputs[queryKey] || {};
+    Utils.getStickyQueryInputs = function () {
+        if (toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH') && this.stickyQueryInputs) {
+            return this.stickyQueryInputs[sessionStorage.queryKey] || {};
+        }
+        return {};
     };
 
-    Utils.getStickyQueryInputs = function () {
-        return toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH') ? Utils.getCurrentQueryInputs() : {};
+    Utils.setStickyQueryInputs = function (inputs) {
+        const queryKey = sessionStorage.queryKey;
+        if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
+            this.stickyQueryInputs = this.stickyQueryInputs || {};
+            this.stickyQueryInputs[queryKey] = inputs;
+        }
     };
 
     Utils.setSelectedValues = function (selections) {
@@ -295,7 +302,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             if (initiatedBy !== null && initiatedBy !== undefined) {
                 queryDataEntry.initiatedBy = initiatedBy;
             }
-            Utils.setQueryInputs(inputs, queryKey);
+            Utils.setCurrentQueryInputs(inputs, queryKey);
             this.queryData[queryKey] = queryDataEntry;
 
             this.page = null;
