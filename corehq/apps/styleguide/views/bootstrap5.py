@@ -33,30 +33,36 @@ from corehq.apps.styleguide.examples.bootstrap5.select_toggle_form import Select
 from corehq.apps.styleguide.examples.bootstrap5.switch_form import SwitchDemoForm
 
 
+@use_bootstrap5
 def styleguide_home(request):
     return render(request, 'styleguide/bootstrap5/home.html', get_navigation_context("styleguide_home_b5"))
 
 
+@use_bootstrap5
 def styleguide_code_guidelines(request):
     return render(request, 'styleguide/bootstrap5/code_guidelines.html',
                   get_navigation_context("styleguide_code_guidelines_b5"))
 
 
+@use_bootstrap5
 def styleguide_migration_guide(request):
     return render(request, 'styleguide/bootstrap5/migration_guide.html',
                   get_navigation_context("styleguide_migration_guide_b5"))
 
 
+@use_bootstrap5
 def styleguide_atoms_accessibility(request):
     return render(request, 'styleguide/bootstrap5/atoms/accessibility.html',
                   get_navigation_context("styleguide_atoms_accessibility_b5"))
 
 
+@use_bootstrap5
 def styleguide_atoms_typography(request):
     return render(request, 'styleguide/bootstrap5/atoms/typography.html',
                   get_navigation_context("styleguide_atoms_typography_b5"))
 
 
+@use_bootstrap5
 def styleguide_atoms_colors(request):
     context = get_navigation_context("styleguide_atoms_colors_b5")
     context.update({
@@ -67,6 +73,7 @@ def styleguide_atoms_colors(request):
     return render(request, 'styleguide/bootstrap5/atoms/colors.html', context)
 
 
+@use_bootstrap5
 def styleguide_atoms_icons(request):
     context = get_navigation_context("styleguide_atoms_icons_b5")
     context.update({
@@ -76,6 +83,7 @@ def styleguide_atoms_icons(request):
     return render(request, 'styleguide/bootstrap5/atoms/icons.html', context)
 
 
+@use_bootstrap5
 def styleguide_molecules_buttons(request):
     context = get_navigation_context("styleguide_molecules_buttons_b5")
     context.update({
