@@ -1,44 +1,51 @@
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.urls import Resolver404, resolve, reverse
 from django.utils.translation import gettext as _
 
 from memoized import memoized
 
 from corehq.apps.accounting.mixins import BillingModalsMixin
-from corehq.apps.domain.decorators import (
-    login_required,
-    LoginAndDomainMixin,
-)
+from corehq.apps.domain.decorators import LoginAndDomainMixin, login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.models import Invitation
-from corehq.util.quickcache import quickcache
 
 
 def covid19(request):
-    return select(request, next_view="app_exchange")
+    return select(request, get_url=_view_name_to_fn("app_exchange"))
+
+
+def _view_name_to_fn(view_name):
+    def get_url(domain):
+        return reverse(view_name, kwargs={'domain': domain})
+    return get_url
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
 @login_required
-def select(request, do_not_redirect=False, next_view=None):
+def select(request, always_show_list=False, get_url=None):
+    """
+    Show list of user's domains and open invitations. Can also redirect to
+    specific views and/or auto-select the most recently used domain.
+
+    :param always_show_list: always show list of domains to select (if False,
+    automatically go to last used domain)
+    :param get_url: function which accepts a domain and returns a URL
+    """
     if not hasattr(request, 'couch_user'):
         return redirect('registration_domain')
 
-    # next_view must be a url that expects exactly one parameter, a domain name
-    next_view = next_view or request.GET.get('next_view')
     show_invitations = False
-    if not next_view:
-        next_view = "domain_homepage"
+    if get_url is None:
         show_invitations = True
-    domain_links = get_domain_links_for_dropdown(request.couch_user, view_name=next_view)
+    domain_links = get_domain_links(request.couch_user, get_url=get_url)
     if not domain_links:
         return redirect('registration_domain')
-    domain_links += get_enterprise_links_for_dropdown(request.couch_user, view_name=next_view)
+    domain_links += get_enterprise_links(request.couch_user, get_url=get_url)
     domain_links = sorted(domain_links, key=lambda link: link['display_name'].lower())
 
     email = request.couch_user.get_email()
@@ -56,7 +63,7 @@ def select(request, do_not_redirect=False, next_view=None):
     domain_select_template = "domain/select.html"
     last_visited_domain = request.session.get('last_visited_domain')
     if open_invitations \
-       or do_not_redirect \
+       or always_show_list \
        or not last_visited_domain:
         return render(request, domain_select_template, additional_context)
     else:
@@ -68,11 +75,11 @@ def select(request, do_not_redirect=False, next_view=None):
                 or (request.user.is_superuser and not domain_obj.restrict_superusers)
                 or domain_obj.is_snapshot
             ):
-                try:
-                    return HttpResponseRedirect(reverse(next_view or 'dashboard_default',
-                                                args=[last_visited_domain]))
-                except Http404:
-                    pass
+                if get_url is not None:
+                    url = get_url(last_visited_domain)
+                else:
+                    url = reverse('domain_homepage', args=[last_visited_domain])
+                return HttpResponseRedirect(url)
 
         del request.session['last_visited_domain']
         return render(request, domain_select_template, additional_context)
@@ -89,32 +96,28 @@ def accept_all_invitations(request):
     return HttpResponseRedirect(reverse('domain_select_redirect'))
 
 
-@quickcache(['couch_user.username'])
-def get_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
-    # Returns dicts with keys 'name', 'display_name', and 'url'
-    return _domains_to_links(Domain.active_for_user(couch_user), view_name)
+def get_domain_links(couch_user, get_url=None):
+    return _domains_to_links(Domain.active_for_user(couch_user), get_url)
 
 
 # Returns domains where given user has access only by virtue of enterprise permissions
-@quickcache(['couch_user.username'])
-def get_enterprise_links_for_dropdown(couch_user, view_name="domain_homepage"):
-    # Returns dicts with keys 'name', 'display_name', and 'url'
+def get_enterprise_links(couch_user, get_url=None):
     from corehq.apps.enterprise.models import EnterprisePermissions
-    domain_links_by_name = {d['name']: d for d in get_domain_links_for_dropdown(couch_user)}
-    subdomain_objects_by_name = {}
-    for domain_name in domain_links_by_name:
-        for subdomain in EnterprisePermissions.get_domains(domain_name):
-            if subdomain not in domain_links_by_name:
-                subdomain_objects_by_name[subdomain] = Domain.get_by_name(subdomain)
-
-    return _domains_to_links(subdomain_objects_by_name.values(), view_name)
+    user_domains = {d.name for d in Domain.active_for_user(couch_user)}
+    subdomains = {subdomain for domain_name in user_domains
+                  for subdomain in EnterprisePermissions.get_domains(domain_name)}
+    subdomains -= user_domains
+    subdomain_objects = [Domain.get_by_name(d) for d in subdomains]
+    return _domains_to_links(subdomain_objects, get_url)
 
 
-def _domains_to_links(domain_objects, view_name):
+def _domains_to_links(domain_objects, get_url):
+    if not get_url:
+        get_url = _view_name_to_fn('domain_homepage')
     return sorted([{
         'name': o.name,
         'display_name': o.display_name(),
-        'url': reverse(view_name, args=[o.name]),
+        'url': get_url(o.name),
     } for o in domain_objects if o], key=lambda link: link['display_name'].lower())
 
 
@@ -157,3 +160,18 @@ class BaseDomainView(LoginAndDomainMixin, BillingModalsMixin, BaseSectionPageVie
     def page_url(self):
         if self.urlname:
             return reverse(self.urlname, args=[self.domain])
+
+
+def redirect_to_domain(request):
+    """Allows us to use eg commcarehq.org/a/DOMAIN/settings/users/web
+    in documentation and have it redirect to the user's domain"""
+    # switch out the DOMAIN placeholder so it doesn't match this view
+    resolvable_path = '/a/example/' + request.path.removeprefix('/a/DOMAIN/')
+    try:
+        match = resolve(resolvable_path)
+    except Resolver404:
+        raise Http404()
+
+    def get_url(domain):
+        return reverse(match.url_name, kwargs={**match.kwargs, 'domain': domain})
+    return select(request, always_show_list=True, get_url=get_url)
