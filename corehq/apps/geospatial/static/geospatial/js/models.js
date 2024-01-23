@@ -43,8 +43,9 @@ hqDefine('geospatial/js/models', [
         self.groupCoordinates = null;
 
         self.setMarkerOpacity = function (opacity) {
-            let element = self.marker.getElement();
-            element.style.opacity = opacity;
+            const element = self.marker.getElement();
+            const svg = element.getElementsByTagName("svg")[0];
+            svg.setAttribute("opacity", opacity);
         };
 
         function changeMarkerColor(selectedCase, newColor) {
