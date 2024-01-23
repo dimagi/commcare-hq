@@ -1,6 +1,8 @@
 
 GPS_POINT_CASE_PROPERTY = 'gps_point'
 
+ALGO_AES = 'aes'
+
 # Max number of cases per geohash
 MAX_GEOHASH_DOC_COUNT = 10_000
 
