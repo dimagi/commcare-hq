@@ -227,17 +227,12 @@ hqDefine('geospatial/js/models', [
             marker.addTo(self.mapInstance);
 
             const popupDiv = document.createElement("div");
-            popupDiv.setAttribute("data-bind", "template: 'select-case'");
-
-            const popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
-                .setLngLat(coordinates)
-                .setDOMContent(popupDiv)
-                .on('open', () => {
-                    highlightMarkerGroup(itemId);
-                })
-                .on('close', () => {
-                    resetMarkersOpacity();
-                });
+            const popup = utils.createMapPopup(
+                coordinates,
+                popupDiv,
+                () => highlightMarkerGroup(itemId),
+                resetMarkersOpacity
+            );
 
             marker.setPopup(popup);
             const mapItemInstance = new MapItem(itemId, itemData, marker, colors);
