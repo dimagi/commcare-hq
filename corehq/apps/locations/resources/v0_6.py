@@ -4,7 +4,7 @@ from corehq.apps.users.models import HqPermissions
 
 from corehq.apps.locations.resources import v0_5
 
-from tastypie.exceptions import BadRequest, NotFound
+from tastypie.exceptions import BadRequest
 
 
 class LocationResource(v0_5.LocationResource):
@@ -54,11 +54,9 @@ class LocationResource(v0_5.LocationResource):
 
     def obj_update(self, bundle, **kwargs):
         try:
-            bundle.obj = SQLLocation.objects.get(location_id=kwargs['location_id'])
+            bundle.obj = SQLLocation.objects.get(location_id=kwargs['location_id'], domain=kwargs['domain'])
         except SQLLocation.DoesNotExist:
-            raise BadRequest("Could not find location with given ID.")
-        if bundle.obj.domain != kwargs.pop('domain'):
-            raise NotFound('Location could not be found.')
+            raise BadRequest("Could not find location with given ID on the domain.")
         self._update(bundle)
         return bundle
 
