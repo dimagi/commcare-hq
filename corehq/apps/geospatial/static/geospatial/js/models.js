@@ -233,7 +233,7 @@ hqDefine('geospatial/js/models', [
                 .setLngLat(coordinates)
                 .setDOMContent(popupDiv)
                 .on('open', () => {
-                    highlightMarkerGroup(marker);
+                    highlightMarkerGroup(itemId);
                 })
                 .on('close', () => {
                     resetMarkersOpacity();
@@ -260,14 +260,10 @@ hqDefine('geospatial/js/models', [
             changeMarkersOpacity(markers, 1);
         }
 
-        function highlightMarkerGroup(marker) {
-            const markerCoords = marker.getLngLat();
-            const currentMarkerPosition = markerCoords.lng + " " + markerCoords.lat;
-            const markerItem = self.caseGroupsIndex[currentMarkerPosition];
-
+        function highlightMarkerGroup(itemId) {
+            const markerItem = self.caseGroupsIndex[itemId];
             if (markerItem) {
                 const groupId = markerItem.groupId;
-
                 let markersToHide = [];
                 Object.keys(self.caseGroupsIndex).forEach(itemCoordinates => {
                     const mapMarkerItem = self.caseGroupsIndex[itemCoordinates];
