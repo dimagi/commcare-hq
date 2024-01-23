@@ -226,35 +226,20 @@ hqDefine('geospatial/js/models', [
             // Add the marker to the map
             marker.addTo(self.mapInstance);
 
-            let popupDiv = document.createElement("div");
+            const popupDiv = document.createElement("div");
             popupDiv.setAttribute("data-bind", "template: 'select-case'");
 
-            let popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
+            const popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
                 .setLngLat(coordinates)
-                .setDOMContent(popupDiv);
+                .setDOMContent(popupDiv)
+                .on('open', () => {
+                    highlightMarkerGroup(marker);
+                })
+                .on('close', () => {
+                    resetMarkersOpacity();
+                });
 
             marker.setPopup(popup);
-
-            const markerDiv = marker.getElement();
-            // Show popup on hover
-            markerDiv.addEventListener('mouseenter', () => marker.togglePopup());
-            markerDiv.addEventListener('mouseenter', () => highlightMarkerGroup(marker));
-            markerDiv.addEventListener('mouseleave', () => resetMarkersOpacity());
-
-            // Hide popup if mouse leaves marker and popup
-            var addLeaveEvent = function (fromDiv, toDiv) {
-                fromDiv.addEventListener('mouseleave', function () {
-                    setTimeout(function () {
-                        if (!$(toDiv).is(':hover')) {
-                            // mouse left toDiv as well
-                            marker.togglePopup();
-                        }
-                    }, 100);
-                });
-            };
-            addLeaveEvent(markerDiv, popupDiv);
-            addLeaveEvent(popupDiv, markerDiv);
-
             const mapItemInstance = new MapItem(itemId, itemData, marker, colors);
             $(popupDiv).koApplyBindings(mapItemInstance);
 
