@@ -229,6 +229,22 @@ def styleguide_molecules_feedback(request):
 
 
 @use_bootstrap5
+def styleguide_molecules_dates_times(request):
+    context = get_navigation_context("styleguide_molecules_dates_times_b5")
+    context.update({
+        'examples': {
+            'datepicker_widget': get_example_context('styleguide/bootstrap5/examples/datepicker_widget.html'),
+            'date_only': get_example_context('styleguide/bootstrap5/examples/date_only.html'),
+            'tempus_dominus': get_example_context('styleguide/bootstrap5/examples/tempus_dominus.html'),
+            'date_range': get_example_context('styleguide/bootstrap5/examples/date_range.html'),
+            'time_only': get_example_context('styleguide/bootstrap5/examples/time_only.html'),
+            'time_only_24': get_example_context('styleguide/bootstrap5/examples/time_only_24.html'),
+        }
+    })
+    return render(request, 'styleguide/bootstrap5/molecules/dates_times.html', context)
+
+
+@use_bootstrap5
 def styleguide_organisms_forms(request):
     crispy_errors_form = ErrorsCrispyExampleForm({'full_name': 'Jon Jackson'})
     crispy_errors_form.is_valid()
