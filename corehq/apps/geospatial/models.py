@@ -86,7 +86,7 @@ class GeoConfig(models.Model):
 
     @property
     def api_token(self):
-        if self._api_token.startswith(f'${ALGO_AES}$'):
+        if self._api_token and self._api_token.startswith(f'${ALGO_AES}$'):
             ciphertext = self._api_token.split('$', 2)[2]
             return b64_aes_decrypt(ciphertext)
         return self._api_token
@@ -96,3 +96,5 @@ class GeoConfig(models.Model):
         if value and not value.startswith(f'${ALGO_AES}$'):
             ciphertext = b64_aes_encrypt(value)
             self._api_token = f'${ALGO_AES}${ciphertext}'
+        else:
+            self._api_token = None
