@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,21 +2,26 @@
+@@ -2,21 +2,29 @@
  requirejs.config({
      baseUrl: '/static/',
      paths: {
@@ -19,6 +19,9 @@
 +        "datatables.fixedColumns": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
 +        "datatables.fixedColumns.bootstrap": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
 +        "datatables.bootstrap": "datatables.net-bs5/js/dataTables.bootstrap5.min",
++        "popper": "@popperjs/core/dist/umd/popper.min",
++        "tempus-dominus": "eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
++        "datepicker": "@eonasdan/tempus-dominus/dist/js/jQuery-provider.min",  // import this if you need jquery plugin of tempus-dominus
      },
      shim: {
          "ace-builds/src-min-noconflict/ace": { exports: "ace" },
@@ -31,7 +34,17 @@
          "jquery.rmi/jquery.rmi": {
              deps: ['jquery', 'knockout', 'underscore'],
              exports: 'RMI',
-@@ -44,7 +49,7 @@
+@@ -32,6 +40,9 @@
+         "hqwebapp/js/lib/modernizr": {
+             exports: 'Modernizr',
+         },
++        "datepicker": {
++            deps: ['popper', 'tempus-dominus'],
++        },
+     },
+     packages: [{
+         name: 'moment',
+@@ -44,7 +55,7 @@
          },
      },
  
