@@ -243,6 +243,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         events: {
             "click @ui.clickIcon": "iconClick",
+            "keydown @ui.clickIcon": "iconKeyAction",
             "click": "rowClick",
             "keydown": "rowKeyAction",
             'click @ui.selectRow': 'selectRowAction',
@@ -295,6 +296,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
         },
 
+        iconKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.iconClick(e);
+            }
+        },
+
         getFieldIndexFromEvent: function (e) {
             return $(e.currentTarget).parent().parent().children('.module-case-list-column').index($(e.currentTarget).parent());
         },
@@ -330,7 +337,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
             urlObject.clickedIcon = true;
-            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true, true);
+            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
                 self.updateModelFromDetailResponse(caseId, detailResponse);
             }).fail(function () {
@@ -412,6 +419,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
+                headers: this.options.headers,
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
@@ -532,7 +540,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const PersistentCaseTileView = CaseTileView.extend({
-        className: "formplayer-request",
+        className: "formplayer-request persistent-sticky",
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
@@ -585,6 +593,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
+                headers: this.options.headers,
                 endpointActions: this.options.endpointActions,
             };
         },
@@ -863,6 +872,23 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                 }
 
                                 marker.on('click', () => {
+                                    if (popupIndex < 0) {
+                                        const urlObject = formplayerUtils.currentUrlToObject();
+                                        urlObject.addSelection(model.get('id'));
+                                        const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, false, false);
+                                        $.when(fetchingDetails).done(function (detailResponse) {
+                                            const attributes = Array.from(detailResponse)[0].attributes;
+                                            const popupIndexOnClick =
+                                                _.findIndex(attributes.styles, (style) => style.displayFormat === constants.FORMAT_ADDRESS_POPUP);
+                                            if (popupIndexOnClick >= 0) {
+                                                const popupTextOnClick = markdown.render(attributes.details[popupIndexOnClick]);
+                                                const p = L.popup().setContent(popupTextOnClick);
+                                                marker.bindPopup(p).openPopup();
+                                            }
+                                        }).fail(function () {
+                                            console.log('could not get case details');
+                                        });
+                                    }
                                     // tiles
                                     $(`.list-cell-wrapper-style[id!='${rowId}']`)
                                         .removeClass("highlighted-case");

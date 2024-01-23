@@ -5,7 +5,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
     'hqwebapp/js/initial_page_data',
     'data_interfaces/js/case_property_input',
     'data_interfaces/js/case_rule_criteria',
-    'hqwebapp/js/widgets',
+    'hqwebapp/js/bootstrap3/widgets',
 ], function (
     $,
     ko,
