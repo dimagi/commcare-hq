@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-from ..management.commands.populate_repeatrecords import Command
+from corehq.util.django_migrations import prompt_for_historical_migration, get_migration_name
 
 
 class Migration(migrations.Migration):
@@ -13,8 +13,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(
-            Command.migrate_from_migration,
-            reverse_code=migrations.RunPython.noop,
-        ),
+        prompt_for_historical_migration(
+            "repeaters", get_migration_name(__file__), "TODO commit hash on master somtime after PR 2 is merged"),
     ]
