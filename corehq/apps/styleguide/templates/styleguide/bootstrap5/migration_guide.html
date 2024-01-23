@@ -1,7 +1,7 @@
 {% extends 'styleguide/bootstrap5/base.html' %}
 
 {% block intro %}
-  <h1 class="sg-title mb-0" id="content">Migration Guide</h1>
+  <h1 class="sg-title mb-0" id="content">Bootstrap Migration Guide</h1>
   <p class="sg-lead">
     How to migrate an HQ application to the next Bootstrap version.
   </p>
@@ -12,15 +12,26 @@
   <hr class="my-2 ms-3">
   <nav id="TableOfContents">
     <ul>
-      <li>
-        <a href="#atomic-design">Atomic Design and Organization</a>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#prepare-local-environment">Prepare Local Environment</a></li>
+      <li><a href="#announce-migration">Step 1: Announce Migration</a></li>
+      <li><a href="#split-files">Step 2: Split Files</a>
         <ul>
-          <li><a href="#atomic-design-atoms">Atoms</a></li>
-          <li><a href="#atomic-design-molecules">Molecules</a></li>
-          <li><a href="#atomic-design-organisms">Organisms</a></li>
-          <li><a href="#atomic-design-templates">Templates and Pages</a></li>
+          <li><a href="#update-diffs">Configure &amp; Update Diffs</a></li>
+          <li><a href="#verify-references">Verify References</a></li>
         </ul>
       </li>
+      <li><a href="#update-stylesheets">Step 2B: Migrate Stylesheets</a></li>
+      <li><a href="#migrating-views">Step 3: Migrating Views</a>
+        <ul>
+          <li><a href="#un-split-view-files">Un-Split View Files</a></li>
+          <li><a href="#deploy-to-staging">Deploy to Staging</a></li>
+          <li><a href="#rebuild-diffs">Rebuild Diffs</a></li>
+        </ul>
+      </li>
+      <li><a href="#completing-migration">Step 4: Completing the App Migration</a></li>
+      <li><a href="#final-cleanup">Final Cleanup Process</a></li>
+      <li><a href="#deep-dive-resources">Deep-Dive Resources</a></li>
     </ul>
   </nav>
 {% endblock toc %}
@@ -76,7 +87,7 @@
     </li>
   </ul>
 
-  <h2 id="preparing-local-environment" class="pt-4">
+  <h2 id="prepare-local-environment" class="pt-4">
     Prepare Local Environment
   </h2>
   <p>
@@ -354,5 +365,25 @@
     we have used to support this migration. This page can then serve as the starting point for anyone embarking on
     a future (and hopefully less painful) challenge of the next Bootstrap Migration.
   </p>
+
+  <h2 id="deep-dive-resources" class="pt-4">
+    Deep-Dive Resources
+  </h2>
+  <p>
+    Here are the official migration guides from Bootstrap. These guides detail every change made
+    from the previous version to the next. The migration tool we created is meant to help automate the process
+    of pouring over these guides for each change over and over again. However, if you are curious
+    to read more, this is a good place to start.
+  </p>
+  <ul>
+    <li><a href="https://getbootstrap.com/docs/4.6/migration/" target="_blank">Bootstrap 4.6 Migration Guide</a></li>
+    <li><a href="https://getbootstrap.com/docs/5.3/migration/" target="_blank">Bootstrap 5.3 Migration Guide</a></li>
+  </ul>
+  <p>
+    If you are interested in reading about how we initially spec'd the process of Migrating from Bootstrap 3 to 5
+    on CommCare HQ, Dimagi folks are welcome to
+    <a href="https://docs.google.com/document/d/109bbC9yacAwhlZ71eepLRsN7ZoqDz055D-XCAV4rI-U/edit" target="_blank">review the initial Tech Spec here</a>.
+  </p>
+
 
 {% endblock content %}
