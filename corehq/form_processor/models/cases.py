@@ -54,9 +54,6 @@ CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties"
 
 class CommCareCaseManager(RequireDBManager):
 
-    def get_by_natural_key(self, case_id):
-        return self.partitioned_query(case_id).get(case_id=case_id)
-
     def get_case(self, case_id, domain=None):
         if not case_id:
             raise CaseNotFound(case_id)
@@ -345,9 +342,16 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         super().__init__(*args, **kwargs)
 
     def natural_key(self):
+        """
+        Django recommends always returning a tuple in natural_key methods:
+        https://docs.djangoproject.com/en/3.2/topics/serialization/#serialization-of-natural-keys
+        We intentionally do not follow this to optimize corehq.apps.dump_reload.sql.load.SqlDataLoader when other
+        models foreign key to CommCareCase or XFormInstance. This means our loader code is subject to break in
+        future Django upgrades.
+        """
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return (self.case_id,)
+        return self.case_id
 
     @property
     def doc_type(self):
