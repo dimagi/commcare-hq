@@ -91,9 +91,9 @@ hqDefine("geospatial/js/geospatial_map", [
             // Clean stale disbursement results
             mapModel.removeDisbursementLayers();
 
-            var groupId = 0;
+            let groupId = 0;
             Object.keys(result).forEach((userId) => {
-                let user = mapModel.userMapItems().find((userModel) => {return userModel.itemId === userId;});
+                const user = mapModel.userMapItems().find((userModel) => {return userModel.itemId === userId;});
                 mapModel.caseGroupsIndex[userId] = {groupId: groupId, item: user};
 
                 let cases = [];
