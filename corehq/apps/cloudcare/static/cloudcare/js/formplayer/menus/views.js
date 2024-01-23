@@ -479,7 +479,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         rowClick: function () {},
     });
 
-    var initCaseTileList = function (options) {
+    const initCaseTileList = function (options) {
         const numEntitiesPerRow = options.numEntitiesPerRow || 1;
         const numRows = options.maxHeight;
         const numColumns = options.maxWidth;
@@ -569,7 +569,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const PersistentCaseTileView = CaseTileView.extend({
         className: function () {
-            return "persistent-sticky" + (this.options.hasInlineTile ? " formplayer-request": "");
+            return "persistent-sticky" + (this.options.hasInlineTile ? " formplayer-request" : "");
         },
         rowClick: function (e) {
             e.preventDefault();
@@ -629,8 +629,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         initialize: function (options) {
-            const self = this;
-            var sidebarNoItemsText = gettext("Please perform a search.");
+            const self = this,
+                sidebarNoItemsText = gettext("Please perform a search.");
             self.styles = options.styles;
             self.hasNoItems = options.collection.length === 0 || options.triggerEmptyCaseList;
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
