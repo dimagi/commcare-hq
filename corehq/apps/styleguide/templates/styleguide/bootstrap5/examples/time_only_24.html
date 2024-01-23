@@ -1,0 +1,18 @@
+<input type="text" name="timpick24" class="form-control" id="id_timepicker_24">
+
+<script>
+  $(function () {
+    $('#id_timepicker_24').tempusDominus({
+      display: {
+        theme: 'light',
+        components: {
+          calendar: false,
+        },
+      },
+      localization: {
+        hourCycle: 'h23',
+        format: 'H:mm',
+      },
+    });
+  });
+</script>
