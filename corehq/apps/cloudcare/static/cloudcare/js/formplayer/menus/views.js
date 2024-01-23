@@ -363,7 +363,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (!(
                 e.target.classList.contains('module-case-list-column-checkbox') ||  // multiselect checkbox
                 e.target.classList.contains("select-row-checkbox") ||               // multiselect select all
-                $(e.target).is('a') ||                                              // actual link, as in markdown
+                $(e.target).parent().is('a') ||                                     // actual link, as in markdown
                 e.target.classList.contains('show-more') ||
                 $(e.target).parent().hasClass('show-more')
             )) {
