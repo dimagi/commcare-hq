@@ -42,6 +42,7 @@ def get_navigation_context(current_page):
                     Page("Searching & Filtering", 'styleguide_molecules_searching_b5'),
                     Page("Inline Editing", 'styleguide_molecules_inline_editing_b5'),
                     Page("Feedback", 'styleguide_molecules_feedback_b5'),
+                    Page("Dates & Times", 'styleguide_molecules_dates_times_b5'),
                 ],
             ),
             NavigationGroup(
