@@ -1,5 +1,6 @@
 hqDefine('app_manager/js/forms/form_workflow', function () {
     'use strict';
+    const uiElementKeyValueList = hqImport("hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list");
 
     var FormWorkflow = function (options) {
         var self = this;
@@ -143,6 +144,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         self.formId = ko.observable(formId);
         self.autoLink = ko.observable();
         self.allowManualLinking = ko.observable();
+        self.advancedMode = hqImport("hqwebapp/js/toggles").toggleEnabled('FORM_LINK_ADVANCED_MODE');
         self.forms = workflow.forms || [];
         self.datums = ko.observableArray();
         self.manualDatums = ko.observable(false);
@@ -191,6 +193,26 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         self.showLinkDatums = ko.computed(function () {
             return (!self.autoLink() || self.manualDatums());
         });
+
+        if (self.advancedMode) {
+            self.advancedModeDatumsElement = uiElementKeyValueList.new(
+                String(Math.random()).slice(2),  // random id
+                gettext("Manual Linking Datums"),
+                gettext("Set datums required to navigate to the selected form or menu"),
+                {key: gettext("Datum ID"), value: gettext("XPath Expression")}  // placeholders
+            );
+            let datumsDict = {};
+            _.each(datums, function (datum) {
+                datumsDict[datum.name] = datum.xpath;
+            });
+            self.advancedModeDatumsElement.val(datumsDict);
+            self.advancedModeDatumsElement.on("change", function () {
+                self.serializedDatums(JSON.stringify(_.map(this.val(), function (xpath, name) {
+                    return {name: name, xpath: xpath};
+                })));
+                workflow.$changeEl.trigger('change'); // Manually trigger change so Save button activates
+            });
+        }
 
         self.formId.subscribe(function (form_id) {
             let form = self.get_form_by_id(form_id);
