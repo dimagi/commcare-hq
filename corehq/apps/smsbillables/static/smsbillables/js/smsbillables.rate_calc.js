@@ -3,7 +3,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
     'knockout',
     'underscore',
     'hqwebapp/js/select2_handler',
-    'hqwebapp/js/widgets',  // the public sms page uses a .hqwebapp-select2 for country input
+    'hqwebapp/js/bootstrap3/widgets',  // the public sms page uses a .hqwebapp-select2 for country input
 ], function (
     $,
     ko,

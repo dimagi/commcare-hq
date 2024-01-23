@@ -15,12 +15,7 @@ from corehq.apps.reports.filters.base import (
     BaseMultipleOptionFilter,
     BaseSingleOptionFilter,
 )
-from corehq.motech.repeaters.const import (
-    RECORD_CANCELLED_STATE,
-    RECORD_FAILURE_STATE,
-    RECORD_PENDING_STATE,
-    RECORD_SUCCESS_STATE,
-)
+from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.models import Repeater
 
 
@@ -144,9 +139,9 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [
-            (RECORD_SUCCESS_STATE, _("Successful")),
-            (RECORD_PENDING_STATE, _("Pending")),
-            (RECORD_CANCELLED_STATE, _("Cancelled")),
-            (RECORD_FAILURE_STATE, _("Failed")),
-        ]
+        return [(s.name.upper(), s.label) for s in [
+            State.Success,
+            State.Pending,
+            State.Cancelled,
+            State.Fail,
+        ]]

@@ -3,6 +3,8 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.custom_data_fields.models import (
     COMMCARE_PROJECT,
     PROFILE_SLUG,
@@ -26,15 +28,15 @@ class UserData:
     def lazy_init(cls, couch_user, domain):
         # To be used during initial rollout - lazily create user_data objs from
         # existing couch data
-        raw_user_data = couch_user.user_data.copy()
+        raw_user_data = couch_user.to_json().get('user_data', {}).copy()
         raw_user_data.pop(COMMCARE_PROJECT, None)
         profile_id = raw_user_data.pop(PROFILE_SLUG, None)
         sql_data, _ = SQLUserData.objects.get_or_create(
             user_id=couch_user.user_id,
             domain=domain,
             defaults={
-                'data': couch_user.user_data,
-                'django_user': couch_user.get_django_user(),
+                'data': raw_user_data,
+                'django_user': couch_user.get_django_user,
                 'profile_id': profile_id,
             }
         )
@@ -46,7 +48,7 @@ class UserData:
             domain=self.domain,
             defaults={
                 'data': self._local_to_user,
-                'django_user': self._couch_user.get_django_user(),
+                'django_user': self._couch_user.get_django_user,
                 'profile_id': self.profile_id,
             },
         )
@@ -188,3 +190,27 @@ class SQLUserData(models.Model):
     class Meta:
         unique_together = ("user_id", "domain")
         indexes = [models.Index(fields=['user_id', 'domain'])]
+
+
+def prime_user_data_caches(users, domain):
+    """
+    Enriches a set of users by looking up and priming user data caches in
+    chunks, for use in bulk workflows.
+    :return: generator that yields the enriched user objects
+    """
+    for chunk in chunked(users, 100):
+        user_ids = [user.user_id for user in chunk]
+        sql_data_by_user_id = {
+            ud.user_id: ud for ud in
+            SQLUserData.objects.filter(domain=domain, user_id__in=user_ids)
+        }
+        for user in chunk:
+            if user.user_id in sql_data_by_user_id:
+                sql_data = sql_data_by_user_id[user.user_id]
+                user_data = UserData(sql_data.data, user, domain,
+                                     profile_id=sql_data.profile_id)
+            else:
+                user_data = UserData({}, user, domain)
+            # prime the user.get_user_data cache
+            user._user_data_accessors[domain] = user_data
+            yield user

@@ -1,4 +1,4 @@
-/*globals DOMPurify, Marionette */
+/*globals Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const kissmetrics = hqImport("analytix/js/kissmetrix"),
@@ -147,6 +147,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     // generate the case tile's style block and insert
     const buildCellLayout = function (tiles, styles, prefix) {
         const borderInTile = Boolean(_.find(styles, s => s.showBorder));
+        const shadingInTile = Boolean(_.find(styles, s => s.showShading));
         const tileModels = _.chain(tiles || [])
             .map(function (tile, idx) {
                 if (tile === null || tile === undefined) {
@@ -161,6 +162,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     horizontalAlign: getValidFieldAlignment(style.horizontalAlign),
                     showBorder: style.showBorder,
                     borderInTile: borderInTile,
+                    showShading: style.showShading,
+                    shadingInTile: shadingInTile,
                 };
             })
             .filter(function (tile) {
@@ -240,6 +243,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         events: {
             "click @ui.clickIcon": "iconClick",
+            "keydown @ui.clickIcon": "iconKeyAction",
             "click": "rowClick",
             "keydown": "rowKeyAction",
             'click @ui.selectRow': 'selectRowAction',
@@ -292,6 +296,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
         },
 
+        iconKeyAction: function (e) {
+            if (e.keyCode === 13) {
+                this.iconClick(e);
+            }
+        },
+
         getFieldIndexFromEvent: function (e) {
             return $(e.currentTarget).parent().parent().children('.module-case-list-column').index($(e.currentTarget).parent());
         },
@@ -327,7 +337,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
             urlObject.clickedIcon = true;
-            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true, true);
+            const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
                 self.updateModelFromDetailResponse(caseId, detailResponse);
             }).fail(function () {
@@ -409,6 +419,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
+                headers: this.options.headers,
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
@@ -440,7 +451,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseTileView = CaseView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style",
+        className: "formplayer-request list-cell-wrapper-style panel panel-default",
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
@@ -464,7 +475,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseTileGroupedView = CaseTileView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style case-tile-group",
+        className: "formplayer-request list-cell-wrapper-style case-tile-group panel panel-default",
         template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
@@ -529,7 +540,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const PersistentCaseTileView = CaseTileView.extend({
-        className: "formplayer-request",
+        className: "formplayer-request persistent-sticky",
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
@@ -582,6 +593,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
+                headers: this.options.headers,
                 endpointActions: this.options.endpointActions,
             };
         },
@@ -780,7 +792,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         verifySelectedCaseIdsLessThanMaxSelectValue: function () {
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
-                    "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
+                    "of <%- value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
                 hqRequire(["hqwebapp/js/bootstrap3/alert_user"], function (alertUser) {
                     alertUser.alert_user(errorMessage, 'danger');
                 });
@@ -860,6 +872,23 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                                 }
 
                                 marker.on('click', () => {
+                                    if (popupIndex < 0) {
+                                        const urlObject = formplayerUtils.currentUrlToObject();
+                                        urlObject.addSelection(model.get('id'));
+                                        const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, false, false);
+                                        $.when(fetchingDetails).done(function (detailResponse) {
+                                            const attributes = Array.from(detailResponse)[0].attributes;
+                                            const popupIndexOnClick =
+                                                _.findIndex(attributes.styles, (style) => style.displayFormat === constants.FORMAT_ADDRESS_POPUP);
+                                            if (popupIndexOnClick >= 0) {
+                                                const popupTextOnClick = markdown.render(attributes.details[popupIndexOnClick]);
+                                                const p = L.popup().setContent(popupTextOnClick);
+                                                marker.bindPopup(p).openPopup();
+                                            }
+                                        }).fail(function () {
+                                            console.log('could not get case details');
+                                        });
+                                    }
                                     // tiles
                                     $(`.list-cell-wrapper-style[id!='${rowId}']`)
                                         .removeClass("highlighted-case");
@@ -935,33 +964,25 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            const paginateItems = formplayerUtils.paginateOptions(this.options.currentPage, this.options.pageCount);
+            const paginateItems = formplayerUtils.paginateOptions(
+                this.options.currentPage,
+                this.options.pageCount,
+                this.options.collection.length
+            );
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
-            const boldSortedCharIcon = (header) => {
-                const headerWords = header.trim().split(' ');
-                const lastChar = headerWords.pop();
-
-                return lastChar === "Λ" || lastChar === "V"
-                    ? `${headerWords.join(' ')} <b>${lastChar}</b>`
-                    : header;
-            };
             let description = this.options.description;
             let title = this.options.title;
             if (this.options.sidebarEnabled && this.options.collection.queryResponse) {
                 description = this.options.collection.queryResponse.description;
                 title = this.options.collection.queryResponse.title;
             }
-            return {
-                startPage: paginateItems.startPage,
+            return _.extend(paginateItems, {
                 title: title.trim(),
-                description: description === undefined ? "" : DOMPurify.sanitize(markdown.render(description.trim())),
-                headers: this.headers.map(boldSortedCharIcon),
+                description: description === undefined ? "" : markdown.render(description.trim()),
+                headers: this.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
-                endPage: paginateItems.endPage,
-                pageCount: paginateItems.pageCount,
-                rowRange: [5, 10, 25, 50, 100],
                 limit: casesPerPage,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
@@ -983,8 +1004,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
-                pageNumLabel: _.template(gettext("Page <%-num%>")),
-            };
+            });
         },
     });
 
@@ -1005,7 +1025,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const MultiSelectCaseListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {
             selectAllCheckbox: "#select-all-checkbox",
-            continueButton: "#multi-select-continue-btn",
+            continueButton: ".multi-select-continue-btn",
             continueButtonText: "#multi-select-btn-text",
         }),
 
@@ -1057,7 +1077,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const CaseTileListView = CaseListView.extend({
         ui: _.extend(CaseListViewUI(), {
             selectAllCheckbox: "#select-all-tile-checkbox",
-            continueButton: "#multi-select-continue-btn",
+            continueButton: ".multi-select-continue-btn",
             continueButtonText: "#multi-select-btn-text",
         }),
         childView: CaseTileView,
@@ -1108,6 +1128,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const dict = CaseTileListView.__super__.templateContext.apply(this, arguments);
             dict.useTiles = true;
             dict.isMultiSelect = this.options.isMultiSelect;
+            dict.sortOptions = _.map(dict.sortIndices, function (sortIndex) {
+                let header = dict.headers[sortIndex],
+                    sortOrder = null,
+                    headerWords = header.trim().split(' '),
+                    lastChar = headerWords.pop();
+                if (lastChar === "Λ" || lastChar === "V") {
+                    header = headerWords.join(' ');
+                    sortOrder = lastChar;
+                }
+                return {
+                    index: sortIndex,
+                    header: header,
+                    sortOrder: sortOrder,
+                };
+            });
             return dict;
         },
 
@@ -1182,11 +1217,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#breadcrumb-item-template").html() || ""),
         className: "breadcrumb-text",
         attributes: function () {
-            return {
+            let attributes = {
                 "role": "link",
                 "tabindex": "0",
                 "style": this.buildMaxWidth(),
             };
+            if (this.options.model.get('ariaCurrentPage')) {
+                attributes['aria-current'] = 'page';
+            }
+            return attributes;
         },
         events: {
             "click": "crumbClick",

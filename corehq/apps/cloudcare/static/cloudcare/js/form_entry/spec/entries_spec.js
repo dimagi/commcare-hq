@@ -18,6 +18,7 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {
                 "toggles_dict",
                 {
                     WEB_APPS_UPLOAD_QUESTIONS: true,
+                    WEB_APPS_ANCHORED_SUBMIT: false,
                 }
             );
         });

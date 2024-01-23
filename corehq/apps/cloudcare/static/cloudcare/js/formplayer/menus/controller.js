@@ -7,9 +7,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
+        queryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         Collection = hqImport("cloudcare/js/formplayer/menus/collections");
     var selectMenu = function (options) {
 
@@ -107,9 +106,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var sidebarEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH') && !appPreview;
-
-        if (sidebarEnabled && menuResponse.type === "query") {
+        var queryResponse = menuResponse.queryResponse;
+        var sidebarEnabled = !appPreview && menusUtils.isSidebarEnabled(menuResponse);
+        if (sidebarEnabled && menuResponse.type === constants.QUERY) {
             var menuData = menusUtils.getMenuData(menuResponse);
             menuData["triggerEmptyCaseList"] = true;
             menuData["sidebarEnabled"] = true;
@@ -126,28 +125,29 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
         }
 
-        var queryResponse = menuResponse.queryResponse;
-        if (sidebarEnabled && menuResponse.type === "entities" && queryResponse)  {
+        if (sidebarEnabled && menuResponse.type === constants.ENTITIES && queryResponse)  {
             var queryCollection = new Collection(queryResponse.displays);
             FormplayerFrontend.regions.getRegion('sidebar').show(
-                QueryListView({
+                queryView.queryListView({
                     collection: queryCollection,
                     title: menuResponse.title,
                     description: menuResponse.description,
                     hasDynamicSearch: queryResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: !sessionStorage.submitPerformed,
+                    groupHeaders: queryResponse.groupHeaders,
                 }).render()
             );
-        } else if (sidebarEnabled && menuResponse.type === "query") {
+        } else if (sidebarEnabled && menuResponse.type === constants.QUERY) {
             FormplayerFrontend.regions.getRegion('sidebar').show(
-                QueryListView({
+                queryView.queryListView({
                     collection: menuResponse,
                     title: menuResponse.title,
                     description: menuResponse.description,
                     hasDynamicSearch: menuResponse.dynamicSearch,
                     sidebarEnabled: true,
                     disableDynamicSearch: true,
+                    groupHeaders: menuResponse.groupHeaders,
                 }).render()
             );
         } else {
@@ -159,9 +159,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             if (!appPreview) {
                 let isFormEntry = !menuResponse.queryKey;
                 if (isFormEntry) {
-                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData('lang_code_name_mapping'));
+                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
                 }
-                if (menuResponse.type === "entities") {
+                if (menuResponse.type === constants.ENTITIES) {
                     menusUtils.showMenuDropdown();
                 }
             }
@@ -179,7 +179,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var showDetail = function (model, detailTabIndex, caseId, isMultiSelect) {
-        var detailObjects = model.models;
+        var detailObjects = model.filter(function (d) {
+            const styles = d.get('styles');
+            const visibleStyle = _.find(styles, s => s.displayFormat !== constants.FORMAT_ADDRESS_POPUP);
+            return typeof visibleStyle !== 'undefined';
+        });
+
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
             if (isMultiSelect) {
@@ -252,10 +257,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.header = headers[i];
             obj.style = styles[i];
             obj.id = i;
-            if (obj.style.displayFormat === 'Markdown') {
+            if (obj.style.displayFormat === constants.FORMAT_MARKDOWN) {
                 obj.html = markdown.render(details[i]);
             }
-            detailModel.push(obj);
+            if (obj.style.displayFormat !== constants.FORMAT_ADDRESS_POPUP) {
+                detailModel.push(obj);
+            }
         }
         var detailCollection = new Backbone.Collection();
         detailCollection.reset(detailModel);
@@ -282,6 +289,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
         return views.PersistentCaseTileView({
             model: detailModel,
+            headers: detailObject.headers,
             styles: detailObject.styles,
             tiles: detailObject.tiles,
             maxWidth: detailObject.maxWidth,

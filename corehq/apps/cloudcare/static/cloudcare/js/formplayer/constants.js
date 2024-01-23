@@ -25,6 +25,10 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
         FORMAT_ADDRESS: "Address",
         FORMAT_ADDRESS_POPUP: "AddressPopup",
         FORMAT_CLICKABLE_ICON: "ClickableIcon",
+        FORMAT_MARKDOWN: "Markdown",
+
+        ENTITIES: "entities",
+        QUERY: "query",
 
         SMALL_SCREEN_WIDTH_PX: 992,
 

@@ -167,6 +167,10 @@ class DetailContributor(SectionContributor):
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
         d = Detail(id=id, title=title, nodeset=nodeset, print_template=print_template, relevant=relevant)
+        if (detail_type == 'case_short' or detail_type == 'search_short') \
+                and hasattr(module, 'lazy_load_case_list_fields') and module.lazy_load_case_list_fields:
+            d.lazy_loading = module.lazy_load_case_list_fields
+
         self._add_custom_variables(detail, d)
         if tabs:
             tab_spans = detail.get_tab_spans()
@@ -194,7 +198,13 @@ class DetailContributor(SectionContributor):
             if len(d.details):
                 helper = EntriesHelper(self.app)
                 datums = helper.get_datum_meta_module(module)
-                d.variables.extend([DetailVariable(name=datum.id, function=datum.datum.value) for datum in datums])
+                d.variables.extend([
+                    DetailVariable(name=datum.id, function=datum.datum.value)
+                    for datum in datums
+                    # FixtureSelect isn't supported under variables
+                    # More context here: https://github.com/dimagi/commcare-hq/pull/33769#discussion_r1410315708
+                    if datum.action != 'fixture_select'
+                ])
                 return d
             else:
                 return None
@@ -486,6 +496,7 @@ class DetailContributor(SectionContributor):
                     grid_x=0,
                     grid_y=0,
                     show_border=False,
+                    show_shading=False,
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath_function=xml)),
@@ -509,6 +520,7 @@ class DetailContributor(SectionContributor):
                     grid_x=0,
                     grid_y=0,
                     show_border=False,
+                    show_shading=False,
                 ),
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath=TextXPath(

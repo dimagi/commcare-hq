@@ -406,27 +406,25 @@ class ModuleBaseValidator(object):
             from corehq.apps.app_manager.views.modules import get_all_case_modules
             valid_modules = get_all_case_modules(self.app, self.module)
         valid_module_ids = [info['unique_id'] for info in valid_modules]
+        search_config = getattr(self.module, 'search_config', None)
         if self.module.parent_select.module_id not in valid_module_ids:
             errors.append({
                 'type': 'invalid parent select id',
                 'module': self.get_module_info(),
             })
-        else:
-            module_id = self.module.parent_select.module_id
-            parent_select_module = self.module.get_app().get_module_by_unique_id(module_id)
+
+        elif search_config:
+            parent_module_id = self.module.parent_select.module_id
+            parent_select_module = self.module.get_app().get_module_by_unique_id(parent_module_id)
             if parent_select_module and module_uses_inline_search(parent_select_module):
-                errors.append({
-                    'type': 'parent select is inline search module',
-                    'module': self.get_module_info(),
-                })
-
-        if module_uses_inline_search(self.module):
-            if self.module.parent_select.relationship:
-                errors.append({
-                    'type': 'inline search parent select relationship',
-                    'module': self.get_module_info(),
-                })
-
+                parent_module_instance_name = parent_select_module.search_config.get_instance_name()
+                if search_config.get_instance_name() == parent_module_instance_name:
+                    errors.append({
+                        'type': 'non-unique instance name with parent select module',
+                        "message": f'The instance "{search_config.get_instance_name()}" is not unique',
+                        "module": self.get_module_info(),
+                        "details": search_config.get_instance_name()
+                    })
         return errors
 
     def validate_smart_links(self):
@@ -538,6 +536,15 @@ class ModuleBaseValidator(object):
                             "module": self.get_module_info(),
                             "details": search_config.get_instance_name()
                         }
+            module_contains_grouping_property = any(prop.is_group for prop in search_config.properties)
+            if module_contains_grouping_property:
+                ungrouped_properties = [prop for prop in search_config.properties if not prop.group_key]
+                for prop in ungrouped_properties:
+                    yield {
+                        "type": "invalid grouping from ungrouped search property",
+                        "module": self.get_module_info(),
+                        "property": prop.name,
+                    }
 
     def validate_case_list_field_actions(self):
         if hasattr(self.module, 'case_details'):
@@ -558,10 +565,13 @@ class ModuleBaseValidator(object):
 class ModuleDetailValidatorMixin(object):
 
     __invalid_tile_configuration_type: str = "invalid tile configuration"
-
     __invalid_clickable_icon_configuration: str = "invalid clickable icon configuration"
+    __deprecated_popup_configuration: str = "deprecated popup configuration"
 
-    def _validate_fields_with_format(
+    __address_popup = 'address-popup'
+    __address_popup_display = 'Address Popup'
+
+    def _validate_fields_with_format_duplicate(
         self,
         format_value: str,
         format_display: str,
@@ -576,6 +586,20 @@ class ModuleDetailValidatorMixin(object):
                 'module': self.get_module_info(),
                 'reason': _('Format "{}" can only be used once but is used by multiple properties: {}'
                             .format(format_display, fields_with_address_format_str))
+            })
+
+    def _validate_address_popup_in_long(
+        self,
+        errors: list
+    ):
+        fields_with_address_format = \
+            {c.field for c in self.module.case_details.short.columns if c.format == self.__address_popup}
+        if len(fields_with_address_format) > 0:
+            errors.append({
+                'type': self.__deprecated_popup_configuration,
+                'module': self.get_module_info(),
+                'reason': _('Format "{}" should be used in the Case Detail not Case List.'
+                            .format(self.__address_popup_display))
             })
 
     def _validate_clickable_icons(
@@ -615,6 +639,7 @@ class ModuleDetailValidatorMixin(object):
                     'module': self.get_module_info(),
                     'filter': self.module.case_list_filter,
                 })
+
         for detail in [self.module.case_details.short, self.module.case_details.long]:
             if detail.case_tile_template:
                 if not detail.display == "short":
@@ -631,8 +656,7 @@ class ModuleDetailValidatorMixin(object):
                             'module': self.get_module_info(),
                             'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
                         })
-            self._validate_fields_with_format('address', 'Address', detail.columns, errors)
-            self._validate_fields_with_format('address-popup', 'Address Popup', detail.columns, errors)
+            self._validate_fields_with_format_duplicate('address', 'Address', detail.columns, errors)
             self._validate_clickable_icons(detail.columns, errors)
 
             if detail.has_persistent_tile() and self.module.report_context_tile:
@@ -643,6 +667,15 @@ class ModuleDetailValidatorMixin(object):
                         A menu may not use both a persistent case list tile and a persistent report tile.
                     """),
                 })
+
+        self._validate_fields_with_format_duplicate(
+            self.__address_popup,
+            self.__address_popup_display,
+            self.module.case_details.long.columns,
+            errors)
+
+        self._validate_address_popup_in_long(errors)
+
         return errors
 
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
