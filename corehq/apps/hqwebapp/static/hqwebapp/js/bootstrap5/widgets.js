@@ -79,6 +79,7 @@ hqDefine("hqwebapp/js/bootstrap5/widgets",[
                         longitude: item.geometry.coordinates[0],
                         latitude: item.geometry.coordinates[1],
                     };
+                    geoObj.bbox = item.bbox;
                     inputEl.attr("value", JSON.stringify(geoObj));
                     return item.place_name;
                 }
