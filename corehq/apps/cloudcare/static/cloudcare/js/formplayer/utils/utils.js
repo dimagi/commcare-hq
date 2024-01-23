@@ -194,22 +194,18 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         }
     };
 
-    Utils.getQueryInputs = function () {
-        return this.queryInputs || {};
+    Utils.getCurrentQueryInputs = function (queryKey) {
+        queryKey = queryKey || sessionStorage.queryKey;
+        const queryInputs = this.queryInputs || {};
+        return queryInputs[queryKey];
     };
 
-    Utils.setQueryInputs = function (inputs, queryKey) {
+    Utils.setCurrentQueryInputs = function (inputs, queryKey) {
         queryKey = queryKey || sessionStorage.queryKey;
         if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
             this.queryInputs = this.queryInputs || {};
             this.queryInputs[queryKey] = inputs;
         }
-    };
-
-    Utils.getCurrentQueryInputs = function (queryKey) {
-        const queryInputs = this.getQueryInputs();
-        queryKey = queryKey || sessionStorage.queryKey;
-        return queryInputs[queryKey];
     };
 
     Utils.getStickyQueryInputs = function () {
@@ -306,7 +302,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             if (initiatedBy !== null && initiatedBy !== undefined) {
                 queryDataEntry.initiatedBy = initiatedBy;
             }
-            Utils.setQueryInputs(inputs, queryKey);
+            Utils.setCurrentQueryInputs(inputs, queryKey);
             this.queryData[queryKey] = queryDataEntry;
 
             this.page = null;
