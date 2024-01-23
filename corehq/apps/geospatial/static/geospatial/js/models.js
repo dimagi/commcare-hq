@@ -11,7 +11,6 @@ hqDefine('geospatial/js/models', [
     initialPageData,
     utils
 ) {
-    const HOVER_DELAY = 400;
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
@@ -282,13 +281,9 @@ hqDefine('geospatial/js/models', [
         }
 
         function changeMarkersOpacity(markers, opacity) {
-            // It's necessary to delay obscuring the markers since mapbox does not play nice
-            // if we try to do it all at once.
-            setTimeout(function () {
-                markers.forEach(marker => {
-                    marker.setMarkerOpacity(opacity);
-                });
-            }, HOVER_DELAY);
+            markers.forEach(marker => {
+                marker.setMarkerOpacity(opacity);
+            });
         }
 
         self.getLineFeatureId = function (itemId) {
