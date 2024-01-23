@@ -71,7 +71,7 @@ hqDefine("geospatial/js/geo_config", [
                 },
             }).fail(function () {
                 alertUser.alert_user(
-                    gettext("Invalid API token. Please verify that the token matches the one on your Mapbox account."),
+                    gettext("Invalid API token. Please verify that the token matches the one on your Mapbox account and has the correct scope configured."),
                     "danger"
                 );
             });
