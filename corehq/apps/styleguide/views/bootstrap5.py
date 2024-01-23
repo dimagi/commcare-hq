@@ -51,6 +51,12 @@ def styleguide_migration_guide(request):
 
 
 @use_bootstrap5
+def styleguide_javascript_guide(request):
+    return render(request, 'styleguide/bootstrap5/javascript_guide.html',
+                  get_navigation_context("styleguide_javascript_guide_b5"))
+
+
+@use_bootstrap5
 def styleguide_atoms_accessibility(request):
     return render(request, 'styleguide/bootstrap5/atoms/accessibility.html',
                   get_navigation_context("styleguide_atoms_accessibility_b5"))
