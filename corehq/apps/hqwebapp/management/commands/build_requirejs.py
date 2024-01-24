@@ -165,6 +165,7 @@ def _r_js(local=False, verbose=False, bootstrap_version=None):
             'exclude': [
                 f'hqwebapp/js/{bootstrap_version}/common',
                 f'hqwebapp/js/{bootstrap_version}/base_main',
+                'cloudcare/js/sentry',
             ],
             'include': sorted(mains),
             'create': True,

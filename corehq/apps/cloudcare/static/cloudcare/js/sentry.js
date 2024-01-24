@@ -1,8 +1,10 @@
-/* global Sentry */
 hqDefine('cloudcare/js/sentry', [
     'hqwebapp/js/initial_page_data',
+    'sentry_browser',
+    'sentry_captureconsole',    // needed for Sentry.Integrations.CaptureConsole
 ], function (
-    initialPageData
+    initialPageData,
+    Sentry
 ) {
 
     let initSentry = function () {

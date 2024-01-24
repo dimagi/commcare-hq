@@ -1,0 +1,31 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Javascript Guide</h1>
+  <p class="sg-lead">
+    How to use javascript on HQ.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li>
+        <a href="#overview">Overview</a></li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">
+    Overview
+  </h2>
+  <p>
+    This Style Guide aims to be a good review of the visual components of our front-end, which includes CSS and javascript
+    from various libraries. For a more in-depth review of our JavaScript structure, organization, and processes,
+    please refer to the
+    <a href="https://commcare-hq.readthedocs.io/js-guide/README.html" target="_blank">Dimagi JavaScript Guide</a>.
+  </p>
+{% endblock content %}

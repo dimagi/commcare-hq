@@ -7,6 +7,9 @@ requirejs.config({
         "babel-plugin-transform-modules-requirejs-babel": "babel-plugin-transform-modules-requirejs-babel/index",
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
+        "backbone": "backbone/backbone-min",
+        "backbone.radio": "backbone.radio/build/backbone.radio.min",
+        "backbone.marionette": "backbone.marionette/lib/backbone.marionette.min",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
         "bootstrap5": "bootstrap5/dist/js/bootstrap.bundle.min",
         "knockout": "knockout/build/output/knockout-latest.debug",
@@ -17,12 +20,54 @@ requirejs.config({
         "datatables.bootstrap": "datatables.net-bs5/js/dataTables.bootstrap5.min",
         "popper": "@popperjs/core/dist/umd/popper.min",
         "tempus-dominus": "eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
-        "datepicker": "@eonasdan/tempus-dominus/dist/js/jQuery-provider.min",  // import this if you need jquery plugin of tempus-dominus
+        "datetimepicker": "@eonasdan/tempus-dominus/dist/js/jQuery-provider.min",  // import this if you need jquery plugin of tempus-dominus
+        "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
+        "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+        "ace-builds/src-min-noconflict/mode-json": { deps: ["ace-builds/src-min-noconflict/ace"] },
+        "ace-builds/src-min-noconflict/mode-xml": { deps: ["ace-builds/src-min-noconflict/ace"] },
+        "ace-builds/src-min-noconflict/ext-searchbox": { deps: ["ace-builds/src-min-noconflict/ace"] },
+        "At.js/dist/js/jquery.atwho": { deps: ['jquery', 'Caret.js/dist/jquery.caret'] },
+        "backbone": { exports: "backbone" },
+        "calendars/dist/js/jquery.calendars.picker": {
+            deps: [
+                "calendars/dist/js/jquery.plugin",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.ethiopian": {
+            deps: [
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.plus": {
+            deps: [
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.picker-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.ethiopian-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars.ethiopian",
+            ],
+        },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/bootstrap5/hq.helpers": { deps: ['jquery', 'knockout', 'underscore'] },
+        "sentry_browser": { exports: "Sentry" },
         "datatables.bootstrap": { deps: ['datatables'] },
         "datatables.fixedColumns.bootstrap": { deps: ['datatables.fixedColumns'] },
         "jquery.rmi/jquery.rmi": {
@@ -40,7 +85,7 @@ requirejs.config({
         "hqwebapp/js/lib/modernizr": {
             exports: 'Modernizr',
         },
-        "datepicker": {
+        "datetimepicker": {
             deps: ['popper', 'tempus-dominus'],
         },
     },
