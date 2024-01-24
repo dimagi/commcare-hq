@@ -603,6 +603,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
                                                 label=gettext_lazy("Secret Expires On"))
 
     def __init__(self, identity_provider, *args, **kwargs):
+        self.show_remote_user_management = kwargs.pop('show_remote_user_management')
         initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
         self.idp = identity_provider
         initial.setdefault('enable_user_deactivation', identity_provider.enable_user_deactivation)
@@ -806,7 +807,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.layout = crispy.Layout(
+        layout = crispy.Layout(
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
@@ -843,9 +844,12 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                 ),
                 css_class="panel panel-modern-gray panel-form-only"
             ),
-            crispy.Div(*self.get_remote_user_management_fields()),
-            crispy.Div(*self.get_primary_fields()),
         )
+        if self.show_remote_user_management:
+            layout.append(crispy.Div(*self.get_remote_user_management_fields()))
+        layout.append(crispy.Div(*self.get_primary_fields()))
+
+        self.helper.layout = layout
 
     def clean_login_url(self):
         is_active = bool(self.data.get('is_active'))
