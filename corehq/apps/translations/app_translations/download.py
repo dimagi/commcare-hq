@@ -265,7 +265,10 @@ def _get_module_detail_no_items_text(langs, module):
 
 
 def _get_module_detail_select_text(langs, module):
+    app = module.get_app()
     short_detail = module.case_details.short
+    if not (app.supports_select_text):
+        return []
     return [
         ("select_text", "list") + tuple(short_detail.select_text.get(lang, '') for lang in langs)
     ]
