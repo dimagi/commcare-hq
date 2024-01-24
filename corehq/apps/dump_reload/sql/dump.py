@@ -10,6 +10,7 @@ from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
     CaseIDFilter,
     FilteredModelIteratorBuilder,
+    ManualFilteredModelIteratorBuilder,
     ManyFilters,
     SimpleFilter,
     UniqueFilteredModelIteratorBuilder,
@@ -32,10 +33,10 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
 
     FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndex', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseAttachment', CaseIDFilter()),
-    FilteredModelIteratorBuilder('form_processor.CaseTransaction', CaseIDFilter()),
+    ManualFilteredModelIteratorBuilder('form_processor.CaseAttachment', CaseIDFilter()),
+    ManualFilteredModelIteratorBuilder('form_processor.CaseTransaction', CaseIDFilter()),
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.LedgerTransaction', CaseIDFilter()),
+    ManualFilteredModelIteratorBuilder('form_processor.LedgerTransaction', CaseIDFilter()),
 
     FilteredModelIteratorBuilder('case_search.DomainsNotInCaseSearchIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),

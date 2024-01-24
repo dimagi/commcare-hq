@@ -112,8 +112,38 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
     queryset = queryset.order_by(pk_field)
     docs = queryset[:limit]
     while docs:
+        doc_count = 0
         for doc in docs:
+            doc_count += 1
             yield doc
+
+        if doc_count < limit:
+            break
 
         last_doc_pk = getattr(doc, pk_field)
         docs = queryset.filter(**{pk_field + "__gt": last_doc_pk})[:limit]
+
+
+def queryset_to_iterator_for_transactions(queryset, model_cls, limit=500, ignore_ordering=False):
+    """
+    Pull from queryset in chunks. This is suitable for deep pagination, but
+    cannot be used with ordered querysets (results will be sorted by pk).
+    """
+    if queryset.ordered and not ignore_ordering:
+        raise AssertionError("queryset_to_iterator does not respect ordering.  "
+                             "Pass ignore_ordering=True to continue.")
+
+    queryset = queryset.order_by('case_id', 'pk')
+    docs = queryset[:limit]
+    while docs:
+        doc_count = 0
+        for doc in docs:
+            doc_count += 1
+            yield doc
+
+        if doc_count < limit:
+            break
+
+        last_doc_case_id = getattr(doc, 'case_id')
+        last_doc_pk = getattr(doc, 'pk')
+        docs = queryset.filter(**{"case_id__gte": last_doc_case_id, "pk__gt": last_doc_pk})[:limit]

@@ -6,7 +6,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.form_processor.models.cases import CommCareCase
 from corehq.sql_db.util import paginate_query
-from corehq.util.queries import queryset_to_iterator
+from corehq.util.queries import queryset_to_iterator, queryset_to_iterator_for_transactions
 
 
 class DomainFilter(metaclass=ABCMeta):
@@ -96,7 +96,7 @@ class UserIDFilter(IDFilter):
 
 class CaseIDFilter(IDFilter):
     def __init__(self, case_field='case'):
-        super().__init__(case_field, None)
+        super().__init__(case_field, None, chunksize=500)
 
     def count(self, domain_name):
         active_case_count = len(CommCareCase.objects.get_case_ids_in_domain(domain_name))
@@ -175,3 +175,11 @@ class UniqueFilteredModelIteratorBuilder(FilteredModelIteratorBuilder):
         querysets = self.querysets()
         for querysets in querysets:
             yield _unique(querysets)
+
+
+class ManualFilteredModelIteratorBuilder(FilteredModelIteratorBuilder):
+
+    def iterators(self):
+        for queryset in self.querysets():
+            # the limit here is designed to be a "backup" more than anything
+            yield queryset_to_iterator_for_transactions(queryset, self.model_class, ignore_ordering=True, limit=500)
