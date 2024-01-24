@@ -405,6 +405,9 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
             call_command('populate_repeatrecords', domains=["other"], log_path=log.path)
             self.assertIn(f'Created model for RepeatRecord with id {docs["other"]._id}\n', log.content)
             self.assertNotIn(docs["test"]._id, log.content)
+            SQLRepeatRecord.objects.get(couch_id=docs["other"]._id)
+            with self.assertRaises(SQLRepeatRecord.DoesNotExist):
+                SQLRepeatRecord.objects.get(couch_id=docs["test"]._id)
 
     def diff(self, doc, obj):
         return do_diff(Command, doc, obj)
