@@ -6,7 +6,7 @@
 hqDefine("cloudcare/js/formplayer/menus/collections", [
     'underscore',
     'backbone',
-    'sentry/js/sentry.browser.7.28.0.min',
+    'sentry_browser',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/utils/utils',
 ], function (
