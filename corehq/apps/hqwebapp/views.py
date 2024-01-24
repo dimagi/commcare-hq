@@ -864,7 +864,7 @@ class SolutionsFeatureRequestView(View):
             post_params=request.POST,
             couch_user=request.couch_user,
             uploaded_file=request.FILES.get('feature_request'),
-            to_email=settings.SOLUTIONS_EMAIL,
+            to_email=settings.INTERNAL_FEEDBACK_EMAIL,
         )
         email.send(fail_silently=False)
         return HttpResponse()
