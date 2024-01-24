@@ -1,0 +1,120 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Dates &amp; Times</h1>
+  <p class="sg-lead">
+    Having an easy-to-use widget to select dates and times greatly improves user experience.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#simple-date">Simple Date Picker Widget</a></li>
+      <li><a href="#advanced-date-picker">Advanced Date Picker</a></li>
+      <li><a href="#date-and-time">Date &amp; Time</a></li>
+      <li><a href="#time-only">Time Only</a></li>
+      <li><a href="#date-range">Date Range</a></li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">Overview</h2>
+  <p>
+    Over the course of HQ's history, we have trialed and tested several date and time pickers.
+    We have finally settled on one library, <a href="https://getdatepicker.com/" target="_blank">Tempus Dominus</a>, for its
+    accessibility features and ease of localization. Below are examples of how to use it in various scenarios, as well as
+    guidance for how to replace older tools on Bootstrap 3 pages with this new library.
+  </p>
+  <p>
+    Tempus Dominus emerged from the <code>eonasdan-bootstrap-datetimepicker</code>,
+    which is still referenced in Bootstrap 3 pages as the <code>datetimepicker</code> jQuery plugin. Any references to
+    <code>datetimepicker</code> should be replaced with <code>tempusDominus</code> when migrating a page from
+    Bootstrap 3 to 5.
+  </p>
+  <p>
+    There are also references to the jQuery UI <code>datepicker</code> plugin, the <code>timpicker</code> plugin
+    (from the abandoned <code>bootstrap-timepicker</code> project), and <code>daterangepicker</code> (from
+    <code>bootstrap-daterangepicker</code>) in Bootstrap 3 pages. All of these should be replaced with Tempus Dominus
+    during the migration of a page from Bootstrap 3 to 5.
+  </p>
+  <div class="alert alert-primary">
+    <strong>Important Usage Note:</strong> To use Tempus Dominus on a page, you will need to apply the
+    <code>@use_datetimepicker</code> decorator to your view to ensure that the CSS (on all views) and javascript
+    (on non-requirejs views) are included.
+    If you are using requirejs, make sure that <code>datetimepicker</code> is in your list of dependencies.
+  </div>
+
+  <h2 id="simple-date" class="pt-4">
+    Simple Date Picker Widget
+  </h2>
+  <p>
+    If you are in need of a simple date picker widget that returns a format in <code>YYYY-MM-DD</code>, then
+    your best option is to add the <code>date-picker</code> CSS class to any text <code>input</code> and
+    make sure that <code>hqwebapp/js/bootstrap5/widgets</code> is included as part of your javascript dependencies.
+    Additionally, you will want to use the <ocde>@use_datetimepicker</ocde> decorator on the view using the widget
+    to ensure the CSS is loaded to the page properly.
+  </p>
+  <p>
+    The <code>hqwebapp/js/bootstrap5/widgets</code> module when loaded to a page will look for <code>input</code> fields
+    with the <code>date-picker</code> CSS class, and apply the Tempus Dominus plugin to that field.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.datepicker_widget %}
+
+  <h2 id="advanced-date-picker" class="pt-4">
+    Advanced Date Picker
+  </h2>
+  <p>
+    If you are interested in having a date-only picker widget with extra options, you can use Tempus Dominus without
+    the clock component. See the project's <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
+    for additional guidance.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.date_only %}
+
+  <h2 id="date-and-time" class="pt-4">
+    Date &amp; Time
+  </h2>
+  <p>
+    If you want to choose a date and time together, the default state of the Tempus Dominus plugin is a good starting point.
+    See the project's <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
+    for additional guidance.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.tempus_dominus %}
+
+  <h2 id="time-only" class="pt-4">
+    Time Only
+  </h2>
+  <p>
+    If you only need to choose a time, you can use Tempus Dominus without the calendar option.
+    See the project's <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
+    for additional guidance.
+  </p>
+  <div class="alert alert-primary">
+    <strong>Bootstrap Migration Note:</strong> Older Bootstrap 3 pages will be using the old
+    <code>bootstrap-timepicker</code> plugin. The example below should be a good starting point to use as a drop-in
+    replacement for that widget.
+  </div>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.time_only %}
+  <p>
+    If you want a time-picker in 24-hour format, the example below provides a good starting point.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.time_only_24 %}
+
+  <h2 id="date-range" class="pt-4">
+    Date Range
+  </h2>
+  <p>
+    If you need to select a range between two dates (start and end), you can use Tempus Dominus with the
+    <code>dateRange</code> option enabled. Previously, we used <code>bootstrap-daterangepicker</code> as
+    the plugin of choice. The example below provides a drop-in replacement for the default usage of
+    <code>bootstrap-daterangepicker</code> if you come across it in older Bootstrap 3 pages.
+    For additional guidance, see the <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
+    for Tempus Dominus.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.date_range %}
+{% endblock content %}
