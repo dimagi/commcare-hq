@@ -8,6 +8,9 @@
 {% block page_content %}
   {% initial_page_data 'idp_slug' idp_slug %}
   {% initial_page_data 'toggle_client_secret' toggle_client_secret %}
+  {% initial_page_data 'toggle_api_secret' toggle_api_secret %}
+  {% initial_page_data 'api_secret_exists' api_secret_exists %}
+
 
   <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
     <li><a href="#idp" data-toggle="tab">{% trans "Identity Provider" %}</a></li>

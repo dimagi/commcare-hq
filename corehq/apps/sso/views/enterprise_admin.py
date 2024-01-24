@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.sso.async_handlers import SSOExemptUsersAdminAsyncHandler, SsoTestUserAdminAsyncHandler
 from corehq.apps.sso.certificates import get_certificate_response
 from corehq.apps.sso.forms import (
@@ -41,6 +42,10 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         SsoTestUserAdminAsyncHandler,
     ]
 
+    @use_jquery_ui  # for datepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditIdentityProviderEnterpriseView, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_url(self):
         return reverse(self.urlname, args=(self.domain, self.idp_slug))
@@ -68,6 +73,8 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
                 self.identity_provider.protocol == IdentityProviderProtocol.OIDC
                 and self.identity_provider.client_secret
             ),
+            'toggle_api_secret': self.identity_provider.protocol == IdentityProviderProtocol.SAML,
+            'api_secret_exists': bool(self.identity_provider.api_secret)
         }
 
     @property

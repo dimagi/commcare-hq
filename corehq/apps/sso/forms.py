@@ -61,6 +61,13 @@ def _check_required_when_active(is_active, value):
         )
 
 
+def _check_required_when_enabled(is_enabled, value):
+    if is_enabled and not value:
+        raise forms.ValidationError(
+            _("This is required when Auto-Deactivation is enabled.")
+        )
+
+
 def _ensure_entity_id_matches_expected_provider(entity_id, identity_provider):
     if (identity_provider.idp_type == IdentityProviderType.ONE_LOGIN
             and not re.match(r'^https:\/\/[A-za-z\d-]*.onelogin.com\/', entity_id)):
@@ -583,9 +590,26 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         label=gettext_lazy("Entity ID"),
         required=False,
     )
+    enable_user_deactivation = forms.BooleanField(required=False, label="Auto-Deactivation",
+                                help_text="This option ensures any authorization provided by CommCare HQ to"
+                                 " Web Users using SSO is removed when those users are removed from Azure AD"
+                                 " (Entra ID). This includes automatic deactivation of any API keys associated"
+                                 " with these users.",
+                                widget=BootstrapCheckboxInput(inline_label="Automatically deactivate Web Users"))
+    api_host = forms.CharField(required=False, label=gettext_lazy("Tenant Id"))
+    api_id = forms.CharField(required=False, label=gettext_lazy("Application ID"))
+    api_secret = forms.CharField(required=False, label=gettext_lazy("Client Secret"))
+    date_api_secret_expiration = forms.DateTimeField(required=False,
+                                                label=gettext_lazy("Secret Expires On"))
 
     def __init__(self, identity_provider, *args, **kwargs):
+        initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
         self.idp = identity_provider
+        initial.setdefault('enable_user_deactivation', identity_provider.enable_user_deactivation)
+        initial.setdefault('api_host', identity_provider.api_host)
+        initial.setdefault('api_id', identity_provider.api_id)
+        initial.setdefault('api_secret', identity_provider.api_secret)
+        initial.setdefault('date_api_secret_expiration', identity_provider.date_api_secret_expiration)
         super().__init__(*args, **kwargs)
 
     def get_primary_fields(self):
@@ -618,6 +642,57 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
             ),
         ]
 
+    def get_remote_user_management_fields(self):
+        def mask_api(s):
+            if len(s) <= 3:
+                return s
+            else:
+                return s[:3] + '*' * (len(s) - 3)
+        masked_api = mask_api(self.idp.api_secret)
+
+        api_secret_toggles = crispy.Div(
+            crispy.HTML(
+                format_html(
+                    '<p class="form-control-text" data-bind="visible: isAPISecretHidden">''{} '
+                    '<a href="#" data-bind="click: showAPISecret">{}</a></p>',
+                    masked_api,
+                    gettext("Update Secret")
+                ),
+            ),
+            crispy.HTML(
+                format_html(
+                    '<p class="form-control-text" data-bind="visible: isCancelUpdateVisible">'
+                    '<a href="#" data-bind="click: hideAPISecret">{}</a></p>',
+                    gettext("Cancel Update")
+                ),
+            ),
+            style="display: none;",  # prevent html showing before knockout is executed, will set visible to false
+            data_bind="visible: true",
+        )
+        return [crispy.Div(
+            crispy.Div(
+                crispy.Fieldset(
+                    _('Remote User Management'),
+                    twbscrispy.PrependedText('enable_user_deactivation', ''),
+                    'api_host',
+                    'api_id',
+                    hqcrispy.B3MultiField(
+                        gettext("Client Secret"),
+                        crispy.Div(
+                            hqcrispy.InlineField(
+                                'api_secret',
+                                data_bind="visible: isAPISecretVisible"
+                            ),
+                            api_secret_toggles,
+                        ),
+                        show_row_class=False,
+                    ),
+                    crispy.Field('date_api_secret_expiration', css_class='date-picker'),
+                ),
+                css_class="panel-body"
+            ),
+            css_class="panel panel-modern-gray panel-form-only")]
+
     def clean_is_active(self):
         is_active = self.cleaned_data['is_active']
         if is_active:
@@ -630,6 +705,34 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         _check_required_when_active(is_active, entity_id)
         _ensure_entity_id_matches_expected_provider(entity_id, self.idp)
         return entity_id
+
+    def clean_api_secret(self):
+        api_secret = self.cleaned_data['api_secret']
+        is_enabled = self.cleaned_data['enable_user_deactivation']
+        _check_required_when_enabled(is_enabled, api_secret)
+        return api_secret
+
+    def clean_api_id(self):
+        api_id = self.cleaned_data['api_id']
+        is_enabled = self.cleaned_data['enable_user_deactivation']
+        _check_required_when_enabled(is_enabled, api_id)
+        return api_id
+
+    def clean_api_host(self):
+        api_host = self.cleaned_data['api_host']
+        is_enabled = self.cleaned_data['enable_user_deactivation']
+        _check_required_when_enabled(is_enabled, api_host)
+        return api_host
+
+    def clean_date_api_secret_expiration(self):
+        date_expiration = self.cleaned_data['date_api_secret_expiration']
+        is_enabled = self.cleaned_data['enable_user_deactivation']
+        _check_required_when_enabled(is_enabled, date_expiration)
+        if date_expiration and date_expiration <= datetime.datetime.now(tz=date_expiration.tzinfo):
+            raise forms.ValidationError(
+                _("This certificate has already expired!")
+            )
+        return date_expiration
 
     def update_identity_provider(self, admin_user):
         raise NotImplementedError("please implement update_identity_provider")
@@ -740,6 +843,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                 ),
                 css_class="panel panel-modern-gray panel-form-only"
             ),
+            crispy.Div(*self.get_remote_user_management_fields()),
             crispy.Div(*self.get_primary_fields()),
         )
 
@@ -792,6 +896,13 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         self.idp.date_idp_cert_expiration = date_expiration
 
         self.idp.require_encrypted_assertions = self.cleaned_data['require_encrypted_assertions']
+
+        self.idp.enable_user_deactivation = self.cleaned_data['enable_user_deactivation']
+        self.idp.api_secret = self.cleaned_data['api_secret']
+        self.idp.api_host = self.cleaned_data['api_host']
+        self.idp.api_id = self.cleaned_data['api_id']
+        self.idp.date_api_secret_expiration = self.cleaned_data['date_api_secret_expiration']
+
         self.idp.last_modified_by = admin_user.username
         self.idp.save()
         return self.idp
