@@ -20,7 +20,7 @@ requirejs.config({
         "datatables.bootstrap": "datatables.net-bs5/js/dataTables.bootstrap5.min",
         "popper": "@popperjs/core/dist/umd/popper.min",
         "tempus-dominus": "eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
-        "datepicker": "@eonasdan/tempus-dominus/dist/js/jQuery-provider.min",  // import this if you need jquery plugin of tempus-dominus
+        "datetimepicker": "@eonasdan/tempus-dominus/dist/js/jQuery-provider.min",  // import this if you need jquery plugin of tempus-dominus
         "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
         "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
     },
@@ -85,7 +85,7 @@ requirejs.config({
         "hqwebapp/js/lib/modernizr": {
             exports: 'Modernizr',
         },
-        "datepicker": {
+        "datetimepicker": {
             deps: ['popper', 'tempus-dominus'],
         },
     },
