@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from corehq.apps.dump_reload.sql.load import SqlDataLoader
 from corehq.apps.users.models import SQLUserData
+from corehq.apps.users.models_role import Permission, RolePermission, UserRole
 from corehq.form_processor.models.cases import CaseTransaction
 from corehq.form_processor.tests.utils import create_case
 
@@ -53,3 +54,18 @@ class TestSqlDataLoader(TestCase):
 
         transaction = CaseTransaction.objects.partitioned_query('abc123').get(case=cc_case, form_id='fk-test')
         self.assertEqual(transaction.case_id, 'abc123')
+
+    def test_loading_foreign_keys_using_primary_key(self):
+        role = UserRole.objects.create(domain='test', name='test-role')
+        permission = Permission.objects.create(value='test')
+        model = {
+            "model": "users.rolepermission",
+            "pk": 1,
+            "fields": {"role": role.pk, "permission_fk": permission.pk, "allow_all": True, "allowed_items": []},
+        }
+        serialized_model = json.dumps(model)
+
+        SqlDataLoader().load_objects([serialized_model])
+
+        role_permission = RolePermission.objects.get(role=role, permission_fk=permission)
+        self.assertEqual(role_permission.pk, 1)
