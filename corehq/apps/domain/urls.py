@@ -137,7 +137,7 @@ urlpatterns = [
 domain_settings = [
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
     url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.urlname),
-    url(r'^basic/$', 
+    url(r'^basic/$',
         waf_allow('XSS_BODY')(EditBasicProjectInfoView.as_view()), name=EditBasicProjectInfoView.urlname),
     url(r'^call_center_owner_options/', CallCenterOwnerOptionsView.as_view(),
         name=CallCenterOwnerOptionsView.url_name),
