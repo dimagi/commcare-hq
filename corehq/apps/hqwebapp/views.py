@@ -859,6 +859,8 @@ class BugReportView(View):
 
 @method_decorator([login_required], name='dispatch')
 class SolutionsFeatureRequestView(View):
+    urlname = 'solutions_feature_request'
+
     def post(self, request, *args, **kwargs):
         email = _get_email_message_base(
             post_params=request.POST,
