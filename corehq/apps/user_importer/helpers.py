@@ -153,6 +153,23 @@ class BaseUserImporter(object):
         if self.role_updated:
             self.user.set_role(self.user_domain, role_qualified_id)
 
+    def update_user_data(self, data, uncategorized_data, profile_name, profiles_by_name):
+        from corehq.apps.users.user_data import UserDataError
+        user_data = self.user.get_user_data(self.user_domain)
+        old_profile_id = user_data.profile_id
+        if PROFILE_SLUG in data:
+            raise UserUploadError(_("You cannot set {} directly").format(PROFILE_SLUG))
+        if profile_name:
+            profile_id = profiles_by_name[profile_name].pk
+
+        try:
+            user_data.update(data, profile_id=profile_id if profile_name else ...)
+            user_data.update(uncategorized_data)
+        except UserDataError as e:
+            raise UserUploadError(str(e))
+        if user_data.profile_id and user_data.profile_id != old_profile_id:
+            self.logger.add_info(UserChangeMessage.profile_info(user_data.profile_id, profile_name))
+
     def save_log(self):
         # Tracking for role is done post save to have role setup correctly on save
         if self.role_updated:
@@ -169,9 +186,6 @@ class BaseUserImporter(object):
 
 
 class CommCareUserImporter(BaseUserImporter):
-    def update_password(self, password):
-        self.user.set_password(password)
-        self.logger.add_change_message(UserChangeMessage.password_reset())
 
     def update_phone_numbers(self, phone_numbers):
         """
@@ -190,24 +204,6 @@ class CommCareUserImporter(BaseUserImporter):
     def update_name(self, name):
         self.user.set_full_name(str(name))
         self.logger.add_changes({'first_name': self.user.first_name, 'last_name': self.user.last_name})
-
-    def update_user_data(self, data, uncategorized_data, profile_name, domain_info):
-        from corehq.apps.users.user_data import UserDataError
-        user_data = self.user.get_user_data(self.user_domain)
-        old_profile_id = user_data.profile_id
-        if PROFILE_SLUG in data:
-            raise UserUploadError(_("You cannot set {} directly").format(PROFILE_SLUG))
-        if profile_name:
-            profile_id = domain_info.profiles_by_name[profile_name].pk
-
-        try:
-            user_data.update(data, profile_id=profile_id if profile_name else ...)
-            user_data.update(uncategorized_data)
-        except UserDataError as e:
-            raise UserUploadError(str(e))
-
-        if user_data.profile_id and user_data.profile_id != old_profile_id:
-            self.logger.add_info(UserChangeMessage.profile_info(user_data.profile_id, profile_name))
 
     def update_language(self, language):
         self.user.language = language

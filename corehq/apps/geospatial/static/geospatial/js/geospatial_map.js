@@ -225,7 +225,7 @@ hqDefine("geospatial/js/geospatial_map", [
     };
 
     function initMap() {
-        mapModel = new models.Map();
+        mapModel = new models.Map(false, true);
         mapModel.initMap(MAP_CONTAINER_ID);
 
         let selectedCases = ko.computed(function () {

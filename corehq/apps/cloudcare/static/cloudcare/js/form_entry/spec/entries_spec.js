@@ -23,6 +23,10 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {
             );
         });
 
+        after(function () {
+            hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
+        });
+
         beforeEach(function () {
             window.MAPBOX_ACCESS_TOKEN = 'xxx';
             questionJSON = {
