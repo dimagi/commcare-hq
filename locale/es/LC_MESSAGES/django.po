@@ -6895,6 +6895,28 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"                The case list in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                has an address popup configuration that should be moved to "
+"case detail.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                The case list in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                has an invalid clickable icon configuration. Reason: "
+"%(error_reason)s\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
 "                Shadow module\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
 "                doesn't have a source module specified.\n"
@@ -12296,6 +12318,10 @@ msgstr ""
 msgid "The first argument to '{node.name}' must be a valid case property name"
 msgstr ""
 
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid "'match-all()' does not take any arguments"
+msgstr ""
+
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 #, python-brace-format
 msgid "Unsupported operator for use with 'subcase-count': {op}"
@@ -13499,16 +13525,12 @@ msgid "Add Case Type"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Show Deprecated Properties"
 msgid "Show Deprecated Case Types"
-msgstr "Mostrar Propiedades Obsoletas"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Hide Deprecated Properties"
 msgid "Hide Deprecated Case Types"
-msgstr "Ocultar Propiedades Obsoletas"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Create a new Case Type"
@@ -22690,6 +22712,10 @@ msgid ""
 "\n"
 "        Previous disbursement was cleared.\n"
 "    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Layers"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
@@ -43957,10 +43983,8 @@ msgid "Forward Locations"
 msgstr "Re-enviar Ubicaciones"
 
 #: corehq/motech/repeaters/models.py
-#, fuzzy
-#| msgid "Create Data Source"
 msgid "Forward Data Source Data"
-msgstr "Crear Fuente de Datos"
+msgstr ""
 
 #: corehq/motech/repeaters/repeater_generators.py
 msgid "XML"
@@ -44502,6 +44526,12 @@ msgstr ""
 #: corehq/privileges.py
 msgid "Allow case copy from one user to another"
 msgstr ""
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Application Profiles"
+msgid "Deduplication Rules"
+msgstr "Perfiles de Aplicaciones"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
@@ -45680,6 +45710,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Successful"
-#~ msgstr "Exitoso"
