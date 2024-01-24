@@ -27,7 +27,7 @@ class TestRadialDistanceSolver(SimpleTestCase):
                         {"id": "Jackson", "lat": 40.55517003526139, "lon": -106.34189549259928},
                     ],
                 },
-            ).solve(), (
+            ).solve("domain"), (
                 None,
                 {
                     'New York': ['New Hampshire', 'Newark', 'NY2'],
