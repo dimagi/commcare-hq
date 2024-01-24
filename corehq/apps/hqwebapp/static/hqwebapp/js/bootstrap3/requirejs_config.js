@@ -16,6 +16,8 @@ requirejs.config({
         "datatables": "datatables.net/js/jquery.dataTables.min",
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
+        "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
+        "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
@@ -61,7 +63,7 @@ requirejs.config({
         },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/bootstrap3/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
-        "sentry/js/sentry.browser.7.28.0.min": { exports: "Sentry" },
+        "sentry_browser": { exports: "Sentry" },
         "datatables.bootstrap": { deps: ['datatables'] },
         "jquery.rmi/jquery.rmi": {
             deps: ['jquery', 'knockout', 'underscore'],

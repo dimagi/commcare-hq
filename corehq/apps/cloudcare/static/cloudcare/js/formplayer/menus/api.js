@@ -4,7 +4,7 @@
 hqDefine("cloudcare/js/formplayer/menus/api", [
     'jquery',
     'underscore',
-    'sentry/js/sentry.browser.7.28.0.min',
+    'sentry_browser',
     'cloudcare/js/formplayer/menus/collections',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/form_entry/errors',
