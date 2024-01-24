@@ -13,7 +13,7 @@ from django.db.models import (
 )
 from memoized import memoized
 
-from corehq.sql_db.models import PartitionedModel
+from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.util.models import NullJsonField
 
 from .util import get_content_md5
@@ -23,10 +23,17 @@ def uuid4_hex():
     return uuid4().hex
 
 
+class BlobMetaManager(RequireDBManager):
+
+    def get_by_natural_key(self, parent_id, key):
+        return self.partitioned_query(parent_id).get(key=key)
+
+
 class BlobMeta(PartitionedModel, Model):
     """Metadata about an object stored in the blob db"""
 
     partition_attr = "parent_id"
+    objects = BlobMetaManager()
 
     domain = CharField(max_length=255)
     parent_id = CharField(
@@ -119,7 +126,7 @@ class BlobMeta(PartitionedModel, Model):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.key
+        return self.parent_id, self.key
 
 
 class DeletedBlobMeta(PartitionedModel, Model):
