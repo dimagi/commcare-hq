@@ -363,7 +363,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (!(
                 e.target.classList.contains('module-case-list-column-checkbox') ||  // multiselect checkbox
                 e.target.classList.contains("select-row-checkbox") ||               // multiselect select all
-                $(e.target).is('a') ||                                              // actual link, as in markdown
+                $(e.target).closest('a').length ||                                  // actual link, as in markdown
                 e.target.classList.contains('show-more') ||
                 $(e.target).parent().hasClass('show-more')
             )) {
@@ -634,6 +634,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             self.styles = options.styles;
             self.hasNoItems = options.collection.length === 0 || options.triggerEmptyCaseList;
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
+            self.selectText = options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
@@ -1009,6 +1010,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return _.extend(paginateItems, {
                 title: title.trim(),
                 description: description === undefined ? "" : markdown.render(description.trim()),
+                selectText: this.selectText === undefined ? "" : this.selectText,
                 headers: this.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,

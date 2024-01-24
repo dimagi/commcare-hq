@@ -91,10 +91,11 @@ hqDefine('geospatial/js/models', [
         };
     };
 
-    var Map = function (usesClusters) {
+    var Map = function (usesClusters, usesStreetsLayers) {
         var self = this;
 
         self.usesClusters = usesClusters;
+        self.usesStreetsLayers = usesStreetsLayers;
 
         self.mapInstance;
         self.drawControls;
@@ -132,10 +133,97 @@ hqDefine('geospatial/js/models', [
             if (self.usesClusters) {
                 createClusterLayers();
             }
+
+            if (self.usesStreetsLayers) {
+                loadMapBoxStreetsLayers();
+                addLayersToPanel();
+            }
         };
 
+        function loadMapBoxStreetsLayers() {
+            self.mapInstance.on('load', () => {
+                self.mapInstance.addSource('mapbox-streets', {
+                    type: 'vector',
+                    url: 'mapbox://mapbox.mapbox-streets-v8',
+                });
+
+                self.mapInstance.addLayer({
+                    id: 'landuse_overlay',
+                    source: 'mapbox-streets',
+                    'source-layer': 'landuse_overlay',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#800080', // purple
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'road',
+                    source: 'mapbox-streets',
+                    'source-layer': 'road',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#000000', // black
+                    },
+                    'layout': {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'admin',
+                    source: 'mapbox-streets',
+                    'source-layer': 'admin',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#800080', // purple
+                    },
+                    'layout': {
+                        'visibility': 'none',
+                    },
+                });
+            });
+        }
+
+        function addLayersToPanel() {
+            self.mapInstance.on('idle', () => {
+                const toggleableLayerIds = ['landuse_overlay', 'admin', 'road'];
+                const menuElement = document.getElementById('layer-toggle-menu');
+                for (const layerId of toggleableLayerIds) {
+                    // Skip if layer doesn't exist or button is already present
+                    if (!self.mapInstance.getLayer(layerId) || document.getElementById(layerId)) {
+                        continue;
+                    }
+
+                    const link = document.createElement('a');
+                    link.id = layerId;
+                    link.role = 'button';
+                    link.href = '#';
+                    link.textContent = layerId;
+                    link.className = 'btn btn-secondary';
+                    link.onclick = function (e) {
+                        const clickedLayer = this.textContent;
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const visibility = self.mapInstance.getLayoutProperty(clickedLayer, 'visibility');
+                        if (visibility === 'visible') {
+                            self.mapInstance.setLayoutProperty(clickedLayer, 'visibility', 'none');
+                            this.classList.remove('active');
+                        } else {
+                            this.classList.add('active');
+                            self.mapInstance.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+                        }
+                    };
+
+                    menuElement.appendChild(link);
+                }
+                menuElement.classList.remove('hidden');
+            });
+        }
+
         function createClusterLayers() {
-            // const mapInstance = self.mapInstance;
             self.mapInstance.on('load', () => {
                 self.mapInstance.addSource('caseWithGPS', {
                     type: 'geojson',

@@ -2,7 +2,7 @@ hqDefine("app_manager/js/app_exchange", [
     "jquery",
     "knockout",
     'analytix/js/kissmetrix',
-    "hqwebapp/js/widgets",  // hqwebapp-select2 for versions
+    "hqwebapp/js/bootstrap3/widgets",  // hqwebapp-select2 for versions
 ], function (
     $,
     ko,

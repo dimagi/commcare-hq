@@ -202,3 +202,41 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             'indices.host': ['c1'],
         }).get_ids()
         self.assertItemsEqual(actual, ['c4'])
+
+    def test_match_all(self):
+        self._create_case_search_config()
+        cases = [
+            {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
+            {'_id': 'c2', 'case_type': 'song', 'description': 'Manchester'},
+            {'_id': 'c3', 'case_type': 'song', 'description': 'Manchester Boston'},
+        ]
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            get_case_search_query(
+                self.domain,
+                ['song'],
+                {'_xpath_query': "match-all()"},
+            ),
+            None,
+            ['c1', 'c2', 'c3']
+        )
+
+    def test_match_none(self):
+        self._create_case_search_config()
+        cases = [
+            {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
+            {'_id': 'c2', 'case_type': 'song', 'description': 'Manchester'},
+            {'_id': 'c3', 'case_type': 'song', 'description': 'Manchester Boston'},
+        ]
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            get_case_search_query(
+                self.domain,
+                ['song'],
+                {'_xpath_query': "match-none()"},
+            ),
+            None,
+            []
+        )
