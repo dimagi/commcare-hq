@@ -1161,7 +1161,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             'all_case_properties': self.get_augmented_data_dict_props_by_case_type(self.domain),
             'case_types': sorted(list(get_case_types_for_domain(self.domain))),
             'criteria_form': self.case_filter_form,
-            'update_actions_enabled': toggles.CASE_DEDUPE.enabled(self.domain),
+            'update_actions_enabled': toggles.CASE_DEDUPE_UPDATES.enabled(self.domain),
         })
         return context
 
