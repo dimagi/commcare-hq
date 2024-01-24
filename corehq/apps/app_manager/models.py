@@ -2024,6 +2024,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     #Only applies to 'short' details
     no_items_text = LabelProperty(default={'en': 'List is empty.'})
 
+    select_text = LabelProperty(default={'en': 'Continue'})
+
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
         if value_is_the_default:

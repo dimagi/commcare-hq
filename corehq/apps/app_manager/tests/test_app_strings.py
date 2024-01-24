@@ -287,3 +287,21 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
         self.assertEqual(default_strings['forms.m0f0.submit_label'], form.submit_label['en'])
         self.assertEqual(default_strings['forms.m0f0.submit_notification_label'],
                          form.submit_notification_label['en'])
+
+    def test_select_text_app_strings(self):
+        factory = AppFactory(build_version='2.54.0')
+        factory.app.langs = ['en', 'fra']
+        factory.app.build_profiles = OrderedDict({
+            'en': BuildProfile(langs=['en'], name='en-profile'),
+            'fra': BuildProfile(langs=['fra'], name='fra-profile'),
+        })
+        module, form = factory.new_basic_module('my_module', 'cases')
+        module.case_details.short.select_text = {'en': 'Continue with case', 'fra': 'Continuer avec le cas'}
+
+        app = Application.wrap(factory.app.to_json())
+
+        en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
+        self.assertEqual(en_app_strings['m0_select_text'], 'Continue with case')
+
+        es_app_strings = self._generate_app_strings(app, 'fra', build_profile_id='fra')
+        self.assertEqual(es_app_strings['m0_select_text'], 'Continuer avec le cas')
