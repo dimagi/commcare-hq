@@ -19,7 +19,7 @@
   "admin_password": null,
   "build_spec": {
     "doc_type": "BuildSpec",
-    "version": "2.13.0",
+    "version": "2.54.0",
     "build_number": null,
     "latest": true
   },
