@@ -16,3 +16,4 @@ modules:
   - name: hqwebapp/js/bootstrap5/base_main
     exclude:
       - hqwebapp/js/bootstrap5/common
+      - cloudcare/js/sentry
