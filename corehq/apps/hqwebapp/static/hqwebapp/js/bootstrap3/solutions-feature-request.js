@@ -69,7 +69,7 @@ hqDefine('hqwebapp/js/bootstrap3/solutions-feature-request', [
         });
 
         function IsValidEmail(email) {
-            var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            var regex = /^([a-zA-Z0-9_.+-])+@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
             return regex.test(email);
         }
 
