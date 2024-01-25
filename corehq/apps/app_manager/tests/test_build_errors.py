@@ -418,3 +418,16 @@ class BuildErrorsTest(TestCase):
             'module': {'id': 0, 'name': {'en': 'm0 module'}},
             'form': {'id': 0, 'name': {'en': 'm0 form 0'}},
         }, errors)
+
+    @patch('corehq.apps.app_manager.models.ModuleBase.is_auto_select', return_value=True)
+    def test_search_on_clear_with_auto_select(self, *args):
+        factory = AppFactory()
+        module = factory.new_basic_module('basic', 'person', with_form=False)
+        module.search_config = CaseSearch(
+            search_on_clear=True,
+        )
+        errors = factory.app.validate_app()
+        self.assertIn({
+            'type': 'search on clear with auto select',
+            'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}},
+        }, errors)

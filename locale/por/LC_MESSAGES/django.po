@@ -6531,6 +6531,28 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"                The case list in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                has an address popup configuration that should be moved to "
+"case detail.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                The case list in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                has an invalid clickable icon configuration. Reason: "
+"%(error_reason)s\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
 "                Shadow module\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
 "                doesn't have a source module specified.\n"
@@ -11773,6 +11795,10 @@ msgstr ""
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 #, python-brace-format
 msgid "The first argument to '{node.name}' must be a valid case property name"
+msgstr ""
+
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid "'match-all()' does not take any arguments"
 msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
@@ -21999,6 +22025,10 @@ msgid ""
 "\n"
 "        Previous disbursement was cleared.\n"
 "    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Layers"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
@@ -43265,6 +43295,12 @@ msgstr ""
 #: corehq/privileges.py
 msgid "Allow case copy from one user to another"
 msgstr ""
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Application Users"
+msgid "Deduplication Rules"
+msgstr "Usuários da Aplicação"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
