@@ -31,13 +31,6 @@
 -        "bootstrap": { deps: ['jquery'] },
          "datatables.bootstrap": { deps: ['datatables'] },
 +        "datatables.fixedColumns.bootstrap": { deps: ['datatables.fixedColumns'] },
-         "jquery.rmi/jquery.rmi": {
-             deps: ['jquery', 'knockout', 'underscore'],
-             exports: 'RMI',
-@@ -32,6 +40,9 @@
-         "hqwebapp/js/lib/modernizr": {
-             exports: 'Modernizr',
-         },
 +        "datetimepicker": {
 +            deps: ['popper', 'tempus-dominus'],
 +        },
