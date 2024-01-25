@@ -123,7 +123,7 @@
 -                                <p class="help-block">
 -                                    <i class="fa fa-warning"></i>
 -                                    {% blocktrans %}
--                                        Do not upload a file containing individually identifiable data.
+-                                        Do not upload a file containing sensitive data like passwords or project data.
 -                                    {% endblocktrans %}
 -                                </p>
 -                            </div>
@@ -193,7 +193,7 @@
 +                      <p class="help-block">
 +                          <i class="fa fa-warning"></i>
 +                          {% blocktrans %}
-+                              Do not upload a file containing individually identifiable data.
++                              Do not upload a file containing sensitive data like passwords or project data.
 +                          {% endblocktrans %}
 +                      </p>
 +                  </div>

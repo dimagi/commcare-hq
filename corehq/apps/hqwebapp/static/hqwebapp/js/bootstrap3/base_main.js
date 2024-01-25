@@ -4,6 +4,7 @@ hqDefine("hqwebapp/js/bootstrap3/base_main", [
     'hqwebapp/js/bootstrap3/hq.helpers',
     'hqwebapp/js/layout',
     'hqwebapp/js/bootstrap3/hq-bug-report',
+    'hqwebapp/js/bootstrap3/solutions-feature-request',
     'hqwebapp/js/bootstrap3/sticky_tabs',
     'hqwebapp/js/bootstrap3/main',
     'hqwebapp/js/bootstrap3/inactivity',
