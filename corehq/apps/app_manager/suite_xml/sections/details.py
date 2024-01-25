@@ -250,6 +250,8 @@ class DetailContributor(SectionContributor):
                         id
                     )) is not None:
                         d.actions.append(case_search_action)
+            # Add select text
+            self.add_select_text_to_detail(d, self.app, detail_type, module)
 
             try:
                 if not self.app.enable_multi_sort:
@@ -552,6 +554,11 @@ class DetailContributor(SectionContributor):
     def add_no_items_text_to_detail(detail, app, detail_type, module):
         if detail_type.endswith('short') and app.supports_empty_case_list_text:
             detail.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
+
+    @staticmethod
+    def add_select_text_to_detail(detail, app, detail_type, module):
+        if detail_type.endswith('short') and app.supports_select_text:
+            detail.select_text = Text(locale_id=id_strings.select_text_detail(module))
 
 
 class DetailsHelper(object):

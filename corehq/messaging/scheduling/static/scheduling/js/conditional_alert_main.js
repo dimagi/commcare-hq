@@ -5,7 +5,7 @@ hqDefine("scheduling/js/conditional_alert_main", [
     'hqwebapp/js/initial_page_data',
     'data_interfaces/js/case_rule_criteria',
     'data_interfaces/js/case_property_input',
-    'hqwebapp/js/widgets',
+    'hqwebapp/js/bootstrap3/widgets',
     'scheduling/js/create_schedule.ko',
     'data_interfaces/js/make_read_only',
 ], function (

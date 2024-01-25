@@ -29,7 +29,7 @@ def _grandfather_privilege(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0088_add_new_softwareplan_visibility'),
+        ('accounting', '0089_dedupe_priv'),
     ]
 
     operations = [

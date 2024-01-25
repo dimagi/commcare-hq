@@ -27,7 +27,7 @@
 /corehq/apps/callcenter/ @snopoke
 /corehq/apps/change_feed/ @dannyroberts
 /corehq/apps/commtrack/ @esoergel
-/corehq/apps/data_dictionary/ @esoergel @orangejenny
+/corehq/apps/data_dictionary/ @esoergel @orangejenny @zandre-eng
 /corehq/apps/domain/decorators.py @esoergel
 /corehq/apps/domain/auth.py @esoergel
 /corehq/apps/es/ @esoergel @amitphulera

@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
         queryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         Collection = hqImport("cloudcare/js/formplayer/menus/collections");
     var selectMenu = function (options) {
 
@@ -106,18 +106,14 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var queryResponse = menuResponse.queryResponse;
         var sidebarEnabled = !appPreview && menusUtils.isSidebarEnabled(menuResponse);
-        if (sidebarEnabled && menuResponse.type === constants.QUERY) {
-            var menuData = menusUtils.getMenuData(menuResponse);
-            menuData["triggerEmptyCaseList"] = true;
-            menuData["sidebarEnabled"] = true;
-            menuData["description"] = menuResponse.description;
-
-            var caseListView = menusUtils.getCaseListView(menuResponse);
-            FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
-        } else if (menuListView) {
+        if (menuListView && !sidebarEnabled) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
+        }
+        if (sidebarEnabled) {
+            showSplitScreenQuery(menuResponse, menuListView);
+        } else {
+            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
         if (menuResponse.persistentCaseTile && !appPreview) {
             showPersistentCaseTile(menuResponse.persistentCaseTile);
@@ -125,41 +121,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
         }
 
-        if (sidebarEnabled && menuResponse.type === constants.ENTITIES && queryResponse)  {
-            var queryCollection = new Collection(queryResponse.displays);
-            FormplayerFrontend.regions.getRegion('sidebar').show(
-                queryView.queryListView({
-                    collection: queryCollection,
-                    title: menuResponse.title,
-                    description: menuResponse.description,
-                    hasDynamicSearch: queryResponse.dynamicSearch,
-                    sidebarEnabled: true,
-                    disableDynamicSearch: !sessionStorage.submitPerformed,
-                    groupHeaders: queryResponse.groupHeaders,
-                }).render()
-            );
-        } else if (sidebarEnabled && menuResponse.type === constants.QUERY) {
-            FormplayerFrontend.regions.getRegion('sidebar').show(
-                queryView.queryListView({
-                    collection: menuResponse,
-                    title: menuResponse.title,
-                    description: menuResponse.description,
-                    hasDynamicSearch: menuResponse.dynamicSearch,
-                    sidebarEnabled: true,
-                    disableDynamicSearch: true,
-                    groupHeaders: menuResponse.groupHeaders,
-                }).render()
-            );
-        } else {
-            FormplayerFrontend.regions.getRegion('sidebar').empty();
-        }
-
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
             if (!appPreview) {
                 let isFormEntry = !menuResponse.queryKey;
                 if (isFormEntry) {
-                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData('lang_code_name_mapping'));
+                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
                 }
                 if (menuResponse.type === constants.ENTITIES) {
                     menusUtils.showMenuDropdown();
@@ -173,13 +140,59 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
     };
 
+    var showSplitScreenQuery = function (menuResponse, menuListView) {
+        var menuData = menusUtils.getMenuData(menuResponse);
+        var queryResponse = menuResponse.queryResponse;
+        if (menuResponse.type === constants.ENTITIES && queryResponse)  {
+            var queryCollection = new Collection(queryResponse.displays);
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                queryView.queryListView({
+                    collection: queryCollection,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    hasDynamicSearch: queryResponse.dynamicSearch,
+                    sidebarEnabled: true,
+                    disableDynamicSearch: !sessionStorage.submitPerformed,
+                    groupHeaders: queryResponse.groupHeaders,
+                    searchOnClear: queryResponse.searchOnClear,
+                }).render()
+            );
+            FormplayerFrontend.regions.getRegion('main').show(menuListView);
+        } else if (menuResponse.type === constants.QUERY) {
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                queryView.queryListView({
+                    collection: menuResponse,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    hasDynamicSearch: menuResponse.dynamicSearch,
+                    sidebarEnabled: true,
+                    disableDynamicSearch: true,
+                    groupHeaders: menuResponse.groupHeaders,
+                    searchOnClear: menuResponse.searchOnClear,
+                }).render()
+            );
+
+            menuData["triggerEmptyCaseList"] = true;
+            menuData["sidebarEnabled"] = true;
+            menuData["description"] = menuResponse.description;
+
+            var caseListView = menusUtils.getCaseListView(menuResponse);
+            FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
+        }
+    };
+
     var showPersistentCaseTile = function (persistentCaseTile) {
         var detailView = getCaseTile(persistentCaseTile);
         FormplayerFrontend.regions.getRegion('persistentCaseTile').show(detailView.render());
     };
 
     var showDetail = function (model, detailTabIndex, caseId, isMultiSelect) {
-        var detailObjects = model.models;
+        var detailObjects = model.filter(function (d) {
+            const styles = d.get('styles');
+            const visibleStyle = _.find(styles, s => s.displayFormat !== constants.FORMAT_ADDRESS_POPUP);
+            return typeof visibleStyle !== 'undefined';
+        });
+
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
             if (isMultiSelect) {
@@ -252,10 +265,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.header = headers[i];
             obj.style = styles[i];
             obj.id = i;
-            if (obj.style.displayFormat === 'Markdown') {
+            if (obj.style.displayFormat === constants.FORMAT_MARKDOWN) {
                 obj.html = markdown.render(details[i]);
             }
-            detailModel.push(obj);
+            if (obj.style.displayFormat !== constants.FORMAT_ADDRESS_POPUP) {
+                detailModel.push(obj);
+            }
         }
         var detailCollection = new Backbone.Collection();
         detailCollection.reset(detailModel);
@@ -282,6 +297,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
         return views.PersistentCaseTileView({
             model: detailModel,
+            headers: detailObject.headers,
             styles: detailObject.styles,
             tiles: detailObject.tiles,
             maxWidth: detailObject.maxWidth,

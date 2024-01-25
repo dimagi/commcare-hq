@@ -22,7 +22,7 @@
       {# navigation handle by URL hash #}
       <a data-bind="attr: {href: $data.url}">
         <span data-bind="text: $data.name" style="display: inline-block"></span>
-        <span data-bind="visible: $data.deprecated" class="label label-warning">{% trans "deprecated" %}</span>
+        <span data-bind="visible: $data.deprecated" class="hidden deprecate-case-type label label-warning">{% trans "deprecated" %}</span>
       </a>
     </li>
     <!-- /ko -->
@@ -31,6 +31,17 @@
         <a href="#" data-bind="openModal: 'create-case-type'">
           <i class="fa fa-plus"></i>
           {% trans "Add Case Type" %}
+        </a>
+      </li>
+      <li>
+        <a class="hidden deprecate-case-type" data-bind="click: $root.toggleShowDeprecatedCaseTypes">
+            <i class="fa fa-archive"></i>
+            <span data-bind="hidden: $root.showDeprecatedCaseTypes">
+              {% trans 'Show Deprecated Case Types' %}
+            </span>
+            <span data-bind="visible: $root.showDeprecatedCaseTypes">
+              {% trans 'Hide Deprecated Case Types' %}
+            </span>
         </a>
       </li>
     {% endif %}
@@ -54,23 +65,26 @@
             {% csrf_token %}
             <div class="modal-body">
               <fieldset>
-                <div class="form-group" data-bind="css: {'has-error': nameChecked() && !nameValid()}">
+                <div class="form-group" data-bind="css: {'has-error': nameChecked() && (!nameValid() || !nameUnique())}">
                   <label for="name" class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
                     {% trans "Name" %}
                   </label>
                   <i class="fa" data-bind="
                      visible: nameChecked(),
                      css: {
-                         'fa-check': nameValid(),
-                         'text-success': nameValid(),
-                         'fa-remove': !nameValid(),
-                         'text-danger': !nameValid(),
+                         'fa-check': nameValid() && nameUnique(),
+                         'text-success': nameValid() && nameUnique(),
+                         'fa-remove': !nameValid() || !nameUnique(),
+                         'text-danger': !nameValid() || !nameUnique(),
                      }
                   "></i>
                   <div class="col-xs-12 col-sm-6 col-md-6 col-lg-8 controls">
                     <input type="text" name="name" class="form-control" required data-bind="textInput: name"/>
-                    <span class='help-block' data-bind="visible: nameChecked() && !nameValid()">
+                    <span class='help-block' data-bind="visible: nameChecked() && !nameUnique()">
                       {% trans "A case type with this name already exists." %}
+                    </span>
+                    <span class="help-block" data-bind="visible: nameChecked() && !nameValid()">
+                      {% trans "Invalid case type name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}
                     </span>
                   </div>
                 </div>
@@ -90,8 +104,8 @@
                 attr: {disabled: formCreateCaseTypeSent()}
               ">{% trans 'Cancel' %}</a>
               <button type="submit" class="btn btn-primary" data-bind="
-                css: {disabled: formCreateCaseTypeSent() || !nameValid()},
-                attr: {disabled: formCreateCaseTypeSent() || !nameValid()}
+                css: {disabled: formCreateCaseTypeSent() || !nameValid() || !nameUnique()},
+                attr: {disabled: formCreateCaseTypeSent() || !nameValid() || !nameUnique()}
               ">
                 <i class="fa fa-plus" data-bind="
                    css: {
@@ -131,7 +145,7 @@
     <div class="col-md-12">
       <div>
         <h3 data-bind="text: $root.activeCaseType()" style="display: inline-block;"></h3>
-        <span data-bind="visible: $root.isActiveCaseTypeDeprecated()" class="label label-warning" style="display: inline-block;">{% trans "deprecated" %}</span>
+        <span data-bind="visible: $root.isActiveCaseTypeDeprecated()" class="deprecate-case-type hidden label label-warning" style="display: inline-block;">{% trans "deprecated" %}</span>
       </div>
       {% if fhir_integration_enabled %}
         <div id="fhir-resource-type-form" class="form-inline" data-bind="visible: fhirResourceTypes().length">
@@ -331,9 +345,9 @@
           </div>
         </div>
         {% if not request.is_view_only %}
-          <form class="form-inline">
+          <form class="form-inline" data-bind="css: { 'has-error': !newPropertyNameUnique() || !newPropertyNameValid() }">
             <input class="form-control" placeholder="Case Property" data-bind="value: newPropertyName">
-            <button class="btn btn-default" data-bind="click: $root.newCaseProperty, enable: newPropertyNameUnique()">
+            <button class="btn btn-default" data-bind="click: $root.newCaseProperty, enable: newPropertyNameUnique() && newPropertyNameValid()">
               <i class="fa fa-plus"></i>
               {% trans "Add Case Property" %}
             </button>
@@ -341,18 +355,24 @@
               <span class="text-danger" data-bind="visible: !newPropertyNameUnique()">
                 {% trans "A case property with this name already exists." %}
               </span>
+              <span class="text-danger" data-bind="visible: !newPropertyNameValid()">
+                {% trans "Invalid case property name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}
+              </span>
             </div>
           </form>
           <br />
-          <form class="form-inline">
+          <form class="form-inline" data-bind="css: {'has-error': !newGroupNameUnique() || !newGroupNameValid()}">
             <input class="form-control" placeholder="Group Name" data-bind="value: newGroupName">
-            <button class="btn btn-default" data-bind="click: $root.newGroup, enable: newGroupNameUnique()">
+            <button class="btn btn-default" data-bind="click: $root.newGroup, enable: newGroupNameUnique() && newGroupNameValid()">
               <i class="fa fa-plus"></i>
               {% trans "Add Case Property Group" %}
             </button>
             <div class="help-block">
               <span class="text-danger" data-bind="visible: !newGroupNameUnique()">
                 {% trans "A case property group with this name already exists." %}
+              </span>
+              <span class="text-danger" data-bind="visible: !newGroupNameValid()">
+                {% trans "Invalid case group name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}
               </span>
             </div>
           </form>

@@ -119,6 +119,7 @@ CASE_LIST_EXPLORER = 'case_list_explorer'
 
 CASE_COPY = 'case_copy'
 
+CASE_DEDUPE = 'case_deduplicate'
 CUSTOM_DOMAIN_ALERTS = 'custom_domain_alerts'
 
 MAX_PRIVILEGES = [
@@ -183,6 +184,7 @@ MAX_PRIVILEGES = [
     DATA_DICTIONARY,
     CASE_LIST_EXPLORER,
     CASE_COPY,
+    CASE_DEDUPE,
     CUSTOM_DOMAIN_ALERTS,
 ]
 
@@ -261,5 +263,6 @@ class Titles(object):
             DATA_DICTIONARY: _("Project level data dictionary of cases"),
             CASE_LIST_EXPLORER: _("Case List Explorer"),
             CASE_COPY: _("Allow case copy from one user to another"),
+            CASE_DEDUPE: _("Deduplication Rules"),
             CUSTOM_DOMAIN_ALERTS: _("Custom domain banners"),
         }.get(privilege, privilege)

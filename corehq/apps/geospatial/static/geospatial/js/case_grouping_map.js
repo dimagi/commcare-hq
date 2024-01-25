@@ -300,32 +300,10 @@ hqDefine("geospatial/js/case_grouping_map",[
                 marker.addTo(mapModel.mapInstance);
                 mapMarkers.push(marker);
 
-                let popupDiv = document.createElement("div");
-                popupDiv.setAttribute("data-bind", "template: 'select-case'");
-
-                let popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
-                    .setLngLat(coordinates)
-                    .setDOMContent(popupDiv);
+                const popupDiv = document.createElement("div");
+                const popup = utils.createMapPopup(coordinates, popupDiv, marker.togglePopup, marker.togglePopup);
 
                 marker.setPopup(popup);
-
-                const markerDiv = marker.getElement();
-                // Show popup on hover
-                markerDiv.addEventListener('mouseenter', marker.togglePopup);
-
-                // Hide popup if mouse leaves marker and popup
-                var addLeaveEvent = function (fromDiv, toDiv) {
-                    fromDiv.addEventListener('mouseleave', function () {
-                        setTimeout(function () {
-                            if (!$(toDiv).is(':hover')) {
-                                // mouse left toDiv as well
-                                marker.togglePopup();
-                            }
-                        }, 100);
-                    });
-                };
-                addLeaveEvent(markerDiv, popupDiv);
-                addLeaveEvent(popupDiv, markerDiv);
                 const colors = {default: color, selected: color};
 
                 const mapMarkerInstance = new mapMarkerModel(caseItem.itemId, caseItem, marker, colors);

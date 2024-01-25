@@ -731,7 +731,7 @@ def _apply_update(request, alert):
     command = request.POST.get('command')
     if command == "activate":
         if Alert.objects.filter(created_by_domain=request.domain, active=True).count() >= MAX_ACTIVE_ALERTS:
-            messages.error(request, _("Alert not updated. Only 3 active alerts allowed."))
+            messages.error(request, _("Alert not activated. Only 3 active alerts allowed."))
             return
 
     if command in ['activate', 'deactivate']:
