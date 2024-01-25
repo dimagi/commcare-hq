@@ -1,8 +1,35 @@
 --- 
 +++ 
-@@ -1,4 +1,4 @@
+@@ -1,10 +1,10 @@
 -hqDefine("hqwebapp/js/bootstrap3/widgets",[
 +hqDefine("hqwebapp/js/bootstrap5/widgets",[
-         'jquery',
-         'underscore',
-         '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
+     'jquery',
+     'underscore',
+     '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
+     'hqwebapp/js/initial_page_data',
+     'select2/dist/js/select2.full.min',
+-    'jquery-ui/ui/widgets/datepicker',
++    'datetimepicker',  // jquery plugin for tempusDominus
+ ], function ($, _, MapboxGeocoder, initialPageData) {
+     var init = function () {
+         var MAPBOX_ACCESS_TOKEN = initialPageData.get(
+@@ -107,7 +107,18 @@
+             }
+         });
+ 
+-        $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
++        // datepicker / tempus dominus
++        $('.date-picker').tempusDominus({
++            display: {
++                theme: 'light',
++                components: {
++                    clock: false,
++                },
++            },
++            localization: {
++                format: 'yyyy-MM-dd',
++            },
++        });
+     };
+ 
+     var parseEmails = function (input) {

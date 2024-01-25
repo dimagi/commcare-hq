@@ -91,18 +91,16 @@ hqDefine("geospatial/js/geospatial_map", [
             // Clean stale disbursement results
             mapModel.removeDisbursementLayers();
 
-            var groupId = 0;
+            let groupId = 0;
             Object.keys(result).forEach((userId) => {
-                let user = mapModel.userMapItems().find((userModel) => {return userModel.itemId === userId;});
-                const userCoordString = user.itemData.coordinates['lng'] + " " + user.itemData.coordinates['lat'];
-                mapModel.caseGroupsIndex[userCoordString] = {groupId: groupId, item: user};
+                const user = mapModel.userMapItems().find((userModel) => {return userModel.itemId === userId;});
+                mapModel.caseGroupsIndex[userId] = {groupId: groupId, item: user};
 
                 let cases = [];
                 mapModel.caseMapItems().forEach((caseModel) => {
                     if (result[userId].includes(caseModel.itemId)) {
                         cases.push(caseModel);
-                        const coordString = caseModel.itemData.coordinates['lng'] + " " + caseModel.itemData.coordinates['lat'];
-                        mapModel.caseGroupsIndex[coordString] = {groupId: groupId, item: caseModel};
+                        mapModel.caseGroupsIndex[caseModel.itemId] = {groupId: groupId, item: caseModel};
                     }
                 });
                 connectUserWithCasesOnMap(user, cases);
@@ -225,7 +223,7 @@ hqDefine("geospatial/js/geospatial_map", [
     };
 
     function initMap() {
-        mapModel = new models.Map();
+        mapModel = new models.Map(false, true);
         mapModel.initMap(MAP_CONTAINER_ID);
 
         let selectedCases = ko.computed(function () {

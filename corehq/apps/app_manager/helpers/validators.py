@@ -545,6 +545,11 @@ class ModuleBaseValidator(object):
                         "module": self.get_module_info(),
                         "property": prop.name,
                     }
+            if search_config.search_on_clear and self.module.is_auto_select():
+                yield {
+                    "type": "search on clear with auto select",
+                    "module": self.get_module_info(),
+                }
 
     def validate_case_list_field_actions(self):
         if hasattr(self.module, 'case_details'):
