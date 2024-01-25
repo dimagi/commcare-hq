@@ -64,9 +64,6 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
 
 
             self.isAPISecretVisible =  ko.observable(!initialPageData.get('api_secret_exists'))
-            self.isAPISecretHidden = ko.computed(function () {
-                return !self.isAPISecretVisible();
-            });
 
             self.showAPISecret = function () {
                 self.isAPISecretVisible(true);
