@@ -108,6 +108,7 @@ def get_deleted_case_name(case):
 
 
 def get_all_cases_from_form(form, domain):
+    # A more inclusive method of getting cases from a form, including cases whose deleted field is True
     touched_cases = {}
     case_updates = get_case_updates(form)
     for update in case_updates:

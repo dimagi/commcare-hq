@@ -11,7 +11,11 @@ from corehq.apps.hqcase.utils import (
     get_deidentified_data,
     submit_case_blocks,
 )
-from corehq.apps.hqcase.case_deletion_utils import get_ordered_case_xforms
+from corehq.apps.hqcase.case_deletion_utils import (
+    get_all_cases_from_form,
+    get_deleted_case_name,
+    get_ordered_case_xforms,
+)
 from corehq.apps.reports.tests.test_case_data import _delete_all_cases_and_forms
 from corehq.form_processor.models import CommCareCase
 
@@ -134,6 +138,31 @@ class TestCaseDeletionUtil(TestCase):
 
         for i in range(2):
             self.assertGreater(xforms[i + 1].received_on, xforms[i].received_on)
+
+    def test_get_deleted_case_name(self):
+        main_case_id = uuid.uuid4().hex
+        xform, cases = submit_case_blocks([
+            CaseBlock(main_case_id, case_name="main_case", create=True).as_text(),
+        ], DOMAIN)
+        self.addCleanup(_delete_all_cases_and_forms, DOMAIN)
+
+        xform.archive()
+        case = CommCareCase.objects.get_case(cases[0].case_id, DOMAIN)
+
+        self.assertFalse(case.name)
+        self.assertEqual(get_deleted_case_name(case), "main_case")
+
+    def test_get_deleted_cases_from_form(self):
+        main_case_id = uuid.uuid4().hex
+        xform, _ = submit_case_blocks([
+            CaseBlock(main_case_id, case_name="main_case", create=True).as_text(),
+        ], DOMAIN)
+        self.addCleanup(_delete_all_cases_and_forms, DOMAIN)
+
+        xform.archive()
+        cases = get_all_cases_from_form(xform, DOMAIN)
+        self.assertEqual(len(cases), 1)
+        self.assertTrue(cases[main_case_id].case.is_deleted)
 
 
 @contextmanager

@@ -170,7 +170,7 @@ class TestCaseDeletion(TestCase):
 
         return main_case_id
 
-    def make_complex_case(self):
+    def make_complex_case(self, xform_delete=False):
         main_case_id = uuid.uuid4().hex
         child_case1_id = uuid.uuid4().hex
         child_case2_id = uuid.uuid4().hex
@@ -180,7 +180,7 @@ class TestCaseDeletion(TestCase):
             CaseBlock(main_case_id, case_name="main_case", create=True).as_text(),
             CaseBlock(child_case1_id, case_name="child1", create=True).as_text(),
         ], self.domain)
-        submit_case_blocks([
+        xform, cases = submit_case_blocks([
             CaseBlock(main_case_id, update={}).as_text(),
             CaseBlock(child_case2_id, case_name="child2", create=True).as_text(),
         ], self.domain)
@@ -194,6 +194,10 @@ class TestCaseDeletion(TestCase):
         ], self.domain)
         self.addCleanup(_delete_all_cases_and_forms, self.domain)
 
+        if xform_delete:
+            for case in cases:
+                if case.case_id != main_case_id:
+                    return xform, case
         return main_case_id
 
     def make_closed_case(self):
@@ -271,6 +275,20 @@ class TestCaseDeletion(TestCase):
         case_data = get_case_and_display_data(case, self.domain)
 
         self.assertEqual(len(case_data['reopened_cases']), 1)
+
+    # Testing case data retrieval for form driven case deletion
+    def test_case_walk_returns_form_delete_case_list(self):
+        xform, case = self.make_complex_case(xform_delete=True)
+        case_data = get_case_and_display_data(case, self.domain, xform.form_id)
+
+        self.assertEqual(len(case_data['form_delete_cases']), 1)
+        self.assertEqual(len(case_data['delete_cases']), 1)
+
+    def test_case_walk_returns_form_delete_affected_list(self):
+        xform, case = self.make_complex_case(xform_delete=True)
+        case_data = get_case_and_display_data(case, self.domain, xform.form_id)
+
+        self.assertEqual(len(case_data['form_affected_cases']), 1)
 
     # Testing deletion
     def test_delete_case(self):
