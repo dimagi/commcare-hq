@@ -99,7 +99,8 @@ class Command(PopulateSQLCommand):
         ).values_list("id", flat=True)}
         return {d["_id"] for d in docs if d["repeater_id"] not in existing_ids}
 
-    def _get_couch_doc_count_for_type(self):
+    @classmethod
+    def _get_couch_doc_count_for_type(cls):
         return count_docs()
 
     def _get_all_couch_docs_for_model(self, chunk_size):

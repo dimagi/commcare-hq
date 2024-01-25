@@ -186,7 +186,7 @@ class PopulateSQLCommand(BaseCommand):
         status = cls.get_migration_status()
         if status.get("is_completed"):
             return 0
-        couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
+        couch_count = cls._get_couch_doc_count_for_type()
         ignored_count = status.get("ignored_count", 0)
         sql_count = cls.sql_class().objects.count()
         return couch_count - ignored_count - sql_count
@@ -565,8 +565,9 @@ Run the following commands to run the migration and get up to date:
         return get_all_docs_with_doc_types(
             self.couch_db(), [self.couch_doc_type()], chunk_size)
 
-    def _get_couch_doc_count_for_type(self):
-        return get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
+    @classmethod
+    def _get_couch_doc_count_for_type(cls):
+        return get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
 
     @staticmethod
     def open_log(log_path, mode="w"):
