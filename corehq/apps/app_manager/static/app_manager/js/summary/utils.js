@@ -15,7 +15,7 @@ hqDefine("app_manager/js/summary/utils",[
     };
 
     var formIcon = function (form) {
-        var formIcon = 'fa fa-file-o appnav-primary-icon';
+        var formIcon = 'fa-regular fa-file appnav-primary-icon';
         if (form.action_type === 'open') {
             formIcon = 'fcc fcc-app-createform appnav-primary-icon appnav-primary-icon-lg';
         } else if (form.action_type === 'close') {

@@ -36,7 +36,7 @@
         {% elif form.form_type == 'shadow_form' %}
             class="fa fa-moon-o appnav-primary-icon"
         {% else %}
-            class="fa fa-file-o appnav-primary-icon"
+            class="fa-regular fa-file appnav-primary-icon"
         {% endif %}
             title="{% if request|toggle_enabled:"SUPPORT" %}{% blocktrans with form.id as index %}This is form {{ index }}<br>{% endblocktrans %} {% endif %}{{ form.get_icon_help_text }}"
             data-toggle="tooltip"
