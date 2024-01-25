@@ -10,6 +10,8 @@ requirejs.config({
         "datatables": "datatables.net/js/jquery.dataTables.min",
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
+        "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
+        "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
@@ -32,6 +34,7 @@ requirejs.config({
         "hqwebapp/js/lib/modernizr": {
             exports: 'Modernizr',
         },
+        "sentry_browser": { exports: "Sentry" },
     },
     packages: [{
         name: 'moment',

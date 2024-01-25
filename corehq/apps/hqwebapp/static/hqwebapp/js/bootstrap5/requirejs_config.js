@@ -18,6 +18,8 @@ requirejs.config({
         "popper": "@popperjs/core/dist/umd/popper.min",
         "tempus-dominus": "eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
         "datepicker": "@eonasdan/tempus-dominus/dist/js/jQuery-provider.min",  // import this if you need jquery plugin of tempus-dominus
+        "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
+        "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
@@ -43,6 +45,7 @@ requirejs.config({
         "datepicker": {
             deps: ['popper', 'tempus-dominus'],
         },
+        "sentry_browser": { exports: "Sentry" },
     },
     packages: [{
         name: 'moment',
