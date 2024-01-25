@@ -83,7 +83,7 @@
                 <div>
                   <a href="{% url "invite_web_user" domain %}?request_id={{ req.id }}"
                      class="approve-request btn btn-default">
-                    <i class="fa fa-check-square-o"></i>
+                    <i class="fa-regular fa-square-check"></i>
                     {% trans "Approve Request" %}
                   </a>
                   <a href="#" class="btn btn-danger delete-request"
@@ -287,7 +287,7 @@
                 <div data-bind="visible: !actionMessage()">
                   <button type="button" class="resend-invite btn btn-default"
                           data-bind="click: resend, disable: actionInProgress">
-                    <i class="fa fa-envelope-o"></i>
+                    <i class="fa-regular fa-envelope"></i>
                     {% trans "Resend Invitation" %}
                   </button>
                   <button type="button" class="btn btn-danger delete-invitation"
