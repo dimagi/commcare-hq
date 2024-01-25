@@ -744,6 +744,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
             });
             if (invalidRequiredFields.length === 0) {
+                console.log("Performing Submit with dynamicSearch");
                 self.performSubmit(formplayerConstants.queryInitiatedBy.DYNAMIC_SEARCH);
             }
         },
