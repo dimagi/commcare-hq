@@ -1,3 +1,5 @@
+import csv
+import hashlib
 import re
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
@@ -33,7 +35,8 @@ from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.data_interfaces.deduplication import (
-    find_duplicate_case_ids,
+    case_exists_in_es as _case_exists_in_es,
+    find_duplicate_case_ids as _find_duplicate_case_ids,
     get_dedupe_xmlns,
     reset_and_backfill_deduplicate_rule,
     reset_deduplicate_rule,
@@ -66,11 +69,14 @@ from corehq.sql_db.util import (
     paginate_query,
     paginate_query_across_partitioned_databases, create_unique_index_name,
 )
+from corehq import toggles
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
+
+from corehq.apps.hqcase.utils import resave_case
 
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
@@ -1067,6 +1073,33 @@ class CaseDeduplicationMatchTypeChoices:
     )
 
 
+def case_matching_rule_exists_in_es(case, rule):
+    """Returns whether or not the current case, according to the properties
+    that the given rule cares about, is present in elasticsearch
+    """
+    action = CaseDeduplicationActionDefinition.from_rule(rule)
+    return _case_exists_in_es(
+        case.domain,
+        case,
+        action.case_properties,
+        action.include_closed,
+        action.match_type,
+        case_filter_criteria=rule.memoized_criteria)
+
+
+def find_matching_case_ids_in_es(case, rule, limit=0):
+    action = CaseDeduplicationActionDefinition.from_rule(rule)
+    return _find_duplicate_case_ids(
+        case.domain,
+        case,
+        action.case_properties,
+        action.include_closed,
+        action.match_type,
+        case_filter_criteria=rule.memoized_criteria,
+        limit=limit
+    )
+
+
 class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     match_type = models.CharField(choices=CaseDeduplicationMatchTypeChoices.CHOICES, max_length=5)
     case_properties = ArrayField(models.TextField())
@@ -1081,42 +1114,110 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             raise ValueError(
                 f"Rule must have workflow {AutomaticUpdateRule.WORKFLOW_DEDUPLICATE}, but we got {rule.workflow}"
             )
-        try:
-            deduplicate_action_definition = rule.memoized_actions[0].definition
-        except IndexError:
-            raise ValueError("Rule has no actions")
 
+        assert len(rule.memoized_actions) == 1, f"an unexpected number of actions were found for rule {rule.id}"
+        deduplicate_action_definition = rule.memoized_actions[0].definition
         if not isinstance(deduplicate_action_definition, cls):
             raise ValueError(f"The action from rule {rule.pk} is not a {cls.__name__}")
 
         return deduplicate_action_definition
 
-    def properties_fit_definition(self, case_properties):
+    def properties_fit_definition(self, updated_case_properties):
         """Given a list of case properties, returns whether these will be pertinent in
         finding duplicate cases.
-
-        Used when deciding whether to run the action from the pillow.
-
         """
 
         definition_properties = set(self.case_properties)
-        case_properties = set(case_properties)
+        updated_case_properties = set(updated_case_properties)
 
-        all_match = (
-            self.match_type == CaseDeduplicationMatchTypeChoices.ALL
-            and case_properties.issuperset(definition_properties)
-        )
+        if self.match_type == CaseDeduplicationMatchTypeChoices.ALL:
+            return updated_case_properties.issuperset(definition_properties)
+        elif self.match_type == CaseDeduplicationMatchTypeChoices.ANY:
+            return updated_case_properties.intersection(definition_properties)
 
-        any_match = (
-            self.match_type == CaseDeduplicationMatchTypeChoices.ANY
-            and case_properties.intersection(definition_properties)
-        )
-
-        return all_match or any_match
+        raise ValueError(f"Unknown match type: {self.match_type}")
 
     def when_case_matches(self, case, rule):
+        result = self._handle_case_duplicate_new(case, rule)
+        self._handle_case_duplicate(case, rule)
+
+        return result
+
+    def _handle_case_duplicate_new(self, case, rule):
+        if not case_matching_rule_exists_in_es(case, rule):
+            # If the case isn't found in elasticsearch, any duplicate information is unreliable
+            # Resaving this case will give our pillows a chance to process it again,
+            # Doing so will 1) insert the case into elasticsearch and 2) run this case through
+            # the duplicate pillow again
+            resave_case(rule.domain, case, send_post_save_signal=False)
+            return CaseRuleActionResult(num_updates=0)
+
+        try:
+            existing_duplicate = CaseDuplicateNew.objects.get(case_id=case.case_id, action=self)
+        except CaseDuplicateNew.DoesNotExist:
+            existing_duplicate = None
+
+        current_hash = CaseDuplicateNew.case_and_action_to_hash(case, self)
+
+        # Check if the new parameters have changed.
+        if existing_duplicate and existing_duplicate.hash == current_hash:
+            # Nothing has changed. We can stop processing here
+            return CaseRuleActionResult(num_updates=0)
+
+        with transaction.atomic():
+            if existing_duplicate:
+                existing_duplicate.delete()
+            duplicate_ids = self._create_duplicates(case, rule, current_hash)
+
+        if toggles.CASE_DEDUPE_UPDATES.enabled(rule.domain):
+            num_updates = self._update_duplicates(duplicate_ids, case, rule)
+        else:
+            num_updates = 0
+        return CaseRuleActionResult(num_updates=num_updates)
+
+    def _create_duplicates(self, case, rule, current_hash):
+        """Create any necessary duplicates for this case that don't already exist.
+        Returns a list of those newly-created ids"""
+        # Pull 3 matching cases to answer whether this is a new duplicate, an existing duplicate,
+        # or not a duplicate. When this is an existing duplicate, we'd expect to see at least
+        # 2 other matching records plus the current case, hence needing to fetch at least 3 records
+        matching_ids = find_matching_case_ids_in_es(case, rule, limit=3)
+
+        other_duplicate_ids = {case_id for case_id in matching_ids if case_id != case.case_id}
+        if not other_duplicate_ids:
+            # This isn't a duplicate, just return
+            return []
+
+        duplicates = [CaseDuplicateNew(case_id=case.case_id, action=self, hash=current_hash)]
+        missing_ids = self._get_case_ids_not_recorded_as_duplicates(other_duplicate_ids)
+        if missing_ids:
+            # create a new duplicate for anything that currently isn't registered as one
+            new_duplicates = [
+                CaseDuplicateNew(case_id=missing_id, action=self, hash=current_hash)
+                for missing_id in missing_ids
+            ]
+            duplicates.extend(new_duplicates)
+
+        CaseDuplicateNew.objects.bulk_create(duplicates)
+        return [duplicate.case_id for duplicate in duplicates]
+
+    def _get_case_ids_not_recorded_as_duplicates(self, all_ids):
+        existing_ids = set(CaseDuplicateNew.objects.filter(
+            action=self, case_id__in=all_ids
+        ).values_list('case_id', flat=True))
+        return all_ids - existing_ids
+
+    def _update_duplicates(self, duplicate_ids, case, rule):
+        num_updates = 0
+        if duplicate_ids and self.properties_to_update:
+            num_updates = self._update_cases(case.domain, rule, duplicate_ids)
+
+        return num_updates
+
+    # OLD APPROACH -- remove when _handle_case_duplicate_new has been proven safe
+    def _handle_case_duplicate(self, case, rule):
         domain = case.domain
-        new_duplicate_case_ids = set(find_duplicate_case_ids(
+        new_duplicate_case_ids = set(_find_duplicate_case_ids(
             domain,
             case,
             self.case_properties,
@@ -1130,14 +1231,16 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         new_duplicate_case_ids.add(case.case_id)
 
         with transaction.atomic():
+            # Compare the list of the elastic search duplicates with those
+            # stored in CaseDuplicate. If the lists are the same or no other duplicates exist,
+            # no work is required. If the lists differ, then delete all the existing entries
+            # then recreate all the duplicates again
+            # all of this seem unnecessary with the new model
             if self._handle_existing_duplicates(case.case_id, new_duplicate_case_ids):
                 return CaseRuleActionResult(num_updates=0)
             CaseDuplicate.bulk_create_duplicate_relationships(self, case, new_duplicate_case_ids)
-        if self.properties_to_update:
-            num_updates = self._update_cases(domain, rule, new_duplicate_case_ids)
-        else:
-            num_updates = 0
-        return CaseRuleActionResult(num_updates=num_updates)
+
+        return CaseRuleActionResult(0)
 
     def _handle_existing_duplicates(self, case_id, new_duplicate_case_ids):
         """Handles existing duplicate objects.
@@ -1202,6 +1305,101 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             'case_properties': self.case_properties,
             'include_closed': self.include_closed,
         }
+
+
+class CaseDuplicateNew(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    case_id = models.CharField(max_length=126, db_index=True)
+    action = models.ForeignKey("CaseDeduplicationActionDefinition", on_delete=models.CASCADE)
+    hash = models.CharField(max_length=256)
+
+    class Meta:
+        db_table = "data_interfaces_caseduplicate_new"
+        unique_together = ('case_id', 'action')
+        indexes = [
+            models.Index(fields=['hash', 'action_id'])
+        ]
+
+    def __str__(self):
+        return (
+            f"CaseDuplicateNew("
+            f"case_id={self.case_id}, action_id={self.action_id}, hash={self.hash})"
+        )
+
+    def delete(self, *args, check_for_orphans=True, **kwargs):
+        with transaction.atomic():
+            if check_for_orphans:
+                other_records = CaseDuplicateNew.objects.filter(
+                    action=self.action, hash=self.hash).exclude(case_id=self.case_id)[:2]
+
+                if other_records.count() == 1:
+                    # This will be orphaned when the current record is deleted, so delete it as well
+                    other_records[0].delete(check_for_orphans=False)
+
+            return super().delete(*args, **kwargs)
+
+    @classmethod
+    def create(cls, case, action, save=True):
+        hash = cls.case_and_action_to_hash(case, action)
+        obj = cls(case_id=case.case_id, action=action, hash=hash)
+        if save:
+            obj.save()
+        return obj
+
+    @classmethod
+    def get_case_ids(cls, rule_id):
+        """Given a AutomaticUpdateRule id, return all case_ids that match
+        """
+        try:
+            rule = AutomaticUpdateRule.objects.get(
+                id=rule_id,
+                workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+                deleted=False
+            )
+        except AutomaticUpdateRule.DoesNotExist:
+            return []
+        action_id = CaseDeduplicationActionDefinition.from_rule(rule).id
+        return list(cls.objects.filter(action_id=action_id).values_list('case_id', flat=True))
+
+    @classmethod
+    def remove_duplicates_for_case_ids(cls, case_ids):
+        duplicates = cls.objects.filter(case_id__in=case_ids)
+        for duplicate in duplicates:
+            # Individually delete models, rather than use a bulk query, so that the custom delete logic triggers
+            duplicate.delete()
+
+    @classmethod
+    def case_and_action_to_hash(cls, case, action):
+        current_values = []
+        for prop in action.case_properties:
+            properties = case.resolve_case_property(prop)
+            current_values.extend(prop.value for prop in properties)
+
+        return hash_arguments(*current_values)
+
+
+def hash_arguments(*args):
+    # mimic file-like object
+    class Updater:
+        def __init__(self):
+            self.combined = hashlib.sha256()
+
+        def write(self, value):
+            self.combined.update(value.encode('utf8'))
+
+    updater = Updater()
+
+    writer = csv.writer(
+        updater,
+        delimiter='\t',
+        quotechar=None,
+        escapechar='|',
+        quoting=csv.QUOTE_NONE,
+    )
+
+    writer.writerow(args)
+
+    return updater.combined.hexdigest()
 
 
 class CaseDuplicate(models.Model):
