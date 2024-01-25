@@ -45,7 +45,7 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
 
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
-        return super(EditIdentityProviderEnterpriseView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
