@@ -220,7 +220,7 @@ def get_common_icons():
         {
             'name': 'Common FontAwesome primary icons',
             'icons': [
-                'fa-plus', 'fa-trash', 'fa-remove', 'fa-search',
+                'fa-plus', 'fa-regular fa-trash-can', 'fa-remove', 'fa-search',
                 'fa-angle-double-right', 'fa-angle-double-down',
             ],
         },
