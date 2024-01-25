@@ -1,50 +1,48 @@
 --- 
 +++ 
-@@ -2,21 +2,29 @@
+@@ -1,26 +1,37 @@
  requirejs.config({
      baseUrl: '/static/',
      paths: {
-+        "es6": "requirejs-babel7/es6",
 +        "babel": "@babel/standalone/babel.min",
 +        "babel-plugin-transform-modules-requirejs-babel": "babel-plugin-transform-modules-requirejs-babel/index",
-         "jquery": "jquery/dist/jquery.min",
-         "underscore": "underscore/underscore",
          "bootstrap": "bootstrap/dist/js/bootstrap.min",
 +        "bootstrap5": "bootstrap5/dist/js/bootstrap.bundle.min",
-         "knockout": "knockout/build/output/knockout-latest.debug",
-         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
          "datatables": "datatables.net/js/jquery.dataTables.min",
--        "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
 -        "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
+-        "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
++        "datatables.bootstrap": "datatables.net-bs5/js/dataTables.bootstrap5.min",
 +        "datatables.fixedColumns": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
 +        "datatables.fixedColumns.bootstrap": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
-+        "datatables.bootstrap": "datatables.net-bs5/js/dataTables.bootstrap5.min",
-+        "popper": "@popperjs/core/dist/umd/popper.min",
-+        "tempus-dominus": "eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
 +        "datepicker": "@eonasdan/tempus-dominus/dist/js/jQuery-provider.min",  // import this if you need jquery plugin of tempus-dominus
++        "es6": "requirejs-babel7/es6",
+         "jquery": "jquery/dist/jquery.min",
+         "knockout": "knockout/build/output/knockout-latest.debug",
+         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
++        "popper": "@popperjs/core/dist/umd/popper.min",
+         "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
+         "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
++        "tempus-dominus": "eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
+         "underscore": "underscore/underscore",
      },
      shim: {
+         "accounting/js/lib/stripe": { exports: 'Stripe' },
          "ace-builds/src-min-noconflict/ace": { exports: "ace" },
 -        "bootstrap": { deps: ['jquery'] },
-         "ko.mapping": { deps: ['knockout'] },
--        "hqwebapp/js/bootstrap3/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
-+        "hqwebapp/js/bootstrap5/hq.helpers": { deps: ['jquery', 'knockout', 'underscore'] },
          "datatables.bootstrap": { deps: ['datatables'] },
 +        "datatables.fixedColumns.bootstrap": { deps: ['datatables.fixedColumns'] },
-         "jquery.rmi/jquery.rmi": {
-             deps: ['jquery', 'knockout', 'underscore'],
-             exports: 'RMI',
-@@ -32,6 +40,9 @@
-         "hqwebapp/js/lib/modernizr": {
-             exports: 'Modernizr',
-         },
 +        "datepicker": {
 +            deps: ['popper', 'tempus-dominus'],
 +        },
-     },
-     packages: [{
-         name: 'moment',
-@@ -44,7 +55,7 @@
+         "d3/d3.min": {
+             "exports": "d3",
+         },
+-        "hqwebapp/js/bootstrap3/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
++        "hqwebapp/js/bootstrap5/hq.helpers": { deps: ['jquery', 'knockout', 'underscore'] },
+         "hqwebapp/js/lib/modernizr": {
+             exports: 'Modernizr',
+         },
+@@ -46,7 +57,7 @@
          },
      },
  

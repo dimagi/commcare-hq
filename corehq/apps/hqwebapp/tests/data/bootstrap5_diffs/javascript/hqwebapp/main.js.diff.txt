@@ -33,7 +33,7 @@
 -        $("input[type='submit']", $elem).button();
          $("input[type='text'], input[type='password'], textarea", $elem);
          $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
-
+ 
 @@ -129,7 +129,7 @@
          'use strict';
          var key;
