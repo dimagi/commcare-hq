@@ -1,4 +1,4 @@
-hqDefine('hqwebapp/js/bootstrap5/hq-request-report', [
+hqDefine('hqwebapp/js/bootstrap5/solutions-feature-request', [
     "jquery",
     "es6!hqwebapp/js/bootstrap5_loader",
     "jquery-form/dist/jquery.form.min",
