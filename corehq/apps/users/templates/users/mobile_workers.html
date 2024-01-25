@@ -242,7 +242,7 @@
             <td data-bind="attr: {class: creation_status}, text: last_name"></td>
             <td data-bind="attr: {class: creation_status}">
               <div data-bind="visible: creation_status() === $root.STATUS.PENDING">
-                <i class="fa fa-circle-o-notch fa-spin"></i>
+                <i class="fa fa-circle-notch fa-spin"></i>
                 {% trans 'Pending...' %}
               </div>
               <div data-bind="visible: creation_status() === $root.STATUS.SUCCESS">
