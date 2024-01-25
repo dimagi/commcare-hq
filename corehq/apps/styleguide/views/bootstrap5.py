@@ -13,6 +13,7 @@ from corehq.apps.styleguide.context import (
     CrispyFormsWithJsDemo,
     get_js_example_context,
     get_gradient_colors,
+    CodeForDisplay,
 )
 from corehq.apps.styleguide.examples.bootstrap5.checkbox_form import CheckboxDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_basic import BasicCrispyExampleForm
@@ -317,7 +318,10 @@ def styleguide_pages_navigation(request):
     context = get_navigation_context("styleguide_pages_navigation_b5")
     context.update({
         'examples': {
-            'page_title_block': get_example_context('styleguide/bootstrap5/examples/page_title_block.html'),
+            'page_title_block': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/page_title_block.html'),
+                language="HTML",
+            ),
             'page_header': get_example_context('styleguide/bootstrap5/examples/page_header.html'),
             'navs_cards': get_example_context('styleguide/bootstrap5/examples/navs_cards.html'),
             'navs_tabs': get_example_context('styleguide/bootstrap5/examples/navs_tabs.html'),
