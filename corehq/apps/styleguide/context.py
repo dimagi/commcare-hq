@@ -267,7 +267,7 @@ def get_example_context(filename):
         return content.read()
 
 
-def get_crispy_forms_context(filename):
+def get_python_example_context(filename):
     examples = os.path.join(os.path.dirname(__file__), 'examples', 'bootstrap5')
     with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
         return content.read()
