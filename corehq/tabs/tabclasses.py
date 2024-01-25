@@ -917,7 +917,7 @@ class ProjectDataTab(UITab):
             export_data_views.append({
                 'title': _(DataFileDownloadList.page_title),
                 'url': reverse(DataFileDownloadList.urlname, args=(self.domain,)),
-                'icon': 'fa fa-file-text-o',
+                'icon': 'fa-regular fa-file-lines',
                 'show_in_dropdown': True,
                 'subpages': []
             })
