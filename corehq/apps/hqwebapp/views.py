@@ -862,13 +862,14 @@ class SolutionsFeatureRequestView(View):
     urlname = 'solutions_feature_request'
 
     def post(self, request, *args, **kwargs):
-        email = _get_email_message_base(
-            post_params=request.POST,
-            couch_user=request.couch_user,
-            uploaded_file=request.FILES.get('feature_request'),
-            to_email=settings.INTERNAL_FEEDBACK_EMAIL,
-        )
-        email.send(fail_silently=False)
+        if request.couch_user.is_staff:
+            email = _get_email_message_base(
+                post_params=request.POST,
+                couch_user=request.couch_user,
+                uploaded_file=request.FILES.get('feature_request'),
+                to_email=settings.INTERNAL_FEEDBACK_EMAIL,
+            )
+            email.send(fail_silently=False)
         return HttpResponse()
 
 
