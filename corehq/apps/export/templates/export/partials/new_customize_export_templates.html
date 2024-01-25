@@ -57,6 +57,23 @@
         </div>
       </div>
       <!-- /ko -->
+
+      {% if request|toggle_enabled:"SUPPORT_GEO_JSON_EXPORT" %}
+      <div id="select-geo-property" class="form-group" hidden>
+        <label class="col-sm-4 col-md-3 col-lg-2 control-label" for="geo-property-select">
+          {% trans 'Select geo property' %}
+        </label>
+        <div class="col-sm-9 col-md-8 col-lg-6">
+          <select
+            id="geo-property-select"
+            class="control form-control"
+            data-bind="options: $parent.geoProperties,
+              value: table.selected_geo_property">
+          </select>
+        </div>
+      </div>
+      {% endif %}
+
       <h4>{{ terminology.choose_fields_label }}</h4>
       <div class="help-block">
         {% if request|request_has_privilege:"EXPORT_MULTISORT" %}
