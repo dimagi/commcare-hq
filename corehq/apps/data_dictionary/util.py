@@ -17,6 +17,8 @@ from corehq.apps.data_dictionary.models import (
     CasePropertyGroup,
     CaseType,
 )
+from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
+from corehq.apps.es.case_search import CaseSearchES, CASE_PROPERTIES_PATH, PROPERTY_KEY
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
@@ -264,6 +266,14 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         return gettext('Unable to save valid values longer than {} characters').format(max_len)
 
 
+def delete_case_property(name, case_type, domain):
+    try:
+        prop = CaseProperty.objects.get(name=name, case_type__name=case_type, case_type__domain=domain)
+    except CaseProperty.DoesNotExist:
+        return gettext('Case property does not exist.')
+    prop.delete()
+
+
 @quickcache(vary_on=['domain', 'exclude_deprecated'], timeout=24 * 60 * 60)
 def get_data_dict_props_by_case_type(domain, exclude_deprecated=True):
     filter_kwargs = {'case_type__domain': domain}
@@ -370,3 +380,27 @@ def is_case_type_or_prop_name_valid(case_prop_name):
     pattern = '^[a-zA-Z][a-zA-Z0-9-_]*$'
     match_obj = re.match(pattern, case_prop_name)
     return match_obj is not None
+
+
+@quickcache(vary_on=['domain'], timeout=60 * 60)
+def get_used_props_by_case_type(domain):
+    agg = TermsAggregation('case_types', 'type.exact').aggregation(
+        NestedAggregation('case_props', CASE_PROPERTIES_PATH).aggregation(
+            TermsAggregation('props', PROPERTY_KEY)
+        )
+    )
+    query = (
+        CaseSearchES()
+        .domain(domain)
+        .size(0)
+        .aggregation(agg)
+    )
+    case_type_buckets = query.run().aggregations.case_types.buckets_list
+    props_by_case_type = {}
+    for case_type_bucket in case_type_buckets:
+        prop_buckets = case_type_bucket.case_props.props.buckets_list
+        for prop_bucket in prop_buckets:
+            if case_type_bucket.key not in props_by_case_type:
+                props_by_case_type[case_type_bucket.key] = []
+            props_by_case_type[case_type_bucket.key].append(prop_bucket.key)
+    return props_by_case_type
