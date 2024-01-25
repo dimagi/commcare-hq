@@ -64,11 +64,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
             self.api_expiration_date = "";
 
 
-            if (initialPageData.get('api_secret_exists')) {
-                self.isAPISecretVisible = ko.observable(false);
-            } else {
-                self.isAPISecretVisible = ko.observable(true);
-            }
+self.isAPISecretVisible =  ko.observable(!initialPageData.get('api_secret_exists'))
             self.isAPISecretHidden = ko.computed(function () {
                 return !self.isAPISecretVisible();
             });
