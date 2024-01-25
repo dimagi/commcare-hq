@@ -1,24 +1,16 @@
 hqDefine('registration/js/login', [
     'jquery',
-    'blazy/blazy',
     'analytix/js/kissmetrix',
     'registration/js/user_login_form',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/captcha', // shows captcha
 ], function (
     $,
-    blazy,
     kissmetrics,
     userLoginForm,
     initialPageData
 ) {
     $(function () {
-        // Blazy for loading images asynchronously
-        // Usage: specify the b-lazy class on an element and adding the path
-        // to the image in data-src="{% static 'path/to/image.jpg' %}"
-        new blazy({
-            container: 'body',
-        });
 
         // populate username field if set in the query string
         var urlParams = new URLSearchParams(window.location.search);
