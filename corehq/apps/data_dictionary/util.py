@@ -270,7 +270,7 @@ def delete_case_property(name, case_type, domain):
     try:
         prop = CaseProperty.objects.get(name=name, case_type__name=case_type, case_type__domain=domain)
     except CaseProperty.DoesNotExist:
-        return gettext('Case property does not exist and might have already been deleted.')
+        return gettext('Case property does not exist.')
     prop.delete()
 
 
