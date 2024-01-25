@@ -833,7 +833,7 @@ class BugReportView(View):
         email = self._get_email_message(
             post_params=req.POST,
             couch_user=req.couch_user,
-            uploaded_file=req.FILES.get('feature_request')
+            uploaded_file=req.FILES.get('report_issue')
         )
 
         email.send(fail_silently=False)
