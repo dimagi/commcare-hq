@@ -236,6 +236,28 @@ def use_bootstrap5(view_func):
     return _inner
 
 
+def use_datetimepicker(view_func):
+    """Use this decorator on the dispatch method of a TemplateView subclass
+    to include CSS for Tempus Dominus (Date and/or Time picking widget).
+    NOTE: Only available for Bootstrap 5 pages!
+
+    Example:
+        @use_datetimepicker
+        def dispatch(self, request, *args, **kwargs):
+            return super().dispatch(request, *args, **kwargs)
+
+    Or alternatively:
+        @method_decorator(use_datetimepicker, name='dispatch')
+        class MyViewClass(MyViewSubclass):
+            ...
+    """
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        request.use_datetimepicker = True
+        return view_func(request, *args, **kwargs)
+    return _inner
+
+
 def waf_allow(kind, hard_code_pattern=None):
     """
     Using this decorator simply registers a function for later use
