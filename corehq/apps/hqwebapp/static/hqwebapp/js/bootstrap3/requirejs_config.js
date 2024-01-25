@@ -1,4 +1,3 @@
-/* globals requirejs */
 requirejs.config({
     baseUrl: '/static/',
     paths: {
