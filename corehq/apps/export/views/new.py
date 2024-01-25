@@ -118,7 +118,7 @@ class BaseExportView(BaseProjectDataView):
         number_of_apps_to_process = 0
         is_all_case_types_export = (
             isinstance(self.export_instance, CaseExportInstance)
-            and self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
+            and self._is_bulk_export
         )
         table_count = 0
         if not is_all_case_types_export:
@@ -162,18 +162,27 @@ class BaseExportView(BaseProjectDataView):
         if self.export_type == FORM_EXPORT:
             return []
 
-        geo_properties = CaseProperty.objects.filter(
+        if self._is_bulk_export:
+            return []
+
+        return list(CaseProperty.objects.filter(
             case_type__domain=self.domain,
             case_type__name=self.export_instance.case_type,
             data_type=CaseProperty.DataType.GPS,
-        ).all()
-        return [prop.name for prop in geo_properties]
+        ).values_list('name', flat=True))
 
     @property
     def format_options(self):
         format_options = ["xls", "xlsx", "csv"]
-        if self.export_type == CASE_EXPORT and toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain):
+
+        should_support_geojson = (
+            self.export_type == CASE_EXPORT
+            and toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain)
+            and not self._is_bulk_export
+        )
+        if should_support_geojson:
             format_options.append("geojson")
+
         return format_options
 
     @property
@@ -298,6 +307,10 @@ class BaseExportView(BaseProjectDataView):
     @memoized
     def get_empty_export_schema(self, domain, identifier):
         return self.export_schema_cls.generate_empty_schema(domain, identifier)
+
+    @property
+    def _is_bulk_export(self):
+        return self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
 
 
 @location_safe

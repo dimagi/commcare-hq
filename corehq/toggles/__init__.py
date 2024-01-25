@@ -2711,8 +2711,8 @@ USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
 
 SUPPORT_GEO_JSON_EXPORT = StaticToggle(
     slug='support_geo_json_export',
-    label='Support geo json export in Case Exporter',
+    label='Support GeoJSON export in Case Exporter',
     tag=TAG_SOLUTIONS_CONDITIONAL,
     namespaces=[NAMESPACE_DOMAIN],
-    description='The Case Export page now supports the exporting of geo json data.',
+    description='The Case Export page now supports the exporting of GeoJSON data.',
 )

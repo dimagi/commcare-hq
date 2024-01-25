@@ -61,7 +61,7 @@
       {% if request|toggle_enabled:"SUPPORT_GEO_JSON_EXPORT" %}
       <div id="select-geo-property" class="form-group" hidden>
         <label class="col-sm-4 col-md-3 col-lg-2 control-label" for="geo-property-select">
-          Select geo property
+          {% trans 'Select geo property' %}
         </label>
         <div class="col-sm-9 col-md-8 col-lg-6">
           <select
@@ -69,7 +69,6 @@
             class="control form-control"
             data-bind="options: $parent.geoProperties,
               value: table.selected_geo_property">
-          >
           </select>
         </div>
       </div>
