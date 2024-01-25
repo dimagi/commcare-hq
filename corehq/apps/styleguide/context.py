@@ -7,6 +7,7 @@ ColorGroup = namedtuple('ColorGroup', 'title description main_color subtle_color
 Color = namedtuple('Color', 'slug hex')
 CrispyFormsDemo = namedtuple('CrispyFormsDemo', 'form code')
 CrispyFormsWithJsDemo = namedtuple('CrispyFormsWithJsDemo', 'form code_python code_js')
+CodeForDisplay = namedtuple('CodeForDisplay', 'code language')
 ThemeColor = namedtuple('ThemeColor', 'slug hex theme_equivalent')
 
 
