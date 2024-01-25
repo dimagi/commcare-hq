@@ -405,7 +405,7 @@ class EndOfFormNavigationWorkflow(object):
                 if child not in frame_children:
                     frame_children.append(child)
         else:
-            module_command = id_strings.menu_id(module)
+            module_command = id_strings.menu_id(module, WorkflowHelper._get_id_suffix(module))
             if module_command != id_strings.ROOT:
                 frame_children.append(CommandId(module_command))
 
