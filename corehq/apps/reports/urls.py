@@ -112,6 +112,8 @@ urlpatterns = [
         undo_close_case_view, name="undo_close_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/delete_case_view/$',
         DeleteCaseView.as_view(), name=DeleteCaseView.urlname),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/delete_case_view/(?P<xform_id>[\w\-:]+)/$',
+        DeleteCaseView.as_view(), name=DeleteCaseView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/export_transactions/$',
         export_case_transactions, name="export_case_transactions"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', case_form_data, name="case_form_data"),

@@ -1212,6 +1212,17 @@ def _get_form_render_context(request, domain, instance, case_id=None):
         "tz_abbrev": timezone.localize(datetime.utcnow()).tzname(),
     })
 
+    # Additional context to redirect form deletion to case deletion if the form created any cases
+    if instance.is_archived:
+        for case_update in get_case_updates(instance):
+            actions = {action.action_type_slug for action in case_update.actions}
+            if const.CASE_ACTION_CREATE in actions:
+                context.update({
+                    "is_create_form": True,
+                    "case_id": case_update.id,
+                })
+            break
+
     context.update(_get_cases_changed_context(domain, instance, case_id))
     context.update(_get_form_metadata_context(domain, instance, timezone, support_enabled))
     context.update(_get_display_options(request, domain, user, instance, support_enabled))
@@ -1572,12 +1583,12 @@ def restore_edit(request, domain, instance_id):
 def archive_form(request, domain, instance_id, is_case_delete=False):
     instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
+    case_id_from_request, redirect = _get_case_id_and_redirect_url(domain, request)
 
     notify_level = messages.SUCCESS
     if instance.is_normal:
         cases_with_other_forms = _get_cases_with_other_forms(domain, instance)
         if cases_with_other_forms:
-            case_id_from_request, redirect = _get_case_id_and_redirect_url(domain, request)
             notify_msg = _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request)
             notify_level = messages.ERROR
         else:
