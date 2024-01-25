@@ -8,7 +8,7 @@ from corehq.apps.styleguide.context import (
     get_common_icons,
     get_custom_icons,
     get_example_context,
-    get_crispy_forms_context,
+    get_python_example_context,
     CrispyFormsDemo,
     CrispyFormsWithJsDemo,
     get_js_example_context,
@@ -114,47 +114,47 @@ def styleguide_molecules_selections(request):
         'examples': {
             'toggles': get_example_context('styleguide/bootstrap5/examples/toggles.html'),
             'toggles_crispy': CrispyFormsDemo(
-                SelectToggleDemoForm(), get_crispy_forms_context('select_toggle_form.py'),
+                SelectToggleDemoForm(), get_python_example_context('select_toggle_form.py'),
             ),
             'select2_manual': get_example_context('styleguide/bootstrap5/examples/select2_manual.html'),
             'select2_manual_crispy': CrispyFormsWithJsDemo(
                 form=Select2ManualDemoForm(),
-                code_python=get_crispy_forms_context('select2_manual_form.py'),
+                code_python=get_python_example_context('select2_manual_form.py'),
                 code_js=get_js_example_context('select2_manual_crispy.js'),
             ),
             'select2_css_class': get_example_context('styleguide/bootstrap5/examples/select2_css_class.html'),
             'select2_css_class_multiple': get_example_context(
                 'styleguide/bootstrap5/examples/select2_css_class_multiple.html'),
             'select2_css_class_crispy': CrispyFormsDemo(
-                Select2CssClassDemoForm(), get_crispy_forms_context('select2_css_class_form.py'),
+                Select2CssClassDemoForm(), get_python_example_context('select2_css_class_form.py'),
             ),
             'select2_ko_dynamic': get_example_context('styleguide/bootstrap5/examples/select2_ko_dynamic.html'),
             'select2_ko_dynamic_crispy': CrispyFormsWithJsDemo(
                 form=Select2DynamicKoForm(),
-                code_python=get_crispy_forms_context('select2_dynamic_ko_form.py'),
+                code_python=get_python_example_context('select2_dynamic_ko_form.py'),
                 code_js=get_js_example_context('select2_dynamic_ko_crispy.js'),
             ),
             'select2_ko_static': get_example_context('styleguide/bootstrap5/examples/select2_ko_static.html'),
             'select2_ko_static_crispy': CrispyFormsWithJsDemo(
                 form=Select2StaticKoForm(),
-                code_python=get_crispy_forms_context('select2_static_ko_form.py'),
+                code_python=get_python_example_context('select2_static_ko_form.py'),
                 code_js=get_js_example_context('select2_static_ko_crispy.js'),
             ),
             'select2_ko_autocomplete': get_example_context(
                 'styleguide/bootstrap5/examples/select2_ko_autocomplete.html'),
             'select2_ko_autocomplete_crispy': CrispyFormsWithJsDemo(
                 form=Select2AutocompleteKoForm(),
-                code_python=get_crispy_forms_context('select2_autocomplete_ko_form.py'),
+                code_python=get_python_example_context('select2_autocomplete_ko_form.py'),
                 code_js=get_js_example_context('select2_autocomplete_ko_crispy.js'),
             ),
             'multiselect': get_example_context('styleguide/bootstrap5/examples/multiselect.html'),
             'multiselect_crispy': CrispyFormsWithJsDemo(
                 form=MultiselectDemoForm(),
-                code_python=get_crispy_forms_context('multiselect_form.py'),
+                code_python=get_python_example_context('multiselect_form.py'),
                 code_js=get_js_example_context('multiselect_crispy.js'),
             ),
             'select2_ajax_crispy': CrispyFormsDemo(
-                Select2AjaxDemoForm(), get_crispy_forms_context('select2_ajax_form.py'),
+                Select2AjaxDemoForm(), get_python_example_context('select2_ajax_form.py'),
             ),
         }
     })
@@ -172,10 +172,10 @@ def styleguide_molecules_checkboxes(request):
             'checkbox_horizontal_form': get_example_context(
                 'styleguide/bootstrap5/examples/checkbox_horizontal_form.html'),
             'checkbox_crispy': CrispyFormsDemo(
-                CheckboxDemoForm(), get_crispy_forms_context('checkbox_form.py'),
+                CheckboxDemoForm(), get_python_example_context('checkbox_form.py'),
             ),
             'switch_crispy': CrispyFormsDemo(
-                SwitchDemoForm(), get_crispy_forms_context('switch_form.py'),
+                SwitchDemoForm(), get_python_example_context('switch_form.py'),
             ),
         }
     })
@@ -267,25 +267,25 @@ def styleguide_organisms_forms(request):
     context.update({
         'examples': {
             'crispy_basic': CrispyFormsDemo(
-                BasicCrispyExampleForm(), get_crispy_forms_context('crispy_forms_basic.py'),
+                BasicCrispyExampleForm(), get_python_example_context('crispy_forms_basic.py'),
             ),
             'crispy_errors': CrispyFormsDemo(
-                crispy_errors_form, get_crispy_forms_context('crispy_forms_errors.py'),
+                crispy_errors_form, get_python_example_context('crispy_forms_errors.py'),
             ),
             'crispy_disabled_fields': CrispyFormsDemo(
-                DisabledFieldsExampleForm(), get_crispy_forms_context('disabled_fields.py'),
+                DisabledFieldsExampleForm(), get_python_example_context('disabled_fields.py'),
             ),
             'crispy_placeholder_help_text': CrispyFormsDemo(
-                PlaceholderHelpTextExampleForm(), get_crispy_forms_context('placeholder_help_text.py'),
+                PlaceholderHelpTextExampleForm(), get_python_example_context('placeholder_help_text.py'),
             ),
             'crispy_knockout': CrispyFormsWithJsDemo(
                 form=KnockoutCrispyExampleForm(),
-                code_python=get_crispy_forms_context('crispy_forms_knockout.py'),
+                code_python=get_python_example_context('crispy_forms_knockout.py'),
                 code_js=get_js_example_context('crispy_forms_knockout.js'),
             ),
             'crispy_knockout_validation': CrispyFormsWithJsDemo(
                 form=KnockoutValidationCrispyExampleForm(),
-                code_python=get_crispy_forms_context('crispy_forms_knockout_validation.py'),
+                code_python=get_python_example_context('crispy_forms_knockout_validation.py'),
                 code_js=get_js_example_context('crispy_forms_knockout_validation.js'),
             ),
             'basic_form': get_example_context('styleguide/bootstrap5/examples/basic_form.html'),
