@@ -590,12 +590,13 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         label=gettext_lazy("Entity ID"),
         required=False,
     )
-    enable_user_deactivation = forms.BooleanField(required=False, label="Auto-Deactivation",
-                                help_text="This option ensures any authorization provided by CommCare HQ to"
-                                 " Web Users using SSO is removed when those users are removed from Azure AD"
+    enable_user_deactivation = forms.BooleanField(required=False, label=gettext_lazy("Auto-Deactivation"),
+                                help_text=gettext_lazy("This option ensures any authorization provided by CommCare"
+                                 " HQ to Web Users using SSO is removed when those users are removed from Azure AD"
                                  " (Entra ID). This includes automatic deactivation of any API keys associated"
-                                 " with these users.",
-                                widget=BootstrapCheckboxInput(inline_label="Automatically deactivate Web Users"))
+                                 " with these users."),
+                                widget=BootstrapCheckboxInput(inline_label=gettext_lazy(
+                                    "Automatically deactivate Web Users")))
     api_host = forms.CharField(required=False, label=gettext_lazy("Tenant Id"))
     api_id = forms.CharField(required=False, label=gettext_lazy("Application ID"))
     api_secret = forms.CharField(required=False, label=gettext_lazy("Client Secret"))
