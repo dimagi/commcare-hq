@@ -15,6 +15,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
     models
 ) {
     $(function () {
+        'use strict'
         let ssoExemptUserManager = models.linkedObjectListModel({
             asyncHandler: 'sso_exempt_users_admin',
             requestContext: {
@@ -36,7 +37,6 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
         ssoTestUserManager.init();
 
         let oidcClientSecretManager = function () {
-            'use strict';
             let self = {};
 
             self.isClientSecretVisible = ko.observable(false);
@@ -57,14 +57,13 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
         };
 
         let remoteUserManagementClientSecretManager = function () {
-            'use strict';
             let self = {};
             self.isCancelUpdateVisible = ko.observable(false);
             self.api_secret = "";
             self.api_expiration_date = "";
 
 
-self.isAPISecretVisible =  ko.observable(!initialPageData.get('api_secret_exists'))
+            self.isAPISecretVisible =  ko.observable(!initialPageData.get('api_secret_exists'))
             self.isAPISecretHidden = ko.computed(function () {
                 return !self.isAPISecretVisible();
             });
