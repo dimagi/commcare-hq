@@ -117,7 +117,7 @@
                 <p><i class="fa fa-exclamation-triangle"></i> {% trans 'The following action is permanent!' %}</p>
                 <p>
                   <a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal">
-                    <i class="fa fa-trash"></i> {% trans "Delete Mobile Worker" %}
+                    <i class="fa-regular fa-trash-can"></i> {% trans "Delete Mobile Worker" %}
                   </a>
                 </p>
               </div>
@@ -240,9 +240,11 @@
                              css: {disabled: disabled()},
                              attr: {disabled: disabled()}
                          ">
-                <i id="delete-user-icon" class="fa fa-trash" data-bind="
+                <i id="delete-user-icon" class="fa-regular fa-trash-can" data-bind="
                                  css: {
-                                     'fa-trash': !formDeleteUserSent(),
+                                     'fa-trash-can': !formDeleteUserSent(),
+                                     'fa-regular': !formDeleteUserSent(),
+                                     'fa': formDeleteUserSent,
                                      'fa-refresh': formDeleteUserSent,
                                      'fa-spin': formDeleteUserSent
                                  }

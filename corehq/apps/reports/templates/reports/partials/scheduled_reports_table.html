@@ -129,12 +129,12 @@
           <div class="btn-group">
             <div data-bind="if: !is_owner && !is_admin">
               <button type="button" class="btn btn-danger disabled" disabled="disabled">
-                <i class="fa fa-trash"></i> {% trans "Delete" %}
+                <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
               </button>
             </div>
             <div data-bind="if: is_owner || is_admin">
               <button class="btn btn-danger" data-toggle="modal" data-bind="attr: {href: '#delete-report-modal-' + id() }">
-                <i class="fa fa-trash"></i> {% trans "Delete" %}
+                <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
               </button>
             </div>
           </div>
