@@ -55,7 +55,13 @@ class Command(BaseCommand):
             filename = _get_dump_stream_filename(dumper.slug, domain_name, self.utcnow)
             stream = self.stdout if console else gzip.open(filename, 'wt')
             try:
-                meta[dumper.slug] = dumper(domain_name, excludes, includes).dump(stream)
+                result = dumper(domain_name, excludes, includes).dump(stream)
+                if dumper == SqlDataDumper:
+                    counts = result[0]
+                    meta[dumper.max_pk_slug] = result[1]
+                else:
+                    counts = result
+                meta[dumper.slug] = counts
             except Exception as e:
                 if show_traceback:
                     raise

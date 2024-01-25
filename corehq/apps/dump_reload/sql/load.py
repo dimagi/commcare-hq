@@ -5,6 +5,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from functools import partial
+from memoized import memoized
 from queue import Full
 from typing import Tuple
 
@@ -13,10 +14,11 @@ from django.conf import settings
 from django.core.management.color import no_style
 from django.core.serializers.python import Deserializer as PythonDeserializer
 from django.db import DatabaseError, connections, router, transaction
+from django.db.models import Max
 
 from corehq.apps.dump_reload.exceptions import DataLoadException
 from corehq.apps.dump_reload.interface import DataLoader
-from corehq.apps.dump_reload.util import get_model_label
+from corehq.apps.dump_reload.util import get_model_label, get_model_class
 from corehq.sql_db.routers import HINT_PARTITION_VALUE
 
 
@@ -28,12 +30,13 @@ ENQUEUE_TIMEOUT = 10
 
 class SqlDataLoader(DataLoader):
     slug = 'sql'
+    max_pk_slug = 'sql_max_pks'
 
-    def load_objects(self, object_strings, force=False, dry_run=False):
+    def load_objects(self, object_strings, force=False, dry_run=False, dump_meta=None, offset_pks=False):
         if dry_run:
             dry_run_stats = Counter()
             for line in object_strings:
-                obj = self.line_to_object(line)
+                obj = self.line_to_object(line, dump_meta, offset_pks)
                 if obj is not None:
                     dry_run_stats[obj['model']] += 1
             return dry_run_stats
@@ -74,7 +77,7 @@ class SqlDataLoader(DataLoader):
             dbalias_to_workerqueue = DefaultDictWithKey(worker_queue_factory)
 
             for line in object_strings:
-                obj = self.line_to_object(line)
+                obj = self.line_to_object(line, dump_meta, offset_pks)
                 if obj is not None:
                     try:
                         enqueue_object(dbalias_to_workerqueue, obj)
@@ -96,10 +99,44 @@ class SqlDataLoader(DataLoader):
             loaded_model_counts.update(model_labels)
         return loaded_model_counts
 
-    def line_to_object(self, line):
+    def max_pk_in_source(self, model_label, dump_meta):
+        from corehq.apps.dump_reload.sql.dump import SqlDataDumper
+        return dump_meta[SqlDataDumper.max_pk_slug][model_label]
+
+    @memoized
+    def max_pk_in_target(self, model_label):
+        model_class = get_model_class(model_label)
+        return model_class.objects.aggregate(Max('pk'))['pk__max']
+
+    def offset_pk(self, obj, dump_meta):
+        from corehq.apps.dump_reload.sql.dump import is_pk_type_int
+        model_class = get_model_class(obj['model'])
+        if not is_pk_type_int(model_class):
+            return
+
+        def offset(val, model_label):
+            return val + max(
+                self.max_pk_in_source(model_label, dump_meta),
+                self.max_pk_in_target(model_label),
+            ) + 1
+
+        model_label = obj['model']
+        # offset primary_key field
+        obj['pk'] = offset(obj['pk'], model_label)
+        # offset related fields
+        for field in model_class._meta.fields:
+            if field.related_model:
+                obj['fields'][field.name] = offset(
+                    obj['fields'][field.name],
+                    get_model_label(field.related_model)
+                )
+
+    def line_to_object(self, line, dump_meta, offset_pks=False):
         line = line.strip()
         if line:
             obj = json.loads(line)
+            if offset_pks:
+                self.offset_pk(obj, dump_meta)
             update_model_name(obj)
             if self.filter_object(obj):
                 return obj

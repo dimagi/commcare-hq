@@ -1,7 +1,7 @@
 import inspect
 import json
 import uuid
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
@@ -92,18 +92,25 @@ class BaseDumpLoadTest(TestCase):
         dumper = SqlDataDumper(self.domain_name, [], [])
         dumper.stdout = None  # silence output
         output_stream = StringIO()
-        dumper.dump(output_stream)
+        _, max_pks = dumper.dump(output_stream)
         output_stream.seek(0)
 
         self.delete_sql_data()
-        self._do_load(output_stream, expected_dump_counts, load_filter, expected_load_counts)
+        self._do_load(output_stream,
+            {dumper.slug: expected_dump_counts, dumper.max_pk_slug: max_pks},
+            load_filter, expected_load_counts
+        )
 
     def _load(self, output_stream, expected_load_counts):
         expected_load_counts.update(self.default_objects_counts)
-        self._do_load(output_stream, expected_load_counts, None, expected_load_counts)
+        self._do_load(output_stream,
+            {SqlDataDumper.slug: expected_load_counts, SqlDataDumper.max_pk_slug: defaultdict(int)},
+            None, expected_load_counts
+        )
 
-    def _do_load(self, output_stream, expected_dump_counts, load_filter, expected_load_counts):
+    def _do_load(self, output_stream, dump_meta, load_filter, expected_load_counts):
         # make sure that there's no data left in the DB
+        expected_dump_counts = dump_meta[SqlDataDumper.slug]
         objects_remaining = list(get_objects_to_dump(self.domain_name, [], []))
         object_classes = [obj.__class__.__name__ for obj in objects_remaining]
         counts = Counter(object_classes)
