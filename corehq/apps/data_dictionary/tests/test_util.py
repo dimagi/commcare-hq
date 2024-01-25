@@ -257,15 +257,48 @@ class UsedPropsByCaseTypeTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        case_block = CaseBlock(
+        cls.case_blocks = [
+            cls._create_case_block(
+                case_type='case-type',
+                name='Case A',
+                props={'prop': True},
+            ),
+            cls._create_case_block(
+                case_type='case-type',
+                name='Case B',
+                props={'other-prop': True},
+            ),
+            cls._create_case_block(
+                case_type='other-case-type',
+                name='Case C',
+                props={'prop': True},
+            ),
+            cls._create_case_block(
+                case_type='other-case-type',
+                name='Case A',
+                props={'foobar': True},
+            ),
+            cls._create_case_block(
+                case_type='test',
+                name='Case D',
+                props={},
+            ),
+        ]
+        case_search_es_setup(cls.domain, cls.case_blocks)
+
+    def _create_case_block(case_type, name, props):
+        return CaseBlock(
             case_id=uuid.uuid4().hex,
-            case_type='other-case-type',
-            case_name='Case A',
-            update={'other-prop': True},
+            case_type=case_type,
+            case_name=name,
+            update=props,
         )
-        case_search_es_setup(cls.domain, [case_block])
 
     def test_get_used_props_by_case_type(self):
         used_props_by_case_type = get_used_props_by_case_type(self.domain)
-        self.assertEqual(len(used_props_by_case_type), 1)
-        self.assertTrue('other-prop' in used_props_by_case_type['other-case-type'])
+        self.assertEqual(len(used_props_by_case_type), 3)
+        self.assertTrue({'prop', 'other-prop'}.issubset(used_props_by_case_type['case-type']))
+        self.assertFalse('foobar' in used_props_by_case_type['case-type'])
+        self.assertTrue({'prop', 'foobar'}.issubset(used_props_by_case_type['other-case-type']))
+        for prop in ['prop', 'other-prop', 'foobar']:
+            self.assertFalse(prop in used_props_by_case_type['test'])
