@@ -817,6 +817,7 @@ class ExportInstance(BlobMixin, Document):
 
     sharing = StringProperty(default=SharingOption.EDIT_AND_EXPORT, choices=SharingOption.CHOICES)
     owner_id = StringProperty(default=None)
+    selected_geo_property = StringProperty(default='')
 
     _blobdb_type_code = CODES.data_export
 
