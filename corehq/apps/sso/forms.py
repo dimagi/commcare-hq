@@ -603,8 +603,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
     date_api_secret_expiration = forms.DateTimeField(required=False,
                                                 label=gettext_lazy("Secret Expires On"))
 
-    def __init__(self, identity_provider, *args, **kwargs):
-        self.show_remote_user_management = kwargs.pop('show_remote_user_management')
+def __init__(self, identity_provider, show_remote_user_management=False, *args, **kwargs):
         initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
         self.idp = identity_provider
         initial.setdefault('enable_user_deactivation', identity_provider.enable_user_deactivation)
