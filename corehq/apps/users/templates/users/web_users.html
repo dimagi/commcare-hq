@@ -88,7 +88,7 @@
                   </a>
                   <a href="#" class="btn btn-danger delete-request"
                      data-id={{ req.id }}>
-                    <i class="fa fa-trash"></i>
+                    <i class="fa-regular fa-trash-can"></i>
                     {% trans "Delete Request" %}
                   </a>
                 </div>
@@ -165,7 +165,7 @@
                           class="btn btn-danger"
                           data-toggle="modal"
                           data-bind="attr: {'data-target': '#remove_membership_' + id}">
-                    <i class="fa fa-trash"></i> {% trans "Remove Membership" %}
+                    <i class="fa-regular fa-trash-can"></i> {% trans "Remove Membership" %}
                   </button>
                 </div>
                 <!-- ko if: removeUrl -->
@@ -204,7 +204,7 @@
                           {% trans "Cancel" %}
                         </button>
                         <button type="submit" class="btn btn-danger">
-                          <i class="fa fa-trash"></i>
+                          <i class="fa-regular fa-trash-can"></i>
                           {% trans "Remove Membership" %}
                         </button>
                       </div>
@@ -292,7 +292,7 @@
                   </button>
                   <button type="button" class="btn btn-danger delete-invitation"
                           data-bind="click: $root.confirmRemoveInvitation, disable: actionInProgress">
-                    <i class="fa fa-trash"></i>
+                    <i class="fa-regular fa-trash-can"></i>
                     {% trans "Delete Invitation" %}
                   </button>
                 </div>
