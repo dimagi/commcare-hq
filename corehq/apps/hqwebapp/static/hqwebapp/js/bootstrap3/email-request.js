@@ -49,6 +49,26 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
             self.hasRecipientsInputError(false);
         }
 
+        function hqwebappRequestReportBeforeSerialize() {
+            self.reportUrl(location.href);
+        }
+
+        function hqwebappRequestReportBeforeSubmit() {
+            self.isRequestReportSubmitting = true;
+        }
+
+        function hqwebappRequestReportSucccess() {
+            self.isRequestReportSubmitting = false;
+            self.$submitBtn.button('success');
+        }
+
+        function hqwebappRequestReportError() {
+            self.isRequestReportSubmitting = false;
+            self.$submitBtn.button('error');
+            self.cancelBtnEnabled(true);
+            self.hasSubmitError(true);
+        }
+
         return self;
     };
 
