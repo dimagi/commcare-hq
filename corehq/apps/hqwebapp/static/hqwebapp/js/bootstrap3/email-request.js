@@ -29,6 +29,9 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
         self.isRequestReportSubmitting = false;
 
         self.reportUrl = ko.observable('');
+        self.openModal = function () {
+            self.subjectHasFocus(true);
+        };
 
         return self;
     };
