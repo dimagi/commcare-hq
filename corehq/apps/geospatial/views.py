@@ -246,6 +246,7 @@ class GeospatialConfigPage(BaseConfigView):
             },
             'target_grouping_name': GeoConfig.TARGET_SIZE_GROUPING,
             'min_max_grouping_name': GeoConfig.MIN_MAX_GROUPING,
+            'road_network_algorithm_slug': GeoConfig.ROAD_NETWORK_ALGORITHM,
         })
         return context
 

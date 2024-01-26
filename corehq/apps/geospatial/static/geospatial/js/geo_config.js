@@ -9,7 +9,7 @@ hqDefine("geospatial/js/geo_config", [
     initialPageData,
     alertUser
 ) {
-    const ROAD_NETWORK_ALGORITHM = 'road_network_algorithm';
+    const ROAD_NETWORK_ALGORITHM = initialPageData.get('road_network_algorithm_slug');
 
     var geoConfigViewModel = function (configData) {
         'use strict';
