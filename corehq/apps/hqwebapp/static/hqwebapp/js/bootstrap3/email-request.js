@@ -29,6 +29,48 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
         self.isRequestReportSubmitting = false;
 
         self.reportUrl = ko.observable('');
+
+        self.$formElement.submit(() => {
+            resetErrors();
+
+            const isDescriptionEmpty = !self.subjectText() && !self.descriptionText();
+            if (isDescriptionEmpty) {
+                self.hasSubjectError(true);
+            }
+
+            if (self.emailInput() && !isValidEmail(self.emailInput())) {
+                self.hasEmailInputError(true);
+                return false;
+            }
+
+            const emailAddresses = self.otherEmailsText().replace(/ /g, "").split(",");
+            for (const email of emailAddresses) {
+                if (email && !isValidEmail(email)) {
+                    self.hasRecipientsInputError(true);
+                    return false;
+                }
+            }
+            if (isDescriptionEmpty) {
+                return false;
+            }
+
+            if (!self.isRequestReportSubmitting && self.$submitBtn.text() === self.$submitBtn.data("success-text")) {
+                self.$element.modal('hide');
+            } else if (!self.isRequestReportSubmitting) {
+                self.$submitBtn.button('loading');
+                self.cancelBtnEnabled(false);
+                self.$formElement.ajaxSubmit({
+                    type: "POST",
+                    url: self.$formElement.attr('action'),
+                    beforeSerialize: hqwebappRequestReportBeforeSerialize,
+                    beforeSubmit: hqwebappRequestReportBeforeSubmit,
+                    success: hqwebappRequestReportSucccess,
+                    error: hqwebappRequestReportError,
+                });
+            }
+            return false;
+        });
+
         self.openModal = function () {
             self.subjectHasFocus(true);
         };
