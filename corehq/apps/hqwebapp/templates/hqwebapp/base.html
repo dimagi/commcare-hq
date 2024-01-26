@@ -314,8 +314,7 @@
       {% if use_bootstrap5 %}
         {% compress js %}
           <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap5/hq-bug-report.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap5/solutions-feature-request.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/email-request.js' %}"></script>
           <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
           <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
           <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
@@ -326,8 +325,7 @@
       {% else %}
         {% compress js %}
           <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap3/hq-bug-report.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap3/solutions-feature-request.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap3/email-request.js' %}"></script>
           <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
           <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
           <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
