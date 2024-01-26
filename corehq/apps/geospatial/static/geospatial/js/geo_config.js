@@ -59,11 +59,12 @@ hqDefine("geospatial/js/geo_config", [
 
         self.validateApiToken = function () {
             const url = "https://api.mapbox.com/directions-matrix/v1/mapbox/driving/-122.42,37.78;-122.45,37.91;-122.48,37.73";
-            const params = "access_token=" + self.apiToken();
+            const params = {access_token: self.apiToken()};
 
             $.ajax({
                 method: 'get',
-                url: url + "?" + params,
+                url: url,
+                data: params,
                 success: function (data, status, request) {
                     if (request.status === 200) {
                         alertUser.alert_user(gettext("Token successfully verified!"), "success");
