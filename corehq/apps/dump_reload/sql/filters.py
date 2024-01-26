@@ -145,8 +145,8 @@ class UnfilteredModelIteratorBuilder(object):
 class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
     def __init__(self, model_label, filter, paginate_by={}):
         """
-        :param paginate_by: optional dictionary where key is a field name and the value is a conditional
-        For example, {'username': 'gt'}
+        :param paginate_by: optional dictionary of {field: conditional, ...} (e.g., {'username': 'gt'})
+        NOTE: the order of keys matters in this dictionary, as it dictates sort order.
         """
         super(FilteredModelIteratorBuilder, self).__init__(model_label)
         self.filter = filter

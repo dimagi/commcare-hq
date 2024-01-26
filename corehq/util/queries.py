@@ -103,6 +103,8 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False, 
     """
     Pull from queryset in chunks. This is suitable for deep pagination, but
     cannot be used with ordered querysets (results will be sorted by pk).
+    :param paginate_by: optional dictionary of {field: conditional,} to specify what fields pagination should key
+    off of and how. This means that order of fields matters, since this prioritizes how sorting will be done.
     """
     if queryset.ordered and not ignore_ordering:
         raise AssertionError("queryset_to_iterator does not respect ordering.  "
@@ -115,17 +117,15 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False, 
     queryset = queryset.order_by(*list(paginate_by.keys()))
     docs = queryset[:limit]
     while docs:
-        doc_count = 0
-        for doc in docs:
-            doc_count += 1
-            yield doc
+        yield from docs
 
-        if doc_count < limit:
+        if len(docs) < limit:
             break
 
+        last_doc = docs[len(docs) - 1]
         last_doc_values = {}
         for field, condition in paginate_by.items():
             key = f"{field}__{condition}"
-            last_doc_values[key] = getattr(doc, field)
+            last_doc_values[key] = getattr(last_doc, field)
 
         docs = queryset.filter(**last_doc_values)[:limit]
