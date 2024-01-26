@@ -2709,6 +2709,14 @@ USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
     description='The project logo replaces the CommCare logo.',
 )
 
+SUPPORT_GEO_JSON_EXPORT = StaticToggle(
+    slug='support_geo_json_export',
+    label='Support GeoJSON export in Case Exporter',
+    tag=TAG_SOLUTIONS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='The Case Export page now supports the exporting of GeoJSON data.',
+)
+
 SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
     slug='support_road_network_disbursement_algorithm',
     label='Add Road Network disbursement algorithm on geospatial settings page',
