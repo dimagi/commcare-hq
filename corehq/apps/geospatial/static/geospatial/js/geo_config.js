@@ -65,10 +65,8 @@ hqDefine("geospatial/js/geo_config", [
                 method: 'get',
                 url: url,
                 data: params,
-                success: function (data, status, request) {
-                    if (request.status === 200) {
-                        alertUser.alert_user(gettext("Token successfully verified!"), "success");
-                    }
+                success: function () {
+                    alertUser.alert_user(gettext("Token successfully verified!"), "success");
                 },
             }).fail(function () {
                 alertUser.alert_user(
