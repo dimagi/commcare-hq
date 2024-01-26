@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% if request.user.is_authenticated %}
-    <div class="modal fade" id="modalSolutionsFeatureRequest">
+    <div class="modal fade" id="modalSolutionsFeatureRequest" data-bind="event: { 'shown.bs.modal': openModal, 'hidden.bs.modal': resetForm }">
         <div class="modal-dialog">
             <form id="hqwebapp-requestReportForm"
                   action="{% url "solutions_feature_request" %}"
@@ -9,7 +9,7 @@
                   enctype="multipart/form-data"
                   role="form">
                 {% csrf_token %}
-                <input type="hidden" id="request-report-url" name="url"/>
+                <input type="hidden" id="request-report-url" data-bind="value: reportUrl" name="url"/>
                 <input type="hidden" id="request-report-username" name="username" value="{{ user.username }}"/>
                 <input type="hidden" id="request-report-domain" name="domain" value="{{ domain }}"/>
                 <input type="hidden" id="request-report-app_id" name="app_id" value="{{ app.id }}"/>
@@ -25,7 +25,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-horizontal">
-                        <div class="form-group" id="request-report-subject-form-group">
+                        <div class="form-group" id="request-report-subject-form-group" data-bind="css: { 'has-error has-feedback': hasSubjectError }">
                             <label for="request-report-subject"
                                    class="col-sm-3 control-label">{% trans "Short Description" %} *</label>
                             <div class="col-sm-9">
@@ -33,8 +33,9 @@
                                        class="form-control"
                                        name="subject"
                                        id="request-report-subject"
-                                       placeholder="{% trans 'One sentence description of feature/change request.' %}">
-                                <span class="label label-danger hide">
+                                       placeholder="{% trans 'One sentence description of feature/change request.' %}"
+                                       data-bind="value: subjectText, hasfocus: subjectHasFocus">
+                                <span class="label label-danger" data-bind="visible: hasSubjectError">
                                         <i class="fa fa-warning"></i> {% trans 'Please give us some information about the feature/change request' %}
                                 </span>
                             </div>
@@ -47,10 +48,11 @@
                                           class="form-control vertical-resize"
                                           id="request-report-message"
                                           rows="3"
-                                          placeholder="{% trans "Please describe the product changes you would like to see in CommCare." %}"></textarea>
+                                          placeholder="{% trans "Please describe the product changes you would like to see in CommCare." %}"
+                                          data-bind="value: descriptionText"></textarea>
                             </div>
                         </div>
-                        <div class="form-group" id="request-report-cc-form-group">
+                        <div class="form-group" id="request-report-cc-form-group" data-bind="css: { 'has-error has-feedback': hasRecipientsInputError}">
                             <label for="request-report-cc"
                                    class="col-sm-3 control-label">{% trans "Other recipients" %}</label>
                             <div class="col-sm-9">
@@ -58,12 +60,13 @@
                                        name="cc"
                                        class="form-control"
                                        id="request-report-cc"
-                                       placeholder="ex: admin@commcarehq.org, test@commcarehq.org" />
+                                       placeholder="ex: admin@commcarehq.org, test@commcarehq.org"
+                                       data-bind="value: recipientEmailsText"/>
                                 <p class="help-block">
                                     {% blocktrans %}
                                         Comma-separated email addresses of others you want to notify about this request.
                                     {% endblocktrans %}
-                                    <span class="label label-danger hide">
+                                    <span class="label label-danger" data-bind="visible: hasRecipientsInputError">
                                         <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
                                     </span>
                                 </p>
@@ -93,13 +96,15 @@
                     <button type="button"
                             id="request-report-cancel"
                             class="btn btn-default"
-                            data-dismiss="modal">{% trans 'Cancel' %}</button>
+                            data-dismiss="modal"
+                            data-bind="enable: cancelBtnEnabled">{% trans 'Cancel' %}</button>
                     <button type="submit"
-                            class="btn btn-primary"
+                            class="btn"
                             id="request-report-submit"
                             data-loading-text="{% trans "Submitting Report..." %}"
                             data-error-text="{% trans "Failed. Retry Request Submission" %}"
-                            data-success-text="{% trans "Success! Back to CommCare HQ" %}">
+                            data-success-text="{% trans "Success! Back to CommCare HQ" %}"
+                            data-bind="css: { 'btn-danger': hasSubmitError, 'btn-primary': !hasSubmitError() }">
                         {% trans "Submit Report" %}
                     </button>
                 </div>
