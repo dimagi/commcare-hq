@@ -9,7 +9,7 @@ requirejs.config({
         "datatables.bootstrap": "datatables.net-bs5/js/dataTables.bootstrap5.min",
         "datatables.fixedColumns": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
         "datatables.fixedColumns.bootstrap": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
-        "datepicker": "@eonasdan/tempus-dominus/dist/js/jQuery-provider.min",  // import this if you need jquery plugin of tempus-dominus
+        "datetimepicker": "@eonasdan/tempus-dominus/dist/js/jQuery-provider.min",  // import this if you need jquery plugin of tempus-dominus
         "es6": "requirejs-babel7/es6",
         "jquery": "jquery/dist/jquery.min",
         "knockout": "knockout/build/output/knockout-latest.debug",
@@ -25,7 +25,7 @@ requirejs.config({
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
         "datatables.bootstrap": { deps: ['datatables'] },
         "datatables.fixedColumns.bootstrap": { deps: ['datatables.fixedColumns'] },
-        "datepicker": {
+        "datetimepicker": {
             deps: ['popper', 'tempus-dominus'],
         },
         "d3/d3.min": {
