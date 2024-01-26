@@ -542,10 +542,10 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def natural_key(self):
         """
-        Django recommends always returning a tuple in natural_key methods:
+        Django requires returning a tuple in natural_key methods:
         https://docs.djangoproject.com/en/3.2/topics/serialization/#serialization-of-natural-keys
         We intentionally do not follow this to optimize corehq.apps.dump_reload.sql.load.SqlDataLoader when other
-        models foreign key to CommCareCase or XFormInstance. This means our loader code is subject to break in
+        models reference CommCareCase or XFormInstance via a foreign key. This means our loader code may break in
         future Django upgrades.
         """
         # necessary for dumping models from a sharded DB so that we exclude the

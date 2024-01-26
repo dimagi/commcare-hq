@@ -234,14 +234,14 @@ class SqlDataDumper(DataDumper):
         the following reasons:
 
         use_natural_primary_keys is necessary for sharded models to ensure the primary key, which will not be
-        unique across shards, is not used.
+        unique across shards, is not used. This can be thought of as "use natural primary keys when defined".
 
-        use_natural_foreign_keys is necessary for fk relationships where the primary key is used. For instance,
-        SQLUserData foreign keys to auth.User, relying on the auth.User primary key. However auth.User has a
-        natural_key method defined, so it's primary key will not be included due to use_natural_primary_keys
-        being set to True. To resolve, we can use_natural_foreign_keys for any object that has get_by_natural_key
-        defined, which auth.User does. This enables identifying the correct auth.User when loading serialized
-        SQLUserData back into a database.
+        use_natural_foreign_keys is necessary for foreign keys that reference primary keys on models that have a
+        natural_key method defined. This can be thought of as "use natural foreign keys when defined". For example,
+        SQLUserData has a foreign key to User based on the primary key. However a natural_key method is defined on
+        the User model, so its primary key will not be serialized when use_natural_primary_keys=True. To resolve,
+        we set use_natural_foreign_keys=True which will result in natural keys being serialized as part of the
+        foreign key field when referencing a model with natural_key defined.
         """
         stats = Counter()
         objects = get_objects_to_dump(
