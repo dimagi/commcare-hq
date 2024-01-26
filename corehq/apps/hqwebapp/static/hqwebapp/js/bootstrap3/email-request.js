@@ -33,6 +33,22 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
             self.subjectHasFocus(true);
         };
 
+        self.resetForm = function () {
+            self.$formElement.find("button[type='submit']").button('reset');
+            self.$formElement.resetForm();
+            self.cancelBtnEnabled(true);
+            self.$submitBtn.button('reset');
+            self.hasEmailInputError(false);
+        };
+
+        function resetErrors() {
+            self.hasSubmitError(false);
+            self.hasSubjectError(false);
+            self.hasEmailInputError(false);
+            self.hasOtherEmailInputError(false);
+            self.hasRecipientsInputError(false);
+        }
+
         return self;
     };
 
