@@ -334,7 +334,7 @@ class TestUpdateDomainAlertStatusView(TestBaseDomainAlertView):
         )
 
         messages = list(get_messages(response.wsgi_request))
-        self.assertEqual(messages[0].message, 'Alert not updated. Only 3 active alerts allowed.')
+        self.assertEqual(messages[0].message, 'Alert not activated. Only 3 active alerts allowed.')
 
 
 class TestDeleteDomainAlertView(TestBaseDomainAlertView):
