@@ -96,7 +96,7 @@ class UserIDFilter(IDFilter):
 
 class CaseIDFilter(IDFilter):
     def __init__(self, case_field='case'):
-        super().__init__(case_field, None)
+        super().__init__(case_field, None, chunksize=500)
 
     def count(self, domain_name):
         active_case_count = len(CommCareCase.objects.get_case_ids_in_domain(domain_name))
@@ -143,9 +143,14 @@ class UnfilteredModelIteratorBuilder(object):
 
 
 class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
-    def __init__(self, model_label, filter):
+    def __init__(self, model_label, filter, paginate_by={}):
+        """
+        :param paginate_by: optional dictionary where key is a field name and the value is a conditional
+        For example, {'username': 'gt'}
+        """
         super(FilteredModelIteratorBuilder, self).__init__(model_label)
         self.filter = filter
+        self.paginate_by = paginate_by
 
     def build(self, domain, model_class, db_alias):
         return self.__class__(self.model_label, self.filter).prepare(domain, model_class, db_alias)

@@ -99,7 +99,7 @@ def paginated_queryset(queryset, chunk_size):
             return
 
 
-def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
+def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False, paginate_by={}):
     """
     Pull from queryset in chunks. This is suitable for deep pagination, but
     cannot be used with ordered querysets (results will be sorted by pk).
@@ -108,12 +108,24 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
         raise AssertionError("queryset_to_iterator does not respect ordering.  "
                              "Pass ignore_ordering=True to continue.")
 
-    pk_field = model_cls._meta.pk.name
-    queryset = queryset.order_by(pk_field)
+    if not paginate_by:
+        pk_field = model_cls._meta.pk.name
+        paginate_by = {pk_field: "gt"}
+
+    queryset = queryset.order_by(*list(paginate_by.keys()))
     docs = queryset[:limit]
     while docs:
+        doc_count = 0
         for doc in docs:
+            doc_count += 1
             yield doc
 
-        last_doc_pk = getattr(doc, pk_field)
-        docs = queryset.filter(**{pk_field + "__gt": last_doc_pk})[:limit]
+        if doc_count < limit:
+            break
+
+        last_doc_values = {}
+        for field, condition in paginate_by.items():
+            key = f"{field}__{condition}"
+            last_doc_values[key] = getattr(doc, field)
+
+        docs = queryset.filter(**last_doc_values)[:limit]
