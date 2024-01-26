@@ -142,7 +142,7 @@
 -                                       name="cc"
 -                                       class="form-control"
 -                                       id="bug-report-cc"
--                                       placeholder="ex: admin@commcarehq.org, test@commcarehq.org" 
+-                                       placeholder="ex: admin@commcarehq.org, test@commcarehq.org"
 -                                       data-bind="value: recipientEmailsText" />
 -                                <p class="help-block">
 -                                    {% blocktrans %}
