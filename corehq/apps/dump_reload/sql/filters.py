@@ -1,11 +1,16 @@
 from abc import ABCMeta, abstractmethod
 
 from django.db.models import Q
+from django.db.models.fields.related import ForeignKey
 
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.dump_reload.util import get_model_class
 from corehq.form_processor.models.cases import CommCareCase
-from corehq.sql_db.util import paginate_query
+from corehq.sql_db.util import (
+    get_db_aliases_for_partitioned_query,
+    paginate_query,
+)
 from corehq.util.queries import queryset_to_iterator
 
 
@@ -95,13 +100,23 @@ class UserIDFilter(IDFilter):
 
 
 class CaseIDFilter(IDFilter):
-    def __init__(self, case_field='case'):
+    def __init__(self, model_label, case_field='case'):
+        _, self.model_cls = get_model_class(model_label)
+        try:
+            field_obj, = [f for f in self.model_cls._meta.fields if f.name == case_field]
+            assert isinstance(field_obj, ForeignKey)
+            assert field_obj.remote_field.model == CommCareCase
+        except Exception:
+            raise ValueError(
+                "CaseIDFilter only supports models with a foreign key relationship to CommCareCase"
+            )
         super().__init__(case_field, None, chunksize=500)
 
     def count(self, domain_name):
-        active_case_count = len(CommCareCase.objects.get_case_ids_in_domain(domain_name))
-        deleted_case_count = len(CommCareCase.objects.get_deleted_case_ids_in_domain(domain_name))
-        return active_case_count + deleted_case_count
+        count = 0
+        for db in get_db_aliases_for_partitioned_query():
+            count += self.model_cls.objects.using(db).filter(case__domain=domain_name).count()
+        return count
 
     def get_ids(self, domain_name, db_alias=None):
         assert db_alias, "Expected db_alias to be defined for CaseIDFilter"

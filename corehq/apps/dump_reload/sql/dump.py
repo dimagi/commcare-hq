@@ -32,11 +32,13 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
 
     FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndex', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseAttachment', CaseIDFilter()),
-    FilteredModelIteratorBuilder('form_processor.CaseTransaction', CaseIDFilter(), {'case_id': 'gte', 'pk': 'gt'}),
+    FilteredModelIteratorBuilder('form_processor.CaseAttachment', CaseIDFilter('form_processor.CaseAttachment')),
+    FilteredModelIteratorBuilder('form_processor.CaseTransaction',
+                                 CaseIDFilter('form_processor.CaseTransaction'),
+                                 {'case_id': 'gte', 'pk': 'gt'}),
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.LedgerTransaction', CaseIDFilter()),
-
+    FilteredModelIteratorBuilder('form_processor.LedgerTransaction',
+                                 CaseIDFilter('form_processor.LedgerTransaction')),
     FilteredModelIteratorBuilder('case_search.DomainsNotInCaseSearchIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.FuzzyProperties', SimpleFilter('domain')),
