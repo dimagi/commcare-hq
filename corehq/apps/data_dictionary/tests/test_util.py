@@ -271,15 +271,10 @@ class UsedPropsByCaseTypeTest(TestCase):
             cls._create_case_block(
                 case_type='other-case-type',
                 name='Case C',
-                props={'prop': True},
+                props={'prop': True, 'foobar': True},
             ),
             cls._create_case_block(
-                case_type='other-case-type',
-                name='Case A',
-                props={'foobar': True},
-            ),
-            cls._create_case_block(
-                case_type='test',
+                case_type='no-props',
                 name='Case D',
                 props={},
             ),
@@ -297,8 +292,12 @@ class UsedPropsByCaseTypeTest(TestCase):
     def test_get_used_props_by_case_type(self):
         used_props_by_case_type = get_used_props_by_case_type(self.domain)
         self.assertEqual(len(used_props_by_case_type), 3)
-        self.assertTrue({'prop', 'other-prop'}.issubset(used_props_by_case_type['case-type']))
-        self.assertFalse('foobar' in used_props_by_case_type['case-type'])
-        self.assertTrue({'prop', 'foobar'}.issubset(used_props_by_case_type['other-case-type']))
-        for prop in ['prop', 'other-prop', 'foobar']:
-            self.assertFalse(prop in used_props_by_case_type['test'])
+
+        # No props were passed to this case type, so should only contain metadata
+        # properties which we are not concerned about
+        metadata_props = set(used_props_by_case_type['no-props'])
+
+        props = set(used_props_by_case_type['case-type']) - metadata_props
+        self.assertEqual({'prop', 'other-prop'}, props)
+        props = set(used_props_by_case_type['other-case-type']) - metadata_props
+        self.assertEqual({'prop', 'foobar'}, props)
