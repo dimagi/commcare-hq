@@ -20,7 +20,7 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         self.user_locations = request_json['users']
         self.case_locations = request_json['cases']
 
-    def calculate_distance_matrix(self, domain):
+    def calculate_distance_matrix(self, config):
         distance_matrix = []
         for user in self.user_locations:
             user_point = (float(user['lat']), float(user['lon']))
@@ -33,8 +33,8 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
 
         return distance_matrix
 
-    def solve(self, domain, print_solution=False):
-        costs = self.calculate_distance_matrix(domain)
+    def solve(self, config, print_solution=False):
+        costs = self.calculate_distance_matrix(config)
         user_count = len(costs)
         case_count = len(costs[0])
 
@@ -86,10 +86,7 @@ class RoadNetworkSolver(RadialDistanceSolver):
     Solves user-case location assignment based on driving distance
     """
 
-    def calculate_distance_matrix(self, domain):
-        from corehq.apps.geospatial.models import GeoConfig
-        config = GeoConfig.objects.get(domain=domain)
-
+    def calculate_distance_matrix(self, config):
         # Todo; support more than Mapbox limit by chunking
         if len(self.user_locations + self.case_locations) > 25:
             raise Exception("This is more than Mapbox matrix API limit (25)")
