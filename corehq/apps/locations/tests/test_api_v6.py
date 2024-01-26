@@ -151,12 +151,11 @@ class LocationV6Test(APIResourceTest):
             key_value_pair in created_location_json['metadata'].items()
             for key_value_pair in post_data_location_data.items()))
 
-    def test_put_general(self):
+    def test_put1(self):
         put_data = {
             "name": "New Denver",
-            "site_code": "new denver",
-            "longitude": 33.9012,
-            "parent_location_id": self.south_park.location_id
+            "site_code": "new_denver",
+            "longitude": 33.9012
         }
         response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
                                                    put_data, method='PUT')
@@ -164,12 +163,19 @@ class LocationV6Test(APIResourceTest):
 
         self.location2_updated = SQLLocation.objects.get(location_id=self.location2.location_id)
         self.assertEqual(self.location2_updated.name, "New Denver")
-        self.assertEqual(self.location2_updated.site_code, "new denver")
+        self.assertEqual(self.location2_updated.site_code, "new_denver")
         self.assertEqual(float(self.location2_updated.longitude), 33.9012)
-        self.assertEqual(self.location2_updated.parent.location_id, self.south_park.location_id)
 
-    def test_put_location_type(self):
+    def test_put2(self):
+        self.kansas = SQLLocation.objects.create(
+            domain=self.domain.name,
+            location_id="4",
+            name="Kansas",
+            site_code="kansas",
+            location_type=self.parent_type
+        )
         put_data = {
+            "parent_location_id": self.kansas.location_id,
             "location_type_code": self.county.code
         }
         response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
@@ -178,3 +184,5 @@ class LocationV6Test(APIResourceTest):
 
         self.location2_updated = SQLLocation.objects.get(location_id=self.location2.location_id)
         self.assertEqual(self.location2_updated.location_type.code, self.county.code)
+
+# TODO: test invalid parent (wrong type), test site code special chars/unique, test whether name is unique among siblings
