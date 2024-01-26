@@ -102,9 +102,12 @@ class CaseDisbursementAlgorithm(BaseDomainView):
     urlname = "case_disbursement"
 
     def post(self, request, domain, *args, **kwargs):
-        solver_class = GeoConfig.objects.get(domain=domain).disbursement_solver
+        config = GeoConfig.objects.get(domain=domain)
         request_json = json.loads(request.body.decode('utf-8'))
-        poll_id, result = solver_class(request_json).solve(self.domain)
+
+        solver_class = config.disbursement_solver
+        poll_id, result = solver_class(request_json).solve(config=config)
+
         if poll_id is None:
             return json_response(
                 {'result': result}
@@ -194,8 +197,7 @@ class BaseConfigView(BaseDomainView):
             self.config,
             fields=GeospatialConfigForm.Meta.fields,
         )
-        if toggles.SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM.enabled(self.domain):
-            config['plaintext_api_token'] = self.config.plaintext_api_token
+        config['plaintext_api_token'] = self.config.plaintext_api_token
         return config
 
     @property

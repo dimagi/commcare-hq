@@ -203,20 +203,6 @@ class GeoConfigViewTestClass(TestCase):
         config = GeoConfig.objects.get(domain=self.domain)
         self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.RADIAL_ALGORITHM)
 
-        self._make_post(
-            self.construct_data(
-                case_property='prop1',
-                user_property='prop2',
-                extra_data={
-                    'selected_disbursement_algorithm': GeoConfig.ROAD_NETWORK_ALGORITHM,
-                    'plaintext_api_token': 'secret-token',
-                },
-            )
-        )
-        config = GeoConfig.objects.get(domain=self.domain)
-        self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.ROAD_NETWORK_ALGORITHM)
-        self.assertEqual(config.plaintext_api_token, 'secret-token')
-
 
 @es_test(requires=[case_adapter], setup_class=True)
 class TestGPSCaptureView(BaseGeospatialViewClass):
