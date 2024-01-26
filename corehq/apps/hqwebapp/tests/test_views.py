@@ -250,6 +250,14 @@ class TestSolutionsFeatureRequestView(TestCase):
             created_by=None,
             created_via=None,
         )
+        cls.staff_web_user = WebUser.create(
+            cls.domain,
+            'staff@example.com',
+            password='123',
+            created_by=None,
+            created_via=None,
+            is_staff=True,
+        )
         cls.url = reverse(SolutionsFeatureRequestView.urlname)
 
     @classmethod
@@ -279,9 +287,16 @@ class TestSolutionsFeatureRequestView(TestCase):
             HTTP_USER_AGENT='firefox'
         )
 
-    def test_email_submission(self):
+    def test_non_staff_email_submission(self):
         self.client.login(username=self.web_user.username, password='123')
         payload = self._default_payload(self.web_user.username)
+        response = self._post_request(payload)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_email_submission(self):
+        self.client.login(username=self.staff_web_user.username, password='123')
+        payload = self._default_payload(self.staff_web_user.username)
         response = self._post_request(payload)
         self.assertEqual(response.status_code, 200)
 
@@ -293,7 +308,7 @@ class TestSolutionsFeatureRequestView(TestCase):
         self.assertEqual(test_mail.subject, expected_subject)
         software_plan = Subscription.get_subscribed_plan_by_domain(self.domain)
         expected_body = (
-            "username: feature-admin\n"
+            "username: staff@example.com\n"
             + "full name: \n"
             + "domain: test-feature-request\n"
             + "url: www.features.com\n"
