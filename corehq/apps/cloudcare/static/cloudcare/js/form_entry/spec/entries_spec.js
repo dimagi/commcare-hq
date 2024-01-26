@@ -90,7 +90,7 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {
                 id: 2,
             }]);
 
-            assert.equal(entry.placeholderText, 'Please choose an item')
+            assert.equal(entry.placeholderText, 'Please choose an item');
             entry.rawAnswer(1);
             this.clock.tick(1000);
             assert.isTrue(spy.calledOnce);
@@ -112,7 +112,7 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {
             entry = formUI.Question(questionJSON).entry;
             assert.isTrue(entry instanceof entries.MultiDropdownEntry);
             assert.equal(entry.templateType, 'multidropdown');
-            assert.equal(entry.placeholderText, 'Please choose an item')
+            assert.equal(entry.placeholderText, 'Please choose an item');
 
             assert.isTrue(entry instanceof entries.MultiSelectEntry);
             assert.sameMembers(entry.answer(), [1, 2]);

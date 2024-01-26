@@ -63,12 +63,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         this.question.error(this.getErrorMessage(newValue));
     };
 
-    Entry.prototype.setPlaceHolder = function(hasPlaceHolder) {
+    Entry.prototype.setPlaceHolder = function (hasPlaceHolder) {
         const self = this;
-        if(hasPlaceHolder) {
+        if (hasPlaceHolder) {
             self.placeholderText = ko.utils.unwrapObservable(self.question.hint);
         }
-    }
+    };
 
     /**
      * Serves as the base for all entries that take an array answer.
