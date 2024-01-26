@@ -736,7 +736,7 @@ stack-data==0.1.4
     # via ipython
 stone==3.3.1
     # via dropbox
-stripe==7.2.0
+stripe==8.0.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
