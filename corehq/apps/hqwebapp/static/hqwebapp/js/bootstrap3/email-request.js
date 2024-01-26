@@ -41,6 +41,11 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
             self.hasEmailInputError(false);
         };
 
+        function isValidEmail(email) {
+            var regex = /^([a-zA-Z0-9_.+-])+@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            return regex.test(email);
+        }
+
         function resetErrors() {
             self.hasSubmitError(false);
             self.hasSubjectError(false);
