@@ -1,14 +1,17 @@
 hqDefine('hqwebapp/js/bootstrap3/email-request', [
     "jquery",
     "knockout",
+    "es6!hqwebapp/js/bootstrap5_loader",
     "jquery-form/dist/jquery.form.min",
-    "hqwebapp/js/bootstrap3/hq.helpers",
-], function ($, ko) {
+    "hqwebapp/js/bootstrap5/hq.helpers",
+], function ($, ko, bootstrap) {
+    'use strict';
 
     var EmailRequest = function (modalId, formId) {
         let self = {};
 
         self.$element = $(`#${modalId}`);
+        self.reportModal = new bootstrap.Modal(self.$element);
         self.$formElement = $(`#${formId}`);
         self.$submitBtn = self.$formElement.find("button[type='submit']");
 
@@ -55,9 +58,9 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
             }
 
             if (!self.isRequestReportSubmitting && self.$submitBtn.text() === self.$submitBtn.data("success-text")) {
-                self.$element.modal('hide');
+                self.reportModal.hide();
             } else if (!self.isRequestReportSubmitting) {
-                self.$submitBtn.button('loading');
+                self.$submitBtn.changeButtonState('loading');
                 self.cancelBtnEnabled(false);
                 self.$formElement.ajaxSubmit({
                     type: "POST",
@@ -76,10 +79,10 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
         };
 
         self.resetForm = function () {
-            self.$formElement.find("button[type='submit']").button('reset');
+            self.$formElement.find("button[type='submit']").changeButtonState('reset');
             self.$formElement.resetForm();
             self.cancelBtnEnabled(true);
-            self.$submitBtn.button('reset');
+            self.$submitBtn.changeButtonState('reset');
             self.hasEmailInputError(false);
         };
 
@@ -106,12 +109,12 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
 
         function hqwebappRequestReportSucccess() {
             self.isRequestReportSubmitting = false;
-            self.$submitBtn.button('success');
+            self.$submitBtn.changeButtonState('success');
         }
 
         function hqwebappRequestReportError() {
             self.isRequestReportSubmitting = false;
-            self.$submitBtn.button('error');
+            self.$submitBtn.changeButtonState('error');
             self.cancelBtnEnabled(true);
             self.hasSubmitError(true);
         }
