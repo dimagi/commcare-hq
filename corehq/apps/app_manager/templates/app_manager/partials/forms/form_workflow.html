@@ -101,7 +101,7 @@
               {% trans "Disable manual linking" %}
             </span>
           </div>
-          <div>  {# manual linking #}
+          <!-- ko ifnot: formLink.advancedMode -->
             <div class="help-block" data-bind="visible: formLink.showLinkDatums()">
               <button class="btn btn-default btn-xs" data-bind="click: formLink.fetchDatums">
                 <!-- ko if: formLink.datumsFetched() -->
@@ -141,7 +141,10 @@
                 </div>
               </div>
             </div>
-          </div>
+          <!-- /ko -->
+          <!-- ko if: formLink.advancedMode && formLink.showLinkDatums() -->
+            <div data-bind="jqueryElement: formLink.advancedModeDatumsElement.ui"></div>
+          <!-- /ko -->
         </div>
       </div>
     </div>
