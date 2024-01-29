@@ -200,6 +200,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiatedBy) {
+        console.log("In menu:query initiatedBy " + initiatedBy);
         var urlObject = utils.currentUrlToObject();
         var queryObject = _.extend(
             {
