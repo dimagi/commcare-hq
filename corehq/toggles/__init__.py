@@ -2715,7 +2715,8 @@ CASE_DEDUPE = FrozenPrivilegeToggle(
     help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
 )
 
-CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
+CUSTOM_DOMAIN_BANNER_ALERTS = FrozenPrivilegeToggle(
+    privilege_slug=privileges.CUSTOM_DOMAIN_ALERTS,
     slug='custom_domain_banners',
     label='Allow projects to add banners for their users on HQ',
     tag=TAG_CUSTOM,
