@@ -18,10 +18,11 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound
+from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
-from corehq.apps.accounting.decorators import always_allow_project_access, requires_privilege_with_fallback
+from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from dimagi.utils.web import json_response
 
@@ -529,7 +530,7 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
     urlname = 'domain_manage_mobile_workers'
 
 
-@method_decorator([requires_privilege_with_fallback(privileges.CUSTOM_DOMAIN_ALERTS),
+@method_decorator([requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS),
                    require_can_manage_domain_alerts], name='dispatch')
 class BaseDomainAlertsView(BaseProjectSettingsView):
     @staticmethod
@@ -688,7 +689,7 @@ class EditDomainAlertView(BaseDomainAlertsView):
 
 
 @require_POST
-@requires_privilege_with_fallback(privileges.CUSTOM_DOMAIN_ALERTS)
+@requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS)
 @require_can_manage_domain_alerts
 def update_domain_alert_status(request, domain):
     alert_id = request.POST.get('alert_id')
@@ -703,7 +704,7 @@ def update_domain_alert_status(request, domain):
 
 
 @require_POST
-@requires_privilege_with_fallback(privileges.CUSTOM_DOMAIN_ALERTS)
+@requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS)
 @require_can_manage_domain_alerts
 def delete_domain_alert(request, domain):
     alert_id = request.POST.get('alert_id')

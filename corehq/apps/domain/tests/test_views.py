@@ -14,7 +14,6 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views import SubscriptionUpgradeRequiredView
 from corehq.apps.domain.views.settings import EditDomainAlertView, ManageDomainAlertsView, MAX_ACTIVE_ALERTS
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.users.models import WebUser
@@ -157,11 +156,7 @@ class TestBaseDomainAlertView(TestCase):
             response = self.client.post(self.url)
         else:
             response = self.client.get(self.url)
-        self.assertEqual(type(response.context['view']), SubscriptionUpgradeRequiredView)
-        self.assertEqual(
-            response.context['current_page']['page_name'],
-            'Sorry, you do not have access to Custom domain banners'
-        )
+        self.assertEqual(response.status_code, 404)
 
 
 class TestManageDomainAlertsView(TestBaseDomainAlertView):
