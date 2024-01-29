@@ -112,7 +112,7 @@
             {% endif %}
             {% if request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" %}
               <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
-                <i class="fa fa-trash"></i>
+                <i class="fa-regular fa-trash-can"></i>
                 {% trans "Bulk Delete Users" %}
               </a>
               <a class="btn btn-default" href="{% url "commcare_users_lookup" domain %}">
@@ -242,7 +242,7 @@
             <td data-bind="attr: {class: creation_status}, text: last_name"></td>
             <td data-bind="attr: {class: creation_status}">
               <div data-bind="visible: creation_status() === $root.STATUS.PENDING">
-                <i class="fa fa-circle-o-notch fa-spin"></i>
+                <i class="fa fa-circle-notch fa-spin"></i>
                 {% trans 'Pending...' %}
               </div>
               <div data-bind="visible: creation_status() === $root.STATUS.SUCCESS">

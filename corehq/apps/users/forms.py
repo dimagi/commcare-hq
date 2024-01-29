@@ -685,7 +685,7 @@ class NewMobileWorkerForm(forms.Form):
         required=True,
         help_text="""
             <span data-bind="visible: $root.usernameAvailabilityStatus() !== $root.STATUS.NONE">
-                <i class="fa fa-circle-o-notch fa-spin"
+                <i class="fa fa-circle-notch fa-spin"
                    data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.PENDING"></i>
                 <i class="fa fa-check"
                    data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.SUCCESS"></i>
