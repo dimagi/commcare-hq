@@ -46,8 +46,8 @@
                   "><i class="fa fa-remove"></i></button>
         </legend>
       </div>
-      <div data-bind="if: collapsible">
-        <div class="collapsible-icon-container">
+      <div data-bind="if: collapsible" style="display: flex">
+        <div class="collapsible-icon-container" style="align-self: center">
           <i style="" class="fa" data-bind="
               css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
           "></i>
