@@ -10,7 +10,7 @@ hqDefine('cloudcare/js/sentry', [
     let initSentry = function () {
         const sentryConfig = initialPageData.get('sentry');
 
-        if (sentryConfig.dsn) {
+        if (false && sentryConfig.dsn) {
             Sentry.init({
                 dsn: sentryConfig.dsn,
                 environment: sentryConfig.environment,
