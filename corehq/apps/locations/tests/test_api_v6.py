@@ -151,12 +151,11 @@ class LocationV6Test(APIResourceTest):
             key_value_pair in created_location_json['metadata'].items()
             for key_value_pair in post_data_location_data.items()))
 
-    def test_put_general(self):
+    def test_successful_put1(self):
         put_data = {
             "name": "New Denver",
-            "site_code": "new denver",
-            "longitude": 33.9012,
-            "parent_location_id": self.south_park.location_id
+            "site_code": "new_denver",
+            "longitude": 33.9012
         }
         response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
                                                    put_data, method='PUT')
@@ -164,17 +163,80 @@ class LocationV6Test(APIResourceTest):
 
         self.location2_updated = SQLLocation.objects.get(location_id=self.location2.location_id)
         self.assertEqual(self.location2_updated.name, "New Denver")
-        self.assertEqual(self.location2_updated.site_code, "new denver")
+        self.assertEqual(self.location2_updated.site_code, "new_denver")
         self.assertEqual(float(self.location2_updated.longitude), 33.9012)
-        self.assertEqual(self.location2_updated.parent.location_id, self.south_park.location_id)
 
-    def test_put_location_type(self):
+    def test_successful_put2(self):
+        self.kansas = SQLLocation.objects.create(
+            domain=self.domain.name,
+            location_id="4",
+            name="Kansas",
+            site_code="kansas",
+            location_type=self.parent_type
+        )
         put_data = {
+            "parent_location_id": self.kansas.location_id,
             "location_type_code": self.county.code
         }
         response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
                                                    put_data, method='PUT')
-        self.assertTrue(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.location2_updated = SQLLocation.objects.get(location_id=self.location2.location_id)
         self.assertEqual(self.location2_updated.location_type.code, self.county.code)
+
+    def test_change_location_type_with_children(self):
+        self.kansas = SQLLocation.objects.create(
+            domain=self.domain.name,
+            location_id="4",
+            name="Kansas",
+            site_code="kansas",
+            location_type=self.parent_type
+        )
+        put_data = {
+            "parent_location_id": self.kansas.location_id,
+            "location_type_code": self.county.code
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(self.location1.location_id),
+                                                   put_data, method='PUT')
+        self.assertEqual(response.json(),
+                         {'error': 'You cannot change the location type of a location with children'})
+        self.assertEqual(response.status_code, 400)
+
+    def test_invalid_parent(self):
+        put_data = {
+            "parent_location_id": self.south_park.location_id,
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
+                                                   put_data, method='PUT')
+        self.assertEqual(response.json(),
+                         {'error': 'The selected parent location cannot have child locations!'})
+        self.assertEqual(response.status_code, 400)
+
+    def test_name_unique_among_siblings(self):
+        post_data = post_data = {
+            "location_type_code": "city",
+            "name": "Denver",
+            "parent_location_id": "1",
+            "site_code": "second_denver"
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint, post_data, method='POST')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(),
+                         {'error': 'Location with same name and parent already exists.'})
+
+    def test_site_code_special_chars(self):
+        put_data = {
+            "site_code": "special$char",
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
+                                                   put_data, method='PUT')
+        self.assertEqual(response.status_code, 400)
+
+    def test_site_code_unique(self):
+        put_data = {
+            "site_code": "south_park",
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
+                                                   put_data, method='PUT')
+        self.assertEqual(response.status_code, 400)
