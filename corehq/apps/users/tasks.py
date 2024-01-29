@@ -107,8 +107,7 @@ def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, delet
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
     delete_schedule_instances_for_cases.delay(domain, case_ids)
-    if toggles.CASE_DEDUPE.enabled(domain):
-        delete_duplicates_for_cases.delay(case_ids)
+    delete_duplicates_for_cases.delay(case_ids)
 
 
 @task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
