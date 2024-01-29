@@ -90,12 +90,19 @@ class Command(AppMigrationCommandBase):
         return self.options.get('num_domains_test', None)
 
     def get_domains(self):
+        domain_objs = Domain.view(
+            "domain/snapshots",
+            startkey=[],
+            endkey=[{}],
+            include_docs=True,
+            reduce=False,
+        )
+
+        all_domain_names = [d.name for d in domain_objs]
         if self.is_dry_run and self.num_domains_test:
-            all_domain_names = Domain.get_all_names()
             random.shuffle(all_domain_names)
-            return all_domain_names[:int(self.num_domains_test)]
-        else:
-            return Domain.get_all_names()
+            all_domain_names = all_domain_names[:int(self.num_domains_test)]
+        return all_domain_names
 
     def log_error(self, app_doc):
         with open(self.APP_WRAPPING_ERRORS_LOG, 'a') as f:
