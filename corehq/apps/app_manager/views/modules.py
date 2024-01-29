@@ -1197,6 +1197,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     parent_select = params.get('parent_select', None)
     fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
+    case_tile_template = params.get('caseTileTemplate', None)
     print_template = params.get('printTemplate', None)
     custom_variables_dict = {
         'short': params.get("short_custom_variables_dict", None),
@@ -1232,6 +1233,11 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
         detail.short.filter = filter
+    if case_tile_template is not None:
+        if short is not None:
+            detail.short.case_tile_template = case_tile_template
+        else:
+            detail.long.case_tile_template = case_tile_template
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
 
@@ -1416,7 +1422,6 @@ def _update_short_details(detail, short, params, lang):
             if value is not None:
                 setattr(detail.short, attribute_name or param_name, value)
 
-        _set_if_not_none('caseTileTemplate', 'case_tile_template')
         _set_if_not_none('persistTileOnForms', 'persist_tile_on_forms')
         _set_if_not_none('persistentCaseTileFromModule', 'persistent_case_tile_from_module')
         _set_if_not_none('enableTilePullDown', 'pull_down_tile')
