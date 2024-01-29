@@ -155,7 +155,7 @@ def _create_module_details_app_strings(module, langs):
                 clean_trans(column.header, langs)
             )
 
-            if column.format in ('enum', 'enum-image', 'conditional-enum', 'clickable-icon'):
+            if column.format in ('enum', 'conditional-enum'):
                 for item in column.enum:
                     yield (
                         id_strings.detail_column_enum_variable(
@@ -165,6 +165,26 @@ def _create_module_details_app_strings(module, langs):
                             item.key_as_variable,
                         ),
                         clean_trans(item.value, langs)
+                    )
+            elif column.format in ('enum-image', 'clickable-icon'):
+                for item in column.enum:
+                    yield (
+                        id_strings.detail_column_enum_variable(
+                            module,
+                            detail_type,
+                            column,
+                            item.key_as_variable,
+                        ),
+                        clean_trans(item.value, langs)
+                    )
+                    yield (
+                        id_strings.detail_column_alt_text_variable(
+                            module,
+                            detail_type,
+                            column,
+                            item.key_as_variable,
+                        ),
+                        clean_trans(item.alt_text, langs)
                     )
             elif column.format == "graph":
                 for index, item in enumerate(column.graph_configuration.annotations):
