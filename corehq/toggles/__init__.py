@@ -2718,7 +2718,7 @@ CASE_DEDUPE = FrozenPrivilegeToggle(
 CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
     slug='custom_domain_banners',
     label='Allow projects to add banners for their users on HQ',
-    tag=TAG_CUSTOM,
+    tag=TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow projects to add banners visible to their users on HQ on every login',
 )
