@@ -449,7 +449,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             'Barcode Scan': 'fa fa-barcode',
             'Date': 'fa fa-calendar',
             'Date and Time': 'fcc fcc-fd-datetime',
-            'Time': 'fcc fcc-fa-clock-o',
+            'Time': 'fa-regular fa-clock',
             'Select': 'fcc fcc-fd-single-select',
             'Double': 'fcc fcc-fd-decimal',
             'Label': 'fa fa-tag',
