@@ -11,7 +11,6 @@ hqDefine('geospatial/js/models', [
     initialPageData,
     utils
 ) {
-    const HOVER_DELAY = 400;
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
@@ -43,8 +42,9 @@ hqDefine('geospatial/js/models', [
         self.groupCoordinates = null;
 
         self.setMarkerOpacity = function (opacity) {
-            let element = self.marker.getElement();
-            element.style.opacity = opacity;
+            const element = self.marker.getElement();
+            const svg = element.getElementsByTagName("svg")[0];
+            svg.setAttribute("opacity", opacity);
         };
 
         function changeMarkerColor(selectedCase, newColor) {
@@ -314,35 +314,15 @@ hqDefine('geospatial/js/models', [
             // Add the marker to the map
             marker.addTo(self.mapInstance);
 
-            let popupDiv = document.createElement("div");
-            popupDiv.setAttribute("data-bind", "template: 'select-case'");
-
-            let popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
-                .setLngLat(coordinates)
-                .setDOMContent(popupDiv);
+            const popupDiv = document.createElement("div");
+            const popup = utils.createMapPopup(
+                coordinates,
+                popupDiv,
+                () => highlightMarkerGroup(itemId),
+                resetMarkersOpacity
+            );
 
             marker.setPopup(popup);
-
-            const markerDiv = marker.getElement();
-            // Show popup on hover
-            markerDiv.addEventListener('mouseenter', () => marker.togglePopup());
-            markerDiv.addEventListener('mouseenter', () => highlightMarkerGroup(marker));
-            markerDiv.addEventListener('mouseleave', () => resetMarkersOpacity());
-
-            // Hide popup if mouse leaves marker and popup
-            var addLeaveEvent = function (fromDiv, toDiv) {
-                fromDiv.addEventListener('mouseleave', function () {
-                    setTimeout(function () {
-                        if (!$(toDiv).is(':hover')) {
-                            // mouse left toDiv as well
-                            marker.togglePopup();
-                        }
-                    }, 100);
-                });
-            };
-            addLeaveEvent(markerDiv, popupDiv);
-            addLeaveEvent(popupDiv, markerDiv);
-
             const mapItemInstance = new MapItem(itemId, itemData, marker, colors);
             $(popupDiv).koApplyBindings(mapItemInstance);
 
@@ -363,14 +343,10 @@ hqDefine('geospatial/js/models', [
             changeMarkersOpacity(markers, 1);
         }
 
-        function highlightMarkerGroup(marker) {
-            const markerCoords = marker.getLngLat();
-            const currentMarkerPosition = markerCoords.lng + " " + markerCoords.lat;
-            const markerItem = self.caseGroupsIndex[currentMarkerPosition];
-
+        function highlightMarkerGroup(itemId) {
+            const markerItem = self.caseGroupsIndex[itemId];
             if (markerItem) {
                 const groupId = markerItem.groupId;
-
                 let markersToHide = [];
                 Object.keys(self.caseGroupsIndex).forEach(itemCoordinates => {
                     const mapMarkerItem = self.caseGroupsIndex[itemCoordinates];
@@ -388,13 +364,9 @@ hqDefine('geospatial/js/models', [
         }
 
         function changeMarkersOpacity(markers, opacity) {
-            // It's necessary to delay obscuring the markers since mapbox does not play nice
-            // if we try to do it all at once.
-            setTimeout(function () {
-                markers.forEach(marker => {
-                    marker.setMarkerOpacity(opacity);
-                });
-            }, HOVER_DELAY);
+            markers.forEach(marker => {
+                marker.setMarkerOpacity(opacity);
+            });
         }
 
         self.getLineFeatureId = function (itemId) {
