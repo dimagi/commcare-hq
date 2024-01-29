@@ -209,13 +209,13 @@ class GeoConfigViewTestClass(TestCase):
                 user_property='prop2',
                 extra_data={
                     'selected_disbursement_algorithm': GeoConfig.ROAD_NETWORK_ALGORITHM,
-                    'api_token': 'secret-token',
+                    'plaintext_api_token': 'secret-token',
                 },
             )
         )
         config = GeoConfig.objects.get(domain=self.domain)
         self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.ROAD_NETWORK_ALGORITHM)
-        self.assertEqual(config.api_token, 'secret-token')
+        self.assertEqual(config.plaintext_api_token, 'secret-token')
 
 
 @es_test(requires=[case_adapter], setup_class=True)

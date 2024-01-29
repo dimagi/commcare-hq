@@ -51,7 +51,7 @@ hqDefine("geospatial/js/geo_config", [
         });
 
         self.selectedAlgorithm = ko.observable();
-        self.apiToken = ko.observable(data.api_token);
+        self.plaintext_api_token = ko.observable(data.plaintext_api_token);
 
         self.captureApiToken = ko.computed(function () {
             return self.selectedAlgorithm() === ROAD_NETWORK_ALGORITHM;
@@ -59,7 +59,7 @@ hqDefine("geospatial/js/geo_config", [
 
         self.validateApiToken = function () {
             const url = "https://api.mapbox.com/directions-matrix/v1/mapbox/driving/-122.42,37.78;-122.45,37.91;-122.48,37.73";
-            const params = {access_token: self.apiToken()};
+            const params = {access_token: self.plaintext_api_token()};
 
             $.ajax({
                 method: 'get',

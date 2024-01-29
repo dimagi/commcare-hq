@@ -198,7 +198,7 @@ class BaseConfigView(BaseDomainView):
             fields=GeospatialConfigForm.Meta.fields,
         )
         if toggles.SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM.enabled(self.domain):
-            config['api_token'] = self.config.api_token
+            config['plaintext_api_token'] = self.config.plaintext_api_token
         return config
 
     @property

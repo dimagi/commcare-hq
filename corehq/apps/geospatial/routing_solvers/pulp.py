@@ -106,7 +106,7 @@ class RoadNetworkSolver(RadialDistanceSolver):
             'sources': sources,
             'destinations': destinations,
             'annotations': 'distance',
-            'access_token': config.api_token,
+            'access_token': config.plaintext_api_token,
         }
 
         response = requests.get(url, params=params)

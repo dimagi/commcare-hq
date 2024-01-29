@@ -23,13 +23,13 @@ class TestGeoConfig(TestCase):
 
     def test_geo_config_api_token(self):
         with self.get_geo_config() as config:
-            config.api_token = '1234'
-            self.assertEqual(config.api_token, '1234')
-            self.assertTrue(config._api_token.startswith(f"${ALGO_AES}$"))
+            config.plaintext_api_token = '1234'
+            self.assertEqual(config.plaintext_api_token, '1234')
+            self.assertTrue(config.api_token.startswith(f"${ALGO_AES}$"))
 
-            config.api_token = None
+            config.plaintext_api_token = None
+            self.assertEqual(config.plaintext_api_token, None)
             self.assertEqual(config.api_token, None)
-            self.assertEqual(config._api_token, None)
 
     @contextmanager
     def get_geo_config(self):

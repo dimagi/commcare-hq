@@ -34,7 +34,7 @@ class GeospatialConfigForm(forms.ModelForm):
             "min_cases_per_group",
             "target_group_count",
             "selected_disbursement_algorithm",
-            "api_token",
+            "plaintext_api_token",
         ]
 
     user_location_property_name = forms.CharField(
@@ -84,7 +84,7 @@ class GeospatialConfigForm(forms.ModelForm):
         choices=DISBURSEMENT_ALGORITHM_OPTIONS,
         required=True,
     )
-    api_token = forms.CharField(
+    plaintext_api_token = forms.CharField(
         label=_("Enter mapbox token"),
         help_text=_(
             "Enter your Mapbox API token here. Make sure your token has the correct scope configured"
@@ -160,7 +160,7 @@ class GeospatialConfigForm(forms.ModelForm):
                         data_bind='value: selectedAlgorithm',
                     ),
                     crispy.Div(
-                        crispy.Field('api_token', data_bind="value: apiToken"),
+                        crispy.Field('plaintext_api_token', data_bind="value: plaintext_api_token"),
                         data_bind="visible: captureApiToken"
                     ),
                     crispy.Div(
@@ -209,13 +209,13 @@ class GeospatialConfigForm(forms.ModelForm):
                 raise ValidationError(_("Value for target group count required"))
 
         algorithm = cleaned_data.get('selected_disbursement_algorithm')
-        token = cleaned_data.get('api_token')
+        token = cleaned_data.get('plaintext_api_token')
         if algorithm == GeoConfig.ROAD_NETWORK_ALGORITHM and not token:
             raise ValidationError(_("Mapbox API token required"))
 
         return cleaned_data
 
     def save(self, commit=True):
-        if self.cleaned_data.get('api_token'):
-            self.instance.api_token = self.cleaned_data.get('api_token')
+        if self.cleaned_data.get('plaintext_api_token'):
+            self.instance.plaintext_api_token = self.cleaned_data.get('plaintext_api_token')
         return super().save(commit)

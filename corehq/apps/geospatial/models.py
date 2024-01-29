@@ -62,7 +62,7 @@ class GeoConfig(models.Model):
         default=RADIAL_ALGORITHM,
         max_length=50
     )
-    _api_token = models.CharField(max_length=255, blank=True, null=True, db_column="api_token")
+    api_token = models.CharField(max_length=255, blank=True, null=True, db_column="api_token")
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -85,16 +85,16 @@ class GeoConfig(models.Model):
         ]
 
     @property
-    def api_token(self):
-        if self._api_token and self._api_token.startswith(f'${ALGO_AES}$'):
-            ciphertext = self._api_token.split('$', 2)[2]
+    def plaintext_api_token(self):
+        if self.api_token and self.api_token.startswith(f'${ALGO_AES}$'):
+            ciphertext = self.api_token.split('$', 2)[2]
             return b64_aes_decrypt(ciphertext)
-        return self._api_token
+        return self.api_token
 
-    @api_token.setter
-    def api_token(self, value):
+    @plaintext_api_token.setter
+    def plaintext_api_token(self, value):
         if value and not value.startswith(f'${ALGO_AES}$'):
             ciphertext = b64_aes_encrypt(value)
-            self._api_token = f'${ALGO_AES}${ciphertext}'
+            self.api_token = f'${ALGO_AES}${ciphertext}'
         else:
-            self._api_token = None
+            self.api_token = None

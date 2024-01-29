@@ -566,6 +566,7 @@ geospatial
  0003_auto_20230908_0927
  0004_auto_20230920_0821
  0005_auto_20240123_1413
+ 0006_rename__api_token_geoconfig_api_token
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
