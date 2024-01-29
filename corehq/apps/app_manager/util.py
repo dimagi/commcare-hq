@@ -310,9 +310,9 @@ def languages_mapping():
     if not mapping:
         with open('submodules/langcodes/langs.json', encoding='utf-8') as langs_file:
             lang_data = json.load(langs_file)
-            mapping = dict([(l["two"], l["names"]) for l in lang_data])
+            mapping = dict([(lang["two"], lang["names"]) for lang in lang_data])
         mapping["default"] = ["Default Language"]
-        cache.set('__languages_mapping', mapping, 12*60*60)
+        cache.set('__languages_mapping', mapping, 12 * 60 * 60)
     return mapping
 
 
@@ -358,8 +358,9 @@ def get_commcare_builds(request_user):
 
 
 def actions_use_usercase(actions):
-    return (('usercase_update' in actions and actions['usercase_update'].update) or
-            ('usercase_preload' in actions and actions['usercase_preload'].preload))
+    return ("usercase_update" in actions and actions["usercase_update"].update) or (
+        "usercase_preload" in actions and actions["usercase_preload"].preload
+    )
 
 
 def advanced_actions_use_usercase(actions):
@@ -407,10 +408,9 @@ def module_offers_search(module):
     from corehq.apps.app_manager.models import AdvancedModule, Module, ShadowModule
 
     return (
-        isinstance(module, (Module, AdvancedModule, ShadowModule)) and
-        module.search_config
-        and (module.search_config.properties
-        or module.search_config.default_properties)
+        isinstance(module, (Module, AdvancedModule, ShadowModule))
+        and module.search_config
+        and (module.search_config.properties or module.search_config.default_properties)
     )
 
 
@@ -589,7 +589,9 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
             except IndexError:
                 raise AppManagerException(f"Sort column references an unknown column at index: {column_index}")
             if not column.useXpathExpression:
-                raise AppManagerException(f"Calculation sort column references an incorrect column: {column.field}")
+                raise AppManagerException(
+                    f"Calculation sort column references an incorrect column: {column.field}"
+                )
             sort_columns[column.field] = (element, element_order)
 
     sort_only_elements = [
@@ -753,7 +755,7 @@ def wrap_transition_from_old_update_case_action(properties_dict):
     A modification of UpdateCaseAction to use a ConditionalCaseUpdate instead of a simple question path
     was part of these changes. It also used as part of a follow-up migration.
     """
-    if(properties_dict):
+    if properties_dict:
         first_prop_value = list(properties_dict.values())[0]
         # If the dict just holds question paths (strings) as values we want to translate the old
         # type of UpdateCaseAction model to the new.
