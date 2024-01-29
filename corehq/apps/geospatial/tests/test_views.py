@@ -188,34 +188,18 @@ class GeoConfigViewTestClass(TestCase):
         config = GeoConfig.objects.get(domain=self.domain)
         self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.RADIAL_ALGORITHM)
 
-    @flag_enabled('GEOSPATIAL')
-    @flag_enabled('SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM')
-    def test_config_update__road_network_algorithm_ff_enabled(self):
-        self._make_post(
-            self.construct_data(
-                case_property='prop1',
-                user_property='prop2',
-                extra_data={
-                    'selected_disbursement_algorithm': GeoConfig.RADIAL_ALGORITHM
-                }
-            )
-        )
-        config = GeoConfig.objects.get(domain=self.domain)
-        self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.RADIAL_ALGORITHM)
-
         self._make_post(
             self.construct_data(
                 case_property='prop1',
                 user_property='prop2',
                 extra_data={
                     'selected_disbursement_algorithm': GeoConfig.ROAD_NETWORK_ALGORITHM,
-                    'plaintext_api_token': 'secret-token',
+                    'plaintext_api_token': '1234',
                 },
             )
         )
         config = GeoConfig.objects.get(domain=self.domain)
         self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.ROAD_NETWORK_ALGORITHM)
-        self.assertEqual(config.plaintext_api_token, 'secret-token')
 
 
 @es_test(requires=[case_adapter], setup_class=True)

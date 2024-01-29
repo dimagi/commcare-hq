@@ -6,7 +6,6 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django import forms
 from corehq.apps.geospatial.models import GeoConfig
-from corehq import toggles
 
 
 LOCATION_SOURCE_OPTIONS = [
@@ -22,6 +21,7 @@ class GeospatialConfigForm(forms.ModelForm):
 
     DISBURSEMENT_ALGORITHM_OPTIONS = [
         RADIAL_ALGORITHM_OPTION,
+        ROAD_NETWORK_ALGORITHM_OPTION,
     ]
 
     class Meta:
@@ -96,11 +96,6 @@ class GeospatialConfigForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        if toggles.SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM.enabled(self.domain):
-            choices = self.fields['selected_disbursement_algorithm'].choices
-            choices.append(self.ROAD_NETWORK_ALGORITHM_OPTION)
-            self.fields['selected_disbursement_algorithm'].choices = choices
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.add_layout(
