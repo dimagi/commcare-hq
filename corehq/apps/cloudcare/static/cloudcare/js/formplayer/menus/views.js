@@ -476,6 +476,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     const CaseTileViewUnclickable = CaseTileView.extend({
         events: {},
+        attributes: {},
         className: "list-cell-wrapper-style panel panel-default",
         rowClick: function () {},
     });
@@ -572,6 +573,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: function () {
             return "persistent-sticky" + (this.options.hasInlineTile ? " formplayer-request" : "");
         },
+        attributes: {},
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
