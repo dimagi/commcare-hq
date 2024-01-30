@@ -26,6 +26,7 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
         self.hasRecipientsInputError = ko.observable(false);
 
         self.isRequestReportSubmitting = false;
+        self.isReportSent = false;
 
         self.reportUrl = ko.observable('');
 
@@ -53,7 +54,7 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
                 return false;
             }
 
-            if (!self.isRequestReportSubmitting && self.$submitBtn.text() === self.$submitBtn.data("success-text")) {
+            if (!self.isRequestReportSubmitting && self.isReportSent) {
                 self.$element.modal('hide');
             } else if (!self.isRequestReportSubmitting) {
                 self.$submitBtn.button('loading');
@@ -104,6 +105,7 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
 
         function hqwebappRequestReportSucccess() {
             self.isRequestReportSubmitting = false;
+            self.isReportSent = true;
             self.$submitBtn.button('success');
         }
 
