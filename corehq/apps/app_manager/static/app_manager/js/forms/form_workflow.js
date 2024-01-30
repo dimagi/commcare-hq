@@ -201,7 +201,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
                 gettext("Set datums required to navigate to the selected form or menu"),
                 {key: gettext("Datum ID"), value: gettext("XPath Expression")}  // placeholders
             );
-            let datumsDict = {};
+            const datumsDict = {};
             _.each(datums, function (datum) {
                 datumsDict[datum.name] = datum.xpath;
             });
