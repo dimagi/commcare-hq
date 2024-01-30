@@ -16,7 +16,7 @@
 +  xxl: 1160px
 +);
  
--@font-size-base:  12px;
+-@font-size-base:  14px;
 -@icon-font-path:  "../../bootstrap/fonts/";
 +
 +// Typography Overrides
