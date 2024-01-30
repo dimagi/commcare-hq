@@ -1157,8 +1157,12 @@ class DeduplicationBackfillTest(TestCase):
         )
         cls.case2 = cls.factory.create_case(case_name="foo", case_type=cls.case_type, update={"age": 2})
         cls.case3 = cls.factory.create_case(case_name="foo", case_type=cls.case_type, update={"age": 2})
+        cls.case4 = cls.factory.create_case(
+            case_name="foo", case_type=cls.case_type,
+            update={"age": 2, CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME: cls.case1.case_id}
+        )
 
-        case_search_adapter.bulk_index([cls.case1, cls.case2, cls.case3], refresh=True)
+        case_search_adapter.bulk_index([cls.case1, cls.case2, cls.case3, cls.case4], refresh=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -1190,10 +1194,16 @@ class DeduplicationBackfillTest(TestCase):
         self._set_up_rule(include_closed=True)
 
         backfill_deduplicate_rule(self.domain, self.rule)
-        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 3)
+
+        duplicate_case_ids = CaseDuplicate.objects.filter(action=self.action).values_list('case_id', flat=True)
+        self.assertEqual(len(duplicate_case_ids), 3)
+        self.assertNotIn(self.case4.case_id, duplicate_case_ids)
 
     def test_finds_open_cases_only(self):
         self._set_up_rule(include_closed=False)
 
         backfill_deduplicate_rule(self.domain, self.rule)
-        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 2)
+
+        duplicate_case_ids = CaseDuplicate.objects.filter(action=self.action).values_list('case_id', flat=True)
+        self.assertEqual(len(duplicate_case_ids), 2)
+        self.assertNotIn(self.case4.case_id, duplicate_case_ids)

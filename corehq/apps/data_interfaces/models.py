@@ -23,6 +23,7 @@ from jsonobject.properties import (
 from memoized import memoized
 
 from casexml.apps.case.xform import get_case_updates
+from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
@@ -1115,6 +1116,9 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         return all_match or any_match
 
     def when_case_matches(self, case, rule):
+        if CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME in case.case_json:
+            return CaseRuleActionResult()
+
         domain = case.domain
         new_duplicate_case_ids = set(find_duplicate_case_ids(
             domain,
