@@ -1,7 +1,6 @@
 import re
 
 from django import forms
-from django.db.models import Q
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.translation import gettext as _

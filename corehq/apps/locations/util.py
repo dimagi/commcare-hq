@@ -175,8 +175,7 @@ class LocationExporter(object):
     @memoized
     def include_consumption(self):
         if bool(
-            self.include_consumption_flag and
-            self.domain_obj.commtrack_settings.individual_consumption_defaults
+            self.include_consumption_flag and self.domain_obj.commtrack_settings.individual_consumption_defaults
         ):
             # we'll be needing these, so init 'em:
             self.products = Product.by_domain(self.domain)
@@ -192,9 +191,8 @@ class LocationExporter(object):
 
     def get_consumption(self, loc):
         if (
-            not self.include_consumption or
-            loc.location_type_name in self.administrative_types or
-            not self.consumption_dict
+            not self.include_consumption or loc.location_type_name in self.administrative_types
+            or not self.consumption_dict
         ):
             return {}
         if loc.location_id in self.supply_point_map:
@@ -296,8 +294,9 @@ class LocationExporter(object):
 
 def dump_locations(domain, download_id, include_consumption, headers_only,
                    owner_id, root_location_ids=None, task=None, **kwargs):
-    exporter = LocationExporter(domain, include_consumption=include_consumption, root_location_ids=root_location_ids,
-                                headers_only=headers_only, async_task=task, **kwargs)
+    exporter = LocationExporter(domain, include_consumption=include_consumption,
+                                root_location_ids=root_location_ids, headers_only=headers_only,
+                                async_task=task, **kwargs)
 
     fd, path = tempfile.mkstemp()
     os.close(fd)
@@ -400,34 +399,33 @@ def has_siblings_with_name(location, name, parent_location_id):
 
 
 def get_location_type(domain, location, parent, loc_type_string, exception, is_new_location):
-        from corehq.apps.locations.forms import LocationForm
-        allowed_types = LocationForm.get_allowed_types(domain, parent)
-        if not allowed_types:
-            raise exception(_('The selected parent location cannot have child locations!'))
+    from corehq.apps.locations.forms import LocationForm
+    allowed_types = LocationForm.get_allowed_types(domain, parent)
+    if not allowed_types:
+        raise exception(_('The selected parent location cannot have child locations!'))
 
-        if not loc_type_string:
-            if len(allowed_types) == 1:
-                loc_type_obj = allowed_types[0]
-            else:
-                raise exception(_('You must select a location type'))
+    if not loc_type_string:
+        if len(allowed_types) == 1:
+            loc_type_obj = allowed_types[0]
         else:
-            try:
-                loc_type_obj = (LocationType.objects
-                                .filter(domain=domain)
-                                .get(Q(code=loc_type_string) | Q(name=loc_type_string)))
-            except LocationType.DoesNotExist:
-                raise exception(_("LocationType '{}' not found").format(loc_type_string))
-            else:
-                if loc_type_obj not in allowed_types:
-                    raise exception(_('Location type not valid for the selected parent.'))
+            raise exception(_('You must select a location type'))
+    else:
+        try:
+            loc_type_obj = (LocationType.objects
+                            .filter(domain=domain)
+                            .get(Q(code=loc_type_string) | Q(name=loc_type_string)))
+        except LocationType.DoesNotExist:
+            raise exception(_("LocationType '{}' not found").format(loc_type_string))
+        else:
+            if loc_type_obj not in allowed_types:
+                raise exception(_('Location type not valid for the selected parent.'))
 
-        _can_change_location_type = (is_new_location
-                                     or not location.get_descendants().exists())
-        if not _can_change_location_type and loc_type_obj.pk != location.location_type.pk:
-            raise exception(_(
-                'You cannot change the location type of a location with children'
-            ))
+    _can_change_location_type = (is_new_location or not location.get_descendants().exists())
+    if not _can_change_location_type and loc_type_obj.pk != location.location_type.pk:
+        raise exception(_(
+            'You cannot change the location type of a location with children'
+        ))
 
-        return loc_type_obj
+    return loc_type_obj
 
 # ---
