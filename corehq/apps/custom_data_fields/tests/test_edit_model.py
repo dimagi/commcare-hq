@@ -43,7 +43,24 @@ def fields_are_equal(left, right):
     return left.to_dict() == right.to_dict()
 
 
-class TestEditModel(TestCase):
+class FieldsViewMixin:
+
+    def create_field(self, slug='test_field', label='Test Field', is_required=False, choices=[], regex=None,
+            regex_msg=None, upstream_id=None):
+        return Field(
+            slug=slug,
+            label=label,
+            is_required=is_required,
+            choices=choices,
+            regex=regex,
+            regex_msg=regex_msg,
+            upstream_id=upstream_id,
+        )
+
+    _create_field = create_field
+
+
+class TestEditModel(FieldsViewMixin, TestCase):
     domain = 'test-domain'
 
     def test_saves_custom_fields(self):
@@ -82,18 +99,6 @@ class TestEditModel(TestCase):
         self.assertEqual(str(messages[0]),
             "Could not update 'ExistingField'. You do not have the appropriate role")
 
-    def _create_field(self, slug='test_field', label='Test Field', is_required=False, choices=[], regex=None,
-            regex_msg=None, upstream_id=None):
-        return Field(
-            slug=slug,
-            label=label,
-            is_required=is_required,
-            choices=choices,
-            regex=regex,
-            regex_msg=regex_msg,
-            upstream_id=upstream_id,
-        )
-
     def _create_initial_fields(self, fields):
         definition = CustomDataFieldsDefinition.objects.create(field_type='UserFields', domain=self.domain)
         definition.set_fields(fields)
@@ -104,7 +109,7 @@ class TestEditModel(TestCase):
         return request
 
 
-class TestValidateIncomingFields(SimpleTestCase):
+class TestValidateIncomingFields(FieldsViewMixin, SimpleTestCase):
     def test_no_conflicts_produces_no_errors(self):
         existing_fields = [self.create_field(is_required=False)]
         new_fields = [self.create_field(is_required=True)]
@@ -191,14 +196,3 @@ class TestValidateIncomingFields(SimpleTestCase):
         self.assertEqual(len(errors), 1)
         self.assertEqual(errors[0], "Could not update 'two'. Synced data cannot be created this way")
 
-    def create_field(self, slug='test_field', label='Test Field', is_required=False, choices=[], regex=None,
-            regex_msg=None, upstream_id=None):
-        return Field(
-            slug=slug,
-            label=label,
-            is_required=is_required,
-            choices=choices,
-            regex=regex,
-            regex_msg=regex_msg,
-            upstream_id=upstream_id
-        )
