@@ -647,6 +647,8 @@ class BlockWebAppsView(BaseDomainView):
 @login_and_domain_required
 @require_POST
 def api_histogram_metrics(request, domain):
+    import logging
+    logging.info(f"api_histogram_metrics {request.POST}")
     request_dict = request.POST
 
     metric_name = request_dict.get("metrics")
