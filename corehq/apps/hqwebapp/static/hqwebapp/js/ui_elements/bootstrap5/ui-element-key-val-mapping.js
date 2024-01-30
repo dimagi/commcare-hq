@@ -77,6 +77,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
         // attach a media-manager if item.value is a file-path to icon
         if (mappingContext.values_are_icons()) {
             var actualPath = item.value[mappingContext.lang];
+            var altText = item.alt_text[mappingContext.lang];
             var defaultIconPath = actualPath || self.generateIconPath();
             self.iconManager = app_manager.appMenuMediaManager({
                 ref: {
@@ -85,6 +86,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
                     "media_type": "Image",
                     "media_class": "CommCareImage",
                     "icon_class": "icon-picture",
+                    "alt_text": altText,
                 },
                 objectMap: mappingContext.multimedia,
                 uploadController: uploaders.iconUploader,
@@ -112,6 +114,19 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
                 }
             });
             return _.object(new_value);
+        });
+
+        self.alt_text = ko.computed(function () {
+            var newAltText = [];
+            var langs = _.union(_(item.alt_text).keys(), [mappingContext.lang]);
+            _.each(langs, function (lang) {
+                if (mappingContext.values_are_icons() && lang === mappingContext.lang) {
+                    newAltText.push([lang, self.iconManager.altText]);
+                } else {
+                    newAltText.push([lang, ko.observable(item.alt_text[lang])]);
+                }
+            });
+            return _.object(newAltText);
         });
 
         self.key.subscribe(function (newValue) {
@@ -216,8 +231,9 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
                 self.duplicatedItems.remove(ko.utils.unwrapObservable(item.key));
         };
         self.addItem = function () {
-            var raw_item = {key: '', value: {}};
+            var raw_item = {key: '', value: {}, alt_text: {}};
             raw_item.value[self.lang] = '';
+            raw_item.alt_text[self.lang] = '';
 
             var item = new MapItem(raw_item, self.items.length, self);
             self.items.push(item);
@@ -269,6 +285,9 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
                     key: ko.utils.unwrapObservable(item.key),
                     value: _.object(_(item.value()).map(function (value, lang) {
                         return [lang, ko.utils.unwrapObservable(value)];
+                    })),
+                    alt_text: _.object(_(item.alt_text()).map(function (altText, lang) {
+                        return [lang, ko.utils.unwrapObservable(altText)];
                     })),
                 };
             });

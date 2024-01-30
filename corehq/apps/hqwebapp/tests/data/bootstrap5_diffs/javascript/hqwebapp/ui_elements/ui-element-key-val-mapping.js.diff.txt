@@ -9,7 +9,7 @@
      'use strict';
      var module = {};
  
-@@ -331,7 +331,7 @@
+@@ -350,7 +350,7 @@
          $div.attr("data-bind", "template: \'key_value_mapping_template\'");
          $div.koApplyBindings(m);
          m.ui = $div;
