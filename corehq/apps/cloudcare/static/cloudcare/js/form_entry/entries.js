@@ -43,7 +43,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         self.entryId = _.uniqueId(this.datatype);
         self.xformAction = constants.ANSWER;
         self.xformParams = function () { return {}; };
-
+        self.placeholderText = '';
         // Returns true if the rawAnswer is valid, false otherwise
         self.isValid = function (rawAnswer) {
             return self.getErrorMessage(rawAnswer) === null;
@@ -57,6 +57,10 @@ hqDefine("cloudcare/js/form_entry/entries", [
         self.clear = function () {
             self.answer(constants.NO_ANSWER);
         };
+        self.useHintAsPlaceHolder = ko.computed(function () {
+            return ko.utils.unwrapObservable(question.hint) && question.stylesContains(constants.HINT_AS_PLACEHOLDER);
+        });
+        self.setPlaceHolder(self.useHintAsPlaceHolder());
         self.afterRender = function () {
             // Override with any logic that comes after rendering the Entry
         };
@@ -81,6 +85,13 @@ hqDefine("cloudcare/js/form_entry/entries", [
             this.answer(newValue);
         }
         this.question.error(this.getErrorMessage(newValue));
+    };
+
+    Entry.prototype.setPlaceHolder = function (hasPlaceHolder) {
+        const self = this;
+        if (hasPlaceHolder) {
+            self.placeholderText = ko.utils.unwrapObservable(self.question.hint);
+        }
     };
 
     /**
@@ -138,7 +149,6 @@ hqDefine("cloudcare/js/form_entry/entries", [
         Entry.call(self, question);
         self.valueUpdate = undefined;
         self.rawAnswer = ko.observable(getRawAnswer(question.answer()));
-        self.placeholderText = '';
 
         self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 
@@ -458,8 +468,9 @@ hqDefine("cloudcare/js/form_entry/entries", [
         var self = this;
         MultiSelectEntry.call(this, question, options);
         self.templateType = 'multidropdown';
-        self.placeholderText = gettext('Please choose an item');
-
+        if (!self.placeholderText.length) {
+            self.placeholderText = gettext('Please choose an item');
+        }
         self.afterRender = function () {
             select2ify(self, {});
         };
@@ -590,8 +601,9 @@ hqDefine("cloudcare/js/form_entry/entries", [
         var self = this;
         EntrySingleAnswer.call(this, question, options);
         self.templateType = 'dropdown';
-        self.placeholderText = gettext('Please choose an item');
-
+        if (!self.placeholderText.length) {
+            self.placeholderText = gettext('Please choose an item');
+        }
         self.options = ko.computed(function () {
             return [{text: "", id: undefined}].concat(_.map(question.choices(), function (choice, idx) {
                 return {
