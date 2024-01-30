@@ -23,7 +23,6 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
         self.hasSubmitError = ko.observable(false);
         self.hasSubjectError = ko.observable(false);
         self.hasEmailInputError = ko.observable(false);
-        self.hasOtherEmailInputError = ko.observable(false);
         self.hasRecipientsInputError = ko.observable(false);
 
         self.isRequestReportSubmitting = false;
@@ -43,7 +42,7 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
                 return false;
             }
 
-            const emailAddresses = self.otherEmailsText().replace(/ /g, "").split(",");
+            const emailAddresses = self.recipientEmailsText().replace(/ /g, "").split(",");
             for (const email of emailAddresses) {
                 if (email && !isValidEmail(email)) {
                     self.hasRecipientsInputError(true);
@@ -92,7 +91,6 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
             self.hasSubmitError(false);
             self.hasSubjectError(false);
             self.hasEmailInputError(false);
-            self.hasOtherEmailInputError(false);
             self.hasRecipientsInputError(false);
         }
 
