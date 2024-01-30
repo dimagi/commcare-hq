@@ -176,8 +176,11 @@ def deprecate_or_restore_case_type(request, domain, case_type_name):
 @requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 @require_permission(HqPermissions.edit_data_dict)
 def delete_case_type(request, domain, case_type_name):
-    case_type_obj = CaseType.objects.get(domain=domain, name=case_type_name)
-    case_type_obj.delete()
+    try:
+        case_type_obj = CaseType.objects.get(domain=domain, name=case_type_name)
+        case_type_obj.delete()
+    except CaseType.DoesNotExist:
+        return JsonResponse({'status': 'failed', 'message': 'Case type does not exist'})
     return JsonResponse({'status': 'success'})
 
 
