@@ -61,7 +61,7 @@ def _get_es_filtered_case_query(domain, case, case_filter_criteria=None):
     return query
 
 
-def find_duplicate_case_ids(
+def case_exists_in_es(
     domain,
     case,
     case_properties,
@@ -69,14 +69,48 @@ def find_duplicate_case_ids(
     match_type="ALL",
     case_filter_criteria=None
 ):
+    es = _get_es_filtered_case_query(domain, case, case_filter_criteria).size(1)
+
+    if not include_closed:
+        es = es.is_closed(False)
+
+    es, _ = add_case_properties_to_query(es, case, case_properties, match_type)
+
+    es = es.case_property_query('@case_id', case.case_id, queries.MUST)
+
+    return es.count() == 1
+
+
+def find_duplicate_case_ids(
+    domain,
+    case,
+    case_properties,
+    include_closed=False,
+    match_type="ALL",
+    case_filter_criteria=None,
+    limit=0
+):
     if case_filter_criteria is None:
         case_filter_criteria = []
 
     es = _get_es_filtered_case_query(domain, case, case_filter_criteria=case_filter_criteria)
 
+    if limit:
+        es = es.size(limit)
+
     if not include_closed:
         es = es.is_closed(False)
 
+    es, at_least_one_property_query = add_case_properties_to_query(es, case, case_properties, match_type)
+
+    if at_least_one_property_query:
+        # We need at least one property query otherwise this would return all the cases in the domain
+        return es.get_ids()
+    else:
+        return [case.case_id]
+
+
+def add_case_properties_to_query(es, case, case_properties, match_type):
     clause = queries.MUST if match_type == "ALL" else queries.SHOULD
     _case_json = None
 
@@ -101,11 +135,7 @@ def find_duplicate_case_ids(
             clause
         )
 
-    if at_least_one_property_query:
-        # We need at least one property query otherwise this would return all the cases in the domain
-        return es.get_ids()
-    else:
-        return [case.case_id]
+    return (es, at_least_one_property_query)
 
 
 def reset_and_backfill_deduplicate_rule(rule):
@@ -131,9 +161,11 @@ def reset_deduplicate_rule(rule):
     from corehq.apps.data_interfaces.models import (
         CaseDeduplicationActionDefinition,
         CaseDuplicate,
+        CaseDuplicateNew,
     )
     deduplicate_action = CaseDeduplicationActionDefinition.from_rule(rule)
     CaseDuplicate.objects.filter(action=deduplicate_action).delete()
+    CaseDuplicateNew.objects.filter(action=deduplicate_action).delete()
 
 
 def backfill_deduplicate_rule(domain, rule):
