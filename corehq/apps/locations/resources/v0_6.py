@@ -67,12 +67,6 @@ class LocationResource(v0_5.LocationResource):
 
     def _update(self, bundle, domain, is_new_location=False):
         data = bundle.data
-        # Invalid fields that might be common
-        if data.pop('location_type_name', False):
-            raise BadRequest(_('Location type name is not editable.'))
-        if data.pop('last_modified', False):
-            raise BadRequest(_('\"last_modified\" field is not editable.'))
-
         if 'parent_location_id' in data:
             parent = self._get_parent_location(data.pop('parent_location_id'))
             if not is_new_location and 'location_type_code' not in data:
@@ -103,7 +97,7 @@ class LocationResource(v0_5.LocationResource):
             bundle.obj.longitude = data.pop('longitude')
 
         if len(data):
-            raise BadRequest(_("Invalid fields were included in request."))
+            raise BadRequest(_(f"Invalid fields were included in request: {list(data.keys())}"))
 
         bundle.obj.save()
 
