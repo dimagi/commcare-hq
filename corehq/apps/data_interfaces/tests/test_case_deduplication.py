@@ -30,6 +30,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
+from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.form_processor.models import CommCareCase, XFormInstance
@@ -365,6 +366,43 @@ class FindingDuplicatesTest(TestCase):
         # other cases where that property is blank
         self.assertItemsEqual([cases[0].case_id],
                               find_duplicate_case_ids(self.domain, cases[0], ["name", "dob"], match_type="ANY"))
+
+    def test_find_duplicates_exclude_copied_cases(self):
+        """cases that were copied using copy cases feature should not be considered as duplicates
+        """
+        cases = [
+            self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
+                ("Padme Amidala", "1901-05-01"),
+                ("Padme Amidala", "1901-05-01"),
+                ("Padme Amidala", "1901-05-01"),
+                ("Anakin Skywalker", "1977-03-25"),
+                ("Darth Vadar", "1977-03-25"),
+            ]
+        ]
+
+        cases[2] = self.factory.update_case(
+            case_id=cases[2].case_id,
+            update={CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME: cases[0].case_id}
+        )
+
+        self._prime_es_index(cases)
+
+        self.assertCountEqual(
+            [cases[0].case_id, cases[1].case_id],
+            find_duplicate_case_ids(self.domain, cases[0], ["name", "dob"], match_type="ALL")
+        )
+
+        self.assertCountEqual(
+            [cases[0].case_id, cases[1].case_id, cases[2].case_id],
+            find_duplicate_case_ids(
+                self.domain, cases[0], ["name", "dob"], match_type="ALL", exclude_copied_cases=False
+            )
+        )
+
+        self.assertCountEqual(
+            [cases[3].case_id, cases[4].case_id],
+            find_duplicate_case_ids(self.domain, cases[3], ["name", "dob"], match_type="ANY")
+        )
 
 
 class CaseDeduplicationActionTest(TestCase):

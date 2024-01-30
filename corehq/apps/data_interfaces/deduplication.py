@@ -67,7 +67,8 @@ def find_duplicate_case_ids(
     case_properties,
     include_closed=False,
     match_type="ALL",
-    case_filter_criteria=None
+    case_filter_criteria=None,
+    exclude_copied_cases=True,
 ):
     if case_filter_criteria is None:
         case_filter_criteria = []
@@ -76,6 +77,10 @@ def find_duplicate_case_ids(
 
     if not include_closed:
         es = es.is_closed(False)
+
+    if exclude_copied_cases:
+        from corehq.apps.hqcase.case_helper import CaseCopier
+        es = es.case_property_missing(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME)
 
     clause = queries.MUST if match_type == "ALL" else queries.SHOULD
     _case_json = None
