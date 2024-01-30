@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
@@ -252,7 +251,7 @@ class TestSolutionsFeatureRequestView(TestCase):
         )
         cls.staff_web_user = WebUser.create(
             cls.domain,
-            'staff@example.com',
+            'staff@dimagi.com',
             password='123',
             created_by=None,
             created_via=None,
@@ -303,12 +302,12 @@ class TestSolutionsFeatureRequestView(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         test_mail = mail.outbox[0]
 
-        self.assertEqual(test_mail.to, [settings.INTERNAL_FEEDBACK_EMAIL])
+        self.assertEqual(test_mail.to, ['solutions-feedback@dimagi.com'])
         expected_subject = f"{payload['subject']} ({self.domain})"
         self.assertEqual(test_mail.subject, expected_subject)
         software_plan = Subscription.get_subscribed_plan_by_domain(self.domain)
         expected_body = (
-            "username: staff@example.com\n"
+            "username: staff@dimagi.com\n"
             + "full name: \n"
             + "domain: test-feature-request\n"
             + "url: www.features.com\n"

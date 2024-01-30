@@ -861,14 +861,18 @@ class BugReportView(View):
 class SolutionsFeatureRequestView(View):
     urlname = 'solutions_feature_request'
 
+    @property
+    def to_email_address(self):
+        return 'solutions-feedback@dimagi.com'
+
     def post(self, request, *args, **kwargs):
-        if not request.couch_user.is_staff:
+        if not settings.IS_DIMAGI_ENVIRONMENT or not request.couch_user.is_dimagi:
             return HttpResponse(status=400)
         email = _get_email_message_base(
             post_params=request.POST,
             couch_user=request.couch_user,
             uploaded_file=request.FILES.get('feature_request'),
-            to_email=settings.INTERNAL_FEEDBACK_EMAIL,
+            to_email=self.to_email_address,
         )
         email.send(fail_silently=False)
         return HttpResponse()
