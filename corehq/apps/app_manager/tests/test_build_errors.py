@@ -18,6 +18,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchLabel,
     CaseSearchProperty,
     DetailColumn,
+    DetailTab,
     FormLink,
     Module,
 )
@@ -132,7 +133,7 @@ class BuildErrorsTest(TestCase):
             self._clean_unique_id(errors)
             self.assertIn(cycle_error, errors)
 
-    def test_case_tile_configuration_errors(self, *args):
+    def test_case_tile_mapping_errors(self, *args):
         case_tile_error = {
             'type': "invalid tile configuration",
             'module': {'id': 0, 'name': {'en': 'View'}},
@@ -146,6 +147,83 @@ class BuildErrorsTest(TestCase):
             errors = app.validate_app()
             self._clean_unique_id(errors)
             self.assertIn(case_tile_error, errors)
+
+    def test_case_tile_case_detail(self, *args):
+        case_tile_error = {
+            'type': 'invalid tile configuration',
+            'module': {'id': 0, 'name': {'en': 'Add Song module'}},
+            'reason': 'Case tiles on the case detail must be manually configured.',
+        }
+        factory = AppFactory(build_version='2.51.0')
+        app = factory.app
+        module = factory.new_basic_module('Add Song', 'song', with_form=False)
+        module.case_details.long.case_tile_template = "one_3X_two_4X_one_2X"
+        module.case_details.long.columns.append(DetailColumn(
+            format='plain',
+            field='artist',
+            header={'en': 'Artist'},
+        ))
+
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertIn(case_tile_error, errors)
+
+        module.case_details.long.case_tile_template = "custom"
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertNotIn(case_tile_error, errors)
+
+    def test_case_tile_case_detail_tabs(self, *args):
+        case_tile_error = {
+            'type': 'invalid tile configuration',
+            'module': {'id': 0, 'name': {'en': 'Add Song module'}},
+            'reason': 'Each row of the tile may contain fields only from a single tab. '
+                      'Row #1 contains fields from multiple tabs.'
+        }
+        factory = AppFactory(build_version='2.51.0')
+        app = factory.app
+        module = factory.new_basic_module('Add Song', 'song', with_form=False)
+        module.case_details.long.case_tile_template = "custom"
+
+        # Start with a legitimate tab+column layout
+        module.case_details.long.tabs = [
+            DetailTab(starting_index=0),
+            DetailTab(starting_index=2),
+        ]
+        module.case_details.long.columns = []
+        module.case_details.long.columns.append(DetailColumn(
+            format='plain',
+            field='artist', header={'en': 'Artist'},
+            grid_x=0, grid_y=0, width=4, height=1,
+        ))
+        module.case_details.long.columns.append(DetailColumn(
+            format='plain',
+            field='name', header={'en': 'Name'},
+            grid_x=5, grid_y=0, width=4, height=1,
+        ))
+        module.case_details.long.columns.append(DetailColumn(
+            format='plain',
+            field='mood', header={'en': 'Mood'},
+            grid_x=0, grid_y=1, width=4, height=1,
+        ))
+        module.case_details.long.columns.append(DetailColumn(
+            format='plain',
+            field='energy', header={'en': 'Energy'},
+            grid_x=5, grid_y=1, width=4, height=1,
+        ))
+
+        module.case_details.long_case_tile_template = "custom"
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertNotIn(case_tile_error, errors)
+
+        # Move field from second tab into first row of tile
+        module.case_details.long.columns[2].grid_y = 0
+        module.case_details.long.columns[2].grid_x = 9
+
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertIn(case_tile_error, errors)
 
     def create_app_with_module(self):
         factory = AppFactory(build_version='2.51.0')
