@@ -2695,14 +2695,6 @@ DATA_DICTIONARY = FrozenPrivilegeToggle(
 )
 
 
-CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
-    slug='custom_domain_banners',
-    label='Allow projects to add banners for their users on HQ',
-    tag=TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Allow projects to add banners visible to their users on HQ on every login',
-)
-
 USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
     slug='use_logo_in_system_emails',
     label='Use the project\'s logo in emails sent from HQ',
