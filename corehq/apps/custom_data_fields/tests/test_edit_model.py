@@ -4,7 +4,11 @@ from django.views.generic import View
 from django.contrib.messages import get_messages
 from django.contrib.messages.storage import default_storage
 from django.test import TestCase, SimpleTestCase
-from corehq.apps.custom_data_fields.models import Field, CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+)
 from corehq.apps.custom_data_fields.edit_model import CustomDataFieldsForm, CustomDataModelMixin
 
 
@@ -196,3 +200,19 @@ class TestValidateIncomingFields(FieldsViewMixin, SimpleTestCase):
         self.assertEqual(len(errors), 1)
         self.assertEqual(errors[0], "Could not update 'two'. Synced data cannot be created this way")
 
+
+class TestCustomDataModelValidation(FieldsViewMixin, SimpleTestCase):
+
+    def test_error_in_data_fiels_does_not_cause_error_in_profiles(self):
+        view = FieldsView(
+            "test",
+            fields=[
+                self.create_field(slug='one', label='one'),
+                self.create_field(slug='two', label=''),
+            ],
+            profiles=[CustomDataFieldsProfile(name="OneProfile", fields={"one": "one"})],
+        )
+        self.assertDictEqual(
+            view.form.errors,
+            {"data_fields": ["A label is required for each field."]},
+        )
