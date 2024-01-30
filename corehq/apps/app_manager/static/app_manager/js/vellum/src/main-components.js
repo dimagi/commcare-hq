@@ -3232,7 +3232,7 @@ define("json/json!langCodes", function(){ return [
         "three": "wak"
     },
     {
-        "names": ["Walamo", "Wolaytta"],
+        "names": ["Wolaytta"],
         "two": "",
         "three": "wal"
     },
