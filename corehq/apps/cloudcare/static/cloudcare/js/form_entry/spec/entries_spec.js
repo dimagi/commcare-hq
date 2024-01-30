@@ -251,9 +251,13 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {
 
         it('Should return FreeTextEntry', function () {
             questionJSON.datatype = constants.STRING;
+            questionJSON.style.raw = 'hint-as-placeholder';
+            questionJSON.hint = 'this is a hint';
             var entry = formUI.Question(questionJSON).entry;
+            entry.setPlaceHolder(entry.useHintAsPlaceHolder());
             assert.isTrue(entry instanceof entries.FreeTextEntry);
             assert.equal(entry.templateType, 'text');
+            assert.equal(entry.placeholderText, 'this is a hint');
 
             entry.answer('harry');
             this.clock.tick(1000);
