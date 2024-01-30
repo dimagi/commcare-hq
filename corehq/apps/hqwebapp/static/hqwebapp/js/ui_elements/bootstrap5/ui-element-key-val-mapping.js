@@ -39,8 +39,8 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
         }
         return name.replace(/[^a-z0-9]/g, function (s) {
             var c = s.charCodeAt(0);
-            if (c === 32) return '-';
-            if (c >= 65 && c <= 90) return '_' + s.toLowerCase();
+            if (c === 32) { return '-'; }
+            if (c >= 65 && c <= 90) { return '_' + s.toLowerCase(); }
             return '__' + ('000' + c.toString(16)).slice(-4);
         });
     };
@@ -72,14 +72,14 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
         };
 
 
-        var app_manager = hqImport('app_manager/js/app_manager_media');
+        var appManager = hqImport('app_manager/js/app_manager_media');
         var uploaders = hqImport("app_manager/js/nav_menu_media_common");
         // attach a media-manager if item.value is a file-path to icon
         if (mappingContext.values_are_icons()) {
             var actualPath = item.value[mappingContext.lang];
             var altText = item.alt_text[mappingContext.lang];
             var defaultIconPath = actualPath || self.generateIconPath();
-            self.iconManager = app_manager.appMenuMediaManager({
+            self.iconManager = appManager.appMenuMediaManager({
                 ref: {
                     "path": actualPath,
                     "icon_type": "icon-picture",
@@ -101,19 +101,18 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
 
         self.value = ko.computed(function () {
             // ko.observable for item.value
-            var new_value = [];
+            var newValue = [];
             var langs = _.union(_(item.value).keys(), [mappingContext.lang]) ;
             _.each(langs, function (lang) {
                 // return ko reference to path in `iconManager` for current UI language value
                 if (mappingContext.values_are_icons() && lang === mappingContext.lang) {
-                    new_value.push([lang, self.iconManager.customPath]);
-                }
-                // return new ko.observable for other languages
-                else {
-                    new_value.push([lang, ko.observable(item.value[lang])]);
+                    newValue.push([lang, self.iconManager.customPath]);
+                } else {
+                    // return new ko.observable for other languages
+                    newValue.push([lang, ko.observable(item.value[lang])]);
                 }
             });
-            return _.object(new_value);
+            return _.object(newValue);
         });
 
         self.alt_text = ko.computed(function () {
@@ -188,16 +187,14 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
                     addButton: gettext('Add Image'),
                     badXML: gettext('Calculation contains an invalid character.'),
                 };
-            }
-            else if (self.keys_are_conditions()) {
+            } else if (self.keys_are_conditions()) {
                 return {
                     placeholder: gettext('Calculation'),
                     duplicated: gettext('Calculation is duplicated'),
                     addButton: gettext('Add Key, Value Mapping'),
                     badXML: gettext('Calculation contains an invalid character.'),
                 };
-            }
-            else {
+            } else {
                 return {
                     placeholder: gettext('Key'),
                     duplicated: gettext('Key is duplicated'),
@@ -227,30 +224,31 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
         };
         self.removeItem = function (item) {
             self.items.remove(item);
-            if (!self._isItemDuplicated(ko.utils.unwrapObservable(item.key)))
+            if (!self._isItemDuplicated(ko.utils.unwrapObservable(item.key))) {
                 self.duplicatedItems.remove(ko.utils.unwrapObservable(item.key));
+            }
         };
         self.addItem = function () {
-            var raw_item = {key: '', value: {}, alt_text: {}};
-            raw_item.value[self.lang] = '';
-            raw_item.alt_text[self.lang] = '';
+            var rawItem = {key: '', value: {}, alt_text: {}};
+            rawItem.value[self.lang] = '';
+            rawItem.alt_text[self.lang] = '';
 
-            var item = new MapItem(raw_item, self.items.length, self);
+            var item = new MapItem(rawItem, self.items.length, self);
             self.items.push(item);
             if (self.duplicatedItems.indexOf('') === -1 && self._isItemDuplicated('')) {
                 self.duplicatedItems.push('');
             }
         };
 
-        self._isItemDuplicated = function (key, max_counts) {
-            if (typeof(max_counts) === 'undefined') max_counts = 1;
+        self._isItemDuplicated = function (key, maxCounts) {
+            if (typeof(maxCounts) === 'undefined') { maxCounts = 1; }
             var items = self.getItems();
             var counter = 0;
             for (var i = 0; i < items.length; i++) {
                 var item = items[i];
                 if (ko.utils.unwrapObservable(item.key) === key) {
                     counter++;
-                    if (counter > max_counts) return true;
+                    if (counter > maxCounts) { return true; }
                 }
             }
             return false;
@@ -347,7 +345,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
             m.edit(edit);
         };
         var $div = $(document.createElement("div"));
-        $div.attr("data-bind", "template: \'key_value_mapping_template\'");
+        $div.attr("data-bind", "template: 'key_value_mapping_template'");
         $div.koApplyBindings(m);
         m.ui = $div;
         hqImport("hqwebapp/js/bootstrap5/main").eventize(m);
