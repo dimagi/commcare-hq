@@ -74,6 +74,11 @@ class SuiteCustomCaseTilesTest(SimpleTestCase, SuiteMixin):
                             </xpath>
                         </text>
                     </sort>
+                    <alt_text>
+                        <text>
+                            <xpath function="''"/>
+                        </text>
+                    </alt_text>
                 </field>
             </partial>
             """,
