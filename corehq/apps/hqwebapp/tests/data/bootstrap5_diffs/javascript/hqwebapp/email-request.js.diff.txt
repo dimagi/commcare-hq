@@ -24,7 +24,7 @@
 @@ -55,9 +58,9 @@
              }
  
-             if (!self.isRequestReportSubmitting && self.$submitBtn.text() === self.$submitBtn.data("success-text")) {
+             if (!self.isRequestReportSubmitting && self.isReportSent) {
 -                self.$element.modal('hide');
 +                self.reportModal.hide();
              } else if (!self.isRequestReportSubmitting) {
@@ -47,9 +47,9 @@
          };
  
 @@ -106,12 +109,12 @@
- 
          function hqwebappRequestReportSucccess() {
              self.isRequestReportSubmitting = false;
+             self.isReportSent = true;
 -            self.$submitBtn.button('success');
 +            self.$submitBtn.changeButtonState('success');
          }
