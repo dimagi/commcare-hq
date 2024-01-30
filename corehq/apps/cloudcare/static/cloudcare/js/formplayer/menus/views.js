@@ -1161,10 +1161,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        onBeforeDetach: function () {
-            CaseTileListView.__super__.onBeforeDetach.apply(this, arguments);
-            $('#content-container').removeClass('full-width');
-        },
     });
 
     const CaseTileGroupedListView = CaseTileListView.extend({
