@@ -147,6 +147,8 @@ class CaseTileHelper(object):
 
         DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
 
+        DetailContributor.add_select_text_to_detail(detail, self.app, self.detail_type, self.module)
+
         if self.module.has_grouped_tiles():
             detail.tile_group = TileGroup(
                 function=f"string(./index/{self.detail.case_tile_group.index_identifier})",

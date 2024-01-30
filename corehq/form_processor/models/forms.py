@@ -432,6 +432,9 @@ class XFormInstanceManager(RequireDBManager):
 
 class XFormOperationManager(RequireDBManager):
 
+    def get_by_natural_key(self, form_id, user_id, date):
+        return self.partitioned_query(form_id).get(form_id=form_id, user_id=user_id, date=date)
+
     def get_form_operations(self, form_id):
         return list(self.partitioned_query(form_id).filter(form_id=form_id).order_by('date'))
 
@@ -538,6 +541,13 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         return XFormOperation.objects.get_form_operations(self.__original_form_id)
 
     def natural_key(self):
+        """
+        Django requires returning a tuple in natural_key methods:
+        https://docs.djangoproject.com/en/3.2/topics/serialization/#serialization-of-natural-keys
+        We intentionally do not follow this to optimize corehq.apps.dump_reload.sql.load.SqlDataLoader when other
+        models reference CommCareCase or XFormInstance via a foreign key. This means our loader code may break in
+        future Django upgrades.
+        """
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
         return self.form_id

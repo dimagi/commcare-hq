@@ -109,6 +109,7 @@ pro_v1 = standard_v1 + [
     privileges.REGEX_FIELD_VALIDATION,
     privileges.EXPORT_OWNERSHIP,
     privileges.CASE_LIST_EXPLORER,
+    privileges.CASE_DEDUPE,
 ]
 
 

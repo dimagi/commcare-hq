@@ -689,16 +689,32 @@ curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
-### Step 8: Configure LESS CSS (2 Options)
+### Step 8: Configure CSS Precompilers (2 Options)
 
-#### Option 1: Let Client Side Javascript (less.js) handle it for you
+#### Requirements: Install Dart Sass
+
+At present, we are undergoing a migration from Bootstrap 3 to 5. Bootstrap 3 uses LESS
+as its CSS precompiler, and Bootstrap 5 using SASS / SCSS. You will need both installed.
+
+LESS is already taken care of by `package.json` when you run `yarn install`. In order to
+compile SASS, we need Dart Sass. There is a `sass` npm package that can be installed globally with
+`npm install -g sass`, however this installs the pure javascript version without a binary. For speed in a
+development environment, it is recommended to install `sass` with homebrew:
+
+```shell
+brew install sass/sass/sass
+```
+
+You can also view [alternative installation instructions](https://sass-lang.com/install/) if homebrew doesn't work for you.
+
+#### Option 1: Compile CSS on page-load without compression
 
 This is the setup most developers use. If you don't know which option to use,
 use this one. It's the simplest to set up and the least painful way to develop:
 just make sure your `localsettings.py` does not contain `COMPRESS_ENABLED` or
 `COMPRESS_OFFLINE` settings (or has them both set to `False`).
 
-The disadvantage is that this is a different setup than production, where LESS
+The disadvantage is that this is a different setup than production, where LESS/SASS
 files are compressed.
 
 #### Option 2: Compress OFFLINE, just like production
@@ -715,7 +731,7 @@ COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
 ```
 
-For all STATICFILES changes (primarily LESS and JavaScript), run:
+For all STATICFILES changes (primarily LESS, SASS, and JavaScript), run:
 
 ```sh
 ./manage.py collectstatic

@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
         queryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         Collection = hqImport("cloudcare/js/formplayer/menus/collections");
     var selectMenu = function (options) {
 
@@ -106,18 +106,14 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var queryResponse = menuResponse.queryResponse;
         var sidebarEnabled = !appPreview && menusUtils.isSidebarEnabled(menuResponse);
-        if (sidebarEnabled && menuResponse.type === constants.QUERY) {
-            var menuData = menusUtils.getMenuData(menuResponse);
-            menuData["triggerEmptyCaseList"] = true;
-            menuData["sidebarEnabled"] = true;
-            menuData["description"] = menuResponse.description;
-
-            var caseListView = menusUtils.getCaseListView(menuResponse);
-            FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
-        } else if (menuListView) {
+        if (menuListView && !sidebarEnabled) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
+        }
+        if (sidebarEnabled) {
+            showSplitScreenQuery(menuResponse, menuListView);
+        } else {
+            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
         if (menuResponse.persistentCaseTile && !appPreview) {
             showPersistentCaseTile(menuResponse.persistentCaseTile);
@@ -125,41 +121,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
         }
 
-        if (sidebarEnabled && menuResponse.type === constants.ENTITIES && queryResponse)  {
-            var queryCollection = new Collection(queryResponse.displays);
-            FormplayerFrontend.regions.getRegion('sidebar').show(
-                queryView.queryListView({
-                    collection: queryCollection,
-                    title: menuResponse.title,
-                    description: menuResponse.description,
-                    hasDynamicSearch: queryResponse.dynamicSearch,
-                    sidebarEnabled: true,
-                    disableDynamicSearch: !sessionStorage.submitPerformed,
-                    groupHeaders: queryResponse.groupHeaders,
-                }).render()
-            );
-        } else if (sidebarEnabled && menuResponse.type === constants.QUERY) {
-            FormplayerFrontend.regions.getRegion('sidebar').show(
-                queryView.queryListView({
-                    collection: menuResponse,
-                    title: menuResponse.title,
-                    description: menuResponse.description,
-                    hasDynamicSearch: menuResponse.dynamicSearch,
-                    sidebarEnabled: true,
-                    disableDynamicSearch: true,
-                    groupHeaders: menuResponse.groupHeaders,
-                }).render()
-            );
-        } else {
-            FormplayerFrontend.regions.getRegion('sidebar').empty();
-        }
-
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
             if (!appPreview) {
                 let isFormEntry = !menuResponse.queryKey;
                 if (isFormEntry) {
-                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData('lang_code_name_mapping'));
+                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
                 }
                 if (menuResponse.type === constants.ENTITIES) {
                     menusUtils.showMenuDropdown();
@@ -170,6 +137,47 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
         if (menuResponse.appVersion) {
             FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
+        }
+    };
+
+    var showSplitScreenQuery = function (menuResponse, menuListView) {
+        var menuData = menusUtils.getMenuData(menuResponse);
+        var queryResponse = menuResponse.queryResponse;
+        if (menuResponse.type === constants.ENTITIES && queryResponse)  {
+            var queryCollection = new Collection(queryResponse.displays);
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                queryView.queryListView({
+                    collection: queryCollection,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    hasDynamicSearch: queryResponse.dynamicSearch,
+                    sidebarEnabled: true,
+                    disableDynamicSearch: !sessionStorage.submitPerformed,
+                    groupHeaders: queryResponse.groupHeaders,
+                    searchOnClear: queryResponse.searchOnClear,
+                }).render()
+            );
+            FormplayerFrontend.regions.getRegion('main').show(menuListView);
+        } else if (menuResponse.type === constants.QUERY) {
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                queryView.queryListView({
+                    collection: menuResponse,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    hasDynamicSearch: menuResponse.dynamicSearch,
+                    sidebarEnabled: true,
+                    disableDynamicSearch: true,
+                    groupHeaders: menuResponse.groupHeaders,
+                    searchOnClear: menuResponse.searchOnClear,
+                }).render()
+            );
+
+            menuData["triggerEmptyCaseList"] = true;
+            menuData["sidebarEnabled"] = true;
+            menuData["description"] = menuResponse.description;
+
+            var caseListView = menusUtils.getCaseListView(menuResponse);
+            FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
         }
     };
 
