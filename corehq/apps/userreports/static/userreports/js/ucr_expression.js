@@ -11,7 +11,7 @@ hqDefine("userreports/js/ucr_expression", [
     _,
     initialPageData,
     baseAce,
-    alertUser,
+    alertUser
 ) {
     let EditModel = function(data) {
         const mapping = {

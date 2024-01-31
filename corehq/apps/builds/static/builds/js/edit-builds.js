@@ -34,7 +34,7 @@ hqDefine('builds/js/edit-builds', [
 
         _.each(doc.menu, function (version) {
             self.versions.push(versionModel(
-                version.build.version, version.label,
+                version.build.version, version.label
             ));
         });
         _.each(doc.defaults, function (version_doc) {
