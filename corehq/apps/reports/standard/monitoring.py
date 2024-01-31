@@ -1817,9 +1817,6 @@ def _get_raw_user_link(user, url, filter_class, additional_params=None):
     - str: A string containing an HTML anchor tag (<a>) with the constructed URL and the user's display name.
     """
     user_link_template = '<a href="{link}?{params}">{username}</a>'
-    additional_param_string = ''
-    if additional_params:
-        additional_param_string = '&' + urlencode(additional_params)
     user_link = format_html(
         user_link_template,
         link=url,
