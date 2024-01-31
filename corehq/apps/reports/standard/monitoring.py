@@ -1819,10 +1819,7 @@ def _get_raw_user_link(user, url, filter_class, additional_params=None):
     user_link_template = '<a href="{link}?{params}">{username}</a>'
     additional_param_string = ''
     if additional_params:
-        if isinstance(additional_params, dict):
-            additional_param_string = '&' + urlencode(additional_params)
-        else:
-            raise ValueError("additional_params must be a dictionary")
+        additional_param_string = '&' + urlencode(additional_params)
     user_link = format_html(
         user_link_template,
         link=url,
