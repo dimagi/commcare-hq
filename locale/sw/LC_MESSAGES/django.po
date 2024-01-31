@@ -6231,6 +6231,17 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"              The case list in <a href=\"%(module_url)s\">%(module_name)s</"
+"a> uses both multi-select auto select and \"Clearing search terms resets "
+"search results\".\n"
+"              These two features are not compatible.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
 "                uses \"Display only forms\" and is also configured with\n"
 "                \"make search input available after search\". This workflow "
@@ -8648,6 +8659,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Include all related cases in search results"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Clearing search terms resets search results"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
@@ -11712,6 +11727,10 @@ msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 msgid "'match-all()' does not take any arguments"
+msgstr ""
+
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid "'match-none()' does not take any arguments"
 msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
@@ -17865,7 +17884,7 @@ msgid "Alert was removed!"
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-msgid "Alert not updated. Only 3 active alerts allowed."
+msgid "Alert not activated. Only 3 active alerts allowed."
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
@@ -19349,7 +19368,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export_new.html
-#: corehq/apps/ota/templates/ota/advanced_prime_restore_cache.html
 msgid "More info"
 msgstr ""
 
@@ -26673,20 +26691,6 @@ msgstr ""
 #: corehq/apps/oauth_integrations/views/google.py
 msgid ""
 "Something went wrong when trying to sign you in to Google. Please try again."
-msgstr ""
-
-#: corehq/apps/ota/forms.py
-msgid ""
-"For projects where mobile users manage a lot of cases (e.g. more than "
-"10,000), this tool can be used to temporarily speed up phone sync times. "
-"Once activated, it will ensure that the 'Sync with Server' functionality "
-"runs faster on the phone for 24 hours."
-msgstr ""
-
-#: corehq/apps/ota/templates/ota/advanced_prime_restore_cache.html
-msgid ""
-"Use this form to generate the restore response for users and cache the "
-"results for 24 hours."
 msgstr ""
 
 #: corehq/apps/ota/utils.py corehq/apps/users/tasks.py
@@ -35402,26 +35406,12 @@ msgid "Could not find organization with site code '%(site_code)s'"
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "Domain cannot be set to '{domain}'"
-msgstr ""
-
-#: corehq/apps/user_importer/importer.py
 msgid "Username must not contain blank spaces or special characters."
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
 msgid ""
 "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. "
-msgstr ""
-
-#: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "User with ID '{user_id}' not found"
-msgstr ""
-
-#: corehq/apps/user_importer/importer.py
-msgid "You can only set 'Is Account Confirmed' to 'False' on a new User."
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
@@ -35435,6 +35425,20 @@ msgstr ""
 msgid ""
 "The email has bounced for this user's invite. Please try again with a "
 "different username"
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
+#, python-brace-format
+msgid "Domain cannot be set to '{self.domain}'"
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
+#, python-brace-format
+msgid "User with ID '{user_id}' not found"
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
+msgid "You can only set 'Is Account Confirmed' to 'False' on a new User."
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
