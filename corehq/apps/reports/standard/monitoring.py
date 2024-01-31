@@ -965,10 +965,8 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     def get_raw_user_link(self, user):
         from corehq.apps.reports.standard.inspect import SubmitHistory
-        sub_time_param = {
-            CompletionOrSubmissionTimeFilter.slug:
-            CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain) or ''
-        }
+        value = CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain)
+        sub_time_param = {CompletionOrSubmissionTimeFilter.slug: value} if value else None
         return _get_raw_user_link(user, SubmitHistory.get_url(domain=self.domain),
                                   filter_class=EMWF, additional_params=sub_time_param)
 
