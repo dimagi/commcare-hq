@@ -42,12 +42,28 @@
     z-index: @zindex-formplayer-anchored-submit;
   }
 
+  // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
+  .row {
+      margin-left: 0px;
+      margin-right: 0px;
+    }
+
+  .question-container {
+    padding-left: @form-text-indent + 3px;
+    padding-right: @form-text-indent + 3px;
+  }
+
   .form-group {
-    padding-left: 25px;
-    padding-right: 20px;
+    margin-left: 0;
+    margin-right: 0;
     .caption.control-label {
       display: block;
     }
+  }
+
+  .group-body {
+    // to match panel
+    margin-bottom: 17px;
   }
 
   .gr.panel {
@@ -58,14 +74,37 @@
     border-radius: 0px;
   }
 
+  .col-sm-12:first-child,
+  .col-sm-11:first-child,
+  .col-sm-10:first-child,
+  .col-sm-9:first-child,
+  .col-sm-8:first-child,
+  .col-sm-7:first-child,
+  .col-sm-6:first-child,
+  .col-sm-5:first-child,
+  .col-sm-4:first-child,
+  .col-sm-3:first-child,
+  .col-sm-2:first-child,
+  .col-sm-1:first-child {
+      padding-left: 0;
+  }
+
+  .col-sm-12:last-child,
+  .col-sm-11:last-child,
+  .col-sm-10:last-child,
+  .col-sm-9:last-child,
+  .col-sm-8:last-child,
+  .col-sm-7:last-child,
+  .col-sm-6:last-child,
+  .col-sm-5:last-child,
+  .col-sm-4:last-child,
+  .col-sm-3:last-child,
+  .col-sm-2:last-child,
+  .col-sm-1:last-child {
+      padding-right: 0;
+  }
+
   .panel-body {
-    padding-left: 5px;
-    padding-right: 5px;
-    // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
-    .row {
-      margin-left: 0px;
-      margin-right: 0px;
-    }
     @media (max-width: @screen-xs-max) {
       padding-left: 0px;
       padding-right: 0px;
@@ -102,10 +141,6 @@
     .collapsible-icon-container {
       float: left;
       margin-right: 10px;
-    }
-
-    legend {
-      padding-left: @form-text-indent + 3px;
     }
   }
 
@@ -172,6 +207,27 @@
 
 }
 
+.case-tile-container {
+  background: transparent !important;
+  > div {
+    background: white;
+    margin-bottom: 20px;
+    display: grid;
+    container-type: inline-size;
+  }
+
+  #persistent-case-tile .persistent-sticky .webapp-markdown-output {
+    img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+
+    h1,h2,h3 {
+      margin-top: 0px
+    }
+  }
+}
+
 @media screen {
     .case-tile-container {
         position: sticky;
@@ -213,6 +269,15 @@
     color: #52616f !important;
     font-size: 14px;
   }
+
+  .case-tile-container {
+    > div {
+      margin-bottom: 0px;
+    }
+    > div:not(:empty) {
+      border-bottom: 1px dashed black;
+    }
+  }
 }
 
 .question-tile-row:has(div.q) {
@@ -222,8 +287,6 @@
 .question-tile-row {
   display: flex;
   align-items: top;
-  margin-left: 10px;
-  margin-right: 10px;
   * .form-group, * p, * .control-label {
     padding-top: 0px !important;
     padding-bottom: 0px !important;
