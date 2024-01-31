@@ -1,4 +1,4 @@
-hqDefine("export/spec/data/export_instances", function () {
+hqDefine("export/spec/data/export_instances", [], function () {
     return {
         basic: {
             "name": null,
