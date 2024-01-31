@@ -1031,11 +1031,11 @@ GEOCODER_AUTOLOAD_USER_LOCATION = StaticToggle(
 
 GEOCODER_USER_PROXIMITY = StaticToggle(
     "geocoder_user_proximity",
-    "USH: Adjust geo coder result to be more relevant to user and project.",
+    "USH: Adjust geocoder result to be more relevant to user and project.",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
-    This has two effects on getting geo coder search results:
+    This has two effects on getting geocoder search results:
     1. Based on the bounding box of the project default location all result falling outside of it
        will be filtered out when used in the case search.
     2. Proximity to the users location will be taken into account for the results order.
