@@ -1,4 +1,4 @@
-hqDefine('locations/spec/data/locations_data', function () {
+hqDefine('locations/spec/data/locations_data', [], function () {
     return {
         linear: {
             state: {
