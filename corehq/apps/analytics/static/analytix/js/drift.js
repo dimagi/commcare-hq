@@ -12,7 +12,7 @@ hqDefine('analytix/js/drift', [
     initialAnalytics,
     logging,
     utils,
-    hubspot,
+    hubspot
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('drift'),
