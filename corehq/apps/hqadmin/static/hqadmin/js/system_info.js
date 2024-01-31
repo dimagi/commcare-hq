@@ -294,7 +294,7 @@ hqDefine('hqadmin/js/system_info', [
                     var err = 'Unknown server error';
                     try {
                         err = JSON.parse(jqxhr.responseText).error;
-                    } catch () {
+                    } catch (e) {
                         // do nothing
                     }
                     self.operationInProgress(false);
