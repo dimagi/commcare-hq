@@ -180,7 +180,7 @@ def delete_case_type(request, domain, case_type_name):
         case_type_obj = CaseType.objects.get(domain=domain, name=case_type_name)
         case_type_obj.delete()
     except CaseType.DoesNotExist:
-        return JsonResponse({'status': 'failed', 'message': 'Case type does not exist'})
+        return JsonResponse({'status': 'failed'})
     return JsonResponse({'status': 'success'})
 
 
