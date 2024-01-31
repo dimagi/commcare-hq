@@ -1,10 +1,21 @@
 /* eslint-env mocha */
-describe('ExportInstance model', function () {
-    const constants = hqImport('export/js/const'),
-        viewModels = hqImport('export/js/models'),
-        SampleExportInstances = hqImport('export/spec/data/export_instances');
+describe('ExportInstance model', [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'export/js/const',
+    'export/js/models',
+    'export/spec/data/export_instances',
+], function (
+    $,
+    _,
+    initialPageData,
+    constants,
+    viewModels,
+    SampleExportInstances
+) {
     var basicFormExport, savedFormExport;
-    hqImport('hqwebapp/js/initial_page_data').registerUrl(
+    initialPageData.registerUrl(
         "build_schema", "/a/---/data/export/build_full_schema/"
     );
     beforeEach(function () {
