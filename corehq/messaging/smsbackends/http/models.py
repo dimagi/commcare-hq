@@ -4,8 +4,8 @@ import sys
 from django.conf import settings
 
 import six
-from six.moves.urllib.parse import urlencode
-from six.moves.urllib.request import urlopen
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
 from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.sms.models import SQLSMSBackend
