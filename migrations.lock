@@ -339,6 +339,8 @@ data_interfaces
  0034_case_name_actions
  0035_add_case_duplicate_new
  0036_backfill_dedupe_match_values
+ 0037_remove_old_duplicate_table
+ 0038_rename_caseduplicatenew_caseduplicate
 dhis2
  0001_initial
  0002_auto_20170322_1323

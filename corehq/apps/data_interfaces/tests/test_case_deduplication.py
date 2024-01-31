@@ -20,7 +20,7 @@ from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
     CaseDeduplicationMatchTypeChoices,
-    CaseDuplicateNew,
+    CaseDuplicate,
     CaseRuleCriteria,
     LocationFilterDefinition,
     MatchPropertyDefinition,
@@ -570,7 +570,7 @@ class CaseDeduplicationActionTest(TestCase):
         self.rule.run_actions_when_case_matches(duplicates[0])
 
         # We only guarantee that the matching case and at least one other case will get inserted
-        resulting_case_ids = CaseDuplicateNew.objects.filter(
+        resulting_case_ids = CaseDuplicate.objects.filter(
             action=self.action).all().values_list('case_id', flat=True)
         self.assertIn(duplicates[0].case_id, resulting_case_ids)
         self.assertGreater(len(resulting_case_ids), 1)
@@ -579,21 +579,16 @@ class CaseDeduplicationActionTest(TestCase):
         duplicates, _ = self._create_cases(num_cases=1)
         self.case_exists_mock.return_value = False
 
-        # Remove these lines when the old model is removed
-        from corehq.apps.data_interfaces.models import CaseRuleActionResult
-        with patch.object(CaseDeduplicationActionDefinition, '_handle_case_duplicate') as handle_case_duplicate:
-            handle_case_duplicate.return_value = CaseRuleActionResult(num_updates=0)
-
-            with patch('corehq.apps.data_interfaces.models.resave_case') as resave_case_mock:
-                self.rule.run_actions_when_case_matches(duplicates[0])
-                resave_case_mock.assert_called()
+        with patch('corehq.apps.data_interfaces.models.resave_case') as resave_case_mock:
+            self.rule.run_actions_when_case_matches(duplicates[0])
+            resave_case_mock.assert_called()
 
     @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
     def test_case_no_longer_duplicate(self, find_duplicates_mock):
         """When the case is no longer a duplicate, it should be removed from the CaseDuplicate model
         """
         case = self._create_case(age=12)
-        CaseDuplicateNew.create(case, self.action)
+        CaseDuplicate.create(case, self.action)
 
         updated_case = self.factory.update_case(case.case_id, update={'age': 15})
 
@@ -602,7 +597,7 @@ class CaseDeduplicationActionTest(TestCase):
         self.rule.run_actions_when_case_matches(updated_case)
 
         self.assertEqual(
-            CaseDuplicateNew.objects.filter(action=self.action, case_id=case.case_id).count(), 0
+            CaseDuplicate.objects.filter(action=self.action, case_id=case.case_id).count(), 0
         )
 
     @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
@@ -623,7 +618,7 @@ class CaseDeduplicationActionTest(TestCase):
         duplicate_ids = [case.case_id for case in duplicates]
 
         self.assertEqual(
-            CaseDuplicateNew.objects.filter(action=self.action, case_id__in=duplicate_ids).count(), 0
+            CaseDuplicate.objects.filter(action=self.action, case_id__in=duplicate_ids).count(), 0
         )
 
     @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
@@ -637,7 +632,7 @@ class CaseDeduplicationActionTest(TestCase):
 
         # Running a second time shouldn't change the results
         self.rule.run_actions_when_case_matches(duplicates[0])
-        duplicate = CaseDuplicateNew.objects.get(action=self.action, case_id=duplicates[0].case_id)
+        duplicate = CaseDuplicate.objects.get(action=self.action, case_id=duplicates[0].case_id)
         self.assertEqual(duplicate.case_id, duplicates[0].case_id)
 
     @patch.object(CaseDeduplicationActionDefinition, '_update_cases')
@@ -684,13 +679,13 @@ class CaseDeduplicationActionTest(TestCase):
         """Test that deleting a rule will also delete case duplicates
         """
         duplicates, uniques = self._create_cases()
-        CaseDuplicateNew.objects.bulk_create([
-            CaseDuplicateNew(
+        CaseDuplicate.objects.bulk_create([
+            CaseDuplicate(
                 case_id=case.case_id, action=self.action, hash="abc"
             ) for case in duplicates])
 
         self.rule.soft_delete()
-        self.assertEqual(CaseDuplicateNew.objects.filter(action=self.action).count(), 0)
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 0)
 
     @flag_enabled('CASE_DEDUPE')
     def test_case_deletion(self):
@@ -699,9 +694,9 @@ class CaseDeduplicationActionTest(TestCase):
         duplicates, _ = self._create_cases()
         duplicate_case_ids = [c.case_id for c in duplicates]
         duplicate_entries = [
-            CaseDuplicateNew(case_id=case.case_id, action=self.action, hash='abc') for case in duplicates
+            CaseDuplicate(case_id=case.case_id, action=self.action, hash='abc') for case in duplicates
         ]
-        CaseDuplicateNew.objects.bulk_create(duplicate_entries)
+        CaseDuplicate.objects.bulk_create(duplicate_entries)
 
         # Delete all cases except the last one, which is now no longer a duplicate.
         tag_cases_as_deleted_and_remove_indices(
@@ -709,7 +704,7 @@ class CaseDeduplicationActionTest(TestCase):
         )
 
         # All CaseDuplicates should be deleted (including the last one)
-        self.assertEqual(CaseDuplicateNew.objects.filter(case_id__in=duplicate_case_ids).count(), 0)
+        self.assertEqual(CaseDuplicate.objects.filter(case_id__in=duplicate_case_ids).count(), 0)
 
     @es_test(requires=[case_search_adapter])
     def test_integration_test(self):
@@ -723,8 +718,8 @@ class CaseDeduplicationActionTest(TestCase):
         for i in range(len(duplicates)):
             self.rule.run_actions_when_case_matches(duplicates[i])
 
-        duplicate = CaseDuplicateNew.objects.get(action=self.action, case_id=duplicates[0].case_id)
-        results = set(CaseDuplicateNew.objects.filter(
+        duplicate = CaseDuplicate.objects.get(action=self.action, case_id=duplicates[0].case_id)
+        results = set(CaseDuplicate.objects.filter(
             action=self.action, hash=duplicate.hash).values_list('case_id', flat=True))
         duplicate_case_ids = {c.case_id for c in duplicates}
         self.assertSetEqual(results, duplicate_case_ids)
@@ -792,7 +787,7 @@ class DeduplicationPillowTest(TestCase):
         new_kafka_sec = get_topic_offset(topics.CASE_SQL)
         self.pillow.process_changes(since=self.kafka_offset, forever=False)
 
-        self.assertEqual(CaseDuplicateNew.objects.count(), 2)
+        self.assertEqual(CaseDuplicate.objects.count(), 2)
         self.assertEqual(CommCareCase.objects.get_case(case1.case_id, self.domain).get_case_property('age'), '5')
         self.assertEqual(CommCareCase.objects.get_case(case1.case_id, self.domain).name, 'Herman Miller')
 
@@ -822,8 +817,8 @@ class DeduplicationPillowTest(TestCase):
 
         self.pillow.process_changes(since=self.kafka_offset, forever=False)
 
-        hash = CaseDuplicateNew.case_and_action_to_hash(case, action)
-        results = CaseDuplicateNew.objects.filter(
+        hash = CaseDuplicate.case_and_action_to_hash(case, action)
+        results = CaseDuplicate.objects.filter(
             action=action, hash=hash).values_list('case_id', flat=True)
 
         self.assertSetEqual(set(results), {case.case_id, 'duplicate_case_id'})
@@ -840,8 +835,8 @@ class DeduplicationPillowTest(TestCase):
 
         self.pillow.process_changes(since=new_kafka_sec, forever=False)
 
-        hash = CaseDuplicateNew.case_and_action_to_hash(case, action)
-        results = CaseDuplicateNew.objects.filter(
+        hash = CaseDuplicate.case_and_action_to_hash(case, action)
+        results = CaseDuplicate.objects.filter(
             action=action, hash=hash).values_list('case_id', flat=True)
 
         self.assertSetEqual(set(results), {case.case_id, 'duplicate_case_id'})
@@ -1224,10 +1219,10 @@ class DeduplicationBackfillTest(TestCase):
         self._set_up_rule(include_closed=True)
 
         backfill_deduplicate_rule(self.domain, self.rule)
-        self.assertEqual(CaseDuplicateNew.objects.filter(action=self.action).count(), 3)
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 3)
 
     def test_finds_open_cases_only(self):
         self._set_up_rule(include_closed=False)
 
         backfill_deduplicate_rule(self.domain, self.rule)
-        self.assertEqual(CaseDuplicateNew.objects.filter(action=self.action).count(), 2)
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 2)

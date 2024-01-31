@@ -15,6 +15,11 @@ def reverse_func(apps, schema_editor):
 
 
 def process_records(batch_size=100, db_alias=None):
+    from corehq.apps.data_interfaces import models
+    if not hasattr(models, 'CaseDuplicateNew'):
+        # The model was previously migrated, so no work remains
+        return
+
     from corehq.form_processor.models.cases import CommCareCase
     from corehq.apps.data_interfaces.models import CaseDuplicate, CaseDuplicateNew
 

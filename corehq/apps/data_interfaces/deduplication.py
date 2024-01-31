@@ -161,11 +161,9 @@ def reset_deduplicate_rule(rule):
     from corehq.apps.data_interfaces.models import (
         CaseDeduplicationActionDefinition,
         CaseDuplicate,
-        CaseDuplicateNew,
     )
     deduplicate_action = CaseDeduplicationActionDefinition.from_rule(rule)
     CaseDuplicate.objects.filter(action=deduplicate_action).delete()
-    CaseDuplicateNew.objects.filter(action=deduplicate_action).delete()
 
 
 def backfill_deduplicate_rule(domain, rule):
