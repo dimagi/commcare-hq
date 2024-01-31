@@ -966,8 +966,12 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     def get_raw_user_link(self, user):
         from corehq.apps.reports.standard.inspect import SubmitHistory
+        sub_time_param = {
+            CompletionOrSubmissionTimeFilter.slug:
+            CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain) or ''
+        }
         return _get_raw_user_link(user, SubmitHistory.get_url(domain=self.domain),
-                                  filter_class=EMWF)
+                                  filter_class=EMWF, additional_params=sub_time_param)
 
     @property
     def template_context(self):
@@ -1800,16 +1804,32 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return rows
 
 
-def _get_raw_user_link(user, url, filter_class):
+def _get_raw_user_link(user, url, filter_class, additional_params=None):
     """
-    filter_class is expected to be either ExpandedMobileWorkerFilter or a
-    subclass of it, such as the CaseListFilter
+    Generates an HTML anchor tag (<a>) for a user link with additional query parameters.
+
+    Parameters:
+    - user (SimplifiedUserInfo object): The user for whom the link is being generated.
+    - url (str): The base URL to which filter parameters and any additional parameters will be appended.
+    - filter_class (class): A filter class expected to be either ExpandedMobileWorkerFilter or a subclass of it,
+    such as CaseListFilter.
+    - additional_params (dict, optional): An optional dictionary of additional query parameters to be appended to
+    the URL. Each key-value pair in the dictionary represents a parameter name and its value.
+
+    Returns:
+    - str: A string containing an HTML anchor tag (<a>) with the constructed URL and the user's display name.
     """
     user_link_template = '<a href="{link}?{params}">{username}</a>'
+    additional_param_string = ''
+    if additional_params:
+        if isinstance(additional_params, dict):
+            additional_param_string = '&' + urlencode(additional_params)
+        else:
+            raise ValueError("additional_params must be a dictionary")
     user_link = format_html(
         user_link_template,
         link=url,
-        params=urlencode(filter_class.for_user(user.user_id)),
+        params=urlencode(filter_class.for_user(user.user_id)) + additional_param_string,
         username=user.username_in_report,
     )
     return user_link
