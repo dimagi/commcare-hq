@@ -1823,7 +1823,7 @@ def _get_raw_user_link(user, url, filter_class, additional_params=None):
     user_link = format_html(
         user_link_template,
         link=url,
-        params=urlencode(filter_class.for_user(user.user_id)) + additional_param_string,
+        params=urlencode(filter_class.for_user(user.user_id) | (additional_params or {})),
         username=user.username_in_report,
     )
     return user_link
