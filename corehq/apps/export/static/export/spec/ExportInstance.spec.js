@@ -14,7 +14,7 @@ hqDefine("export/spec/ExportInstance.spec", [
     viewModels,
     SampleExportInstances
 ) {
-    describe('ExportInstance model', [
+    describe('ExportInstance model', function () {
         var basicFormExport, savedFormExport;
         initialPageData.registerUrl(
             "build_schema", "/a/---/data/export/build_full_schema/"
