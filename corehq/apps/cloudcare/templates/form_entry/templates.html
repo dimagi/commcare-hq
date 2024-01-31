@@ -8,7 +8,6 @@
           'gr-no-children': $data.children().length === 0,
           'gr-has-no-questions': $data.children().every(function(d) { return d.type() !== 'grouped-element-tile-row' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
-          'panel panel-default': collapsible,
           'repetition': isRepetition,
           'required-group': !showChildren() && childrenRequired(),
           'stripe-repeats': stripeRepeats,
@@ -16,7 +15,6 @@
         }">
     <fieldset class="gr-header" data-bind="
         css: {
-          'panel-heading': collapsible,
            clickable: collapsible
         },
         attr: collapsible ? {
@@ -31,9 +29,7 @@
               },
         click: toggleChildren,
         event: {keypress: keyPressAction},
-        style: {'background-color': headerBackgroundColor(),
-                'color': headerBackgroundColor() ? 'white' : '',
-        }">
+        ">
       <div data-bind="ifnot: collapsible">
         <legend>
           <span class="caption webapp-markdown-output"
@@ -46,18 +42,25 @@
                   "><i class="fa fa-remove"></i></button>
         </legend>
       </div>
-      <div data-bind="if: collapsible" style="display: flex">
-        <div class="collapsible-icon-container" style="align-self: center">
-          <i style="" class="fa" data-bind="
-              css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
-          "></i>
-        </div>
-        <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
-        <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
-        <button class="btn btn-danger del pull-right" href="#" data-bind="
-                    visible: isRepetition,
-                    click: deleteRepeat
-                "><i class="fa fa-remove"></i></button>
+      <div data-bind="if: collapsible" >
+        <div
+            style="display: flex"  data-bind="
+          style: {'background-color': headerBackgroundColor(),
+            'color': headerBackgroundColor() ? 'white' : '',
+            'margin': '0 23px 0 23px',
+        }">
+          <div class="collapsible-icon-container" style="align-self: center">
+            <i style="margin: 10px" class="fa" data-bind="
+                css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
+            "></i>
+          </div>
+          <span style="align-self: center" class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
+          <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
+          <button class="btn btn-danger del pull-right" href="#" data-bind="
+                      visible: isRepetition,
+                      click: deleteRepeat
+                  "><i class="fa fa-remove"></i></button>
+          </div>
       </div>
       <span class="ix"></span>
     </fieldset>
@@ -72,7 +75,6 @@
                 afterRender: focusNewRepeat,
               },
               css: {
-                'panel-body': collapsible,
                 'stripe-repeats': stripeRepeats,
               }"></div>
         </fieldset>
