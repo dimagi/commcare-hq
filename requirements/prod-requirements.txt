@@ -394,7 +394,7 @@ pickle5==0.0.11
     # via -r base-requirements.in
 pickleshare==0.7.5
     # via ipython
-pillow==10.0.1
+pillow==10.2.0
     # via
     #   -r base-requirements.in
     #   reportlab
@@ -690,7 +690,7 @@ zope-interface==6.1
 # The following packages are considered to be unsafe in a requirements file:
 pip==23.3
     # via -r prod-requirements.in
-setuptools==67.3.2
+setuptools==69.0.3
     # via
     #   django-websocket-redis
     #   gunicorn

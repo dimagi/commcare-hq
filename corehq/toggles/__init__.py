@@ -709,7 +709,7 @@ CASE_LIST_TILE = StaticToggle(
 
 CASE_LIST_TILE_CUSTOM = StaticToggle(
     'case_list_tile_custom',
-    'USH: Configure custom case list tile',
+    'USH: Configure custom case tile for case list and case detail',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
@@ -740,6 +740,18 @@ SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
     'Allow toggling the persistent case context tile',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
+)
+
+FORM_LINK_ADVANCED_MODE = StaticToggle(
+    'form_link_advanced_mode',
+    'USH: Form linking advanced mode',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Switches manual datum configuration for form linking to a UI where app "
+        "builders must specify the datum IDs to provide. Allows for linking to "
+        "more targets, but is way harder to use."
+    ),
 )
 
 CASE_LIST_LOOKUP = StaticToggle(
@@ -2698,7 +2710,7 @@ DATA_DICTIONARY = FrozenPrivilegeToggle(
 CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
     slug='custom_domain_banners',
     label='Allow projects to add banners for their users on HQ',
-    tag=TAG_CUSTOM,
+    tag=TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow projects to add banners visible to their users on HQ on every login',
 )

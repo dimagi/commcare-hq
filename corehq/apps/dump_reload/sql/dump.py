@@ -240,6 +240,20 @@ class SqlDataDumper(DataDumper):
     slug = 'sql'
 
     def dump(self, output_stream):
+        """
+        When serializing data using JsonLinesSerializer().serialize(...), the additional parameters are set for
+        the following reasons:
+
+        use_natural_primary_keys is necessary for sharded models to ensure the primary key, which will not be
+        unique across shards, is not used. This can be thought of as "use natural primary keys when defined".
+
+        use_natural_foreign_keys is necessary for foreign keys that reference primary keys on models that have a
+        natural_key method defined. This can be thought of as "use natural foreign keys when defined". For example,
+        SQLUserData has a foreign key to User based on the primary key. However a natural_key method is defined on
+        the User model, so its primary key will not be serialized when use_natural_primary_keys=True. To resolve,
+        we set use_natural_foreign_keys=True which will result in natural keys being serialized as part of the
+        foreign key field when referencing a model with natural_key defined.
+        """
         stats = Counter()
         objects = get_objects_to_dump(
             self.domain,
@@ -248,9 +262,10 @@ class SqlDataDumper(DataDumper):
             stats_counter=stats,
             stdout=self.stdout,
         )
+
         JsonLinesSerializer().serialize(
             objects,
-            use_natural_foreign_keys=False,
+            use_natural_foreign_keys=True,
             use_natural_primary_keys=True,
             stream=output_stream
         )
