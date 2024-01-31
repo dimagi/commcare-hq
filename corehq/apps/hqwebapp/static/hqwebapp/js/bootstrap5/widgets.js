@@ -107,17 +107,19 @@ hqDefine("hqwebapp/js/bootstrap5/widgets",[
             }
         });
 
-        // datepicker / tempus dominus
-        $('.date-picker').tempusDominus({
-            display: {
-                theme: 'light',
-                components: {
-                    clock: false,
+        _.each($(".date-picker"), function (input) {
+            // datepicker / tempus dominus
+            $(input).tempusDominus({
+                display: {
+                    theme: 'light',
+                    components: {
+                        clock: false,
+                    },
                 },
-            },
-            localization: {
-                format: 'yyyy-MM-dd',
-            },
+                localization: {
+                    format: 'yyyy-MM-dd',
+                },
+            });
         });
     };
 
