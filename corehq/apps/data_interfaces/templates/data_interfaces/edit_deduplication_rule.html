@@ -13,8 +13,10 @@
   {% initial_page_data 'match_type' match_type %}
   {% initial_page_data 'case_properties' case_properties %}
   {% initial_page_data 'include_closed' include_closed %}
-  {% initial_page_data 'properties_to_update' properties_to_update %}
-  <div id="case-dedupe-rule-definition">
+  {% if allow_actions %}
+    {% initial_page_data 'properties_to_update' properties_to_update %}
+  {% endif %}
+  <div class="ko-template" id="case-dedupe-rule-definition">
     {% if readonly %}
       <p class="help-block alert alert-info"><i class="fa fa-info-circle"></i>
         {% blocktrans %}
@@ -87,20 +89,22 @@
           {% crispy criteria_form %}
         </div>
       </div>
-      <fieldset {% if readonly %} disabled="disabled" {% endif %}>
-        <legend>{% trans "Actions" %}</legend>
-        <div data-bind="template: {name: 'update-case-property-action', foreach: propertiesToUpdate, as: 'propertyToUpdate'} "></div>
-        <div class="form-group">
-          <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
-            {% trans "Add Action" %}
-          </label>
-          <button class="btn btn-default" type="button" data-bind="click: addPropertyToUpdate">
-            <i class="fa fa-plus"></i>
-            {% trans "Add Update Case Property" %}
-          </button>
-          <input type="text" hidden name="properties_to_update" data-bind="value: serializedPropertiesToUpdate" />
-        </div>
-      </fieldset>
+      {% if allow_actions %}
+        <fieldset {% if readonly %} disabled="disabled" {% endif %}>
+          <legend>{% trans "Actions" %}</legend>
+          <div data-bind="template: {name: 'update-case-property-action', foreach: propertiesToUpdate, as: 'propertyToUpdate'} "></div>
+          <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
+              {% trans "Add Action" %}
+            </label>
+            <button class="btn btn-default" type="button" data-bind="click: addPropertyToUpdate">
+              <i class="fa fa-plus"></i>
+              {% trans "Add Update Case Property" %}
+            </button>
+            <input type="text" hidden name="properties_to_update" data-bind="value: serializedPropertiesToUpdate" />
+          </div>
+        </fieldset>
+      {% endif %}
       {% if not readonly %}
         <div class="form-actions">
           <div class="col-xs-1">
@@ -136,6 +140,7 @@
     </div>
   </script>
 
+  {% if allow_actions %}
   <script type="text/html" id="update-case-property-action">
     <div class="form-group">
       <button type="button" class="btn btn-danger" data-bind="click: $parent.removePropertyToUpdate">
@@ -168,5 +173,6 @@
       </div>
     </div>
   </script>
+  {% endif %}
 
 {% endblock %}

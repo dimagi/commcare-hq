@@ -1161,6 +1161,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             'all_case_properties': self.get_augmented_data_dict_props_by_case_type(self.domain),
             'case_types': sorted(list(get_case_types_for_domain(self.domain))),
             'criteria_form': self.case_filter_form,
+            'allow_actions': toggles.CASE_DEDUPE.enabled(self.domain),
         })
         return context
 
@@ -1250,11 +1251,13 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
                 if prop
             ],
             "include_closed": request.POST.get("include_closed") == "on",
-            "properties_to_update": [
+            "properties_to_update": [],
+        }
+        if toggles.CASE_DEDUPE.enabled(self.domain):
+            action_params["properties_to_update"] = [
                 {"name": prop["name"], "value_type": prop["valueType"], "value": prop["value"]}
                 for prop in json.loads(request.POST.get("properties_to_update"))
-            ],
-        }
+            ]
         return rule_params, action_params
 
     def validate_rule_params(self, domain, rule_params, rule=None):
@@ -1274,24 +1277,26 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         if len(set(case_properties)) != len(case_properties):
             errors.append(_("Matching case properties must be unique"))
 
-        update_properties = [prop['name'] for prop in action_params['properties_to_update']]
-        update_properties_set = set(update_properties)
-        reserved_properties = set(prop.replace("@", "") for prop in SPECIAL_CASE_PROPERTIES)
-        reserved_properties.add(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME)
+        if toggles.CASE_DEDUPE.enabled(self.domain):
+            update_properties = [prop['name'] for prop in action_params['properties_to_update']]
+            update_properties_set = set(update_properties)
+            reserved_properties = set(prop.replace("@", "") for prop in SPECIAL_CASE_PROPERTIES)
+            reserved_properties.add(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME)
 
-        reserved_properties_updated = (
-            reserved_properties & update_properties_set
-        )
-        if reserved_properties_updated:
-            errors.append(
-                _("You cannot update reserved property: {}").format(
-                    ",".join(reserved_properties_updated))
+            reserved_properties_updated = (
+                reserved_properties & update_properties_set
             )
-        if len(update_properties_set) != len(update_properties):
-            errors.append(_("Action case properties must be unique"))
+            if reserved_properties_updated:
+                errors.append(
+                    _("You cannot update reserved property: {}").format(
+                        ",".join(reserved_properties_updated))
+                )
+            if len(update_properties_set) != len(update_properties):
+                errors.append(_("Action case properties must be unique"))
 
-        if set(case_properties) & update_properties_set:
-            errors.append(_("You cannot update properties that are used to match a duplicate."))
+            if set(case_properties) & update_properties_set:
+                errors.append(_("You cannot update properties that are used to match a duplicate."))
+
         return errors
 
     def _create_rule(self, domain, name, case_type):
@@ -1345,13 +1350,15 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
             "match_type": self.dedupe_action.match_type,
             "case_properties": self.dedupe_action.case_properties,
             "include_closed": self.dedupe_action.include_closed,
-            "properties_to_update": [
-                {"name": prop["name"], "valueType": prop["value_type"], "value": prop["value"]}
-                for prop in self.dedupe_action.properties_to_update
-            ],
             "readonly": self.rule.locked_for_editing,
             "criteria_form": self.case_filter_form,
         })
+
+        if toggles.CASE_DEDUPE.enabled(self.domain):
+            context["properties_to_update"] = [
+                {"name": prop["name"], "valueType": prop["value_type"], "value": prop["value"]}
+                for prop in self.dedupe_action.properties_to_update
+            ]
 
         if self.rule.locked_for_editing:
             progress_helper = MessagingRuleProgressHelper(self.rule_id)
