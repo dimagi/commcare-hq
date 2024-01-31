@@ -1736,7 +1736,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for expression in self.base_query.all():
+        for expression in self.base_query[self.skip:self.skip + self.limit]:
             yield {
                 "itemData": self._item_data(expression),
                 "template": "base-ucr-statement-template",
