@@ -18,7 +18,7 @@ DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE = _(
 )
 FORM_NOT_FOUND_ERROR_MESSAGE = _(
     'Sorry! There was a problem trying to edit your report. '
-    'This likely occurred because form associated with this report was deleted from the application. '
+    'This likely occurred because the form associated with this report was deleted from the application. '
     'You can go back and view historical data submitted. However, you may not edit this report again. '
     'You also have the option of deleting this report by clicking the delete button below.'
 )
