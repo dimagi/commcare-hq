@@ -742,6 +742,18 @@ SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+FORM_LINK_ADVANCED_MODE = StaticToggle(
+    'form_link_advanced_mode',
+    'USH: Form linking advanced mode',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Switches manual datum configuration for form linking to a UI where app "
+        "builders must specify the datum IDs to provide. Allows for linking to "
+        "more targets, but is way harder to use."
+    ),
+)
+
 CASE_LIST_LOOKUP = StaticToggle(
     'case_list_lookup',
     'Allow external android callouts to search the case list',
