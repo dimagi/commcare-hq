@@ -1,4 +1,3 @@
-
 .webforms {
   max-width: 800px;
   font-family: sans-serif;
@@ -6,21 +5,23 @@
 
 #sync-container {
   padding-top: 9px;
-}
 
-#sync-container #sync-button {
-  margin-bottom: 3px;
-  margin-top: 3px;
+  #sync-button {
+    margin-bottom: 3px;
+    margin-top: 3px;
+  }
 }
 
 /* Override default nprogress bar color to match CommCareHQ */
-#nprogress .bar {
-  background: #4aba32;
-  height: 4px;
-}
+#nprogress {
+  .bar {
+    background: #4aba32;
+    height: 4px;
+  }
 
-#nprogress .peg {
-  box-shadow: 0 0 10px #004ebc, 0 0 5px #004ebc;
+  .peg {
+    box-shadow: 0 0 10px #004ebc, 0 0 5px #004ebc;
+  }
 }
 
 video {
@@ -37,6 +38,14 @@ video {
 
 .widget {
   margin-right: 20px;
+
+  button p {
+    margin-bottom: 0;
+  }
+}
+
+.dirty .widget {
+    background-color: lightblue;
 }
 
 .loading {
@@ -55,7 +64,6 @@ input:invalid {
   border-color: #b94a48;
 }
 
-
 .required .caption::before,
 .required-group .gr-header .caption::before {
   content: '*';
@@ -67,10 +75,6 @@ input:invalid {
 
 .caption {
   font-weight: normal;
-}
-
-.dirty .widget {
-    background-color: lightblue;
 }
 
 .map {

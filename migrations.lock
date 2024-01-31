@@ -109,6 +109,7 @@ accounting
  0087_invoice_unique_constraints
  0088_add_new_softwareplan_visibility
  0089_dedupe_priv
+ 0090_custom_domain_alerts_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
