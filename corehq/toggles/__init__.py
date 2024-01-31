@@ -709,7 +709,7 @@ CASE_LIST_TILE = StaticToggle(
 
 CASE_LIST_TILE_CUSTOM = StaticToggle(
     'case_list_tile_custom',
-    'USH: Configure custom case list tile',
+    'USH: Configure custom case tile for case list and case detail',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'

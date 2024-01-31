@@ -473,6 +473,34 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    const CaseTileViewUnclickable = CaseTileView.extend({
+        events: {},
+        className: "list-cell-wrapper-style panel panel-default",
+        rowClick: function () {},
+    });
+
+    const initCaseTileList = function (options) {
+        const numEntitiesPerRow = options.numEntitiesPerRow || 1;
+        const numRows = options.maxHeight;
+        const numColumns = options.maxWidth;
+        const useUniformUnits = options.useUniformUnits;
+
+        const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
+            numEntitiesPerRow, useUniformUnits, 'list');
+
+        const gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
+
+        $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
+        $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
+        // If we have multiple cases per line, need to generate the outer grid style as well
+        if (caseTileStyles.cellWrapperStyle && caseTileStyles.cellContainerStyle) {
+            $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle).data("css-polyfilled", false);
+            $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle).data("css-polyfilled", false);
+        }
+
+        $.getScript(gridPolyfillPath);
+    };
+
     const CaseTileGroupedView = CaseTileView.extend({
         tagName: "div",
         className: "formplayer-request list-cell-wrapper-style case-tile-group panel panel-default",
@@ -540,7 +568,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const PersistentCaseTileView = CaseTileView.extend({
-        className: "formplayer-request persistent-sticky",
+        className: function () {
+            return "persistent-sticky" + (this.options.hasInlineTile ? " formplayer-request" : "");
+        },
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
@@ -599,8 +629,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         initialize: function (options) {
-            const self = this;
-            var sidebarNoItemsText = gettext("Please perform a search.");
+            const self = this,
+                sidebarNoItemsText = gettext("Please perform a search.");
             self.styles = options.styles;
             self.hasNoItems = options.collection.length === 0 || options.triggerEmptyCaseList;
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
@@ -1086,26 +1116,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         initialize: function (options) {
             CaseTileListView.__super__.initialize.apply(this, arguments);
-
-            const numEntitiesPerRow = options.numEntitiesPerRow || 1;
-            const numRows = options.maxHeight;
-            const numColumns = options.maxWidth;
-            const useUniformUnits = options.useUniformUnits;
-
-            const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
-                numEntitiesPerRow, useUniformUnits, 'list');
-
-            const gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
-
-            $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
-            $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
-            // If we have multiple cases per line, need to generate the outer grid style as well
-            if (caseTileStyles.cellWrapperStyle && caseTileStyles.cellContainerStyle) {
-                $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle).data("css-polyfilled", false);
-                $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle).data("css-polyfilled", false);
-            }
-
-            $.getScript(gridPolyfillPath);
+            initCaseTileList(options);
 
             registerContinueListener(this, options);
         },
@@ -1212,6 +1223,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const CaseListDetailView = CaseListView.extend({
         template: _.template($("#case-view-list-detail-template").html() || ""),
         childView: CaseViewUnclickable,
+    });
+    const CaseTileDetailView = CaseListView.extend({
+        template: _.template($("#case-view-tile-detail-template").html() || ""),
+        childView: CaseTileViewUnclickable,
+
+        initialize: function (options) {
+            CaseTileDetailView.__super__.initialize.apply(this, arguments);
+            initCaseTileList(options);
+        },
+
+        childViewOptions: function () {
+            const dict = CaseTileDetailView.__super__.childViewOptions.apply(this, arguments);
+            dict.prefix = 'list';
+            return dict;
+        },
     });
 
     const BreadcrumbView = Marionette.View.extend({
@@ -1445,6 +1471,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         CaseListDetailView: function (options) {
             return new CaseListDetailView(options);
+        },
+        CaseTileDetailView: function (options) {
+            return new CaseTileDetailView(options);
         },
         CaseListView: function (options) {
             return new CaseListView(options);
