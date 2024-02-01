@@ -79,7 +79,11 @@
                 method="post"
                 action="{% url "bulk_sms_verification" domain group.get_id %}">
             {% csrf_token %}
-            <button id="submit-verification" type="submit" class="btn btn-default">
+            <button id="submit-verification"
+                    type="submit"
+                    data-html="true"
+                    data-title="<div class='alert alert-warning'><i class='fa fa-exclamation-triangle'></i> <strong>{% trans 'SMS charges will incur.' %}</strong></div>{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
+                    class="btn btn-default verify-button">
               <i class="fa fa-signal"></i> {% trans 'Verify Phone Numbers' %}
             </button>
             <span class="hq-help-template"
