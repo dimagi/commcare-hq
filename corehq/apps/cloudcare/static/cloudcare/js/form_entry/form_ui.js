@@ -595,7 +595,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
 
         // Header and captions
-        self.needsHeader = oneQuestionPerScreen || self.isRepetition || self.caption() || ko.utils.unwrapObservable(self.caption_markdown);
+        self.needsHeader = oneQuestionPerScreen || self.isRepetition || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown);
         if (self.needsHeader && !oneQuestionPerScreen && self.isRepetition) {
             self.caption(null);
             self.hideCaption = true;
