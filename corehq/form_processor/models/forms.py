@@ -432,9 +432,6 @@ class XFormInstanceManager(RequireDBManager):
 
 class XFormOperationManager(RequireDBManager):
 
-    def get_by_natural_key(self, form_id, user_id, date):
-        return self.partitioned_query(form_id).get(form_id=form_id, user_id=user_id, date=date)
-
     def get_form_operations(self, form_id):
         return list(self.partitioned_query(form_id).filter(form_id=form_id).order_by('date'))
 
@@ -790,7 +787,7 @@ class XFormOperation(PartitionedModel, SaveStateMixin, models.Model):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.form, self.user_id, self.date
+        return self.form_id, self.user_id, self.date
 
     @property
     def user(self):

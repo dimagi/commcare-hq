@@ -175,6 +175,7 @@ def load_data_for_db(db_alias):
                     # save over it and rather error out.
                     obj.save(using=db_alias, force_insert=True)
                 except DatabaseError as err:
+                    print(err)
                     logger.exception("Error saving data")
                     m = Model._meta
                     key = f"pk={obj.object.pk}"
