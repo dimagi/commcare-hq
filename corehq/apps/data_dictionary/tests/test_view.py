@@ -372,7 +372,7 @@ class DataDictionaryJsonTest(TestCase):
                 {
                     "name": "caseType",
                     "fhir_resource_type": None,
-                    "contains_case_data": False,
+                    "is_safe_to_delete": True,
                     "groups": [
                         {
                             "id": self.case_prop_group.id,
@@ -386,7 +386,7 @@ class DataDictionaryJsonTest(TestCase):
                                     "fhir_resource_prop_path": None,
                                     "name": "property",
                                     "deprecated": False,
-                                    "contains_case_data": False,
+                                    "is_safe_to_delete": True,
                                     "allowed_values": {},
                                     "data_type": "number",
                                 },
@@ -406,7 +406,7 @@ class DataDictionaryJsonTest(TestCase):
                 {
                     "name": "depCaseType",
                     "fhir_resource_type": None,
-                    "contains_case_data": False,
+                    "is_safe_to_delete": True,
                     "groups": [
                         {
                             "name": '',

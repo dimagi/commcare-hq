@@ -87,7 +87,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
             "is_deprecated": case_type.is_deprecated,
             "module_count": module_count,
             "properties": [],
-            "contains_case_data": len(used_props) > 0,
+            "is_safe_to_delete": len(used_props) == 0,
         }
         grouped_properties = {
             group: [
@@ -99,7 +99,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                     ),
                     'name': prop.name,
                     'deprecated': prop.deprecated,
-                    'contains_case_data': prop.name in used_props,
+                    'is_safe_to_delete': prop.name not in used_props,
                 }
                 | (
                     {
