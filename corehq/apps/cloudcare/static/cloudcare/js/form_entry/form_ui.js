@@ -594,10 +594,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         let parentForm = getParentForm(self);
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
 
-        if (!oneQuestionPerScreen && self.isRepetition) {
+        // Header and captions
+        self.needsHeader = oneQuestionPerScreen || self.isRepetition || self.caption() || ko.utils.unwrapObservable(self.caption_markdown);
+        if (self.needsHeader && !oneQuestionPerScreen && self.isRepetition) {
             self.caption(null);
             self.hideCaption = true;
         }
+
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
