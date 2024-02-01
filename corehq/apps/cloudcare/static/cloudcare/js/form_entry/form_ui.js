@@ -139,8 +139,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
     function isStyleNPerRowRepeat(styleStr) {
         const pattern = new RegExp(`\\d+${constants.PER_ROW_REPEAT}(\\s|$)`);
-        const matchingStyles = getMatchingStyles(pattern, styleStr);
-        return matchingStyles.length > 0;
+        return getMatchingStyles(pattern, styleStr).length > 0;
     }
 
     function getNPerRowStyleFromRepeatStyle(style) {
