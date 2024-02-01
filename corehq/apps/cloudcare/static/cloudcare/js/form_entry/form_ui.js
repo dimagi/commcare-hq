@@ -143,9 +143,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     }
 
     function getNPerRowStyleFromRepeatStyle(style) {
-        var parts = style.split('-');
-        var integerPart = parts[0];
-        return integerPart + '-per-row';
+        const allStyles = style.split(" ");
+        const nPerRowStyle = allStyles.find(singleStyle => isStyleNPerRowRepeat(singleStyle));
+        if (nPerRowStyle) {
+            const integerPart = nPerRowStyle.split('-')[0];
+            return integerPart + '-per-row';
+        }
     }
 
     function isNPerRowRepeatElement(element) {
