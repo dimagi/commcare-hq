@@ -338,7 +338,7 @@
             {% if not request.is_view_only %}
               <div class="row-item-small">
                 <button title="{% trans_html_attr 'Delete Property' %}"
-                        data-bind="click: confirmDeleteProperty, visible: isSafeToDelete && !isGeoCaseProp()"
+                        data-bind="click: confirmDeleteProperty, visible: isSafeToDelete"
                         class="fa fa-trash"></button>
               </div>
               <div class="row-item-small">
