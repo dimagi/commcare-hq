@@ -31,6 +31,13 @@ class TestGeoConfig(TestCase):
             self.assertEqual(config.plaintext_api_token, None)
             self.assertEqual(config.api_token, None)
 
+    def test_geo_config_api_token_cannot_be_empty(self):
+        with self.assertRaises(Exception) as context:
+            with self.get_geo_config() as config:
+                config.plaintext_api_token = ""
+
+        self.assertEqual(str(context.exception), "Unexpected value set for plaintext api token")
+
     @contextmanager
     def get_geo_config(self):
         conf = GeoConfig(
