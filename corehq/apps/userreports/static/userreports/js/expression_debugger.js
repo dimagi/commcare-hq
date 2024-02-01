@@ -21,7 +21,7 @@ hqDefine('userreports/js/expression_debugger', function () {
             ucrExpressionId: initial_page_data('ucr_expression_id'),
         };
         $('#expression-debugger').koApplyBindings(
-            expressionModel(expressionEditor, docEditor, submitUrl, initialData),
+            expressionModel(expressionEditor, docEditor, submitUrl, initialData)
         );
     });
 });
