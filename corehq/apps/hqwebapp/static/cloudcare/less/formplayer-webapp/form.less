@@ -47,12 +47,28 @@
     z-index: @zindex-formplayer-anchored-submit;
   }
 
+  // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
+  .row {
+      margin-left: 0px;
+      margin-right: 0px;
+    }
+
+  .question-container {
+    padding-left: @form-text-indent + 3px;
+    padding-right: @form-text-indent + 3px;
+  }
+
   .form-group {
-    padding-left: 25px;
-    padding-right: 20px;
+    margin-left: 0;
+    margin-right: 0;
     .caption.control-label {
       display: block;
     }
+  }
+
+  .group-body {
+    // to match panel
+    margin-bottom: 17px;
   }
 
   .gr.panel {
@@ -63,14 +79,39 @@
     border-radius: 0px;
   }
 
+  // line up fields with group headers. All columns use padding for spacing in between them.
+  // It is not needed/wanted at the sides
+  .col-sm-12:first-child,
+  .col-sm-11:first-child,
+  .col-sm-10:first-child,
+  .col-sm-9:first-child,
+  .col-sm-8:first-child,
+  .col-sm-7:first-child,
+  .col-sm-6:first-child,
+  .col-sm-5:first-child,
+  .col-sm-4:first-child,
+  .col-sm-3:first-child,
+  .col-sm-2:first-child,
+  .col-sm-1:first-child {
+      padding-left: 0;
+  }
+
+  .col-sm-12:last-child,
+  .col-sm-11:last-child,
+  .col-sm-10:last-child,
+  .col-sm-9:last-child,
+  .col-sm-8:last-child,
+  .col-sm-7:last-child,
+  .col-sm-6:last-child,
+  .col-sm-5:last-child,
+  .col-sm-4:last-child,
+  .col-sm-3:last-child,
+  .col-sm-2:last-child,
+  .col-sm-1:last-child {
+      padding-right: 0;
+  }
+
   .panel-body {
-    padding-left: 5px;
-    padding-right: 5px;
-    // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
-    .row {
-      margin-left: 0px;
-      margin-right: 0px;
-    }
     @media (max-width: @screen-xs-max) {
       padding-left: 0px;
       padding-right: 0px;
@@ -107,10 +148,6 @@
     .collapsible-icon-container {
       float: left;
       margin-right: 10px;
-    }
-
-    legend {
-      padding-left: @form-text-indent + 3px;
     }
   }
 
@@ -257,8 +294,6 @@
 .question-tile-row {
   display: flex;
   align-items: top;
-  margin-left: 10px;
-  margin-right: 10px;
   * .form-group, * p, * .control-label {
     padding-top: 0px !important;
     padding-bottom: 0px !important;
