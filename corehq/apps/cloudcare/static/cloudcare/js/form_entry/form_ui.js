@@ -338,13 +338,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
 
         for (let child of json.children) {
-            if (isNPerRowRepeatElement(child)) {
-                for (let groupChild of child.children) {
-                    if (groupChild.type === constants.GROUP_TYPE) {
-                        groupChild.style.raw = getNPerRowStyleFromRepeatStyle(child.style.raw);
-                    }
-                }
-            }
             if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE) {
                 const elementTileWidth = GroupedElementTileRow.calculateElementWidth(child.style);
                 usedWidth += elementTileWidth;
@@ -353,6 +346,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     usedWidth += elementTileWidth;
                 }
                 if (child.type === constants.GROUP_TYPE) {
+                    if (isNPerRowRepeatElement(child)) {
+                        for (let groupChild of child.children) {
+                            if (groupChild.type === constants.GROUP_TYPE) {
+                                groupChild.style.raw = getNPerRowStyleFromRepeatStyle(child.style.raw);
+                            }
+                        }
+                    }
                     child = Container.groupElements(child);
                 }
                 addToCurrentGroup(child);
