@@ -236,10 +236,9 @@
           'text-center': stylesContains('text-align-center'),
           'text-right': stylesContains('text-align-right'),
         }">
-        <span class="webapp-markdown-output" tabindex="0"
-              data-bind="
-                html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
-                css: {'col-md-11' : help()}"></span>
+        <span class="webapp-markdown-output" data-bind="
+            html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+            css: {'col-md-11' : help()}"></span>
         <!-- ko if: help() -->
         <a
           class="help-text-trigger col-md-1"
@@ -251,7 +250,7 @@
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-body">
-                <p class="webapp-markdown-output" tabindex="0" align="left" data-bind="html: help"></p>
+                <p class="webapp-markdown-output" align="left" data-bind="html: help"></p>
                 <div class="widget-multimedia" data-bind="
                     template: {
                       name: 'widget-help-multimedia-ko-template',
@@ -310,11 +309,10 @@
         'text-right': stylesContains('text-align-right'),
       }">
       <span class="ix" data-bind="text: ixInfo($data)">></span>
-      <span class="caption webapp-markdown-output"
-            data-bind="
-              html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
-              attr: {'for': entry.entryId}"
-            tabindex="0">
+      <span class="caption webapp-markdown-output" data-bind="
+          html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+          attr: {'for': entry.entryId}"
+          ">
       </span>
       <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
@@ -355,7 +353,7 @@
         'background-color': headerBackgroundColor(),
         'color': headerBackgroundColor() ? 'white' : '',
       }">
-      <h3 class="caption" data-bind="html: header" tabindex="0"></h3>
+      <h3 class="caption" data-bind="html: header"></h3>
       <span class="ix" data-bind="text: ixInfo($data)"></span>
     </div>
     <div class="panel-body">
