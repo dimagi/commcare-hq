@@ -65,34 +65,44 @@ hqDefine('toggle_ui/js/edit-flag', [
         };
 
         self.change = function () {
-            self.saveButton.fire('change');
+            self.saveButtonTop.fire('change');
+            self.saveButtonBottom.fire('change');
         };
 
-        self.saveButton = hqMain.initSaveButton({
-            unsavedMessage: "You have unsaved changes",
-            save: function () {
-                var items = _.map(_.filter(self.items(), function (item) {
-                    return item.value();
-                }), function (item) {
-                    var ns_raw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), ''),
-                        namespace = ns_raw === 'user' ? null : ns_raw,
-                        value = namespace === null ? item.value() : namespace + ':' + item.value();
-                    return value;
-                });
-                self.saveButton.ajax({
-                    type: 'post',
-                    url: initialPageData.reverse('edit_toggle') + location.search,
-                    data: {
-                        item_list: JSON.stringify(items),
-                        randomness: self.randomness(),
-                    },
-                    dataType: 'json',
-                    success: function (data) {
-                        self.init_items(data);
-                    },
-                });
-            },
-        });
+        self.createSaveButton = function() {
+            return hqMain.initSaveButton ({
+                unsavedMessage: "You have unsaved changes",
+                save: function () {
+                    var items = _.map(_.filter(self.items(), function (item) {
+                        return item.value();
+                    }), function (item) {
+                        var ns_raw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), ''),
+                            namespace = ns_raw === 'user' ? null : ns_raw,
+                            value = namespace === null ? item.value() : namespace + ':' + item.value();
+                        return value;
+                    });
+                    self.saveButtonTop.ajax({
+                        type: 'post',
+                        url: initialPageData.reverse('edit_toggle') + location.search,
+                        data: {
+                            item_list: JSON.stringify(items),
+                            randomness: self.randomness(),
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            self.init_items(data);
+                            self.saveButtonBottom.ajax({
+                                success: function () {}
+                            });
+                        },
+                    });
+
+                },
+            })
+        };
+
+        self.saveButtonTop = self.createSaveButton();
+        self.saveButtonBottom = self.createSaveButton();
 
         var projectInfoUrl = '<a href="' + initialPageData.reverse('domain_internal_settings') + '">domain</a>';
         self.getNamespaceHtml = function (namespace, value) {
