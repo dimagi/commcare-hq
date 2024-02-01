@@ -14,6 +14,8 @@ from custom.abdm.fhir.clinical_artifacts import (
     validate_mandatory_case_types_for_artifact,
 )
 
+UUID_URN_PREFIX = "urn:uuid:"
+
 
 def fhir_resources_configured_for_domain(domain):
     return list(
@@ -65,7 +67,7 @@ class ABDMDocumentBundleGenerator:
     def generate_reference_from_resource(resource):
         return {
             "type": resource["resourceType"],
-            "reference": f"{resource['resourceType']}/{resource['id']}"
+            "reference": f"{UUID_URN_PREFIX}{resource['id']}"
         }
 
     def _get_subject_resource(self):
@@ -116,13 +118,13 @@ class ABDMDocumentBundleGenerator:
     def generate_bundle_entries(self, composition):
         entries = [{
             "resource": composition,
-            "fullUrl": f"{composition['resourceType']}/{composition['id']}"
+            "fullUrl": f"{UUID_URN_PREFIX}{composition['id']}"
         }]
         for resource_type in self.clinical_artifact.BUNDLE_ENTRIES:
             for resource in self.fhir_entries.get(resource_type, []):
                 entries.append({
                     "resource": resource,
-                    "fullUrl": f"{resource_type}/{resource['id']}"
+                    "fullUrl": f"{UUID_URN_PREFIX}{resource['id']}"
                 })
         return entries
 

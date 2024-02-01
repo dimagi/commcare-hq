@@ -23,7 +23,10 @@ from custom.abdm.fhir.clinical_artifacts import (
     FHIRMissingCasesError,
     PrescriptionRecord,
 )
-from custom.abdm.fhir.document_bundle import fhir_health_data_from_hq
+from custom.abdm.fhir.document_bundle import (
+    UUID_URN_PREFIX,
+    fhir_health_data_from_hq,
+)
 
 
 @dataclass()
@@ -202,7 +205,7 @@ class TestFHIRHealthDataFromHQ(TestCase):
                 "id": patient_case.case_id,
                 "resourceType": "Patient"
             },
-            "fullUrl": f"Patient/{patient_case.case_id}"
+            "fullUrl": f"{UUID_URN_PREFIX}{patient_case.case_id}"
         }
         patient_entry = self._get_entry_by_resource_type(result[0]["entry"], "Patient")
         self.assertEqual(patient_entry, expected_patient_entry)
@@ -214,7 +217,7 @@ class TestFHIRHealthDataFromHQ(TestCase):
                 "id": practitioner_case.case_id,
                 "resourceType": "Practitioner"
             },
-            "fullUrl": f"Practitioner/{practitioner_case.case_id}"
+            "fullUrl": f"{UUID_URN_PREFIX}{practitioner_case.case_id}"
         }
         practitioner_entry = self._get_entry_by_resource_type(result[0]["entry"], "Practitioner")
         self.assertEqual(practitioner_entry, expected_practitioner_entry)
@@ -229,7 +232,7 @@ class TestFHIRHealthDataFromHQ(TestCase):
                 "id": medication_request_case.case_id,
                 "resourceType": "MedicationRequest"
             },
-            "fullUrl": f"MedicationRequest/{medication_request_case.case_id}"
+            "fullUrl": f"{UUID_URN_PREFIX}{medication_request_case.case_id}"
         }
         medication_request_entry = self._get_entry_by_resource_type(result[0]["entry"], "MedicationRequest")
         self.assertEqual(medication_request_entry, expected_medication_request_entry)
@@ -242,12 +245,12 @@ class TestFHIRHealthDataFromHQ(TestCase):
                 "status": "final",
                 "subject": {
                     "type": "Patient",
-                    "reference": f"Patient/{patient_case.case_id}"
+                    "reference": f"{UUID_URN_PREFIX}{patient_case.case_id}"
                 },
                 "author": [
                     {
                         "type": "Practitioner",
-                        "reference": f"Practitioner/{practitioner_case.case_id}"
+                        "reference": f"{UUID_URN_PREFIX}{practitioner_case.case_id}"
                     }
                 ],
                 "type": {
@@ -263,13 +266,13 @@ class TestFHIRHealthDataFromHQ(TestCase):
                         "entry": [
                             {
                                 "type": "MedicationRequest",
-                                "reference": f"MedicationRequest/{medication_request_case.case_id}"
+                                "reference": f"{UUID_URN_PREFIX}{medication_request_case.case_id}"
                             }
                         ]
                     }
                 ]
             },
-            "fullUrl": f"Composition/{self.care_context_case_id}"
+            "fullUrl": f"{UUID_URN_PREFIX}{self.care_context_case_id}"
         }
         composition_entry = self._get_entry_by_resource_type(result[0]["entry"], "Composition")
         del composition_entry["resource"]["date"]
