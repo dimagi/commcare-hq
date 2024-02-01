@@ -380,10 +380,20 @@
          attr: { src: mediaSrc($data.caption_image()) },
          visible: mediaSrc($data.caption_image())
          " />
-  <audio controls="controls" data-bind="visible: caption_audio, attr: { src: mediaSrc($data.caption_audio()) }">
+  <audio controls="controls" data-bind="
+      visible: caption_audio,
+      attr: {
+          src: mediaSrc($data.caption_audio()),
+          tabindex: caption_audio() ? '0' : '-1',
+      }">
     {% trans "Your browser does not support audio" %}
   </audio>
-  <video controls="controls" data-bind="visible: caption_video, attr: { src: mediaSrc($data.caption_video()) }">
+  <video controls="controls" data-bind="
+      visible: caption_video,
+      attr: {
+          src: mediaSrc($data.caption_video()),
+          tabindex: caption_video() ? '0' : '-1',
+      }">
     {% trans "Your browser does not support video" %}
   </video>
 </script>
@@ -394,12 +404,18 @@
       visible: mediaSrc($data.help_image())" />
   <audio controls="controls" data-bind="
       visible: help_audio,
-      attr: { src: mediaSrc($data.help_audio()) }">
+      attr: {
+          src: mediaSrc($data.help_audio()),
+          tabindex: help_audio() ? '0' : '-1',
+      }">
     {% trans "Your browser does not support audio" %}
   </audio>
   <video controls="controls" data-bind="
       visible: help_video,
-      attr: { src: mediaSrc($data.help_video()) }">
+      attr: {
+          src: mediaSrc($data.help_video()),
+          tabindex: help_video() ? '0' : '-1',
+      }">
     {% trans "Your browser does not support video" %}
   </video>
 </script>
