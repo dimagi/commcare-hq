@@ -93,8 +93,13 @@ class GeoConfig(models.Model):
 
     @plaintext_api_token.setter
     def plaintext_api_token(self, value):
-        if value and not value.startswith(f'${ALGO_AES}$'):
-            ciphertext = b64_aes_encrypt(value)
-            self.api_token = f'${ALGO_AES}${ciphertext}'
-        else:
-            self.api_token = None
+        try:
+            if value is None:
+                self.api_token = None
+            elif value and not value.startswith(f'${ALGO_AES}$'):
+                ciphertext = b64_aes_encrypt(value)
+                self.api_token = f'${ALGO_AES}${ciphertext}'
+            else:
+                raise Exception("Unexpected value set for plaintext api token")
+        except AttributeError:
+            raise Exception("Unexpected value set for plaintext api token")
