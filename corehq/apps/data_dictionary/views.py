@@ -93,6 +93,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
         grouped_properties = {
             group: [
                 {
+                    'id': prop.id,
                     'description': prop.description,
                     'label': prop.label,
                     'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(

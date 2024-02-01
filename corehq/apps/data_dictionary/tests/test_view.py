@@ -381,6 +381,7 @@ class DataDictionaryJsonTest(TestCase):
                             "deprecated": False,
                             "properties": [
                                 {
+                                    "id": self.case_prop_obj.id,
                                     "description": "",
                                     "label": "",
                                     "fhir_resource_prop_path": None,
