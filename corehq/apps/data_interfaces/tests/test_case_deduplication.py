@@ -30,6 +30,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
+from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.form_processor.models import CommCareCase
@@ -441,6 +442,43 @@ class FindingDuplicatesTest(TestCase):
         # other cases where that property is blank
         self.assertItemsEqual([cases[0].case_id],
                               find_duplicate_case_ids(self.domain, cases[0], ["name", "dob"], match_type="ANY"))
+
+    def test_find_duplicates_exclude_copied_cases(self):
+        """cases that were copied using copy cases feature should not be considered as duplicates
+        """
+        cases = [
+            self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
+                ("Padme Amidala", "1901-05-01"),
+                ("Padme Amidala", "1901-05-01"),
+                ("Padme Amidala", "1901-05-01"),
+                ("Anakin Skywalker", "1977-03-25"),
+                ("Darth Vadar", "1977-03-25"),
+            ]
+        ]
+
+        cases[2] = self.factory.update_case(
+            case_id=cases[2].case_id,
+            update={CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME: cases[0].case_id}
+        )
+
+        self._prime_es_index(cases)
+
+        self.assertCountEqual(
+            [cases[0].case_id, cases[1].case_id],
+            find_duplicate_case_ids(self.domain, cases[0], ["name", "dob"], match_type="ALL")
+        )
+
+        self.assertCountEqual(
+            [cases[0].case_id, cases[1].case_id, cases[2].case_id],
+            find_duplicate_case_ids(
+                self.domain, cases[0], ["name", "dob"], match_type="ALL", exclude_copied_cases=False
+            )
+        )
+
+        self.assertCountEqual(
+            [cases[3].case_id, cases[4].case_id],
+            find_duplicate_case_ids(self.domain, cases[3], ["name", "dob"], match_type="ANY")
+        )
 
 
 @flag_enabled('CASE_DEDUPE_UPDATES')
@@ -1192,8 +1230,12 @@ class DeduplicationBackfillTest(TestCase):
         )
         cls.case2 = cls.factory.create_case(case_name="foo", case_type=cls.case_type, update={"age": 2})
         cls.case3 = cls.factory.create_case(case_name="foo", case_type=cls.case_type, update={"age": 2})
+        cls.case4 = cls.factory.create_case(
+            case_name="foo", case_type=cls.case_type,
+            update={"age": 2, CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME: cls.case1.case_id}
+        )
 
-        case_search_adapter.bulk_index([cls.case1, cls.case2, cls.case3], refresh=True)
+        case_search_adapter.bulk_index([cls.case1, cls.case2, cls.case3, cls.case4], refresh=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -1225,10 +1267,16 @@ class DeduplicationBackfillTest(TestCase):
         self._set_up_rule(include_closed=True)
 
         backfill_deduplicate_rule(self.domain, self.rule)
-        self.assertEqual(CaseDuplicateNew.objects.filter(action=self.action).count(), 3)
+
+        duplicate_case_ids = CaseDuplicateNew.objects.filter(action=self.action).values_list('case_id', flat=True)
+        self.assertEqual(len(duplicate_case_ids), 3)
+        self.assertNotIn(self.case4.case_id, duplicate_case_ids)
 
     def test_finds_open_cases_only(self):
         self._set_up_rule(include_closed=False)
 
         backfill_deduplicate_rule(self.domain, self.rule)
-        self.assertEqual(CaseDuplicateNew.objects.filter(action=self.action).count(), 2)
+
+        duplicate_case_ids = CaseDuplicateNew.objects.filter(action=self.action).values_list('case_id', flat=True)
+        self.assertEqual(len(duplicate_case_ids), 2)
+        self.assertNotIn(self.case4.case_id, duplicate_case_ids)
