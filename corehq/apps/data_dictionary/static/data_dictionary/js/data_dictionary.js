@@ -220,6 +220,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     }
 
                     _.each(group.properties(), function (element, index) {
+                        if (element.deleted && !element.id) {
+                            return;
+                        }
+
                         const allowedValues = element.allowedValues.val();
                         let pureAllowedValues = {};
                         for (const key in allowedValues) {
