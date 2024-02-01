@@ -244,7 +244,7 @@
           class="help-text-trigger col-md-1"
           role="button"
           href="javascript:void(0)"
-          title="{% trans "Show help dialog" %}"
+          title="{% trans 'Show help dialog' %}"
         ><i class="fa fa-question-circle"></i></a>
         <div class="modal fade" role="dialog">
           <div class="modal-dialog">
@@ -265,10 +265,10 @@
         </div>
         <!-- /ko -->
       </div>
-      <i class="hint-text" data-bind="
+      <em class="hint-text" data-bind="
               text: ko.utils.unwrapObservable($data.hint),
               visible: !entry.useHintAsPlaceHolder()
-          "></i>
+          "></em>
       <!-- ko if: required() -->
       <span class="sr-only">{% trans "A response is required for this question." %}</span>
       <!-- /ko -->
@@ -310,10 +310,8 @@
       }">
       <span class="ix" data-bind="text: ixInfo($data)">></span>
       <span class="caption webapp-markdown-output" data-bind="
-          html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
-          attr: {'for': entry.entryId}"
-          ">
-      </span>
+          html: ko.utils.unwrapObservable($data.caption_markdown) || caption()
+          "></span>
       <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
       >
