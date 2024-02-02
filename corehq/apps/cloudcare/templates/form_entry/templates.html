@@ -31,8 +31,9 @@
               },
         click: toggleChildren,
         event: {keypress: keyPressAction},
-        style: {'background-color': headerBackgroundColor(),
-                'color': headerBackgroundColor() ? 'white' : '',
+        style: {'display': showHeader ? 'block': 'none',
+                'background-color': headerBackgroundColor(),
+                'color': headerBackgroundColor() ? 'white' : ''
         }">
       <div data-bind="ifnot: collapsible">
         <legend>
