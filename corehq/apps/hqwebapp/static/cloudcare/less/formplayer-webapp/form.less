@@ -1,4 +1,4 @@
-@form-text-indent: 20px;
+@form-text-indent: 23px;
 
 .form-container {
   background-color: white;
@@ -10,7 +10,8 @@
     padding-bottom: 30px;
 
     h1 {
-      padding-left: @form-text-indent - 5px;
+      // -8 to account for .panel-header padding
+      padding-left: @form-text-indent - 8px;
     }
   }
 
@@ -49,8 +50,8 @@
     }
 
   .question-container {
-    padding-left: @form-text-indent + 3px;
-    padding-right: @form-text-indent + 3px;
+    padding-left: @form-text-indent;
+    padding-right: @form-text-indent;
   }
 
   .form-group {
