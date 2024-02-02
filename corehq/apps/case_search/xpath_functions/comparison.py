@@ -6,7 +6,7 @@ from eulxml.xpath import serialize
 from eulxml.xpath.ast import Step
 
 from corehq.apps.case_search.dsl_utils import unwrap_value
-from corehq.apps.case_search.exceptions import CaseFilterError, XPathFunctionException
+from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.case_search.xpath_functions.value_functions import value_to_date
 from corehq.apps.case_search.const import RANGE_OP_MAPPING, EQ, NEQ, SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.es import filters
@@ -62,25 +62,24 @@ def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node
     in Asia/Seoul timezone begins at 2023-06-04T20:00:00 UTC.
     This might be inconsistent in daylight savings situations.
     """
-    utc_equivalent_datetime_value = adjust_input_date_by_timezone(value_to_date(node, value), timezone, op)
+    utc_date = adjust_to_utc(value_to_date(node, value), timezone)
     if op in [EQ, NEQ]:
-        day_start_datetime = utc_equivalent_datetime_value
-        day_end_datetime = (utc_equivalent_datetime_value + timedelta(days=1))
+        day_start = utc_date
+        day_end = (utc_date + timedelta(days=1))
         op_value_dict = {
-            RANGE_OP_MAPPING[">="]: day_start_datetime,
-            RANGE_OP_MAPPING["<"]: day_end_datetime,
+            RANGE_OP_MAPPING[">="]: day_start,
+            RANGE_OP_MAPPING["<"]: day_end,
         }
         query = _case_property_range_query(case_property_name, op_value_dict, node)
         if op == NEQ:
             query = filters.NOT(query)
         return query
-    else:
-        op_value_dict = {RANGE_OP_MAPPING[op]: utc_equivalent_datetime_value}
-        return _case_property_range_query(case_property_name, op_value_dict, node)
+    elif op == '>' or op == '<=':
+        utc_date += timedelta(days=1)
+    op_value_dict = {RANGE_OP_MAPPING[op]: utc_date}
+    return _case_property_range_query(case_property_name, op_value_dict, node)
 
 
-def adjust_input_date_by_timezone(date, timezone, op):
+def adjust_to_utc(date, timezone):
     date = datetime(date.year, date.month, date.day)
-    if op == '>' or op == '<=':
-        date += timedelta(days=1)
     return UserTime(date, tzinfo=timezone).server_time().done()
