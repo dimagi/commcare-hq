@@ -1,7 +1,6 @@
 import uuid
 from datetime import date, datetime
 from unittest.mock import patch
-import pytz
 
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
@@ -10,7 +9,6 @@ from couchforms.geopoint import GeoPoint
 
 from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.case_search.xpath_functions.comparison import adjust_to_utc
 from corehq.apps.es import queries
 from corehq.apps.es.client import manager
 from corehq.apps.es.case_search import (
@@ -556,16 +554,3 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             "starts-with(ssn, '100')",
             ['c5', 'c6', 'c2']
         )
-
-
-class TestTimezoneAdjustment(TestCase):
-
-    def test_user_input_timezone_adjustment_forward(self):
-        self.timezone = pytz.timezone('Asia/Seoul')  # UTC+09:00
-        self.assertEqual(datetime(2023, 6, 3, 15, 0, 0),
-                         adjust_to_utc(date(2023, 6, 4), self.timezone))
-
-    def test_user_input_timezone_adjustment_backward(self):
-        self.timezone = pytz.timezone('US/Hawaii')  # UTC+10:00
-        self.assertEqual(datetime(2023, 6, 4, 10, 0, 0),
-                         adjust_to_utc(date(2023, 6, 4), self.timezone))

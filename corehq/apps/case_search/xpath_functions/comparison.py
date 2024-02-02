@@ -1,6 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-from django.db import models
 from django.utils.translation import gettext
 from eulxml.xpath import serialize
 from eulxml.xpath.ast import Step
@@ -8,12 +7,16 @@ from eulxml.xpath.ast import Step
 from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.case_search.xpath_functions.value_functions import value_to_date
-from corehq.apps.case_search.const import RANGE_OP_MAPPING, EQ, NEQ, SPECIAL_CASE_PROPERTIES_MAP
+from corehq.apps.case_search.const import (
+    RANGE_OP_MAPPING, EQ, NEQ
+)
+from corehq.apps.case_search.xpath_functions.utils import (
+    case_property_requires_timezone_adjustment,
+    adjust_to_utc
+)
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import case_property_query, case_property_range_query
-from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone_for_domain
-from corehq.util.timezones.conversions import UserTime
 
 
 def property_comparison_query(context, case_property_name_raw, op, value_raw, node):
@@ -25,9 +28,7 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
 
     case_property_name = serialize(case_property_name_raw)
     value = unwrap_value(value_raw, context)
-    if (case_property_name in SPECIAL_CASE_PROPERTIES_MAP.keys()
-        and isinstance(SPECIAL_CASE_PROPERTIES_MAP[case_property_name].field_getter(CommCareCase),
-                    models.DateTimeField)):
+    if case_property_requires_timezone_adjustment(case_property_name):
         timezone = get_timezone_for_domain(context.request_domain)
         return _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone)
     return _create_query(context, case_property_name, op, value, node)
@@ -79,8 +80,3 @@ def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node
         utc_date += timedelta(days=1)
     op_value_dict = {RANGE_OP_MAPPING[op]: utc_date}
     return _case_property_range_query(case_property_name, op_value_dict, node)
-
-
-def adjust_to_utc(date, timezone):
-    date = datetime(date.year, date.month, date.day)
-    return UserTime(date, tzinfo=timezone).server_time().done()
