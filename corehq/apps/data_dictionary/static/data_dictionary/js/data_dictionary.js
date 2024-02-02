@@ -171,10 +171,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
         });
 
         self.confirmDeleteProperty = function () {
-            if (!self.id) {
-                self.deleted(true);
-                return;
-            }
             const $modal = $("#delete-case-prop-modal").modal('show');
             $("#delete-case-prop-btn").off("click").on("click", () => {
                 self.deleted(true);
