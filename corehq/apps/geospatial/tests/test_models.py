@@ -31,10 +31,24 @@ class TestGeoConfig(TestCase):
             self.assertEqual(config.plaintext_api_token, None)
             self.assertEqual(config.api_token, None)
 
+    def test_geo_config_api_token_cannot_be_non_str(self):
+        with self.assertRaises(Exception) as context:
+            with self.get_geo_config() as config:
+                config.plaintext_api_token = 1234
+
+        self.assertEqual(str(context.exception), "Only string values allowed for plaintext api token")
+
     def test_geo_config_api_token_cannot_be_empty(self):
         with self.assertRaises(Exception) as context:
             with self.get_geo_config() as config:
                 config.plaintext_api_token = ""
+
+        self.assertEqual(str(context.exception), "Unexpected value set for plaintext api token")
+
+    def test_geo_config_api_token_cannot_start_with_encryption_str(self):
+        with self.assertRaises(Exception) as context:
+            with self.get_geo_config() as config:
+                config.plaintext_api_token = f"${ALGO_AES}$1234"
 
         self.assertEqual(str(context.exception), "Unexpected value set for plaintext api token")
 
