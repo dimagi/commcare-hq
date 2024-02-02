@@ -50,6 +50,13 @@
         </div>
         <div class="row">
           <!-- ko if: $parent.values_are_icons() -->
+          <div data-bind="template: {name: 'icon_alt_text', data: iconManager}"
+               style="margin-top: 3px">
+          </div>
+          <!-- /ko -->
+        </div>
+        <div class="row">
+          <!-- ko if: $parent.values_are_icons() -->
           <div data-bind="template: {name: 'icon_uploader_path', data: iconManager}"
                style="margin-top: 3px">
           </div>
@@ -141,6 +148,16 @@
       <i class="fa fa-cog"></i>
       {% trans 'Set Path' %}
     </button>
+  </div>
+</div>
+
+<div id="icon_alt_text">
+  <label class="control-label col-sm-1">{% trans 'Alt Text' %}</label>
+  <div class="col-sm-4">
+    <input type="text" class="form-control"
+           placeholder="{% trans 'Alternative text description' %}"
+           data-bind="value: altText,
+                      valueUpdate: 'textchange'" />
   </div>
 </div>
 
