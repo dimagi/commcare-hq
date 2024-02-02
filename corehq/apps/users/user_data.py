@@ -71,10 +71,11 @@ class UserData:
 
     @property
     def _schema_defaults(self):
-        fields = self._get_schema_fields()
+        fields = self._schema_fields
         return {field.slug: '' for field in fields}
 
-    def _get_schema_fields(self):
+    @cached_property
+    def _schema_fields(self):
         from corehq.apps.users.views.mobile.custom_data_fields import (
             CUSTOM_USER_DATA_FIELD_TYPE,
         )
@@ -213,12 +214,30 @@ class SQLUserData(models.Model):
         indexes = [models.Index(fields=['user_id', 'domain'])]
 
 
+def get_all_profiles_by_id(domain):
+    from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
+    return {
+        profile.id: profile for profile in CustomDataFieldsProfile.objects.filter(
+            definition__domain=domain, definition__field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+    }
+
+
+def get_user_schema_fields(domain):
+    from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
+
+    definition = CustomDataFieldsDefinition.objects.get(domain=domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+    return definition.get_fields()
+
+
 def prime_user_data_caches(users, domain):
     """
     Enriches a set of users by looking up and priming user data caches in
     chunks, for use in bulk workflows.
     :return: generator that yields the enriched user objects
     """
+    profiles_by_id = get_all_profiles_by_id(domain)
+    schema_fields = get_user_schema_fields(domain)
+
     for chunk in chunked(users, 100):
         user_ids = [user.user_id for user in chunk]
         sql_data_by_user_id = {
@@ -234,4 +253,10 @@ def prime_user_data_caches(users, domain):
                 user_data = UserData({}, user, domain)
             # prime the user.get_user_data cache
             user._user_data_accessors[domain] = user_data
+
+            # prime the user schema data to avoid individual database calls
+            user._schema_fields = schema_fields
+            if user_data.profile_id and user_data.profile_id in profiles_by_id:
+                user_data.profile = profiles_by_id[user_data.profile_id]
+
             yield user

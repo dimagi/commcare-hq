@@ -178,7 +178,7 @@ class TestUserDataModel(SimpleTestCase):
 
     def setUp(self):
         self.user_fields = []
-        field_patcher = patch('corehq.apps.users.user_data.UserData._get_schema_fields')
+        field_patcher = patch('corehq.apps.users.user_data.UserData._schema_fields')
         mocked_schema_fields = field_patcher.start()
         mocked_schema_fields.side_effect = lambda: self.user_fields
 
