@@ -11,7 +11,7 @@ hqDefine("settings/js/user_api_keys", [
     _,
     initialPageData,
     CRUDPaginatedList,
-    widgets,
+    widgets
 ) {
 
     var ApiKeyListModel = function () {

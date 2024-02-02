@@ -30,6 +30,7 @@ from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
+
 from dimagi.utils.couch.undo import (
     get_deleted_doc_type,
     is_deleted,
@@ -50,6 +51,7 @@ from corehq.apps.analytics.tasks import (
     update_hubspot_properties,
 )
 from corehq.apps.api.decorators import api_throttle
+from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
@@ -91,6 +93,7 @@ from corehq.apps.userreports.app_manager.helpers import (
 from corehq.apps.userreports.const import (
     DATA_SOURCE_MISSING_APP_ERROR_MESSAGE,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    FORM_NOT_FOUND_ERROR_MESSAGE,
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
     REPORT_BUILDER_EVENTS_KEY,
@@ -559,11 +562,19 @@ class ConfigureReport(ReportBuilderView):
             )
         except ResourceNotFound:
             return self.render_error_response(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
+        except FormNotFoundException:
+            return self.render_error_response(
+                FORM_NOT_FOUND_ERROR_MESSAGE,
+                allow_delete=True,
+                # when this error is thrown, the report_id in the template context is still not set
+                # this ensures the correct id is set so that the delete action is functional
+                report_id=self.existing_report.get_id
+            )
 
         self._populate_data_source_properties_from_interface(data_source_interface)
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
-    def render_error_response(self, message, allow_delete=None):
+    def render_error_response(self, message, allow_delete=None, report_id=None):
         if self.existing_report:
             context = {
                 'allow_delete': self.existing_report.get_id and not self.existing_report.is_static
@@ -574,6 +585,8 @@ class ConfigureReport(ReportBuilderView):
             context['allow_delete'] = allow_delete
         context['error_message'] = message
         context.update(self.main_context)
+        if report_id:
+            context['report_id'] = report_id
         return render(self.request, 'userreports/report_error.html', context)
 
     @property

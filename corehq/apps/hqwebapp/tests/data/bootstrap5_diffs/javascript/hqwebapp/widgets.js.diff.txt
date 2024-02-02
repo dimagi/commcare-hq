@@ -13,23 +13,23 @@
  ], function ($, _, MapboxGeocoder, initialPageData) {
      var init = function () {
          var MAPBOX_ACCESS_TOKEN = initialPageData.get(
-@@ -107,7 +107,18 @@
-             }
+@@ -108,7 +108,18 @@
          });
  
--        $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
-+        // datepicker / tempus dominus
-+        $('.date-picker').tempusDominus({
-+            display: {
-+                theme: 'light',
-+                components: {
-+                    clock: false,
+         _.each($(".date-picker"), function (input) {
+-            $(input).datepicker({ dateFormat: "yy-mm-dd" });
++            // datepicker / tempus dominus
++            $(input).tempusDominus({
++                display: {
++                    theme: 'light',
++                    components: {
++                        clock: false,
++                    },
 +                },
-+            },
-+            localization: {
-+                format: 'yyyy-MM-dd',
-+            },
-+        });
++                localization: {
++                    format: 'yyyy-MM-dd',
++                },
++            });
+         });
      };
  
-     var parseEmails = function (input) {
