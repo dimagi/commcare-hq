@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, Field
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.management.commands.populate_sql_user_data import (
     get_users_without_user_data,
@@ -176,6 +176,14 @@ def _get_profile(self, profile_id):
 class TestUserDataModel(SimpleTestCase):
     domain = 'test-user-data-model'
 
+    def setUp(self):
+        self.user_fields = []
+        field_patcher = patch('corehq.apps.users.user_data.UserData._get_schema_fields')
+        mocked_schema_fields = field_patcher.start()
+        mocked_schema_fields.side_effect = lambda: self.user_fields
+
+        self.addCleanup(field_patcher.stop)
+
     def init_user_data(self, raw_user_data=None, profile_id=None):
         return UserData(
             raw_user_data=raw_user_data or {},
@@ -183,6 +191,18 @@ class TestUserDataModel(SimpleTestCase):
             domain=self.domain,
             profile_id=profile_id,
         )
+
+    def test_defaults_unspecified_schema_properties_to_empty(self):
+        self.user_fields = [Field(slug='one')]
+        user_data = self.init_user_data({})
+        result = user_data.to_dict()
+        self.assertEqual(result['one'], '')
+
+    def test_specified_user_data_overrides_schema_defaults(self):
+        self.user_fields = [Field(slug='one')]
+        user_data = self.init_user_data({'one': 'some_value'})
+        result = user_data.to_dict()
+        self.assertEqual(result['one'], 'some_value')
 
     def test_add_and_remove_profile(self):
         # Custom user data profiles get their data added to metadata automatically for mobile users

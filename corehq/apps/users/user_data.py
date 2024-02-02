@@ -9,6 +9,7 @@ from corehq.apps.custom_data_fields.models import (
     COMMCARE_PROJECT,
     PROFILE_SLUG,
     CustomDataFieldsProfile,
+    CustomDataFieldsDefinition,
     is_system_key,
 )
 
@@ -63,9 +64,29 @@ class UserData:
 
     def to_dict(self):
         return {
+            **self._schema_defaults,
             **self._local_to_user,
             **self._provided_by_system,
         }
+
+    @property
+    def _schema_defaults(self):
+        fields = self._get_schema_fields()
+        return {field.slug: '' for field in fields}
+
+    def _get_schema_fields(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            CUSTOM_USER_DATA_FIELD_TYPE,
+        )
+
+        try:
+            definition = CustomDataFieldsDefinition.objects.get(
+                domain=self.domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+            fields = definition.get_fields()
+        except CustomDataFieldsDefinition.DoesNotExist:
+            return []
+
+        return fields
 
     @property
     def raw(self):
