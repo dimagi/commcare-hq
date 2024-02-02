@@ -1,9 +1,10 @@
+import uuid
 from contextlib import contextmanager
 from datetime import datetime
 
 from django.test import TestCase
 
-from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.mock import CaseFactory, CaseBlock
 
 from corehq.apps.export.const import DEID_DATE_TRANSFORM, DEID_ID_TRANSFORM
 from corehq.apps.hqcase.case_helper import CaseCopier
@@ -11,7 +12,15 @@ from corehq.apps.hqcase.utils import (
     get_case_value,
     get_deidentified_data,
     is_copied_case,
+    submit_case_blocks,
 )
+from corehq.apps.hqcase.case_deletion_utils import (
+    get_all_cases_from_form,
+    get_deleted_case_name,
+    get_ordered_case_xforms,
+)
+from corehq.apps.reports.tests.test_case_data import _delete_all_cases_and_forms
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_case
 
 DOMAIN = 'test-domain'
@@ -102,6 +111,62 @@ class TestGetCensoredCaseData(TestCase):
 
         self.assertTrue(censored_attrs == {})
         self.assertTrue(censored_props['captain'] == '')
+
+
+class TestCaseDeletionUtil(TestCase):
+
+    def test_xform_order(self):
+        main_case_id = uuid.uuid4().hex
+        child_case1_id = uuid.uuid4().hex
+        child_case2_id = uuid.uuid4().hex
+        child_case3_id = uuid.uuid4().hex
+        submit_case_blocks([
+            CaseBlock(main_case_id, case_name="main_case", create=True).as_text(),
+            CaseBlock(child_case1_id, case_name="child1", create=True).as_text(),
+        ], DOMAIN)
+        submit_case_blocks([
+            CaseBlock(main_case_id, update={}).as_text(),
+            CaseBlock(child_case2_id, case_name="child2", create=True).as_text(),
+        ], DOMAIN)
+        submit_case_blocks([
+            CaseBlock(main_case_id, update={}).as_text(),
+            CaseBlock(child_case3_id, case_name="child3", create=True).as_text(),
+        ], DOMAIN)
+        self.addCleanup(_delete_all_cases_and_forms, DOMAIN)
+
+        main_case = CommCareCase.objects.get_case(main_case_id, DOMAIN)
+        xforms = get_ordered_case_xforms(main_case, DOMAIN)
+
+        for xform in xforms:
+            self.assertEqual(xforms.count(xform), 1)
+
+        for i in range(2):
+            self.assertGreater(xforms[i + 1].received_on, xforms[i].received_on)
+
+    def test_get_deleted_case_name(self):
+        main_case_id = uuid.uuid4().hex
+        xform, cases = submit_case_blocks([
+            CaseBlock(main_case_id, case_name="main_case", create=True).as_text(),
+        ], DOMAIN)
+        self.addCleanup(_delete_all_cases_and_forms, DOMAIN)
+
+        xform.archive()
+        case = CommCareCase.objects.get_case(cases[0].case_id, DOMAIN)
+
+        self.assertFalse(case.name)
+        self.assertEqual(get_deleted_case_name(case), "main_case")
+
+    def test_get_deleted_cases_from_form(self):
+        main_case_id = uuid.uuid4().hex
+        xform, _ = submit_case_blocks([
+            CaseBlock(main_case_id, case_name="main_case", create=True).as_text(),
+        ], DOMAIN)
+        self.addCleanup(_delete_all_cases_and_forms, DOMAIN)
+
+        xform.archive()
+        cases = get_all_cases_from_form(xform, DOMAIN)
+        self.assertEqual(len(cases), 1)
+        self.assertTrue(cases[main_case_id].case.is_deleted)
 
 
 @contextmanager
