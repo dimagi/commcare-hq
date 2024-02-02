@@ -43,7 +43,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
                 for (let prop of group.properties) {
                     const isGeoCaseProp = (self.geoCaseProp === prop.name && prop.data_type === 'gps');
-                    if (!prop.is_safe_to_delete) {
+                    if (self.canDelete && !prop.is_safe_to_delete) {
                         self.canDelete = false;
                     }
 
