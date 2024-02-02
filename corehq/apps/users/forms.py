@@ -533,17 +533,6 @@ class CommCareUserActionForm(BaseUpdateUserForm):
         )
 
 
-class RoleForm(forms.Form):
-
-    def __init__(self, *args, **kwargs):
-        if 'role_choices' in kwargs:
-            role_choices = kwargs.pop('role_choices')
-        else:
-            role_choices = ()
-        super(RoleForm, self).__init__(*args, **kwargs)
-        self.fields['role'].choices = role_choices
-
-
 class SetUserPasswordForm(SetPasswordForm):
 
     new_password1 = forms.CharField(

@@ -23,7 +23,6 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
-from corehq.apps.users.forms import RoleForm
 from corehq.apps.users.models import CouchUser
 
 # Bandit does not catch any references to mark_safe using this,
@@ -488,21 +487,7 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
         return ""
 
 
-# From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
-#
-# I'll put this in each app, so they can be standalone, but it should really go in some centralized
-# part of the distro
-
-class _BaseForm(object):
-
-    def clean(self):
-        for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], str):
-                self.cleaned_data[field] = self.cleaned_data[field].strip()
-        return self.cleaned_data
-
-
-class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
+class AdminInvitesUserForm(forms.Form):
     # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
     # and do need to relabel some things.
     email = forms.EmailField(label="Email Address",
@@ -518,7 +503,12 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
         if 'location' in kwargs:
             location = kwargs['location']
             del kwargs['location']
+        role_choices = kwargs.pop('role_choices', ())
+
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
+
+        self.fields['role'].choices = role_choices
+
         if domain_obj and domain_obj.commtrack_enabled:
             self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
                                                           widget=LocationSelectWidget(domain_obj.name),
@@ -579,3 +569,9 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             raise forms.ValidationError(_("A user with this email address is already in "
                                           "this project or has a pending invitation."))
         return email
+
+    def clean(self):
+        for field in self.cleaned_data:
+            if isinstance(self.cleaned_data[field], str):
+                self.cleaned_data[field] = self.cleaned_data[field].strip()
+        return self.cleaned_data
