@@ -41,7 +41,7 @@ hqDefine('users/js/edit_commcare_user', [
             url: $(this).attr('action'),
             type: 'POST',
             dataType: 'json',
-            success: function (response, status, xhr, form) {
+            success: function (response) {
                 if (response.status === "OK") {
                     alertUser.alert_user(gettext("Password changed successfully."), 'success');
                     googleAnalytics.track.event("Edit Mobile Worker", "Reset password", couchUserId);
