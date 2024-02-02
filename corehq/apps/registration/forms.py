@@ -488,28 +488,16 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
 
 
 class AdminInvitesUserForm(forms.Form):
-    # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
-    # and do need to relabel some things.
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
-    def __init__(self, data=None, excluded_emails=None, is_add_user=None, *args, **kwargs):
-        domain_obj = None
-        location = None
-        if 'domain' in kwargs:
-            domain_obj = Domain.get_by_name(kwargs['domain'])
-            del kwargs['domain']
-        if 'location' in kwargs:
-            location = kwargs['location']
-            del kwargs['location']
-        role_choices = kwargs.pop('role_choices', ())
-
-        super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
-
+    def __init__(self, data=None, excluded_emails=None, is_add_user=None, location=None,
+                 role_choices=(), *, domain, **kwargs):
+        super(AdminInvitesUserForm, self).__init__(data=data, **kwargs)
+        domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = role_choices
-
-        if domain_obj and domain_obj.commtrack_enabled:
+        if domain_obj.commtrack_enabled:
             self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
                                                           widget=LocationSelectWidget(domain_obj.name),
                                                           help_text=EMWF.location_search_help,
