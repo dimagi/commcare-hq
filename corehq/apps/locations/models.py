@@ -695,10 +695,6 @@ class SQLLocation(AdjListModel):
         return self.parent.location_id if self.parent else None
 
     @property
-    def location_type_object(self):
-        return self.location_type
-
-    @property
     def location_type_name(self):
         return self.location_type.name
 

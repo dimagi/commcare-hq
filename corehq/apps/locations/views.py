@@ -745,7 +745,7 @@ class EditLocationView(BaseEditLocationView):
     @memoized
     def products_form(self):
         if (
-            self.location.location_type_object.administrative or
+            self.location.location_type.administrative or
             not toggles.PRODUCTS_PER_LOCATION.enabled(self.request.domain)
         ):
             return None
