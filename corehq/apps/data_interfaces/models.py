@@ -25,7 +25,6 @@ from jsonobject.properties import (
 from memoized import memoized
 
 from casexml.apps.case.xform import get_case_updates
-from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
@@ -43,7 +42,7 @@ from corehq.apps.data_interfaces.deduplication import (
     reset_deduplicate_rule,
 )
 from corehq.apps.data_interfaces.utils import property_references_parent
-from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS
+from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS, is_copied_case
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
@@ -1139,7 +1138,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         raise ValueError(f"Unknown match type: {self.match_type}")
 
     def when_case_matches(self, case, rule):
-        if CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME in case.case_json:
+        if is_copied_case(case):
             return CaseRuleActionResult()
 
         result = self._handle_case_duplicate_new(case, rule)
