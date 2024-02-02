@@ -80,81 +80,78 @@ class TestLoadingNonUniqueNaturalKeys(TestCase):
     to save an object using an existing primary key/inserted object.
     """
 
-    def test_loading_conflicting_case_transactions(self):
+    def test_loading_conflicting_case_transactions_saves_distinct_objects_to_db(self):
         cc_case = create_case("test", case_id="abc123", save=True)
-        serialized_models = []
-        for _ in range(2):
-            model = {
-                "model": "form_processor.casetransaction",
-                "fields": {
-                    "case": cc_case.case_id,
-                    "form_id": None,
-                    "type": 16,
-                    "server_date": "2019-11-07T09:10:12.318008Z",
-                }
+        model = {
+            "model": "form_processor.casetransaction",
+            "fields": {
+                "case": cc_case.case_id,
+                "form_id": None,
+                "type": 16,
+                "server_date": "2019-11-07T09:10:12.318008Z",
             }
-            serialized_models.append(json.dumps(model))
+        }
+        serialized_models = [json.dumps(model) for _ in range(2)]
 
         SqlDataLoader().load_objects(serialized_models)
 
         self.assertEqual(
-            CaseTransaction.objects.partitioned_query(cc_case.case_id)
-            .filter(case=cc_case.case_id, form_id=None, type=16).count(),
+            CaseTransaction.objects.partitioned_query(cc_case.case_id).filter(
+                case=cc_case.case_id,
+                form_id=None,
+                type=16
+            ).count(),
             2,
         )
 
-    def test_loading_conflicting_xform_operations(self):
+    def test_loading_conflicting_xform_operations_saves_distinct_objects_to_db(self):
         xform = create_form_for_test("test", form_id="abc123", save=True)
-        serialized_models = []
-        for _ in range(2):
-            model = {
-                "model": "form_processor.xformoperationsql",
-                "fields": {
-                    "form": xform.form_id,
-                    "user_id": 'conflicting-user-id',
-                    "date": "2019-11-07T09:10:12.318008Z",
-                    "operation": "test",
-                }
+        model = {
+            "model": "form_processor.xformoperationsql",
+            "fields": {
+                "form": xform.form_id,
+                "user_id": 'conflicting-user-id',
+                "date": "2019-11-07T09:10:12.318008Z",
+                "operation": "test",
             }
-            serialized_models.append(json.dumps(model))
+        }
+        serialized_models = [json.dumps(model) for _ in range(2)]
 
         SqlDataLoader().load_objects(serialized_models)
 
         self.assertEqual(
-            XFormOperation.objects.partitioned_query(xform.form_id)
-            .filter(form=xform.form_id, user_id="conflicting-user-id").count(),
+            XFormOperation.objects.partitioned_query(xform.form_id).filter(
+                form=xform.form_id,
+                user_id="conflicting-user-id"
+            ).count(),
             2,
         )
 
-    def test_loading_conflicting_ledger_transaction(self):
+    def test_loading_conflicting_ledger_transactions_saves_distinct_objects_to_db(self):
         cc_case = create_case("test", case_id="abc123", save=True)
         xform = create_form_for_test("test", form_id="abc123", save=True)
-        serialized_models = []
-        for _ in range(2):
-            model = {
-                "model": "form_processor.ledgertransaction",
-                "fields": {
-                    "case": cc_case.case_id,
-                    "form_id": xform.form_id,
-                    "section_id": "conflicting-section-id",
-                    "entry_id": "conflicting-entry-id",
-                    "server_date": "2019-11-07T09:10:12.318008Z",
-                    "report_date": "2019-11-07T09:10:12.318008Z",
-                    "type": 1,
-                }
+        model = {
+            "model": "form_processor.ledgertransaction",
+            "fields": {
+                "case": cc_case.case_id,
+                "form_id": xform.form_id,
+                "section_id": "conflicting-section-id",
+                "entry_id": "conflicting-entry-id",
+                "server_date": "2019-11-07T09:10:12.318008Z",
+                "report_date": "2019-11-07T09:10:12.318008Z",
+                "type": 1,
             }
-            serialized_models.append(json.dumps(model))
+        }
+        serialized_models = [json.dumps(model) for _ in range(2)]
 
         SqlDataLoader().load_objects(serialized_models)
 
         self.assertEqual(
-            LedgerTransaction.objects.partitioned_query(cc_case.case_id)
-            .filter(
+            LedgerTransaction.objects.partitioned_query(cc_case.case_id).filter(
                 case=cc_case.case_id,
                 form_id=xform.form_id,
                 section_id="conflicting-section-id",
-                entry_id="conflicting-entry-id",
-            )
-            .count(),
+                entry_id="conflicting-entry-id"
+            ).count(),
             2,
         )
