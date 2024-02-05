@@ -239,7 +239,6 @@ class TestCustomDataFieldsForm(FieldsViewMixin, SimpleTestCase):
         form = self._create_form(fields, profiles)
 
         self.assertFalse(form.is_valid())
-        print(form.errors)
 
     def _create_form(self, fields, profiles):
         fields_json = json.dumps([field.to_dict() for field in fields])
