@@ -48,13 +48,15 @@
             </a>
           </div>
         </div>
-        <div class="row">
-          <!-- ko if: $parent.values_are_icons() -->
-          <div data-bind="template: {name: 'icon_alt_text', data: iconManager}"
-               style="margin-top: 3px">
+        {% if app.supports_alt_text %}
+          <div class="row">
+            <!-- ko if: $parent.values_are_icons() -->
+            <div data-bind="template: {name: 'icon_alt_text', data: iconManager}"
+                style="margin-top: 3px">
+            </div>
+            <!-- /ko -->
           </div>
-          <!-- /ko -->
-        </div>
+        {% endif %}
         <div class="row">
           <!-- ko if: $parent.values_are_icons() -->
           <div data-bind="template: {name: 'icon_uploader_path', data: iconManager}"
