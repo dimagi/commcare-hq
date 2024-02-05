@@ -16,6 +16,14 @@
     }
   }
 
+  .d-flex {
+    display: flex
+  }
+
+  .align-items-center {
+    align-items: center
+  }
+
   .controls {
     padding-right: 25px;
     padding-top: 3px;
@@ -82,34 +90,24 @@
 
   // line up fields with group headers. All columns use padding for spacing in between them.
   // It is not needed/wanted at the sides
-  .col-sm-12:first-child,
-  .col-sm-11:first-child,
-  .col-sm-10:first-child,
-  .col-sm-9:first-child,
-  .col-sm-8:first-child,
-  .col-sm-7:first-child,
-  .col-sm-6:first-child,
-  .col-sm-5:first-child,
-  .col-sm-4:first-child,
-  .col-sm-3:first-child,
-  .col-sm-2:first-child,
-  .col-sm-1:first-child {
+  .col-sm-12,
+  .col-sm-11,
+  .col-sm-10,
+  .col-sm-9,
+  .col-sm-8,
+  .col-sm-7,
+  .col-sm-6,
+  .col-sm-5,
+  .col-sm-4,
+  .col-sm-3,
+  .col-sm-2,
+  .col-sm-1 {
+    &:first-child {
       padding-left: 0;
-  }
-
-  .col-sm-12:last-child,
-  .col-sm-11:last-child,
-  .col-sm-10:last-child,
-  .col-sm-9:last-child,
-  .col-sm-8:last-child,
-  .col-sm-7:last-child,
-  .col-sm-6:last-child,
-  .col-sm-5:last-child,
-  .col-sm-4:last-child,
-  .col-sm-3:last-child,
-  .col-sm-2:last-child,
-  .col-sm-1:last-child {
+    }
+    &:last-child {
       padding-right: 0;
+    }
   }
 
   .panel-body {
