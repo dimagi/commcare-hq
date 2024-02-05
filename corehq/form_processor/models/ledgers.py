@@ -4,17 +4,11 @@ from django.db import models
 
 from memoized import memoized
 
-from corehq.sql_db.models import PartitionedModel, RequireDBManager
+from corehq.sql_db.models import PartitionedModel
 from corehq.util.models import TruncatingCharField
 
 from ..track_related import TrackRelatedChanges
 from .mixin import SaveStateMixin
-
-
-class LedgerValueManager(RequireDBManager):
-
-    def get_by_natural_key(self, case_id, section_id, entry_id):
-        return self.partitioned_query(case_id).get(case_id=case_id, section_id=section_id, entry_id=entry_id)
 
 
 class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedChanges):
@@ -22,7 +16,6 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     Represents the current state of a ledger.
     """
     partition_attr = 'case_id'
-    objects = LedgerValueManager()
 
     domain = models.CharField(max_length=255, null=False, default=None)
     case = models.ForeignKey(
@@ -40,7 +33,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.case, self.section_id, self.entry_id
+        return self.case_id, self.section_id, self.entry_id
 
     @property
     def last_modified_date(self):
@@ -106,17 +99,8 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
         unique_together = ("case", "section_id", "entry_id")
 
 
-class LedgerTransactionManager(RequireDBManager):
-
-    def get_by_natural_key(self, case_id, form_id, section_id, entry_id):
-        return self.partitioned_query(case_id).get(
-            case_id=case_id, form_id=form_id, section_id=section_id, entry_id=entry_id
-        )
-
-
 class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
-    objects = LedgerTransactionManager()
 
     TYPE_BALANCE = 1
     TYPE_TRANSFER = 2
@@ -145,7 +129,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.case, self.form_id, self.section_id, self.entry_id
+        return self.case_id, self.form_id, self.section_id, self.entry_id
 
     def get_consumption_transactions(self, exclude_inferred_receipts=False):
         """
