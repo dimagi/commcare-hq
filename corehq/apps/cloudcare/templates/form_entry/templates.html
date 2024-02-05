@@ -36,6 +36,7 @@
                 'color': headerBackgroundColor() ? 'white' : ''
         }">
       <div data-bind="ifnot: collapsible">
+        <legend>
           <span class="caption webapp-markdown-output"
                 data-bind="
                   html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
@@ -44,6 +45,7 @@
                       visible: isRepetition,
                       click: deleteRepeat
                   "><i class="fa fa-remove"></i></button>
+        </legend>
       </div>
       <div data-bind="if: collapsible" >
         <div class="d-flex align-items-center">
