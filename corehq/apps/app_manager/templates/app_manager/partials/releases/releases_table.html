@@ -45,7 +45,7 @@
     {% endif %}
     {% if user.is_superuser %}
       <a class="btn btn-default" href="{% url "app_build_timings" %}?app_id={{ app.id }}" target="_blank">
-        <i class="fa fa-clock-o"></i>
+        <i class="fa-regular fa-clock"></i>
         {% trans "Timing" %}
       </a>
     {% endif %}
@@ -128,7 +128,7 @@
                data-bind="openModal: 'delete-build-modal-template',
                                   visible: !_deleteState(),
                                   css: {hide: false}">
-              <i class="fa fa-trash"></i>
+              <i class="fa-regular fa-trash-can"></i>
             </a>
             <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
               <i class="fa fa-spin fa-spinner"></i>
