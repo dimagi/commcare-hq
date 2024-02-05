@@ -69,15 +69,15 @@ hqDefine('toggle_ui/js/edit-flag', [
             self.saveButtonBottom.fire('change');
         };
 
-        self.createSaveButton = function() {
-            return hqMain.initSaveButton ({
+        self.createSaveButton = function () {
+            return hqMain.initSaveButton({
                 unsavedMessage: "You have unsaved changes",
                 save: function () {
                     var items = _.map(_.filter(self.items(), function (item) {
                         return item.value();
                     }), function (item) {
-                        var ns_raw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), ''),
-                            namespace = ns_raw === 'user' ? null : ns_raw,
+                        var nsRaw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), ''),
+                            namespace = nsRaw === 'user' ? null : nsRaw,
                             value = namespace === null ? item.value() : namespace + ':' + item.value();
                         return value;
                     });
@@ -92,13 +92,13 @@ hqDefine('toggle_ui/js/edit-flag', [
                         success: function (data) {
                             self.init_items(data);
                             self.saveButtonBottom.ajax({
-                                success: function () {}
+                                success: function () {},
                             });
                         },
                     });
 
                 },
-            })
+            });
         };
 
         self.saveButtonTop = self.createSaveButton();
