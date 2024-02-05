@@ -30527,13 +30527,14 @@ define('vellum/parser',[
                         dataType = dataType.replace('xsd:',''); //strip out extraneous namespace
                         dataType = dataType.toLowerCase();
                         if (inputAdaptors.hasOwnProperty(dataType)) {
+                            console.log("hasOwnProp");
                             delete mug.p.rawBindAttributes.type;
                             if (dataType === 'string' && appearance === 'numeric') {
                                 return makeMugAdaptor('PhoneNumber')(mug, form);
-                            } else if (appearance === 'microimage') {
-                              return makeMugAdaptor('MicroImage')(mug, form);
                             }
                             return inputAdaptors[dataType](mug, form);
+                        } else if (appearance === 'micro-image') {
+                          return makeMugAdaptor('MicroImage')(mug, form);
                         }
                     }
                     return inputAdaptors.string(mug, form);
