@@ -166,7 +166,7 @@ def _create_module_details_app_strings(module, langs):
                         ),
                         clean_trans(item.value, langs)
                     )
-                    if column.format in ('enum-image', 'clickable-icon'):
+                    if module.get_app().supports_alt_text and column.format in ('enum-image', 'clickable-icon'):
                         yield (
                             id_strings.detail_column_alt_text_variable(
                                 module,

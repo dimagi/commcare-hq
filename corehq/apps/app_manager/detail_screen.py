@@ -496,9 +496,10 @@ class EnumImage(Enum):
 
     @property
     def alt_text(self):
-        return sx.AltText(
-            text=sx.Text(xpath=self.alt_text_xpath)
-        )
+        if self.app.supports_alt_text:
+            return sx.AltText(
+                text=sx.Text(xpath=self.alt_text_xpath)
+            )
 
     def _xpath_template(self, type):
         return "if({key_as_condition}, {key_as_var_name}"
