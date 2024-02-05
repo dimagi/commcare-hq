@@ -77,6 +77,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
     case_type_app_module_count = get_case_type_app_module_count(domain)
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
     used_props_by_case_type = get_used_props_by_case_type(domain)
+    geo_case_prop = get_geo_case_property(domain)
     for case_type in queryset:
         module_count = case_type_app_module_count.get(case_type.name, 0)
         used_props = used_props_by_case_type[case_type.name] if case_type.name in used_props_by_case_type else []
@@ -87,11 +88,12 @@ def data_dictionary_json(request, domain, case_type_name=None):
             "is_deprecated": case_type.is_deprecated,
             "module_count": module_count,
             "properties": [],
-            "contains_case_data": len(used_props) > 0,
+            "is_safe_to_delete": bool(used_props),
         }
         grouped_properties = {
             group: [
                 {
+                    'id': prop.id,
                     'description': prop.description,
                     'label': prop.label,
                     'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(
@@ -99,7 +101,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                     ),
                     'name': prop.name,
                     'deprecated': prop.deprecated,
-                    'contains_case_data': prop.name in used_props,
+                    'is_safe_to_delete': prop.name not in used_props and prop.name != geo_case_prop,
                 }
                 | (
                     {
@@ -135,7 +137,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
         props.append(p)
     return JsonResponse({
         'case_types': props,
-        'geo_case_property': get_geo_case_property(domain),
+        'geo_case_property': geo_case_prop,
     })
 
 
