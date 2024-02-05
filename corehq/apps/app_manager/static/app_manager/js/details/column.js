@@ -365,9 +365,10 @@ hqDefine("app_manager/js/details/column", function () {
         self.$format = $('<div/>').append(self.format.ui);
         self.$format.find("select").css("margin-bottom", "5px");
         self.format.on('change', function () {
+            const $fieldSelect = self.field.ui.find('select');
             if (self.field.val() === microCaseImageName) {
                 console.log("resetting image type");
-                self.field.ui.find('select').prop('disabled', false);
+                $fieldSelect.prop('disabled', false);
             }
 
             self.coordinatesVisible(!_.contains(['address', 'address-popup', 'invisible'], self.format.val()));
@@ -434,8 +435,9 @@ hqDefine("app_manager/js/details/column", function () {
                     });
                 } else if (this.val() === 'image') {
                     console.log("selected image type");
-                    self.field.ui.find('select').val(microCaseImageName).change();
-                    self.field.ui.find('select').prop('disabled', true);
+                    self.field.val(microCaseImageName);
+                    $fieldSelect.val(microCaseImageName).change();
+                    $fieldSelect.prop('disabled', true);
                 }
             }
         }).fire('change');
