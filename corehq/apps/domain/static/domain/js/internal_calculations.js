@@ -5,34 +5,33 @@ hqDefine("domain/js/internal_calculations", [
     $,
     initialPageData
 ) {
-    function load_calculation($calc_group) {
-        var $calc_btn = $calc_group.find('.load-calc-btn');
-        var $calc_error = $calc_group.find('.calc-error');
-        var calc_tag = $calc_btn.attr('data-calc-tag');
+    function loadCalculation($group) {
+        var $btn = $group.find('.load-calc-btn');
+        var $error = $group.find('.calc-error');
+        var tag = $btn.attr('data-calc-tag');
 
-        $calc_btn.html('Loading...');
-        $.get(initialPageData.reverse('calculated_properties'), {calc_tag: calc_tag}, function (data) {
+        $btn.html('Loading...');
+        $.get(initialPageData.reverse('calculated_properties'), {calc_tag: tag}, function (data) {
             if (!data.error) {
-                $('#calc-' + calc_tag).html(data.value);
-                $calc_btn.addClass('btn-default');
-                $calc_error.html("");
+                $('#calc-' + tag).html(data.value);
+                $btn.addClass('btn-default');
+                $error.html("");
+            } else {
+                $btn.addClass('btn-danger');
+                $error.html(data.error);
             }
-            else {
-                $calc_btn.addClass('btn-danger');
-                $calc_error.html(data.error);
-            }
-            $calc_btn.html('Reload Data').removeClass('btn-primary');
+            $btn.html('Reload Data').removeClass('btn-primary');
         });
     }
 
     $(function () {
         $(document).on("click", ".load-calc-btn", function () {
-            load_calculation($(this).parent());
+            loadCalculation($(this).parent());
         });
 
         $(document).on("click", '#load-all-btn', function () {
             $('.calc-group').each(function (_, ele) {
-                load_calculation($(ele));
+                loadCalculation($(ele));
             });
         });
     });

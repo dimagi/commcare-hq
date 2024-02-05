@@ -107,7 +107,9 @@ hqDefine("hqwebapp/js/bootstrap3/widgets",[
             }
         });
 
-        $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
+        _.each($(".date-picker"), function (input) {
+            $(input).datepicker({ dateFormat: "yy-mm-dd" });
+        });
     };
 
     var parseEmails = function (input) {

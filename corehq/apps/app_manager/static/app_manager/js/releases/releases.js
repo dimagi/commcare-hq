@@ -272,12 +272,12 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         });
 
-        self.download_application_zip = function (appId, multimediaOnly, buildProfile, download_targeted_version) {
+        self.download_application_zip = function (appId, multimediaOnly, buildProfile, downloadTargetedVersion) {
             var urlSlug = multimediaOnly ? 'download_multimedia_zip' : 'download_ccz';
             var url = self.reverse(urlSlug, appId);
             var params = {};
             params.message = "Your application download is ready";
-            params.download_targeted_version = download_targeted_version;
+            params.download_targeted_version = downloadTargetedVersion;
             if (buildProfile) {
                 params.profile = buildProfile;
             }
@@ -451,7 +451,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.revertSavedApp = function (savedApp) {
             $.postGo(self.reverse('revert_to_copy'), {build_id: savedApp.id()});
         };
-        self.handleDeprecatedCaseTypesWarning = function(depCaseTypes) {
+        self.handleDeprecatedCaseTypesWarning = function (depCaseTypes) {
             if (depCaseTypes && depCaseTypes.length) {
                 self.depCaseTypes(depCaseTypes);
             } else {

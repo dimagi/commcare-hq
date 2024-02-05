@@ -111,28 +111,28 @@ hqDefine("reports/js/reports.async", function () {
             });
         };
 
-        self.updateFilters = function (form_params) {
+        self.updateFilters = function (params) {
             self.standardReport.saveDatespanToCookie();
             self.filterRequest = $.ajax({
                 url: window.location.pathname.replace(self.standardReport.urlRoot,
-                    self.standardReport.urlRoot + 'filters/') + "?" + form_params,
+                    self.standardReport.urlRoot + 'filters/') + "?" + params,
                 dataType: 'json',
                 success: loadFilters,
             });
         };
 
         self.updateReport = function (initialLoad, params, setFilters) {
-            var process_filters = "";
+            var processFilters = "";
             if (initialLoad) {
-                process_filters = "hq_filters=true&";
+                processFilters = "hq_filters=true&";
                 if (self.standardReport.loadDatespanFromCookie()) {
-                    process_filters = process_filters +
+                    processFilters = processFilters +
                         "&startdate=" + self.standardReport.datespan.startdate +
                         "&enddate=" + self.standardReport.datespan.enddate;
                 }
             }
-            if (setFilters != undefined) {
-                process_filters = process_filters + "&filterSet=" + setFilters;
+            if (setFilters !== undefined) {
+                processFilters = processFilters + "&filterSet=" + setFilters;
             }
             if (setFilters) {
                 $(self.standardReport.exportReportButton).removeClass('hide');
@@ -142,7 +142,7 @@ hqDefine("reports/js/reports.async", function () {
 
             self.reportRequest = $.ajax({
                 url: (window.location.pathname.replace(self.standardReport.urlRoot,
-                    self.standardReport.urlRoot + 'async/')) + "?" + process_filters + "&" + params,
+                    self.standardReport.urlRoot + 'async/')) + "?" + processFilters + "&" + params,
                 dataType: 'json',
                 success: function (data) {
                     self.reportRequest = null;
@@ -195,7 +195,7 @@ hqDefine("reports/js/reports.async", function () {
                 error: function (data) {
                     var humanReadable;
                     self.reportRequest = null;
-                    if (data.status != 0) {
+                    if (data.status !== 0) {
                         // If it is a BadRequest allow for report to specify text
                         if (data.status === 400) {
                             humanReadable = data.responseText || self.humanReadableErrors[data.status];
@@ -204,13 +204,14 @@ hqDefine("reports/js/reports.async", function () {
                         }
                         self.loadingIssueModal.find('.report-error-status').html('<strong>' + data.status + '</strong> ' +
                             ((humanReadable) ? humanReadable : ""));
-                        if (self.issueAttempts > 0)
+                        if (self.issueAttempts > 0) {
                             self.loadingIssueModal.find('.btn-primary').button('fail');
+                        }
                         self.issueAttempts += 1;
                         self.loadingIssueModal.modal('show');
                     } else {
                         self.hqLoading = $(self.loaderClass);
-                        self.hqLoading.find('h4').text("Loading Stopped");
+                        self.hqLoading.find('h4').text(gettext("Loading Stopped"));
                         self.hqLoading.find('.js-loading-spinner').attr('style', 'visibility: hidden;');
                     }
                 },
@@ -230,8 +231,7 @@ hqDefine("reports/js/reports.async", function () {
             self.loadingIssueModal.find('.btn-primary').button('loading');
             if (self.isCaseListRelated(window.location.pathname)) {
                 self.getQueryId(window.location.search.substr(1), true, true, window.location.pathname);
-            }
-            else {
+            } else {
                 self.updateReport(true, window.location.search.substr(1));
             }
         });

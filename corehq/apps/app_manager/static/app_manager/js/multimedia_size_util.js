@@ -49,10 +49,9 @@ hqDefine('app_manager/js/multimedia_size_util',[
                     self.loadState('loaded');
                 },
                 error: function (data) {
-                    if (data.hasOwnProperty('responseJSON')) {
+                    if (_.has(data, 'responseJSON')) {
                         alertUser.alert_user(data.responseJSON.message, "danger");
-                    }
-                    else {
+                    } else {
                         alert(gettext('Oops, there was a problem loading this section. Please try again.'));
                     }
                     self.loadState('error');
