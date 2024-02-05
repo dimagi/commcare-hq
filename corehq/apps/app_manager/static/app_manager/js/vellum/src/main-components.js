@@ -26500,13 +26500,14 @@ define('vellum/mugs',[
         }
     });
 
-    var MicroImage = util.extend(Image, {
+    var MicroImage = util.extend(Audio, {
       typeName: gettext('Micro-Image'),
       icon: 'fa fa-camera',
       tagName: 'input',
-      mediaType: "image/*",
+      mediaType: "image/*", /* */
       init: function (mug, form) {
-        mug.p.appearance = "microimage";
+        Audio.init(mug, form);
+        mug.p.appearance = "micro-image";
       }
     });
 
@@ -30529,6 +30530,8 @@ define('vellum/parser',[
                             delete mug.p.rawBindAttributes.type;
                             if (dataType === 'string' && appearance === 'numeric') {
                                 return makeMugAdaptor('PhoneNumber')(mug, form);
+                            } else if (appearance === 'microimage') {
+                              return makeMugAdaptor('MicroImage')(mug, form);
                             }
                             return inputAdaptors[dataType](mug, form);
                         }
@@ -30584,8 +30587,6 @@ define('vellum/parser',[
                 } else if (mediaType === 'image/*') { /* fix eclipse syntax highlighter */
                     if (appearance === 'signature') {
                         type = 'Signature';
-                    }  else if (appearance === 'microimage') {
-                      type = 'MicroImage'
                     } else {
                         type = 'Image';
                     }
