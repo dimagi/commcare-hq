@@ -129,6 +129,14 @@
                     </a>
                 </li>
             {% endif %}
+            {% if user.is_staff %}
+                <li>
+                    <a href="#modalSolutionsFeatureRequest" data-toggle="modal" class="track-usage-link"
+                    data-category="Nav Bar" data-action="Question Mark" data-label="Solutions Feature Request">
+                        <i class="fa fa-wrench dropdown-icon"></i> {% trans "Solutions Feature Request" %}
+                    </a>
+                </li>
+            {% endif %}
             {% if not enterprise_mode %}
                 <li>
                     <a href="https://status.commcarehq.org/" data-toggle="modal" class="track-usage-link"
