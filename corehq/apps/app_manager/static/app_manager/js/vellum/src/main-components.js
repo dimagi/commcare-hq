@@ -30530,6 +30530,8 @@ define('vellum/parser',[
                             delete mug.p.rawBindAttributes.type;
                             if (dataType === 'string' && appearance === 'numeric') {
                                 return makeMugAdaptor('PhoneNumber')(mug, form);
+                            } else if (appearance === 'microimage') {
+                              return makeMugAdaptor('MicroImage')(mug, form);
                             }
                             return inputAdaptors[dataType](mug, form);
                         }
