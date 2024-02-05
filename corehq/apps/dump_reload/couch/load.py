@@ -57,7 +57,7 @@ class CouchDataLoader(DataLoader):
             chunksize = 100
             if doc_type in [Application._doc_type, LinkedApplication._doc_type, RemoteApp._doc_type]:
                 chunksize = 1
-            db = IterDB(couch_db, new_edits=False, callback=callback, chunksize=chunksize)
+            db = IterDB(couch_db, new_edits=False, callback=callback, chunksize=chunksize, throttle_secs=0.25)
             db.__enter__()
             self._dbs[doc_type] = db
         return self._dbs[doc_type]
