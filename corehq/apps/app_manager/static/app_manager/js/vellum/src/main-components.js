@@ -703,7 +703,7 @@ __p+='<div class="btn-toolbar pull-left"></div>';
  } 
 __p+='\n    <div class="btn-toolbar pull-right">\n        ';
  if (isDeleteable) { 
-__p+='\n            <button type="button" class="btn btn-danger fd-button-remove"  tabindex="-1">\n                <i class="fa fa-trash-o"></i> '+
+__p+='\n            <button type="button" class="btn btn-danger fd-button-remove"  tabindex="-1">\n                <i class="fa-regular fa-trash-can"></i> '+
 ((__t=(gettext("Delete")))==null?'':_.escape(__t))+
 '\n            </button>\n        ';
  } 
@@ -26558,7 +26558,7 @@ define('vellum/mugs',[
     var Time = util.extend(defaultOptions, {
         typeName: gettext('Time'),
         dataType: 'xsd:time',
-        icon: 'fa fa-clock-o',
+        icon: 'fa-regular fa-clock',
         init: function (mug, form) {
         }
     });
@@ -47172,7 +47172,7 @@ define('vellum/core',[
             },
             {
                 name: gettext("Export Form Contents"),
-                icon: "fa fa-file-excel-o",
+                icon: "fa-regular fa-file-excel",
                 action: function (done) {
                     _this.showExportModal(done);
                 }
@@ -53580,7 +53580,7 @@ define('vellum/window',[
 define('tpl/tpl!vellum/templates/external_sources_tree', ['underscore'], function (_) { return function(obj){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
 with(obj||{}){
-__p+='<div class="fd-external-sources-container">\n    <div class="fd-head fd-head-external-sources">\n        <div class="fd-head-max-indicator"><i class="fa fa-arrow-circle-o-down"></i></div>\n        <h2>'+
+__p+='<div class="fd-external-sources-container">\n    <div class="fd-head fd-head-external-sources">\n        <div class="fd-head-max-indicator"><i class="fa-regular fa-circle-down"></i></div>\n        <h2>'+
 ((__t=(gettext("App Properties")))==null?'':_.escape(__t))+
 '</h2>\n    </div>\n    <div class="fd-scrollable">\n        <div class="fd-external-resource-search">\n            <form class="form-inline">\n                <label class="control-label" for="fdExternalSearch"><i class="fa fa-search"></i></label>\n                <div class="fd-search-control">\n                    <input type="text"\n                        id="fdExternalSearch"\n                        class="form-control search-query"\n                        placeholder="'+
 ((__t=(gettext("Search...")))==null?'':_.escape(__t))+
@@ -53790,8 +53790,8 @@ define('vellum/databrowser',[
         if (pane.height() > headHeight) {
             pane.css("height", headHeight + "px");
             pane.find('.fd-head-external-sources .fd-head-max-indicator i')
-                .removeClass('fa-arrow-circle-o-down')
-                .addClass('fa-arrow-circle-o-up');
+                .removeClass('fa-circle-down')
+                .addClass('fa-circle-up');
             $(window).resize();
         } else {
             var tree = vellum.$f.find(".fd-tree"),
@@ -53799,8 +53799,8 @@ define('vellum/databrowser',[
                 height = panelHeight || tree.height() * DATABROWSER_HEIGHT;
             pane.css("height", height + "px");
             pane.find('.fd-head-external-sources .fd-head-max-indicator i')
-                .removeClass('fa-arrow-circle-o-up')
-                .addClass('fa-arrow-circle-o-down');
+                .removeClass('fa-circle-up')
+                .addClass('fa-circle-down');
             $(window).resize();
             fn.initDataBrowser(vellum);
         }
