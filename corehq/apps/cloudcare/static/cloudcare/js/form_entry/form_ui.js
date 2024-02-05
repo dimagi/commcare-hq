@@ -151,17 +151,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
     }
 
-    function isNPerRowRepeatElement(element) {
-        return (
-            element &&
-            element.hasOwnProperty('type') &&
-            element.type === constants.GROUP_TYPE &&
-            element.hasOwnProperty('style') &&
-            element.style &&
-            element.style.hasOwnProperty('raw') &&
-            element.style.raw &&
-            isStyleNPerRowRepeat(element.style.raw)
-        );
+    function isNPerRowRepeatElement(style) {
+        const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
+        if(styleStr) {
+            return isStyleNPerRowRepeat(styleStr)
+        } else {
+            return false
+        }
     }
 
     /**
@@ -348,7 +344,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     usedWidth += elementTileWidth;
                 }
                 if (child.type === constants.GROUP_TYPE) {
-                    if (isNPerRowRepeatElement(child)) {
+                    if (isNPerRowRepeatElement(child.style)) {
                         for (let groupChild of child.children) {
                             if (groupChild.type === constants.GROUP_TYPE) {
                                 groupChild.style.raw = getNPerRowStyleFromRepeatStyle(child.style.raw);
