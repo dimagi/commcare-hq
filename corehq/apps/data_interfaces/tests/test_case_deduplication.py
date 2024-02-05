@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import chain
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
+from freezegun import freeze_time
 
 from faker import Faker
 
@@ -485,7 +486,7 @@ class CaseDeduplicationActionTest(TestCase):
         faker = Faker()
 
         duplicates = [
-            self._create_case(name='George Simon Esq.', age=12) for _ in range(num_cases)
+            self._create_case() for _ in range(num_cases)
         ]
         uniques = [
             self._create_case(name=faker.name(), age=faker.random_int(1, 100)) for _ in range(num_cases)
@@ -575,18 +576,36 @@ class CaseDeduplicationActionTest(TestCase):
         self.assertIn(duplicates[0].case_id, resulting_case_ids)
         self.assertGreater(len(resulting_case_ids), 1)
 
-    def test_calls_resave_cases_for_case_not_in_elasticsearch(self):
-        duplicates, _ = self._create_cases(num_cases=1)
-        self.case_exists_mock.return_value = False
+    @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
+    @patch("corehq.apps.data_interfaces.models.case_matching_rule_exists_in_es")
+    def test_ignores_recent_submissions_not_in_elasticsearch(self, mock_case_exists, find_duplicates_mock):
+        # create existing duplicates
+        existing_duplicates, _ = self._create_cases(num_cases=2)
+        find_duplicates_mock.return_value = [duplicate.case_id for duplicate in existing_duplicates]
 
-        # Remove these lines when the old model is removed
-        from corehq.apps.data_interfaces.models import CaseRuleActionResult
-        with patch.object(CaseDeduplicationActionDefinition, '_handle_case_duplicate') as handle_case_duplicate:
-            handle_case_duplicate.return_value = CaseRuleActionResult(num_updates=0)
+        # create a new case that will qualify as a duplicate, but has been submitted recently
+        current_time = datetime(year=2024, month=2, day=5, hour=10)
+        new_case = self._create_case()
+        new_case.modified_on = current_time - timedelta(hours=1)
+        mock_case_exists.return_value = False
 
-            with patch('corehq.apps.data_interfaces.models.resave_case') as resave_case_mock:
-                self.rule.run_actions_when_case_matches(duplicates[0])
-                resave_case_mock.assert_called()
+        with freeze_time(current_time):
+            self.rule.run_actions_when_case_matches(new_case)
+
+        created_duplicates = CaseDuplicateNew.objects.filter(case_id=new_case.case_id)
+        self.assertEqual(created_duplicates.count(), 0)
+
+    @patch("corehq.apps.data_interfaces.models.case_matching_rule_exists_in_es")
+    def test_raises_error_when_case_not_in_elasticsearch(self, mock_case_exists):
+        current_time = datetime(year=2024, month=2, day=5, hour=10)
+        case = self._create_case()
+        case.modified_on = current_time - timedelta(hours=1, seconds=1)
+        mock_case_exists.return_value = False
+
+        with self.assertRaisesRegex(
+                ValueError, f'Unable to find current ElasticSearch data for: {case.case_id}'):
+            with freeze_time(current_time):
+                self.rule.run_actions_when_case_matches(case)
 
     @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
     def test_case_no_longer_duplicate(self, find_duplicates_mock):
