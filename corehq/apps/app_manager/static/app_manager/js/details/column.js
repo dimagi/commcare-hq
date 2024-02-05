@@ -13,6 +13,7 @@
 hqDefine("app_manager/js/details/column", function () {
     const uiElement = hqImport('hqwebapp/js/bootstrap3/ui-element');
     const initialPageData = hqImport('hqwebapp/js/initial_page_data').get;
+    const microCaseImageName = 'cc_case_image';
 
     return function (col, screen) {
         /*
@@ -364,6 +365,11 @@ hqDefine("app_manager/js/details/column", function () {
         self.$format = $('<div/>').append(self.format.ui);
         self.$format.find("select").css("margin-bottom", "5px");
         self.format.on('change', function () {
+            if (self.field.val() === microCaseImageName) {
+                console.log("resetting image type");
+                self.field.ui.find('select').prop('disabled', false);
+            }
+
             self.coordinatesVisible(!_.contains(['address', 'address-popup', 'invisible'], self.format.val()));
             // Prevent self from running on page load before init
             if (self.format.ui.parent().length > 0) {
@@ -426,6 +432,10 @@ hqDefine("app_manager/js/details/column", function () {
                         self.time_ago_extra.value = interval.val();
                         fireChange();
                     });
+                } else if (this.val() === 'image') {
+                    console.log("selected image type");
+                    self.field.ui.find('select').val(microCaseImageName).change();
+                    self.field.ui.find('select').prop('disabled', true);
                 }
             }
         }).fire('change');

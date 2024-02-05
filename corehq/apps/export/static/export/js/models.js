@@ -80,6 +80,7 @@ hqDefine('export/js/models', [
         var self = this;
         ko.mapping.fromJS(instanceJSON, ExportInstance.mapping, self);
 
+        self.geoProperties = options.geoProperties;
         self.buildSchemaProgress = ko.observable(0);
         self.showBuildSchemaProgressBar = ko.observable(false);
         self.errorOnBuildSchema = ko.observable(false);
@@ -325,6 +326,8 @@ hqDefine('export/js/models', [
             return gettext('Excel (older versions)');
         } else if (format === constants.EXPORT_FORMATS.XLSX) {
             return gettext('Excel 2007+');
+        } else if (format === constants.EXPORT_FORMATS.GEOJSON) {
+            return gettext('GeoJSON');
         }
     };
 
@@ -527,6 +530,7 @@ hqDefine('export/js/models', [
             'xmlns',
             'is_daily_saved_export',
             'show_det_config_download',
+            'selected_geo_property',
         ],
         tables: {
             create: function (options) {
