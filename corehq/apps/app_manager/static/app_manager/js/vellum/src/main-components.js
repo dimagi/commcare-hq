@@ -26500,6 +26500,16 @@ define('vellum/mugs',[
         }
     });
 
+    var MicroImage = util.extend(Image, {
+      typeName: gettext('Micro-Image'),
+      icon: 'fa fa-camera',
+      tagName: 'input',
+      mediaType: "image/*",
+      init: function (mug, form) {
+        mug.p.appearance = "microimage";
+      }
+    });
+
     var Video = util.extend(Audio, {
         typeName: gettext('Video Capture'),
         icon: 'fa fa-video-camera',
@@ -26934,6 +26944,7 @@ define('vellum/mugs',[
                 "Geopoint": Geopoint,
                 "Group": Group,
                 "Image": Image,
+                "MicroImage": MicroImage,
                 "Int": Int,
                 "Long": Long,
                 "MSelect": MSelect,
@@ -30573,6 +30584,8 @@ define('vellum/parser',[
                 } else if (mediaType === 'image/*') { /* fix eclipse syntax highlighter */
                     if (appearance === 'signature') {
                         type = 'Signature';
+                    }  else if (appearance === 'microimage') {
+                      type = 'MicroImage'
                     } else {
                         type = 'Image';
                     }
@@ -46909,6 +46922,19 @@ define('vellum/core',[
      *              - questions: [mugType, ...]
      */
     fn.getQuestionGroups = function () {
+      let mediaGroup = {
+        group: ["Image", gettext('Multimedia Capture')],
+        questions: [
+          "Image",
+          "Audio",
+          "Video",
+          "Signature"
+        ]
+      }
+      if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_MICRO_IMAGE')) {
+        mediaGroup.questions.push("MicroImage");
+      }
+
         return [
             {
                 group: ["Text"],
@@ -46942,15 +46968,7 @@ define('vellum/core',[
                     "FieldList"
                 ]
             },
-            {
-                group: ["Image", gettext('Multimedia Capture')],
-                questions: [
-                    "Image",
-                    "Audio",
-                    "Video",
-                    "Signature"
-                ]
-            },
+            mediaGroup,
             {
                 group: ["Trigger"],
                 questions: ["Trigger"],
