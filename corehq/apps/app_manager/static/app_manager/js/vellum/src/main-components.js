@@ -26507,7 +26507,7 @@ define('vellum/mugs',[
       mediaType: "image/*", /* */
       init: function (mug, form) {
         Audio.init(mug, form);
-        mug.p.appearance = "microimage";
+        mug.p.appearance = "micro-image";
       }
     });
 
