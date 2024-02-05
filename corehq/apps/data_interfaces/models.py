@@ -76,8 +76,6 @@ from corehq.util.test_utils import unit_testing_only
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 
-from corehq.apps.hqcase.utils import resave_case
-
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
 
@@ -1145,12 +1143,19 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
 
     def _handle_case_duplicate_new(self, case, rule):
         if not case_matching_rule_exists_in_es(case, rule):
-            # If the case isn't found in elasticsearch, any duplicate information is unreliable
-            # Resaving this case will give our pillows a chance to process it again,
-            # Doing so will 1) insert the case into elasticsearch and 2) run this case through
-            # the duplicate pillow again
-            resave_case(rule.domain, case, send_post_save_signal=False)
-            return CaseRuleActionResult(num_updates=0)
+            ALLOWED_ES_DELAY = timedelta(hours=1)
+            if datetime.utcnow() - case.modified_on > ALLOWED_ES_DELAY:
+                # If old data was found that is not present in ElasticSearch, the data is unreliable.
+                # We've decided skipping this record and recording an error is likely the safest way to handle this
+                # Hopefully, these errors allow us to track down the underlying bug or infrastructure issue
+                # and fix the issue at the source
+                raise ValueError(f'Unable to find current ElasticSearch data for: {case.case_id}')
+            else:
+                # Normal processing can involve latency between when a case is written to the database and when
+                # it arrives in ElasticSearch. If this case was modified within the acceptable latency window,
+                # we can skip it now, with the expectation that the CaseDeduplicationProcessor will correctly
+                # handle it when it arrives in ElasticSearch
+                return CaseRuleActionResult(num_updates=0)
 
         try:
             existing_duplicate = CaseDuplicateNew.objects.get(case_id=case.case_id, action=self)
