@@ -26500,12 +26500,13 @@ define('vellum/mugs',[
         }
     });
 
-    var MicroImage = util.extend(Image, {
+    var MicroImage = util.extend(Audio, {
       typeName: gettext('Micro-Image'),
       icon: 'fa fa-camera',
       tagName: 'input',
-      mediaType: "image/*",
+      mediaType: "image/*", /* */
       init: function (mug, form) {
+        Audio.init(mug, form);
         mug.p.appearance = "microimage";
       }
     });
