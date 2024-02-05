@@ -435,6 +435,7 @@ hqDefine("app_manager/js/details/column", function () {
                     });
                 } else if (this.val() === 'image') {
                     console.log("selected image type");
+                    self.field.val(microCaseImageName);
                     $fieldSelect.val(microCaseImageName).change();
                     $fieldSelect.prop('disabled', true);
                 }
