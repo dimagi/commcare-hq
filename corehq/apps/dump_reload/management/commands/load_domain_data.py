@@ -70,12 +70,14 @@ class Command(BaseCommand):
         parser.add_argument('--json-output', action="store_true", help="Produce JSON output for use in tests")
         parser.add_argument('--chunksize', type=int, default=100,
                             help="Set custom chunksize in case it runs into large couch documents")
+        parser.add_argument('--throttle', action="store_false", help="Throttle saves to database")
 
     def handle(self, dump_file_path, **options):
         self.force = options.get('force')
         self.dry_run = options.get('dry_run')
         self.use_extracted = options.get('use_extracted')
         self.chunksize = options.get('chunksize')
+        self.should_throttle = options.get('throttle')
 
         if not os.path.isfile(dump_file_path):
             raise CommandError("Dump file not found: {}".format(dump_file_path))
@@ -125,7 +127,7 @@ class Command(BaseCommand):
 
     def _load_data(self, loader_class, extracted_dump_path, object_filter, dump_meta):
         try:
-            loader = loader_class(object_filter, self.stdout, self.stderr, self.chunksize)
+            loader = loader_class(object_filter, self.stdout, self.stderr, self.chunksize, self.should_throttle)
             return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force, dry_run=self.dry_run)
         except DataExistsException as e:
             raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(str(e)))

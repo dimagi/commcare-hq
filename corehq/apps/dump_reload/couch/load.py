@@ -62,7 +62,8 @@ class CouchDataLoader(DataLoader):
         callback = LoaderCallback(self._success_counter, self.stdout)
         large_doc_types = [Application._doc_type, LinkedApplication._doc_type, RemoteApp._doc_type]
         chunksize = 1 if doc_type in large_doc_types else self.chunksize
-        db = IterDB(couch_db, new_edits=False, callback=callback, chunksize=chunksize)
+        throttle_secs = 0.25 if self.should_throttle else None
+        db = IterDB(couch_db, new_edits=False, callback=callback, chunksize=chunksize, throttle_secs=throttle_secs)
         db.__enter__()
         return db
 
