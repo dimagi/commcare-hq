@@ -8,6 +8,7 @@ from freezegun import freeze_time
 from faker import Faker
 
 from casexml.apps.case.mock import CaseFactory
+from corehq.form_processor.tests.utils import create_case
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.topics import get_topic_offset
@@ -450,7 +451,6 @@ class CaseDeduplicationActionTest(TestCase):
 
         self.domain = 'case-dedupe-test'
         self.case_type = 'adult'
-        self.factory = CaseFactory(self.domain)
 
         self.rule = AutomaticUpdateRule.objects.create(
             domain=self.domain,
@@ -494,8 +494,10 @@ class CaseDeduplicationActionTest(TestCase):
 
         return duplicates, uniques
 
-    def _create_case(self, name='George Simon Esq.', age=12):
-        return self.factory.create_case(case_name=name, case_type=self.case_type, update={'age': age})
+    def _create_case(self, name='George Simon Esq.', age=12, case_id=None, save=True):
+        return create_case(
+            domain=self.domain, case_id=case_id, name=name,
+            case_type=self.case_type, case_json={'age': str(age)}, save=save)
 
     @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
     def test_updates_a_duplicate(self, find_duplicates_mock):
@@ -614,7 +616,7 @@ class CaseDeduplicationActionTest(TestCase):
         case = self._create_case(age=12)
         CaseDuplicateNew.create(case, self.action)
 
-        updated_case = self.factory.update_case(case.case_id, update={'age': 15})
+        updated_case = self._create_case(case_id=case.case_id, age=15, save=False)
 
         # The first case is no longer a duplicate
         find_duplicates_mock.return_value = [case.case_id]
@@ -634,7 +636,7 @@ class CaseDeduplicationActionTest(TestCase):
 
         self.rule.run_actions_when_case_matches(duplicates[0])
 
-        updated_case = self.factory.update_case(duplicates[0].case_id, update={'age': 15})
+        updated_case = self._create_case(case_id=duplicates[0].case_id, age=15, save=False)
 
         find_duplicates_mock.return_value = [duplicates[0].case_id]
         self.rule.run_actions_when_case_matches(updated_case)
