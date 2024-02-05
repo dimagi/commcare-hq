@@ -30587,8 +30587,6 @@ define('vellum/parser',[
                 } else if (mediaType === 'image/*') { /* fix eclipse syntax highlighter */
                     if (appearance === 'signature') {
                         type = 'Signature';
-                    }  else if (appearance === 'microimage') {
-                      type = 'MicroImage'
                     } else {
                         type = 'Image';
                     }
