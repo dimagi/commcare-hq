@@ -906,7 +906,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': CommCareAnalyticsListView.page_title,
                     'url': reverse(CommCareAnalyticsListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-bar-chart',
+                    'icon': 'fa-regular fa-chart-bar',
                     'show_in_dropdown': False,
                     'subpages': []
                 })
