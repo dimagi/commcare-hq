@@ -180,16 +180,20 @@
           <i class="fa fa-cloud-upload"></i>
           {% trans "Import from Excel" %}
         </a>
-      <a class="btn btn-default" href="#" data-bind="openModal: 'deprecate-case-type', visible: !$root.isActiveCaseTypeDeprecated()">
-        <i class="fa fa-archive"></i>
-        {% trans "Deprecate Case Type" %}
-      </a>
-      <button class="btn btn-default" data-bind="click: restoreCaseType, visible: $root.isActiveCaseTypeDeprecated()">
-        <i class="fa fa-undo"></i>
-        {% trans "Restore Case Type" %}
-      </button>
+        <a class="btn btn-default" href="#" data-bind="openModal: 'deprecate-case-type', visible: !$root.isActiveCaseTypeDeprecated()">
+          <i class="fa fa-archive"></i>
+          {% trans "Deprecate Case Type" %}
+        </a>
+        <button class="btn btn-default" data-bind="click: restoreCaseType, visible: $root.isActiveCaseTypeDeprecated()">
+          <i class="fa fa-undo"></i>
+          {% trans "Restore Case Type" %}
+        </button>
+        <a class="btn btn-danger" href="#" data-bind="openModal: 'delete-case-type-modal', visible: $root.canDeleteActiveCaseType()">
+          <i class="fa fa-trash"></i>
+          {% trans "Delete Case Type" %}
+        </a>
       {% endif %}
-      <div  data-bind="visible: $root.activeCaseType()">
+      <div data-bind="visible: $root.activeCaseType()">
         <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated" %}</button>
         <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default pull-right">{% trans "Hide Deprecated" %}</button>
         <div id="data-dictionary-table">
@@ -332,6 +336,11 @@
               </div>
             {% endif %}
             {% if not request.is_view_only %}
+              <div class="row-item-small">
+                <button title="{% trans_html_attr 'Delete Property' %}"
+                        data-bind="click: confirmDeleteProperty, visible: isSafeToDelete"
+                        class="fa fa-trash"></button>
+              </div>
               <div class="row-item-small">
                 <!-- ko if: !deprecated() -->
                 <button title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="fa fa-archive"></button>
