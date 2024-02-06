@@ -435,3 +435,43 @@ class DataDictionaryJsonTest(TestCase):
         response = self.client.get(self.endpoint, data={'load_deprecated_case_types': 'true'})
         expected_response = self._get_case_type_json(with_deprecated=True)
         self.assertEqual(response.json(), expected_response)
+
+
+@privilege_enabled(privileges.DATA_DICTIONARY)
+class TestDeleteCaseType(TestCase):
+
+    urlname = 'delete_case_type'
+    domain = 'test'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.admin_webuser = WebUser.create(cls.domain, 'test', 'foobar', None, None, is_admin=True)
+        cls.case_type_name = 'caseType'
+        cls.case_type_obj = CaseType(name=cls.case_type_name, domain=cls.domain)
+        cls.case_type_obj.save()
+
+        CaseProperty(case_type=cls.case_type_obj, name='property').save()
+
+    def setUp(self):
+        self.endpoint = reverse(self.urlname, args=(self.domain, self.case_type_obj.name))
+        self.client = Client()
+        self.client.login(username='test', password='foobar')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.case_type_obj.delete()
+        cls.admin_webuser.delete(cls.domain, None)
+        cls.domain_obj.delete()
+        return super().tearDownClass()
+
+    def test_delete_case_type(self):
+        response = self.client.post(self.endpoint, {})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'status': 'success'})
+
+        case_prop = CaseProperty.objects.filter(case_type__name=self.case_type_name, name='property').first()
+        self.assertIsNone(case_prop)
+        case_type = CaseType.objects.filter(name=self.case_type_name).first()
+        self.assertIsNone(case_type)
