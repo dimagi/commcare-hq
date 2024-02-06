@@ -2195,7 +2195,7 @@ VELLUM_TYPES = {
     "Geopoint": {
         'tag': 'input',
         'type': 'geopoint',
-        'icon': 'fa fa-map-marker',
+        'icon': 'fa-solid fa-location-dot',
         'editable': True,
     },
     "Group": {
