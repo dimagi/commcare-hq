@@ -860,7 +860,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-dashboard',
+                    'icon': 'fa-solid fa-gauge',
                     'show_in_dropdown': True,
                     'subpages': subpages
                 })
@@ -868,7 +868,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-dashboard',
+                    'icon': 'fa-solid fa-gauge',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
