@@ -312,7 +312,7 @@
               <div class="row-item fhir-path">
                 <input class="form-control" data-bind="value: $data.fhirResourcePropPath, disable: removeFHIRResourcePropertyPath"></input>
                 <!-- ko if: fhirResourcePropPath() && !removeFHIRResourcePropertyPath() -->
-                <button title="{% trans_html_attr 'Remove Path' %}" data-bind="click: removePath" class="fa fa-close"></button>
+                <button title="{% trans_html_attr 'Remove Path' %}" data-bind="click: removePath" class="fa-solid fa-xmark"></button>
                 <!-- /ko -->
                 <!-- ko if: removeFHIRResourcePropertyPath() -->
                 <button title="{% trans_html_attr 'Restore Path' %}" data-bind="click: restorePath" class="fa fa-undo"></button>
