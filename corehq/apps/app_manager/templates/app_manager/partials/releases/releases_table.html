@@ -39,7 +39,7 @@
                 visible: savedApps().length,
                 click: function () { return trackClick('Compare App Versions: Clicked Version Preview'); }
                 ">
-        <i class="fa fa-exchange"></i>
+        <i class="fa-solid fa-right-left"></i>
         {% trans "Preview" %}
       </a>
     {% endif %}
@@ -220,7 +220,7 @@
                         return trackClick('Compare App Versions: Clicked View Changes');
                     }
                     visible: $parent.previousBuildId($index())">
-            <i class="fa fa-exchange"></i>
+            <i class="fa-solid fa-right-left"></i>
             {% trans "View Changes" %}
           </a>
         {% endif %}
