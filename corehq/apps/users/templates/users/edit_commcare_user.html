@@ -61,7 +61,7 @@
         <div class="panel-body">
           {% if couch_user.user_location_id %}
             <a class="btn btn-default" href="{% url "edit_location" domain couch_user.user_location_id %}">
-              <i class="fa fa-external-link"></i> {% trans "User Location" %}
+              <i class="fa-solid fa-up-right-from-square"></i> {% trans "User Location" %}
             </a>
           {% endif %}
           {% include "users/partials/edit_commtrack_user_settings.html" %}
