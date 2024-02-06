@@ -372,7 +372,7 @@
       <div class="modal-body">
         <form action="{% url "soft_delete_form" domain instance.form_id %}" method="POST">{% csrf_token %}
           <p class="alert alert-warning">
-            <i class="fa fa-exclamation-triangle"></i>
+            <i class="fa-solid fa-triangle-exclamation"></i>
             {% blocktrans %}
               It is important you read the entire message below thoroughly before completing this action.
             {% endblocktrans %}
