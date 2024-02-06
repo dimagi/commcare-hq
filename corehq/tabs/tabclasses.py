@@ -731,7 +731,7 @@ class ProjectDataTab(UITab):
                         'url': reverse(FormExportListView.urlname,
                                        args=(self.domain,)),
                         'show_in_dropdown': True,
-                        'icon': 'icon icon-list-alt fa fa-list-alt',
+                        'icon': 'icon icon-list-alt fa-regular fa-rectangle-list',
                         'subpages': [_f for _f in [
                             {
                                 'title': _(CreateNewCustomFormExportView.page_title),
