@@ -27,6 +27,7 @@ from corehq.apps.data_dictionary.models import (
 from corehq.apps.data_dictionary.util import (
     save_case_property,
     save_case_property_group,
+    get_used_props_by_case_type,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -74,9 +75,11 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    used_props_by_case_type = get_used_props_by_case_type(domain)
     geo_case_prop = get_geo_case_property(domain)
     for case_type in queryset:
         module_count = case_type_app_module_count.get(case_type.name, 0)
+        used_props = used_props_by_case_type[case_type.name] if case_type.name in used_props_by_case_type else []
         p = {
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
@@ -84,10 +87,12 @@ def data_dictionary_json(request, domain, case_type_name=None):
             "is_deprecated": case_type.is_deprecated,
             "module_count": module_count,
             "properties": [],
+            "is_safe_to_delete": len(used_props) == 0,
         }
         grouped_properties = {
             group: [
                 {
+                    'id': prop.id,
                     'description': prop.description,
                     'label': prop.label,
                     'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(
@@ -95,6 +100,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                     ),
                     'name': prop.name,
                     'deprecated': prop.deprecated,
+                    'is_safe_to_delete': prop.name not in used_props and prop.name != geo_case_prop,
                 }
                 | (
                     {
