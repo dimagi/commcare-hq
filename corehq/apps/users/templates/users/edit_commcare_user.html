@@ -114,7 +114,7 @@
             <fieldset>
               <legend>{% trans 'Delete Mobile Worker' %}</legend>
               <div class="alert alert-danger">
-                <p><i class="fa fa-exclamation-triangle"></i> {% trans 'The following action is permanent!' %}</p>
+                <p><i class="fa-solid fa-triangle-exclamation"></i> {% trans 'The following action is permanent!' %}</p>
                 <p>
                   <a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal">
                     <i class="fa-regular fa-trash-can"></i> {% trans "Delete Mobile Worker" %}
@@ -199,7 +199,7 @@
             {% csrf_token %}
             <div class="modal-body">
               <p class="alert alert-warning">
-                <i class="fa fa-exclamation-triangle"></i>
+                <i class="fa-solid fa-triangle-exclamation"></i>
                 {% blocktrans %}
                   It is important you read the entire message below thoroughly before completing this action.
                 {% endblocktrans %}
