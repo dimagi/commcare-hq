@@ -792,7 +792,7 @@ class ProjectDataTab(UITab):
                         'title': _(DownloadNewSmsExportView.page_title),
                         'url': reverse(DownloadNewSmsExportView.urlname, args=(self.domain,)),
                         'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-commenting-o',
+                        'icon': 'icon icon-share fa-regular fa-comment-dots',
                         'subpages': []
                     })
 
