@@ -4,9 +4,13 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "locations/js/widgets" %}
+{% requirejs_main 'users/js/edit_web_user' %}
 
 {% block page_content %}
+  {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
+  {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
+  {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
+  {% initial_page_data "user_data" user_data %}
   {% if has_untrusted_identity_provider %}
     <div class="alert alert-setting">
       <p class="lead">

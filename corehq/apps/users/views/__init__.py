@@ -10,6 +10,7 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -421,9 +422,14 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def page_context(self):
+        profiles = [profile.to_json() for profile in self.form_user_update.custom_data.model.get_profiles()]
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
+            'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
+            'custom_fields_profiles': sorted(profiles, key=lambda x: x['name'].lower()),
+            'custom_fields_profile_slug': PROFILE_SLUG,
+            'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
         }
         if self.request.is_view_only:
             make_form_readonly(self.commtrack_form)
