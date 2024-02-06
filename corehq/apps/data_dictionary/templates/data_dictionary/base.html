@@ -267,7 +267,7 @@
             {% endif %}
           </div>
           <div data-bind="sortable: { data: properties, connectClass: 'properties', options: { handle: 'i.sortable-handle' } }, visible: expanded() && (!deprecated || $root.showAll())">
-            <div class="table-row" data-bind="visible: expanded() && (!deprecated() || $root.showAll())">
+            <div class="table-row" data-bind="visible: expanded() && (!deprecated() || $root.showAll()) && !deleted()">
               <div class="row-item-small">
               {% if not request.is_view_only %}
                 <i class="sortable-handle fa fa-arrows-v"></i>
