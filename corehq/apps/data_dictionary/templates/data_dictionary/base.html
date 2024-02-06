@@ -175,7 +175,7 @@
       </a>
       {% if not request.is_view_only %}
         <a class="btn btn-default" href="{% url "upload_data_dict" domain %}">
-          <i class="fa fa-cloud-upload"></i>
+          <i class="fa-solid fa-cloud-arrow-up"></i>
           {% trans "Import from Excel" %}
         </a>
       <a class="btn btn-default" href="#" data-bind="openModal: 'deprecate-case-type', visible: !$root.isActiveCaseTypeDeprecated()">
