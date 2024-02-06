@@ -251,7 +251,7 @@ hqDefine('app_manager/js/app_manager', function () {
 
         function initDragHandles() {
             var $scope = $(".appmanager-main-menu");
-            $scope.find('.drag_handle').addClass('fa fa-arrows-v');
+            $scope.find('.drag_handle').addClass('fa-solid fa-up-down');
             $scope.find('.js-appnav-drag-module').on('mouseenter', function () {
                 $(this).closest('.js-sorted-li').addClass('appnav-highlight');
             }).on('mouseleave', function () {
