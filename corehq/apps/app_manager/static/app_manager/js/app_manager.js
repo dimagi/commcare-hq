@@ -122,7 +122,7 @@ hqDefine('app_manager/js/app_manager', function () {
                 } else {
                     area.find('*').hide();
                     upgradeMessage.append(
-                        $('<i></i>').addClass('fa').addClass('fa-arrow-left')
+                        $('<i></i>').addClass('fa fa-arrow-left')
                     ).append(
                         $('<span></span>').text(' Requires CommCare ' + version)
                     ).appendTo(area);
