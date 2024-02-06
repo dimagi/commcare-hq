@@ -27,6 +27,7 @@ from corehq.apps.data_dictionary.models import (
 from corehq.apps.data_dictionary.util import (
     save_case_property,
     save_case_property_group,
+    delete_case_property,
     get_used_props_by_case_type,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -219,21 +220,25 @@ def update_case_property(request, domain):
         for property in property_list:
             case_type = property.get('caseType')
             name = property.get('name')
-            label = property.get('label')
-            index = property.get('index')
-            description = property.get('description')
-            data_type = property.get('data_type') if data_validation_enabled else None
-            group = property.get('group')
-            deprecated = property.get('deprecated')
-            allowed_values = property.get('allowed_values') if data_validation_enabled else None
-            if update_fhir_resources:
-                fhir_resource_prop_path = property.get('fhir_resource_prop_path')
-                remove_path = property.get('removeFHIRResourcePropertyPath', False)
+            deleted = property.get('deleted')
+            if deleted:
+                error = delete_case_property(name, case_type, domain)
             else:
-                fhir_resource_prop_path, remove_path = None, None
-            error = save_case_property(name, case_type, domain, data_type, description, label, group, deprecated,
-                                       fhir_resource_prop_path, fhir_resource_type_obj, remove_path,
-                                       allowed_values, index)
+                label = property.get('label')
+                index = property.get('index')
+                description = property.get('description')
+                data_type = property.get('data_type') if data_validation_enabled else None
+                group = property.get('group')
+                deprecated = property.get('deprecated')
+                allowed_values = property.get('allowed_values') if data_validation_enabled else None
+                if update_fhir_resources:
+                    fhir_resource_prop_path = property.get('fhir_resource_prop_path')
+                    remove_path = property.get('removeFHIRResourcePropertyPath', False)
+                else:
+                    fhir_resource_prop_path, remove_path = None, None
+                error = save_case_property(name, case_type, domain, data_type, description, label, group,
+                                           deprecated, fhir_resource_prop_path, fhir_resource_type_obj,
+                                           remove_path, allowed_values, index)
             if error:
                 errors.append(error)
 
