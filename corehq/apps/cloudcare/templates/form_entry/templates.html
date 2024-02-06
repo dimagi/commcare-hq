@@ -47,18 +47,20 @@
                   "><i class="fa fa-remove"></i></button>
         </legend>
       </div>
-      <div data-bind="if: collapsible">
-        <div class="collapsible-icon-container">
-          <i style="" class="fa" data-bind="
-              css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
-          "></i>
+      <div data-bind="if: collapsible" >
+        <div class="d-flex align-items-center">
+          <div class="collapsible-icon-container">
+            <i  class="fa" data-bind="
+                css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
+            "></i>
+          </div>
+          <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
+          <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
+          <button class="btn btn-danger del pull-right" href="#" data-bind="
+                      visible: isRepetition,
+                      click: deleteRepeat
+                  "><i class="fa fa-remove"></i></button>
         </div>
-        <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
-        <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
-        <button class="btn btn-danger del pull-right" href="#" data-bind="
-                    visible: isRepetition,
-                    click: deleteRepeat
-                "><i class="fa fa-remove"></i></button>
       </div>
       <span class="ix"></span>
     </fieldset>
@@ -74,6 +76,7 @@
               },
               css: {
                 'panel-body': collapsible,
+                'group-body': !collapsible,
                 'stripe-repeats': stripeRepeats,
               }"></div>
         </fieldset>
