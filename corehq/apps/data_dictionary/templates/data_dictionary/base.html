@@ -218,7 +218,7 @@
           <div class="table-row group" data-bind="css: { 'group-deprecated': toBeDeprecated() }, visible: !deprecated || $root.showAll()">
             <div class="row-item-small">
               {% if not request.is_view_only %}
-              <i class="sortable-handle fa fa-arrows-v"></i>
+              <i class="sortable-handle fa-solid fa-up-down"></i>
               {% endif %}
               <i class="fa ms-2"
                 data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: toggleExpanded"></i>
@@ -264,7 +264,7 @@
             <div class="table-row" data-bind="visible: expanded() && (!deprecated() || $root.showAll())">
               <div class="row-item-small">
               {% if not request.is_view_only %}
-                <i class="sortable-handle fa fa-arrows-v"></i>
+                <i class="sortable-handle fa-solid fa-up-down"></i>
               {% endif %}
               </div>
               <div class="row-item">
