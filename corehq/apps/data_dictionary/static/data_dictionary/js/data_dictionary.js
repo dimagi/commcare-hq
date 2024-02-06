@@ -212,6 +212,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     }
 
                     _.each(group.properties(), function (element, index) {
+                        if (element.deleted && !element.id) {
+                            return;
+                        }
+
                         const allowedValues = element.allowedValues.val();
                         let pureAllowedValues = {};
                         for (const key in allowedValues) {
@@ -228,6 +232,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'fhir_resource_prop_path': (
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
                             'deprecated': element.deprecated(),
+                            'deleted': element.deleted(),
                             'removeFHIRResourcePropertyPath': element.removeFHIRResourcePropertyPath(),
                             'allowed_values': pureAllowedValues,
                         };
