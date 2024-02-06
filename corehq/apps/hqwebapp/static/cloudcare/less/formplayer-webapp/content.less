@@ -54,16 +54,6 @@ body {
   background: transparent;
 }
 
-.case-tile-container {
-  background: transparent !important;
-  > div {
-    background: white;
-    margin-bottom: 20px;
-    display: grid;
-    container-type: inline-size;
-  }
-}
-
 #case-list-search-controls {
   background-color: @cc-bg;
   margin: 0 5px 5px 5px;
@@ -86,8 +76,7 @@ body {
 }
 
 .select-row-checkbox-div {
-  padding-top: 10px;
-  padding-left: 10px;
+  margin: 10px 10px 10px 10px;
   float: left;
 }
 
@@ -106,15 +95,6 @@ body {
 
   #cloudcare-main {
     padding: 0px;
-  }
-
-  .case-tile-container {
-    > div {
-      margin-bottom: 0px;
-    }
-    > div:not(:empty) {
-      border-bottom: 1px dashed black;
-    }
   }
 
   video {

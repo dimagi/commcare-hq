@@ -5,7 +5,7 @@ hqDefine("sms/js/settings", [
     'hqwebapp/js/select2_handler',
     'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
     'bootstrap-timepicker/js/bootstrap-timepicker',
-    'hqwebapp/js/widgets', //multi-emails
+    'hqwebapp/js/bootstrap3/widgets', //multi-emails
 ], function(
     $,
     ko,

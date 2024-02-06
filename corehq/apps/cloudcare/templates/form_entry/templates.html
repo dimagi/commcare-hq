@@ -3,9 +3,10 @@
 
 <script type="text/html" id="sub-group-fullform-ko-template">
   <div tabindex="-1" class ="gr" data-bind="
+        class: elementTile,
         css: {
           'gr-no-children': $data.children().length === 0,
-          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'grouped-question-tile-row' }),
+          'gr-has-no-questions': $data.children().every(function(d) { return d.type() !== 'grouped-element-tile-row' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'panel panel-default': collapsible,
           'repetition': isRepetition,
@@ -30,8 +31,9 @@
               },
         click: toggleChildren,
         event: {keypress: keyPressAction},
-        style: {'background-color': headerBackgroundColor(),
-                'color': headerBackgroundColor() ? 'white' : '',
+        style: {'display': showHeader ? 'block': 'none',
+                'background-color': headerBackgroundColor(),
+                'color': headerBackgroundColor() ? 'white' : ''
         }">
       <div data-bind="ifnot: collapsible">
         <legend>
@@ -63,8 +65,17 @@
       <div data-bind="visible: showChildren">
         <fieldset>
         <legend aria-hidden="true" class="sr-only">{% trans "Question Group" %}</legend>
-          <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children,
-            afterRender: focusNewRepeat }, css: {'panel-body': collapsible}"/>
+          <div class="children" data-bind="
+              slideVisible: showChildren(),
+              template: {
+                name: childTemplate,
+                foreach: $data.children,
+                afterRender: focusNewRepeat,
+              },
+              css: {
+                'panel-body': collapsible,
+                'stripe-repeats': stripeRepeats,
+              }"></div>
         </fieldset>
       </div>
   </div>
@@ -202,7 +213,7 @@
 </script>
 
 
-<script type="text/html" id="grouped-question-tile-row-fullform-ko-template">
+<script type="text/html" id="grouped-element-tile-row-fullform-ko-template">
   <div class="row">
     <div data-bind="template: { name: childTemplate, foreach: $data.children }" class="question-tile-row"/>
   </div>
@@ -256,7 +267,10 @@
         </div>
         <!-- /ko -->
       </div>
-      <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
+      <i class="hint-text" data-bind="
+              text: ko.utils.unwrapObservable($data.hint),
+              visible: !entry.useHintAsPlaceHolder()
+          "></i>
       <!-- ko if: required() -->
       <span class="sr-only">{% trans "A response is required for this question." %}</span>
       <!-- /ko -->
@@ -396,6 +410,7 @@
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
         attr: {
+            placeholder: placeholderText,
             maxlength: lengthLimit,
             id: entryId,
             'aria-required': $parent.required() ? 'true' : 'false',
@@ -453,19 +468,25 @@
 </script>
 
 <script type="text/html" id="file-entry-ko-template">
-  <input type="file" data-bind="
-        value: $data.rawAnswer,
-        attr: {
-            id: entryId,
-            'aria-required': $parent.required() ? 'true' : 'false',
-            accept: accept,
-        },
-    "/>
-  <button class="btn btn-default btn-xs pull-right" data-bind="
-    click: onClear,
-    text: $root.getTranslation('upload.clear.title', '{% trans_html_attr 'Clear' %}'),
-  ">
-  </button>
+  <div class="row">
+    <div class="col-xs-8">
+      <input type="file" data-bind="
+            value: $data.rawAnswer,
+            attr: {
+                id: entryId,
+                'aria-required': $parent.required() ? 'true' : 'false',
+                accept: accept,
+            },
+        "/>
+    </div>
+    <div class="col-xs-4">
+      <button class="btn btn-default btn-xs pull-right" data-bind="
+        click: onClear,
+        text: $root.getTranslation('upload.clear.title', '{% trans_html_attr 'Clear' %}'),
+      ">
+      </button>
+    </div>
+  </div>
 </script>
 
 <script type="text/html" id="signature-entry-ko-template">

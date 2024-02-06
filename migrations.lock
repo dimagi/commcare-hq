@@ -108,6 +108,8 @@ accounting
  0086_add_duplicate_invoice_id_to_invoice_model
  0087_invoice_unique_constraints
  0088_add_new_softwareplan_visibility
+ 0089_dedupe_priv
+ 0090_custom_domain_alerts_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -1070,6 +1072,7 @@ sso
  0003_oidc_onelogin_idp_update
  0004_login_enforcement_type_sso_test_user
  0005_alter_identityprovider_idp_type
+ 0006_add_new_fields_in_identityprovider
 start_enterprise
  0001_initial
 stock

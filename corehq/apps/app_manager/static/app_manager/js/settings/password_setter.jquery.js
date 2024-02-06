@@ -1,6 +1,6 @@
 /* jQuery extension for password reset widget. Only used by app settings. */
 
-$.fn.password_setter = function (options) {
+$.fn.password_setter = function () {
     var that = this,
         randID = Math.floor(Math.random() * 1000),
         password1ID = 'password-' + randID + '-1',
@@ -28,15 +28,14 @@ $.fn.password_setter = function (options) {
     $repeatRow.find("label").attr("for", password2ID);
     $repeatInput.find("input").attr("id", password2ID);
 
-    $modal.find("button.save").click(function (e) {
+    $modal.find("button.save").click(function () {
         $errorMismatch.addClass("hide");
         $errorEmpty.addClass("hide");
         if ($passwordInput.val() !== $repeatInput.val()) {
             $errorMismatch.removeClass("hide");
         } else if (!$passwordInput.val()) {
             $errorEmpty.removeClass("hide");
-        }
-        else {
+        } else {
             $modal.modal('hide');
             that.val($passwordInput.val()).trigger('textchange');
         }

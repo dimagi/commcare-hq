@@ -52,7 +52,12 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     Utils.currentUrlToObject = function () {
         var url = Backbone.history.getFragment();
         try {
-            return Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
+            const cloudcareUrl = Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
+            for (const queryKey in cloudcareUrl.queryData) {
+                // retrieve query inputs from Utils object
+                cloudcareUrl.queryData[queryKey].inputs = Utils.getCurrentQueryInputs(queryKey);
+            }
+            return cloudcareUrl;
         } catch (e) {
             // This means that we're on the homepage
             return new Utils.CloudcareUrl({});
@@ -61,6 +66,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
 
     Utils.setUrlToObject = function (urlObject, replace) {
         replace = replace || false;
+        for (const queryKey in urlObject.queryData) {
+            // don't store query inputs in url
+            delete urlObject.queryData[queryKey].inputs;
+        }
         var encodedUrl = Utils.objectToEncodedUrl(urlObject.toJson());
         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
             FormplayerFrontend.navigate(encodedUrl, { replace: replace });
@@ -185,29 +194,33 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         }
     };
 
-    Utils.getCurrentQueryInputs = function () {
-        var queryData = Utils.currentUrlToObject().queryData[sessionStorage.queryKey];
-        if (queryData) {
-            return queryData.inputs || {};
+    Utils.getCurrentQueryInputs = function (queryKey) {
+        queryKey = queryKey || sessionStorage.queryKey;
+        const queryInputs = this.queryInputs || {};
+        return queryInputs[queryKey];
+    };
+
+    Utils.setCurrentQueryInputs = function (inputs, queryKey) {
+        queryKey = queryKey || sessionStorage.queryKey;
+        if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
+            this.queryInputs = this.queryInputs || {};
+            this.queryInputs[queryKey] = inputs;
+        }
+    };
+
+    Utils.getStickyQueryInputs = function () {
+        if (toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH') && this.stickyQueryInputs) {
+            return this.stickyQueryInputs[sessionStorage.queryKey] || {};
         }
         return {};
     };
 
-    Utils.getStickyQueryInputs = function () {
-        if (!toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
-            return {};
-        }
-        if (!this.stickyQueryInputs) {
-            return {};
-        }
-        return this.stickyQueryInputs[sessionStorage.queryKey] || {};
-    };
-
     Utils.setStickyQueryInputs = function (inputs) {
-        if (!this.stickyQueryInputs) {
-            this.stickyQueryInputs = {};
+        const queryKey = sessionStorage.queryKey;
+        if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
+            this.stickyQueryInputs = this.stickyQueryInputs || {};
+            this.stickyQueryInputs[queryKey] = inputs;
         }
-        this.stickyQueryInputs[sessionStorage.queryKey] = inputs;
     };
 
     Utils.setSelectedValues = function (selections) {
@@ -276,6 +289,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
 
         this.setQueryData = function ({ inputs, execute, forceManualSearch, initiatedBy}) {
             var selections = Utils.currentUrlToObject().selections;
+            var queryKey = sessionStorage.queryKey;
             this.queryData = this.queryData || {};
 
             const queryDataEntry = _.defaults({
@@ -283,13 +297,13 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 execute: execute,
                 force_manual_search: forceManualSearch,
                 selections: selections,
-            }, this.queryData[sessionStorage.queryKey]);
+            }, this.queryData[queryKey]);
 
             if (initiatedBy !== null && initiatedBy !== undefined) {
                 queryDataEntry.initiatedBy = initiatedBy;
             }
-
-            this.queryData[sessionStorage.queryKey] = queryDataEntry;
+            Utils.setCurrentQueryInputs(inputs, queryKey);
+            this.queryData[queryKey] = queryDataEntry;
 
             this.page = null;
             this.search = null;
