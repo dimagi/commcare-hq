@@ -74,6 +74,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    geo_case_prop = get_geo_case_property(domain)
     for case_type in queryset:
         module_count = case_type_app_module_count.get(case_type.name, 0)
         p = {
@@ -129,7 +130,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
         props.append(p)
     return JsonResponse({
         'case_types': props,
-        'geo_case_property': get_geo_case_property(domain),
+        'geo_case_property': geo_case_prop,
     })
 
 
