@@ -266,6 +266,14 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         return gettext('Unable to save valid values longer than {} characters').format(max_len)
 
 
+def delete_case_property(name, case_type, domain):
+    try:
+        prop = CaseProperty.objects.get(name=name, case_type__name=case_type, case_type__domain=domain)
+    except CaseProperty.DoesNotExist:
+        return gettext('Case property does not exist.')
+    prop.delete()
+
+
 @quickcache(vary_on=['domain', 'exclude_deprecated'], timeout=24 * 60 * 60)
 def get_data_dict_props_by_case_type(domain, exclude_deprecated=True):
     filter_kwargs = {'case_type__domain': domain}
