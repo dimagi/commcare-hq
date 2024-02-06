@@ -2723,7 +2723,7 @@ USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
     description='The project logo replaces the CommCare logo.',
 )
 
-CASE_MICRO_IMAGE = StaticToggle(
+VELLUM_CASE_MICRO_IMAGE = StaticToggle(
     slug='case_micro_image',
     label='Add case micro images to case list',
     tag=TAG_SOLUTIONS_LIMITED,
