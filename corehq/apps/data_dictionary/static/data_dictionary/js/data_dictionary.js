@@ -170,6 +170,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return self.dataType() === 'select';
         });
 
+        self.confirmDeleteProperty = function () {
+            const $modal = $("#delete-case-prop-modal").modal('show');
+            $("#delete-case-prop-btn").off("click").on("click", () => {
+                self.deleted(true);
+                $modal.modal('hide');
+            });
+        };
+
         return self;
     };
 
@@ -309,6 +317,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return (activeCaseType) ? activeCaseType.deprecated : false;
         };
 
+        self.canDeleteActiveCaseType = function () {
+            const activeCaseType = self.getActiveCaseType();
+            return (activeCaseType) ? activeCaseType.canDelete : false;
+        };
+
         self.activeCaseTypeModuleCount = function () {
             const activeCaseType = self.getActiveCaseType();
             return (activeCaseType) ? activeCaseType.appCount : 0;
@@ -338,6 +351,20 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 },
                 success: function () {
                     window.location.reload(true);
+                },
+                error: function () {
+                    $("#case-type-error").show();
+                },
+            });
+        };
+
+        self.deleteCaseType = function () {
+            $("#case-type-error").hide();
+            $.ajax({
+                url: initialPageData.reverse('delete_case_type', self.getActiveCaseType().name),
+                method: 'POST',
+                success: function () {
+                    window.location.href = initialPageData.reverse('data_dictionary');
                 },
                 error: function () {
                     $("#case-type-error").show();
