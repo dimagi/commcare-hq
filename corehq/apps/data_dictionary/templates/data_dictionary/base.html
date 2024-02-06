@@ -131,10 +131,10 @@
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
   {% initial_page_data 'read_only_mode' request.is_view_only %}
   {% url 'geospatial_settings' domain as geospatial_settings_url %}
-  <div id="deprecate-case-type-error" class="alert alert-danger hidden">
+  <div id="case-type-error" class="alert alert-danger" hidden>
     <p>
       {% blocktrans %}
-        There was an error deprecating the case type. Please try again.
+        There was an error processing the request. Please try again.
       {% endblocktrans %}
     </p>
   </div>
