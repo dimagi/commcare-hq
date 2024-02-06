@@ -265,10 +265,10 @@
         </div>
         <!-- /ko -->
       </div>
-      <em class="hint-text" data-bind="
+      <span class="hint-text" data-bind="
               text: ko.utils.unwrapObservable($data.hint),
               visible: !entry.useHintAsPlaceHolder()
-          "></em>
+          "></span>
       <!-- ko if: required() -->
       <span class="sr-only">{% trans "A response is required for this question." %}</span>
       <!-- /ko -->
