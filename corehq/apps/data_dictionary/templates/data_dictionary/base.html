@@ -336,12 +336,13 @@
               </div>
             {% endif %}
             {% if not request.is_view_only %}
-              <div class="row-item-small">
-                <button title="{% trans_html_attr 'Delete Property' %}"
-                        data-bind="click: confirmDeleteProperty, visible: isSafeToDelete"
-                        class="fa fa-trash"></button>
-              </div>
-              <div class="row-item-small">
+              <div class="row-item-small m-auto">
+                  <button title="{% trans_html_attr 'Delete Property' %}"
+                          data-bind="click: confirmDeleteProperty, visible: isSafeToDelete"
+                          class="btn btn-danger">
+                    <i class="fa fa-trash"></i>
+                    {% trans 'Delete' %}
+                  </button>
                 <!-- ko if: !deprecated() -->
                 <button title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="fa fa-archive"></button>
                 <!-- /ko -->
