@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -3,185 +3,228 @@
+@@ -3,188 +3,228 @@
  {% load hq_shared_tags %}
  
  {% if request.couch_user %}
@@ -282,6 +282,7 @@
 -                    <a href="#modalReportIssue" data-toggle="modal" class="track-usage-link"
 -                       data-category="Nav Bar" data-action="Question Mark" data-label="Report an Issue">
 -                        <i class="fa-solid fa-triangle-exclamation icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
+-<<<<<<< HEAD
 -                    </a>
 -                </li>
 -            {% endif %}
@@ -290,6 +291,8 @@
 -                    <a href="#modalSolutionsFeatureRequest" data-toggle="modal" class="track-usage-link"
 -                    data-category="Nav Bar" data-action="Question Mark" data-label="Solutions Feature Request">
 -                        <i class="fa fa-wrench dropdown-icon"></i> {% trans "Solutions Feature Request" %}
+-=======
+->>>>>>> 95debc6d759 (fontawesome 6, rename exclamation triangle)
 -                    </a>
 -                </li>
 -            {% endif %}
