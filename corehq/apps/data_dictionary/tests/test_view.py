@@ -201,6 +201,17 @@ class UpdateCasePropertyViewTest(TestCase):
         prop = self._get_property()
         self.assertIsNone(prop.group)
 
+    def test_delete_case_property(self):
+        prop = self._get_property()
+        post_data = {
+            "groups": '[]',
+            "properties": '[{"caseType": "caseType", "name": "property", "group": "", "deleted": true}]'
+        }
+        response = self.client.post(self.url, post_data)
+        self.assertEqual(response.status_code, 200)
+        prop = self._get_property()
+        self.assertIsNone(prop)
+
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryViewTest(TestCase):

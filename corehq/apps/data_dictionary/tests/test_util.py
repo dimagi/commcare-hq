@@ -16,6 +16,7 @@ from corehq.apps.data_dictionary.util import (
     is_case_type_deprecated,
     get_data_dict_deprecated_case_types,
     is_case_type_or_prop_name_valid,
+    delete_case_property,
 )
 
 
@@ -96,6 +97,35 @@ class GenerateDictionaryTest(TestCase):
 
         self.assertEqual(CaseType.objects.filter(domain=self.domain).count(), 1)
         self.assertEqual(CaseProperty.objects.filter(case_type__domain=self.domain).count(), 1)
+
+
+class DeleteCasePropertyTest(TestCase):
+    domain = uuid.uuid4().hex
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.case_type = 'my-case-type'
+        cls.case_prop_name = 'my-prop'
+        cls.case_type_obj = CaseType(name=cls.case_type, domain=cls.domain)
+        cls.case_type_obj.save()
+        cls.case_prop_obj = CaseProperty(case_type=cls.case_type_obj, name=cls.case_prop_name)
+        cls.case_prop_obj.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.case_type_obj.delete()
+        super().tearDownClass()
+
+    def test_delete_case_property(self):
+        error = delete_case_property(self.case_prop_name, self.case_type, self.domain)
+        does_exist = CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            case_type__name=self.case_type,
+            name=self.case_prop_name,
+        ).exists()
+        self.assertFalse(does_exist)
+        self.assertEqual(error, None)
 
 
 class MiscUtilTest(TestCase):
