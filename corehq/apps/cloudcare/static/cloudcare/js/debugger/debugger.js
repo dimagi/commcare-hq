@@ -445,7 +445,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             'Image': 'fa fa-camera',
             'Video': 'fa fa-video-camera',
             'Signature': 'fcc fcc-fd-signature',
-            'Geopoint': 'fa fa-map-marker',
+            'Geopoint': 'fa-solid fa-location-dot',
             'Barcode Scan': 'fa fa-barcode',
             'Date': 'fa-solid fa-calendar-days',
             'Date and Time': 'fcc fcc-fd-datetime',

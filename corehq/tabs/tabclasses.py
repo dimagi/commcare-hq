@@ -964,7 +964,7 @@ class ProjectDataTab(UITab):
                 'title': _(ExploreCaseDataView.page_title),
                 'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
                 'show_in_dropdown': False,
-                'icon': 'fa fa-map-marker',
+                'icon': 'fa-solid fa-location-dot',
                 'subpages': [],
             })
         if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
