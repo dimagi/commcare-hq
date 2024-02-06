@@ -447,7 +447,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             'Signature': 'fcc fcc-fd-signature',
             'Geopoint': 'fa fa-map-marker',
             'Barcode Scan': 'fa fa-barcode',
-            'Date': 'fa fa-calendar',
+            'Date': 'fa-solid fa-calendar-days',
             'Date and Time': 'fcc fcc-fd-datetime',
             'Time': 'fa-regular fa-clock',
             'Select': 'fcc fcc-fd-single-select',
