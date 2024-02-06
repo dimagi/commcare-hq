@@ -58,7 +58,7 @@ from corehq.apps.data_interfaces.forms import (
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
-    CaseDuplicate,
+    CaseDuplicateNew,
     DomainCaseRuleRun,
 )
 from corehq.apps.data_interfaces.tasks import (
@@ -991,7 +991,7 @@ class ViewCaseRuleView(EditCaseRuleView):
         return True
 
 
-@method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
+@method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_deduplication_rules.html'
     urlname = 'deduplication_rules'
@@ -1145,10 +1145,10 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 total_cases=progress_helper.get_total_cases_to_process(),
             )
         action = CaseDeduplicationActionDefinition.from_rule(rule)
-        return CaseDuplicate.objects.filter(action=action).count()
+        return CaseDuplicateNew.objects.filter(action=action).count()
 
 
-@method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
+@method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleCreateView(DataInterfaceSection):
     template_name = "data_interfaces/edit_deduplication_rule.html"
     urlname = 'add_deduplication_rule'
@@ -1161,6 +1161,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             'all_case_properties': self.get_augmented_data_dict_props_by_case_type(self.domain),
             'case_types': sorted(list(get_case_types_for_domain(self.domain))),
             'criteria_form': self.case_filter_form,
+            'update_actions_enabled': toggles.CASE_DEDUPE_UPDATES.enabled(self.domain),
         })
         return context
 
@@ -1250,11 +1251,17 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
                 if prop
             ],
             "include_closed": request.POST.get("include_closed") == "on",
-            "properties_to_update": [
+        }
+        if toggles.CASE_DEDUPE_UPDATES.enabled(self.domain):
+            properties_to_update = [
                 {"name": prop["name"], "value_type": prop["valueType"], "value": prop["value"]}
                 for prop in json.loads(request.POST.get("properties_to_update"))
-            ],
-        }
+            ]
+        else:
+            properties_to_update = []
+
+        action_params["properties_to_update"] = properties_to_update
+
         return rule_params, action_params
 
     def validate_rule_params(self, domain, rule_params, rule=None):
@@ -1307,7 +1314,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         )
 
 
-@method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')
+@method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleEditView(DeduplicationRuleCreateView):
     urlname = 'edit_deduplication_rule'
     page_title = gettext_lazy("Edit Deduplication Rule")
