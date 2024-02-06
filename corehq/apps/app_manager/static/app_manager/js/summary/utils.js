@@ -31,7 +31,7 @@ hqDefine("app_manager/js/summary/utils",[
         if (module.module_type === 'advanced') {
             moduleIcon = 'fa fa-flask appnav-primary-icon';
         } else if (module.module_type === 'report') {
-            moduleIcon = 'fa fa-bar-chart appnav-primary-icon';
+            moduleIcon = 'fa-regular fa-chart-bar appnav-primary-icon';
         } else if (module.module_type === 'shadow') {
             moduleIcon = 'fa-regular fa-folder-open appnav-primary-icon';
         } else if (!module.is_surveys) {
