@@ -392,7 +392,7 @@ hqDefine('app_manager/js/releases/app_diff', function () {
             var url = reverse('app_data_json', appId),
                 deferred = $.Deferred();
 
-            if (cache.hasOwnProperty(appId)) {
+            if (_.has(cache, appId)) {
                 deferred.resolve(cache[appId]);
             } else if (!appId) {
                 deferred.resolve([]);

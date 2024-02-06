@@ -1686,23 +1686,23 @@ class UserFilterForm(forms.Form):
                 data_bind="slideVisible: !isCrossDomain()",
             ),
             crispy.Field("search_string", data_bind="value: search_string"),
+            crispy.Div(
+                "location_id",
+                data_bind="slideVisible: !isCrossDomain()",
+            ),
+            crispy.Div(
+                crispy.Field(
+                    "selected_location_only",
+                    data_bind="checked: selected_location_only"
+                ),
+                data_bind="slideVisible: !isCrossDomain() && location_id",
+            )
         ]
 
         fieldset_label = _('Filter and Download Users')
         if self.user_type == MOBILE_USER_TYPE:
             fieldset_label = _('Filter and Download Mobile Workers')
             fields += [
-                crispy.Div(
-                    "location_id",
-                    data_bind="slideVisible: !isCrossDomain()",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        "selected_location_only",
-                        data_bind="checked: selected_location_only"
-                    ),
-                    data_bind="slideVisible: !isCrossDomain() && location_id",
-                ),
                 "user_active_status",
                 crispy.Field("columns", data_bind="value: columns"),
             ]

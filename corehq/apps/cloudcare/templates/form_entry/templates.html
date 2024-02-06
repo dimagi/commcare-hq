@@ -31,8 +31,9 @@
               },
         click: toggleChildren,
         event: {keypress: keyPressAction},
-        style: {'background-color': headerBackgroundColor(),
-                'color': headerBackgroundColor() ? 'white' : '',
+        style: {'display': showHeader ? 'block': 'none',
+                'background-color': headerBackgroundColor(),
+                'color': headerBackgroundColor() ? 'white' : ''
         }">
       <div data-bind="ifnot: collapsible">
         <legend>
@@ -637,7 +638,7 @@
   <div class="input-group">
     <input type="text" class="form-control"
       data-bind="attr: {id: entryId, 'aria-required': $parent.required() ? 'true' : 'false'}"/>
-    <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+    <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>
   </div>
 </script>
 
@@ -658,7 +659,7 @@
 <script type="text/html" id="ethiopian-date-entry-ko-template">
   <div class="input-group">
     <input type="text" class="form-control" autocomplete="off" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
-    <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+    <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>
   </div>
 </script>
 

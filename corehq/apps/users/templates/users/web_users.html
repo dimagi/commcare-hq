@@ -43,12 +43,12 @@
         {% endif %}
 
         <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
-          <i class="fa fa-cloud-download"></i> {% trans "Download Web Users" %}
+          <i class="fa-solid fa-cloud-arrow-down"></i> {% trans "Download Web Users" %}
         </a>
 
         {% if not request.is_view_only %}
         <a id="bulk_upload" class="btn btn-default" href="{% url "upload_web_users" domain %}">
-          <i class="fa fa-cloud-upload"></i> {% trans "Upload Web Users" %}
+          <i class="fa-solid fa-cloud-arrow-up"></i> {% trans "Upload Web Users" %}
         </a>
         {% endif %}
       </div>

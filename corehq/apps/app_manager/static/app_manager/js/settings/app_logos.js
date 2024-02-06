@@ -1,15 +1,15 @@
 hqDefine("app_manager/js/settings/app_logos", function () {
     var self = {};
     var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders").get(),
-        initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
-    var refs = initial_page_data('media_refs');
-    var media_info = initial_page_data('media_info');
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+    var refs = initialPageData.get('media_refs');
+    var mediaInfo = initialPageData.get('media_info');
 
     var imageRefs = {};
     for (var slug in refs) {
         imageRefs[slug] = hqImport('hqmedia/js/media_reference_models').ImageReference(refs[slug]);
         imageRefs[slug].upload_controller = HQMediaUploaders[slug];
-        imageRefs[slug].setObjReference(media_info[slug]);
+        imageRefs[slug].setObjReference(mediaInfo[slug]);
     }
 
     self.urlFromLogo = function (slug) {
@@ -38,7 +38,7 @@ hqDefine("app_manager/js/settings/app_logos", function () {
 
     self.removeLogo = function (slug) {
         $.post(
-            hqImport("hqwebapp/js/initial_page_data").reverse("hqmedia_remove_logo"),
+            initialPageData.reverse("hqmedia_remove_logo"),
             {
                 logo_slug: slug,
             },

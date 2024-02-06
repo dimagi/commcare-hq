@@ -289,7 +289,13 @@
   background-color: transparent;
   color: #685c53;
   justify-items: left;
-  padding: 20px 20px 10px 20px;
+  <% if (model.prefix === "persistent") { %>
+    margin: 20px 20px 10px 20px;
+  <% } else if (model.isMultiSelect) { %>
+    margin: 10px 30px 0 10px;
+  <% } else { %>
+    margin: 10px 20px 0 20px;
+  <% } %>
   }
 </script>
 

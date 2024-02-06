@@ -180,7 +180,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
     // useUniformUnits - true if the grid's cells should have the same height as width
-    const buildCellGridStyle = function (numRows, numColumns, useUniformUnits, prefix) {
+    const buildCellGridStyle = function (numRows, numColumns, useUniformUnits, prefix, isMultiSelect) {
         let heightString;
 
         if (useUniformUnits) {
@@ -195,6 +195,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             numColumns: numColumns,
             heightString: heightString,
             prefix: prefix,
+            isMultiSelect: isMultiSelect,
         };
         const templateString = $("#cell-grid-style-template").html();
         const template = _.template(templateString);
@@ -486,7 +487,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         const useUniformUnits = options.useUniformUnits;
 
         const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
-            numEntitiesPerRow, useUniformUnits, 'list');
+            numEntitiesPerRow, useUniformUnits, 'list', options.isMultiSelect);
 
         const gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
 
@@ -832,7 +833,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         fontAwesomeIcon: function (iconName) {
             return L.divIcon({
-                html: `<i class='fa ${iconName} fa-4x'></i>`,
+                html: `<i class='${iconName} fa-4x'></i>`,
                 iconSize: [12, 12],
                 className: 'marker-pin',
             });
@@ -842,9 +843,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const token = initialPageData.get("mapbox_access_token");
 
             try {
-                const locationIcon = this.fontAwesomeIcon("fa-map-marker");
-                const selectedLocationIcon = this.fontAwesomeIcon("fa-star");
-                const homeLocationIcon = this.fontAwesomeIcon("fa-street-view");
+                const locationIcon = this.fontAwesomeIcon("fa-solid fa-location-dot");
+                const selectedLocationIcon = this.fontAwesomeIcon("fa fa-star");
+                const homeLocationIcon = this.fontAwesomeIcon("fa fa-street-view");
 
                 const lat = 30;
                 const lon = 15;
@@ -1095,10 +1096,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     // - shape and size of the tile's layout grid
     // - the tile's visual style and its outer boundary
     // - layout of the case tiles on the outer, visible grid
-    const buildCaseTileStyles = function (tiles, styles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
+    const buildCaseTileStyles = function (tiles, styles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix, isMultiSelect) {
         const caseTileStyles = {};
         caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, styles, prefix);
-        caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
+        caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix, isMultiSelect);
         if (numEntitiesPerRow > 1) {
             caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
             caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template");
