@@ -97,3 +97,85 @@
         </div>
     </div>
 </div>
+
+<!-- Modal for deleting case property -->
+<div id="delete-case-prop-modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    {% trans 'Delete Case Property' %}
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    {% blocktrans %}
+                        There are currently no cases that store data with this case property, and so it is safe to delete.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                        Would you like to proceed with deleting this case property?
+                    {% endblocktrans %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    {% trans 'Cancel' %}
+                </button>
+                <button id="delete-case-prop-btn" type="button" class="btn btn-primary">
+                    {% trans 'Confirm' %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for deleting case type -->
+<div id="delete-case-type-modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    {% blocktrans %}
+                    Delete
+                    '<span data-bind="text: $root.activeCaseType()"></span>'
+                    Case Type
+                    {% endblocktrans %}
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    {% blocktrans %}
+                    There are no cases that use this case type or store data with any of its case properties.
+                    Therefore, it is safe to delete this case type.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                    Please note however, that all case properties for this case type will also be deleted.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                    Would you like to proceed with deleting this case type?
+                    {% endblocktrans %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    {% trans 'Cancel' %}
+                </button>
+                <button id="delete-case-type-btn" type="button" class="btn btn-primary" data-dismiss="modal" data-bind="click: $root.deleteCaseType">
+                    {% trans 'Confirm' %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
