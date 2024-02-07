@@ -711,7 +711,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
-            this.updateSubmitButtonStatus(false);
+            this.updateSubmitButtonDisabled(false);
             if (self.dynamicSearchEnabled && useDynamicSearch) {
                 self.updateSearchResults();
             }
@@ -726,14 +726,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (self.dynamicSearchEnabled || this.searchOnClear) {
                 self.updateSearchResults();
             }
-            this.updateSubmitButtonStatus(false);
+            this.updateSubmitButtonDisabled(false);
         },
 
         submitAction: function (e) {
             var self = this;
             e.preventDefault();
             self.performSubmit();
-            this.updateSubmitButtonStatus(true);
+            this.updateSubmitButtonDisabled(true);
         },
 
         performSubmit: function (initiatedBy) {
@@ -765,7 +765,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
         },
 
-        updateSubmitButtonStatus: function (disabled) {
+        updateSubmitButtonDisabled: function (disabled) {
             if (this.sidebarEnabled) {
                 sessionStorage.submitDisabled = disabled;
                 this.render();
