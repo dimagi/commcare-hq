@@ -314,6 +314,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         } = onlyVisibleColumns(detailObject);
         var detailModel = new Backbone.Model({
             data: details,
+            altText: detailObject.altText,
             id: 0,
         });
         var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
@@ -329,7 +330,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
         return views.PersistentCaseTileView({
             model: detailModel,
-            headers: headers,
             styles: styles,
             tiles: tiles,
             maxWidth: detailObject.maxWidth,
