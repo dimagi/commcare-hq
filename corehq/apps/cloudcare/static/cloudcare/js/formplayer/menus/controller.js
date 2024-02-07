@@ -298,7 +298,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         return {
             styles: _.map(indices, index => detailObject.styles[index]),
-            headers: _.map(indices, index => detailObject.headers[index]),
+            altText: _.map(indices, index => detailObject.altText[index]),
             tiles: _.map(indices, index => detailObject.tiles[index]),
             details: _.map(indices, index => detailObject.details[index]),
         };
@@ -308,13 +308,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var getCaseTile = function (detailObject) {
         var {
             styles,
-            headers,
+            altText,
             tiles,
             details,
         } = onlyVisibleColumns(detailObject);
         var detailModel = new Backbone.Model({
             data: details,
-            altText: detailObject.altText,
+            altText,
             id: 0,
         });
         var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
