@@ -138,7 +138,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     }
 
     /**
-     * Base abstract prototype for Repeat, Group, GroupedQuestionTileRow, and Form. Adds methods to
+     * Base abstract prototype for Repeat, Group, GroupedElementTileRow, and Form. Adds methods to
      * objects that contain a children array for rendering nested questions.
      * @param {Object} json - The JSON returned from touchforms to represent the container
      */
@@ -171,7 +171,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var self = this;
 
         if (!json.type) {
-            Container.groupQuestions(json);
+            Container.groupElements(json);
         }
 
         var mapping = {
@@ -190,8 +190,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             },
             children: {
                 create: function (options) {
-                    if (options.data.type === constants.GROUPED_QUESTION_TILE_ROW_TYPE) {
-                        return new GroupedQuestionTileRow(options.data, self);
+                    if (options.data.type === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
+                        return new GroupedElementTileRow(options.data, self);
                     } else if (options.data.type === constants.QUESTION_TYPE) {
                         return new Question(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
@@ -271,17 +271,18 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     };
 
     /**
-     * Recursively groups sequential "question" items in a nested JSON structure.
+     * Recursively groups sequential "Question" or "Group" items in a nested JSON structure.
      *
-     * This function takes a JSON object as input and searches for sequential "question"
-     * items within the 'children' arrays of the input and its nested 'group' objects.
-     * It groups these sequential "question" items into "GroupedQuestionTileRow" objects while
-     * maintaining the original structure of the JSON.
+     * This function takes a JSON object as input and searches for sequential "Question" or "Group"
+     * items within the 'children' arrays of the input and its nested "Group" objects.
+     * It groups the sequential "Question" items and "Group"
+     * items into "GroupedElementTileRow" objects while maintaining the original structure of the JSON.
      *
      * @param {Object} json - The JSON object to process, containing 'children' arrays.
-     * @returns {Object} - A new JSON object with sequential "question" items grouped into "GroupedQuestionTileRow".
+     * @returns {Object} - A new JSON object with sequential "Question" items and sequential
+     * "Group" items grouped into "GroupedElementTileRow".
      */
-    Container.groupQuestions = function (json) {
+    Container.groupElements = function (json) {
         if (!json || !json.children || !Array.isArray(json.children)) {
             return json;
         }
@@ -293,7 +294,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         function addToCurrentGroup(child) {
             if (!currentGroup) {
                 currentGroup = {
-                    type: constants.GROUPED_QUESTION_TILE_ROW_TYPE,
+                    type: constants.GROUPED_ELEMENT_TILE_ROW_TYPE,
                     children: [],
                     ix: null,
                 };
@@ -312,16 +313,19 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
 
         for (let child of json.children) {
-            if (child.type === constants.QUESTION_TYPE) {
-                const questionTileWidth = Question.calculateColumnWidthForPerRowStyle(child.style);
-                usedWidth += questionTileWidth;
+            if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE) {
+                const elementTileWidth = GroupedElementTileRow.calculateElementWidth(child.style);
+                usedWidth += elementTileWidth;
                 if (usedWidth > constants.GRID_COLUMNS) {
                     resetCurrentGroup();
-                    usedWidth += questionTileWidth;
+                    usedWidth += elementTileWidth;
+                }
+                if (child.type === constants.GROUP_TYPE) {
+                    child = Container.groupElements(child);
                 }
                 addToCurrentGroup(child);
-            } else if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
-                const newGroup = Container.groupQuestions(child);
+            } else if (child.type === constants.REPEAT_TYPE) {
+                const newGroup = Container.groupElements(child);
                 newChildren.push(newGroup);
                 resetCurrentGroup();
             } else {
@@ -575,7 +579,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Form.prototype.constructor = Container;
 
     /**
-     * Represents a group of GroupedQuestionTileRow which contains questions.
+     * Represents a group of GroupedElementTileRow which contains Question or Group objects.
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
      */
@@ -586,14 +590,19 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
-        self.isRepetition = parent instanceof Repeat;
+        self.isRepetition = parent.parent instanceof Repeat;
         let parentForm = getParentForm(self);
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
 
-        if (!oneQuestionPerScreen && self.isRepetition) {
-            self.caption(null);
-            self.hideCaption = true;
+        // Header and captions
+        self.showHeader = oneQuestionPerScreen || self.isRepetition || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown);
+        if (self.showHeader) {
+            if (!oneQuestionPerScreen && self.isRepetition) {
+                self.caption(null);
+                self.hideCaption = true;
+            }
         }
+
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
@@ -652,9 +661,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
-                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE || d.type() === constants.GROUPED_QUESTION_TILE_ROW_TYPE) {
+                if (d.type() === constants.REPEAT_TYPE) {
                     return true;
-                } else if (d.type() === constants.GROUP_TYPE) {
+                } else if (d.type() === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
                     return d.hasAnyNestedQuestions();
                 }
             });
@@ -672,12 +681,17 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             }
             return Container.prototype.headerBackgroundColor.call(self);
         };
+
+        let columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
+        this.elementTile = `col-sm-${columnWidth}`;
     }
+
     Group.prototype = Object.create(Container.prototype);
     Group.prototype.constructor = Container;
 
     /**
-     * Represents a repeat group. A repeat only has Group objects as children. Each child Group contains GroupedQuestionTileRow
+     * Represents a repeat group. A repeat only has Group objects as children, which are contained
+     * within a GroupedElementTileRow. Each child Group contains GroupedElementTileRow
      * objects which contains the child questions to be rendered
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
@@ -708,25 +722,50 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Repeat.prototype.constructor = Container;
 
     /**
-     * Represents a group of questions. Questions are grouped such that all questions are
+     * Represents a group of Questions. Questions are grouped such that all questions are
      * contained in the same row.
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
      */
-    function GroupedQuestionTileRow(json, parent) {
+    function GroupedElementTileRow(json, parent) {
         var self = this;
         self.parent = parent;
         Container.call(self, json);
 
+        self.hasAnyNestedQuestions = function () {
+            return _.any(self.children(), function (d) {
+                if (d.type() === constants.QUESTION_TYPE) {
+                    return true;
+                } else if (d.type() === constants.GROUP_TYPE) {
+                    return d.hasAnyNestedQuestions();
+                }
+            });
+        };
+
         self.required = ko.observable(0);
         self.childrenRequired = ko.computed(function () {
             return _.find(self.children(), function (child) {
-                return child.required();
+                return child.required() || child.childrenRequired && child.childrenRequired();
             });
         });
     }
-    GroupedQuestionTileRow.prototype = Object.create(Container.prototype);
-    GroupedQuestionTileRow.prototype.constructor = Container;
+    GroupedElementTileRow.prototype = Object.create(Container.prototype);
+    GroupedElementTileRow.prototype.constructor = Container;
+
+    /**
+     * Matches "<n>-per-row" style attributes. If a match if found, it calculates the column width
+     * based on Bootstrap's 12 column grid system and returns the column width.
+     * @param {Object} style - the appearance attributes
+     */
+    GroupedElementTileRow.calculateElementWidth = function (style) {
+        const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
+        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
+        const matchingPerRowStyles = getMatchingStyles(perRowPattern, styleStr);
+        const perRowStyle = matchingPerRowStyles.length === 0 ? null : matchingPerRowStyles[0];
+        const itemsPerRow = perRowStyle !== null ? parseInt(perRowStyle.split("-")[0], 10) : null;
+
+        return itemsPerRow !== null ? Math.round(constants.GRID_COLUMNS / itemsPerRow) : constants.GRID_COLUMNS;
+    };
 
     /**
      * Represents a Question. A Question contains an Entry which is the widget that is displayed for that question
@@ -892,7 +931,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
     Question.prototype.setWidths = function (hasLabel) {
         const self = this;
-        const columnWidth = Question.calculateColumnWidthForPerRowStyle(self.style);
+        const columnWidth = GroupedElementTileRow.calculateElementWidth(self.style);
         const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
 
         if (self.stylesContains(perRowPattern)) {
@@ -913,21 +952,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         } else if (self.stylesContains(constants.MEDIUM)) {
             self.controlWidth = constants.MEDIUM_WIDTH;
         }
-    };
-
-    /**
-     * Matches "<n>-per-row" style attributes. If a match if found, it calculates the column width
-     * based on Bootstrap's 12 column grid system and returns the column width.
-     * @param {Object} style - the appearance attributes
-     */
-    Question.calculateColumnWidthForPerRowStyle = function (style) {
-        const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
-        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
-        const matchingPerRowStyles = getMatchingStyles(perRowPattern, styleStr);
-        const perRowStyle = matchingPerRowStyles.length === 0 ? null : matchingPerRowStyles[0];
-        const itemsPerRow = perRowStyle !== null ? parseInt(perRowStyle.split("-")[0], 10) : null;
-
-        return itemsPerRow !== null ? Math.round(constants.GRID_COLUMNS / itemsPerRow) : constants.GRID_COLUMNS;
     };
 
     return {

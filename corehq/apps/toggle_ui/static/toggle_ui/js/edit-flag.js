@@ -20,9 +20,9 @@ hqDefine('toggle_ui/js/edit-flag', [
 
         self.init = function (config) {
             self.padded_ns = {};
-            var max_ns_len = Math.max.apply(Math, _.map(config.namespaces, function (ns) { return ns.length; }));
+            var maxLength = Math.max.apply(Math, _.map(config.namespaces, function (ns) { return ns.length; }));
             _(config.namespaces).each(function (namespace) {
-                var diff = max_ns_len - namespace.length,
+                var diff = maxLength - namespace.length,
                     pad = new Array(diff + 1).join(PAD_CHAR);
                 self.padded_ns[namespace] = namespace + pad;
             });
@@ -33,8 +33,8 @@ hqDefine('toggle_ui/js/edit-flag', [
 
         self.init_items = function (config) {
             var items = config.items,
-                last_used = config.last_used || {},
-                service_type = config.service_type || {};
+                lastUsed = config.last_used || {},
+                serviceType = config.service_type || {};
             self.items.removeAll();
             _.each(_.sortBy(items), function (item) {
                 var fields = item.split(':'),
@@ -43,8 +43,8 @@ hqDefine('toggle_ui/js/edit-flag', [
                 self.items.push({
                     namespace: ko.observable(self.padded_ns[namespace]),
                     value: ko.observable(value),
-                    last_used: ko.observable(last_used[value]),
-                    service_type: ko.observable(service_type[value]),
+                    last_used: ko.observable(lastUsed[value]),
+                    service_type: ko.observable(serviceType[value]),
                 });
             });
         };
@@ -74,8 +74,8 @@ hqDefine('toggle_ui/js/edit-flag', [
                 var items = _.map(_.filter(self.items(), function (item) {
                     return item.value();
                 }), function (item) {
-                    var ns_raw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), ''),
-                        namespace = ns_raw === 'user' ? null : ns_raw,
+                    var rawNamespace = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), ''),
+                        namespace = rawNamespace === 'user' ? null : rawNamespace,
                         value = namespace === null ? item.value() : namespace + ':' + item.value();
                     return value;
                 });

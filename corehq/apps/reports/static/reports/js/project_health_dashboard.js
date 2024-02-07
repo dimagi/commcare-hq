@@ -1,4 +1,4 @@
-/* globals d3, moment, nv */
+/* globals moment */
 hqDefine("reports/js/project_health_dashboard", function () {
     // "Performing / Active User Trends" Chart
     function setupCharts(data) {
@@ -111,23 +111,23 @@ hqDefine("reports/js/project_health_dashboard", function () {
         $('a.user-popover').popover({
             "html": true,
             "content": function () {
-                var div_id =  "tmp-id-" + $.now();
-                return details_in_popup($(this).data('url'), div_id);
+                var divId =  "tmp-id-" + $.now();
+                return detailsInPopup($(this).data('url'), divId);
             },
             "sanitize": false,
         });
 
-        function details_in_popup(link, div_id) {
+        function detailsInPopup(link, divId) {
             $.ajax({
                 url: link,
                 success: function (response) {
-                    $('#' + div_id).html(response);
+                    $('#' + divId).html(response);
                 },
                 error: function () {
-                    $('#' + div_id).html(gettext("Sorry, we couldn't load that."));
+                    $('#' + divId).html(gettext("Sorry, we couldn't load that."));
                 },
             });
-            return $('<div />').attr('id', div_id).text(gettext('Loading...'))[0].outerHTML;
+            return $('<div />').attr('id', divId).text(gettext('Loading...'))[0].outerHTML;
         }
     }
 

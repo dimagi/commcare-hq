@@ -473,6 +473,11 @@ def no_items_text_detail(module):
     return detail(module, 'no_items_text')
 
 
+@pattern('m%d_select_text')
+def select_text_detail(module):
+    return detail(module, 'select_text')
+
+
 def fixture_detail(module):
     return detail(module, 'fixture_select')
 

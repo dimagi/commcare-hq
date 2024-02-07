@@ -118,7 +118,7 @@ class LocationGroupTest(LocationGroupBase):
             group_obj.save()
 
     def test_get_owner_ids(self):
-        loc_type = self.loc.location_type_object
+        loc_type = self.loc.location_type
         self.assertFalse(loc_type.shares_cases)
         owner_ids = self.user.get_owner_ids()
         self.assertEqual(1, len(owner_ids))

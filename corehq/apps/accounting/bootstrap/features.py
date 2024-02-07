@@ -136,6 +136,7 @@ advanced_v0 = pro_v1 + [
     privileges.FILTERED_BULK_USER_DOWNLOAD,
     privileges.DATA_DICTIONARY,
     privileges.CASE_COPY,
+    privileges.CUSTOM_DOMAIN_ALERTS,
 ]
 
 enterprise_v0 = advanced_v0 + [
