@@ -128,7 +128,6 @@ class CaseTileHelper(object):
             DetailContributor.add_register_action(
                 self.app, self.module, detail.actions, self.build_profile_id, self.entries_helper)
 
-        # Add case search action if needed
         if self.detail_type.endswith('short'):
             #  Excludes legacy tile template to preserve behavior of existing apps using this template.
             if self.detail.case_tile_template not in [CaseTileTemplates.PERSON_SIMPLE.value, CUSTOM]:
