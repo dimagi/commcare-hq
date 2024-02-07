@@ -405,6 +405,7 @@ es
  0004_make_new_indexes
  0005_add_epoch_as_valid_date_to_forms
  0006_verify_es2_indices_reindexed
+ 0007_add_doc_id_to_all_mappings
 events
  0001_add_events_model
  0002_attendancetrackingconfig
