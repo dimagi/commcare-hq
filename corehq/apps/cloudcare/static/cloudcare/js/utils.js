@@ -129,7 +129,9 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var formplayerLoading = function () {
-        if (!(JSON.parse(sessionStorage.validationInProgress))) {
+        var validationInProgress= sessionStorage.validationInProgress === undefined ?
+            undefined : JSON.parse(sessionStorage.validationInProgress);
+        if (!validationInProgress) {
             showLoading();
         }
     };
