@@ -204,8 +204,6 @@ class DetailContributor(SectionContributor):
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
 
-            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
-
             # Add variables
             variables = list(
                 schedule_detail_variables(module, detail, detail_column_infos)
@@ -256,6 +254,7 @@ class DetailContributor(SectionContributor):
                         d.actions.append(case_search_action)
             # Add select text
             self.add_select_text_to_detail(d, self.app, detail_type, module)
+            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
 
             try:
                 if not self.app.enable_multi_sort:
