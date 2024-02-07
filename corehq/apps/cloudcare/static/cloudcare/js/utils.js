@@ -135,9 +135,7 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var formplayerLoadingComplete = function (isError, message) {
-        if (!sessionStorage.validationInProgress) {
-            hideLoading();
-        }
+        hideLoading();
         if (isError) {
             showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));
         }
