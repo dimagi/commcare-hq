@@ -321,7 +321,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var numColumns = detailObject.maxWidth;
         var useUniformUnits = detailObject.useUniformUnits || false;
 
-        var caseTileStyles = views.buildCaseTileStyles(detailObject.tiles, styles, numRows,
+        var caseTileStyles = views.buildCaseTileStyles(tiles, styles, numRows,
             numColumns, numEntitiesPerRow, useUniformUnits, 'persistent');
         // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
         $("#persistent-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
