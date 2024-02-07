@@ -10,6 +10,8 @@ from .repeaters import (
     AddCaseRepeaterView,
     AddFormRepeaterView,
     AddRepeaterView,
+    AddDataSourceRepeaterView,
+    EditDataSourceRepeaterView,
     DomainForwardingOptionsView,
     EditCaseRepeaterView,
     EditFormRepeaterView,

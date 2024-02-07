@@ -30,6 +30,8 @@ from corehq.motech.repeaters.views import (
     AddFormRepeaterView,
     AddRepeaterView,
     DomainForwardingOptionsView,
+    AddDataSourceRepeaterView,
+    EditDataSourceRepeaterView,
     EditCaseRepeaterView,
     EditFormRepeaterView,
     EditRepeaterView,
@@ -79,6 +81,8 @@ urlpatterns = [
     url(r'^forwarding/new/CaseExpressionRepeater/$', AddCaseExpressionRepeaterView.as_view(),
         {'repeater_type': 'CaseExpressionRepeater'}, name=AddCaseExpressionRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
+    url(r'^forwarding/new/DataSourceRepeater/$', AddDataSourceRepeaterView.as_view(),
+        {'repeater_type': 'DataSourceRepeater'}, name=AddDataSourceRepeaterView.urlname),
 
     url(r'^forwarding/edit/CaseRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
         {'repeater_type': 'CaseRepeater'}, name=EditCaseRepeaterView.urlname),
@@ -105,6 +109,8 @@ urlpatterns = [
         {'repeater_type': 'CaseExpressionRepeater'},
         name=EditCaseExpressionRepeaterView.urlname
     ),
+    url(r'^forwarding/edit/DataSourceRepeater/(?P<repeater_id>\w+)/$', EditDataSourceRepeaterView.as_view(),
+        {'repeater_type': 'DataSourceRepeater'}, name=EditDataSourceRepeaterView.urlname),
     url(r'^forwarding/edit/(?P<repeater_type>\w+)/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
         name=EditRepeaterView.urlname),
 

@@ -200,3 +200,21 @@ class CaseRepeaterForm(GenericRepeaterForm):
         if not set(black_listed_users).issubset([t[0] for t in self.user_choices]):
             raise ValidationError(_('Unknown user'))
         return cleaned_data
+
+
+class DataSourceRepeaterForm(GenericRepeaterForm):
+    data_source_id = forms.CharField(
+        required=True,
+        label=_('DataSource ID'),
+        help_text=_('The ID of the data source you want to have forwarded')
+    )
+    
+    def set_extra_django_form_fields(self):
+        super(CaseRepeaterForm, self).set_extra_django_form_fields()
+        breakpoint()
+        print()
+        # self.fields['data_source_id'] = 
+
+    def get_ordered_crispy_form_fields(self):
+        fields = super(CaseRepeaterForm, self).get_ordered_crispy_form_fields()
+        return fields + ['data_source_id']
