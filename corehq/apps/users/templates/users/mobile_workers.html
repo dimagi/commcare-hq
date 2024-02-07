@@ -89,13 +89,13 @@
           {% endif %}
 
           <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
-            <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
+            <i class="fa-solid fa-cloud-arrow-down"></i> {% trans "Download Mobile Workers" %}
           </a>
 
           {% if not request.is_view_only %}
             {% if can_bulk_edit_users and can_access_all_locations %}
               <a id="bulk_upload" class="btn btn-default" href="{% url "upload_commcare_users" domain %}">
-                <i class="fa fa-cloud-upload"></i> {% trans "Bulk Upload" %}
+                <i class="fa-solid fa-cloud-arrow-up"></i> {% trans "Bulk Upload" %}
               </a>
             {% endif %}
             {% if can_add_extra_users and can_access_all_locations %}
@@ -112,7 +112,7 @@
             {% endif %}
             {% if request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" %}
               <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
-                <i class="fa fa-trash"></i>
+                <i class="fa-regular fa-trash-can"></i>
                 {% trans "Bulk Delete Users" %}
               </a>
               <a class="btn btn-default" href="{% url "commcare_users_lookup" domain %}">
@@ -242,7 +242,7 @@
             <td data-bind="attr: {class: creation_status}, text: last_name"></td>
             <td data-bind="attr: {class: creation_status}">
               <div data-bind="visible: creation_status() === $root.STATUS.PENDING">
-                <i class="fa fa-circle-o-notch fa-spin"></i>
+                <i class="fa fa-circle-notch fa-spin"></i>
                 {% trans 'Pending...' %}
               </div>
               <div data-bind="visible: creation_status() === $root.STATUS.SUCCESS">
@@ -252,7 +252,7 @@
               </div>
               <div data-bind="visible: creation_status() === $root.STATUS.ERROR">
                   <span class="text-danger">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     {% trans "ERROR" %}
                     <!-- ko text: creation_error --><!--/ko-->
                   </span>
@@ -354,7 +354,7 @@
                     {% trans "Reactivate" %}
                   </button>
                   <p data-bind="visible: action_error">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     <span data-bind="text: action_error"></span>
                   </p>
                 </div>
@@ -371,7 +371,7 @@
                   </button>
                   {% endif %}
                   <p data-bind="visible: action_error">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     <span data-bind="text: action_error"></span>
                   </p>
                 </div>
@@ -382,7 +382,7 @@
                     {% trans "Reactivate" %}
                   </button>
                   <p data-bind="visible: action_error">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     <span data-bind="text: action_error"></span>
                   </p>
                 </div>
@@ -393,7 +393,7 @@
                     {% trans "Deactivate" %}
                   </button>
                   <p data-bind="visible: action_error">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     <span data-bind="text: action_error"></span>
                   </p>
                 </div>
