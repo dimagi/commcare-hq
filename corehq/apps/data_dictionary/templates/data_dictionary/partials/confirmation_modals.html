@@ -127,7 +127,7 @@
                     {% trans 'Cancel' %}
                 </button>
                 <button id="delete-case-prop-btn" type="button" class="btn btn-danger">
-                    <i class="fa fa-remove"></i>
+                    <i class="fa fa-trash"></i>
                     {% trans 'Delete' %}
                 </button>
             </div>
@@ -173,7 +173,8 @@
                 <button type="button" class="btn btn-default" data-dismiss="modal">
                     {% trans 'Cancel' %}
                 </button>
-                <button id="delete-case-type-btn" type="button" class="btn btn-primary" data-dismiss="modal" data-bind="click: $root.deleteCaseType">
+                <button id="delete-case-type-btn" type="button" class="btn btn-danger" data-dismiss="modal" data-bind="click: $root.deleteCaseType">
+                    <i class="fa fa-trash"></i>
                     {% trans 'Confirm' %}
                 </button>
             </div>
