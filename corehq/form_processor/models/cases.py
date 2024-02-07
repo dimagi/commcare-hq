@@ -843,9 +843,6 @@ def get_index_map(indices):
 
 class CaseAttachmentManager(RequireDBManager):
 
-    def get_by_natural_key(self, case_id, attachment_id):
-        return self.partitioned_query(case_id).get(attachment_id=attachment_id)
-
     def get_attachments(self, case_id):
         return list(self.partitioned_query(case_id).filter(case_id=case_id))
 
@@ -975,9 +972,6 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
 
 
 class CommCareCaseIndexManager(RequireDBManager):
-
-    def get_by_natural_key(self, domain, case_id, identifier):
-        return self.partitioned_query(case_id).get(domain=domain, case_id=case_id, identifier=identifier)
 
     def get_indices(self, domain, case_id):
         query = self.partitioned_query(case_id)
@@ -1117,7 +1111,7 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.domain, self.case, self.identifier
+        return self.domain, self.case_id, self.identifier
 
     @property
     def is_deleted(self):
@@ -1188,9 +1182,6 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
 
 
 class CaseTransactionManager(RequireDBManager):
-
-    def get_by_natural_key(self, case_id, form_id, transaction_type):
-        return self.partitioned_query(case_id).get(case_id=case_id, form_id=form_id, type=transaction_type)
 
     def get_transactions(self, case_id):
         return list(
@@ -1323,7 +1314,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.case, self.form_id, self.type
+        return self.case_id, self.form_id, self.type
 
     @staticmethod
     def _should_process(transaction_type):

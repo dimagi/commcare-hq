@@ -657,6 +657,23 @@ msgstr "Este formulario ya no existe o tiene un tipo de caso diferente"
 msgid "Unrecognized value"
 msgstr "Valor no reconocido"
 
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Datum ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "XPath Expression"
+msgstr "Expresión XPath"
+
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
 msgid "Active"
 msgstr "Activo"
@@ -1564,10 +1581,6 @@ msgid ""
 msgstr ""
 "Está en Modo Avanzado ahora porque su lógica es demasiado complicada para el "
 "Modo Simple."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath Expression"
-msgstr "Expresión XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "You can drag a question into the box."
@@ -4298,6 +4311,12 @@ msgstr "Caducó el Portal. Por favor contacte al Soporte de CommCare HQ."
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Your search term was too long. Please provide a shorter search filter"
 msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
+#, fuzzy
+#| msgid "Loading"
+msgid "Loading Stopped"
+msgstr "Cargando"
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "We were unsuccessful loading the report:"

@@ -116,31 +116,20 @@ class DetailContributor(SectionContributor):
                         )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
                         detail_id = id_strings.detail(module, detail_type)
-                        if detail.case_tile_template:
-                            helper = CaseTileHelper(self.app, module, detail, detail_id, detail_type,
-                                self.build_profile_id, detail_column_infos, self.entries_helper)
-
-                            d = helper.build_case_tile_detail()
-                            self._add_custom_variables(detail, d)
+                        locale_id = id_strings.detail_title_locale(detail_type)
+                        title = Text(locale_id=locale_id) if locale_id else Text()
+                        d = self.build_detail(
+                            module,
+                            detail_type,
+                            detail,
+                            detail_column_infos,
+                            title,
+                            tabs=list(detail.get_tabs()),
+                            id=detail_id,
+                            print_template=detail.print_template['path'] if detail.print_template else None,
+                        )
+                        if d:
                             elements.append(d)
-                        else:
-                            print_template_path = None
-                            if detail.print_template:
-                                print_template_path = detail.print_template['path']
-                            locale_id = id_strings.detail_title_locale(detail_type)
-                            title = Text(locale_id=locale_id) if locale_id else Text()
-                            d = self.build_detail(
-                                module,
-                                detail_type,
-                                detail,
-                                detail_column_infos,
-                                tabs=list(detail.get_tabs()),
-                                id=detail_id,
-                                title=title,
-                                print_template=print_template_path,
-                            )
-                            if d:
-                                elements.append(d)
 
                     # add the persist case context if needed and if
                     # case tiles are present and have their own persistent block
@@ -159,8 +148,8 @@ class DetailContributor(SectionContributor):
 
         return elements
 
-    def build_detail(self, module, detail_type, detail, detail_column_infos, tabs=None, id=None,
-                     title=None, nodeset=None, print_template=None, start=0, end=None, relevant=None):
+    def build_detail(self, module, detail_type, detail, detail_column_infos, title, tabs=None, id=None,
+                     nodeset=None, print_template=None, start=0, end=None, relevant=None):
         """
         Recursively builds the Detail object.
         (Details can contain other details for each of their tabs)
@@ -185,7 +174,7 @@ class DetailContributor(SectionContributor):
                     detail_type,
                     detail,
                     detail_column_infos,
-                    title=Text(locale_id=id_strings.detail_tab_title_locale(
+                    Text(locale_id=id_strings.detail_tab_title_locale(
                         module, detail_type, tab
                     )),
                     nodeset=self._get_detail_tab_nodeset(module, detail, tab),
@@ -215,34 +204,47 @@ class DetailContributor(SectionContributor):
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
 
-            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
-
             # Add variables
             variables = list(
                 schedule_detail_variables(module, detail, detail_column_infos)
             )
             if variables:
                 d.variables.extend(variables)
-
-            # Add fields
             if end is None:
                 end = len(detail_column_infos)
-            for column_info in detail_column_infos[start:end]:
-                # column_info is an instance of DetailColumnInfo named tuple.
-                fields = get_column_generator(
-                    self.app, module, detail, parent_tab_nodeset=nodeset,
-                    detail_type=detail_type, entries_helper=self.entries_helper,
-                    *column_info
-                ).fields
-                for field in fields:
-                    d.fields.append(field)
+
+            # Add fields
+            if detail.case_tile_template:
+                helper = CaseTileHelper(
+                    self.app,
+                    module,
+                    detail,
+                    id,
+                    detail_type,
+                    self.build_profile_id,
+                    detail_column_infos,
+                    self.entries_helper,
+                )
+                d = helper.build_case_tile_detail(d, start, end)
+            else:
+                for column_info in detail_column_infos[start:end]:
+                    # column_info is an instance of DetailColumnInfo named tuple.
+                    fields = get_column_generator(
+                        self.app, module, detail, parent_tab_nodeset=nodeset,
+                        detail_type=detail_type, entries_helper=self.entries_helper,
+                        *column_info
+                    ).fields
+                    for field in fields:
+                        d.fields.append(field)
+
+                    # Add actions
+                    if detail_type.endswith('short') and not module.put_in_root:
+                        if module.case_list_form.form_id:
+                            DetailContributor.add_register_action(
+                                self.app, module, d.actions, self.build_profile_id, self.entries_helper)
 
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
-                if module.case_list_form.form_id:
-                    DetailContributor.add_register_action(
-                        self.app, module, d.actions, self.build_profile_id, self.entries_helper)
-
                 if module_offers_search(module) and not module_uses_inline_search(module):
                     if (case_search_action := DetailContributor.get_case_search_action(
                         module,
@@ -252,6 +254,7 @@ class DetailContributor(SectionContributor):
                         d.actions.append(case_search_action)
             # Add select text
             self.add_select_text_to_detail(d, self.app, detail_type, module)
+            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
 
             try:
                 if not self.app.enable_multi_sort:

@@ -31,8 +31,9 @@
               },
         click: toggleChildren,
         event: {keypress: keyPressAction},
-        style: {'background-color': headerBackgroundColor(),
-                'color': headerBackgroundColor() ? 'white' : '',
+        style: {'display': showHeader ? 'block': 'none',
+                'background-color': headerBackgroundColor(),
+                'color': headerBackgroundColor() ? 'white' : ''
         }">
       <div data-bind="ifnot: collapsible">
         <legend>
@@ -46,18 +47,20 @@
                   "><i class="fa fa-remove"></i></button>
         </legend>
       </div>
-      <div data-bind="if: collapsible">
-        <div class="collapsible-icon-container">
-          <i style="" class="fa" data-bind="
-              css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
-          "></i>
+      <div data-bind="if: collapsible" >
+        <div class="d-flex align-items-center">
+          <div class="collapsible-icon-container">
+            <i  class="fa" data-bind="
+                css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
+            "></i>
+          </div>
+          <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
+          <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
+          <button class="btn btn-danger del pull-right" href="#" data-bind="
+                      visible: isRepetition,
+                      click: deleteRepeat
+                  "><i class="fa fa-remove"></i></button>
         </div>
-        <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
-        <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
-        <button class="btn btn-danger del pull-right" href="#" data-bind="
-                    visible: isRepetition,
-                    click: deleteRepeat
-                "><i class="fa fa-remove"></i></button>
       </div>
       <span class="ix"></span>
     </fieldset>
@@ -73,6 +76,7 @@
               },
               css: {
                 'panel-body': collapsible,
+                'group-body': !collapsible,
                 'stripe-repeats': stripeRepeats,
               }"></div>
         </fieldset>
@@ -266,7 +270,10 @@
         </div>
         <!-- /ko -->
       </div>
-      <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
+      <i class="hint-text" data-bind="
+              text: ko.utils.unwrapObservable($data.hint),
+              visible: !entry.useHintAsPlaceHolder()
+          "></i>
       <!-- ko if: required() -->
       <span class="sr-only">{% trans "A response is required for this question." %}</span>
       <!-- /ko -->
@@ -406,6 +413,7 @@
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
         attr: {
+            placeholder: placeholderText,
             maxlength: lengthLimit,
             id: entryId,
             'aria-required': $parent.required() ? 'true' : 'false',
@@ -463,19 +471,25 @@
 </script>
 
 <script type="text/html" id="file-entry-ko-template">
-  <input type="file" data-bind="
-        value: $data.rawAnswer,
-        attr: {
-            id: entryId,
-            'aria-required': $parent.required() ? 'true' : 'false',
-            accept: accept,
-        },
-    "/>
-  <button class="btn btn-default btn-xs pull-right" data-bind="
-    click: onClear,
-    text: $root.getTranslation('upload.clear.title', '{% trans_html_attr 'Clear' %}'),
-  ">
-  </button>
+  <div class="row">
+    <div class="col-xs-8">
+      <input type="file" data-bind="
+            value: $data.rawAnswer,
+            attr: {
+                id: entryId,
+                'aria-required': $parent.required() ? 'true' : 'false',
+                accept: accept,
+            },
+        "/>
+    </div>
+    <div class="col-xs-4">
+      <button class="btn btn-default btn-xs pull-right" data-bind="
+        click: onClear,
+        text: $root.getTranslation('upload.clear.title', '{% trans_html_attr 'Clear' %}'),
+      ">
+      </button>
+    </div>
+  </div>
 </script>
 
 <script type="text/html" id="signature-entry-ko-template">

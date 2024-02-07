@@ -2071,7 +2071,7 @@ def _get_manage_domain_alerts_section(domain):
     from corehq.apps.domain.views.settings import ManageDomainAlertsView
     section = []
 
-    if toggles.CUSTOM_DOMAIN_BANNER_ALERTS.enabled(domain):
+    if domain_has_privilege(domain, privileges.CUSTOM_DOMAIN_ALERTS):
         section.append({
             'title': _(ManageDomainAlertsView.page_title),
             'url': reverse(ManageDomainAlertsView.urlname, args=[domain])

@@ -43,6 +43,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         MEDIUM: 'medium',
         STRIPE_REPEATS: 'stripe-repeats',
         GROUP_BORDER: 'group-border',
+        HINT_AS_PLACEHOLDER: 'hint-as-placeholder',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
