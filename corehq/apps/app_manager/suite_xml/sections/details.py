@@ -217,12 +217,11 @@ class DetailContributor(SectionContributor):
 
             # Add fields
             if detail.case_tile_template:
-                detail_id = id_strings.detail(module, detail_type)
                 helper = CaseTileHelper(
                     self.app,
                     module,
                     detail,
-                    detail_id,
+                    id,
                     detail_type,
                     self.build_profile_id,
                     detail_column_infos,
