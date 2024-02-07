@@ -668,6 +668,23 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr "Valeur non reconnue"
 
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Datum ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "XPath Expression"
+msgstr "Expression de XPath"
+
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
 msgid "Active"
 msgstr "Actif"
@@ -1548,10 +1565,6 @@ msgid ""
 msgstr ""
 "Vous êtes actuellement en mode avancé car votre logique est trop compliquée "
 "pour le mode simple."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath Expression"
-msgstr "Expression de XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "You can drag a question into the box."
@@ -4169,6 +4182,12 @@ msgstr ""
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Your search term was too long. Please provide a shorter search filter"
 msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
+#, fuzzy
+#| msgid "Loading"
+msgid "Loading Stopped"
+msgstr "Chargement en cours"
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "We were unsuccessful loading the report:"
