@@ -809,7 +809,7 @@ LOCAL_APPS += ('django_extensions',)
 **IMPORTANT:** When running HQ, be sure to use `runserver_plus`
 
 ```sh
-./manage.py runserver_plus localhost:8000
+./manage.py runserver_plus localhost:8000 --keep-meta-shutdown
 ```
 
 Then you need to have Formplayer running.
