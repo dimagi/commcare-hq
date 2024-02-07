@@ -3890,7 +3890,13 @@ msgid "Column/Field \"{}\": Clickable Icons require a form to be configured."
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
-msgid "Case tiles may only be used for the case list (not the case details)."
+msgid "Case tiles on the case detail must be manually configured."
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
+msgid ""
+"Each row of the tile may contain fields only from a single tab. Row #{} "
+"contains fields from multiple tabs."
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
@@ -9703,6 +9709,14 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 msgid "Send to"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/users/templates/users/partials/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid "SMS charges will incur."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
@@ -22260,6 +22274,14 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid ""
+"Send a verification SMS to this phone. When the user replies to this SMS, "
+"the phone number will be verified."
+msgstr ""
+
+#: corehq/apps/groups/templates/groups/group_members.html
 msgid "Verify Phone Numbers"
 msgstr ""
 
@@ -34686,10 +34708,6 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
-msgid "Delete Idenetiy Provider"
-msgstr ""
-
 #: corehq/apps/sso/templates/sso/partials/manage_authenticated_email_domains.html
 msgid ""
 "\n"
@@ -35769,6 +35787,15 @@ msgid ""
 "the application associated with the report was deleted. In order to view "
 "this data using the Report Builder you will have to delete this report and "
 "then build it again. Click below to delete it."
+msgstr ""
+
+#: corehq/apps/userreports/const.py
+msgid ""
+"Sorry! There was a problem trying to edit your report. This likely occurred "
+"because the form associated with this report was deleted from the "
+"application. You can go back and view historical data submitted. However, "
+"you may not edit this report again. You also have the option of deleting "
+"this report by clicking the delete button below."
 msgstr ""
 
 #: corehq/apps/userreports/const.py
@@ -38773,13 +38800,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/partials/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-msgid ""
-"Send a verification SMS to this phone. When the user replies to this SMS, "
-"the phone number will be verified."
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 msgid "Verify (retry)"
 msgstr ""
 
@@ -39147,6 +39167,10 @@ msgstr ""
 #: corehq/apps/users/views/__init__.py
 #, python-brace-format
 msgid "It appears {username} has already been removed from your project space."
+msgstr ""
+
+#: corehq/apps/users/views/__init__.py
+msgid "Update subscription to set access for custom domain alerts"
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py
@@ -43303,6 +43327,12 @@ msgstr ""
 #: corehq/privileges.py
 msgid "Deduplication Rules"
 msgstr ""
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Custom Android Gateway"
+msgid "Custom domain banners"
+msgstr "Portão Android Customizado"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
