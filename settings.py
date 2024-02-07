@@ -492,6 +492,7 @@ SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 SAAS_REPORTING_EMAIL = None
+INTERNAL_FEEDBACK_EMAIL = 'internal-feedback@example.com'
 
 # Return-Path is the email used to forward BOUNCE & COMPLAINT notifications
 # This email must be a REAL email address, not a mailing list, otherwise

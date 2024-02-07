@@ -10,6 +10,7 @@ from corehq.apps.hqwebapp.session_details_endpoint.views import (
 )
 from corehq.apps.hqwebapp.views import (
     BugReportView,
+    SolutionsFeatureRequestView,
     MaintenanceAlertsView,
     create_alert,
     debug_notify,
@@ -60,6 +61,8 @@ urlpatterns = [
     url(r'^accounts/logout/$', logout, name="logout"),
     url(r'^reports/$', redirect_to_default),
     url(r'^bug_report/$', BugReportView.as_view(), name='bug_report'),
+    url(r'^solutions_feature_request/$', SolutionsFeatureRequestView.as_view(),
+        name=SolutionsFeatureRequestView.urlname),
     url(r'^debug/notify/$', debug_notify, name='debug_notify'),
     url(r'^search/$', quick_find, name="global_quick_find"),
     url(r'^searchDescription.xml$', osdd, name="osdd"),
