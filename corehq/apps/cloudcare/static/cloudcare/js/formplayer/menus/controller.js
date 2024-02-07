@@ -302,7 +302,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             tiles: _.map(indices, index => detailObject.tiles[index]),
             details: _.map(indices, index => detailObject.details[index]),
         };
-    }
+    };
 
     // return a case tile from a detail object (for persistent case tile and case tile in case detail)
     var getCaseTile = function (detailObject) {
