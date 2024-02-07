@@ -1,11 +1,17 @@
 import datetime
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
 import pytz
-from unittest.mock import MagicMock, patch
 
+from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es import user_adapter
+from corehq.apps.es.client import manager
+from corehq.apps.es.filters import OR, term
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.export.filters import (
     NOT,
     FormSubmittedByFilter,
@@ -14,7 +20,6 @@ from corehq.apps.export.filters import (
     UserTypeFilter,
 )
 from corehq.apps.export.forms import (
-    BaseFilterExportDownloadForm,
     CaseExportFilterBuilder,
     CreateExportTagForm,
     DashboardFeedFilterForm,
@@ -24,8 +29,11 @@ from corehq.apps.export.forms import (
     FormExportFilterBuilder,
 )
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import LocationType
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.users.models import CommCareUser
+from corehq.util.es.testing import sync_users_to_es
 
 
 class FakeDomainObject(object):
