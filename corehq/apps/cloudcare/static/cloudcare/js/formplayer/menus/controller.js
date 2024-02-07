@@ -289,18 +289,40 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
     };
 
+    const onlyVisibleColumns = function (detailObject) {
+        const indices = _.chain(detailObject.styles)
+            .map((value, index) => [value, index])
+            .filter(([s]) => s.displayFormat !== constants.FORMAT_ADDRESS_POPUP)
+            .map(([, index]) => index)
+            .value();
+
+        return {
+            styles: _.map(indices, index => detailObject.styles[index]),
+            altText: _.map(indices, index => detailObject.altText[index]),
+            tiles: _.map(indices, index => detailObject.tiles[index]),
+            details: _.map(indices, index => detailObject.details[index]),
+        };
+    };
+
     // return a case tile from a detail object (for persistent case tile and case tile in case detail)
     var getCaseTile = function (detailObject) {
+        var {
+            styles,
+            altText,
+            tiles,
+            details,
+        } = onlyVisibleColumns(detailObject);
         var detailModel = new Backbone.Model({
-            data: detailObject.details,
-            altText: detailObject.altText,
+            data: details,
+            altText,
             id: 0,
         });
         var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
         var numRows = detailObject.maxHeight;
         var numColumns = detailObject.maxWidth;
         var useUniformUnits = detailObject.useUniformUnits || false;
-        var caseTileStyles = views.buildCaseTileStyles(detailObject.tiles, detailObject.styles, numRows,
+
+        var caseTileStyles = views.buildCaseTileStyles(detailObject.tiles, styles, numRows,
             numColumns, numEntitiesPerRow, useUniformUnits, 'persistent');
         // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
         $("#persistent-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
@@ -308,8 +330,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
         return views.PersistentCaseTileView({
             model: detailModel,
-            styles: detailObject.styles,
-            tiles: detailObject.tiles,
+            styles: styles,
+            tiles: tiles,
             maxWidth: detailObject.maxWidth,
             maxHeight: detailObject.maxHeight,
             prefix: 'persistent',
