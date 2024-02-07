@@ -806,6 +806,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             var promise = $.Deferred();
             self.updateModelsForValidation = promise;
+            sessionStorage.validationInProgress = true;
 
             var urlObject = formplayerUtils.currentUrlToObject();
             urlObject.setQueryData({
@@ -838,7 +839,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 promise.resolve(response);
 
             });
-
+            sessionStorage.validationInProgress = false;
             return promise;
         },
 

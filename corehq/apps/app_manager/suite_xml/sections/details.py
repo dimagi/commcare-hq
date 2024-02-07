@@ -204,8 +204,6 @@ class DetailContributor(SectionContributor):
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
 
-            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
-
             # Add variables
             variables = list(
                 schedule_detail_variables(module, detail, detail_column_infos)
@@ -217,12 +215,11 @@ class DetailContributor(SectionContributor):
 
             # Add fields
             if detail.case_tile_template:
-                detail_id = id_strings.detail(module, detail_type)
                 helper = CaseTileHelper(
                     self.app,
                     module,
                     detail,
-                    detail_id,
+                    id,
                     detail_type,
                     self.build_profile_id,
                     detail_column_infos,
@@ -240,12 +237,14 @@ class DetailContributor(SectionContributor):
                     for field in fields:
                         d.fields.append(field)
 
+                    # Add actions
+                    if detail_type.endswith('short') and not module.put_in_root:
+                        if module.case_list_form.form_id:
+                            DetailContributor.add_register_action(
+                                self.app, module, d.actions, self.build_profile_id, self.entries_helper)
+
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
-                if module.case_list_form.form_id:
-                    DetailContributor.add_register_action(
-                        self.app, module, d.actions, self.build_profile_id, self.entries_helper)
-
                 if module_offers_search(module) and not module_uses_inline_search(module):
                     if (case_search_action := DetailContributor.get_case_search_action(
                         module,
@@ -255,6 +254,7 @@ class DetailContributor(SectionContributor):
                         d.actions.append(case_search_action)
             # Add select text
             self.add_select_text_to_detail(d, self.app, detail_type, module)
+            self.add_no_items_text_to_detail(d, self.app, detail_type, module)
 
             try:
                 if not self.app.enable_multi_sort:
