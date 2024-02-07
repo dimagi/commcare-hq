@@ -7,6 +7,5 @@ setproctitle
 uWSGI
 ipython  # for nicer django shell experience
 
-cryptography
 idna
 certifi
