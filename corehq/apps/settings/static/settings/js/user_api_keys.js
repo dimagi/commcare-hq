@@ -4,7 +4,7 @@ hqDefine("settings/js/user_api_keys", [
     'underscore',
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap3/crud_paginated_list",
-    'hqwebapp/js/widgets',
+    'hqwebapp/js/bootstrap3/widgets',
 ], function (
     $,
     ko,

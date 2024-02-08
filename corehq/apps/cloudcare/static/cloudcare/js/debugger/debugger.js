@@ -174,7 +174,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             this.options.baseUrl,
             {
                 selections: this.options.selections,
-                query_data: self.options.queryData,
+                query_data: this.options.queryData,
                 username: this.options.username,
                 restoreAs: this.options.restoreAs,
                 domain: this.options.domain,

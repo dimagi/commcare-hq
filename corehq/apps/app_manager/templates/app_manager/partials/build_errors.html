@@ -317,6 +317,18 @@
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 has an invalid case tile configuration. Reason: {{ error_reason }}
               {% endblocktrans %}
+            {% case "deprecated popup configuration" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                The case list in
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                has an address popup configuration that should be moved to case detail.
+              {% endblocktrans %}
+            {% case "invalid clickable icon configuration" %}
+              {% blocktrans with module_name=error.module.name|trans:langs error_reason=error.reason %}
+                The case list in
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                has an invalid clickable icon configuration. Reason: {{ error_reason }}
+              {% endblocktrans %}
             {% case "no source module id" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 Shadow module

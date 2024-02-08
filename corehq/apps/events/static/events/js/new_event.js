@@ -4,7 +4,7 @@ hqDefine("events/js/new_event", [
     "hqwebapp/js/multiselect_utils",
     "hqwebapp/js/initial_page_data",
     "locations/js/widgets",
-    "hqwebapp/js/widgets",
+    "hqwebapp/js/bootstrap3/widgets",
     "jquery-ui/ui/widgets/datepicker",
 ], function (
     $,
