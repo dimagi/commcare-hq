@@ -129,7 +129,7 @@
                     </a>
                 </li>
             {% endif %}
-            {% if user.is_dimagi %}
+            {% if request.couch_user and request.couch_user.is_dimagi %}
                 <li>
                     <a href="#modalSolutionsFeatureRequest" data-toggle="modal" class="track-usage-link"
                     data-category="Nav Bar" data-action="Question Mark" data-label="Solutions Feature Request">
