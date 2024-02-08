@@ -176,6 +176,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
         self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
+
+        const params = new URLSearchParams(document.location.search);
+        self.showDeprecatedCaseTypes = ko.observable(params.get("load_deprecated_case_types") !== null);
+
+        // Elements with this class have a hidden class to hide them on page load. If we don't do this, then the elements
+        // will flash on the page for a bit while the KO bindings are being applied.
+        $(".deprecate-case-type").removeClass('hidden');
+
         self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function () {
@@ -241,7 +249,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.init = function (callback) {
-            $.getJSON(dataUrl)
+            $.getJSON(dataUrl, {load_deprecated_case_types: self.showDeprecatedCaseTypes()})
                 .done(function (data) {
                     _.each(data.case_types, function (caseTypeData) {
                         var caseTypeObj = caseType(
@@ -336,6 +344,19 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.saveButton.setState('saved');
         };
 
+        function isNameValid(nameStr) {
+            // First character must be a letter, and the entire name can only contain letters, numbers, '-', and '_'
+            const pattern = /^[a-zA-Z][a-zA-Z0-9-_]*$/;
+            return pattern.test(nameStr);
+        }
+
+        self.newPropertyNameValid = ko.computed(function () {
+            if (!self.newPropertyName()) {
+                return true;
+            }
+            return isNameValid(self.newPropertyName());
+        });
+
         self.newPropertyNameUnique = ko.computed(function () {
             if (!self.newPropertyName()) {
                 return true;
@@ -344,11 +365,18 @@ hqDefine("data_dictionary/js/data_dictionary", [
             const propertyNameFormatted = self.newPropertyName().toLowerCase().trim();
             const activeCaseTypeData = self.activeCaseTypeData();
             for (const group of activeCaseTypeData) {
-                if (group.properties().some(v => v.name.toLowerCase() === propertyNameFormatted)) {
+                if (group.properties().find(v => v.name.toLowerCase() === propertyNameFormatted)) {
                     return false;
                 }
             }
             return true;
+        });
+
+        self.newGroupNameValid = ko.computed(function () {
+            if (!self.newGroupName()) {
+                return true;
+            }
+            return isNameValid(self.newGroupName());
         });
 
         self.newGroupNameUnique = ko.computed(function () {
@@ -420,21 +448,35 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.removefhirResourceType(false);
         };
 
+        self.toggleShowDeprecatedCaseTypes = function () {
+            self.showDeprecatedCaseTypes(!self.showDeprecatedCaseTypes());
+            const pageUrl = new URL(window.location.href);
+            if (self.showDeprecatedCaseTypes()) {
+                pageUrl.searchParams.append('load_deprecated_case_types', true);
+            } else {
+                pageUrl.searchParams.delete('load_deprecated_case_types');
+            }
+            window.location.href = pageUrl;
+        };
+
         // CREATE workflow
         self.name = ko.observable("").extend({
             rateLimit: { method: "notifyWhenChangesStop", timeout: 400 },
         });
 
         self.nameValid = ko.observable(false);
+        self.nameUnique = ko.observable(false);
         self.nameChecked = ko.observable(false);
         self.name.subscribe((value) => {
             if (!value) {
+                self.nameChecked(false);
                 return;
             }
             let existing = _.find(self.caseTypes(), function (prop) {
                 return prop.name === value;
             });
-            self.nameValid(!existing);
+            self.nameUnique(!existing);
+            self.nameValid(isNameValid(self.name()));
             self.nameChecked(true);
         });
 
@@ -448,6 +490,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             $("#create-case-type-form").trigger("reset");
             self.name("");
             self.nameValid(false);
+            self.nameUnique(false);
             self.nameChecked(false);
             return true;
         };

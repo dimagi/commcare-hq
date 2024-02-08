@@ -3,7 +3,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         GROUP_TYPE: 'sub-group',
         REPEAT_TYPE: 'repeat-juncture',
         QUESTION_TYPE: 'question',
-        GROUPED_QUESTION_TILE_ROW_TYPE: 'grouped-question-tile-row',
+        GROUPED_ELEMENT_TILE_ROW_TYPE: 'grouped-element-tile-row',
 
         // Entry types
         STRING: 'str',
@@ -42,6 +42,8 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         SHORT: 'short',
         MEDIUM: 'medium',
         STRIPE_REPEATS: 'stripe-repeats',
+        GROUP_BORDER: 'group-border',
+        HINT_AS_PLACEHOLDER: 'hint-as-placeholder',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,

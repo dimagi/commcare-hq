@@ -312,7 +312,7 @@ iso8601==2.0.0
     # via -r base-requirements.in
 isodate==0.6.1
     # via python3-saml
-jinja2==3.1.2
+jinja2==3.1.3
     # via -r base-requirements.in
 jmespath==0.10.0
     # via
@@ -334,7 +334,7 @@ jsonschema==4.17.3
     # via
     #   -r base-requirements.in
     #   ddtrace
-jwcrypto==1.4
+jwcrypto==1.5.1
     # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
@@ -393,7 +393,7 @@ phonenumberslite==8.12.48
     # via -r base-requirements.in
 pickle5==0.0.11
     # via -r base-requirements.in
-pillow==10.0.1
+pillow==10.2.0
     # via
     #   -r base-requirements.in
     #   reportlab
@@ -439,9 +439,9 @@ pyasn1-modules==0.2.8
     # via google-auth
 pycparser==2.20
     # via cffi
-pycryptodome==3.10.1
+pycryptodome==3.19.1
     # via -r base-requirements.in
-pycryptodomex==3.14.1
+pycryptodomex==3.19.1
     # via
     #   oic
     #   pyjwkest
@@ -689,7 +689,7 @@ zope-interface==6.1
 # The following packages are considered to be unsafe in a requirements file:
 pip==23.3
     # via pip-tools
-setuptools==67.3.2
+setuptools==69.0.3
     # via
     #   django-websocket-redis
     #   gunicorn

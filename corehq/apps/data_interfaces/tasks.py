@@ -246,7 +246,7 @@ def _get_repeat_record_ids(
         if use_sql:
             queryset = SQLRepeatRecord.objects.filter(
                 domain=domain,
-                repeater__repeater_id=repeater_id,
+                repeater__id=repeater_id,
             )
             return [r['id'] for r in queryset.values('id')]
         else:

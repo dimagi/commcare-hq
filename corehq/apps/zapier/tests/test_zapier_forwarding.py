@@ -9,10 +9,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
-from corehq.motech.repeaters.dbaccessors import (
-    delete_all_repeat_records,
-    delete_all_repeaters,
-)
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import RepeatRecord
 
 DOMAIN = 'zapier-case-forwarding-tests'

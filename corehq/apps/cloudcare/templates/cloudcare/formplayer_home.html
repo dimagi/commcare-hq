@@ -34,7 +34,6 @@
   {% compress css %}
     <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
     <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
-    <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
     <link rel="stylesheet" href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
   {% endcompress %}
   {% compress css %}
@@ -109,13 +108,13 @@
       <div id="content-container" class="container">
         <div id="sidebar-region" class="noprint-sub-container"></div>
         <div id="menu-region" class="print-container"></div>
+        <section id="webforms" data-bind="
+                  template: {
+                      name: 'form-fullform-ko-template',
+                      afterRender: afterRender
+                  }">
+        </section>
       </div>
-      <section id="webforms" data-bind="
-                template: {
-                    name: 'form-fullform-ko-template',
-                    afterRender: afterRender
-                }">
-      </section>
     </div>
     <div role="region" id="sr-notification-region" class="sr-only" aria-live="assertive" aria-relevant="all"></div>
     <small id="version-info"></small>

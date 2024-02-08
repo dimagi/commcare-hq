@@ -47,7 +47,6 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
             white_listed_case_types=[IntentCaseBuilder.CASE_TYPE],
-            repeater_id=uuid.uuid4().hex
         )
         cls.repeater.save()
 

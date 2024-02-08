@@ -516,7 +516,6 @@ class TestGetRepeatRecordIDs(TestCase):
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,
-            repeater_id=uuid4().hex
         )
         cls.repeater.save()
         cls.create_repeat_records()

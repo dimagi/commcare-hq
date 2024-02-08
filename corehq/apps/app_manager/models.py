@@ -2024,6 +2024,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     #Only applies to 'short' details
     no_items_text = LabelProperty(default={'en': 'List is empty.'})
 
+    select_text = LabelProperty(default={'en': 'Continue'})
+
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
         if value_is_the_default:
@@ -2188,6 +2190,7 @@ class CaseSearch(DocumentSchema):
     description = LabelProperty(default={})
     include_all_related_cases = BooleanProperty(default=False)
     dynamic_search = BooleanProperty(default=False)
+    search_on_clear = BooleanProperty(default=False)
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
