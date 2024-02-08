@@ -2,6 +2,9 @@ The `modal` component was rewritten and now the close button should come after
 the `modal-title`. Also, there is a new accessibility attribute `aria-labelledby`
 which you can add to label the modal with the title. See documentation for details...
 
+An EXAMPLE for how to apply this change is provided below.
+Please see docs for further details.
+
 Previously:
 ```
 <div class="modal-header">

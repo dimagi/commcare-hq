@@ -3,6 +3,8 @@
 However, `&times;` in the HTML is no longer needed, as an embedded SVG is now used instead.
 You can remove this.
 
+An EXAMPLE for how to apply this change is provided below.
+
 Previously:
 ```
 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
