@@ -33,3 +33,13 @@ class DuplicateCasesExplorer(CaseListExplorer):
         query = super()._build_query(sort)
         query = query.case_ids(self._get_case_ids())
         return query
+
+    def get_tracked_search_properties(self):
+        from corehq.apps.accounting.models import Subscription, SubscriptionType
+        properties = super().get_tracked_search_properties()
+
+        subscription = Subscription.get_active_subscription_by_domain
+        managed_by_saas = subscription.service_type == SubscriptionType.PRODUCCT if subscription else False
+        properties['managed_by_saas'] = managed_by_saas
+
+        return properties

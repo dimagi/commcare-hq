@@ -43,7 +43,7 @@ from corehq.apps.data_interfaces.deduplication import (
 )
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS
-from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.apps.users.util import SYSTEM_USER_ID, cached_owner_id_to_display
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
@@ -1174,11 +1174,32 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 existing_duplicate.delete()
             duplicate_ids = self._create_duplicates(case, rule, current_hash)
 
+        if existing_duplicate and not duplicate_ids:
+            self._track_fixed_case(case)
+
         if toggles.CASE_DEDUPE_UPDATES.enabled(rule.domain):
             num_updates = self._update_duplicates(duplicate_ids, case, rule)
         else:
             num_updates = 0
         return CaseRuleActionResult(num_updates=num_updates)
+
+    def _track_fixed_case(self, case):
+        from corehq.apps.analytics.tasks import track_workflow
+        from corehq.apps.accounting.models import Subscription, SubscriptionType, SoftwarePlanEdition
+        username = cached_owner_id_to_display(case.modified_by)
+
+        properties = {
+            'domain': case.domain,
+        }
+
+        subscription = Subscription.get_active_subscription_by_domain(case.domain)
+        managed_by_saas = subscription.service_type == SubscriptionType.PRODUCT if subscription else False
+        properties['managed_by_saas'] = managed_by_saas
+
+        if subscription and subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+            properties['enterprise_account'] = subscription.account.name
+
+        track_workflow(username, 'Duplicate Fixed', properties)
 
     def _create_duplicates(self, case, rule, current_hash):
         """Create any necessary duplicates for this case that don't already exist.
