@@ -101,7 +101,7 @@ PASSWORD_RESET_DONE_KWARGS = {
 
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
-    url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
+    url(r'^domain/select_redirect/$', select, {'always_show_list': True}, name='domain_select_redirect'),
     url('^accept_all_invitations/$', accept_all_invitations, name='accept_all_invitations'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
