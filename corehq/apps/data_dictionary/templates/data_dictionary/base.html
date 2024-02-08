@@ -170,12 +170,12 @@
         <br />
       {% endif %}
       <a class="btn btn-info" id="download-dict" href="{% url "export_data_dictionary" domain %}">
-        <i class="fa fa-cloud-download"></i>
+        <i class="fa-solid fa-cloud-arrow-down"></i>
         {% trans "Export to Excel" %}
       </a>
       {% if not request.is_view_only %}
         <a class="btn btn-default" href="{% url "upload_data_dict" domain %}">
-          <i class="fa fa-cloud-upload"></i>
+          <i class="fa-solid fa-cloud-arrow-up"></i>
           {% trans "Import from Excel" %}
         </a>
       <a class="btn btn-default" href="#" data-bind="openModal: 'deprecate-case-type', visible: !$root.isActiveCaseTypeDeprecated()">
@@ -218,7 +218,7 @@
           <div class="table-row group" data-bind="css: { 'group-deprecated': toBeDeprecated() }, visible: !deprecated || $root.showAll()">
             <div class="row-item-small">
               {% if not request.is_view_only %}
-              <i class="sortable-handle fa fa-arrows-v"></i>
+              <i class="sortable-handle fa-solid fa-up-down"></i>
               {% endif %}
               <i class="fa ms-2"
                 data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: toggleExpanded"></i>
@@ -264,7 +264,7 @@
             <div class="table-row" data-bind="visible: expanded() && (!deprecated() || $root.showAll())">
               <div class="row-item-small">
               {% if not request.is_view_only %}
-                <i class="sortable-handle fa fa-arrows-v"></i>
+                <i class="sortable-handle fa-solid fa-up-down"></i>
               {% endif %}
               </div>
               <div class="row-item">
@@ -312,7 +312,7 @@
               <div class="row-item fhir-path">
                 <input class="form-control" data-bind="value: $data.fhirResourcePropPath, disable: removeFHIRResourcePropertyPath"></input>
                 <!-- ko if: fhirResourcePropPath() && !removeFHIRResourcePropertyPath() -->
-                <button title="{% trans_html_attr 'Remove Path' %}" data-bind="click: removePath" class="fa fa-close"></button>
+                <button title="{% trans_html_attr 'Remove Path' %}" data-bind="click: removePath" class="fa-solid fa-xmark"></button>
                 <!-- /ko -->
                 <!-- ko if: removeFHIRResourcePropertyPath() -->
                 <button title="{% trans_html_attr 'Restore Path' %}" data-bind="click: restorePath" class="fa fa-undo"></button>
