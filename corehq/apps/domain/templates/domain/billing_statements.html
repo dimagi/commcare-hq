@@ -139,14 +139,14 @@
           </label>
           <div class="alert alert-danger"
                data-bind="visible: showAmountRangeError">
-            <i class="fa fa-exclamation-triangle"></i>
+            <i class="fa-solid fa-triangle-exclamation"></i>
             {% blocktrans %}
               Please enter an amount that's between $0.50 and $<span data-bind="text: balance"></span>.
             {% endblocktrans %}
           </div>
           <div class="alert alert-danger"
                data-bind="visible: showAmountLeftoverError">
-            <i class="fa fa-exclamation-triangle"></i>
+            <i class="fa-solid fa-triangle-exclamation"></i>
             {% blocktrans %}
               You can't enter an amount between $<span data-bind="text: maxPartialAmount"></span>
               and $<span data-bind="text: balance"></span> because
