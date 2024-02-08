@@ -577,8 +577,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initialize: function (options) {
             this.parentModel = options.collection.models || [];
-            this.sidebarEnabled = this.options.sidebarEnabled;
-            this.dynamicSearchEnabled = options.hasDynamicSearch && this.sidebarEnabled;
+            this.dynamicSearchEnabled = options.hasDynamicSearch && this.options.sidebarEnabled;
 
             this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);
@@ -586,15 +585,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.smallScreenListener.listen();
 
             this.dynamicSearchEnabled = !(options.disableDynamicSearch || this.smallScreenEnabled) &&
-                (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.sidebarEnabled);
+                (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
             this.searchOnClear = (options.searchOnClear && !this.smallScreenEnabled);
 
             if (Object.keys(options.groupHeaders).length > 0) {
                 const groupedCollection = groupDisplays(options.collection, options.groupHeaders);
                 this.collection = new Collection(groupedCollection);
             }
-            sessionStorage.submitDisabled = sessionStorage.submitDisabled === undefined ?
-                true : sessionStorage.submitDisabled;
         },
 
         templateContext: function () {
@@ -603,20 +600,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return {
                 title: this.options.title.trim(),
                 description: DOMPurify.sanitize(description),
-                sidebarEnabled: this.sidebarEnabled,
+                sidebarEnabled: this.options.sidebarEnabled,
                 grouped: Boolean(this.collection.find(c => c.has("groupKey"))),
             };
-        },
-
-        onRender() {
-            var submitButton = this.ui.submitButton;
-            if (this.sidebarEnabled) {
-                if (sessionStorage.submitDisabled === false || sessionStorage.submitDisabled === "false") {
-                    submitButton.prop('disabled', false);
-                } else {
-                    submitButton.prop('disabled', true);
-                }
-            }
         },
 
         ui: {
@@ -632,7 +618,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         handleSmallScreenChange: function (enabled) {
             this.smallScreenEnabled = enabled;
-            if (this.sidebarEnabled) {
+            if (this.options.sidebarEnabled) {
                 if (this.smallScreenEnabled) {
                     $('#sidebar-region').addClass('collapse');
                 } else {
@@ -711,7 +697,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             });
-            this.updateSubmitButtonDisabled(false);
             if (self.dynamicSearchEnabled && useDynamicSearch) {
                 self.updateSearchResults();
             }
@@ -726,14 +711,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (self.dynamicSearchEnabled || this.searchOnClear) {
                 self.updateSearchResults();
             }
-            this.updateSubmitButtonDisabled(false);
         },
 
         submitAction: function (e) {
             var self = this;
             e.preventDefault();
             self.performSubmit();
-            this.updateSubmitButtonDisabled(true);
         },
 
         performSubmit: function (initiatedBy) {
@@ -762,13 +745,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
             if (invalidRequiredFields.length === 0) {
                 self.performSubmit(formplayerConstants.queryInitiatedBy.DYNAMIC_SEARCH);
-            }
-        },
-
-        updateSubmitButtonDisabled: function (disabled) {
-            if (this.sidebarEnabled) {
-                sessionStorage.submitDisabled = disabled;
-                this.render();
             }
         },
 
