@@ -176,6 +176,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
         self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
+
+        const params = new URLSearchParams(document.location.search);
+        self.showDeprecatedCaseTypes = ko.observable(params.get("load_deprecated_case_types") !== null);
+
+        // Elements with this class have a hidden class to hide them on page load. If we don't do this, then the elements
+        // will flash on the page for a bit while the KO bindings are being applied.
+        $(".deprecate-case-type").removeClass('hidden');
+
         self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function () {
@@ -241,7 +249,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.init = function (callback) {
-            $.getJSON(dataUrl)
+            $.getJSON(dataUrl, {load_deprecated_case_types: self.showDeprecatedCaseTypes()})
                 .done(function (data) {
                     _.each(data.case_types, function (caseTypeData) {
                         var caseTypeObj = caseType(
@@ -438,6 +446,17 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.restoreResourceType = function () {
             self.removefhirResourceType(false);
+        };
+
+        self.toggleShowDeprecatedCaseTypes = function () {
+            self.showDeprecatedCaseTypes(!self.showDeprecatedCaseTypes());
+            const pageUrl = new URL(window.location.href);
+            if (self.showDeprecatedCaseTypes()) {
+                pageUrl.searchParams.append('load_deprecated_case_types', true);
+            } else {
+                pageUrl.searchParams.delete('load_deprecated_case_types');
+            }
+            window.location.href = pageUrl;
         };
 
         // CREATE workflow

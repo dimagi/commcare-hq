@@ -6,7 +6,7 @@
 # Translators:
 # Dimagi Dev <devops@dimagi.com>, 2021
 # Michelle B. Sultan <msultan@dimagi.com>, 2022
-# Gladys Teos <info@enestranslations.com>, 2023
+# Gladys Teos <info@enestranslations.com>, 2024
 #
 #, fuzzy
 msgid ""
@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Gladys Teos <info@enestranslations.com>, 2023\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>, 2024\n"
 "Language-Team: Spanish (https://app.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -2983,20 +2983,16 @@ msgid "Please check the following fields:"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/api.js
-#, fuzzy
-#| msgid "Delete incomplete form?"
 msgid "Unable to delete incomplete form '<%- title %>'"
-msgstr "¿Desea borrar el formulario incompleto?"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
 msgid "Delete incomplete form?"
 msgstr "¿Desea borrar el formulario incompleto?"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-#, fuzzy
-#| msgid "Are you sure you want to delete '"
 msgid "Are you sure you want to delete '<%- title %>'?"
-msgstr "¿Está seguro que quiere borrar ' ?"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
 msgid "Yes"
@@ -3550,38 +3546,28 @@ msgid "No group"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "Group"
 msgid "Group ID"
-msgstr "Grupo"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "No Name"
 msgid "Group Name"
-msgstr "No hay Nombre"
+msgstr "Nombre del Grupo"
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "Group Center Coordinates"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "Node Name"
 msgid "Case Name"
-msgstr "Nombre del Nodo"
+msgstr "Nombre del Caso"
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "case property name"
 msgid "Case Owner Name"
-msgstr "nombre de propiedad del caso"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "Case Changes"
 msgid "Case Coordinates"
-msgstr "Cambios del Caso"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "Select group"

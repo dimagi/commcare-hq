@@ -147,21 +147,64 @@ class BuildErrorsTest(TestCase):
             self._clean_unique_id(errors)
             self.assertIn(case_tile_error, errors)
 
+    def create_app_with_module(self):
+        factory = AppFactory(build_version='2.51.0')
+        app = factory.app
+        module = factory.new_basic_module('first', 'case', with_form=False)
+
+        return app, module
+
     def test_clickable_icon_configuration_errors(self, *args):
         case_tile_error = {
             'type': "invalid clickable icon configuration",
             'module': {'id': 0, 'name': {'en': 'first module'}},
             'reason': 'Column/Field "field": Clickable Icons require a form to be configured.'
         }
-        factory = AppFactory(build_version='2.51.0')
-        app = factory.app
-        module = factory.new_basic_module('first', 'case', with_form=False)
+        app, module = self.create_app_with_module()
+
         module.case_details.short.columns.append(DetailColumn(
             format='clickable-icon',
             field='field',
             header={'en': 'Column'},
             model='case',
         ))
+
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertIn(case_tile_error, errors)
+
+    def test_address_popup_defined_in_case_list(self, *args):
+        case_tile_error = {
+            'type': "deprecated popup configuration",
+            'module': {'id': 0, 'name': {'en': 'first module'}},
+            'reason': 'Format "Address Popup" should be used in the Case Detail not Case List.'
+        }
+        app, module = self.create_app_with_module()
+        module.case_details.short.columns.append(DetailColumn(
+            format='address-popup',
+            field='field',
+            header={'en': 'Column'},
+            model='case',
+        ))
+
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertIn(case_tile_error, errors)
+
+    def test_address__defined_twice(self, *args):
+        case_tile_error = {
+            'type': "invalid tile configuration",
+            'module': {'id': 0, 'name': {'en': 'first module'}},
+            'reason': 'Format "Address" can only be used once but is used by multiple properties: "f1", "f2"'
+        }
+        app, module = self.create_app_with_module()
+        for field_id in [1, 2]:
+            module.case_details.short.columns.append(DetailColumn(
+                format='address',
+                field=f'f{field_id}',
+                header={'en': 'Column'},
+                model='case',
+            ))
 
         errors = app.validate_app()
         self._clean_unique_id(errors)

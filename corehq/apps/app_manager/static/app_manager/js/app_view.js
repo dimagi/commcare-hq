@@ -75,7 +75,7 @@ hqDefine("app_manager/js/app_view", function () {
                         success: function (content) {
                             self.load_state('loaded');
                             self.multimedia_page_html(content);
-                            hqImport("hqwebapp/js/widgets").init();
+                            hqImport("hqwebapp/js/bootstrap3/widgets").init();
                         },
                         error: function (data) {
                             if (data.hasOwnProperty('responseJSON')) {

@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from looseversion import LooseVersion
 from urllib.parse import unquote
 
 from django.conf import settings
@@ -18,6 +17,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
+from looseversion import LooseVersion
 from memoized import memoized
 from tastypie.http import HttpTooManyRequests
 
@@ -65,6 +65,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
+from corehq.util.metrics import limit_domains, metrics_histogram
 from corehq.util.quickcache import quickcache
 
 from .case_restore import get_case_restore_response
@@ -76,7 +77,6 @@ from .utils import (
     handle_401_response,
     is_permitted_to_restore,
 )
-from corehq.util.metrics import metrics_histogram
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
@@ -129,14 +129,22 @@ def app_aware_search(request, domain, app_id):
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
-    end_time = datetime.now()
+    _log_search_timing(start_time, request, domain)
+    return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
+
+
+def _log_search_timing(start_time, request, domain):
+    elapsed = (datetime.now() - start_time).total_seconds()
     metrics_histogram("commcare.app_aware_search.processing_time",
-                      int((end_time - start_time).total_seconds() * 1000),
+                      int(elapsed * 1000),
                       bucket_tag='duration_bucket',
                       buckets=(500, 1000, 5000),
                       bucket_unit='ms',
-                      tags={'domain': domain})
-    return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
+                      tags={'domain': limit_domains(domain)})
+    if elapsed >= 10 and limit_domains(domain) != "__other__":
+        notify_exception(request, "LongCaseSearchRequest", details={
+            'request_dict': dict((request.GET if request.method == 'GET' else request.POST).lists()),
+        })
 
 
 @location_safe_bypass

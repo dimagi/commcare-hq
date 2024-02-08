@@ -30,7 +30,6 @@ hqDefine("geospatial/js/geospatial_map", [
 
     var mapModel;
     var polygonFilterModel;
-    var missingGPSModelInstance;
 
     function showMapControls(state) {
         $("#geospatial-map").toggle(state);
@@ -327,7 +326,6 @@ hqDefine("geospatial/js/geospatial_map", [
             self.hasErrors(false);
             if (!self.shouldShowUsers()) {
                 self.hasFiltersChanged(false);
-                missingGPSModelInstance.usersWithoutGPS([]);
                 return;
             }
 
@@ -337,18 +335,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 url: initialPageData.reverse('get_users_with_gps'),
                 success: function (data) {
                     self.hasFiltersChanged(false);
-
-                    // TODO: There is a lot of indexing happening here. This should be replaced with a mapping to make reading it more explicit
-                    const usersWithoutGPS = data.user_data.filter(function (item) {
-                        return item.gps_point === null || !item.gps_point.length;
-                    });
-                    missingGPSModelInstance.usersWithoutGPS(usersWithoutGPS);
-
-                    const usersWithGPS = data.user_data.filter(function (item) {
-                        return item.gps_point !== null && item.gps_point.length;
-                    });
-
-                    const userData = _.object(_.map(usersWithGPS, function (userData) {
+                    const userData = _.object(_.map(data.user_data, function (userData) {
                         const gpsData = (userData.gps_point) ? userData.gps_point.split(' ') : [];
                         const lat = parseFloat(gpsData[0]);
                         const lng = parseFloat(gpsData[1]);
@@ -427,19 +414,6 @@ hqDefine("geospatial/js/geospatial_map", [
         }));
         const caseMapItems = mapModel.addMarkersToMap(casesById, caseMarkerColors);
         mapModel.caseMapItems(caseMapItems);
-
-        var $missingCasesDiv = $("#missing-gps-cases");
-        var casesWithoutGPS = caseData.filter(function (item) {
-            return item[1] === null;
-        });
-        casesWithoutGPS = _.map(casesWithoutGPS, function (item) {return {"link": item[2]};});
-        // Don't re-apply if this is the next page of the pagination
-        if (ko.dataFor($missingCasesDiv[0]) === undefined) {
-            $missingCasesDiv.koApplyBindings(missingGPSModelInstance);
-            missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
-        }
-        missingGPSModelInstance.casesWithoutGPS(casesWithoutGPS);
-
         mapModel.fitMapBounds(caseMapItems);
     }
 
@@ -459,7 +433,6 @@ hqDefine("geospatial/js/geospatial_map", [
             initUserFilters();
             // Hide controls until data is displayed
             showMapControls(false);
-            missingGPSModelInstance = new models.MissingGPSModel();
 
             disbursementRunner = new disbursementRunnerModel();
             $("#disbursement-spinner").koApplyBindings(disbursementRunner);
