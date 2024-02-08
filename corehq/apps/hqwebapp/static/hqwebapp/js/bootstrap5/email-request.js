@@ -58,6 +58,7 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
             }
 
             if (!self.isRequestReportSubmitting && self.isReportSent) {
+                self.isReportSent = false;
                 self.reportModal.hide();
             } else if (!self.isRequestReportSubmitting) {
                 self.$submitBtn.changeButtonState('loading');
