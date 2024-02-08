@@ -235,6 +235,14 @@
       </style>
     {% endif %}
 
+    {% if request.couch_user.is_dimagi %}
+      {% if use_bootstrap5 %}
+        {% include 'hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html' %}
+      {% else %}
+        {% include 'hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html' %}
+      {% endif %}
+    {% endif %}
+
     {% if EULA_COMPLIANCE %}
       {% if request.couch_user and not request.couch_user.is_eula_signed %}
         {% registerurl 'agree_to_eula' %}
@@ -328,7 +336,7 @@
       {% if use_bootstrap5 %}
         {% compress js %}
           <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap5/hq-bug-report.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/email-request.js' %}"></script>
           <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
           <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
           <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
@@ -339,7 +347,7 @@
       {% else %}
         {% compress js %}
           <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap3/hq-bug-report.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap3/email-request.js' %}"></script>
           <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
           <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
           <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
