@@ -195,8 +195,9 @@ class Command(BaseCommand):
         readme_path = readme_directory / readme_filename
         with open(readme_path, 'w') as readme_file:
             readme_file.writelines(changelog)
-        self.stdout.write(f"\nRecorded changes to reference later here:"
-                          f"\n\t{readme_path}")
+        self.stdout.write(f"\nYou can reference the logs for these changes here:"
+                          f"\n\t{readme_path}"
+                          f"\n\t\tThis is IMPORTANT to take note of if you have any suggested changes!\n")
 
     def save_re_checked_file_changes(self, app_name, file_path, changed_lines, is_template):
         short_path = self.get_short_path(app_name, file_path, is_template)
