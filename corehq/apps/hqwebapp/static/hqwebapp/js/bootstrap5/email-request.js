@@ -36,7 +36,7 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
         self.$formElement.submit(() => {
             resetErrors();
 
-            const isDescriptionEmpty = !self.subjectText() && !self.descriptionText();
+            const isDescriptionEmpty = !self.subjectText();
             if (isDescriptionEmpty) {
                 self.hasSubjectError(true);
             }
