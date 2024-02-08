@@ -16,9 +16,10 @@ Previously:
 Now:
 ```
 <div class="modal-header">
-    <h1 class="modal-title" id="exampleModalLabel">Modal title</h1>
+    <h4 class="modal-title" id="exampleModalLabel">Modal title</h4>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 ```
 
-See: https://getbootstrap.com/docs/5.3/components/modal/
+See: Styleguide (B5) > Molecules > Modals for full example
+Official Docs: https://getbootstrap.com/docs/5.3/components/modal/
