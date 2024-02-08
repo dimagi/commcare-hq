@@ -1,8 +1,6 @@
 from collections import defaultdict
 from functools import wraps
 
-from django.urls import get_resolver
-
 from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
 
 
