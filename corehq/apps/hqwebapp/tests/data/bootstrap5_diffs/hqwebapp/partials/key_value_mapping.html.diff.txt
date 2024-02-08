@@ -110,7 +110,7 @@
                      click: function(){if (!useCustomPath()) setCustomPath(); $parent.toggleEditMode()}">
 @@ -155,7 +155,7 @@
  
- <div id="icon_alt_text">
+ <div id="icon_alt_text" class="hide">
    <label class="control-label col-sm-1">{% trans 'Alt Text' %}</label>
 -  <div class="col-sm-4">
 +  <div class="col-md-4">
