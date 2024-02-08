@@ -137,6 +137,29 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         return curr;
     }
 
+    function isStyleNPerRowRepeat(styleStr) {
+        const pattern = new RegExp(`\\d+${constants.PER_ROW_REPEAT}(\\s|$)`);
+        return getMatchingStyles(pattern, styleStr).length > 0;
+    }
+
+    function getNPerRowStyleFromRepeatStyle(style) {
+        const allStyles = style.split(" ");
+        const nPerRowStyle = allStyles.find(singleStyle => isStyleNPerRowRepeat(singleStyle));
+        if (nPerRowStyle) {
+            const integerPart = nPerRowStyle.split('-')[0];
+            return integerPart + '-per-row';
+        }
+    }
+
+    function isNPerRowRepeatElement(style) {
+        const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
+        if(styleStr) {
+            return isStyleNPerRowRepeat(styleStr)
+        } else {
+            return false
+        }
+    }
+
     /**
      * Base abstract prototype for Repeat, Group, GroupedElementTileRow, and Form. Adds methods to
      * objects that contain a children array for rendering nested questions.
@@ -321,6 +344,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     usedWidth += elementTileWidth;
                 }
                 if (child.type === constants.GROUP_TYPE) {
+                    if (isNPerRowRepeatElement(child.style)) {
+                        for (let groupChild of child.children) {
+                            if (groupChild.type === constants.GROUP_TYPE) {
+                                groupChild.style.raw = getNPerRowStyleFromRepeatStyle(child.style.raw);
+                            }
+                        }
+                    }
                     child = Container.groupElements(child);
                 }
                 addToCurrentGroup(child);
