@@ -29,6 +29,7 @@ from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
 from corehq.apps.casegroups.dbaccessors import (
     get_case_groups_in_domain,
@@ -1226,8 +1227,25 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
         reset_and_backfill_deduplicate_rule(rule)
         messages.success(request, _("Successfully created deduplication rule: {}").format(rule.name))
+        self._track_rule_created(rule, _action_definition)
+
         return HttpResponseRedirect(
             reverse(DeduplicationRuleEditView.urlname, kwargs={"domain": self.domain, "rule_id": rule.id})
+        )
+
+    def _track_rule_created(self, rule, action_definition):
+        from corehq.apps.accounting.models import Subscription, SubscriptionType
+        subscription = Subscription.get_active_subscription_by_domain(rule.domain)
+        managed_by_saas = subscription.service_type != SubscriptionType.IMPLEMENTATION if subscription else False
+
+        track_workflow(
+            self.request.couch_user.username,
+            'Created Dedupe Rule',
+            {
+                'domain': self.domain,
+                'num_properties': len(action_definition.case_properties),
+                'managed_by_saas': managed_by_saas,
+            }
         )
 
     @property
