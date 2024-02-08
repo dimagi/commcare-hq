@@ -1,0 +1,17 @@
+<input type="text" name="dateonly" class="form-control" id="id_dateonly">
+
+<script>
+  $(function () {
+    $('#id_dateonly').tempusDominus({
+      display: {
+        theme: 'light',
+        components: {
+          clock: false,
+        }
+      },
+      localization: {
+        format: 'L',
+      },
+    });
+  });
+</script>
