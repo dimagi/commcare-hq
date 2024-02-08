@@ -255,7 +255,7 @@
 +              </a>
 +            </li>
 +          {% endif %}
-+          {% if user.is_staff %}
++          {% if request.couch_user and request.couch_user.is_dimagi %}
                  <li>
 -                    <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" class="track-usage-link" target="_blank"
 -                       data-category="Nav Bar" data-action="Question Mark" data-label="Visit the Help Site">
@@ -285,7 +285,7 @@
 -                    </a>
 -                </li>
 -            {% endif %}
--            {% if user.is_staff %}
+-            {% if request.couch_user and request.couch_user.is_dimagi %}
 -                <li>
 -                    <a href="#modalSolutionsFeatureRequest" data-toggle="modal" class="track-usage-link"
 -                    data-category="Nav Bar" data-action="Question Mark" data-label="Solutions Feature Request">
