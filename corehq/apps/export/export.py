@@ -309,6 +309,7 @@ def get_export_file(export_instances, es_filters, temp_path,
     Return an export file for the given ExportInstance and list of filters
     """
     writer = get_export_writer(export_instances, temp_path)
+
     with writer.open(export_instances):
         for export_instance in export_instances:
             docs = get_export_documents(export_instance, es_filters)
