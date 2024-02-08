@@ -165,6 +165,10 @@ class Command(BaseCommand):
                 changelog.append(old_line)
                 changelog.append(f"\n{SOFT_BREAK_LINE}\n{flag}\n{SOFT_BREAK_LINE}\n\n")
                 self.stdout.write("".join(changelog[-2:]))
+                self.stdout.write("\nIMPORTANT: This complex change requires MANUAL intervention."
+                                  "\n\tHitting enter DOES NOT make this change."
+                                  "\n\tThis guidance is saved to logs for reference later."
+                                  "\n\tThis file is NOT fully migrated UNTIL this issue is addressed.\n")
                 input("ENTER to continue...")
                 self.stdout.write('\n')
             if renames:
@@ -173,6 +177,8 @@ class Command(BaseCommand):
                 changelog.append("\nRENAMES\n  - " + "\n   - ".join(renames))
                 self.stdout.write("".join(changelog[-3:]))
                 changelog.append("\n\n")
+                self.stdout.write("\nIMPORTANT: Answering 'y' below will automatically make this change "
+                                  "in the Bootstrap 5 version of this file.")
                 confirm = input("\nKeep changes? [y/n] ")
                 if confirm.lower() != 'y':
                     changelog.append("CHANGES DISCARDED\n\n")
