@@ -511,7 +511,7 @@ quickcache==0.5.4
     # via -r base-requirements.in
 rcssmin==1.1.0
     # via django-compressor
-redis==4.5.4
+redis==5.0.1
     # via
     #   -r base-requirements.in
     #   django-redis
