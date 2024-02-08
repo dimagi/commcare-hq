@@ -240,22 +240,21 @@
           'text-center': stylesContains('text-align-center'),
           'text-right': stylesContains('text-align-right'),
         }">
-        <span class="webapp-markdown-output" tabindex="0"
-              data-bind="
-                html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
-                css: {'col-md-11' : help()}"></span>
+        <span class="webapp-markdown-output" data-bind="
+            html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+            css: {'col-md-11' : help()}"></span>
         <!-- ko if: help() -->
         <a
           class="help-text-trigger col-md-1"
           role="button"
           href="javascript:void(0)"
-          title="{% trans "Show help dialog" %}"
+          title="{% trans 'Show help dialog' %}"
         ><i class="fa fa-question-circle"></i></a>
         <div class="modal fade" role="dialog">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-body">
-                <p class="webapp-markdown-output" tabindex="0" align="left" data-bind="html: help"></p>
+                <p class="webapp-markdown-output" align="left" data-bind="html: help"></p>
                 <div class="widget-multimedia" data-bind="
                     template: {
                       name: 'widget-help-multimedia-ko-template',
@@ -270,10 +269,10 @@
         </div>
         <!-- /ko -->
       </div>
-      <i class="hint-text" data-bind="
+      <span class="hint-text" data-bind="
               text: ko.utils.unwrapObservable($data.hint),
               visible: !entry.useHintAsPlaceHolder()
-          "></i>
+          "></span>
       <!-- ko if: required() -->
       <span class="sr-only">{% trans "A response is required for this question." %}</span>
       <!-- /ko -->
@@ -314,12 +313,9 @@
         'text-right': stylesContains('text-align-right'),
       }">
       <span class="ix" data-bind="text: ixInfo($data)">></span>
-      <span class="caption webapp-markdown-output"
-            data-bind="
-              html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
-              attr: {'for': entry.entryId}"
-            tabindex="0">
-      </span>
+      <span class="caption webapp-markdown-output" data-bind="
+          html: ko.utils.unwrapObservable($data.caption_markdown) || caption()
+          "></span>
       <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
       >
@@ -359,7 +355,7 @@
         'background-color': headerBackgroundColor(),
         'color': headerBackgroundColor() ? 'white' : '',
       }">
-      <h3 class="caption" data-bind="html: header" tabindex="0"></h3>
+      <h3 class="caption" data-bind="html: header"></h3>
       <span class="ix" data-bind="text: ixInfo($data)"></span>
     </div>
     <div class="panel-body">
@@ -384,10 +380,20 @@
          attr: { src: mediaSrc($data.caption_image()) },
          visible: mediaSrc($data.caption_image())
          " />
-  <audio controls="controls" data-bind="visible: caption_audio, attr: { src: mediaSrc($data.caption_audio()) }">
+  <audio controls="controls" data-bind="
+      visible: caption_audio,
+      attr: {
+          src: mediaSrc($data.caption_audio()),
+          tabindex: caption_audio() ? '0' : '-1',
+      }">
     {% trans "Your browser does not support audio" %}
   </audio>
-  <video controls="controls" data-bind="visible: caption_video, attr: { src: mediaSrc($data.caption_video()) }">
+  <video controls="controls" data-bind="
+      visible: caption_video,
+      attr: {
+          src: mediaSrc($data.caption_video()),
+          tabindex: caption_video() ? '0' : '-1',
+      }">
     {% trans "Your browser does not support video" %}
   </video>
 </script>
@@ -398,12 +404,18 @@
       visible: mediaSrc($data.help_image())" />
   <audio controls="controls" data-bind="
       visible: help_audio,
-      attr: { src: mediaSrc($data.help_audio()) }">
+      attr: {
+          src: mediaSrc($data.help_audio()),
+          tabindex: help_audio() ? '0' : '-1',
+      }">
     {% trans "Your browser does not support audio" %}
   </audio>
   <video controls="controls" data-bind="
       visible: help_video,
-      attr: { src: mediaSrc($data.help_video()) }">
+      attr: {
+          src: mediaSrc($data.help_video()),
+          tabindex: help_video() ? '0' : '-1',
+      }">
     {% trans "Your browser does not support video" %}
   </video>
 </script>
