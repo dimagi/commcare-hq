@@ -237,11 +237,11 @@ class DetailContributor(SectionContributor):
                     for field in fields:
                         d.fields.append(field)
 
-                    # Add actions
-                    if detail_type.endswith('short') and not module.put_in_root:
-                        if module.case_list_form.form_id:
-                            DetailContributor.add_register_action(
-                                self.app, module, d.actions, self.build_profile_id, self.entries_helper)
+                # Add actions
+                if detail_type.endswith('short') and not module.put_in_root:
+                    if module.case_list_form.form_id:
+                        DetailContributor.add_register_action(
+                            self.app, module, d.actions, self.build_profile_id, self.entries_helper)
 
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
