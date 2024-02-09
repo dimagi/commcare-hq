@@ -36,8 +36,8 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
         self.$formElement.submit(() => {
             resetErrors();
 
-            const isDescriptionEmpty = !self.subjectText() && !self.descriptionText();
-            if (isDescriptionEmpty) {
+            const isSubjectEmpty = !self.subjectText();
+            if (isSubjectEmpty) {
                 self.hasSubjectError(true);
             }
 
@@ -53,11 +53,12 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
                     return false;
                 }
             }
-            if (isDescriptionEmpty) {
+            if (isSubjectEmpty) {
                 return false;
             }
 
             if (!self.isRequestReportSubmitting && self.isReportSent) {
+                self.isReportSent = false;
                 self.reportModal.hide();
             } else if (!self.isRequestReportSubmitting) {
                 self.$submitBtn.changeButtonState('loading');
