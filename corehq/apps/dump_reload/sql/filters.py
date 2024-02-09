@@ -1,14 +1,22 @@
 from abc import ABCMeta, abstractmethod
 
 from django.db.models import Q
-from corehq.util.queries import queryset_to_iterator
+from django.db.models.fields.related import ForeignKey
 
 from dimagi.utils.chunked import chunked
+
+from corehq.apps.dump_reload.util import get_model_class
+from corehq.form_processor.models.cases import CommCareCase
+from corehq.sql_db.util import (
+    get_db_aliases_for_partitioned_query,
+    paginate_query,
+)
+from corehq.util.queries import queryset_to_iterator
 
 
 class DomainFilter(metaclass=ABCMeta):
     @abstractmethod
-    def get_filters(self, domain_name):
+    def get_filters(self, domain_name, db_alias=None):
         """Return a list of filters. Each filter will be applied to a queryset independently
         of the others."""
         raise NotImplementedError()
@@ -21,7 +29,7 @@ class SimpleFilter(DomainFilter):
     def __init__(self, filter_kwarg):
         self.filter_kwarg = filter_kwarg
 
-    def get_filters(self, domain_name):
+    def get_filters(self, domain_name, db_alias):
         return [Q(**{self.filter_kwarg: domain_name})]
 
 
@@ -33,7 +41,7 @@ class ManyFilters(DomainFilter):
         assert filter_kwargs, 'Please set one of more filter_kwargs'
         self.filter_kwargs = filter_kwargs
 
-    def get_filters(self, domain_name):
+    def get_filters(self, domain_name, db_alias):
         filter_ = Q(**{self.filter_kwargs[0]: domain_name})
         for filter_kwarg in self.filter_kwargs[1:]:
             filter_ &= Q(**{filter_kwarg: domain_name})
@@ -47,7 +55,7 @@ class UsernameFilter(DomainFilter):
     def count(self, domain_name):
         return len(self.usernames) if self.usernames is not None else None
 
-    def get_filters(self, domain_name):
+    def get_filters(self, domain_name, db_alias=None):
         """
         :return: A generator of filters each filtering for at most 500 users.
         """
@@ -72,11 +80,11 @@ class IDFilter(DomainFilter):
     def count(self, domain_name):
         return len(self.get_ids(domain_name))
 
-    def get_ids(self, domain_name):
+    def get_ids(self, domain_name, db_alias=None):
         return self.ids
 
-    def get_filters(self, domain_name):
-        for chunk in chunked(self.get_ids(domain_name), self.chunksize):
+    def get_filters(self, domain_name, db_alias=None):
+        for chunk in chunked(self.get_ids(domain_name, db_alias=db_alias), self.chunksize):
             query_kwarg = '{}__in'.format(self.field)
             yield Q(**{query_kwarg: chunk})
 
@@ -86,9 +94,37 @@ class UserIDFilter(IDFilter):
         super().__init__(user_id_field, None)
         self.include_web_users = include_web_users
 
-    def get_ids(self, domain_name):
+    def get_ids(self, domain_name, db_alias=None):
         from corehq.apps.users.dbaccessors import get_all_user_ids_by_domain
         return get_all_user_ids_by_domain(domain_name, include_web_users=self.include_web_users)
+
+
+class CaseIDFilter(IDFilter):
+    def __init__(self, model_label, case_field='case'):
+        _, self.model_cls = get_model_class(model_label)
+        try:
+            field_obj, = [f for f in self.model_cls._meta.fields if f.name == case_field]
+            assert isinstance(field_obj, ForeignKey)
+            assert field_obj.remote_field.model == CommCareCase
+        except Exception:
+            raise ValueError(
+                "CaseIDFilter only supports models with a foreign key relationship to CommCareCase"
+            )
+        super().__init__(case_field, None, chunksize=500)
+
+    def count(self, domain_name):
+        count = 0
+        for db in get_db_aliases_for_partitioned_query():
+            count += self.model_cls.objects.using(db).filter(case__domain=domain_name).count()
+        return count
+
+    def get_ids(self, domain_name, db_alias=None):
+        assert db_alias, "Expected db_alias to be defined for CaseIDFilter"
+        source = 'dump_domain_data'
+        query = Q(domain=domain_name)
+        for row in paginate_query(db_alias, CommCareCase, query, values=['case_id'], load_source=source):
+            # there isn't a good way to return flattened results
+            yield row[0]
 
 
 class UnfilteredModelIteratorBuilder(object):
@@ -122,9 +158,14 @@ class UnfilteredModelIteratorBuilder(object):
 
 
 class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
-    def __init__(self, model_label, filter):
+    def __init__(self, model_label, filter, paginate_by={}):
+        """
+        :param paginate_by: optional dictionary of {field: conditional, ...} (e.g., {'username': 'gt'})
+        NOTE: the order of keys matters in this dictionary, as it dictates sort order.
+        """
         super(FilteredModelIteratorBuilder, self).__init__(model_label)
         self.filter = filter
+        self.paginate_by = paginate_by
 
     def build(self, domain, model_class, db_alias):
         return self.__class__(self.model_label, self.filter).prepare(domain, model_class, db_alias)
@@ -137,7 +178,7 @@ class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
 
     def querysets(self):
         queryset = self._base_queryset()
-        filters = self.filter.get_filters(self.domain)
+        filters = self.filter.get_filters(self.domain, db_alias=self.db_alias)
         for filter_ in filters:
             yield queryset.filter(filter_)
 
