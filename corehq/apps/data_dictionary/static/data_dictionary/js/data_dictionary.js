@@ -220,7 +220,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     }
 
                     _.each(group.properties(), function (element, index) {
-                        if (element.deleted && !element.id) {
+                        if (element.deleted() && !element.id) {
                             return;
                         }
 
