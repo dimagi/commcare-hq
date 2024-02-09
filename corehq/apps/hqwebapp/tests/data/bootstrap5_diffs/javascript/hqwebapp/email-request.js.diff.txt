@@ -21,25 +21,7 @@
          self.$formElement = $(`#${formId}`);
          self.$submitBtn = self.$formElement.find("button[type='submit']");
  
-@@ -33,8 +36,8 @@
-         self.$formElement.submit(() => {
-             resetErrors();
- 
--            const isSubjectEmpty = !self.subjectText();
--            if (isSubjectEmpty) {
-+            const isDescriptionEmpty = !self.subjectText();
-+            if (isDescriptionEmpty) {
-                 self.hasSubjectError(true);
-             }
- 
-@@ -50,15 +53,15 @@
-                     return false;
-                 }
-             }
--            if (isSubjectEmpty) {
-+            if (isDescriptionEmpty) {
-                 return false;
-             }
+@@ -56,9 +59,9 @@
  
              if (!self.isRequestReportSubmitting && self.isReportSent) {
                  self.isReportSent = false;

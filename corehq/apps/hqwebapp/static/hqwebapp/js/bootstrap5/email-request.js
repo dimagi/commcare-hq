@@ -36,8 +36,8 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
         self.$formElement.submit(() => {
             resetErrors();
 
-            const isDescriptionEmpty = !self.subjectText();
-            if (isDescriptionEmpty) {
+            const isSubjectEmpty = !self.subjectText();
+            if (isSubjectEmpty) {
                 self.hasSubjectError(true);
             }
 
@@ -53,7 +53,7 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
                     return false;
                 }
             }
-            if (isDescriptionEmpty) {
+            if (isSubjectEmpty) {
                 return false;
             }
 
