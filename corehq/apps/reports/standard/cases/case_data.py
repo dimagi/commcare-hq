@@ -15,7 +15,7 @@ from django.http import (
     JsonResponse,
 )
 from django.utils.decorators import method_decorator
-from django.utils.html import escape, format_html
+from django.utils.html import format_html
 from django.utils.translation import get_language
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -62,10 +62,10 @@ from corehq.apps.hqcase.case_deletion_utils import (
     DeleteForm,
     FormAffectedCases,
     get_all_cases_from_form,
-    get_affected_case,
-    get_ordered_case_xforms,
+    get_or_create_affected_case,
+    get_deduped_ordered_forms_for_case,
     ReopenedCase,
-    validate_case_for_deletion,
+    prepare_case_for_deletion,
 )
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.doc_info import get_form_url, get_case_url
@@ -79,7 +79,7 @@ from corehq.apps.locations.permissions import (
     user_can_access_case,
 )
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.reports.display import xmlns_to_name, xmlns_to_name_case_deletion
+from corehq.apps.reports.display import xmlns_to_name, xmlns_to_name_for_case_deletion
 from corehq.apps.reports.exceptions import TooManyCases
 from corehq.apps.reports.view_helpers import case_hierarchy_context
 from corehq.apps.reports.views import (
@@ -608,7 +608,7 @@ def get_case_and_display_data(main_case_obj, domain, main_form_id=None):
                       const.CASE_ACTION_REBUILD]
 
     def walk_case_relations(case, subcase_count):
-        case = validate_case_for_deletion(case)
+        case = prepare_case_for_deletion(case)
         if not case:
             return
         if case.case_id not in delete_cases:
@@ -619,7 +619,7 @@ def get_case_and_display_data(main_case_obj, domain, main_form_id=None):
             if len(delete_cases) == 1:
                 current_case.is_primary = True
             delete_cases_display.append(current_case)
-        xform_objs = get_ordered_case_xforms(case, domain)
+        xform_objs = get_deduped_ordered_forms_for_case(case, domain)
 
         # iterating through all forms that updated the case (includes archived forms)
         for form_obj in xform_objs:
@@ -627,7 +627,7 @@ def get_case_and_display_data(main_case_obj, domain, main_form_id=None):
             if form_id not in delete_forms:
                 delete_forms.insert(0, form_id)
             if form_id not in form_names:
-                form_names[form_id] = escape(xmlns_to_name_case_deletion(domain, form_obj))
+                form_names[form_id] = xmlns_to_name_for_case_deletion(domain, form_obj)
             current_form = DeleteForm(name=form_names[form_id], url=get_form_url(domain, form_id))
             if main_form_id and form_id == main_form_id:
                 current_form.is_primary = True
@@ -656,7 +656,7 @@ def get_case_and_display_data(main_case_obj, domain, main_form_id=None):
                                          closing_form_name=form_names[form_id],
                                          closing_form_is_primary=current_form.is_primary))
                     if any(action in actions for action in update_actions):
-                        affected_case = get_affected_case(domain, case_obj, affected_cases_display)
+                        affected_case = get_or_create_affected_case(domain, case_obj, affected_cases_display)
                         affected_form = AffectedForm(name=form_names[form_id],
                                                      url=get_form_url(domain, form_id),
                                                      actions=', '.join(actions),
@@ -675,6 +675,7 @@ def get_case_and_display_data(main_case_obj, domain, main_form_id=None):
     for case in form_delete_cases_display:
         if len(case.delete_forms) > 1:
             case_has_multiple_forms = True
+            break
 
     return {
         'case_delete_list': delete_cases,
@@ -759,15 +760,17 @@ class DeleteCaseView(BaseProjectReportSectionView):
 
     def get_redirect_url(self):
         if self.xform_id:
-            get_form_url(self.domain, self.xform_id)
+            return get_form_url(self.domain, self.xform_id)
         return get_case_url(self.domain, self.case_id)
 
     def post(self, request, *args, **kwargs):
         if request.POST.get('input') != self.delete_dict['main_case_name']:
-            messages.error(request, "Incorrect name. Please enter the case name as shown into the textbox.")
+            messages.error(request, _("Incorrect name. Please enter the case name as shown into the textbox."))
             return HttpResponseRedirect(self.page_url)
-        msg, error = soft_delete_cases_and_forms(request, self.domain, self.delete_dict['case_delete_list'],
-                                      self.delete_dict['form_delete_list'])
+        msg, error = soft_delete_cases_and_forms(request, self.domain,
+                                                 self.delete_dict['case_delete_list'],
+                                                 self.delete_dict['form_delete_list'],
+                                                 self.delete_dict['main_case_name'])
         if error:
             messages.error(request, msg, extra_tags='html')
             return HttpResponseRedirect(self.get_redirect_url())
@@ -780,18 +783,19 @@ class DeleteCaseView(BaseProjectReportSectionView):
 
 @location_safe
 @require_permission(HqPermissions.edit_data)
-def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_list):
+def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_list, main_case_name=None):
     error = False
-    msg = ", its related subcases and submission forms were deleted successfully."
+    msg = _("{}, its related subcases and submission forms were deleted successfully.").format(main_case_name)
     for form in form_delete_list:
         if archive_form(request, domain, form, is_case_delete=True):
+            # caching here.....
             form_instance = XFormInstance.objects.get_form(form, domain)
             form_instance.soft_delete()
         else:
             # I'm fairly certain this will never enter here but this is just in case something does go wrong
             error = True
-            msg = "The form {} could not be deleted. Please try manually archiving, then deleting the form," \
-                  "before trying to delete this case again.".format(form)
+            msg = _("The form {} could not be deleted. Please try manually archiving, then deleting the form, "
+                    "before trying to delete this case again.").format(form)
             break
     if not error:
         CommCareCase.objects.soft_delete_cases(domain, list(case_delete_list))
