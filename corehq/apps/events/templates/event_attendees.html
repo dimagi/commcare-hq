@@ -90,7 +90,7 @@
           </td>
           <td data-bind="attr: {class: creationStatus}">
             <div data-bind="visible: creationStatus() === $root.STATUS_CSS.PENDING">
-              <i class="fa fa-circle-o-notch fa-spin"></i>
+              <i class="fa fa-circle-notch fa-spin"></i>
               {% trans 'Pending...' %}
             </div>
             <div data-bind="visible: creationStatus() === $root.STATUS_CSS.SUCCESS">
@@ -100,7 +100,7 @@
             </div>
             <div data-bind="visible: creationStatus() === $root.STATUS_CSS.ERROR">
               <span class="text-danger">
-                <i class="fa fa-exclamation-triangle"></i>
+                <i class="fa-solid fa-triangle-exclamation"></i>
                 {% trans "ERROR" %}
                 <!-- ko text: creationError --><!--/ko-->
               </span>
