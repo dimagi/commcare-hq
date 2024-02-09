@@ -577,8 +577,9 @@ python-termstyle==0.1.10
     # via sniffer
 python3-saml==1.12.0
     # via -r sso-requirements.in
-pytz==2022.1
+pytz==2024.1
     # via
+    #   -r base-requirements.in
     #   babel
     #   celery
     #   django
