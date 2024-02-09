@@ -114,7 +114,7 @@ ddsketch==2.0.4
     # via ddtrace
 ddtrace==1.13.4
     # via -r base-requirements.in
-decorator==4.0.11
+decorator==5.1.1
     # via
     #   -r base-requirements.in
     #   datadog
