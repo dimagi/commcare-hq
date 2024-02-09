@@ -76,7 +76,7 @@ def get_deduped_ordered_forms_for_case(case, domain):
     archived forms in the deletion workflow), which the case.xform_ids method does not support.
     """
     revoked_inclusive_xform_ids = list({t.form_id for t in case.transactions if t.is_form_transaction})
-    xform_objs = XFormInstance.objects.get_forms(revoked_inclusive_xform_ids, domain, sorted=True)
+    xform_objs = XFormInstance.objects.get_forms(revoked_inclusive_xform_ids, domain, ordered=True)
     for xform in xform_objs:
         cache.set(xform.form_id, xform, 10 * 60)
     return sorted(xform_objs, key=lambda form: form.received_on)
@@ -112,7 +112,7 @@ def _get_deleted_case_name(case):
 
 
 def get_all_cases_from_form(form, domain):
-    # A more inclusive method of getting cases from a form, including cases whose deleted field is True
+    # Gets cases from a form, including cases whose deleted field is True
     touched_cases = {}
     case_updates = get_case_updates(form)
     for update in case_updates:

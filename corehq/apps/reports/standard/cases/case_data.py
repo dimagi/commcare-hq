@@ -783,7 +783,7 @@ class DeleteCaseView(BaseProjectReportSectionView):
 
 @location_safe
 @require_permission(HqPermissions.edit_data)
-def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_list, main_case_name):
+def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_list, main_case_name=None):
     error = False
     msg = _("{}, its related subcases and submission forms were deleted successfully.").format(main_case_name)
     for form in form_delete_list:
