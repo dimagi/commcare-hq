@@ -40,9 +40,9 @@ hqDefine("registry/js/registry_text", [], function () {
         if (status === 'rejected') {
             return gettext('fa-ban');
         } else if (status === 'accepted') {
-            return gettext('fa-clock-o');
+            return gettext('fa-regular fa-clock');
         } else {
-            return gettext('fa-check-circle-o');
+            return gettext('fa-regular fa-circle-check');
         }
     };
     let getStatusCssClass = function (status) {
