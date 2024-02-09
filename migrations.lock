@@ -694,11 +694,6 @@ oauth2_provider
  0005_auto_20211222_2352
  0006_alter_application_client_secret
  0007_application_post_logout_redirect_uris
-oauth_integrations
- 0001_initial
- 0002_livegooglesheetschedule
- 0003_livegooglesheetrefreshstatus
- 0004_auto_20220304_1139
 ota
  0001_initial
  0002_alter_db_index
