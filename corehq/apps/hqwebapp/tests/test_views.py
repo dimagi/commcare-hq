@@ -1,12 +1,16 @@
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_views import BaseAutocompleteTest
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
+
+from corehq.apps.hqwebapp.views import SolutionsFeatureRequestView
 
 
 class TestEmailAuthenticationFormAutocomplete(BaseAutocompleteTest):
@@ -229,3 +233,87 @@ class TestMaintenanceAlertsView(TestCase):
         with self.assertRaisesMessage(Alert.DoesNotExist,
                                       'Alert matching query does not exist'):
             self.client.post(reverse('alerts'), {'command': 'activate', 'alert_id': domain_alert.id})
+
+
+class TestSolutionsFeatureRequestView(TestCase):
+    domain = 'test-feature-request'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.web_user = WebUser.create(
+            cls.domain,
+            'feature-admin',
+            password='123',
+            created_by=None,
+            created_via=None,
+        )
+        cls.staff_web_user = WebUser.create(
+            cls.domain,
+            'staff@dimagi.com',
+            password='123',
+            created_by=None,
+            created_via=None,
+            is_staff=True,
+        )
+        cls.url = reverse(SolutionsFeatureRequestView.urlname)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.web_user.delete(cls.domain, deleted_by=None)
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def _default_payload(self, username):
+        return {
+            'subject': 'Feature Request',
+            'username': username,
+            'domain': self.domain,
+            'url': 'www.features.com',
+            'message': 'Improve CommCare!',
+            'app_id': '',
+            'cc': '',
+            'email': '',
+            '500traceback': '',
+            'sentry_event_id': '',
+        }
+
+    def _post_request(self, payload):
+        return self.client.post(
+            self.url,
+            payload,
+            HTTP_USER_AGENT='firefox'
+        )
+
+    def test_non_staff_email_submission(self):
+        self.client.login(username=self.web_user.username, password='123')
+        payload = self._default_payload(self.web_user.username)
+        response = self._post_request(payload)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_email_submission(self):
+        self.client.login(username=self.staff_web_user.username, password='123')
+        payload = self._default_payload(self.staff_web_user.username)
+        response = self._post_request(payload)
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(len(mail.outbox), 1)
+        test_mail = mail.outbox[0]
+
+        self.assertEqual(test_mail.to, ['solutions-feedback@dimagi.com'])
+        expected_subject = f"{payload['subject']} ({self.domain})"
+        self.assertEqual(test_mail.subject, expected_subject)
+        software_plan = Subscription.get_subscribed_plan_by_domain(self.domain)
+        expected_body = (
+            "username: staff@dimagi.com\n"
+            + "full name: \n"
+            + "domain: test-feature-request\n"
+            + "url: www.features.com\n"
+            + "recipients: \n"
+            + f"software plan: {software_plan}\n"
+            + "Message:\n\n"
+            + "Improve CommCare!\n"
+        )
+        self.assertEqual(test_mail.body, expected_body)
