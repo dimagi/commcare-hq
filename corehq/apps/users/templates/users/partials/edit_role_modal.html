@@ -466,6 +466,23 @@
               </div>
             </div>
           </div>
+          {% if request|request_has_privilege:"CUSTOM_DOMAIN_ALERTS" %}
+            <div class="form-group">
+              <label class="col-sm-4 control-label">
+                {% trans "Manage Project Alerts" %}
+              </label>
+              <div class="col-sm-8 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="manage-domain-alerts-checkbox"
+                         data-bind="checked: permissions.manage_domain_alerts" />
+                  <label for="manage-domain-alerts-checkbox">
+                    {% trans "Allow this role to manage project alerts." %}
+                  </label>
+                </div>
+              </div>
+            </div>
+          {% endif %}
         </div>
 
         <div class="modal-footer" data-bind="css: {'has-error': $root.roleError }">

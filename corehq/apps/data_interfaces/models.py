@@ -7,6 +7,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.db.models import Q
 from django.utils.translation import gettext_lazy
+from django.utils.functional import cached_property
 
 import jsonfield
 import pytz
@@ -40,6 +41,7 @@ from corehq.apps.data_interfaces.deduplication import (
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS
 from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.apps.users.cases import get_wrapped_owner
 from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCaseIndex, CommCareCase, XFormInstance
@@ -68,7 +70,7 @@ from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CouchUser
 
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
@@ -122,10 +124,7 @@ class AutomaticUpdateRule(models.Model):
         default='ALL',
     )
 
-    # For performance reasons, the server_modified_boundary is a
-    # required part of the criteria and should be set to the minimum
-    # number of days old that a case's server_modified_on date must be
-    # before we run the rule against it.
+    # Minimum number of days old a case must be before the rule processes it
     server_modified_boundary = models.IntegerField(null=True)
 
     upstream_id = models.CharField(max_length=32, null=True)
@@ -222,9 +221,12 @@ class AutomaticUpdateRule(models.Model):
                 rules_by_case_type[rule.case_type].append(rule)
         return rules_by_case_type
 
-    # returns None if any of the rules do not filter on server modified
-    @classmethod
-    def get_boundary_date(cls, rules, now):
+    @staticmethod
+    def get_boundary_date(rules, now):
+        """
+        :returns: ``datetime`` based on smallest server_modified_boundary value or None if any rule does not filter
+        on server modified
+        """
         min_boundary = None
         for rule in rules:
             if not rule.filter_on_server_modified:
@@ -233,27 +235,17 @@ class AutomaticUpdateRule(models.Model):
                 min_boundary = rule.server_modified_boundary
             elif rule.server_modified_boundary < min_boundary:
                 min_boundary = rule.server_modified_boundary
-        date = now - timedelta(days=min_boundary)
-        return date
+        return now - timedelta(days=min_boundary)
 
     @classmethod
-    def iter_cases(cls, domain, case_type, boundary_date=None, db=None, include_closed=False):
-        return cls._iter_cases_from_postgres(
-            domain, case_type, boundary_date=boundary_date, db=db, include_closed=include_closed
-        )
+    def iter_cases(cls, domain, case_type, db=None, modified_lte=None, include_closed=False):
+        q_expression = Q(domain=domain, type=case_type, deleted=False)
 
-    @classmethod
-    def _iter_cases_from_postgres(cls, domain, case_type, boundary_date=None, db=None, include_closed=False):
-        q_expression = Q(
-            domain=domain,
-            type=case_type,
-            deleted=False,
-        )
         if not include_closed:
             q_expression = q_expression & Q(closed=False)
 
-        if boundary_date:
-            q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
+        if modified_lte:
+            q_expression = q_expression & Q(server_modified_on__lte=modified_lte)
 
         if db:
             return paginate_query(db, CommCareCase, q_expression, load_source='auto_update_rule')
@@ -732,32 +724,25 @@ class LocationFilterDefinition(CaseRuleCriteriaDefinition):
 
     def matches(self, case, now):
         if case.owner_id:
-            if not self.include_child_locations:
-                # Check if case belongs to location
-                if case.owner_id == self.location_id:
-                    return True
+            def is_matching_location(location_id):
+                if self.include_child_locations:
+                    location = self.location
+                    return location and location.descendants_include_location(location_id)
+                else:
+                    return location_id == self.location_id
 
-                # Check if case belongs to user at location
-                user = CommCareUser.get_by_user_id(case.owner_id)
-                if user and user.location_id == self.location_id:
-                    return True
+            if is_matching_location(case.owner_id):
+                return True
 
-            else:
-                criteria_location = SQLLocation.by_location_id(self.location_id)
-
-                if not criteria_location:
-                    return False
-
-                # Check if case belongs to descendant location of criteria_location
-                if criteria_location.descendants_include_location(case.owner_id):
-                    return True
-
-                # Check if case belongs to user at descendant location of criteria_location
-                user = CommCareUser.get_by_user_id(case.owner_id)
-                if user and criteria_location.descendants_include_location(user.location_id):
-                    return True
+            owner = get_wrapped_owner(case.owner_id)
+            if owner and isinstance(owner, CouchUser) and is_matching_location(owner.location_id):
+                return True
 
         return False
+
+    @cached_property
+    def location(self):
+        return SQLLocation.by_location_id(self.location_id)
 
     def to_dict(self):
         return {

@@ -1,0 +1,11 @@
+{% load i18n %}
+<button type="button" class="btn btn-success btn-lg formplayer-request multi-select-continue-btn" disabled="true">
+  <% if (selectText && selectText.length > 0) { %>
+    <%- selectText %>
+    <% } else { %>
+      {% trans "Continue" %}
+    <% } %>
+  <span id="multi-select-btn-text" class="badge">
+    <%- selectedCaseIds.length %>
+  </span>
+</button>

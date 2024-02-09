@@ -6,7 +6,6 @@ from django.utils.translation import gettext as _
 
 from dateutil.relativedelta import relativedelta
 
-from corehq.apps.users.role_utils import get_custom_roles_for_domain
 from couchforms.analytics import (
     domain_has_submission_in_last_30_days,
     get_first_form_submission_received,
@@ -42,6 +41,7 @@ from corehq.apps.users.dbaccessors import (
     get_web_user_count,
 )
 from corehq.apps.users.models import CouchUser, UserRole
+from corehq.apps.users.role_utils import get_custom_roles_for_domain
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq.motech.repeaters.models import Repeater
@@ -60,13 +60,20 @@ def num_mobile_users(domain, *args):
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
 
-def active_mobile_users(domain, *args):
+def active_mobile_users(domain, days=30):
+    return _mobile_users(domain, int(days), inactive=False)
+
+
+def inactive_mobile_users(domain, days=30):
+    return _mobile_users(domain, int(days), inactive=True)
+
+
+def _mobile_users(domain, days=30, inactive=False):
     """
-    Returns the number of mobile users who have submitted a form or SMS in the
-    last 30 days
+    Returns the number of mobile users who have submitted a form or SMS
     """
     now = datetime.utcnow()
-    then = (now - timedelta(days=30))
+    then = (now - timedelta(days=days))
 
     user_ids = get_mobile_users(domain)
 
@@ -94,7 +101,7 @@ def active_mobile_users(domain, *args):
     )
 
     num_users = len(form_users | sms_users)
-    return num_users if 'inactive' not in args else len(user_ids) - num_users
+    return num_users if not inactive else len(user_ids) - num_users
 
 
 def cases(domain, *args):
@@ -243,13 +250,13 @@ def not_implemented(domain, *args):
 
 CALC_ORDER = [
     'num_web_users', 'num_mobile_users', 'forms', 'cases',
-    'mobile_users--active', 'mobile_users--inactive', 'active_cases',
-    'cases_in_last--30', 'cases_in_last--60', 'cases_in_last--90',
-    'cases_in_last--120', 'active', 'first_form_submission',
-    'last_form_submission', 'has_app', 'web_users', 'active_apps',
-    'uses_reminders', 'sms--I', 'sms--O', 'sms_in_last', 'sms_in_last--30',
-    'sms_in_last_bool', 'sms_in_last_bool--30', 'sms_in_in_last--30',
-    'sms_out_in_last--30',
+    'active_mobile_users', 'inactive_mobile_users', 'active_mobile_users--365',
+    'active_cases', 'cases_in_last--30', 'cases_in_last--60',
+    'cases_in_last--90', 'cases_in_last--120', 'active',
+    'first_form_submission', 'last_form_submission', 'has_app', 'web_users',
+    'active_apps', 'uses_reminders', 'sms--I', 'sms--O', 'sms_in_last',
+    'sms_in_last--30', 'sms_in_last_bool', 'sms_in_last_bool--30',
+    'sms_in_in_last--30', 'sms_out_in_last--30',
 ]
 
 CALCS = {
@@ -265,8 +272,9 @@ CALCS = {
     'sms_in_in_last--30': "# incoming SMS in last 30 days",
     'sms_out_in_last--30': "# outgoing SMS in last 30 days",
     'cases': "# cases",
-    'mobile_users--active': "# active mobile users",
-    'mobile_users--inactive': "# inactive mobile users",
+    'active_mobile_users': "# active mobile users in last 30 days",
+    'inactive_mobile_users': "# inactive mobile users in last 30 days",
+    'active_mobile_users--365': "# active mobile users in last 365 days",
     'active_cases': "# active cases",
     'cases_in_last--30': "# cases seen last 30 days",
     'cases_in_last--60': "# cases seen last 60 days",
@@ -278,7 +286,7 @@ CALCS = {
     'has_app': "Has App",
     'web_users': "list of web users",
     'active_apps': "list of active apps",
-    'uses_reminders': "uses reminders"
+    'uses_reminders': "uses reminders",
 }
 
 CALC_FNS = {
@@ -293,7 +301,8 @@ CALC_FNS = {
     "sms_in_in_last": sms_in_in_last,
     "sms_out_in_last": sms_out_in_last,
     "cases": cases,
-    "mobile_users": active_mobile_users,
+    "active_mobile_users": active_mobile_users,
+    "inactive_mobile_users": inactive_mobile_users,
     "active_cases": not_implemented,
     "cases_in_last": cases_in_last,
     "inactive_cases_in_last": inactive_cases_in_last,
@@ -342,7 +351,8 @@ def calced_props(domain_obj, id, all_stats):
     return {
         "_id": id,
         "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
-        "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
+        "cp_n_active_cc_users": int(CALC_FNS["active_mobile_users"](dom)),
+        "cp_n_active_cc_users_365_days": int(CALC_FNS["active_mobile_users"](dom, 365)),
         "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
         "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
         "cp_n_users_submitted_form": total_distinct_users(dom),

@@ -3736,7 +3736,8 @@ class StripePaymentMethod(PaymentMethod):
     @property
     def all_cards(self):
         try:
-            return [card for card in self.customer.cards.data if card is not None]
+            cards = stripe.Customer.list_sources(customer=self.customer.id, object="card")
+            return [card for card in cards.data if card is not None]
         except stripe.error.AuthenticationError:
             if not settings.STRIPE_PRIVATE_KEY:
                 log_accounting_info("Private key is not defined in settings")
@@ -3755,7 +3756,7 @@ class StripePaymentMethod(PaymentMethod):
         } for card in self.all_cards]
 
     def get_card(self, card_token):
-        return self.customer.cards.retrieve(card_token)
+        return stripe.Customer.retrieve_source(self.customer.id, id=card_token)
 
     def get_autopay_card(self, billing_account):
         return next((
@@ -3766,12 +3767,12 @@ class StripePaymentMethod(PaymentMethod):
     def remove_card(self, card_token):
         card = self.get_card(card_token)
         self._remove_card_from_all_accounts(card)
-        card.delete()
+        stripe.Customer.delete_source(self.customer.id, id=card.id)
 
     def _remove_card_from_all_accounts(self, card):
         accounts = BillingAccount.objects.filter(auto_pay_user=self.web_user)
         for account in accounts:
-            if account.autopay_card == card:
+            if account.autopay_card.id == card.id:
                 account.remove_autopay_user()
 
     def create_card(self, stripe_token, billing_account, domain, autopay=False):
@@ -3796,8 +3797,7 @@ class StripePaymentMethod(PaymentMethod):
         Returns:
         - card (stripe.Card): The newly created Stripe card object.
         """
-        customer = self.customer
-        card = customer.cards.create(card=stripe_token)
+        card = stripe.Customer.create_source(self.customer.id, source=stripe_token)
         if autopay:
             self.set_autopay(card, billing_account, domain)
         return card
@@ -3823,10 +3823,8 @@ class StripePaymentMethod(PaymentMethod):
             billing_account.remove_autopay_user()
 
     def _update_autopay_status(self, card, billing_account, autopay):
-        metadata = card.metadata.copy()
-        metadata.update({self._auto_pay_card_metadata_key(billing_account): autopay})
-        card.metadata = metadata
-        card.save()
+        stripe.Customer.modify_source(customer=self.customer.id, id=card.id,
+                                      metadata={self._auto_pay_card_metadata_key(billing_account): autopay})
 
     def _remove_autopay_card(self, billing_account):
         autopay_card = self.get_autopay_card(billing_account)

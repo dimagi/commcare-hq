@@ -1,7 +1,9 @@
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.chunked import chunked
+from corehq.apps.users.user_data import prime_user_data_caches
 
 
 class UserQuerySetAdapter(object):
@@ -26,7 +28,8 @@ class UserQuerySetAdapter(object):
         if isinstance(item, slice):
             limit = item.stop - item.start
             result = self._query.size(limit).start(item.start).run()
-            return [WrappedUser.wrap(user) for user in result.hits]
+            users = (WrappedUser.wrap(user) for user in result.hits)
+            return list(prime_user_data_caches(users, self.domain))
         raise ValueError(
             'Invalid type of argument. Item should be an instance of slice class.')
 

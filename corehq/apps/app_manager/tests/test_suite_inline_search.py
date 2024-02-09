@@ -356,13 +356,8 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     @flag_enabled('USH_SEARCH_FILTER')
-    def test_inline_search_with_parent_select(self):
-        """Inline search module can have 'parent select' as long as the
-        relationship is 'other' (None).
-        Inline search modules can never be the parent select module.
-          * post requests aren't included in the entries for the module with parent select
-          * parent filtering doesn't work since the 'case claim' isn't triggered before filtering
-        """
+    def test_inline_search_with_other_relationship_parent_select_(self):
+        """Inline search module with 'parent select' relationship is 'other' (None)"""
         module = self.app.add_module(Module.new_module("Followup2", None))
         form = self.app.new_form(2, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
         form.requires = 'case'
@@ -412,6 +407,68 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
               </query>
               <datum id="case_id"
                 nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+            </session>
+          </entry>
+        </partial>"""  # noqa: E501
+
+        self.assertXmlPartialEqual(expected_entry, suite, "./entry[1]")
+
+    @flag_enabled('USH_SEARCH_FILTER')
+    def test_inline_search_with_parent_relationship_parent_select(self):
+        """Inline search module with 'parent select' relationship is 'parent'"""
+        module = self.app.add_module(Module.new_module("Followup2", None))
+        form = self.app.new_form(2, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
+        form.requires = 'case'
+        module.case_type = 'parent_case'
+
+        self.module.parent_select.active = True
+        self.module.parent_select.relationship = 'parent'
+        self.module.parent_select.module_id = module.unique_id
+
+        suite = self.app.create_suite()
+
+        expected_entry = f"""
+        <partial>
+          <entry>
+            <form>xmlns1.0</form>
+            <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
+                relevant="$case_id != ''">
+              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) != 0"
+                key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/parent_id]) != 0"
+                key="case_id" ref="instance('commcaresession')/session/data/parent_id"/>
+            </post>
+            <command id="m0-f0">
+              <text>
+                <locale id="forms.m0f0"/>
+              </text>
+            </command>
+            <instance id="casedb" src="jr://instance/casedb"/>
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <instance id="results:inline" src="jr://instance/remote/results:inline"/>
+            <session>
+              <datum id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='parent_case'][@status='open']"
+                value="./@case_id" detail-select="m2_case_short"/>
+              <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+                storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false" dynamic_search="false">
+                <title>
+                  <text>
+                      <locale id="case_search.m0.inputs"/>
+                  </text>
+                </title>
+                <data key="case_type" ref="'case'"/>
+                <data key="_xpath_query" ref="&quot;ancestor-exists(parent, @case_type='parent_case')&quot;"/>
+                <prompt key="name">
+                  <display>
+                    <text>
+                      <locale id="search_property.m0.name"/>
+                    </text>
+                  </display>
+                </prompt>
+              </query>
+              <datum id="case_id"
+                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/parent_id]"
                 value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             </session>
           </entry>
@@ -516,32 +573,38 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
 
     def setUp(self):
         factory = AppFactory(DOMAIN, "App with inline search and child modules", build_version='2.53.0')
-        m0, f0 = factory.new_basic_module("case list", "case")
+        self.m0, f0 = factory.new_basic_module("case list", "case")
         factory.form_requires_case(f0)
 
-        m1, f1 = factory.new_basic_module("child case list", "case", parent_module=m0)
-        m1.parent_select = ParentSelect(active=True, relationship=None, module_id=m0.get_or_create_unique_id())
-        f2 = factory.new_form(m1)
+        self.m0.search_config = CaseSearch(
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+            auto_launch=True,
+            inline_search=True,
+            instance_name="parent_instance",
+        )
+
+        self.m1, f1 = factory.new_basic_module("child case list", "child_case", parent_module=self.m0)
+        self.m1.parent_select = ParentSelect(active=True, relationship='parent',
+                                             module_id=self.m0.get_or_create_unique_id())
+        f2 = factory.new_form(self.m1)
 
         factory.form_requires_case(f1)
         factory.form_requires_case(f2)
 
-        m1.search_config = CaseSearch(
+        self.m1.search_config = CaseSearch(
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
             auto_launch=True,
             inline_search=True,
+            instance_name="child_instance",
         )
 
         factory.app._id = "123"
         # wrap to have assign_references called
         self.app = Application.wrap(factory.app.to_json())
 
-    def test_child_module_with_inline_search_entry(self):
-        """An inline search module can be a child module
-            * as long as there is no parent selection or parent_select.relationship = None
-
-        An inline search module can never be a parent module
-          * post requests aren't included in the entries for the child module
+    def test_child_and_parent_module_with_inline_search_and_parent_relationship_parent_select(self):
+        """Inline search module as child module with 'parent select''parent' relationship.
+        Parent module is also inline search.
         """
         suite = self.app.create_suite()
 
@@ -549,8 +612,11 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
         <partial>
           <entry>
             <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
-                relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case]) = 0">
-              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+                relevant="$case_id != ''">
+              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_child_case]) != 0"
+                key="case_id" ref="instance('commcaresession')/session/data/case_id_child_case"/>
+              <data exclude="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) != 0"
+                key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
             </post>
             <command id="m1-f0">
               <text>
@@ -559,18 +625,35 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
             </command>
             <instance id="casedb" src="jr://instance/casedb"/>
             <instance id="commcaresession" src="jr://instance/session"/>
-            <instance id="results:inline" src="jr://instance/remote/results:inline"/>
+            <instance id="results:child_instance" src="jr://instance/remote/results:child_instance"/>
+            <instance id="results:parent_instance" src="jr://instance/remote/results:parent_instance"/>
             <session>
-              <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']"
+              <query default_search="false" dynamic_search="false" storage-instance="{self.m0.search_config.get_instance_name()}" template="case" url="http://localhost:8000/a/test_domain/phone/search/123/">
+                <title>
+                  <text>
+                    <locale id="case_search.m0.inputs"/>
+                  </text>
+                </title>
+                <data key="case_type" ref="'case'"/>
+                <prompt key="name">
+                  <display>
+                    <text>
+                      <locale id="search_property.m0.name"/>
+                    </text>
+                  </display>
+                </prompt>
+              </query>
+              <datum id="case_id" nodeset="instance('{self.m0.search_config.get_instance_name()}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                 value="./@case_id" detail-select="m0_case_short"/>
               <query url="http://localhost:8000/a/test_domain/phone/search/123/"
-                storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false" dynamic_search="false">
+                storage-instance="{self.m1.search_config.get_instance_name()}" template="case" default_search="false" dynamic_search="false">
                 <title>
                   <text>
                       <locale id="case_search.m1.inputs"/>
                   </text>
                 </title>
-                <data key="case_type" ref="'case'"/>
+                <data key="case_type" ref="'child_case'"/>
+                <data key="_xpath_query" ref="&quot;ancestor-exists(parent, @case_type='case')&quot;"/>
                 <prompt key="name">
                   <display>
                     <text>
@@ -579,8 +662,8 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
                   </display>
                 </prompt>
               </query>
-              <datum id="case_id_case"
-                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+              <datum id="case_id_child_case"
+                nodeset="instance('{self.m1.search_config.get_instance_name()}')/results/case[@case_type='child_case'][@status='open'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/case_id]"
                 value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
             </session>
           </entry>
@@ -600,13 +683,17 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
         <partial>
           <create>
             <command value="'m0'"/>
+            <query id="{self.m0.search_config.get_instance_name()}" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
+              <data key="case_type" ref="'case'"/>
+              <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+            </query>
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
             <command value="'m1'"/>
-            <query id="{RESULTS_INSTANCE_INLINE}" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
-              <data key="case_type" ref="'case'"/>
-              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+            <query id="results:child_instance" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
+              <data key="case_type" ref="'child_case'"/>
+              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_child_case"/>
             </query>
-            <datum id="case_id_case" value="instance('commcaresession')/session/data/case_id_case"/>
+            <datum id="case_id_child_case" value="instance('commcaresession')/session/data/case_id_child_case"/>
             <command value="'m1-f1'"/>
           </create>
         </partial>"""  # noqa: E501

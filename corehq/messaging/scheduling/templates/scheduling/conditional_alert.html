@@ -4,8 +4,26 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
+  {% if request|toggle_enabled:"RICH_TEXT_EMAILS" %}
+    <script src="{% static 'ckeditor5/build/ckeditor5-dll.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-editor-classic/build/editor-classic.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-autoformat/build/autoformat.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-basic-styles/build/basic-styles.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-block-quote/build/block-quote.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-essentials/build/essentials.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-font/build/font.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-heading/build/heading.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-html-support/build/html-support.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-horizontal-line/build/horizontal-line.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-image/build/image.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-indent/build/indent.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-link/build/link.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-list/build/list.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-paste-from-office/build/paste-from-office.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-restricted-editing/build/restricted-editing.js' %}"></script>
+    <script src="{% static '@ckeditor/ckeditor5-alignment/build/alignment.js' %}"></script>
+  {% endif %}
   {% requirejs_main 'scheduling/js/conditional_alert_main' %}
-
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}

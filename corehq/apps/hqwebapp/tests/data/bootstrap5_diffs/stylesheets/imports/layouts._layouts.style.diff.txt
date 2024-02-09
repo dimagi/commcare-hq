@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,24 +1,12 @@
+@@ -1,18 +1,12 @@
 -body, html {
 -    height: 100%;
 -}
@@ -10,12 +10,6 @@
 -    height: auto !important;
 -    margin-bottom: -@navbar-footer-height;
 -    padding-bottom: @navbar-footer-height;
--}
--
--
--.container.ui-widget,
--.container.ui-widget.ui-widget-content {
--  border: none;
 -}
 +// todo find out if this is actually needed
 +//body, html {
@@ -30,10 +24,3 @@
    padding-top: 8px;
    margin-top:10px;
  
-@@ -28,5 +16,5 @@
- }
- 
- .ui-widget-content a.btn-primary {
--  color: white;
-+  color: $white;
- }

@@ -1,6 +1,7 @@
 from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
+import re
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext
@@ -206,6 +207,9 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     """
     if not name:
         return gettext('Case property must have a name')
+    if not is_case_type_or_prop_name_valid(name):
+        return gettext('Invalid case property name. It should start with a letter, and only contain letters, '
+                       'numbers, "-", and "_"')
 
     try:
         prop = CaseProperty.get_or_create(
@@ -360,3 +364,9 @@ def is_case_type_deprecated(domain, case_type):
         return case_type_obj.is_deprecated
     except CaseType.DoesNotExist:
         return False
+
+
+def is_case_type_or_prop_name_valid(case_prop_name):
+    pattern = '^[a-zA-Z][a-zA-Z0-9-_]*$'
+    match_obj = re.match(pattern, case_prop_name)
+    return match_obj is not None

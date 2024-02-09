@@ -20,7 +20,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="verticalAlign" class="control-label">{% trans "Vertial Align" %}</label>
+              <label for="verticalAlign" class="control-label">{% trans "Vertical Align" %}</label>
               <select
                 id="verticalAlign"
                 class="form-control"
@@ -41,6 +41,14 @@
                 id="showBorder"
                 type="checkbox"
                 data-bind="checked: showBorder, visible: coordinatesVisible"
+              >
+            </div>
+            <div class="form-group">
+              <label for="showShading" class="control-label">{% trans "Shade" %}</label>
+              <input
+                id="showShading"
+                type="checkbox"
+                data-bind="checked: showShading, visible: coordinatesVisible"
               >
             </div>
           </div>

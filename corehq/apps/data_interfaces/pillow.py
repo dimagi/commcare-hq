@@ -5,8 +5,11 @@ from pillowtop.processors import PillowProcessor
 
 from corehq.apps.data_interfaces.deduplication import is_dedupe_xmlns
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models.forms import XFormInstance
 from corehq.toggles import CASE_DEDUPE
+from corehq.util.soft_assert import soft_assert
 
 
 class CaseDeduplicationProcessor(PillowProcessor):
@@ -29,14 +32,15 @@ class CaseDeduplicationProcessor(PillowProcessor):
         if change.deleted:
             return
 
-        if is_dedupe_xmlns(change.get_document().get('xmlns')):
+        associated_form = self._get_associated_form(change)
+        if not associated_form or is_dedupe_xmlns(associated_form.xmlns):
             return
 
         rules = self._get_rules(domain)
         if not rules:
             return
 
-        for case_update in get_case_updates(change.get_document()):
+        for case_update in get_case_updates(associated_form, for_case=change.id):
             self._process_case_update(domain, case_update)
 
     def _get_rules(self, domain):
@@ -54,3 +58,19 @@ class CaseDeduplicationProcessor(PillowProcessor):
             case = CommCareCase.objects.get_case(case_id, domain)
             if case.type == rule.case_type:
                 rule.run_rule(case, datetime.utcnow())
+
+    def _get_associated_form(self, change):
+        associated_form_id = change.metadata.associated_document_id
+        associated_form = None
+        if associated_form_id:
+            try:
+                associated_form = XFormInstance.objects.get_form(associated_form_id)
+            except XFormNotFound:
+                _assert = soft_assert(['mriley_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
+                _assert(False, 'Associated form not found', {
+                    'case_id': change.id,
+                    'form_id': associated_form_id
+                })
+                associated_form = None
+
+        return associated_form

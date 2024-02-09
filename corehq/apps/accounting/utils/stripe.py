@@ -12,8 +12,8 @@ def get_customer_cards(username):
             web_user=username,
             method_type=PaymentMethodType.STRIPE
         )
-        stripe_customer = payment_method.customer
-        return dict(stripe_customer.cards)
+        cards = stripe.Customer.list_sources(customer=payment_method.customer.id, object="card")
+        return dict(cards)
     except StripePaymentMethod.DoesNotExist:
         pass
     except stripe.error.AuthenticationError:
@@ -32,7 +32,8 @@ def charge_through_stripe(card, customer, amount_in_dollars, currency, descripti
 
     Parameters:
     - card (str): The card token or ID representing the payment source to be charged.
-    - customer (str): The ID of the stripe customer to whom the card belongs.
+    - customer (str or Customer Object): The ID or the Customer Object of the stripe customer
+                                         to whom the card belongs.
     - amount_in_dollars (Decimal): The amount to charge, represented as a Decimal in dollars.
     - currency (str): The three-letter ISO currency code representing the currency of the charge.
     - description (str): An arbitrary string attached to the charge, for describing the transaction.

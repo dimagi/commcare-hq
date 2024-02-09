@@ -85,9 +85,9 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
     ko.bindingHandlers.runOnInit = {
         // suggestion from https://github.com/knockout/knockout/issues/2446 to use
         // instead of an anonymous template
-        init: function(elem, valueAccessor) {
+        init: function (elem, valueAccessor) {
             valueAccessor();
-        }
+        },
     };
     ko.virtualElements.allowedBindings.runOnInit = true;
 
@@ -95,11 +95,11 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
         // fixes an issue where we try to apply bindings to a parent element
         // that has a child element with existing bindings.
         // see: https://github.com/knockout/knockout/issues/1922
-        init: function(elem, valueAccessor) {
+        init: function (elem, valueAccessor) {
             // Let bindings proceed as normal *only if* my value is false
             var shouldAllowBindings = ko.unwrap(valueAccessor());
             return { controlsDescendantBindings: !shouldAllowBindings };
-        }
+        },
     };
     ko.virtualElements.allowedBindings.allowDescendantBindings = true;
 
@@ -118,7 +118,6 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
         $(".button", $elem).button().wrap('<span />');
         $("input[type='submit']", $elem).button();
         $("input[type='text'], input[type='password'], textarea", $elem);
-        $('.container', $elem).addClass('ui-widget ui-widget-content');
         $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
 
         $('.hq-help-template').each(function () {
@@ -130,7 +129,7 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
         'use strict';
         var key;
         for (key in update) {
-            if (update.hasOwnProperty(key)) {
+            if (_.has(update, key)) {
                 $(key).text(update[key]).val(update[key]);
             }
         }
@@ -180,7 +179,7 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
                         this.$saved.detach();
                         this.$retry.detach();
                         var buttonUi = this.ui;
-                        _.each(BAR_STATE, function (v, k) {
+                        _.each(BAR_STATE, function (v) {
                             buttonUi.removeClass(v);
                         });
                         if (state === 'save') {
@@ -208,7 +207,7 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
                             $.ajaxSettings.beforeSend(jqXHR, settings);
                             beforeSend.apply(this, arguments);
                         };
-                        options.success = function (data) {
+                        options.success = function () {
                             that.setState(that.nextState);
                             success.apply(this, arguments);
                         };
@@ -256,9 +255,11 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
                 $(window).on('beforeunload', function () {
                     var lastParent = button.ui.parents()[button.ui.parents().length - 1];
                     if (lastParent) {
-                        var stillAttached = lastParent.tagName.toLowerCase() == 'html';
+                        var stillAttached = lastParent.tagName.toLowerCase() === 'html';
                         if (button.state !== 'saved' && stillAttached) {
-                            if ($('.js-unhide-on-unsaved').length > 0) $('.js-unhide-on-unsaved').removeClass('hide');
+                            if ($('.js-unhide-on-unsaved').length > 0) {
+                                $('.js-unhide-on-unsaved').removeClass('hide');
+                            }
                             return options.unsavedMessage || "";
                         }
                     }

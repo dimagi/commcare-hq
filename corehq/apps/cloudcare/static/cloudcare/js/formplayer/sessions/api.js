@@ -83,7 +83,9 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
                     if (xhr.responseJSON.status === 'error') {
                         FormplayerFrontend.trigger(
                             'showError',
-                            "Unable to delete incomplete form '" + session.get('title') + "'"
+                            _.template(gettext("Unable to delete incomplete form '<%- title %>'"))({
+                                title: session.get('title'),
+                            })
                         );
                         window.console.error(xhr.responseJSON.exception);
                     }

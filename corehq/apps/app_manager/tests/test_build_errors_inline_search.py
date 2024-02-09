@@ -86,44 +86,6 @@ class BuildErrorsInlineSearchTest(SimpleTestCase):
 
         self.assertIn("workflow previous inline search", _get_error_types(factory.app))
 
-    def test_parent_select_to_inline_search(self, *args):
-        """an inline module can't be the target of parent select"""
-        factory = AppFactory(build_version='2.51.0')
-        m0, _ = factory.new_basic_module('first', 'case')
-
-        m0.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
-            properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
-            auto_launch=True,
-            inline_search=True,
-        )
-
-        m1, _ = factory.new_basic_module('second', 'case')
-        m1.parent_select.active = True
-        m1.parent_select.relationship = None
-        m1.parent_select.module_id = m0.get_or_create_unique_id()
-
-        self.assertIn("parent select is inline search module", _get_error_types(factory.app))
-
-    def test_parent_select_of_inline_search_module(self, *args):
-        """inline search can't use parent select with relationship='parent'"""
-        factory = AppFactory(build_version='2.51.0')
-        m0, _ = factory.new_basic_module('first', 'case')
-
-        m0.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
-            properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
-            auto_launch=True,
-            inline_search=True,
-        )
-
-        m1, _ = factory.new_basic_module('second', 'case')
-
-        m0.parent_select.active = True
-        m0.parent_select.module_id = m0.get_or_create_unique_id()
-
-        self.assertIn("inline search parent select relationship", _get_error_types(factory.app))
-
 
 def _get_error_types(app):
     return [error['type'] for error in app.validate_app()]

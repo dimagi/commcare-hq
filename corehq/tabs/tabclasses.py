@@ -1881,6 +1881,7 @@ class ProjectSettingsTab(UITab):
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
         user_is_billing_admin = self.couch_user.can_edit_billing()
+        user_can_manage_domain_alerts = self.couch_user.can_manage_domain_alerts(self.domain)
         has_project_access = has_privilege(self._request, privileges.PROJECT_ACCESS)
 
         project_info = []
@@ -1910,8 +1911,14 @@ class ProjectSettingsTab(UITab):
 
         items.append((_('Project Information'), project_info))
 
-        if user_is_admin and has_project_access:
-            items.append((_('Project Administration'), _get_administration_section(self.domain)))
+        if (user_is_admin or user_can_manage_domain_alerts) and has_project_access:
+            section = []
+            if user_is_admin:
+                section = _get_administration_section(self.domain)
+            elif user_can_manage_domain_alerts:
+                section = _get_manage_domain_alerts_section(self.domain)
+            if section:
+                items.append((_('Project Administration'), section))
 
         if self.couch_user.can_edit_motech() and has_project_access:
             integration_nav = _get_integration_section(self.domain, self.couch_user)
@@ -2019,7 +2026,6 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
         ManageDomainMobileWorkersView,
-        ManageDomainAlertsView,
         RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -2037,11 +2043,7 @@ def _get_administration_section(domain):
         'url': reverse(FeaturePreviewsView.urlname, args=[domain])
     })
 
-    if toggles.CUSTOM_DOMAIN_BANNER_ALERTS.enabled(domain):
-        administration.append({
-            'title': _(ManageDomainAlertsView.page_title),
-            'url': reverse(ManageDomainAlertsView.urlname, args=[domain])
-        })
+    administration.extend(_get_manage_domain_alerts_section(domain))
 
     if toggles.TRANSFER_DOMAIN.enabled(domain):
         administration.append({
@@ -2063,6 +2065,18 @@ def _get_administration_section(domain):
         }))
 
     return administration
+
+
+def _get_manage_domain_alerts_section(domain):
+    from corehq.apps.domain.views.settings import ManageDomainAlertsView
+    section = []
+
+    if domain_has_privilege(domain, privileges.CUSTOM_DOMAIN_ALERTS):
+        section.append({
+            'title': _(ManageDomainAlertsView.page_title),
+            'url': reverse(ManageDomainAlertsView.urlname, args=[domain])
+        })
+    return section
 
 
 def _get_integration_section(domain, couch_user):

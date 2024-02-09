@@ -224,7 +224,7 @@ def bulk_update_cases(domain, case_changes, device_id, xmlns=None):
 
 def resave_case(domain, case, send_post_save_signal=True):
     from corehq.form_processor.change_publishers import publish_case_saved
-    publish_case_saved(case, send_post_save_signal)
+    publish_case_saved(case, send_post_save_signal=send_post_save_signal)
 
 
 def get_last_non_blank_value(case, case_property):

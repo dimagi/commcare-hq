@@ -61,7 +61,7 @@ class TestMetaDB(TestCase):
         self.assertEqual(get_meta(meta).properties, {})
         query = BlobMeta.objects.partitioned_query(meta.parent_id)
         results = query.filter(id=meta.id).values_list('id', 'properties')
-        self.assertEqual(list(results), [(meta.id, None)])
+        self.assertEqual(list(results), [(meta.id, {})])
 
     def test_delete(self):
         meta = new_meta()

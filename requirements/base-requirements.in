@@ -1,10 +1,14 @@
 alembic
 architect
 attrs>=21.4
+beautifulsoup4  # USH - used for rich text messaging emails, and some tests
+bleach  # USH - used for rich text messaging emails
+bleach[css]  # USH - used for rich text messaging emails
 boto3
 celery
 CommcareTranslationChecker>=0.9.7
 csiphash
+css_inline  # USH - used for rich text messaging emails
 datadog
 ddtrace
 decorator==4.0.11  # required by django-digest

@@ -643,6 +643,23 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Datum ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "XPath Expression"
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
 msgid "Active"
 msgstr ""
@@ -1509,10 +1526,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath Expression"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "You can drag a question into the box."
 msgstr ""
 
@@ -2337,6 +2350,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "Case ID"
 msgstr ""
 
@@ -2701,11 +2715,11 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
-msgid "Submitting..."
+msgid "Submit"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
-msgid "Submit"
+msgid "Submitting..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
@@ -2813,17 +2827,12 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
-"You have selected more than the maximum selection limit of <%= value %> . "
+"You have selected more than the maximum selection limit of <%- value %> . "
 "Please uncheck some values to continue."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid "Your location"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-msgid "Page <%-num%>"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
@@ -2844,12 +2853,16 @@ msgstr ""
 msgid "Please check the following fields:"
 msgstr ""
 
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/api.js
+msgid "Unable to delete incomplete form '<%- title %>'"
+msgstr ""
+
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
 msgid "Delete incomplete form?"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-msgid "Are you sure you want to delete '"
+msgid "Are you sure you want to delete '<%- title %>'?"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
@@ -2873,19 +2886,19 @@ msgid "Use <%- username %>."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
-msgid "Log in as <%= username %>?"
+msgid "Log in as <%- username %>?"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
 msgid "Yes, log in as this user"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
-msgid "Page <%- num %>"
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "Confirm?"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
-msgid "Confirm?"
+msgid "Page <%- num %>"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
@@ -3399,11 +3412,35 @@ msgid "No group"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Group ID"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Group Name"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Group Center Coordinates"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Case Name"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Case Owner Name"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Case Coordinates"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "Select group"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-msgid "Group <%- groupCount %>"
+msgid "Group <%- pageNumber %>-<%- groupCount %>"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
@@ -3417,6 +3454,11 @@ msgid "Name of the Area"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid ""
+"Oops! Something went wrong! Please contact admin if the problem persists."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "All locations"
 msgstr ""
 
@@ -3426,6 +3468,12 @@ msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Mobile Worker"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid ""
+"Warning! This action will clear the current disbursement. Please confirm if "
+"you want to proceed."
 msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js
@@ -4081,6 +4129,10 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Loading Stopped"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js

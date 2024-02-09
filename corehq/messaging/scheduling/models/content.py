@@ -1,3 +1,4 @@
+import os
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -9,6 +10,7 @@ from django.db import models
 from django.http import Http404
 from django.utils.translation import gettext as _
 
+import css_inline
 import jsonfield as old_jsonfield
 from memoized import memoized
 
@@ -23,7 +25,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.domain.models import Domain
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
-from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.sms.models import (
     Email,
@@ -43,12 +45,19 @@ from corehq.apps.smsforms.util import (
     form_requires_input,
 )
 from corehq.apps.users.models import CommCareUser
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.exceptions import NotFound
+from corehq.blobs.models import BlobMeta
+from corehq.blobs.util import random_url_id
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.fcm.exceptions import FCMTokenValidationException
 from corehq.messaging.fcm.utils import FCMUtil
 from corehq.messaging.scheduling.exceptions import EmailValidationException
 from corehq.messaging.scheduling.models.abstract import Content
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.metrics import metrics_counter
+from corehq.util.models import NullJsonField
+from corehq.util.view_utils import absolute_reverse
 
 
 @contextmanager
@@ -106,6 +115,7 @@ class SMSContent(Content):
 class EmailContent(Content):
     subject = old_jsonfield.JSONField(default=dict)
     message = old_jsonfield.JSONField(default=dict)
+    html_message = NullJsonField(default=dict)
 
     TRIAL_MAX_EMAILS = 50
 
@@ -116,16 +126,18 @@ class EmailContent(Content):
         return EmailContent(
             subject=deepcopy(self.subject),
             message=deepcopy(self.message),
+            html_message=deepcopy(self.html_message),
         )
 
-    def render_subject_and_message(self, subject, message, recipient):
+    def render_subject_and_message(self, subject, message, html_message, recipient):
         renderer = self.get_template_renderer(recipient)
-        return renderer.render(subject), renderer.render(message)
+        return renderer.render(subject), renderer.render(message), renderer.render(html_message)
 
     def send(self, recipient, logged_event, phone_entry=None):
-        email_usage = EmailUsage.get_or_create_usage_record(logged_event.domain)
-        is_trial = domain_is_on_trial(logged_event.domain)
-        domain_obj = Domain.get_by_name(logged_event.domain)
+        domain = logged_event.domain
+        email_usage = EmailUsage.get_or_create_usage_record(domain)
+        is_trial = domain_is_on_trial(domain)
+        domain_obj = Domain.get_by_name(domain)
 
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
@@ -145,14 +157,33 @@ class EmailContent(Content):
             recipient.get_language_code()
         )
 
+        html_message = ''
+        if self.html_message:
+            html_message = self.get_translation_from_message_dict(
+                domain_obj,
+                self.html_message,
+                recipient.get_language_code()
+            )
+            # Add extra css added by CKEditor, and inline css styles from template
+            email_css_filepath = os.path.join(
+                "corehq", "messaging", "scheduling", "templates", "scheduling", "rich_text_email_styles.css")
+            with open(email_css_filepath, 'r') as css_file:
+                css_inliner = css_inline.CSSInliner(extra_css=css_file.read())
+            html_message = css_inliner.inline(html_message)
+
         try:
-            subject, message = self.render_subject_and_message(subject, message, recipient)
+            subject, message, html_message = self.render_subject_and_message(
+                subject,
+                message,
+                html_message,
+                recipient
+            )
         except Exception:
             logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
             return
 
         subject = subject or '(No Subject)'
-        if not message:
+        if not message and not html_message:
             logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
             return
 
@@ -162,19 +193,31 @@ class EmailContent(Content):
             logged_subevent.error(e.error_type, additional_error_text=e.additional_text)
             return
 
-        if is_trial and EmailUsage.get_total_count(logged_event.domain) >= self.TRIAL_MAX_EMAILS:
+        if is_trial and EmailUsage.get_total_count(domain) >= self.TRIAL_MAX_EMAILS:
             logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
             return
 
-        metrics_counter('commcare.messaging.email.sent', tags={'domain': logged_event.domain})
-        send_mail_async.delay(subject, message,
-                              [email_address],
-                              messaging_event_id=logged_subevent.id,
-                              domain=logged_event.domain,
-                              use_domain_gateway=True)
+        metrics_counter('commcare.messaging.email.sent', tags={'domain': domain})
+        if toggles.RICH_TEXT_EMAILS.enabled(domain) and html_message:
+            send_html_email_async.delay(
+                subject,
+                email_address,
+                html_message,
+                text_content=message,
+                messaging_event_id=logged_subevent.id,
+                domain=domain,
+                use_domain_gateway=True)
+        else:
+            send_mail_async.delay(
+                subject,
+                message,
+                [email_address],
+                messaging_event_id=logged_subevent.id,
+                domain=domain,
+                use_domain_gateway=True)
 
         email = Email(
-            domain=logged_event.domain,
+            domain=domain,
             date=logged_subevent.date_last_activity,  # use date from subevent for consistency
             couch_recipient_doc_type=logged_subevent.recipient_type,
             couch_recipient=logged_subevent.recipient_id,
@@ -182,6 +225,7 @@ class EmailContent(Content):
             recipient_address=email_address,
             subject=subject,
             body=message,
+            html_body=html_message,
         )
         email.save()
 
@@ -615,3 +659,111 @@ class FCMNotificationContent(Content):
         if not devices_fcm_tokens:
             raise FCMTokenValidationException(MessagingEvent.ERROR_NO_FCM_TOKENS)
         return devices_fcm_tokens
+
+
+def _meta_property(name):
+    def fget(self):
+        return getattr(self._meta, name)
+    return property(fget)
+
+
+class EmailImage(object):
+    """EmailImage is a thin wrapper around BlobMeta"""
+    id = _meta_property("id")
+    domain = _meta_property("parent_id")
+    filename = _meta_property("name")
+    blob_id = _meta_property("key")
+    content_type = _meta_property("content_type")
+    content_length = _meta_property("content_length")
+    delete_after = _meta_property("expires_on")
+
+    def __init__(self, meta):
+        self._meta = meta
+
+    @classmethod
+    def get(cls, domain, pk):
+        return cls(cls.meta_query(domain).get(pk=pk))
+
+    @classmethod
+    def get_by_key(cls, domain, key):
+        return cls(cls.meta_query(domain).get(key=key))
+
+    @classmethod
+    def get_by_keys(cls, keys, domain=None):
+        if domain is None:
+            results = []
+            for db in get_db_aliases_for_partitioned_query():
+                results.extend(cls.db_meta_query(db).filter(key__in=keys).all())
+            return [cls(m) for m in results]
+        return [cls(m) for m in cls.meta_query(domain).filter(key__in=keys).all()]
+
+    @staticmethod
+    def meta_query(domain):
+        Q = models.Q
+        query = BlobMeta.objects.partitioned_query(domain).filter(
+            Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
+            type_code=CODES.email_multimedia,
+        ).filter(parent_id=domain)
+        return query
+
+    @staticmethod
+    def db_meta_query(db):
+        Q = models.Q
+        query = BlobMeta.objects.using(db).filter(
+            Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
+            type_code=CODES.email_multimedia,
+        )
+        return query
+
+    @classmethod
+    def get_all(cls, domain=None):
+        if domain is None:
+            results = []
+            for db in get_db_aliases_for_partitioned_query():
+                results.extend(cls.db_meta_query(db).order_by("name"))
+            return [cls(meta) for meta in results]
+        return [cls(meta) for meta in cls.meta_query(domain).order_by("name")]
+
+    @classmethod
+    def get_all_blob_ids(cls):
+        results = []
+        for db in get_db_aliases_for_partitioned_query():
+            results.extend(cls.db_meta_query(db).values_list('key', flat=True))
+        return results
+
+    @classmethod
+    def get_total_size(cls, domain):
+        return cls.meta_query(domain).aggregate(total=models.Sum('content_length'))["total"]
+
+    @classmethod
+    def save_blob(cls, file_obj, domain, filename, content_type, delete_after=None):
+        return cls(get_blob_db().put(
+            file_obj,
+            domain=domain,
+            parent_id=domain,
+            type_code=CODES.email_multimedia,
+            name=filename,
+            key=random_url_id(16),
+            content_type=content_type,
+            expires_on=delete_after,
+        ))
+
+    def get_blob(self):
+        db = get_blob_db()
+        try:
+            blob = db.get(meta=self._meta)
+        except (KeyError, NotFound) as err:
+            raise NotFound(str(err))
+        return blob
+
+    @classmethod
+    def bulk_delete(cls, keys):
+        get_blob_db().bulk_delete([c._meta for c in cls.get_by_keys(keys)])
+
+    def delete(self):
+        get_blob_db().delete(key=self._meta.key)
+
+    def get_url(self):
+        return absolute_reverse("download_messaging_image", args=[self.domain, self.blob_id])
+
+    DoesNotExist = BlobMeta.DoesNotExist

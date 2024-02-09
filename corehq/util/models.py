@@ -231,20 +231,24 @@ class NullJsonField(jsonfield_JSONField):
 
     def __init__(self, **kw):
         kw.setdefault("null", True)
-        super(NullJsonField, self).__init__(**kw)
+        super().__init__(**kw)
         assert self.null
 
     def get_db_prep_value(self, value, *args, **kw):
         if not value:
             value = None
-        return super(NullJsonField, self).get_db_prep_value(value, *args, **kw)
+        return super().get_db_prep_value(value, *args, **kw)
 
     def to_python(self, value):
-        value = super(NullJsonField, self).to_python(value)
+        value = super().to_python(value)
+        return self.get_default() if value is None else value
+
+    def from_db_value(self, value, expression, connection):
+        value = super().from_db_value(value, expression, connection)
         return self.get_default() if value is None else value
 
     def pre_init(self, value, obj):
-        value = super(NullJsonField, self).pre_init(value, obj)
+        value = super().pre_init(value, obj)
         return self.get_default() if value is None else value
 
 

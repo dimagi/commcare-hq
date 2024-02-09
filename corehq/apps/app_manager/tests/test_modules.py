@@ -2,7 +2,7 @@ from django.test import SimpleTestCase
 
 from unittest.mock import patch
 
-from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
+from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE, CASE_LIST_FILTER_LOCATIONS_FIXTURE
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedOpenCaseAction,
@@ -21,7 +21,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
 )
 from corehq.apps.app_manager.views.modules import (
-    _get_fixture_columns_by_type,
+    _get_fixture_columns_options,
     _update_search_properties,
 )
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
@@ -106,15 +106,21 @@ class ModuleTests(SimpleTestCase):
             "text": {"en": "you shall not pass"},
         }])
 
-    def test_get_fixture_columns_by_type(self):
+    def test_get_fixture_columns_options(self):
         table = LookupTable(
             domain="module-domain",
             tag="duck",
             fields=[TypeField(name="wing")]
         )
         with patch.object(LookupTable.objects, "by_domain", lambda domain: [table]):
-            result = _get_fixture_columns_by_type("module-domain")
-            self.assertEqual(result, {"duck": ["wing"]})
+            result = _get_fixture_columns_options("module-domain")
+            self.assertDictEqual(
+                result,
+                {
+                    CASE_LIST_FILTER_LOCATIONS_FIXTURE: ['@id', 'name', 'site_code'],
+                    "duck": ["wing"]
+                }
+            )
 
 
 class AdvancedModuleTests(SimpleTestCase):
@@ -352,7 +358,10 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
 
     def test_overwrite_default_properties(self):
         self.dest_module.search_config = CaseSearch()
-        self.dest_module.search_config.overwrite_attrs(self.src_module.search_config, ["search_default_properties"])
+        self.dest_module.search_config.overwrite_attrs(
+            self.src_module.search_config,
+            ["search_default_properties"]
+        )
         self.assertEqual(
             self.src_module.search_config.to_json()["default_properties"],
             self.dest_module.search_config.to_json()["default_properties"]

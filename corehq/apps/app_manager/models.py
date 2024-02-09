@@ -154,6 +154,7 @@ from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildRecord, BuildSpec
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.cleanup.models import DeletedCouchDoc
+from corehq.apps.cloudcare.utils import get_mobile_ucr_count
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import (
     ApplicationMediaMixin,
@@ -1048,6 +1049,9 @@ class FormBase(DocumentSchema):
     # computed datums IDs that are allowed in endpoints
     function_datum_endpoints = StringListProperty()
 
+    submit_label = LabelProperty(default={})
+    submit_notification_label = LabelProperty(default={})
+
     def __repr__(self):
         return f"{self.doc_type}(id='{self.id}', name='{self.default_name()}', unique_id='{self.unique_id}')"
 
@@ -1337,6 +1341,16 @@ class FormBase(DocumentSchema):
             case_type = save_to_case_update.case_type
             updates_by_case_type[case_type].update(save_to_case_update.properties)
         return updates_by_case_type
+
+    def get_submit_label(self, lang):
+        if lang in self.submit_label:
+            return self.submit_label[lang]
+        return 'Submit'
+
+    def get_submit_notification_label(self, lang):
+        if self.submit_notification_label and lang in self.submit_notification_label:
+            return self.submit_notification_label[lang]
+        return ''
 
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
@@ -1856,6 +1870,7 @@ class DetailColumn(IndexedSchema):
     vertical_align = StringProperty(exclude_if_none=True)
     font_size = StringProperty(exclude_if_none=True)
     show_border = BooleanProperty(exclude_if_none=True)
+    show_shading = BooleanProperty(exclude_if_none=True)
 
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
@@ -2009,6 +2024,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     #Only applies to 'short' details
     no_items_text = LabelProperty(default={'en': 'List is empty.'})
 
+    select_text = LabelProperty(default={'en': 'Continue'})
+
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
         if value_is_the_default:
@@ -2118,6 +2135,9 @@ class CaseSearchProperty(DocumentSchema):
     receiver_expression = StringProperty(exclude_if_none=True)
     itemset = SchemaProperty(Itemset)
 
+    is_group = BooleanProperty(default=False)
+    group_key = StringProperty(exclude_if_none=True)
+
 
 class DefaultCaseSearchProperty(DocumentSchema):
     """Case Properties with fixed value to search on"""
@@ -2170,6 +2190,7 @@ class CaseSearch(DocumentSchema):
     description = LabelProperty(default={})
     include_all_related_cases = BooleanProperty(default=False)
     dynamic_search = BooleanProperty(default=False)
+    search_on_clear = BooleanProperty(default=False)
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -2189,7 +2210,7 @@ class CaseSearch(DocumentSchema):
 
     def get_relevant(self, case_session_var, multi_select=False):
         xpath = CaseClaimXpath(case_session_var)
-        default_condition = xpath.multi_select_relevant() if multi_select else xpath.default_relevant()
+        default_condition = xpath.multi_case_relevant() if multi_select else xpath.default_relevant()
         if self.additional_relevant:
             return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition
@@ -2553,6 +2574,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
     display_style = StringProperty(default='list')
+    lazy_load_case_list_fields = BooleanProperty(default=False)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -4496,6 +4518,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_app_languages.clear(self.domain)
         get_apps_in_domain.clear(self.domain, True)
         get_apps_in_domain.clear(self.domain, False)
+        get_mobile_ucr_count.clear(self.domain)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
@@ -4522,6 +4545,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_app_languages.clear(self.domain)
         get_apps_in_domain.clear(self.domain, True)
         get_apps_in_domain.clear(self.domain, False)
+        get_mobile_ucr_count.clear(self.domain)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)

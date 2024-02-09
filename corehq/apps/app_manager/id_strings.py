@@ -205,8 +205,7 @@ def module_locale(module):
 
 @pattern('forms.m%df%d')
 def form_locale(form):
-    return "forms.m{module.id}f{form.id}".format(module=form.get_module(),
-                                                  form=form)
+    return "forms.m{module.id}f{form.id}".format(module=form.get_module(), form=form)
 
 
 @pattern('training.root.title')
@@ -415,6 +414,22 @@ def form_custom_icon_locale(form, icon_form):
     )
 
 
+@pattern('forms.m%df%d.submit_label')
+def form_submit_label_locale(form):
+    return "forms.m{module.id}f{form.id}.submit_label".format(
+        module=form.get_module(),
+        form=form
+    )
+
+
+@pattern('forms.m%df%d.submit_notification_label')
+def form_submit_notification_label_locale(form):
+    return "forms.m{module.id}f{form.id}.submit_notification_label".format(
+        module=form.get_module(),
+        form=form
+    )
+
+
 @pattern('case_list_form.m%d.icon')
 def case_list_form_icon_locale(module):
     return "case_list_form.m{module.id}.icon".format(module=module)
@@ -456,6 +471,11 @@ def persistent_case_context_detail(module):
 @pattern('m%d_no_items_text')
 def no_items_text_detail(module):
     return detail(module, 'no_items_text')
+
+
+@pattern('m%d_select_text')
+def select_text_detail(module):
+    return detail(module, 'select_text')
 
 
 def fixture_detail(module):

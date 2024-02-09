@@ -225,6 +225,8 @@ class HqPermissions(DocumentSchema):
     view_data_registry_contents_list = StringListProperty(default=[])
     manage_attendance_tracking = BooleanProperty(default=False)
 
+    manage_domain_alerts = BooleanProperty(default=False)
+
     @classmethod
     def from_permission_list(cls, permission_list):
         """Converts a list of Permission objects into a Permissions object"""
@@ -1103,6 +1105,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         self.last_name = ' '.join(data)
 
     def get_user_data(self, domain):
+        # To do this in bulk, try bulk_populate_user_data
         from .user_data import UserData
         if domain not in self._user_data_accessors:
             self._user_data_accessors[domain] = UserData.lazy_init(self, domain)
@@ -1465,13 +1468,17 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     bulk_save = save_docs
 
-    def save(self, fire_signals=True, update_django_user=True, **params):
+    def save(self, fire_signals=True, update_django_user=True, fail_hard=False, **params):
+        # fail_hard determines whether the save should fail if it cannot obtain the critical section
+        # historically, the critical section hasn't been enforced, but enforcing it is a dramatic change
+        # for our system. The goal here is to allow the programmer to specify fail_hard on a workflow-by-workflow
+        # basis, so we can gradually shift to all saves requiring the critical section.
+
         # HEADS UP!
         # When updating this method, please also ensure that your updates also
         # carry over to bulk_auto_deactivate_commcare_users.
         self.last_modified = datetime.utcnow()
-        self.clear_quickcache_for_user()
-        with CriticalSection(['username-check-%s' % self.username], timeout=120):
+        with CriticalSection(['username-check-%s' % self.username], fail_hard=fail_hard, timeout=120):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
             if by_username and by_username['id'] != self._id:
@@ -1483,7 +1490,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
             if not self.to_be_deleted():
                 self._save_user_data()
-            super(CouchUser, self).save(**params)
+            try:
+                super(CouchUser, self).save(**params)
+            finally:
+                # ensure the cache is cleared even if something goes wrong while saving the user to couch
+                self.clear_quickcache_for_user()
 
         if fire_signals:
             self.fire_signals()
@@ -2040,7 +2051,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         user_data = self.get_user_data(self.domain)
         user_data['commcare_location_id'] = location.location_id
 
-        if not location.location_type_object.administrative:
+        if not location.location_type.administrative:
             # just need to trigger a get or create to make sure
             # this exists, otherwise things blow up
             sp = SupplyInterface(self.domain).get_or_create_by_location(location)
@@ -2208,7 +2219,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         index = {}
         for location in locations:
-            if not location.location_type_object.administrative:
+            if not location.location_type.administrative:
                 sp = SupplyInterface(self.domain).get_by_location(location)
                 index.update(self.supply_point_index_mapping(sp))
 
@@ -2703,6 +2714,8 @@ class Invitation(models.Model):
             "inviter": inviter.formatted_name,
             "url_prefix": get_static_url_prefix(),
         }
+        from corehq.apps.registration.utils import project_logo_emails_context
+        params.update(project_logo_emails_context(domain_obj.name))
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
         lang = guess_domain_language(self.domain)

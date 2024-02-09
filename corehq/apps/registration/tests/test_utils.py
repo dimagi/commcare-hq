@@ -1,3 +1,4 @@
+import os
 from unittest import mock
 
 from django.contrib.auth.models import User
@@ -6,8 +7,12 @@ from django.test import TestCase, RequestFactory
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
-from corehq.apps.registration.utils import request_new_domain
+from corehq.apps.hqmedia.models import CommCareImage, LogoForSystemEmailsReference
+from corehq.apps.hqmedia.views import ViewMultimediaFile
+from corehq.apps.registration.utils import request_new_domain, project_logo_emails_context
+from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import WebUser
+from corehq.util.view_utils import absolute_reverse
 
 
 def _issue_initializing_domain(*args, **kwargs):
@@ -96,3 +101,39 @@ class TestRequestNewDomain(TestCase):
             )
         domain = Domain.get_by_name('subscription-failed')
         self.assertIsNone(domain)
+
+
+class TestUsingProjectLogoInEmails(TestCase):
+
+    def setUp(self):
+        self.domain = 'hogwarts'
+
+        # Just use favicon as an arbitrary image for testing
+        image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', 'favicon.png')
+        with open(image_path, 'rb') as f:
+            image_data = f.read()
+            self.image = CommCareImage.get_by_data(image_data)
+            self.image.save()
+            self.addCleanup(self.image.delete)
+
+        LogoForSystemEmailsReference.objects.create(
+            domain=self.domain,
+            image_id=self.image._id
+        )
+
+    @flag_enabled('USE_LOGO_IN_SYSTEM_EMAILS')
+    def test_project_logo_emails_context_ff_on(self):
+        self.assertDictEqual(
+            project_logo_emails_context(self.domain),
+            {
+                "base_container_template": "registration/email/base_templates/_base_container_project_logo.html",
+                "link_to_logo": absolute_reverse(
+                    ViewMultimediaFile.urlname, args=['CommCareImage', self.image._id])
+            }
+        )
+
+    def test_project_logo_emails_context_ff_off(self):
+        self.assertDictEqual(
+            project_logo_emails_context(self.domain),
+            {}
+        )

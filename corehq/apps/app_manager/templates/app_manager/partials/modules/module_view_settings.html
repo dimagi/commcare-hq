@@ -261,6 +261,12 @@
               {% endif %}
             {% endif %}
 
+            {% if request|toggle_enabled:'CASE_LIST_LAZY' and app.cloudcare_enabled %}
+              <div class="form-group">
+              {% include "app_manager/partials/modules/case_list_lazy_loading.html" %}
+              </div>
+            {% endif %}
+
             {% if request|toggle_enabled:'USH_EMPTY_CASE_LIST_TEXT' %}
             <div class="form-group">
               <label for="no_items_text" class="{% css_label_class %} control-label">

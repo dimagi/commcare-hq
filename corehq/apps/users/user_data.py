@@ -3,6 +3,8 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.custom_data_fields.models import (
     COMMCARE_PROJECT,
     PROFILE_SLUG,
@@ -188,3 +190,27 @@ class SQLUserData(models.Model):
     class Meta:
         unique_together = ("user_id", "domain")
         indexes = [models.Index(fields=['user_id', 'domain'])]
+
+
+def prime_user_data_caches(users, domain):
+    """
+    Enriches a set of users by looking up and priming user data caches in
+    chunks, for use in bulk workflows.
+    :return: generator that yields the enriched user objects
+    """
+    for chunk in chunked(users, 100):
+        user_ids = [user.user_id for user in chunk]
+        sql_data_by_user_id = {
+            ud.user_id: ud for ud in
+            SQLUserData.objects.filter(domain=domain, user_id__in=user_ids)
+        }
+        for user in chunk:
+            if user.user_id in sql_data_by_user_id:
+                sql_data = sql_data_by_user_id[user.user_id]
+                user_data = UserData(sql_data.data, user, domain,
+                                     profile_id=sql_data.profile_id)
+            else:
+                user_data = UserData({}, user, domain)
+            # prime the user.get_user_data cache
+            user._user_data_accessors[domain] = user_data
+            yield user

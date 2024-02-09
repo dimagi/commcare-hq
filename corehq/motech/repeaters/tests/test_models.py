@@ -51,7 +51,6 @@ class RepeaterTestCase(TestCase):
         self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
         self.repeater = FormRepeater(
             domain=DOMAIN,
-            repeater_id=uuid.uuid4().hex,
             connection_settings=self.conn,
         )
         self.repeater.save()
@@ -65,7 +64,6 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
             r = FormRepeater(
                 domain=DOMAIN,
                 connection_settings=self.conn,
-                repeater_id=uuid4().hex
             )
             r.save()
             self.all_repeaters.append(r)
@@ -78,8 +76,8 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
         self.all_repeaters[0].save()
         self.assertEqual(FormRepeater.objects.all().count(), 4)
         self.assertEqual(
-            set(FormRepeater.objects.all().values_list('repeater_id', flat=True)),
-            set([r.repeater_id for r in self.all_repeaters if not r.is_deleted])
+            set(FormRepeater.objects.all().values_list('id', flat=True)),
+            set([r.id for r in self.all_repeaters if not r.is_deleted])
         )
 
     def test_repeatrs_retired_from_sql(self):
@@ -261,7 +259,7 @@ class FormatResponseTests(SimpleTestCase):
 
     def test_non_response(self):
         resp = ResponseMock()
-        self.assertIsNone(format_response(resp))
+        self.assertEqual(format_response(resp), '')
 
     def test_no_text(self):
         resp = ResponseMock()
@@ -540,7 +538,7 @@ class TestCouchRepeatRecordMethods(TestCase):
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
-            repeater_id='def456'
+            repeater_id='404aaaaaaaaaaaaaaaaaaaaaaaaaa404',
         )
         repeat_record.save()
         self.addCleanup(repeat_record.delete)

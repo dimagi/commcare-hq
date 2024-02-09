@@ -356,11 +356,10 @@ class ConnectIDAuthBackend:
             return None
         link = ConnectIDUserLink.objects.get(
             connectid_username=connect_username,
-            domain=couch_user.domain
+            domain=couch_user.domain,
+            commcare_user__username=couch_user.username
         )
 
-        if (couch_user.username != link.commcare_user.username):
-            return None
         return link.commcare_user
 
 
