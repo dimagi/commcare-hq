@@ -301,3 +301,9 @@ def get_deidentified_data(case, censor_data):
                 attrs[attr_or_prop] = censored_value
 
     return attrs, props
+
+
+def is_copied_case(case):
+    """Returns True if the case was created by copying an existing case using the 'COPY_CASES' feature"""
+    from corehq.apps.hqcase.case_helper import CaseCopier
+    return CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME in case.case_json
