@@ -277,7 +277,7 @@ greenlet==2.0.2
     #   -r base-requirements.in
     #   django-websocket-redis
     #   gevent
-grpcio==1.54.2
+grpcio==1.54.3
     # via
     #   google-api-core
     #   grpcio-status
