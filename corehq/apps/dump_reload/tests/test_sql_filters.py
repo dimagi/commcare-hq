@@ -3,6 +3,7 @@ from django.test import TestCase
 from corehq.apps.dump_reload.sql.filters import MultimediaBlobMetaFilter
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.blobs.models import BlobMeta
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
 class TestMultimediaBlobMetaFilter(TestCase):
@@ -16,7 +17,7 @@ class TestMultimediaBlobMetaFilter(TestCase):
         )
 
         filter = MultimediaBlobMetaFilter()
-        actual_ids = list(filter.get_ids(self.domain))
+        actual_ids = list(filter.get_ids(self.domain, db_alias=self.db_alias))
 
         self.assertEqual(actual_ids, expected_ids)
 
@@ -24,9 +25,9 @@ class TestMultimediaBlobMetaFilter(TestCase):
         self.create_multimedia(b'content', 'different-domain')
 
         filter = MultimediaBlobMetaFilter()
-        blobmeta_ids = list(filter.get_ids(self.domain))
+        actual_ids = list(filter.get_ids(self.domain, db_alias=self.db_alias))
 
-        self.assertEqual(blobmeta_ids, [])
+        self.assertEqual(actual_ids, [])
 
     def test_returns_multiple_blobmeta_ids_if_multiple_attached_to_domain(self):
         multimedia = self.create_multimedia(b'content', domain=self.domain)
@@ -39,7 +40,7 @@ class TestMultimediaBlobMetaFilter(TestCase):
         )
 
         filter = MultimediaBlobMetaFilter()
-        actual_ids = list(filter.get_ids(self.domain))
+        actual_ids = list(filter.get_ids(self.domain, db_alias=self.db_alias))
 
         self.assertEqual(len(actual_ids), 2)
         self.assertEqual(actual_ids, expected_ids)
@@ -58,3 +59,4 @@ class TestMultimediaBlobMetaFilter(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = 'test-multimedia'
+        cls.db_alias = get_db_aliases_for_partitioned_query()[0]
