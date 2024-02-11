@@ -6,15 +6,14 @@ from django.core import serializers
 from django.db import router
 
 from corehq.apps.dump_reload.exceptions import DomainDumpError
-
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
     FilteredModelIteratorBuilder,
     ManyFilters,
     MultimediaBlobMetaFilter,
     SimpleFilter,
-    UniqueFilteredModelIteratorBuilder,
     UnfilteredModelIteratorBuilder,
+    UniqueFilteredModelIteratorBuilder,
     UserIDFilter,
     UsernameFilter,
 )
@@ -368,6 +367,7 @@ def get_apps_and_models(app_or_model_label):
             except LookupError:
                 from corehq.util.couch import get_document_class_by_doc_type
                 from corehq.util.exceptions import DocumentClassNotFound
+
                 # ignore this if it's a couch doc type
                 try:
                     get_document_class_by_doc_type(label)

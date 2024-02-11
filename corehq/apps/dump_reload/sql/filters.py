@@ -7,6 +7,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.dump_reload.couch.dump import DOC_PROVIDERS_BY_DOC_TYPE
+from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
     get_db_aliases_for_partitioned_query,
@@ -130,10 +131,15 @@ class MultimediaBlobMetaFilter(IDFilter):
         for doc_class, doc_ids in multimedia_provider.get_doc_ids(domain_name):
             couch_db = doc_class.get_db()
             for doc in iter_docs(couch_db, doc_ids):
+                # BlobMeta is partitioned by parent_id, which is the CommCareMultimedia id
                 db_for_meta = get_db_alias_for_partitioned_doc(doc['_id'])
-                for blob_meta in doc['external_blobs'].values():
-                    self.ids_by_db[db_for_meta].append(blob_meta['blobmeta_id'])
-
+                # wrapping ensures consistent interface for obtaining key attr from blob metas
+                obj = doc_class.get_doc_class(doc['doc_type']).wrap(doc)
+                for name, blob_meta in obj.blobs.items():
+                    meta = BlobMeta.objects.partitioned_query(doc["_id"]).get(
+                        parent_id=doc["_id"], key=blob_meta["key"]
+                    )
+                    self.ids_by_db[db_for_meta].append(meta.pk)
         return self.ids_by_db[db_alias]
 
 
