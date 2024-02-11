@@ -1,9 +1,12 @@
 from abc import ABCMeta, abstractmethod
 
 from django.db.models import Q
-from corehq.util.queries import queryset_to_iterator
 
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.dump_reload.couch.dump import DOC_PROVIDERS_BY_DOC_TYPE
+from corehq.util.queries import queryset_to_iterator
 
 
 class DomainFilter(metaclass=ABCMeta):
@@ -89,6 +92,24 @@ class UserIDFilter(IDFilter):
     def get_ids(self, domain_name):
         from corehq.apps.users.dbaccessors import get_all_user_ids_by_domain
         return get_all_user_ids_by_domain(domain_name, include_web_users=self.include_web_users)
+
+
+class MultimediaBlobMetaFilter(IDFilter):
+    """
+    BlobMeta for multimedia references the "<shared>" domain which is not the domain being dumped.
+    This borrows from the same logic used in ``run_blob_export`` by the ``ExportMultimedia`` exporter.
+    """
+    def __init__(self):
+        # 'id' is used in query (e.g., ...filter(id__in=blobmeta_ids))
+        super().__init__('id', None)
+
+    def get_ids(self, domain_name):
+        multimedia_provider = DOC_PROVIDERS_BY_DOC_TYPE['CommCareMultimedia']
+        for doc_class, doc_ids in multimedia_provider.get_doc_ids(domain_name):
+            couch_db = doc_class.get_db()
+            for doc in iter_docs(couch_db, doc_ids):
+                for blob_meta in doc['external_blobs'].values():
+                    yield blob_meta['blobmeta_id']
 
 
 class UnfilteredModelIteratorBuilder(object):
