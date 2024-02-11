@@ -591,7 +591,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         required=False,
     )
     enable_user_deactivation = forms.BooleanField(
-        required=False, 
+        required=False,
         label=gettext_lazy("Auto-Deactivation"),
         help_text=gettext_lazy(
             "This option ensures any authorization provided by CommCare "
