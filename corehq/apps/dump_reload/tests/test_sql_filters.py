@@ -3,6 +3,7 @@ from django.test import TestCase
 from corehq.apps.dump_reload.sql.filters import MultimediaBlobMetaFilter
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.blobs.models import BlobMeta
+from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
@@ -58,5 +59,7 @@ class TestMultimediaBlobMetaFilter(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.db = TemporaryFilesystemBlobDB()
+        cls.addClassCleanup(cls.db.close)
         cls.domain = 'test-multimedia'
         cls.db_alias = get_db_aliases_for_partitioned_query()[0]

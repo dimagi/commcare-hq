@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from collections import defaultdict
 
 from django.db.models import Q
 
@@ -6,6 +7,10 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.dump_reload.couch.dump import DOC_PROVIDERS_BY_DOC_TYPE
+from corehq.sql_db.util import (
+    get_db_alias_for_partitioned_doc,
+    get_db_aliases_for_partitioned_query,
+)
 from corehq.util.queries import queryset_to_iterator
 
 
@@ -102,14 +107,34 @@ class MultimediaBlobMetaFilter(IDFilter):
     def __init__(self):
         # 'id' is used in query (e.g., ...filter(id__in=blobmeta_ids))
         super().__init__('id', None)
+        self.ids_by_db = None
+
+    def count(self, domain_name):
+        count = 0
+        for db in get_db_aliases_for_partitioned_query():
+            count += len(self.get_ids(domain_name, db_alias=db))
+        return count
 
     def get_ids(self, domain_name, db_alias=None):
+        """
+        Rather than redo work for each db shard, the first time this is called it collects the blobmeta ids
+        for every db shard, and is ready to return the list on the next call. This does mean the map is held
+        in memory, but it only stores BlobMeta primary keys, and it doesn't seem likely that a domain will
+        have an unmanageable number of multimedia blobs.
+        """
+        if self.ids_by_db:
+            return self.ids_by_db[db_alias]
+
+        self.ids_by_db = defaultdict(list)
         multimedia_provider = DOC_PROVIDERS_BY_DOC_TYPE['CommCareMultimedia']
         for doc_class, doc_ids in multimedia_provider.get_doc_ids(domain_name):
             couch_db = doc_class.get_db()
             for doc in iter_docs(couch_db, doc_ids):
+                db_for_meta = get_db_alias_for_partitioned_doc(doc['_id'])
                 for blob_meta in doc['external_blobs'].values():
-                    yield blob_meta['blobmeta_id']
+                    self.ids_by_db[db_for_meta].append(blob_meta['blobmeta_id'])
+
+        return self.ids_by_db[db_alias]
 
 
 class UnfilteredModelIteratorBuilder(object):
