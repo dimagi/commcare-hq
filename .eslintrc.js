@@ -1,5 +1,6 @@
 /* global module */
 // http://eslint.org/
+'use strict';
 module.exports = {
     "extends": "eslint:recommended",
 
