@@ -153,7 +153,7 @@
 
       <hr/>
       <div id="toggle_editing_ko">
-        <div data-bind="saveButton: saveButton"></div>
+        <div data-bind="saveButton: saveButtonTop"></div>
         {% if is_random_editable %}
           <div class="input-group">
             <label for="randomness-edit">Randomness Level: </label>
@@ -200,6 +200,7 @@
             </button>
           {% endfor %}
         {% endif %}
+        <div data-bind="saveButton: saveButtonBottom"></div>
       </div>
     </div>
   </div>

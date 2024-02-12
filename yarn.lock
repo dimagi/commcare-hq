@@ -5706,12 +5706,11 @@ ws@8.5.0:
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.5.0.tgz#bfb4be96600757fe5382de12c670dab984a1ed4f"
   integrity sha512-BWX0SWVgLPzYwF8lTzEy1egjhS4S4OEAHfsO8o65WOVsrnSRGaSiUaa9e0ggGlkMTtBlmOpEXiie9RUcBO86qg==
 
-xpath@dimagi/js-xpath#v0.0.7:
-  version "0.0.7"
-  resolved "https://codeload.github.com/dimagi/js-xpath/tar.gz/cc482ce3cd8635ce311d9b4c82dba24998492a46"
+xpath@dimagi/js-xpath#v0.0.8:
+  version "0.0.8"
+  resolved "https://codeload.github.com/dimagi/js-xpath/tar.gz/54f9c68235a84de3cbd1360d840c51d013ddb110"
   dependencies:
     biginteger "^1.0.3"
-    yarn "1.22.10"
 
 xtend@^4.0.0, xtend@^4.0.1, xtend@^4.0.2:
   version "4.0.2"
@@ -5780,11 +5779,6 @@ yargs@^15.4.1:
     which-module "^2.0.0"
     y18n "^4.0.0"
     yargs-parser "^18.1.2"
-
-yarn@1.22.10:
-  version "1.22.10"
-  resolved "https://registry.yarnpkg.com/yarn/-/yarn-1.22.10.tgz#c99daa06257c80f8fa2c3f1490724e394c26b18c"
-  integrity sha512-IanQGI9RRPAN87VGTF7zs2uxkSyQSrSPsju0COgbsKQOOXr5LtcVPeyXWgwVa0ywG3d8dg6kSYKGBuYK021qeA==
 
 yauzl@^2.10.0:
   version "2.10.0"
