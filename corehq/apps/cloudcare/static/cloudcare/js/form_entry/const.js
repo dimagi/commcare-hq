@@ -36,6 +36,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         ETHIOPIAN: 'ethiopian',
         SIGNATURE: 'signature',
         PER_ROW: '-per-row',
+        PER_ROW_REPEAT: '-per-row-repeat',
         TEXT_ALIGN_CENTER: 'text-align-center',
         TEXT_ALIGN_RIGHT: 'text-align-right',
         BUTTON_SELECT: 'button-select',
