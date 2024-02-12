@@ -493,8 +493,6 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
             with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
 
-                # purge_ids is not added here as it is required temporarily
-                # And setting it would require turning on inline script updates on test es docker
                 manager.reindex(
                     test_adapter.index_name, SECONDARY_INDEX,
                     wait_for_completion=True,
