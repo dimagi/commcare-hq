@@ -163,7 +163,7 @@ class GeoConfigViewTestClass(TestCase):
         self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.RADIAL_ALGORITHM)
 
     @flag_enabled('GEOSPATIAL')
-    def test_config_update__road_network_algorithm_ff_disabled(self):
+    def test_config_update__set_road_network_algorithm(self):
         self._make_post(
             self.construct_data(
                 case_property='prop1',
