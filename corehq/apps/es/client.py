@@ -150,17 +150,14 @@ class ElasticManageAdapter(BaseAdapter):
         :returns: ``dict`` of task details
         :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)
         """
-        if self.elastic_major_version == 5:
-            try:
-                task_details = self._es.tasks.get(task_id=task_id)
-                task_info = task_details['task']
-                task_info['completed'] = task_details['completed']
-            except NotFoundError as e:
-                # unknown task id provided
-                raise TaskMissing(e)
-            return task_info
-        return self._parse_task_result(self._es.tasks.list(task_id=task_id,
-                                                           detailed=True))
+        try:
+            task_details = self._es.tasks.get(task_id=task_id)
+            task_info = task_details['task']
+            task_info['completed'] = task_details['completed']
+        except NotFoundError as e:
+            # unknown task id provided
+            raise TaskMissing(e)
+        return task_info
 
     def cancel_task(self, task_id):
         """
@@ -336,7 +333,7 @@ class ElasticManageAdapter(BaseAdapter):
         :param mapping: ``dict`` mapping for the provided doc type
         """
         self._validate_single_index(index)
-        return self._es.indices.put_mapping(type_, mapping, index,
+        return self._es.indices.put_mapping(doc_type=type_, body=mapping, index=index,
                                             expand_wildcards="none")
 
     def index_get_mapping(self, index, type_):
