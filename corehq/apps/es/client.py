@@ -110,8 +110,7 @@ class ElasticManageAdapter(BaseAdapter):
         :returns: ``dict`` with format ``{<alias>: [<index>, ...], ...}``
         """
         aliases = {}
-        aliases_obj = (self._es.indices.get_aliases()
-                       if self.elastic_major_version == 2 else self._es.indices.get_alias())
+        aliases_obj = self._es.indices.get_alias()
         for index, alias_info in aliases_obj.items():
             for alias in alias_info.get("aliases", {}):
                 aliases.setdefault(alias, []).append(index)
@@ -429,7 +428,7 @@ class ElasticManageAdapter(BaseAdapter):
         """
 
         # More info on "op_type" and "version_type"
-        # https://www.elastic.co/guide/en/elasticsearch/reference/2.4/docs-reindex.html
+        # https://www.elastic.co/guide/en/elasticsearch/reference/5.6/docs-reindex.html
 
         reindex_body = {
             "source": {
@@ -801,10 +800,8 @@ class ElasticDocumentAdapter(BaseAdapter):
         """Perform the low-level (3rd party library) update operation."""
         if return_doc:
             major_version = self.elastic_major_version
-            assert major_version in {2, 5, 6, 7, 8}, self.elastic_version
-            if major_version == 2:
-                kw["fields"] = "_source"
-            elif major_version in {5, 6, 7}:
+            assert major_version in {5, 6, 7, 8}, self.elastic_version
+            if major_version in {5, 6, 7}:
                 # this changed in elasticsearch-py v5.x
                 kw["_source"] = "true"
             else:
