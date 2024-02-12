@@ -21,6 +21,9 @@
       height: @icon-height;
       line-height: @icon-height;
       font-size: @icon-height;
+      &[class*='fa-'] {
+        font-size: @icon-height * .8;
+      }
     }
     .appicon-custom {
       // the default icons have internal padding in the image itself.
