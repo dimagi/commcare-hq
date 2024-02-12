@@ -1,8 +1,9 @@
 from django.db import models
 from django.utils.translation import gettext as _
 
-from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY, ALGO_AES
 from corehq.apps.geospatial.routing_solvers import pulp
+from corehq.motech.utils import b64_aes_encrypt, b64_aes_decrypt
 
 
 class GeoPolygon(models.Model):
@@ -58,9 +59,10 @@ class GeoConfig(models.Model):
 
     selected_disbursement_algorithm = models.CharField(
         choices=VALID_DISBURSEMENT_ALGORITHMS,
-        default=ROAD_NETWORK_ALGORITHM,
+        default=RADIAL_ALGORITHM,
         max_length=50
     )
+    api_token = models.CharField(max_length=255, blank=True, null=True, db_column="api_token")
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -81,3 +83,18 @@ class GeoConfig(models.Model):
         return self.VALID_DISBURSEMENT_ALGORITHM_CLASSES[
             self.selected_disbursement_algorithm
         ]
+
+    @property
+    def plaintext_api_token(self):
+        if self.api_token and self.api_token.startswith(f'${ALGO_AES}$'):
+            ciphertext = self.api_token.split('$', 2)[2]
+            return b64_aes_decrypt(ciphertext)
+        return self.api_token
+
+    @plaintext_api_token.setter
+    def plaintext_api_token(self, value):
+        if value and not value.startswith(f'${ALGO_AES}$'):
+            ciphertext = b64_aes_encrypt(value)
+            self.api_token = f'${ALGO_AES}${ciphertext}'
+        else:
+            self.api_token = None
