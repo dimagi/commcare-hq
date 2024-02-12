@@ -3,7 +3,6 @@ import haversine
 import requests
 import pulp
 
-from django.conf import settings
 from .mapbox_optimize import validate_routing_request
 from corehq.apps.geospatial.routing_solvers.base import DisbursementAlgorithmSolverInterface
 
@@ -21,7 +20,7 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         self.user_locations = request_json['users']
         self.case_locations = request_json['cases']
 
-    def calculate_distance_matrix(self):
+    def calculate_distance_matrix(self, config):
         distance_matrix = []
         for user in self.user_locations:
             user_point = (float(user['lat']), float(user['lon']))
@@ -34,8 +33,8 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
 
         return distance_matrix
 
-    def solve(self, print_solution=False):
-        costs = self.calculate_distance_matrix()
+    def solve(self, config, print_solution=False):
+        costs = self.calculate_distance_matrix(config)
         user_count = len(costs)
         case_count = len(costs[0])
 
@@ -87,7 +86,7 @@ class RoadNetworkSolver(RadialDistanceSolver):
     Solves user-case location assignment based on driving distance
     """
 
-    def calculate_distance_matrix(self):
+    def calculate_distance_matrix(self, config):
         # Todo; support more than Mapbox limit by chunking
         if len(self.user_locations + self.case_locations) > 25:
             raise Exception("This is more than Mapbox matrix API limit (25)")
@@ -107,7 +106,7 @@ class RoadNetworkSolver(RadialDistanceSolver):
             'sources': sources,
             'destinations': destinations,
             'annotations': 'distance',
-            'access_token': settings.MAPBOX_ACCESS_TOKEN
+            'access_token': config.plaintext_api_token,
         }
 
         response = requests.get(url, params=params)

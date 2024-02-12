@@ -34,6 +34,7 @@ class GeospatialConfigForm(forms.ModelForm):
             "min_cases_per_group",
             "target_group_count",
             "selected_disbursement_algorithm",
+            "plaintext_api_token",
         ]
 
     user_location_property_name = forms.CharField(
@@ -47,7 +48,6 @@ class GeospatialConfigForm(forms.ModelForm):
         required=True,
         help_text=_("The name of the case property storing the geo-location data of your cases."),
     )
-
     selected_grouping_method = forms.ChoiceField(
         label=_("Grouping method"),
         # TODO: Add relevant documentation link to help_text when geospatial feature is GA'ed
@@ -84,17 +84,19 @@ class GeospatialConfigForm(forms.ModelForm):
         choices=DISBURSEMENT_ALGORITHM_OPTIONS,
         required=True,
     )
-    mapbox_token = forms.CharField(
+    plaintext_api_token = forms.CharField(
         label=_("Enter mapbox token"),
         help_text=_(
             "Enter your Mapbox API token here. Make sure your token has the correct scope configured"
             " for use of the Mapbox Matrix API."
         ),
         required=False,
+        widget=forms.PasswordInput(),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         if toggles.SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM.enabled(self.domain):
             choices = self.fields['selected_disbursement_algorithm'].choices
             choices.append(self.ROAD_NETWORK_ALGORITHM_OPTION)
@@ -158,8 +160,19 @@ class GeospatialConfigForm(forms.ModelForm):
                         data_bind='value: selectedAlgorithm',
                     ),
                     crispy.Div(
-                        crispy.Field('mapbox_token'),
-                        data_bind="visible: showTokenInput"
+                        crispy.Field('plaintext_api_token', data_bind="value: plaintext_api_token"),
+                        data_bind="visible: captureApiToken"
+                    ),
+                    crispy.Div(
+                        StrictButton(
+                            _('Test API Key'),
+                            type='button',
+                            css_id='test-connection-button',
+                            css_class='btn btn-default',
+                            data_bind="click: validateApiToken",
+                        ),
+                        css_class=hqcrispy.CSS_ACTION_CLASS,
+                        data_bind="visible: captureApiToken"
                     ),
                 ),
                 hqcrispy.FormActions(
@@ -195,9 +208,14 @@ class GeospatialConfigForm(forms.ModelForm):
             if not cleaned_data['target_group_count']:
                 raise ValidationError(_("Value for target group count required"))
 
-        algorithm = cleaned_data['selected_disbursement_algorithm']
-        token = cleaned_data['mapbox_token']
+        algorithm = cleaned_data.get('selected_disbursement_algorithm')
+        token = cleaned_data.get('plaintext_api_token')
         if algorithm == GeoConfig.ROAD_NETWORK_ALGORITHM and not token:
             raise ValidationError(_("Mapbox API token required"))
 
         return cleaned_data
+
+    def save(self, commit=True):
+        if self.cleaned_data.get('plaintext_api_token'):
+            self.instance.plaintext_api_token = self.cleaned_data.get('plaintext_api_token')
+        return super().save(commit)
