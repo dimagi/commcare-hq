@@ -703,7 +703,7 @@ __p+='<div class="btn-toolbar pull-left"></div>';
  } 
 __p+='\n    <div class="btn-toolbar pull-right">\n        ';
  if (isDeleteable) { 
-__p+='\n            <button type="button" class="btn btn-danger fd-button-remove"  tabindex="-1">\n                <i class="fa fa-trash-o"></i> '+
+__p+='\n            <button type="button" class="btn btn-danger fd-button-remove"  tabindex="-1">\n                <i class="fa-regular fa-trash-can"></i> '+
 ((__t=(gettext("Delete")))==null?'':_.escape(__t))+
 '\n            </button>\n        ';
  } 
@@ -3232,7 +3232,7 @@ define("json/json!langCodes", function(){ return [
         "three": "wak"
     },
     {
-        "names": ["Wolaytta"],
+        "names": ["Walamo", "Wolaytta"],
         "two": "",
         "three": "wal"
     },
@@ -23528,7 +23528,7 @@ define('vellum/richText',[
                     };
                 } else if (form.hasValidHashtagPrefix(form.normalizeHashtag(xpath))) {
                     return {
-                        classes: ['label-datanode-external-unknown', 'fa fa-exclamation-triangle']
+                        classes: ['label-datanode-external-unknown', 'fa-solid fa-triangle-exclamation']
                     };
                 }
             }
@@ -26500,6 +26500,18 @@ define('vellum/mugs',[
         }
     });
 
+    var MicroImage = util.extend(Audio, {
+        typeName: gettext('Micro-Image'),
+        isTypeChangeable: false,
+        icon: 'fa fa-camera',
+        tagName: 'input',
+        mediaType: "image/*", /* */
+        init: function (mug, form) {
+            Audio.init(mug, form);
+            mug.p.appearance = "micro-image";
+        }
+    });
+
     var Video = util.extend(Audio, {
         typeName: gettext('Video Capture'),
         icon: 'fa fa-video-camera',
@@ -26526,7 +26538,7 @@ define('vellum/mugs',[
     var Geopoint = util.extend(defaultOptions, {
         typeName: gettext('GPS'),
         dataType: 'geopoint',
-        icon: 'fa fa-map-marker',
+        icon: 'fa-solid fa-location-dot',
         init: function (mug, form) {
         }
     });
@@ -26542,7 +26554,7 @@ define('vellum/mugs',[
     var Date = util.extend(defaultOptions, {
         typeName: gettext('Date'),
         dataType: 'xsd:date',
-        icon: 'fa fa-calendar',
+        icon: 'fa-solid fa-calendar-days',
         init: function (mug, form) {
         }
     });
@@ -26558,7 +26570,7 @@ define('vellum/mugs',[
     var Time = util.extend(defaultOptions, {
         typeName: gettext('Time'),
         dataType: 'xsd:time',
-        icon: 'fa fa-clock-o',
+        icon: 'fa-regular fa-clock',
         init: function (mug, form) {
         }
     });
@@ -26934,6 +26946,7 @@ define('vellum/mugs',[
                 "Geopoint": Geopoint,
                 "Group": Group,
                 "Image": Image,
+                "MicroImage": MicroImage,
                 "Int": Int,
                 "Long": Long,
                 "MSelect": MSelect,
@@ -30520,6 +30533,8 @@ define('vellum/parser',[
                                 return makeMugAdaptor('PhoneNumber')(mug, form);
                             }
                             return inputAdaptors[dataType](mug, form);
+                        } else if (appearance === 'micro-image' && form.vellum.opts().features.case_micro_image) {
+                            return makeMugAdaptor('MicroImage')(mug, form);
                         }
                     }
                     return inputAdaptors.string(mug, form);
@@ -46909,6 +46924,19 @@ define('vellum/core',[
      *              - questions: [mugType, ...]
      */
     fn.getQuestionGroups = function () {
+        let mediaGroup = {
+            group: ["Image", gettext('Multimedia Capture')],
+            questions: [
+                "Image",
+                "Audio",
+                "Video",
+                "Signature"
+            ]
+        };
+        if (this.opts().features.case_micro_image) {
+            mediaGroup.questions.push("MicroImage");
+        }
+
         return [
             {
                 group: ["Text"],
@@ -46942,15 +46970,7 @@ define('vellum/core',[
                     "FieldList"
                 ]
             },
-            {
-                group: ["Image", gettext('Multimedia Capture')],
-                questions: [
-                    "Image",
-                    "Audio",
-                    "Video",
-                    "Signature"
-                ]
-            },
+            mediaGroup,
             {
                 group: ["Trigger"],
                 questions: ["Trigger"],
@@ -47152,7 +47172,7 @@ define('vellum/core',[
             _this.data.windowManager.fullscreen = true;
             $fullScreenMenuItem.html(html.replace(new RegExp(RegExp.escape(expand)), shrink));
         }
-        $fullScreenMenuItem.find("i").toggleClass("fa-compress").toggleClass("fa-expand");
+        $fullScreenMenuItem.find("i").toggleClass("fa-down-left-and-up-right-to-center").toggleClass("fa-up-right-and-down-left-from-center");
         _this.adjustToWindow();
         if (_this.opts().windowManager.toggleFullScreenCallback) {
             _this.opts().windowManager.toggleFullScreenCallback(_this.data.windowManager.fullscreen);
@@ -47164,7 +47184,7 @@ define('vellum/core',[
         return [
             {
                 name: gettext('Expand Editor'),
-                icon: "fa fa-expand",
+                icon: "fa-solid fa-up-right-and-down-left-from-center",
                 hotkey: "Ctrl+Alt+F",
                 action: function (done) {
                     _this.toggleFullScreen();
@@ -47172,7 +47192,7 @@ define('vellum/core',[
             },
             {
                 name: gettext("Export Form Contents"),
-                icon: "fa fa-file-excel-o",
+                icon: "fa-regular fa-file-excel",
                 action: function (done) {
                     _this.showExportModal(done);
                 }
@@ -47186,7 +47206,7 @@ define('vellum/core',[
             },
             {
                 name: gettext("Form Properties"),
-                icon: "fa fa-list-alt",
+                icon: "fa-regular fa-rectangle-list",
                 action: function (done) {
                     _this.showFormPropertiesModal(done);
                 }
@@ -52337,7 +52357,7 @@ define('vellum/javaRosa/plugin',[
     jrUtil
 ) {
     var ICONS = {
-        image: 'fa fa-photo',
+        image: 'fa-regular fa-image',
         audio: 'fa fa-volume-up',
         video: 'fa fa-video-camera',
         'video-inline': 'fa fa-play',
@@ -53580,7 +53600,7 @@ define('vellum/window',[
 define('tpl/tpl!vellum/templates/external_sources_tree', ['underscore'], function (_) { return function(obj){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
 with(obj||{}){
-__p+='<div class="fd-external-sources-container">\n    <div class="fd-head fd-head-external-sources">\n        <div class="fd-head-max-indicator"><i class="fa fa-arrow-circle-o-down"></i></div>\n        <h2>'+
+__p+='<div class="fd-external-sources-container">\n    <div class="fd-head fd-head-external-sources">\n        <div class="fd-head-max-indicator"><i class="fa-regular fa-circle-down"></i></div>\n        <h2>'+
 ((__t=(gettext("App Properties")))==null?'':_.escape(__t))+
 '</h2>\n    </div>\n    <div class="fd-scrollable">\n        <div class="fd-external-resource-search">\n            <form class="form-inline">\n                <label class="control-label" for="fdExternalSearch"><i class="fa fa-search"></i></label>\n                <div class="fd-search-control">\n                    <input type="text"\n                        id="fdExternalSearch"\n                        class="form-control search-query"\n                        placeholder="'+
 ((__t=(gettext("Search...")))==null?'':_.escape(__t))+
@@ -53790,8 +53810,8 @@ define('vellum/databrowser',[
         if (pane.height() > headHeight) {
             pane.css("height", headHeight + "px");
             pane.find('.fd-head-external-sources .fd-head-max-indicator i')
-                .removeClass('fa-arrow-circle-o-down')
-                .addClass('fa-arrow-circle-o-up');
+                .removeClass('fa-circle-down')
+                .addClass('fa-circle-up');
             $(window).resize();
         } else {
             var tree = vellum.$f.find(".fd-tree"),
@@ -53799,8 +53819,8 @@ define('vellum/databrowser',[
                 height = panelHeight || tree.height() * DATABROWSER_HEIGHT;
             pane.css("height", height + "px");
             pane.find('.fd-head-external-sources .fd-head-max-indicator i')
-                .removeClass('fa-arrow-circle-o-up')
-                .addClass('fa-arrow-circle-o-down');
+                .removeClass('fa-circle-up')
+                .addClass('fa-circle-down');
             $(window).resize();
             fn.initDataBrowser(vellum);
         }
@@ -54108,7 +54128,7 @@ define('vellum/commtrack',[
                 }
                 return attrs;
             },
-            icon: 'fa fa-exchange',
+            icon: 'fa-solid fa-right-left',
             init: function (mug, form) {
                 mug.p.src = "";
                 mug.p.dest = "";
@@ -55625,7 +55645,7 @@ __p+='<div class="modal fade" id="'+
 ((__t=( mediaType ))==null?'':__t)+
 '-attribution"\n                                       rows="2"></textarea>\n                            </div>\n                        </div>\n                    </fieldset>\n                </div>\n            </div>\n            <div class="modal-footer">\n                <a class="btn btn-default" data-dismiss="modal">'+
 ((__t=(gettext("Close")))==null?'':_.escape(__t))+
-'</a>\n                <a class="btn btn-default disabled hqm-upload hqm-upload-confirm">\n                    <i class="fa fa-cloud-upload"></i> '+
+'</a>\n                <a class="btn btn-default disabled hqm-upload hqm-upload-confirm">\n                    <i class="fa-solid fa-cloud-arrow-up"></i> '+
 ((__t=(gettext("Begin Upload")))==null?'':_.escape(__t))+
 '\n                </a>\n            </div>\n        </div>\n    </div>\n</div>\n';
 }
@@ -93565,6 +93585,7 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
 
     // Stuff for processing the upload
     self.uploadParams = options.uploadParams || {};
+    self.sessionid = options.sessionid || null;
     self.licensingParams = options.licensingParams || [];
     self.uploadURL = options.uploadURL;
     self.processingURL = options.processingURL;
@@ -93811,6 +93832,14 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
                 postParams[key] = true;
             }
         }
+        var _cookie = document.cookie;
+        if (!/sessionid=/.exec(_cookie) && self.sessionid) {
+            if (_cookie) {
+                _cookie += '; ';
+            }
+            _cookie += 'sessionid=' + self.sessionid;
+        }
+        postParams['_cookie'] = _cookie;
         // With YUI 3.9 you can trigger downloads on a per file basis, but for now just keep the original behavior
         // of uploading the entire queue.
         self.uploader.uploadAll(self.uploadURL, postParams);
@@ -95024,7 +95053,7 @@ define('vellum/copy-paste',[
 define('tpl/tpl!vellum/templates/commander', ['underscore'], function (_) { return function(obj){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
 with(obj||{}){
-__p+='<div class="fd-commander">\n    <i class="fa fa-close fd-commander-close"></i>\n    <input type="text" class="form-control" placeholder="'+
+__p+='<div class="fd-commander">\n    <i class="fa-solid fa-xmark fd-commander-close"></i>\n    <input type="text" class="form-control" placeholder="'+
 ((__t=(gettext('Enter command')))==null?'':_.escape(__t))+
 '" />\n</div>\n';
 }
@@ -95675,7 +95704,7 @@ define('vellum/commcareConnect',[
                 ],
                 mugOptions: util.extend(baseMugOptions, {
                     typeName: 'Assessment Score',
-                    icon: 'fa fa-leanpub',
+                    icon: 'fa-brands fa-leanpub',
                     init: mug => {
                         mug.p.user_score = "";
                     },
