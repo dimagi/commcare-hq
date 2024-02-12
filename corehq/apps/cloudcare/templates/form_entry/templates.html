@@ -229,7 +229,13 @@
                 on: $root.forceRequiredVisible,
             }
         ">
-    <label class="caption control-label" data-bind="css: labelWidth, attr: {'for': entry.entryId}, visible: hasLabelContent">
+    <label class="caption control-label" data-bind="
+      css: labelWidth,
+      attr: {
+        id: entry.entryId + '-label',
+        'for': entry.entryId,
+      },
+      visible: hasLabelContent">
       {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
       <div data-bind="css: {
           'row': help(),
@@ -541,8 +547,12 @@
     </tr>
     </tbody>
   </table>
-  <div class="map" data-bind="attr: { id: entryId }">
-    <div class="wait" data-bind="visible: !map">{% trans "Please wait while the map loads" %}</div>
+  <div class="map" data-bind="
+    attr: {
+      'id': entryId,
+      'aria-labelledby': entryId + '-label',
+    }">
+    <div class="wait" data-bind="visible: !hasMap" >{% trans "Please wait while the map loads" %}</div>
   </div>
   <div>
     <form data-bind="submit: search">
