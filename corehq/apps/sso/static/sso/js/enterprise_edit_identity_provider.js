@@ -59,8 +59,8 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
         let remoteUserManagementClientSecretManager = function () {
             let self = {};
             self.isCancelUpdateVisible = ko.observable(false);
-            self.api_secret = "";
-            self.api_expiration_date = "";
+            self.apiSecret = "";
+            self.apiExpirationDate = "";
 
 
             self.isAPISecretVisible =  ko.observable(!initialPageData.get('api_secret_exists'));
@@ -69,8 +69,8 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
                 self.isAPISecretVisible(true);
                 self.isCancelUpdateVisible(true);
                 // Store the current API secret and expiration date before clearing them for editing.
-                self.api_expiration_date = document.getElementById('id_date_api_secret_expiration').value;
-                self.api_secret = document.getElementById('id_api_secret').value;
+                self.apiExpirationDate = document.getElementById('id_date_api_secret_expiration').value;
+                self.apiSecret = document.getElementById('id_api_secret').value;
                 document.getElementById('id_date_api_secret_expiration').value = '';
                 document.getElementById('id_api_secret').value = '';
             };
@@ -79,8 +79,8 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
                 self.isAPISecretVisible(false);
                 self.isCancelUpdateVisible(false);
                 // Restore the original values of the API secret and expiration date after canceling editing.
-                document.getElementById('id_api_secret').value = self.api_secret;
-                document.getElementById('id_date_api_secret_expiration').value = self.api_expiration_date;
+                document.getElementById('id_api_secret').value = self.apiSecret;
+                document.getElementById('id_date_api_secret_expiration').value = self.apiExpirationDate;
 
             };
             return self;
