@@ -211,6 +211,5 @@ class GeospatialConfigForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        if self.cleaned_data.get('plaintext_api_token'):
-            self.instance.plaintext_api_token = self.cleaned_data.get('plaintext_api_token')
+        self.instance.plaintext_api_token = self.cleaned_data.get('plaintext_api_token')
         return super().save(commit)
