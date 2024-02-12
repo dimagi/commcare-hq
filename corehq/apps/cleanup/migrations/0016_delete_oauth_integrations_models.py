@@ -11,9 +11,9 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL("""
-            DROP TABLE "oauth_integrations_googleapitoken" CASCADE;
-            DROP TABLE "oauth_integrations_livegooglesheetrefreshstatus" CASCADE;
-            DROP TABLE "oauth_integrations_livegooglesheetschedule" CASCADE;
+            DROP TABLE IF EXISTS "oauth_integrations_googleapitoken" CASCADE;
+            DROP TABLE IF EXISTS "oauth_integrations_livegooglesheetrefreshstatus" CASCADE;
+            DROP TABLE IF EXISTS "oauth_integrations_livegooglesheetschedule" CASCADE;
         """),
     ]
 
