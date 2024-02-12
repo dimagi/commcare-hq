@@ -189,6 +189,16 @@ class BaseConfigView(BaseDomainView):
         return obj
 
     @property
+    def config_dict(self):
+        config = model_to_dict(
+            self.config,
+            fields=GeospatialConfigForm.Meta.fields,
+        )
+        if toggles.SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM.enabled(self.domain):
+            config['plaintext_api_token'] = self.config.plaintext_api_token
+        return config
+
+    @property
     def config_form(self):
         if self.request.method == 'POST':
             return self.form_class(self.request.POST, instance=self.config)
@@ -230,10 +240,7 @@ class GeospatialConfigPage(BaseConfigView):
             data_type=CaseProperty.DataType.GPS,
         )
         context.update({
-            'config': model_to_dict(
-                self.config,
-                fields=GeospatialConfigForm.Meta.fields,
-            ),
+            'config': self.config_dict,
             'gps_case_props_deprecated_state': {
                 prop.name: prop.deprecated for prop in gps_case_props
             },
