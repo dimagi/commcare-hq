@@ -56,7 +56,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
 
         };
 
-        let remoteUserManagementClientSecretManager = function () {
+        let remoteUserManagementAPISecretManager = function () {
             let self = {};
             self.isCancelUpdateVisible = ko.observable(false);
             self.apiSecret = "";
@@ -88,7 +88,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
         };
 
         if (initialPageData.get('toggle_api_secret')) {
-            $('#idp').koApplyBindings(remoteUserManagementClientSecretManager);
+            $('#idp').koApplyBindings(remoteUserManagementAPISecretManager);
         }
 
 
