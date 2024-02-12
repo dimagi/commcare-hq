@@ -95,10 +95,11 @@ class GeoConfig(models.Model):
     def plaintext_api_token(self, value):
         if value is None:
             self.api_token = None
-        elif not isinstance(value, str):
-            raise Exception("Only string values allowed for plaintext api token")
-        elif value and not value.startswith(f'${ALGO_AES}$'):
-            ciphertext = b64_aes_encrypt(value)
-            self.api_token = f'${ALGO_AES}${ciphertext}'
         else:
-            raise Exception("Unexpected value set for plaintext api token")
+            assert isinstance(value, str), "Only string values allowed for api token"
+
+            if value and not value.startswith(f'${ALGO_AES}$'):
+                ciphertext = b64_aes_encrypt(value)
+                self.api_token = f'${ALGO_AES}${ciphertext}'
+            else:
+                raise Exception("Unexpected value set for plaintext api token")
