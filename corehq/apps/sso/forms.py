@@ -26,6 +26,7 @@ from corehq.apps.sso.models import (
 )
 from corehq.apps.sso.utils import url_helpers
 from corehq.apps.sso.utils.url_helpers import get_documentation_url
+from corehq.util.strings import get_masked_string
 
 log = logging.getLogger(__name__)
 
@@ -654,12 +655,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         ]
 
     def get_remote_user_management_fields(self):
-        def mask_api(s):
-            if len(s) <= 3:
-                return s
-            else:
-                return s[:3] + '*' * (len(s) - 3)
-        masked_api = mask_api(self.idp.api_secret)
+        masked_api = get_masked_string(self.idp.api_secret)
 
         api_secret_toggles = crispy.Div(
             crispy.HTML(
