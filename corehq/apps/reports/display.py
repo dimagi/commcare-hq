@@ -146,7 +146,15 @@ def xmlns_to_name(domain, xmlns, app_id, lang=None, separator=None, form_name=No
     return _FormType(domain, xmlns, app_id, form_name).get_label(lang, separator)
 
 
-def xmlns_to_name_case_deletion(domain, form):
+def xmlns_to_name_for_case_deletion(domain, form):
+    """
+    The difference between this function and the one above is that in the event that the form name
+    can't be found, this function will attempt to recreate the standard 3 part structure, rather than
+    defaulting to the xmlns url (form.xmlns). Currently only used in the case deletion workflow.
+
+    TODO: Confirm it returning the form.xmlns isn't necessary + confirm this is the format we want to display
+          for unknown form names in report tables and merge the two functions into one.
+    """
     form_name = xmlns_to_name(domain, form.xmlns, form.app_id)
     if form_name == form.xmlns:
         extracted_name = [

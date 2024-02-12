@@ -35,7 +35,7 @@
           <ul class="list-group">
             {% for form in case.delete_forms %}
               <li class="list-group-item">
-                <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name }} </a>
+                <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name|escapejs }} </a>
                   {% if form.is_primary %}
                     <span class="label label-default">Primary Form</span>
                   {% endif %}
@@ -70,7 +70,7 @@
             <ul class="list-group">
               {% for form in case.delete_forms %}
                 <li class="list-group-item">
-                  <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name }} </a>
+                  <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name|escapejs }} </a>
                   </h5>
                   Actions taken by this form on:
                   <ul>
@@ -107,7 +107,7 @@
               {% for form in case.affected_forms %}
                 <li class="list-group-item">
                   <i class="fa fa-file"> </i>
-                  <a href="{{ form.url }}"> {{ form.name }}
+                  <a href="{{ form.url }}"> {{ form.name|escapejs }}
                     {% if form.is_primary %}
                       <span class="label label-default">Primary Form</span>
                     {% endif %}
@@ -134,7 +134,7 @@
               {% for form in case.affected_forms %}
                 <li class="list-group-item">
                   <i class="fa fa-file"> </i>
-                  <a href="{{ form.url }}"> {{ form.name }} </a> ({{ form.actions }})
+                  <a href="{{ form.url }}"> {{ form.name|escapejs }} </a> ({{ form.actions }})
                 </li>
               {% endfor %}
             </ul>
@@ -155,7 +155,7 @@
             <ul class="list-group">
               <li class="list-group-item">
                 <i class="fa fa-file"> </i>
-                Closed by: <a href="{{ case.closing_form_url }}"> {{ case.closing_form_name }} </a>
+                Closed by: <a href="{{ case.closing_form_url }}"> {{ case.closing_form_name|escapejs }} </a>
                 {% if case.closing_form_is_primary %}
                   <span class="label label-default">Primary Form</span>
                 {% endif %}
