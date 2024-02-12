@@ -1,4 +1,4 @@
-@form-text-indent: 23px;
+@form-text-indent: 20px;
 @form-text-size: 16px;
 
 .form-container {
@@ -11,8 +11,7 @@
     padding-bottom: 30px;
 
     h1 {
-      // -8 to account for .panel-header padding
-      padding-left: @form-text-indent - 8px;
+      padding-left: @form-text-indent - 5px;
     }
   }
 
@@ -27,10 +26,6 @@
 
   .form-actions {
     margin: 30px 0 0 0;
-    &.form-group {
-      margin-left: -@form-text-indent;
-      margin-right: -@form-text-indent;
-    }
     background-color: lighten(@cc-brand-hi, 10);
     .border-bottom-radius(0);
 
@@ -52,28 +47,12 @@
     z-index: @zindex-formplayer-anchored-submit;
   }
 
-  // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
-  .row {
-      margin-left: 0px;
-      margin-right: 0px;
-    }
-
-  .question-container {
-    padding-left: @form-text-indent;
-    padding-right: @form-text-indent;
-  }
-
   .form-group {
-    margin-left: 0;
-    margin-right: 0;
+    padding-left: 25px;
+    padding-right: 20px;
     .caption.control-label {
       display: block;
     }
-  }
-
-  .group-body {
-    // to match panel
-    margin-bottom: 17px;
   }
 
   .gr.panel {
@@ -84,29 +63,14 @@
     border-radius: 0px;
   }
 
-  // line up fields with group headers. All columns use padding for spacing in between them.
-  // It is not needed/wanted at the sides
-  .col-sm-12,
-  .col-sm-11,
-  .col-sm-10,
-  .col-sm-9,
-  .col-sm-8,
-  .col-sm-7,
-  .col-sm-6,
-  .col-sm-5,
-  .col-sm-4,
-  .col-sm-3,
-  .col-sm-2,
-  .col-sm-1 {
-    &:first-child {
-      padding-left: 0;
-    }
-    &:last-child {
-      padding-right: 0;
-    }
-  }
-
   .panel-body {
+    padding-left: 5px;
+    padding-right: 5px;
+    // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
+    .row {
+      margin-left: 0px;
+      margin-right: 0px;
+    }
     @media (max-width: @screen-xs-max) {
       padding-left: 0px;
       padding-right: 0px;
@@ -131,10 +95,8 @@
     border: solid 1px @cc-neutral-mid;
     border-radius: 8px;
     margin: 2px;
-  }
-
-  .question-tile-row .group-border:not(.panel) {
-    padding: 15px !important;
+    padding-top: 5px;
+    padding-bottom: 5px;
   }
 
   .info {
@@ -145,6 +107,10 @@
     .collapsible-icon-container {
       float: left;
       margin-right: 10px;
+    }
+
+    legend {
+      padding-left: @form-text-indent + 3px;
     }
   }
 
@@ -292,6 +258,8 @@
 .question-tile-row {
   display: flex;
   align-items: start;
+  margin-left: 10px;
+  margin-right: 10px;
   * .form-group, * p, * .control-label {
     padding-top: 0px !important;
     padding-bottom: 0px !important;
