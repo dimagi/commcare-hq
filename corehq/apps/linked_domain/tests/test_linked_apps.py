@@ -525,7 +525,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         logo_refs = {
             "hq_logo_android_home": {
                 "humanized_content_length": "45.4 KB",
-                "icon_class": "fa fa-picture-o",
+                "icon_class": "fa-regular fa-image",
                 "image_size": "448 X 332 Pixels",
                 "m_id": image._id,
                 "media_type": "Image",

@@ -26,7 +26,7 @@
             {% csrf_token %}
             <a data-bind="attr: {href: downloadUrl}, visible: isDownloadReady(), click: clickDownload"
                class="btn btn-primary btn-full-width">
-              <i class="fa fa-cloud-download"></i>
+              <i class="fa-solid fa-cloud-arrow-down"></i>
               <span data-bind="visible: !isMultimediaDownload()">{% trans "Download" %}</span>
               <span data-bind="visible: isMultimediaDownload()">{% trans "Download Multimedia" %}</span>
             </a>
@@ -62,7 +62,7 @@
             </div>
           </div>
           <div class="label label-danger label-lg" data-bind="visible: progressError">
-            <i class="fa fa-exclamation-triangle"></i>
+            <i class="fa-solid fa-triangle-exclamation"></i>
             <strong>{% trans "Something went wrong!" %}</strong>
             <span data-bind="text: progressError"></span>
           </div>
