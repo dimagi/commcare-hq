@@ -15,7 +15,7 @@ from django.http import (
     JsonResponse,
 )
 from django.utils.decorators import method_decorator
-from django.utils.html import escape, format_html
+from django.utils.html import format_html
 from django.utils.translation import get_language
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -62,10 +62,10 @@ from corehq.apps.hqcase.case_deletion_utils import (
     DeleteForm,
     FormAffectedCases,
     get_all_cases_from_form,
-    get_affected_case,
-    get_ordered_case_xforms,
+    get_or_create_affected_case,
+    get_deduped_ordered_forms_for_case,
     ReopenedCase,
-    validate_case_for_deletion,
+    prepare_case_for_deletion,
 )
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.doc_info import get_form_url, get_case_url
@@ -79,7 +79,7 @@ from corehq.apps.locations.permissions import (
     user_can_access_case,
 )
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.reports.display import xmlns_to_name, xmlns_to_name_case_deletion
+from corehq.apps.reports.display import xmlns_to_name, xmlns_to_name_for_case_deletion
 from corehq.apps.reports.exceptions import TooManyCases
 from corehq.apps.reports.view_helpers import case_hierarchy_context
 from corehq.apps.reports.views import (
@@ -571,146 +571,6 @@ def close_case_view(request, domain, case_id):
     return HttpResponseRedirect(get_case_url(domain, case_id))
 
 
-MAX_CASE_COUNT = CASEBLOCK_CHUNKSIZE
-MAX_SUBCASE_DEPTH = 3
-
-
-def get_case_and_display_data(main_case_obj, domain, main_form_id=None):
-    """
-    Given a case object, recursively checks the case's related submission forms and for each form, the related
-    cases it has affected, and so on, until it goes through all related cases and their related forms.
-    This recursion is capped at the MAX_CASE_COUNT and MAX_SUBCASE_DEPTH values defined above.
-
-    :param main_case_obj: The main case object targeted for deletion. If the case deletion began from form
-    deletion, this is the first case returned while iterating through the form's case (create) updates.
-    :param main_form_id: The form_id of the form being targeted for deletion. This is only applicable if
-    a user is deleting a form that had previously created a case.
-    :return: Returns a dictionary containing the two complete list of cases and forms to reference for
-    soft deletion and 5 lists of dataclasses to be parsed by the html to show deleted, affected and reopened
-    cases and their related submission forms.
-    """
-    delete_cases = []  # list of cases to be soft deleted
-    delete_forms = []  # list of forms to be soft deleted
-
-    # For formatting the list of cases/submission forms
-    form_names = {}
-
-    delete_cases_display = []
-    form_delete_cases_display = []
-    affected_cases_display = []
-    form_affected_cases_display = []
-    reopened_cases_display = []
-
-    update_actions = [const.CASE_ACTION_INDEX,
-                      const.CASE_ACTION_UPDATE,
-                      const.CASE_ACTION_ATTACHMENT,
-                      const.CASE_ACTION_COMMTRACK,
-                      const.CASE_ACTION_REBUILD]
-
-    def walk_case_relations(case, subcase_count):
-        case = validate_case_for_deletion(case)
-        if not case:
-            return
-        if case.case_id not in delete_cases:
-            delete_cases.append(case.case_id)
-            if len(delete_cases) > MAX_CASE_COUNT or subcase_count >= MAX_SUBCASE_DEPTH:
-                raise TooManyCases("Too many cases to delete")
-            current_case = DeleteCase(name=case.name, url=get_case_url(domain, case.case_id))
-            if len(delete_cases) == 1:
-                current_case.is_primary = True
-            delete_cases_display.append(current_case)
-        xform_objs = get_ordered_case_xforms(case, domain)
-
-        # iterating through all forms that updated the case (includes archived forms)
-        for form_obj in xform_objs:
-            form_id = form_obj.form_id
-            if form_id not in delete_forms:
-                delete_forms.insert(0, form_id)
-            if form_id not in form_names:
-                form_names[form_id] = escape(xmlns_to_name_case_deletion(domain, form_obj))
-            current_form = DeleteForm(name=form_names[form_id], url=get_form_url(domain, form_id))
-            if main_form_id and form_id == main_form_id:
-                current_form.is_primary = True
-                form_delete_cases_display.append(current_case)
-                delete_cases_display.remove(current_case)
-            current_case.delete_forms.append(current_form)
-
-            touched_cases = get_all_cases_from_form(form_obj, domain)
-            case_actions = []
-
-            # iterating through all cases affected by the current form_obj
-            for touched_id in touched_cases:
-                case_obj = touched_cases[touched_id].case
-                actions = list(touched_cases[touched_id].actions)
-                if touched_id == case.case_id:
-                    case_actions.append(FormAffectedCases(is_current_case=True, actions=', '.join(actions)))
-                elif touched_id not in delete_cases:
-                    case_actions.append(FormAffectedCases(case_name=case_obj.name,
-                                                          actions=', '.join(actions)))
-                    if const.CASE_ACTION_CREATE in actions and touched_id != case.case_id:
-                        walk_case_relations(case_obj, subcase_count + 1)
-                    if const.CASE_ACTION_CLOSE in actions:
-                        reopened_cases_display.append(
-                            ReopenedCase(name=case_obj.name, url=get_case_url(domain, touched_id),
-                                         closing_form_url=get_form_url(domain, form_id),
-                                         closing_form_name=form_names[form_id],
-                                         closing_form_is_primary=current_form.is_primary))
-                    if any(action in actions for action in update_actions):
-                        affected_case = get_affected_case(domain, case_obj, affected_cases_display)
-                        affected_form = AffectedForm(name=form_names[form_id],
-                                                     url=get_form_url(domain, form_id),
-                                                     actions=', '.join(actions),
-                                                     is_primary=current_form.is_primary)
-                        if affected_form.is_primary:
-                            form_affected_cases_display.append(affected_case)
-                            affected_cases_display.remove(affected_case)
-                        affected_case.affected_forms.append(affected_form)
-            current_form.affected_cases = case_actions
-
-    walk_case_relations(main_case_obj, subcase_count=0)
-    affected_cases_display = [case for case in affected_cases_display if case.id not in delete_cases]
-    form_affected_cases_display = [case for case in form_affected_cases_display if case.id not in delete_cases]
-
-    case_has_multiple_forms = False
-    for case in form_delete_cases_display:
-        if len(case.delete_forms) > 1:
-            case_has_multiple_forms = True
-
-    return {
-        'case_delete_list': delete_cases,
-        'form_delete_list': delete_forms,
-        'delete_cases': delete_cases_display,
-        'form_delete_cases': form_delete_cases_display,
-        'affected_cases': affected_cases_display,
-        'form_affected_cases': form_affected_cases_display,
-        'reopened_cases': reopened_cases_display,
-        'has_multiple_forms': case_has_multiple_forms,
-    }
-
-
-@location_safe
-def get_cases_and_forms_for_deletion(request, domain, case_id, form_id=None):
-    case_instance = safely_get_case(request, domain, case_id, include_deleted=True)
-    try:
-        case_data = get_case_and_display_data(case_instance, domain, form_id)
-    except TooManyCases:
-        if form_id:
-            messages.error(request, _("Deleting this form would delete too many related cases. "
-                                      "Please navigate to the form's Case Changes and delete some "
-                                      "of the cases it created before attempting to delete this form."))
-        else:
-            messages.error(request, _("Deleting this case would delete too many related cases. "
-                                      "Please delete some of this cases' subcases before attempting"
-                                      "to delete this case."))
-        return {'redirect': True}
-
-    case_data.update({
-        'main_case_name': case_instance.name,
-        'redirect': False
-    })
-    return case_data
-
-
 @location_safe
 class DeleteCaseView(BaseProjectReportSectionView):
     urlname = 'soft_delete_case_view'
@@ -718,12 +578,33 @@ class DeleteCaseView(BaseProjectReportSectionView):
     template_name = 'reports/reportdata/case_delete.html'
     delete_dict = {}
 
+    MAX_CASE_COUNT = CASEBLOCK_CHUNKSIZE
+    MAX_SUBCASE_DEPTH = 3
+
+    update_actions = [const.CASE_ACTION_INDEX,
+                      const.CASE_ACTION_UPDATE,
+                      const.CASE_ACTION_ATTACHMENT,
+                      const.CASE_ACTION_COMMTRACK,
+                      const.CASE_ACTION_REBUILD]
+
+    def __init__(self):
+        self.delete_cases = []  # list of cases to be soft deleted
+        self.delete_forms = []  # list of forms to be soft deleted
+
+        # For formatting the list of cases/submission forms
+        self.form_names = {}
+        self.delete_cases_display = []
+        self.form_delete_cases_display = []
+        self.affected_cases_display = []
+        self.form_affected_cases_display = []
+        self.reopened_cases_display = []
+
     @method_decorator(require_case_view_permission)
     def dispatch(self, request, *args, **kwargs):
         if self.xform_id:
             self.template_name = 'reports/reportdata/form_case_delete.html'
             self.page_title = gettext_lazy('Delete Form and Related Cases')
-        self.delete_dict = get_cases_and_forms_for_deletion(request, self.domain, self.case_id, self.xform_id)
+        self.delete_dict = self.get_cases_and_forms_for_deletion(request, self.domain, self.case_id, self.xform_id)
         if self.delete_dict['redirect']:
             return HttpResponseRedirect(self.get_redirect_url())
         return super(DeleteCaseView, self).dispatch(request, *args, **kwargs)
@@ -757,17 +638,167 @@ class DeleteCaseView(BaseProjectReportSectionView):
         context.update(self.delete_dict)
         return context
 
+    @location_safe
+    def get_cases_and_forms_for_deletion(self, request, domain, case_id, form_id=None):
+        """
+        Given a case object, recursively checks the case's related submission forms and for each form,
+        the related cases it has affected, and so on, until it goes through all related cases and their
+        related forms. This recursion is capped at the MAX_CASE_COUNT and MAX_SUBCASE_DEPTH values defined above.
+        Updates the delete_dict dictionary with the sorted lists.
+
+        :param case_id: The main case targeted for deletion. If the case deletion began from form
+        deletion, this is the first case returned while iterating through the form's case (create) updates.
+        :param form_id: The form_id of the form being targeted for deletion. This is only applicable if
+        a user is deleting a form that had previously created a case.
+        :return: The final, updated delete_dict, with additional entries if this is a form driven deletion.
+        """
+        case_instance = safely_get_case(request, domain, case_id, include_deleted=True)
+        try:
+            case_data = self.walk_through_case_forms(case_instance, subcase_count=0)
+        except TooManyCases:
+            if form_id:
+                messages.error(request, _("Deleting this form would delete too many related cases. "
+                                          "Please navigate to the form's Case Changes and delete some "
+                                          "of the cases it created before attempting to delete this form."))
+            else:
+                messages.error(request, _("Deleting this case would delete too many related cases. "
+                                          "Please delete some of this cases' subcases before attempting"
+                                          "to delete this case."))
+            return {'redirect': True}
+
+        case_data['affected_cases'] = [case for case in case_data['affected_cases']
+                                       if case.id not in case_data['case_delete_list']]
+
+        # Reorganizing display groups for form driven case deletion
+        if form_id:
+            updated_delete_cases = case_data['delete_cases']
+            for case in case_data['delete_cases']:
+                for form in case.delete_forms:
+                    if form.is_primary:
+                        self.form_delete_cases_display.append(case)
+                        updated_delete_cases.remove(case)
+                        break
+            case_data['delete_cases'] = updated_delete_cases
+
+            updated_affected_cases = case_data['affected_cases']
+            for case in case_data['affected_cases']:
+                for form in case.affected_forms:
+                    if form.is_primary:
+                        self.form_affected_cases_display.append(case)
+                        updated_affected_cases.remove(case)
+                        break
+            case_data['affected_cases'] = updated_affected_cases
+
+        case_has_multiple_forms = False
+        for case in self.form_delete_cases_display:
+            if len(case.delete_forms) > 1:
+                case_has_multiple_forms = True
+                break
+
+        case_data.update({
+            'main_case_name': case_instance.name,
+            'redirect': False,
+            'has_multiple_forms': case_has_multiple_forms,
+            'form_delete_cases': self.form_delete_cases_display,
+            'form_affected_cases': self.form_affected_cases_display,
+        })
+        return case_data
+
+    def walk_through_case_forms(self, case, subcase_count):
+        """
+        This is the first part of the case relations walk through. Prepares the case and iterates over its xforms
+        to aggregate their contributions to this and other cases for display.
+
+        :param case: The case object chosen for deletion.
+        :param subcase_count: A variable for keeping track of how subcase layers the walk is traveling through.
+        :return: Returns a dict of the complete deletion lists and partial display lists, to be further modified
+        by get_cases_and_forms_for_deletion.
+        """
+        case = prepare_case_for_deletion(case)
+        if not case:
+            return
+        self.delete_cases.append(case.case_id)
+        if len(self.delete_cases) > self.MAX_CASE_COUNT or subcase_count >= self.MAX_SUBCASE_DEPTH:
+            raise TooManyCases("Too many cases to delete")
+        current_case = DeleteCase(id=case.case_id, name=case.name, url=get_case_url(self.domain, case.case_id))
+        if len(self.delete_cases) == 1:
+            current_case.is_primary = True
+        self.delete_cases_display.append(current_case)
+        xform_objs = get_deduped_ordered_forms_for_case(case, self.domain)
+
+        # iterating through all forms that updated the case (includes archived forms)
+        for form_obj in xform_objs:
+            form_id = form_obj.form_id
+            if form_id not in self.delete_forms:
+                self.delete_forms.insert(0, form_id)
+            if form_id not in self.form_names:
+                self.form_names[form_id] = xmlns_to_name_for_case_deletion(self.domain, form_obj)
+            current_form = DeleteForm(id=form_id, name=self.form_names[form_id],
+                                      url=get_form_url(self.domain, form_id), is_primary=form_id == self.xform_id)
+            current_form.affected_cases = self.walk_through_form_touched_cases(case.case_id,
+                                                                               form_obj, subcase_count)
+            current_case.delete_forms.append(current_form)
+
+        if subcase_count == 0:
+            return {
+                'case_delete_list': self.delete_cases,
+                'form_delete_list': self.delete_forms,
+                'delete_cases': self.delete_cases_display,
+                'affected_cases': self.affected_cases_display,
+                'reopened_cases': self.reopened_cases_display,
+            }
+
+    def walk_through_form_touched_cases(self, current_case_id, form_obj, subcase_count):
+        """
+        This is the second part of the case relations walk through. Given a form, walks through its actions
+        on various cases its made changes to and takes SOMETHING according to the action.
+
+        :param current_case_id: The case_id the form_obj belongs to.
+        :param form_obj: A XFormInstance that made changes to all cases in touched_cases.
+        :param subcase_count: This is a continuation of walk_through_case_forms and so needs the variable to
+        potentially pass into another recursion.
+        :return: A list of FormAffectedCases objects that detail how the form_obj changed them.
+        """
+        touched_cases = get_all_cases_from_form(form_obj, self.domain)
+        form_id = form_obj.form_id
+        case_actions = []
+        for touched_id in touched_cases:
+            case_obj = touched_cases[touched_id].case
+            actions = list(touched_cases[touched_id].actions)
+            if case_obj.case_id == current_case_id:
+                case_actions.append(FormAffectedCases(is_current_case=True, actions=', '.join(actions)))
+            elif case_obj.case_id not in self.delete_cases:
+                if const.CASE_ACTION_CREATE in actions and case_obj.case_id != current_case_id:
+                    self.walk_through_case_forms(case_obj, subcase_count + 1)
+                if const.CASE_ACTION_CLOSE in actions:
+                    self.reopened_cases_display.append(
+                        ReopenedCase(name=case_obj.name, url=get_case_url(self.domain, case_obj.case_id),
+                                     closing_form_url=get_form_url(self.domain, form_id),
+                                     closing_form_name=self.form_names[form_id],
+                                     closing_form_is_primary=form_id == self.xform_id))
+                if any(action in actions for action in self.update_actions):
+                    affected_case = get_or_create_affected_case(self.domain, case_obj, self.affected_cases_display)
+                    affected_form = AffectedForm(name=self.form_names[form_id],
+                                                 url=get_form_url(self.domain, form_id),
+                                                 actions=', '.join(actions),
+                                                 is_primary=form_id == self.xform_id)
+                    affected_case.affected_forms.append(affected_form)
+                case_actions.append(FormAffectedCases(case_name=case_obj.name, actions=', '.join(actions)))
+        return case_actions
+
     def get_redirect_url(self):
         if self.xform_id:
-            get_form_url(self.domain, self.xform_id)
+            return get_form_url(self.domain, self.xform_id)
         return get_case_url(self.domain, self.case_id)
 
     def post(self, request, *args, **kwargs):
         if request.POST.get('input') != self.delete_dict['main_case_name']:
-            messages.error(request, "Incorrect name. Please enter the case name as shown into the textbox.")
+            messages.error(request, _("Incorrect name. Please enter the case name as shown into the textbox."))
             return HttpResponseRedirect(self.page_url)
-        msg, error = soft_delete_cases_and_forms(request, self.domain, self.delete_dict['case_delete_list'],
-                                      self.delete_dict['form_delete_list'])
+        msg, error = soft_delete_cases_and_forms(request, self.domain,
+                                                 self.delete_dict['case_delete_list'],
+                                                 self.delete_dict['form_delete_list'],
+                                                 self.delete_dict['main_case_name'])
         if error:
             messages.error(request, msg, extra_tags='html')
             return HttpResponseRedirect(self.get_redirect_url())
@@ -780,18 +811,19 @@ class DeleteCaseView(BaseProjectReportSectionView):
 
 @location_safe
 @require_permission(HqPermissions.edit_data)
-def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_list):
+def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_list, main_case_name=None):
     error = False
-    msg = ", its related subcases and submission forms were deleted successfully."
+    msg = _("{}, its related subcases and submission forms were deleted successfully.").format(main_case_name)
     for form in form_delete_list:
         if archive_form(request, domain, form, is_case_delete=True):
+            # caching here.....
             form_instance = XFormInstance.objects.get_form(form, domain)
             form_instance.soft_delete()
         else:
             # I'm fairly certain this will never enter here but this is just in case something does go wrong
             error = True
-            msg = "The form {} could not be deleted. Please try manually archiving, then deleting the form," \
-                  "before trying to delete this case again.".format(form)
+            msg = _("The form {} could not be deleted. Please try manually archiving, then deleting the form, "
+                    "before trying to delete this case again.").format(form)
             break
     if not error:
         CommCareCase.objects.soft_delete_cases(domain, list(case_delete_list))
