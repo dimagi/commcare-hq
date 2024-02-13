@@ -452,7 +452,6 @@ USER_MAPPING = {
             "analyzer": "standard",
             "fields": {
                 "exact": {
-                    "include_in_all": False,
                     "type": "keyword"
                 }
             },

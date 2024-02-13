@@ -761,6 +761,13 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+SSO_REMOTE_USER_MANAGEMENT = StaticToggle(
+    'sso_remote_user_management',
+    "Shows remote user management fields in SSO Identity Provider Form",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 BIOMETRIC_INTEGRATION = StaticToggle(
     'biometric_integration',
     "Enables biometric integration (simprints) features.",
@@ -2713,4 +2720,12 @@ USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='The project logo replaces the CommCare logo.',
+)
+
+VELLUM_CASE_MICRO_IMAGE = StaticToggle(
+    slug='case_micro_image',
+    label='Add case micro images to case list',
+    tag=TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Add a micro image to cases in the case list.'
 )

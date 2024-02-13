@@ -13,10 +13,6 @@ from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Detail, XPathVariable, TileGroup, Style, EndpointAction
 )
-from corehq.apps.app_manager.util import (
-    module_offers_search,
-    module_uses_inline_search,
-)
 
 TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
 
@@ -132,23 +128,10 @@ class CaseTileHelper(object):
             DetailContributor.add_register_action(
                 self.app, self.module, detail.actions, self.build_profile_id, self.entries_helper)
 
-        # Add case search action if needed
         if self.detail_type.endswith('short'):
-            if module_offers_search(self.module) and not module_uses_inline_search(self.module):
-                if (case_search_action := DetailContributor.get_case_search_action(
-                    self.module,
-                    self.build_profile_id,
-                    self.detail_id
-                )) is not None:
-                    detail.actions.append(case_search_action)
-
             #  Excludes legacy tile template to preserve behavior of existing apps using this template.
             if self.detail.case_tile_template not in [CaseTileTemplates.PERSON_SIMPLE.value, CUSTOM]:
                 self._populate_sort_elements_in_detail(detail)
-
-            DetailContributor.add_no_items_text_to_detail(detail, self.app, self.detail_type, self.module)
-
-            DetailContributor.add_select_text_to_detail(detail, self.app, self.detail_type, self.module)
 
             if self.module.has_grouped_tiles():
                 detail.tile_group = TileGroup(
