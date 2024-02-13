@@ -1,5 +1,7 @@
 from attrs import define, field
 
+from django.core.cache import cache
+
 from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 
 from corehq.apps.hqwebapp.doc_info import get_case_url
@@ -9,6 +11,7 @@ from corehq.form_processor.models import CommCareCase, XFormInstance
 
 @define
 class DeleteCase:
+    id = field()
     name = field()
     url = field()
     is_primary = field(default=False)
@@ -17,6 +20,7 @@ class DeleteCase:
 
 @define
 class DeleteForm:
+    id = field()
     name = field()
     url = field()
     is_primary = field(default=False)
@@ -38,12 +42,13 @@ class AffectedCase:
     affected_forms = field(factory=list)
 
 
-def get_affected_case(domain, case, affected_cases_display):
+def get_or_create_affected_case(domain, case, affected_cases_display):
+    """Note: affected_cases_display is additionally mutated by this function"""
     for affected_case in affected_cases_display:
         if affected_case.id == case.case_id:
             return affected_case
     if not case.name:
-        case.name = get_deleted_case_name(case)
+        case.name = _get_deleted_case_name(case)
     affected_case = AffectedCase(id=case.case_id, name=case.name, url=get_case_url(domain, case.case_id))
     affected_cases_display.append(affected_case)
     return affected_case
@@ -66,38 +71,39 @@ class ReopenedCase:
     closing_form_is_primary = field(default=False)
 
 
-def get_ordered_case_xforms(case, domain):
-    # Returns deduplicated and chronologically ordered case xforms, if not already that
-    revoked_inclusive_xforms = [t.form_id for t in case.transactions if t.is_form_transaction]
-    xform_objs = [XFormInstance.objects.get_form(form_id, domain) for form_id in revoked_inclusive_xforms]
-    case_xforms = []
+def get_deduped_ordered_forms_for_case(case, domain):
+    """
+    Returns deduplicated and chronologically ordered case xforms, if not already that.
+    Returned forms are inclusive of forms from revoked CaseTransactions (necessary in order to include
+    archived forms in the deletion workflow), which the case.xform_ids method does not support.
+    """
+    revoked_inclusive_xform_ids = list({t.form_id for t in case.transactions if t.is_form_transaction})
+    xform_objs = XFormInstance.objects.get_forms(revoked_inclusive_xform_ids, domain, ordered=True)
     for xform in xform_objs:
-        if xform not in case_xforms:
-            case_xforms.append(xform)
-    case_xforms = sorted(case_xforms, key=lambda form: form.received_on)
-    return case_xforms
+        cache.set(xform.form_id, xform, 10 * 60)
+    return sorted(xform_objs, key=lambda form: form.received_on)
 
 
-def validate_case_for_deletion(case):
+def prepare_case_for_deletion(case):
     if not case.is_deleted and case.deleted_on is None:
         # Normal state - not archived nor deleted
         return case
     elif case.is_deleted and case.deleted_on is None:
         # Create form was archived > create CaseTransaction revoked > case name unassigned
-        case.name = get_deleted_case_name(case)
+        case.name = _get_deleted_case_name(case)
         return case
     elif case.deleted_on:
         # Case was deleted through the proper deletion workflow, so there's no need to delete it again
         return None
 
 
-def get_deleted_case_name(case):
+def _get_deleted_case_name(case):
     """When a case's create form is archived, its name is reset to '', so this process sets it again
     to properly display on the case deletion page, but does not save it to the case object"""
     create_form = ''
     for t in case.transactions:
         if t.is_case_create:
-            create_form = XFormInstance.objects.get_form(t.form_id)
+            create_form = cache.get(t.form_id) or XFormInstance.objects.get_form(t.form_id)
             break
     if not create_form:
         return '[Unknown Case]'
@@ -108,7 +114,7 @@ def get_deleted_case_name(case):
 
 
 def get_all_cases_from_form(form, domain):
-    # A more inclusive method of getting cases from a form, including cases whose deleted field is True
+    # Gets cases from a form, including cases whose deleted field is True
     touched_cases = {}
     case_updates = get_case_updates(form)
     for update in case_updates:

@@ -294,21 +294,6 @@ class CommCareCaseManager(RequireDBManager):
 
         return deleted_count
 
-    def hard_delete_cases_before_cutoff(self, cutoff, dry_run=True):
-        """
-        Permanently deletes cases with deleted_on set to a datetime earlier than
-        the specified cutoff datetime
-        """
-        counts = {}
-        for db_name in get_db_aliases_for_partitioned_query():
-            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
-            if dry_run:
-                deleted_counts = {'form_processor.CommCareCase': queryset.count()}
-            else:
-                deleted_counts = queryset.delete()[1]
-            counts.update(deleted_counts)
-        return counts
-
     @staticmethod
     def publish_deleted_cases(domain, case_ids):
         from ..change_publishers import publish_case_deleted
@@ -342,6 +327,18 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     closed_on = models.DateTimeField(null=True)
     closed_by = models.CharField(max_length=255, null=True)
 
+    """
+    NOTE: deleted and deleted_on currently serve 2 different purposes
+    deleted == True: the case was "unmade" as a result of archiving its create form or deleting its owner
+    deleted_on != None: the case deleted using the case deletion workflow, and eligible to be tombstoned
+
+    In summary:
+    deleted == False, deleted_on == None: Normal state, case is accessible
+    deleted == True, deleted_on == None: Archived or removed due to user deletion
+    deleted == False, deleted_on != None: Deleted through case deletion
+    deleted == True, deleted_on != None: The cases' create form was first archived, and then deleted (which
+                                         triggers the case deletion as well)
+    """
     deleted = models.BooleanField(default=False, null=False)
     deleted_on = models.DateTimeField(null=True)
     deletion_id = models.CharField(max_length=255, null=True)
