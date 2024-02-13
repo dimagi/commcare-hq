@@ -288,7 +288,7 @@ grpcio==1.54.3
     #   grpcio-status
 grpcio-status==1.54.2
     # via google-api-core
-gunicorn==20.0.4
+gunicorn==21.2.0
     # via -r base-requirements.in
 haversine==2.8.0
     # via -r base-requirements.in
@@ -387,6 +387,7 @@ packaging==23.0
     #   -r base-requirements.in
     #   build
     #   ddtrace
+    #   gunicorn
 pep517==0.10.0
     # via build
 phonenumberslite==8.12.48
@@ -693,7 +694,6 @@ pip==23.3
 setuptools==69.0.3
     # via
     #   django-websocket-redis
-    #   gunicorn
     #   opentelemetry-api
     #   pip-tools
     #   zope-event
