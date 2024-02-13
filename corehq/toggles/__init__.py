@@ -2501,7 +2501,7 @@ ABDM_INTEGRATION = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='This feature flag allows the project to use ABDM Integration.',
-    relevant_environments=settings.INDIAN_ENVIRONMENTS,
+    # relevant_environments=settings.INDIAN_ENVIRONMENTS,
     help_link='https://confluence.dimagi.com/display/IndiaDivision/ABDM+Integration',
 )
 
