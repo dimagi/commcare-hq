@@ -7,7 +7,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('es', '0006_verify_es2_indices_reindexed'),
+        ('es', '0007_init_indices_for_fresh_es_5'),
     ]
 
     operations = [
