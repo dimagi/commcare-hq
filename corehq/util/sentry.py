@@ -41,6 +41,8 @@ RATE_LIMITED_EXCEPTIONS = {
     'kafka.errors.IllegalStateError': 'kafka',
 
     'GreenletExit': 'greenletexit',
+
+    'oauthlib.oauth2.rfc6749.errors.MissingTokenError': 'repeaters',
 }
 
 
