@@ -20,11 +20,8 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.reports.standard.cases.case_data import (
     _get_case_property_tables,
-    get_case_and_display_data,
-    get_cases_and_forms_for_deletion,
+    DeleteCaseView,
     soft_delete_cases_and_forms,
-    MAX_CASE_COUNT,
-    MAX_SUBCASE_DEPTH
 )
 from corehq.apps.reports.views import archive_form
 from corehq.apps.users.models import (
@@ -158,6 +155,14 @@ class TestCaseDeletion(TestCase):
         couch_user.is_authenticated = True
         cls.request.user = couch_user
 
+    def _create_view(self, case_id, form_id=None):
+        view = DeleteCaseView()
+        view.kwargs = {'domain': self.domain, 'case_id': case_id}
+        if form_id:
+            view.kwargs['xform_id'] = form_id
+        view.request = self.request
+        return view
+
     def make_simple_case(self, scenario):
         cases = {
             'main_case_id': uuid.uuid4().hex,
@@ -167,9 +172,9 @@ class TestCaseDeletion(TestCase):
         xform, _ = submit_case_blocks([
             CaseBlock(cases['main_case_id'], create=True).as_text(),
         ], self.domain)
-        if scenario == 'simple':
-            return cases
         xforms[xform] = xform.form_id
+        if scenario == 'simple':
+            return cases, xforms
         xform, _ = submit_case_blocks([
             CaseBlock(cases['other_case_id'], case_name="other_case", create=True).as_text(),
         ], self.domain)
@@ -182,7 +187,7 @@ class TestCaseDeletion(TestCase):
         elif scenario == 'closed':
             xform, _ = submit_case_blocks([
                 CaseBlock(cases['main_case_id'], update={}).as_text(),
-                CaseBlock(cases['other_case_id'], create=False, close=True).as_text(),
+                CaseBlock(cases['other_case_id'], close=True).as_text(),
             ], self.domain)
         xforms[xform] = xform.form_id
         self.addCleanup(_delete_all_cases_and_forms, self.domain)
@@ -232,26 +237,29 @@ class TestCaseDeletion(TestCase):
     def test_case_walk_returns_correct_cases(self):
         cases, _ = self.make_complex_case()
         case = CommCareCase.objects.get_case(cases['main_case_id'], self.domain)
-        case_data = get_case_and_display_data(case, self.domain)
+        view = self._create_view(case.case_id)
+        case_data = view.walk_through_case_forms(case, subcase_count=0)
 
         self.assertItemsEqual(case_data['case_delete_list'], list(cases.values()))
 
     def test_case_walk_returns_correct_forms(self):
         cases, xforms = self.make_complex_case()
         case = CommCareCase.objects.get_case(cases['main_case_id'], self.domain)
-        case_data = get_case_and_display_data(case, self.domain)
+        view = self._create_view(case.case_id)
+        case_data = view.walk_through_case_forms(case, subcase_count=0)
 
         self.assertItemsEqual(case_data['form_delete_list'], list(xforms.values()))
 
     def test_form_list_archives_without_error(self):
         """
         Ensure that for a case with mulitple subcases, each with their own subcases, the archive_form function
-        succeeds, which means that the list of forms returned by get_cases_and_forms_for_deletion are
+        succeeds, which means that the list of forms returned by walk_through_case_forms are
         correctly ordered such that the create form for each case is the last of that case's forms to be archived.
         """
-        cases, _ = self.make_complex_case()
+        cases, xforms = self.make_complex_case()
         case = CommCareCase.objects.get_case(cases['main_case_id'], self.domain)
-        case_data = get_case_and_display_data(case, self.domain)
+        view = self._create_view(case.case_id)
+        case_data = view.walk_through_case_forms(case, subcase_count=0)
 
         for form in case_data['form_delete_list']:
             # returns True if archived successfully
@@ -260,29 +268,59 @@ class TestCaseDeletion(TestCase):
     def test_case_walk_returns_correct_affected_cases(self):
         cases, _ = self.make_simple_case(scenario='affected')
         case = CommCareCase.objects.get_case(cases['main_case_id'], self.domain)
-        case_data = get_case_and_display_data(case, self.domain)
+        view = self._create_view(case.case_id)
+        case_data = view.walk_through_case_forms(case, subcase_count=0)
 
         self.assertEqual(case_data['affected_cases'][0].name, 'other_case')
 
     def test_case_walk_returns_correct_reopened_cases(self):
         cases, _ = self.make_simple_case(scenario='closed')
         case = CommCareCase.objects.get_case(cases['main_case_id'], self.domain)
-        case_data = get_case_and_display_data(case, self.domain)
+        view = self._create_view(case.case_id)
+        case_data = view.walk_through_case_forms(case, subcase_count=0)
 
         self.assertEqual(case_data['reopened_cases'][0].name, 'other_case')
+
+    # Testing case actions retrieval
+    def test_form_touched_cases_walk_returns_correct_actions(self):
+        cases, xforms = self.make_simple_case(scenario='simple')
+        view = self._create_view(cases['main_case_id'])
+        case_actions = view.walk_through_form_touched_cases(cases['main_case_id'],
+                                                            list(xforms.keys())[0], subcase_count=0)
+        self.assertEqual(case_actions[0].actions, 'create')
+
+    def test_form_touched_cases_walk_returns_correct_update_actions(self):
+        cases, xforms = self.make_simple_case(scenario='affected')
+        view = self._create_view(cases['main_case_id'])
+        form = list(xforms.keys())[2]
+        view.form_names[form.form_id] = 'form_name'
+        case_actions = view.walk_through_form_touched_cases(cases['main_case_id'], form, subcase_count=0)
+
+        self.assertEqual(case_actions[0].actions, 'update')
+
+    def test_form_touched_cases_walk_returns_correct_close_actions(self):
+        cases, xforms = self.make_simple_case(scenario='closed')
+        view = self._create_view(cases['main_case_id'])
+        form = list(xforms.keys())[2]
+        view.form_names[form.form_id] = 'form_name'
+        case_actions = view.walk_through_form_touched_cases(cases['main_case_id'], form, subcase_count=0)
+
+        self.assertIn('close', [case_actions[0].actions, case_actions[1].actions])
 
     # Testing case data retrieval for form driven case deletion
     def test_case_walk_returns_correct_form_delete_case_list(self):
         xform, xform_case = self.make_complex_case(xform_delete=True)
-        case_data = get_case_and_display_data(xform_case, self.domain, xform.form_id)
-
+        view = self._create_view(xform_case.case_id, xform.form_id)
+        case_data = view.get_cases_and_forms_for_deletion(self.request, self.domain,
+                                                          xform_case.case_id, xform.form_id)
         self.assertTrue(case_data['form_delete_cases'][0].name, 'child_2')
         self.assertEqual(case_data['delete_cases'][0].name, 'sub2')
 
     def test_case_walk_returns_correct_form_delete_affected_list(self):
         xform, xform_case = self.make_complex_case(xform_delete=True)
-        case_data = get_case_and_display_data(xform_case, self.domain, xform.form_id)
-
+        view = self._create_view(xform_case.case_id, xform.form_id)
+        case_data = view.get_cases_and_forms_for_deletion(self.request, self.domain,
+                                                          xform_case.case_id, xform.form_id)
         self.assertEqual(case_data['form_affected_cases'][0].name, 'main_case')
 
     # Testing deletion
@@ -290,8 +328,9 @@ class TestCaseDeletion(TestCase):
         """
         Ensure that a single case with a single form is soft deleted
         """
-        cases = self.make_simple_case(scenario='simple')
-        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, cases['main_case_id'])
+        cases, _ = self.make_simple_case(scenario='simple')
+        view = self._create_view(cases['main_case_id'])
+        delete_dict = view.get_cases_and_forms_for_deletion(self.request, self.domain, cases['main_case_id'])
         soft_delete_cases_and_forms(self.request, self.domain,
                                     delete_dict['case_delete_list'], delete_dict['form_delete_list'])
 
@@ -304,8 +343,8 @@ class TestCaseDeletion(TestCase):
         forms are archived and soft deleted
         """
         cases, _ = self.make_complex_case()
-
-        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, cases['main_case_id'])
+        view = self._create_view(cases['main_case_id'])
+        delete_dict = view.get_cases_and_forms_for_deletion(self.request, self.domain, cases['main_case_id'])
         soft_delete_cases_and_forms(self.request, self.domain,
                                     delete_dict['case_delete_list'], delete_dict['form_delete_list'])
 
@@ -319,8 +358,8 @@ class TestCaseDeletion(TestCase):
         Ensure that a case with mulitple subcases, each with their own subcases are all soft deleted
         """
         cases, _ = self.make_complex_case()
-
-        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, cases['main_case_id'])
+        view = self._create_view(cases['main_case_id'])
+        delete_dict = view.get_cases_and_forms_for_deletion(self.request, self.domain, cases['main_case_id'])
         soft_delete_cases_and_forms(self.request, self.domain,
                                     delete_dict['case_delete_list'], delete_dict['form_delete_list'])
 
@@ -334,11 +373,12 @@ class TestCaseDeletion(TestCase):
         case is re-opened. This is really testing form archiving but here for completeness.
         """
         cases, _ = self.make_simple_case(scenario='closed')
+        view = self._create_view(cases['main_case_id'])
 
         other_case = CommCareCase.objects.get_case(cases['other_case_id'], self.domain)
         self.assertTrue(other_case.closed)
 
-        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, cases['main_case_id'])
+        delete_dict = view.get_cases_and_forms_for_deletion(self.request, self.domain, cases['main_case_id'])
         soft_delete_cases_and_forms(self.request, self.domain,
                                     delete_dict['case_delete_list'], delete_dict['form_delete_list'])
 
@@ -351,11 +391,12 @@ class TestCaseDeletion(TestCase):
         appear in the other case's xform_ids. This is really testing form archiving but here for completeness.
         """
         cases, xforms = self.make_simple_case(scenario='affected')
+        view = self._create_view(cases['main_case_id'])
 
         other_case = CommCareCase.objects.get_case(cases['other_case_id'], self.domain)
         self.assertEqual(len(other_case.xform_ids), 2)
 
-        delete_dict = get_cases_and_forms_for_deletion(self.request, self.domain, cases['main_case_id'])
+        delete_dict = view.get_cases_and_forms_for_deletion(self.request, self.domain, cases['main_case_id'])
         soft_delete_cases_and_forms(self.request, self.domain,
                                     delete_dict['case_delete_list'], delete_dict['form_delete_list'])
 
@@ -372,7 +413,7 @@ class TestCaseDeletion(TestCase):
         setattr(request, '_messages', FallbackStorage(request))
 
         main_case_id = uuid.uuid4().hex
-        for i in range(MAX_CASE_COUNT):
+        for i in range(DeleteCaseView.MAX_CASE_COUNT):
             child_case_id = uuid.uuid4().hex
             submit_case_blocks([
                 CaseBlock(main_case_id, create=True).as_text(),
@@ -380,7 +421,8 @@ class TestCaseDeletion(TestCase):
             ], self.domain)
         self.addCleanup(_delete_all_cases_and_forms, self.domain)
 
-        return_dict = get_cases_and_forms_for_deletion(request, self.domain, main_case_id)
+        view = self._create_view(main_case_id)
+        return_dict = view.get_cases_and_forms_for_deletion(request, self.domain, main_case_id)
         self.assertTrue(return_dict['redirect'])
 
     def test_case_deletion_errors_if_too_many_subcases(self):
@@ -391,13 +433,14 @@ class TestCaseDeletion(TestCase):
         setattr(request, 'session', 'session')
         setattr(request, '_messages', FallbackStorage(request))
 
-        cases = [uuid.uuid4().hex for i in range(MAX_SUBCASE_DEPTH + 1)]
-        for i in range(MAX_SUBCASE_DEPTH):
+        cases = [uuid.uuid4().hex for i in range(DeleteCaseView.MAX_SUBCASE_DEPTH + 1)]
+        for i in range(DeleteCaseView.MAX_SUBCASE_DEPTH):
             submit_case_blocks([
                 CaseBlock(cases[i], create=True).as_text(),
                 CaseBlock(cases[i + 1], create=True).as_text(),
             ], self.domain)
         self.addCleanup(_delete_all_cases_and_forms, self.domain)
 
-        return_dict = get_cases_and_forms_for_deletion(request, self.domain, cases[0])
+        view = self._create_view(cases[0])
+        return_dict = view.get_cases_and_forms_for_deletion(request, self.domain, cases[0])
         self.assertTrue(return_dict['redirect'])

@@ -11,6 +11,7 @@ from corehq.form_processor.models import CommCareCase, XFormInstance
 
 @define
 class DeleteCase:
+    id = field()
     name = field()
     url = field()
     is_primary = field(default=False)
@@ -19,6 +20,7 @@ class DeleteCase:
 
 @define
 class DeleteForm:
+    id = field()
     name = field()
     url = field()
     is_primary = field(default=False)
