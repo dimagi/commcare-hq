@@ -1044,6 +1044,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         EntryArrayAnswer.call(self, question, options);
         self.templateType = 'geo';
         self.map = null;
+        self.hasMap = () => !!self.map;
         self.control_width = constants.CONTROL_WIDTH;
 
         self.DEFAULT = {
