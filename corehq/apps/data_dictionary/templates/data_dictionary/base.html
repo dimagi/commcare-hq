@@ -220,8 +220,8 @@
               {% if not request.is_view_only %}
               <i class="sortable-handle fa-solid fa-up-down"></i>
               {% endif %}
-              <i class="fa ms-2"
-                data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: toggleExpanded"></i>
+              <i class="fa-solid ms-2 fa-lg"
+                data-bind="css: { 'fa-square-plus': !expanded(), 'fa-square-minus': expanded() }, click: toggleExpanded"></i>
             </div>
             <div class="row-item">
               <!-- ko if: name() == '' -->
