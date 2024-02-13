@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext as _
+from django.forms.models import model_to_dict
 
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY, ALGO_AES
 from corehq.apps.geospatial.routing_solvers import pulp
@@ -103,3 +104,21 @@ class GeoConfig(models.Model):
                 self.api_token = f'${ALGO_AES}${ciphertext}'
             else:
                 raise Exception("Unexpected value set for plaintext api token")
+
+    def as_dict(self, fields=None):
+        """
+        Returns the model as a dictionary.
+
+        :param fields: Specify the specific fields you're interested in. A value of None will return all fields.
+
+        Example usage:
+        >>> config.as_dict(fields=[])
+        {}
+        >>> config.as_dict(fields=['domain'])
+        {'domain': <value>}
+        """
+        config = model_to_dict(self, fields=fields)
+
+        if fields is None or 'plaintext_api_token' in fields:
+            config['plaintext_api_token'] = self.plaintext_api_token
+        return config

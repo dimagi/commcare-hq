@@ -2,7 +2,6 @@ import json
 
 from django.conf import settings
 from django.core.paginator import Paginator
-from django.forms.models import model_to_dict
 from django.http import (
     Http404,
     HttpResponseBadRequest,
@@ -192,15 +191,6 @@ class BaseConfigView(BaseDomainView):
         return obj
 
     @property
-    def config_dict(self):
-        config = model_to_dict(
-            self.config,
-            fields=GeospatialConfigForm.Meta.fields,
-        )
-        config['plaintext_api_token'] = self.config.plaintext_api_token
-        return config
-
-    @property
     def config_form(self):
         if self.request.method == 'POST':
             return self.form_class(self.request.POST, instance=self.config)
@@ -242,7 +232,7 @@ class GeospatialConfigPage(BaseConfigView):
             data_type=CaseProperty.DataType.GPS,
         )
         context.update({
-            'config': self.config_dict,
+            'config': self.config.as_dict(fields=GeospatialConfigForm.Meta.fields),
             'gps_case_props_deprecated_state': {
                 prop.name: prop.deprecated for prop in gps_case_props
             },
