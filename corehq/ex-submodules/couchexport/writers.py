@@ -578,7 +578,10 @@ class GeoJSONWriter(JsonExportWriter):
         features = []
         for row in data[1:]:
             try:
-                lat, lng, _, _ = row[geo_data_index].split(" ")
+                # row[geo_data_index] could look like "<lat> <lng>" or "<lat> <lng> 0 0"
+                result = row[geo_data_index].split(" ")
+                lat = result[0]
+                lng = result[1]
             except ValueError:
                 continue
             properties = {header: row[i] for i, header in enumerate(table_headers) if header != geo_property_name}
