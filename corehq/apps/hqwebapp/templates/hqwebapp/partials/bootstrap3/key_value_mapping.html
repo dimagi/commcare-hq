@@ -8,7 +8,7 @@
                             attr: {'data-order': _sortableOrder}">
         <div class="row">
           <div class="col-sm-1">
-            <i class="sortable-handle fa fa-arrows-v"></i>
+            <i class="sortable-handle fa-solid fa-up-down"></i>
           </div>
 
           <div class="col-sm-3">
@@ -128,7 +128,7 @@
                                 mediaUploadComplete: uploadComplete,
                                 click: function(){setCustomPath(); passToUploadController()}
                            }">
-      <i class="fa fa-cloud-upload"></i>
+      <i class="fa-solid fa-cloud-arrow-up"></i>
       <span data-bind="visible: isMediaMatched">{% trans 'Replace' %}</span>
       <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
     </button>
