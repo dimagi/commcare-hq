@@ -420,6 +420,8 @@ Run the following commands to run the migration and get up to date:
             print(f"Ignored {self.ignored_count} Couch documents")
         if not skip_verify:
             print(f"Found {self.diff_count} differences")
+            if not aborted:
+                print(f"\nRun again with --fixup-diffs={log_path} to resolve differences.")
         if aborted:
             sys.exit(1)
 
