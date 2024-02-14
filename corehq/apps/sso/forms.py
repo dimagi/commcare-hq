@@ -612,8 +612,8 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         label=gettext_lazy("Secret Expires On")
     )
 
-    def __init__(self, identity_provider, show_remote_user_management=False, *args, **kwargs):
-        self.show_remote_user_management = show_remote_user_management
+    def __init__(self, identity_provider, *args, **kwargs):
+        self.show_remote_user_management = kwargs.pop('show_remote_user_management')
         self.idp = identity_provider
         initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
         self.idp = identity_provider
