@@ -643,6 +643,23 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Datum ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "XPath Expression"
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
 msgid "Active"
 msgstr ""
@@ -1322,6 +1339,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Micro-Image"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Video Capture"
 msgstr ""
 
@@ -1509,10 +1530,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath Expression"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "You can drag a question into the box."
 msgstr ""
 
@@ -1641,15 +1658,15 @@ msgid "Form has validation errors."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Multimedia Capture"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Number"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Groups"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Capture"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -4116,6 +4133,10 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Loading Stopped"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js

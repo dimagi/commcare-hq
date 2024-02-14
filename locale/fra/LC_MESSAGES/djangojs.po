@@ -668,6 +668,23 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr "Valeur non reconnue"
 
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Datum ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "XPath Expression"
+msgstr "Expression de XPath"
+
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
 msgid "Active"
 msgstr "Actif"
@@ -1360,6 +1377,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#, fuzzy
+#| msgid "Image"
+msgid "Micro-Image"
+msgstr "Image"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Video Capture"
 msgstr "Enregistrement vidéo"
 
@@ -1550,10 +1573,6 @@ msgstr ""
 "pour le mode simple."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath Expression"
-msgstr "Expression de XPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "You can drag a question into the box."
 msgstr "Vous pouvez faire glisser une question dans la boîte."
 
@@ -1682,16 +1701,16 @@ msgid "Form has validation errors."
 msgstr "Le formulaire comporte des erreurs de validation."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Multimedia Capture"
+msgstr "Capture multimédia"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Number"
 msgstr "Nombre"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Groups"
 msgstr "Groupes"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Capture"
-msgstr "Capture multimédia"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Advanced"
@@ -4168,6 +4187,10 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Loading Stopped"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js

@@ -23,6 +23,7 @@ class TestESView(SimpleTestCase):
         case_info = case_adapter.get(doc_id)
         case_info.pop('inserted_at')
         case_info.pop('owner_type')
+        case_info.pop('doc_id')
         self.assertEqual(doc_ny, case_info)
         view = CaseESView(doc_ny["domain"])
         # test that the view fetches the doc by its ID as we'd expect

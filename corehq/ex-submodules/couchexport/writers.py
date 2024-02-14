@@ -245,7 +245,7 @@ class ExportWriter(object):
         """
         Close any open file references, do any cleanup.
         """
-        assert(self._isopen)
+        assert self._isopen
         self._close()
         self._isopen = False
 
@@ -554,3 +554,53 @@ class ZippedHtmlExportWriter(ZippedExportWriter):
     writer_class = HtmlFileWriter
     table_file_extension = ".html"
     format = Format.ZIPPED_HTML
+
+
+class GeoJSONWriter(JsonExportWriter):
+    format = Format.GEOJSON
+    table_file_extension = ".geojson"
+
+    @staticmethod
+    def parse_feature(coordinates, properties):
+        return {
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": coordinates},
+            "properties": properties,
+        }
+
+    def get_features(self, table, data):
+        geo_property_name = table.selected_geo_property
+        table_headers = data[0]
+        if geo_property_name not in table_headers:
+            return []
+
+        geo_data_index = table_headers.index(geo_property_name)
+        features = []
+        for row in data[1:]:
+            try:
+                # row[geo_data_index] could look like "<lat> <lng>" or "<lat> <lng> 0 0"
+                result = row[geo_data_index].split(" ")
+                lat = result[0]
+                lng = result[1]
+            except IndexError:
+                continue
+            properties = {header: row[i] for i, header in enumerate(table_headers) if header != geo_property_name}
+            features.append(self.parse_feature(
+                coordinates=[lng, lat],
+                properties=properties,
+            ))
+        return features
+
+    def _close(self):
+        feature_collections = []
+        for table, data in self.tables.items():
+            feature_collections.append(
+                self.get_features(table, data)
+            )
+        new_tables = {
+            "type": "FeatureCollection",
+            "features": feature_collections[0],
+        }
+
+        json_dump = json.dumps(new_tables, cls=self.ConstantEncoder).encode('utf-8')
+        self.file.write(json_dump)

@@ -761,6 +761,13 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+SSO_REMOTE_USER_MANAGEMENT = StaticToggle(
+    'sso_remote_user_management',
+    "Shows remote user management fields in SSO Identity Provider Form",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 BIOMETRIC_INTEGRATION = StaticToggle(
     'biometric_integration',
     "Enables biometric integration (simprints) features.",
@@ -2707,18 +2714,26 @@ DATA_DICTIONARY = FrozenPrivilegeToggle(
 )
 
 
-CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
-    slug='custom_domain_banners',
-    label='Allow projects to add banners for their users on HQ',
-    tag=TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Allow projects to add banners visible to their users on HQ on every login',
-)
-
 USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
     slug='use_logo_in_system_emails',
     label='Use the project\'s logo in emails sent from HQ',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='The project logo replaces the CommCare logo.',
+)
+
+VELLUM_CASE_MICRO_IMAGE = StaticToggle(
+    slug='case_micro_image',
+    label='Add case micro images to case list',
+    tag=TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Add a micro image to cases in the case list.'
+)
+
+SUPPORT_GEO_JSON_EXPORT = StaticToggle(
+    slug='support_geo_json_export',
+    label='Support GeoJSON export in Case Exporter',
+    tag=TAG_SOLUTIONS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='The Case Export page now supports the exporting of GeoJSON data.',
 )

@@ -110,6 +110,7 @@ accounting
  0088_add_new_softwareplan_visibility
  0089_dedupe_priv
  0090_custom_domain_alerts_priv
+ 0091_remove_custom_banner_alerts_feature_flag
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -404,6 +405,8 @@ es
  0004_make_new_indexes
  0005_add_epoch_as_valid_date_to_forms
  0006_verify_es2_indices_reindexed
+ 0007_init_indices_for_fresh_es_5
+ 0008_add_doc_id_to_all_mappings
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -1072,6 +1075,7 @@ sso
  0003_oidc_onelogin_idp_update
  0004_login_enforcement_type_sso_test_user
  0005_alter_identityprovider_idp_type
+ 0006_add_new_fields_in_identityprovider
 start_enterprise
  0001_initial
 stock

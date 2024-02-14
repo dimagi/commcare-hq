@@ -26500,6 +26500,18 @@ define('vellum/mugs',[
         }
     });
 
+    var MicroImage = util.extend(Audio, {
+        typeName: gettext('Micro-Image'),
+        isTypeChangeable: false,
+        icon: 'fa fa-camera',
+        tagName: 'input',
+        mediaType: "image/*", /* */
+        init: function (mug, form) {
+            Audio.init(mug, form);
+            mug.p.appearance = "micro-image";
+        }
+    });
+
     var Video = util.extend(Audio, {
         typeName: gettext('Video Capture'),
         icon: 'fa fa-video-camera',
@@ -26934,6 +26946,7 @@ define('vellum/mugs',[
                 "Geopoint": Geopoint,
                 "Group": Group,
                 "Image": Image,
+                "MicroImage": MicroImage,
                 "Int": Int,
                 "Long": Long,
                 "MSelect": MSelect,
@@ -30520,6 +30533,8 @@ define('vellum/parser',[
                                 return makeMugAdaptor('PhoneNumber')(mug, form);
                             }
                             return inputAdaptors[dataType](mug, form);
+                        } else if (appearance === 'micro-image' && form.vellum.opts().features.case_micro_image) {
+                            return makeMugAdaptor('MicroImage')(mug, form);
                         }
                     }
                     return inputAdaptors.string(mug, form);
@@ -46909,6 +46924,19 @@ define('vellum/core',[
      *              - questions: [mugType, ...]
      */
     fn.getQuestionGroups = function () {
+        let mediaGroup = {
+            group: ["Image", gettext('Multimedia Capture')],
+            questions: [
+                "Image",
+                "Audio",
+                "Video",
+                "Signature"
+            ]
+        };
+        if (this.opts().features.case_micro_image) {
+            mediaGroup.questions.push("MicroImage");
+        }
+
         return [
             {
                 group: ["Text"],
@@ -46942,15 +46970,7 @@ define('vellum/core',[
                     "FieldList"
                 ]
             },
-            {
-                group: ["Image", gettext('Multimedia Capture')],
-                questions: [
-                    "Image",
-                    "Audio",
-                    "Video",
-                    "Signature"
-                ]
-            },
+            mediaGroup,
             {
                 group: ["Trigger"],
                 questions: ["Trigger"],
