@@ -5,6 +5,14 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
         var constants = hqImport("cloudcare/js/form_entry/const"),
             formUI = hqImport("cloudcare/js/form_entry/form_ui");
 
+        before(function () {
+            hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", { WEB_APPS_ANCHORED_SUBMIT: false });
+        });
+
+        after(function () {
+            hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
+        });
+
         describe('TaskQueue', function () {
             var callCount,
                 flag,

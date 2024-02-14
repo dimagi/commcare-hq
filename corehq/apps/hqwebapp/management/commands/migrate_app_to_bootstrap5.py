@@ -165,6 +165,10 @@ class Command(BaseCommand):
                 changelog.append(old_line)
                 changelog.append(f"\n{SOFT_BREAK_LINE}\n{flag}\n{SOFT_BREAK_LINE}\n\n")
                 self.stdout.write("".join(changelog[-2:]))
+                self.stdout.write("\nIMPORTANT: This complex change requires MANUAL intervention."
+                                  "\n\tHitting enter DOES NOT make this change."
+                                  "\n\tThis guidance is saved to logs for reference later."
+                                  "\n\tThis file is NOT fully migrated UNTIL this issue is addressed.\n")
                 input("ENTER to continue...")
                 self.stdout.write('\n')
             if renames:
@@ -173,6 +177,8 @@ class Command(BaseCommand):
                 changelog.append("\nRENAMES\n  - " + "\n   - ".join(renames))
                 self.stdout.write("".join(changelog[-3:]))
                 changelog.append("\n\n")
+                self.stdout.write("\nIMPORTANT: Answering 'y' below will automatically make this change "
+                                  "in the Bootstrap 5 version of this file.")
                 confirm = input("\nKeep changes? [y/n] ")
                 if confirm.lower() != 'y':
                     changelog.append("CHANGES DISCARDED\n\n")
@@ -189,8 +195,9 @@ class Command(BaseCommand):
         readme_path = readme_directory / readme_filename
         with open(readme_path, 'w') as readme_file:
             readme_file.writelines(changelog)
-        self.stdout.write(f"\nRecorded changes to reference later here:"
-                          f"\n\t{readme_path}")
+        self.stdout.write(f"\nYou can reference the logs for these changes here:"
+                          f"\n\t{readme_path}"
+                          f"\n\t\tThis is IMPORTANT to take note of if you have any suggested changes!\n")
 
     def save_re_checked_file_changes(self, app_name, file_path, changed_lines, is_template):
         short_path = self.get_short_path(app_name, file_path, is_template)

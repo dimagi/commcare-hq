@@ -64,8 +64,11 @@ hqDefine("app_manager/js/details/screen", function () {
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM')) {
             baseCaseTileTemplateOptions = baseCaseTileTemplateOptions.concat([["custom", gettext("Manually configure Case Tiles")]]);
         }
+        if (self.columnKey === 'short') {
+            baseCaseTileTemplateOptions = baseCaseTileTemplateOptions.concat(options.caseTileTemplateOptions);
+        }
 
-        self.caseTileTemplateOptions = baseCaseTileTemplateOptions.concat(options.caseTileTemplateOptions);
+        self.caseTileTemplateOptions = baseCaseTileTemplateOptions;
         self.caseTileTemplateOptions = self.caseTileTemplateOptions.map(function (templateOption) {
             return {templateValue: templateOption[0], templateName: templateOption[1]};
         });
@@ -148,6 +151,21 @@ hqDefine("app_manager/js/details/screen", function () {
                 column.tileHeight(1);
                 column.tileWidth(3);
             });
+        };
+
+        // Given a column model, return a boolean indicating whether the column is on an odd
+        // or an even tab, for the sake of being able to differentiate in the case tile preview
+        // which rows go with which tab.
+        self.tabPolarity = function (column) {
+            const self = this;
+            let flag = false;
+            _.find(self.columns(), function (c) {
+                if (c.isTab) {
+                    flag = !flag;
+                }
+                return c === column;
+            });
+            return flag;
         };
 
         self.adjustTileGridArea = function (activeColumnIndex, rowDelta, columnDelta, widthDelta, heightDelta) {
