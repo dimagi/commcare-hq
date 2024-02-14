@@ -17,7 +17,6 @@
 
 {% block stylesheets %}
   {% compress css %}
-    <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
     <link rel="stylesheet" href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
   {% endcompress %}
   {% compress css %}
@@ -45,7 +44,7 @@
       </div>
 
       <section id="cloudcare-notifications" class="container notifications-container"></section>
-      <div id="menu-region" class="container ui-widget ui-widget-content">
+      <div id="menu-region" class="container">
         <div class="module-menu-container">
            {% block widget_content %}
            {% endblock %}

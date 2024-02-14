@@ -6,8 +6,8 @@ from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
 from corehq.apps.es import queries
 from corehq.apps.es.case_search import CaseSearchES, case_property_missing
-from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.apps.locations.dbaccessors import user_ids_at_locations
+from corehq.messaging.util import MessagingRuleProgressHelper
 
 DUPLICATE_LIMIT = 1000
 DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
@@ -16,8 +16,8 @@ DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
 def _get_es_filtered_case_query(domain, case, case_filter_criteria=None):
     # Import here to avoid circular import error
     from corehq.apps.data_interfaces.models import (
+        LocationFilterDefinition,
         MatchPropertyDefinition,
-        LocationFilterDefinition
     )
 
     if case_filter_criteria is None:
@@ -67,12 +67,17 @@ def case_exists_in_es(
     case_properties,
     include_closed=False,
     match_type="ALL",
-    case_filter_criteria=None
+    case_filter_criteria=None,
+    exclude_copied_cases=True,
 ):
     es = _get_es_filtered_case_query(domain, case, case_filter_criteria).size(1)
 
     if not include_closed:
         es = es.is_closed(False)
+
+    if exclude_copied_cases:
+        from corehq.apps.hqcase.case_helper import CaseCopier
+        es = es.case_property_missing(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME)
 
     es, _ = add_case_properties_to_query(es, case, case_properties, match_type)
 
@@ -88,6 +93,7 @@ def find_duplicate_case_ids(
     include_closed=False,
     match_type="ALL",
     case_filter_criteria=None,
+    exclude_copied_cases=True,
     limit=0
 ):
     if case_filter_criteria is None:
@@ -100,6 +106,10 @@ def find_duplicate_case_ids(
 
     if not include_closed:
         es = es.is_closed(False)
+
+    if exclude_copied_cases:
+        from corehq.apps.hqcase.case_helper import CaseCopier
+        es = es.case_property_missing(CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME)
 
     es, at_least_one_property_query = add_case_properties_to_query(es, case, case_properties, match_type)
 

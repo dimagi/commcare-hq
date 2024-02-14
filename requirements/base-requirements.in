@@ -11,7 +11,7 @@ csiphash
 css_inline  # USH - used for rich text messaging emails
 datadog
 ddtrace
-decorator==4.0.11  # required by django-digest
+decorator==5.1.1  # required by django-digest
 defusedxml
 diff-match-patch
 dimagi-memoized
@@ -51,7 +51,7 @@ firebase-admin  # India Division - used for FCM Push Notifications
 gevent
 google-api-python-client==2.32.0
 google-auth-httplib2==0.1.0
-google-auth-oauthlib==0.4.6
+google-auth-oauthlib==1.2.0
 greenlet
 gunicorn
 haversine  # SolTech - Used in Geospatial features
@@ -88,6 +88,7 @@ python-dateutil
 python-imap
 pyphonetics
 python-magic
+pytz
 pyjwt
 PyYAML
 hl7apy
