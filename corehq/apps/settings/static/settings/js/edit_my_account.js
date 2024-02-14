@@ -1,10 +1,8 @@
 hqDefine('settings/js/edit_my_account', [
     'jquery',
-    'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
 ], function (
-    $,
-    initialPageData
+    $
 ) {
     $(function () {
         $('#id_language').select2();

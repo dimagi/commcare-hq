@@ -3882,11 +3882,21 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
+msgid "Format \"{}\" should be used in the Case Detail not Case List."
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
 msgid "Column/Field \"{}\": Clickable Icons require a form to be configured."
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
-msgid "Case tiles may only be used for the case list (not the case details)."
+msgid "Case tiles on the case detail must be manually configured."
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
+msgid ""
+"Each row of the tile may contain fields only from a single tab. Row #{} "
+"contains fields from multiple tabs."
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
@@ -6292,6 +6302,17 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"              The case list in <a href=\"%(module_url)s\">%(module_name)s</"
+"a> uses both multi-select auto select and \"Clearing search terms resets "
+"search results\".\n"
+"              These two features are not compatible.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
 "                uses \"Display only forms\" and is also configured with\n"
 "                \"make search input available after search\". This workflow "
@@ -6519,6 +6540,28 @@ msgid ""
 "                The case list in\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
 "                has an invalid case tile configuration. Reason: "
+"%(error_reason)s\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                The case list in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                has an address popup configuration that should be moved to "
+"case detail.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                The case list in\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                has an invalid clickable icon configuration. Reason: "
 "%(error_reason)s\n"
 "              "
 msgstr ""
@@ -8690,6 +8733,10 @@ msgid "Include all related cases in search results"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Clearing search terms resets search results"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
 "\n"
 "              This is not a valid xpath expression. Check to make sure your "
@@ -9662,6 +9709,14 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 msgid "Send to"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/users/templates/users/partials/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid "SMS charges will incur."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
@@ -11383,7 +11438,7 @@ msgid "Success with warnings"
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/reports/filters/select.py corehq/motech/repeaters/const.py
+#: corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Failed"
 msgstr ""
@@ -11771,6 +11826,14 @@ msgstr ""
 msgid "The first argument to '{node.name}' must be a valid case property name"
 msgstr ""
 
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid "'match-all()' does not take any arguments"
+msgstr ""
+
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid "'match-none()' does not take any arguments"
+msgstr ""
+
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 #, python-brace-format
 msgid "Unsupported operator for use with 'subcase-count': {op}"
@@ -11973,12 +12036,12 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid ""
 "\n"
-"                  Please correct the answers below before submitting.\n"
-"                  <br>\n"
-"                  You can use the <strong><i class='fa fa-fast-forward'></i> "
+"              Please correct the answers below before submitting.\n"
+"              <br>\n"
+"              You can use the <strong><i class='fa fa-fast-forward'></i> "
 "Next Error</strong> button on the left-hand side of the screen to navigate "
 "between required fields.\n"
-"                "
+"            "
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
@@ -11992,11 +12055,11 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid ""
 "\n"
-"                  You can use this button to navigate between questions that "
-"are required but missing or that contain errors.\n"
-"                  You will also see a summary of questions that need "
-"attention at the bottom of the form.\n"
-"                "
+"              You can use this button to navigate between questions that are "
+"required but missing or that contain errors.\n"
+"              You will also see a summary of questions that need attention "
+"at the bottom of the form.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
@@ -12966,11 +13029,25 @@ msgid "Add Case Type"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "Show Deprecated Case Types"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid "Hide Deprecated Case Types"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Create a new Case Type"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "A case type with this name already exists."
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"Invalid case type name. It should start with a letter, and only contain "
+"letters, numbers, '-', and '_'"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -13054,11 +13131,23 @@ msgid "A case property with this name already exists."
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"Invalid case property name. It should start with a letter, and only contain "
+"letters, numbers, '-', and '_'"
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Add Case Property Group"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "A case property group with this name already exists."
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+msgid ""
+"Invalid case group name. It should start with a letter, and only contain "
+"letters, numbers, '-', and '_'"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -15530,10 +15619,8 @@ msgid "Action Type"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/edit_alert.html
-#, fuzzy
-#| msgid "Edit Report"
 msgid "Edit Alert"
-msgstr "Editar Relatório"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html
 #: corehq/apps/domain/views/settings.py corehq/apps/linked_domain/const.py
@@ -17894,10 +17981,8 @@ msgid "There was an error saving your alert. Please try again!"
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-#, fuzzy
-#| msgid "Project Reports"
 msgid "Edit Project Alert"
-msgstr "Relatórios do Projecto"
+msgstr ""
 
 #: corehq/apps/domain/views/settings.py
 msgid "Alert not found!"
@@ -17908,7 +17993,7 @@ msgid "Alert was removed!"
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
-msgid "Alert not updated. Only 3 active alerts allowed."
+msgid "Alert not activated. Only 3 active alerts allowed."
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
@@ -19392,7 +19477,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export_new.html
-#: corehq/apps/ota/templates/ota/advanced_prime_restore_cache.html
 msgid "More info"
 msgstr ""
 
@@ -21710,16 +21794,12 @@ msgid "Owner ID"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
-#, fuzzy
-#| msgid "Owner"
 msgid "Owner Name"
-msgstr "Proprietário"
+msgstr ""
 
 #: corehq/apps/geospatial/reports.py
-#, fuzzy
-#| msgid "# Cases Created"
 msgid "Case Coordinates"
-msgstr "# Casos Criados"
+msgstr ""
 
 #: corehq/apps/geospatial/reports.py corehq/apps/linked_domain/views.py
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
@@ -21980,11 +22060,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
-msgid "Cases Missing GPS Data"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/map_visualization.html
-msgid "Mobile Workers Missing GPS Data"
+msgid "Layers"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
@@ -22195,6 +22271,14 @@ msgid ""
 "\n"
 "            Delete Group \"%(group_name)s\"\n"
 "          "
+msgstr ""
+
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid ""
+"Send a verification SMS to this phone. When the user replies to this SMS, "
+"the phone number will be verified."
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/group_members.html
@@ -26802,20 +26886,6 @@ msgid ""
 "Something went wrong when trying to sign you in to Google. Please try again."
 msgstr ""
 
-#: corehq/apps/ota/forms.py
-msgid ""
-"For projects where mobile users manage a lot of cases (e.g. more than "
-"10,000), this tool can be used to temporarily speed up phone sync times. "
-"Once activated, it will ensure that the 'Sync with Server' functionality "
-"runs faster on the phone for 24 hours."
-msgstr ""
-
-#: corehq/apps/ota/templates/ota/advanced_prime_restore_cache.html
-msgid ""
-"Use this form to generate the restore response for users and cache the "
-"results for 24 hours."
-msgstr ""
-
 #: corehq/apps/ota/utils.py corehq/apps/users/tasks.py
 msgid ""
 "Something went wrong in creating restore for the user. Please try again or "
@@ -28071,8 +28141,8 @@ msgid ""
 "an error, please contact the system administrator."
 msgstr ""
 
-#: corehq/apps/registry/models.py corehq/apps/reports/filters/select.py
-#: corehq/apps/sms/models.py corehq/motech/repeaters/const.py
+#: corehq/apps/registry/models.py corehq/apps/sms/models.py
+#: corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Pending"
@@ -29316,16 +29386,6 @@ msgstr ""
 
 #: corehq/apps/reports/filters/select.py
 msgid "Record Status"
-msgstr ""
-
-#: corehq/apps/reports/filters/select.py
-msgid "Successful"
-msgstr ""
-
-#: corehq/apps/reports/filters/select.py corehq/motech/repeaters/const.py
-#: corehq/motech/repeaters/templates/repeaters/repeaters.html
-#: corehq/motech/repeaters/views/repeat_record_display.py
-msgid "Cancelled"
 msgstr ""
 
 #: corehq/apps/reports/filters/simple.py
@@ -34648,10 +34708,6 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
-msgid "Delete Idenetiy Provider"
-msgstr ""
-
 #: corehq/apps/sso/templates/sso/partials/manage_authenticated_email_domains.html
 msgid ""
 "\n"
@@ -35577,26 +35633,12 @@ msgid "Could not find organization with site code '%(site_code)s'"
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "Domain cannot be set to '{domain}'"
-msgstr ""
-
-#: corehq/apps/user_importer/importer.py
 msgid "Username must not contain blank spaces or special characters."
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
 msgid ""
 "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. "
-msgstr ""
-
-#: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "User with ID '{user_id}' not found"
-msgstr ""
-
-#: corehq/apps/user_importer/importer.py
-msgid "You can only set 'Is Account Confirmed' to 'False' on a new User."
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
@@ -35610,6 +35652,20 @@ msgstr ""
 msgid ""
 "The email has bounced for this user's invite. Please try again with a "
 "different username"
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
+#, python-brace-format
+msgid "Domain cannot be set to '{self.domain}'"
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
+#, python-brace-format
+msgid "User with ID '{user_id}' not found"
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
+msgid "You can only set 'Is Account Confirmed' to 'False' on a new User."
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
@@ -35731,6 +35787,15 @@ msgid ""
 "the application associated with the report was deleted. In order to view "
 "this data using the Report Builder you will have to delete this report and "
 "then build it again. Click below to delete it."
+msgstr ""
+
+#: corehq/apps/userreports/const.py
+msgid ""
+"Sorry! There was a problem trying to edit your report. This likely occurred "
+"because the form associated with this report was deleted from the "
+"application. You can go back and view historical data submitted. However, "
+"you may not edit this report again. You also have the option of deleting "
+"this report by clicking the delete button below."
 msgstr ""
 
 #: corehq/apps/userreports/const.py
@@ -38735,13 +38800,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/partials/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-msgid ""
-"Send a verification SMS to this phone. When the user replies to this SMS, "
-"the phone number will be verified."
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 msgid "Verify (retry)"
 msgstr ""
 
@@ -39109,6 +39167,10 @@ msgstr ""
 #: corehq/apps/users/views/__init__.py
 #, python-brace-format
 msgid "It appears {username} has already been removed from your project space."
+msgstr ""
+
+#: corehq/apps/users/views/__init__.py
+msgid "Update subscription to set access for custom domain alerts"
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py
@@ -42621,6 +42683,12 @@ msgstr ""
 msgid "Succeeded"
 msgstr ""
 
+#: corehq/motech/repeaters/const.py
+#: corehq/motech/repeaters/templates/repeaters/repeaters.html
+#: corehq/motech/repeaters/views/repeat_record_display.py
+msgid "Cancelled"
+msgstr ""
+
 #: corehq/motech/repeaters/expression/forms.py
 msgid ""
 "Items to add to the end of the URL. Please see the documentation for more "
@@ -42713,6 +42781,10 @@ msgstr ""
 
 #: corehq/motech/repeaters/models.py
 msgid "Forward Locations"
+msgstr ""
+
+#: corehq/motech/repeaters/models.py
+msgid "Forward Data Source Data"
 msgstr ""
 
 #: corehq/motech/repeaters/repeater_generators.py
@@ -43251,6 +43323,16 @@ msgstr ""
 #: corehq/privileges.py
 msgid "Allow case copy from one user to another"
 msgstr ""
+
+#: corehq/privileges.py
+msgid "Deduplication Rules"
+msgstr ""
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Custom Android Gateway"
+msgid "Custom domain banners"
+msgstr "Portão Android Customizado"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"

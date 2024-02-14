@@ -105,3 +105,21 @@ def _property_name_to_string(value, node):
         _(f"The first argument to '{node.name}' must be a valid case property name"),
         serialize(node)
     )
+
+
+def match_all(node, context):
+    if len(node.args):
+        raise XPathFunctionException(
+            _("'match-all()' does not take any arguments"),
+            serialize(node)
+        )
+    return filters.match_all()
+
+
+def match_none(node, context):
+    if len(node.args):
+        raise XPathFunctionException(
+            _("'match-none()' does not take any arguments"),
+            serialize(node)
+        )
+    return filters.match_none()

@@ -42,7 +42,7 @@ from corehq.apps.data_interfaces.deduplication import (
     reset_deduplicate_rule,
 )
 from corehq.apps.data_interfaces.utils import property_references_parent
-from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS
+from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS, is_copied_case
 from corehq.apps.users.util import SYSTEM_USER_ID, cached_owner_id_to_display
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
@@ -1135,6 +1135,9 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         raise ValueError(f"Unknown match type: {self.match_type}")
 
     def when_case_matches(self, case, rule):
+        if is_copied_case(case):
+            return CaseRuleActionResult()
+
         self._handle_case_duplicate_new(case, rule)
         result = self._handle_case_duplicate(case, rule)
 
