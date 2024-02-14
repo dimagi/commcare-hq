@@ -3,7 +3,7 @@
 from django.db import migrations, transaction
 from django.db.models import Q
 from corehq.sql_db.util import paginate_query
-from itertools import islice
+from dimagi.utils.chunked import chunked
 
 
 def forwards_func(apps, schema_editor):
@@ -33,15 +33,7 @@ def process_records(batch_size=500, db_alias=None):
 
 def batch_query(db_alias, model, query, batch_size):
     it = paginate_query(db_alias, model, query, query_size=batch_size)
-    return batched(it, batch_size)
-
-
-def batched(iterable, n):
-    while True:
-        batch = list(islice(iterable, n))
-        if not batch:
-            return
-        yield batch
+    return chunked(it, batch_size)
 
 
 class Migration(migrations.Migration):
