@@ -1226,19 +1226,19 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
         reset_and_backfill_deduplicate_rule(rule)
         messages.success(request, _("Successfully created deduplication rule: {}").format(rule.name))
-        self._track_rule_created(rule, _action_definition)
+        self._track_rule_created(request.couch_user.username, rule, _action_definition)
 
         return HttpResponseRedirect(
             reverse(DeduplicationRuleEditView.urlname, kwargs={"domain": self.domain, "rule_id": rule.id})
         )
 
-    def _track_rule_created(self, rule, action_definition):
+    def _track_rule_created(self, username, rule, action_definition):
         from corehq.apps.accounting.models import Subscription, SubscriptionType
         subscription = Subscription.get_active_subscription_by_domain(rule.domain)
         managed_by_saas = bool(subscription and subscription.service_type == SubscriptionType.PRODUCT)
 
         track_workflow(
-            self.request.couch_user.username,
+            username,
             'Created Dedupe Rule',
             {
                 'domain': self.domain,
