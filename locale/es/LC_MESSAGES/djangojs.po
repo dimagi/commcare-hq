@@ -1372,6 +1372,12 @@ msgstr ""
 "li><li>Grandes - 0.5 megapixeles</li></ul>"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#, fuzzy
+#| msgid "Image"
+msgid "Micro-Image"
+msgstr "Imagen"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Video Capture"
 msgstr "Captura de Video"
 
@@ -1717,16 +1723,16 @@ msgid "Form has validation errors."
 msgstr "El formulario tiene errores de validación."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Multimedia Capture"
+msgstr "Captura Multimedia"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Number"
 msgstr "Número"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Groups"
 msgstr "Grupos"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Capture"
-msgstr "Captura Multimedia"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Advanced"
@@ -4313,10 +4319,8 @@ msgid "Your search term was too long. Please provide a shorter search filter"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
-#, fuzzy
-#| msgid "Loading"
 msgid "Loading Stopped"
-msgstr "Cargando"
+msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "We were unsuccessful loading the report:"
