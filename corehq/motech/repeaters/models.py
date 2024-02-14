@@ -965,7 +965,7 @@ class RepeatRecordAttempt(DocumentSchema):
 
     @property
     def message(self):
-        return self.success_response if self.succeeded else self.failure_reason
+        return (self.success_response if self.succeeded else self.failure_reason) or ''
 
     @message.setter
     def message(self, value):

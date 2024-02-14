@@ -183,13 +183,15 @@ class TestRepeatRecordCouchToSQLDiff(BaseRepeatRecordCouchToSQLTest):
         doc["attempts"][0]["succeeded"] = True
         doc["attempts"][0]["failure_reason"] = None
         doc["attempts"][1]["datetime"] = "2020-01-01T00:00:00.000000Z"
+        doc["attempts"][1]["success_response"] = None
+        obj.attempts[1].message = ''
         couch_datetime = repr(datetime(2020, 1, 1, 0, 0))
         sql_created_at = repr(obj.attempts[1].created_at)
         self.assertEqual(
             self.diff(doc, obj),
             [
                 "attempts[0].state: couch value <State.Success: 4> != sql value <State.Fail: 2>",
-                "attempts[0].message: couch value None != sql value 'something bad happened'",
+                "attempts[0].message: couch value '' != sql value 'something bad happened'",
                 f"attempts[1].created_at: couch value {couch_datetime} != sql value {sql_created_at}",
             ],
         )
@@ -269,6 +271,15 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
         self.assertEqual(obj.attempts[0].state, models.State.Success)
         self.assertEqual(len(obj.attempts), 1)
+
+    def test_sync_attempt_with_null_message_to_sql(self):
+        doc, obj = self.create_repeat_record(unwrap_doc=False)
+        doc.save(sync_attempts=True)
+
+        doc.attempts[1].success_response = None
+        doc.save(sync_attempts=True)
+        obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
+        self.assertEqual(obj.attempts[1].message, '')
 
     def test_repeater_syncs_attempt_to_couch_on_sql_record_add_attempt(self):
         doc, obj = self.create_repeat_record(unwrap_doc=False)
@@ -374,6 +385,16 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         with templog() as log, patch.object(transaction, "atomic", atomic_check):
             call_command('populate_repeatrecords', log_path=log.path)
             self.assertIn(f"Ignored model for RepeatRecord with id {doc_id}\n", log.content)
+
+    def test_migration_with_null_attempt_message(self):
+        doc, _ = self.create_repeat_record(unwrap_doc=False)
+        doc.attempts[1].message = None
+        doc.save(sync_to_sql=False)
+        with templog() as log, patch.object(transaction, "atomic", atomic_check):
+            call_command('populate_repeatrecords', log_path=log.path)
+            self.assertNotIn('has differences:', log.content)
+        obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
+        self.assertEqual(obj.attempts[1].message, '')
 
     def test_migration_with_repeater_added_after_start(self):
         doc, obj = self.create_repeat_record(unwrap_doc=False)

@@ -163,6 +163,6 @@ def get_state(doc):
 
 ATTEMPT_TRANSFORMS = {
     "state": get_state,
-    "message": (lambda doc: doc["success_response"] if doc["succeeded"] else doc["failure_reason"]),
+    "message": (lambda doc: (doc["success_response"] if doc["succeeded"] else doc["failure_reason"]) or ''),
     "created_at": (lambda doc: string_to_utc_datetime(doc["datetime"])),
 }
