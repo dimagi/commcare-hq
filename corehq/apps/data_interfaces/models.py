@@ -1162,22 +1162,33 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             existing_duplicate = None
 
         current_hash = CaseDuplicateNew.case_and_action_to_hash(case, self)
+        case_became_closed = not self.include_closed and case.closed
 
-        # Check if the new parameters have changed.
-        if existing_duplicate and existing_duplicate.hash == current_hash:
+        if not self._case_was_modified(existing_duplicate, case_became_closed, current_hash):
             # Nothing has changed. We can stop processing here
             return CaseRuleActionResult(num_updates=0)
 
+        duplicate_ids = []
         with transaction.atomic():
             if existing_duplicate:
                 existing_duplicate.delete()
-            duplicate_ids = self._create_duplicates(case, rule, current_hash)
+
+            if not case_became_closed:
+                duplicate_ids = self._create_duplicates(case, rule, current_hash)
 
         if process_updates:
             num_updates = self._update_duplicates(duplicate_ids, case, rule)
             return CaseRuleActionResult(num_updates=num_updates)
         else:
             return CaseRuleActionResult(num_updates=0)
+
+    def _case_was_modified(self, existing_duplicate, case_became_closed, current_hash):
+        if case_became_closed:
+            return True
+
+        no_property_changes = existing_duplicate and existing_duplicate.hash == current_hash
+
+        return not no_property_changes
 
     def _create_duplicates(self, case, rule, current_hash):
         """Create any necessary duplicates for this case that don't already exist.
@@ -1220,6 +1231,11 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
 
     # OLD APPROACH -- remove when _handle_case_duplicate_new has been proven safe
     def _handle_case_duplicate(self, case, rule):
+        if case.closed and not self.include_closed:
+            # The pillow previously ignored these cases, so continue to ignore them here
+            # until we can remove this old logic
+            return CaseRuleActionResult(0)
+
         domain = case.domain
         new_duplicate_case_ids = set(_find_duplicate_case_ids(
             domain,

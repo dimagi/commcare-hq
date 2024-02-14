@@ -85,6 +85,12 @@ class CaseDeduplicationProcessor(PillowProcessor):
 
     def _has_applicable_changes(self, case_updates, rule):
         action_definition = CaseDeduplicationActionDefinition.from_rule(rule)
+        if not action_definition.include_closed:
+            # If the rule shouldn't include closed cases, then a case being closed is an actionable event
+            closes_case = any(case_update.closes_case() for case_update in case_updates)
+            if closes_case:
+                return True
+
         changed_properties_iter = (
             case_update.get_normalized_update_property_names() for case_update in case_updates
         )
