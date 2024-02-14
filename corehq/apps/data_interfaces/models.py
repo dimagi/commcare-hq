@@ -69,6 +69,7 @@ from corehq.sql_db.util import (
     paginate_query,
     paginate_query_across_partitioned_databases, create_unique_index_name,
 )
+from corehq import toggles
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
@@ -1182,7 +1183,10 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         if existing_duplicate and not duplicate_ids:
             self._track_fixed_case(case)
 
-        num_updates = self._update_duplicates(duplicate_ids, case, rule)
+        if toggles.CASE_DEDUPE_UPDATES.enabled(rule.domain):
+            num_updates = self._update_duplicates(duplicate_ids, case, rule)
+        else:
+            num_updates = 0
         return CaseRuleActionResult(num_updates=num_updates)
 
     def _case_was_modified(self, existing_duplicate, case_became_closed, current_hash):
