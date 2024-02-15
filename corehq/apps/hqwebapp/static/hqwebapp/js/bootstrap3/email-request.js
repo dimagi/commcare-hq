@@ -125,9 +125,12 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
             "modalReportIssue",
             "hqwebapp-bugReportForm"
         ));
-        $("#modalSolutionsFeatureRequest").koApplyBindings(new EmailRequest(
-            "modalSolutionsFeatureRequest",
-            "hqwebapp-requestReportForm"
-        ));
+        const featureRequestModal = $("#modalSolutionsFeatureRequest");
+        if (featureRequestModal.length) {
+            featureRequestModal.koApplyBindings(new EmailRequest(
+                "modalSolutionsFeatureRequest",
+                "hqwebapp-requestReportForm"
+            ));
+        }
     });
 });
