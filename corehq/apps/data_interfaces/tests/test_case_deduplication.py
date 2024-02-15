@@ -790,7 +790,7 @@ class CaseDeduplicationActionTest(TestCase):
         CaseDuplicateNew.objects.bulk_create(duplicate_entries)
         closed_case = self._create_case(case_id=duplicates[0].case_id, closed=True, save=False)
 
-        self.rule.run_actions_when_case_matches(closed_case)
+        self.rule.run_rule(closed_case, datetime.now())
 
         self.assertEqual(CaseDuplicateNew.objects.filter(case_id__in=duplicate_case_ids).count(), 0)
 
@@ -806,7 +806,7 @@ class CaseDeduplicationActionTest(TestCase):
         rule, action = self._create_rule(include_closed=True)
         closed_case = self._create_case(case_id=duplicates[0].case_id, closed=True, save=False)
 
-        rule.run_actions_when_case_matches(closed_case)
+        rule.run_rule(closed_case, datetime.now())
 
         self.assertEqual(CaseDuplicateNew.objects.filter(action=action, case_id__in=duplicate_case_ids).count(), 2)
 

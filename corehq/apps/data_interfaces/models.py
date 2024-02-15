@@ -334,7 +334,14 @@ class AutomaticUpdateRule(models.Model):
             return self.run_actions_when_case_does_not_match(case)
 
     def criteria_match(self, case, now):
-        if case.is_deleted or case.closed:
+        if case.is_deleted:
+            return False
+
+        # bit of a hack due to the architecture constraints.
+        # Dedupe needs to be able to consider closed cases,
+        # both for rules that process closed cases, and to be able to identify
+        # when an open case becomes closed
+        if case.closed and self.workflow != self.WORKFLOW_DEDUPLICATE:
             return False
 
         if case.type != self.case_type:
