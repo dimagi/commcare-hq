@@ -613,7 +613,11 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
     )
 
     def __init__(self, identity_provider, *args, **kwargs):
-        self.show_remote_user_management = kwargs.pop('show_remote_user_management')
+        if 'show_remote_user_management' in kwargs:
+            self.show_remote_user_management = kwargs.pop('show_remote_user_management')
+        else:
+            self.show_remote_user_management = False
+
         self.idp = identity_provider
         initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
         self.idp = identity_provider
