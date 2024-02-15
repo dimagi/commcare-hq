@@ -775,13 +775,6 @@ BIOMETRIC_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SSO_REMOTE_USER_MANAGEMENT = StaticToggle(
-    'sso_remote_user_management',
-    "Shows remote user management fields in SSO Identity Provider Form",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 ADD_USERS_FROM_LOCATION = StaticToggle(
     'add_users_from_location',
     "Allow users to add new mobile workers from the locations page",
