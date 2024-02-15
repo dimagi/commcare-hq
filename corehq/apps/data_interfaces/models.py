@@ -69,6 +69,7 @@ from corehq.sql_db.util import (
     paginate_query,
     paginate_query_across_partitioned_databases, create_unique_index_name,
 )
+from corehq import toggles
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
@@ -1138,12 +1139,12 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         if is_copied_case(case):
             return CaseRuleActionResult()
 
-        self._handle_case_duplicate_new(case, rule)
-        result = self._handle_case_duplicate(case, rule)
+        result = self._handle_case_duplicate_new(case, rule)
+        self._handle_case_duplicate(case, rule)
 
         return result
 
-    def _handle_case_duplicate_new(self, case, rule, process_updates=False):
+    def _handle_case_duplicate_new(self, case, rule):
         if not case_matching_rule_exists_in_es(case, rule):
             ALLOWED_ES_DELAY = timedelta(hours=1)
             if datetime.utcnow() - case.modified_on > ALLOWED_ES_DELAY:
@@ -1179,11 +1180,11 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             if not case_became_closed:
                 duplicate_ids = self._create_duplicates(case, rule, current_hash)
 
-        if process_updates:
+        if toggles.CASE_DEDUPE_UPDATES.enabled(rule.domain):
             num_updates = self._update_duplicates(duplicate_ids, case, rule)
-            return CaseRuleActionResult(num_updates=num_updates)
         else:
-            return CaseRuleActionResult(num_updates=0)
+            num_updates = 0
+        return CaseRuleActionResult(num_updates=num_updates)
 
     def _case_was_modified(self, existing_duplicate, case_became_closed, current_hash):
         if case_became_closed:
@@ -1262,11 +1263,8 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             if self._handle_existing_duplicates(case.case_id, new_duplicate_case_ids):
                 return CaseRuleActionResult(num_updates=0)
             CaseDuplicate.bulk_create_duplicate_relationships(self, case, new_duplicate_case_ids)
-        if self.properties_to_update:
-            num_updates = self._update_cases(domain, rule, new_duplicate_case_ids)
-        else:
-            num_updates = 0
-        return CaseRuleActionResult(num_updates=num_updates)
+
+        return CaseRuleActionResult(0)
 
     def _handle_existing_duplicates(self, case_id, new_duplicate_case_ids):
         """Handles existing duplicate objects.
