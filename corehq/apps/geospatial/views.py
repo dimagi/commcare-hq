@@ -19,6 +19,7 @@ from memoized import memoized
 from requests.exceptions import HTTPError
 
 from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.web import json_request, json_response
 
 from corehq import toggles
@@ -26,6 +27,7 @@ from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, UserES
+from corehq.apps.es.users import missing_or_empty_user_data_property
 from corehq.apps.geospatial.filters import GPSDataFilter
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.geospatial.reports import CaseManagementMap
@@ -34,8 +36,7 @@ from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
-from corehq.apps.users.dbaccessors import get_mobile_users_by_filters
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import json_error
@@ -431,17 +432,18 @@ def _get_paginated_users_without_gps(domain, page, limit, query):
 @require_GET
 @login_and_domain_required
 def get_users_with_gps(request, domain):
+    location_prop_name = get_geo_user_property(domain)
+    query = (
+        UserES()
+        .domain(domain)
+        .mobile_users()
+        .NOT(missing_or_empty_user_data_property(location_prop_name))
+    )
     selected_location_id = request.GET.get('location_id')
     if selected_location_id:
-        user_filters = {
-            'location_id': selected_location_id,
-            'selected_location_only': True,
-        }
-        users = get_mobile_users_by_filters(domain, user_filters)
-    else:
-        users = CommCareUser.by_domain(domain)
-
-    location_prop_name = get_geo_user_property(domain)
+        query = query.location(selected_location_id)
+    user_ids = query.scroll_ids()
+    users = map(CouchUser.wrap_correctly, iter_docs(CommCareUser.get_db(), user_ids))
     user_data = [
         {
             'id': user.user_id,

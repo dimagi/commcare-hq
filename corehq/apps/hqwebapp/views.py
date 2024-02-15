@@ -705,6 +705,128 @@ def jserror(request):
     return HttpResponse('')
 
 
+def _get_email_message_base(post_params, couch_user, uploaded_file, to_email):
+    report = dict([(key, post_params.get(key, '')) for key in (
+        'subject',
+        'username',
+        'domain',
+        'url',
+        'message',
+        'app_id',
+        'cc',
+        'email',
+        '500traceback',
+        'sentry_id',
+    )])
+
+    try:
+        full_name = couch_user.full_name
+        if couch_user.is_commcare_user():
+            email = report['email']
+        else:
+            email = couch_user.get_email()
+    except Exception:
+        full_name = None
+        email = report['email']
+    report['full_name'] = full_name
+    report['email'] = email or report['username']
+
+    if report['domain']:
+        domain = report['domain']
+    elif len(couch_user.domains) == 1:
+        # This isn't a domain page, but the user has only one domain, so let's use that
+        domain = couch_user.domains[0]
+    else:
+        domain = "<no domain>"
+
+    other_recipients = [el.strip() for el in report['cc'].split(",") if el]
+
+    message = (
+        f"username: {report['username']}\n"
+        f"full name: {report['full_name']}\n"
+        f"domain: {report['domain']}\n"
+        f"url: {report['url']}\n"
+        f"recipients: {', '.join(other_recipients)}\n"
+    )
+
+    domain_object = Domain.get_by_name(domain) if report['domain'] else None
+    debug_context = {
+        'datetime': datetime.utcnow(),
+        'self_started': '<unknown>',
+        'has_handoff_info': '<unknown>',
+        'project_description': '<unknown>',
+        'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL', ''), report['sentry_id'])
+    }
+    if domain_object:
+        current_project_description = domain_object.project_description if domain_object else None
+        new_project_description = post_params.get('project_description')
+        if (domain_object and couch_user.is_domain_admin(domain=domain) and new_project_description
+                and current_project_description != new_project_description):
+            domain_object.project_description = new_project_description
+            domain_object.save()
+
+        message += ((
+            "software plan: {software_plan}\n"
+        ).format(
+            software_plan=Subscription.get_subscribed_plan_by_domain(domain),
+        ))
+
+        debug_context.update({
+            'self_started': domain_object.internal.self_started,
+            'has_handoff_info': bool(domain_object.internal.partner_contact),
+            'project_description': domain_object.project_description,
+        })
+
+    subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
+
+    if full_name and not any([c in full_name for c in '<>"']):
+        reply_to = '"{full_name}" <{email}>'.format(**report)
+    else:
+        reply_to = report['email']
+
+    # if the person looks like a commcare user, fogbugz can't reply
+    # to their email, so just use the default
+    if settings.HQ_ACCOUNT_ROOT in reply_to:
+        reply_to = settings.SERVER_EMAIL
+
+    message += "Message:\n\n{message}\n".format(message=report['message'])
+    if post_params.get('five-hundred-report'):
+        extra_message = ("This message was reported from a 500 error page! "
+                         "Please fix this ASAP (as if you wouldn't anyway)...")
+        extra_debug_info = (
+            "datetime: {datetime}\n"
+            "Is self start: {self_started}\n"
+            "Has Support Hand-off Info: {has_handoff_info}\n"
+            "Project description: {project_description}\n"
+            "Sentry Error: {sentry_error}\n"
+        ).format(**debug_context)
+        traceback_info = cache.cache.get(report['500traceback']) or 'No traceback info available'
+        cache.cache.delete(report['500traceback'])
+        message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
+
+    email = EmailMessage(
+        subject=subject,
+        body=message,
+        to=[to_email],
+        headers={'Reply-To': reply_to},
+        cc=other_recipients
+    )
+
+    if uploaded_file:
+        filename = uploaded_file.name
+        content = uploaded_file.read()
+        email.attach(filename=filename, content=content)
+
+    # only fake the from email if it's an @dimagi.com account
+    is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+    if is_dimagi_email(report['username']) and not is_icds_env:
+        email.from_email = report['username']
+    else:
+        email.from_email = to_email
+
+    return email
+
+
 @method_decorator([login_required], name='dispatch')
 class BugReportView(View):
     def post(self, req, *args, **kwargs):
@@ -727,125 +849,33 @@ class BugReportView(View):
 
     @staticmethod
     def _get_email_message(post_params, couch_user, uploaded_file):
-        report = dict([(key, post_params.get(key, '')) for key in (
-            'subject',
-            'username',
-            'domain',
-            'url',
-            'message',
-            'app_id',
-            'cc',
-            'email',
-            '500traceback',
-            'sentry_id',
-        )])
-
-        try:
-            full_name = couch_user.full_name
-            if couch_user.is_commcare_user():
-                email = report['email']
-            else:
-                email = couch_user.get_email()
-        except Exception:
-            full_name = None
-            email = report['email']
-        report['full_name'] = full_name
-        report['email'] = email or report['username']
-
-        if report['domain']:
-            domain = report['domain']
-        elif len(couch_user.domains) == 1:
-            # This isn't a domain page, but the user has only one domain, so let's use that
-            domain = couch_user.domains[0]
-        else:
-            domain = "<no domain>"
-
-        other_recipients = [el.strip() for el in report['cc'].split(",") if el]
-
-        message = (
-            f"username: {report['username']}\n"
-            f"full name: {report['full_name']}\n"
-            f"domain: {report['domain']}\n"
-            f"url: {report['url']}\n"
-            f"recipients: {', '.join(other_recipients)}\n"
+        return _get_email_message_base(
+            post_params,
+            couch_user,
+            uploaded_file,
+            to_email=settings.SUPPORT_EMAIL,
         )
 
-        domain_object = Domain.get_by_name(domain) if report['domain'] else None
-        debug_context = {
-            'datetime': datetime.utcnow(),
-            'self_started': '<unknown>',
-            'has_handoff_info': '<unknown>',
-            'project_description': '<unknown>',
-            'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL', ''), report['sentry_id'])
-        }
-        if domain_object:
-            current_project_description = domain_object.project_description if domain_object else None
-            new_project_description = post_params.get('project_description')
-            if (domain_object and couch_user.is_domain_admin(domain=domain) and new_project_description
-                    and current_project_description != new_project_description):
-                domain_object.project_description = new_project_description
-                domain_object.save()
 
-            message += ((
-                "software plan: {software_plan}\n"
-            ).format(
-                software_plan=Subscription.get_subscribed_plan_by_domain(domain),
-            ))
+@method_decorator([login_required], name='dispatch')
+class SolutionsFeatureRequestView(View):
+    urlname = 'solutions_feature_request'
 
-            debug_context.update({
-                'self_started': domain_object.internal.self_started,
-                'has_handoff_info': bool(domain_object.internal.partner_contact),
-                'project_description': domain_object.project_description,
-            })
+    @property
+    def to_email_address(self):
+        return 'solutions-feedback@dimagi.com'
 
-        subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
-
-        if full_name and not any([c in full_name for c in '<>"']):
-            reply_to = '"{full_name}" <{email}>'.format(**report)
-        else:
-            reply_to = report['email']
-
-        # if the person looks like a commcare user, fogbugz can't reply
-        # to their email, so just use the default
-        if settings.HQ_ACCOUNT_ROOT in reply_to:
-            reply_to = settings.SERVER_EMAIL
-
-        message += "Message:\n\n{message}\n".format(message=report['message'])
-        if post_params.get('five-hundred-report'):
-            extra_message = ("This message was reported from a 500 error page! "
-                             "Please fix this ASAP (as if you wouldn't anyway)...")
-            extra_debug_info = (
-                "datetime: {datetime}\n"
-                "Is self start: {self_started}\n"
-                "Has Support Hand-off Info: {has_handoff_info}\n"
-                "Project description: {project_description}\n"
-                "Sentry Error: {sentry_error}\n"
-            ).format(**debug_context)
-            traceback_info = cache.cache.get(report['500traceback']) or 'No traceback info available'
-            cache.cache.delete(report['500traceback'])
-            message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
-
-        email = EmailMessage(
-            subject=subject,
-            body=message,
-            to=[settings.SUPPORT_EMAIL],
-            headers={'Reply-To': reply_to},
-            cc=other_recipients
+    def post(self, request, *args, **kwargs):
+        if not settings.IS_DIMAGI_ENVIRONMENT or not request.couch_user.is_dimagi:
+            return HttpResponse(status=400)
+        email = _get_email_message_base(
+            post_params=request.POST,
+            couch_user=request.couch_user,
+            uploaded_file=request.FILES.get('feature_request'),
+            to_email=self.to_email_address,
         )
-
-        if uploaded_file:
-            filename = uploaded_file.name
-            content = uploaded_file.read()
-            email.attach(filename=filename, content=content)
-
-        # only fake the from email if it's an @dimagi.com account
-        is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-        if is_dimagi_email(report['username']) and not is_icds_env:
-            email.from_email = report['username']
-        else:
-            email.from_email = settings.SUPPORT_EMAIL
-
-        return email
+        email.send(fail_silently=False)
+        return HttpResponse()
 
 
 def render_static(request, template, page_name):

@@ -104,6 +104,9 @@ USER_MAPPING = {
                 }
             }
         },
+        "doc_id": {
+            "type": "keyword"
+        },
         "doc_type": {
             "type": "keyword"
         },
@@ -449,7 +452,6 @@ USER_MAPPING = {
             "analyzer": "standard",
             "fields": {
                 "exact": {
-                    "include_in_all": False,
                     "type": "keyword"
                 }
             },

@@ -120,6 +120,7 @@ CASE_LIST_EXPLORER = 'case_list_explorer'
 CASE_COPY = 'case_copy'
 
 CASE_DEDUPE = 'case_deduplicate'
+CUSTOM_DOMAIN_ALERTS = 'custom_domain_alerts'
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
@@ -184,6 +185,7 @@ MAX_PRIVILEGES = [
     CASE_LIST_EXPLORER,
     CASE_COPY,
     CASE_DEDUPE,
+    CUSTOM_DOMAIN_ALERTS,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -262,4 +264,5 @@ class Titles(object):
             CASE_LIST_EXPLORER: _("Case List Explorer"),
             CASE_COPY: _("Allow case copy from one user to another"),
             CASE_DEDUPE: _("Deduplication Rules"),
+            CUSTOM_DOMAIN_ALERTS: _("Custom domain banners"),
         }.get(privilege, privilege)

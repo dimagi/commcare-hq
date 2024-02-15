@@ -1,4 +1,3 @@
-/* globals hqDefine */
 hqDefine('userreports/js/data_source_evaluator', function () {
     var dataSourceModel = function (submitUrl) {
         var self = {};
@@ -16,8 +15,7 @@ hqDefine('userreports/js/data_source_evaluator', function () {
             self.uiFeedback("");
             if (!self.documentsId()) {
                 self.uiFeedback("Please enter a document ID.");
-            }
-            else {
+            } else {
                 self.loading(true);
                 $.post({
                     url: self.submitUrl,

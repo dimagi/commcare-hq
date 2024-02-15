@@ -377,10 +377,11 @@ class LocationTypesView(BaseDomainView):
                     # to check if the name/code was swapped with another location by confirming if
                     # either name/code has changed but the current name is still present in the names/codes passed
                     if (
-                            (location_type.name != payload_loc_type_name_by_pk.get(location_type.pk) and
-                             location_type.name in names) or
-                            (location_type.code != payload_loc_type_code_by_pk.get(location_type.pk) and
-                             location_type.code in codes)
+                        location_type.name != payload_loc_type_name_by_pk.get(location_type.pk)
+                        and location_type.name in names
+                    ) or (
+                        location_type.code != payload_loc_type_code_by_pk.get(location_type.pk)
+                        and location_type.code in codes
                     ):
                         return False
             return True
@@ -745,8 +746,8 @@ class EditLocationView(BaseEditLocationView):
     @memoized
     def products_form(self):
         if (
-            self.location.location_type_object.administrative or
-            not toggles.PRODUCTS_PER_LOCATION.enabled(self.request.domain)
+            self.location.location_type.administrative
+            or not toggles.PRODUCTS_PER_LOCATION.enabled(self.request.domain)
         ):
             return None
 

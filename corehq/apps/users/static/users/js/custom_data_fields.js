@@ -6,7 +6,7 @@ hqDefine("users/js/custom_data_fields", [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/select2_knockout_bindings.ko',     // selects2 for fields
-    'hqwebapp/js/widgets',      // select2 for user fields profile
+    'hqwebapp/js/bootstrap3/widgets',      // select2 for user fields profile
 ], function (
     ko,
     _,
