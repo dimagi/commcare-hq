@@ -343,10 +343,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     resetCurrentGroup();
                     usedWidth += elementTileWidth;
                 }
-                if (child.type === constants.GROUP_TYPE && child.repeatable === "true") {
+
+                if (child.type === constants.GROUP_TYPE) {
                     if (isNPerRowRepeatElement(child.style)) {
                         for (let groupChild of child.children) {
-                            if (groupChild.type === constants.GROUP_TYPE) {
+                            // identifies repeat group that is nested in a group
+                            if (groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") {
                                 let elementNPerRowStyle = getNPerRowStyleFromRepeatStyle(child.style.raw);
                                 if (_.has(groupChild, 'style') && groupChild.style && groupChild.style.raw) {
                                     groupChild.style.raw = groupChild.style.raw.concat(" ", elementNPerRowStyle);
