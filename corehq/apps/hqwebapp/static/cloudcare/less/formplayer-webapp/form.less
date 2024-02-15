@@ -274,3 +274,9 @@
     padding-left: 0px !important;
   }
 }
+
+.question-tile-row .gr-no-children.gr-has-no-questions.gr-has-no-nested-questions {
+  // Prevents a priority issue that's happened three times where
+  // a group with hidden values creates whitespace.
+  height: 0px !important;
+}
