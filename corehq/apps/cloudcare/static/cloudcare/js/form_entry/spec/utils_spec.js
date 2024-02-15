@@ -31,6 +31,7 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
              *         groupInRepeat
              *             textInRepeat
              */
+            hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", { WEB_APPS_ANCHORED_SUBMIT: false });
             var text = fixtures.textJSON({ix: "0"}),
                 textInGroup = fixtures.textJSON({ix: "1,0"}),
                 group = fixtures.groupJSON({ix: "1", children: [textInGroup]}),
@@ -45,13 +46,15 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
             [groupInRepeat] = repeat.children();
             [textInRepeat] = groupInRepeat.children();
 
-            assert.equal(groupInRepeat.caption(), null);
+            assert.equal(groupInRepeat.children()[0].caption(), null);
             assert.equal(utils.getRootForm(text), form);
             assert.equal(utils.getRootForm(groupInRepeat), form);
             assert.equal(utils.getRootForm(textInRepeat), form);
 
             assert.equal(utils.getBroadcastContainer(text), form);
             assert.equal(utils.getBroadcastContainer(textInRepeat), groupInRepeat);
+
+            hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
         });
     });
 });

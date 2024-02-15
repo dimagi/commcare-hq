@@ -22,9 +22,20 @@ hqDefine('geospatial/js/utils', [], function () {
         return todayDate.toLocaleDateString();
     };
 
+    var createMapPopup = function (coordinates, popupDiv, openEventFunc, closeEventFunc) {
+        popupDiv.setAttribute("data-bind", "template: 'select-case'");
+        const popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
+            .setLngLat(coordinates)
+            .setDOMContent(popupDiv)
+            .on('open', openEventFunc)
+            .on('close', closeEventFunc);
+        return popup;
+    };
+
     return {
         getRandomRGBColor: getRandomRGBColor,
         uuidv4: uuidv4,
         getTodayDate: getTodayDate,
+        createMapPopup: createMapPopup,
     };
 });

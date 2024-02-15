@@ -15,6 +15,7 @@ from corehq.apps.es.case_search import (
     PROPERTY_GEOPOINT_VALUE,
     PROPERTY_KEY,
     wrap_case_search_hit,
+    case_property_missing,
 )
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
@@ -68,15 +69,14 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
 
     def _build_query(self):
         query = super()._build_query()
+        geo_case_property = get_geo_case_property(self.domain)
+        query = query.NOT(case_property_missing(geo_case_property))
         query = self.apply_xpath_case_search_filter(query)
         return query
 
     def _get_geo_location(self, case):
         geo_case_property = get_geo_case_property(self.domain)
         geo_point = case.get_case_property(geo_case_property)
-        if not geo_point:
-            return
-
         try:
             geo_point = GeoPoint.from_string(geo_point, flexible=True)
             return {"lat": geo_point.latitude, "lng": geo_point.longitude}

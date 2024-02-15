@@ -3,7 +3,7 @@
     "filename": "one_3X_two_4X_one_2X.xml",
     "has_map": true,
     "fields": ["header", "top", "middle0", "middle1_left_img", "middle1_right", "middle2_left_img", "middle2_right", "middle3_left_img",
-        "middle3_right", "middle4_left_img", "middle4_right", "middle5", "bottom", "map", "map_popup"],
+        "middle3_right", "middle4_left_img", "middle4_right", "middle5", "bottom", "map"],
     "grid": {
         "header": {"x": 0, "y": 0, "width": 12, "height": 1, "horz-align": "left", "vert-align": "center"},
         "top": {"x": 0, "y": 1, "width": 12, "height": 1, "horz-align": "left", "vert-align": "center"},

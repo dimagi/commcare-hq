@@ -992,9 +992,7 @@ class TestDeleteDomain(TestCase):
                 domain=domain_name,
                 registered_at=datetime.utcnow(),
             )
-            record.sqlrepeatrecordattempt_set.create(
-                state=RECORD_SUCCESS_STATE,
-            )
+            record.attempt_set.create(state=RECORD_SUCCESS_STATE)
             self._assert_repeaters_count(domain_name, 1)
             self.addCleanup(repeater.delete)
 

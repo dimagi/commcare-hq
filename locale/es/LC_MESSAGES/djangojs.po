@@ -6,7 +6,7 @@
 # Translators:
 # Dimagi Dev <devops@dimagi.com>, 2021
 # Michelle B. Sultan <msultan@dimagi.com>, 2022
-# Gladys Teos <info@enestranslations.com>, 2023
+# Gladys Teos <info@enestranslations.com>, 2024
 #
 #, fuzzy
 msgid ""
@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Gladys Teos <info@enestranslations.com>, 2023\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>, 2024\n"
 "Language-Team: Spanish (https://app.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -656,6 +656,23 @@ msgstr "Este formulario ya no existe o tiene un tipo de caso diferente"
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
 msgid "Unrecognized value"
 msgstr "Valor no reconocido"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Datum ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "XPath Expression"
+msgstr "Expresión XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
 msgid "Active"
@@ -1355,6 +1372,12 @@ msgstr ""
 "li><li>Grandes - 0.5 megapixeles</li></ul>"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#, fuzzy
+#| msgid "Image"
+msgid "Micro-Image"
+msgstr "Imagen"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Video Capture"
 msgstr "Captura de Video"
 
@@ -1566,10 +1589,6 @@ msgstr ""
 "Modo Simple."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath Expression"
-msgstr "Expresión XPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "You can drag a question into the box."
 msgstr "Puede arrastrar una pregunta a la caja."
 
@@ -1704,16 +1723,16 @@ msgid "Form has validation errors."
 msgstr "El formulario tiene errores de validación."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Multimedia Capture"
+msgstr "Captura Multimedia"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Number"
 msgstr "Número"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Groups"
 msgstr "Grupos"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Capture"
-msgstr "Captura Multimedia"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Advanced"
@@ -2983,20 +3002,16 @@ msgid "Please check the following fields:"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/api.js
-#, fuzzy
-#| msgid "Delete incomplete form?"
 msgid "Unable to delete incomplete form '<%- title %>'"
-msgstr "¿Desea borrar el formulario incompleto?"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
 msgid "Delete incomplete form?"
 msgstr "¿Desea borrar el formulario incompleto?"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-#, fuzzy
-#| msgid "Are you sure you want to delete '"
 msgid "Are you sure you want to delete '<%- title %>'?"
-msgstr "¿Está seguro que quiere borrar ' ?"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
 msgid "Yes"
@@ -3550,38 +3565,28 @@ msgid "No group"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "Group"
 msgid "Group ID"
-msgstr "Grupo"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "No Name"
 msgid "Group Name"
-msgstr "No hay Nombre"
+msgstr "Nombre del Grupo"
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "Group Center Coordinates"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "Node Name"
 msgid "Case Name"
-msgstr "Nombre del Nodo"
+msgstr "Nombre del Caso"
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "case property name"
 msgid "Case Owner Name"
-msgstr "nombre de propiedad del caso"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-#, fuzzy
-#| msgid "Case Changes"
 msgid "Case Coordinates"
-msgstr "Cambios del Caso"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "Select group"
@@ -4311,6 +4316,10 @@ msgstr "Caducó el Portal. Por favor contacte al Soporte de CommCare HQ."
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Loading Stopped"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js

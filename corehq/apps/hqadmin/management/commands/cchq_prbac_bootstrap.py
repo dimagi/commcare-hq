@@ -232,6 +232,12 @@ class Command(BaseCommand):
         Role(slug=privileges.CASE_COPY,
              name='Allow Case Copy',
              description='Allow case copy from one user to another'),
+        Role(slug=privileges.CASE_DEDUPE,
+             name='Deduplication Rules',
+             description='Support for finding duplicate cases'),
+        Role(slug=privileges.CUSTOM_DOMAIN_ALERTS,
+             name='Custom Domain Banners',
+             description='Allow projects to add banners for their users on CommCareHQ'),
     ]
 
     BOOTSTRAP_PLANS = [
