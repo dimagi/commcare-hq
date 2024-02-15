@@ -176,6 +176,7 @@ def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE,
         'is_saas_environment': settings.IS_SAAS_ENVIRONMENT,
+        'is_dimagi_environment': settings.IS_DIMAGI_ENVIRONMENT,
     }
 
 
