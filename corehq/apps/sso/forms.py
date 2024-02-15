@@ -620,7 +620,6 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         initial.setdefault('enable_user_deactivation', identity_provider.enable_user_deactivation)
         initial.setdefault('api_host', identity_provider.api_host)
         initial.setdefault('api_id', identity_provider.api_id)
-        initial.setdefault('api_secret', identity_provider.api_secret)
         initial.setdefault('date_api_secret_expiration', identity_provider.date_api_secret_expiration)
         super().__init__(*args, **kwargs)
 
@@ -716,7 +715,10 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
     def clean_api_secret(self):
         api_secret = self.cleaned_data['api_secret']
         is_enabled = self.cleaned_data['enable_user_deactivation']
-        _check_required_when_enabled(is_enabled, api_secret)
+        if is_enabled and (not api_secret and not self.idp.api_secret):
+            raise forms.ValidationError(
+                _("This is required when Auto-Deactivation is enabled.")
+            )
         return api_secret
 
     def clean_api_id(self):
@@ -908,7 +910,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         self.idp.require_encrypted_assertions = self.cleaned_data['require_encrypted_assertions']
 
         self.idp.enable_user_deactivation = self.cleaned_data['enable_user_deactivation']
-        self.idp.api_secret = self.cleaned_data['api_secret']
+        self.idp.api_secret = self.cleaned_data['api_secret'] or self.idp.api_secret
         self.idp.api_host = self.cleaned_data['api_host']
         self.idp.api_id = self.cleaned_data['api_id']
         self.idp.date_api_secret_expiration = self.cleaned_data['date_api_secret_expiration']
