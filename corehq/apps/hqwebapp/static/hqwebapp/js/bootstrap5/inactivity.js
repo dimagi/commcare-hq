@@ -139,7 +139,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             log("polling HQ's ping_login to decide about showing login modal");
             var selectedAppId = '';
             try {
-                var urlParams = JSON.parse(decodeURIComponent(window.location.hash.substr(1)));
+                var urlParams = JSON.parse(decodeURIComponent(window.location.hash.substring(1)));
                 if (!urlParams.copyOf) {
                     // Don't show the popup when user came from versions page
                     selectedAppId = urlParams.appId;
