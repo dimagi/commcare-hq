@@ -1,4 +1,3 @@
-/* globals Array, window */
 /**
  *  Handles communication with the google analytics API. gtag is the replacement
  *  for Google's old analytics.js (ga).

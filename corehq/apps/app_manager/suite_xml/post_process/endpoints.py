@@ -142,7 +142,7 @@ class EndpointsHelper(PostProcessor):
         frame.add_datum(datum)
 
     def _add_query_datum(self, frame, child):
-        frame.add_datum(child.to_stack_datum())
+        frame.add_datum(child.to_stack_datum(True))
 
     def get_frame_children(self, module, form):
         helper = WorkflowHelper(self.suite, self.app, self.app.get_modules())

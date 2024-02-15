@@ -38,6 +38,7 @@ hqDefine("geospatial/js/case_grouping_map",[
 
     let mapModel;
     let polygonFilterInstance;
+    let currentPage = 1;
 
     function clusterStatsModel() {
         'use strict';
@@ -72,13 +73,33 @@ hqDefine("geospatial/js/case_grouping_map",[
             });
 
             let csvStr = "";
+            let groupNameByID = _.object(_.map(caseGroupsInstance.generatedGroups, function(group) {
+                return [group.groupId, group.name]
+            }));
 
             // Write headers first
-            csvStr = Object.keys(casesToExport[0]).join(",");
+            let headers = [
+                gettext('Group ID'),
+                gettext('Group Name'),
+                gettext('Group Center Coordinates'),
+                gettext('Case Name'),
+                gettext('Case Owner Name'),
+                gettext('Case Coordinates'),
+                gettext('Case ID'),
+            ]
+            csvStr = (headers).join(",");
             csvStr += "\n";
 
-            _.forEach(casesToExport, function (itemRow) {
-                csvStr += Object.keys(itemRow).map(key => itemRow[key]).join(",");
+            _.forEach(casesToExport, function (caseToExport) {
+                csvStr += [
+                    caseToExport.groupId,
+                    groupNameByID[caseToExport.groupId],
+                    caseToExport.groupCenterCoordinates,
+                    caseToExport.caseName,
+                    caseToExport.owner_name,
+                    caseToExport.coordinates,
+                    caseToExport.caseId,
+                ].join(",");
                 csvStr += "\n";
             });
 
@@ -259,6 +280,11 @@ hqDefine("geospatial/js/case_grouping_map",[
         setMapLayersVisibility(MAPBOX_LAYER_VISIBILITY.None);
         mapMarkers.forEach((marker) => marker.remove());
         mapMarkers = [];
+
+        let groupColorByID = _.object(_.map(caseGroupsInstance.generatedGroups, function(group) {
+            return [group.groupId, group.color]
+        }));
+
         exportModelInstance.casesToExport().forEach(function (caseItem) {
             const coordinates = caseItem.itemData.coordinates;
             if (!coordinates) {
@@ -266,8 +292,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             }
             const caseGroupID = caseItem.groupId;
             if (caseGroupsInstance.groupIDInVisibleGroupIds(caseGroupID)) {
-                let caseGroup = caseGroupsInstance.getGroupByID(caseGroupID);
-                color = caseGroup.color;
+                color = groupColorByID[caseGroupID];
                 const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
                 marker.setLngLat([coordinates.lng, coordinates.lat]);
 
@@ -275,32 +300,10 @@ hqDefine("geospatial/js/case_grouping_map",[
                 marker.addTo(mapModel.mapInstance);
                 mapMarkers.push(marker);
 
-                let popupDiv = document.createElement("div");
-                popupDiv.setAttribute("data-bind", "template: 'select-case'");
-
-                let popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
-                    .setLngLat(coordinates)
-                    .setDOMContent(popupDiv);
+                const popupDiv = document.createElement("div");
+                const popup = utils.createMapPopup(coordinates, popupDiv, marker.togglePopup, marker.togglePopup);
 
                 marker.setPopup(popup);
-
-                const markerDiv = marker.getElement();
-                // Show popup on hover
-                markerDiv.addEventListener('mouseenter', marker.togglePopup);
-
-                // Hide popup if mouse leaves marker and popup
-                var addLeaveEvent = function (fromDiv, toDiv) {
-                    fromDiv.addEventListener('mouseleave', function () {
-                        setTimeout(function () {
-                            if (!$(toDiv).is(':hover')) {
-                                // mouse left toDiv as well
-                                marker.togglePopup();
-                            }
-                        }, 100);
-                    });
-                };
-                addLeaveEvent(markerDiv, popupDiv);
-                addLeaveEvent(popupDiv, markerDiv);
                 const colors = {default: color, selected: color};
 
                 const mapMarkerInstance = new mapMarkerModel(caseItem.itemId, caseItem, marker, colors);
@@ -441,8 +444,9 @@ hqDefine("geospatial/js/case_grouping_map",[
                 const groupUUID =  utils.uuidv4();
 
                 if (casePoints.length) {
-                    groupName = _.template(gettext("Group <%- groupCount %>"))({
+                    groupName = _.template(gettext("Group <%- pageNumber %>-<%- groupCount %>"))({
                         groupCount: groupCount,
+                        pageNumber: currentPage,
                     });
                     groupCount += 1;
 
@@ -521,7 +525,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             const caseRowOrder = initialPageData.get('case_row_order');
             for (const caseItem of rawCaseData) {
                 const caseObj = parseCaseItem(caseItem, caseRowOrder);
-                const caseModelInstance = new models.GroupedCaseMapItem(caseObj.case_id, {coordinates: caseObj.gps_point}, caseObj.link);
+                const caseModelInstance = new models.GroupedCaseMapItem(caseObj.case_id, caseObj, caseObj.link);
                 caseModels.push(caseModelInstance);
             }
             mapModel.caseMapItems(caseModels);
@@ -570,6 +574,7 @@ hqDefine("geospatial/js/case_grouping_map",[
             $('.dataTables_scroll').hide();
 
             const caseData = xhr.responseJSON.aaData;
+            currentPage = xhr.responseJSON.sEcho;
             if (caseData.length) {
                 loadCases(caseData);
                 loadMapClusters(caseModels);

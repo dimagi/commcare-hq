@@ -8,7 +8,6 @@ import attr
 from django.core.serializers.json import DjangoJSONEncoder
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
-
 from casexml.apps.case.const import CASE_INDEX_IDENTIFIER_HOST
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -23,6 +22,8 @@ from corehq.form_processor.models import CommCareCase
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.motech.repeaters.exceptions import ReferralError, DataRegistryCaseUpdateError
 from dimagi.utils.parsing import json_format_datetime
+from corehq.util.json import CommCareJSONEncoder
+
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 
@@ -739,3 +740,24 @@ class LocationPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, location):
         return json.dumps(location.to_json())
+
+
+class DataSourcePayloadGenerator(BasePayloadGenerator):
+    format_name = 'json'
+    format_label = _('JSON')
+
+    @property
+    def content_type(self):
+        return 'application/json'
+
+    def get_payload(self, repeat_record, payload_doc):
+        """
+        Returns the request body to be forwarded to CommCare Analytics
+        for ``payload_doc``, which is a ``DataSourceUpdateLog``.
+        """
+        data = {
+            "data": payload_doc.rows,
+            "data_source_id": payload_doc.data_source_id,
+            "doc_id": payload_doc.doc_id,
+        }
+        return json.dumps(data, cls=CommCareJSONEncoder)

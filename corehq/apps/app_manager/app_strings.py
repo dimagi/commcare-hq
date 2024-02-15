@@ -142,6 +142,12 @@ def _create_module_details_app_strings(module, langs):
             clean_trans(module.case_details.short.no_items_text, langs)
         )
 
+    if module.get_app().supports_select_text and hasattr(module, 'case_details'):
+        yield (
+            id_strings.select_text_detail(module),
+            clean_trans(module.case_details.short.select_text, langs)
+        )
+
     for detail_type, detail, _ in module.get_details():
         for column in detail.get_columns():
             yield (
@@ -478,6 +484,10 @@ def _create_forms_app_strings(
                 id_strings.custom_assertion_locale(id, module, form),
                 clean_trans(custom_assertion.text, langs)
             )
+
+        yield id_strings.form_submit_label_locale(form), form.get_submit_label(lang)
+        if form.get_submit_notification_label(lang):
+            yield id_strings.form_submit_notification_label_locale(form), form.get_submit_notification_label(lang)
 
 
 def _create_case_list_form_app_strings(

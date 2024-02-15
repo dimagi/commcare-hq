@@ -4,11 +4,9 @@ on:
     branches:
     - master
     - hotfix-deploy
-    - ap/sql-repeater/phase-2
-    - mjr/erm-update-rules
-    - mjr/erm-fixtures
-    - mjr/erm-custom-roles
-    - mjr/erm-roles
+    - mjr/add-change-meta-context
+    - mjr/new_dedupe_model
+    - mjr/dedupe_handle_closed_cases
   schedule:
     # see corehq/apps/hqadmin/management/commands/static_analysis.py
     - cron: '47 12 * * *'

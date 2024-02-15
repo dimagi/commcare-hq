@@ -41,11 +41,29 @@ hqDefine("app_manager/js/details/column", function () {
             vertical_align: "start",
             font_size: "medium",
             show_border: false,
+            show_shading: false,
         };
         _.each(_.keys(defaults), function (key) {
             self.original[key] = self.original[key] || defaults[key];
         });
         self.original.late_flag = _.isNumber(self.original.late_flag) ? self.original.late_flag : 30;
+
+        // Set up tab defaults
+        const tabDefaults = {
+            isTab: false,
+            hasNodeset: false,
+            nodeset: "",
+            nodesetCaseType: "",
+            nodesetFilter: "",
+            relevant: "",
+        };
+        self.original = _.defaults(self.original, tabDefaults);
+        let screenHasChildCaseTypes = screen.childCaseTypes && screen.childCaseTypes.length;
+        if (!self.original.nodeset && !self.original.nodesetCaseType && screenHasChildCaseTypes) {
+            // If there's no nodeset but there are child case types, default to showing a case type
+            self.original.nodesetCaseType = screen.childCaseTypes[0];
+        }
+        _.extend(self, _.pick(self.original, _.keys(tabDefaults)));
 
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
@@ -77,6 +95,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.fontSizeOptions = ['small', 'medium', 'large'];
 
         self.showBorder = ko.observable(self.original.show_border || false);
+        self.showShading = ko.observable(self.original.show_shading || false);
 
         self.openStyleModal = function () {
             const $modalDiv = $(document.createElement("div"));
@@ -97,29 +116,12 @@ hqDefine("app_manager/js/details/column", function () {
             return Number(self.tileColumnStart()) + Number(self.tileWidth());
         });
         self.showInTilePreview = ko.computed(function () {
-            return self.coordinatesVisible() && self.tileRowStart() && self.tileColumnStart() && self.tileWidth() && self.tileHeight();
+            return !self.isTab && self.coordinatesVisible() && self.tileRowStart() && self.tileColumnStart() && self.tileWidth() && self.tileHeight();
         });
         self.tileContent = ko.observable();
         self.setTileContent = function () {
             self.tileContent(self.header.val());
         };
-
-        // Set up tab defaults
-        const tabDefaults = {
-            isTab: false,
-            hasNodeset: false,
-            nodeset: "",
-            nodesetCaseType: "",
-            nodesetFilter: "",
-            relevant: "",
-        };
-        self.original = _.defaults(self.original, tabDefaults);
-        let screenHasChildCaseTypes = screen.childCaseTypes && screen.childCaseTypes.length;
-        if (!self.original.nodeset && !self.original.nodesetCaseType && screenHasChildCaseTypes) {
-            // If there's no nodeset but there are child case types, default to showing a case type
-            self.original.nodesetCaseType = screen.childCaseTypes[0];
-        }
-        _.extend(self, _.pick(self.original, _.keys(tabDefaults)));
 
         self.screen = screen;
         self.lang = screen.lang;
@@ -357,6 +359,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.verticalAlign.subscribe(fireChange);
         self.fontSize.subscribe(fireChange);
         self.showBorder.subscribe(fireChange);
+        self.showShading.subscribe(fireChange);
 
         self.$format = $('<div/>').append(self.format.ui);
         self.$format.find("select").css("margin-bottom", "5px");
@@ -449,6 +452,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.vertical_align = self.verticalAlign();
             column.font_size = self.fontSize();
             column.show_border = self.showBorder();
+            column.show_shading = self.showShading();
             column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;
             column.late_flag = parseInt(self.late_flag_extra.val(), 10);
             column.time_ago_interval = parseFloat(self.time_ago_extra.val());

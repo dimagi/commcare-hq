@@ -13,11 +13,11 @@
 # Rowena Luk <rluk@dimagi.com>, 2021
 # Dimagi Dev <devops@dimagi.com>, 2021
 # Ismaïla Diene <idiene@dimagi.com>, 2022
-# Tyler Wymer <twymer@dimagi.com>, 2023
 # Aissetou Sawadogo <ais107@hotmail.com>, 2023
 # Ayla Reith <areith@dimagi.com>, 2023
 # Carla Legros <clegros@dimagi.com>, 2023
 # patrick keating <pkeating@dimagi.com>, 2023
+# Tyler Wymer <twymer@dimagi.com>, 2024
 #
 #, fuzzy
 msgid ""
@@ -25,7 +25,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: patrick keating <pkeating@dimagi.com>, 2023\n"
+"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2024\n"
 "Language-Team: French (https://app.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -667,6 +667,23 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
 msgid "Unrecognized value"
 msgstr "Valeur non reconnue"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+msgid "Datum ID"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "XPath Expression"
+msgstr "Expression de XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
 msgid "Active"
@@ -1360,6 +1377,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#, fuzzy
+#| msgid "Image"
+msgid "Micro-Image"
+msgstr "Image"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Video Capture"
 msgstr "Enregistrement vidéo"
 
@@ -1550,10 +1573,6 @@ msgstr ""
 "pour le mode simple."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath Expression"
-msgstr "Expression de XPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "You can drag a question into the box."
 msgstr "Vous pouvez faire glisser une question dans la boîte."
 
@@ -1682,16 +1701,16 @@ msgid "Form has validation errors."
 msgstr "Le formulaire comporte des erreurs de validation."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Multimedia Capture"
+msgstr "Capture multimédia"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Number"
 msgstr "Nombre"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Groups"
 msgstr "Groupes"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Multimedia Capture"
-msgstr "Capture multimédia"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Advanced"
@@ -2378,6 +2397,7 @@ msgstr "Type de Dossier"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "Case ID"
 msgstr "Identifiant de dossier"
 
@@ -2742,12 +2762,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
-msgid "Submitting..."
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
 msgid "Submit"
 msgstr "Soumettre"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
+msgid "Submitting..."
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
@@ -2854,17 +2874,12 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid ""
-"You have selected more than the maximum selection limit of <%= value %> . "
+"You have selected more than the maximum selection limit of <%- value %> . "
 "Please uncheck some values to continue."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid "Your location"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-msgid "Page <%-num%>"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
@@ -2885,13 +2900,17 @@ msgstr ""
 msgid "Please check the following fields:"
 msgstr ""
 
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/api.js
+msgid "Unable to delete incomplete form '<%- title %>'"
+msgstr ""
+
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
 msgid "Delete incomplete form?"
 msgstr "Supprimer le formulaire incomplet?"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
-msgid "Are you sure you want to delete '"
-msgstr "Etes-vous sûr que vous voulez supprimer '"
+msgid "Are you sure you want to delete '<%- title %>'?"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
 msgid "Yes"
@@ -2914,20 +2933,20 @@ msgid "Use <%- username %>."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
-msgid "Log in as <%= username %>?"
+msgid "Log in as <%- username %>?"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
 msgid "Yes, log in as this user"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
-msgid "Page <%- num %>"
-msgstr ""
-
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "Confirm?"
 msgstr "Confirmer?"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
+msgid "Page <%- num %>"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error saving!"
@@ -3440,11 +3459,35 @@ msgid "No group"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Group ID"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Group Name"
+msgstr "Nom de groupe"
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Group Center Coordinates"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Case Name"
+msgstr "Nom de dossier"
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Case Owner Name"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
+msgid "Case Coordinates"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
 msgid "Select group"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
-msgid "Group <%- groupCount %>"
+msgid "Group <%- pageNumber %>-<%- groupCount %>"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/case_grouping_map.js
@@ -3458,18 +3501,27 @@ msgid "Name of the Area"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid ""
+"Oops! Something went wrong! Please contact admin if the problem persists."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "All locations"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/gps_capture.js
-#, fuzzy
-#| msgid "Current"
 msgid "current user"
-msgstr "Actuel"
+msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid "Mobile Worker"
 msgstr "Utilisateur mobile"
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid ""
+"Warning! This action will clear the current disbursement. Please confirm if "
+"you want to proceed."
+msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
@@ -4135,6 +4187,10 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Your search term was too long. Please provide a shorter search filter"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js
+msgid "Loading Stopped"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js

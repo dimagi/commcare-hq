@@ -1,7 +1,6 @@
 import re
 
 from django import forms
-from django.db.models import Q
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -14,7 +13,6 @@ from memoized import memoized
 
 from dimagi.utils.couch.database import iter_docs
 
-from corehq.apps.commtrack.util import generate_code
 from corehq.apps.custom_data_fields.edit_entity import (
     CUSTOM_DATA_FIELD_PREFIX,
     CustomDataEditor,
@@ -24,7 +22,12 @@ from corehq.apps.es import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
-from corehq.apps.locations.util import valid_location_site_code
+from corehq.apps.locations.util import (
+    validate_site_code,
+    generate_site_code,
+    has_siblings_with_name,
+    get_location_type
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
 from corehq.util.quickcache import quickcache
@@ -216,16 +219,6 @@ class LocationForm(forms.Form):
         return parent_id
 
     def clean_name(self):
-        def has_siblings_with_name(location, name, parent_location_id):
-            qs = SQLLocation.objects.filter(domain=location.domain,
-                                            name=name)
-            if parent_location_id:
-                qs = qs.filter(parent__location_id=parent_location_id)
-            else:  # Top level
-                qs = qs.filter(parent=None)
-            return (qs.exclude(location_id=self.location.location_id)
-                      .exists())
-
         name = self.cleaned_data['name']
         parent_location_id = self.cleaned_data.get('parent_id', None)
 
@@ -239,32 +232,13 @@ class LocationForm(forms.Form):
 
     def clean_site_code(self):
         site_code = self.cleaned_data['site_code']
-
         if site_code:
-            site_code = site_code.lower()
-            if not valid_location_site_code(site_code):
-                raise forms.ValidationError(_(
-                    'The site code cannot contain spaces or special characters.'
-                ))
-            if (SQLLocation.objects
-                    .filter(domain=self.domain,
-                            site_code__iexact=site_code)
-                    .exclude(location_id=self.location.location_id)
-                    .exists()):
-                raise forms.ValidationError(_(
-                    'another location already uses this site code'
-                ))
-            return site_code
+            return validate_site_code(self.domain, self.location.location_id, site_code, forms.ValidationError)
 
     def clean(self):
         if 'name' in self.cleaned_data and not self.cleaned_data.get('site_code', None):
-            all_codes = [
-                code.lower() for code in
-                (SQLLocation.objects.exclude(location_id=self.location.location_id)
-                                    .filter(domain=self.domain)
-                                    .values_list('site_code', flat=True))
-            ]
-            self.cleaned_data['site_code'] = generate_code(self.cleaned_data['name'], all_codes)
+            self.cleaned_data['site_code'] = generate_site_code(
+                self.domain, self.location.location_id, self.cleaned_data['name'])
 
     @staticmethod
     def get_allowed_types(domain, parent):
@@ -275,34 +249,9 @@ class LocationForm(forms.Form):
                     .all())
 
     def clean_location_type(self):
-        loc_type = self.cleaned_data['location_type']
-        allowed_types = self.get_allowed_types(self.domain, self.cleaned_data.get('parent'))
-        if not allowed_types:
-            raise forms.ValidationError(_('The selected parent location cannot have child locations!'))
-
-        if not loc_type:
-            if len(allowed_types) == 1:
-                loc_type_obj = allowed_types[0]
-            else:
-                raise forms.ValidationError(_('You must select a location type'))
-        else:
-            try:
-                loc_type_obj = (LocationType.objects
-                                .filter(domain=self.domain)
-                                .get(Q(code=loc_type) | Q(name=loc_type)))
-            except LocationType.DoesNotExist:
-                raise forms.ValidationError(_("LocationType '{}' not found").format(loc_type))
-            else:
-                if loc_type_obj not in allowed_types:
-                    raise forms.ValidationError(_('Location type not valid for the selected parent.'))
-
-        _can_change_location_type = (self.is_new_location
-                                     or not self.location.get_descendants().exists())
-        if not _can_change_location_type and loc_type_obj.pk != self.location.location_type.pk:
-            raise forms.ValidationError(_(
-                'You cannot change the location type of a location with children'
-            ))
-
+        loc_type_obj = get_location_type(self.domain, self.location, self.cleaned_data.get('parent'),
+                                         self.cleaned_data['location_type'], forms.ValidationError,
+                                         self.is_new_location)
         self.cleaned_data['location_type_object'] = loc_type_obj
         return loc_type_obj.name
 

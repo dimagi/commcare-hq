@@ -197,6 +197,7 @@ def save_xform(app, form, xml):
 
     return xml
 
+
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
@@ -407,9 +408,9 @@ def module_offers_search(module):
 
     return (
         isinstance(module, (Module, AdvancedModule, ShadowModule)) and
-        module.search_config and
-        (module.search_config.properties or
-         module.search_config.default_properties)
+        module.search_config
+        and (module.search_config.properties
+        or module.search_config.default_properties)
     )
 
 
@@ -420,6 +421,15 @@ def module_uses_inline_search(module):
         module_offers_search(module)
         and module.search_config.inline_search
         and module.search_config.auto_launch
+    )
+
+
+def module_uses_inline_search_with_parent_relationship_parent_select(module):
+    return (
+        module_uses_inline_search(module)
+        and hasattr(module, 'parent_select')
+        and module.parent_select.active
+        and module.parent_select.relationship == 'parent'
     )
 
 
@@ -522,6 +532,8 @@ def _app_callout_templates():
         data = []
     while True:
         yield data
+
+
 app_callout_templates = _app_callout_templates()
 
 

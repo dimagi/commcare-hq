@@ -1864,7 +1864,7 @@ class TableauServerView(BaseProjectReportSectionView):
         user_syncing_config = {}
         user_syncing_config['user_syncing_enabled'] = TABLEAU_USER_SYNCING.enabled(self.domain)
         if user_syncing_config['user_syncing_enabled']:
-            if TableauConnectedApp.is_server_setup(self.domain):
+            if TableauConnectedApp.get_server(self.domain):
                 try:
                     user_syncing_config['all_tableau_groups'] = get_all_tableau_groups(self.domain)
                     user_syncing_config['server_reachable'] = True

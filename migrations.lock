@@ -108,6 +108,9 @@ accounting
  0086_add_duplicate_invoice_id_to_invoice_model
  0087_invoice_unique_constraints
  0088_add_new_softwareplan_visibility
+ 0089_dedupe_priv
+ 0090_custom_domain_alerts_priv
+ 0091_remove_custom_banner_alerts_feature_flag
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -337,6 +340,9 @@ data_interfaces
  0032_bootstrap_audit_events_for_update_rules
  0033_automaticupdaterule_deleted_on
  0034_case_name_actions
+ 0035_add_case_duplicate_new
+ 0036_backfill_dedupe_match_values
+ 0037_add_dedupe_update_toggle
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -401,6 +407,9 @@ es
  0003_add_assigned_location_ids
  0004_make_new_indexes
  0005_add_epoch_as_valid_date_to_forms
+ 0006_verify_es2_indices_reindexed
+ 0007_init_indices_for_fresh_es_5
+ 0008_add_doc_id_to_all_mappings
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -584,6 +593,8 @@ hqadmin
  0018_back_populate_deploy_commit
  0019_celery_taskmeta_sequence
  0020_celery_results_sequence
+hqmedia
+ 0001_initial
 hqwebapp
  0001_initial
  0002_auto_20171121_1803
@@ -782,6 +793,8 @@ repeaters
  0002_repeaters_db
  0003_id_fields
  0004_fix_whitelist_bug_repeaters
+ 0005_datasourcerepeater
+ 0006_int_state_add_next_check_rm_repeater_id
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -828,6 +841,7 @@ scheduling
  0024_app_id
  0025_schedule_and_broadcast_deleted_on
  0026_add_model_fcm_notification_content
+ 0027_emailcontent_html_message
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -900,6 +914,7 @@ sms
  0055_messagingsubevent_index_domain_date_id
  0056_backfill_sms_event_date
  0057_fcm_content_type_messaging_events
+ 0058_email_html_body
 smsbillables
  0001_initial
  0002_bootstrap
@@ -1063,6 +1078,7 @@ sso
  0003_oidc_onelogin_idp_update
  0004_login_enforcement_type_sso_test_user
  0005_alter_identityprovider_idp_type
+ 0006_add_new_fields_in_identityprovider
 start_enterprise
  0001_initial
 stock
@@ -1181,6 +1197,7 @@ users
  0053_userreportingmetadatastaging_fcm_token
  0054_connectiduserlink
  0055_add_user_data
+ 0056_add_manage_domain_alerts_permission
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

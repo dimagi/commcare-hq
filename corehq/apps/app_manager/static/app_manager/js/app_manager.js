@@ -164,7 +164,9 @@ hqDefine('app_manager/js/app_manager', function () {
                     stopSubmit = $(e.target).closest('button').data('stopsubmit') === 'yes',
                     $form;
 
-                if (stopSubmit) return;
+                if (stopSubmit) {
+                    return;
+                }
 
                 if (isForm) {
                     var caseAction =  $(e.target).closest('button').data('case-action'),

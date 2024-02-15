@@ -8,17 +8,18 @@ from django.urls import reverse
 from bs4 import BeautifulSoup
 from unittest.mock import patch
 
+from corehq import privileges
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views.settings import ManageDomainAlertsView
+from corehq.apps.domain.views.settings import EditDomainAlertView, ManageDomainAlertsView, MAX_ACTIVE_ALERTS
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import AppStructureRepeater
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import privilege_enabled
 
 
 class TestDomainViews(TestCase, DomainSubscriptionMixin):
@@ -150,6 +151,13 @@ class TestBaseDomainAlertView(TestCase):
         self.client = Client()
         self.client.login(username=self.username, password=self.password)
 
+    def ensure_valid_access_only(self, use_post=False):
+        if use_post:
+            response = self.client.post(self.url)
+        else:
+            response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
 
 class TestManageDomainAlertsView(TestBaseDomainAlertView):
     @classmethod
@@ -160,11 +168,10 @@ class TestManageDomainAlertsView(TestBaseDomainAlertView):
             'domain': cls.domain_name,
         })
 
-    def test_feature_flag_access_only(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 404)
+    def test_valid_access_only(self):
+        self.ensure_valid_access_only()
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_only_domain_alerts_listed(self):
         alert = self.domain_alert
 
@@ -172,12 +179,15 @@ class TestManageDomainAlertsView(TestBaseDomainAlertView):
         self.assertListEqual(
             response.context['alerts'],
             [
-                {'active': False, 'html': 'Test Alert 1!', 'id': alert.id, 'created_by_user': self.username}
+                {
+                    'start_time': None, 'end_time': None,
+                    'active': False, 'html': 'Test Alert 1!', 'id': alert.id, 'created_by_user': self.username
+                }
             ]
         )
         self.assertEqual(response.status_code, 200)
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_creating_new_alert(self):
         self.assertEqual(Alert.objects.count(), 2)
 
@@ -199,7 +209,7 @@ class TestManageDomainAlertsView(TestBaseDomainAlertView):
         self.assertEqual(new_alert.created_by_domain, self.domain.name)
         self.assertListEqual(new_alert.domains, [self.domain.name])
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_creating_new_alert_with_errors(self):
         self.assertEqual(Alert.objects.count(), 2)
 
@@ -226,16 +236,15 @@ class TestUpdateDomainAlertStatusView(TestBaseDomainAlertView):
             'domain': cls.domain_name,
         })
 
-    def test_feature_flag_access_only(self):
-        response = self.client.post(self.url)
-        self.assertEqual(response.status_code, 404)
+    def test_valid_access_only(self):
+        self.ensure_valid_access_only(use_post=True)
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_post_access_only(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 405)
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_apply_command_with_missing_alert_id(self):
         with self.assertRaisesMessage(AssertionError, 'Missing alert ID'):
             self.client.post(
@@ -245,7 +254,7 @@ class TestUpdateDomainAlertStatusView(TestBaseDomainAlertView):
                 },
             )
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_apply_command_with_missing_alert(self):
         response = self.client.post(
             self.url,
@@ -258,7 +267,7 @@ class TestUpdateDomainAlertStatusView(TestBaseDomainAlertView):
         self.assertEqual(messages[0].message, 'Alert not found!')
         self.assertEqual(response.status_code, 302)
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_apply_command_with_invalid_command(self):
         response = self.client.post(
             self.url,
@@ -271,7 +280,7 @@ class TestUpdateDomainAlertStatusView(TestBaseDomainAlertView):
         self.assertEqual(messages[0].message, 'Unexpected update received. Alert not updated!')
         self.assertEqual(response.status_code, 302)
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_apply_command_with_valid_command(self):
         alert = self._create_alert_for_domain(self.domain, "New Alert!", self.username)
 
@@ -292,7 +301,7 @@ class TestUpdateDomainAlertStatusView(TestBaseDomainAlertView):
         self.assertEqual(messages[0].message, 'Alert updated!')
         self.assertEqual(response.status_code, 302)
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_apply_command_with_other_doamin_alert(self):
         response = self.client.post(
             self.url,
@@ -306,6 +315,33 @@ class TestUpdateDomainAlertStatusView(TestBaseDomainAlertView):
         self.assertEqual(messages[0].message, 'Alert not found!')
         self.assertEqual(response.status_code, 302)
 
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_limiting_active_alerts(self):
+        new_alerts = [
+            self._create_alert_for_domain(self.domain_name, 'New Alert 1!', self.username),
+            self._create_alert_for_domain(self.domain_name, 'New Alert 2!', self.username),
+            self._create_alert_for_domain(self.domain_name, 'New Alert 3!', self.username),
+        ]
+        for alert in new_alerts:
+            alert.active = True
+            alert.save()
+
+        self.assertEqual(
+            Alert.objects.filter(created_by_domain=self.domain, active=True).count(),
+            MAX_ACTIVE_ALERTS
+        )
+
+        response = self.client.post(
+            self.url,
+            data={
+                'command': 'activate',
+                'alert_id': self.domain_alert.id,
+            },
+        )
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert not activated. Only 3 active alerts allowed.')
+
 
 class TestDeleteDomainAlertView(TestBaseDomainAlertView):
     @classmethod
@@ -316,16 +352,15 @@ class TestDeleteDomainAlertView(TestBaseDomainAlertView):
             'domain': cls.domain_name,
         })
 
-    def test_feature_flag_access_only(self):
-        response = self.client.post(self.url)
-        self.assertEqual(response.status_code, 404)
+    def test_valid_access_only(self):
+        self.ensure_valid_access_only(use_post=True)
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_post_access_only(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 405)
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_with_missing_alert_id(self):
         with self.assertRaisesMessage(AssertionError, 'Missing alert ID'):
             self.client.post(
@@ -333,7 +368,7 @@ class TestDeleteDomainAlertView(TestBaseDomainAlertView):
                 data={},
             )
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_with_missing_alert(self):
         response = self.client.post(
             self.url,
@@ -345,7 +380,7 @@ class TestDeleteDomainAlertView(TestBaseDomainAlertView):
         self.assertEqual(messages[0].message, 'Alert not found!')
         self.assertEqual(response.status_code, 302)
 
-    @flag_enabled('CUSTOM_DOMAIN_BANNER_ALERTS')
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
     def test_delete(self):
         response = self.client.post(
             self.url,
@@ -356,6 +391,68 @@ class TestDeleteDomainAlertView(TestBaseDomainAlertView):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(messages[0].message, 'Alert was removed!')
         self.assertEqual(response.status_code, 302)
+
+
+class TestEditDomainAlertView(TestBaseDomainAlertView):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.url = reverse(EditDomainAlertView.urlname, kwargs={
+            'domain': cls.domain_name, 'alert_id': cls.domain_alert.id
+        })
+
+    def test_valid_access_only(self):
+        self.ensure_valid_access_only()
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_only_domain_alerts_accessible(self):
+        url = reverse(EditDomainAlertView.urlname, kwargs={
+            'domain': self.domain_name, 'alert_id': self.other_domain_alert.id
+        })
+
+        with self.assertRaisesMessage(AssertionError, 'Alert not found'):
+            self.client.get(url)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_only_domain_alerts_accessible_for_update(self):
+        url = reverse(EditDomainAlertView.urlname, kwargs={
+            'domain': self.domain_name, 'alert_id': self.other_domain_alert.id
+        })
+        response = self.client.post(url, data={'text': 'Bad text'})
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert not found!')
+        self.assertEqual(response.status_code, 302)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_updating_alert(self):
+        text = self.domain_alert.text + ". Updated!"
+        response = self.client.post(
+            self.url,
+            data={
+                'text': text,
+            },
+        )
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert saved!')
+        self.assertEqual(response.status_code, 302)
+        self.domain_alert.refresh_from_db()
+        self.assertEqual(self.domain_alert.text, 'Test Alert 1!. Updated!')
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_updating_alert_with_errors(self):
+        response = self.client.post(
+            self.url,
+            data={
+                'text': '',
+            },
+        )
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'There was an error saving your alert. Please try again!')
+        self.assertEqual(response.status_code, 200)
 
 
 @contextmanager

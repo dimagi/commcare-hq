@@ -87,9 +87,9 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     ko.bindingHandlers.runOnInit = {
         // suggestion from https://github.com/knockout/knockout/issues/2446 to use
         // instead of an anonymous template
-        init: function(elem, valueAccessor) {
+        init: function (elem, valueAccessor) {
             valueAccessor();
-        }
+        },
     };
     ko.virtualElements.allowedBindings.runOnInit = true;
 
@@ -97,11 +97,11 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
         // fixes an issue where we try to apply bindings to a parent element
         // that has a child element with existing bindings.
         // see: https://github.com/knockout/knockout/issues/1922
-        init: function(elem, valueAccessor) {
+        init: function (elem, valueAccessor) {
             // Let bindings proceed as normal *only if* my value is false
             var shouldAllowBindings = ko.unwrap(valueAccessor());
             return { controlsDescendantBindings: !shouldAllowBindings };
-        }
+        },
     };
     ko.virtualElements.allowedBindings.allowDescendantBindings = true;
 
@@ -118,7 +118,6 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
         });
 
         $("input[type='text'], input[type='password'], textarea", $elem);
-        $('.container', $elem).addClass('ui-widget ui-widget-content');
         $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
 
         $('.hq-help-template').each(function () {

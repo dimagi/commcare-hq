@@ -39,7 +39,7 @@
 
       <div class="btn-toolbar" style="margin-bottom: 20px;">
 
-        {% if location.get_id and location.location_type_object.can_have_children and not request.is_view_only %}
+        {% if location.get_id and location.location_type.can_have_children and not request.is_view_only %}
           <a class="btn btn-primary" href="{% url "create_location" domain %}?parent={{ location.get_id }}">
             <i class="fa fa-plus"></i> {% trans "New Child Location" %}
           </a>

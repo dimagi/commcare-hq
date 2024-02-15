@@ -24,13 +24,19 @@ UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
 logger = logging.getLogger(__name__)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+# @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def permanently_delete_eligible_data(dry_run=False):
     """
     Permanently delete database objects that are eligible for hard deletion.
     To be eligible means to have a ``deleted_on`` field with a value less than
     the cutoff date returned from ``get_cutoff_date_for_data_deletion``.
     :param dry_run: if True, no changes will be committed to the database
+    """
+    """
+    NOTE: Do not delete this function! In the interest of keeping deletion records for future reference,
+    data won't be completely hard deleted until the domain is deleted. Instead, they'll be converted
+    into a tombstone after the 90 day safety period. This task will be restructured to do that once a day
+    in a future PR coming soon (Q1 2024).
     """
     dry_run_tag = '[DRY RUN] ' if dry_run else ''
     cutoff_date = get_cutoff_date_for_data_deletion()
