@@ -9,7 +9,7 @@ from rest_framework.authtoken.models import Token
 class ABDMUser(models.Model):
     username = models.CharField(max_length=100)
     access_token = models.CharField(max_length=2000, null=True, blank=True)
-    token_created_at = models.DateTimeField()
+    token_created_at = models.DateTimeField(null=True)
     domain = models.CharField(max_length=100)
 
     class Meta:
