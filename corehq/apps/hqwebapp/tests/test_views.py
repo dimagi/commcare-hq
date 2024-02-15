@@ -296,6 +296,13 @@ class TestSolutionsFeatureRequestView(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(len(mail.outbox), 0)
 
+    def test_non_dimagi_env_submission(self):
+        self.client.login(username=self.web_user.username, password='123')
+        payload = self._default_payload(self.staff_web_user.username)
+        response = self._post_request(payload, False)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(len(mail.outbox), 0)
+
     def test_email_submission(self):
         self.client.login(username=self.staff_web_user.username, password='123')
         payload = self._default_payload(self.staff_web_user.username)
