@@ -95,6 +95,15 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         return matchingStyles;
     }
 
+    function stylesContaining(pattern, style) {
+        var styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
+        return getMatchingStyles(pattern, styleStr);
+    }
+
+    function stylesContains(pattern, style) {
+        return stylesContaining(pattern, style).length > 0;
+    }
+
     function parseMeta(type, style) {
         var meta = {};
 
@@ -947,8 +956,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      */
     Question.prototype.stylesContaining = function (pattern) {
         var self = this;
-        var styleStr = (self.style) ? ko.utils.unwrapObservable(self.style.raw) : null;
-        return getMatchingStyles(pattern, styleStr);
+        return stylesContaining(pattern, self.style);
     };
 
     /**
