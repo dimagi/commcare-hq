@@ -242,6 +242,8 @@ class EnterpriseFormReport(EnterpriseReport):
         apps = {a.id: a.name for a in apps}
         rows = []
         for hit in self.hits(domain_obj.name):
+            if hit['form'].get('#type') == 'system':
+                continue
             username = hit['form']['meta']['username']
             submitted = self.format_date(datetime.strptime(hit['received_on'][:19], '%Y-%m-%dT%H:%M:%S'))
             rows.append([
