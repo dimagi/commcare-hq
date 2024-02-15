@@ -343,7 +343,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     resetCurrentGroup();
                     usedWidth += elementTileWidth;
                 }
-                if (child.type === constants.GROUP_TYPE) {
+                if (child.type === constants.GROUP_TYPE && child.repeatable === "true") {
                     if (isNPerRowRepeatElement(child.style)) {
                         for (let groupChild of child.children) {
                             if (groupChild.type === constants.GROUP_TYPE) {
