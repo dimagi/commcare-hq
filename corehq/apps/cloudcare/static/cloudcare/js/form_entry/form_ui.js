@@ -347,7 +347,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     if (isNPerRowRepeatElement(child.style)) {
                         for (let groupChild of child.children) {
                             if (groupChild.type === constants.GROUP_TYPE) {
-                                groupChild.style.raw = getNPerRowStyleFromRepeatStyle(child.style.raw);
+                                let elementNPerRowStyle = getNPerRowStyleFromRepeatStyle(child.style.raw);
+                                if (_.has(groupChild, 'style') && groupChild.style && groupChild.style.raw) {
+                                    groupChild.style.raw = groupChild.style.raw.concat(" ", elementNPerRowStyle);
+                                } else {
+                                    groupChild.style = {'raw': elementNPerRowStyle};
+                                }
                             }
                         }
                     }
