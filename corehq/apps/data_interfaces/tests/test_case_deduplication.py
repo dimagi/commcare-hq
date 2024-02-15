@@ -490,21 +490,9 @@ class CaseDeduplicationActionTest(TestCase):
         self.domain = 'case-dedupe-test'
         self.case_type = 'adult'
 
-        self.rule = AutomaticUpdateRule.objects.create(
-            domain=self.domain,
-            name='test',
-            case_type=self.case_type,
-            active=True,
-            deleted=False,
-            filter_on_server_modified=False,
-            server_modified_boundary=None,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
-        )
-        _, self.action = self.rule.add_action(
-            CaseDeduplicationActionDefinition,
-            match_type=CaseDeduplicationMatchTypeChoices.ALL,
-            case_properties=["name", "age"],
-        )
+        (rule, action) = self._create_rule()
+        self.rule = rule
+        self.action = action
 
         self.action.set_properties_to_update([
             CaseDeduplicationActionDefinition.PropertyDefinition(
@@ -520,6 +508,29 @@ class CaseDeduplicationActionTest(TestCase):
         self.case_exists_mock.return_value = True
         self.addCleanup(case_exists_patcher.stop)
 
+    def _create_rule(self, case_properties=None, include_closed=False):
+        if not case_properties:
+            case_properties = ['name', 'age']
+
+        rule = AutomaticUpdateRule.objects.create(
+            domain=self.domain,
+            name='test',
+            case_type=self.case_type,
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )
+        _, action = rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=case_properties,
+            include_closed=include_closed
+        )
+
+        return rule, action
+
     def _create_cases(self, num_cases=5):
         faker = Faker()
 
@@ -532,10 +543,10 @@ class CaseDeduplicationActionTest(TestCase):
 
         return duplicates, uniques
 
-    def _create_case(self, name='George Simon Esq.', age=12, case_id=None, save=True):
+    def _create_case(self, name='George Simon Esq.', age=12, case_id=None, closed=False, save=True):
         return create_case(
             domain=self.domain, case_id=case_id, name=name,
-            case_type=self.case_type, case_json={'age': str(age)}, save=save)
+            case_type=self.case_type, case_json={'age': str(age)}, closed=closed, save=save)
 
     @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
     def test_updates_a_duplicate(self, find_duplicates_mock):
@@ -769,6 +780,35 @@ class CaseDeduplicationActionTest(TestCase):
 
         # All CaseDuplicates should be deleted (including the last one)
         self.assertEqual(CaseDuplicateNew.objects.filter(case_id__in=duplicate_case_ids).count(), 0)
+
+    def test_rule_that_ignores_closed_cases_removes_recently_closed_case(self):
+        duplicates, uniques = self._create_cases(num_cases=2)
+        duplicate_case_ids = [c.case_id for c in duplicates]
+        duplicate_entries = [
+            CaseDuplicateNew(case_id=case.case_id, action=self.action, hash='abc') for case in duplicates
+        ]
+        CaseDuplicateNew.objects.bulk_create(duplicate_entries)
+        closed_case = self._create_case(case_id=duplicates[0].case_id, closed=True, save=False)
+
+        self.rule.run_actions_when_case_matches(closed_case)
+
+        self.assertEqual(CaseDuplicateNew.objects.filter(case_id__in=duplicate_case_ids).count(), 0)
+
+    @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
+    def test_rule_that_includes_closed_cases_does_not_remove_recently_closed_case(self, find_duplicates_mock):
+        duplicates, uniques = self._create_cases(num_cases=2)
+        duplicate_case_ids = [c.case_id for c in duplicates]
+        duplicate_entries = [
+            CaseDuplicateNew(case_id=case.case_id, action=self.action, hash='abc') for case in duplicates
+        ]
+        CaseDuplicateNew.objects.bulk_create(duplicate_entries)
+        find_duplicates_mock.return_value = [duplicate.case_id for duplicate in duplicates]
+        rule, action = self._create_rule(include_closed=True)
+        closed_case = self._create_case(case_id=duplicates[0].case_id, closed=True, save=False)
+
+        rule.run_actions_when_case_matches(closed_case)
+
+        self.assertEqual(CaseDuplicateNew.objects.filter(action=action, case_id__in=duplicate_case_ids).count(), 2)
 
     @es_test(requires=[case_search_adapter])
     def test_integration_test(self):
