@@ -124,10 +124,13 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
     };
 
     $(function () {
-        $("#modalReportIssue").koApplyBindings(new EmailRequest(
-            "modalReportIssue",
-            "hqwebapp-bugReportForm"
-        ));
+        const issueReportModal = $("#modalReportIssue");
+        if (issueReportModal.length) {
+            issueReportModal.koApplyBindings(new EmailRequest(
+                "modalReportIssue",
+                "hqwebapp-bugReportForm"
+            ));
+        }
         const featureRequestModal = $("#modalSolutionsFeatureRequest");
         if (featureRequestModal.length) {
             featureRequestModal.koApplyBindings(new EmailRequest(
