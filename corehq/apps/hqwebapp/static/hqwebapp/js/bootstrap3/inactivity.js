@@ -140,12 +140,12 @@ hqDefine('hqwebapp/js/bootstrap3/inactivity', [
             var selectedAppId = '';
             try {
                 var urlParams = JSON.parse(decodeURIComponent(window.location.hash.substr(1)));
-                if(!urlParams.copyOf){
+                if (!urlParams.copyOf) {
                     // Don't show the popup when user came from versions page
                     selectedAppId = urlParams.appId;
                 }
             } catch (error) {
-                console.log(error);
+                return;
             }
             var domain = initialPageData.get('domain');
             $.ajax({
