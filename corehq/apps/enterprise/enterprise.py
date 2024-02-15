@@ -245,7 +245,7 @@ class EnterpriseFormReport(EnterpriseReport):
             username = hit['form']['meta']['username']
             submitted = self.format_date(datetime.strptime(hit['received_on'][:19], '%Y-%m-%dT%H:%M:%S'))
             rows.append([
-                hit['form']['@name'],
+                hit['form'].get('@name', _('Unnamed')),
                 submitted,
                 apps[hit['app_id']] if hit['app_id'] in apps else _('App not found'),
                 username,
