@@ -146,25 +146,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         return curr;
     }
 
-    function isStyleNPerRowRepeat(styleStr) {
-        return getMatchingStyles(constants.PER_ROW_REPEAT_PATTERN, styleStr).length > 0;
-    }
-
-    function getNPerRowStyleFromRepeatStyle(style) {
-        const allStyles = style.split(" ");
-        const nPerRowStyle = allStyles.find(singleStyle => isStyleNPerRowRepeat(singleStyle));
-        if (nPerRowStyle) {
-            const integerPart = nPerRowStyle.split('-')[0];
+    function getNPerRowStyleFromRepeatStyle(styleStr) {
+        const matchingPerRowRepeatStyles = getMatchingStyles(constants.PER_ROW_REPEAT_PATTERN, styleStr),
+            perRowRepeatStyle = matchingPerRowRepeatStyles.length === 0 ? null : matchingPerRowRepeatStyles[0];
+        if (perRowRepeatStyle) {
+            const integerPart = perRowRepeatStyle.split('-')[0];
             return integerPart + '-per-row';
-        }
-    }
-
-    function isNPerRowRepeatElement(style) {
-        const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
-        if (styleStr) {
-            return isStyleNPerRowRepeat(styleStr);
-        } else {
-            return false;
         }
     }
 
@@ -353,7 +340,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 }
 
                 if (child.type === constants.GROUP_TYPE) {
-                    if (isNPerRowRepeatElement(child.style)) {
+                    if (stylesContains(constants.PER_ROW_REPEAT_PATTERN, child.style)) {
                         for (let groupChild of child.children) {
                             // identifies repeat group that is nested in a group
                             if (groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") {
