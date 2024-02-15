@@ -138,8 +138,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     }
 
     function isStyleNPerRowRepeat(styleStr) {
-        const pattern = new RegExp(`\\d+${constants.PER_ROW_REPEAT}(\\s|$)`);
-        return getMatchingStyles(pattern, styleStr).length > 0;
+        return getMatchingStyles(constants.PER_ROW_REPEAT_PATTERN, styleStr).length > 0;
     }
 
     function getNPerRowStyleFromRepeatStyle(style) {
@@ -153,10 +152,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
     function isNPerRowRepeatElement(style) {
         const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
-        if(styleStr) {
-            return isStyleNPerRowRepeat(styleStr)
+        if (styleStr) {
+            return isStyleNPerRowRepeat(styleStr);
         } else {
-            return false
+            return false;
         }
     }
 
@@ -791,8 +790,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      */
     GroupedElementTileRow.calculateElementWidth = function (style) {
         const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
-        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
-        const matchingPerRowStyles = getMatchingStyles(perRowPattern, styleStr);
+        const matchingPerRowStyles = getMatchingStyles(constants.PER_ROW_PATTERN, styleStr);
         const perRowStyle = matchingPerRowStyles.length === 0 ? null : matchingPerRowStyles[0];
         const itemsPerRow = perRowStyle !== null ? parseInt(perRowStyle.split("-")[0], 10) : null;
 
@@ -964,9 +962,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Question.prototype.setWidths = function (hasLabel) {
         const self = this;
         const columnWidth = GroupedElementTileRow.calculateElementWidth(self.style);
-        const perRowPattern = new RegExp(`\\d+${constants.PER_ROW}(\\s|$)`);
 
-        if (self.stylesContains(perRowPattern)) {
+        if (self.stylesContains(constants.PER_ROW_PATTERN)) {
             self.controlWidth = constants.FULL_WIDTH;
             self.labelWidth = constants.FULL_WIDTH;
             self.questionTileWidth = `col-sm-${columnWidth}`;
