@@ -280,7 +280,7 @@
               {% if request|request_has_privilege:"EXPORT_MULTISORT" %}style="cursor:pointer"{% endif %}>
             <td class="text-center">
               <span class="sortable-handle">
-                <i class="fa fa-arrows-v"></i>
+                <i class="fa-solid fa-up-down"></i>
               </span>
               &nbsp;&nbsp;&nbsp;
               <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
@@ -400,7 +400,7 @@
                     <li class="list-group-item">
                       <span data-bind="text: $data"></span>
                       <i style="cursor: pointer"
-                         class="text-danger fa fa-trash pull-right"
+                         class="text-danger fa-regular fa-trash-can pull-right"
                          data-bind="click: column.removeUserDefinedOption.bind(column)"></i>
                     </li>
                   </ul>
