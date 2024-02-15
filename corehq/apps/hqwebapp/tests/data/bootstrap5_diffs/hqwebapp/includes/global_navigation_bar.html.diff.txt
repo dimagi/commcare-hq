@@ -94,7 +94,7 @@
 -            <li>
 -                <a href="{% url "domain_subscription_view" domain %}" class="track-usage-link"
 -                   data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
--                    <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
+-                    <i class="fa-solid fa-gauge icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
 -                </a>
 -            </li>
 +              </li>
@@ -121,7 +121,7 @@
 +          <li>
 +            <a href="{% url "domain_subscription_view" domain %}" class="dropdown-item track-usage-link"
 +               data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
-+              <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
++              <i class="fa-solid fa-gauge icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
 +            </a>
 +          </li>
 +          {% endif %}
@@ -250,7 +250,7 @@
 +                 data-category="Nav Bar"
 +                 data-action="Question Mark"
 +                 data-label="Report an Issue">
-+                  <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i>
++                  <i class="fa-solid fa-triangle-exclamation icon-warning-sign dropdown-icon"></i>
 +                  {% trans "Report an Issue" %}
 +              </a>
 +            </li>
@@ -281,7 +281,7 @@
 -                <li>
 -                    <a href="#modalReportIssue" data-toggle="modal" class="track-usage-link"
 -                       data-category="Nav Bar" data-action="Question Mark" data-label="Report an Issue">
--                        <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
+-                        <i class="fa-solid fa-triangle-exclamation icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
 -                    </a>
 -                </li>
 -            {% endif %}

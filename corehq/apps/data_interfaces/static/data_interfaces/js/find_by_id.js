@@ -24,7 +24,7 @@ hqDefine("data_interfaces/js/find_by_id", [
 
         self.linkMessage = ko.computed(function () {
             if (self.link()) {
-                var redirectTemplate = _.template(gettext("<a href='<%- link %>' target='_blank'>View <i class='fa fa-external-link'></i></a>"));
+                var redirectTemplate = _.template(gettext("<a href='<%- link %>' target='_blank'>View <i class='fa-solid fa-up-right-from-square'></i></a>"));
                 return self.successMessage + " " + redirectTemplate({link: self.link()});
             }
             return '';
