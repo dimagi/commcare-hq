@@ -1416,9 +1416,9 @@ def hash_arguments(*args):
     writer = csv.writer(
         updater,
         delimiter='\t',
-        quotechar=None,
+        quotechar='"',
         escapechar='|',
-        quoting=csv.QUOTE_NONE,
+        quoting=csv.QUOTE_MINIMAL,
     )
 
     writer.writerow(args)

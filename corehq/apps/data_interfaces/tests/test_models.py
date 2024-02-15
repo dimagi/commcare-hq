@@ -515,6 +515,15 @@ class HashArguments_Tests(SimpleTestCase):
         result2 = hash_arguments('1\t2')
         self.assertNotEqual(result1, result2)
 
+    def test_handles_empty_arguments(self):
+        result = hash_arguments('')
+        self.assertTrue(type(result), str)
+
+    def test_empty_arguments_match(self):
+        result1 = hash_arguments('')
+        result2 = hash_arguments('')
+        self.assertEqual(result1, result2)
+
 
 def create_dict_mock(class_, data):
     '''Create an empty object of the given class whose `to_dict` method returns the specified data'''
