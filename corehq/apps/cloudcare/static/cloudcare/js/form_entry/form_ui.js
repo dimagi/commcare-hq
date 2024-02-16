@@ -667,7 +667,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 this.toggleChildren(data, event);
             }
         };
-
         self.childrenRequired = ko.computed(function () {
             return _.find(self.children(), function (child) {
                 return child.required() || child.childrenRequired && child.childrenRequired();
