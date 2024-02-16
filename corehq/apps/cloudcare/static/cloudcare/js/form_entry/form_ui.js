@@ -353,12 +353,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                             }
                         }
                     }
+                }
+
+                if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
                     child = Container.groupElements(child);
                 }
 
-                if (child.type === constants.REPEAT_TYPE) {
-                    child = Container.groupElements(child);
-                }
                 addToCurrentGroup(child);
             } else {
                 newChildren.push(child);
