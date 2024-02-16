@@ -775,7 +775,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.required = ko.observable(0);
         self.childrenRequired = ko.computed(function () {
             return _.find(self.children(), function (child) {
-                return child.required() || child.childrenRequired && child.childrenRequired();
+                return (child.required && child.required() || child.childrenRequired && child.childrenRequired());
             });
         });
     }
