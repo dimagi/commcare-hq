@@ -65,19 +65,19 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             formJSON.tree = [repeatJSON];
             var form = formUI.Form(formJSON);
             assert.equal(form.children().length, 1);
-            assert.equal(form.children()[0].children().length, 0);
+            assert.equal(form.children()[0].children()[0].children().length, 0);
 
             // Add new repeat
             form.fromJS({ children: [repeatNestJSON] });
             assert.equal(form.children().length, 1);
             // Each repeat is a group with questions
-            assert.equal(form.children()[0].type(), constants.REPEAT_TYPE);
-            assert.equal(form.children()[0].children().length, 1);
-            assert.equal(form.children()[0].children()[0].type(), constants.GROUPED_ELEMENT_TILE_ROW_TYPE);
-            assert.equal(form.children()[0].children()[0].children()[0].type(), constants.GROUP_TYPE);
-            assert.isTrue(form.children()[0].children()[0].children()[0].isRepetition);
-            assert.equal(form.children()[0].children()[0].children()[0].children()[0].type(), constants.GROUPED_ELEMENT_TILE_ROW_TYPE);
-            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);
+            assert.equal(form.children()[0].children()[0].type(), constants.REPEAT_TYPE);
+            assert.equal(form.children()[0].children()[0].children().length, 1);
+            assert.equal(form.children()[0].children()[0].children()[0].type(), constants.GROUPED_ELEMENT_TILE_ROW_TYPE);
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].type(), constants.GROUP_TYPE);
+            assert.isTrue(form.children()[0].children()[0].children()[0].children()[0].isRepetition);
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[0].type(), constants.GROUPED_ELEMENT_TILE_ROW_TYPE);
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);
         });
 
         it('Should render questions grouped by row', function () {
@@ -217,16 +217,26 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             g0.children[0].children.push(g1);
 
             /* Group (collapsible) [g0]
-                -Group [g0-0]
-                    -Question
-                    -Question
-                    -Group (collapsible) [g1]
-                        -Group (collapsible) [g1-0]
+                -Group-Element-Tile-Row
+                    -Group [g0-0]
+                        -Group-Element-Tile-Row
                             -Question
+                        -Group-Element-Tile-Row
                             -Question
-                            -Repeat [r1]
-                                - Group (collapsible) [r1-0]
-                                    -Question
+                        -Group-Element-Tile-Row
+                            -Group (collapsible) [g1]
+                                -Group-Element-Tile-Row
+                                    -Group (collapsible) [g1-0]
+                                        -Group-Element-Tile-Row
+                                            -Question
+                                        -Group-Element-Tile-Row
+                                            -Question
+                                        -Group-Element-Tile-Row
+                                            -Repeat [r1]
+                                                -Group-Element-Tile-Row
+                                                    - Group (collapsible) [r1-0]
+                                                        -Group-Element-Tile-Row
+                                                            -Question
             */
             formJSON.tree = [g0];
             let form = formUI.Form(formJSON);
@@ -235,8 +245,8 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].headerBackgroundColor(), ''); //[g0-0]
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].headerBackgroundColor(), '#003e96'); //[g1]
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].headerBackgroundColor(), '#004EBC'); //[g1-0]
-            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].children()[2].headerBackgroundColor(), '#002f71'); //[r1]
-            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].headerBackgroundColor(), ''); //[r1-0]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].children()[2].children()[0].headerBackgroundColor(), '#002f71'); //[r1]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].headerBackgroundColor(), ''); //[r1-0]
         });
 
         it('Should reconcile question choices', function () {
