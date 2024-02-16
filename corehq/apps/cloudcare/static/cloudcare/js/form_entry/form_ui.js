@@ -744,6 +744,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             $.publish('formplayer.dirty');
             $('.add').trigger('blur');
         };
+
+        const columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
+        this.elementTile = `col-sm-${columnWidth}`;
     }
     Repeat.prototype = Object.create(Container.prototype);
     Repeat.prototype.constructor = Container;
