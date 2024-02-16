@@ -343,7 +343,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     if (stylesContains(constants.PER_ROW_REPEAT_PATTERN, child.style)) {
                         const elementNPerRowStyle = getNPerRowStyleFromRepeatStyle(child.style.raw);
                         for (let groupChild of child.children) {
-                            // identifies repeat group that is nested in a group
+                            // Detects configured repeat groups within the form. If a repeat group has a 'repeat-count' configured,
+                            // the Formplayer response designates the key 'type' as 'sub-group' and 'repeatable' as 'true'.
                             if ((groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") || groupChild.type === constants.REPEAT_TYPE) {
                                 if (_.has(groupChild, 'style') && groupChild.style && groupChild.style.raw) {
                                     groupChild.style.raw = groupChild.style.raw.concat(" ", elementNPerRowStyle);
