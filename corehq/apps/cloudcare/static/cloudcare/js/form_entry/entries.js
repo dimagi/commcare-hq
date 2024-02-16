@@ -899,6 +899,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.extensionsMap = initialPageData.get("valid_multimedia_extensions_map");
         // Tracks whether file entry has already been cleared, preventing an additional failing request to Formplayer
         self.cleared = false;
+        self.buildBroadcastTopics(options);
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
@@ -950,6 +951,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             }
             self.question.error(null);
             self.question.onchange();
+
+            if (self.broadcastTopics.length) {
+                var broadcastObj = {0: self.file().name};
+                self.broadcastMessages(self.question, broadcastObj);
+            }
         }
     };
     FileEntry.prototype.onClear = function () {
@@ -1310,13 +1316,19 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                                 entry = new SignatureEntry(question, {});
                                 break;
                             }
-                            entry = new ImageEntry(question, {});
+                            entry = new ImageEntry(question, {
+                                broadcastStyles: broadcastStyles,
+                            });
                             break;
                         case constants.CONTROL_AUDIO_CAPTURE:
-                            entry = new AudioEntry(question, {});
+                            entry = new AudioEntry(question, {
+                                broadcastStyles: broadcastStyles,
+                            });
                             break;
                         case constants.CONTROL_VIDEO_CAPTURE:
-                            entry = new VideoEntry(question, {});
+                            entry = new VideoEntry(question, {
+                                broadcastStyles: broadcastStyles,
+                            });
                             break;
                         // any other control types are unsupported
                     }
