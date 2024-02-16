@@ -331,7 +331,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
 
         for (let child of json.children) {
-            if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE) {
+            if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
                 const elementTileWidth = GroupedElementTileRow.calculateElementWidth(child.style);
                 usedWidth += elementTileWidth;
                 if (usedWidth > constants.GRID_COLUMNS) {
@@ -344,7 +344,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                         const elementNPerRowStyle = getNPerRowStyleFromRepeatStyle(child.style.raw);
                         for (let groupChild of child.children) {
                             // identifies repeat group that is nested in a group
-                            if (groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") {
+                            if ((groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") || groupChild.type === constants.REPEAT_TYPE) {
                                 if (_.has(groupChild, 'style') && groupChild.style && groupChild.style.raw) {
                                     groupChild.style.raw = groupChild.style.raw.concat(" ", elementNPerRowStyle);
                                 } else {
@@ -355,11 +355,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     }
                     child = Container.groupElements(child);
                 }
+
+                if (child.type === constants.REPEAT_TYPE) {
+                    child = Container.groupElements(child);
+                }
                 addToCurrentGroup(child);
-            } else if (child.type === constants.REPEAT_TYPE) {
-                const newGroup = Container.groupElements(child);
-                newChildren.push(newGroup);
-                resetCurrentGroup();
             } else {
                 newChildren.push(child);
                 resetCurrentGroup();
