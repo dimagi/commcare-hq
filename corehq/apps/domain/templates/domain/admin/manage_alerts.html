@@ -80,6 +80,7 @@
             </td>
             <td>
               <a class="btn btn-default" data-bind="attr: {href: editUrl}" style="float: left; margin-right: 5px;">
+                <i class="fa fa-edit"></i>
                 {% trans "Edit" %}
               </a>
               <form action="{% url 'delete_domain_alert' domain %}" method="post" style="float: left">
@@ -89,6 +90,7 @@
                        data-bind="value: id">
                 <button type="submit"
                       class="btn btn-danger">
+                  <i class="fa fa-trash"></i>
                   {% trans "Delete" %}
                 </button>
               </form>
