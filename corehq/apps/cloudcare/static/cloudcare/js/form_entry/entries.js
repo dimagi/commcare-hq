@@ -912,7 +912,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
             // Input has changed and validation will be checked
             if (newValue !== self.answer()) {
-                self.question.formplayerProcessed = false;
+                self.question.formplayerMediaRequest = $.Deferred();
                 self.cleared = false;
             }
             self.answer(newValue.replace(constants.FILE_PREFIX, ""));
@@ -923,7 +923,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     FileEntry.prototype.onAnswerChange = function (newValue) {
         var self = this;
         // file has already been validated and assigned a unique id. another request should not be sent to formplayer
-        if (self.question.formplayerProcessed) {
+        if (self.question.formplayerMediaRequest.state() === "resolved") {
             return;
         }
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
@@ -957,8 +957,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.question.onchange();
 
             if (self.broadcastTopics.length) {
-                var broadcastObj = {0: self.file().name};
-                self.broadcastMessages(self.question, broadcastObj);
+                // allow support for broadcasting multiple filenames
+                var broadcastObj = Object.fromEntries([self.file()].map((file, i) => [i, file.name]));
+                self.question.formplayerMediaRequest.then(function () {
+                    self.broadcastMessages(self.question, broadcastObj);
+                });
             }
         }
     };
