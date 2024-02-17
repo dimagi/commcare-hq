@@ -169,37 +169,51 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
              assert.equal(form.children()[0].children()[1].children()[0].children()[0].children()[1].children().length, 1); // [q]
         });
 
-        it('Should add n-per-row style to inner Group when using n-per-row-repeat and render Repeat Group and Question grouped by row', function () {
-            let styleObj = {raw: '3-per-row-repeat'};
+        it('Should add n-per-row style to Repeat that are direct children of n-per-row-repeat Group and group the Repeat', function () {
+            let styleObj = {raw: '2-per-row-repeat'};
 
             let g0 = fixtures.groupJSON({
-                style: styleObj,
-                ix: "0",
-            });
+                    style: styleObj,
+                    ix: "0",
+                }),
+                r0 = fixtures.repeatJSON(),
+                r1 = fixtures.repeatJSON(),
+                r2 = fixtures.repeatJSON();
 
-            g0.children[0].style = styleObj;
-
+            r1.ix = "1J";
+            r2.ix = "2J";
+            g0.children.push(r0, r1, r2);
             formJSON.tree = [g0];
             let form = formUI.Form(formJSON);
 
-            assert.equal(form.children()[0].children()[0].style.raw(), '3-per-row');
-
-            /* Group
+            /* -Group-Element-Tile-Row
+                -Group0
                     -Group-Element-Tile-Row
-                            -Group
-                                -Group-Element-Tile-Row
-                                    -Question
-                                -Group-Element-Tile-Row
-                                    -Question
+                        -Group1
+                            -Group-Element-Tile-Row
+                                -Question
+                            -Group-Element-Tile-Row
+                                -Question
+                    -Group-Element-Tile-Row
+                        -Repeat0
+                        -Repeat1
+                    -Group-Element-Tile-Row
+                        -Repeat2
             */
 
             // Expected structure (where ge signifies type "grouped-element-tile-row")
-            assert.equal(form.children().length, 1); // [group]
-            assert.equal(form.children()[0].children().length, 1); // [ge]
-            assert.equal(form.children()[0].children()[0].children()[0].children().length, 1); // [group]
-            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children().length, 2); // [ge,ge]
-            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[0].children().length, 1); // [q]
-            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[1].children().length, 1); // [q]
+            let group0 = form.children()[0].children()[0],
+                group1 = group0.children()[0].children()[0],
+                repeat0 = group0.children()[1].children()[0],
+                repeat1 = group0.children()[1].children()[1],
+                repeat2 = group0.children()[2].children()[0];
+            assert.equal(form.children()[0].children().length, 1); // [group0]
+            assert.equal(group0.children().length, 3); // [ge, ge, ge]
+            assert.equal(group1.style, null); // [group]
+            assert.equal(group0.children()[1].children().length, 2); // [repeat0, repeat1]
+            assert.equal(repeat0.style.raw(), "2-per-row");
+            assert.equal(repeat1.style.raw(), "2-per-row");
+            assert.equal(repeat2.style.raw(), "2-per-row");
         });
 
         it('Should calculate nested background header color', function () {
