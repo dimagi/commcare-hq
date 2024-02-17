@@ -752,7 +752,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Repeat.prototype.constructor = Container;
 
     /**
-     * Represents a group of Questions. Questions are grouped such that all questions are
+     * Represents a group of Questions, Group, or Repeat. Elements are grouped such that all elements are
      * contained in the same row.
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
