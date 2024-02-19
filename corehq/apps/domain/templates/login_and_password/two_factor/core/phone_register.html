@@ -1,3 +1,4 @@
+{# lightly modified version of two_factor/core/phone_register.html #}
 {% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
@@ -5,11 +6,11 @@
 {% block page_content %}
   <h1>{% block title %}{% trans "Add Backup Phone" %}{% endblock %}</h1>
 
-  {% if wizard.steps.current == 'method' %}
-    <p>{% blocktrans %}Your backup phone number will be used if your primary method of
+  {% if wizard.steps.current == 'setup' %}
+    <p>{% blocktrans trimmed %}Your backup phone number will be used if your primary method of
       registration is not available. Please enter a valid phone number.{% endblocktrans %}</p>
   {% elif wizard.steps.current == 'validation' %}
-    <p>{% blocktrans %}We've sent a token to your phone number. Please
+    <p>{% blocktrans trimmed %}We've sent a token to your phone number. Please
       enter the token you've received.{% endblocktrans %}</p>
   {% endif %}
 
