@@ -491,9 +491,7 @@ class CaseDeduplicationActionTest(TestCase):
         self.domain = 'case-dedupe-test'
         self.case_type = 'adult'
 
-        (rule, action) = self._create_rule()
-        self.rule = rule
-        self.action = action
+        (self.rule, self.action) = self._create_rule()
 
         self.action.set_properties_to_update([
             CaseDeduplicationActionDefinition.PropertyDefinition(
