@@ -183,6 +183,39 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
              assert.equal(form.children()[0].children()[1].children()[0].children()[0].children()[1].children().length, 1); // [q]
         });
 
+        it('Should add n-per-row style to inner Group when using n-per-row-repeat and render Repeat Group and Question grouped by row', function () {
+            let styleObj = {raw: '3-per-row-repeat'};
+
+            let g0 = fixtures.groupJSON({
+                style: styleObj,
+                ix: "0",
+            });
+
+            g0.children[0].style = styleObj;
+
+            formJSON.tree = [g0];
+            let form = formUI.Form(formJSON);
+
+            assert.equal(form.children()[0].children()[0].style.raw(), '3-per-row');
+
+            /* Group
+                    -Group-Element-Tile-Row
+                            -Group
+                                -Group-Element-Tile-Row
+                                    -Question
+                                -Group-Element-Tile-Row
+                                    -Question
+            */
+
+            // Expected structure (where ge signifies type "grouped-element-tile-row")
+            assert.equal(form.children().length, 1); // [group]
+            assert.equal(form.children()[0].children().length, 1); // [ge]
+            assert.equal(form.children()[0].children()[0].children()[0].children().length, 1); // [group]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children().length, 2); // [ge,ge]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[0].children().length, 1); // [q]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[1].children().length, 1); // [q]
+        });
+
         it('Should calculate nested background header color', function () {
             let styleObj = {raw: 'group-collapse'};
             let g0 = fixtures.groupJSON({
