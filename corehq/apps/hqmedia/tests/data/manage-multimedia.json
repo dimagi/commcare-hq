@@ -2280,7 +2280,7 @@
     "hq_logo_android_home": {
       "updated": false,
       "m_id": "3962060d41a756276a082c52ce018d9d",
-      "icon_class": "fa fa-picture-o",
+      "icon_class": "fa-regular fa-image",
       "uid": "a682d9a2a882ba7adaf4bd245b3b5298",
       "url": "/hq/multimedia/file/CommCareImage/3962060d41a756276a082c52ce018d9d/",
       "original_path": null,
@@ -2292,7 +2292,7 @@
     "hq_logo_android_login": {
       "updated": false,
       "m_id": "3af8ce684e1ab00f46e135c06a01e113",
-      "icon_class": "fa fa-picture-o",
+      "icon_class": "fa-regular fa-image",
       "uid": "e0115ba2206cb3e08024d253fe9f34fb",
       "url": "/hq/multimedia/file/CommCareImage/3af8ce684e1ab00f46e135c06a01e113/",
       "original_path": null,
