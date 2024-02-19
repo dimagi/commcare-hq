@@ -298,7 +298,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         iconKeyAction: function (e) {
-            if (e.keyCode === 13) {
+            if (e.keyCode === 13 || e.keyCode === 32) {
+                if (e.keyCode === 32) {
+                    e.preventDefault();
+                }
                 this.iconClick(e);
             }
         },
@@ -351,6 +354,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.destroy();
             } else {
                 this.model.set("data", detailResponse.models[0].attributes.details);
+                this.model.set("altText", detailResponse.models[0].attributes.altText);
             }
         },
 
@@ -419,8 +423,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
+                altText: this.options.model.get('altText'),
                 styles: this.options.styles,
-                headers: this.options.headers,
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
@@ -624,7 +628,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                headers: this.options.headers,
                 endpointActions: this.options.endpointActions,
             };
         },
