@@ -21,12 +21,16 @@
     height: @appicon-icon-height-preview;
     line-height: @appicon-icon-height-preview;
     font-size: @appicon-icon-height-preview;
+    &[class*='fa-'] {
+      font-size: 70px;
+    }
   }
 }
 
 .appicon-start,
 .appicon-sync,
 .appicon-settings,
+.appicon-restore-as,
 .preview-tablet-mode .appicon-incomplete {
   .appicon-title {
     height: 21px;
