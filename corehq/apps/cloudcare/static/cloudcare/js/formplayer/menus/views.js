@@ -329,8 +329,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
 
             $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
-                self.reloadCase(self.model.get('id'));
-                resetIcon();
+                self.reloadCase(self.model.get('id')).then(function () {
+                    resetIcon();
+                });
             }).fail(function () {
                 resetIcon();
             });
@@ -347,6 +348,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }).fail(function () {
                 console.log('could not get case details');
             });
+            return fetchingDetails;
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
