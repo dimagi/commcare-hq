@@ -139,7 +139,7 @@ nav.appmanager-content {
 .appnav-menu > li > .appnav-item a.appnav-add {
   width: @appnav-width;
   padding-left: @appnav-trash-width;
-  > .fa {
+  > [class*='fa-'] {
     .transition(all .2s);
     margin-right: 8px;
     margin-left: 5px;
@@ -148,7 +148,7 @@ nav.appmanager-content {
   &:hover, &:focus {
     text-decoration: none;
 
-    > .fa {
+    > [class*='fa-'] {
       color: @call-to-action-mid;
     }
   }

@@ -5,6 +5,10 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import *
 
+from corehq.apps.styleguide.context import (
+    get_common_icons,
+    get_custom_icons,
+)
 from corehq.apps.styleguide.example_forms import (
     BasicCrispyForm,
     CheckboxesForm,
@@ -93,46 +97,8 @@ class AtomsStyleGuideView(BaseStyleGuideArticleView):
     @property
     def page_context(self):
         return {
-            'common_icons': [
-                {
-                    'name': 'Common FontAwesome primary icons',
-                    'icons': [
-                        'fa-plus', 'fa-trash', 'fa-remove', 'fa-search',
-                        'fa-angle-double-right', 'fa-angle-double-down',
-                    ],
-                },
-                {
-                    'name': 'Common FontAwesome secondary icons',
-                    'icons': [
-                        'fa-cloud-download', 'fa-cloud-upload',
-                        'fa-warning', 'fa-info-circle', 'fa-question-circle', 'fa-check',
-                        'fa-external-link',
-                    ],
-                }
-            ],
-            'custom_icons': [
-                {
-                    'name': 'Custom HQ icons',
-                    'icons': [
-                        'fcc-flower', 'fcc-applications', 'fcc-commtrack', 'fcc-reports', 'fcc-data', 'fcc-users',
-                        'fcc-settings', 'fcc-help', 'fcc-exchange', 'fcc-messaging', 'fcc-chart-report',
-                        'fcc-form-report', 'fcc-datatable-report', 'fcc-piegraph-report', 'fcc-survey',
-                        'fcc-casemgt', 'fcc-blankapp', 'fcc-globe', 'fcc-app-createform', 'fcc-app-updateform',
-                        'fcc-app-completeform',
-                    ],
-                },
-                {
-                    'name': 'Custom HQ icons specific to form builder',
-                    'icons': [
-                        'fcc-fd-text', 'fcc-fd-numeric', 'fcc-fd-data', 'fcc-fd-variable', 'fcc-fd-single-select',
-                        'fcc-fd-single-circle', 'fcc-fd-multi-select', 'fcc-fd-multi-box', 'fcc-fd-decimal',
-                        'fcc-fd-long', 'fcc-fd-datetime', 'fcc-fd-audio-capture', 'fcc-fd-android-intent',
-                        'fcc-fd-signature', 'fcc-fd-multi-box', 'fcc-fd-single-circle', 'fcc-fd-hash',
-                        'fcc-fd-external-case', 'fcc-fd-external-case-data', 'fcc-fd-expand', 'fcc-fd-collapse',
-                        'fcc-fd-case-property', 'fcc-fd-edit-form',
-                    ],
-                },
-            ],
+            'common_icons': get_common_icons(),
+            'custom_icons': get_custom_icons(),
             'swatches': {
                 'RED': {
                     'main': ('e73c27', 'cc-att-neg-mid'),

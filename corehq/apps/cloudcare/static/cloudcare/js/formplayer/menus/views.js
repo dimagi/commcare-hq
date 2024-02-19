@@ -833,7 +833,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         fontAwesomeIcon: function (iconName) {
             return L.divIcon({
-                html: `<i class='fa ${iconName} fa-4x'></i>`,
+                html: `<i class='${iconName} fa-4x'></i>`,
                 iconSize: [12, 12],
                 className: 'marker-pin',
             });
@@ -843,9 +843,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const token = initialPageData.get("mapbox_access_token");
 
             try {
-                const locationIcon = this.fontAwesomeIcon("fa-map-marker");
-                const selectedLocationIcon = this.fontAwesomeIcon("fa-star");
-                const homeLocationIcon = this.fontAwesomeIcon("fa-street-view");
+                const locationIcon = this.fontAwesomeIcon("fa-solid fa-location-dot");
+                const selectedLocationIcon = this.fontAwesomeIcon("fa fa-star");
+                const homeLocationIcon = this.fontAwesomeIcon("fa fa-street-view");
 
                 const lat = 30;
                 const lon = 15;

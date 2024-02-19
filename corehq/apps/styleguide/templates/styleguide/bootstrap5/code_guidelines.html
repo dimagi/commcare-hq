@@ -1,0 +1,149 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Code Guidelines</h1>
+  <p class="sg-lead">
+    Good styling code, like any good code, is reusable, DRY, and semantic.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#style-hierarchy">Style Hierarchy</a></li>
+      <li><a href="#z-index">Handling Z-Index</a></li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">
+    Overview
+  </h2>
+  <p>
+    Most of us don’t write much CSS. HQ uses
+    <a href="https://getbootstrap.com/docs/5.3/getting-started/introduction/">Bootstrap 5.3</a>, which
+    gives us a consistent and fairly comprehensive set of styles. Most of the "styling" we do is
+    picking the appropriate Bootstrap (or HQ) classes and then troubleshooting anything unexpected.
+  </p>
+  <p>
+    We use <a href="https://sass-lang.com/">SASS / SCSS</a> to write styles.
+    SASS is a powerful extension of CSS that allows for more maintainable and reusable styling
+    by supporting variables, mixins, and so much more. SCSS is a flavor of SASS with a syntax
+    closer to CSS syntax where the use of semicolons and braces are mandatory.
+    Since Bootstrap 5 uses the SCSS flavor of SASS, we also have chosen to use SCSS.
+  </p>
+  <p>
+    Reusable CSS is good for the same reasons reusable code is good everywhere else. On the front end,
+    reusable code is also correlated with visual consistency and generally better UX. To that end, when
+    creating a new page or section:
+  </p>
+  <ul>
+    <li>It should look very similar to related HQ pages.</li>
+    <li>It should look fairly similar to other HQ pages.</li>
+    <li>It should look somewhat like the rest of the internet.</li>
+  </ul>
+  <p>
+    Bootstrap takes care of a lot this: it gives us a consistent framework so our pages look like each other,
+    and that framework is designed to resemble the rest of the internet.
+  </p>
+  <p>
+    Good styling is <strong>semantic</strong>, because that makes it easier for other developers to reuse.
+    Ideally, a visual designer decides what an error looks like, or what a CRUD page looks like, and then
+    developers only need to determine that they're displaying an error, or creating a CRUD page, and the look
+    and feel is taken care of.
+  </p>
+  <p>
+    Classes like <code>.bump-down { margin-top: 10px; }</code> are problematic because it isn't clear when
+    and why they should be used, so they get applied inconsistently, and we end up with a site that looks
+    a little bit...off...but it isn't obvious why. Bootstrap is a good example of a largely semantic system:
+    classes have names like <code>.btn-danger</code> rather than <code>.btn-red</code>, to make it clear <strong>why</strong>
+    you should use a particular class.
+  </p>
+
+  <h2 id="style-hierarchy" class="pt-4">
+    Style Hierarchy
+  </h2>
+  <p class="lead">
+    Most styling should live in external SCSS files.
+  </p>
+  <p>
+    Most HQ-specific styling lives in external SCSS files, typically in
+    <code>corehq/apps/hqwebapp/static/hqwebapp/scss</code>.
+  </p>
+  <p>
+    App-specific styling
+    can live in <code>corehq/apps/style/static/APPNAME/scss</code> and then be
+    included with <code>&lt;link&gt;</code> tags in the appropriate template.
+  </p>
+  <p>
+    Some pages use in-page <code>&lt;style&gt;</code> blocks. This isn't ideal for two reasons:
+  </p>
+  <ul>
+    <li>
+      In-page styles can't be reused by other pages - but for the sake of a consistent experience,
+      most styling shouldn't be specific to a single page.
+    </li>
+    <li>
+      In-page styles can't use SCSS, so they tend to be less DRY and has to hard-code values like
+      colors and dimensions, rather than using the standard values stored in SCSS.
+    </li>
+  </ul>
+  <p>
+    Inline styling is generally a bad idea for the same reasons as in-page styling: one-off styling
+    isn't good for consistency and often isn't semantic.
+  </p>
+
+  <h2 id="z-index" class="pt-4">
+    Handling Z-Index
+  </h2>
+  <p class="lead">
+    Disorganized z-indices lead to highly visible bugs.
+  </p>
+  <p>
+    Z-index gives you control over the stacking order of elements. The challenge is that
+    it acts like a global variable and, like any global variable, gets hard to keep track of.
+    HQ deals with this as best as it can, by declaring numeric z-index values as variables in
+    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/scss/commcarehq/_variables.scss">variables.scss</a>
+    and using the variables in other SCSS files. This isn't perfect, but it at least gives us
+    one place to define HQ-specific absolute z-index values - which also need to play nicely
+    with Bootstrap's z-index list.
+  </p>
+  <p>
+    Most z-index issues arise from not having a good handle on all of the different values
+    used in an application, but there are a few other complexities that occasionally cause problems:
+  </p>
+  <ul>
+    <li class="pb-2">
+      Stacking levels: Z index isn't the only aspect of element stacking. Stacking is also affected
+      by element positioning and floating.
+      <a href="http://vanseodesign.com/css/css-stack-z-index/">
+        "Natural" stacking order, from top to bottom:
+      </a>
+      <ul>
+        <li>Positive z-index</li>
+        <li>z-index auto or 0</li>
+        <li>Inline elements</li>
+        <li>Floated elements</li>
+        <li>Block-level elements</li>
+        <li>Negative z-index</li>
+        <li>Background</li>
+      </ul>
+    </li>
+    <li>
+      Stacking context: Z-index isn't strictly global, it acts within a stacking context. There's a
+      global context but may also be sub-contexts within that. The most common of these is that an
+      element with a non-auto z-index creates a stacking context. This is intuitive: if you set a modal
+      to <code>z-index: 9999</code>, you don’t have to set the z-index on all of its children to 1000,
+      they just come along for the ride. But there are other properties that also create new stacking
+      contexts where you might not expect it. <code>position: fixed</code> is one, translucent elements
+      is another.
+      <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Positioning/Understanding_z_index/The_stacking_context">
+        The others are pretty obscure.
+      </a>
+    </li>
+  </ul>
+{% endblock content %}
