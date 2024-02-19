@@ -557,7 +557,7 @@ class CaseDeduplicationActionTest(TestCase):
         duplicates, uniques = self._create_cases()
         find_duplicates_mock.return_value = [duplicate.case_id for duplicate in duplicates]
 
-        self.rule.run_actions_when_case_matches(duplicates[0])
+        self.rule.run_rule(duplicates[0], datetime.now())
 
         for duplicate_case in duplicates:
             self.assertEqual(
@@ -580,8 +580,8 @@ class CaseDeduplicationActionTest(TestCase):
         duplicates, uniques = self._create_cases()
         find_duplicates_mock.return_value = [duplicate.case_id for duplicate in duplicates]
 
-        self.rule.run_actions_when_case_matches(duplicates[0])
-        self.rule.run_actions_when_case_matches(duplicates[1])
+        self.rule.run_rule(duplicates[0], datetime.now())
+        self.rule.run_rule(duplicates[1], datetime.now())
 
         # duplicates[1] should already have been updated by the first action.
         # It should only have two transactions (create and the initial
@@ -599,7 +599,7 @@ class CaseDeduplicationActionTest(TestCase):
         duplicates, uniques = self._create_cases(1)
         find_duplicates_mock.return_value = [duplicate.case_id for duplicate in duplicates]
 
-        self.rule.run_actions_when_case_matches(duplicates[0])
+        self.rule.run_rule(duplicates[0], datetime.now())
 
         for duplicate_case in duplicates:
             self.assertIsNone(
@@ -620,7 +620,7 @@ class CaseDeduplicationActionTest(TestCase):
         duplicates, _ = self._create_cases(num_cases=5)
         find_duplicates_mock.return_value = [duplicate.case_id for duplicate in duplicates]
 
-        self.rule.run_actions_when_case_matches(duplicates[0])
+        self.rule.run_rule(duplicates[0], datetime.now())
 
         # We only guarantee that the matching case and at least one other case will get inserted
         resulting_case_ids = CaseDuplicateNew.objects.filter(
@@ -642,7 +642,7 @@ class CaseDeduplicationActionTest(TestCase):
         mock_case_exists.return_value = False
 
         with freeze_time(current_time):
-            self.rule.run_actions_when_case_matches(new_case)
+            self.rule.run_rule(new_case, datetime.now())
 
         created_duplicates = CaseDuplicateNew.objects.filter(case_id=new_case.case_id)
         self.assertEqual(created_duplicates.count(), 0)
@@ -657,7 +657,7 @@ class CaseDeduplicationActionTest(TestCase):
         with self.assertRaisesRegex(
                 ValueError, f'Unable to find current ElasticSearch data for: {case.case_id}'):
             with freeze_time(current_time):
-                self.rule.run_actions_when_case_matches(case)
+                self.rule.run_rule(case, datetime.now())
 
     @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
     def test_case_no_longer_duplicate(self, find_duplicates_mock):
@@ -670,7 +670,7 @@ class CaseDeduplicationActionTest(TestCase):
 
         # The first case is no longer a duplicate
         find_duplicates_mock.return_value = [case.case_id]
-        self.rule.run_actions_when_case_matches(updated_case)
+        self.rule.run_rule(updated_case, datetime.now())
 
         self.assertEqual(
             CaseDuplicateNew.objects.filter(action=self.action, case_id=case.case_id).count(), 0
@@ -684,12 +684,12 @@ class CaseDeduplicationActionTest(TestCase):
         duplicates, uniques = self._create_cases(num_cases=2)
         find_duplicates_mock.return_value = [duplicate.case_id for duplicate in duplicates]
 
-        self.rule.run_actions_when_case_matches(duplicates[0])
+        self.rule.run_rule(duplicates[0], datetime.now())
 
         updated_case = self._create_case(case_id=duplicates[0].case_id, age=15, save=False)
 
         find_duplicates_mock.return_value = [duplicates[0].case_id]
-        self.rule.run_actions_when_case_matches(updated_case)
+        self.rule.run_rule(updated_case, datetime.now())
 
         duplicate_ids = [case.case_id for case in duplicates]
 
@@ -704,10 +704,10 @@ class CaseDeduplicationActionTest(TestCase):
         duplicates, uniques = self._create_cases(num_cases=2)
         find_duplicates_mock.return_value = [duplicate.case_id for duplicate in duplicates]
 
-        self.rule.run_actions_when_case_matches(duplicates[0])
+        self.rule.run_rule(duplicates[0], datetime.now())
 
         # Running a second time shouldn't change the results
-        self.rule.run_actions_when_case_matches(duplicates[0])
+        self.rule.run_rule(duplicates[0], datetime.now())
         duplicate = CaseDuplicateNew.objects.get(action=self.action, case_id=duplicates[0].case_id)
         self.assertEqual(duplicate.case_id, duplicates[0].case_id)
 
@@ -735,7 +735,7 @@ class CaseDeduplicationActionTest(TestCase):
             case_properties=["name", "age"],
         )
 
-        no_update_rule.run_actions_when_case_matches(duplicates[0])
+        no_update_rule.run_rule(duplicates[0], datetime.now())
         update_cases_mock.assert_not_called()
 
     def test_rule_activation(self):
@@ -820,7 +820,7 @@ class CaseDeduplicationActionTest(TestCase):
         # Each run only ensures that it will insert itself and one other record if its a duplicate,
         # so run through all duplicates to ensure they all exist
         for i in range(len(duplicates)):
-            self.rule.run_actions_when_case_matches(duplicates[i])
+            self.rule.run_rule(duplicates[i], datetime.now())
 
         duplicate = CaseDuplicateNew.objects.get(action=self.action, case_id=duplicates[0].case_id)
         results = set(CaseDuplicateNew.objects.filter(
@@ -847,7 +847,7 @@ class CaseDeduplicationActionTest(TestCase):
         self.action.save()
         self.rule = AutomaticUpdateRule.objects.get(id=self.rule.id)
 
-        self.rule.run_actions_when_case_matches(child)
+        self.rule.run_rule(child, datetime.now())
 
         updated_parent_case = CommCareCase.objects.get_case(parent.case_id, self.domain)
         self.assertEqual(updated_parent_case.get_case_property('name'), new_parent_case_property_value)
