@@ -310,7 +310,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         clickableIconRequest: function (e, endpointId, caseId, endpointArg, isBackground) {
             const self = this;
-            const $moduleIcon = $(e.target).find('img.module-icon').addBack();
+            const $moduleIcon = $(e.target).find('img.module-icon').addBack('img.module-icon');
             const $iconButton = $(e.target).closest('button.clickable-icon');
             const $spinnerElement = $iconButton.find('i');
             $moduleIcon.css('display', 'none');
