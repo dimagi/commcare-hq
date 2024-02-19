@@ -429,6 +429,12 @@ Run the following commands to run the migration and get up to date:
         def update_log(action, doc_ids):
             for doc_id in doc_ids:
                 logfile.write(f"{action} model for {couch_doc_type} with id {doc_id}\n")
+
+        def update_sub_creates(pairs):
+            for sub_class, subs in pairs:
+                if subs:
+                    submodel_creates[sub_class].extend(subs)
+
         couch_doc_type = self.couch_doc_type()
         sql_class = self.sql_class()
         couch_class = sql_class._migration_get_couch_model_class()
@@ -441,6 +447,9 @@ Run the following commands to run the migration and get up to date:
             objs_by_couch_id = {obj._migration_couch_id for obj in objs.only(couch_id_name)}
         creates = []
         updates = []
+        submodel_specs = couch_class._migration_get_submodels()
+        submodel_creates = defaultdict(list)
+        self._prepare_for_submodel_creation(docs)
         # cache ignored ids in instance variable so _verify_docs does not need to recalculate
         self._ignored_ids_cache = ignored = self.get_ids_to_ignore(
             [d for d in docs if d["_id"] not in objs_by_couch_id])
@@ -456,24 +465,41 @@ Run the following commands to run the migration and get up to date:
                     else:
                         continue  # already migrated
                 else:
+                    if submodel_specs:
+                        update_sub_creates(self._create_submodels(doc, submodel_specs))
                     continue  # already migrated
             else:
                 obj = sql_class()
                 obj._migration_couch_id = doc["_id"]
                 creates.append(obj)
             couch_class.wrap(doc)._migration_sync_to_sql(obj, save=False)
-        if creates or updates:
-            submodel_specs = couch_class._migration_get_submodels()
+        if creates or updates or submodel_creates:
             with transaction.atomic(), disable_sync_to_couch(sql_class):
                 # ignore conflicts when the PK value is not needed for submodels
                 sql_class.objects.bulk_create(creates, ignore_conflicts=not submodel_specs)
-                for sub_class, sub_creates in self._group_submodels(creates, submodel_specs):
+                update_sub_creates(self._group_submodels(creates, submodel_specs))
+                for sub_class, sub_creates in submodel_creates.items():
                     sub_class.objects.bulk_create(sub_creates)
                 for obj in updates:
                     obj.save()
         update_log("Created", [obj._migration_couch_id for obj in creates])
         update_log("Updated", [obj._migration_couch_id for obj in updates])
         update_log("Ignored", ignored)
+
+    def _prepare_for_submodel_creation(self, docs):
+        """Populate caches or otherwise prepare for submodel creation"""
+        pass
+
+    def _create_submodels(self, doc, obj, submodel_specs):
+        """Create (unsaved) submodels for a previously synced doc
+
+        The default implementation does nothing, but this hook can be
+        used by subclasses to implement submodel creation for models
+        that do not sync submodels to SQL on every Couch document save.
+
+        :returns: Iterable of ``(submodel_type, submodels_list)`` pairs.
+        """
+        return []
 
     def _group_submodels(self, creates, submodel_specs):
         combined = defaultdict(list)

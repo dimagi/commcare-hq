@@ -396,6 +396,32 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
         self.assertEqual(obj.attempts[1].message, '')
 
+    def test_migrate_record_with_unynced_sql_attempts(self):
+        doc, _ = self.create_repeat_record(unwrap_doc=False)
+        doc.save()  # sync to SQL, but do not save attempts
+        with templog() as log, patch.object(transaction, "atomic", atomic_check):
+            call_command('populate_repeatrecords', log_path=log.path)
+            self.assertNotIn('has differences:', log.content)
+        obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
+        self.assertEqual(len(obj.attempts), len(doc.attempts))
+        self.assertTrue(obj.attempts)
+
+    def test_migrate_record_with_unynced_sql_attempts2(self):
+        doc, _ = self.create_repeat_record(unwrap_doc=False)
+        doc.save()  # sync to SQL, but do not save attempts
+        doc.add_attempt(RepeatRecordAttempt(
+            datetime=datetime.utcnow(),
+            success_response="good call",
+            succeeded=True,
+        ))
+        doc.save()  # sync to SQL, but do not save attempts
+        assert len(doc.attempts) == 3, doc.attempts
+        with templog() as log, patch.object(transaction, "atomic", atomic_check):
+            call_command('populate_repeatrecords', log_path=log.path)
+            self.assertNotIn('has differences:', log.content)
+        obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
+        self.assertEqual(len(obj.attempts), 3)
+
     def test_migration_with_repeater_added_after_start(self):
         doc, obj = self.create_repeat_record(unwrap_doc=False)
         repeater3 = models.FormRepeater(

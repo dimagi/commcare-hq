@@ -1,9 +1,11 @@
+from django.db.models import Count
+
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 from corehq.util.couch_helpers import paginate_view
 
-from ...models import Repeater, enable_attempts_sync_to_sql
+from ...models import Repeater, SQLRepeatRecordAttempt, enable_attempts_sync_to_sql
 
 
 class Command(PopulateSQLCommand):
@@ -98,6 +100,32 @@ class Command(PopulateSQLCommand):
             id__in=list({d["repeater_id"] for d in docs})
         ).values_list("id", flat=True)}
         return {d["_id"] for d in docs if d["repeater_id"] not in existing_ids}
+
+    def _prepare_for_submodel_creation(self, docs):
+        query = self.sql_class().objects.filter(
+            couch_id__in=[d["_id"] for d in docs if d["attempts"]],
+        ).annotate(
+            num_attempts=Count("attempt_set")
+        ).order_by().values_list("couch_id", "id", "num_attempts")
+        self._sql_id_and_num_attempts_by_couch_id = {c: (s, n) for c, s, n in query}
+
+    def _create_submodels(self, doc, submodel_specs):
+        """Create (unsaved) submodels for a previously synced doc
+
+        :returns: Iterable of ``(submodel_type, submodels_list)`` pairs.
+        """
+        couch_attempts = doc["attempts"]
+        if not couch_attempts:
+            return
+        sql_id, sql_count = self._sql_id_and_num_attempts_by_couch_id.get(doc["_id"], (None, None))
+        if sql_id is not None and sql_count < len(couch_attempts):
+            transforms = ATTEMPT_TRANSFORMS
+            yield SQLRepeatRecordAttempt, [
+                SQLRepeatRecordAttempt(repeat_record_id=sql_id, **{
+                    f: trans(attempt) for f, trans in transforms.items()
+                })
+                for attempt in (couch_attempts[:-sql_count] if sql_count else couch_attempts)
+            ]
 
     @classmethod
     def _get_couch_doc_count_for_type(cls):
