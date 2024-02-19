@@ -11,7 +11,7 @@
   <% if (style.displayFormat === 'Graph') { %>
   <td><iframe srcdoc="<%- data %>" height="300" width="300"></iframe></td>
   <% } else if (style.displayFormat === 'Image') { %>
-  <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(data) %>"/></td>
+  <td class="module-case-list-column"><img alt="<%- altText %>" class="module-icon" src="<%- resolveUri(data) %>"/></td>
   <% } else if (style.displayFormat === 'Phone') { %>
   <td><a href="tel:<%- data %>"><%- data %></a></td>
   <% } else if (style.displayFormat === 'Markdown' && html) { %>
