@@ -259,7 +259,7 @@ google-auth-httplib2==0.1.0
     # via
     #   -r base-requirements.in
     #   google-api-python-client
-google-auth-oauthlib==0.4.6
+google-auth-oauthlib==1.2.0
     # via -r base-requirements.in
 google-cloud-core==2.3.2
     # via
@@ -282,7 +282,7 @@ greenlet==2.0.2
     #   -r base-requirements.in
     #   django-websocket-redis
     #   gevent
-grpcio==1.54.2
+grpcio==1.54.3
     # via
     #   google-api-core
     #   grpcio-status

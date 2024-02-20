@@ -37,6 +37,9 @@ XFORM_MAPPING = {
         "build_id": {
             "type": "keyword"
         },
+        "doc_id": {
+            "type": "keyword"
+        },
         "doc_type": {
             "type": "text"
         },
