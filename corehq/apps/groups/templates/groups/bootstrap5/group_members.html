@@ -154,7 +154,7 @@
                 {% endblocktrans %}
               </div>
             {% endif %}
-            {% include "groups/partials/edit_group_disabled_case_sharing.html" %}
+            {% include "groups/partials/bootstrap5/edit_group_disabled_case_sharing.html" %}
           {% else %}
             <div class="row">
               <div class="col-md-12">
@@ -202,7 +202,7 @@
                   {% endif %}
                 </div>
               </div>
-              {% include "groups/partials/edit_group_disabled_case_sharing.html" %}
+              {% include "groups/partials/bootstrap5/edit_group_disabled_case_sharing.html" %}
             </div>
           {% else %}
             <form id="group-data-form" class="form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
