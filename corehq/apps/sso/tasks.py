@@ -135,7 +135,7 @@ def auto_deactivate_removed_sso_users():
             recipient = idp.owner.enterprise_admin_emails
             body = _("we have temporarily skipped automatic deactivation of Web Users because we are receiving "
                      "an empty list of Users from Azure AD")
-            send_html_email_async(
+            send_html_email_async.delay(
                 subject,
                 recipient,
                 body,

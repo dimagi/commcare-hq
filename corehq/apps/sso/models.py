@@ -454,7 +454,7 @@ class IdentityProvider(models.Model):
             subject = _("Issue Connecting to Microsoft Graph API")
             body = f'There was an issue connecting to the Microsoft Graph API: {str(e)}'
             recipient = self.owner.enterprise_admin_emails
-            send_html_email_async(
+            send_html_email_async.delay(
                 subject,
                 recipient,
                 body,
