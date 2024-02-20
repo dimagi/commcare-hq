@@ -101,6 +101,7 @@ cryptography==41.0.6
     # via
     #   -r sso-requirements.in
     #   jwcrypto
+    #   msal
     #   oic
     #   pyjwt
     #   pyopenssl
@@ -424,6 +425,8 @@ mdit-py-plugins==0.4.0
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
+msal==1.26.0
+    # via -r sso-requirements.in
 msgpack==1.0.5
     # via cachecontrol
 myst-parser==2.0.0
@@ -544,6 +547,7 @@ pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
     #   firebase-admin
+    #   msal
     #   pygithub
     #   twilio
 pynacl==1.5.0
@@ -621,6 +625,7 @@ requests==2.28.2
     #   dropbox
     #   google-api-core
     #   google-cloud-storage
+    #   msal
     #   oic
     #   pygithub
     #   pyjwkest
