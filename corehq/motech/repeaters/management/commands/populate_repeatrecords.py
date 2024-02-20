@@ -62,11 +62,12 @@ class Command(PopulateSQLCommand):
             couch["next_check"],
             json_format_datetime(sql.next_check) if sql.next_check else sql.next_check,
         ))
-        diffs.append(cls.diff_value(
-            "failure_reason",
-            couch["failure_reason"] or '',
-            sql.failure_reason,
-        ))
+        if couch["failure_reason"]:
+            diffs.append(cls.diff_value(
+                "failure_reason",
+                couch["failure_reason"],
+                sql.failure_reason,
+            ))
 
         def transform(couch_attempts):
             for attempt in couch_attempts:

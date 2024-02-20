@@ -178,6 +178,15 @@ class TestRepeatRecordCouchToSQLDiff(BaseRepeatRecordCouchToSQLTest):
             ],
         )
 
+    def test_diff_empty_couch_failure_reason(self):
+        doc, obj = self.create_repeat_record()
+        doc["failure_reason"] = ""
+        doc["cancelled"] = True
+        doc["attempts"].pop()
+        obj.state = models.State.Cancelled
+        obj.attempts.pop()
+        self.assertEqual(self.diff(doc, obj), [])
+
     def test_diff_attempts(self):
         doc, obj = self.create_repeat_record()
         doc["attempts"][0]["succeeded"] = True
