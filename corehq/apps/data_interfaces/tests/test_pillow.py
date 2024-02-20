@@ -14,6 +14,7 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.form_processor.models import CommCareCase
 from corehq.apps.hqcase.utils import resave_case
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 
 
 @override_settings(RUN_UNKNOWN_USER_PILLOW=False)
@@ -107,6 +108,17 @@ class DeduplicationPillowTest(TestCase):
             action=action, hash=hash).values_list('case_id', flat=True)
 
         self.assertSetEqual(set(results), {case.case_id, 'duplicate_case_id'})
+
+    @patch('corehq.apps.data_interfaces.pillow.run_rules_for_case')
+    def test_pillow_skips_commtrack_cases(self, mock_run_rules):
+        self._create_rule()
+        case = self.factory.create_case(case_type=USER_LOCATION_OWNER_MAP_TYPE)
+        case.opened_by = None
+        case.save()
+
+        self.pillow.process_changes(since=self.kafka_offset, forever=False)
+
+        mock_run_rules.assert_not_called()
 
     def _create_rule(self, name='test', match_on=None):
         rule = AutomaticUpdateRule.objects.create(
