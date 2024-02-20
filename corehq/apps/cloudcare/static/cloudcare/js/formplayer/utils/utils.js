@@ -477,6 +477,9 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                         // Perform Sync
                     }
                 }, delayInMilliseconds);
+            } else if (FormplayerFrontend.syncInterval && !toggleOn) {
+                clearInterval(FormplayerFrontend.syncInterval);
+                FormplayerFrontend.syncInterval = null;
             }
         });
     };
