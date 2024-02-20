@@ -958,7 +958,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      * @param {Object} pattern - the regex or string used to find matching styles.
      */
     Question.prototype.stylesContains = function (pattern) {
-        return this.stylesContaining(pattern).length > 0;
+        let _self = this;
+        return stylesContains(pattern, _self.style);
     };
 
     Question.prototype.setWidths = function (hasLabel) {
