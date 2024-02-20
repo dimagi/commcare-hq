@@ -170,13 +170,16 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
         });
 
         it('Should add n-per-row style to Repeat that are direct children of n-per-row-repeat Group and group the Repeat', function () {
-            let styleObj = {raw: '2-per-row-repeat'};
+            let styleObj = {raw: '2-per-row-repeat'},
+                fakeStyleObj = {raw: "fake-style"};
 
             let g0 = fixtures.groupJSON({
                     style: styleObj,
                     ix: "0",
                 }),
-                r0 = fixtures.repeatJSON(),
+                r0 = fixtures.repeatJSON({
+                    style: fakeStyleObj,
+                }),
                 r1 = fixtures.repeatJSON(),
                 r2 = fixtures.repeatJSON();
 
@@ -211,7 +214,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             assert.equal(group0.children().length, 3); // [ge, ge, ge]
             assert.equal(group1.style, null); // [group]
             assert.equal(group0.children()[1].children().length, 2); // [repeat0, repeat1]
-            assert.equal(repeat0.style.raw(), "2-per-row");
+            assert.equal(repeat0.style.raw(), "fake-style 2-per-row");
             assert.equal(repeat1.style.raw(), "2-per-row");
             assert.equal(repeat2.style.raw(), "2-per-row");
         });
