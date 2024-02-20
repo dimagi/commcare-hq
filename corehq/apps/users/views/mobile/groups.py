@@ -150,7 +150,7 @@ class BaseGroupsView(BaseUserSettingsView):
 
 
 class GroupsListView(BaseGroupsView):
-    template_name = "groups/all_groups.html"
+    template_name = "groups/bootstrap3/all_groups.html"
     page_title = gettext_noop("Groups")
     urlname = 'all_groups'
 
