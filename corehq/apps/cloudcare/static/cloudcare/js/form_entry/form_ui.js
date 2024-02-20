@@ -330,6 +330,23 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             usedWidth = 0;
         }
 
+        if (json.type === constants.GROUP_TYPE) {
+            if (stylesContains(constants.PER_ROW_REPEAT_PATTERN, json.style)) {
+                const elementNPerRowStyle = getNPerRowStyleFromRepeatStyle(json.style.raw);
+                for (let groupChild of json.children) {
+                    // Detects configured repeat groups within the form. If a repeat group has a 'repeat-count' configured,
+                    // the Formplayer response designates the key 'type' as 'sub-group' and 'repeatable' as 'true'.
+                    if ((groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") || groupChild.type === constants.REPEAT_TYPE) {
+                        if (_.has(groupChild, 'style') && groupChild.style && groupChild.style.raw) {
+                            groupChild.style.raw = groupChild.style.raw.concat(" ", elementNPerRowStyle);
+                        } else {
+                            groupChild.style = {'raw': elementNPerRowStyle};
+                        }
+                    }
+                }
+            }
+        }
+
         for (let child of json.children) {
             if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
                 const elementTileWidth = GroupedElementTileRow.calculateElementWidth(child.style);
@@ -337,23 +354,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 if (usedWidth > constants.GRID_COLUMNS) {
                     resetCurrentGroup();
                     usedWidth += elementTileWidth;
-                }
-
-                if (child.type === constants.GROUP_TYPE) {
-                    if (stylesContains(constants.PER_ROW_REPEAT_PATTERN, child.style)) {
-                        const elementNPerRowStyle = getNPerRowStyleFromRepeatStyle(child.style.raw);
-                        for (let groupChild of child.children) {
-                            // Detects configured repeat groups within the form. If a repeat group has a 'repeat-count' configured,
-                            // the Formplayer response designates the key 'type' as 'sub-group' and 'repeatable' as 'true'.
-                            if ((groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") || groupChild.type === constants.REPEAT_TYPE) {
-                                if (_.has(groupChild, 'style') && groupChild.style && groupChild.style.raw) {
-                                    groupChild.style.raw = groupChild.style.raw.concat(" ", elementNPerRowStyle);
-                                } else {
-                                    groupChild.style = {'raw': elementNPerRowStyle};
-                                }
-                            }
-                        }
-                    }
                 }
 
                 if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
