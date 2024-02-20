@@ -158,7 +158,7 @@ class GroupsListView(BaseGroupsView):
 class EditGroupMembersView(BaseGroupsView):
     urlname = 'group_members'
     page_title = gettext_noop("Edit Group")
-    template_name = 'groups/group_members.html'
+    template_name = 'groups/bootstrap3/group_members.html'
 
     @property
     def parent_pages(self):
