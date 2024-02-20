@@ -1,4 +1,4 @@
-hqDefine("groups/js/group_members", [
+hqDefine("groups/js/bootstrap5/group_members", [
     "jquery",
     "underscore",
     "analytix/js/google",
