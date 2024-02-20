@@ -306,7 +306,7 @@
                                          {% if not is_case_sharing_enabled %}disabled: true,{% endif %}
                                          value: '{% if group.case_sharing %}true{% else %}false{% endif %}'"></select-toggle>
                   <p class="help-block">{% trans "Determines whether users within this group will share cases with each other." %}</p>
-                  {% include 'groups/partials/case_sharing_upgrade_notice.html' %}
+                  {% include 'groups/partials/bootstrap3/case_sharing_upgrade_notice.html' %}
                   <div id="group-case-sharing-warning" hidden="true">
                     <p class="help-block alert alert-warning">
                       {% trans 'Warning: Case sharing will not work until enabled under application settings. Read more here: ' %}
