@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ {% load i18n %}
+ 
+ {% if not is_case_sharing_enabled %}
+-  <div class="well well-sm">
++  <div class="card well-sm">
+     <i class="fa fa-info-circle"></i>
+     {% blocktrans %}
+       Case Sharing Groups are not available on your subscription. This feature

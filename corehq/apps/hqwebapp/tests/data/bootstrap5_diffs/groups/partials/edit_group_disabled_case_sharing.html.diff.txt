@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -8,7 +8,7 @@
+         This is a <strong>Case Sharing Group</strong>. You subscription no longer supports
+         Case Sharing Groups. Editing this group will be disabled until you either upgrade to our Pro plan or
+         <a href="#disableCaseSharing"
+-           data-toggle="modal">change the group type to <strong>Reporting Group</strong> only</a>.
++           data-bs-toggle="modal">change the group type to <strong>Reporting Group</strong> only</a>.
+       {% endblocktrans %}
+     </p>
+     <p>

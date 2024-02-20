@@ -1,0 +1,240 @@
+--- 
++++ 
+@@ -11,7 +11,7 @@
+   </style>
+ {% endblock %}
+ 
+-{% requirejs_main "groups/js/bootstrap3/group_members" %}
++{% requirejs_main "groups/js/bootstrap5/group_members" %}
+ 
+ {% block page_title %}
+   {% if request.is_view_only %}
+@@ -53,20 +53,20 @@
+       <div class="btn-toolbar">
+         {% if show_disable_case_sharing %}
+           <a href="#disableCaseSharing"
+-             class="btn btn-default"
+-             data-toggle="modal">
++             class="btn btn-outline-primary"
++             data-bs-toggle="modal">
+             <i class="fa fa-pencil"></i>
+             {% trans "Change group type to Reporting Group" %}
+           </a>
+         {% else %}
+           <a href="#editGroupSettings"
+-             class="btn btn-default"
+-             data-toggle="modal">
++             class="btn btn-outline-primary"
++             data-bs-toggle="modal">
+             <i class="fa fa-pencil"></i>
+             {% trans "Edit Settings" %}
+           </a>
+         {% endif %}
+-        <a class="btn btn-danger pull-right" style="margin-right: 45px;" data-toggle="modal" href="#delete_group_modal">
++        <a class="btn btn-outline-danger float-end" style="margin-right: 45px;" data-bs-toggle="modal" href="#delete_group_modal">
+           <i class="fa fa-remove"></i>
+           {% blocktrans with group.name as group_name %}
+             Delete Group "{{group_name}}"
+@@ -83,7 +83,7 @@
+                     type="submit"
+                     data-html="true"
+                     data-title="<div class='alert alert-warning'><i class='fa fa-exclamation-triangle'></i> <strong>{% trans 'SMS charges will incur.' %}</strong></div>{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
+-                    class="btn btn-default verify-button">
++                    class="btn btn-outline-primary verify-button">
+               <i class="fa fa-signal"></i> {% trans 'Verify Phone Numbers' %}
+             </button>
+             <span class="hq-help-template"
+@@ -106,12 +106,12 @@
+ 
+     <ul class="nav nav-tabs sticky-tabs" role="tablist" style="margin-bottom: 20px;">
+       <li role="presentation">
+-        <a href="#membership-tab" aria-controls="home" role="tab" data-toggle="tab">
++        <a href="#membership-tab" aria-controls="home" role="tab" data-bs-toggle="tab">
+           {% trans "Group Membership" %}
+         </a>
+       </li>
+       <li role="presentation">
+-        <a href="#groupdata-tab" aria-controls="profile" role="tab" data-toggle="tab">
++        <a href="#groupdata-tab" aria-controls="profile" role="tab" data-bs-toggle="tab">
+           {% trans "Group Data" %}
+         </a>
+       </li>
+@@ -120,17 +120,17 @@
+     <!-- Tab panes -->
+     <div class="tab-content">
+       <div role="tabpanel" class="tab-pane" id="membership-tab">
+-        <div class="panel-body">
++        <div class="card-body">
+           {% if request.is_view_only or not can_edit_group_membership or show_disable_case_sharing %}
+             <div class="form form-horizontal">
+               <legend>
+                 {% trans "View Group Membership" %}
+               </legend>
+               <div class="form-group">
+-                <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
++                <label class="form-label col-sm-12 col-md-4 col-lg-4 col-xl-2">
+                   {% trans "Group Membership" %}
+                 </label>
+-                <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 controls-text">
++                <div class="col-sm-12 col-md-8 col-lg-8 col-xl-6 controls-text">
+                   {% if not group_members %}
+                     {% blocktrans %}
+                       No Mobile Workers are currently assigned to this group.
+@@ -154,10 +154,10 @@
+                 {% endblocktrans %}
+               </div>
+             {% endif %}
+-            {% include "groups/partials/bootstrap3/edit_group_disabled_case_sharing.html" %}
++            {% include "groups/partials/bootstrap5/edit_group_disabled_case_sharing.html" %}
+           {% else %}
+             <div class="row">
+-              <div class="col-sm-12">
++              <div class="col-md-12">
+                 <div class="alert alert-info" id="membership_updating" style="display: none">
+                   <p class="lead">
+                     <i class="fa fa-spinner fa-spin"></i> {% trans 'Updating Group Membership, please wait...' %}
+@@ -176,17 +176,17 @@
+         </div>
+       </div>
+       <div role="tabpanel" class="tab-pane" id="groupdata-tab">
+-        <div class="panel-body">
++        <div class="card-body">
+           {% if request.is_view_only or show_disable_case_sharing %}
+             <div class="form form-horizontal">
+               <legend>
+                 {% trans "View Group Data" %}
+               </legend>
+               <div class="form-group">
+-                <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
++                <label class="form-label col-sm-12 col-md-4 col-lg-4 col-xl-2">
+                   {% trans "Group Data" %}
+                 </label>
+-                <div class="controls-text col-xs-12 col-sm-8 col-md-8 col-lg-6">
++                <div class="controls-text col-sm-12 col-md-8 col-lg-8 col-xl-6">
+                   {% if not group.metadata %}
+                     {% trans "No Data Provided" %}
+                   {% else %}
+@@ -202,7 +202,7 @@
+                   {% endif %}
+                 </div>
+               </div>
+-              {% include "groups/partials/bootstrap3/edit_group_disabled_case_sharing.html" %}
++              {% include "groups/partials/bootstrap5/edit_group_disabled_case_sharing.html" %}
+             </div>
+           {% else %}
+             <form id="group-data-form" class="form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
+@@ -210,16 +210,16 @@
+               <fieldset>
+                 <legend>{% trans "Edit Group Data" %}</legend>
+                 <div class="form-group">
+-                  <label class="control-label col-sm-2">
++                  <label class="form-label col-md-2">
+                     {% trans "Group Data" %}
+                   </label>
+-                  <div class="col-sm-9">
++                  <div class="col-md-9">
+                     <div id="group-data-ui-editor"></div>
+                   </div>
+                 </div>
+                 <input name="group-data" id="group-data" type="hidden" value="{% html_attr group.metadata %}">
+                 <div class="form-actions">
+-                  <div class="col-sm-9 col-sm-offset-2">
++                  <div class="col-md-9 col-sm-offset-2">
+                     <button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button>
+                   </div>
+                 </div>
+@@ -240,7 +240,7 @@
+       <div class="modal-dialog">
+         <div class="modal-content">
+           <div class="modal-header">
+-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
++            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+             <h4 class="modal-title">
+               {% blocktrans with group.name as group_name %}
+                 Delete Group "{{group_name}}"?
+@@ -257,8 +257,8 @@
+               </p>
+             </div>
+             <div class="modal-footer">
+-              <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
+-              <button class="btn btn-danger disable-on-submit" type="submit">
++              <a href="#" data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans 'Cancel' %}</a>
++              <button class="btn btn-outline-danger disable-on-submit" type="submit">
+                 <i class="fa fa-remove"></i>
+                 {% trans 'Delete' %}
+               </button>
+@@ -272,7 +272,7 @@
+       <div class="modal-dialog">
+         <div class="modal-content">
+           <div class="modal-header">
+-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
++            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+             <h4 class="modal-title">
+               {% blocktrans with group.name as group_name %}
+                 Edit Settings for Group "{{ group_name }}"
+@@ -283,14 +283,14 @@
+             {% csrf_token %}
+             <div class="modal-body">
+               <div class="form-group">
+-                <label class="control-label col-sm-3" for="group-name-input">{% trans "Group Name" %}</label>
+-                <div class="col-sm-9">
++                <label class="form-label col-md-3" for="group-name-input">{% trans "Group Name" %}</label>
++                <div class="col-md-9">
+                   <input type="text" value="{{ group.name }}" class="form-control" name="name" id="group-name-input" />
+                 </div>
+               </div>
+               <div class="form-group">
+-                <label class="control-label col-sm-3" for="group-case-sharing-input">{% trans "Case Sharing" %}</label>
+-                <div class="col-sm-9">
++                <label class="form-label col-md-3" for="group-case-sharing-input">{% trans "Case Sharing" %}</label>
++                <div class="col-md-9">
+                   <select-toggle params="name: 'case_sharing',
+                                          id: 'group-case-sharing-input',
+                                          options: [
+@@ -306,7 +306,7 @@
+                                          {% if not is_case_sharing_enabled %}disabled: true,{% endif %}
+                                          value: '{% if group.case_sharing %}true{% else %}false{% endif %}'"></select-toggle>
+                   <p class="help-block">{% trans "Determines whether users within this group will share cases with each other." %}</p>
+-                  {% include 'groups/partials/bootstrap3/case_sharing_upgrade_notice.html' %}
++                  {% include 'groups/partials/bootstrap5/case_sharing_upgrade_notice.html' %}
+                   <div id="group-case-sharing-warning" hidden="true">
+                     <p class="help-block alert alert-warning">
+                       {% trans 'Warning: Case sharing will not work until enabled under application settings. Read more here: ' %}
+@@ -316,8 +316,8 @@
+                 </div>
+               </div>
+               <div class="form-group">
+-                <label class="control-label col-sm-3" for="group-reporting-input">{% trans "Reporting" %}</label>
+-                <div class="col-sm-6">
++                <label class="form-label col-md-3" for="group-reporting-input">{% trans "Reporting" %}</label>
++                <div class="col-md-6">
+                   <select-toggle params="name: 'reporting',
+                                                        id: 'group-reporting-input',
+                                                        options: [{
+@@ -333,7 +333,7 @@
+               </div>
+             </div>
+             <div class="modal-footer">
+-              <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
++              <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</a>
+               <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+             </div>
+           </form>
+@@ -348,7 +348,7 @@
+       <div class="modal-dialog">
+         <div class="modal-content">
+           <div class="modal-header">
+-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
++            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+             <h4 class="modal-title">
+               {% blocktrans with group.name as group_name %}
+                 Change Group Type for "{{ group_name }}" to Reporting Group
+@@ -377,7 +377,7 @@
+               </p>
+             </div>
+             <div class="modal-footer">
+-              <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
++              <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</a>
+               <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+             </div>
+           </form>

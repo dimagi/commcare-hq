@@ -125,5 +125,27 @@
       "label": "analytics/forms",
       "compare_all_files": true
     }
+  ],
+  "apps/groups/templates/groups": [
+    {
+      "directories": ["partials/bootstrap3/", "partials/bootstrap5/"],
+      "file_type": "template",
+      "label": "groups/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": ["bootstrap3/", "bootstrap5/"],
+      "file_type": "template",
+      "label": "groups",
+      "compare_all_files": true
+    }
+  ],
+  "apps/groups/static/groups": [
+    {
+      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
+      "file_type": "javascript",
+      "label": "javascript/groups",
+      "compare_all_files": true
+    }
   ]
 }
