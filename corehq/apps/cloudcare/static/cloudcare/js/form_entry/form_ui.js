@@ -151,7 +151,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             perRowRepeatStyle = matchingPerRowRepeatStyles.length ? matchingPerRowRepeatStyles[0] : null;
         if (perRowRepeatStyle) {
             const integerPart = perRowRepeatStyle.split('-')[0];
-            return integerPart + '-per-row';
+            return integerPart + constants.PER_ROW;
         } else {
             return '';
         }
