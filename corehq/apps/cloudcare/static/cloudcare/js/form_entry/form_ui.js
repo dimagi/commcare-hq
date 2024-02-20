@@ -155,6 +155,23 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
     }
 
+    function processNPerRowRepeatStyle(json) {
+        if (stylesContains(constants.PER_ROW_REPEAT_PATTERN, json.style)) {
+            const elementNPerRowStyle = getNPerRowStyleFromRepeatStyle(json.style.raw);
+            for (let groupChild of json.children) {
+                // Detects configured repeat groups within the form. If a repeat group has a 'repeat-count' configured,
+                // the Formplayer response designates the key 'type' as 'sub-group' and 'repeatable' as 'true'.
+                if ((groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") || groupChild.type === constants.REPEAT_TYPE) {
+                    if (_.has(groupChild, 'style') && groupChild.style && groupChild.style.raw) {
+                        groupChild.style.raw = groupChild.style.raw.concat(" ", elementNPerRowStyle);
+                    } else {
+                        groupChild.style = {'raw': elementNPerRowStyle};
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Base abstract prototype for Repeat, Group, GroupedElementTileRow, and Form. Adds methods to
      * objects that contain a children array for rendering nested questions.
@@ -331,20 +348,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         }
 
         if (json.type === constants.GROUP_TYPE) {
-            if (stylesContains(constants.PER_ROW_REPEAT_PATTERN, json.style)) {
-                const elementNPerRowStyle = getNPerRowStyleFromRepeatStyle(json.style.raw);
-                for (let groupChild of json.children) {
-                    // Detects configured repeat groups within the form. If a repeat group has a 'repeat-count' configured,
-                    // the Formplayer response designates the key 'type' as 'sub-group' and 'repeatable' as 'true'.
-                    if ((groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") || groupChild.type === constants.REPEAT_TYPE) {
-                        if (_.has(groupChild, 'style') && groupChild.style && groupChild.style.raw) {
-                            groupChild.style.raw = groupChild.style.raw.concat(" ", elementNPerRowStyle);
-                        } else {
-                            groupChild.style = {'raw': elementNPerRowStyle};
-                        }
-                    }
-                }
-            }
+            processNPerRowRepeatStyle(json);
         }
 
         for (let child of json.children) {
