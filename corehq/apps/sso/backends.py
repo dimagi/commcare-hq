@@ -85,7 +85,7 @@ class SsoBackend(ModelBackend):
             web_user.is_active = True
             web_user.save()
             request.sso_new_user_messages['success'].append(
-                _("User account for {} reactivated.").format(web_user.username)
+                _("User account for {} has been re-activated.").format(web_user.username)
             )
 
         if async_signup and async_signup.invitation:
