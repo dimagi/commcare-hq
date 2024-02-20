@@ -1,4 +1,4 @@
-hqDefine("groups/js/all_groups", [
+hqDefine("groups/js/bootstrap5/all_groups", [
     'jquery',
     'analytix/js/google',
     // Just importing main.py so the post-link function is accessible, function parameter not needed
