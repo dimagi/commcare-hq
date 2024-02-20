@@ -3,12 +3,21 @@ import logging
 
 from celery.schedules import crontab
 
+from django.utils.translation import gettext as _
+
 from corehq.apps.celery import periodic_task
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
+from corehq.apps.sso.models import (
+    AuthenticatedEmailDomain,
+    IdentityProvider,
+    IdentityProviderProtocol,
+    IdentityProviderType,
+    UserExemptFromSingleSignOn
+)
 from corehq.apps.sso.utils.context_helpers import (
     get_idp_cert_expiration_email_context,
 )
+from corehq.apps.users.models import WebUser
 
 log = logging.getLogger(__name__)
 
@@ -99,3 +108,45 @@ def send_idp_cert_expires_reminder_emails(num_days):
                 f"Failed to send cert reminder email for IdP {idp}: {exc!s}",
                 exc_info=True,
             )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=2), acks_late=True)
+def auto_deactivate_removed_sso_users():
+    for idp in IdentityProvider.objects.filter(
+        enable_user_deactivation=True,
+        idp_type=IdentityProviderType.AZURE_AD
+    ).all():
+        # Fetch a list of users usernames that are members of the idp
+        idp_users = idp.get_all_members_of_the_idp()
+        # Fetch a list of active WebUser usernames that are members of project spaces associated with the idp
+        domains = idp.owner.get_domains()
+        web_user_in_account = set()
+        for domain in domains:
+            [web_user_in_account.add(user.username) for user in WebUser.by_domain(domain)]
+
+        # Get a list of SSO Exempt users
+        authenticated_domains = AuthenticatedEmailDomain.objects.filter(identity_provider=idp)
+        sso_exempt_users = UserExemptFromSingleSignOn.objects.filter(email_domain__in=authenticated_domains)
+        exempt_usernames = sso_exempt_users.values_list('username', flat=True)
+
+        if len(idp_users) == 0 and len(web_user_in_account) - len(exempt_usernames) > 3:
+            # Send email
+            subject = _("Temporarily skipped automatic deactivation of Web Users")
+            recipient = idp.owner.enterprise_admin_emails
+            body = _("we have temporarily skipped automatic deactivation of Web Users because we are receiving "
+                     "an empty list of Users from Azure AD")
+            send_html_email_async(
+                subject,
+                recipient,
+                body,
+            )
+        else:
+            users_to_deactivate = [user for user in web_user_in_account if user not in idp_users
+                                and user not in exempt_usernames]
+
+            # Deactivate user that is not returned by Graph Users API
+            for username in users_to_deactivate:
+                user = WebUser.get_by_username(username)
+                if user and user.is_active:
+                    user.is_active = False
+                    user.save()
