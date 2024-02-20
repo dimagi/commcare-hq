@@ -1101,7 +1101,7 @@ class RepeatRecord(SyncCouchToSQLMixin, Document):
 
     @property
     def registered_at(self):
-        return self.registered_on
+        return self.registered_on or datetime.fromtimestamp(0)
 
     @registered_at.setter
     def registered_at(self, value):

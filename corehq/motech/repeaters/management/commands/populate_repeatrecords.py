@@ -54,7 +54,7 @@ class Command(PopulateSQLCommand):
         ))
         diffs.append(cls.diff_value(
             "registered_at",
-            couch["registered_on"],
+            couch["registered_on"] or '1970-01-01T00:00:00.000000Z',
             json_format_datetime(sql.registered_at),
         ))
         diffs.append(cls.diff_value(

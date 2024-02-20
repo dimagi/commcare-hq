@@ -396,6 +396,16 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
         self.assertEqual(obj.attempts[1].message, '')
 
+    def test_migration_with_null_registered_at(self):
+        doc, _ = self.create_repeat_record(unwrap_doc=False)
+        doc.registered_on = None
+        doc.save(sync_to_sql=False)
+        with templog() as log, patch.object(transaction, "atomic", atomic_check):
+            call_command('populate_repeatrecords', log_path=log.path)
+            self.assertNotIn('has differences:', log.content)
+        obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
+        self.assertEqual(obj.registered_at, datetime(1970, 1, 1))
+
     def test_migrate_record_with_unynced_sql_attempts(self):
         doc, _ = self.create_repeat_record(unwrap_doc=False)
         doc.save()  # sync to SQL, but do not save attempts
