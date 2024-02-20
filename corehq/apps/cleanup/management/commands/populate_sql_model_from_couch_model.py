@@ -510,11 +510,19 @@ Run the following commands to run the migration and get up to date:
                     combined[spec.sql_class].extend(sql_submodels)
         return combined.items()
 
-    def _verify_docs(self, docs, logfile, verify_only):
+    def _sql_query_from_docs(self, docs):
+        """Construct SQL query for records corresponding to the given docs
+
+        Override to augment the query with ``prefetch_related()``
+        for submodel query optimization, etc.
+        """
         sql_class = self.sql_class()
         couch_id_name = getattr(sql_class, '_migration_couch_id_name', 'couch_id')
         couch_ids = [doc["_id"] for doc in docs]
-        objs = sql_class.objects.filter(**{couch_id_name + "__in": couch_ids})
+        return sql_class.objects.filter(**{couch_id_name + "__in": couch_ids})
+
+    def _verify_docs(self, docs, logfile, verify_only):
+        objs = self._sql_query_from_docs(docs)
         objs_by_couch_id = {obj._migration_couch_id: obj for obj in objs}
         diff_count = self.diff_count
         if verify_only:

@@ -128,6 +128,9 @@ class Command(PopulateSQLCommand):
                 for attempt in (couch_attempts[:-sql_count] if sql_count else couch_attempts)
             ]
 
+    def _sql_query_from_docs(self, docs):
+        return super()._sql_query_from_docs(docs).prefetch_related("attempt_set")
+
     @classmethod
     def _get_couch_doc_count_for_type(cls):
         return count_docs()
