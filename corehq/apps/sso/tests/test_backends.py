@@ -600,7 +600,7 @@ class TestSsoBackend(TestCase):
         self.assertEqual(
             self.request.sso_new_user_messages['success'],
             [
-                f'User account for {web_user.username} reactivated.',
+                f'User account for {web_user.username} has benn re-activated.',
             ]
         )
 
