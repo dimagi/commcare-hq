@@ -985,29 +985,27 @@ class DomainUsernames(Resource):
 
 
 class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
-    config_id = None
-    table_id = None
 
     def dispatch(self, request_type, request, **kwargs):
         if not domain_has_privilege(request.domain, privileges.ODATA_FEED):
             raise ImmediateHttpResponse(
                 response=HttpResponseNotFound('Feature flag not enabled.')
             )
-        self.config_id = kwargs['config_id']
-        self.table_id = int(kwargs.get('table_id', 0))
         with TimingContext() as timer:
             response = super(BaseODataResource, self).dispatch(
                 request_type, request, **kwargs
             )
-        record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
+        record_feed_access_in_datadog(request, kwargs['config_id'], timer.duration, response)
         return response
 
     def create_response(self, request, data, response_class=HttpResponse,
                         **response_kwargs):
         data['domain'] = request.domain
-        data['config_id'] = self.config_id
         data['api_path'] = request.path
-        data['table_id'] = self.table_id
+        # Avoids storing these properties on the class instance which protects against the possibility of
+        # concurrent requests making conflicting updates to properties
+        data['config_id'] = request.resolver_match.kwargs['config_id']
+        data['table_id'] = int(request.resolver_match.kwargs.get('table_id', 0))
         response = super(BaseODataResource, self).create_response(
             request, data, response_class, **response_kwargs)
         return add_odata_headers(response)
@@ -1027,7 +1025,7 @@ class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
 class ODataCaseResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        config = get_document_or_404(CaseExportInstance, domain, self.config_id)
+        config = get_document_or_404(CaseExportInstance, domain, kwargs['config_id'])
         if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
             raise ImmediateHttpResponse(
                 HttpForbidden(gettext_noop(
@@ -1068,7 +1066,7 @@ class ODataCaseResource(BaseODataResource):
 class ODataFormResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        config = get_document_or_404(FormExportInstance, domain, self.config_id)
+        config = get_document_or_404(FormExportInstance, domain, kwargs['config_id'])
         if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
             raise ImmediateHttpResponse(
                 HttpForbidden(gettext_noop(

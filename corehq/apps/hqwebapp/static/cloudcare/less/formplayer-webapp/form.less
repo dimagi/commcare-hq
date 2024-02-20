@@ -1,10 +1,11 @@
 @form-text-indent: 20px;
+@form-text-size: 16px;
 
 .form-container {
   background-color: white;
   .box-shadow(0 0 10px 2px rgba(0,0,0,.1));
   margin-bottom: 2rem;
-  font-size: @font-size-base;   // Don't overshadow inputs
+  font-size: @form-text-size;   // Don't overshadow inputs
 
   .page-header {
     padding-bottom: 30px;
@@ -17,6 +18,10 @@
   .controls {
     padding-right: 25px;
     padding-top: 3px;
+  }
+
+  .form-control {
+    font-size: @form-text-size;
   }
 
   .form-actions {

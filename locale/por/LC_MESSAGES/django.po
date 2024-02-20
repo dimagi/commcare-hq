@@ -1010,6 +1010,7 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/formplayer/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
@@ -1028,7 +1029,9 @@ msgstr ""
 #: corehq/apps/geospatial/templates/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
@@ -3890,7 +3893,13 @@ msgid "Column/Field \"{}\": Clickable Icons require a form to be configured."
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
-msgid "Case tiles may only be used for the case list (not the case details)."
+msgid "Case tiles on the case detail must be manually configured."
+msgstr ""
+
+#: corehq/apps/app_manager/helpers/validators.py
+msgid ""
+"Each row of the tile may contain fields only from a single tab. Row #{} "
+"contains fields from multiple tabs."
 msgstr ""
 
 #: corehq/apps/app_manager/helpers/validators.py
@@ -5992,6 +6001,7 @@ msgstr ""
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_30_day_trial.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/get_demo_modals.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/ko_feedback.html
@@ -6834,6 +6844,8 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
@@ -9703,6 +9715,14 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 msgid "Send to"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/users/templates/users/partials/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid "SMS charges will incur."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
@@ -13041,11 +13061,13 @@ msgid "Create Case Type"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid "There was an error processing your request"
 msgid ""
 "\n"
-"        There was an error deprecating the case type. Please try again.\n"
+"        There was an error processing the request. Please try again.\n"
 "      "
-msgstr ""
+msgstr "Houve um erro ao processamento de seu pedido"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
@@ -13063,6 +13085,12 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Restore Case Type"
 msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid "All Case Types"
+msgid "Delete Case Type"
+msgstr "Todos os Tipos de Casos"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Show Deprecated"
@@ -13140,7 +13168,7 @@ msgstr ""
 msgid "Add a new Case Type"
 msgstr ""
 
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
 "              Deprecate\n"
@@ -13149,7 +13177,7 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
 "            <p>\n"
@@ -13184,44 +13212,109 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #: corehq/apps/reports/templates/reports/notification_unsubscribe.html
 msgid "Confirm"
 msgstr ""
 
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid "Deprecate GPS property"
 msgstr ""
 
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"              This GPS case property is currently being used to store the "
-"geolocation for cases.\n"
-"            "
+"                    This GPS case property is currently being used to store "
+"the geolocation for cases.\n"
+"                    "
 msgstr ""
 
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #, python-format
 msgid ""
 "\n"
-"              Deprecating this case property may result in unintended "
+"                    Deprecating this case property may result in unintended "
 "behaviour, and so\n"
-"              it is advised to first change the selected custom case "
+"                    it is advised to first change the selected custom case "
 "property in\n"
-"              <a href=\"%(geospatial_settings_url)s\">\n"
-"                geospatial settings\n"
-"              </a>\n"
-"              before deprecating this case property.\n"
-"            "
+"                    <a href=\"%(geospatial_settings_url)s\">\n"
+"                        geospatial settings\n"
+"                    </a>\n"
+"                    before deprecating this case property.\n"
+"                    "
 msgstr ""
 
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"              Would you like to proceed with deprecating this case "
+"                    Would you like to proceed with deprecating this case "
 "property?\n"
-"            "
+"                    "
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid "Case property"
+msgid "Delete Case Property"
+msgstr "Propriedade do Caso"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+msgid ""
+"\n"
+"                        There are currently no cases that store data with "
+"this case property, and so it is safe to delete.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+msgid ""
+"\n"
+"                        Would you like to proceed with deleting this case "
+"property?\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                    Reporting groups are used in reports "
+#| "to filter and view\n"
+#| "                                    data."
+msgid ""
+"\n"
+"                    Delete\n"
+"                    '<span data-bind=\"text: $root.activeCaseType()\"></"
+"span>'\n"
+"                    Case Type\n"
+"                    "
+msgstr ""
+"\n"
+"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
+" dados."
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+msgid ""
+"\n"
+"                    There are no cases that use this case type or store data "
+"with any of its case properties.\n"
+"                    Therefore, it is safe to delete this case type.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+msgid ""
+"\n"
+"                    Please note however, that all case properties for this "
+"case type will also be deleted.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+msgid ""
+"\n"
+"                    Would you like to proceed with deleting this case type?\n"
+"                    "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
@@ -13245,6 +13338,12 @@ msgstr ""
 #: corehq/apps/data_dictionary/util.py
 msgid "Unable to save valid values longer than {} characters"
 msgstr ""
+
+#: corehq/apps/data_dictionary/util.py
+#, fuzzy
+#| msgid "Case property"
+msgid "Case property does not exist."
+msgstr "Propriedade do Caso"
 
 #: corehq/apps/data_dictionary/util.py
 msgid "Column {} in \"{}\" sheet has an empty header"
@@ -22260,6 +22359,14 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid ""
+"Send a verification SMS to this phone. When the user replies to this SMS, "
+"the phone number will be verified."
+msgstr ""
+
+#: corehq/apps/groups/templates/groups/group_members.html
 msgid "Verify Phone Numbers"
 msgstr ""
 
@@ -23690,19 +23797,25 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/500.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 msgid "Short Description"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/500.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 msgid "Full Description"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/500.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 msgid "Submit Report"
 msgstr ""
 
@@ -24136,6 +24249,11 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
+msgid "Solutions Feature Request"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
 msgid "Status Page"
 msgstr ""
 
@@ -24321,7 +24439,9 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 msgid "Incorrect Format"
 msgstr ""
 
@@ -24333,7 +24453,9 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 #: corehq/apps/reports/forms.py
 msgid "Other recipients"
 msgstr "Outros destinatários"
@@ -24347,7 +24469,9 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 msgid "Upload file"
 msgstr ""
 
@@ -24368,7 +24492,9 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 msgid "Submitting Report..."
 msgstr ""
 
@@ -24378,8 +24504,93 @@ msgid "Failed. Retry Issue Submission"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
 msgid "Success! Back to CommCare HQ"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
+msgid "Make a Feature Request to Solutions"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
+msgid ""
+"Please submit this report from the page where you would like to see the "
+"change"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
+msgid "One sentence description of feature/change request."
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
+msgid "Please give us some information about the feature/change request"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
+msgid "Please describe the product changes you would like to see in CommCare."
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                    Reporting groups are used in reports "
+#| "to filter and view\n"
+#| "                                    data."
+msgid ""
+"\n"
+"                                        Comma-separated email addresses of "
+"others you want to notify about this request.\n"
+"                                    "
+msgstr ""
+"\n"
+"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
+" dados."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                    Reporting groups are used in reports "
+#| "to filter and view\n"
+#| "                                    data."
+msgid ""
+"\n"
+"                                    Please upload any files relevant to your "
+"suggestion.\n"
+"                                    "
+msgstr ""
+"\n"
+"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
+" dados."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                    Reporting groups are used in reports "
+#| "to filter and view\n"
+#| "                                    data."
+msgid ""
+"\n"
+"                                        Do not upload a file containing "
+"sensitive data like passwords or project data.\n"
+"                                    "
+msgstr ""
+"\n"
+"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
+" dados."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
+msgid "Failed. Retry Request Submission"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
@@ -24428,6 +24639,48 @@ msgid ""
 "identifiable data.\n"
 "                          "
 msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
+msgid ""
+"\n"
+"                          Comma-separated email addresses of others you want "
+"to notify about this request.\n"
+"                      "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                    Reporting groups are used in reports "
+#| "to filter and view\n"
+#| "                                    data."
+msgid ""
+"\n"
+"                          Please upload any files relevant to your "
+"suggestion.\n"
+"                          "
+msgstr ""
+"\n"
+"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
+" dados."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                    Reporting groups are used in reports "
+#| "to filter and view\n"
+#| "                                    data."
+msgid ""
+"\n"
+"                              Do not upload a file containing sensitive data "
+"like passwords or project data.\n"
+"                          "
+msgstr ""
+"\n"
+"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
+" dados."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "Create Alert"
@@ -26127,34 +26380,6 @@ msgid "name conflicts with another location with this parent"
 msgstr ""
 
 #: corehq/apps/locations/forms.py
-msgid "The site code cannot contain spaces or special characters."
-msgstr ""
-
-#: corehq/apps/locations/forms.py
-msgid "another location already uses this site code"
-msgstr ""
-
-#: corehq/apps/locations/forms.py
-msgid "The selected parent location cannot have child locations!"
-msgstr ""
-
-#: corehq/apps/locations/forms.py
-msgid "You must select a location type"
-msgstr ""
-
-#: corehq/apps/locations/forms.py
-msgid "LocationType '{}' not found"
-msgstr ""
-
-#: corehq/apps/locations/forms.py
-msgid "Location type not valid for the selected parent."
-msgstr ""
-
-#: corehq/apps/locations/forms.py
-msgid "You cannot change the location type of a location with children"
-msgstr ""
-
-#: corehq/apps/locations/forms.py
 msgid "could not understand coordinates"
 msgstr ""
 
@@ -26225,6 +26450,30 @@ msgid ""
 "This project has restricted data access rules. Please contact your project "
 "administrator to be assigned access to data in this project. More "
 "information is available <a href=\"{}\">here</a>."
+msgstr ""
+
+#: corehq/apps/locations/resources/v0_6.py
+msgid "Could not find location with given ID on the domain."
+msgstr ""
+
+#: corehq/apps/locations/resources/v0_6.py
+msgid "Invalid fields were included in request: {list(data.keys())}"
+msgstr ""
+
+#: corehq/apps/locations/resources/v0_6.py
+msgid "Could not find parent location with the given ID."
+msgstr ""
+
+#: corehq/apps/locations/resources/v0_6.py
+msgid "Location with same name and parent already exists."
+msgstr ""
+
+#: corehq/apps/locations/resources/v0_6.py corehq/apps/locations/util.py
+msgid "The selected parent location cannot have child locations!"
+msgstr ""
+
+#: corehq/apps/locations/resources/v0_6.py
+msgid "Parent cannot have children of this location's type."
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/downgrade_locations.html
@@ -26648,6 +26897,30 @@ msgstr ""
 
 #: corehq/apps/locations/templates/locations/manage/partials/bulk_upload.html
 msgid "Download Empty Template"
+msgstr ""
+
+#: corehq/apps/locations/util.py
+msgid "The site code cannot contain spaces or special characters."
+msgstr ""
+
+#: corehq/apps/locations/util.py
+msgid "another location already uses this site code"
+msgstr ""
+
+#: corehq/apps/locations/util.py
+msgid "You must select a location type"
+msgstr ""
+
+#: corehq/apps/locations/util.py
+msgid "LocationType '{}' not found"
+msgstr ""
+
+#: corehq/apps/locations/util.py
+msgid "Location type not valid for the selected parent."
+msgstr ""
+
+#: corehq/apps/locations/util.py
+msgid "You cannot change the location type of a location with children"
 msgstr ""
 
 #: corehq/apps/locations/views.py
@@ -34686,10 +34959,6 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
-msgid "Delete Idenetiy Provider"
-msgstr ""
-
 #: corehq/apps/sso/templates/sso/partials/manage_authenticated_email_domains.html
 msgid ""
 "\n"
@@ -35769,6 +36038,15 @@ msgid ""
 "the application associated with the report was deleted. In order to view "
 "this data using the Report Builder you will have to delete this report and "
 "then build it again. Click below to delete it."
+msgstr ""
+
+#: corehq/apps/userreports/const.py
+msgid ""
+"Sorry! There was a problem trying to edit your report. This likely occurred "
+"because the form associated with this report was deleted from the "
+"application. You can go back and view historical data submitted. However, "
+"you may not edit this report again. You also have the option of deleting "
+"this report by clicking the delete button below."
 msgstr ""
 
 #: corehq/apps/userreports/const.py
@@ -38773,13 +39051,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/partials/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-msgid ""
-"Send a verification SMS to this phone. When the user replies to this SMS, "
-"the phone number will be verified."
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 msgid "Verify (retry)"
 msgstr ""
 
@@ -39147,6 +39418,10 @@ msgstr ""
 #: corehq/apps/users/views/__init__.py
 #, python-brace-format
 msgid "It appears {username} has already been removed from your project space."
+msgstr ""
+
+#: corehq/apps/users/views/__init__.py
+msgid "Update subscription to set access for custom domain alerts"
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py
@@ -43302,6 +43577,10 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Deduplication Rules"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Custom domain banners"
 msgstr ""
 
 #: corehq/reports.py
