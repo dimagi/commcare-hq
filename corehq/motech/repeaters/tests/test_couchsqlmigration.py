@@ -166,6 +166,14 @@ class TestRepeatRecordCouchToSQLDiff(BaseRepeatRecordCouchToSQLTest):
              f"!= sql value {json_format_datetime(hour_hence)!r}"],
         )
 
+    def test_diff_next_check_when_couch_value_is_obsolete(self):
+        doc, obj = self.create_repeat_record(unwrap_doc=False)
+        doc.state = models.State.Success
+        doc.next_check = datetime.utcnow() + timedelta(days=2)
+        obj.state = models.State.Success
+        obj.next_check = None
+        self.assertEqual(self.diff(doc.to_json(), obj), [])
+
     def test_diff_failure_reason(self):
         doc, obj = self.create_repeat_record()
         doc["failure_reason"] = "polly didn't get a cracker"

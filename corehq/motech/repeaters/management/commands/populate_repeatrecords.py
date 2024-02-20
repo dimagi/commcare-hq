@@ -40,6 +40,13 @@ class Command(PopulateSQLCommand):
         differences, or None if the two are equivalent. The list may
         contain `None` or empty strings.
         """
+        def sql_may_have_next_check():
+            if sql.next_check is not None:
+                return True
+            couch_state = get_state(couch)
+            return couch_state == State.Pending or couch_state == State.Fail
+
+        from ...models import State
         fields = ["domain", "payload_id"]
         diffs = [cls.diff_attr(name, couch, sql) for name in fields]
         diffs.append(cls.diff_value(
@@ -57,11 +64,12 @@ class Command(PopulateSQLCommand):
             couch["registered_on"] or '1970-01-01T00:00:00.000000Z',
             json_format_datetime(sql.registered_at),
         ))
-        diffs.append(cls.diff_value(
-            "next_check",
-            couch["next_check"],
-            json_format_datetime(sql.next_check) if sql.next_check else sql.next_check,
-        ))
+        if sql_may_have_next_check():
+            diffs.append(cls.diff_value(
+                "next_check",
+                couch["next_check"],
+                json_format_datetime(sql.next_check) if sql.next_check else sql.next_check,
+            ))
         if couch["failure_reason"]:
             diffs.append(cls.diff_value(
                 "failure_reason",
