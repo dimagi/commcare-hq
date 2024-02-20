@@ -148,10 +148,29 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
     function getNPerRowStyleFromRepeatStyle(styleStr) {
         const matchingPerRowRepeatStyles = getMatchingStyles(constants.PER_ROW_REPEAT_PATTERN, styleStr),
-            perRowRepeatStyle = matchingPerRowRepeatStyles.length === 0 ? null : matchingPerRowRepeatStyles[0];
+            perRowRepeatStyle = matchingPerRowRepeatStyles.length ? matchingPerRowRepeatStyles[0] : null;
         if (perRowRepeatStyle) {
             const integerPart = perRowRepeatStyle.split('-')[0];
-            return integerPart + '-per-row';
+            return integerPart + constants.PER_ROW;
+        } else {
+            return '';
+        }
+    }
+
+    function processNPerRowRepeatStyle(json) {
+        if (stylesContains(constants.PER_ROW_REPEAT_PATTERN, json.style)) {
+            const elementNPerRowStyle = getNPerRowStyleFromRepeatStyle(json.style.raw);
+            for (let groupChild of json.children) {
+                // Detects configured repeat groups within the form. If a repeat group has a 'repeat-count' configured,
+                // the Formplayer response designates the key 'type' as 'sub-group' and 'repeatable' as 'true'.
+                if ((groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") || groupChild.type === constants.REPEAT_TYPE) {
+                    if (_.has(groupChild, 'style') && groupChild.style && groupChild.style.raw) {
+                        groupChild.style.raw = groupChild.style.raw.concat(" ", elementNPerRowStyle);
+                    } else {
+                        groupChild.style = {'raw': elementNPerRowStyle};
+                    }
+                }
+            }
         }
     }
 
@@ -330,6 +349,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             usedWidth = 0;
         }
 
+        if (json.type === constants.GROUP_TYPE) {
+            processNPerRowRepeatStyle(json);
+        }
+
         for (let child of json.children) {
             if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
                 const elementTileWidth = GroupedElementTileRow.calculateElementWidth(child.style);
@@ -337,23 +360,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 if (usedWidth > constants.GRID_COLUMNS) {
                     resetCurrentGroup();
                     usedWidth += elementTileWidth;
-                }
-
-                if (child.type === constants.GROUP_TYPE) {
-                    if (stylesContains(constants.PER_ROW_REPEAT_PATTERN, child.style)) {
-                        const elementNPerRowStyle = getNPerRowStyleFromRepeatStyle(child.style.raw);
-                        for (let groupChild of child.children) {
-                            // Detects configured repeat groups within the form. If a repeat group has a 'repeat-count' configured,
-                            // the Formplayer response designates the key 'type' as 'sub-group' and 'repeatable' as 'true'.
-                            if ((groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") || groupChild.type === constants.REPEAT_TYPE) {
-                                if (_.has(groupChild, 'style') && groupChild.style && groupChild.style.raw) {
-                                    groupChild.style.raw = groupChild.style.raw.concat(" ", elementNPerRowStyle);
-                                } else {
-                                    groupChild.style = {'raw': elementNPerRowStyle};
-                                }
-                            }
-                        }
-                    }
                 }
 
                 if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
@@ -672,7 +678,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 this.toggleChildren(data, event);
             }
         };
-
         self.childrenRequired = ko.computed(function () {
             return _.find(self.children(), function (child) {
                 return child.required() || child.childrenRequired && child.childrenRequired();
@@ -758,7 +763,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Repeat.prototype.constructor = Container;
 
     /**
-     * Represents a group of Questions. Questions are grouped such that all questions are
+     * Represents a group of Questions, Group, or Repeat. Elements are grouped such that all elements are
      * contained in the same row.
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
@@ -781,7 +786,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.required = ko.observable(0);
         self.childrenRequired = ko.computed(function () {
             return _.find(self.children(), function (child) {
-                return child.required() || child.childrenRequired && child.childrenRequired();
+                return (child.required && child.required() || child.childrenRequired && child.childrenRequired());
             });
         });
     }
@@ -960,7 +965,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      * @param {Object} pattern - the regex or string used to find matching styles.
      */
     Question.prototype.stylesContains = function (pattern) {
-        return this.stylesContaining(pattern).length > 0;
+        let _self = this;
+        return stylesContains(pattern, _self.style);
     };
 
     Question.prototype.setWidths = function (hasLabel) {
