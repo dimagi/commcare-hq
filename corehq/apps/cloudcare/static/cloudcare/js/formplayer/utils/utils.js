@@ -459,5 +459,17 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         });
     };
 
+    Utils.setEnableIntervalSync = function (toggleOn, delayInMilliseconds) {
+        function shouldSync() {
+            let currentTime = Date.now(),
+                lastUserActivityTime =  sessionStorage.getItem("lastUserActivityTime") || 0,
+                elapsedTimeSinceLastActivity = currentTime - (lastUserActivityTime);
+
+            if (elapsedTimeSinceLastActivity <= delayInMilliseconds) {
+                return true;
+            }
+        }
+    };
+
     return Utils;
 });
