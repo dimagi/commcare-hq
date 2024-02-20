@@ -32,8 +32,8 @@ class TestSSOTasks(TestCase):
     def test_create_rollover_service_provider_x509_certificates(self):
         self.idp.create_service_provider_certificate()
         self.idp.date_sp_cert_expiration = (
-            datetime.datetime.utcnow() -
-            datetime.timedelta(days=_get_days_before_expiration(13))
+            datetime.datetime.utcnow()
+            - datetime.timedelta(days=_get_days_before_expiration(13))
         )
         self.idp.save()
 
@@ -64,8 +64,8 @@ class TestSSOTasks(TestCase):
         self.idp.create_service_provider_certificate()
         self.idp.create_rollover_service_provider_certificate()
         self.idp.date_sp_cert_expiration = (
-            datetime.datetime.utcnow() -
-            datetime.timedelta(seconds=_get_days_before_expiration(7))
+            datetime.datetime.utcnow()
+            - datetime.timedelta(seconds=_get_days_before_expiration(7))
         )
         self.idp.save()
 
