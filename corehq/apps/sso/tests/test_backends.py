@@ -631,7 +631,7 @@ class TestSsoBackend(TestCase):
         self.assertEqual(
             self.request.sso_new_user_messages['success'],
             [
-                f'User account for {invitation.email} reactivated.',
+                f'User account for {invitation.email} has benn re-activated.',
                 f'You have been added to the "{invitation.domain}" project space.',
             ]
         )
@@ -662,7 +662,7 @@ class TestSsoBackend(TestCase):
         self.assertEqual(
             self.request.sso_new_user_messages['success'],
             [
-                f'User account for {invitation.email} reactivated.',
+                f'User account for {invitation.email} has been re-activated.',
             ]
         )
         self.assertEqual(
