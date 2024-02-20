@@ -148,10 +148,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
     function getNPerRowStyleFromRepeatStyle(styleStr) {
         const matchingPerRowRepeatStyles = getMatchingStyles(constants.PER_ROW_REPEAT_PATTERN, styleStr),
-            perRowRepeatStyle = matchingPerRowRepeatStyles.length === 0 ? null : matchingPerRowRepeatStyles[0];
+            perRowRepeatStyle = matchingPerRowRepeatStyles.length ? matchingPerRowRepeatStyles[0] : null;
         if (perRowRepeatStyle) {
             const integerPart = perRowRepeatStyle.split('-')[0];
             return integerPart + '-per-row';
+        } else {
+            return '';
         }
     }
 
