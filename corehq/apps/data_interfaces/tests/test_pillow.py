@@ -43,11 +43,11 @@ class DeduplicationPillowTest(TestCase):
         self.addCleanup(case_exists_patcher.stop)
 
     def test_pillow_processes_changes(self):
-        rule = self._create_rule('test', ["age"])
-        self._configure_properties_to_update(rule, {"name": "Herman Miller", "age": "5"})
+        rule = self._create_rule('test', ['age'])
+        self._configure_properties_to_update(rule, {'name': 'Herman Miller', 'age': '5'})
 
-        case1 = self.factory.create_case(case_type=self.case_type, update={"age": 2})
-        case2 = self.factory.create_case(case_type=self.case_type, update={"age": 2})
+        case1 = self.factory.create_case(case_type=self.case_type, update={'age': 2})
+        case2 = self.factory.create_case(case_type=self.case_type, update={'age': 2})
 
         self.find_duplicates_mock.return_value = [case1.case_id, case2.case_id]
 
@@ -61,10 +61,10 @@ class DeduplicationPillowTest(TestCase):
         self.pillow.process_changes(since=new_kafka_sec, forever=False)
 
     def test_pillow_ignores_deduplication_changes(self):
-        rule = self._create_rule('test', ["age"])
-        self._configure_properties_to_update(rule, {"name": "Herman Miller", "age": "5"})
+        rule = self._create_rule('test', ['age'])
+        self._configure_properties_to_update(rule, {'name': 'Herman Miller', 'age': '5'})
 
-        case = self.factory.create_case(case_type=self.case_type, update={"age": 2})
+        case = self.factory.create_case(case_type=self.case_type, update={'age': 2})
         self.find_duplicates_mock.return_value = [case.case_id, 'test_id']
 
         new_kafka_sec = get_topic_offset(topics.CASE_SQL)
@@ -94,7 +94,7 @@ class DeduplicationPillowTest(TestCase):
         rule = self._create_rule('test', ['age'])
         action = CaseDeduplicationActionDefinition.from_rule(rule)
 
-        case = self.factory.create_case(case_type=self.case_type, update={"age": 2})
+        case = self.factory.create_case(case_type=self.case_type, update={'age': 2})
         new_kafka_sec = get_topic_offset(topics.CASE_SQL)
         resave_case(self.domain, case, send_post_save_signal=False)
 
