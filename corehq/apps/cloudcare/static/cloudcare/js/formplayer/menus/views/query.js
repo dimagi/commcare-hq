@@ -610,7 +610,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onRender() {
             var submitButton = this.ui.submitButton;
-            if (this.sidebarEnabled) {
+            if (this.options.sidebarEnabled) {
                 if (sessionStorage.submitDisabled === false || sessionStorage.submitDisabled === "false") {
                     submitButton.prop('disabled', false);
                 } else {
@@ -766,7 +766,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         updateSubmitButtonDisabled: function (disabled) {
-            if (this.sidebarEnabled) {
+            if (this.options.sidebarEnabled) {
                 sessionStorage.submitDisabled = disabled;
                 this.render();
             }
