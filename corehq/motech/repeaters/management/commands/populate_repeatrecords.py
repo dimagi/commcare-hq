@@ -76,7 +76,7 @@ class Command(PopulateSQLCommand):
         transforms = ATTEMPT_TRANSFORMS
         diffs.extend(cls.diff_lists(
             "attempts",
-            list(transform(couch["attempts"])),
+            list(transform(couch.get("attempts", []))),
             sql.attempts,
             transforms,
         ))
@@ -104,7 +104,7 @@ class Command(PopulateSQLCommand):
 
     def _prepare_for_submodel_creation(self, docs):
         query = self.sql_class().objects.filter(
-            couch_id__in=[d["_id"] for d in docs if d["attempts"]],
+            couch_id__in=[d["_id"] for d in docs if d.get("attempts")],
         ).annotate(
             num_attempts=Count("attempt_set")
         ).order_by().values_list("couch_id", "id", "num_attempts")
@@ -115,7 +115,7 @@ class Command(PopulateSQLCommand):
 
         :returns: Iterable of ``(submodel_type, submodels_list)`` pairs.
         """
-        couch_attempts = doc["attempts"]
+        couch_attempts = doc.get("attempts")
         if not couch_attempts:
             return
         sql_id, sql_count = self._sql_id_and_num_attempts_by_couch_id.get(doc["_id"], (None, None))
