@@ -620,7 +620,6 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
 
         self.idp = identity_provider
         initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
-        self.idp = identity_provider
         initial.setdefault('enable_user_deactivation', identity_provider.enable_user_deactivation)
         initial.setdefault('api_host', identity_provider.api_host)
         initial.setdefault('api_id', identity_provider.api_id)
