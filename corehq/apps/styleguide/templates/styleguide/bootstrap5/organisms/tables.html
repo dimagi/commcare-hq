@@ -1,0 +1,270 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block stylesheets %}
+  <link type="text/css"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'datatables.net-bs5/css/dataTables.bootstrap5.min.css' %}" />
+  <link type="text/css"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'datatables.net-fixedcolumns-bs5/css/fixedColumns.bootstrap5.min.css' %}" />
+{% endblock stylesheets %}
+
+{% block javascript %}
+  <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'datatables.net-bs5/js/dataTables.bootstrap5.min.js' %}"></script>
+  <script src="{% static 'datatables.net-fixedcolumns/js/dataTables.fixedColumns.min.js' %}"></script>
+  <script src="{% static 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5.min.js' %}"></script>
+{% endblock javascript %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Tables</h1>
+  <p class="sg-lead">
+    Keep tables easily scannable and think about how big they might get.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a>
+        <ul>
+          <li><a href="#tables-layout">Tables and Layout?</a></li>
+        </ul>
+      </li>
+      <li><a href="#basic-table">Basic Table</a></li>
+      <li><a href="#sectioned-table">Sectioned Table</a></li>
+      <li><a href="#datatables">Report Tables (Datatables)</a>
+        <ul>
+          <li><a href="#datatables-simple">Simple Example</a></li>
+        </ul>
+      </li>
+      <li><a href="#paginated-table">Paginated Table</a></li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">Overview</h2>
+  <p>
+    When adding a table, first consider the nature the information you're displaying. Tables
+    are best suited to tabular data, so if that's not what you're working with,
+    consider other design options.
+  </p>
+  <div class="alert alert-primary">
+    Tabular data is data that is organized in a table with rows and columns&mdash;like Excel or GSheets.
+    There are generally several columns with headings and several rows of repeating data related to those headings.
+  </div>
+  <p>
+    To increase "scannability" it's best to observe the following guidelines:
+  </p>
+  <ul>
+    <li>
+      Follow common table setups described below to ensure functionality is always familiar to users.
+    </li>
+    <li>
+      Avoid extremely wide tables that stretch beyond visible page boundaries or are full-page
+      widths with few columns.
+    </li>
+    <li>
+      Align headings with data in columns.
+    </li>
+    <li>
+      Keep small screens in mind, consider
+      <a href="https://css-tricks.com/rotated-table-column-headers/"
+         target="_blank">oblique headers</a>
+      (headers at a 45-degree angle).
+    </li>
+    <li>
+      In languages that read left to right, left-align text and right-align numbers.
+    </li>
+  </ul>
+  <div class="alert alert-primary">
+    Recommended reading:
+    <a href="https://alistapart.com/article/web-typography-tables" target="_blank">
+      Web Typography: Designing Tables to be Read, Not Looked At
+    </a>
+  </div>
+  <p>
+    Most of our tables use hand-crafted markup based on Bootstrap's styles. Some areas of CommCare,
+    particularly reporting, use
+    <a href="https://datatables.net/manual/" target="_blank">DataTables</a> and are tightly integrated
+    with the python code that generates the data.
+  </p>
+  <div class="alert alert-primary">
+    Important External Documentation: <a href="https://getbootstrap.com/docs/5.3/content/tables/" target="_blank">Bootstrap 5 Tables</a>
+  </div>
+
+  <h3 id="tables-layout" class="pt-3">
+    Tables and Layout?
+  </h3>
+  <p>
+    Due to the nature of table cells and the ability to stack them horizontally, vertically, and apply certain
+    alignment rules to their contents, it can be very appealing to use tables to for layout.
+  </p>
+  <p>
+    <strong>Please do not do this.</strong>
+  </p>
+  <p>
+    As mentioned in the first sentence of the overview, tables are for <strong>tabular data</strong>. They are
+    <strong>not</strong> for aligning form fields or creating page sections and layouts.
+  </p>
+  <p>
+    Here are pointers toward more optimal decisions:
+  </p>
+  <ul>
+    <li>
+      <p>
+        Need to create vertical "columns" of sections within a page?
+        Bootstrap 5's <a href="https://getbootstrap.com/docs/5.3/layout/grid/" target="_blank">Grid</a> and
+        <a href="https://getbootstrap.com/docs/5.3/layout/columns/" target="_blank">Column</a> guides can help.
+      </p>
+    </li>
+    <li>
+      <p>
+        Tempted to use a table with form labels and fields? Please don't. We have great documentation on how to
+        <a href="{% url "styleguide_organisms_forms_b5" %}#html-forms">horizontally style forms properly</a>.
+      </p>
+    </li>
+    <li>
+      <p>
+        "What if my data doesn't fit the grid system? Tables seem so much more flexible for things like vertical alignment
+        and dynamic widths." If this sounds familiar, then perhaps Bootstrap 5's
+        <a href="https://getbootstrap.com/docs/5.3/utilities/flex/" target="_blank">flex utilities</a> are what you need.
+      </p>
+    </li>
+  </ul>
+  <h2 id="basic-table" class="pt-4">
+    Basic Table
+  </h2>
+  <p>
+    Below is an example of a very basic table without any pagination or reporting style.
+    Using a basic table is appropriate when you know the data displayed by this table will remain fairly short
+    (no more than 25 items). As it gets longer than that, please consider using pagination.
+  </p>
+  <p>
+    Important: If the data displayed by a table is fully user controlled or generated with no strict limits,
+    expect that the data will scale and eventually that table will become unusable to a certain subset of users.
+  </p>
+  <p>
+    To control column spacing, use the <code>.col-(xs|sm|mg|lg)-[0-9]</code> classes provided by
+    <a href="https://getbootstrap.com/docs/5.3/layout/grid/" target="_blank">
+      Bootstrap 5's grid system
+    </a>.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.basic_table %}
+
+  <h2 id="sectioned-table" class="pt-4">
+    Sectioned Table
+  </h2>
+  <p>
+    It's often the case that multiple tables might exist on a page. If that is the case, consider
+    using the "sectioned table" styling below.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.sectioned_table %}
+
+  <h2 id="datatables" class="pt-4">
+    Report Tables (Datatables)
+  </h2>
+  <p>
+    Reports with advanced filters on HQ, such as the ones found in the "Reports" section, all use a javascript
+    library called <a href="https://datatables.net/manual/" target="_blank">DataTables</a> to display the data.
+    DataTables is an extensive library with built-in support for pagination, column sorting, data typing, and more
+    (especially when you consider the ecosystem of datatables extensions).
+  </p>
+  <p>
+    In CommCare HQ, we have created a wrapper class around our reporting use of datatables called
+    <code>GenericTabularReport</code>, which takes care of generating the datatables configuration in
+    <code>config.dataTables.bootstrap.js</code>. This was done in an effort to reduce the amount of HTML and
+    javascript required to create a report, as generating custom reports for projects was once very common in HQ.
+    With the introduction of User Configurable Reports (UCRs), this need for quickly creating these hard-coded
+    custom reports has since been eliminated.
+  </p>
+  <p>
+    As of the time of this writing, the current reporting infrastructure could use a re-examination. It is one of the
+    oldest un-refactored parts of HQ and, therefore, contains a lot of design problems. It's best to examine this
+    area of the codebase with a great deal of scrutiny. As the styleguide is aimed at explaining the visual side of HQ,
+    we recommend that you visit our
+    <a href="https://commcare-hq.readthedocs.io/reporting.html" target="_blank">Read the Docs on Reporting</a> to get
+    a better idea of the back end implementation.
+  </p>
+  <p>
+    When our reporting tools were created, DataTables was still a fairly young library and had its own set of issues,
+    which you can see in <code>config.dataTables.bootstrap.js</code> if you examine the strangely named variables in
+    still in "hungarian notation" style. Thankfully, the developers of dataTables have kept later versions
+    backwards-compatible with this older notation, but for reference here is a
+    <a href="https://datatables.net/upgrade/1.10-convert" target="_blank">conversion guide</a> for the older configuration
+    parameters and what the modern equivalents are.
+  </p>
+  <div class="alert alert-primary">
+    {# todo future developer: remove with use_bootstrap5 removal cleanup and revisit text above too #}
+    <strong>Important:</strong> As of the time of this writing, the Bootstrap 3 to 5 migration is still ongoing
+    and the Reporting section has not yet been migrated. Please ensure that during that migration, the notation in
+    <code>config.dataTables.bootstrap.js</code> is updated. Thank you.
+  </div>
+  <h3 id="datatables-simple" class="pt-3">
+    Simple Example
+  </h3>
+  <p>
+    Below is an example of a standalone datatable. This kind of datatable does not really exist on HQ outside a
+    report or UCR view, as discussed above. It's mainly here as a simplified demonstration to connect the styling
+    and javascript
+  </p>
+  <p>
+    This example fetches the data asynchronously to avoid
+    having to hardcode the tabular data, however it does not do any server-side processing or pagination.
+    Please see the documentation for
+    <a href="https://datatables.net/examples/data_sources/server_side" target="_blank">Server-Side Processing</a>
+    with DataTables if you want to understand how to do this further.
+  </p>
+  <p>
+    Additionally, the example below makes use of one extension called <code>FixedColumns</code>, which is used across
+    a few reports in HQ. This supports fixing at least one column to the left or right of the report, allowing the rest
+    of the tabular data to scroll underneath it when scrolling horizontally.
+  </p>
+  <p>
+    Stylistically, the tables with report-style advanced filters and column sorting all use the visual style
+    described below. Tabular data that exists outside this framework of advanced filters and column sorting use
+    the standard  Bootstrap table styles. Tables that require pagination but do not have advanced
+    filtering capabilities of the Report views should use the Paginated Table style.
+  </p>
+
+  <div class="alert alert-primary">
+    <strong>Important Usage Note:</strong> To use Datatables on a page, you will need to apply the
+    <code>@use_datatables</code> decorator to your view to ensure that the CSS (on all views) and javascript
+    (on non-requirejs views) are included.
+    If you are using requirejs, make sure that <code>datatables.bootstrap</code> is in your list of dependencies.
+    If you are using the <code>fixedColumns</code> extension, make sure that <code>datatables.fixedColumns.bootstrap</code>
+    is in your list of dependencies.
+  </div>
+  {% registerurl "styleguide_datatables_data" %}
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.datatables %}
+
+  <h2 id="paginated-table" class="pt-4">
+    Paginated Table
+  </h2>
+  <p>
+    Below is an example of a paginated table. As explained in the <a href="{% url "styleguide_molecules_pagination_b5" %}">Pagination</a> section of
+    this guide, it is best to review how this pagination of tabular data is actually used in HQ. The Pagination guide
+    has a few notable examples mentions.
+  </p>
+  <p>
+    Note that the example below makes use of the same fake data source as the Datatables example above for
+    stylistic demonstration only. When this component is actually used in HQ, the data that exists in the table's
+    rows is most likely not reporting data. Most of the time, these paginated tables contain more complex objects that
+    have additional primary and secondary actions associated with them and more complex interactions. The
+    Web users and Mobile Workers pages showcase this component well.
+  </p>
+  <p>
+    Additionally, these paginated tables generally have a simple search functionality for filtering the data and often
+    no support for column sorting. If you find yourself requiring advanced filtering and column sorting,
+    perhaps you want to build a report. In that case, please see the datatables section above as well as our
+    docs on <a href="https://commcare-hq.readthedocs.io/reporting.html" target="_blank">Reporting</a>.
+  </p>
+  {% registerurl "styleguide_paginated_table_data" %}
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.paginated_table %}
+{% endblock content %}
