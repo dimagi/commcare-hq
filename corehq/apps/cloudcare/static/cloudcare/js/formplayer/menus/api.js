@@ -25,6 +25,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 options,
                 menus;
 
+                FormplayerFrontend.durationMetToShowLoading = false;
+                let intervalId = setInterval(() => {
+                    FormplayerFrontend.durationMetToShowLoading = true;
+                }, constants.DURATION_BEFORE_SHOW_LOADING);
+
             $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
                 if (!params.preview) {
                     // Make sure the user has access to the app
@@ -48,6 +53,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                 options = {
                     success: function (parsedMenus, response) {
+                        clearInterval(intervalId);
                         if (response.status === 'retry') {
                             FormplayerFrontend.trigger('retry', response, function () {
                                 var newOptionsData = JSON.stringify($.extend(true, { mustRestore: true }, JSON.parse(options.data)));

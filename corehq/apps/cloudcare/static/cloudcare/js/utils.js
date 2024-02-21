@@ -124,20 +124,62 @@ hqDefine('cloudcare/js/utils', [
         return $container;
     };
 
+    var shouldShowHideLoading = function () {
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+        const answerInProgress = (sessionStorage.answerQuestionInProgress && JSON.parse(sessionStorage.answerQuestionInProgress));
+        const validationInProgress = (sessionStorage.validationInProgress && JSON.parse(sessionStorage.validationInProgress));
+        return !answerInProgress && !validationInProgress && FormplayerFrontend.durationMetToShowLoading;
+    }
+
+    var getRegionContainer = function () {
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+        if (!FormplayerFrontend.regions) {
+            let RegionContainer = Marionette.View.extend({
+                el: "#menu-container",
+
+                regions: {
+                    main: "#menu-region",
+                    loadingProgress: "#formplayer-progress-container",
+                    breadcrumb: "#breadcrumb-region",
+                    persistentCaseTile: "#persistent-case-tile",
+                    restoreAsBanner: '#restore-as-region',
+                    sidebar: '#sidebar-region',
+                },
+            });
+
+            return new RegionContainer();
+        }
+    }
+
     var showLoading = function () {
-        NProgress.start();
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+            ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar");
+            let progressView = ProgressBar({
+                progressMessage: gettext("Loading..."),
+            });
+            if (!FormplayerFrontend.regions) {
+                FormplayerFrontend.regions = getRegionContainer();
+            }
+            $('#breadcrumb-region').css('z-index', '0');
+            const loadingElement = FormplayerFrontend.regions.getRegion('loadingProgress');
+            loadingElement.show(progressView);
+            progressView.setProgress(10, 100, 200);
+        } else {
+            NProgress.start();
+        }
     };
 
     var formplayerLoading = function () {
-        var validationInProgress = sessionStorage.validationInProgress === undefined ?
-            undefined : JSON.parse(sessionStorage.validationInProgress);
-        if (!validationInProgress) {
+        if (shouldShowHideLoading()) {
             showLoading();
         }
     };
 
     var formplayerLoadingComplete = function (isError, message) {
-        hideLoading();
+        if (shouldShowHideLoading()) {
+            hideLoading();
+        }
         if (isError) {
             showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));
         }
@@ -185,7 +227,16 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var hideLoading = function () {
-        NProgress.done();
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+            $('#breadcrumb-region').css('z-index', '');
+            let progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
+            if (progressView) {
+                progressView.setProgress(100, 100, 200);
+                FormplayerFrontend.regions.getRegion('loadingProgress').empty();
+            }
+        } else {
+            NProgress.done();
+        }
     };
 
     function getSentryMessage(data) {
@@ -404,5 +455,6 @@ hqDefine('cloudcare/js/utils', [
         reportFormplayerErrorToHQ: reportFormplayerErrorToHQ,
         smallScreenIsEnabled: smallScreenIsEnabled,
         smallScreenListener: smallScreenListener,
+        getRegionContainer: getRegionContainer,
     };
 });
