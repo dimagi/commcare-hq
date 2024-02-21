@@ -1,0 +1,110 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Buttons</h1>
+  <p class="sg-lead">
+    Figuring out where the "right" button is can be frustrating when
+    there are too many options. Let's demystify that.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#most-buttons">Most Buttons</a></li>
+      <li><a href="#primary-action-buttons">Primary Action Buttons</a></li>
+      <li><a href="#download-upload-buttons">Download / Upload Buttons</a></li>
+      <li><a href="#destructive-action-buttons">Destructive Action Buttons</a></li>
+      <li><a href="#other-buttons">Other Buttons</a>
+        <ul>
+          <li><a href="#signup-login">Signup &amp; Login</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">
+    Overview
+  </h2>
+  <p>
+    Having clear guidance for what the next actions are on a page is important to reducing decision fatigue. One
+    huge component of this comes from button styling and organization.
+  </p>
+  <h2 id="most-buttons" class="pt-4">
+    Most Buttons
+  </h2>
+  <p>
+    Most buttons should use the <code>btn-outline-primary</code> class. This class uses the  "Call to Action" color
+    described in the <a href="{%  url "styleguide_atoms_colors_b5" %}">guide on colors</a>.
+  </p>
+
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.most_buttons %}
+
+  <h2 id="primary-action-buttons" class="pt-4">
+    Primary Action Buttons
+  </h2>
+  <p>
+    Buttons that denote the primary (or main) action of a page should use the <code>btn-primary</code> class.
+  </p>
+
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.primary_action_buttons %}
+
+  <p>
+    Most pages have a <strong>single primary action</strong>&mdash;often save, download, or add&mdash;and may have multiple secondary or
+    tertiary buttons. The names are to suggest what level of importance the button has to the user.
+  </p>
+  <div class="alert alert-primary">
+    <strong>Note:</strong>  If you have a row of buttons (4+), please reconsider the design.
+  </div>
+
+  <h2 id="download-upload-buttons" class="pt-4">
+    Download / Upload Buttons
+  </h2>
+  <p>
+    Usually a common secondary action on a page will be a direction to download or upload data to HQ. In this case,
+    the <code>btn-info</code> class should be used.
+  </p>
+
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.download_upload_buttons %}
+
+  <div class="alert alert-primary">
+    <strong>Note:</strong> There are some places in HQ, such as formdesigner, where the primary action on the page, Save,
+    uses a <code>btn-info</code> style to create contrast on a dark blue background. However, consider that the rule
+    of only using this button for Download / Upload actions should not be broken for any new feature development.
+  </div>
+
+  <h2 id="destructive-action-buttons" class="pt-4">
+    Destructive Action Buttons
+  </h2>
+  <p>
+    For buttons which correspond to a destructive action&mdash;like Delete&mdash;the
+    <code>btn-outline-danger</code> class should be used. We typically like to keep one destructive action button
+    per group of buttons / row or per page.
+  </p>
+
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.destructive_action_buttons %}
+
+  <h2 id="other-buttons" class="pt-4">
+    Other Buttons
+  </h2>
+  <p>
+    If you are familiar with Bootstrap 5's <a href="https://getbootstrap.com/docs/5.3/components/buttons/" target="_blank">button documentation</a>,
+    you know that there are far more button styles available. Please note that while there are a variety of options available,
+    we purposely don't list them here because we want to keep our standard button choices limited so that there is
+    less confusion&mdash;both for the developer and the user&mdash;when it comes to using buttons consistently in HQ
+    and what to expect from those buttons.
+  </p>
+
+  <h3 id="signup-login" class="pt-4">
+    Signup &amp; Login
+  </h3>
+  <p>
+    The signup and login pages also deviate a bit from button choices by using a purple styled button. This stylistic
+    choice is used to create a better transition between dimagi.com and commcarehq.org.
+  </p>
+{% endblock content %}
