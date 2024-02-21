@@ -664,6 +664,11 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
 
+    @property
+    @memoized
+    def selected_app_id(self):
+        return self.request_params.get(SelectApplicationFilter.slug, None)
+
     @memoized
     def user_query(self):
         # partially inspired by ApplicationStatusReport.user_query
@@ -675,6 +680,22 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             mobile_user_and_group_slugs,
             self.request.couch_user,
         )
+
+        if self.selected_app_id:
+            last_submission_filter = filters.nested(
+                'reporting_metadata.last_submissions',
+                filters.term(
+                    'reporting_metadata.last_submissions.app_id', self.selected_app_id
+                ),
+            )
+            last_sync_filter = filters.nested(
+                'reporting_metadata.last_syncs',
+                filters.term(
+                    'reporting_metadata.last_syncs.app_id', self.selected_app_id
+                ),
+            )
+            user_query = user_query.OR(last_submission_filter, last_sync_filter)
+
         user_query = user_query.aggregations([
             DateHistogram(
                 'last_submission',
