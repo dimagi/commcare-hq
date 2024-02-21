@@ -5,7 +5,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
     'hqwebapp/js/utils/email',
     "hqwebapp/js/initial_page_data",
     'sso/js/models',
-    'hqwebapp/js/widgets',
+    'hqwebapp/js/bootstrap3/widgets',
 ], function (
     $,
     ko,
