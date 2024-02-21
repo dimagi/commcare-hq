@@ -2729,3 +2729,11 @@ VELLUM_CASE_MICRO_IMAGE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Add a micro image to cases in the case list.'
 )
+
+USE_PROMINENT_PROGRESS_BAR = StaticToggle(
+    slug='use_prominent_progress_bar',
+    label='Use more prominent progress bar in place of NProgress',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Replaces NProgress bar with more prominent progress bar',
+)
