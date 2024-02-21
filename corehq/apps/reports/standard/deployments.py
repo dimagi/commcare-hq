@@ -216,8 +216,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def user_query(self, pagination=True):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker') +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.request.GET.getlist('location_restricted_mobile_worker')
+            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -438,8 +438,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def get_user_ids(self):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker') +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.request.GET.getlist('location_restricted_mobile_worker')
+            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
         user_ids = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -713,7 +713,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             def get_buckets(self):
                 return self.bucket_series.get_summary_data()
 
-
         class BucketSeries(namedtuple('Bucket', 'data_series total_series total user_count')):
             @property
             @memoized
@@ -809,8 +808,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 }
             )
             return BucketSeries(daily_series, running_total_series, total, user_count)
-
-
 
         submission_series = SeriesData(
             id='submission',
