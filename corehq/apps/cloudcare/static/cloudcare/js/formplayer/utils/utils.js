@@ -473,6 +473,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         });
     };
 
+    Utils.stopIntervalSync = function () {
+        Utils.setEnableIntervalSync(false);
+    };
+
     Utils.setEnableIntervalSync = function (toggleOn, delayInMilliseconds) {
         function shouldSync() {
             let currentTime = Date.now(),
