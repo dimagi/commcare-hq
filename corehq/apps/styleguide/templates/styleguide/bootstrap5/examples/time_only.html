@@ -1,0 +1,17 @@
+<input type="text" name="timpick" class="form-control" id="id_timepicker">
+
+<script>
+  $(function () {
+    $('#id_timepicker').tempusDominus({
+      display: {
+        theme: 'light',
+        components: {
+          calendar: false,
+        }
+      },
+      localization: {
+        format: 'LT',
+      },
+    });
+  });
+</script>
