@@ -47,10 +47,10 @@
                   "><i class="fa fa-remove"></i></button>
         </legend>
       </div>
-      <div data-bind="if: collapsible" >
+      <div data-bind="if: collapsible">
         <div class="d-flex align-items-center">
           <div class="collapsible-icon-container">
-            <i  class="fa" data-bind="
+            <i class="fa" data-bind="
                 css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
             "></i>
           </div>
@@ -354,27 +354,29 @@
 </script>
 
 <script type="text/html" id="repeat-juncture-fullform-ko-template">
-  <div class="panel panel-default rep">
-    <div class="panel-heading" data-bind="style: {
-        'background-color': headerBackgroundColor(),
-        'color': headerBackgroundColor() ? 'white' : '',
-      }">
-      <h3 class="caption" data-bind="html: header" tabindex="0"></h3>
-      <span class="ix" data-bind="text: ixInfo($data)"></span>
-    </div>
-    <div class="panel-body">
-      <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
-      <div class="alert alert-info empty" data-bind="visible: !children().length">
-        {% trans "This repeatable group is empty" %}
+  <div data-bind="class: elementTile">
+    <div class="panel panel-default rep">
+      <div class="panel-heading" data-bind="style: {
+          'background-color': headerBackgroundColor(),
+          'color': headerBackgroundColor() ? 'white' : '',
+        }">
+        <h3 class="caption" data-bind="html: header" tabindex="0"></h3>
+        <span class="ix" data-bind="text: ixInfo($data)"></span>
       </div>
-    </div>
-    <div class="panel-footer">
-      <button class="btn btn-default add" href="#"
-              data-bind="click: newRepeat"
-              id="repeat-add-new">
-              <i class="fa fa-plus"></i>
-              <!-- ko text: $root.getTranslation('repeat.dialog.add.new', '{% trans_html_attr 'Add new repeat' %}') --><!-- /ko -->
-      </button>
+      <div class="panel-body">
+        <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+        <div class="alert alert-info empty" data-bind="visible: !children().length">
+          {% trans "This repeatable group is empty" %}
+        </div>
+      </div>
+      <div class="panel-footer">
+        <button class="btn btn-default add" href="#"
+                data-bind="click: newRepeat"
+                id="repeat-add-new">
+                <i class="fa fa-plus"></i>
+                <!-- ko text: $root.getTranslation('repeat.dialog.add.new', '{% trans_html_attr 'Add new repeat' %}') --><!-- /ko -->
+        </button>
+      </div>
     </div>
   </div>
 </script>
@@ -641,7 +643,7 @@
   <div class="input-group">
     <input type="text" class="form-control"
       data-bind="attr: {id: entryId, 'aria-required': $parent.required() ? 'true' : 'false'}"/>
-    <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+    <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>
   </div>
 </script>
 
@@ -655,14 +657,14 @@
 <script type="text/html" id="time-entry-ko-template">
   <div class="input-group">
     <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
-    <span class="input-group-addon"><i class="fa fa-clock-o"></i></span>
+    <span class="input-group-addon"><i class="fa-regular fa-clock"></i></span>
   </div>
 </script>
 
 <script type="text/html" id="ethiopian-date-entry-ko-template">
   <div class="input-group">
     <input type="text" class="form-control" autocomplete="off" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
-    <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+    <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>
   </div>
 </script>
 

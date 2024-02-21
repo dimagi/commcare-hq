@@ -484,6 +484,11 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_use_dedupe(self):
+        return domain_has_privilege(self.domain, privileges.CASE_DEDUPE)
+
+    @property
+    @memoized
     def can_export_data(self):
         return (self.project and not self.project.is_snapshot
                 and self.couch_user.can_access_any_exports(self.domain))
@@ -573,11 +578,6 @@ class ProjectDataTab(UITab):
     def can_view_ecd_preview(self):
         return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self._request)
                 and is_eligible_for_ecd_preview(self._request))
-
-    @property
-    @memoized
-    def can_deduplicate_cases(self):
-        return toggles.CASE_DEDUPE.enabled_for_request(self._request)
 
     @property
     def _can_view_geospatial(self):
@@ -731,7 +731,7 @@ class ProjectDataTab(UITab):
                         'url': reverse(FormExportListView.urlname,
                                        args=(self.domain,)),
                         'show_in_dropdown': True,
-                        'icon': 'icon icon-list-alt fa fa-list-alt',
+                        'icon': 'icon icon-list-alt fa-regular fa-rectangle-list',
                         'subpages': [_f for _f in [
                             {
                                 'title': _(CreateNewCustomFormExportView.page_title),
@@ -759,7 +759,7 @@ class ProjectDataTab(UITab):
                         'url': reverse(CaseExportListView.urlname,
                                        args=(self.domain,)),
                         'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-share-square-o',
+                        'icon': 'icon icon-share fa fa-share-form-square',
                         'subpages': [_f for _f in [
                             {
                                 'title': _(CreateNewCustomCaseExportView.page_title),
@@ -792,7 +792,7 @@ class ProjectDataTab(UITab):
                         'title': _(DownloadNewSmsExportView.page_title),
                         'url': reverse(DownloadNewSmsExportView.urlname, args=(self.domain,)),
                         'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-commenting-o',
+                        'icon': 'icon icon-share fa-regular fa-comment-dots',
                         'subpages': []
                     })
 
@@ -807,7 +807,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     "title": _(DailySavedExportListView.page_title),
                     "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-calendar',
+                    'icon': 'fa-solid fa-calendar-days',
                     "show_in_dropdown": True,
                     "subpages": [_f for _f in [
                         {
@@ -832,7 +832,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DailySavedExportListView.page_title),
                     'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-calendar',
+                    'icon': 'fa-solid fa-calendar-days',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
@@ -860,7 +860,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-dashboard',
+                    'icon': 'fa-solid fa-gauge',
                     'show_in_dropdown': True,
                     'subpages': subpages
                 })
@@ -868,7 +868,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-dashboard',
+                    'icon': 'fa-solid fa-gauge',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
@@ -906,7 +906,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': CommCareAnalyticsListView.page_title,
                     'url': reverse(CommCareAnalyticsListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-bar-chart',
+                    'icon': 'fa-regular fa-chart-bar',
                     'show_in_dropdown': False,
                     'subpages': []
                 })
@@ -917,7 +917,7 @@ class ProjectDataTab(UITab):
             export_data_views.append({
                 'title': _(DataFileDownloadList.page_title),
                 'url': reverse(DataFileDownloadList.urlname, args=(self.domain,)),
-                'icon': 'fa fa-file-text-o',
+                'icon': 'fa-regular fa-file-lines',
                 'show_in_dropdown': True,
                 'subpages': []
             })
@@ -943,7 +943,7 @@ class ProjectDataTab(UITab):
             else:
                 edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
 
-        if self.can_deduplicate_cases:
+        if self.can_use_dedupe:
             from corehq.apps.data_interfaces.views import (
                 DeduplicationRuleListView,
             )
@@ -952,6 +952,7 @@ class ProjectDataTab(UITab):
                 'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
             }
             edit_section[0][1].append(deduplication_list_view)
+
         return edit_section
 
     def _get_explore_data_views(self):
@@ -963,7 +964,7 @@ class ProjectDataTab(UITab):
                 'title': _(ExploreCaseDataView.page_title),
                 'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
                 'show_in_dropdown': False,
-                'icon': 'fa fa-map-marker',
+                'icon': 'fa-solid fa-location-dot',
                 'subpages': [],
             })
         if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):

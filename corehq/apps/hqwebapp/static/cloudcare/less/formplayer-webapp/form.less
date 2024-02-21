@@ -1,5 +1,6 @@
 @form-text-indent: 23px;
 @form-text-size: 16px;
+@group-indent: 15px;
 
 .form-container {
   background-color: white;
@@ -11,7 +12,6 @@
     padding-bottom: 30px;
 
     h1 {
-      // -8 to account for .panel-header padding
       padding-left: @form-text-indent - 8px;
     }
   }
@@ -31,6 +31,7 @@
       margin-left: -@form-text-indent;
       margin-right: -@form-text-indent;
     }
+
     background-color: lighten(@cc-brand-hi, 10);
     .border-bottom-radius(0);
 
@@ -54,26 +55,25 @@
 
   // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
   .row {
-      margin-left: 0px;
-      margin-right: 0px;
-    }
-
+    margin-left: 0px;
+    margin-right: 0px;
+  }
   .question-container {
     padding-left: @form-text-indent;
     padding-right: @form-text-indent;
   }
 
   .form-group {
-    margin-left: 0;
-    margin-right: 0;
+    margin-left: 0px;
+    margin-right: 0px;
     .caption.control-label {
       display: block;
     }
   }
 
   .group-body {
-    // to match panel
-    margin-bottom: 17px;
+    margin-left: @group-indent;
+    margin-right: @group-indent;
   }
 
   .gr.panel {
@@ -84,8 +84,6 @@
     border-radius: 0px;
   }
 
-  // line up fields with group headers. All columns use padding for spacing in between them.
-  // It is not needed/wanted at the sides
   .col-sm-12,
   .col-sm-11,
   .col-sm-10,
@@ -131,10 +129,8 @@
     border: solid 1px @cc-neutral-mid;
     border-radius: 8px;
     margin: 2px;
-  }
-
-  .question-tile-row .group-border:not(.panel) {
-    padding: 15px !important;
+    padding-top: 5px;
+    padding-bottom: 5px;
   }
 
   .info {
@@ -305,4 +301,10 @@
     padding-right: 0px !important;
     padding-left: 0px !important;
   }
+}
+
+.question-tile-row .gr-no-children.gr-has-no-questions.gr-has-no-nested-questions {
+  // Prevents a priority issue that's happened three times where
+  // a group with hidden values creates whitespace.
+  display: none;
 }

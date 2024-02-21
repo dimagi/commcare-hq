@@ -517,6 +517,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         """
         Transforms a model dict to a JSON serializable dict suitable for indexing in elasticsearch.
         """
+        model_dict['doc_id'] = model_dict['_id']
         return model_dict.pop('_id'), model_dict
 
     def to_json(self, doc):
