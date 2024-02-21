@@ -1360,8 +1360,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * Fix that by applying `aria-labelledby` to the element getting keyboard focus.
      */
     function applySelect2Labelledby(entryId, isMulti) {
-        var $input = $('#' + entryId);
-        var $focusElement = isMulti
+        const $input = $('#' + entryId);
+        const $focusElement = isMulti
             ? $input.parent().find('textarea.select2-search__field')
             : $input.parent().find('span.select2-selection--single');
         $focusElement.attr('aria-labelledby', entryId + '-label');
