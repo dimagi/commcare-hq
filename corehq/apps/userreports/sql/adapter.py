@@ -336,7 +336,7 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
         if orig_exception and isinstance(orig_exception, psycopg2.IntegrityError):
             if orig_exception.pgcode == psycopg2.errorcodes.NOT_NULL_VIOLATION:
                 from corehq.apps.userreports.models import InvalidUCRData
-                InvalidUCRData.objects.create(
+                InvalidUCRData.objects.get_or_create(
                     doc_id=doc['_id'],
                     doc_type=doc['doc_type'],
                     domain=doc['domain'],
