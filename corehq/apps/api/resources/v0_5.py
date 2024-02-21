@@ -35,7 +35,6 @@ from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
-from tastypie.utils import dict_strip_unicode_keys
 
 
 from phonelog.models import DeviceReportEntry
@@ -395,7 +394,7 @@ class GroupResource(v0_4.GroupResource):
         for data in deserialized[collection_name]:
 
             data = self.alter_deserialized_detail_data(request, data)
-            bundle = self.build_bundle(data=dict_strip_unicode_keys(data), request=request)
+            bundle = self.build_bundle(data=data, request=request)
             try:
 
                 self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
@@ -415,7 +414,7 @@ class GroupResource(v0_4.GroupResource):
         deserialized = self.deserialize(request, request.body,
                                         format=request.META.get('CONTENT_TYPE', 'application/json'))
         deserialized = self.alter_deserialized_detail_data(request, deserialized)
-        bundle = self.build_bundle(data=dict_strip_unicode_keys(deserialized), request=request)
+        bundle = self.build_bundle(data=deserialized, request=request)
         try:
             updated_bundle = self.obj_create(bundle, **self.remove_api_resource_names(kwargs))
             location = self.get_resource_uri(updated_bundle)
