@@ -46,6 +46,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     }
                 }
 
+                formplayerUtils.startIntervalSync(params.appId);
+
                 options = {
                     success: function (parsedMenus, response) {
                         if (response.status === 'retry') {
