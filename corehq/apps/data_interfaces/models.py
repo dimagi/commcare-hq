@@ -1078,18 +1078,20 @@ class CaseDeduplicationMatchTypeChoices:
     )
 
 
-def case_matching_rule_exists_in_es(case, rule):
+def case_matching_rule_criteria_exists_in_es(case, rule):
     """Returns whether or not the current case, according to the properties
-    that the given rule cares about, is present in elasticsearch
+    that the given rule cares about, is present in elasticsearch.
+    Note that this only matches the filter criteria, not the closed status.
     """
     action = CaseDeduplicationActionDefinition.from_rule(rule)
     return _case_exists_in_es(
         case.domain,
         case,
         action.case_properties,
-        action.include_closed,
-        action.match_type,
-        case_filter_criteria=rule.memoized_criteria)
+        match_type=action.match_type,
+        case_filter_criteria=rule.memoized_criteria,
+        include_closed=True
+    )
 
 
 def find_matching_case_ids_in_es(case, rule, limit=0):
@@ -1152,9 +1154,9 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         return result
 
     def _handle_case_duplicate_new(self, case, rule):
-        if not case_matching_rule_exists_in_es(case, rule):
+        if not case_matching_rule_criteria_exists_in_es(case, rule):
             ALLOWED_ES_DELAY = timedelta(hours=1)
-            if datetime.utcnow() - case.modified_on > ALLOWED_ES_DELAY:
+            if datetime.utcnow() - case.server_modified_on > ALLOWED_ES_DELAY:
                 # If old data was found that is not present in ElasticSearch, the data is unreliable.
                 # We've decided skipping this record and recording an error is likely the safest way to handle this
                 # Hopefully, these errors allow us to track down the underlying bug or infrastructure issue
