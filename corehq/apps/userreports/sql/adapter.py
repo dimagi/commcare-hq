@@ -338,11 +338,13 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
                 from corehq.apps.userreports.models import InvalidUCRData
                 InvalidUCRData.objects.get_or_create(
                     doc_id=doc['_id'],
-                    doc_type=doc['doc_type'],
-                    domain=doc['domain'],
                     indicator_config_id=self.config._id,
                     validation_name='not_null_violation',
-                    validation_text='A column in this doc violates an is_nullable constraint'
+                    defaults={
+                        'doc_type': doc['doc_type'],
+                        'domain': doc['domain'],
+                        'validation_text': 'A column in this doc violates an is_nullable constraint'
+                    }
                 )
                 return
 
