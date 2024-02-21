@@ -61,7 +61,7 @@ class Command(PopulateSQLCommand):
         ))
         diffs.append(cls.diff_value(
             "registered_at",
-            couch["registered_on"] or '1970-01-01T00:00:00.000000Z',
+            couch.get("registered_on") or '1970-01-01T00:00:00.000000Z',
             json_format_datetime(sql.registered_at),
         ))
         if sql_may_have_next_check():
@@ -70,24 +70,28 @@ class Command(PopulateSQLCommand):
                 couch["next_check"],
                 json_format_datetime(sql.next_check) if sql.next_check else sql.next_check,
             ))
-        if couch["failure_reason"]:
+        if couch.get("failure_reason"):
             diffs.append(cls.diff_value(
                 "failure_reason",
                 couch["failure_reason"],
                 sql.failure_reason,
             ))
 
-        def transform(couch_attempts):
-            for attempt in couch_attempts:
-                yield {f: trans(attempt) for f, trans in transforms.items()}
+        if "attempts" not in couch:
+            if len(sql.attempts) > 1:
+                diffs.append(f"attempts: not in couch, {len(sql.attempts)} in sql")
+        else:
+            def transform(couch_attempts):
+                for attempt in couch_attempts:
+                    yield {f: trans(attempt) for f, trans in transforms.items()}
 
-        transforms = ATTEMPT_TRANSFORMS
-        diffs.extend(cls.diff_lists(
-            "attempts",
-            list(transform(couch.get("attempts", []))),
-            sql.attempts,
-            transforms,
-        ))
+            transforms = ATTEMPT_TRANSFORMS
+            diffs.extend(cls.diff_lists(
+                "attempts",
+                list(transform(couch["attempts"])),
+                sql.attempts,
+                transforms,
+            ))
         return diffs
 
     def get_ids_to_ignore(self, docs):
@@ -190,11 +194,11 @@ def iter_docs(chunk_size, **params):
 
 def get_state(doc):
     from ...models import State
-    if doc['succeeded'] and doc['cancelled']:
+    if doc['succeeded'] and doc.get('cancelled'):
         return State.Empty
     if doc['succeeded']:
         return State.Success
-    if doc['cancelled']:
+    if doc.get('cancelled'):
         return State.Cancelled
     if doc['failure_reason']:
         return State.Fail

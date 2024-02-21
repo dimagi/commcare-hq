@@ -493,6 +493,26 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
             with self.assertRaises(SQLRepeatRecord.DoesNotExist):
                 SQLRepeatRecord.objects.get(couch_id=docs["test"]._id)
 
+    def test_verify_record_missing_fields(self):
+        doc, _ = self.create_repeat_record(unwrap_doc=False)
+        doc.succeeded = True
+        doc.save()
+        self.db.save_doc({
+            "_id": doc._id,
+            "_rev": doc._rev,
+            "doc_type": "RepeatRecord",
+            "domain": "test",
+            "last_checked": "2015-02-20T13:25:25.655650Z",
+            "lock_date": None,
+            "next_check": None,
+            "payload_id": "00a7d361-474d-4cf3-9aed-f6204c2a0897",
+            "repeater_id": self.repeater1.id.hex,
+            "succeeded": True,
+        })
+        with templog() as log, patch.object(transaction, "atomic", atomic_check):
+            call_command('populate_repeatrecords', log_path=log.path)
+            self.assertIn('has differences:', log.content)
+
     def diff(self, doc, obj):
         return do_diff(Command, doc, obj)
 
