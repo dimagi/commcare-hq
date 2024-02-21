@@ -459,6 +459,20 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         });
     };
 
+    Utils.startIntervalSync = function (appId) {
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            let currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId),
+                customProperties = currentApp.attributes.profile.custom_properties;
+            const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
+
+            let useAggressiveSyncTiming = (customProperties["cc-sync-after-form"] === "yes");
+            if (useAggressiveSyncTiming) {
+                // Sync frequency is synchronized with Formplayer's restore expiration
+                Utils.setEnableIntervalSync(true, FIVE_MINUTES_IN_MILLISECONDS);
+            }
+        });
+    };
+
     Utils.setEnableIntervalSync = function (toggleOn, delayInMilliseconds) {
         function shouldSync() {
             let currentTime = Date.now(),
