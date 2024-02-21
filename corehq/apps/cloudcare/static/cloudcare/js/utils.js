@@ -1,4 +1,5 @@
-/* global moment, NProgress, Sentry */
+'use strict';
+/* global Marionette, moment, NProgress, Sentry */
 hqDefine('cloudcare/js/utils', [
     'jquery',
     'hqwebapp/js/initial_page_data',
@@ -130,7 +131,7 @@ hqDefine('cloudcare/js/utils', [
             const validationInProgress = (sessionStorage.validationInProgress && JSON.parse(sessionStorage.validationInProgress));
             return !answerInProgress && !validationInProgress && FormplayerFrontend.durationMetToShowLoading;
         });
-    }
+    };
 
     var getRegionContainer = function () {
         let RegionContainer = Marionette.View.extend({
@@ -147,13 +148,13 @@ hqDefine('cloudcare/js/utils', [
         });
 
         return new RegionContainer();
-    }
+    };
 
     var showLoading = function () {
         hqRequire([
             "cloudcare/js/formplayer/app",
             "hqwebapp/js/toggles",
-            "cloudcare/js/formplayer/layout/views/progress_bar"
+            "cloudcare/js/formplayer/layout/views/progress_bar",
         ], function (FormplayerFrontend, toggles, ProgressBar) {
             if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
                 let progressView = ProgressBar({
@@ -229,7 +230,7 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var hideLoading = function () {
-        hqRequire(["hqwebapp/js/toggles"], function (toggles) {
+        hqRequire(["cloudcare/js/formplayer/app", "hqwebapp/js/toggles"], function (FormplayerFrontend, toggles) {
             if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
                 $('#breadcrumb-region').css('z-index', '');
                 let progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
