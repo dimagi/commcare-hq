@@ -481,9 +481,9 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         function shouldSync() {
             let currentTime = Date.now(),
                 lastUserActivityTime =  sessionStorage.getItem("lastUserActivityTime") || 0,
-                elapsedTimeSinceLastActivity = currentTime - (lastUserActivityTime);
-
-            if (elapsedTimeSinceLastActivity <= delayInMilliseconds) {
+                elapsedTimeSinceLastActivity = currentTime - (lastUserActivityTime),
+                isInApp = Utils.currentUrlToObject().appId !== undefined;
+            if (elapsedTimeSinceLastActivity <= delayInMilliseconds && isInApp) {
                 return true;
             }
         }
