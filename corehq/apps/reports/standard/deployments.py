@@ -655,6 +655,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.select.SelectApplicationFilter',
     ]
     exportable = False
     emailable = False
