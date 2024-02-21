@@ -1,6 +1,5 @@
 def get_masked_string(value, mask_character=None, reveal_length=3):
-    if mask_character is None:
-        mask_character = '*'
+    mask_character = mask_character or '*'
 
     if len(value) <= reveal_length:
         return value
