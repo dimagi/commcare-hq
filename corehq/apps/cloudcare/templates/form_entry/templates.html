@@ -40,7 +40,7 @@
                 data-bind="
                   html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
                 "></span>
-          <button class="btn btn-danger del pull-right" href="#" aria-label="{% trans 'Delete Repeat' %}"
+          <button class="btn btn-danger del pull-right" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
                   data-bind="
                       visible: isRepetition,
                       click: deleteRepeat
@@ -56,7 +56,7 @@
           </div>
           <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
           <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
-          <button class="btn btn-danger del pull-right" href="#" aria-label="{% trans 'Delete Repeat' %}"
+          <button class="btn btn-danger del pull-right" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
                   data-bind="
                       visible: isRepetition,
                       click: deleteRepeat
