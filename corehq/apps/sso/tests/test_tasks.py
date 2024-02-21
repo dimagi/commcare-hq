@@ -204,7 +204,7 @@ class TestAutoDeactivationTask(TestCase):
         self.assertTrue(web_user.is_active)
 
     @patch('corehq.apps.sso.models.IdentityProvider.get_all_members_of_the_idp')
-    @patch('corehq.apps.sso.tasks.send_html_email_async')
+    @patch('corehq.apps.sso.tasks.send_html_email_async.delay')
     def test_deactivation_skipped_if_azure_return_empty_sso_user(self, mock_send, mock_get_all_members_of_the_idp):
         mock_get_all_members_of_the_idp.return_value = []
 
