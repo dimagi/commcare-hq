@@ -22,7 +22,7 @@
           <a class="btn btn-primary"
              data-bind="attr: { href: loc_edit_url(uuid()) }">
             {% if view_only %}
-              <i class="fa fa-eye"></i>
+              <i class="fa-solid fa-eye"></i>
               {% trans "View" %}
             {% else %}
               <i class="fa fa-edit"></i>
@@ -46,7 +46,7 @@
           {% endif %}
           <button class="btn btn-danger"
                   data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
-            <i class="fa fa-trash"></i>
+            <i class="fa-regular fa-trash-can"></i>
             {% trans "Delete" %}
           </button>
         {% endif %}
@@ -54,9 +54,17 @@
 
       <!-- want to make entire row clickable, but overrides click on 'edit' button -->
       <div data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
-              <span data-bind="if: can_have_children">
-                  <i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded()==true, 'fa-plus-square-o': expanded()=='semi' }"></i>
-              </span>
+          <!-- ko if: can_have_children -->
+              <!-- ko if: !expanded() -->
+                <i class="fa-solid fa-square-plus fa-lg"></i>
+              <!-- /ko -->
+              <!-- ko if: expanded()==true -->
+                <i class="fa-solid fa-square-minus fa-lg"></i>
+              <!-- /ko -->
+              <!-- ko if: expanded()=='semi' -->
+                <i class="fa-regular fa-square-plus fa-lg"></i>
+              <!-- /ko -->
+          <!-- /ko -->
         <span class="loc_name" data-bind="text: name"></span>
         <span class="loc_type">(<span data-bind="text: type"></span>)</span>
       </div>
