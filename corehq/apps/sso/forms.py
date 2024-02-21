@@ -613,11 +613,6 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
     )
 
     def __init__(self, identity_provider, *args, **kwargs):
-        if 'show_remote_user_management' in kwargs:
-            self.show_remote_user_management = kwargs.pop('show_remote_user_management')
-        else:
-            self.show_remote_user_management = False
-
         self.idp = identity_provider
         initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
         initial.setdefault('enable_user_deactivation', identity_provider.enable_user_deactivation)
@@ -782,6 +777,10 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
     )
 
     def __init__(self, identity_provider, *args, **kwargs):
+        if 'show_remote_user_management' in kwargs:
+            self.show_remote_user_management = kwargs.pop('show_remote_user_management')
+        else:
+            self.show_remote_user_management = False
         initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
         initial.setdefault('is_active', identity_provider.is_active)
         initial.setdefault('login_enforcement_type', identity_provider.login_enforcement_type)
