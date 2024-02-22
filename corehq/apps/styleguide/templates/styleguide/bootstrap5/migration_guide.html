@@ -51,7 +51,7 @@
     <li>
       <p>
         Using an automated process, split template and javascript files that need changes into <code>bootstrap3</code>
-        and <code>bootstrap5</code> versions. This process will find / replace the straightforward changes and flag
+        and <code>bootstrap5</code> versions. This process will find/replace the straightforward changes and flag
         more complex changes to be addressed later.
       </p>
     </li>
@@ -141,9 +141,14 @@
   <p>
     The management command will iterate through all template and javascript files in the app.
     The command will prompt you to accept each find-and-replace change in a file. More involved changes will be
-    flagged with notes saved for later in <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code>. You will always have the option
-    to skip changes that do not make sense.
+    flagged with notes saved for later in markdown files within the <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code>.
+    You will always have the option to skip changes that do not make sense.
   </p>
+  <div class="alert alert-primary">
+    Due to potential merge conflict issues, the markdown files outputted to <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code>
+    are not version controlled. If you want to work on migrating an application with multiple people, you can zip
+    these markdown files and share with your collaborators for future reference.
+  </div>
   <p>
     Once a file is updated and split into the two bootstrap versions, the command will
     find references to the original filepath and replace them with the filepath to the <code>bootstrap3</code> version.
@@ -153,6 +158,26 @@
     moving on to the next file. The management command will prompt you to do this with a suggested commit message.
     Formatting our commits this way is important to maintain a clean git history.
   </p>
+  <div class="alert alert-primary">
+    <p>
+      It is possible that you might have to run a migration multiple times on an app. It might be the case that templates
+      or javascript files have several nested dependencies.
+    </p>
+    <p>
+      For instance, let's suppose one template called <code>webapps_base.html</code> is
+      split into <code>bootstrap3</code> and <code>bootstrap5</code> versions. In that same run of
+      <code>migrate_app_to_bootstrap5</code>, a template called <code>question.html</code> was already checked but
+      never split because it did not contain code needing an upgrade. However, this template extends
+      <code>webapps_base.html</code>, so it does need to be split.
+    </p>
+    <p>
+      When <code>webapps_base.html</code> is renamed to a <code>bootstrap3</code> path, the <code>extend</code> path
+      in <code>question.html</code> is also updated. Since <code>question.html</code> was checked before
+      <code>webapps_base.html</code>, the migration script did not catch that <code>question.html</code> now extends from
+      a <code>bootstrap3</code> template. A second run of <code>migrate_app_to_bootstrap5</code> would catch this and
+      accurately split <code>question.html</code>.
+    </p>
+  </div>
 
   <h3 id="update-diffs" class="pt-3">
     Configure &amp; Update Diffs
