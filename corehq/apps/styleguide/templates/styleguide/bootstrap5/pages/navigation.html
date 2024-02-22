@@ -52,6 +52,11 @@
     Which tab is highlighted depends on the <code>url_prefix_formats</code> defined for each tab. Which items
     appear in a tab's dropdown is determined by <code>dropdown_items</code>.
   </p>
+  <p>
+    Below is an example of how tabs are structured to create the navigation for the example views covered in
+    the <a hre="{% url 'styleguide_pages_views_b5' %}">Views</a> section of this styleguide.
+  </p>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.tabs %}
 
   <h3 id="side-navigation" class="pt-3">
     Side Navigation
