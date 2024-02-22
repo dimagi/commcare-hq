@@ -198,7 +198,10 @@ class PopulateSQLCommand(BaseCommand):
     def save_migration_status(self, fixup_diffs=False, **extra):
         ignored_count = self.ignored_count
         if fixup_diffs:
-            ignored_count += self.get_migration_status().get("ignored_count", 0)
+            status = self.get_migration_status()
+            if "ignored_count" not in status:
+                return
+            ignored_count += status["ignored_count"]
         self.couch_db().save_doc({
             "_id": self._migration_status_slug,
             "doc_type": "PopulateSQLCommandStatus",
