@@ -575,7 +575,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 }, gettext('Waiting for server progress'));
             } else {
                 FormplayerFrontend.trigger('clearProgress');
-                CloudcareUtils.formplayerSyncComplete(response.responseJSON.status === 'error');
+                CloudcareUtils.formplayerSyncComplete(response.status === 'error');
             }
         };
         options = {
