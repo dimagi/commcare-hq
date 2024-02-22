@@ -466,7 +466,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
             FormplayerFrontend.permitIntervalSync = true;
             if (attemptedRestore) {
-                Utils.stopIntervalSync();
+                Utils.setEnableIntervalSync(false);
             }
 
             let useAggressiveSyncTiming = (customProperties["cc-sync-after-form"] === "yes");
@@ -475,10 +475,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 Utils.setEnableIntervalSync(true, FIVE_MINUTES_IN_MILLISECONDS);
             }
         });
-    };
-
-    Utils.stopIntervalSync = function () {
-        Utils.setEnableIntervalSync(false);
     };
 
     Utils.setEnableIntervalSync = function (toggleOn, delayInMilliseconds) {
