@@ -195,11 +195,14 @@ class PopulateSQLCommand(BaseCommand):
     def _migration_status_slug(cls):
         return f"{cls.couch_doc_type()}-sql-migration-status"
 
-    def save_migration_status(self, **extra):
+    def save_migration_status(self, fixup_diffs=False, **extra):
+        ignored_count = self.ignored_count
+        if fixup_diffs:
+            ignored_count += self.get_migration_status().get("ignored_count", 0)
         self.couch_db().save_doc({
             "_id": self._migration_status_slug,
             "doc_type": "PopulateSQLCommandStatus",
-            "ignored_count": self.ignored_count,
+            "ignored_count": ignored_count,
             **extra
         }, force_update=True)
 
@@ -408,7 +411,7 @@ Run the following commands to run the migration and get up to date:
                         doc_index += 1
                         if doc_index % 1000 == 0:
                             print(f"Diff count: {self.diff_count}")
-                self.save_migration_status()
+                self.save_migration_status(fixup_diffs)
             except KeyboardInterrupt:
                 traceback.print_exc(file=logfile)
                 aborted = True
