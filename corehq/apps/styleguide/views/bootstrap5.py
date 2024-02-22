@@ -328,3 +328,33 @@ def styleguide_pages_navigation(request):
         },
     })
     return render(request, 'styleguide/bootstrap5/pages/navigation.html', context)
+
+
+@use_bootstrap5
+def styleguide_pages_views(request):
+    context = get_navigation_context("styleguide_pages_views_b5")
+    context.update({
+        'examples': {
+            'functional_view': CodeForDisplay(
+                code=get_python_example_context('functional_view.py'),
+                language="Python",
+            ),
+            'class_view': CodeForDisplay(
+                code=get_python_example_context('class_view.py'),
+                language="Python",
+            ),
+            'example_urls': CodeForDisplay(
+                code=get_python_example_context('example_urls.py'),
+                language="Python",
+            ),
+            'simple_centered_page': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/simple_centered_page.html'),
+                language="HTML",
+            ),
+            'simple_section': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/simple_section.html'),
+                language="HTML",
+            ),
+        },
+    })
+    return render(request, 'styleguide/bootstrap5/pages/views.html', context)
