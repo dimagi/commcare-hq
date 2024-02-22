@@ -423,7 +423,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
         self.assertEqual(obj.registered_at, datetime(1970, 1, 1))
 
-    def test_migrate_record_with_unynced_sql_attempts(self):
+    def test_migrate_record_with_unsynced_sql_attempts(self):
         doc, _ = self.create_repeat_record(unwrap_doc=False)
         doc.save()  # sync to SQL, but do not save attempts
         with templog() as log, patch.object(transaction, "atomic", atomic_check):
@@ -433,9 +433,11 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         self.assertEqual(len(obj.attempts), len(doc.attempts))
         self.assertTrue(obj.attempts)
 
-    def test_migrate_record_with_unynced_sql_attempts2(self):
+    def test_migrate_record_with_partial_sql_attempts(self):
         doc, _ = self.create_repeat_record(unwrap_doc=False)
         doc.save()  # sync to SQL, but do not save attempts
+        # This attempt is saved in both Couch and SQL, which means there
+        # are three attempts in Couch and only one in SQL.
         doc.add_attempt(RepeatRecordAttempt(
             datetime=datetime.utcnow(),
             success_response="good call",
