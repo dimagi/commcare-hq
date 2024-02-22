@@ -151,7 +151,7 @@ class BaseGroupsView(BaseUserSettingsView):
 
 @method_decorator(use_bootstrap5, name='dispatch')
 class GroupsListView(BaseGroupsView):
-    template_name = "groups/bootstrap3/all_groups.html"
+    template_name = "groups/bootstrap5/all_groups.html"
     page_title = gettext_noop("Groups")
     urlname = 'all_groups'
 
@@ -160,7 +160,7 @@ class GroupsListView(BaseGroupsView):
 class EditGroupMembersView(BaseGroupsView):
     urlname = 'group_members'
     page_title = gettext_noop("Edit Group")
-    template_name = 'groups/bootstrap3/group_members.html'
+    template_name = 'groups/bootstrap5/group_members.html'
 
     @property
     def parent_pages(self):

@@ -1,4 +1,4 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% requirejs_main "groups/js/bootstrap5/all_groups" %}
@@ -38,14 +38,27 @@
       </li>
     </ul>
     {% if not request.is_view_only %}
-      <form class="card well-sm form-inline" method="post" action="{% url "add_group" domain %}" id="create_group_form">
-        {% csrf_token %}
-        <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" class="form-control" />
-        <button class="btn btn-primary" type="submit">
-          <i class="fa fa-plus"></i>
-          {% trans "Add Group" %}
-        </button>
-      </form>
+      <div class="card">
+        <div class="card-body">
+
+          <form method="post" action="{% url "add_group" domain %}" id="create_group_form">
+              {% csrf_token %}
+            <div class="row">
+              <div class="col">
+              <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" class="form-control" />
+              </div>
+
+              <div class="col">
+                <button class="btn btn-primary" type="submit">
+                  <i class="fa fa-plus"></i>
+                  {% trans "Add Group changed" %}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
     {% endif %}
 
     <div class="card card-default">
