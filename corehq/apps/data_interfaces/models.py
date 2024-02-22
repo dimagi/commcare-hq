@@ -42,7 +42,7 @@ from corehq.apps.data_interfaces.deduplication import (
     reset_deduplicate_rule,
 )
 from corehq.apps.data_interfaces.utils import property_references_parent
-from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS, is_copied_case
+from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS, is_copied_case, resave_case
 from corehq.apps.users.util import SYSTEM_USER_ID, cached_owner_id_to_display
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
@@ -1167,6 +1167,12 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 # it arrives in ElasticSearch. If this case was modified within the acceptable latency window,
                 # we can skip it now, with the expectation that the CaseDeduplicationProcessor will correctly
                 # handle it when it arrives in ElasticSearch
+
+                # HACK: it was discovered that, because this processor uses results from Kafka, and because
+                # inserts into ElasticSearch are asychronous, we can receive cases here that will not yet be
+                # present in ElasticSearch but will never be processed later. In the short-term, we're avoiding
+                # this by resaving the case, with the intention to use a more stable approach in the future
+                resave_case(rule.domain, case, send_post_save_signal=False)
                 return CaseRuleActionResult(num_updates=0)
 
         try:
