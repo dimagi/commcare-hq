@@ -179,7 +179,7 @@ class PopulateSQLCommand(BaseCommand):
         print("Sampling items to be migrated...")
         counts = [get_count() for x in range(10)]
         print(f"counts={counts} avg={sum(counts) / len(counts)}")
-        return sum(counts) / len(counts)
+        return max(sum(counts) / len(counts), 0)
 
     @classmethod
     def count_items_to_be_migrated(cls):
@@ -229,7 +229,7 @@ class PopulateSQLCommand(BaseCommand):
             Should only be called from within a django migration.
             Calls sys.exit on failure.
         """
-        to_migrate = cls.count_items_to_be_migrated()
+        to_migrate = max(cls.count_items_to_be_migrated(), 0)
         print(f"Found {to_migrate} {cls.couch_doc_type()} documents to migrate.")
 
         migrated = to_migrate == 0
