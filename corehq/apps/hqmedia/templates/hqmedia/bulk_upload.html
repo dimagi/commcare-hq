@@ -29,7 +29,7 @@
   {% for uploader in uploaders %}
     <div id="{{ uploader.slug }}">
       <div class="alert alert-info hqm-not-supported hide">
-        <i class="fa fa-exclamation-triangle"></i>
+        <i class="fa-solid fa-triangle-exclamation"></i>
         {% blocktrans %}
           Your browser does not support this uploader.
           We recommend <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a>.
@@ -40,7 +40,7 @@
           <button class="hqm-select btn btn-primary" role="button">{% trans 'Select Files' %}</button>
         </div>
         <a class="hqm-upload hqm-upload-confirm btn btn-primary disabled" data-toggle="modal">
-          <i class="fa fa-cloud-upload"></i> {% trans 'Begin Upload' %}
+          <i class="fa-solid fa-cloud-arrow-up"></i> {% trans 'Begin Upload' %}
         </a>
       </div>
       <h3>{% trans 'Bulk Upload File Queue' %}</h3>

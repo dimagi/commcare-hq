@@ -228,7 +228,7 @@ hqDefine("registry/js/registry_edit", [
             initialPageData.get("registry"),
             initialPageData.get("availableCaseTypes"),
             initialPageData.get("availableDomains"),
-            initialPageData.get("invitedDomains"),
+            initialPageData.get("invitedDomains")
         ));
     });
 });

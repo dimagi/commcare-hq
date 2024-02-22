@@ -1,4 +1,3 @@
-/* globals window, hbspt */
 /**
  * Instatiates the Hubspot analytics platform.
  */

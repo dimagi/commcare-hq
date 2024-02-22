@@ -1,6 +1,3 @@
-/* globals $ */
-/* globals window */
-
 hqDefine('app_manager/js/preview_app', function () {
     'use strict';
     var module = {};
@@ -46,7 +43,9 @@ hqDefine('app_manager/js/preview_app', function () {
 
         var $offsetContainer = (_private.isFormdesigner) ? $(module.SELECTORS.FORMDESIGNER) : $(module.SELECTORS.APP_MANAGER_BODY);
         $offsetContainer.addClass('offset-for-preview');
-        if (localStorage.getItem(module.DATA.TABLET)) $offsetContainer.addClass('offset-for-tablet');
+        if (localStorage.getItem(module.DATA.TABLET)) {
+            $offsetContainer.addClass('offset-for-tablet');
+        }
     };
 
     _private.hideAppPreview = function (triggerAnalytics) {
@@ -55,7 +54,9 @@ hqDefine('app_manager/js/preview_app', function () {
 
         var $offsetContainer = (_private.isFormdesigner) ? $(module.SELECTORS.FORMDESIGNER) : $(module.SELECTORS.APP_MANAGER_BODY);
         $offsetContainer.removeClass('offset-for-preview');
-        if (localStorage.getItem(module.DATA.TABLET)) $offsetContainer.removeClass('offset-for-tablet');
+        if (localStorage.getItem(module.DATA.TABLET)) {
+            $offsetContainer.removeClass('offset-for-tablet');
+        }
 
         if (triggerAnalytics) {
             hqImport('analytix/js/kissmetrix').track.event("[app-preview] Clicked Hide App Preview");
@@ -184,12 +185,16 @@ hqDefine('app_manager/js/preview_app', function () {
             if (localStorage.getItem(module.DATA.OPEN)) {
                 $appPreview.addClass('open');
                 $offsetContainer.addClass('offset-for-preview');
-                if (localStorage.getItem(module.DATA.TABLET)) $offsetContainer.addClass('offset-for-tablet');
+                if (localStorage.getItem(module.DATA.TABLET)) {
+                    $offsetContainer.addClass('offset-for-tablet');
+                }
                 $messages.addClass('offset-for-preview');
             } else {
                 $appPreview.removeClass('open');
                 $offsetContainer.removeClass('offset-for-preview');
-                if (localStorage.getItem(module.DATA.TABLET)) $offsetContainer.removeClass('offset-for-tablet');
+                if (localStorage.getItem(module.DATA.TABLET)) {
+                    $offsetContainer.removeClass('offset-for-tablet');
+                }
                 $messages.removeClass('offset-for-preview');
             }
 

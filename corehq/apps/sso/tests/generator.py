@@ -118,13 +118,9 @@ def get_public_cert_file(expiration_in_seconds=certificates.DEFAULT_EXPIRATION):
         key_pair,
         expiration_in_seconds
     )
-    cert_bytes = certificates.crypto.dump_certificate(
-        certificates.crypto.FILETYPE_PEM,
-        cert
-    )
     return SimpleUploadedFile(
         "certificate.cer",
-        cert_bytes,
+        cert.public_bytes(certificates.serialization.Encoding.PEM),
         content_type="application/x-x509-ca-cert",
     )
 

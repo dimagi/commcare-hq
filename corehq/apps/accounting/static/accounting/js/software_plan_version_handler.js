@@ -158,8 +158,8 @@ hqDefine("accounting/js/software_plan_version_handler", [
             $('#id_new_role_slug').on('keyup change', function (event) {
                 var c = String.fromCharCode(event.keyCode);
                 if (c.match(/\w/)) {
-                    var orig_val = $(this).val();
-                    $(this).val(orig_val.replace(' ', '_').replace('-','_'));
+                    var original = $(this).val();
+                    $(this).val(original.replace(' ', '_').replace('-','_'));
                 }
             });
             $('#id_role_slug').select2();

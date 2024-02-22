@@ -1,6 +1,5 @@
-/* globals d3, nv */
 hqDefine("reports/js/aggregate_user_status", function () {
-    function aggregateTooltip(key, x, y, e, graph) {
+    function aggregateTooltip(key, x, y, e) {
         return '<p><strong>' + key + '</strong></p>' +
            '<p>' + Math.round(e.value) + '% since ' + x + '</p>';
     }

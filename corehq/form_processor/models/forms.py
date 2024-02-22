@@ -538,6 +538,13 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         return XFormOperation.objects.get_form_operations(self.__original_form_id)
 
     def natural_key(self):
+        """
+        Django requires returning a tuple in natural_key methods:
+        https://docs.djangoproject.com/en/3.2/topics/serialization/#serialization-of-natural-keys
+        We intentionally do not follow this to optimize corehq.apps.dump_reload.sql.load.SqlDataLoader when other
+        models reference CommCareCase or XFormInstance via a foreign key. This means our loader code may break in
+        future Django upgrades.
+        """
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
         return self.form_id
@@ -780,7 +787,7 @@ class XFormOperation(PartitionedModel, SaveStateMixin, models.Model):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.form, self.user_id, self.date
+        return self.form_id, self.user_id, self.date
 
     @property
     def user(self):

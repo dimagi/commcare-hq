@@ -9,8 +9,8 @@
      'use strict';
      var module = {};
  
-@@ -331,7 +331,7 @@
-         $div.attr("data-bind", "template: \'key_value_mapping_template\'");
+@@ -348,7 +348,7 @@
+         $div.attr("data-bind", "template: 'key_value_mapping_template'");
          $div.koApplyBindings(m);
          m.ui = $div;
 -        hqImport("hqwebapp/js/bootstrap3/main").eventize(m);

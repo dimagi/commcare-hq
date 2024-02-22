@@ -88,6 +88,9 @@ CASE_MAPPING = {
         "contact_phone_number": {
             "type": "keyword"
         },
+        "doc_id": {
+            "type": "keyword"
+        },
         "doc_type": {
             "type": "keyword"
         },

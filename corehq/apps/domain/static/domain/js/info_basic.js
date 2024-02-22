@@ -2,7 +2,7 @@ hqDefine("domain/js/info_basic", [
     'jquery',
     'hqwebapp/js/select_2_ajax_widget', // for call center case owner
     'select2/dist/js/select2.full.min',
-    'hqwebapp/js/widgets',
+    'hqwebapp/js/bootstrap3/widgets',
 ], function (
     $
 ) {

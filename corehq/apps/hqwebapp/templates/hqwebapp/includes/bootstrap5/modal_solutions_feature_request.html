@@ -1,0 +1,119 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% if request.user.is_authenticated %}
+  <div class="modal fade"
+       tabindex="-1"
+       aria-labelledby="requestAFeatureModalLabel"
+       aria-hidden="true"
+       id="modalSolutionsFeatureRequest">
+    <div class="modal-dialog modal-lg">
+      <form id="hqwebapp-requestReportForm"
+            action="{% url "solutions_feature_request" %}"
+            method="post"
+            enctype="multipart/form-data"
+            role="form">
+        {% csrf_token %}
+        <input type="hidden" id="request-report-url" name="url"/>
+        <input type="hidden" id="request-report-username" name="username" value="{{ user.username }}"/>
+        <input type="hidden" id="request-report-domain" name="domain" value="{{ domain }}"/>
+        <input type="hidden" id="request-report-app_id" name="app_id" value="{{ app.id }}"/>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="requestAFeatureModalLabel">{% trans "Make a Feature Request to Solutions" %}</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>
+              <strong>{% trans "Please submit this report from the page where you would like to see the change" %}</strong>
+            </p>
+            <div class="form-horizontal">
+              <div class="row mb-3">
+                <label for="request-report-subject"
+                       class="col-sm-2 col-form-label">{% trans "Short Description" %} *</label>
+                <div class="col-sm-10">
+                  <input type="text"
+                         class="form-control"
+                         name="subject"
+                         id="request-report-subject"
+                         placeholder="{% trans 'One sentence description of feature/change request.' %}">
+                  <span class="badge badge-danger d-none">
+                    <i class="fa fa-warning"></i> {% trans 'Please give us some information about the feature/change request' %}
+                  </span>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="request-report-message"
+                       class="col-sm-2 col-form-label">
+                  {% trans "Full Description" %}
+                </label>
+                <div class="col-sm-10">
+                  <textarea name="message"
+                            class="form-control vertical-resize"
+                            id="request-report-message"
+                            rows="3"
+                            placeholder="{% trans "Please describe the product changes you would like to see in CommCare." %}"></textarea>
+                </div>
+              </div>
+              <div class="row mb-3"
+                   id="request-report-cc-form-group">
+                <label for="request-report-cc"
+                       class="col-sm-2 col-form-label">
+                  {% trans "Other recipients" %}
+                </label>
+                <div class="col-sm-10">
+                  <input type="text"
+                         name="cc"
+                         class="form-control"
+                         id="request-report-cc"
+                         placeholder="ex: admin@commcarehq.org, test@commcarehq.org" />
+                  <p class="help-block">
+                      {% blocktrans %}
+                          Comma-separated email addresses of others you want to notify about this request.
+                      {% endblocktrans %}
+                      <span class="badge bade-danger hide">
+                          <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
+                      </span>
+                  </p>
+                </div>
+              </div>
+              <div class="row mb-3">
+                  <label for="request-report-file"
+                         class="col-sm-2 col-form-label">
+                    {% trans 'Upload file' %}
+                  </label>
+                  <div class="col-sm-10">
+                      <input type="file" id="request-report-file" name="feature_request"/>
+                      <p class="help-block">
+                          {% blocktrans %}
+                          Please upload any files relevant to your suggestion.
+                          {% endblocktrans %}
+                      </p>
+                      <p class="help-block">
+                          <i class="fa fa-warning"></i>
+                          {% blocktrans %}
+                              Do not upload a file containing sensitive data like passwords or project data.
+                          {% endblocktrans %}
+                      </p>
+                  </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+              <button type="button"
+                      id="request-report-cancel"
+                      class="btn btn-default"
+                      data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+              <button type="submit"
+                      class="btn btn-primary"
+                      id="request-report-submit"
+                      data-loading-text="{% trans "Submitting Report..." %}"
+                      data-error-text="{% trans "Failed. Retry Request Submission" %}"
+                      data-success-text="{% trans "Success! Back to CommCare HQ" %}">
+                  {% trans "Submit Report" %}
+              </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endif %}

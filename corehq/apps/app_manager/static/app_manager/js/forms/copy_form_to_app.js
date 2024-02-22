@@ -1,4 +1,3 @@
-/* globals hqDefine, ko, _ */
 hqDefine("app_manager/js/forms/copy_form_to_app", function () {
     "use strict";
 

@@ -7,7 +7,7 @@ hqDefine("accounting/js/stripe_card_manager", [
     ko,
     Stripe
 ) {
-    var newStripeCardModel = function(data, cardManager){
+    var newStripeCardModel = function (data, cardManager) {
         var self = {};
         var mapping = {
             observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token'],
@@ -148,7 +148,7 @@ hqDefine("accounting/js/stripe_card_manager", [
     };
 
 
-    var stripeCardManager = function (data){
+    var stripeCardManager = function (data) {
         var self = {};
         var mapping = {
             'cards': {

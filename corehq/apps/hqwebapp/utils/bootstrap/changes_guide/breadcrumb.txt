@@ -1,6 +1,9 @@
 `breadcrumb` has been rewritten. Most notably, `breadcrumb-item`
 is now required on child `li` elements.
 
+An EXAMPLE for how to apply this change is provided below.
+Please see docs for further details.
+
 Previously:
 ```
 <ol class="breadcrumb">

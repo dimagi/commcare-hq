@@ -252,7 +252,7 @@
       <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
           <a class="btn btn-default pull-left" href="{% url 'download_case_history' domain case_id %}">
-            <i class="fa fa-cloud-download"></i>
+            <i class="fa-solid fa-cloud-arrow-down"></i>
             {% trans 'Download Case History' %}
           </a>
           {% if show_properties_edit %}
@@ -284,6 +284,12 @@
                 {% trans 'Close Case' %}
               </button>
             </form>
+          {% endif %}
+          {% if not is_usercase %}
+            <a class="btn btn-danger pull-left" href="{% url 'soft_delete_case_view' domain case_id %}">
+              <i class="fa fa-trash"></i>
+              {% trans 'Delete Case' %}
+            </a>
           {% endif %}
         </div>
       </div>

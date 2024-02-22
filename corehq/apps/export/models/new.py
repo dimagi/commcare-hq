@@ -394,7 +394,7 @@ class ExportColumn(DocumentSchema):
         column.selected = (
             auto_select
             and not column._is_deleted(app_ids_and_versions)
-            and not is_case_update
+            and (not is_case_update or is_case_id)
             and not is_label_question
             and (is_main_table or is_bulk_export)
             and not is_deprecated
@@ -817,6 +817,7 @@ class ExportInstance(BlobMixin, Document):
 
     sharing = StringProperty(default=SharingOption.EDIT_AND_EXPORT, choices=SharingOption.CHOICES)
     owner_id = StringProperty(default=None)
+    selected_geo_property = StringProperty(default='')
 
     _blobdb_type_code = CODES.data_export
 

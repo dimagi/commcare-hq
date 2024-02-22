@@ -1,4 +1,4 @@
-/* global Clipboard, hqDefine, hqImport */
+/* global Clipboard */
 hqDefine('app_manager/js/details/graph_config', function () {
     /**
      * Create a view model that is bound to an "Edit graph" button. The ui property

@@ -4,7 +4,11 @@ from django.views.generic import View
 from django.contrib.messages import get_messages
 from django.contrib.messages.storage import default_storage
 from django.test import TestCase, SimpleTestCase
-from corehq.apps.custom_data_fields.models import Field, CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+)
 from corehq.apps.custom_data_fields.edit_model import CustomDataFieldsForm, CustomDataModelMixin
 
 
@@ -43,7 +47,24 @@ def fields_are_equal(left, right):
     return left.to_dict() == right.to_dict()
 
 
-class TestEditModel(TestCase):
+class FieldsViewMixin:
+
+    def create_field(self, slug='test_field', label='Test Field', is_required=False, choices=[], regex=None,
+            regex_msg=None, upstream_id=None):
+        return Field(
+            slug=slug,
+            label=label,
+            is_required=is_required,
+            choices=choices,
+            regex=regex,
+            regex_msg=regex_msg,
+            upstream_id=upstream_id,
+        )
+
+    _create_field = create_field
+
+
+class TestEditModel(FieldsViewMixin, TestCase):
     domain = 'test-domain'
 
     def test_saves_custom_fields(self):
@@ -82,18 +103,6 @@ class TestEditModel(TestCase):
         self.assertEqual(str(messages[0]),
             "Could not update 'ExistingField'. You do not have the appropriate role")
 
-    def _create_field(self, slug='test_field', label='Test Field', is_required=False, choices=[], regex=None,
-            regex_msg=None, upstream_id=None):
-        return Field(
-            slug=slug,
-            label=label,
-            is_required=is_required,
-            choices=choices,
-            regex=regex,
-            regex_msg=regex_msg,
-            upstream_id=upstream_id,
-        )
-
     def _create_initial_fields(self, fields):
         definition = CustomDataFieldsDefinition.objects.create(field_type='UserFields', domain=self.domain)
         definition.set_fields(fields)
@@ -104,7 +113,7 @@ class TestEditModel(TestCase):
         return request
 
 
-class TestValidateIncomingFields(SimpleTestCase):
+class TestValidateIncomingFields(FieldsViewMixin, SimpleTestCase):
     def test_no_conflicts_produces_no_errors(self):
         existing_fields = [self.create_field(is_required=False)]
         new_fields = [self.create_field(is_required=True)]
@@ -191,14 +200,19 @@ class TestValidateIncomingFields(SimpleTestCase):
         self.assertEqual(len(errors), 1)
         self.assertEqual(errors[0], "Could not update 'two'. Synced data cannot be created this way")
 
-    def create_field(self, slug='test_field', label='Test Field', is_required=False, choices=[], regex=None,
-            regex_msg=None, upstream_id=None):
-        return Field(
-            slug=slug,
-            label=label,
-            is_required=is_required,
-            choices=choices,
-            regex=regex,
-            regex_msg=regex_msg,
-            upstream_id=upstream_id
+
+class TestCustomDataModelValidation(FieldsViewMixin, SimpleTestCase):
+
+    def test_error_in_data_fiels_does_not_cause_error_in_profiles(self):
+        view = FieldsView(
+            "test",
+            fields=[
+                self.create_field(slug='one', label='one'),
+                self.create_field(slug='two', label=''),
+            ],
+            profiles=[CustomDataFieldsProfile(name="OneProfile", fields={"one": "one"})],
+        )
+        self.assertDictEqual(
+            view.form.errors,
+            {"data_fields": ["A label is required for each field."]},
         )

@@ -1,4 +1,3 @@
-/* globals hqDefine, ko, _ */
 hqDefine('app_manager/js/modules/shadow_module_settings', function () {
     const module = {
 

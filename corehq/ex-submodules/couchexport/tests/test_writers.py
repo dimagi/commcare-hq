@@ -15,7 +15,9 @@ from couchexport.writers import (
     PythonDictWriter,
     XlsLengthException,
     ZippedExportWriter,
+    GeoJSONWriter,
 )
+from corehq.apps.export.models.new import ExportInstance
 
 
 class ZippedExportWriterTests(SimpleTestCase):
@@ -233,3 +235,67 @@ class HeaderNameTest(SimpleTestCase):
         preview = writer.get_preview()
         table_names = {table['table_name'] for table in preview}
         self.assertEqual(len(table_names), 2)
+
+
+class TestGeoJSONWriter(SimpleTestCase):
+    GEO_PROPERTY = 'geo-prop'
+
+    def test_get_features(self):
+        table = ExportInstance(selected_geo_property=self.GEO_PROPERTY)
+        features = GeoJSONWriter().get_features(table, self._table_data())
+
+        expected_features = [
+            {
+                'type': 'Feature',
+                'geometry': {'type': 'Point', 'coordinates': ['-71.057083', '42.361145']},
+                'properties': {'name': 'Boston', 'country': 'United States'}
+            },
+            {
+                'type': 'Feature',
+                'geometry': {'type': 'Point', 'coordinates': ['18.423300', '-33.918861']},
+                'properties': {'name': 'Cape Town', 'country': 'South Africa'}
+            },
+            {
+                'type': 'Feature',
+                'geometry': {'type': 'Point', 'coordinates': ['77.2300', '28.6100']},
+                'properties': {'name': 'Delhi', 'country': 'India'}
+            },
+        ]
+        self.assertEqual(features, expected_features)
+
+    def test_get_features__other_geo_property_configured(self):
+        table = ExportInstance(selected_geo_property="some-other-property")
+        features = GeoJSONWriter().get_features(table, self._table_data())
+        self.assertEqual(features, [])
+
+    def test_get_features__invalid_geo_property_column_value(self):
+        table = ExportInstance(selected_geo_property=self.GEO_PROPERTY)
+
+        data = self._table_data()
+        data[1][1] = "not-a-geo-coordinate-value"
+        features = GeoJSONWriter().get_features(table, data)
+
+        features_names = [feature['properties']['name'] for feature in features]
+        self.assertTrue(data[1][2] not in features_names)
+
+    def _table_data(self):
+        data = [self._table_header]
+        table_data_rows = self._table_data_rows
+        [data.append(row) for row in table_data_rows]
+        return data
+
+    @property
+    def _table_header(self):
+        return [
+            'name',
+            self.GEO_PROPERTY,
+            'country',
+        ]
+
+    @property
+    def _table_data_rows(self):
+        return [
+            ['Boston', '42.361145 -71.057083 0 0', 'United States'],
+            ['Cape Town', '-33.918861 18.423300 0 0', 'South Africa'],
+            ['Delhi', '28.6100 77.2300 0 0', 'India']
+        ]

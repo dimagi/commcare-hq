@@ -93,9 +93,12 @@ def user_ids_at_locations(location_ids):
     return UserES().location(location_ids).get_ids()
 
 
-def mobile_user_ids_at_locations(location_ids):
+def mobile_user_ids_at_locations(location_ids, include_inactive_users=False):
     # this doesn't include web users
-    return UserES().location(location_ids).mobile_users().get_ids()
+    filter = UserES().location(location_ids).mobile_users()
+    if include_inactive_users:
+        filter = filter.show_inactive()
+    return filter.get_ids()
 
 
 def user_ids_at_locations_and_descendants(location_ids):

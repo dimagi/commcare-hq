@@ -1,0 +1,85 @@
+<fieldset>
+  <legend>
+    Examples of Disabled Fields
+  </legend>
+  <div class="row mb-3">
+    <label for="id_first_name_dis"
+           class="col-form-label col-xs-12 col-sm-4 col-md-4 col-lg-3">
+      First Name
+    </label>
+    <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9">
+      <input type="text"
+             name="first_name_dis"
+             value="Jon"
+             class="form-control"
+             id="id_first_name_dis"
+             autocomplete="off"
+             disabled />
+      <!-- ^^ notice the disabled attribute above -->
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label for="id_favorite_color_dis"
+           class="col-form-label col-xs-12 col-sm-4 col-md-4 col-lg-3">
+      Favorite Color
+    </label>
+    <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9">
+      <select name="favorite_color_dis"
+              class="form-select hqwebapp-select2"
+              id="id_favorite_color_dis"
+              disabled>
+        <!-- ^^ notice the disabled attribute above -->
+        <option value="red">Red</option>
+        <option value="green">Green</option>
+        <option value="blue">Blue</option>
+      </select>
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label for="id_hopes_dis"
+           class="col-form-label col-xs-12 col-sm-4 col-md-4 col-lg-3">
+      Hopes and Dreams
+    </label>
+    <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9">
+      <textarea name="hopes_dis"
+                class="form-control vertical-resize"
+                id="id_hopes_dis"
+                disabled>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce in facilisis lectus. Cras accumsan ante vel massa sagittis faucibus.</textarea>
+      <!-- ^^ notice the disabled attribute above -->
+    </div>
+  </div>
+</fieldset>
+<fieldset>
+  <legend>
+    Examples of Readonly Fields
+  </legend>
+  <div class="row mb-3">
+    <label for="id_first_name_ro"
+           class="col-form-label col-xs-12 col-sm-4 col-md-4 col-lg-3">
+      First Name
+    </label>
+    <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9">
+      <input type="text"
+             name="first_name_ro"
+             value="Jon"
+             id="id_first_name_ro"
+             autocomplete="off"
+             class="form-control-plaintext"
+             readonly />
+      <!-- ^^ notice the readonly attribute and form-control-plaintext css class above -->
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label for="id_hopes_ro"
+           class="col-form-label col-xs-12 col-sm-4 col-md-4 col-lg-3">
+      Hopes and Dreams
+    </label>
+    <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9">
+      <textarea name="hopes_ro"
+                id="id_hopes_ro"
+                class="form-control-plaintext"
+                readonly>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce in facilisis lectus. Cras accumsan ante vel massa sagittis faucibus.</textarea>
+      <!-- ^^ notice the readonly attribute and form-control-plaintext css class above -->
+    </div>
+  </div>
+</fieldset>

@@ -7,7 +7,7 @@
                 attr: {'data-order': _sortableOrder}
                 ">
     <td class="col-sm-1" data-bind="css: {'sortable-handle': $root.canSortLanguages}">
-      <i class="fa fa-arrows-v" data-bind="visible: $root.canSortLanguages"></i>
+      <i class="fa-solid fa-up-down" data-bind="visible: $root.canSortLanguages"></i>
     </td>
     <td class="col-sm-3">
       <form>
@@ -26,7 +26,7 @@
       <a href="#" data-bind="click: $root.setAsDefault, visible: !isDefaultLang()" class="btn btn-default">{% trans "Set as default" %}</a>
     </td>
     <td class="col-sm-1">
-      <a href="#" data-bind="click: $root.removeLanguage" class="btn btn-danger"><i class="fa fa-trash-o"></i></a>
+      <a href="#" data-bind="click: $root.removeLanguage" class="btn btn-danger"><i class="fa-regular fa-trash-can"></i></a>
     </td>
   </tr>
   </tbody>

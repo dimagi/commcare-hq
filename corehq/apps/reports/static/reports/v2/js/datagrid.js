@@ -156,7 +156,9 @@ hqDefine('reports/v2/js/datagrid', [
         };
 
         self.isSortableColumn = function (columnName) {
-            if (!options.unsortableColumnNames) return true;
+            if (!options.unsortableColumnNames) {
+                return true;
+            }
             return (options.unsortableColumnNames.indexOf(columnName) === -1);
         };
 

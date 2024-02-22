@@ -1,4 +1,3 @@
-/* globals ko */
 hqDefine('app_manager/js/forms/custom_instances', function () {
     'use strict';
 

@@ -272,16 +272,14 @@ def _get_datums_matched_to_manual_values(target_frame_elements, manual_values, f
     """
     manual_values_by_name = {datum.name: datum.xpath for datum in manual_values}
     for child in target_frame_elements:
-        if not isinstance(child, WorkflowSessionMeta) or not child.requires_selection:
+        if child.id in manual_values_by_name:
+            yield StackDatum(id=child.id, value=manual_values_by_name.get(child.id))
+        elif not isinstance(child, WorkflowSessionMeta) or not child.requires_selection:
             yield child
         else:
-            manual_value = manual_values_by_name.get(child.id)
-            if manual_value:
-                yield StackDatum(id=child.id, value=manual_value)
-            else:
-                raise SuiteValidationError("Unable to link form '{}', missing variable '{}'".format(
-                    form.default_name(), child.id
-                ))
+            raise SuiteValidationError("Unable to link form '{}', missing variable '{}'".format(
+                form.default_name(), child.id
+            ))
 
 
 def _get_datums_matched_to_source(target_frame_elements, source_datums):
@@ -407,7 +405,7 @@ class EndOfFormNavigationWorkflow(object):
                 if child not in frame_children:
                     frame_children.append(child)
         else:
-            module_command = id_strings.menu_id(module)
+            module_command = id_strings.menu_id(module, WorkflowHelper._get_id_suffix(module))
             if module_command != id_strings.ROOT:
                 frame_children.append(CommandId(module_command))
 

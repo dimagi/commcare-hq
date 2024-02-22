@@ -2,7 +2,7 @@ hqDefine("reminders/js/reminders.keywords.ko", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/widgets",      // .hqwebapp-select2 for survey dropdown
+    "hqwebapp/js/bootstrap3/widgets",      // .hqwebapp-select2 for survey dropdown
 ], function (
     $,
     ko,

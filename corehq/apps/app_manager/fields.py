@@ -15,9 +15,10 @@ from couchforms.analytics import get_exports_by_form
 
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.export.const import ALL_CASE_TYPE_EXPORT
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_CASE,
@@ -25,8 +26,7 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_RAW,
 )
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
-from corehq.toggles import AGGREGATE_UCRS
-from corehq.apps.export.const import ALL_CASE_TYPE_EXPORT
+from corehq.toggles import AGGREGATE_UCRS, EXPORT_HIDE_DELETED_APPLICATIONS
 
 DataSource = collections.namedtuple('DataSource', ['application', 'source_type', 'source', 'registry_slug'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
@@ -285,8 +285,10 @@ class ApplicationDataRMIHelper(object):
     APP_TYPE_NONE = 'no_app'
     APP_TYPE_UNKNOWN = 'unknown'
 
-    def __init__(self, domain, user, as_dict=True):
+    def __init__(self, domain, project, user, as_dict=True):
         self.domain = domain
+        self.domain_object = project
+
         self.user = user
         self.as_dict = as_dict
         self.form_labels = AppFormRMIPlaceholder(
@@ -423,6 +425,8 @@ class ApplicationDataRMIHelper(object):
         for f in get_exports_by_form(self.domain):
             form = f['value']
             if form.get('app_deleted') and not form.get('submissions'):
+                continue
+            if form.get('app_deleted') and not self.domain_object.show_deleted_apps_exports:
                 continue
             if 'app' in form:
                 form['has_app'] = True

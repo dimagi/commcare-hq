@@ -37,6 +37,17 @@ hqDefine("cloudcare/js/formplayer/spec/utils_spec", function () {
         describe('CloudcareUrl', function () {
             let stubs = {};
 
+            before(function () {
+                hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", {
+                    SPLIT_SCREEN_CASE_SEARCH: false,
+                    DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
+                });
+            });
+
+            after(function () {
+                hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
+            });
+
             beforeEach(function () {
                 let currentUrl = new Utils.CloudcareUrl({appId: 'abc123'});
 

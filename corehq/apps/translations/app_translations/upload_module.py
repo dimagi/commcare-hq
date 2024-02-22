@@ -31,6 +31,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.search_again_label = None
         self.title_label = None
         self.description = None
+        self.select_text = None
         self.tab_headers = None
         self.no_items_text = None
 
@@ -99,6 +100,9 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
 
         if self.description:
             self._update_translation(self.description, self.module.search_config.description)
+
+        if self.select_text:
+            self._update_translation(self.select_text, self.module.case_details.short.select_text)
 
         if self.no_items_text:
             self._update_translation(self.no_items_text, self.module.case_details.short.no_items_text)
@@ -208,6 +212,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.search_again_label = None
         self.title_label = None
         self.description = None
+        self.select_text = None
         self.no_items_text = None
         self.tab_headers = [None for i in self.module.case_details.long.tabs]
         index_of_last_enum_in_condensed = -1
@@ -268,6 +273,8 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                 self.title_label = row
             elif row['case_property'] == 'description':
                 self.description = row
+            elif row['case_property'] == 'select_text':
+                self.select_text = row
 
             # It's the empty case list text. Don't add it to condensed rows
             elif row['case_property'] == 'no_items_text':

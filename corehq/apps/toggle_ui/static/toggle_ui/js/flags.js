@@ -80,7 +80,7 @@ hqDefine('toggle_ui/js/flags', [
 
     let viewModel = buildViewModel();
     $.fn.dataTableExt.afnFiltering.push(
-        function (oSettings, aData, iDataIndex) {
+        function (oSettings, aData) {
             if (viewModel.tagFilter() === 'all') {
                 return true;
             }
@@ -99,7 +99,7 @@ hqDefine('toggle_ui/js/flags', [
     });
     table.render();
 
-    viewModel.tagFilter.subscribe(function (value) {
+    viewModel.tagFilter.subscribe(function () {
         table.datatable.fnDraw();
     });
 });

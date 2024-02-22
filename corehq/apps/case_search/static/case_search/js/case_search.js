@@ -44,7 +44,7 @@ hqDefine('case_search/js/case_search', [
         });
 
         self.searchButtonIcon = ko.observable("fa fa-search");
-        self.profileButtonIcon = ko.observable("fa fa-clock-o");
+        self.profileButtonIcon = ko.observable("fa-regular fa-clock");
 
         self._submit = function (postData) {
             postData = postData || {};
@@ -74,7 +74,7 @@ hqDefine('case_search/js/case_search', [
                         self.profile(data.profile);
                     }
                     self.searchButtonIcon("fa fa-search");
-                    self.profileButtonIcon("fa fa-clock-o");
+                    self.profileButtonIcon("fa-regular fa-clock");
                 },
                 error: function (response) {
                     alertUser.alert_user(response.responseJSON.message, 'danger');

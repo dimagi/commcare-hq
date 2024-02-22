@@ -340,6 +340,8 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         query = users.UserES().remove_default_filters()
         # add extra keys added in transformation
         doc.update({
+            '_id': 'test',
+            'doc_id': 'test',
             'base_username': 'u1',
             'user_data_es': [],
             '__group_ids': [],
@@ -363,6 +365,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         # add extra keys added in transformation
         doc1.update({
             'base_username': 'u1',
+            'doc_id': 'test',
             'user_data_es': [],
             '__group_ids': [],
             '__group_names': []

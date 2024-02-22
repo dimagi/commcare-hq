@@ -22,6 +22,10 @@ def match_all():
     return {"match_all": {}}
 
 
+def match_none():
+    return {"match_none": {}}
+
+
 def prefix(field, value):
     return {"prefix": {field: value}}
 

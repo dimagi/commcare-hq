@@ -76,6 +76,7 @@ from corehq.apps.domain.views.settings import (
     RecoveryMeasuresHistory,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.integration.urls import settings_patterns as integration_settings
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -100,7 +101,7 @@ PASSWORD_RESET_DONE_KWARGS = {
 
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
-    url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
+    url(r'^domain/select_redirect/$', select, {'always_show_list': True}, name='domain_select_redirect'),
     url('^accept_all_invitations/$', accept_all_invitations, name='accept_all_invitations'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
@@ -136,7 +137,8 @@ urlpatterns = [
 domain_settings = [
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
     url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.urlname),
-    url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.urlname),
+    url(r'^basic/$',
+        waf_allow('XSS_BODY')(EditBasicProjectInfoView.as_view()), name=EditBasicProjectInfoView.urlname),
     url(r'^call_center_owner_options/', CallCenterOwnerOptionsView.as_view(),
         name=CallCenterOwnerOptionsView.url_name),
     url(r'^privacy/$', EditPrivacySecurityView.as_view(), name=EditPrivacySecurityView.urlname),

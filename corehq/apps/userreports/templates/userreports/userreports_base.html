@@ -10,7 +10,7 @@
     <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
     <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
     <script src="{% static 'hqwebapp/js/base_ace.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
     <script src="{% static 'userreports/js/widgets.js' %}"></script>
   {% endcompress %}
 {% endblock %}
@@ -34,7 +34,7 @@
       </li>
       <li>
         <a href="{% url 'import_configurable_report' domain %}">
-          <i class="fa fa-cloud-upload"></i>
+          <i class="fa-solid fa-cloud-arrow-up"></i>
           {% trans "Import Custom Web Report" %}
         </a>
       </li>
@@ -77,7 +77,7 @@
       </li>
       <li>
         <a href="{% url 'import_configurable_report' domain %}">
-          <i class="fa fa-cloud-upload"></i>
+          <i class="fa-solid fa-cloud-arrow-up"></i>
           {% trans "Import report" %}
         </a>
       </li>

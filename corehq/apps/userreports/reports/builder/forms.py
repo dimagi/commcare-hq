@@ -1543,10 +1543,9 @@ class ConfigureNewReportBase(forms.Form):
         :param column_field: The "field" property of a report column
         :return: a data source indicator id
         """
-        indicator_id = "_".join(column_field.split("_")[:-1])
         for indicator in indicators:
-            if indicator['column_id'] == indicator_id and indicator['type'] == 'choice_list':
-                return indicator_id
+            if column_field.startswith(indicator['column_id']) and indicator['type'] == 'choice_list':
+                return indicator['column_id']
         return None
 
     @property

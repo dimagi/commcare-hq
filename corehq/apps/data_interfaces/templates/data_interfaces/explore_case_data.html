@@ -192,7 +192,7 @@
               <a class="datagrid-external-link"
                  target="_blank"
                  data-bind="attr: { href: row._link }">
-                <i class="fa fa-external-link"></i>
+                <i class="fa-solid fa-up-right-from-square"></i>
               </a>
             <!-- /ko -->
             <span data-bind="text: row[column.name()]"></span>
@@ -399,7 +399,7 @@
                     data-bind="visible: !$root.editColumnController.isNew() && $root.editColumnController.showDelete(),
                                click: $root.deleteColumn"
                     class="btn btn-danger pull-left">
-              <i class="fa fa-trash"></i>
+              <i class="fa-regular fa-trash-can"></i>
               {% trans "Delete" %}
             </button>
             <button type="button"

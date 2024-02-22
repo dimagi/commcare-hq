@@ -20,7 +20,9 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
 
         $select.select2(params);
 
-        if (!_.isFunction(options.getInitialValue)) return;
+        if (!_.isFunction(options.getInitialValue)) {
+            return;
+        }
 
         initialValue = options.getInitialValue();
 

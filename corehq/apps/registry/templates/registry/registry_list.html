@@ -71,11 +71,11 @@
             {% trans "No project spaces invited to this registry" %}
           </span>
           <span class="label label-success-light" data-bind="if: accepted_invitation_count">
-            <i class="fa fa-check-circle-o"></i>
+            <i class="fa-regular fa-circle-check"></i>
             <span data-bind="text: acceptedText"></span>
           </span>
           <span class="label label-info-light" data-bind="if: pending_invitation_count">
-            <i class="fa fa-clock-o"></i>
+            <i class="fa-regular fa-clock"></i>
             <span data-bind="text: pendingText"></span>
           </span>
           <span class="label label-warning-light" data-bind="if: rejected_invitation_count">
@@ -94,7 +94,7 @@
               <a data-bind="text: name, attr: { href: manageUrl }"></a>
             </div>
             <div class="col-md-2 text-right text-muted">
-              <i class="fa fa-user-o"></i>
+              <i class="fa-regular fa-user"></i>
               <span data-bind="text: statusText"></span>
               <span class="label label-default-light" data-bind="
                 attr: {'title': is_active() ? '{% trans_html_attr "Active" %}' : '{% trans_html_attr "Inactive" %}'}

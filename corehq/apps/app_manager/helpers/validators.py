@@ -545,6 +545,11 @@ class ModuleBaseValidator(object):
                         "module": self.get_module_info(),
                         "property": prop.name,
                     }
+            if search_config.search_on_clear and self.module.is_auto_select():
+                yield {
+                    "type": "search on clear with auto select",
+                    "module": self.get_module_info(),
+                }
 
     def validate_case_list_field_actions(self):
         if hasattr(self.module, 'case_details'):
@@ -565,10 +570,13 @@ class ModuleBaseValidator(object):
 class ModuleDetailValidatorMixin(object):
 
     __invalid_tile_configuration_type: str = "invalid tile configuration"
-
     __invalid_clickable_icon_configuration: str = "invalid clickable icon configuration"
+    __deprecated_popup_configuration: str = "deprecated popup configuration"
 
-    def _validate_fields_with_format(
+    __address_popup = 'address-popup'
+    __address_popup_display = 'Address Popup'
+
+    def _validate_fields_with_format_duplicate(
         self,
         format_value: str,
         format_display: str,
@@ -583,6 +591,20 @@ class ModuleDetailValidatorMixin(object):
                 'module': self.get_module_info(),
                 'reason': _('Format "{}" can only be used once but is used by multiple properties: {}'
                             .format(format_display, fields_with_address_format_str))
+            })
+
+    def _validate_address_popup_in_long(
+        self,
+        errors: list
+    ):
+        fields_with_address_format = \
+            {c.field for c in self.module.case_details.short.columns if c.format == self.__address_popup}
+        if len(fields_with_address_format) > 0:
+            errors.append({
+                'type': self.__deprecated_popup_configuration,
+                'module': self.get_module_info(),
+                'reason': _('Format "{}" should be used in the Case Detail not Case List.'
+                            .format(self.__address_popup_display))
             })
 
     def _validate_clickable_icons(
@@ -622,24 +644,40 @@ class ModuleDetailValidatorMixin(object):
                     'module': self.get_module_info(),
                     'filter': self.module.case_list_filter,
                 })
+
         for detail in [self.module.case_details.short, self.module.case_details.long]:
             if detail.case_tile_template:
-                if not detail.display == "short":
-                    errors.append({
-                        'type': self.__invalid_tile_configuration_type,
-                        'module': self.get_module_info(),
-                        'reason': _('Case tiles may only be used for the case list (not the case details).')
-                    })
+                if detail.display != "short":
+                    if detail.case_tile_template != "custom":
+                        errors.append({
+                            'type': self.__invalid_tile_configuration_type,
+                            'module': self.get_module_info(),
+                            'reason': _('Case tiles on the case detail must be manually configured.'),
+                        })
+
+                    tab_spans = detail.get_tab_spans()
+                    tile_rows = defaultdict(set)   # tile row index => {tabs that appear in that row}
+                    for index, span in enumerate(tab_spans):
+                        for col in detail.columns[span[0]:span[1]]:
+                            if col.grid_y is not None:
+                                tile_rows[col.grid_y].add(index)
+                    for row_index, tab_index_list in tile_rows.items():
+                        if len(tab_index_list) > 1:
+                            errors.append({
+                                'type': self.__invalid_tile_configuration_type,
+                                'module': self.get_module_info(),
+                                'reason': _('Each row of the tile may contain fields only from a single tab. '
+                                            'Row #{} contains fields from multiple tabs.').format(row_index + 1),
+                            })
                 col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
                 for field in case_tile_template_config(detail.case_tile_template).fields:
                     if field not in col_by_tile_field:
                         errors.append({
                             'type': self.__invalid_tile_configuration_type,
                             'module': self.get_module_info(),
-                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
+                            'reason': _('A case property must be assigned to the "{}" tile field.').format(field)
                         })
-            self._validate_fields_with_format('address', 'Address', detail.columns, errors)
-            self._validate_fields_with_format('address-popup', 'Address Popup', detail.columns, errors)
+            self._validate_fields_with_format_duplicate('address', 'Address', detail.columns, errors)
             self._validate_clickable_icons(detail.columns, errors)
 
             if detail.has_persistent_tile() and self.module.report_context_tile:
@@ -650,6 +688,15 @@ class ModuleDetailValidatorMixin(object):
                         A menu may not use both a persistent case list tile and a persistent report tile.
                     """),
                 })
+
+        self._validate_fields_with_format_duplicate(
+            self.__address_popup,
+            self.__address_popup_display,
+            self.module.case_details.long.columns,
+            errors)
+
+        self._validate_address_popup_in_long(errors)
+
         return errors
 
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):

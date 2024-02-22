@@ -34,7 +34,7 @@
       float: right;
       line-height: 13px;
       display: block;
-      .fa {
+      [class*='fa-'] {
         font-size: 18px;
       }
     }

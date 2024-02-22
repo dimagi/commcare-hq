@@ -7,7 +7,7 @@
     <a href="#form_confirm_delete_{{ module.unique_id }}_{{ form.unique_id }}"
        class="appnav-delete"
        data-toggle="modal">
-        <i class="fa fa-trash-o"></i>
+        <i class="fa-regular fa-trash-can"></i>
     </a>
 
     <a id="view_form_{{ module.unique_id }}_{{ form.unique_id }}_sidebar"
@@ -34,9 +34,9 @@
         {% elif form.get_action_type == 'update' %}
             class="fcc fcc-app-updateform appnav-primary-icon appnav-primary-icon-lg"
         {% elif form.form_type == 'shadow_form' %}
-            class="fa fa-moon-o appnav-primary-icon"
+            class="fa-regular fa-moon appnav-primary-icon"
         {% else %}
-            class="fa fa-file-o appnav-primary-icon"
+            class="fa-regular fa-file appnav-primary-icon"
         {% endif %}
             title="{% if request|toggle_enabled:"SUPPORT" %}{% blocktrans with form.id as index %}This is form {{ index }}<br>{% endblocktrans %} {% endif %}{{ form.get_icon_help_text }}"
             data-toggle="tooltip"
@@ -58,7 +58,7 @@
        data-action="View Form"
        data-label="Sidebar"
        class="appnav-secondary appnav-settings appnav-responsive track-usage-link">
-        <i class="fa fa-gear appnav-show-on-hover"></i>
+        <i class="fa-solid fa-gear appnav-show-on-hover"></i>
     </a>
     {% endif %}
 
@@ -89,7 +89,7 @@
                 {% trans "Cancel" %}
               </button>
               <button type="submit" class="disable-on-submit btn btn-danger">
-                <i class="fa fa-trash"></i>
+                <i class="fa-regular fa-trash-can"></i>
                 {% trans "Delete Form" %}
               </button>
             </div>

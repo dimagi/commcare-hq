@@ -250,7 +250,7 @@ hqDefine("reports/js/data_corrections", [
                 .filter(function (prop) { return prop.dirty(); })
                 .indexBy('name')
                 .mapObject(function (model) { return model.value(); })
-            .value();
+                .value();
             $.post({
                 url: options.saveUrl,
                 data: {

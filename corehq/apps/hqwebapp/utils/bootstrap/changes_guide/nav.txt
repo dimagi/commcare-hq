@@ -1,6 +1,9 @@
 The `nav` element has been restructured a bit so that you need to explicitly label
 child elements with `nav-item` and `nav-link`.
 
+An EXAMPLE for how to apply this change is provided below.
+Please see docs for further details.
+
 Previously:
 ```
 <ul class="nav nav-tabs">

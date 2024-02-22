@@ -20,7 +20,7 @@
                             {% if attempt.state == 'SUCCESS' or attempt.state == 'EMPTY' %}
                                 <br/><i class="fa fa-check"></i>
                             {% elif attempt.state == 'FAIL' or attempt.state == 'CANCELLED' %}
-                                <br/><i class="fa fa-exclamation-triangle"></i>
+                                <br/><i class="fa-solid fa-triangle-exclamation"></i>
                             {% elif attempt.state == 'PENDING' %}
                                 <br/><i class="fa fa-spinner"></i>
                             {% endif %}

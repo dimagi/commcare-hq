@@ -43,12 +43,12 @@
         {% endif %}
 
         <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
-          <i class="fa fa-cloud-download"></i> {% trans "Download Web Users" %}
+          <i class="fa-solid fa-cloud-arrow-down"></i> {% trans "Download Web Users" %}
         </a>
 
         {% if not request.is_view_only %}
         <a id="bulk_upload" class="btn btn-default" href="{% url "upload_web_users" domain %}">
-          <i class="fa fa-cloud-upload"></i> {% trans "Upload Web Users" %}
+          <i class="fa-solid fa-cloud-arrow-up"></i> {% trans "Upload Web Users" %}
         </a>
         {% endif %}
       </div>
@@ -83,12 +83,12 @@
                 <div>
                   <a href="{% url "invite_web_user" domain %}?request_id={{ req.id }}"
                      class="approve-request btn btn-default">
-                    <i class="fa fa-check-square-o"></i>
+                    <i class="fa-regular fa-square-check"></i>
                     {% trans "Approve Request" %}
                   </a>
                   <a href="#" class="btn btn-danger delete-request"
                      data-id={{ req.id }}>
-                    <i class="fa fa-trash"></i>
+                    <i class="fa-regular fa-trash-can"></i>
                     {% trans "Delete Request" %}
                   </a>
                 </div>
@@ -165,7 +165,7 @@
                           class="btn btn-danger"
                           data-toggle="modal"
                           data-bind="attr: {'data-target': '#remove_membership_' + id}">
-                    <i class="fa fa-trash"></i> {% trans "Remove Membership" %}
+                    <i class="fa-regular fa-trash-can"></i> {% trans "Remove Membership" %}
                   </button>
                 </div>
                 <!-- ko if: removeUrl -->
@@ -204,7 +204,7 @@
                           {% trans "Cancel" %}
                         </button>
                         <button type="submit" class="btn btn-danger">
-                          <i class="fa fa-trash"></i>
+                          <i class="fa-regular fa-trash-can"></i>
                           {% trans "Remove Membership" %}
                         </button>
                       </div>
@@ -287,12 +287,12 @@
                 <div data-bind="visible: !actionMessage()">
                   <button type="button" class="resend-invite btn btn-default"
                           data-bind="click: resend, disable: actionInProgress">
-                    <i class="fa fa-envelope-o"></i>
+                    <i class="fa-regular fa-envelope"></i>
                     {% trans "Resend Invitation" %}
                   </button>
                   <button type="button" class="btn btn-danger delete-invitation"
                           data-bind="click: $root.confirmRemoveInvitation, disable: actionInProgress">
-                    <i class="fa fa-trash"></i>
+                    <i class="fa-regular fa-trash-can"></i>
                     {% trans "Delete Invitation" %}
                   </button>
                 </div>

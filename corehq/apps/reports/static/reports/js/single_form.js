@@ -1,4 +1,3 @@
-/* globals Clipboard */
 /*
     Interactivity for a single form. Used on the list of forms in the Case History tab when viewing a case, and
     also in the single form view page that's accessible from the submit history report or the "View standalone

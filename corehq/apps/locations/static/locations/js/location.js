@@ -9,7 +9,7 @@ hqDefine("locations/js/location", [
     'locations/js/location_drilldown',
     'locations/js/location_tree',
     'hqwebapp/js/select_2_ajax_widget',
-    'hqwebapp/js/widgets',       // custom data fields use a .hqwebapp-select2
+    'hqwebapp/js/bootstrap3/widgets',       // custom data fields use a .hqwebapp-select2
     'locations/js/widgets',
 ], function (
     $,

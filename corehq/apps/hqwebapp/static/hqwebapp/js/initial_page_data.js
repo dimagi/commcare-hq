@@ -55,6 +55,17 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         _initData[name] = value;
     };
 
+    /*
+     * Remove item from initial page data.
+     * Useful for mocha test cleanup.
+     */
+    var unregister = function (name) {
+        if (_initData[name] === undefined) {
+            throw new Error("Could not unregister initial page data: " + name);
+        }
+        delete _initData[name];
+    };
+
     // http://stackoverflow.com/a/21903119/240553
     var getUrlParameter = function (param) {
         return getUrlParameterFromString(param, window.location.search);
@@ -116,6 +127,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         gather: gather,
         get: get,
         register: register,
+        unregister: unregister,
         getUrlParameter: getUrlParameter,
         getUrlParameterFromString: getUrlParameterFromString,
         registerUrl: registerUrl,

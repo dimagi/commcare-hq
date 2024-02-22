@@ -4,8 +4,8 @@ hqDefine('userreports/js/configure_report', function () {
         reportBuilder = hqImport('userreports/js/report_config').reportBuilder;
 
     $(function () {
-        var existing_report = initialPageData.get('existing_report'),
-            report_description = initialPageData.get('report_description');
+        var existingReport = initialPageData.get('existing_report'),
+            reportDescription = initialPageData.get('report_description');
 
         var reportConfig = new reportBuilder.ReportConfig({
             "columnOptions": initialPageData.get('column_options'),
@@ -16,10 +16,10 @@ hqDefine('userreports/js/configure_report', function () {
             "registrySlug": initialPageData.get('registry_slug'),
             "reportPreviewUrl": initialPageData.get('report_preview_url'),
             "previewDatasourceId": initialPageData.get('preview_datasource_id'),
-            "existingReport": existing_report ? existing_report._id : null,
+            "existingReport": existingReport ? existingReport._id : null,
             "existingReportType": initialPageData.get('existing_report_type'),
             "reportTitle": initialPageData.get('report_title'),
-            "reportDescription": report_description ? report_description : null,
+            "reportDescription": reportDescription ? reportDescription : null,
             "dataSourceProperties": initialPageData.get('data_source_properties'),
             "initialDefaultFilters": initialPageData.get('initial_default_filters'),
             "initialUserFilters": initialPageData.get('initial_user_filters'),
@@ -30,7 +30,7 @@ hqDefine('userreports/js/configure_report', function () {
             // In previewMode, report can't be saved.
             "previewMode": (
                 !initialPageData.get('has_report_builder_access') ||
-                (initialPageData.get('at_report_limit') && !existing_report)),
+                (initialPageData.get('at_report_limit') && !existingReport)),
         });
         $("#reportConfig").koApplyBindings(reportConfig);
         multiselectUtils.createFullMultiselectWidget('domain-selector', {

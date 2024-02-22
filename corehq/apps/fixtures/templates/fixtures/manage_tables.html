@@ -37,7 +37,7 @@
       <p class="pull-left">
         <a href="#" class="btn btn-primary"
            data-bind="click: downloadExcels, attr: {'disabled': selectedTables().length < 1}">
-          <i class="fa fa-cloud-download"></i> {% trans "Download Lookup Tables" %}
+          <i class="fa-solid fa-cloud-arrow-down"></i> {% trans "Download Lookup Tables" %}
         </a>
         </p>
         <p class="pull-right">
@@ -83,7 +83,7 @@
           </th>
           <th class="col-sm-2">
             {% trans "View Table" %}
-            <i class="fa fa-external-link"></i>
+            <i class="fa-solid fa-up-right-from-square"></i>
           </th>
           <th class="col-sm-3">
             {% trans "Edit or Delete Table" %}
@@ -115,13 +115,13 @@
               {% trans "Edit" %}
             </button>
             <button class="btn btn-danger" data-bind="click: $root.removeDataType">
-              <i class="fa fa-trash"></i>
+              <i class="fa-regular fa-trash-can"></i>
               {% trans "Delete" %}
             </button>
             <!-- /ko -->
             <!-- ko ifnot: !is_synced() || $parent.unlockLinkedData() -->
             <button class="btn btn-default" data-bind="click: startViewing, visible: saveState() === 'saved'">
-              <i class="fa fa-eye"></i>
+              <i class="fa-solid fa-eye"></i>
               {% trans "View" %}
             </button>
             <!-- /ko -->
@@ -204,7 +204,7 @@
         <div class="form-actions">
           <div class="col-sm-offset-3">
             <button type="submit" class="btn btn-primary disable-on-submit" data-bind="attr: {'disabled': !file()}">
-              <i class="fa fa-cloud-upload"></i> {% trans 'Upload Tables' %}
+              <i class="fa-solid fa-cloud-arrow-up"></i> {% trans 'Upload Tables' %}
             </button>
           </div>
         </div>
@@ -229,7 +229,7 @@
             <p class="alert alert-success">{% trans "Your file is ready." %}</p>
             <a href="#" id="file-download-url">
               <button type="submit" class="btn btn-primary" data-bind="attr:">
-                <i class="fa fa-cloud-download"></i> {% trans 'Download File Now' %}
+                <i class="fa-solid fa-cloud-arrow-down"></i> {% trans 'Download File Now' %}
               </button>
             </a>
           </div>

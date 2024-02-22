@@ -53,7 +53,7 @@
   <script id="phase-template" type="text/html">
     <tr class="phase" data-bind="style: {cursor: 'move'}">
       <td>
-        <i class="grip sortable-handle fa fa-arrows-v"
+        <i class="grip sortable-handle fa-solid fa-up-down"
            data-bind="event: {mousedown: function(){ $(':focus').blur(); }},
                               visible: $data !== $parent.selectedPhase()"></i>
         <input data-bind="value: name, visibleAndSelect: $data === $parent.selectedPhase(),

@@ -73,12 +73,18 @@ hqDefine("reports/js/case_details", [
         self.data_loading = ko.observable(false);
 
         self.getParameterByName = function (name, url) {
-            if (!url) url = window.location.href;
+            if (!url) {
+                url = window.location.href;
+            }
             name = name.replace(/[[\]]/g, "\\$&");
             var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
                 results = regex.exec(url);
-            if (!results) return null;
-            if (!results[2]) return '';
+            if (!results) {
+                return null;
+            }
+            if (!results[2]) {
+                return '';
+            }
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         };
 
@@ -102,7 +108,7 @@ hqDefine("reports/js/case_details", [
                         container: $panel,
                     });
                 },
-                "error": function (jqXHR, textStatus, errorThrown) {
+                "error": function (jqXHR) {
                     var message;
                     if (jqXHR.status === 403) {
                         message = jqXHR.responseJSON.html;
@@ -218,8 +224,7 @@ hqDefine("reports/js/case_details", [
             var endPageNum = ((startNum - 1) * self.page_size()) + self.page_size();
             if (endPageNum > self.total_rows()) {
                 return self.total_rows();
-            }
-            else {
+            } else {
                 return endPageNum;
             }
         });
@@ -250,9 +255,8 @@ hqDefine("reports/js/case_details", [
 
     $(function () {
         $('#close_case').submit(function () {
-            googleAnalytics.track.event('Edit Data', 'Close Case', '-', "", {}, function () {
-                document.getElementById('close_case').submit();
-            });
+            document.getElementById('close_case').submit();
+            googleAnalytics.track.event('Edit Data', 'Close Case', '-', "", {});
             return false;
         });
 

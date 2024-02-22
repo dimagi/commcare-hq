@@ -31,20 +31,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             // resolve immediately
             xsrfRequest.resolve();
         }
-        var RegionContainer = Marionette.View.extend({
-            el: "#menu-container",
 
-            regions: {
-                main: "#menu-region",
-                loadingProgress: "#formplayer-progress-container",
-                breadcrumb: "#breadcrumb-region",
-                persistentCaseTile: "#persistent-case-tile",
-                restoreAsBanner: '#restore-as-region',
-                sidebar: '#sidebar-region',
-            },
-        });
-
-        FormplayerFrontend.regions = new RegionContainer();
+        if (!FormplayerFrontend.regions) {
+            FormplayerFrontend.regions = CloudcareUtils.getRegionContainer();
+        }
         let sidebar = FormplayerFrontend.regions.getRegion('sidebar');
         sidebar.on('show', function () {
             $('#content-container').addClass('full-width');

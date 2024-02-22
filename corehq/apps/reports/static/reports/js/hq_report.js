@@ -5,7 +5,7 @@ hqDefine("reports/js/hq_report", [
     'hqwebapp/js/bootstrap3/alert_user',
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/widgets', //multi-emails
+    'hqwebapp/js/bootstrap3/widgets', //multi-emails
 ], function (
     $,
     ko,

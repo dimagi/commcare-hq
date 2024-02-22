@@ -301,7 +301,7 @@ def _delete_demo_user_restores(domain_name):
 DOMAIN_DELETE_OPERATIONS = [
     DjangoUserRelatedModelDeletion('otp_static', 'StaticDevice', 'user__username', ['StaticToken']),
     DjangoUserRelatedModelDeletion('otp_totp', 'TOTPDevice', 'user__username'),
-    DjangoUserRelatedModelDeletion('two_factor', 'PhoneDevice', 'user__username'),
+    DjangoUserRelatedModelDeletion('phonenumber', 'PhoneDevice', 'user__username'),
     DjangoUserRelatedModelDeletion('users', 'HQApiKey', 'user__username'),
     CustomDeletion('auth', _delete_django_users, ['User']),
     ModelDeletion('products', 'SQLProduct', 'domain'),
@@ -371,6 +371,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'CustomActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'UpdateCaseDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseDuplicate', 'action__caseruleaction__rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseDuplicateNew', 'action__caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseDeduplicationActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CreateScheduleInstanceActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleAction', 'rule__domain'),

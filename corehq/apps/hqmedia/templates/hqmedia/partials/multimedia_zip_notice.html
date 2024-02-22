@@ -1,7 +1,7 @@
 {% load i18n %}
 
 {% if multimedia_state.has_form_errors %}
-  <div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Warning:</strong>
+  <div class="alert alert-danger"><i class="fa-solid fa-triangle-exclamation"></i> {% blocktrans %}<strong>Warning:</strong>
     This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.
   {% endblocktrans %}</div>
 {% endif %}
@@ -10,7 +10,7 @@
   <div class="alert alert-warning">
     <p>
       {% blocktrans %}
-        <i class="fa fa-exclamation-triangle"></i>
+        <i class="fa-solid fa-triangle-exclamation"></i>
         This application is missing references, so this zip will be incomplete.
       {% endblocktrans %}
     </p>
@@ -40,9 +40,9 @@
        id="download_zip"
     >
       {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}
-        <i class="fa fa-exclamation-triangle"></i> {% trans 'Download Incomplete ZIP' %}
+        <i class="fa-solid fa-triangle-exclamation"></i> {% trans 'Download Incomplete ZIP' %}
       {% else %}
-        <i class="fa fa-cloud-download"></i> {% trans 'Download ZIP' %}
+        <i class="fa-solid fa-cloud-arrow-down"></i> {% trans 'Download ZIP' %}
       {% endif %}
     </a>
   </p>

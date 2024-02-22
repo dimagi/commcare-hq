@@ -70,7 +70,8 @@ hqDefine('app_manager/js/summary/form_models',[
                     _.each(viewModel.modules, function (module) {
                         module.isSelected(module.changes.contains_changes || _.find(module.forms, function (form) {
                             form.isSelected(form.changes.contains_changes);
-                            return form.isSelected(); }));
+                            return form.isSelected();
+                        }));
                     });
                 });
             },

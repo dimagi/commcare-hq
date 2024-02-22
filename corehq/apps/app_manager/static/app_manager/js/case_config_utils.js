@@ -2,7 +2,8 @@ hqDefine('app_manager/js/case_config_utils', function () {
     return {
         getQuestions: function (questions, filter, excludeHidden, includeRepeat, excludeTrigger) {
             // filter can be "all", or any of "select1", "select", or "input" separated by spaces
-            var i, options = [],
+            var i,
+                options = [],
                 q;
             excludeHidden = excludeHidden || false;
             excludeTrigger = excludeTrigger || false;
@@ -30,7 +31,10 @@ hqDefine('app_manager/js/case_config_utils', function () {
             return options;
         },
         getAnswers: function (questions, condition) {
-            var i, q, o, value = condition.question,
+            var i,
+                q,
+                o,
+                value = condition.question,
                 found = false,
                 options = [];
             for (i = 0; i < questions.length; i += 1) {
@@ -75,10 +79,10 @@ hqDefine('app_manager/js/case_config_utils', function () {
             }
         },
         filteredSuggestedProperties: function (suggestedProperties, properties) {
-            var used_properties = _.map(properties, function (x) {
+            var usedProperties = _.map(properties, function (x) {
                 return x.key();
             });
-            return _(suggestedProperties).difference(used_properties);
+            return _(suggestedProperties).difference(usedProperties);
         },
         propertyDictToArray: function (required, propertyDict, caseConfig) {
             var propertyArray = _(propertyDict).map(function (conditionalCaseUpdate, caseName) {

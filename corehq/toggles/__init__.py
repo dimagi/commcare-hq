@@ -709,7 +709,7 @@ CASE_LIST_TILE = StaticToggle(
 
 CASE_LIST_TILE_CUSTOM = StaticToggle(
     'case_list_tile_custom',
-    'USH: Configure custom case list tile',
+    'USH: Configure custom case tile for case list and case detail',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
@@ -742,11 +742,30 @@ SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+FORM_LINK_ADVANCED_MODE = StaticToggle(
+    'form_link_advanced_mode',
+    'USH: Form linking advanced mode',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Switches manual datum configuration for form linking to a UI where app "
+        "builders must specify the datum IDs to provide. Allows for linking to "
+        "more targets, but is way harder to use."
+    ),
+)
+
 CASE_LIST_LOOKUP = StaticToggle(
     'case_list_lookup',
     'Allow external android callouts to search the case list',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
+)
+
+SSO_REMOTE_USER_MANAGEMENT = StaticToggle(
+    'sso_remote_user_management',
+    "Shows remote user management fields in SSO Identity Provider Form",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 BIOMETRIC_INTEGRATION = StaticToggle(
@@ -1019,12 +1038,14 @@ GEOCODER_AUTOLOAD_USER_LOCATION = StaticToggle(
 
 GEOCODER_USER_PROXIMITY = StaticToggle(
     "geocoder_user_proximity",
-    "USH: Set the geocoder widget's proximity based on the user's location.",
+    "USH: Adjust geocoder result to be more relevant to user and project.",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
-    This has the effect of getting search results that are closer to the user's location. This will override
-    the domains default proximity setting ("Default project location").
+    This has two effects on getting geocoder search results:
+    1. Based on the bounding box of the project default location all result falling outside of it
+       will be filtered out when used in the case search.
+    2. Proximity to the users location will be taken into account for the results order.
     """,
     parent_toggles=[USH_CASE_CLAIM_UPDATES],
 )
@@ -1469,9 +1490,9 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-CASE_DEDUPE = StaticToggle(
-    'case_dedupe',
-    'Case deduplication feature',
+CASE_DEDUPE_UPDATES = StaticToggle(
+    'case_dedupe_updates',
+    'Allow Case deduplication update actions',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
@@ -1542,6 +1563,15 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
+
+
+EXPORT_HIDE_DELETED_APPLICATIONS = StaticToggle(
+    'hide_deleted_apps_exports',
+    'Allow hiding of deleted applications in exports',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
@@ -2692,13 +2722,13 @@ DATA_DICTIONARY = FrozenPrivilegeToggle(
     help_link='https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary'
 )
 
-
-CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
-    slug='custom_domain_banners',
-    label='Allow projects to add banners for their users on HQ',
-    tag=TAG_CUSTOM,
+CASE_DEDUPE = FrozenPrivilegeToggle(
+    privileges.CASE_DEDUPE,
+    'case_dedupe',
+    label='Case deduplication feature',
+    tag=TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Allow projects to add banners visible to their users on HQ on every login',
+    help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
 )
 
 USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
@@ -2707,4 +2737,28 @@ USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='The project logo replaces the CommCare logo.',
+)
+
+VELLUM_CASE_MICRO_IMAGE = StaticToggle(
+    slug='case_micro_image',
+    label='Add case micro images to case list',
+    tag=TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Add a micro image to cases in the case list.'
+)
+
+SUPPORT_GEO_JSON_EXPORT = StaticToggle(
+    slug='support_geo_json_export',
+    label='Support GeoJSON export in Case Exporter',
+    tag=TAG_SOLUTIONS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='The Case Export page now supports the exporting of GeoJSON data.',
+)
+
+USE_PROMINENT_PROGRESS_BAR = StaticToggle(
+    slug='use_prominent_progress_bar',
+    label='Use more prominent progress bar in place of NProgress',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Replaces NProgress bar with more prominent progress bar',
 )

@@ -231,6 +231,7 @@ DEFAULT_APPS = (
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'two_factor',
+    'two_factor.plugins.phonenumber',
     'ws4redis',
     'statici18n',
     'django_user_agents',
@@ -1157,7 +1158,7 @@ CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
-PERMANENT_DELETION_WINDOW = 30  # days
+PERMANENT_DELETION_WINDOW = 90  # days
 
 # GSheets related work that was dropped, but should be picked up in the near future
 GOOGLE_OATH_CONFIG = {}
@@ -1987,10 +1988,14 @@ DOMAIN_MODULE_MAP = {
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
     'kenya-vca': 'custom.abt',
+    'pmievolve-ethiopia-1': 'custom.abt',
+    'pmievolve-ghana': 'custom.abt',
     'pmievolve-madagascar': 'custom.abt',
     'pmievolve-malawi': 'custom.abt',
     'pmievolve-mozambique': 'custom.abt',
     'pmievolve-rwanda': 'custom.abt',
+    'pmievolve-sierra-leone': 'custom.abt',
+    'pmievolve-uganda': 'custom.abt',
     'pmievolve-zambia': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',

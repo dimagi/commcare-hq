@@ -123,19 +123,5 @@
       </text>
     </template>
   </field>
-  <field>
-    <header>
-      <text>
-        <locale id="{map_popup[locale_id]}"/>
-      </text>
-    </header>
-    <template form="{map_popup[format]}" width="0">
-      <text>
-        <xpath function="{map_popup[xpath_function]}">
-          {map_popup[variables]}
-        </xpath>
-      </text>
-    </template>
-  </field>
 
 </detail>

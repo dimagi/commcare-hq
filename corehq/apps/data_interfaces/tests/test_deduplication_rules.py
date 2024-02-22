@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 from django.test import RequestFactory, TestCase
 
+from corehq.apps.users.models import FakeUser
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.data_interfaces.views import (
     DeduplicationRuleCreateView,
@@ -20,6 +21,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = 'test-domain-create'
+        cls.user = FakeUser(username='test-user')
 
     @patch('corehq.apps.data_interfaces.views.messages')
     @patch('corehq.apps.data_interfaces.views.reverse', Mock(return_value='url'))
@@ -76,6 +78,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
         else:
             request = RequestFactory().post(url, params)
         request.domain = self.domain
+        request.couch_user = self.user
         return request
 
     def _save_dummy_rule(self, rule_name, case_type):

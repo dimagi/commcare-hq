@@ -1,3 +1,4 @@
+import ssl
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
 
 
@@ -18,3 +19,7 @@ class SQLSislogBackend(SQLHttpBackend):
     @staticmethod
     def _encode_http_message(text):
         return text.encode("utf-8")
+
+    @property
+    def extra_urlopen_kwargs(self):
+        return {'context': ssl._create_unverified_context()}

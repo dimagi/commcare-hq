@@ -29,7 +29,7 @@
         <a data-toggle="modal"
            data-bind="attr: { class: upload_button_class, href: upload_controller.container },
                       click: triggerUpload">
-          <i class="fa" data-bind="css: {'fa-recycle': is_matched(), 'fa-cloud-upload': !is_matched()}"></i>
+          <i data-bind="css: {'fa fa-recycle': is_matched(), 'fa-solid fa-cloud-arrow-up': !is_matched()}"></i>
           <span data-bind="visible: !is_matched()">{% trans "Upload" %}</span>
           <span data-bind="visible: is_matched()">{% trans "Replace" %}</span>
         </a>
@@ -37,7 +37,7 @@
       <td class="text-center">
         <div data-bind="visible: is_matched, template: preview_template"></div>
         <div data-bind="visible: !is_matched()">
-          <i class="fa fa-exclamation-triangle text-danger media-status-icon"></i>
+          <i class="fa-solid fa-triangle-exclamation text-danger media-status-icon"></i>
           <div class="text-danger">{% trans "Missing" %}</div>
         </div>
       </td>

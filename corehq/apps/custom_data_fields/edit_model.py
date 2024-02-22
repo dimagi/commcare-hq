@@ -143,13 +143,14 @@ class CustomDataFieldsForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        data_fields = self.cleaned_data.get('data_fields', [])
+        data_fields = self.cleaned_data.get('data_fields')
         profiles = self.cleaned_data.get('profiles', [])
 
         errors = set()
         errors.update(self.verify_no_duplicate_profiles(profiles))
-        errors.update(self.verify_no_profiles_missing_fields(data_fields, profiles))
-        errors.update(self.verify_profiles_validate(data_fields, profiles))
+        if data_fields is not None:
+            errors.update(self.verify_no_profiles_missing_fields(data_fields, profiles))
+            errors.update(self.verify_profiles_validate(data_fields, profiles))
 
         if errors:
             separator = mark_safe('<br/>')  # nosec: no user input

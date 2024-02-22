@@ -400,7 +400,8 @@ hqDefine("users/js/mobile_workers",[
 
         self.generateStrongPassword = function () {
             function pick(possible, min, max) {
-                var n, chars = '';
+                let n,
+                    chars = '';
 
                 if (typeof max === 'undefined') {
                     n = min;
@@ -417,13 +418,17 @@ hqDefine("users/js/mobile_workers",[
 
             function shuffle(password) {
                 var array = password.split('');
-                var tmp, current, top = array.length;
+                var tmp,
+                    current,
+                    top = array.length;
 
-                if (top) while (--top) {
-                    current = Math.floor(Math.random() * (top + 1));
-                    tmp = array[current];
-                    array[current] = array[top];
-                    array[top] = tmp;
+                if (top) {
+                    while (--top) {
+                        current = Math.floor(Math.random() * (top + 1));
+                        tmp = array[current];
+                        array[current] = array[top];
+                        array[top] = tmp;
+                    }
                 }
 
                 return array.join('');

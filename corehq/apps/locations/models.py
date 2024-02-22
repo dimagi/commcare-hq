@@ -1,5 +1,4 @@
 import uuid
-from collections import defaultdict
 from datetime import datetime
 from functools import partial
 
@@ -98,7 +97,12 @@ class LocationType(models.Model):
         on_delete=models.CASCADE,
     )  # levels below this location type that we start expanding from
     _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
-    expand_to = models.ForeignKey('self', null=True, related_name='+', on_delete=models.CASCADE)  # levels above this type that are synced
+    expand_to = models.ForeignKey(
+        "self",
+        null=True,
+        related_name="+",
+        on_delete=models.CASCADE,
+    )  # levels above this type that are synced
     include_without_expanding = models.ForeignKey(
         'self',
         null=True,
@@ -523,8 +527,7 @@ class SQLLocation(AdjListModel):
     def products(self, value):
         # this will set stocks_all_products to true if the user
         # has added all products in the domain to this location
-        self.stocks_all_products = (set(value) ==
-                                    set(SQLProduct.by_domain(self.domain)))
+        self.stocks_all_products = set(value) == set(SQLProduct.by_domain(self.domain))
 
         self._products.set(value)
 
@@ -695,10 +698,6 @@ class SQLLocation(AdjListModel):
         return self.parent.location_id if self.parent else None
 
     @property
-    def location_type_object(self):
-        return self.location_type
-
-    @property
     def location_type_name(self):
         return self.location_type.name
 
@@ -782,13 +781,13 @@ class LocationFixtureConfiguration(models.Model):
 
 def get_case_sharing_groups_for_locations(locations, for_user_id=None):
     # safety check to make sure all locations belong to same domain
-    assert len(set([l.domain for l in locations])) < 2
+    assert len({location.domain for location in locations}) <= 1
 
     for location in locations:
         if location.location_type.shares_cases:
             yield location.case_sharing_group_object(for_user_id)
 
-    location_ids = [l.pk for l in locations if l.location_type.view_descendants]
+    location_ids = [location.pk for location in locations if location.location_type.view_descendants]
     descendants = []
     if location_ids:
         where = Q(domain=locations[0].domain, parent_id__in=location_ids)

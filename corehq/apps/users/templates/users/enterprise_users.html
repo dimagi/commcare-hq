@@ -66,9 +66,9 @@
         <tbody data-bind="foreach: users">
           <tr data-bind="visible: visible">
             <td class="form-check">
-              <i class="clickable fa" data-bind="
+              <i class="clickable fa-solid fa-lg" data-bind="
                 click: $root.toggleLoginAsUsers,
-                css: {'fa-plus-square': !expanded(), 'fa-minus-square': expanded()},
+                css: {'fa-square-plus': !expanded(), 'fa-square-minus': expanded()},
                 visible: !$root.showDeactivated() ? loginAsUserCount > 0 : inactiveMobileCount > 0,
               "></i>
               <i class="fa fa-link" data-bind="visible: loginAsUser" style="margin-left: 15px;"></i>

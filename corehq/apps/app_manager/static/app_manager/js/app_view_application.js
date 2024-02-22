@@ -4,15 +4,15 @@ hqDefine("app_manager/js/app_view_application", function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
         // Languages: CommCare Translations
-        var $translation_ui = $("#translations_ui");
-        if ($translation_ui.length) {
+        var $ui = $("#translations_ui");
+        if ($ui.length) {
             hqImport("translations/js/translations").makeTranslationUI({
                 translations: initialPageData.get("translations"),
                 url: initialPageData.reverse("edit_app_ui_translations"),
                 suggestion_url: initialPageData.reverse("get_app_ui_translations"),
                 lang: initialPageData.get("lang"),
                 allow_autofill: initialPageData.get("lang") !== 'en',
-                $home: $translation_ui,
+                $home: $ui,
             });
         }
 

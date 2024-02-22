@@ -13,6 +13,9 @@ GROUP_MAPPING = {
         "case_sharing": {
             "type": "boolean"
         },
+        "doc_id": {
+            "type": "keyword"
+        },
         "doc_type": {
             "type": "keyword"
         },

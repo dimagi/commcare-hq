@@ -1,6 +1,9 @@
 `dl-horizontal` has been dropped.
 Instead, use `.row` on `<dl>` and use grid column classes (or mixins) on its `<dt>` and `<dd>` children.
 
+An EXAMPLE for how to apply this change is provided below.
+Please see docs for further details.
+
 Previously:
 ```
 <dl class="dl-horizontal">

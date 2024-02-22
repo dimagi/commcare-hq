@@ -177,9 +177,21 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
 
     @property
     def rows(self):
-        track_workflow(self.request.couch_user.username, f"{self.name}: Search Performed")
+        self.track_search()
         data = (wrap_case_search_hit(row) for row in self.es_results['hits'].get('hits', []))
         return self._get_rows(data)
+
+    def track_search(self):
+        track_workflow(
+            self.request.couch_user.username,
+            f"{self.name}: Search Performed",
+            self.get_tracked_search_properties()
+        )
+
+    def get_tracked_search_properties(self):
+        return {
+            'domain': self.domain,
+        }
 
     @property
     def get_all_rows(self):

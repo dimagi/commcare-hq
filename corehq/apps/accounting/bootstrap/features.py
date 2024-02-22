@@ -109,6 +109,7 @@ pro_v1 = standard_v1 + [
     privileges.REGEX_FIELD_VALIDATION,
     privileges.EXPORT_OWNERSHIP,
     privileges.CASE_LIST_EXPLORER,
+    privileges.CASE_DEDUPE,
 ]
 
 
@@ -135,6 +136,7 @@ advanced_v0 = pro_v1 + [
     privileges.FILTERED_BULK_USER_DOWNLOAD,
     privileges.DATA_DICTIONARY,
     privileges.CASE_COPY,
+    privileges.CUSTOM_DOMAIN_ALERTS,
 ]
 
 enterprise_v0 = advanced_v0 + [

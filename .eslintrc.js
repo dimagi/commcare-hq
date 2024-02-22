@@ -1,5 +1,6 @@
 /* global module */
 // http://eslint.org/
+'use strict';
 module.exports = {
     "extends": "eslint:recommended",
 
@@ -65,6 +66,7 @@ module.exports = {
         "space-before-blocks": ["error"],
         "space-in-parens": ["error", "never"],
         "space-infix-ops": ["error"],   // match flake8 E225
+        "strict": ["warn", "global"],
     },
     "ignorePatterns": ["**/vellum/src/*.js"],
 };

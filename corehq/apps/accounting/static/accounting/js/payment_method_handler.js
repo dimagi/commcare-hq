@@ -163,17 +163,16 @@ hqDefine('accounting/js/payment_method_handler', [
         self.isSubmitDisabled = ko.computed(function () {
             if (self.paymentMethod() === self.CREDIT_CARD) {
                 return !(!! self.costItem() && self.costItem().isValid()) || self.selectedCard().isProcessing();
-            }
-            else {
+            } else {
                 return (self.paymentProcessing());
             }
         });
 
         self.loadCards = function (cards) {
             _.each(cards.data, function (card) {
-                var stripe_card = stripeCardModel();
-                stripe_card.loadSavedData(card);
-                self.savedCards.push(stripe_card);
+                var stripeCard = stripeCardModel();
+                stripeCard.loadSavedData(card);
+                self.savedCards.push(stripeCard);
             });
             if (self.savedCards().length > 0) {
                 self.selectedCardType('saved');
@@ -189,8 +188,7 @@ hqDefine('accounting/js/payment_method_handler', [
         self.processPayment = function () {
             if (self.costItem().isValid() && self.paymentMethod() === self.CREDIT_CARD) {
                 self.selectedCard().process(self.submitForm);
-            }
-            else {
+            } else {
                 self.paymentProcessing(true);
                 self.submitForm();
             }
@@ -254,9 +252,9 @@ hqDefine('accounting/js/payment_method_handler', [
                 if (response.wasSaved) {
                     for (var i = 0; i < self.handlers.length; i++) {
                         var handler = self.handlers[i];
-                        var stripe_card = stripeCardModel();
-                        stripe_card.loadSavedData(response.card);
-                        handler.savedCards.push(stripe_card);
+                        var stripeCard = stripeCardModel();
+                        stripeCard.loadSavedData(response.card);
+                        handler.savedCards.push(stripeCard);
                         handler.selectedCardType('saved');
                     }
                 }
@@ -419,25 +417,25 @@ hqDefine('accounting/js/payment_method_handler', [
         self.general_credit = data.general_credit;
 
         self.amount = ko.computed(function () {
-            var product_sum = _.reduce(self.products(), function (memo, product) {
+            var productSum = _.reduce(self.products(), function (memo, product) {
                 return memo + parseFloat(product.addAmount());
             }, 0);
 
-            var feature_sum = _.reduce(self.features(), function (memo, feature) {
+            var featureSum = _.reduce(self.features(), function (memo, feature) {
                 return memo + parseFloat(feature.addAmount());
             }, 0);
-            var sum = product_sum + feature_sum + parseFloat(self.general_credit().addAmount());
+            var sum = productSum + featureSum + parseFloat(self.general_credit().addAmount());
             return isNaN(sum) ? 0.0 : sum;
         });
 
         self.reset = function (response) {
             var items = self.products().concat(self.features());
             _.each(response.balances, function (balance) {
-                var update_balance = _.find(items, function (item) {
+                var updateBalance = _.find(items, function (item) {
                     return item.creditType() === balance.type;
                 });
-                if (update_balance) {
-                    update_balance.amount(balance.balance);
+                if (updateBalance) {
+                    updateBalance.amount(balance.balance);
                 }
             });
         };
@@ -517,7 +515,9 @@ hqDefine('accounting/js/payment_method_handler', [
             return !! self.errorMsg();
         });
         self.cleanedNumber = ko.computed(function () {
-            if (self.number()) return self.number().split('-').join('');
+            if (self.number()) {
+                return self.number().split('-').join('');
+            }
             return null;
         });
 

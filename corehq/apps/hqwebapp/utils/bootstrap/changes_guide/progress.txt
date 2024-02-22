@@ -1,6 +1,9 @@
 The markup for progress bars has been updated. We did as many find-replace changes
 as possible, the rest needs more careful attention. Note changes to accessibility labels.
 
+An EXAMPLE for how to apply this change is provided below.
+Please see docs for further details.
+
 Previously:
 ```
 <div class="progress">

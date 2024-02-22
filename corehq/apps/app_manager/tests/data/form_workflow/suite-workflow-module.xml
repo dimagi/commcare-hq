@@ -245,7 +245,7 @@
     <stack>
       <create>
         <command value="'m6'"/>
-        <command value="'m7'"/>
+        <command value="'m7.m6'"/>
       </create>
     </stack>
   </entry>

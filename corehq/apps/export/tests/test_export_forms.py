@@ -1,11 +1,17 @@
 import datetime
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
 import pytz
-from unittest.mock import MagicMock, patch
 
+from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es import user_adapter
+from corehq.apps.es.client import manager
+from corehq.apps.es.filters import OR, term
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.export.filters import (
     NOT,
     FormSubmittedByFilter,
@@ -14,7 +20,6 @@ from corehq.apps.export.filters import (
     UserTypeFilter,
 )
 from corehq.apps.export.forms import (
-    BaseFilterExportDownloadForm,
     CaseExportFilterBuilder,
     CreateExportTagForm,
     DashboardFeedFilterForm,
@@ -24,8 +29,11 @@ from corehq.apps.export.forms import (
     FormExportFilterBuilder,
 )
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import LocationType
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.users.models import CommCareUser
+from corehq.util.es.testing import sync_users_to_es
 
 
 class FakeDomainObject(object):
@@ -517,3 +525,136 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         assert not fetch_user_ids_patch.called
         assert not filters_from_slugs_patch.called
         self.assertEqual(case_filters, [])
+
+
+@es_test(requires=[user_adapter], setup_class=True)
+class TestFormExportFilterBuilder(TestCase):
+    @classmethod
+    @patch('corehq.apps.users.tasks.remove_users_test_cases')
+    def setUpClass(cls, _):
+        super().setUpClass()
+
+        # Setup domain
+        cls.domain_obj = create_domain(name='test-form-builder')
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        # Setup locations
+        LocationType.objects.get_or_create(
+            domain=cls.domain_obj.name,
+            name='Top Level',
+        )
+        cls.location_a = make_loc(
+            'loc_a', domain=cls.domain_obj.name, type='Top Level'
+        )
+
+        cls.location_b = make_loc(
+            'loc_b', domain=cls.domain_obj.name, type='Top Level'
+        )
+
+        # Create two mobile workers in location `loc_a` and mark mobile_worker_1 as Deactivated
+        cls.mobile_worker_1 = cls._setup_mobile_worker('test_1', cls.location_a, is_active=False)
+        cls.mobile_worker_2 = cls._setup_mobile_worker('test_2', cls.location_a)
+
+        # Create a mobile worker in location `loc_b`
+        cls.mobile_worker_3 = cls._setup_mobile_worker('test_3', cls.location_b)
+
+        manager.index_refresh(user_adapter.index_name)
+
+        # Setup export builder
+        cls.form_export_builder = FormExportFilterBuilder(cls.domain_obj, pytz.utc)
+
+    def test_active_worker_without_location_restriction(self):
+
+        filters = self.form_export_builder.get_filters(
+            can_access_all_locations=True,
+            accessible_location_ids=[self.location_a.location_id],
+            group_ids=[],
+            user_types=[HQUserType.ACTIVE],
+            user_ids=[],
+            location_ids=[],
+            date_range=[]
+        )
+
+        # Since can_access_all_locations is True, the filter will return submissions
+        # from both location_a and location_b
+        expected_filters = [
+            OR(
+                term(
+                    'form.meta.userID',
+                    sorted([self.mobile_worker_2._id, self.mobile_worker_3._id]))
+            ),
+        ]
+        self.assertEqual(self._transform_to_es_filters(filters), expected_filters)
+
+    def test_location_restricted_active_workers(self):
+
+        filters = self.form_export_builder.get_filters(
+            can_access_all_locations=False,
+            accessible_location_ids=[self.location_a.location_id],
+            group_ids=[],
+            user_types=[HQUserType.ACTIVE],
+            user_ids=[],
+            location_ids=[],
+            date_range=[]
+        )
+
+        expected_filters = [
+            # Filter to get all submissions by active workers
+            OR(
+                term(
+                    'form.meta.userID',
+                    sorted([self.mobile_worker_2._id, self.mobile_worker_3._id]))
+            ),
+            # Scoped Filter for submissions done by users in location_a
+            term('form.meta.userID', [self.mobile_worker_2._id])
+        ]
+
+        self.assertEqual(self._transform_to_es_filters(filters), expected_filters)
+
+    def test_location_restricted_deactivated_workers(self):
+
+        filters = self.form_export_builder.get_filters(
+            can_access_all_locations=False,
+            accessible_location_ids=[self.location_a.location_id],
+            group_ids=[],
+            user_types=[HQUserType.DEACTIVATED],
+            user_ids=[],
+            location_ids=[],
+            date_range=[]
+        )
+
+        expected_filters = [
+            # Filter to get all submissions by active workers
+            OR(
+                term(
+                    'form.meta.userID',
+                    [self.mobile_worker_1._id])
+            ),
+            # Scoped Filter for location_a, should include inactive workers too
+            term('form.meta.userID', sorted([self.mobile_worker_2._id, self.mobile_worker_1._id]))
+        ]
+
+        self.assertEqual(self._transform_to_es_filters(filters), expected_filters)
+
+    def _transform_to_es_filters(self, filters):
+        es_filters = []
+        for f in filters:
+            es_filter = f.to_es_filter()
+            if es_filter.get('bool'):
+                path = es_filter['bool']['should'][0]['terms']
+                path['form.meta.userID'] = sorted(path['form.meta.userID'])
+            if es_filter.get('terms'):
+                es_filter['terms']['form.meta.userID'] = sorted(es_filter['terms']['form.meta.userID'])
+            es_filters.append(es_filter)
+        return es_filters
+
+    @classmethod
+    def _setup_mobile_worker(cls, username, location, is_active=True):
+        with sync_users_to_es():
+            mobile_worker = CommCareUser.create(
+                cls.domain_obj.name, f'{username}@test-form-builder.commcarehq.org', 'secret', None, None,
+                is_active=is_active
+            )
+            mobile_worker.set_location(location)
+        cls.addClassCleanup(mobile_worker.delete, cls.domain_obj.name, None)
+        return mobile_worker
