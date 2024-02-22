@@ -1,5 +1,6 @@
 from django.conf.urls import include, re_path as url
 
+from corehq.apps.styleguide.examples.bootstrap5.example_urls import urlpatterns as example_urlpatterns
 from corehq.apps.styleguide.views import (
     AtomsStyleGuideView,
     MainStyleGuideView,
@@ -44,6 +45,7 @@ urlpatterns = [
         name="styleguide_datatables_data"),
     url(r'^b5/data/paginated_table_data$', bootstrap5_data.paginated_table_data,
         name="styleguide_paginated_table_data"),
+    url(r'^b5/example/', include(example_urlpatterns)),
     url(r'^b5/guidelines/$', bootstrap5.styleguide_code_guidelines,
         name="styleguide_code_guidelines_b5"),
     url(r'^b5/migration/$', bootstrap5.styleguide_migration_guide,
@@ -82,4 +84,6 @@ urlpatterns = [
         name="styleguide_organisms_tables_b5"),
     url(r'^b5/pages/navigation/$', bootstrap5.styleguide_pages_navigation,
         name="styleguide_pages_navigation_b5"),
+    url(r'^b5/pages/views/$', bootstrap5.styleguide_pages_views,
+        name="styleguide_pages_views_b5"),
 ]

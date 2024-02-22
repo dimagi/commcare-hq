@@ -58,6 +58,7 @@ def get_navigation_context(current_page):
                 name="Pages",
                 pages=[
                     Page("Navigation", 'styleguide_pages_navigation_b5'),
+                    Page("Views", 'styleguide_pages_views_b5'),
                 ],
             ),
         ],
