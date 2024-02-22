@@ -109,11 +109,13 @@
     ask that people refrain from any front-end development in that app until changes from the split files step have
     been merged.
   </p>
-  <p>
+  <div class="alert alert-primary">
+    <strong>Important:</strong>
     After announcing your intent to migrate the app, please update the app's migration status
     <a href="https://docs.google.com/spreadsheets/d/1tkSXR643Da-fp6a-uYPa5dYs5if4W2LqtvUJs3IfUKs/edit#gid=0"
-       target="_blank">in this table</a>.
-  </p>
+       target="_blank">in this table</a>. This is also a good place to see what apps have not been migrated yet, if
+    you are in need of ideas.
+  </div>
 
   <h2 id="split-files" class="pt-4">
     Step 2: Split Files
@@ -138,6 +140,10 @@
       <pre class="m-0">./manage.py migrate_app_to_bootstrap5 &lt;app_name&gt;</pre>
     </div>
   </div>
+  <p>
+    For instance, if you want to migrate <code>corehq.apps.reminders</code>, you would use <code>reminders</code> as
+    <code>&lt;app_name&gt;</code>.
+  </p>
   <p>
     The management command will iterate through all template and javascript files in the app.
     The command will prompt you to accept each find-and-replace change in a file. More involved changes will be
