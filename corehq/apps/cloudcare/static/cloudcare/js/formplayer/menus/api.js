@@ -93,7 +93,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 return;
                             }
 
-                            formplayerUtils.startIntervalSync(params.appId, parsedMenus.metaData.attemptRestore );
+                            formplayerUtils.startIntervalSync(params.appId, parsedMenus.metaData.attemptRestore);
+                            sessionStorage.setItem("lastUserActivityTime",  Date.now());
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
