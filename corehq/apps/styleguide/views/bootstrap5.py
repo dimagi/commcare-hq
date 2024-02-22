@@ -318,6 +318,10 @@ def styleguide_pages_navigation(request):
     context = get_navigation_context("styleguide_pages_navigation_b5")
     context.update({
         'examples': {
+            'tabs': CodeForDisplay(
+                code=get_python_example_context('tabs.py'),
+                language="Python",
+            ),
             'page_title_block': CodeForDisplay(
                 code=get_example_context('styleguide/bootstrap5/examples/page_title_block.html'),
                 language="HTML",
