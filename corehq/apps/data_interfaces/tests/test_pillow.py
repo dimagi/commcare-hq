@@ -124,6 +124,10 @@ class DeduplicationPillowTest(TestCase):
         mock_run_rules.assert_not_called()
 
     def test_pillow_processes_restored_forms(self):
+        # This test was created to ensure that 'Undo-ing' a delete, or archiving a deletion request,
+        # was not causing the correct deduplication logic to occur.
+        # Because, from the code's perspective, these situations both just appear
+        # as a case published without an associated form, that is what is being tested here
         rule = self._create_rule('test', ['name'])
         action = CaseDeduplicationActionDefinition.from_rule(rule)
         case1 = create_case(domain=self.domain, name='test', case_type=self.case_type, save=True)
