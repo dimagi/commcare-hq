@@ -464,7 +464,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             let currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId),
                 customProperties = currentApp.attributes.profile.custom_properties;
             const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
-
+            FormplayerFrontend.permitIntervalSync = true;
             if (attemptedRestore) {
                 Utils.stopIntervalSync();
             }
@@ -495,7 +495,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
             if (!FormplayerFrontend.syncInterval && toggleOn) {
                 FormplayerFrontend.syncInterval = setInterval(function () {
-                    if (shouldSync()) {
+                    if (shouldSync() && FormplayerFrontend.permitIntervalSync) {
                         let urlObject = Utils.currentUrlToObject();
                         FormplayerFrontend.getChannel().request("interval_sync-db", urlObject);
                     }

@@ -185,7 +185,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     });
 
     FormplayerFrontend.on('startForm', function (data) {
-        FormplayerUtils.stopIntervalSync();
+        FormplayerFrontend.permitIntervalSync = false;
         FormplayerFrontend.getChannel().request("clearMenu");
         hqRequire(["cloudcare/js/formplayer/menus/utils"], function (MenusUtils) {
             MenusUtils.showBreadcrumbs(data.breadcrumbs);
