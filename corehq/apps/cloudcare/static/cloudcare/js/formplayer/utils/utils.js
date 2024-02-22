@@ -1,7 +1,8 @@
 /*global Backbone, DOMPurify */
 hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles");
+        toggles = hqImport("hqwebapp/js/toggles"),
+        constants = hqImport("cloudcare/js/formplayer/constants");
 
     var Utils = {};
 
@@ -469,7 +470,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 Utils.setEnableIntervalSync(false);
             }
 
-            let useAggressiveSyncTiming = (customProperties["cc-sync-after-form"] === "yes");
+            let useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
             if (useAggressiveSyncTiming) {
                 // Sync frequency is synchronized with Formplayer's restore expiration
                 Utils.setEnableIntervalSync(true, FIVE_MINUTES_IN_MILLISECONDS);
