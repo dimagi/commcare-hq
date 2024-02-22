@@ -107,6 +107,7 @@ class ElasticProcessor(PillowProcessor):
                 adapter=self.adapter,
                 name='ElasticProcessor',
                 data=doc,
+                refresh=True,
             )
 
     def _delete_doc_if_exists(self, doc_id):
@@ -183,7 +184,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
 
 
 def send_to_elasticsearch(adapter, doc_id, name,
-                        data=None, delete=False, es_merge_update=False):
+                        data=None, delete=False, es_merge_update=False, refresh=False):
     """
     More fault tolerant es.put method
     kwargs:
@@ -204,10 +205,10 @@ def send_to_elasticsearch(adapter, doc_id, name,
                     # The `retry_on_conflict` param is only valid on `update`
                     # requests. ES <5.x was lenient of its presence on `index`
                     # requests, ES >=5.x is not.
-                    adapter.update(doc_id, fields=data, retry_on_conflict=2)
+                    adapter.update(doc_id, fields=data, retry_on_conflict=2, refresh=refresh)
                 else:
                     # use the same index API to create or update doc
-                    adapter.index(data)
+                    adapter.index(data, refresh=refresh)
             break
         except ConnectionError:
             current_tries += 1
