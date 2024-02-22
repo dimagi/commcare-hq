@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -221,7 +221,9 @@ class EnterpriseFormReport(EnterpriseReport):
 
     def _query(self, domain_name):
         time_filter = form_es.submitted
-        datespan = DateSpan(datetime.now() - timedelta(days=self.window), datetime.utcnow())
+        start_date = datetime(2023, 12, 15)
+        end_date = datetime(2024, 2, 14)
+        datespan = DateSpan(start_date, end_date)
 
         users_filter = form_es.user_id(UserES().domain(domain_name).mobile_users().show_inactive()
                                     .values_list('_id', flat=True))
