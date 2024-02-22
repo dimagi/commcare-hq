@@ -623,7 +623,7 @@ class CaseDeduplicationActionTest(TestCase):
         self.assertGreater(len(resulting_case_ids), 1)
 
     @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
-    @patch("corehq.apps.data_interfaces.models.case_matching_rule_exists_in_es")
+    @patch("corehq.apps.data_interfaces.models.case_matching_rule_criteria_exists_in_es")
     def test_ignores_recent_submissions_not_in_elasticsearch(self, mock_case_exists, find_duplicates_mock):
         # create existing duplicates
         existing_duplicates, _ = self._create_cases(num_cases=2)
@@ -632,7 +632,7 @@ class CaseDeduplicationActionTest(TestCase):
         # create a new case that will qualify as a duplicate, but has been submitted recently
         current_time = datetime(year=2024, month=2, day=5, hour=10)
         new_case = self._create_case()
-        new_case.modified_on = current_time - timedelta(hours=1)
+        new_case.server_modified_on = current_time - timedelta(hours=1)
         mock_case_exists.return_value = False
 
         with freeze_time(current_time):
@@ -641,11 +641,11 @@ class CaseDeduplicationActionTest(TestCase):
         created_duplicates = CaseDuplicateNew.objects.filter(case_id=new_case.case_id)
         self.assertEqual(created_duplicates.count(), 0)
 
-    @patch("corehq.apps.data_interfaces.models.case_matching_rule_exists_in_es")
+    @patch("corehq.apps.data_interfaces.models.case_matching_rule_criteria_exists_in_es")
     def test_raises_error_when_case_not_in_elasticsearch(self, mock_case_exists):
         current_time = datetime(year=2024, month=2, day=5, hour=10)
         case = self._create_case()
-        case.modified_on = current_time - timedelta(hours=1, seconds=1)
+        case.server_modified_on = current_time - timedelta(hours=1, seconds=1)
         mock_case_exists.return_value = False
 
         with self.assertRaisesRegex(
