@@ -663,6 +663,10 @@ class DeleteCaseView(BaseProjectReportSectionView):
                                           "to delete this case."))
             return {'redirect': True}
 
+        if not case_data:
+            messages.error(request, _("This case is already deleted."))
+            return {'redirect': True}
+
         case_data['affected_cases'] = [case for case in case_data['affected_cases']
                                        if case.id not in case_data['case_delete_list']]
 
@@ -709,7 +713,7 @@ class DeleteCaseView(BaseProjectReportSectionView):
         """
         case = prepare_case_for_deletion(case)
         if not case:
-            return
+            return {}
         self.delete_cases.append(case.case_id)
         if len(self.delete_cases) > self.MAX_CASE_COUNT or subcase_count >= self.MAX_SUBCASE_DEPTH:
             raise TooManyCases("Too many cases to delete")
@@ -740,6 +744,8 @@ class DeleteCaseView(BaseProjectReportSectionView):
                 'affected_cases': self.affected_cases_display,
                 'reopened_cases': self.reopened_cases_display,
             }
+        else:
+            return {}
 
     def walk_through_form_touched_cases(self, current_case_id, form_obj, subcase_count):
         """

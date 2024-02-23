@@ -1,5 +1,6 @@
 import uuid
 
+from datetime import datetime
 from copy import deepcopy
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core.management import call_command
@@ -30,6 +31,7 @@ from corehq.apps.users.models import (
     UserRole
 )
 from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.form_processor.tests.utils import create_case
 from corehq.util.test_utils import unit_testing_only
 
 
@@ -443,4 +445,20 @@ class TestCaseDeletion(TestCase):
 
         view = self._create_view(cases[0])
         return_dict = view.get_cases_and_forms_for_deletion(request, self.domain, cases[0])
+        self.assertTrue(return_dict['redirect'])
+
+    def test_case_deletion_redirect_if_case_is_already_deleted(self):
+        """
+        In the event that a user tries to delete a case after the case has already been deleted, they should
+        be redirected.
+        """
+        request = deepcopy(self.request)
+        setattr(request, 'session', 'session')
+        setattr(request, '_messages', FallbackStorage(request))
+
+        case = create_case(domain=self.domain, deleted_on=datetime.now(), save=True)
+        self.addCleanup(_delete_all_cases_and_forms, self.domain)
+        view = self._create_view(case)
+
+        return_dict = view.get_cases_and_forms_for_deletion(request, self.domain, case.case_id)
         self.assertTrue(return_dict['redirect'])
