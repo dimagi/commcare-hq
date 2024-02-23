@@ -39,6 +39,7 @@ from corehq.apps.registry.exceptions import (
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.toggles import USH_CASE_SEARCH_LIMIT_INCREASE
 
 
 def get_case_search_results_from_request(domain, app_id, couch_user, request_dict):
@@ -182,11 +183,13 @@ class CaseSearchQueryBuilder:
         return search_es
 
     def _get_initial_search_es(self):
+        size = (1500 if USH_CASE_SEARCH_LIMIT_INCREASE.enabled(self.request_domain)
+                else CASE_SEARCH_MAX_RESULTS)
         return (CaseSearchES()
                 .domain(self.query_domains)
                 .case_type(self.case_types)
                 .is_closed(False)
-                .size(CASE_SEARCH_MAX_RESULTS))
+                .size(size))
 
     def _apply_sort(self, search_es, commcare_sort=None):
         if commcare_sort:

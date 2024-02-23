@@ -1008,6 +1008,14 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
+USH_CASE_SEARCH_LIMIT_INCREASE = StaticToggle(
+    'ush_case_search_limit_increase',
+    "USH: Temporarily increase the CASE_SEARCH_MAX_RESULTS limit",
+    TAG_INTERNAL,
+    description="Please do not enable this for your project",
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
