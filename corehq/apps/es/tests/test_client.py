@@ -1,15 +1,16 @@
 import json
 import math
+import uuid
 from contextlib import contextmanager
 from copy import deepcopy
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
-import uuid
 from django.test import SimpleTestCase, override_settings
-from nose.tools import nottest
-from unittest.mock import patch
-from corehq.apps.es.utils import check_task_progress
 
+from nose.tools import nottest
+
+from corehq.apps.es import const
+from corehq.apps.es.utils import check_task_progress
 from corehq.util.es.elasticsearch import (
     BulkIndexError,
     Elasticsearch,
@@ -18,6 +19,20 @@ from corehq.util.es.elasticsearch import (
     TransportError,
 )
 
+from ..client import (
+    BaseAdapter,
+    BulkActionItem,
+    ElasticMultiplexAdapter,
+    Tombstone,
+    _client_default,
+    _client_for_export,
+    _elastic_hosts,
+    create_document_adapter,
+    get_client,
+    manager,
+)
+from ..const import INDEX_CONF_REINDEX, INDEX_CONF_STANDARD, SCROLL_KEEPALIVE
+from ..exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 from .utils import (
     TestDoc,
     TestDocumentAdapter,
@@ -27,20 +42,6 @@ from .utils import (
     temporary_index,
     test_adapter,
 )
-from ..client import (
-    BaseAdapter,
-    BulkActionItem,
-    ElasticMultiplexAdapter,
-    Tombstone,
-    create_document_adapter,
-    get_client,
-    manager,
-    _elastic_hosts,
-    _client_default,
-    _client_for_export,
-)
-from ..const import INDEX_CONF_REINDEX, INDEX_CONF_STANDARD, SCROLL_KEEPALIVE
-from ..exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 
 
 @override_settings(ELASTICSEARCH_HOSTS=["localhost"],
