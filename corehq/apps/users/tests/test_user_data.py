@@ -101,7 +101,9 @@ class TestUserData(TestCase):
         ]
         users_with_data = [self.make_commcare_user(), self.make_web_user()]
         for user in users_with_data:
-            user.get_user_data(self.domain).save()
+            ud = user.get_user_data(self.domain)
+            ud['key'] = 'dummy val so this is non-empty'
+            ud.save()
 
         users_to_migrate = get_users_without_user_data()
         self.assertItemsEqual(
@@ -131,8 +133,8 @@ class TestUserData(TestCase):
     def test_migrate_user_no_data(self):
         user = self.make_commcare_user()
         populate_user_data(user)
-        sql_data = SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
-        self.assertEqual(sql_data.data, {})
+        with self.assertRaises(SQLUserData.DoesNotExist):
+            SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
 
     def test_prime_user_data_caches(self):
         users = [
@@ -143,7 +145,9 @@ class TestUserData(TestCase):
             self.make_web_user(),
         ]
         for user in users:
-            user.get_user_data(self.domain).save()
+            ud = user.get_user_data(self.domain)
+            ud['key'] = 'dummy val so this is non-empty'
+            ud.save()
         users.append(self.make_web_user())  # add user without data
         self.assertEqual(SQLUserData.objects.count(), 5)
 
