@@ -171,7 +171,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 var receiveTopic = match[1];
                 var receiveTopicField = match[2];
                 if (receiveTopicField === constants.RECEIVER_FIELD_INDEXED) {
-                    var ixMatch = question.ix().match(/_(\d)/);
+                    var ixMatch = question.ix().match(/_(\d+)/);
                     receiveTopicField = ixMatch ? ixMatch.pop() : 0;
                 }
                 question.broadcastPubSub.subscribe(function (message) {
