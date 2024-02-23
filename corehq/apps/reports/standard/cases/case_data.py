@@ -615,9 +615,7 @@ class DeleteCaseView(BaseProjectReportSectionView):
 
     @property
     def xform_id(self):
-        if 'xform_id' in self.kwargs:
-            return self.kwargs['xform_id']
-        return None
+        return self.kwargs.get('xform_id')
 
     @property
     def domain(self):
@@ -638,7 +636,6 @@ class DeleteCaseView(BaseProjectReportSectionView):
         context.update(self.delete_dict)
         return context
 
-    @location_safe
     def get_cases_and_forms_for_deletion(self, request, domain, case_id, form_id=None):
         """
         Given a case object, recursively checks the case's related submission forms and for each form,
@@ -671,23 +668,19 @@ class DeleteCaseView(BaseProjectReportSectionView):
 
         # Reorganizing display groups for form driven case deletion
         if form_id:
-            updated_delete_cases = case_data['delete_cases']
-            for case in case_data['delete_cases']:
+            for case in list(case_data['delete_cases']):
                 for form in case.delete_forms:
                     if form.is_primary:
                         self.form_delete_cases_display.append(case)
-                        updated_delete_cases.remove(case)
+                        case_data['delete_cases'].remove(case)
                         break
-            case_data['delete_cases'] = updated_delete_cases
 
-            updated_affected_cases = case_data['affected_cases']
-            for case in case_data['affected_cases']:
+            for case in list(case_data['affected_cases']):
                 for form in case.affected_forms:
                     if form.is_primary:
                         self.form_affected_cases_display.append(case)
-                        updated_affected_cases.remove(case)
+                        case_data['affected_cases'].remove(case)
                         break
-            case_data['affected_cases'] = updated_affected_cases
 
         case_has_multiple_forms = False
         for case in self.form_delete_cases_display:
@@ -710,7 +703,7 @@ class DeleteCaseView(BaseProjectReportSectionView):
         to aggregate their contributions to this and other cases for display.
 
         :param case: The case object chosen for deletion.
-        :param subcase_count: A variable for keeping track of how subcase layers the walk is traveling through.
+        :param subcase_count: A variable for keeping track of the subcase depth the walk is currently on.
         :return: Returns a dict of the complete deletion lists and partial display lists, to be further modified
         by get_cases_and_forms_for_deletion.
         """

@@ -115,11 +115,13 @@ def _get_deleted_case_name(case):
 
 def get_all_cases_from_form(form, domain):
     # Gets cases from a form, including cases whose deleted field is True
-    touched_cases = {}
     case_updates = get_case_updates(form)
-    for update in case_updates:
-        case = CommCareCase.objects.get_case(update.id, domain)
-        actions = {action.action_type_slug for action in update.actions}
+    update_ids = [update.id for update in case_updates]
+    all_cases = CommCareCase.objects.get_cases(update_ids, domain, ordered=True)
+    all_actions = [{action.action_type_slug for action in update.actions} for update in case_updates]
+
+    touched_cases = {}
+    for case, actions in zip(all_cases, all_actions):
         case_update_meta = CaseUpdateMetadata(case, False, '', actions)
         if case.case_id in touched_cases:
             touched_cases[case.case_id] = touched_cases[case.case_id].merge(case_update_meta)
