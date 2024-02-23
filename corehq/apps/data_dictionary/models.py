@@ -6,6 +6,9 @@ from django.utils.translation import gettext as _, gettext_lazy
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.app_manager.app_schemas.case_properties import expire_case_properties_caches
 from corehq.apps.case_importer import exceptions
 
 
@@ -147,6 +150,8 @@ class CaseProperty(models.Model):
         )
         get_data_dict_props_by_case_type.clear(domain)
         get_gps_properties.clear(domain, case_type)
+        if domain_has_privilege(domain, privileges.DATA_DICTIONARY):
+            expire_case_properties_caches(domain)
 
     def save(self, *args, **kwargs):
         self.clear_caches(self.case_type.domain, self.case_type.name)
