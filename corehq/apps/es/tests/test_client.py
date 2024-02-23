@@ -2060,8 +2060,6 @@ class TestTombstone(SimpleTestCase):
 
 
 @es_test
-@override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=False)
-@override_settings(ES_FOR_TEST_INDEX_SWAPPED=False)
 class TestCreateDocumentAdapter(SimpleTestCase):
 
     def test_create_document_adapter_returns_doc_adapter(self):
@@ -2082,7 +2080,7 @@ class TestCreateDocumentAdapter(SimpleTestCase):
         self.assertEqual(type(test_adapter), TestDocumentAdapter)
         self.assertEqual(test_adapter.index_name, 'test_some-primary')
 
-    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
+    @patch.object(const, 'ES_FOR_TEST_INDEX_MULTIPLEXED', True)
     def test_returns_multiplexer_adapter_with_multiplexed_setting(self):
         test_adapter = create_document_adapter(
             TestDocumentAdapter,
@@ -2094,8 +2092,8 @@ class TestCreateDocumentAdapter(SimpleTestCase):
         self.assertEqual(test_adapter.index_name, 'test_some-primary')
         self.assertEqual(test_adapter.secondary.index_name, 'test_some-secondary')
 
-    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
-    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    @patch.object(const, 'ES_FOR_TEST_INDEX_MULTIPLEXED', True)
+    @patch.object(const, 'ES_FOR_TEST_INDEX_SWAPPED', True)
     def test_returns_multiplexer_with_swapped_indexes(self):
         test_adapter = create_document_adapter(
             TestDocumentAdapter,
@@ -2107,9 +2105,9 @@ class TestCreateDocumentAdapter(SimpleTestCase):
         self.assertEqual(test_adapter.primary.index_name, "test_some-secondary")
         self.assertEqual(test_adapter.secondary.index_name, "test_some-primary")
 
-    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=False)
-    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
-    def test_returns_doc_adapater_with_secondary_index(self):
+    @patch.object(const, 'ES_FOR_TEST_INDEX_MULTIPLEXED', False)
+    @patch.object(const, 'ES_FOR_TEST_INDEX_SWAPPED', True)
+    def test_returns_doc_adapter_with_secondary_index(self):
         test_adapter = create_document_adapter(
             TestDocumentAdapter,
             "some-primary",
@@ -2119,8 +2117,8 @@ class TestCreateDocumentAdapter(SimpleTestCase):
         self.assertEqual(type(test_adapter), TestDocumentAdapter)
         self.assertEqual(test_adapter.index_name, "test_some-secondary")
 
-    @override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True)
-    @override_settings(ES_FOR_TEST_INDEX_SWAPPED=True)
+    @patch.object(const, 'ES_FOR_TEST_INDEX_MULTIPLEXED', True)
+    @patch.object(const, 'ES_FOR_TEST_INDEX_SWAPPED', True)
     def test_settings_have_no_effect_if_secondary_is_None(self):
         test_adapter = create_document_adapter(
             TestDocumentAdapter,

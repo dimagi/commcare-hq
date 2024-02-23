@@ -81,3 +81,6 @@ ES_GROUPS_INDEX_SWAPPED = get_es_reindex_setting_value('ES_GROUPS_INDEX_SWAPPED'
 ES_SMS_INDEX_SWAPPED = get_es_reindex_setting_value('ES_SMS_INDEX_SWAPPED', True)
 ES_USERS_INDEX_SWAPPED = get_es_reindex_setting_value('ES_USERS_INDEX_SWAPPED', True)
 
+
+ES_FOR_TEST_INDEX_MULTIPLEXED = get_es_reindex_setting_value('ES_FOR_TEST_INDEX_MULTIPLEXED', False)
+ES_FOR_TEST_INDEX_SWAPPED = get_es_reindex_setting_value('ES_FOR_TEST_INDEX_MULTIPLEXED', False)
