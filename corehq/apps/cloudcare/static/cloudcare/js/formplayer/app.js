@@ -185,6 +185,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     });
 
     FormplayerFrontend.on('startForm', function (data) {
+        FormplayerFrontend.permitIntervalSync = false;
         FormplayerFrontend.getChannel().request("clearMenu");
         hqRequire(["cloudcare/js/formplayer/menus/utils"], function (MenusUtils) {
             MenusUtils.showBreadcrumbs(data.breadcrumbs);
@@ -545,6 +546,40 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         };
         options = {
             url: formplayerUrl + "/sync-db",
+            data: JSON.stringify(data),
+            complete: complete,
+        };
+        FormplayerUtils.setCrossDomainAjaxOptions(options);
+        $.ajax(options);
+    });
+
+    FormplayerFrontend.getChannel().reply("interval_sync-db", function (unusedOptions) {
+        var user = FormplayerFrontend.getChannel().request('currentUser'),
+            username = user.username,
+            domain = user.domain,
+            formplayerUrl = user.formplayer_url,
+            complete,
+            data = {
+                "username": username,
+                "domain": domain,
+                "restoreAs": user.restoreAs,
+                "app_id": unusedOptions.appId,
+            },
+            options;
+
+        complete = function (response) {
+            if (response.status === 'retry') {
+                FormplayerFrontend.trigger('retry', response, function () {
+                    options.data = JSON.stringify($.extend(true, {mustRestore: true}, data));
+                    $.ajax(options);
+                }, gettext('Waiting for server progress'));
+            } else {
+                FormplayerFrontend.trigger('clearProgress');
+                CloudcareUtils.formplayerSyncComplete(response.status === 'error');
+            }
+        };
+        options = {
+            url: formplayerUrl + "/interval_sync-db",
             data: JSON.stringify(data),
             complete: complete,
         };
