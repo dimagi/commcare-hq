@@ -126,11 +126,9 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var shouldShowHideLoading = function () {
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            const answerInProgress = (sessionStorage.answerQuestionInProgress && JSON.parse(sessionStorage.answerQuestionInProgress));
-            const validationInProgress = (sessionStorage.validationInProgress && JSON.parse(sessionStorage.validationInProgress));
-            return !answerInProgress && !validationInProgress && FormplayerFrontend.durationMetToShowLoading;
-        });
+        const answerInProgress = (sessionStorage.answerQuestionInProgress && JSON.parse(sessionStorage.answerQuestionInProgress));
+        const validationInProgress = (sessionStorage.validationInProgress && JSON.parse(sessionStorage.validationInProgress));
+        return !answerInProgress && !validationInProgress;
     };
 
     var getRegionContainer = function () {
@@ -166,7 +164,13 @@ hqDefine('cloudcare/js/utils', [
                 $('#breadcrumb-region').css('z-index', '0');
                 const loadingElement = FormplayerFrontend.regions.getRegion('loadingProgress');
                 loadingElement.show(progressView);
-                progressView.setProgress(10, 100, 200);
+                let currentProgress = 10;
+                progressView.setProgress(currentProgress, 100, 200);
+                sessionStorage.intervalToClear = setInterval(function () {
+                    progressView.setProgress(currentProgress, 100, 200);
+                    currentProgress += 1;
+                }, 250);
+
             } else {
                 NProgress.start();
             }
@@ -180,9 +184,7 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var formplayerLoadingComplete = function (isError, message) {
-        if (shouldShowHideLoading()) {
             hideLoading();
-        }
         if (isError) {
             showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));
         }
@@ -233,10 +235,13 @@ hqDefine('cloudcare/js/utils', [
         hqRequire(["cloudcare/js/formplayer/app", "hqwebapp/js/toggles"], function (FormplayerFrontend, toggles) {
             if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
                 $('#breadcrumb-region').css('z-index', '');
+                clearInterval(sessionStorage.intervalToClear);
                 let progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
                 if (progressView) {
                     progressView.setProgress(100, 100, 200);
-                    FormplayerFrontend.regions.getRegion('loadingProgress').empty();
+                    setTimeout(function () {
+                        FormplayerFrontend.regions.getRegion('loadingProgress').empty();
+                    }, 250);
                 }
             } else {
                 NProgress.done();
