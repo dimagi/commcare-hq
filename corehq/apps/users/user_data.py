@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, transaction
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
@@ -49,9 +49,12 @@ class UserData:
 
         return cls(sql_data.data, couch_user, domain, profile_id=sql_data.profile_id)
 
+    @transaction.atomic
     def save(self):
         try:
-            sql_data = SQLUserData.objects.get(user_id=self._couch_user.user_id, domain=self.domain)
+            sql_data = (SQLUserData.objects
+                        .select_for_update()
+                        .get(user_id=self._couch_user.user_id, domain=self.domain))
         except SQLUserData.DoesNotExist:
             if self._local_to_user or self.profile_id:
                 SQLUserData.objects.create(
