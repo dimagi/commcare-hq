@@ -570,7 +570,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         complete = function (response) {
             if (response.status === 'retry') {
                 FormplayerFrontend.trigger('retry', response, function () {
-                    options.data = JSON.stringify($.extend(true, {mustRestore: true}, data));
+                    options.data = JSON.stringify($.extend({mustRestore: true}, data));
                     $.ajax(options);
                 }, gettext('Waiting for server progress'));
             } else {
