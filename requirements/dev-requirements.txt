@@ -218,7 +218,7 @@ django-tastypie==0.14.4
     # via -r base-requirements.in
 django-transfer==0.4
     # via -r base-requirements.in
-django-two-factor-auth==1.15.5
+django-two-factor-auth @ git+https://github.com/gherceg/django-two-factor-auth.git@f0c5387978a1003ae28d6d377f53b5066aa10282
     # via -r base-requirements.in
 django-user-agents==0.4.0
     # via -r base-requirements.in
