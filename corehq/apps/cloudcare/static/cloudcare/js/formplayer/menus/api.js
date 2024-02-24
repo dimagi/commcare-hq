@@ -45,7 +45,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         return;
                     }
                 }
-
+                FormplayerFrontend.permitIntervalSync = true;
                 options = {
                     success: function (parsedMenus, response) {
                         if (response.status === 'retry') {
