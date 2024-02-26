@@ -175,20 +175,24 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 });
 
                 var callStartTime = performance.now();
-                console.log(`currentSelection:  ${ JSON.stringify(currentSelections) }, new selections: ${ JSON.stringify(params.selections) }`);
-                if (!_.isEqual(params.selections, currentSelections)) {
-                    console.log('different selection: interrupt ongoing defers')
-                    currentSelections = params.selections;
-                    while (ongoingRequests.length > 0) {
-                        const ongoingRequest = ongoingRequests.pop();
-                        if (ongoingRequest.readyState !== 4) {
-                            console.log('found pending defer. rejecting it.')
-                            ongoingRequest.abort();
+                const updateRequest = menus.fetch($.extend(true, {}, options));
+
+                if (route.startsWith("navigate_menu")) {
+                    console.log(`currentSelection:  ${ JSON.stringify(currentSelections) }, new selections: ${ JSON.stringify(params.selections) }`);
+                    if (!_.isEqual(params.selections, currentSelections)) {
+                        console.log('different selection: interrupt ongoing defers')
+                        currentSelections = params.selections;
+                        while (ongoingRequests.length > 0) {
+                            const ongoingRequest = ongoingRequests.pop();
+                            if (ongoingRequest.readyState !== 4) {
+                                console.log('found pending defer. rejecting it.')
+                                ongoingRequest.abort();
+                            }
                         }
                     }
+                    ongoingRequests.push(updateRequest);
                 }
-                const updateRequest = menus.fetch($.extend(true, {}, options));
-                ongoingRequests.push(updateRequest);
+
 
                 updateRequest.always(function () {
                     if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === constants.queryInitiatedBy.DYNAMIC_SEARCH) {
