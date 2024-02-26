@@ -673,16 +673,16 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     def selected_app_id(self):
         return self.request_params.get(SelectApplicationFilter.slug, None)
 
-    def _get_histogram_aggregation_for_app(self, field_name):
-        nested_field_name = f'reporting_metadata.{field_name}'
-        nested_agg = NestedAggregation(f'nested_{field_name}', nested_field_name)
+    def _get_histogram_aggregation_for_app(self, nested_field_name, date_field_name):
+        nested_field_path = f'reporting_metadata.{nested_field_name}'
+        nested_agg = NestedAggregation(f'nested_{nested_field_name}', nested_field_path)
         filter_agg = FilterAggregation(
-            f'filtered_{field_name}',
-            filters.term(f'{nested_field_name}.app_id', self.selected_app_id)
+            f'filtered_{nested_field_name}',
+            filters.term(f'{nested_field_path}.app_id', self.selected_app_id)
         )
         histogram_agg = DateHistogram(
-            f'{field_name}_date_histogram',
-            f'{nested_field_name}.submission_date',
+            f'{nested_field_name}_date_histogram',
+            f'{nested_field_path}.{date_field_name}',
             DateHistogram.Interval.DAY
         )
 
@@ -701,8 +701,8 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         )
 
         if self.selected_app_id:
-            last_submission_agg = self._get_histogram_aggregation_for_app('last_submissions')
-            last_sync_agg = self._get_histogram_aggregation_for_app('last_syncs')
+            last_submission_agg = self._get_histogram_aggregation_for_app('last_submissions', 'submission_date')
+            last_sync_agg = self._get_histogram_aggregation_for_app('last_syncs', 'sync_date')
         else:
             last_submission_agg = DateHistogram(
                 'last_submission',
