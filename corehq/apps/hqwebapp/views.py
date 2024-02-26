@@ -48,6 +48,7 @@ from django.views.generic import TemplateView
 from django.views.generic.base import View
 from memoized import memoized
 from sentry_sdk import last_event_id
+from two_factor.utils import default_device
 from two_factor.views import LoginView
 
 from corehq.apps.accounting.decorators import (
@@ -483,6 +484,24 @@ class HQLoginView(LoginView):
         (LoginView.BACKUP_STEP, HQBackupTokenForm),
     ]
     extra_context = {}
+
+    def has_token_step(self):
+        """
+        Overrides the two_factor LoginView has_token_step to ensure this step is excluded if a valid backup
+        token exists. Created https://github.com/jazzband/django-two-factor-auth/issues/709 to track work to
+        potentially include this in django-two-factor-auth directly.
+        """
+        return (
+            default_device(self.get_user())
+            and self.BACKUP_STEP not in self.storage.validated_step_data
+            and not self.remember_agent
+        )
+
+    # override two_factor LoginView condition_dict to include the method defined above
+    condition_dict = {
+        LoginView.TOKEN_STEP: has_token_step,
+        LoginView.BACKUP_STEP: LoginView.has_backup_step,
+    }
 
     def post(self, *args, **kwargs):
         if settings.ENFORCE_SSO_LOGIN and self.steps.current == self.AUTH_STEP:
