@@ -546,7 +546,12 @@ def _get_usercase_default_properties(domain):
 
 
 def expire_case_properties_caches(domain):
-    all_case_properties_by_domain.clear(domain, True, True)
-    all_case_properties_by_domain.clear(domain, True, False)
-    all_case_properties_by_domain.clear(domain, False, True)
-    all_case_properties_by_domain.clear(domain, False, False)
+    # expire all possible combinations of arguments
+    all_case_properties_by_domain.clear(domain=domain,
+                                        include_parent_properties=True, exclude_deprecated_properties=True)
+    all_case_properties_by_domain.clear(domain=domain,
+                                        include_parent_properties=True, exclude_deprecated_properties=False)
+    all_case_properties_by_domain.clear(domain=domain,
+                                        include_parent_properties=False, exclude_deprecated_properties=True)
+    all_case_properties_by_domain.clear(domain=domain,
+                                        include_parent_properties=False, exclude_deprecated_properties=False)
