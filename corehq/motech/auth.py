@@ -234,7 +234,11 @@ class OAuth2ClientGrantManager(AuthManager):
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )
-        make_session_public_only(session, domain_name, src='motech_oauth_send_attempt')
+        make_session_public_only(
+            session,
+            domain_name,
+            src='motech_oauth_send_attempt',
+        )
         return session
 
 
@@ -285,9 +289,10 @@ class OAuth2PasswordGrantManager(AuthManager):
             # Used by OAuth2Session
             self.last_token = token
 
-        # This adds an extra round trip for all access tokens without refresh tokens.
-        # That is not ideal, but is the only way to ensure that we are able to guarantee
-        # the token will work without error, or refactoring the way sessions are used across
+        # This adds an extra round trip for all access tokens without
+        # refresh tokens. That is not ideal, but is the only way to
+        # ensure that we are able to guarantee the token will work
+        # without error, or refactoring the way sessions are used across
         # all repeaters.
         if not self.last_token or self.last_token.get('refresh_token') is None:
             client = LegacyApplicationClient(client_id=self.client_id)
@@ -321,7 +326,11 @@ class OAuth2PasswordGrantManager(AuthManager):
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )
-        make_session_public_only(session, domain_name, src='motech_oauth_send_attempt')
+        make_session_public_only(
+            session,
+            domain_name,
+            src='motech_oauth_send_attempt',
+        )
         return session
 
 
