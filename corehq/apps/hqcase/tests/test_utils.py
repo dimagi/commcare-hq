@@ -5,6 +5,7 @@ from datetime import datetime
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
+from casexml.apps.case.xform import TempCaseBlockCache
 
 from corehq.apps.export.const import DEID_DATE_TRANSFORM, DEID_ID_TRANSFORM
 from corehq.apps.hqcase.case_helper import CaseCopier
@@ -22,6 +23,7 @@ from corehq.apps.hqcase.utils import (
 from corehq.form_processor.tests.utils import create_case
 from corehq.apps.reports.tests.test_case_data import _delete_all_cases_and_forms
 from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models.forms import TempFormCache
 
 DOMAIN = 'test-domain'
 
@@ -138,21 +140,21 @@ class TestCaseDeletionUtil(TestCase):
         cases, xforms = self.make_case()
         xforms['child_xform'].archive()
         main_case = CommCareCase.objects.get_case(cases['main_case_id'], DOMAIN)
-        ordered_xforms = get_deduped_ordered_forms_for_case(main_case, DOMAIN)
+        ordered_xforms = get_deduped_ordered_forms_for_case(main_case, TempFormCache(DOMAIN))
 
         self.assertItemsEqual(ordered_xforms, list(xforms.values()))
 
     def test_xform_list_is_ordered(self):
         cases, xforms = self.make_case()
         main_case = CommCareCase.objects.get_case(cases['main_case_id'], DOMAIN)
-        ordered_xforms = get_deduped_ordered_forms_for_case(main_case, DOMAIN)
+        ordered_xforms = get_deduped_ordered_forms_for_case(main_case, TempFormCache(DOMAIN))
 
         self.assertEqual(ordered_xforms, sorted(list(xforms.values()), key=lambda f: f.received_on))
 
     def test_xform_list_is_deduped(self):
         cases, xforms = self.make_case()
         main_case = CommCareCase.objects.get_case(cases['main_case_id'], DOMAIN)
-        ordered_xforms = get_deduped_ordered_forms_for_case(main_case, DOMAIN)
+        ordered_xforms = get_deduped_ordered_forms_for_case(main_case, TempFormCache(DOMAIN))
 
         self.assertEqual(len({f.form_id for f in list(xforms.values())}), len(ordered_xforms))
 
@@ -161,12 +163,13 @@ class TestCaseDeletionUtil(TestCase):
         xforms['main_xform'].archive()
         case = CommCareCase.objects.get_case(cases['main_case_id'], DOMAIN)
 
-        self.assertEqual(_get_deleted_case_name(case), "main_case")
+        self.assertEqual(_get_deleted_case_name(case, TempFormCache(DOMAIN),
+                                                TempCaseBlockCache(DOMAIN)), "main_case")
 
     def test_get_cases_irrespective_of_deleted_state(self):
         cases, xforms = self.make_case()
         xforms['child_xform'].archive()
-        cases_from_form = get_all_cases_from_form(xforms['child_xform'], DOMAIN)
+        cases_from_form = get_all_cases_from_form(xforms['child_xform'], DOMAIN, TempCaseBlockCache(DOMAIN))
 
         self.assertItemsEqual(list(cases.values()), list(cases_from_form.keys()))
 

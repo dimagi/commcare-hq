@@ -33,6 +33,7 @@ from casexml.apps.case.util import (
     get_paged_changes_to_case_property,
 )
 from casexml.apps.case.views import get_wrapped_case
+from casexml.apps.case.xform import TempCaseBlockCache
 from casexml.apps.case.xml import V2
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
@@ -97,6 +98,7 @@ from corehq.form_processor.models import (
     UserRequestedRebuild,
     XFormInstance,
 )
+from corehq.form_processor.models.forms import TempFormCache
 from corehq.motech.repeaters.dbaccessors import (
     get_repeat_records_by_payload_id,
 )
@@ -601,6 +603,8 @@ class DeleteCaseView(BaseProjectReportSectionView):
 
     @method_decorator(require_case_view_permission)
     def dispatch(self, request, *args, **kwargs):
+        self.form_cache = TempFormCache(self.domain)
+        self.case_block_cache = TempCaseBlockCache(self.domain)
         if self.xform_id:
             self.template_name = 'reports/reportdata/form_case_delete.html'
             self.page_title = gettext_lazy('Delete Form and Related Cases')
@@ -711,7 +715,7 @@ class DeleteCaseView(BaseProjectReportSectionView):
         :return: Returns a dict of the complete deletion lists and partial display lists, to be further modified
         by get_cases_and_forms_for_deletion.
         """
-        case = prepare_case_for_deletion(case)
+        case = prepare_case_for_deletion(case, self.form_cache, self.case_block_cache)
         if not case:
             return {}
         self.delete_cases.append(case.case_id)
@@ -721,7 +725,7 @@ class DeleteCaseView(BaseProjectReportSectionView):
         if len(self.delete_cases) == 1:
             current_case.is_primary = True
         self.delete_cases_display.append(current_case)
-        xform_objs = get_deduped_ordered_forms_for_case(case, self.domain)
+        xform_objs = get_deduped_ordered_forms_for_case(case, self.form_cache)
 
         # iterating through all forms that updated the case (includes archived forms)
         for form_obj in xform_objs:
@@ -758,7 +762,7 @@ class DeleteCaseView(BaseProjectReportSectionView):
         potentially pass into another recursion.
         :return: A list of FormAffectedCases objects that detail how the form_obj changed them.
         """
-        touched_cases = get_all_cases_from_form(form_obj, self.domain)
+        touched_cases = get_all_cases_from_form(form_obj, self.domain, self.case_block_cache)
         form_id = form_obj.form_id
         case_actions = []
         for touched_id in touched_cases:
@@ -776,7 +780,8 @@ class DeleteCaseView(BaseProjectReportSectionView):
                                      closing_form_name=self.form_names[form_id],
                                      closing_form_is_primary=form_id == self.xform_id))
                 if any(action in actions for action in self.update_actions):
-                    affected_case = get_or_create_affected_case(self.domain, case_obj, self.affected_cases_display)
+                    affected_case = get_or_create_affected_case(self.domain, case_obj, self.affected_cases_display,
+                                                                self.form_cache, self.case_block_cache)
                     affected_form = AffectedForm(name=self.form_names[form_id],
                                                  url=get_form_url(self.domain, form_id),
                                                  actions=', '.join(actions),

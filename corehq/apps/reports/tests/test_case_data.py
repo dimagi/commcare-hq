@@ -9,6 +9,7 @@ from django.test import TestCase
 from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.xform import TempCaseBlockCache
 
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
@@ -31,6 +32,7 @@ from corehq.apps.users.models import (
     UserRole
 )
 from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.form_processor.models.forms import TempFormCache
 from corehq.form_processor.tests.utils import create_case
 from corehq.util.test_utils import unit_testing_only
 
@@ -163,6 +165,8 @@ class TestCaseDeletion(TestCase):
         if form_id:
             view.kwargs['xform_id'] = form_id
         view.request = self.request
+        view.form_cache = TempFormCache(self.domain)
+        view.case_block_cache = TempCaseBlockCache(self.domain)
         return view
 
     def make_simple_case(self, scenario):
