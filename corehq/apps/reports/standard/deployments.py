@@ -781,8 +781,18 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         query = self.user_query().run()
 
         aggregations = query.aggregations
-        last_submission_buckets = aggregations[0].normalized_buckets
-        last_sync_buckets = aggregations[1].normalized_buckets
+        if self.selected_app_id:
+            last_submission_buckets = (aggregations[0]
+                                       .filtered_last_submissions
+                                       .last_submissions_date_histogram
+                                       .normalized_buckets)
+            last_sync_buckets = (aggregations[1]
+                                 .filtered_last_syncs
+                                 .last_syncs_date_histogram
+                                 .normalized_buckets)
+        else:
+            last_submission_buckets = aggregations[0].normalized_buckets
+            last_sync_buckets = aggregations[1].normalized_buckets
         total_users = query.total
 
         def _buckets_to_series(buckets, user_count):
