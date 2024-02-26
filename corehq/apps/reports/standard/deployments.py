@@ -24,7 +24,11 @@ from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
 )
 from corehq.apps.es import UserES, filters
-from corehq.apps.es.aggregations import DateHistogram
+from corehq.apps.es.aggregations import (
+    DateHistogram,
+    FilterAggregation,
+    NestedAggregation,
+)
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
@@ -664,6 +668,26 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
 
+    @property
+    @memoized
+    def selected_app_id(self):
+        return self.request_params.get(SelectApplicationFilter.slug, None)
+
+    def _get_histogram_aggregation_for_app(self, field_name):
+        nested_field_name = f'reporting_metadata.{field_name}'
+        nested_agg = NestedAggregation(f'nested_{field_name}', nested_field_name)
+        filter_agg = FilterAggregation(
+            f'filtered_{field_name}',
+            filters.term(f'{nested_field_name}.app_id', self.selected_app_id)
+        )
+        histogram_agg = DateHistogram(
+            f'{field_name}_date_histogram',
+            f'{nested_field_name}.submission_date',
+            DateHistogram.Interval.DAY
+        )
+
+        return nested_agg.aggregation(filter_agg.aggregation(histogram_agg))
+
     @memoized
     def user_query(self):
         # partially inspired by ApplicationStatusReport.user_query
@@ -675,17 +699,25 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             mobile_user_and_group_slugs,
             self.request.couch_user,
         )
-        user_query = user_query.aggregations([
-            DateHistogram(
+
+        if self.selected_app_id:
+            last_submission_agg = self._get_histogram_aggregation_for_app('last_submissions')
+            last_sync_agg = self._get_histogram_aggregation_for_app('last_syncs')
+        else:
+            last_submission_agg = DateHistogram(
                 'last_submission',
                 'reporting_metadata.last_submission_for_user.submission_date',
                 DateHistogram.Interval.DAY,
-            ),
-            DateHistogram(
+            )
+            last_sync_agg = DateHistogram(
                 'last_sync',
                 'reporting_metadata.last_sync_for_user.sync_date',
                 DateHistogram.Interval.DAY,
             )
+
+        user_query = user_query.aggregations([
+            last_submission_agg,
+            last_sync_agg,
         ])
         return user_query
 
