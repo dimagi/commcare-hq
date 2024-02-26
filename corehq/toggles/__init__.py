@@ -2746,6 +2746,14 @@ SUPPORT_GEO_JSON_EXPORT = StaticToggle(
     description='The Case Export page now supports the exporting of GeoJSON data.',
 )
 
+INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
+    slug='increased_max_search_results',
+    label='Support a higher number of ES results',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Temporary increase of the max number of search results.',
+)
+
 USE_PROMINENT_PROGRESS_BAR = StaticToggle(
     slug='use_prominent_progress_bar',
     label='Use more prominent progress bar in place of NProgress',
