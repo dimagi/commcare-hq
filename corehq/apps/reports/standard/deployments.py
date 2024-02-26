@@ -24,7 +24,11 @@ from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
 )
 from corehq.apps.es import UserES, filters
-from corehq.apps.es.aggregations import DateHistogram
+from corehq.apps.es.aggregations import (
+    DateHistogram,
+    FilterAggregation,
+    NestedAggregation,
+)
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
@@ -216,8 +220,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def user_query(self, pagination=True):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker') +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.request.GET.getlist('location_restricted_mobile_worker')
+            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -438,8 +442,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def get_user_ids(self):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker') +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.request.GET.getlist('location_restricted_mobile_worker')
+            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
         user_ids = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -655,6 +659,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.select.SelectApplicationFilter',
     ]
     exportable = False
     emailable = False
@@ -662,6 +667,26 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def selected_app_id(self):
+        return self.request_params.get(SelectApplicationFilter.slug, None)
+
+    def _get_histogram_aggregation_for_app(self, field_name):
+        nested_field_name = f'reporting_metadata.{field_name}'
+        nested_agg = NestedAggregation(f'nested_{field_name}', nested_field_name)
+        filter_agg = FilterAggregation(
+            f'filtered_{field_name}',
+            filters.term(f'{nested_field_name}.app_id', self.selected_app_id)
+        )
+        histogram_agg = DateHistogram(
+            f'{field_name}_date_histogram',
+            f'{nested_field_name}.submission_date',
+            DateHistogram.Interval.DAY
+        )
+
+        return nested_agg.aggregation(filter_agg.aggregation(histogram_agg))
 
     @memoized
     def user_query(self):
@@ -674,17 +699,25 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             mobile_user_and_group_slugs,
             self.request.couch_user,
         )
-        user_query = user_query.aggregations([
-            DateHistogram(
+
+        if self.selected_app_id:
+            last_submission_agg = self._get_histogram_aggregation_for_app('last_submissions')
+            last_sync_agg = self._get_histogram_aggregation_for_app('last_syncs')
+        else:
+            last_submission_agg = DateHistogram(
                 'last_submission',
                 'reporting_metadata.last_submission_for_user.submission_date',
                 DateHistogram.Interval.DAY,
-            ),
-            DateHistogram(
+            )
+            last_sync_agg = DateHistogram(
                 'last_sync',
                 'reporting_metadata.last_sync_for_user.sync_date',
                 DateHistogram.Interval.DAY,
             )
+
+        user_query = user_query.aggregations([
+            last_submission_agg,
+            last_sync_agg,
         ])
         return user_query
 
@@ -712,7 +745,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
 
             def get_buckets(self):
                 return self.bucket_series.get_summary_data()
-
 
         class BucketSeries(namedtuple('Bucket', 'data_series total_series total user_count')):
             @property
@@ -749,8 +781,18 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         query = self.user_query().run()
 
         aggregations = query.aggregations
-        last_submission_buckets = aggregations[0].normalized_buckets
-        last_sync_buckets = aggregations[1].normalized_buckets
+        if self.selected_app_id:
+            last_submission_buckets = (aggregations[0]
+                                       .filtered_last_submissions
+                                       .last_submissions_date_histogram
+                                       .normalized_buckets)
+            last_sync_buckets = (aggregations[1]
+                                 .filtered_last_syncs
+                                 .last_syncs_date_histogram
+                                 .normalized_buckets)
+        else:
+            last_submission_buckets = aggregations[0].normalized_buckets
+            last_sync_buckets = aggregations[1].normalized_buckets
         total_users = query.total
 
         def _buckets_to_series(buckets, user_count):
@@ -809,8 +851,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 }
             )
             return BucketSeries(daily_series, running_total_series, total, user_count)
-
-
 
         submission_series = SeriesData(
             id='submission',
