@@ -13,7 +13,7 @@ from corehq.apps.app_manager.views.formdesigner import ping
 from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
-from corehq.apps.domain.views.base import covid19
+from corehq.apps.domain.views.base import covid19, redirect_to_domain
 from corehq.apps.domain.views.feedback import submit_feedback
 from corehq.apps.domain.views.pro_bono import ProBonoStaticView
 from corehq.apps.domain.views.settings import logo
@@ -106,6 +106,7 @@ urlpatterns = [
     url(r'^analytics/', include('corehq.apps.analytics.urls')),
     url(r'^api/', include(user_api_urlpatterns)),
     url(r'^register/', include('corehq.apps.registration.urls')),
+    url(r'^a/DOMAIN/', redirect_to_domain),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
     url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')),
