@@ -14,7 +14,7 @@ class DeletedCouchDoc(models.Model):
 
 class DeletedSQLDoc(models.Model):
     doc_id = models.CharField(max_length=126)
-    doc_type = models.CharField(max_length=126)
+    doc_type = models.CharField(max_length=255)
     deleted_on = models.DateTimeField(db_index=True)
     domain = models.CharField(max_length=255)
     deleted_by = models.CharField(max_length=126, null=True)

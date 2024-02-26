@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('doc_id', models.CharField(max_length=126)),
-                ('doc_type', models.CharField(max_length=126)),
+                ('doc_type', models.CharField(max_length=255)),
                 ('deleted_on', models.DateTimeField(db_index=True)),
                 ('domain', models.CharField(max_length=255)),
                 ('deleted_by', models.CharField(max_length=126, null=True)),
