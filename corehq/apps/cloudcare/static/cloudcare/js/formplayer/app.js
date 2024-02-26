@@ -553,7 +553,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         $.ajax(options);
     });
 
-    FormplayerFrontend.getChannel().reply("interval_sync-db", function (unusedOptions) {
+    FormplayerFrontend.getChannel().reply("interval_sync-db", function (appId) {
         var user = FormplayerFrontend.getChannel().request('currentUser'),
             username = user.username,
             domain = user.domain,
@@ -563,7 +563,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 "username": username,
                 "domain": domain,
                 "restoreAs": user.restoreAs,
-                "app_id": unusedOptions.appId,
+                "app_id": appId,
             },
             options;
 

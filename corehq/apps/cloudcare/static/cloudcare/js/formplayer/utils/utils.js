@@ -493,7 +493,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 FormplayerFrontend.syncInterval = setInterval(function () {
                     if (shouldSync() && FormplayerFrontend.permitIntervalSync) {
                         const urlObject = Utils.currentUrlToObject();
-                        FormplayerFrontend.getChannel().request("interval_sync-db", urlObject);
+                        FormplayerFrontend.getChannel().request("interval_sync-db", urlObject.appId);
                     }
                 }, delayInMilliseconds);
             } else if (FormplayerFrontend.syncInterval && !toggleOn) {
