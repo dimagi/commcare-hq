@@ -37,7 +37,7 @@ django-recaptcha
 django-statici18n
 django-tastypie
 django-transfer
-django-two-factor-auth
+django-two-factor-auth @ git+https://github.com/gherceg/django-two-factor-auth.git@f0c5387978a1003ae28d6d377f53b5066aa10282
 django-user-agents
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
 django>=3.2.18,<4.0
