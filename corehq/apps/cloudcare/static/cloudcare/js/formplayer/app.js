@@ -519,18 +519,19 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         return FormplayerFrontend.LoginAsNextOptions || null;
     });
 
-    FormplayerFrontend.on("sync", function () {
+    function getSyncRequestData() {
         var user = FormplayerFrontend.getChannel().request('currentUser'),
-            username = user.username,
-            domain = user.domain,
-            formplayerUrl = user.formplayer_url,
-            complete,
-            data = {
-                "username": username,
-                "domain": domain,
+            return {
+                "username": user.username,
+                "domain": user.domain,
                 "restoreAs": user.restoreAs,
-            },
-            options;
+            }
+    }
+    FormplayerFrontend.on("sync", function () {
+        var options,
+            complete,
+            formplayerUrl = user.formplayer_url,
+            data = getSyncRequestData();
 
         complete = function (response) {
             if (response.responseJSON.status === 'retry') {
@@ -554,18 +555,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     });
 
     FormplayerFrontend.getChannel().reply("interval_sync-db", function (appId) {
-        var user = FormplayerFrontend.getChannel().request('currentUser'),
-            username = user.username,
-            domain = user.domain,
-            formplayerUrl = user.formplayer_url,
+        var options,
             complete,
-            data = {
-                "username": username,
-                "domain": domain,
-                "restoreAs": user.restoreAs,
-                "app_id": appId,
-            },
-            options;
+            formplayerUrl = user.formplayer_url,
+            data = $.extend(getSyncRequestData(), {"app_id": appId});
 
         complete = function (response) {
             if (response.status === 'retry') {
