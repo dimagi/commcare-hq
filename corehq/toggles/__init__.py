@@ -2740,7 +2740,7 @@ SUPPORT_GEO_JSON_EXPORT = StaticToggle(
 
 INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
     slug='increased_max_search_results',
-    label='Support a higher number of ES results',
+    label='Increases the maximum number of Elasticsearch results from 500 to 1500',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='Temporary increase of the max number of search results.',
