@@ -185,7 +185,7 @@ class CaseSearchQueryBuilder:
     def _get_initial_search_es(self):
         max_results = CASE_SEARCH_MAX_RESULTS
         if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
-            max_results = 1000
+            max_results = 1500
         return (CaseSearchES()
                 .domain(self.query_domains)
                 .case_type(self.case_types)
