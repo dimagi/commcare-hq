@@ -182,7 +182,7 @@ django-redis-sessions==0.6.2
     # via -r base-requirements.in
 django-statici18n==2.4.0
     # via -r base-requirements.in
-django-tastypie==0.14.4
+django-tastypie==0.14.6
     # via -r base-requirements.in
 django-transfer==0.4
     # via -r base-requirements.in
