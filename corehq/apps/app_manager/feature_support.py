@@ -254,12 +254,3 @@ class CommCareFeatureSupportMixin(object):
         return (
             self._require_minimum_version('2.54')
         )
-
-    @property
-    def supports_alt_text(self):
-        """
-        Alt text for case list icons and clickable icons
-        """
-        return (
-            self._require_minimum_version('2.54')
-        )

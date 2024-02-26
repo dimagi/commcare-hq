@@ -267,7 +267,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var headers = detailObject.get('headers');
         var details = detailObject.get('details');
         var styles = detailObject.get('styles');
-        var altText = detailObject.get('altText');
         var detailModel = [];
         // we need to map the details and headers JSON to a list for a Backbone Collection
         for (i = 0; i < headers.length; i++) {
@@ -275,7 +274,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.data = details[i];
             obj.header = headers[i];
             obj.style = styles[i];
-            obj.altText = altText[i];
             obj.id = i;
             if (obj.style.displayFormat === constants.FORMAT_MARKDOWN) {
                 obj.html = markdown.render(details[i]);
@@ -300,7 +298,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         return {
             styles: _.map(indices, index => detailObject.styles[index]),
-            altText: _.map(indices, index => detailObject.altText[index]),
+            headers: _.map(indices, index => detailObject.headers[index]),
             tiles: _.map(indices, index => detailObject.tiles[index]),
             details: _.map(indices, index => detailObject.details[index]),
         };
@@ -310,13 +308,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var getCaseTile = function (detailObject) {
         var {
             styles,
-            altText,
+            headers,
             tiles,
             details,
         } = onlyVisibleColumns(detailObject);
         var detailModel = new Backbone.Model({
             data: details,
-            altText,
             id: 0,
         });
         var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
@@ -332,6 +329,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
         return views.PersistentCaseTileView({
             model: detailModel,
+            headers: headers,
             styles: styles,
             tiles: tiles,
             maxWidth: detailObject.maxWidth,
