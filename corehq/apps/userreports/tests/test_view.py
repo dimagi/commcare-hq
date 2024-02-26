@@ -534,4 +534,4 @@ class TestSubscribeToDataSource(TestCase):
             HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
         )
         self.assertEqual(request.status_code, 422)
-        self.assertEqual(request.content.decode("utf-8"), "Missing parameter: client_id")
+        self.assertEqual(request.content.decode("utf-8"), "Missing parameters: client_id")
