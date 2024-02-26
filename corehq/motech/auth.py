@@ -183,6 +183,7 @@ class OAuth2ClientGrantManager(AuthManager):
         client_secret: str,
         token_url: str,
         refresh_url: str,
+        pass_credentials_in_header: bool,
         connection_settings: 'ConnectionSettings',
     ):
         self.base_url = base_url
@@ -190,6 +191,7 @@ class OAuth2ClientGrantManager(AuthManager):
         self.client_secret = client_secret
         self.token_url = token_url
         self.refresh_url = refresh_url
+        self.pass_credentials_in_header = pass_credentials_in_header
         self.connection_settings = connection_settings
 
     @property
@@ -206,22 +208,27 @@ class OAuth2ClientGrantManager(AuthManager):
         self.connection_settings.save()
 
     def get_session(self, domain_name: str) -> Session:
+        # Compare to OAuth2PasswordGrantManager.get_session()
+
         def set_last_token(token):
             # Used by OAuth2Session
             self.last_token = token
 
-        # This adds an extra round trip for all access tokens without refresh tokens.
-        # That is not ideal, but is the only way to ensure that we are able to guarantee
-        # the token will work without error, or refactoring the way sessions are used across
-        # all repeaters.
         if not self.last_token or self.last_token.get('refresh_token') is None:
             client = BackendApplicationClient(client_id=self.client_id)
             session = OAuth2Session(client=client)
-            self.last_token = session.fetch_token(
-                token_url=self.token_url,
-                client_id=self.client_id,
-                client_secret=self.client_secret,
-            )
+            if self.pass_credentials_in_header:
+                auth = HTTPBasicAuth(self.client_id, self.client_secret)
+                self.last_token = session.fetch_token(
+                    token_url=self.token_url,
+                    auth=auth,
+                )
+            else:
+                self.last_token = session.fetch_token(
+                    token_url=self.token_url,
+                    client_id=self.client_id,
+                    client_secret=self.client_secret,
+                )
 
         refresh_kwargs = {
             'client_id': self.client_id,
