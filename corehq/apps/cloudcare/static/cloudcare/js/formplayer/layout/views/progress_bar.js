@@ -23,6 +23,12 @@ hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", function () {
                 $(this.el).find('.progress').addClass("hide");
                 $(this.el).find('.js-loading').removeClass("hide");
             } else {
+                if (hqImport('hqwebapp/js/toggles').toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+                    $(this.el).find('.progress').css("height", "12px");
+                    $(this.el).find('.progress-container').css("width", "50%");
+                    $(this.el).find('.progress-title h1').css("font-size", "25px");
+                    $(this.el).find('#formplayer-progress ').css("background-color", "rgba(255, 255, 255, 0.7)");
+                }
                 $(this.el).find('.progress').removeClass("hide");
                 $(this.el).find('.js-loading').addClass("hide");
             }
