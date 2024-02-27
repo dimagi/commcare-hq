@@ -685,13 +685,15 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
                         crispy.Div(
                             hqcrispy.InlineField(
                                 'api_secret',
-                                data_bind="visible: isAPISecretVisible"
+                                data_bind="visible: isAPISecretVisible, "
+                                          "textInput: apiSecret"
                             ),
                             api_secret_toggles,
                         ),
                         show_row_class=False,
                     ),
-                    crispy.Field('date_api_secret_expiration', css_class='date-picker'),
+                    crispy.Field('date_api_secret_expiration', css_class='date-picker',
+                                 data_bind="textInput: dateApiSecretExpiration"),
                 ),
                 css_class="panel-body"
             ),

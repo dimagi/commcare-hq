@@ -61,23 +61,25 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
             self.isCancelUpdateVisible = ko.observable(false);
             self.apiExpirationDate = "";
 
-
+            self.dateApiSecretExpiration = ko.observable($('#id_date_api_secret_expiration').val());
             self.isAPISecretVisible =  ko.observable(!initialPageData.get('api_secret_exists'));
+            self.apiSecret = ko.observable();
 
             self.showAPISecret = function () {
                 self.isAPISecretVisible(true);
                 self.isCancelUpdateVisible(true);
                 // Store the current expiration date before clearing them for editing.
-                self.apiExpirationDate = document.getElementById('id_date_api_secret_expiration').value;
-                document.getElementById('id_date_api_secret_expiration').value = '';
+                self.apiExpirationDate = self.dateApiSecretExpiration();
+                self.dateApiSecretExpiration('');
             };
 
             self.hideAPISecret = function () {
                 self.isAPISecretVisible(false);
                 self.isCancelUpdateVisible(false);
-                document.getElementById('id_api_secret').value = '';
+                // Reset the api secret to blank if user cancel editing
+                self.apiSecret('');
                 // Restore the original values of expiration date after canceling editing.
-                document.getElementById('id_date_api_secret_expiration').value = self.apiExpirationDate;
+                self.dateApiSecretExpiration(self.apiExpirationDate);
 
             };
             return self;
