@@ -25,8 +25,6 @@ from django_countries.data import COUNTRIES
 
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
-from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -1513,16 +1511,12 @@ class AddPhoneNumberForm(forms.Form):
 class CommCareUserFormSet(object):
     """Combines the CommCareUser form and the Custom Data form"""
 
-    def __init__(self, domain, editable_user, request_user, request, data=None, *args, **kwargs):
+    def __init__(self, domain, editable_user, request_user, request, data=None):
         self.domain = domain
         self.editable_user = editable_user
         self.request_user = request_user
         self.request = request
         self.data = data
-        self.loadtest_users_enabled = domain_has_privilege(
-            domain,
-            privileges.LOADTEST_USERS,
-        )
 
     @cached_property
     def user_form(self):
