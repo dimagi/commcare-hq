@@ -493,8 +493,14 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
             if (!FormplayerFrontend.syncInterval) {
                 FormplayerFrontend.syncInterval = setInterval(function () {
+                    const urlObject = Utils.currentUrlToObject(),
+                        currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", urlObject.appId),
+                        customProperties = currentApp?.attributes?.profile?.custom_properties || {},
+                        useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
+                    if (!useAggressiveSyncTiming){
+                        stopSyncInterval();
+                    }
                     if (shouldSync() && FormplayerFrontend.permitIntervalSync) {
-                        const urlObject = Utils.currentUrlToObject();
                         FormplayerFrontend.getChannel().request("interval_sync-db", urlObject.appId);
                     }
                 }, delayInMilliseconds);
