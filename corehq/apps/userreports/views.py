@@ -1568,8 +1568,7 @@ def subscribe_to_data_source_changes(request, domain, config_id):
     conn_name = gettext_lazy('CommCare Analytics on {server}').format(
         server=client_hostname,
     )
-
-    conn_settings, _ = ConnectionSettings.objects.update_or_create(
+    conn_settings, __ = ConnectionSettings.objects.update_or_create(
         client_id=request.POST['client_id'],
         defaults={
             'domain': domain,
