@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("cloudcare/js/formplayer/middleware", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 

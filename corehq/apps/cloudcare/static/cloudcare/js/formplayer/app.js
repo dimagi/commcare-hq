@@ -3,6 +3,7 @@
 /**
  * The primary Marionette application managing menu navigation and launching form entry
  */
+'use strict';
 hqDefine("cloudcare/js/formplayer/app", function () {
     var appcues = hqImport('analytix/js/appcues'),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
@@ -520,14 +521,14 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     function makeSyncRequest(route, requestData) {
         var options,
-        complete,
-        user = FormplayerFrontend.getChannel().request('currentUser'),
-        formplayerUrl = user.formplayer_url,
-        data = {
-            "username": user.username,
-            "domain": user.domain,
-            "restoreAs": user.restoreAs,
-        };
+            complete,
+            user = FormplayerFrontend.getChannel().request('currentUser'),
+            formplayerUrl = user.formplayer_url,
+            data = {
+                "username": user.username,
+                "domain": user.domain,
+                "restoreAs": user.restoreAs,
+            };
 
         if (requestData) {
             data = $.extend(data, requestData);
@@ -570,7 +571,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     });
 
     FormplayerFrontend.getChannel().reply("interval_sync-db", function (appId) {
-        makeSyncRequest("interval_sync-db", {"app_id": appId})
+        makeSyncRequest("interval_sync-db", {"app_id": appId});
     });
 
     /**
