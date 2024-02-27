@@ -10,6 +10,7 @@ from corehq.apps.sso.utils.context_helpers import (
     get_api_secret_expiration_email_context,
     get_idp_cert_expiration_email_context,
 )
+from dimagi.utils.logging import notify_exception
 
 log = logging.getLogger(__name__)
 
@@ -132,7 +133,7 @@ def send_api_token_expiration_reminder_emails(num_days):
     for idp in queryset.all():
         context = get_api_secret_expiration_email_context(idp)
         if not context["to"]:
-            log.error(f"no admin email addresses for IdP: {idp}")
+            notify_exception(f"no admin email addresses for IdP: {idp}")
         try:
             for send_to in context["to"]:
                 send_html_email_async.delay(
@@ -152,7 +153,5 @@ def send_api_token_expiration_reminder_emails(num_days):
                     }
                 )
         except Exception as exc:
-            log.error(
-                f"Failed to send cert reminder email for IdP {idp}: {exc!s}",
-                exc_info=True,
-            )
+            notify_exception(f"Failed to send api secret expire reminder email for IdP {idp}: {exc!s}",
+                             exc_info=True)
