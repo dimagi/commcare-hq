@@ -390,7 +390,8 @@ class EditWebUserView(BaseEditUserView):
             data = self.request.POST
         else:
             data = None
-        form = WebUserFormSet(self.domain, self.editable_user, self.request, data)
+        form = WebUserFormSet(data=data, domain=self.domain,
+            editable_user=self.editable_user, request_user=self.request.couch_user, request=self.request)
 
         if self.can_change_user_roles:
             try:
