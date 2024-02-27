@@ -518,64 +518,59 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         return FormplayerFrontend.LoginAsNextOptions || null;
     });
 
-    function getSyncRequestData() {
-        var user = FormplayerFrontend.getChannel().request('currentUser')
-            return {
-                "username": user.username,
-                "domain": user.domain,
-                "restoreAs": user.restoreAs,
-            }
-    }
-    FormplayerFrontend.on("sync", function () {
+    function makeSyncRequest(route, requestData) {
         var options,
-            complete,
-            formplayerUrl = user.formplayer_url,
-            data = getSyncRequestData();
+        complete,
+        user = FormplayerFrontend.getChannel().request('currentUser'),
+        formplayerUrl = user.formplayer_url,
+        data = {
+            "username": user.username,
+            "domain": user.domain,
+            "restoreAs": user.restoreAs,
+        };
+
+        if (requestData) {
+            data = $.extend(data, requestData);
+        }
 
         complete = function (response) {
-            if (response.responseJSON.status === 'retry') {
-                FormplayerFrontend.trigger('retry', response.responseJSON, function () {
-                    // Ensure that when we hit the sync db route we don't use the overwrite_cache param
-                    options.data = JSON.stringify($.extend(true, { preserveCache: true }, data));
-                    $.ajax(options);
-                }, gettext('Waiting for server progress'));
-            } else {
-                FormplayerFrontend.trigger('clearProgress');
-                CloudcareUtils.formplayerSyncComplete(response.responseJSON.status === 'error');
+            if (route === "sync-db") {
+                if (response.responseJSON.status === 'retry') {
+                    FormplayerFrontend.trigger('retry', response.responseJSON, function () {
+                        // Ensure that when we hit the sync db route we don't use the overwrite_cache param
+                        options.data = JSON.stringify($.extend(true, { preserveCache: true }, data));
+                        $.ajax(options);
+                    }, gettext('Waiting for server progress'));
+                } else {
+                    FormplayerFrontend.trigger('clearProgress');
+                    CloudcareUtils.formplayerSyncComplete(response.responseJSON.status === 'error');
+                }
+            } else if (route === "interval_sync-db") {
+                if (response.status === 'retry') {
+                    FormplayerFrontend.trigger('retry', response, function () {
+                        options.data = JSON.stringify($.extend({mustRestore: true}, data));
+                        $.ajax(options);
+                    }, gettext('Waiting for server progress'));
+                } else {
+                    FormplayerFrontend.trigger('clearProgress');
+                }
             }
         };
+
         options = {
-            url: formplayerUrl + "/sync-db",
+            url: formplayerUrl + "/" + route,
             data: JSON.stringify(data),
             complete: complete,
         };
         FormplayerUtils.setCrossDomainAjaxOptions(options);
         $.ajax(options);
+    }
+    FormplayerFrontend.on("sync", function () {
+        makeSyncRequest("sync-db");
     });
 
     FormplayerFrontend.getChannel().reply("interval_sync-db", function (appId) {
-        var options,
-            complete,
-            formplayerUrl = user.formplayer_url,
-            data = $.extend(getSyncRequestData(), {"app_id": appId});
-
-        complete = function (response) {
-            if (response.status === 'retry') {
-                FormplayerFrontend.trigger('retry', response, function () {
-                    options.data = JSON.stringify($.extend({mustRestore: true}, data));
-                    $.ajax(options);
-                }, gettext('Waiting for server progress'));
-            } else {
-                FormplayerFrontend.trigger('clearProgress');
-            }
-        };
-        options = {
-            url: formplayerUrl + "/interval_sync-db",
-            data: JSON.stringify(data),
-            complete: complete,
-        };
-        FormplayerUtils.setCrossDomainAjaxOptions(options);
-        $.ajax(options);
+        makeSyncRequest("interval_sync-db", {"app_id": appId})
     });
 
     /**
