@@ -498,7 +498,7 @@ class TestSubscribeToDataSource(TestCase):
         self.assertEqual(request.status_code, 201)
 
         conn_settings = ConnectionSettings.objects.get(client_id=client_id)
-        self.assertEqual(conn_settings.name, "Connection - hostname.com")
+        self.assertEqual(conn_settings.name, "CommCare Analytics on hostname.com")
         self.assertEqual(conn_settings.auth_type, OAUTH2_CLIENT)
 
         repeater = DataSourceRepeater.objects.get(name="hostname.com_data_source_id")
