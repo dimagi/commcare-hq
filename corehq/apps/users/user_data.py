@@ -56,6 +56,7 @@ class UserData:
                         .select_for_update()
                         .get(user_id=self._couch_user.user_id, domain=self.domain))
         except SQLUserData.DoesNotExist:
+            # Only create db object if there's something to persist
             if self._local_to_user or self.profile_id:
                 SQLUserData.objects.create(
                     user_id=self._couch_user.user_id,
@@ -64,7 +65,6 @@ class UserData:
                     django_user=self._couch_user.get_django_user(),
                     profile_id=self.profile_id,
                 )
-            # Don't save to DB if there's nothing to save
         else:
             sql_data.data = self._local_to_user
             sql_data.profile_id = self.profile_id
