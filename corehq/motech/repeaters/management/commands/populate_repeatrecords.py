@@ -70,7 +70,7 @@ class Command(PopulateSQLCommand):
                 couch["next_check"],
                 json_format_datetime(sql.next_check) if sql.next_check else sql.next_check,
             ))
-        if couch.get("failure_reason"):
+        if couch.get("failure_reason") and not couch.get("succeeded"):
             diffs.append(cls.diff_value(
                 "failure_reason",
                 couch["failure_reason"],
