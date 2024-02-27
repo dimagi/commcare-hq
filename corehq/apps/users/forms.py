@@ -1571,7 +1571,7 @@ class WebUserFormSet(object):
         self.data = data
 
     @cached_property
-    def user_role_form(self):
+    def user_form(self):
         return UpdateUserRoleForm(data=self.data, domain=self.domain,
                                   existing_user=self.editable_user, request=self.request)
 
@@ -1590,15 +1590,15 @@ class WebUserFormSet(object):
 
     def is_valid(self):
         return (self.data is not None
-                and all([self.user_role_form.is_valid(), self.custom_data.is_valid()]))
+                and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
 
     def update_user(self):
-        user_data = self.user_role_form.existing_user.get_user_data(self.domain)
+        user_data = self.user_form.existing_user.get_user_data(self.domain)
         old_profile_id = user_data.profile_id
         new_user_data = self.custom_data.get_data_to_save()
         new_profile_id = new_user_data.pop(PROFILE_SLUG, ...)
         changed = user_data.update(new_user_data, new_profile_id)
-        return self.user_role_form.update_user(
+        return self.user_form.update_user(
             metadata_updated=changed,
             profile_updated=old_profile_id != new_profile_id
         )

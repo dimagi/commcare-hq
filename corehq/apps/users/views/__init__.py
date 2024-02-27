@@ -400,9 +400,9 @@ class EditWebUserView(BaseEditUserView):
                 messages.error(self.request, _("""
                     This user has no role. Please assign this user a role and save.
                 """))
-            form.user_role_form.load_roles(current_role=existing_role, role_choices=self.user_role_choices)
+            form.user_form.load_roles(current_role=existing_role, role_choices=self.user_role_choices)
         else:
-            del form.user_role_form.fields['role']
+            del form.user_form.fields['role']
 
         return form
 

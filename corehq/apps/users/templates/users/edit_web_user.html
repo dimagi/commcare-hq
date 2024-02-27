@@ -69,7 +69,7 @@
       <input type="hidden" name="form_type" value="update-user" />
       <fieldset>
         <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Role{% endblocktrans %}</legend>
-        {% crispy form_user_update.user_role_form %}
+        {% crispy form_user_update.user_form %}
 
         {% if form_user_update.custom_data.form.fields or form_user_update.custom_data.form.data %}
           {% crispy form_user_update.custom_data.form %}
