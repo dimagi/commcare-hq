@@ -448,7 +448,7 @@ class IdentityProvider(models.Model):
                 f"{result.get('error_description')}, Correlation ID: {result.get('correlation_id')}"
                 raise Exception(error_message)
         except Exception as e:
-            notify_exception(None, f"Failed to get members of the IDP. {str(e)}")
+            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
 
             # Send email
             subject = _("Issue Connecting to Microsoft Graph API")
