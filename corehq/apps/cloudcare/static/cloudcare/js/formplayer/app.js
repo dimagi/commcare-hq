@@ -3,7 +3,6 @@
 /**
  * The primary Marionette application managing menu navigation and launching form entry
  */
-
 hqDefine("cloudcare/js/formplayer/app", function () {
     var appcues = hqImport('analytix/js/appcues'),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
@@ -520,7 +519,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     });
 
     function getSyncRequestData() {
-        var user = FormplayerFrontend.getChannel().request('currentUser'),
+        var user = FormplayerFrontend.getChannel().request('currentUser')
             return {
                 "username": user.username,
                 "domain": user.domain,
