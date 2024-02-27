@@ -133,7 +133,7 @@ def send_api_token_expiration_reminder_emails(num_days):
     for idp in queryset.all():
         context = get_api_secret_expiration_email_context(idp)
         if not context["to"]:
-            notify_exception(f"no admin email addresses for IdP: {idp}")
+            notify_exception(None, f"no admin email addresses for IdP: {idp}")
         try:
             for send_to in context["to"]:
                 send_html_email_async.delay(
@@ -153,5 +153,5 @@ def send_api_token_expiration_reminder_emails(num_days):
                     }
                 )
         except Exception as exc:
-            notify_exception(f"Failed to send api secret expire reminder email for IdP {idp}: {exc!s}",
+            notify_exception(None, f"Failed to send api secret expire reminder email for IdP {idp}: {exc!s}",
                              exc_info=True)
