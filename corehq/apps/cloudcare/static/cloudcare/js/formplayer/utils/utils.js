@@ -1,7 +1,8 @@
 /*global Backbone, DOMPurify */
 hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles");
+        toggles = hqImport("hqwebapp/js/toggles"),
+        constants = hqImport("cloudcare/js/formplayer/constants");
 
     var Utils = {};
 
@@ -457,6 +458,49 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             expires: 365,
             path: savedPath,
             secure: initialPageData.get('secure_cookies'),
+        });
+    };
+
+    Utils.startIntervalSync = function (appId, attemptedRestore) {
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId),
+                customProperties = currentApp?.attributes?.profile?.custom_properties || {},
+                FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
+            if (attemptedRestore) {
+                Utils.setEnableIntervalSync(false);
+            }
+
+            const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
+            if (useAggressiveSyncTiming) {
+                // Sync frequency is synchronized with Formplayer's restore expiration
+                Utils.setEnableIntervalSync(true, FIVE_MINUTES_IN_MILLISECONDS);
+            }
+        });
+    };
+
+    Utils.setEnableIntervalSync = function (toggleOn, delayInMilliseconds) {
+        function shouldSync() {
+            const currentTime = Date.now(),
+                lastUserActivityTime =  sessionStorage.getItem("lastUserActivityTime") || 0,
+                elapsedTimeSinceLastActivity = currentTime - lastUserActivityTime,
+                isInApp = Utils.currentUrlToObject().appId !== undefined;
+            if (elapsedTimeSinceLastActivity <= delayInMilliseconds && isInApp) {
+                return true;
+            }
+        }
+
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            if (!FormplayerFrontend.syncInterval && toggleOn) {
+                FormplayerFrontend.syncInterval = setInterval(function () {
+                    if (shouldSync() && FormplayerFrontend.permitIntervalSync) {
+                        const urlObject = Utils.currentUrlToObject();
+                        FormplayerFrontend.getChannel().request("interval_sync-db", urlObject.appId);
+                    }
+                }, delayInMilliseconds);
+            } else if (FormplayerFrontend.syncInterval && !toggleOn) {
+                clearInterval(FormplayerFrontend.syncInterval);
+                FormplayerFrontend.syncInterval = null;
+            }
         });
     };
 
