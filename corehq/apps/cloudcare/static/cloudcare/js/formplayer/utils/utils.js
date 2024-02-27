@@ -460,24 +460,24 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         });
     };
 
-    Utils.startIntervalSync = function (appId, attemptedRestore) {
+    Utils.setSyncInterval = function (appId, attemptedRestore) {
         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
             const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId),
                 customProperties = currentApp?.attributes?.profile?.custom_properties || {},
                 FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
             if (attemptedRestore) {
-                Utils.setEnableIntervalSync(false);
+                stopSyncInterval();
             }
 
             const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
             if (useAggressiveSyncTiming) {
                 // Sync frequency is synchronized with Formplayer's restore expiration
-                Utils.setEnableIntervalSync(true, FIVE_MINUTES_IN_MILLISECONDS);
+                startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
             }
         });
     };
 
-    Utils.setEnableIntervalSync = function (toggleOn, delayInMilliseconds) {
+    function startSyncInterval(delayInMilliseconds) {
         function shouldSync() {
             const currentTime = Date.now(),
                 lastUserActivityTime =  sessionStorage.getItem("lastUserActivityTime") || 0,
@@ -489,17 +489,21 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         }
 
         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            if (!FormplayerFrontend.syncInterval && toggleOn) {
+            if (!FormplayerFrontend.syncInterval) {
                 FormplayerFrontend.syncInterval = setInterval(function () {
                     if (shouldSync() && FormplayerFrontend.permitIntervalSync) {
                         const urlObject = Utils.currentUrlToObject();
                         FormplayerFrontend.getChannel().request("interval_sync-db", urlObject.appId);
                     }
                 }, delayInMilliseconds);
-            } else if (FormplayerFrontend.syncInterval && !toggleOn) {
-                clearInterval(FormplayerFrontend.syncInterval);
-                FormplayerFrontend.syncInterval = null;
             }
+        });
+    };
+
+    function stopSyncInterval() {
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            clearInterval(FormplayerFrontend.syncInterval);
+            FormplayerFrontend.syncInterval = null;
         });
     };
 
