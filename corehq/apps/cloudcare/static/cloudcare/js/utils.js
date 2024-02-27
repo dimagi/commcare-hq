@@ -167,8 +167,10 @@ hqDefine('cloudcare/js/utils', [
                 let currentProgress = 10;
                 progressView.setProgress(currentProgress, 100, 200);
                 sessionStorage.intervalToClear = setInterval(function () {
-                    progressView.setProgress(currentProgress, 100, 200);
-                    currentProgress += 1;
+                    if (currentProgress <= 100) {
+                        progressView.setProgress(currentProgress, 100, 200);
+                        currentProgress += 1;
+                    }
                 }, 250);
 
             } else {
