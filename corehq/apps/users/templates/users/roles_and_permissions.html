@@ -301,14 +301,14 @@
                                     {% trans "Edit Role" %}
                                 </span>
                                 <span data-bind="ifnot: $root.allowEdit && (!upstream_id() || $parent.unlockLinkedRoles())">
-                                    <i class="fa fa-eye"></i>
+                                    <i class="fa-solid fa-eye"></i>
                                     {% trans "View Role" %}
                                 </span>
             </button>
             <button class="btn btn-danger"
               data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit && isEditable,
                 click: $data._id ? $root.setRoleBeingDeleted : null">
-              <i class="fa fa-trash"></i>
+              <i class="fa-regular fa-trash-can"></i>
               {% trans "Delete" %}
             </button>
           </td>

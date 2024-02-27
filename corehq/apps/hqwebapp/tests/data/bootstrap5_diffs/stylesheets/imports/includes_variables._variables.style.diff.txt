@@ -1,11 +1,15 @@
 --- 
 +++ 
-@@ -1,124 +1,194 @@
+@@ -1,124 +1,225 @@
 -@import "@{b3-import-variables}";
-+$prefix: bs;
- 
+-
 -// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
 -@font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+-
+-@font-size-base:  12px;
+-@icon-font-path:  "../../bootstrap/fonts/";
++$prefix: bs;
++
 +// Grid Containers
 +// we will want to adapt the defaults in a full redesign
 +$container-max-widths: (
@@ -15,9 +19,7 @@
 +  xl: 1140px,
 +  xxl: 1160px
 +);
- 
--@font-size-base:  12px;
--@icon-font-path:  "../../bootstrap/fonts/";
++
 +
 +// Typography Overrides
 +$font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -141,68 +143,30 @@
 -@cc-dark-cool-accent-hi:  #d6c5ea;
 -@cc-dark-cool-accent-mid: #9060c8;
 -@cc-dark-cool-accent-low: #5d3f82;
-+$cc-dark-cool-accent-hi:  #d6c5ea;
-+$cc-dark-cool-accent-mid: #9060c8;
-+$cc-dark-cool-accent-low: #5d3f82;
- 
+-
 -@cc-dark-warm-accent-hi:  #ffe3c2;
 -@cc-dark-warm-accent-mid: #ff8400;
 -@cc-dark-warm-accent-low: #994f00;
-+$cc-dark-warm-accent-hi:  #ffe3c2;
-+$cc-dark-warm-accent-mid: #ff8400;
-+$cc-dark-warm-accent-low: #994f00;
- 
+-
 -// Main TWBS Colors
 -@brand-primary:   @cc-brand-mid;
 -@brand-success:   @cc-att-pos-mid;
 -@brand-info:      @cc-light-cool-accent-mid;
 -@brand-warning:   @cc-dark-warm-accent-mid;
 -@brand-danger:    @cc-att-neg-mid;
-+// Grays from default stylesheet — needed for reference
-+$gray-100: #f8f9fa;
-+$gray-200: #e9ecef;
-+$gray-600: #6c757d;
-+$gray-800: #343a40;
- 
+-
 -@text-color: @cc-text;
-+// Base color overrides
-+$blue: #5D70D2;
-+$green: #3FA12A;
-+$red: #E73C27;
-+$teal: #01A2A9;
-+$yellow: #EEAE00;
- 
+-
 -@link-hover-color: @cc-brand-low;
-+// for determining when to show black or white text on top of color
-+$min-contrast-ratio: 3;
- 
+-
 -@btn-default-color:              @cc-text;
 -@btn-default-bg:                 @cc-bg;
 -@btn-default-border:             @cc-neutral-hi;
-+// Theme Colors
-+$primary:   $blue;
-+$secondary: $gray-600;
-+$success:   $green;
-+$danger:    $red;
-+$info:      $teal;
-+$warning:   $yellow;
-+$light:     $gray-100;
-+$dark:      $gray-800;
- 
+-
 -@navbar-height:                  60px;
 -@navbar-padding-vertical:        ((@navbar-height - @line-height-computed) / 2);
 -@navbar-default-bg:              @cc-bg;
-+$theme-colors: (
-+  "primary":    $primary,
-+  "success":    $success,
-+  "info":       $info,
-+  "warning":    $warning,
-+  "danger":     $danger,
-+  "dark":       $dark,
-+  "secondary":  $secondary,
-+  "light":      $light,
-+);
- 
+-
 -@navbar-footer-height:            38px;
 -@navbar-footer-link-color:        mix(darken(#ffffff, 10), @brand-primary, 90);
 -@navbar-footer-link-color-hover:  @gray-lighter;
@@ -235,15 +199,93 @@
 -@zindex-cloudcare-debugger:           1005;
 -@zindex-formplayer-scroll-to-bottom:    5;
 -@zindex-formplayer-anchored-submit:     2;
-+$body-color: $dark;
-+$link-color: darken($primary, 10);
-+$link-hover-color: darken($primary, 50);
-+$border-color: $gray-200;
- 
- 
+-
+-
 -@input-border-radius-large:       5px;
 -@input-color:                     #000;
 -@cursor-disabled:                 'not-allowed';
++$cc-dark-cool-accent-hi:  #d6c5ea;
++$cc-dark-cool-accent-mid: #9060c8;
++$cc-dark-cool-accent-low: #5d3f82;
++
++$cc-dark-warm-accent-hi:  #ffe3c2;
++$cc-dark-warm-accent-mid: #ff8400;
++$cc-dark-warm-accent-low: #994f00;
++
++
++// Colors from the Dimagi color theme
++$dimagi-deep-purple: #16006D;
++$dimagi-sky: #8EA1FF;
++$dimagi-indigo: #3843D0;
++$dimagi-marigold: #FEAF31;
++$dimagi-sunset: #E44434;
++$dimagi-mango: #FC5F36;
++
++
++// Base color overrides
++$blue: #5D70D2;
++$green: #3FA12A;
++$red: $dimagi-sunset;
++$teal: #01A2A9;
++$yellow: $dimagi-marigold;
++$indigo: $dimagi-indigo;
++$purple: mix($dimagi-mango, $dimagi-indigo, 25%);
++$pink: mix($dimagi-mango, $dimagi-indigo, 50%);
++$salmon: mix($dimagi-mango, $dimagi-indigo, 75%);
++$orange: $dimagi-mango;
++
++// Grays from default stylesheet — needed for reference
++$gray-100: #f8f9fa;
++$gray-200: #e9ecef;
++$gray-600: #6c757d;
++$gray-800: #343a40;
++
++// Blues from default stylesheet - needed for reference
++$blue-600: shade-color($blue, 20%);
++$blue-900: shade-color($blue, 80%);
++
++// for determining when to show black or white text on top of color
++$min-contrast-ratio: 3;
++
++// Theme Colors
++$primary:   $blue;
++$secondary: $gray-600;
++$success:   $green;
++$danger:    $red;
++$info:      $teal;
++$warning:   $yellow;
++$light:     $gray-100;
++$dark:      $gray-800;
++
++$theme-colors: (
++  "primary":    $primary,
++  "success":    $success,
++  "info":       $info,
++  "warning":    $warning,
++  "danger":     $danger,
++  "dark":       $dark,
++  "secondary":  $secondary,
++  "light":      $light,
++);
++
++$body-color: $dark;
++$link-color: $blue-600;
++$link-hover-color:$blue-900;
++$border-color: $gray-200;
++
++// New gradient for salmon
++
++$salmon-100: tint-color($salmon, 80%);
++$salmon-200: tint-color($salmon, 60%);
++$salmon-300: tint-color($salmon, 40%);
++$salmon-400: tint-color($salmon, 20%);
++$salmon-500: $salmon !default;
++$salmon-600: shade-color($salmon, 20%);
++$salmon-700: shade-color($salmon, 40%);
++$salmon-800: shade-color($salmon, 60%);
++$salmon-900: shade-color($salmon, 80%);
++
++
 +// Form Sates
 +
 +$form-feedback-valid-color:         $success;

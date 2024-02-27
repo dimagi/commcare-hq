@@ -1559,9 +1559,13 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
 @toggles.SUPERSET_ANALYTICS.required_decorator()
 @api_throttle
 def subscribe_to_data_source_changes(request, domain, config_id):
-    for param in ['webhook_url', 'client_id', 'client_secret', 'token_url']:
-        if param not in request.POST:
-            return HttpResponse(status=422, content=f"Missing parameter: {param}")
+    reqd_params = {'webhook_url', 'client_id', 'client_secret', 'token_url'}
+    missing_params = reqd_params - set(request.POST)
+    if missing_params:
+        return HttpResponse(
+            status=422,
+            content=f"Missing parameters: {', '.join(missing_params)}",
+        )
 
     webhook_url = request.POST['webhook_url']
     client_hostname = urlparse(webhook_url).hostname

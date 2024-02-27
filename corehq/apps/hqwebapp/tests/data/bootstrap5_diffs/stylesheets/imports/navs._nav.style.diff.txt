@@ -9,7 +9,7 @@
    padding: 0;
    padding-bottom: 20px;
  }
-@@ -16,7 +16,7 @@
+@@ -16,15 +16,18 @@
    &.nav > li {
      a {
        padding: 3px 20px;
@@ -18,16 +18,21 @@
      }
      > a:hover {
        background-color: #dbdbdb;
-@@ -24,7 +24,7 @@
+     }
    }
-   &.nav li.active {
-     > a, > a:link, > a:visited, > a:hover {
+-  &.nav li.active {
+-    > a, > a:link, > a:visited, > a:hover {
 -      background-color: @brand-primary;
++  &.nav li {
++    > a.active,
++    > a.active:link,
++    > a.active:visited,
++    > a.active:hover {
 +      background-color: $brand-primary;
        color: #ffffff;
      }
    }
-@@ -36,7 +36,7 @@
+@@ -36,7 +39,7 @@
      margin: 8px 10px;
      overflow: hidden;
      background-color: white;
@@ -36,7 +41,7 @@
    }
    .nav-input {
      padding: 3px 20px;
-@@ -54,6 +54,7 @@
+@@ -54,6 +57,7 @@
  .nav-main-icon {
    font-size: 1.7em;
    line-height: 0.7em;
@@ -44,7 +49,7 @@
  }
  
  .text-hq-nav-header {
-@@ -68,7 +69,7 @@
+@@ -68,7 +72,7 @@
  }
  
  .nav > li > a {
