@@ -460,18 +460,20 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         });
     };
 
-    Utils.setSyncInterval = function (appId, attemptedRestore) {
+    Utils.setSyncInterval = function (appId, restartInterval) {
         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
             const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId),
                 customProperties = currentApp?.attributes?.profile?.custom_properties || {},
-                FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
-            if (attemptedRestore) {
-                stopSyncInterval();
+                useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
+            if (!useAggressiveSyncTiming) {
+                return
             }
 
-            const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
-            if (useAggressiveSyncTiming) {
-                // Sync frequency is synchronized with Formplayer's restore expiration
+            const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
+            if (restartInterval) {
+                stopSyncInterval();
+                startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
+            } else {
                 startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
             }
         });
