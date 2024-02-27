@@ -312,6 +312,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                     'is_static': self.is_static,
                     'error_message': error_message,
                     'details': details,
+                    'allow_delete': can_delete_report(request, self.spec),
                 }
                 context.update(self.main_context)
                 return self.render_to_response(context)
