@@ -145,7 +145,7 @@ class HQTwoFactorMethodForm(MethodForm):
         super().__init__(**kwargs)
         if not allow_phone_2fa:
             # Block people from setting up the phone method as their default
-            phone_methods = [method for method, _ in get_available_phone_methods()]
+            phone_methods = [method.code for method in get_available_phone_methods()]
             self.fields['method'].choices = [
                 (method, display_name)
                 for method, display_name in self.fields['method'].choices
