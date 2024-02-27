@@ -674,6 +674,35 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         return self.request_params.get(SelectApplicationFilter.slug, None)
 
     def _get_histogram_aggregation_for_app(self, nested_field_name, date_field_name):
+        """
+        The histogram aggregation is put inside a nested and filter aggregation to only query
+        the nested documents that match the selected app ID.
+
+        This function will return a nested aggregation that looks like the following:
+        "aggs": {
+            "nested_{nested_field_name}": {
+                "nested": {
+                    "path": "reporting_metadata.{nested_field_name}"
+                }
+            },
+            "aggs": {
+                "filtered_{nested_field_name}": {
+                    "filter": {
+                        "term": {
+                            "reporting_metadata.{nested_field_name}.app_id": self.selected_app_id
+                        }
+                    }
+                    "aggs": {
+                        "{nested_field_name}_date_histogram": {
+                            "date_histogram": {
+                                ...
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        """
         nested_field_path = f'reporting_metadata.{nested_field_name}'
         nested_agg = NestedAggregation(f'nested_{nested_field_name}', nested_field_path)
         filter_agg = FilterAggregation(
