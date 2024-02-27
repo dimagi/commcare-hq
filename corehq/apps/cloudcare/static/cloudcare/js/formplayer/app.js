@@ -185,6 +185,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     });
 
     FormplayerFrontend.on('startForm', function (data) {
+        FormplayerFrontend.permitIntervalSync = false;
         FormplayerFrontend.getChannel().request("clearMenu");
         hqRequire(["cloudcare/js/formplayer/menus/utils"], function (MenusUtils) {
             MenusUtils.showBreadcrumbs(data.breadcrumbs);
@@ -518,18 +519,19 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         return FormplayerFrontend.LoginAsNextOptions || null;
     });
 
-    FormplayerFrontend.on("sync", function () {
+    function getSyncRequestData() {
         var user = FormplayerFrontend.getChannel().request('currentUser'),
-            username = user.username,
-            domain = user.domain,
-            formplayerUrl = user.formplayer_url,
-            complete,
-            data = {
-                "username": username,
-                "domain": domain,
+            return {
+                "username": user.username,
+                "domain": user.domain,
                 "restoreAs": user.restoreAs,
-            },
-            options;
+            }
+    }
+    FormplayerFrontend.on("sync", function () {
+        var options,
+            complete,
+            formplayerUrl = user.formplayer_url,
+            data = getSyncRequestData();
 
         complete = function (response) {
             if (response.responseJSON.status === 'retry') {
@@ -545,6 +547,31 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         };
         options = {
             url: formplayerUrl + "/sync-db",
+            data: JSON.stringify(data),
+            complete: complete,
+        };
+        FormplayerUtils.setCrossDomainAjaxOptions(options);
+        $.ajax(options);
+    });
+
+    FormplayerFrontend.getChannel().reply("interval_sync-db", function (appId) {
+        var options,
+            complete,
+            formplayerUrl = user.formplayer_url,
+            data = $.extend(getSyncRequestData(), {"app_id": appId});
+
+        complete = function (response) {
+            if (response.status === 'retry') {
+                FormplayerFrontend.trigger('retry', response, function () {
+                    options.data = JSON.stringify($.extend({mustRestore: true}, data));
+                    $.ajax(options);
+                }, gettext('Waiting for server progress'));
+            } else {
+                FormplayerFrontend.trigger('clearProgress');
+            }
+        };
+        options = {
+            url: formplayerUrl + "/interval_sync-db",
             data: JSON.stringify(data),
             complete: complete,
         };
