@@ -33,8 +33,8 @@ class DuplicateCasesExplorer(CaseListExplorer):
             from corehq.apps.data_interfaces.views import DeduplicationRuleListView
             message = format_html(
                 gettext(
-                    'Please select a duplicate case rule to filter by above. Rules can be created '
-                    ' <a href={} target="_blank">here</a>'
+                    'Please select a duplicate case rule to filter by above. If one does not exist, you may '
+                    ' <a href={} target="_blank">create a new rule</a>'
                 ),
                 reverse(DeduplicationRuleListView.urlname, args=[self.domain])
             )
