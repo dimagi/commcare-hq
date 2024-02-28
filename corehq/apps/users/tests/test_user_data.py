@@ -115,7 +115,7 @@ class TestUserData(TestCase):
         user = self.make_commcare_user()
         user['user_data'] = {'favorite_color': 'purple'}
         user.save()
-        populate_user_data(user)
+        populate_user_data(CommCareUser.get_db().get(user._id), user.get_django_user())
         sql_data = SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
         self.assertEqual(sql_data.data['favorite_color'], 'purple')
 
@@ -125,14 +125,14 @@ class TestUserData(TestCase):
         user['user_data'] = {'favorite_color': 'purple'}
         user.add_domain_membership('domain2', timezone='UTC')
         user.save()
-        populate_user_data(user)
+        populate_user_data(WebUser.get_db().get(user._id), user.get_django_user())
         for domain in [self.domain, 'domain2']:
             sql_data = SQLUserData.objects.get(domain=domain, user_id=user.user_id)
             self.assertEqual(sql_data.data['favorite_color'], 'purple')
 
     def test_migrate_user_no_data(self):
         user = self.make_commcare_user()
-        populate_user_data(user)
+        populate_user_data(CommCareUser.get_db().get(user._id), user.get_django_user())
         with self.assertRaises(SQLUserData.DoesNotExist):
             SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
 
