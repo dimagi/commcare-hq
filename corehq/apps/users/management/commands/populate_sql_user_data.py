@@ -1,4 +1,4 @@
-# One-off migration, November 2023
+# One-off migration, March 2024
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
@@ -23,5 +23,6 @@ def get_users_without_user_data():
 
 def populate_user_data(django_user):
     user = CouchUser.from_django_user(django_user, strict=True)
-    for domain in user.get_domains():
-        user.get_user_data(domain).save()
+    if user:
+        for domain in user.get_domains():
+            user.get_user_data(domain).save()
