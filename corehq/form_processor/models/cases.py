@@ -6,6 +6,7 @@ import uuid
 from collections import OrderedDict, namedtuple
 from datetime import datetime
 
+from django.conf import settings
 from django.db import DatabaseError, models, transaction
 from django.db.models import F
 
@@ -833,6 +834,16 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
                 self.clear_tracked_models()
         except DatabaseError as e:
             raise CaseSaveError(e)
+
+    def delete(self, leave_tombstone=False):
+        if not leave_tombstone and not settings.UNIT_TESTING:
+            raise ValueError(
+                'Cannot delete case without leaving a tombstone except during testing, domain deletion or '
+                'when deleting system cases')
+        if leave_tombstone:
+            case = self.get(self._id)
+            create_deleted_sql_doc(case.case_id, 'form_processor.CommCareCase', case.domain, case.deleted_on)
+        super().delete()
 
     def __str__(self):
         return (

@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO
 
+from django.conf import settings
 from django.db import InternalError, models, transaction
 from django.db.models import Q
 
@@ -722,6 +723,16 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     def unarchive(self, user_id=None, trigger_signals=True):
         if self.is_archived:
             type(self).objects.do_archive(self, False, user_id, trigger_signals)
+
+    def delete(self, leave_tombstone=False):
+        if not leave_tombstone and not settings.UNIT_TESTING:
+            raise ValueError(
+                'Cannot delete form without leaving a tombstone except during testing, domain deletion or '
+                'when deleting system forms')
+        if leave_tombstone:
+            form = self.get(self._id)
+            create_deleted_sql_doc(form.form_id, 'form_processor.XFormInstance', form.domain, form.deleted_on)
+        super().delete()
 
     def __str__(self):
         return (
