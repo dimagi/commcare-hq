@@ -39,6 +39,8 @@ ES_GROUPS_INDEX_SWAPPED = False
 ES_SMS_INDEX_SWAPPED = False
 ES_USERS_INDEX_SWAPPED = False
 
+ES_MULTIPLEX_TO_VERSION = '6'
+
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
 # it can be reverted whenever that's figured out.
