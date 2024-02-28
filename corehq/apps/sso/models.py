@@ -1,4 +1,3 @@
-import msal
 import requests
 
 from django.db import models
@@ -411,6 +410,7 @@ class IdentityProvider(models.Model):
         return None
 
     def get_all_members_of_the_idp(self):
+        import msal
         authority_base_url = "https://login.microsoftonline.com/"
         authority = f"{authority_base_url}{self.api_host}"
 

@@ -426,9 +426,7 @@ mdit-py-plugins==0.4.0
 mdurl==0.1.2
     # via markdown-it-py
 msal==1.26.0
-    # via
-    #   -r docs-requirements.in
-    #   -r sso-requirements.in
+    # via -r sso-requirements.in
 msgpack==1.0.5
     # via cachecontrol
 myst-parser==2.0.0
