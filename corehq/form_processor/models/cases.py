@@ -20,6 +20,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.cleanup.models import create_deleted_sql_doc
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import BadName, NotFound
@@ -293,6 +294,29 @@ class CommCareCaseManager(RequireDBManager):
             self.publish_deleted_cases(domain, case_ids)
 
         return deleted_count
+
+    def hard_delete_cases_before_cutoff(self, cutoff, dry_run=True):
+        """
+        Permanently deletes cases with deleted_on set to a datetime earlier than
+        the specified cutoff datetime and creates a tombstone record of the deletion.
+        :param cutoff: datetime used to obtain the cases to be hard deleted
+        :param dry_run: if True, no changes will be committed to the database
+        and this method is effectively read-only
+        :return: dictionary of count of deleted objects per table
+        """
+        counts = {}
+        class_path = 'form_processor.CommCareCase'
+        for db_name in get_db_aliases_for_partitioned_query():
+            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
+            if dry_run:
+                deleted_counts = {class_path: queryset.count()}
+                counts.update(deleted_counts)
+            else:
+                for case in queryset:
+                    create_deleted_sql_doc(case.case_id, class_path, case.domain, case.deleted_on)
+                deleted_counts = queryset.delete()[1]
+                counts.update(deleted_counts)
+        return counts
 
     @staticmethod
     def publish_deleted_cases(domain, case_ids):

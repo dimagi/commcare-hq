@@ -10,6 +10,9 @@ from dimagi.utils.couch.migration import (
     SyncSQLToCouchMixin,
 )
 
+from corehq.apps.cleanup.models import DeletedSQLDoc
+from corehq.util.test_utils import unit_testing_only
+
 
 class ModelAttrEqualityHelper(SimpleTestCase):
     """
@@ -47,3 +50,8 @@ class ModelAttrEqualityHelper(SimpleTestCase):
 
 def is_monday():
     return datetime.utcnow().isoweekday() == 1
+
+
+@unit_testing_only
+def delete_all_deleted_sql_docs():
+    DeletedSQLDoc.objects.all().delete()

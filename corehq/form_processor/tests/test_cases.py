@@ -8,6 +8,8 @@ from django.conf import settings
 from django.db import router
 from django.test import TestCase
 
+from corehq.apps.cleanup.models import DeletedSQLDoc
+from corehq.apps.cleanup.tests.util import delete_all_deleted_sql_docs
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
 from corehq.form_processor.models import (
@@ -429,6 +431,93 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         self.assertEqual([], CommCareCaseIndex.objects.get_indices(case1.domain, case1.case_id))
         self.assertEqual([], CaseAttachment.objects.get_attachments(case1.case_id))
         self.assertEqual([], CaseTransaction.objects.get_transactions(case1.case_id))
+
+
+class TestHardDeleteCasesBeforeCutoff(TestCase):
+
+    def setUp(self):
+        self.domain = 'test_hard_delete_cases_before_cutoff'
+        self.cutoff = datetime(2020, 1, 1, 12, 30)
+
+    def test_case_is_hard_deleted_if_deleted_on_is_before_cutoff(self):
+        case = _create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
+        self.addCleanup(delete_all_deleted_sql_docs)
+
+        with self.assertRaises(CaseNotFound):
+            CommCareCase.objects.get_case(case.case_id, self.domain)
+
+    def test_case_is_not_hard_deleted_if_deleted_on_is_cutoff(self):
+        case = _create_case(self.domain, deleted_on=self.cutoff)
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
+
+        fetched_case = CommCareCase.objects.get_case(case.case_id, self.domain)
+        self.assertIsNotNone(fetched_case)
+
+    def test_case_is_not_hard_deleted_if_deleted_on_is_after_cutoff(self):
+        case = _create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 31))
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
+
+        fetched_case = CommCareCase.objects.get_case(case.case_id, self.domain)
+        self.assertIsNotNone(fetched_case)
+
+    def test_case_is_not_hard_deleted_if_deleted_on_is_null(self):
+        case = _create_case(self.domain, deleted_on=None)
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
+
+        fetched_case = CommCareCase.objects.get_case(case.case_id, self.domain)
+        self.assertIsNotNone(fetched_case)
+
+    def test_returns_deleted_counts(self):
+        expected_count = 5
+        for _ in range(expected_count):
+            _create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        counts = CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
+        self.addCleanup(delete_all_deleted_sql_docs)
+
+        self.assertEqual(counts, {'form_processor.CaseTransaction': 5, 'form_processor.CommCareCase': 5})
+
+    def test_nothing_is_deleted_if_dry_run_is_true(self):
+        case = _create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        # dry_run defaults to True
+        counts = CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff)
+
+        # should not raise CaseNotFound
+        CommCareCase.objects.get_case(case.case_id, self.domain)
+        # still returns accurate count
+        self.assertEqual(counts, {'form_processor.CommCareCase': 1})
+
+    def test_tombstone_is_created_on_deletion(self):
+        case = _create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
+        self.addCleanup(delete_all_deleted_sql_docs)
+        delete_doc = DeletedSQLDoc.objects.filter(doc_id=case.case_id)
+
+        self.assertIsNotNone(delete_doc)
+
+    def test_tombstone_count_matches_deleted_case_count(self):
+        expected_count = 5
+        for _ in range(expected_count):
+            _create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        counts = CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
+        self.addCleanup(delete_all_deleted_sql_docs)
+
+        self.assertEqual(DeletedSQLDoc.objects.all().count(), counts['form_processor.CommCareCase'])
+
+    def test_tombstone_is_not_create_if_deleted_on_is_null(self):
+        _create_case(self.domain, deleted_on=None)
+
+        CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
+
+        self.assertFalse(list(DeletedSQLDoc.objects.all()))
 
 
 @sharded

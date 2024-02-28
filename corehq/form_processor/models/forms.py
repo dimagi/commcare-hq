@@ -19,6 +19,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.cleanup.models import create_deleted_sql_doc
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -192,25 +193,6 @@ class XFormInstanceManager(RequireDBManager):
                 .values_list('form_id', flat=True)
             )
         return result
-
-    def hard_delete_forms_before_cutoff(self, cutoff, dry_run=True):
-        """
-        Permanently deletes forms with deleted_on set to a datetime earlier than
-        the specified cutoff datetime
-        :param cutoff: datetime used to obtain the forms to be hard deleted
-        :param dry_run: if True, no changes will be committed to the database
-        and this method is effectively read-only
-        :return: dictionary of count of deleted objects per table
-        """
-        counts = {}
-        for db_name in get_db_aliases_for_partitioned_query():
-            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
-            if dry_run:
-                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            else:
-                deleted_counts = queryset.delete()[1]
-            counts.update(deleted_counts)
-        return counts
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
@@ -422,6 +404,29 @@ class XFormInstanceManager(RequireDBManager):
             self.publish_deleted_forms(domain, form_ids)
 
         return deleted_count
+
+    def hard_delete_forms_before_cutoff(self, cutoff, dry_run=True):
+        """
+        Permanently deletes forms with deleted_on set to a datetime earlier than
+        the specified cutoff datetime and creates a tombstone record of the deletion.
+        :param cutoff: datetime used to obtain the forms to be hard deleted
+        :param dry_run: if True, no changes will be committed to the database
+        and this method is effectively read-only
+        :return: dictionary of count of deleted objects per table
+        """
+        counts = {}
+        class_path = 'form_processor.XFormInstance'
+        for db_name in get_db_aliases_for_partitioned_query():
+            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
+            if dry_run:
+                deleted_counts = {class_path: queryset.count()}
+                counts.update(deleted_counts)
+            else:
+                for form in queryset:
+                    create_deleted_sql_doc(form.form_id, class_path, form.domain, form.deleted_on)
+                deleted_counts = queryset.delete()[1]
+                counts.update(deleted_counts)
+        return counts
 
     @staticmethod
     def publish_deleted_forms(domain, form_ids):
