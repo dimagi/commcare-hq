@@ -4,9 +4,9 @@ from django.http import HttpResponse
 from django.urls import NoReverseMatch
 
 from tastypie import http
-from tastypie.exceptions import ImmediateHttpResponse, InvalidSortError
-from tastypie.resources import Resource
-
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse, InvalidSortError
+from tastypie.resources import Resource, convert_post_to_patch
+from tastypie.utils import dict_strip_unicode_keys
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
@@ -116,6 +116,37 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
 
     def get_required_privilege(self):
         return privileges.API_ACCESS
+
+    def patch_list_replica(self, create_or_update_object, request=None, **kwargs):
+        """
+        Exactly copied fromhttps://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1466
+        (BSD licensed) and modified to call custom method `create_or_update_object` on each bundle
+        """
+        request = convert_post_to_patch(request)
+        deserialized = self.deserialize(request, request.body,
+                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
+
+        collection_name = self._meta.collection_name
+        if collection_name not in deserialized:
+            raise BadRequest("Invalid data sent: missing '%s'" % collection_name)
+
+        if len(deserialized[collection_name]) and 'put' not in self._meta.detail_allowed_methods:
+            raise ImmediateHttpResponse(response=http.HttpMethodNotAllowed())
+
+        bundles_seen = []
+        status = http.HttpAccepted
+        for data in deserialized[collection_name]:
+            data = self.alter_deserialized_detail_data(request, data)
+            bundle = self.build_bundle(data=dict_strip_unicode_keys(data), request=request)
+            try:
+                create_or_update_object(bundle=bundle, **self.remove_api_resource_names(kwargs))
+            except AssertionError as e:
+                status = http.HttpBadRequest
+                bundle.data['_id'] = str(e)
+            bundles_seen.append(bundle)
+
+        to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
+        return self.create_response(request, to_be_serialized, response_class=status)
 
 
 class SimpleSortableResourceMixin(object):
