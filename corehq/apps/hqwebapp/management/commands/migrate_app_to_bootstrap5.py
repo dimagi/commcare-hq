@@ -165,21 +165,15 @@ class Command(BaseCommand):
             for flag in flags:
                 changelog.append(old_line)
                 changelog.append(f"\n{SOFT_BREAK_LINE}\n{flag}\n{SOFT_BREAK_LINE}\n\n")
-                self.stdout.write("".join(changelog[-2:]))
-                self.stdout.write("\nIMPORTANT: This complex change requires MANUAL intervention."
-                                  "\n\tHitting enter DOES NOT make this change."
-                                  "\n\tThis guidance is saved to logs for reference later."
-                                  "\n\tThis file is NOT fully migrated UNTIL this issue is addressed.\n")
+                self.display_flag_summary(changelog)
                 self.enter_to_continue()
                 self.stdout.write('\n')
             if renames:
                 changelog.append(f"-{old_line}")
                 changelog.append(f"+{new_line}")
                 changelog.append("\nRENAMES\n  - " + "\n   - ".join(renames))
-                self.stdout.write("".join(changelog[-3:]))
+                self.display_rename_summary(changelog)
                 changelog.append("\n\n")
-                self.stdout.write("\nIMPORTANT: Answering 'y' below will automatically make this change "
-                                  "in the Bootstrap 5 version of this file.\n")
 
                 confirm = self.get_confirmation("Keep changes?")
                 if not confirm:
@@ -187,6 +181,19 @@ class Command(BaseCommand):
                     self.stdout.write("ok, discarding changes...")
                     return old_line, changelog
         return new_line, changelog
+
+    def display_flag_summary(self, changelog):
+        self.stdout.write("".join(changelog[-2:]))
+        self.stdout.write("\nIMPORTANT: This complex change requires MANUAL intervention."
+                          "\n\tHitting enter DOES NOT make this change."
+                          "\n\tThis guidance is saved to logs for reference later."
+                          "\n\tThis file is NOT fully migrated UNTIL this issue is addressed.\n")
+
+    def display_rename_summary(self, changelog):
+        self.stdout.write("".join(changelog[-3:]))
+        changelog.append("\n\n")
+        self.stdout.write("\nIMPORTANT: Answering 'y' below will automatically make this change "
+                          "in the Bootstrap 5 version of this file.\n")
 
     def record_file_changes(self, template_path, app_name, changelog, is_template):
         short_path = self.get_short_path(app_name, template_path.parent, is_template)
@@ -197,6 +204,9 @@ class Command(BaseCommand):
         readme_path = readme_directory / readme_filename
         with open(readme_path, 'w') as readme_file:
             readme_file.writelines(changelog)
+        self.show_information_about_readme(readme_path)
+
+    def show_information_about_readme(self, readme_path):
         self.stdout.write(f"\nYou can reference the logs for these changes here:"
                           f"\n\t{readme_path}"
                           f"\n\t\tThis is IMPORTANT to take note of if you have any suggested changes!\n")
