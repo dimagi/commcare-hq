@@ -170,7 +170,7 @@ class Command(BaseCommand):
                                   "\n\tHitting enter DOES NOT make this change."
                                   "\n\tThis guidance is saved to logs for reference later."
                                   "\n\tThis file is NOT fully migrated UNTIL this issue is addressed.\n")
-                input("ENTER to continue...")
+                self.enter_to_continue()
                 self.stdout.write('\n')
             if renames:
                 changelog.append(f"-{old_line}")
@@ -215,7 +215,7 @@ class Command(BaseCommand):
         self.stdout.write("\nChanges saved.")
         self.stdout.write("\nNow would be a good time to review changes with git and "
                           "commit before moving on to the next template.")
-        input("\nENTER to continue...")
+        self.enter_to_continue()
 
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = self.get_short_path(app_name, file_path, is_template)
@@ -254,7 +254,7 @@ class Command(BaseCommand):
                           "commit before moving on to the next template.")
         self.stdout.write("\nSuggested commit message:")
         self.stdout.write(f"bootstrap 3 to 5 auto-migration for {short_path}")
-        input("\nENTER to continue...")
+        self.enter_to_continue()
 
     @staticmethod
     def save_split_templates(original_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines):
@@ -300,7 +300,7 @@ class Command(BaseCommand):
                                   "commit before moving on to the next template.")
                 self.stdout.write(f"\nSuggested commit message:\n"
                                   f"Bootstrap 5 - Updated references to '{old_reference}'\n")
-                input("\nENTER to continue...")
+                self.enter_to_continue()
                 self.stdout.write("\n\n")
 
     @staticmethod
@@ -384,3 +384,7 @@ class Command(BaseCommand):
     def get_confirmation(self, prompt):
         option = self.select_option_from_prompt(prompt, ['y', 'n'])
         return option == 'y'
+
+    @staticmethod
+    def enter_to_continue():
+        input("\nENTER to continue...")
