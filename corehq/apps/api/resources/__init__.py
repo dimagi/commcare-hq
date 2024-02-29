@@ -45,7 +45,8 @@ class JsonResourceMixin(object):
         # http://stackoverflow.com/questions/17280513/tastypie-json-header-to-use-utf-8
         desired_format = self.determine_format(request)
         serialized = self.serialize(request, data, desired_format)
-        return response_class(content=serialized, content_type=build_content_type(desired_format), **response_kwargs)
+        return response_class(content=serialized, content_type=build_content_type(desired_format),
+                              **response_kwargs)
 
     def determine_format(self, request):
         format = super(JsonResourceMixin, self).determine_format(request)
@@ -165,7 +166,7 @@ class SimpleSortableResourceMixin(object):
     and should also have a meta field `ordering` that specifies the allowed fields
 
       _meta :: [str]
-    
+
     '''
 
     def apply_sorting(self, obj_list, options=None):
@@ -186,10 +187,10 @@ class SimpleSortableResourceMixin(object):
                 field_name = field
 
             # Map the field back to the actual attribute
-            if not field_name in self.fields:
+            if field_name not in self.fields:
                 raise InvalidSortError("No matching '%s' field for ordering on." % field_name)
 
-            if not field_name in self._meta.ordering:
+            if field_name not in self._meta.ordering:
                 raise InvalidSortError("The '%s' field does not allow ordering." % field_name)
 
             if self.fields[field_name].attribute is None:
@@ -213,8 +214,11 @@ class DomainSpecificResourceMixin(object):
         base_bundle = self.build_bundle(request=request)
         objects = self.obj_get_list(bundle=base_bundle, **self.remove_api_resource_names(kwargs))
         sorted_objects = self.apply_sorting(objects, options=request.GET)
-        
-        paginator = self._meta.paginator_class(request.GET, sorted_objects, resource_uri=self.get_resource_list_uri(request, kwargs), limit=self._meta.limit, max_limit=self._meta.max_limit, collection_name=self._meta.collection_name)
+
+        paginator = self._meta.paginator_class(request.GET, sorted_objects,
+                                               resource_uri=self.get_resource_list_uri(request, kwargs),
+                                               limit=self._meta.limit, max_limit=self._meta.max_limit,
+                                               collection_name=self._meta.collection_name)
         to_be_serialized = paginator.page()
 
         # Dehydrate the bundles in preparation for serialization.
@@ -233,14 +237,15 @@ class DomainSpecificResourceMixin(object):
         Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.11/tastypie/resources.py#L601
         (BSD licensed) and modified to use the kwargs.
 
-        (v0.9.14 combines get_resource_list_uri and get_resource_uri; this re-separates them to keep things simpler)
+        (v0.9.14 combines get_resource_list_uri and get_resource_uri; this re-separates them to keep
+        things simpler)
         """
         kwargs = dict(kwargs)
         kwargs['resource_name'] = self._meta.resource_name
 
         if self._meta.api_name is not None:
             kwargs['api_name'] = self._meta.api_name
-            
+
         try:
             return self._build_reverse_url("api_dispatch_list", kwargs=kwargs)
         except NoReverseMatch:
