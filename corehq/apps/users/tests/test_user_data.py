@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import patch
+from unittest.mock import patch, PropertyMock
 
 from django.test import SimpleTestCase, TestCase
 
@@ -178,7 +178,7 @@ class TestUserDataModel(SimpleTestCase):
 
     def setUp(self):
         self.user_fields = []
-        field_patcher = patch('corehq.apps.users.user_data.UserData._schema_fields')
+        field_patcher = patch('corehq.apps.users.user_data.UserData._schema_fields', new_callable=PropertyMock)
         mocked_schema_fields = field_patcher.start()
         mocked_schema_fields.side_effect = lambda: self.user_fields
 

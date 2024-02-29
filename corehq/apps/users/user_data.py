@@ -225,8 +225,13 @@ def get_all_profiles_by_id(domain):
 def get_user_schema_fields(domain):
     from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 
-    definition = CustomDataFieldsDefinition.objects.get(domain=domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
-    return definition.get_fields()
+    try:
+        definition = CustomDataFieldsDefinition.objects.get(domain=domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+    except CustomDataFieldsDefinition.DoesNotExist:
+        fields = []
+    else:
+        fields = definition.get_fields()
+    return fields
 
 
 def prime_user_data_caches(users, domain):
