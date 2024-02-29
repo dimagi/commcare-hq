@@ -212,6 +212,7 @@
           {% endif %}
           {% if not request.is_view_only %}
             <div class="row-item-small"></div>
+            <div class="row-item-small"></div>
           {% endif %}
           </div>
           <div data-bind="sortable: { data: caseGroupList, connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
@@ -264,6 +265,7 @@
               <button title="{% trans_html_attr 'Restore Group' %}" data-bind="click: restoreGroup" class="fa fa-undo"></button>
               <!-- /ko -->
             </div>
+            <div class="row-item-small"></div>
             {% endif %}
           </div>
           <div data-bind="sortable: { data: properties, connectClass: 'properties', options: { handle: 'i.sortable-handle' } }, visible: expanded() && (!deprecated || $root.showAll())">
@@ -343,6 +345,8 @@
                   <i class="fa fa-trash"></i>
                   {% trans 'Delete' %}
                 </button>
+              </div>
+              <div class="row-item-small m-auto">
                 <!-- ko if: !deprecated() -->
                 <button title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="btn btn-default">
                   <i class="fa fa-archive"></i>
