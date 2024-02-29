@@ -113,8 +113,9 @@ class Command(BaseCommand):
         for file_path in files:
             short_path = self.get_short_path(app_name, file_path, is_template)
 
-            confirm = input(f'\n{HARD_BREAK_LINE}\n\nReady to migrate "{short_path}"? [y/n] ')
-            if confirm.lower() != 'y':
+            self.stdout.write(f'\n{HARD_BREAK_LINE}\n\n')
+            confirm = self.get_confirmation(f'Ready to migrate "{short_path}"?')
+            if not confirm:
                 self.stdout.write(f"\tok, skipping {short_path}")
                 continue
 
@@ -178,9 +179,10 @@ class Command(BaseCommand):
                 self.stdout.write("".join(changelog[-3:]))
                 changelog.append("\n\n")
                 self.stdout.write("\nIMPORTANT: Answering 'y' below will automatically make this change "
-                                  "in the Bootstrap 5 version of this file.")
-                confirm = input("\nKeep changes? [y/n] ")
-                if confirm.lower() != 'y':
+                                  "in the Bootstrap 5 version of this file.\n")
+
+                confirm = self.get_confirmation("Keep changes?")
+                if not confirm:
                     changelog.append("CHANGES DISCARDED\n\n")
                     self.stdout.write("ok, discarding changes...")
                     return old_line, changelog
@@ -201,8 +203,9 @@ class Command(BaseCommand):
 
     def save_re_checked_file_changes(self, app_name, file_path, changed_lines, is_template):
         short_path = self.get_short_path(app_name, file_path, is_template)
-        confirm = input(f'\nSave changes to {short_path}? [y/n] ')
-        if confirm == 'y':
+
+        confirm = self.get_confirmation(f"\nSave changes to {short_path}?")
+        if confirm:
             with open(file_path, 'w') as readme_file:
                 readme_file.writelines(changed_lines)
             self.stdout.write("\nChanges saved.")
@@ -214,9 +217,10 @@ class Command(BaseCommand):
 
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = self.get_short_path(app_name, file_path, is_template)
-        confirm = input(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
-                        f'and update references? [y/n] ')
-        if confirm == 'y':
+
+        confirm = self.get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
+                                        f'and update references?')
+        if confirm:
             bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
             bootstrap3_short_path = self.get_short_path(app_name, bootstrap3_path, is_template)
             bootstrap5_short_path = self.get_short_path(app_name, bootstrap5_path, is_template)
@@ -361,3 +365,19 @@ class Command(BaseCommand):
             str(replace_path) + '/',
             ''
         )
+
+    @staticmethod
+    def select_option_from_prompt(prompt, options):
+        formatted_options = '/'.join(options)
+        prompt_with_options = f"{prompt} [{formatted_options}]"
+        while True:
+            option = input(prompt_with_options).lower()
+            if option in options:
+                break
+            else:
+                prompt_with_options = f'"{option}" is not an option. Please choose from [{formatted_options}].'
+        return option
+
+    def get_confirmation(self, prompt):
+        option = self.select_option_from_prompt(prompt, ['y', 'n'])
+        return option == 'y'
