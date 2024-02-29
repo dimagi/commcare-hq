@@ -205,53 +205,56 @@ class Command(BaseCommand):
         short_path = self.get_short_path(app_name, file_path, is_template)
 
         confirm = self.get_confirmation(f"\nSave changes to {short_path}?")
-        if confirm:
-            with open(file_path, 'w') as readme_file:
-                readme_file.writelines(changed_lines)
-            self.stdout.write("\nChanges saved.")
-            self.stdout.write("\nNow would be a good time to review changes with git and "
-                              "commit before moving on to the next template.")
-            input("\nENTER to continue...")
-        else:
+
+        if not confirm:
             self.stdout.write("ok, skipping save...\n\n")
+            return
+
+        with open(file_path, 'w') as readme_file:
+            readme_file.writelines(changed_lines)
+        self.stdout.write("\nChanges saved.")
+        self.stdout.write("\nNow would be a good time to review changes with git and "
+                          "commit before moving on to the next template.")
+        input("\nENTER to continue...")
 
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = self.get_short_path(app_name, file_path, is_template)
 
         confirm = self.get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
                                         f'and update references?')
-        if confirm:
-            bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
-            bootstrap3_short_path = self.get_short_path(app_name, bootstrap3_path, is_template)
-            bootstrap5_short_path = self.get_short_path(app_name, bootstrap5_path, is_template)
-            self.stdout.write(f"ok, saving changes..."
-                              f"\n\t{bootstrap3_short_path}"
-                              f"\n\t{bootstrap5_short_path}\n\n")
-            if '/bootstrap5/' not in str(file_path):
-                self.save_split_templates(
-                    file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
-                )
-                self.stdout.write("updating references...")
-                references = self.update_and_get_references(short_path, bootstrap3_short_path, is_template)
-                if not is_template:
-                    # also check extension-less references for javascript files
-                    references.extend(self.update_and_get_references(
-                        short_path.replace('.js', ''),
-                        bootstrap3_short_path.replace('.js', ''),
-                        is_template=False
-                    ))
-                if references:
-                    self.stdout.write(f"Updated references to {short_path} in these files:")
-                    self.stdout.write("\n".join(references))
-                else:
-                    self.stdout.write(f"No references were found for {short_path}...")
-            self.stdout.write("\nNow would be a good time to review changes with git and "
-                              "commit before moving on to the next template.")
-            self.stdout.write("\nSuggested commit message:")
-            self.stdout.write(f"bootstrap 3 to 5 auto-migration for {short_path}")
-            input("\nENTER to continue...")
-        else:
+        if not confirm:
             self.stdout.write("ok, skipping...\n\n")
+            return
+
+        bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
+        bootstrap3_short_path = self.get_short_path(app_name, bootstrap3_path, is_template)
+        bootstrap5_short_path = self.get_short_path(app_name, bootstrap5_path, is_template)
+        self.stdout.write(f"ok, saving changes..."
+                          f"\n\t{bootstrap3_short_path}"
+                          f"\n\t{bootstrap5_short_path}\n\n")
+        if '/bootstrap5/' not in str(file_path):
+            self.save_split_templates(
+                file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
+            )
+            self.stdout.write("updating references...")
+            references = self.update_and_get_references(short_path, bootstrap3_short_path, is_template)
+            if not is_template:
+                # also check extension-less references for javascript files
+                references.extend(self.update_and_get_references(
+                    short_path.replace('.js', ''),
+                    bootstrap3_short_path.replace('.js', ''),
+                    is_template=False
+                ))
+            if references:
+                self.stdout.write(f"Updated references to {short_path} in these files:")
+                self.stdout.write("\n".join(references))
+            else:
+                self.stdout.write(f"No references were found for {short_path}...")
+        self.stdout.write("\nNow would be a good time to review changes with git and "
+                          "commit before moving on to the next template.")
+        self.stdout.write("\nSuggested commit message:")
+        self.stdout.write(f"bootstrap 3 to 5 auto-migration for {short_path}")
+        input("\nENTER to continue...")
 
     @staticmethod
     def save_split_templates(original_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines):
