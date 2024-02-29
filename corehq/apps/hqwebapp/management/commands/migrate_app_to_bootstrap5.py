@@ -213,9 +213,7 @@ class Command(BaseCommand):
         with open(file_path, 'w') as readme_file:
             readme_file.writelines(changed_lines)
         self.stdout.write("\nChanges saved.")
-        self.stdout.write("\nNow would be a good time to review changes with git and "
-                          "commit before moving on to the next template.")
-        self.enter_to_continue()
+        self.suggest_commit_message(f"re-ran migration for {short_path}")
 
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = self.get_short_path(app_name, file_path, is_template)
@@ -250,11 +248,7 @@ class Command(BaseCommand):
                 self.stdout.write("\n".join(references))
             else:
                 self.stdout.write(f"No references were found for {short_path}...")
-        self.stdout.write("\nNow would be a good time to review changes with git and "
-                          "commit before moving on to the next template.")
-        self.stdout.write("\nSuggested commit message:")
-        self.stdout.write(f"bootstrap 3 to 5 auto-migration for {short_path}")
-        self.enter_to_continue()
+        self.suggest_commit_message(f"initial auto-migration for {short_path}, splitting templates")
 
     @staticmethod
     def save_split_templates(original_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines):
@@ -296,11 +290,7 @@ class Command(BaseCommand):
             if references:
                 self.stdout.write(f"\n\nUpdated references to {old_reference} in these files:")
                 self.stdout.write("\n".join(references))
-                self.stdout.write("\nNow would be a good time to review changes with git and "
-                                  "commit before moving on to the next template.")
-                self.stdout.write(f"\nSuggested commit message:\n"
-                                  f"Bootstrap 5 - Updated references to '{old_reference}'\n")
-                self.enter_to_continue()
+                self.suggest_commit_message(f"updated path references to '{references}'")
                 self.stdout.write("\n\n")
 
     @staticmethod
@@ -388,3 +378,11 @@ class Command(BaseCommand):
     @staticmethod
     def enter_to_continue():
         input("\nENTER to continue...")
+
+    def suggest_commit_message(self, message):
+        self.stdout.write("\nNow would be a good time to review changes with git and "
+                          "commit before moving on to the next template.")
+        self.stdout.write("\nSuggested commit message:")
+        self.stdout.write(f"Bootstrap 5 Migration - {message}")
+        self.stdout.write("\n")
+        self.enter_to_continue()
