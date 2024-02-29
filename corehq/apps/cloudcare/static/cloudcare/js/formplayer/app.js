@@ -570,7 +570,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         makeSyncRequest("sync-db");
     });
 
-    FormplayerFrontend.getChannel().reply("interval_sync-db", function (appId) {
+    FormplayerFrontend.on("interval_sync-db", function (appId) {
         makeSyncRequest("interval_sync-db", {"app_id": appId});
     });
 
