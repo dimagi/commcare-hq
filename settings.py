@@ -235,7 +235,6 @@ DEFAULT_APPS = (
     'ws4redis',
     'statici18n',
     'django_user_agents',
-    'logentry_admin',
     'oauth2_provider',
 )
 
