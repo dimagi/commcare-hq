@@ -6,7 +6,6 @@ from django.urls import NoReverseMatch
 from tastypie import http
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, InvalidSortError
 from tastypie.resources import Resource, convert_post_to_patch
-from tastypie.utils import dict_strip_unicode_keys
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
@@ -141,7 +140,7 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
 
         for data in deserialized[collection_name]:
             data = self.alter_deserialized_detail_data(request, data)
-            bundle = self.build_bundle(data=dict_strip_unicode_keys(data), request=request)
+            bundle = self.build_bundle(data=data, request=request)
             try:
                 create_or_update_object(bundle=bundle, **self.remove_api_resource_names(kwargs))
             except AssertionError as e:

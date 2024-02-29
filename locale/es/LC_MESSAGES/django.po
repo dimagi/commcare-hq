@@ -2257,7 +2257,6 @@ msgstr ""
 #: corehq/apps/reports/standard/forms/reports.py
 #: corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/standard/monitoring.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/project_health/partials/user_list.html
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/accept_invite.html
@@ -2721,7 +2720,6 @@ msgstr ""
 #: corehq/apps/reports/filters/dates.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
 #: corehq/apps/users/templates/users/web_users.html custom/up_nrhm/sql_data.py
 msgid "Date"
@@ -3904,7 +3902,6 @@ msgstr "Aplicaciones"
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/message_event_display.py
 #: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/messaging/survey_detail.html
 #: corehq/apps/sms/models.py corehq/apps/sms/views.py
 msgid "Unknown"
@@ -5905,10 +5902,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
-#, fuzzy
-#| msgid "This is a <i class=\"fa fa-file-o\"></i> Survey."
 msgid "This is a <i class=\"fa-regular fa-file\"></i> Survey."
-msgstr "Esta es una <i class=\"fa fa-file-o\"></i> Encuesta."
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 msgid ""
@@ -9522,7 +9517,6 @@ msgstr "Agregar Anotación"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
 #: corehq/apps/linked_domain/const.py corehq/apps/registry/models.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/userreports/reports/builder/forms.py
 msgid "Report"
@@ -18995,10 +18989,8 @@ msgid "Mobile User"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Username"
 msgid "Unnamed"
-msgstr "Nombre de Usuario"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "App not found"
@@ -20953,10 +20945,8 @@ msgid "Custom Path"
 msgstr "Ruta Personalizada"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-#, fuzzy
-#| msgid "Set case property"
 msgid "Select geo property"
-msgstr "Establecer propiedad del caso"
+msgstr ""
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid ""
@@ -31733,10 +31723,6 @@ msgstr ""
 msgid "Added"
 msgstr ""
 
-#: corehq/apps/reports/standard/web_user_activity.py
-msgid "Web User Activity"
-msgstr ""
-
 #: corehq/apps/reports/templates/reports/async/aggregate_user_status.html
 msgid "Users who have Ever Submitted Data"
 msgstr ""
@@ -38530,6 +38516,18 @@ msgid ""
 msgstr ""
 "Hubo un problema ejecutando su consulta, por favor asegúrese de que los "
 "parámetros son válidos."
+
+#: corehq/apps/userreports/views.py
+#, fuzzy, python-brace-format
+#| msgid "CommCare Translations"
+msgid "CommCare Analytics on {server}"
+msgstr "Traducciones CommCare"
+
+#: corehq/apps/userreports/views.py
+#, fuzzy, python-brace-format
+#| msgid "Data source \"{}\" saved!"
+msgid "Data source {ds} on {server}"
+msgstr "¡Fuente de datos \"{}\" guardada!"
 
 #: corehq/apps/userreports/views.py
 msgid "Filter {} not found!"
