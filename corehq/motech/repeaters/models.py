@@ -1335,7 +1335,7 @@ DB_CASCADE = models.DO_NOTHING
 class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     domain = models.CharField(max_length=126)
     couch_id = models.CharField(max_length=36, null=True, blank=True)
-    payload_id = models.CharField(max_length=36)
+    payload_id = models.CharField(max_length=255)
     repeater = models.ForeignKey(Repeater,
                                  on_delete=DB_CASCADE,
                                  db_column="repeater_id_",
