@@ -844,8 +844,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
                 'Cannot delete case without leaving a tombstone except during testing, domain deletion or '
                 'when deleting system cases')
         if leave_tombstone:
-            case = self.get(self._id)
-            create_deleted_sql_doc(case.case_id, 'form_processor.CommCareCase', case.domain, case.deleted_on)
+            create_deleted_sql_doc(self.case_id, 'form_processor.CommCareCase', self.domain, self.deleted_on)
         super().delete()
 
     def __str__(self):

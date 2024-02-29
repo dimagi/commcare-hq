@@ -7,6 +7,7 @@ import attr
 from django.conf import settings
 from django.db import router
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from corehq.apps.cleanup.models import DeletedSQLDoc
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
@@ -574,6 +575,17 @@ class TestCommCareCase(BaseCaseManagerTest):
         ) as (case, index1, index2):
             index_map = case.get_index_map(reversed=True)
             self.assertEqual(index_map, {})  # Nothing indexes `case`
+
+    def test_hard_delete_case_with_tombstone(self):
+        case = _create_case(deleted_on=datetime.now())
+        case.delete(leave_tombstone=True)
+        self.assertEqual(DeletedSQLDoc.objects.all().count(), 1)
+
+    @override_settings(UNIT_TESTING=False)
+    def test_hard_delete_case_errors_without_tombstone(self):
+        case = _create_case(deleted_on=datetime.now())
+        with self.assertRaises(ValueError):
+            case.delete()
 
 
 @sharded

@@ -733,8 +733,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
                 'Cannot delete form without leaving a tombstone except during testing, domain deletion or '
                 'when deleting system forms')
         if leave_tombstone:
-            form = self.get(self._id)
-            create_deleted_sql_doc(form.form_id, 'form_processor.XFormInstance', form.domain, form.deleted_on)
+            create_deleted_sql_doc(self.form_id, 'form_processor.XFormInstance', self.domain, self.deleted_on)
         super().delete()
 
     def __str__(self):

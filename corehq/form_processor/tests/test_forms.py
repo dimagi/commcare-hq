@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from corehq.apps.cleanup.models import DeletedSQLDoc
 from corehq.blobs import NotFound as BlobNotFound, get_blob_db
@@ -354,6 +355,17 @@ class XFormInstanceManagerTest(TestCase):
         forms = XFormInstance.objects.get_forms(form_ids)
         self.assertEqual(1, len(forms))
         self.assertEqual(form_ids[0], forms[0].form_id)
+
+    def test_hard_delete_with_tombstone(self):
+        form = create_form_for_test(DOMAIN, deleted_on=datetime.now())
+        form.delete(leave_tombstone=True)
+        self.assertEqual(DeletedSQLDoc.objects.all().count(), 1)
+
+    @override_settings(UNIT_TESTING=False)
+    def test_hard_delete_errors_without_tombstone(self):
+        form = create_form_for_test(DOMAIN)
+        with self.assertRaises(ValueError):
+            form.delete()
 
     def assert_form_xml_attachment(self, form):
         attachments = XFormInstance.objects.get_attachments(form.form_id)
