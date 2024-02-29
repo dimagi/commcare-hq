@@ -27,7 +27,6 @@ crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@77
 django-cte
 django-field-audit
 django-formtools
-django-logentry-admin
 django-oauth-toolkit
 django-otp
 django-phonenumber-field

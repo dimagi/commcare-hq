@@ -126,7 +126,6 @@ django==3.2.24
     #   django-crispy-forms
     #   django-extensions
     #   django-formtools
-    #   django-logentry-admin
     #   django-oauth-toolkit
     #   django-otp
     #   django-phonenumber-field
@@ -169,8 +168,6 @@ django-formtools==2.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-logentry-admin==1.0.6
-    # via -r base-requirements.in
 django-oauth-toolkit==2.3.0
     # via -r base-requirements.in
 django-otp==1.1.3
