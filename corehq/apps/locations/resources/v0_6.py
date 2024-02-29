@@ -17,6 +17,7 @@ from tastypie.exceptions import BadRequest
 
 class LocationResource(v0_5.LocationResource):
     resource_name = 'location'
+    patch_limit = 100
 
     class Meta:
         queryset = SQLLocation.active_objects.all()
@@ -133,4 +134,4 @@ class LocationResource(v0_5.LocationResource):
                 bundle = self.obj_create(bundle, **kwargs)
             bundle.data['_id'] = bundle.obj.location_id  # For serialization
             return bundle
-        return super().patch_list_replica(create_or_update, request, **kwargs)
+        return super().patch_list_replica(create_or_update, request, obj_limit=self.patch_limit, **kwargs)

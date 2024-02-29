@@ -117,7 +117,7 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
     def get_required_privilege(self):
         return privileges.API_ACCESS
 
-    def patch_list_replica(self, create_or_update_object, request=None, **kwargs):
+    def patch_list_replica(self, create_or_update_object, request=None, obj_limit=None, **kwargs):
         """
         Exactly copied fromhttps://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1466
         (BSD licensed) and modified to call custom method `create_or_update_object` on each bundle
@@ -135,6 +135,10 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
 
         bundles_seen = []
         status = http.HttpAccepted
+
+        if obj_limit and obj_limit < len(deserialized[collection_name]):
+            raise BadRequest("Object count exceeds limit for PATCH method.")
+
         for data in deserialized[collection_name]:
             data = self.alter_deserialized_detail_data(request, data)
             bundle = self.build_bundle(data=dict_strip_unicode_keys(data), request=request)
