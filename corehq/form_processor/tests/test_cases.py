@@ -9,7 +9,6 @@ from django.db import router
 from django.test import TestCase
 
 from corehq.apps.cleanup.models import DeletedSQLDoc
-from corehq.apps.cleanup.tests.util import delete_all_deleted_sql_docs
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
 from corehq.form_processor.models import (
@@ -443,7 +442,6 @@ class TestHardDeleteCasesBeforeCutoff(TestCase):
         case = _create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
 
         CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
-        self.addCleanup(delete_all_deleted_sql_docs)
 
         with self.assertRaises(CaseNotFound):
             CommCareCase.objects.get_case(case.case_id, self.domain)
@@ -478,7 +476,6 @@ class TestHardDeleteCasesBeforeCutoff(TestCase):
             _create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
 
         counts = CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
-        self.addCleanup(delete_all_deleted_sql_docs)
 
         self.assertEqual(counts, {'form_processor.CaseTransaction': 5, 'form_processor.CommCareCase': 5})
 
@@ -497,7 +494,6 @@ class TestHardDeleteCasesBeforeCutoff(TestCase):
         case = _create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
 
         CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
-        self.addCleanup(delete_all_deleted_sql_docs)
         delete_doc = DeletedSQLDoc.objects.filter(doc_id=case.case_id)
 
         self.assertIsNotNone(delete_doc)
@@ -508,7 +504,6 @@ class TestHardDeleteCasesBeforeCutoff(TestCase):
             _create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
 
         counts = CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
-        self.addCleanup(delete_all_deleted_sql_docs)
 
         self.assertEqual(DeletedSQLDoc.objects.all().count(), counts['form_processor.CommCareCase'])
 

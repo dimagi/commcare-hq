@@ -20,7 +20,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from corehq.apps.cleanup.models import create_deleted_sql_doc
+from corehq.apps.cleanup.models import create_deleted_sql_doc, DeletedSQLDoc
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -423,8 +423,11 @@ class XFormInstanceManager(RequireDBManager):
                 deleted_counts = {class_path: queryset.count()}
                 counts.update(deleted_counts)
             else:
-                for form in queryset:
-                    create_deleted_sql_doc(form.form_id, class_path, form.domain, form.deleted_on)
+                form_tombstones = [DeletedSQLDoc(doc_id=form.form_id, object_class_path=class_path,
+                                                 domain=form.domain, deleted_on=form.deleted_on)
+                                   for form in queryset]
+                for chunk in chunked(form_tombstones, 1000, list):
+                    DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True)
                 deleted_counts = queryset.delete()[1]
                 counts.update(deleted_counts)
         return counts

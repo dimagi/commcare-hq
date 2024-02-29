@@ -7,7 +7,6 @@ from django.db import transaction
 from django.test import TestCase
 
 from corehq.apps.cleanup.models import DeletedSQLDoc
-from corehq.apps.cleanup.tests.util import delete_all_deleted_sql_docs
 from corehq.blobs import NotFound as BlobNotFound, get_blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
@@ -382,7 +381,6 @@ class TestHardDeleteFormsBeforeCutoff(TestCase):
         form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
 
         XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
-        self.addCleanup(delete_all_deleted_sql_docs)
 
         with self.assertRaises(XFormNotFound):
             XFormInstance.objects.get_form(form.form_id)
@@ -417,7 +415,6 @@ class TestHardDeleteFormsBeforeCutoff(TestCase):
             create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
 
         counts = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
-        self.addCleanup(delete_all_deleted_sql_docs)
 
         self.assertEqual(counts, {'form_processor.XFormInstance': 5})
 
@@ -436,7 +433,6 @@ class TestHardDeleteFormsBeforeCutoff(TestCase):
         form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
 
         XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
-        self.addCleanup(delete_all_deleted_sql_docs)
         delete_doc = DeletedSQLDoc.objects.filter(doc_id=form.form_id)
 
         self.assertIsNotNone(delete_doc)
@@ -447,7 +443,6 @@ class TestHardDeleteFormsBeforeCutoff(TestCase):
             create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
 
         counts = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
-        self.addCleanup(delete_all_deleted_sql_docs)
 
         self.assertEqual(DeletedSQLDoc.objects.all().count(), counts['form_processor.XFormInstance'])
 

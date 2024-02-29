@@ -4,7 +4,6 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from corehq.apps.cleanup.tasks import permanently_delete_and_tombstone_eligible_data
-from corehq.apps.cleanup.tests.util import delete_all_deleted_sql_docs
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import create_form_for_test
@@ -47,4 +46,3 @@ class TestPermanentlyDeleteEligibleData(TestCase):
         self.mock_cutoff = patcher.start()
         self.mock_cutoff.return_value = self.cutoff
         self.addCleanup(patcher.stop)
-        self.addCleanup(delete_all_deleted_sql_docs)

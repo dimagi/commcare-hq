@@ -21,7 +21,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from corehq.apps.cleanup.models import create_deleted_sql_doc
+from corehq.apps.cleanup.models import create_deleted_sql_doc, DeletedSQLDoc
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import BadName, NotFound
@@ -313,8 +313,11 @@ class CommCareCaseManager(RequireDBManager):
                 deleted_counts = {class_path: queryset.count()}
                 counts.update(deleted_counts)
             else:
-                for case in queryset:
-                    create_deleted_sql_doc(case.case_id, class_path, case.domain, case.deleted_on)
+                case_tombstones = [DeletedSQLDoc(doc_id=case.case_id, object_class_path=class_path,
+                                                 domain=case.domain, deleted_on=case.deleted_on)
+                                   for case in queryset]
+                for chunk in chunked(case_tombstones, 1000, list):
+                    DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True)
                 deleted_counts = queryset.delete()[1]
                 counts.update(deleted_counts)
         return counts
