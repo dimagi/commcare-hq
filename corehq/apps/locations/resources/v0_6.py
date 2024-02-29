@@ -9,6 +9,7 @@ from corehq.apps.locations.util import (
 )
 from corehq.apps.locations.views import LocationFieldsView
 
+from django.db.transaction import atomic
 from django.utils.translation import gettext as _
 
 from tastypie.exceptions import BadRequest
@@ -21,7 +22,7 @@ class LocationResource(v0_5.LocationResource):
         queryset = SQLLocation.active_objects.all()
         detail_uri_name = 'location_id'
         authentication = RequirePermissionAuthentication(HqPermissions.edit_locations)
-        list_allowed_methods = ['get', 'post']
+        list_allowed_methods = ['get', 'post', 'patch']
         detail_allowed_methods = ['get', 'put']
         always_return_data = True
         include_resource_uri = False
@@ -52,16 +53,17 @@ class LocationResource(v0_5.LocationResource):
     def obj_create(self, bundle, **kwargs):
         domain = kwargs['domain']
         if 'name' not in bundle.data or 'location_type_code' not in bundle.data:
-            raise BadRequest("'name' and 'location_type_code' are required fields.")
+            raise BadRequest("'name' and 'location_type_code' are required fields when creating a new location.")
         bundle.obj = SQLLocation(domain=domain)
         self._update(bundle, domain, is_new_location=True)
         return bundle
 
     def obj_update(self, bundle, **kwargs):
+        location_id = kwargs.get('location_id') or bundle.data.pop('location_id')
         try:
-            bundle.obj = SQLLocation.objects.get(location_id=kwargs['location_id'], domain=kwargs['domain'])
+            bundle.obj = SQLLocation.objects.get(location_id=location_id, domain=kwargs['domain'])
         except SQLLocation.DoesNotExist:
-            raise BadRequest(_("Could not find location with given ID on the domain."))
+            raise BadRequest(_("Could not update: could not find location with given ID on the domain."))
         self._update(bundle, kwargs['domain'], is_new_location=False)
         return bundle
 
@@ -120,3 +122,15 @@ class LocationResource(v0_5.LocationResource):
         if location.location_type not in parent_allowed_types:
             raise BadRequest(_("Parent cannot have children of this location's type."))
         self._validate_unique_among_siblings(location, location.name, parent)
+
+    @atomic
+    def patch_list(self, request, **kwargs):
+        def create_or_update(bundle, **kwargs):
+            if 'location_id' in bundle.data and SQLLocation.objects.filter(
+                    location_id=bundle.data['location_id'], domain=kwargs['domain']).exists():
+                bundle = self.obj_update(bundle, **kwargs)
+            else:
+                bundle = self.obj_create(bundle, **kwargs)
+            bundle.data['_id'] = bundle.obj.location_id  # For serialization
+            return bundle
+        return super().patch_list_replica(create_or_update, request, **kwargs)
