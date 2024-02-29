@@ -372,13 +372,14 @@ class Command(BaseCommand):
     @staticmethod
     def select_option_from_prompt(prompt, options):
         formatted_options = '/'.join(options)
-        prompt_with_options = f"{prompt} [{formatted_options}]"
+        prompt_with_options = f"{prompt} [{formatted_options}] "
         while True:
             option = input(prompt_with_options).lower()
             if option in options:
                 break
             else:
-                prompt_with_options = f'"{option}" is not an option. Please choose from [{formatted_options}].'
+                prompt_with_options = f'Sorry, "{option}" is not an option. ' \
+                                      f'Please choose from [{formatted_options}]: '
         return option
 
     def get_confirmation(self, prompt):
