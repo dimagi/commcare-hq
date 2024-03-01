@@ -319,7 +319,7 @@ class ESSyncUtil:
         known_indices = set()
         for cname in CANONICAL_NAME_ADAPTER_MAP.keys():
             known_indices.update(self._get_current_and_older_index_name(cname))
-        return known_indices
+        return [index for index in known_indices if index]
 
     def display_shard_info(self):
         # Print the status of the shards in Elasticsearch cluster
