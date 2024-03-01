@@ -1018,10 +1018,12 @@ class RepeatRecord(SyncCouchToSQLMixin, Document):
 
     @classmethod
     def _migration_get_fields(cls):
-        return ["domain", "payload_id", "registered_at", "next_check", "state"]
+        return ["domain", "payload_id", "registered_at", "state"]
 
     def _migration_sync_to_sql(self, sql_object, save=True):
         sql_object.repeater_id = uuid.UUID(self.repeater_id)
+        if not (self.succeeded or self.cancelled):
+            sql_object.next_check = self.next_check
         return super()._migration_sync_to_sql(sql_object, save=save)
 
     @classmethod
