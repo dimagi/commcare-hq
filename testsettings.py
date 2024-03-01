@@ -39,6 +39,7 @@ ES_GROUPS_INDEX_SWAPPED = False
 ES_SMS_INDEX_SWAPPED = False
 ES_USERS_INDEX_SWAPPED = False
 
+# This should be updated when a new value is added to ES_REINDEX_LOG else test will fail
 ES_MULTIPLEX_TO_VERSION = '6'
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
