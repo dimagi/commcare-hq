@@ -119,7 +119,7 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
 
     def patch_list_replica(self, create_or_update_object, request=None, obj_limit=None, **kwargs):
         """
-        Exactly copied fromhttps://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1466
+        Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1466
         (BSD licensed) and modified to call custom method `create_or_update_object` on each bundle
         """
         request = convert_post_to_patch(request)

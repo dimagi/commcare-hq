@@ -64,7 +64,8 @@ class LocationResource(v0_5.LocationResource):
         try:
             bundle.obj = SQLLocation.objects.get(location_id=location_id, domain=kwargs['domain'])
         except SQLLocation.DoesNotExist:
-            raise BadRequest(_("Could not update: could not find location with given ID on the domain."))
+            raise BadRequest(_("Could not update: could not find location with"
+                               f" given ID {location_id} on the domain."))
         self._update(bundle, kwargs['domain'], is_new_location=False)
         return bundle
 
@@ -127,8 +128,7 @@ class LocationResource(v0_5.LocationResource):
     @atomic
     def patch_list(self, request, **kwargs):
         def create_or_update(bundle, **kwargs):
-            if 'location_id' in bundle.data and SQLLocation.objects.filter(
-                    location_id=bundle.data['location_id'], domain=kwargs['domain']).exists():
+            if 'location_id' in bundle.data:
                 bundle = self.obj_update(bundle, **kwargs)
             else:
                 bundle = self.obj_create(bundle, **kwargs)

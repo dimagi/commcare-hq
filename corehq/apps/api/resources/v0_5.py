@@ -374,7 +374,7 @@ class GroupResource(v0_4.GroupResource):
         return self._meta.serializer.serialize(data, format, options)
 
     def patch_list(self, request=None, **kwargs):
-        super().patch_list_replica(self.obj_create, request, **kwargs)
+        return super().patch_list_replica(self.obj_create, request, **kwargs)
 
     def post_list(self, request, **kwargs):
         """

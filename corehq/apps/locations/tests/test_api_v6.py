@@ -308,3 +308,20 @@ class LocationV6Test(APIResourceTest):
         response = self._assert_auth_post_resource(self.list_endpoint,
                                                    patch_data, method='PATCH')
         self.assertEqual(response.status_code, 400)
+
+        unknown_location_id = 'qwerty'
+        patch_data = {
+            "objects": [
+                {
+                    "location_id": unknown_location_id,
+                    "latitude": "32.42",
+                }
+            ]
+        }
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   patch_data, method='PATCH')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(),
+                         {'error': "Could not update: could not find location with"
+                                   f" given ID {unknown_location_id} on the domain."})
