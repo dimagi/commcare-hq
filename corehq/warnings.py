@@ -22,12 +22,10 @@ WHITELIST = [
     ("couchdbkit.schema.properties", "'collections.abc'"),
     ("django.apps", re.compile(r"'(" + "|".join(re.escape(app) for app in [
         "captcha",
-        "django_celery_results",
         "oauth2_provider",
         "statici18n",
         "two_factor",
     ]) + ")' defines default_app_config"), RemovedInDjango41Warning),
-    ("django_celery_results", "ugettext_lazy() is deprecated"),
     ("nose.importer", "the imp module is deprecated"),
     ("nose.util", "inspect.getargspec() is deprecated"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
