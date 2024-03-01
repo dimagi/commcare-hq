@@ -4,13 +4,13 @@ import uuid
 from contextlib import contextmanager
 from copy import deepcopy
 from unittest.mock import ANY, patch
-
+from django.conf import settings
 from django.test import SimpleTestCase, override_settings
 
 from nose.tools import nottest
 
 from corehq.apps.es import const
-from corehq.apps.es.utils import check_task_progress
+from corehq.apps.es.utils import check_task_progress, get_es_reindex_setting_value
 from corehq.util.es.elasticsearch import (
     BulkIndexError,
     Elasticsearch,
@@ -2126,6 +2126,64 @@ class TestCreateDocumentAdapter(SimpleTestCase):
             "test_doc",
         )
         self.assertEqual(type(test_adapter), TestDocumentAdapter)
+
+    @override_settings(ES_MULTIPLEX_TO_VERSION=None)
+    def test_reindex_config_has_no_effect_if_es_multiplex_to_version_is_not_set(self):
+        with override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True):
+            setting_name = 'ES_FOR_TEST_INDEX_MULTIPLEXED'
+            # The variable set in django settings would be ignore and the default would be used
+            setting_val = get_es_reindex_setting_value(setting_name, False)
+
+            self.assertEqual(setting_val, False)
+
+            with patch.object(const, setting_name, setting_val):
+                test_adapter = create_document_adapter(
+                    TestDocumentAdapter,
+                    "some-primary",
+                    "test_doc",
+                    secondary="some-secondary",
+                )
+            self.assertEqual(type(test_adapter), TestDocumentAdapter)
+
+    def test_reindex_config_works_if_es_multiplex_to_version_is_set(self):
+        # ES_MULTIPEX_TO_VERSION is set in testsettings.py
+        with override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True):
+            setting_name = 'ES_FOR_TEST_INDEX_MULTIPLEXED'
+            # Since ES_MULTIPLEX_to_VERSION is set, the value in settings would be used
+            setting_val = get_es_reindex_setting_value(setting_name, False)
+            self.assertEqual(setting_val, True)
+
+            with patch.object(const, setting_name, setting_val):
+                test_adapter = create_document_adapter(
+                    TestDocumentAdapter,
+                    "some-primary",
+                    "test_doc",
+                    secondary="some-secondary",
+                )
+                self.assertEqual(type(test_adapter), ElasticMultiplexAdapter)
+
+    def test_reindex_log_has_unique_values(self):
+        dupes = self._get_duplicate_items(const.ES_REINDEX_LOG)
+        assert dupes == [], f"ES_REINDEX_LOG contains following duplicate values: {dupes}"
+
+    def test_es_multiplex_to_version_is_set_correctly_in_tests(self):
+        val = getattr(settings, 'ES_MULTIPLEX_TO_VERSION', None)
+        self.assertEqual(
+            val,
+            const.ES_REINDEX_LOG[-1],
+            "ES_MULTIPLEX_TO_VERSION should be equal to the last value in ES_REINDEX_LOG. Update testsettings.py"
+        )
+
+    def _get_duplicate_items(self, arr):
+        seen = set()
+        dupes = set()
+
+        for elem in arr:
+            if elem in seen:
+                dupes.add(elem)
+            else:
+                seen.add(elem)
+        return list(dupes)
 
 
 class OneshotIterable:
