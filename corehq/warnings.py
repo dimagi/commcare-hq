@@ -20,7 +20,6 @@ WHITELIST = [
     # warnings that may be resolved with a library upgrade
     ("couchdbkit.schema.properties", "'collections.abc'"),
     ("django.apps", re.compile(r"'(" + "|".join(re.escape(app) for app in [
-        "statici18n",
         "two_factor",
     ]) + ")' defines default_app_config"), RemovedInDjango41Warning),
     ("nose.importer", "the imp module is deprecated"),
