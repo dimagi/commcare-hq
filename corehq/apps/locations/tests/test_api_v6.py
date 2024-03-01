@@ -240,3 +240,71 @@ class LocationV6Test(APIResourceTest):
         response = self._assert_auth_post_resource(self.single_endpoint(self.location2.location_id),
                                                    put_data, method='PUT')
         self.assertEqual(response.status_code, 400)
+
+    def test_successful_patch_list(self):
+        patch_data = {
+            "objects": [
+                {
+                    "name": "newtown",
+                    "latitude": "31.41",
+                    "location_type_code": self.child_type.code,
+                    "parent_location_id": self.location1.location_id
+                },
+                {
+                    "location_id": self.south_park.location_id,
+                    "latitude": "32.42",
+                    "parent_location_id": self.location1.location_id
+                }
+            ]
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   patch_data, method='PATCH')
+        self.assertEqual(response.status_code, 202)
+
+        self.assertTrue(SQLLocation.objects.filter(
+            domain=self.domain.name, name="newtown").exists())
+        newtown = SQLLocation.objects.get(domain=self.domain.name, name="newtown")
+        self.assertEqual(newtown.parent_location_id, self.location1.location_id)
+        self.assertEqual(float(newtown.latitude), 31.41)
+
+        updated_south_park = SQLLocation.objects.get(domain=self.domain.name, name=self.south_park.name)
+        self.assertEqual(float(updated_south_park.latitude), 32.42)
+        self.assertEqual(updated_south_park.parent_location_id, self.location1.location_id)
+
+    def test_patch_list_is_atomic(self):
+        patch_data = {
+            "objects": [
+                {
+                    "name": "newtown",
+                    "latitude": "31.41",
+                    "location_type_code": self.child_type.code,
+                    "parent_location_id": self.location1.location_id
+                },
+                {
+                    "location_id": self.south_park.location_id,
+                    "latitude": "32.42",
+                    "parent_location_id": self.location2.location_id  # Invalid parent
+                }
+            ]
+        }
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   patch_data, method='PATCH')
+        self.assertEqual(response.status_code, 400)
+        # "newtown" should not be created since the update to South Park failed
+        self.assertFalse(SQLLocation.objects.filter(
+            domain=self.domain.name, name="newtown").exists())
+
+    def test_patch_list_missing_location_id(self):
+        patch_data = {
+            "objects": [
+                {
+                    "_id": self.south_park.location_id,  # Incorrect ID key
+                    "latitude": "32.42",
+                }
+            ]
+        }
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   patch_data, method='PATCH')
+        self.assertEqual(response.status_code, 400)
