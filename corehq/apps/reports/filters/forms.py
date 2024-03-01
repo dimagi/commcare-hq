@@ -1,5 +1,3 @@
-from django.utils.functional import lazy
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
@@ -13,6 +11,7 @@ from couchforms.analytics import (
 )
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.reports.analytics.couchaccessors import (
     get_all_form_definitions_grouped_by_app_and_xmlns,
     get_all_form_details,
@@ -39,9 +38,6 @@ PARAM_SLUG_XMLNS = 'xmlns'
 
 PARAM_VALUE_STATUS_ACTIVE = 'active'
 PARAM_VALUE_STATUS_DELETED = 'deleted'
-
-# TODO: Replace with library method
-mark_safe_lazy = lazy(mark_safe, str)
 
 
 class FormsByApplicationFilterParams(object):
