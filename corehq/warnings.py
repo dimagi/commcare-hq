@@ -18,10 +18,8 @@ WHITELIST = [
     # (module_path, message_substring_or_regex, optional_warning_class, override_action)
 
     # warnings that may be resolved with a library upgrade
-    ("captcha.fields", "ugettext_lazy() is deprecated"),
     ("couchdbkit.schema.properties", "'collections.abc'"),
     ("django.apps", re.compile(r"'(" + "|".join(re.escape(app) for app in [
-        "captcha",
         "oauth2_provider",
         "statici18n",
         "two_factor",
