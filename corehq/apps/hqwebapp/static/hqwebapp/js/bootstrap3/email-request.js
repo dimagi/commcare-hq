@@ -121,13 +121,19 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
     };
 
     $(function () {
-        $("#modalReportIssue").koApplyBindings(new EmailRequest(
-            "modalReportIssue",
-            "hqwebapp-bugReportForm"
-        ));
-        $("#modalSolutionsFeatureRequest").koApplyBindings(new EmailRequest(
-            "modalSolutionsFeatureRequest",
-            "hqwebapp-requestReportForm"
-        ));
+        const issueReportModal = $("#modalReportIssue");
+        if (issueReportModal.length) {
+            issueReportModal.koApplyBindings(new EmailRequest(
+                "modalReportIssue",
+                "hqwebapp-bugReportForm"
+            ));
+        }
+        const featureRequestModal = $("#modalSolutionsFeatureRequest");
+        if (featureRequestModal.length) {
+            featureRequestModal.koApplyBindings(new EmailRequest(
+                "modalSolutionsFeatureRequest",
+                "hqwebapp-requestReportForm"
+            ));
+        }
     });
 });

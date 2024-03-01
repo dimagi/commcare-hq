@@ -82,6 +82,20 @@ class CustomDataFieldsForm(forms.Form):
         return errors
 
     @classmethod
+    def verify_no_empty_profile_fields(cls, data_fields, profiles):
+        errors = set()
+
+        required_field_names = {field['slug'] for field in data_fields if field['is_required']}
+        for profile in profiles:
+            profile_fields = json.loads(profile.get('fields', '{}'))
+            for slug, value in profile_fields.items():
+                if slug in required_field_names and not value:
+                    errors.add(_("Profile '{}' does not assign a value for required field '{}'").format(
+                        profile['name'], slug
+                    ))
+        return errors
+
+    @classmethod
     def verify_profiles_validate(cls, data_fields, profiles):
         errors = set()
         fields_by_slug = {
@@ -151,6 +165,7 @@ class CustomDataFieldsForm(forms.Form):
         if data_fields is not None:
             errors.update(self.verify_no_profiles_missing_fields(data_fields, profiles))
             errors.update(self.verify_profiles_validate(data_fields, profiles))
+            errors.update(self.verify_no_empty_profile_fields(data_fields, profiles))
 
         if errors:
             separator = mark_safe('<br/>')  # nosec: no user input

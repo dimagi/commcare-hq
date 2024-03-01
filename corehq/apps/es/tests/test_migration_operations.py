@@ -14,6 +14,7 @@ from corehq.apps.es.client import manager
 from corehq.apps.es.index.settings import render_index_tuning_settings
 from corehq.apps.es.migration_operations import (
     CreateIndex,
+    CreateIndexIfNotExists,
     DeleteIndex,
     MappingUpdateFailed,
     UpdateIndexMapping,
@@ -335,11 +336,7 @@ class TestCreateIndexIfNotExists(BaseCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        # It's not possible to import files starting with number
-        # Therefore using import_module to import migration file
-        from importlib import import_module
-        migration_module = import_module("corehq.apps.es.migrations.0001_bootstrap_es_indexes")
-        cls.CreateIndexIfNotExists = migration_module.CreateIndexIfNotExists
+        cls.CreateIndexIfNotExists = CreateIndexIfNotExists
 
     def test_does_not_fail_if_index_exists(self):
         manager.index_create(self.index)
