@@ -19,8 +19,6 @@ WHITELIST = [
 
     # warnings that may be resolved with a library upgrade
     ("captcha.fields", "ugettext_lazy() is deprecated"),
-    ("compressor.filters.base", "smart_text() is deprecated"),
-    ("compressor.signals", "The providing_args argument is deprecated."),
     ("couchdbkit.schema.properties", "'collections.abc'"),
     ("django.apps", re.compile(r"'(" + "|".join(re.escape(app) for app in [
         "captcha",
