@@ -219,6 +219,20 @@ class TestAutoDeactivationTask(TestCase):
         self.assertTrue(web_user_c.is_active)
         mock_send.assert_called_once()
 
+    @patch('corehq.apps.sso.models.IdentityProvider.get_all_members_of_the_idp')
+    def test_deactivation_skip_members_of_the_domains_but_not_have_an_email_domain_controlled_by_the_IdP(self,
+                                                                            mock_get_all_members_of_the_idp):
+        dimagi_user = self._create_web_user('superuser@dimagi.com')
+        mock_get_all_members_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
+
+        auto_deactivate_removed_sso_users()
+
+        # Refetch Web User
+        dimagi_user = WebUser.get_by_username(dimagi_user.username)
+        self.assertTrue(dimagi_user.is_active)
+        web_user_c = WebUser.get_by_username(self.web_user_c.username)
+        self.assertFalse(web_user_c.is_active)
+
     def _create_web_user(self, username):
         user = WebUser.create(
             self.domain.name, username, 'testpwd', None, None
