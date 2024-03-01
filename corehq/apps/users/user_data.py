@@ -260,7 +260,7 @@ def prime_user_data_caches(users, domain):
             user._user_data_accessors[domain] = user_data
 
             # prime the user schema data to avoid individual database calls
-            user._schema_fields = schema_fields
+            user_data._schema_fields = schema_fields
             if user_data.profile_id and user_data.profile_id in profiles_by_id:
                 user_data.profile = profiles_by_id[user_data.profile_id]
 

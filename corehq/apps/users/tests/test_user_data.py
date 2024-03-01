@@ -3,7 +3,8 @@ from unittest.mock import patch, PropertyMock
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, Field
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, Field, CustomDataFieldsDefinition
+from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.management.commands.populate_sql_user_data import (
     get_users_without_user_data,
@@ -154,6 +155,21 @@ class TestUserData(TestCase):
             for user in users:
                 user.get_user_data(self.domain)
             self.assertEqual(lazy_init.call_count, 0)
+
+    def test_prime_user_data_caches_avoids_multiple_schema_lookups(self):
+        users = [
+            self.make_commcare_user()
+        ]
+
+        fields_definition = CustomDataFieldsDefinition.objects.create(
+            domain=self.domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+        fields_definition.set_fields([Field(slug='field1', label='Field1')])
+
+        users = list(prime_user_data_caches(users, self.domain))
+
+        fields_definition.set_fields([Field(slug='updated', label='Updated')])
+        user_data = users[0].get_user_data(self.domain).to_dict()
+        self.assertIn('field1', user_data)
 
 
 def _get_profile(self, profile_id):
