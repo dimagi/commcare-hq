@@ -6,7 +6,6 @@ from django.contrib.auth.models import User
 from django.core.validators import validate_email
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 from django.template.loader import render_to_string
-from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
@@ -20,15 +19,12 @@ from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.forms import RoleForm
 from corehq.apps.users.models import CouchUser
-
-# Bandit does not catch any references to mark_safe using this,
-# so please use it with caution, and only on segments that do not contain user input
-mark_safe_lazy = lazy(mark_safe, str)
 
 
 class RegisterWebUserForm(forms.Form):
