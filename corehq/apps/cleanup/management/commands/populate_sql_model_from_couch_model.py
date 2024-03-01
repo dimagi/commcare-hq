@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import pdb
 import sys
 import traceback
 from collections import defaultdict
@@ -336,8 +337,13 @@ Run the following commands to run the migration and get up to date:
                 remove override.
             """
         )
+        parser.add_argument(
+            '--debug',
+            action='store_true',
+            help="Debug uncaught exceptions.",
+        )
 
-    def handle(self, chunk_size, fixup_diffs, override_is_completed, **options):
+    def handle(self, chunk_size, fixup_diffs, override_is_completed, debug, **options):
         if override_is_completed:
             return self.handle_override_is_completed(override_is_completed)
 
@@ -419,6 +425,11 @@ Run the following commands to run the migration and get up to date:
                 traceback.print_exc(file=logfile)
                 aborted = True
                 print("Aborted.")
+            except Exception as exc:
+                if not debug:
+                    raise
+                traceback.print_exception(type(exc), exc, exc.__traceback__)
+                pdb.post_mortem(exc.__traceback__)
 
         if not is_bulk:
             print(f"Processed {doc_index} documents")
