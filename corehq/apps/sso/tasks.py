@@ -143,12 +143,12 @@ def auto_deactivate_removed_sso_users():
             )
         else:
             users_to_deactivate = []
+            authenticated_email_domains = authenticated_domains.values_list('email_domain', flat=True)
 
             for user in web_user_in_account:
                 # If the user is not returned by IdP and is not exempted from SSO
                 if user not in idp_users and user not in exempt_usernames:
                     email_domain = get_email_domain_from_username(user)
-                    authenticated_email_domains = authenticated_domains.values_list('email_domain', flat=True)
                     # If the user's email domain is in the list of email domains controlled by IdP
                     if email_domain in authenticated_email_domains:
                         users_to_deactivate.append(user)
