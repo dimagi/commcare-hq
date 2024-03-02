@@ -53,7 +53,7 @@ def get_context_to_send_purchase_receipt(payment_record_id, domain, additional_c
     payment_record = PaymentRecord.objects.get(id=payment_record_id)
     username = payment_record.payment_method.web_user
     web_user = WebUser.get_by_username(username)
-    if web_user:
+    if web_user and web_user.is_active:
         email = web_user.get_email()
         name = web_user.first_name
     else:
