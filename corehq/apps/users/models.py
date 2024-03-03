@@ -1105,7 +1105,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         self.last_name = ' '.join(data)
 
     def get_user_data(self, domain):
-        # To do this in bulk, try prime_user_data_caches
+        # To do this in bulk, try UserData's prime_user_data_caches
         from .user_data import UserData
         if domain not in self._user_data_accessors:
             self._user_data_accessors[domain] = UserData.for_user(self, domain)

@@ -128,7 +128,6 @@ django==3.2.24
     #   django-bulk-update
     #   django-crispy-forms
     #   django-formtools
-    #   django-logentry-admin
     #   django-oauth-toolkit
     #   django-otp
     #   django-phonenumber-field
@@ -152,7 +151,7 @@ django-bulk-update==2.2.0
     # via -r base-requirements.in
 django-celery-results==2.4.0
     # via -r base-requirements.in
-django-compressor==4.1
+django-compressor==4.4
     # via -r base-requirements.in
 django-countries==7.3.2
     # via -r base-requirements.in
@@ -168,8 +167,6 @@ django-formtools==2.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-logentry-admin==1.0.6
-    # via -r base-requirements.in
 django-nose @ https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
     # via -r test-requirements.in
 django-oauth-toolkit==2.3.0
@@ -501,7 +498,7 @@ quickcache==0.5.4
     # via -r base-requirements.in
 radon==6.0.1
     # via -r test-requirements.in
-rcssmin==1.1.0
+rcssmin==1.1.1
     # via django-compressor
 redis==4.5.4
     # via
@@ -537,7 +534,7 @@ requests-oauthlib==1.3.1
     #   google-auth-oauthlib
 requests-toolbelt==1.0.0
     # via -r base-requirements.in
-rjsmin==1.2.0
+rjsmin==1.2.1
     # via django-compressor
 rsa==4.8
     # via google-auth
