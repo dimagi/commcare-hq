@@ -1,4 +1,3 @@
-from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
@@ -11,7 +10,7 @@ from couchforms.analytics import (
 )
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
+from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.reports.analytics.couchaccessors import (
     get_all_form_definitions_grouped_by_app_and_xmlns,
     get_all_form_details,
@@ -618,14 +617,14 @@ class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
     default_text = gettext_lazy("Completion Time")
 
     def _generate_help_message():
-        completion_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
-            "<strong>Completion</strong> time is when the form is completed on the phone."))
+        completion_help = gettext_lazy(  # nosec: no user input
+            "<strong>Completion</strong> time is when the form is completed on the phone.")
 
-        submission_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+        submission_help = gettext_lazy(  # nosec: no user input
             "<strong>Submission</strong> time is when {hq_name} receives the form.".format(
-                hq_name=commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME'])))
+                hq_name=commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']))
 
-        return format_html("{}<br />{}", completion_help, submission_help)
+        return format_html_lazy("{}<br />{}", completion_help, submission_help)
 
     help_text = _generate_help_message()
 
