@@ -20,7 +20,7 @@ def create_usercase(user):
     )
 
 
-patch_user_data_db_layer = patch('corehq.apps.users.user_data.UserData.lazy_init',
+patch_user_data_db_layer = patch('corehq.apps.users.user_data.UserData.for_user',
                                  new=lambda u, d: UserData({}, None, d))
 
 patch_user_data_schema = patch('corehq.apps.users.user_data.UserData._schema_defaults',
