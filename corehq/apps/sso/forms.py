@@ -430,10 +430,21 @@ class EditIdentityProviderAdminForm(forms.Form):
         )
 
         if self.idp.is_editable:
+            dashboard_link = url_helpers.get_dashboard_link(self.idp)
             self.fields['is_editable'].help_text = format_html(
                 '<a href="{}">{}</a>',
-                url_helpers.get_dashboard_link(self.idp),
+                dashboard_link,
                 _("Edit Enterprise Settings")
+            ) if dashboard_link else format_html(
+                '<div class="alert alert-warning">'
+                '   <i class="fa-solid fa-warning-sign"></i> {}'
+                '   <a href="{}">{}</a>'
+                '</div>',
+                _("This account has no active Enterprise subscription! Please fix the "
+                  "Billing Account configuration in order to complete the Identity "
+                  "Provider setup."),
+                account_link,
+                _("Manage Billing Account"),
             )
 
         self.helper = FormHelper()
