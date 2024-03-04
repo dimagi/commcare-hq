@@ -142,7 +142,6 @@ Docker images that will not run on Mac OS (Intel or M1):
 
 Docker images that will not run on Mac OS (as of 11.x Big Sur and above):
 
-- `elasticsearch2`
 - `elasticsearch5`
 
 ### M1 (OS 11.x and above) Recommended Docker Up Command
