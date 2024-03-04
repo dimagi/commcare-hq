@@ -28,7 +28,12 @@ from corehq.apps.sso.async_handlers import (
     SSOExemptUsersAdminAsyncHandler,
     SsoTestUserAdminAsyncHandler,
 )
-from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol, AuthenticatedEmailDomain
+from corehq.apps.sso.models import (
+    IdentityProvider,
+    IdentityProviderProtocol,
+    AuthenticatedEmailDomain,
+    TrustedIdentityProvider,
+)
 
 
 class IdentityProviderInterface(AddItemInterface):
@@ -207,6 +212,7 @@ class EditIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerM
             )
         elif self.is_deletion_request:
             AuthenticatedEmailDomain.objects.filter(identity_provider=self.identity_provider).delete()
+            TrustedIdentityProvider.objects.filter(identity_provider=self.identity_provider).delete()
             self.identity_provider.delete()
             messages.success(
                 request,
