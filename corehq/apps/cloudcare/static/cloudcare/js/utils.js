@@ -155,7 +155,7 @@ hqDefine('cloudcare/js/utils', [
             "cloudcare/js/formplayer/layout/views/progress_bar",
         ], function (FormplayerFrontend, toggles, ProgressBar) {
             if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
-                let progressView = ProgressBar({
+                const progressView = ProgressBar({
                     progressMessage: gettext("Loading..."),
                 });
                 if (!FormplayerFrontend.regions) {
@@ -237,7 +237,7 @@ hqDefine('cloudcare/js/utils', [
             if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
                 $('#breadcrumb-region').css('z-index', '');
                 clearInterval(sessionStorage.progressIncrementInterval);
-                let progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
+                const progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
                 if (progressView) {
                     progressView.setProgress(100, 100, 200);
                     setTimeout(function () {
