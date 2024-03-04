@@ -125,12 +125,10 @@ hqDefine('cloudcare/js/utils', [
         return $container;
     };
 
-    var shouldShowHideLoading = function () {
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            const answerInProgress = (sessionStorage.answerQuestionInProgress && JSON.parse(sessionStorage.answerQuestionInProgress));
-            const validationInProgress = (sessionStorage.validationInProgress && JSON.parse(sessionStorage.validationInProgress));
-            return !answerInProgress && !validationInProgress && FormplayerFrontend.durationMetToShowLoading;
-        });
+    var shouldShowLoading = function () {
+        const answerInProgress = (sessionStorage.answerQuestionInProgress && JSON.parse(sessionStorage.answerQuestionInProgress));
+        const validationInProgress = (sessionStorage.validationInProgress && JSON.parse(sessionStorage.validationInProgress));
+        return !answerInProgress && !validationInProgress;
     };
 
     var getRegionContainer = function () {
@@ -174,15 +172,13 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var formplayerLoading = function () {
-        if (shouldShowHideLoading()) {
+        if (shouldShowLoading()) {
             showLoading();
         }
     };
 
     var formplayerLoadingComplete = function (isError, message) {
-        if (shouldShowHideLoading()) {
-            hideLoading();
-        }
+        hideLoading();
         if (isError) {
             showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));
         }
