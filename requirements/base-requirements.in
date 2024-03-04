@@ -42,8 +42,7 @@ django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websock
 django>=3.2.18,<4.0
 djangorestframework
 dropbox
-elasticsearch2>=2.0.0,<3.0.0  # we will be deprecating support for ES2 soon
-elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
+elasticsearch5>=5.0.0,<6.0.0
 ethiopian-date-converter
 eulxml
 firebase-admin  # India Division - used for FCM Push Notifications

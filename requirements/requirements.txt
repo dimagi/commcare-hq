@@ -194,8 +194,6 @@ djangorestframework==3.13.1
     # via -r base-requirements.in
 dropbox==11.36.0
     # via -r base-requirements.in
-elasticsearch2==2.5.1
-    # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
 envier==0.4.0
@@ -588,7 +586,6 @@ uritemplate==4.1.1
 urllib3==1.26.18
     # via
     #   botocore
-    #   elasticsearch2
     #   elasticsearch5
     #   google-auth
     #   py-kissmetrics
