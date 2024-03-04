@@ -178,8 +178,8 @@ Unrecognized VM option 'UseConcMarkSweepGC'
 Error: Could not create the Java Virtual Machine.
 ```
 
-...try commenting out those options in the relevant config file: inside of your elasticsearch directory (`which
-elasticsearch`), these may be set in `bin/elasticsearch.in.sh` or in `config/jvm.options`).
+...try commenting out those options in the relevant config file: inside of your elasticsearch directory
+(`which elasticsearch`), these may be set in `bin/elasticsearch.in.sh` or in `config/jvm.options`).
 
 #### Install Elasticsearch plugins
 
