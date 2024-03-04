@@ -451,7 +451,7 @@ class IdentityProvider(models.Model):
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
 
             # Send email
-            subject = _("Issue Connecting to Microsoft Graph API")
+            subject = _("CommCare HQ Alert: SSO Remote User Management, Issue Connecting to Microsoft Graph API")
             body = f'There was an issue connecting to the Microsoft Graph API: {str(e)}'
             recipient = self.owner.enterprise_admin_emails
             send_html_email_async.delay(
