@@ -603,8 +603,8 @@ class DeleteCaseView(BaseProjectReportSectionView):
 
     @method_decorator(require_case_view_permission)
     def dispatch(self, request, *args, **kwargs):
-        self.form_cache = TempFormCache(self.domain)
-        self.case_block_cache = TempCaseBlockCache(self.domain)
+        self.form_cache = TempFormCache()
+        self.case_block_cache = TempCaseBlockCache()
         if self.xform_id:
             self.template_name = 'reports/reportdata/form_case_delete.html'
             self.page_title = gettext_lazy('Delete Form and Related Cases')

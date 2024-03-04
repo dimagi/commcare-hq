@@ -227,8 +227,7 @@ def _extract_case_blocks(data, path=None, form_id=Ellipsis):
 
 
 class TempCaseBlockCache:
-    def __init__(self, domain):
-        self.domain = domain
+    def __init__(self):
         self.cache = {}
 
     def get_case_blocks(self, form):

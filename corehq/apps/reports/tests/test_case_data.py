@@ -165,8 +165,8 @@ class TestCaseDeletion(TestCase):
         if form_id:
             view.kwargs['xform_id'] = form_id
         view.request = self.request
-        view.form_cache = TempFormCache(self.domain)
-        view.case_block_cache = TempCaseBlockCache(self.domain)
+        view.form_cache = TempFormCache()
+        view.case_block_cache = TempCaseBlockCache()
         return view
 
     def make_simple_case(self, scenario):
