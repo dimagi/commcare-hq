@@ -1,5 +1,3 @@
-from contextlib import contextmanager
-
 from django.db.models import Count
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
@@ -149,8 +147,15 @@ class Command(PopulateSQLCommand):
     def _get_couch_doc_count_for_type(cls):
         return count_docs()
 
-    def _get_all_couch_docs_for_model(self, chunk_size):
-        yield from iter_docs(chunk_size, self.__logfile)
+    @classmethod
+    def get_couch_view_name_and_parameters(cls):
+        return 'repeaters/repeat_records_by_payload_id', {}
+
+    def should_process(self, result):
+        if result['doc'] is None:
+            self.logfile.write(f"Ignored null document: {result['id']}\n")
+            return False
+        return True
 
     def _get_couch_doc_count_for_domains(self, domains):
         def count_domain_docs(domain):
@@ -159,17 +164,9 @@ class Command(PopulateSQLCommand):
 
     def _iter_couch_docs_for_domains(self, domains, chunk_size):
         def iter_domain_docs(domain):
-            return iter_docs(chunk_size, self.__logfile, startkey=[domain], endkey=[domain, {}])
+            return iter_docs(chunk_size, self.logfile, startkey=[domain], endkey=[domain, {}])
         for domain in domains:
             yield from iter_domain_docs(domain)
-
-    def open_log(self, *args, **kw):
-        @contextmanager
-        def grab_log(ctx):
-            with ctx as log:
-                self.__logfile = log
-                yield log
-        return grab_log(super().open_log(*args, **kw))
 
 
 def count_docs(**params):
