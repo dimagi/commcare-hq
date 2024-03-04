@@ -11,6 +11,7 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.filters import (
     DateCreatedFilter,
     NameFilter,
+    IdPServiceTypeFilter,
 )
 from corehq.apps.accounting.interface import AddItemInterface
 from corehq.apps.accounting.views import AccountingSectionView
@@ -28,7 +29,12 @@ from corehq.apps.sso.async_handlers import (
     SSOExemptUsersAdminAsyncHandler,
     SsoTestUserAdminAsyncHandler,
 )
-from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol, AuthenticatedEmailDomain
+from corehq.apps.sso.models import (
+    IdentityProvider,
+    IdentityProviderProtocol,
+    AuthenticatedEmailDomain,
+    TrustedIdentityProvider,
+)
 
 
 class IdentityProviderInterface(AddItemInterface):
@@ -43,6 +49,7 @@ class IdentityProviderInterface(AddItemInterface):
     fields = [
         'corehq.apps.accounting.interface.DateCreatedFilter',
         'corehq.apps.accounting.interface.NameFilter',
+        'corehq.apps.accounting.filters.IdPServiceTypeFilter',
     ]
 
     @property
@@ -54,6 +61,7 @@ class IdentityProviderInterface(AddItemInterface):
         return DataTablesHeader(
             DataTablesColumn("Name"),
             DataTablesColumn("Slug"),
+            DataTablesColumn("Service"),
             DataTablesColumn("Edit Status"),
             DataTablesColumn("Active Status"),
             DataTablesColumn("Account Owner Name"),
@@ -66,6 +74,7 @@ class IdentityProviderInterface(AddItemInterface):
             return [
                 format_html('<a href="{}">{}</a>', edit_url, idp.name),
                 idp.slug,
+                idp.service_name,
                 "Open" if idp.is_editable else "Closed",
                 "Active" if idp.is_active else "Inactive",
                 idp.owner.name,
@@ -87,6 +96,13 @@ class IdentityProviderInterface(AddItemInterface):
         if name is not None:
             queryset = queryset.filter(
                 owner__name=name,
+            )
+        idp_type = IdPServiceTypeFilter.get_value(
+            self.request, self.domain
+        )
+        if idp_type is not None:
+            queryset = queryset.filter(
+                idp_type=idp_type,
             )
 
         return queryset
@@ -207,6 +223,7 @@ class EditIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerM
             )
         elif self.is_deletion_request:
             AuthenticatedEmailDomain.objects.filter(identity_provider=self.identity_provider).delete()
+            TrustedIdentityProvider.objects.filter(identity_provider=self.identity_provider).delete()
             self.identity_provider.delete()
             messages.success(
                 request,
