@@ -164,7 +164,14 @@ hqDefine('cloudcare/js/utils', [
                 $('#breadcrumb-region').css('z-index', '0');
                 const loadingElement = FormplayerFrontend.regions.getRegion('loadingProgress');
                 loadingElement.show(progressView);
-                progressView.setProgress(10, 100, 200);
+                let currentProgress = 10;
+                progressView.setProgress(currentProgress, 100, 200);
+                sessionStorage.progressIncrementInterval = setInterval(function () {
+                    if (currentProgress <= 100) {
+                        progressView.setProgress(currentProgress, 100, 200);
+                        currentProgress += 1;
+                    }
+                }, 250);
             } else {
                 NProgress.start();
             }
@@ -229,10 +236,13 @@ hqDefine('cloudcare/js/utils', [
         hqRequire(["cloudcare/js/formplayer/app", "hqwebapp/js/toggles"], function (FormplayerFrontend, toggles) {
             if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
                 $('#breadcrumb-region').css('z-index', '');
+                clearInterval(sessionStorage.progressIncrementInterval);
                 let progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
                 if (progressView) {
                     progressView.setProgress(100, 100, 200);
+                    setTimeout(function () {
                     FormplayerFrontend.regions.getRegion('loadingProgress').empty();
+                    }, 250);
                 }
             } else {
                 NProgress.done();
