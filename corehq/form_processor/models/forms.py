@@ -373,7 +373,8 @@ class XFormInstanceManager(RequireDBManager):
         return count
 
     def hard_delete_forms(self, domain, form_ids, delete_attachments=True, *, publish_changes=True):
-        """Delete forms permanently
+        """Delete forms permanently. Currently only used for tests, domain deletion and to delete system forms
+        and so do not need to leave tombstones.
 
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
@@ -727,13 +728,15 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         if self.is_archived:
             type(self).objects.do_archive(self, False, user_id, trigger_signals)
 
-    def delete(self, leave_tombstone=False):
-        if not leave_tombstone and not settings.UNIT_TESTING:
-            raise ValueError(
-                'Cannot delete form without leaving a tombstone except during testing, domain deletion or '
-                'when deleting system forms')
-        if leave_tombstone:
-            create_deleted_sql_doc(self.form_id, 'form_processor.XFormInstance', self.domain, self.deleted_on)
+    def delete(self, leave_tombstone=True):
+        if not settings.UNIT_TESTING:
+            if not leave_tombstone:
+                raise ValueError(
+                    'Cannot delete form without leaving a tombstone except during testing, domain deletion or '
+                    'when deleting system forms')
+            if leave_tombstone:
+                create_deleted_sql_doc(self.form_id, 'form_processor.XFormInstance', self.domain, self.deleted_on)
+
         super().delete()
 
     def __str__(self):

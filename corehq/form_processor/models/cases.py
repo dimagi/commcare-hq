@@ -280,7 +280,8 @@ class CommCareCaseManager(RequireDBManager):
         return undeleted_count
 
     def hard_delete_cases(self, domain, case_ids, *, publish_changes=True):
-        """Permanently delete cases in domain
+        """Permanently delete cases in domain. Currently only used for tests, domain deletion
+        and to delete system cases, and so do not need to leave tombstones.
 
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
@@ -838,13 +839,14 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         except DatabaseError as e:
             raise CaseSaveError(e)
 
-    def delete(self, leave_tombstone=False):
-        if not leave_tombstone and not settings.UNIT_TESTING:
-            raise ValueError(
-                'Cannot delete case without leaving a tombstone except during testing, domain deletion or '
-                'when deleting system cases')
-        if leave_tombstone:
-            create_deleted_sql_doc(self.case_id, 'form_processor.CommCareCase', self.domain, self.deleted_on)
+    def delete(self, leave_tombstone=True):
+        if not settings.UNIT_TESTING:
+            if not leave_tombstone:
+                raise ValueError(
+                    'Cannot delete case without leaving a tombstone except during testing, domain deletion or '
+                    'when deleting system cases')
+            if leave_tombstone:
+                create_deleted_sql_doc(self.case_id, 'form_processor.CommCareCase', self.domain, self.deleted_on)
         super().delete()
 
     def __str__(self):

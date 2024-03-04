@@ -576,16 +576,17 @@ class TestCommCareCase(BaseCaseManagerTest):
             index_map = case.get_index_map(reversed=True)
             self.assertEqual(index_map, {})  # Nothing indexes `case`
 
+    @override_settings(UNIT_TESTING=False)
     def test_hard_delete_case_with_tombstone(self):
         case = _create_case(deleted_on=datetime.now())
-        case.delete(leave_tombstone=True)
+        case.delete()
         self.assertEqual(DeletedSQLDoc.objects.all().count(), 1)
 
     @override_settings(UNIT_TESTING=False)
     def test_hard_delete_case_errors_without_tombstone(self):
         case = _create_case(deleted_on=datetime.now())
         with self.assertRaises(ValueError):
-            case.delete()
+            case.delete(leave_tombstone=False)
 
 
 @sharded
