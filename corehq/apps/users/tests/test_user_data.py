@@ -1,9 +1,10 @@
 import uuid
-from unittest.mock import patch
+from unittest.mock import patch, PropertyMock
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, Field, CustomDataFieldsDefinition
+from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.management.commands.populate_sql_user_data import (
     get_users_without_user_data,
@@ -101,7 +102,9 @@ class TestUserData(TestCase):
         ]
         users_with_data = [self.make_commcare_user(), self.make_web_user()]
         for user in users_with_data:
-            user.get_user_data(self.domain).save()
+            ud = user.get_user_data(self.domain)
+            ud['key'] = 'dummy val so this is non-empty'
+            ud.save()
 
         users_to_migrate = get_users_without_user_data()
         self.assertItemsEqual(
@@ -113,7 +116,7 @@ class TestUserData(TestCase):
         user = self.make_commcare_user()
         user['user_data'] = {'favorite_color': 'purple'}
         user.save()
-        populate_user_data(user)
+        populate_user_data(CommCareUser.get_db().get(user._id), user.get_django_user())
         sql_data = SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
         self.assertEqual(sql_data.data['favorite_color'], 'purple')
 
@@ -123,16 +126,16 @@ class TestUserData(TestCase):
         user['user_data'] = {'favorite_color': 'purple'}
         user.add_domain_membership('domain2', timezone='UTC')
         user.save()
-        populate_user_data(user)
+        populate_user_data(WebUser.get_db().get(user._id), user.get_django_user())
         for domain in [self.domain, 'domain2']:
             sql_data = SQLUserData.objects.get(domain=domain, user_id=user.user_id)
             self.assertEqual(sql_data.data['favorite_color'], 'purple')
 
     def test_migrate_user_no_data(self):
         user = self.make_commcare_user()
-        populate_user_data(user)
-        sql_data = SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
-        self.assertEqual(sql_data.data, {})
+        populate_user_data(CommCareUser.get_db().get(user._id), user.get_django_user())
+        with self.assertRaises(SQLUserData.DoesNotExist):
+            SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
 
     def test_prime_user_data_caches(self):
         users = [
@@ -143,7 +146,9 @@ class TestUserData(TestCase):
             self.make_web_user(),
         ]
         for user in users:
-            user.get_user_data(self.domain).save()
+            ud = user.get_user_data(self.domain)
+            ud['key'] = 'dummy val so this is non-empty'
+            ud.save()
         users.append(self.make_web_user())  # add user without data
         self.assertEqual(SQLUserData.objects.count(), 5)
 
@@ -154,6 +159,21 @@ class TestUserData(TestCase):
             for user in users:
                 user.get_user_data(self.domain)
             self.assertEqual(lazy_init.call_count, 0)
+
+    def test_prime_user_data_caches_avoids_multiple_schema_lookups(self):
+        users = [
+            self.make_commcare_user()
+        ]
+
+        fields_definition = CustomDataFieldsDefinition.objects.create(
+            domain=self.domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+        fields_definition.set_fields([Field(slug='field1', label='Field1')])
+
+        users = list(prime_user_data_caches(users, self.domain))
+
+        fields_definition.set_fields([Field(slug='updated', label='Updated')])
+        user_data = users[0].get_user_data(self.domain).to_dict()
+        self.assertIn('field1', user_data)
 
 
 def _get_profile(self, profile_id):
@@ -176,6 +196,14 @@ def _get_profile(self, profile_id):
 class TestUserDataModel(SimpleTestCase):
     domain = 'test-user-data-model'
 
+    def setUp(self):
+        self.user_fields = []
+        field_patcher = patch('corehq.apps.users.user_data.UserData._schema_fields', new_callable=PropertyMock)
+        mocked_schema_fields = field_patcher.start()
+        mocked_schema_fields.side_effect = lambda: self.user_fields
+
+        self.addCleanup(field_patcher.stop)
+
     def init_user_data(self, raw_user_data=None, profile_id=None):
         return UserData(
             raw_user_data=raw_user_data or {},
@@ -183,6 +211,18 @@ class TestUserDataModel(SimpleTestCase):
             domain=self.domain,
             profile_id=profile_id,
         )
+
+    def test_defaults_unspecified_schema_properties_to_empty(self):
+        self.user_fields = [Field(slug='one')]
+        user_data = self.init_user_data({})
+        result = user_data.to_dict()
+        self.assertEqual(result['one'], '')
+
+    def test_specified_user_data_overrides_schema_defaults(self):
+        self.user_fields = [Field(slug='one')]
+        user_data = self.init_user_data({'one': 'some_value'})
+        result = user_data.to_dict()
+        self.assertEqual(result['one'], 'some_value')
 
     def test_add_and_remove_profile(self):
         # Custom user data profiles get their data added to metadata automatically for mobile users

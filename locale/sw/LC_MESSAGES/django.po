@@ -2059,7 +2059,6 @@ msgstr ""
 #: corehq/apps/reports/standard/forms/reports.py
 #: corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/standard/monitoring.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/project_health/partials/user_list.html
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/accept_invite.html
@@ -2484,7 +2483,6 @@ msgstr ""
 #: corehq/apps/reports/filters/dates.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
 #: corehq/apps/users/templates/users/web_users.html custom/up_nrhm/sql_data.py
 msgid "Date"
@@ -3638,7 +3636,6 @@ msgstr ""
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/message_event_display.py
 #: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/messaging/survey_detail.html
 #: corehq/apps/sms/models.py corehq/apps/sms/views.py
 msgid "Unknown"
@@ -9018,7 +9015,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
 #: corehq/apps/linked_domain/const.py corehq/apps/registry/models.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/userreports/reports/builder/forms.py
 msgid "Report"
@@ -30598,10 +30594,6 @@ msgstr ""
 msgid "Added"
 msgstr ""
 
-#: corehq/apps/reports/standard/web_user_activity.py
-msgid "Web User Activity"
-msgstr ""
-
 #: corehq/apps/reports/templates/reports/async/aggregate_user_status.html
 msgid "Users who have Ever Submitted Data"
 msgstr ""
@@ -37156,6 +37148,16 @@ msgstr ""
 msgid ""
 "There was a problem executing your query, please make sure your parameters "
 "are valid."
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+#, python-brace-format
+msgid "CommCare Analytics on {server}"
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+#, python-brace-format
+msgid "Data source {ds} on {server}"
 msgstr ""
 
 #: corehq/apps/userreports/views.py

@@ -498,10 +498,12 @@ class TestSubscribeToDataSource(TestCase):
         self.assertEqual(request.status_code, 201)
 
         conn_settings = ConnectionSettings.objects.get(client_id=client_id)
-        self.assertEqual(conn_settings.name, "Connection - hostname.com")
+        self.assertEqual(conn_settings.name, "CommCare Analytics on hostname.com")
         self.assertEqual(conn_settings.auth_type, OAUTH2_CLIENT)
 
-        repeater = DataSourceRepeater.objects.get(name="hostname.com_data_source_id")
+        repeater = DataSourceRepeater.objects.get(
+            name="Data source data_source_id on hostname.com"
+        )
         self.assertEqual(repeater.connection_settings_id, conn_settings.id)
         self.assertEqual(repeater.data_source_id, data_source_id)
 
@@ -518,7 +520,7 @@ class TestSubscribeToDataSource(TestCase):
 
     @flag_enabled('SUPERSET_ANALYTICS')
     @flag_enabled('API_THROTTLE_WHITELIST')
-    def test_subscribe_unsuccessful_with_missing_data(self):
+    def test_subscribe_unsuccessful_with_a_missing_param(self):
         data_source_id = "data_source_id"
         post_data = {
             'webhook_url': 'https://hostname.com/webhook',
@@ -534,4 +536,25 @@ class TestSubscribeToDataSource(TestCase):
             HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
         )
         self.assertEqual(request.status_code, 422)
-        self.assertEqual(request.content.decode("utf-8"), "Missing parameter: client_id")
+        self.assertEqual(request.content.decode("utf-8"), "Missing parameters: client_id")
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
+    def test_subscribe_unsuccessful_with_missing_params(self):
+        data_source_id = "data_source_id"
+        post_data = {
+            'webhook_url': 'https://hostname.com/webhook',
+            'client_secret': 'client_secret',
+        }
+
+        request = self._post_request(
+            domain=self.domain,
+            data_source_id=data_source_id,
+            data=post_data,
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(request.status_code, 422)
+        self.assertEqual(
+            request.content.decode("utf-8"),
+            "Missing parameters: client_id, token_url",
+        )
