@@ -30,9 +30,8 @@ hqDefine('users/js/edit_commcare_user', [
     });
 
     $('#add_phone_number').submit(function () {
-        googleAnalytics.track.event('Edit Mobile Worker', 'Update phone number', couchUserId, '', {}, function () {
-            document.getElementById('add_phone_number').submit();
-        });
+        document.getElementById('add_phone_number').submit();
+        googleAnalytics.track.event('Edit Mobile Worker', 'Update phone number', couchUserId, '', {}, function () {});
         return false;
     });
 
@@ -165,9 +164,8 @@ hqDefine('users/js/edit_commcare_user', [
 
     // Analytics
     $("button:submit", $userInformationForm).on("click", function () {
-        googleAnalytics.track.event("Edit Mobile Worker", "Updated user info", couchUserId, "", {}, function () {
-            $userInformationForm.submit();
-        });
+        $userInformationForm.submit();
+        googleAnalytics.track.event("Edit Mobile Worker", "Updated user info", couchUserId, "", {});
         return false;
     });
 });

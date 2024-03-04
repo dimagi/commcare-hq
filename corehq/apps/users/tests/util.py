@@ -29,7 +29,7 @@ class patch_user_data_db_layer(ContextDecorator):
 
     def __enter__(self):
         self.init_patcher = patch(
-            'corehq.apps.users.user_data.UserData.lazy_init', new=lambda u, d: UserData({}, None, d))
+            'corehq.apps.users.user_data.UserData.for_user', new=lambda u, d: UserData({}, None, d))
         self.schema_patcher = patch('corehq.apps.users.user_data.UserData._schema_defaults',
                                new=PropertyMock(return_value=self.user_schema))
         self.init_patcher.start()

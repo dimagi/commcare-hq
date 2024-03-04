@@ -1108,7 +1108,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         # To do this in bulk, try UserData's prime_user_data_caches
         from .user_data import UserData
         if domain not in self._user_data_accessors:
-            self._user_data_accessors[domain] = UserData.lazy_init(self, domain)
+            self._user_data_accessors[domain] = UserData.for_user(self, domain)
         return self._user_data_accessors[domain]
 
     def _save_user_data(self):
@@ -2051,7 +2051,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         user_data = self.get_user_data(self.domain)
         user_data['commcare_location_id'] = location.location_id
 
-        if not location.location_type_object.administrative:
+        if not location.location_type.administrative:
             # just need to trigger a get or create to make sure
             # this exists, otherwise things blow up
             sp = SupplyInterface(self.domain).get_or_create_by_location(location)
@@ -2219,7 +2219,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         index = {}
         for location in locations:
-            if not location.location_type_object.administrative:
+            if not location.location_type.administrative:
                 sp = SupplyInterface(self.domain).get_by_location(location)
                 index.update(self.supply_point_index_mapping(sp))
 

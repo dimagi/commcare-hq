@@ -23,6 +23,9 @@
                           data-bind="text: 'Update to CommCare: ' + sms_odk_url() + ' (&quot;' + short_name() + '&quot; v. ' + version() + ')'">
                 </textarea>
       </div>
+      <div class="alert alert-warning text-center">
+        <i class="fa-solid fa-triangle-exclamation"></i> <strong>{% trans "SMS charges will incur." %}</strong>
+      </div>
       <input type="submit" class="btn btn-default" value="{% trans "Send" %}"/>
     </form>
   </div>

@@ -57,7 +57,7 @@ def app_has_been_submitted_to_in_last_30_days(domain, app_id):
     result = _received_on_query(domain, desc=True).app(app_id)[0]
 
     if not result:
-        return
+        return False
 
     return iso_string_to_datetime(result[0]['received_on']) > (now - _30_days)
 

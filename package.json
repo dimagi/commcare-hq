@@ -45,7 +45,6 @@
         "detectrtc": "1.4.0",
         "eonasdan-bootstrap-datetimepicker": "4.17.49",
         "fast-levenshtein": "2.0.6",
-        "font-awesome": "4.7.0",
         "intl-tel-input": "9.0.7",
         "jquery": "3.5.1",
         "jquery-color": "2.2.0",
@@ -88,7 +87,7 @@
         "ui-select": "npm:ui-select#0.13.2",
         "underscore": "1.13.1",
         "url-polyfill": "1.1.10",
-        "xpath": "dimagi/js-xpath#v0.0.7",
+        "xpath": "dimagi/js-xpath#v0.0.8",
         "zxcvbn": "4.4.2"
     },
     "devDependencies": {

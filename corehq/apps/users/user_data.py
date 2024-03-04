@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, transaction
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
@@ -26,33 +26,37 @@ class UserData:
         self._profile_id = profile_id or raw_user_data.get(PROFILE_SLUG, None)
 
     @classmethod
-    def lazy_init(cls, couch_user, domain):
-        # To be used during initial rollout - lazily create user_data objs from
-        # existing couch data
-        raw_user_data = couch_user.to_json().get('user_data', {}).copy()
-        raw_user_data.pop(COMMCARE_PROJECT, None)
-        profile_id = raw_user_data.pop(PROFILE_SLUG, None)
-        sql_data, _ = SQLUserData.objects.get_or_create(
-            user_id=couch_user.user_id,
-            domain=domain,
-            defaults={
-                'data': raw_user_data,
-                'django_user': couch_user.get_django_user,
-                'profile_id': profile_id,
-            }
-        )
+    def for_user(cls, couch_user, domain):
+        try:
+            sql_data = SQLUserData.objects.get(
+                user_id=couch_user.user_id,
+                domain=domain,
+            )
+        except SQLUserData.DoesNotExist:
+            return cls({}, couch_user, domain)
+
         return cls(sql_data.data, couch_user, domain, profile_id=sql_data.profile_id)
 
+    @transaction.atomic
     def save(self):
-        SQLUserData.objects.update_or_create(
-            user_id=self._couch_user.user_id,
-            domain=self.domain,
-            defaults={
-                'data': self._local_to_user,
-                'django_user': self._couch_user.get_django_user,
-                'profile_id': self.profile_id,
-            },
-        )
+        try:
+            sql_data = (SQLUserData.objects
+                        .select_for_update()
+                        .get(user_id=self._couch_user.user_id, domain=self.domain))
+        except SQLUserData.DoesNotExist:
+            # Only create db object if there's something to persist
+            if self._local_to_user or self.profile_id:
+                SQLUserData.objects.create(
+                    user_id=self._couch_user.user_id,
+                    domain=self.domain,
+                    data=self._local_to_user,
+                    django_user=self._couch_user.get_django_user(),
+                    profile_id=self.profile_id,
+                )
+        else:
+            sql_data.data = self._local_to_user
+            sql_data.profile_id = self.profile_id
+            sql_data.save()
 
     @property
     def _provided_by_system(self):
