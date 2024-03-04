@@ -43,9 +43,13 @@ def get_dashboard_link(identity_provider):
         is_active=True,
         account__is_active=True,
     ).first()
+    try:
+        enterprise_domain = linked_subscription.subscriber.domain
+    except AttributeError:
+        return None
     return reverse(
         EditIdentityProviderEnterpriseView.urlname,
-        args=(linked_subscription.subscriber.domain, identity_provider.slug,)
+        args=(enterprise_domain, identity_provider.slug,)
     )
 
 
