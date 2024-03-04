@@ -54,6 +54,7 @@ class IdentityProviderInterface(AddItemInterface):
         return DataTablesHeader(
             DataTablesColumn("Name"),
             DataTablesColumn("Slug"),
+            DataTablesColumn("Service"),
             DataTablesColumn("Edit Status"),
             DataTablesColumn("Active Status"),
             DataTablesColumn("Account Owner Name"),
@@ -66,6 +67,7 @@ class IdentityProviderInterface(AddItemInterface):
             return [
                 format_html('<a href="{}">{}</a>', edit_url, idp.name),
                 idp.slug,
+                idp.service_name,
                 "Open" if idp.is_editable else "Closed",
                 "Active" if idp.is_active else "Inactive",
                 idp.owner.name,
