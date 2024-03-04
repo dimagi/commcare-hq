@@ -547,7 +547,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         old_web_user = WebUser.get_by_username(old_username)
         # Do not send email to inactive user
-        if not old_web_user.is_active:
+        if old_web_user and not old_web_user.is_active:
             return
         old_user_first_name = old_web_user.first_name if old_web_user else old_username
         email = old_web_user.get_email() if old_web_user else old_username
