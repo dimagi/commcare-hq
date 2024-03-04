@@ -84,13 +84,12 @@ coverage==7.1.0
     # via -r test-requirements.in
 crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
     # via -r base-requirements.in
-cryptography==41.0.6
+cryptography==42.0.3
     # via
-    #   -r sso-requirements.in
+    #   -r base-requirements.in
     #   jwcrypto
     #   oic
     #   pyjwt
-    #   pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
 css-inline==0.11.0
@@ -452,8 +451,6 @@ pyjwt[crypto]==2.7.0
     #   twilio
 pynacl==1.5.0
     # via pygithub
-pyopenssl==23.2.0
-    # via -r sso-requirements.in
 pyparsing==3.0.7
     # via httplib2
 pyphonetics==0.5.3
