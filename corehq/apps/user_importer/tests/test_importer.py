@@ -2172,7 +2172,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             local_tableau_users.get(username='george@eliot.com')
 
 
-@patch_user_data_db_layer
+@patch_user_data_db_layer()
 class TestUserChangeLogger(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
