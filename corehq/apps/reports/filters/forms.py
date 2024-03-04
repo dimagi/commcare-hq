@@ -4,13 +4,16 @@ from django.utils.translation import gettext_lazy, gettext_noop
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 
-from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from couchforms.analytics import (
     get_all_xmlns_app_id_pairs_submitted_to_in_domain,
 )
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.hqwebapp.utils.translation import format_html_lazy, mark_safe_lazy
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
+from corehq.apps.hqwebapp.utils.translation import (
+    format_html_lazy,
+    mark_safe_lazy,
+)
 from corehq.apps.reports.analytics.couchaccessors import (
     get_all_form_definitions_grouped_by_app_and_xmlns,
     get_all_form_details,
