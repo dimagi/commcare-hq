@@ -544,6 +544,50 @@ def _bootstrap_class(obj, severe, warn):
         return "label label-success"
 
 
+def _get_histogram_aggregation_for_app(field_name, date_field_name, app_id):
+    """
+    The histogram aggregation is put inside a nested and filter aggregation to only query
+    the nested documents that match the selected app ID.
+
+    This function will return a nested aggregation that looks like the following:
+    "aggs": {
+        {field_name}: {
+            "nested": {
+                "path": "reporting_metadata.{field_name}"
+            }
+        },
+        "aggs": {
+            "filtered_agg": {
+                "filter": {
+                    "term": {
+                        "reporting_metadata.{field_name}.app_id": self.selected_app_id
+                    }
+                }
+                "aggs": {
+                    "date_histogram": {
+                        "date_histogram": {
+                            ...
+                        }
+                    }
+                }
+            }
+        }
+    }
+    """
+    field_path = f'reporting_metadata.{field_name}'
+    nested_agg = NestedAggregation(field_name, field_path)
+    filter_agg = FilterAggregation(
+        'filtered_agg',
+        filters.term(f'{field_path}.app_id', app_id),
+    )
+    histogram_agg = DateHistogram(
+        'date_histogram',
+        f'{field_path}.{date_field_name}',
+        DateHistogram.Interval.DAY,
+    )
+    return nested_agg.aggregation(filter_agg.aggregation(histogram_agg))
+
+
 class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     name = gettext_lazy("Application Error Report")
     slug = "application_error"
@@ -673,50 +717,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     def selected_app_id(self):
         return self.request_params.get(SelectApplicationFilter.slug, None)
 
-    def _get_histogram_aggregation_for_app(self, field_name, date_field_name):
-        """
-        The histogram aggregation is put inside a nested and filter aggregation to only query
-        the nested documents that match the selected app ID.
-
-        This function will return a nested aggregation that looks like the following:
-        "aggs": {
-            "nested_{nested_field_name}": {
-                "nested": {
-                    "path": "reporting_metadata.{nested_field_name}"
-                }
-            },
-            "aggs": {
-                "filtered_{nested_field_name}": {
-                    "filter": {
-                        "term": {
-                            "reporting_metadata.{nested_field_name}.app_id": self.selected_app_id
-                        }
-                    }
-                    "aggs": {
-                        "{nested_field_name}_date_histogram": {
-                            "date_histogram": {
-                                ...
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        """
-        field_path = f'reporting_metadata.{field_name}'
-        nested_agg = NestedAggregation(f'nested_{field_name}', field_path)
-        filter_agg = FilterAggregation(
-            f'filtered_{field_name}',
-            filters.term(f'{field_path}.app_id', self.selected_app_id)
-        )
-        histogram_agg = DateHistogram(
-            f'{field_name}_date_histogram',
-            f'{field_path}.{date_field_name}',
-            DateHistogram.Interval.DAY
-        )
-
-        return nested_agg.aggregation(filter_agg.aggregation(histogram_agg))
-
     @memoized
     def user_query(self):
         # partially inspired by ApplicationStatusReport.user_query
@@ -730,8 +730,12 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         )
 
         if self.selected_app_id:
-            last_submission_agg = self._get_histogram_aggregation_for_app('last_submissions', 'submission_date')
-            last_sync_agg = self._get_histogram_aggregation_for_app('last_syncs', 'sync_date')
+            last_submission_agg = _get_histogram_aggregation_for_app(
+                "last_submissions", "submission_date", self.selected_app_id
+            )
+            last_sync_agg = _get_histogram_aggregation_for_app(
+                "last_syncs", "sync_date", self.selected_app_id
+            )
         else:
             last_submission_agg = DateHistogram(
                 'last_submission',
