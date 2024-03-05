@@ -117,7 +117,7 @@ from corehq.util.global_request import get_request_domain
 from corehq.util.html_utils import strip_tags
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
-from corehq.apps.data_dictionary.util import get_deprecated_fields
+from corehq.apps.data_dictionary.util import get_deprecated_fields, get_data_dict_props_by_case_type
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.util import get_indicator_adapter
 
@@ -871,10 +871,12 @@ class ExportInstance(BlobMixin, Document):
                 return table
         return None
 
+    # This
     @classmethod
     def _new_from_schema(cls, schema, export_settings=None):
         raise NotImplementedError()
 
+    # This
     @classmethod
     def generate_instance_from_schema(
         cls,
@@ -1165,6 +1167,7 @@ class ExportInstance(BlobMixin, Document):
 
 
 class CaseExportInstance(ExportInstance):
+    # Example: https://www.commcarehq.org/hq/admin/raw_doc/?id=5f340da91b425838aeecbe26d42ffb3d&db_name=
     case_type = StringProperty()
     type = CASE_EXPORT
 
@@ -1713,6 +1716,7 @@ class ExportDataSchema(Document):
 
     @classmethod
     def generate_empty_schema(cls, domain, identifier):
+        # No change needed here
         """
         Builds a schema, without processing any Application builds.
         This is primarily used for bulk case exports, as the processing of Application
@@ -1722,7 +1726,7 @@ class ExportDataSchema(Document):
 
         current_schema.domain = domain
         current_schema.app_id = None
-        current_schema.version = cls.schema_version()
+        current_schema.version = cls.schema_version()  # may be increment this by 1
         current_schema._set_identifier(identifier)
 
         current_schema = cls._save_export_schema(
@@ -1742,6 +1746,7 @@ class ExportDataSchema(Document):
         only_process_current_builds=False,
         task=None,
     ):
+        # This needs changes
         """
         Builds a schema from Application builds for a given identifier
 
@@ -1768,25 +1773,32 @@ class ExportDataSchema(Document):
         else:
             current_schema = cls()
 
-        app_ids_for_domain = cls._get_current_app_ids_for_domain(domain, app_id)
-        app_build_ids = []
-        if not only_process_current_builds:
-            app_build_ids = cls._get_app_build_ids_to_process(
-                domain,
-                app_ids_for_domain,
-                current_schema.last_app_versions,
-            )
-        app_build_ids.extend(app_ids_for_domain)
-        current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task)
+        generating_via_dd = False
+        if generating_via_dd:
+            # Generate schema from DD
+            current_schema = cls._generate_schema_from_data_dictionary(
+                domain, current_schema, identifier, task)
+        else:
+            app_ids_for_domain = cls._get_current_app_ids_for_domain(domain, app_id)
+            app_build_ids = []
+            if not only_process_current_builds:
+                app_build_ids = cls._get_app_build_ids_to_process(
+                    domain,
+                    app_ids_for_domain,
+                    current_schema.last_app_versions,
+                )
+            app_build_ids.extend(app_ids_for_domain)
+            current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task)
 
         inferred_schema = cls._get_inferred_schema(domain, app_id, identifier)
         if inferred_schema:
             current_schema = cls._merge_schemas(current_schema, inferred_schema)
 
-        try:
-            current_schema = cls._reorder_schema_from_app(current_schema, app_id, identifier)
-        except Exception as e:
-            logging.exception('Failed to process app during reorder {}. {}'.format(app_id, e))
+        if not generating_via_dd:
+            try:
+                current_schema = cls._reorder_schema_from_app(current_schema, app_id, identifier)
+            except Exception as e:
+                logging.exception('Failed to process app during reorder {}. {}'.format(app_id, e))
 
         current_schema.domain = domain
         current_schema.app_id = app_id
@@ -1798,6 +1810,20 @@ class ExportDataSchema(Document):
             original_id,
             original_rev
         )
+        return current_schema
+
+    @classmethod
+    def _generate_schema_from_data_dictionary(cls, domain, current_schema, case_type, task):
+        # ToDo: generate case property mapping from DD
+        data_dict_props_by_case_type = get_data_dict_props_by_case_type(domain)
+        if case_type not in data_dict_props_by_case_type:
+            raise Exception("Case type not found in data dictionary")
+        case_property_mapping = {
+            case_type: data_dict_props_by_case_type[case_type]
+        }
+        case_schema = cls._generate_schema_from_case_property_mapping(case_property_mapping)
+        current_schema = cls._merge_schemas(current_schema, case_schema)
+        set_task_progress(task, current=1, total=1, src='ExportDataSchema._generate_schema_from_data_dictionary')
         return current_schema
 
     @classmethod
@@ -2291,6 +2317,7 @@ class FormExportDataSchema(ExportDataSchema):
 
 
 class CaseExportDataSchema(ExportDataSchema):
+    # Example: https://www.commcarehq.org/hq/admin/raw_doc/?id=5ba2abddc2772d1ec39e2d07226da34e&db_name=
 
     case_type = StringProperty(required=True)
 
@@ -2358,7 +2385,8 @@ class CaseExportDataSchema(ExportDataSchema):
         return cls._merge_schemas(*case_schemas)
 
     @classmethod
-    def _generate_schema_from_case_property_mapping(cls, case_property_mapping, parent_types, app_id, app_version):
+    def _generate_schema_from_case_property_mapping(cls, case_property_mapping, parent_types=None,
+                                                    app_id=None, app_version=None):
         """
         Generates the schema for the main Case tab on the export page
         Includes system export properties for the case as well as properties for exporting parent case IDs
