@@ -277,7 +277,7 @@ class ServiceProviderDetailsForm(forms.Form):
         if self.idp.idp_type == IdentityProviderType.AZURE_AD:
             help_text = _(
                 'This is a high security feature that ensures Assertions are '
-                'fully encrypted. This feature requires a Premium Azure AD '
+                'fully encrypted. This feature requires a Premium Entra ID '
                 'subscription.'
             )
         else:
