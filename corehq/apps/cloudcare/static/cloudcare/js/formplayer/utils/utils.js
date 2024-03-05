@@ -311,6 +311,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
             sessionStorage.removeItem('submitPerformed');
             sessionStorage.removeItem('geocoderValues');
             sessionStorage.removeItem('validationInProgress');
+            sessionStorage.removeItem('answerQuestionInProgress');
         };
 
         this.onSubmit = function () {

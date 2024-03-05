@@ -964,6 +964,7 @@ class MappingItem(DocumentSchema):
     key = StringProperty()
     # lang => localized string
     value = DictProperty()
+    alt_text = LabelProperty()
 
     @property
     def treat_as_expression(self):
