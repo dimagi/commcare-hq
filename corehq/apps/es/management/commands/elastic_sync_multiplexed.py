@@ -41,8 +41,7 @@ class ESSyncUtil:
     def __init__(self):
         self.es = get_client()
 
-    def start_reindex(self, cname, reindex_batch_size=1000,
-                      purge_ids=False, requests_per_second=None):
+    def start_reindex(self, cname, reindex_batch_size=1000, requests_per_second=None):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -57,9 +56,7 @@ class ESSyncUtil:
 
         logger.info("Starting ReIndex process")
         task_id = es_manager.reindex(
-            source_index, destination_index,
-            batch_size=reindex_batch_size, purge_ids=purge_ids,
-            requests_per_second=requests_per_second
+            source_index, destination_index, requests_per_second=requests_per_second
         )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
         task_number = task_id.split(':')[1]
@@ -322,7 +319,7 @@ class ESSyncUtil:
         known_indices = set()
         for cname in CANONICAL_NAME_ADAPTER_MAP.keys():
             known_indices.update(self._get_current_and_older_index_name(cname))
-        return known_indices
+        return [index for index in known_indices if index]
 
     def display_shard_info(self):
         # Print the status of the shards in Elasticsearch cluster
@@ -534,10 +531,7 @@ class Command(BaseCommand):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
         if sub_cmd == 'start':
-            cmd_func(
-                options['index_cname'], options['batch_size'],
-                options['purge_ids'], options['requests_per_second']
-            )
+            cmd_func(options['index_cname'], options['batch_size'], options['requests_per_second'])
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
         elif sub_cmd == 'cleanup' or sub_cmd == 'display_doc_counts':

@@ -174,7 +174,7 @@ class TestESSyncUtil(SimpleTestCase):
     )
     @patch(
         'corehq.apps.es.management.commands.elastic_sync_multiplexed.es_consts.HQ_APPS_INDEX_NAME',
-        'test_hqapps_2020-02-26'
+        'test_apps-20230524'
     )
     @patch('builtins.input', return_value='N')
     @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.doc_adapter_from_cname')
@@ -196,7 +196,7 @@ class TestESSyncUtil(SimpleTestCase):
     )
     @patch(
         'corehq.apps.es.management.commands.elastic_sync_multiplexed.es_consts.HQ_APPS_INDEX_NAME',
-        'test_hqapps_2020-02-26'
+        'test_apps-20230524'
     )
     @patch('builtins.input', return_value=HQ_APPS_INDEX_CANONICAL_NAME)
     @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.doc_adapter_from_cname')
@@ -232,7 +232,7 @@ class TestESSyncUtil(SimpleTestCase):
 
         # Create an index and close it
         type_ = "test_doc"
-        mappings = {"properties": {"value": {"type": "string"}}}
+        mappings = {"properties": {"value": {"type": "text"}}}
         settings = {
             "number_of_replicas": "0",
             "number_of_shards": "1",
@@ -267,7 +267,7 @@ class TestESSyncUtil(SimpleTestCase):
 
         # Create some residual indices
         type_ = "test_doc"
-        mappings = {"properties": {"value": {"type": "string"}}}
+        mappings = {"properties": {"value": {"type": "text"}}}
         settings = {
             "number_of_replicas": "0",
             "number_of_shards": "1",
