@@ -34,8 +34,9 @@ CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_SORT_KEY: "commcare_sort",
 }
 
+CASE_SEARCH_MODULE_NAME_TAG = "module_name_tag"
 CASE_SEARCH_TAGS_MAPPING = {
-    "module_name_tag": MODULE_NAME_TAG,
+    CASE_SEARCH_MODULE_NAME_TAG: MODULE_NAME_TAG,
 }
 
 UNSEARCHABLE_KEYS = (
@@ -197,7 +198,8 @@ class CaseSearchRequestConfig:
 
 def extract_search_request_config(request_dict):
     params = dict(request_dict.lists())
-
+    for param_name in CASE_SEARCH_TAGS_MAPPING:
+        params.pop(param_name, None)
     kwargs_from_params = {
         config_name: params.pop(param_name, None)
         for param_name, config_name in CONFIG_KEYS_MAPPING.items()
