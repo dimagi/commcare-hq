@@ -1,3 +1,4 @@
+'use strict';
 /*
  * Executes the queue in a FIFO action. When a task is added, it will be immediately
  * executed if the queue was previously empty.

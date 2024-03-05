@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
     describe('Formplayer utils', function () {
         var fixtures = hqImport("cloudcare/js/form_entry/spec/fixtures"),

@@ -155,21 +155,31 @@ Note: `kafka` will be very cranky on start up. You might have to restart it if y
 ./scripts/docker restart kafka
 ```
 
-### Installing and running Elasticsearch 2.4.6 outside of Docker
+### Installing and running Elasticsearch 5.6.16 outside of Docker
 
 First, ensure that you have Java 8 running. `java -version` should output something like `openjdk version "1.8.0_322"`.
 Use `sdkman` or `jenv` to manage your local java versions.
 
 Download the `tar` file for [elasticsearch 5.6.16](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.16.tar.gz)
 
-Un-tar and put the folder somewhere you can find it. Take note of tha path (`pwd`) and add the following to your `~/.zshrc`:
+Un-tar and put the folder somewhere you can find it. Take note of that path (`pwd`) and add the following to your `~/.zshrc`:
 
 ```sh
-export PATH="/path/to/elasticsearch-2.4.6/bin:$PATH"
+export PATH="/path/to/elasticsearch-5.6.16/bin:$PATH"
 ```
 NOTE: Make sure that `/path/to` is replaced with the actual path!
 
 After this you can open a new terminal window and run elasticsearch with `elasticsearch`.
+
+If running `elasticsearch` throws errors related to JVM options, such as...
+
+```sh
+Unrecognized VM option 'UseConcMarkSweepGC'
+Error: Could not create the Java Virtual Machine.
+```
+
+...try commenting out those options in the relevant config file: inside of your elasticsearch directory
+(`which elasticsearch`), these may be set in `bin/elasticsearch.in.sh` or in `config/jvm.options`).
 
 #### Install Elasticsearch plugins
 

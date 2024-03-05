@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("cloudcare/js/form_entry/errors", function () {
     return {
         GENERIC_ERROR: gettext("Something unexpected went wrong on that request. " +

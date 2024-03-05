@@ -1,3 +1,4 @@
+'use strict';
 /* global DOMPurify */
 hqDefine("cloudcare/js/form_entry/form_ui", function () {
     var markdown = hqImport("cloudcare/js/markdown"),
@@ -546,7 +547,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 if (document.visibilityState === "hidden") {
                     self.showSubmitButton = false;
                 }
-             };
+            };
             self.hasSubmitAttempted(true);
             $.publish('formplayer.' + constants.SUBMIT, self);
         };
