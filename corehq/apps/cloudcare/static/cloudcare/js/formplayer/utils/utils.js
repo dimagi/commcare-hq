@@ -462,9 +462,13 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
 
     Utils.setSyncInterval = function (appId, restartInterval) {
         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId),
-                customProperties = currentApp?.attributes?.profile?.custom_properties || {},
-                useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
+            const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
+            let customProperties = {};
+            if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
+                customProperties = currentApp.attributes.profile.custom_properties;
+            }
+
+            const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
             if (!useAggressiveSyncTiming) {
                 return
             }
@@ -494,9 +498,12 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             if (!FormplayerFrontend.syncInterval) {
                 FormplayerFrontend.syncInterval = setInterval(function () {
                     const urlObject = Utils.currentUrlToObject(),
-                        currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", urlObject.appId),
-                        customProperties = currentApp?.attributes?.profile?.custom_properties || {},
-                        useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
+                        currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", urlObject.appId);
+                    let customProperties = {};
+                    if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
+                        customProperties = currentApp.attributes.profile.custom_properties;
+                    }
+                    const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
                     if (!useAggressiveSyncTiming){
                         stopSyncInterval();
                     }
