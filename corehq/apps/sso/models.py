@@ -444,7 +444,7 @@ class IdentityProvider(models.Model):
                 user_principal_names = [user["userPrincipalName"] for user in graph_data["value"]]
                 return user_principal_names
             else:
-                error_message = f"Error acquiring token: {result.get('error')}, Description: "
+                error_message = f"Error acquiring Microsoft Graph API token: {result.get('error')}, Description: "
                 f"{result.get('error_description')}, Correlation ID: {result.get('correlation_id')}"
                 raise Exception(error_message)
         except Exception as e:
