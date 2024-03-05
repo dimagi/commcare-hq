@@ -19,8 +19,9 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
 )
 
 COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
-HARD_BREAK_LINE = "************************************************************************"
-SOFT_BREAK_LINE = "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+COLOR_RED = "91"
+COLOR_GREEN = "92"
+COLOR_YELLOW = "93"
 
 
 class Command(BaseCommand):
@@ -68,12 +69,10 @@ class Command(BaseCommand):
             return
 
         if not js_name:
-            self.stdout.write(f"\n\nMigrating {app_name} templates...")
             app_templates = self.get_templates_for_migration(app_name, template_name, do_re_check)
             self.migrate_files(app_templates, app_name, spec, is_template=True)
 
         if not template_name:
-            self.stdout.write(f"\n\nMigrating {app_name} javascript...")
             app_javascript = self.get_js_files_for_migration(app_name, js_name, do_re_check)
             self.migrate_files(app_javascript, app_name, spec, is_template=False)
 
@@ -112,8 +111,8 @@ class Command(BaseCommand):
     def migrate_files(self, files, app_name, spec, is_template):
         for file_path in files:
             short_path = self.get_short_path(app_name, file_path, is_template)
-
-            self.stdout.write(f'\n{HARD_BREAK_LINE}\n\n')
+            file_type = "templates" if is_template else "javascript"
+            self.stdout.write(self.format_header(f"Migrating {app_name} {file_type}..."))
             confirm = self.get_confirmation(f'Ready to migrate "{short_path}"?')
             if not confirm:
                 self.stdout.write(f"\tok, skipping {short_path}")
@@ -145,7 +144,12 @@ class Command(BaseCommand):
                 if line_changelog:
                     file_changelog.extend(line_changelog)
 
+            short_path = self.get_short_path(app_name, file_path, is_template)
             if has_changes:
+                self.stdout.write(
+                    self.format_header(f"Finalizing changes for {short_path}..."),
+                    style_func=get_style_func(COLOR_YELLOW)
+                )
                 self.record_file_changes(file_path, app_name, file_changelog, is_template)
                 if '/bootstrap5/' in str(file_path):
                     self.save_re_checked_file_changes(app_name, file_path, new_lines, is_template)
@@ -154,24 +158,31 @@ class Command(BaseCommand):
                         app_name, file_path, old_lines, new_lines, is_template
                     )
             else:
-                short_path = self.get_short_path(app_name, file_path, is_template)
                 self.stdout.write(f"\nNo changes were needed for {short_path}. Skipping...\n\n")
 
     def confirm_and_get_line_changes(self, line_number, old_line, new_line, renames, flags):
         changelog = []
         if renames or flags:
-            changelog.append(f"\nLine {line_number}:\n")
+            changelog.append(self.format_header(f"Line {line_number}"))
             self.stdout.write(changelog[-1])
             for flag in flags:
-                changelog.append(old_line)
-                changelog.append(f"\n{SOFT_BREAK_LINE}\n{flag}\n{SOFT_BREAK_LINE}\n\n")
+                changelog.append("\nFlagged Code:")
+                changelog.append(self.format_code(old_line, break_length=len(old_line) + 5))
+                changelog.append(self.format_guidance(flag))
                 self.display_flag_summary(changelog)
                 self.enter_to_continue()
-                self.stdout.write('\n')
+                changelog.append("\n\n")
+                self.stdout.write(self.format_header(
+                    f"Additional changes to line {line_number} will be made..."
+                ))
             if renames:
-                changelog.append(f"-{old_line}")
-                changelog.append(f"+{new_line}")
-                changelog.append("\nRENAMES\n  - " + "\n   - ".join(renames))
+                changelog.append("\nDiff of changes:")
+                changelog.extend(self.format_code(
+                    f"-{old_line}+{new_line}",
+                    split_lines=True,
+                    break_length=max(len(old_line), len(new_line)) + 5
+                ))
+                changelog.append("Summary:\n  - " + "\n  - ".join(renames))
                 self.display_rename_summary(changelog)
                 changelog.append("\n\n")
 
@@ -183,17 +194,21 @@ class Command(BaseCommand):
         return new_line, changelog
 
     def display_flag_summary(self, changelog):
-        self.stdout.write("".join(changelog[-2:]))
-        self.stdout.write("\nIMPORTANT: This complex change requires MANUAL intervention."
-                          "\n\tHitting enter DOES NOT make this change."
-                          "\n\tThis guidance is saved to logs for reference later."
-                          "\n\tThis file is NOT fully migrated UNTIL this issue is addressed.\n")
+        self.stdout.write(changelog[-3])
+        self.stdout.write(changelog[-2], style_func=get_style_func(COLOR_YELLOW))
+        self.stdout.write(changelog[-1])
+        self.stdout.write("\nThis change requires manual intervention and is not made automatically. "
+                          "\nThis guidance will be saved to migration logs for reference later. \n\n")
 
     def display_rename_summary(self, changelog):
-        self.stdout.write("".join(changelog[-3:]))
+        self.stdout.write("".join(changelog[-5:-3]))
+        changes = changelog[-3].split('\n')
+        self.stdout.write(changes[0], style_func=get_style_func(COLOR_RED))
+        self.stdout.write(changes[1], style_func=get_style_func(COLOR_GREEN))
+        self.stdout.write("".join(changelog[-2:]))
         changelog.append("\n\n")
-        self.stdout.write("\nIMPORTANT: Answering 'y' below will automatically make this change "
-                          "in the Bootstrap 5 version of this file.\n")
+        self.stdout.write("\n\n\nAnswering 'y' below will automatically make this change "
+                          "in the Bootstrap 5 version of this file.\n\n")
 
     def record_file_changes(self, template_path, app_name, changelog, is_template):
         short_path = self.get_short_path(app_name, template_path.parent, is_template)
@@ -387,6 +402,28 @@ class Command(BaseCommand):
         return option == 'y'
 
     @staticmethod
+    def format_code(code_text, split_lines=False, break_length=80):
+        break_line = get_break_line("`  ", break_length)
+        lines = [
+            f'\n{break_line}\n',
+            code_text,
+            f'\n{break_line}\n\n',
+        ]
+        if split_lines:
+            return lines
+        return "".join(lines)
+
+    @staticmethod
+    def format_header(header_text, break_length=80):
+        break_line = get_break_line("*", break_length)
+        return f'\n{break_line}\n\n{header_text}\n\n{break_line}\n\n'
+
+    @staticmethod
+    def format_guidance(guidance_text, break_length=80):
+        break_line = get_break_line("- ", break_length)
+        return f'Guidance:\n{break_line}\n{guidance_text}\n{break_line}\n\n'
+
+    @staticmethod
     def enter_to_continue():
         input("\nENTER to continue...")
 
@@ -397,3 +434,11 @@ class Command(BaseCommand):
         self.stdout.write(f"Bootstrap 5 Migration - {message}")
         self.stdout.write("\n")
         self.enter_to_continue()
+
+
+def get_break_line(character, break_length):
+    return character * int(break_length / len(character))
+
+
+def get_style_func(color_code):
+    return lambda x: f"\033[{color_code}m{x}\033[00m"
