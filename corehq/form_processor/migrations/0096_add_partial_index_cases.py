@@ -19,9 +19,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddIndex(
-            model_name='commcarecase',
-            index=models.Index(condition=models.Q(('deleted_on__isnull', False)), fields=['deleted_on'],
-                               name=INDEX_NAME),
-        ),
+        migrations.RunSQL(
+            sql=CREATE_INDEX_SQL,
+            reverse_sql=DROP_INDEX_SQL,
+            state_operations=[
+                migrations.AddIndex(
+                    model_name='commcarecase',
+                    index=models.Index(condition=models.Q(('deleted_on__isnull', False)), fields=['deleted_on'],
+                                       name=INDEX_NAME),
+                ),
+            ]
+        )
     ]
