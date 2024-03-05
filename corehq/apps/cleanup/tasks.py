@@ -18,7 +18,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.form_processor.models import XFormInstance
 
-
 UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
 
 logger = logging.getLogger(__name__)

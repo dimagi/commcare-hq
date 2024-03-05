@@ -17,24 +17,25 @@
       Case Deletion
     </h2>
     <h3 class="h4">
-      Please review the listed items before proceeding with the case deletion.
+      Please review the items below before proceeding with case deletion.
     </h3>
     </br>
     {% blocktrans %}
-      The following Cases and their Form Submissions will be deleted:
+      The following cases and their form submissions will be deleted.
+      The Primary Case is the case originally marked for deletion.
     {% endblocktrans %}
     <ul>
       {% for case in delete_cases %}
         <li>
           <h4><i class="fa fa-list-alt"></i><strong><a href="{{ case.url }}"> {{ case.name }} </a></strong>
             {% if case.is_primary %}
-              <span class="label label-default">primary case</span>
+              <span class="label label-default">Primary Case</span>
             {% endif %}
           </h4>
           <ul class="list-group">
             {% for form in case.delete_forms %}
               <li class="list-group-item">
-                <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name|escapejs }} </a></h5>
+                <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name }} </a></h5>
                 Actions taken by this form on:
                 <ul>
                   {% for case in form.affected_cases %}
@@ -56,7 +57,7 @@
     </br>
     {% if affected_cases %}
       {% blocktrans %}
-        The following Cases have related Form Submissions that will be deleted, which will roll back the action
+        The following case have related form submissions that will be deleted, which will roll back the action
         taken by that form on the case, unless the form has already been archived.
         These cases will <strong>not</strong> be deleted.
       {% endblocktrans %}
@@ -68,7 +69,7 @@
               {% for form in case.affected_forms %}
                 <li class="list-group-item">
                   <i class="fa fa-file"> </i>
-                  <a href="{{ form.url }}"> {{ form.name|escapejs }} </a> ({{ form.actions }})
+                  <a href="{{ form.url }}"> {{ form.name }} </a> ({{ form.actions }})
                 </li>
               {% endfor %}
             </ul>
@@ -79,8 +80,8 @@
     </br>
     {% if reopened_cases %}
       {% blocktrans %}
-        The following Cases will have their closing form deleted and will be reopened, unless the form
-        has already been archived, but the case will <strong>not</strong> deleted.
+        The following cases will have the form that closed the case deleted, resulting in reopening the case
+        unless the form has already been archived. The case will <strong>not</strong> be deleted.
       {% endblocktrans %}
       <ul>
         {% for case in reopened_cases %}
@@ -89,7 +90,7 @@
             <ul class="list-group">
               <li class="list-group-item">
                 <i class="fa fa-file"> </i>
-                Closed by: <a href="{{ case.closing_form_url }}"> {{ case.closing_form_name|escapejs }} </a>
+                Closed by: <a href="{{ case.closing_form_url }}"> {{ case.closing_form_name }} </a>
               </li>
             </ul>
           </li>

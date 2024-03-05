@@ -21,11 +21,11 @@
     </h3>
     </br>
     {% blocktrans %}
-        The following Cases were created by the form marked for deletion (Primary Form) and will be deleted.
+        The following cases were created by the form pending deletion (Primary Form) and will be deleted.
     {% endblocktrans %}
     {% if has_multiple_forms %}
       {% blocktrans %}
-        The related forms that updated these Cases will also be deleted as a result of deleting the Primary Form.
+        The related forms that updated these cases will also be deleted as a result of deleting the Primary Form.
       {% endblocktrans %}
     {% endif %}
     <ul>
@@ -35,7 +35,7 @@
           <ul class="list-group">
             {% for form in case.delete_forms %}
               <li class="list-group-item">
-                <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name|escapejs }} </a>
+                <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name }} </a>
                   {% if form.is_primary %}
                     <span class="label label-default">Primary Form</span>
                   {% endif %}
@@ -60,7 +60,7 @@
     </ul>
     {% if delete_cases %}
       {% blocktrans %}
-        The following Cases and their submission forms belongs to at least one of the above cases
+        The following cases and their submission forms belongs to at least one of the above cases
         and will also be deleted:
       {% endblocktrans %}
       <ul>
@@ -70,7 +70,10 @@
             <ul class="list-group">
               {% for form in case.delete_forms %}
                 <li class="list-group-item">
-                  <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name|escapejs }} </a>
+                  <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name }} </a>
+                    {% if form.is_primary %}
+                      <span class="label label-default">Primary Form</span>
+                    {% endif %}
                   </h5>
                   Actions taken by this form on:
                   <ul>
@@ -92,11 +95,34 @@
       </ul>
     {% endif %}
     </br>
+    {% if reopened_cases %}
+      {% blocktrans %}
+        The following cases will have their closing form deleted and will be reopened, unless the form
+        has already been archived, but the case will <strong>not</strong> deleted.
+      {% endblocktrans %}
+      <ul>
+        {% for case in reopened_cases %}
+          <li>
+            <h4><strong><a href="{{ case.url }}"> {{ case.name }} </a></strong></h4>
+            <ul class="list-group">
+              <li class="list-group-item">
+                <i class="fa fa-file"> </i>
+                Closed by: <a href="{{ case.closing_form_url }}"> {{ case.closing_form_name }} </a>
+                {% if case.closing_form_is_primary %}
+                  <span class="label label-default">Primary Form</span>
+                {% endif %}
+              </li>
+            </ul>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    </br>
     {% if form_affected_cases %}
       {% blocktrans %}
-        The following Cases were directly updated by the form pending deletion, but these cases will
-        <strong>not</strong> be deleted. However, you will not be able to restore the case updates
-        from this form after deletion.
+        The following cases were directly updated by the form pending deletion (Primary Form),
+        but these cases will <strong>not</strong> be deleted. However, you will not be able to restore
+        the case updates made by the Primary Form after deletion.
       {% endblocktrans %}
         <!-- look into adding case updates pulled from form... if it's too difficult its fine -->
       <ul>
@@ -107,7 +133,7 @@
               {% for form in case.affected_forms %}
                 <li class="list-group-item">
                   <i class="fa fa-file"> </i>
-                  <a href="{{ form.url }}"> {{ form.name|escapejs }}
+                  <a href="{{ form.url }}"> {{ form.name }}
                     {% if form.is_primary %}
                       <span class="label label-default">Primary Form</span>
                     {% endif %}
@@ -119,10 +145,11 @@
         {% endfor %}
       </ul>
     {% endif %}
+    </br>
     {% if affected_cases %}
       {% blocktrans %}
-        The following Cases have related Form Submissions that will be deleted as a result of one of the above
-        Cases being deleted.
+        The following cases have related Form Submissions that will be deleted as a result of one of the above
+        cases being deleted.
         This will roll back the action taken by that form, if the form is not already archived.
         These cases will <strong>not</strong> be deleted.
       {% endblocktrans %}
@@ -134,7 +161,7 @@
               {% for form in case.affected_forms %}
                 <li class="list-group-item">
                   <i class="fa fa-file"> </i>
-                  <a href="{{ form.url }}"> {{ form.name|escapejs }} </a> ({{ form.actions }})
+                  <a href="{{ form.url }}"> {{ form.name }} </a> ({{ form.actions }})
                 </li>
               {% endfor %}
             </ul>
@@ -142,30 +169,6 @@
         {% endfor %}
       </ul>
     {% endif %}
-    </br>
-    {% if reopened_cases %}
-      {% blocktrans %}
-        The following Cases will have their closing form deleted and will be reopened, unless the form
-        has already been archived, but the case will <strong>not</strong> deleted.
-      {% endblocktrans %}
-      <ul>
-        {% for case in reopened_cases %}
-          <li>
-            <h4><strong><a href="{{ case.url }}"> {{ case.name }} </a></strong></h4>
-            <ul class="list-group">
-              <li class="list-group-item">
-                <i class="fa fa-file"> </i>
-                Closed by: <a href="{{ case.closing_form_url }}"> {{ case.closing_form_name|escapejs }} </a>
-                {% if case.closing_form_is_primary %}
-                  <span class="label label-default">Primary Form</span>
-                {% endif %}
-              </li>
-            </ul>
-          </li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-    </br>
     <div class="clearfix form-actions">
       <div class="col-sm-12">
         <a class="btn btn-default pull-left" href="{% url 'render_form_data' domain main_xform_id %}">
