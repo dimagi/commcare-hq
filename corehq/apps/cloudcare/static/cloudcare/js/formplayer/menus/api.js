@@ -66,7 +66,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                         return;
                     }
                 }
-
+                FormplayerFrontend.permitIntervalSync = true;
                 options = {
                     success: function (parsedMenus, response) {
                         if (response.status === 'retry') {
@@ -114,6 +114,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                                 return;
                             }
 
+                            formplayerUtils.setSyncInterval(params.appId, parsedMenus?.metaData?.attemptRestore);
+                            sessionStorage.setItem("lastUserActivityTime",  Date.now());
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
