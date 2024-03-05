@@ -581,3 +581,121 @@ class TestSsoBackend(TestCase):
         self.assertIsNotNone(user)
         self.assertEqual(user.username, self.user.username)
         self.assertIsNone(self.request.sso_login_error)
+
+    def test_deactivated_user_is_reactivated_after_successful_sso_login(self):
+        web_user_to_be_reactivated = self._create_a_new_user_then_deactivate_user()
+
+        django_user = auth.authenticate(
+            request=self.request,
+            username=web_user_to_be_reactivated.username,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+
+        # refetch the WebUser object
+        web_user = WebUser.get_by_username(web_user_to_be_reactivated.username)
+        self.assertTrue(web_user.is_active)
+        django_user.refresh_from_db()
+        self.assertTrue(django_user.is_active)
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'User account for {web_user.username} has been re-activated.',
+            ]
+        )
+
+    def test_deactivated_user_is_reactivated_and_invitation_accepted(self):
+        web_user_to_be_reactivated = self._create_a_new_user_then_deactivate_user()
+        admin_role = StaticRole.domain_admin(self.domain.name)
+        invitation = Invitation(
+            domain=self.domain.name,
+            email=web_user_to_be_reactivated.username,
+            invited_by=self.user.couch_id,
+            invited_on=datetime.datetime.utcnow(),
+            role=admin_role.get_qualified_id(),
+        )
+        invitation.save()
+        AsyncSignupRequest.create_from_invitation(invitation)
+        django_user = auth.authenticate(
+            request=self.request,
+            username=invitation.email,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+
+        # refetch the WebUser object
+        web_user = WebUser.get_by_username(web_user_to_be_reactivated.username)
+        self.assertTrue(web_user.is_active)
+        django_user.refresh_from_db()
+        self.assertTrue(django_user.is_active)
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'User account for {invitation.email} has been re-activated.',
+                f'You have been added to the "{invitation.domain}" project space.',
+            ]
+        )
+
+    def test_deactivated_user_is_reactivated_and_expired_invitation_declined(self):
+        web_user_to_be_reactivated = self._create_a_new_user_then_deactivate_user()
+        invitation = Invitation(
+            domain=self.domain.name,
+            email=web_user_to_be_reactivated.username,
+            invited_by=self.user.couch_id,
+            invited_on=datetime.datetime.utcnow() - relativedelta(months=2),
+        )
+        invitation.save()
+        AsyncSignupRequest.create_from_invitation(invitation)
+
+        django_user = auth.authenticate(
+            request=self.request,
+            username=invitation.email,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+
+        # refetch the WebUser object
+        web_user = WebUser.get_by_username(web_user_to_be_reactivated.username)
+        self.assertTrue(web_user.is_active)
+        django_user.refresh_from_db()
+        self.assertTrue(django_user.is_active)
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'User account for {invitation.email} has been re-activated.',
+            ]
+        )
+        self.assertEqual(
+            self.request.sso_new_user_messages['error'],
+            [
+                'Could not accept invitation because it is expired.',
+            ]
+        )
+
+    def test_failed_sso_login_does_not_reactivate_user(self):
+        """
+        This test ensures that a failed SSO login attempt does not reactivate a deactivated user.
+        """
+        deactivated_user = self._create_a_new_user_then_deactivate_user()
+
+        # When SSO authentication fails
+        user = auth.authenticate(
+            request=self.request,
+            username=deactivated_user.username,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=False,  # Simulate a failed handshake/authentication
+        )
+
+        # refetch the WebUser object
+        web_user = WebUser.get_by_username(deactivated_user.username)
+        self.assertFalse(web_user.is_active)
+        self.assertIsNone(user)
+
+    def _create_a_new_user_then_deactivate_user(self):
+        user = WebUser.create(
+            None, 'reactivate@vaultwax.com', 'testpwd', None, None
+        )
+        user.is_active = False
+        user.save()
+        self.addCleanup(user.delete, None, deleted_by=None)
+        return user
