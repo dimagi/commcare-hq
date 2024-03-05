@@ -2115,7 +2115,6 @@ msgstr ""
 #: corehq/apps/reports/standard/forms/reports.py
 #: corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/standard/monitoring.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/project_health/partials/user_list.html
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/accept_invite.html
@@ -2540,7 +2539,6 @@ msgstr ""
 #: corehq/apps/reports/filters/dates.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
 #: corehq/apps/users/templates/users/web_users.html custom/up_nrhm/sql_data.py
 msgid "Date"
@@ -3696,7 +3694,6 @@ msgstr "Aplicações"
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/message_event_display.py
 #: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/messaging/survey_detail.html
 #: corehq/apps/sms/models.py corehq/apps/sms/views.py
 msgid "Unknown"
@@ -9083,7 +9080,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
 #: corehq/apps/linked_domain/const.py corehq/apps/registry/models.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/userreports/reports/builder/forms.py
 msgid "Report"
@@ -18323,10 +18319,8 @@ msgid "Mobile User"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Username"
 msgid "Unnamed"
-msgstr "Nome de usuário"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "App not found"
@@ -20257,10 +20251,8 @@ msgid "Custom Path"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-#, fuzzy
-#| msgid "custom user property"
 msgid "Select geo property"
-msgstr "Propriedade do usuário personalizada"
+msgstr ""
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid ""
@@ -30794,10 +30786,6 @@ msgstr ""
 msgid "Added"
 msgstr ""
 
-#: corehq/apps/reports/standard/web_user_activity.py
-msgid "Web User Activity"
-msgstr ""
-
 #: corehq/apps/reports/templates/reports/async/aggregate_user_status.html
 msgid "Users who have Ever Submitted Data"
 msgstr "Usuários que alguma vez já submeteram dados"
@@ -37371,6 +37359,17 @@ msgstr ""
 msgid ""
 "There was a problem executing your query, please make sure your parameters "
 "are valid."
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+#, fuzzy, python-brace-format
+#| msgid "CommCare Translations"
+msgid "CommCare Analytics on {server}"
+msgstr "Traduções do CommCare"
+
+#: corehq/apps/userreports/views.py
+#, python-brace-format
+msgid "Data source {ds} on {server}"
 msgstr ""
 
 #: corehq/apps/userreports/views.py

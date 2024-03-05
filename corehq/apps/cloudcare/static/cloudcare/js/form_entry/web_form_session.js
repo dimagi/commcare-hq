@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("cloudcare/js/form_entry/web_form_session", function () {
     var cloudcareUtils = hqImport("cloudcare/js/utils"),
         constants = hqImport("cloudcare/js/form_entry/const"),

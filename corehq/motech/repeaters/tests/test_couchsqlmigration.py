@@ -461,6 +461,16 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         obj = SQLRepeatRecord.objects.get(couch_id=doc_id)
         self.assertFalse(obj.attempts)
 
+    def test_migrate_record_erroneous_next_check(self):
+        doc, _ = self.create_repeat_record()
+        doc.update(succeeded=True, next_check=datetime.utcnow().isoformat() + 'Z')
+        doc_id = self.db.save_doc(doc)["id"]
+        with templog() as log, patch.object(transaction, "atomic", atomic_check):
+            call_command('populate_repeatrecords', log_path=log.path)
+            self.assertNotIn('has differences:', log.content)
+        obj = SQLRepeatRecord.objects.get(couch_id=doc_id)
+        self.assertIsNone(obj.next_check)
+
     def test_migration_with_repeater_added_after_start(self):
         doc, obj = self.create_repeat_record(unwrap_doc=False)
         repeater3 = models.FormRepeater(

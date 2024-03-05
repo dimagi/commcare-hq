@@ -1,3 +1,4 @@
+'use strict';
 /* global affix */
 /* eslint-env mocha */
 hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {

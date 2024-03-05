@@ -216,3 +216,34 @@ class TestCustomDataModelValidation(FieldsViewMixin, SimpleTestCase):
             view.form.errors,
             {"data_fields": ["A label is required for each field."]},
         )
+
+
+class TestCustomDataFieldsForm(FieldsViewMixin, SimpleTestCase):
+    def test_valid(self):
+        fields = [self.create_field(slug='one')]
+        profiles = [CustomDataFieldsProfile(name='profile', fields={'one': 'one'})]
+        form = self._create_form(fields, profiles)
+
+        self.assertTrue(form.is_valid())
+
+    def test_can_assign_empty_profile_values_to_optional_fields(self):
+        fields = [self.create_field(slug='one', is_required=False)]
+        profiles = [CustomDataFieldsProfile(name='profile', fields={'one': ''})]
+        form = self._create_form(fields, profiles)
+
+        self.assertTrue(form.is_valid())
+
+    def test_cannot_assign_empty_profile_values_to_required_fields(self):
+        fields = [self.create_field(slug='one', is_required=True)]
+        profiles = [CustomDataFieldsProfile(name='profile', fields={'one': ''})]
+        form = self._create_form(fields, profiles)
+
+        self.assertFalse(form.is_valid())
+
+    def _create_form(self, fields, profiles):
+        fields_json = json.dumps([field.to_dict() for field in fields])
+        profiles_json = json.dumps([profile.to_json() for profile in profiles])
+        return CustomDataFieldsForm({
+            'data_fields': fields_json,
+            'profiles': profiles_json
+        })

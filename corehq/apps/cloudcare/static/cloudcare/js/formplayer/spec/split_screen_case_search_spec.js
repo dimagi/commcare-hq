@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 /* global Backbone, Marionette */
 hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function () {

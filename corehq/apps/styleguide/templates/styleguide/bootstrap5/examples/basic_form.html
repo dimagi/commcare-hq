@@ -1,0 +1,58 @@
+<form action="#someUrl"
+      method="post">
+  <!-- the {% csrf_token %} template tag should be included here -->
+  <fieldset>
+    <legend>Basic Information</legend>
+    <div class="row mb-3">
+      <!-- Generally, it is best practice to use the {% css_label_class %}
+           template tag below instead of the col-* classes -->
+      <label for="id_first_name"
+             class="col-form-label col-xs-12 col-sm-4 col-md-4 col-lg-3">
+        First Name
+      </label>
+      <!-- Generally, it is best practice to use the {% css_field_class %}
+           template tag below instead of the col-* classes -->
+      <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9">
+        <input type="text"
+               name="first_name"
+               class="form-control"
+               id="id_first_name"
+               autocomplete="off" />
+      </div>
+    </div>
+    <div class="row mb-3">
+      <label for="id_favorite_color"
+             class="col-form-label col-xs-12 col-sm-4 col-md-4 col-lg-3">
+        Favorite Color
+      </label>
+      <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9">
+        <select name="favorite_color"
+                class="form-select hqwebapp-select2"
+                id="id_favorite_color">
+          <option value="red">Red</option>
+          <option value="green">Green</option>
+          <option value="blue">Blue</option>
+        </select>
+      </div>
+    </div>
+    <div class="row mb-3">
+      <label for="id_hopes"
+             class="col-form-label col-xs-12 col-sm-4 col-md-4 col-lg-3">
+        Hopes and Dreams
+      </label>
+      <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9">
+        <textarea name="hopes"
+                  class="form-control vertical-resize"
+                  id="id_hopes"></textarea>
+      </div>
+    </div>
+  </fieldset>
+  <div class="form-actions row">
+    <!-- Generally, it is best practice to use the {% css_action_class %}
+         template tag below instead of offset-* and col-* -->
+    <div class="offset-xs-12 offset-sm-4 offset-md-4 offset-lg-3 col-xs-12 col-sm-8 col-md-8 col-lg-9">
+      <button class="btn btn btn-primary" type="submit">Save</button>
+      <a href="#" class="btn btn-outline-primary">Cancel</a>
+    </div>
+  </div>
+</form>
