@@ -57,6 +57,23 @@
         </div>
       </div>
       <!-- /ko -->
+
+      {% if request|toggle_enabled:"SUPPORT_GEO_JSON_EXPORT" %}
+      <div id="select-geo-property" class="form-group" hidden>
+        <label class="col-sm-4 col-md-3 col-lg-2 control-label" for="geo-property-select">
+          {% trans 'Select geo property' %}
+        </label>
+        <div class="col-sm-9 col-md-8 col-lg-6">
+          <select
+            id="geo-property-select"
+            class="control form-control"
+            data-bind="options: $parent.geoProperties,
+              value: table.selected_geo_property">
+          </select>
+        </div>
+      </div>
+      {% endif %}
+
       <h4>{{ terminology.choose_fields_label }}</h4>
       <div class="help-block">
         {% if request|request_has_privilege:"EXPORT_MULTISORT" %}
@@ -263,7 +280,7 @@
               {% if request|request_has_privilege:"EXPORT_MULTISORT" %}style="cursor:pointer"{% endif %}>
             <td class="text-center">
               <span class="sortable-handle">
-                <i class="fa fa-arrows-v"></i>
+                <i class="fa-solid fa-up-down"></i>
               </span>
               &nbsp;&nbsp;&nbsp;
               <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
@@ -383,7 +400,7 @@
                     <li class="list-group-item">
                       <span data-bind="text: $data"></span>
                       <i style="cursor: pointer"
-                         class="text-danger fa fa-trash pull-right"
+                         class="text-danger fa-regular fa-trash-can pull-right"
                          data-bind="click: column.removeUserDefinedOption.bind(column)"></i>
                     </li>
                   </ul>

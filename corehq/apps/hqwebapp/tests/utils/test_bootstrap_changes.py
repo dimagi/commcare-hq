@@ -46,11 +46,11 @@ def test_flag_changed_css_classes_bootstrap5():
     flags = flag_changed_css_classes(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(flags, ['`dl-horizontal` has been dropped.\nInstead, use `.row` on `<dl>` and use grid '
-               'column classes (or mixins) on its `<dt>` and `<dd>` children.\n\nPreviously:\n```\n'
-               '<dl class="dl-horizontal">\n    <dt>foo</dt>\n    <dd>foo</dd>\n</dl>\n```\n\nNow:'
-               '\n```\n<dl class="row">\n    <dt class="col-3">foo</dt>\n    '
-               '<dd class="col-9">foo</dd>\n</dl>\n```\n'])
+    eq(flags, ['`dl-horizontal` has been dropped.\nInstead, use `.row` on `<dl>` and use grid column classes '
+               '(or mixins) on its `<dt>` and `<dd>` children.\n\nAn EXAMPLE for how to apply this change is '
+               'provided below.\nPlease see docs for further details.\n\nPreviously:\n```\n<dl class='
+               '"dl-horizontal">\n    <dt>foo</dt>\n    <dd>foo</dd>\n</dl>\n```\n\nNow:\n```\n<dl class='
+               '"row">\n    <dt class="col-3">foo</dt>\n    <dd class="col-9">foo</dd>\n</dl>\n```\n'])
 
 
 def test_flag_stateful_button_changes_bootstrap5():
@@ -64,16 +64,15 @@ def test_flag_changed_javascript_plugins_bootstrap5():
     flags = flag_changed_javascript_plugins(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(flags, ["The `modal` plugin has been restructured since the removal of jQuery.\n\n"
-               "There is now a new way of triggering modal events and interacting with "
-               "modals in javascript.\nFor instance, if we wanted to hide a modal with "
-               "id `#bugReport` before, we would now do the\nfollowing...\n\npreviously"
-               "\n```\n$('#bugReport').modal('hide');\n```\n\nnow\n```\nconst bugReportModal"
-               " = new bootstrap.Modal($('#bugReport'));\nbugReportModal.hide();\n```\n\n"
-               "Hint: make sure to list `hqwebapp/js/bootstrap5_loader` as a js dependency "
-               "in the file where\nbootstrap is referenced.\n\nOld docs: "
-               "https://getbootstrap.com/docs/3.4/javascript/#modals\nNew docs: "
-               "https://getbootstrap.com/docs/5.3/components/modal/#via-javascript\n"])
+    eq(flags, ["The `modal` plugin has been restructured since the removal of jQuery.\n\nThere is now a new way "
+               "of triggering modal events and interacting with modals in javascript.\nFor instance, if we "
+               "wanted to hide a modal with id `#bugReport` before, we would now do the\nfollowing..."
+               "\n\nAn EXAMPLE for how to apply this change is provided below.\nPlease see docs for "
+               "further details.\n\npreviously\n```\n$('#bugReport').modal('hide');\n```\n\nnow\n```\n"
+               "const bugReportModal = new bootstrap.Modal($('#bugReport'));\nbugReportModal.hide();\n```\n\n"
+               "Hint: make sure to list `hqwebapp/js/bootstrap5_loader` as a js dependency in the file where\n"
+               "bootstrap is referenced.\n\nOld docs: https://getbootstrap.com/docs/3.4/javascript/#modals\n"
+               "New docs: https://getbootstrap.com/docs/5.3/components/modal/#via-javascript\n"])
 
 
 def test_flag_extended_changed_javascript_plugins_bootstrap5():

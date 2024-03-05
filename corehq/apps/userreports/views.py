@@ -1559,21 +1559,24 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
 @toggles.SUPERSET_ANALYTICS.required_decorator()
 @api_throttle
 def subscribe_to_data_source_changes(request, domain, config_id):
-    from django.utils.translation import gettext as _
-
-    for param in ['webhook_url', 'client_id', 'client_secret', 'token_url']:
-        if param not in request.POST:
-            return HttpResponse(status=422, content=f"Missing parameter: {param}")
+    reqd_params = {'webhook_url', 'client_id', 'client_secret', 'token_url'}
+    missing_params = reqd_params - set(request.POST)
+    if missing_params:
+        return HttpResponse(
+            status=422,
+            content=f"Missing parameters: {', '.join(sorted(missing_params))}",
+        )
 
     webhook_url = request.POST['webhook_url']
     client_hostname = urlparse(webhook_url).hostname
-    connection_settings_name = f"{_('Connection')} - {client_hostname}"
-
-    conn_settings, _ = ConnectionSettings.objects.update_or_create(
+    conn_name = gettext_lazy('CommCare Analytics on {server}').format(
+        server=client_hostname,
+    )
+    conn_settings, __ = ConnectionSettings.objects.update_or_create(
         client_id=request.POST['client_id'],
         defaults={
             'domain': domain,
-            'name': connection_settings_name,
+            'name': conn_name,
             'auth_type': OAUTH2_CLIENT,
             'client_secret': request.POST['client_secret'],
             'url': webhook_url,
@@ -1581,8 +1584,12 @@ def subscribe_to_data_source_changes(request, domain, config_id):
         }
     )
 
+    repeater_name = gettext_lazy('Data source {ds} on {server}').format(
+        ds=config_id,
+        server=client_hostname,
+    )
     DataSourceRepeater.objects.create(
-        name=f"{client_hostname}_{config_id}",
+        name=repeater_name,
         domain=domain,
         data_source_id=config_id,
         connection_settings_id=conn_settings.id,

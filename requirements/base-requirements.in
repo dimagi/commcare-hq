@@ -7,11 +7,12 @@ bleach[css]  # USH - used for rich text messaging emails
 boto3
 celery
 CommcareTranslationChecker>=0.9.7
+cryptography>=42.0
 csiphash
 css_inline  # USH - used for rich text messaging emails
 datadog
 ddtrace
-decorator==4.0.11  # required by django-digest
+decorator==5.1.1  # required by django-digest
 defusedxml
 diff-match-patch
 dimagi-memoized
@@ -26,7 +27,6 @@ crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@77
 django-cte
 django-field-audit
 django-formtools
-django-logentry-admin
 django-oauth-toolkit
 django-otp
 django-phonenumber-field
@@ -43,16 +43,14 @@ django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websock
 django>=3.2.18,<4.0
 djangorestframework
 dropbox
-elasticsearch2>=2.0.0,<3.0.0  # we will be deprecating support for ES2 soon
 elasticsearch5>=5.0.0,<6.0.0
-elasticsearch6 >=6.0.0,<7.0.0 # ES6 support is currently in development
 ethiopian-date-converter
 eulxml
 firebase-admin  # India Division - used for FCM Push Notifications
 gevent
 google-api-python-client==2.32.0
 google-auth-httplib2==0.1.0
-google-auth-oauthlib==0.4.6
+google-auth-oauthlib==1.2.0
 greenlet
 gunicorn
 haversine  # SolTech - Used in Geospatial features
@@ -89,6 +87,7 @@ python-dateutil
 python-imap
 pyphonetics
 python-magic
+pytz
 pyjwt
 PyYAML
 hl7apy

@@ -9,7 +9,7 @@ from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.reports.analytics.esaccessors import get_user_stubs
-from corehq.apps.users.tests.util import patch_user_data_db_layer
+from corehq.apps.users.tests.util import patch_user_data_db_layer, patch_user_data_schema
 from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import mock_out_couch
 
@@ -58,6 +58,7 @@ class TestUserSignals(SimpleTestCase):
 
 
 @mock_out_couch()
+@patch_user_data_schema
 @patch_user_data_db_layer
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
 @patch('corehq.apps.analytics.signals.update_hubspot_properties')

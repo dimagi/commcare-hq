@@ -761,6 +761,13 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+SSO_REMOTE_USER_MANAGEMENT = StaticToggle(
+    'sso_remote_user_management',
+    "Shows remote user management fields in SSO Identity Provider Form",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 BIOMETRIC_INTEGRATION = StaticToggle(
     'biometric_integration',
     "Enables biometric integration (simprints) features.",
@@ -1151,14 +1158,6 @@ ECD_MIGRATED_DOMAINS = StaticToggle(
     'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.'
 )
 
-WEB_USER_ACTIVITY_REPORT = StaticToggle(
-    'web_user_activity_report',
-    'USH: Enable Web User Activity Report',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Activity+Report',
-)
-
 ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
     'ecd_enterprise_domains',
     'Explore Case Data feature preview for Enterprise domains',
@@ -1483,9 +1482,9 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-CASE_DEDUPE = StaticToggle(
-    'case_dedupe',
-    'Case deduplication feature',
+CASE_DEDUPE_UPDATES = StaticToggle(
+    'case_dedupe_updates',
+    'Allow Case deduplication update actions',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
@@ -2706,6 +2705,14 @@ DATA_DICTIONARY = FrozenPrivilegeToggle(
     help_link='https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary'
 )
 
+CASE_DEDUPE = FrozenPrivilegeToggle(
+    privileges.CASE_DEDUPE,
+    'case_dedupe',
+    label='Case deduplication feature',
+    tag=TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
+)
 
 USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
     slug='use_logo_in_system_emails',
@@ -2721,4 +2728,20 @@ VELLUM_CASE_MICRO_IMAGE = StaticToggle(
     tag=TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description='Add a micro image to cases in the case list.'
+)
+
+SUPPORT_GEO_JSON_EXPORT = StaticToggle(
+    slug='support_geo_json_export',
+    label='Support GeoJSON export in Case Exporter',
+    tag=TAG_SOLUTIONS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='The Case Export page now supports the exporting of GeoJSON data.',
+)
+
+INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
+    slug='increased_max_search_results',
+    label='Increases the maximum number of Elasticsearch results from 500 to 1500',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Temporary increase of the max number of search results.',
 )
