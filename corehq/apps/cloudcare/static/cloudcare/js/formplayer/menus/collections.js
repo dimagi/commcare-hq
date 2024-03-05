@@ -6,6 +6,7 @@
  *  selects one of these items. The query screen is also implemented as
  *  a menu, where each search field is an item.
  */
+'use strict';
 hqDefine("cloudcare/js/formplayer/menus/collections", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Utils = hqImport("cloudcare/js/formplayer/utils/utils");
@@ -34,6 +35,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'type',
             'noItemsText',
             'dynamicSearch',
+            'metaData',
         ],
 
         entityProperties: [
