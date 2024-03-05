@@ -15,3 +15,6 @@ MPM_LIVEALL = 'liveall'
 MPM_LIVESUM = 'livesum'
 MPM_MAX = 'max'
 MPM_MIN = 'min'
+
+# Datadog tags
+MODULE_NAME_TAG = "module_name"

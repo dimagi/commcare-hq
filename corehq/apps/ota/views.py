@@ -44,7 +44,7 @@ from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.exceptions import CaseSearchUserError
-from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, CASE_SEARCH_TAGS_MAPPING
 from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import check_domain_migration
@@ -134,16 +134,24 @@ def app_aware_search(request, domain, app_id):
 
 
 def _log_search_timing(start_time, request, domain):
+    request_dict = dict((request.GET if request.method == 'GET' else request.POST).lists())
+    tags = {
+        tag_name: value[0]
+        for param_name, tag_name in CASE_SEARCH_TAGS_MAPPING.items()
+        if (value := request_dict.pop(param_name, []))
+    }
+    tags.update({'domain': limit_domains(domain)})
+
     elapsed = (datetime.now() - start_time).total_seconds()
     metrics_histogram("commcare.app_aware_search.processing_time",
                       int(elapsed * 1000),
                       bucket_tag='duration_bucket',
                       buckets=(500, 1000, 5000),
                       bucket_unit='ms',
-                      tags={'domain': limit_domains(domain)})
+                      tags=tags)
     if elapsed >= 10 and limit_domains(domain) != "__other__":
         notify_exception(request, "LongCaseSearchRequest", details={
-            'request_dict': dict((request.GET if request.method == 'GET' else request.POST).lists()),
+            'request_dict': request_dict,
         })
 
 
