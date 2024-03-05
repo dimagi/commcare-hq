@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 from django.conf import settings
@@ -63,8 +64,6 @@ class Command(BaseCommand):
         verify_references = options.get('verify_references')
 
         if verify_references:
-            self.stdout.write(f"\n\nVerifying that references to migrated files "
-                              f"in {app_name} have been updated...")
             self.verify_migrated_references(app_name)
             return
 
@@ -92,7 +91,8 @@ class Command(BaseCommand):
         files = [t for t in files if '/bootstrap3/' not in str(t)]
 
         if do_re_check:
-            self.stdout.write("Re-checking migrated Bootstrap 5 templates only")
+            self.clear_screen()
+            self.write_response("\n\nRe-checking migrated Bootstrap 5 templates only.\n\n")
             files = [t for t in files if '/bootstrap5/' in str(t)]
         else:
             files = [t for t in files if '/bootstrap5/' not in str(t)]
@@ -111,11 +111,12 @@ class Command(BaseCommand):
     def migrate_files(self, files, app_name, spec, is_template):
         for file_path in files:
             short_path = self.get_short_path(app_name, file_path, is_template)
+            self.clear_screen()
             file_type = "templates" if is_template else "javascript"
             self.stdout.write(self.format_header(f"Migrating {app_name} {file_type}..."))
             confirm = self.get_confirmation(f'Ready to migrate "{short_path}"?')
             if not confirm:
-                self.stdout.write(f"\tok, skipping {short_path}")
+                self.write_response(f"ok, skipping {short_path}")
                 continue
 
             self.migrate_single_file(app_name, file_path, spec, is_template)
@@ -146,6 +147,7 @@ class Command(BaseCommand):
 
             short_path = self.get_short_path(app_name, file_path, is_template)
             if has_changes:
+                self.clear_screen()
                 self.stdout.write(
                     self.format_header(f"Finalizing changes for {short_path}..."),
                     style_func=get_style_func(COLOR_YELLOW)
@@ -158,12 +160,13 @@ class Command(BaseCommand):
                         app_name, file_path, old_lines, new_lines, is_template
                     )
             else:
-                self.stdout.write(f"\nNo changes were needed for {short_path}. Skipping...\n\n")
+                self.write_response(f"\nNo changes were needed for {short_path}. Skipping...\n\n")
 
     def confirm_and_get_line_changes(self, line_number, old_line, new_line, renames, flags):
         changelog = []
         if renames or flags:
             changelog.append(self.format_header(f"Line {line_number}"))
+            self.clear_screen()
             self.stdout.write(changelog[-1])
             for flag in flags:
                 changelog.append("\nFlagged Code:")
@@ -172,6 +175,7 @@ class Command(BaseCommand):
                 self.display_flag_summary(changelog)
                 self.enter_to_continue()
                 changelog.append("\n\n")
+                self.clear_screen()
                 self.stdout.write(self.format_header(
                     f"Additional changes to line {line_number} will be made..."
                 ))
@@ -189,7 +193,7 @@ class Command(BaseCommand):
                 confirm = self.get_confirmation("Keep changes?")
                 if not confirm:
                     changelog.append("CHANGES DISCARDED\n\n")
-                    self.stdout.write("ok, discarding changes...")
+                    self.write_response("ok, discarding changes...")
                     return old_line, changelog
         return new_line, changelog
 
@@ -232,7 +236,7 @@ class Command(BaseCommand):
         confirm = self.get_confirmation(f"\nSave changes to {short_path}?")
 
         if not confirm:
-            self.stdout.write("ok, skipping save...\n\n")
+            self.write_response("ok, skipping save...")
             return
 
         with open(file_path, 'w') as readme_file:
@@ -246,7 +250,7 @@ class Command(BaseCommand):
         confirm = self.get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
                                         f'and update references?')
         if not confirm:
-            self.stdout.write("ok, skipping...\n\n")
+            self.write_response("ok, canceling split and rolling back changes...")
             return
 
         bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
@@ -295,6 +299,10 @@ class Command(BaseCommand):
         return migrated_files
 
     def verify_migrated_references(self, app_name):
+        self.clear_screen()
+        self.stdout.write(self.format_header(f"Verifying references for {app_name}"))
+        self.stdout.write(f"\n\nVerifying that references to migrated files "
+                          f"in {app_name} have been updated...")
         migrated_files = self._get_migrated_files(app_name)
         template_path = self._get_app_template_folder(app_name)
         for file_path in migrated_files:
@@ -401,6 +409,9 @@ class Command(BaseCommand):
         option = self.select_option_from_prompt(prompt, ['y', 'n'])
         return option == 'y'
 
+    def clear_screen(self):
+        self.stdout.write("\033c")  # clear terminal screen
+
     @staticmethod
     def format_code(code_text, split_lines=False, break_length=80):
         break_line = get_break_line("`  ", break_length)
@@ -422,6 +433,10 @@ class Command(BaseCommand):
     def format_guidance(guidance_text, break_length=80):
         break_line = get_break_line("- ", break_length)
         return f'Guidance:\n{break_line}\n{guidance_text}\n{break_line}\n\n'
+
+    def write_response(self, response_text):
+        self.stdout.write(f'\n{response_text}')
+        time.sleep(2)
 
     @staticmethod
     def enter_to_continue():
