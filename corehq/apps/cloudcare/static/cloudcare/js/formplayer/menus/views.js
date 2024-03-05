@@ -1,3 +1,4 @@
+'use strict';
 /*globals Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {

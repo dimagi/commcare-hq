@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("cloudcare/js/formplayer/main", function () {
 
     $(function () {

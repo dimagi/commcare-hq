@@ -1,3 +1,4 @@
+'use strict';
 /*global Backbone, DOMPurify */
 hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
@@ -426,7 +427,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
 
     if (!String.prototype.includes) {
         String.prototype.includes = function (search, start) {
-            'use strict';
             if (typeof start !== 'number') {
                 start = 0;
             }

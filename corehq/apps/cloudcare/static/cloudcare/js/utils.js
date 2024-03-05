@@ -1,3 +1,4 @@
+'use strict';
 /* global moment, NProgress, Sentry */
 hqDefine('cloudcare/js/utils', [
     'jquery',
