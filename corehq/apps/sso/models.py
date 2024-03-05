@@ -71,8 +71,7 @@ class ServiceProviderCertificate:
 class IdentityProvider(models.Model):
     """
     This stores the information necessary to make a SAML request to an external
-    IdP. Right now this process supports Azure AD and the plan is to add
-    support for other identity provider types in the future.
+    IdP.
     """
     # these three fields must only ever be editable by Accounting admins
     name = models.CharField(max_length=128)
@@ -122,7 +121,7 @@ class IdentityProvider(models.Model):
     date_idp_cert_expiration = models.DateTimeField(blank=True, null=True)
 
     # Requires that <saml:Assertion> elements received by the SP are encrypted.
-    # In Azure AD this requires that Token Encryption is enabled, a premium feature
+    # In Entra ID this requires that Token Encryption is enabled, a premium feature
     require_encrypted_assertions = models.BooleanField(default=False)
 
     # as the service provider, this will store our x509 certificates and
@@ -146,7 +145,7 @@ class IdentityProvider(models.Model):
     # for auto-deactivation web user purposes
     enable_user_deactivation = models.BooleanField(default=False)
     api_host = models.TextField(default="")  # tenant id
-    api_id = models.TextField(default="")  # application (client) id in Azure AD
+    api_id = models.TextField(default="")  # application (client) id in Entra ID
     api_secret = models.TextField(default="")
     date_api_secret_expiration = models.DateField(blank=True, null=True)
 

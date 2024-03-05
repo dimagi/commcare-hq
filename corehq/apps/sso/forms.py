@@ -263,7 +263,7 @@ class ServiceProviderDetailsForm(forms.Form):
     def __init__(self, identity_provider, show_help_block=True, *args, **kwargs):
         self.idp = identity_provider
         # todo eventually have a setting for IdentityProvider toggles based on
-        #  whether SP signing is enforced (dependent on client's Azure tier)
+        #  whether SP signing is enforced (dependent on client's Entra ID tier)
         self.show_help_block = show_help_block
 
         super().__init__(*args, **kwargs)

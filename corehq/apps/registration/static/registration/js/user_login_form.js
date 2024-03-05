@@ -134,7 +134,7 @@ hqDefine('registration/js/user_login_form', [
             }
             if (self.isSessionExpiration) {
                 // the reason why we do this for the session expiration popup
-                // is that Azure AD does not load in cross origin iframes.
+                // is that Entra ID does not load in cross origin iframes.
                 window.open(ssoUrl);
                 window.location = self.sessionExpirationSsoIframeUrl;
             } else {
