@@ -125,7 +125,7 @@ def auto_deactivate_removed_sso_users():
         for domain in domains:
             [web_user_in_account.add(user.username) for user in WebUser.by_domain(domain)]
 
-        # Get a list of SSO Exempt users
+        # Get criteria for exempting usernames and email domains from the deactivation list
         authenticated_domains = AuthenticatedEmailDomain.objects.filter(identity_provider=idp)
         sso_exempt_users = UserExemptFromSingleSignOn.objects.filter(email_domain__in=authenticated_domains)
         exempt_usernames = sso_exempt_users.values_list('username', flat=True)
