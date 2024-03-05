@@ -165,6 +165,10 @@ hqDefine('cloudcare/js/utils', [
                 const loadingElement = FormplayerFrontend.regions.getRegion('loadingProgress');
                 loadingElement.show(progressView);
                 let currentProgress = 10;
+                progressView.progressEl.find('.progress').css("height", "12px");
+                progressView.progressEl.find('.progress-container').css("width", "50%");
+                progressView.progressEl.find('.progress-title h1').css("font-size", "25px");
+                progressView.progressEl.find('#formplayer-progress ').css("background-color", "rgba(255, 255, 255, 0.7)");
                 progressView.setProgress(currentProgress, 100, 200);
                 sessionStorage.progressIncrementInterval = setInterval(function () {
                     if (currentProgress <= 100) {
