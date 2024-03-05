@@ -1564,7 +1564,7 @@ def subscribe_to_data_source_changes(request, domain, config_id):
     if missing_params:
         return HttpResponse(
             status=422,
-            content=f"Missing parameters: {', '.join(missing_params)}",
+            content=f"Missing parameters: {', '.join(sorted(missing_params))}",
         )
 
     webhook_url = request.POST['webhook_url']

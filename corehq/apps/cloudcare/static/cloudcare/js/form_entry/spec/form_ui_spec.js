@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
     describe('Fullform formUI', function () {
@@ -176,11 +177,11 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].children().length, 1); // [ge]
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[0].children().length, 2); // [q,q]
 
-             assert.equal(form.children()[0].children()[1].children().length, 1); // [ge]
-             assert.equal(form.children()[0].children()[1].children()[0].children().length, 1); // [group]
-             assert.equal(form.children()[0].children()[1].children()[0].children()[0].children().length, 2); // [ge,ge]
-             assert.equal(form.children()[0].children()[1].children()[0].children()[0].children()[0].children().length, 1); // [q]
-             assert.equal(form.children()[0].children()[1].children()[0].children()[0].children()[1].children().length, 1); // [q]
+            assert.equal(form.children()[0].children()[1].children().length, 1); // [ge]
+            assert.equal(form.children()[0].children()[1].children()[0].children().length, 1); // [group]
+            assert.equal(form.children()[0].children()[1].children()[0].children()[0].children().length, 2); // [ge,ge]
+            assert.equal(form.children()[0].children()[1].children()[0].children()[0].children()[0].children().length, 1); // [q]
+            assert.equal(form.children()[0].children()[1].children()[0].children()[0].children()[1].children().length, 1); // [q]
         });
 
         it('Should add n-per-row style to Repeat that are direct children of n-per-row-repeat Group and group the Repeat', function () {

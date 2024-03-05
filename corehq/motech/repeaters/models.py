@@ -1018,10 +1018,11 @@ class RepeatRecord(SyncCouchToSQLMixin, Document):
 
     @classmethod
     def _migration_get_fields(cls):
-        return ["domain", "payload_id", "registered_at", "next_check", "state"]
+        return ["domain", "payload_id", "registered_at", "state"]
 
     def _migration_sync_to_sql(self, sql_object, save=True):
         sql_object.repeater_id = uuid.UUID(self.repeater_id)
+        sql_object.next_check = None if self.succeeded or self.cancelled else self.next_check
         return super()._migration_sync_to_sql(sql_object, save=save)
 
     @classmethod
@@ -1335,7 +1336,7 @@ DB_CASCADE = models.DO_NOTHING
 class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     domain = models.CharField(max_length=126)
     couch_id = models.CharField(max_length=36, null=True, blank=True)
-    payload_id = models.CharField(max_length=36)
+    payload_id = models.CharField(max_length=255)
     repeater = models.ForeignKey(Repeater,
                                  on_delete=DB_CASCADE,
                                  db_column="repeater_id_",

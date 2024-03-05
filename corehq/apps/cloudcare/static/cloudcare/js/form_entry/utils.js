@@ -1,3 +1,4 @@
+'use strict';
 /*global MapboxGeocoder*/
 hqDefine("cloudcare/js/form_entry/utils", function () {
     var errors = hqImport("cloudcare/js/form_entry/errors"),
