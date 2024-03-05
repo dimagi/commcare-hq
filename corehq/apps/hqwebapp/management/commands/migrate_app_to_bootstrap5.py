@@ -75,6 +75,22 @@ class Command(BaseCommand):
             app_javascript = self.get_js_files_for_migration(app_name, js_name, do_re_check)
             self.migrate_files(app_javascript, app_name, spec, is_template=False)
 
+        self.show_next_steps(app_name)
+
+    def show_next_steps(self, app_name):
+        self.clear_screen()
+        self.stdout.write(
+            self.format_header(f"All done with Step 2 of migrating {app_name}!"),
+            style_func=get_style_func(COLOR_GREEN)
+        )
+        self.stdout.write("If this is the first time running this command, "
+                          "it's recommended to re-run the command\nat least one more "
+                          "time in the event of nested dependencies / inheritance "
+                          "in split files.\n\n")
+        self.stdout.write("Thank you for your dedication to this migration! <3\n\n")
+        self.stdout.write("Please review the next steps here:"
+                          "\tcommcarehq.org/styleguide/b5/migration/#update-stylesheets\n\n\n")
+
     @staticmethod
     def _get_app_template_folder(app_name):
         return COREHQ_BASE_DIR / "apps" / app_name / "templates" / app_name
