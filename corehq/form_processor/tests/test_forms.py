@@ -4,7 +4,7 @@ from datetime import datetime
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from corehq.blobs import NotFound as BlobNotFound, get_blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
@@ -15,6 +15,7 @@ from ..backends.sql.processor import FormProcessorSQL
 from ..exceptions import AttachmentNotFound, XFormNotFound
 from ..interfaces.processor import ProcessedForms
 from ..models import CaseTransaction, XFormInstance, XFormOperation
+from ..models.forms import TempFormCache
 from ..tests.utils import FormProcessorTestUtils, create_form_for_test, sharded
 from ..parsers.form import apply_deprecation
 from ..utils import get_simple_form_xml, get_simple_wrapped_form
@@ -431,6 +432,16 @@ class TestHardDeleteFormsBeforeCutoff(TestCase):
     def setUp(self):
         self.domain = 'test_hard_delete_forms_before_cutoff'
         self.cutoff = datetime(2020, 1, 1, 12, 30)
+
+
+class TempFormCacheTests(SimpleTestCase):
+    def test_no_db_hit_if_cached(self):
+        cache = TempFormCache()
+        form = XFormInstance(form_id="1234")
+        cache.cache[form.form_id] = form
+        # This should not raise an AssertionError, which means it tried to access the db
+        retrieved_form = cache.get_forms([form.form_id])[0]
+        self.assertEqual(retrieved_form, form)
 
 
 class DeleteAttachmentsFSDBTests(TestCase):
