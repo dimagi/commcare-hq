@@ -123,7 +123,9 @@ def app_aware_search(request, domain, app_id):
     Returns results as a fixture with the same structure as a casedb instance.
     """
     start_time = datetime.now()
-    request_dict = request.GET if request.method == 'GET' else request.POST
+    request_dict = (request.GET if request.method == 'GET' else request.POST).copy()
+    for param_name in CASE_SEARCH_TAGS_MAPPING:
+        request_dict.pop(param_name, None)
     try:
         cases = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
     except CaseSearchUserError as e:
