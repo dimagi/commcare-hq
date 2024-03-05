@@ -2754,3 +2754,11 @@ INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Temporary increase of the max number of search results.',
 )
+
+USE_PROMINENT_PROGRESS_BAR = StaticToggle(
+    slug='use_prominent_progress_bar',
+    label='Use more prominent progress bar in place of NProgress',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Replaces NProgress bar with more prominent progress bar',
+)
