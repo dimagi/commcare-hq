@@ -211,6 +211,23 @@ def emails(request=None):
     }
 
 
+def user_permissions(request):
+    """
+    Adds the permissions for the currently logged in user to initial page data.
+    Right now this is only used to determine if the user has the ability to view the apps.
+    Which is used by AppCues to determine whether to show the app cues modal.
+    """
+    has_app_view_permission = False
+    if getattr(request, 'project', None) and getattr(request, 'couch_user', None):
+        domain = request.project.name
+        has_app_view_permission = request.couch_user.has_permission(
+            domain, get_permission_name(HqPermissions.view_apps)
+        )
+    return {
+        'has_app_view_permission': has_app_view_permission
+    }
+
+
 def _get_cc_name(request, var):
     value = getattr(settings, var)
     if isinstance(value, str):
