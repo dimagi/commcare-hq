@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/spec/utils_spec", function () {
     describe("Cloudcare Utils", function () {

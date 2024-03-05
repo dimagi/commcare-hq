@@ -1,3 +1,4 @@
+'use strict';
 /* global Backbone */
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", function () {

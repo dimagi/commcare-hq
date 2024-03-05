@@ -1,3 +1,4 @@
+'use strict';
 /**
  * hq_events.js
  *

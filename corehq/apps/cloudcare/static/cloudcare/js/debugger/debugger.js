@@ -1,3 +1,4 @@
+'use strict';
 /* globals ace, Clipboard */
 hqDefine('cloudcare/js/debugger/debugger', function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
