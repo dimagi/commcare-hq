@@ -132,7 +132,8 @@ def auto_deactivate_removed_sso_users():
 
         if len(idp_users) == 0 and len(web_user_in_account) - len(exempt_usernames) > 3:
             # Send email
-            subject = _("CommCare HQ Alert: Temporarily skipped automatic deactivation of SSO Web Users (Remote User Management)")
+            subject = _("CommCare HQ Alert: Temporarily skipped automatic deactivation of SSO Web Users"
+                        " (Remote User Management)")
             recipient = idp.owner.enterprise_admin_emails
             body = _("we have temporarily skipped automatic deactivation of Web Users because we are receiving "
                      "an empty list of Users from Azure AD")
