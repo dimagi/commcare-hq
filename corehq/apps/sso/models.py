@@ -15,7 +15,7 @@ class IdentityProviderType:
     ONE_LOGIN = 'one_login'
     OKTA = 'okta'
     CHOICES = (
-        (AZURE_AD, "Azure AD"),
+        (AZURE_AD, "Entra ID"),
         (ONE_LOGIN, "One Login"),
         (OKTA, "Okta"),
     )
@@ -33,7 +33,7 @@ class IdentityProviderProtocol:
     def get_supported_types(cls):
         return {
             cls.SAML: (
-                (IdentityProviderType.AZURE_AD, "Azure AD"),
+                (IdentityProviderType.AZURE_AD, "Entra ID"),
             ),
             cls.OIDC: (
                 (IdentityProviderType.ONE_LOGIN, "One Login"),
