@@ -175,6 +175,7 @@ class TestAutoDeactivationTask(TestCase):
         self.web_user_a = self._create_web_user('a@vaultwax.com')
         self.web_user_b = self._create_web_user('b@vaultwax.com')
         self.web_user_c = self._create_web_user('c@vaultwax.com')
+        # web_user_d is required so the total number of IdP user meet the threshold for auto-deactivation
         self.web_user_d = self._create_web_user('d@vaultwax.com')
 
     @patch('corehq.apps.sso.models.IdentityProvider.get_all_members_of_the_idp')
