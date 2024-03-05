@@ -4,7 +4,6 @@
 /**
  * The primary Marionette application managing menu navigation and launching form entry
  */
-'use strict';
 hqDefine("cloudcare/js/formplayer/app", function () {
     var appcues = hqImport('analytix/js/appcues'),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
