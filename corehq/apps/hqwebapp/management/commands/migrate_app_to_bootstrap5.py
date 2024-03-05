@@ -242,9 +242,10 @@ class Command(BaseCommand):
         self.show_information_about_readme(readme_path)
 
     def show_information_about_readme(self, readme_path):
-        self.stdout.write(f"\nYou can reference the logs for these changes here:"
-                          f"\n\t{readme_path}"
-                          f"\n\t\tThis is IMPORTANT to take note of if you have any suggested changes!\n")
+        self.stdout.write("\nThe changelog for all changes to the Bootstrap 5 "
+                          "version of this file can be found here:\n")
+        self.stdout.write(f"\n{readme_path}\n\n")
+        self.stdout.write("** Please make a note of this for reviewing later.\n\n\n")
 
     def save_re_checked_file_changes(self, app_name, file_path, changed_lines, is_template):
         short_path = self.get_short_path(app_name, file_path, is_template)
@@ -272,14 +273,14 @@ class Command(BaseCommand):
         bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
         bootstrap3_short_path = self.get_short_path(app_name, bootstrap3_path, is_template)
         bootstrap5_short_path = self.get_short_path(app_name, bootstrap5_path, is_template)
-        self.stdout.write(f"ok, saving changes..."
+        self.stdout.write(f"\n\nSplitting files:\n"
                           f"\n\t{bootstrap3_short_path}"
                           f"\n\t{bootstrap5_short_path}\n\n")
         if '/bootstrap5/' not in str(file_path):
             self.save_split_templates(
                 file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
             )
-            self.stdout.write("updating references...")
+            self.stdout.write("\nUpdating references...")
             references = self.update_and_get_references(short_path, bootstrap3_short_path, is_template)
             if not is_template:
                 # also check extension-less references for javascript files
@@ -289,10 +290,10 @@ class Command(BaseCommand):
                     is_template=False
                 ))
             if references:
-                self.stdout.write(f"Updated references to {short_path} in these files:")
+                self.stdout.write(f"\n\nUpdated references to {short_path} in these files:\n")
                 self.stdout.write("\n".join(references))
             else:
-                self.stdout.write(f"No references were found for {short_path}...")
+                self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
         self.suggest_commit_message(f"initial auto-migration for {short_path}, splitting templates")
 
     @staticmethod
@@ -340,7 +341,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"\n\nUpdated references to {old_reference} in these files:")
                 self.stdout.write("\n".join(references))
                 self.suggest_commit_message(f"updated path references to '{references}'")
-                self.stdout.write("\n\n")
+        self.stdout.write("\n\nDone.\n\n")
 
     @staticmethod
     def update_and_get_references(old_reference, new_reference, is_template):
