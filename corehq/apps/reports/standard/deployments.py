@@ -549,30 +549,7 @@ def _get_histogram_aggregation_for_app(field_name, date_field_name, app_id):
     The histogram aggregation is put inside a nested and filter aggregation to only query
     the nested documents that match the selected app ID.
 
-    This function will return a nested aggregation that looks like the following:
-    "aggs": {
-        {field_name}: {
-            "nested": {
-                "path": "reporting_metadata.{field_name}"
-            }
-        },
-        "aggs": {
-            "filtered_agg": {
-                "filter": {
-                    "term": {
-                        "reporting_metadata.{field_name}.app_id": self.selected_app_id
-                    }
-                }
-                "aggs": {
-                    "date_histogram": {
-                        "date_histogram": {
-                            ...
-                        }
-                    }
-                }
-            }
-        }
-    }
+    Refer to `TestGetHistogramAggregationForApp` to see the final output.
     """
     field_path = f'reporting_metadata.{field_name}'
     nested_agg = NestedAggregation(field_name, field_path)
