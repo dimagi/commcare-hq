@@ -720,7 +720,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
     def clean_api_secret(self):
         api_secret = self.cleaned_data['api_secret']
         is_enabled = self.cleaned_data['enable_user_deactivation']
-        if is_enabled and (not api_secret and not self.idp.api_secret):
+        if is_enabled and not (api_secret or self.idp.api_secret):
             raise forms.ValidationError(
                 _("This is required when Auto-Deactivation is enabled.")
             )
