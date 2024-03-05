@@ -21,7 +21,12 @@ def create_usercase(user):
     )
 
 
-class patch_user_data_db_layer(ContextDecorator):
+def patch_user_data_db_layer(fn=None, *, user_schema=None):
+    context = _patch_user_data_db_layer(user_schema=user_schema)
+    return context(fn) if fn else context
+
+
+class _patch_user_data_db_layer(ContextDecorator):
     def __init__(self, user_schema=None):
         self.user_schema = user_schema or {}
         self.init_patcher = None
