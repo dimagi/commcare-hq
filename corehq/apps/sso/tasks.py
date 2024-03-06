@@ -120,14 +120,15 @@ def auto_deactivate_removed_sso_users():
         # Fetch a list of users usernames that are members of the idp
         idp_users = idp.get_all_members_of_the_idp()
         # Fetch a list of active WebUser usernames that are members of project spaces associated with the idp
-        web_users_in_account = { user.username for domain in idp.owner.get_domains() for user in WebUser.by_domain(domain) }
+        web_users_in_account = {user.username for domain in idp.owner.get_domains()
+                                for user in WebUser.by_domain(domain)}
 
         # Get criteria for exempting usernames and email domains from the deactivation list
         authenticated_domains = AuthenticatedEmailDomain.objects.filter(identity_provider=idp)
         exempt_usernames = UserExemptFromSingleSignOn.objects.filter(email_domain__in=authenticated_domains
                                                                      ).values_list('username', flat=True)
 
-        if len(idp_users) == 0 and len(web_user_in_account) - len(exempt_usernames) > 3:
+        if len(idp_users) == 0 and len(web_users_in_account) - len(exempt_usernames) > 3:
             # Send email
             subject = _("CommCare HQ Alert: Temporarily skipped automatic deactivation of SSO Web Users"
                         " (Remote User Management)")
@@ -144,8 +145,8 @@ def auto_deactivate_removed_sso_users():
         users_to_deactivate = []
         authenticated_email_domains = authenticated_domains.values_list('email_domain', flat=True)
 
-        for user in web_user_in_account:
             # If the user is not returned by IdP and is not exempted from SSO
+        for user in web_users_in_account:
             if user not in idp_users and user not in exempt_usernames:
                 email_domain = get_email_domain_from_username(user)
                 # If the user's email domain is in the list of email domains controlled by IdP
