@@ -1,5 +1,5 @@
 from django.utils.translation import gettext as _
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -8,6 +8,7 @@ from couchforms.analytics import get_form_analytics_metadata
 from dimagi.utils.couch import IncompatibleDocument, get_cached_property
 from dimagi.utils.couch.safe_index import safe_index
 
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
@@ -143,3 +144,23 @@ class _FormType(object):
 
 def xmlns_to_name(domain, xmlns, app_id, lang=None, separator=None, form_name=None):
     return _FormType(domain, xmlns, app_id, form_name).get_label(lang, separator)
+
+
+def xmlns_to_name_for_case_deletion(domain, form):
+    """
+    The difference between this function and the one above is that in the event that the form name
+    can't be found, this function will attempt to recreate the standard 3 part structure, rather than
+    defaulting to the xmlns url (form.xmlns). Currently only used in the case deletion workflow.
+
+    TODO: Confirm it returning the form.xmlns isn't necessary + confirm this is the format we want to display
+          for unknown form names in report tables and merge the two functions into one.
+    """
+    form_name = xmlns_to_name(domain, form.xmlns, form.app_id)
+    if form_name == form.xmlns:
+        extracted_name = [
+            get_app(domain, form.app_id).name or "[Unknown App]",
+            "[Unknown Module]",
+            form.name or "[Unknown Form]"
+        ]
+        form_name = escape(' > '.join(extracted_name))
+    return form_name
