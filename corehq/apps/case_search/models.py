@@ -9,6 +9,7 @@ from django.utils.translation import gettext as _
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import CaseFilterError
+from corehq.util.metrics.const import MODULE_NAME_TAG
 from corehq.util.quickcache import quickcache
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
@@ -32,6 +33,12 @@ CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY: "include_all_related_cases",
     CASE_SEARCH_SORT_KEY: "commcare_sort",
 }
+
+CASE_SEARCH_MODULE_NAME_TAG = "module_name_tag"
+CASE_SEARCH_TAGS_MAPPING = {
+    CASE_SEARCH_MODULE_NAME_TAG: MODULE_NAME_TAG,
+}
+
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     'owner_id',
@@ -191,7 +198,8 @@ class CaseSearchRequestConfig:
 
 def extract_search_request_config(request_dict):
     params = dict(request_dict.lists())
-
+    for param_name in CASE_SEARCH_TAGS_MAPPING:
+        params.pop(param_name, None)
     kwargs_from_params = {
         config_name: params.pop(param_name, None)
         for param_name, config_name in CONFIG_KEYS_MAPPING.items()
