@@ -150,6 +150,7 @@ class TestAutoDeactivationTask(TestCase):
         cls.account.enterprise_admin_emails = ['test@vaultwax.com']
         cls.account.save()
         cls.domain = Domain.get_or_create_with_name("vaultwax-001", is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
 
         enterprise_plan = accounting_generator.subscribable_plan_version(edition=SoftwarePlanEdition.ENTERPRISE)
         accounting_generator.generate_domain_subscription(
