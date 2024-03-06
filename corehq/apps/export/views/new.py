@@ -139,7 +139,10 @@ class BaseExportView(BaseProjectDataView):
         allow_deid = has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
         show_deprecated_filter = False
-        if self.export_instance.type == CASE_EXPORT:
+        if (
+            self.export_instance.type == CASE_EXPORT
+            and domain_has_privilege(self.domain, privileges.DATA_DICTIONARY)
+        ):
             show_deprecated_filter = CaseProperty.objects.filter(
                 case_type__domain=self.domain,
                 case_type__name=self.export_instance.case_type,
