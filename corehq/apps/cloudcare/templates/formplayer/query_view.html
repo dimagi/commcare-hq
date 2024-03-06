@@ -63,17 +63,19 @@
     class="<% if (contentTag === 'td') { %>col-sm-6 <% } %>query-caption
            <% if (required) { %> required<% } %>
            <% if (errorMessage) { %> has-error<% } %>">
-    <div style="display: grid; grid-template-columns: auto auto">
-      <label class="control-label" for="<%- text ? text : "" %>">
-        <%- text ? text : "" %>
-      </label>
-      <% if (typeof hint !== "undefined" && hint !== null) { %>
-      <div class="hq-help" style="justify-self: right;">
-        <a href="#" tabindex="-1"  data-title="<%- text ? text : "" %>" data-content="<%- hint ? hint : "" %>">
-          <i class="fa fa-question-circle icon-question-sign"></i>
-        </a>
+    <div class="container-fluid">
+      <div class="row">
+        <label class="control-label col-11" for="<%- text ? text : "" %>">
+          <%- text ? text : "" %>
+        </label>
+        <% if (typeof hint !== "undefined" && hint !== null) { %>
+        <div class="hq-help col-1" style="justify-self: right;">
+          <a href="#" tabindex="-1"  data-title="<%- text ? text : "" %>" data-content="<%- hint ? hint : "" %>">
+            <i class="fa fa-question-circle icon-question-sign"></i>
+          </a>
+        </div>
+        <% } %>
       </div>
-      <% } %>
     </div>
   </<%- contentTag %>>
   <<%- contentTag %>
