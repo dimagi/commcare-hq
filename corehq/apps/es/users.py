@@ -231,38 +231,16 @@ def user_data(key, value):
     )
 
 
-def _missing_user_data_property(property_name):
-    """
-    A user_data property doesn't exist.
-    """
-    return filters.NOT(
-        queries.nested(
-            'user_data_es',
-            filters.term(field='user_data_es.key', value=property_name),
-        )
-    )
-
-
-def _missing_user_data_value(property_name):
-    """
-    A user_data property exists but has an empty string value.
-    """
-    return queries.nested(
-        'user_data_es',
-        filters.AND(
-            filters.term('user_data_es.key', property_name),
-            filters.NOT(
-                filters.wildcard(field='user_data_es.value', value='*')
-            )
-        )
-    )
-
-
 def missing_or_empty_user_data_property(property_name):
     """
     A user_data property doesn't exist, or does exist but has an empty string value.
     """
-    return filters.OR(
-        _missing_user_data_property(property_name),
-        _missing_user_data_value(property_name),
-    )
+    missing_property = filters.NOT(queries.nested(
+        'user_data_es',
+        filters.term(field='user_data_es.key', value=property_name),
+    ))
+    empty_value = queries.nested('user_data_es', filters.AND(
+        filters.term('user_data_es.key', property_name),
+        filters.term('user_data_es.value', ''),
+    ))
+    return filters.OR(missing_property, empty_value)
