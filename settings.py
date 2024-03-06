@@ -234,7 +234,6 @@ DEFAULT_APPS = (
     'ws4redis',
     'statici18n',
     'django_user_agents',
-    'logentry_admin',
     'oauth2_provider',
 )
 
@@ -821,6 +820,7 @@ REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
+    'corehq.motech.repeaters.models.DataSourceRepeater',
     'corehq.motech.fhir.repeaters.FHIRRepeater',
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
@@ -853,21 +853,21 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 2
+ELASTICSEARCH_MAJOR_VERSION = 5
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
 # The variables should be used while reindexing an index.
 # When the variables are set to true the data will be written to both primary and secondary indexes.
 
-ES_APPS_INDEX_MULTIPLEXED = True
-ES_CASE_SEARCH_INDEX_MULTIPLEXED = True
-ES_CASES_INDEX_MULTIPLEXED = True
-ES_DOMAINS_INDEX_MULTIPLEXED = True
-ES_FORMS_INDEX_MULTIPLEXED = True
-ES_GROUPS_INDEX_MULTIPLEXED = True
-ES_SMS_INDEX_MULTIPLEXED = True
-ES_USERS_INDEX_MULTIPLEXED = True
+ES_APPS_INDEX_MULTIPLEXED = False
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
+ES_CASES_INDEX_MULTIPLEXED = False
+ES_DOMAINS_INDEX_MULTIPLEXED = False
+ES_FORMS_INDEX_MULTIPLEXED = False
+ES_GROUPS_INDEX_MULTIPLEXED = False
+ES_SMS_INDEX_MULTIPLEXED = False
+ES_USERS_INDEX_MULTIPLEXED = False
 
 
 # Setting the variable to True would mean that the primary index would become secondary and vice-versa
@@ -1986,10 +1986,14 @@ DOMAIN_MODULE_MAP = {
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
     'kenya-vca': 'custom.abt',
+    'pmievolve-ethiopia-1': 'custom.abt',
+    'pmievolve-ghana': 'custom.abt',
     'pmievolve-madagascar': 'custom.abt',
     'pmievolve-malawi': 'custom.abt',
     'pmievolve-mozambique': 'custom.abt',
     'pmievolve-rwanda': 'custom.abt',
+    'pmievolve-sierra-leone': 'custom.abt',
+    'pmievolve-uganda': 'custom.abt',
     'pmievolve-zambia': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',

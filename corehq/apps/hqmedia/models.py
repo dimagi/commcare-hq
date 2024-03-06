@@ -4,6 +4,7 @@ from copy import copy
 from datetime import datetime
 from io import BytesIO
 
+from django.db import models
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -38,6 +39,7 @@ from corehq.apps.domain import SHARED_DOMAIN
 from corehq.apps.domain.models import LICENSE_LINKS, LICENSES
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.blobs.mixin import CODES, BlobMixin
+from corehq.util.view_utils import absolute_reverse
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -408,7 +410,7 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def get_icon_class(cls):
-        return "fa fa-picture-o"
+        return "fa-regular fa-image"
 
 
 class CommCareAudio(CommCareMultimedia):
@@ -1030,3 +1032,14 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 has_restored = True
                 del self.archived_media[LOGO_ARCHIVE_KEY][slug]
         return has_restored
+
+
+class LogoForSystemEmailsReference(models.Model):
+    domain = models.CharField(max_length=255, unique=True, null=False)
+    # Doc ID of the CommCareImage the object references
+    image_id = models.CharField(max_length=255, null=False)
+
+    def full_url_to_image(self):
+        from corehq.apps.hqmedia.views import ViewMultimediaFile
+        image = CommCareImage.get(self.image_id)
+        return absolute_reverse(ViewMultimediaFile.urlname, args=[image.doc_type, image._id])

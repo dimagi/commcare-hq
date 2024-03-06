@@ -33,7 +33,7 @@
     {% compress js %}
       <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
       <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
       <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
       <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
       <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
@@ -59,6 +59,13 @@
       </div>
     </div>
     <div class="docs-content" data-spy="scroll" data-target=".docs-subnav">
+      <div class="alert alert-info text-lg">
+        <h1>This guide will be deprecated soon!</h1>
+        <p class="lead">
+          CommCare HQ is currently undergoing a migration to Bootstrap 5.
+          <strong><a href="{% url "styleguide_home_b5" %}">You can find the updated style guide here.</a></strong>
+        </p>
+      </div>
       {% block content %}
       {% endblock content %}
     </div>

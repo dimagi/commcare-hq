@@ -29,6 +29,7 @@ from corehq.apps.userreports.pillow import (
     get_ucr_processor,
 )
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
+from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.messaging.pillow import CaseMessagingSyncProcessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.case_search import get_case_search_processor
@@ -119,6 +120,8 @@ def get_case_pillow(
     processors = [case_to_es_processor, CaseMessagingSyncProcessor()]
     if settings.RUN_CASE_SEARCH_PILLOW:
         processors.append(case_search_processor)
+    if settings.RUN_DEDUPLICATION_PILLOW:
+        processors.append(CaseDeduplicationProcessor())
     if not skip_ucr:
         # this option is useful in tests to avoid extra UCR setup where unneccessary
         processors = [ucr_processor, ucr_dr_processor] + processors

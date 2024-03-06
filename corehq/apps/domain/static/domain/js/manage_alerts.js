@@ -1,10 +1,19 @@
 hqDefine("domain/js/manage_alerts",[
     'jquery',
+    'knockout',
+    'underscore',
     'hqwebapp/js/initial_page_data',
-], function ($, initialPageData) {
+], function ($, ko, _, initialPageData) {
+
+    var domainAlert = function (options) {
+        var self = ko.mapping.fromJS(options);
+        self.editUrl = initialPageData.reverse('domain_edit_alert', self.id());
+        return self;
+    };
+
     $(function () {
         $('#ko-alert-container').koApplyBindings({
-            'alerts': initialPageData.get('alerts'),
+            'alerts': _.map(initialPageData.get('alerts'), domainAlert),
         });
     });
 });

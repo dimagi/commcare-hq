@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("cloudcare/js/formplayer/spec/fixtures/menu_list", function () {
     let FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer");
 

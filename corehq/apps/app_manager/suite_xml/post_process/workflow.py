@@ -272,16 +272,14 @@ def _get_datums_matched_to_manual_values(target_frame_elements, manual_values, f
     """
     manual_values_by_name = {datum.name: datum.xpath for datum in manual_values}
     for child in target_frame_elements:
-        if not isinstance(child, WorkflowSessionMeta) or not child.requires_selection:
+        if child.id in manual_values_by_name:
+            yield StackDatum(id=child.id, value=manual_values_by_name.get(child.id))
+        elif not isinstance(child, WorkflowSessionMeta) or not child.requires_selection:
             yield child
         else:
-            manual_value = manual_values_by_name.get(child.id)
-            if manual_value:
-                yield StackDatum(id=child.id, value=manual_value)
-            else:
-                raise SuiteValidationError("Unable to link form '{}', missing variable '{}'".format(
-                    form.default_name(), child.id
-                ))
+            raise SuiteValidationError("Unable to link form '{}', missing variable '{}'".format(
+                form.default_name(), child.id
+            ))
 
 
 def _get_datums_matched_to_source(target_frame_elements, source_datums):
@@ -407,7 +405,7 @@ class EndOfFormNavigationWorkflow(object):
                 if child not in frame_children:
                     frame_children.append(child)
         else:
-            module_command = id_strings.menu_id(module)
+            module_command = id_strings.menu_id(module, WorkflowHelper._get_id_suffix(module))
             if module_command != id_strings.ROOT:
                 frame_children.append(CommandId(module_command))
 
@@ -736,7 +734,7 @@ class WorkflowSessionMeta:
     def clone_to_match(self, source_id=None):
         raise NotImplementedError
 
-    def to_stack_datum(self):
+    def to_stack_datum(self, is_endpoint=False):
         raise NotImplementedError
 
 
@@ -788,7 +786,7 @@ class WorkflowDatumMeta(WorkflowSessionMeta):
         new_meta.source_id = source_id or self.id
         return new_meta
 
-    def to_stack_datum(self):
+    def to_stack_datum(self, is_endpoint=False):
         value = session_var(self.source_id) if self.requires_selection else self.function
         return StackDatum(id=self.id, value=value)
 
@@ -837,7 +835,7 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
         new_meta.source_id = source_id or self.id
         return new_meta
 
-    def to_stack_datum(self):
+    def to_stack_datum(self, is_endpoint=False):
         wanted = (CASE_SEARCH_REGISTRY_ID_KEY, "case_type", "case_id")
         keys = {el.key for el in self.query.data}
         data = [QueryData(key=el.key, ref=el.ref) for el in self.query.data if el.key in wanted]
@@ -845,7 +843,8 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
             if getattr(self.next_datum, "is_instance", False):
                 data.append(QueryData(key="case_id", ref=".", nodeset=self._get_multi_select_nodeset()))
             else:
-                data.append(QueryData(key="case_id", ref=session_var(self.source_id)))
+                ref_val = "$case_id" if is_endpoint else session_var(self.source_id)
+                data.append(QueryData(key="case_id", ref=ref_val))
         url = self.query.url
         if self.is_case_search:
             # we don't need the full search results, just the case that's been selected

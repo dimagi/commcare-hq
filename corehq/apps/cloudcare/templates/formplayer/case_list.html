@@ -28,6 +28,11 @@
         <div aria-label="<%- description %>" tabindex="0" class="query-description"><%= description %></div>
       <% } %>
     </div>
+    <% if (isMultiSelect) { %>
+      <div class="case-list-actions">
+        {% include 'formplayer/multi_select_continue_button.html' %}
+      </div>
+    <% } %>
     <% if (!sidebarEnabled) { %>
     <div class="module-search-container">
       <div class="input-group input-group-lg">
@@ -62,10 +67,15 @@
                   <span> {% trans "Sort By" %} </span><i class="fa fa-sort" aria-hidden="true"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="case-list-sort-by">
-                  <%  _.each(headers, function(header, index) { %>
-                    <% if (columnSortable(index)) { %>
-                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- index %>" role="menuitem"><a><%= header %></a></li>
-                    <% } %>
+                  <%  _.each(sortOptions, function(sortOption) { %>
+                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- sortOption.index %>" role="menuitem">
+                      <a>
+                        <%= sortOption.header %>
+                        <% if (sortOption.sortOrder) { %>
+                          <i class="fa fa-arrow-<%= sortOption.sortOrder === 'V' ? 'down' : 'up' %> pull-right"></i>
+                        <% } %>
+                      </a>
+                    </li>
                   <% }); %>
                 </ul>
               </div>
@@ -103,18 +113,18 @@
       </div>
     </div>
     <% if (actions || isMultiSelect) { %>
-    <div class="case-list-actions">
-      <% if (isMultiSelect) { %>
-      <button type="button" class="btn btn-success btn-lg formplayer-request" disabled="true" id="multi-select-continue-btn">{% trans "Continue" %} <span id="multi-select-btn-text" class="badge"><%- selectedCaseIds.length %></span></button>
-      <% } %>
-      <% if (actions) { %>
-        <% _.each(actions, function(action, index) { %>
-        <div class="case-list-action-button btn-group formplayer-request">
-          <button type="button" class="btn btn-default btn-lg " data-index="<%- index %>"><%- action.text %></button>
-        </div>
-        <% }) %>
-      <% } %>
-    </div>
+      <div class="case-list-actions">
+        <% if (isMultiSelect) { %>
+          {% include 'formplayer/multi_select_continue_button.html' %}
+        <% } %>
+        <% if (actions) { %>
+          <% _.each(actions, function(action, index) { %>
+            <div class="case-list-action-button btn-group formplayer-request">
+              <button type="button" class="btn btn-default btn-lg " data-index="<%- index %>"><%- action.text %></button>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
     <% } %>
 
     <% if (!hasNoItems) { %>
@@ -132,11 +142,13 @@
   <% _.each(data, function(datum, index) { %>
     <% if (!(styles[index].widthHint === 0)) { %>
       <% if (styles[index].displayFormat === 'Image') { %>
-        <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
+        <td class="module-case-list-column"><img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/></td>
       <% } else if (styles[index].displayFormat === 'ClickableIcon') { %>
         <td class="module-case-list-column">
-          <img class="module-icon clickable-icon" src="<%- resolveUri(datum) %>"/>
-          <i class="fa fa-spin fa-spinner" style="display:none"></i>
+          <button class="clickable-icon">
+            <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
+            <i class="fa fa-spin fa-spinner" style="display:none"></i>
+          </button>
         </td>
       <% } else if (styles[index].displayFormat === 'Markdown') { %>
         <td class="module-case-list-column webapp-markdown-output"><%= renderMarkdown(datum) %></td>
@@ -161,12 +173,14 @@
     <div class="<%- prefix %>-grid-style-<%- index %> box">
       <% if (styles[index].displayFormat === 'Image') {
       if(resolveUri(datum)) { %>
-        <img class="module-icon" src="<%- resolveUri(datum) %>"/>
+        <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
       <% } %>
       <% } else if (styles[index].displayFormat === 'ClickableIcon') {
       if(resolveUri(datum)) { %>
-        <img class="module-icon clickable-icon" src="<%- resolveUri(datum) %>"/>
-        <i class="fa fa-spin fa-spinner" style="display:none"></i>
+        <button class="clickable-icon">
+          <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
+          <i class="fa fa-spin fa-spinner" style="display:none"></i>
+        </button>
       <% } %>
       <% } else if(styles[index].widthHint === 0) { %>
         <div style="display:none;"><%- datum %></div>
@@ -191,12 +205,14 @@
         <div class="<%- prefix %>-grid-style-<%- index %> box" >
           <% if (styles[index].displayFormat === 'ClickableIcon') {
           if(resolveUri(datum)) { %>
-            <img class="module-icon clickable-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
-            <i class="fa fa-spin fa-spinner" style="display:none"></i>
+            <button class="clickable-icon">
+              <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" style="max-width:100%; max-height:100%;"/>
+              <i class="fa fa-spin fa-spinner" style="display:none"></i>
+            </button>
           <% } %>
           <% } else if (styles[index].displayFormat === 'Image') {
           if(resolveUri(datum)) { %>
-            <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+            <img alt="<%- altText[index] %>" class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
           <% } %>
           <% } else if(styles[index].widthHint === 0) { %>
             <div style="display:none;"><%- datum %></div>
@@ -215,12 +231,14 @@
             <div class="<%- prefix %>-grid-style-<%- index %> box">
               <% if (styles[index].displayFormat === 'Image') {
                 if(resolveUri(datum)) { %>
-                  <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+                  <img alt="<%- altText[index] %>" class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
                 <% } %>
               <% } else if (styles[index].displayFormat === 'ClickableIcon') {
                 if(resolveUri(datum)) { %>
-                  <img class="module-icon clickable-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
-                  <i class="fa fa-spin fa-spinner" style="display:none"></i>
+                  <button class="clickable-icon">
+                    <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" style="max-width:100%; max-height:100%;"/>
+                    <i class="fa fa-spin fa-spinner" style="display:none"></i>
+                  </button>
                 <% } %>
               <% } else { %>
                   <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
@@ -239,19 +257,28 @@
       grid-area: <%- model.gridStyle %>;
       font-size: <%- model.fontStyle %>;
       text-align: <%- model.horizontalAlign %>;
-      <% if (!model.borderInTile) { %>
+      <% if (!model.borderInTile && !model.shadingInTile) { %>
         justify-self: <%- model.horizontalAlign %>;
         align-self: <%- model.verticalAlign %>;
       <% } else { %>
-        <% if (model.showBorder) { %>
-          border: 1px solid #685c53;
+        <% if (model.showBorder || model.showShading) { %>
           border-radius: 8px;
           padding-top: 5px;
           padding-bottom: 0px;
           padding-left: 5px;
           padding-right: 5px;
           justify-self: stretch;
-          margin: 2px;
+          margin-left: 4px;
+          margin-right: 4px;
+          margin-bottom: 5px;
+          margin-top: 2px;
+          <% if (model.showBorder) { %>
+            border: 1px solid #685c53;
+          <% } %>
+          <% if (model.showShading) { %>
+            background-color: white;
+            z-index: -1;
+          <% } %>
         <% } else { %>
           margin: 7px;
           justify-self: <%- model.horizontalAlign %>;
@@ -270,7 +297,13 @@
   background-color: transparent;
   color: #685c53;
   justify-items: left;
-  padding: 10px 20px 0 20px;
+  <% if (model.prefix === "persistent") { %>
+    margin: 20px 20px 10px 20px;
+  <% } else if (model.isMultiSelect) { %>
+    margin: 10px 30px 0 10px;
+  <% } else { %>
+    margin: 10px 20px 0 20px;
+  <% } %>
   }
 </script>
 
@@ -311,4 +344,8 @@
       </table>
     </div>
   </div>
+</script>
+
+<script type="text/template" id="case-view-tile-detail-template">
+  <section class="js-case-container clearfix list-cell-container-style"></section>
 </script>

@@ -17,15 +17,15 @@
         </button>
       </div>
     <% } %>
-    <% if (title.length > 0 && !sidebarEnabled) {%>
+    <% if (title.length > 0 && !sidebarEnabled) { %>
       <h2 tabindex="0"><%- title %></h2>
     <% } %>
-    <% if (description.length > 0 && !sidebarEnabled) {%>
+    <% if (description.length > 0 && !sidebarEnabled) { %>
       <div class="query-description" tabindex="0">
         <%= description %>
       </div>
     <% } %>
-    <table class="table table-hover table-striped table-bordered" role="presentation">
+    <table class="table table-hover <%= grouped ? '' : 'table-striped table-bordered' %>" role="presentation">
       <tbody id="query-properties">
       </tbody>
     </table>
@@ -40,7 +40,23 @@
   </form>
 </script>
 
+<script type="text/template" id="query-view-group-template">
+  <td class="search-query-group">
+    <% if (named) { %>
+    <div class="search-query-group-header <% if (required) { %> required<% } %>" data-toggle="collapse" data-target="#group-<%- groupKey %>" aria-expanded="true" aria-controls="group-<%- groupKey %>">
+      <label class="search-query-group-header-label"><%= groupName %></label>
+      <i class="fa fa-angle-double-down pull-right" style="font-size: larger"></i>
+    </div>
+    <% } %>
+    <div id="group-<%- groupKey %>" class="in">
+      <table class="table table-hover" role="presentation">
+        <tbody id="query-group-content">
+        </tbody>
+      </table>
+    </div>
 
+  </td>
+</script>
 
 <script type="text/template" id="query-view-item-template">
   <<%- contentTag %>
@@ -90,7 +106,7 @@
              class="date query-field form-control"
              value="<%- value %>"
              <% if (required) { %> aria-required="true"<% } %>>
-      <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+      <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>
     </div>
 
     <% } else if (input === "daterange") { %>

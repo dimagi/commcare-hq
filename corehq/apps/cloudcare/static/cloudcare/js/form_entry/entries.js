@@ -1,3 +1,4 @@
+'use strict';
 /* globals moment, SignaturePad, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
@@ -19,7 +20,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.entryId = _.uniqueId(this.datatype);
         self.xformAction = constants.ANSWER;
         self.xformParams = function () { return {}; };
-
+        self.placeholderText = '';
         // Returns true if the rawAnswer is valid, false otherwise
         self.isValid = function (rawAnswer) {
             return self.getErrorMessage(rawAnswer) === null;
@@ -33,6 +34,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.clear = function () {
             self.answer(constants.NO_ANSWER);
         };
+        self.useHintAsPlaceHolder = ko.computed(function () {
+            return ko.utils.unwrapObservable(question.hint) && question.stylesContains(constants.HINT_AS_PLACEHOLDER);
+        });
+        self.setPlaceHolder(self.useHintAsPlaceHolder());
         self.afterRender = function () {
             // Override with any logic that comes after rendering the Entry
         };
@@ -57,6 +62,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             this.answer(newValue);
         }
         this.question.error(this.getErrorMessage(newValue));
+    };
+
+    Entry.prototype.setPlaceHolder = function (hasPlaceHolder) {
+        const self = this;
+        if (hasPlaceHolder) {
+            self.placeholderText = ko.utils.unwrapObservable(self.question.hint);
+        }
     };
 
     /**
@@ -114,7 +126,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         Entry.call(self, question);
         self.valueUpdate = undefined;
         self.rawAnswer = ko.observable(getRawAnswer(question.answer()));
-        self.placeholderText = '';
 
         self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 
@@ -434,10 +445,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var self = this;
         MultiSelectEntry.call(this, question, options);
         self.templateType = 'multidropdown';
-        self.placeholderText = gettext('Please choose an item');
-
+        if (!self.placeholderText.length) {
+            self.placeholderText = gettext('Please choose an item');
+        }
         self.afterRender = function () {
-            select2ify(self, {});
+            select2ify(self, {}, true);
         };
     }
     MultiDropdownEntry.prototype = Object.create(MultiSelectEntry.prototype);
@@ -566,8 +578,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var self = this;
         EntrySingleAnswer.call(this, question, options);
         self.templateType = 'dropdown';
-        self.placeholderText = gettext('Please choose an item');
-
+        if (!self.placeholderText.length) {
+            self.placeholderText = gettext('Please choose an item');
+        }
         self.options = ko.computed(function () {
             return [{text: "", id: undefined}].concat(_.map(question.choices(), function (choice, idx) {
                 return {
@@ -582,7 +595,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.afterRender = function () {
-            select2ify(self, self.additionalSelect2Options());
+            select2ify(self, self.additionalSelect2Options(), false);
         };
     }
     DropdownEntry.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -1032,6 +1045,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         EntryArrayAnswer.call(self, question, options);
         self.templateType = 'geo';
         self.map = null;
+        self.hasMap = () => !!self.map;
         self.control_width = constants.CONTROL_WIDTH;
 
         self.DEFAULT = {
@@ -1331,7 +1345,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * Utility to render question as select2
      * additionalOptions is passed as object to select2 constructor
      */
-    function select2ify(entry, additionalOptions) {
+    function select2ify(entry, additionalOptions, isMulti) {
         var $input = $('#' + entry.entryId);
         $input.select2(_.extend({
             allowClear: true,
@@ -1339,6 +1353,19 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
         }, additionalOptions));
 
+        applySelect2Labelledby(entry.entryId, isMulti);
+    }
+
+    /**
+     * Select2 ignores labelling from original `<select>` element.
+     * Fix that by applying `aria-labelledby` to the element getting keyboard focus.
+     */
+    function applySelect2Labelledby(entryId, isMulti) {
+        const $input = $('#' + entryId);
+        const $focusElement = isMulti
+            ? $input.parent().find('textarea.select2-search__field')
+            : $input.parent().find('span.select2-selection--single');
+        $focusElement.attr('aria-labelledby', entryId + '-label');
     }
 
     /**

@@ -341,11 +341,11 @@ def test_generator_required_fields_create_missing_owner():
 
 def test_generator_required_fields_create_missing_case_type():
     intent_case = IntentCaseBuilder().get_case({
-            "target_data_registry": "reg1",
-            "target_domain": "domain",
-            "target_case_id": "123",
-            "target_case_create": "1",
-            "target_case_owner_id": "1234"
+        "target_data_registry": "reg1",
+        "target_domain": "domain",
+        "target_case_id": "123",
+        "target_case_create": "1",
+        "target_case_owner_id": "1234"
     })
     expected_message = "'case_type' required when creating cases"
     with assert_raises(DataRegistryCaseUpdateError, msg=expected_message):
@@ -387,7 +387,6 @@ def _test_payload_generator(intent_case, registry_mock_cases=None,
         white_listed_case_types=[
             IntentCaseBuilder.CASE_TYPE
         ],
-        repeater_id=uuid.uuid4().hex
     )
     generator = DataRegistryCaseUpdatePayloadGenerator(repeater)
     generator.submission_user_id = Mock(return_value='user1')

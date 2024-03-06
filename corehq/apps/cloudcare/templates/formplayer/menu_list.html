@@ -120,13 +120,13 @@
 </script>
 
 <script type="text/template" id="breadcrumb-list-template">
-  <div class="breadcrumb-nav">
+  <nav class="breadcrumb-nav" aria-label="Breadcrumb">
     <ol class="breadcrumb">
-      <li class="js-home breadcrumb-text" role="link" tabindex="0" aria-label="{% trans_html_attr 'Home' %}"><i class="fa fa-home"></i></li>
+      <li class="js-home breadcrumb-text" role="link" tabindex="0">{% trans 'Home' %}</li>
     </ol>
     <div class="pull-right dropdown dropdown-menu-right" id="breadcrumb__menu-dropdown">
     </div>
-  </div>
+  </nav>
 </script>
 
 <script type="text/template" id="menu-dropdown-template">

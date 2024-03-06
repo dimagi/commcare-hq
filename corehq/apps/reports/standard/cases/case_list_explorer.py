@@ -28,8 +28,32 @@ from corehq.apps.reports.standard.cases.filters import (
 from corehq.util.metrics import metrics_histogram_timer
 
 
+class XpathCaseSearchFilterMixin(object):
+    """
+    To be mixed in views using XPathCaseSearchFilter to apply the filter
+    """
+    def apply_xpath_case_search_filter(self, query):
+        xpath = XPathCaseSearchFilter.get_value(self.request, self.domain)
+        if xpath:
+            try:
+                query = query.xpath_query(self.domain, xpath)
+            except CaseFilterError as e:
+                track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")
+
+                error = "<p>{}.</p>".format(escape(e))
+                bad_part = "<p>{} <strong>{}</strong></p>".format(
+                    _("The part of your search query that caused this error is: "),
+                    escape(e.filter_part)
+                ) if e.filter_part else ""
+                raise BadRequestError("{}{}".format(error, bad_part))
+
+            if '/' in xpath:
+                track_workflow(self.request.couch_user.username, f"{self.name}: Related case search")
+        return query
+
+
 @location_safe
-class CaseListExplorer(CaseListReport):
+class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
     name = _('Case List Explorer')
     slug = 'case_list_explorer'
     search_class = CaseSearchES
@@ -67,23 +91,7 @@ class CaseListExplorer(CaseListReport):
     def _build_query(self, sort=True):
         query = super(CaseListExplorer, self)._build_query()
         query = self._populate_sort(query, sort)
-        xpath = XPathCaseSearchFilter.get_value(self.request, self.domain)
-        if xpath:
-            try:
-                query = query.xpath_query(self.domain, xpath)
-            except CaseFilterError as e:
-                track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")
-
-                error = "<p>{}.</p>".format(escape(e))
-                bad_part = "<p>{} <strong>{}</strong></p>".format(
-                    _("The part of your search query that caused this error is: "),
-                    escape(e.filter_part)
-                ) if e.filter_part else ""
-                raise BadRequestError("{}{}".format(error, bad_part))
-
-            if '/' in xpath:
-                track_workflow(self.request.couch_user.username, f"{self.name}: Related case search")
-
+        query = self.apply_xpath_case_search_filter(query)
         return query
 
     def _populate_sort(self, query, sort):
@@ -169,9 +177,21 @@ class CaseListExplorer(CaseListReport):
 
     @property
     def rows(self):
-        track_workflow(self.request.couch_user.username, f"{self.name}: Search Performed")
+        self.track_search()
         data = (wrap_case_search_hit(row) for row in self.es_results['hits'].get('hits', []))
         return self._get_rows(data)
+
+    def track_search(self):
+        track_workflow(
+            self.request.couch_user.username,
+            f"{self.name}: Search Performed",
+            self.get_tracked_search_properties()
+        )
+
+    def get_tracked_search_properties(self):
+        return {
+            'domain': self.domain,
+        }
 
     @property
     def get_all_rows(self):

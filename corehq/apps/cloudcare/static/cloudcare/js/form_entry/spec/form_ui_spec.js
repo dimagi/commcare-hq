@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
     describe('Fullform formUI', function () {
@@ -12,6 +13,20 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             spy,
             repeatJSON,
             repeatNestJSON;
+
+        before(function () {
+            hqImport("hqwebapp/js/initial_page_data").register(
+                "toggles_dict",
+                {
+                    WEB_APPS_UPLOAD_QUESTIONS: true,
+                    WEB_APPS_ANCHORED_SUBMIT: false,
+                }
+            );
+        });
+
+        after(function () {
+            hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
+        });
 
         beforeEach(function () {
             questionJSON = fixtures.selectJSON();
@@ -65,18 +80,19 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             formJSON.tree = [repeatJSON];
             var form = formUI.Form(formJSON);
             assert.equal(form.children().length, 1);
-            assert.equal(form.children()[0].children().length, 0);
+            assert.equal(form.children()[0].children()[0].children().length, 0);
 
             // Add new repeat
             form.fromJS({ children: [repeatNestJSON] });
             assert.equal(form.children().length, 1);
             // Each repeat is a group with questions
-            assert.equal(form.children()[0].type(), constants.REPEAT_TYPE);
-            assert.equal(form.children()[0].children().length, 1);
-            assert.equal(form.children()[0].children()[0].type(), constants.GROUP_TYPE);
-            assert.isTrue(form.children()[0].children()[0].isRepetition);
-            assert.equal(form.children()[0].children()[0].children()[0].type(), constants.GROUPED_QUESTION_TILE_ROW_TYPE);
-            assert.equal(form.children()[0].children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);
+            assert.equal(form.children()[0].children()[0].type(), constants.REPEAT_TYPE);
+            assert.equal(form.children()[0].children()[0].children().length, 1);
+            assert.equal(form.children()[0].children()[0].children()[0].type(), constants.GROUPED_ELEMENT_TILE_ROW_TYPE);
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].type(), constants.GROUP_TYPE);
+            assert.isTrue(form.children()[0].children()[0].children()[0].children()[0].isRepetition);
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[0].type(), constants.GROUPED_ELEMENT_TILE_ROW_TYPE);
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);
         });
 
         it('Should render questions grouped by row', function () {
@@ -105,12 +121,117 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             formJSON.tree = [q0, g0, q1, q2, q3];
             let form = formUI.Form(formJSON);
 
-            // Expected structure (where gq signifies type "grouped-question-tile-row")
-            assert.equal(form.children().length, 4); // [gq, g, gq, gq]
+            // Expected structure (where ge signifies type "grouped-element-tile-row")
+            assert.equal(form.children().length, 4); // [ge, g, ge, ge]
             assert.equal(form.children()[0].children().length, 1); // [q0]
-            assert.equal(form.children()[1].children()[0].children()[0].children().length, 2); // [q(ix=2,3), q(ix=2,4)]
+            assert.equal(form.children()[1].children()[0].children()[0].children()[0].children()[0].children().length, 2); // [q(ix=2,3), q(ix=2,4)]
             assert.equal(form.children()[2].children().length, 2); // [q1, q2]
             assert.equal(form.children()[3].children().length, 1); // [q3]
+        });
+
+        it('Should render groups and question grouped by row', function () {
+            let styleObj = {raw: '3-per-row'};
+            let styleObj2 = {raw: '2-per-row'};
+
+            let g0 = fixtures.groupJSON({
+                style: styleObj,
+                ix: "0",
+            });
+            let g1 = fixtures.groupJSON({
+                style: styleObj,
+                ix: "1",
+            });
+            let q2 = fixtures.labelJSON({
+                style: styleObj,
+                ix: "3",
+            });
+
+            g0.children[0].children[0].style = styleObj2;
+            g0.children[0].children[1].style = styleObj2;
+
+            formJSON.tree = [g0,g1,q2];
+            let form = formUI.Form(formJSON);
+
+            /* Group-Element-Tile-Row
+                    -Group
+                        -Group-Element-Tile-Row
+                            -Group
+                                -Group-Element-Tile-Row
+                                    -Question
+                                    -Question
+                    -Group
+                        -Group-Element-Tile-Row
+                            -Group
+                                -Group-Element-Tile-Row
+                                    -Question
+                                -Group-Element-Tile-Row
+                                    -Question
+                    -Question
+            */
+
+            // Expected structure (where ge signifies type "grouped-element-tile-row")
+            assert.equal(form.children().length, 1); // [ge]
+            assert.equal(form.children()[0].children().length, 3); // [g0,g1,q2]
+            assert.equal(form.children()[0].children()[0].children().length, 1); // [ge]
+            assert.equal(form.children()[0].children()[0].children()[0].children().length, 1); // [group]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children().length, 1); // [ge]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[0].children().length, 2); // [q,q]
+
+            assert.equal(form.children()[0].children()[1].children().length, 1); // [ge]
+            assert.equal(form.children()[0].children()[1].children()[0].children().length, 1); // [group]
+            assert.equal(form.children()[0].children()[1].children()[0].children()[0].children().length, 2); // [ge,ge]
+            assert.equal(form.children()[0].children()[1].children()[0].children()[0].children()[0].children().length, 1); // [q]
+            assert.equal(form.children()[0].children()[1].children()[0].children()[0].children()[1].children().length, 1); // [q]
+        });
+
+        it('Should add n-per-row style to Repeat that are direct children of n-per-row-repeat Group and group the Repeat', function () {
+            let styleObj = {raw: '2-per-row-repeat'},
+                fakeStyleObj = {raw: "fake-style"};
+
+            let g0 = fixtures.groupJSON({
+                    style: styleObj,
+                    ix: "0",
+                }),
+                r0 = fixtures.repeatJSON({
+                    style: fakeStyleObj,
+                }),
+                r1 = fixtures.repeatJSON(),
+                r2 = fixtures.repeatJSON();
+
+            r1.ix = "1J";
+            r2.ix = "2J";
+            g0.children.push(r0, r1, r2);
+            formJSON.tree = [g0];
+            let form = formUI.Form(formJSON);
+
+            /* -Group-Element-Tile-Row
+                -Group0
+                    -Group-Element-Tile-Row
+                        -Group1
+                            -Group-Element-Tile-Row
+                                -Question
+                            -Group-Element-Tile-Row
+                                -Question
+                    -Group-Element-Tile-Row
+                        -Repeat0
+                        -Repeat1
+                    -Group-Element-Tile-Row
+                        -Repeat2
+            */
+
+            // Expected structure (where ge signifies type "grouped-element-tile-row")
+            let group0 = form.children()[0].children()[0],
+                group1 = group0.children()[0].children()[0],
+                repeat0 = group0.children()[1].children()[0],
+                repeat1 = group0.children()[1].children()[1],
+                repeat2 = group0.children()[2].children()[0];
+            assert.equal(form.children()[0].children().length, 1); // [group0]
+            assert.equal(group0.children().length, 3); // [ge, ge, ge]
+            assert.equal(group1.style, null); // [group]
+            assert.equal(group0.children()[1].children().length, 2); // [repeat0, repeat1]
+            assert.equal(repeat0.style.raw(), "fake-style 2-per-row");
+            assert.equal(repeat1.style.raw(), "2-per-row");
+            assert.equal(repeat2.style.raw(), "2-per-row");
         });
 
         it('Should calculate nested background header color', function () {
@@ -123,31 +244,41 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
             });
             let r1 = fixtures.repeatNestJSON();
             g1.children[0].style = styleObj;
-            r1.children[0].style = styleObj;
+            r1.children[0].children[0].style = styleObj;
             g1.children[0].children.push(r1);
             g0.children[0].children.push(g1);
 
             /* Group (collapsible) [g0]
-                -Group [g0-0]
-                    -Question
-                    -Question
-                    -Group (collapsible) [g1]
-                        -Group (collapsible) [g1-0]
+                -Group-Element-Tile-Row
+                    -Group [g0-0]
+                        -Group-Element-Tile-Row
                             -Question
+                        -Group-Element-Tile-Row
                             -Question
-                            -Repeat [r1]
-                                - Group (collapsible) [r1-0]
-                                    -Question
+                        -Group-Element-Tile-Row
+                            -Group (collapsible) [g1]
+                                -Group-Element-Tile-Row
+                                    -Group (collapsible) [g1-0]
+                                        -Group-Element-Tile-Row
+                                            -Question
+                                        -Group-Element-Tile-Row
+                                            -Question
+                                        -Group-Element-Tile-Row
+                                            -Repeat [r1]
+                                                -Group-Element-Tile-Row
+                                                    - Group (collapsible) [r1-0]
+                                                        -Group-Element-Tile-Row
+                                                            -Question
             */
             formJSON.tree = [g0];
             let form = formUI.Form(formJSON);
 
-            assert.equal(form.children()[0].headerBackgroundColor(), '#4a5aa8'); //[g0]
-            assert.equal(form.children()[0].children()[0].headerBackgroundColor(), ''); //[g0-0]
-            assert.equal(form.children()[0].children()[0].children()[2].headerBackgroundColor(), '#38437e'); //[g1]
-            assert.equal(form.children()[0].children()[0].children()[2].children()[0].headerBackgroundColor(), '#252d54'); //[g1-0]
-            assert.equal(form.children()[0].children()[0].children()[2].children()[0].children()[2].headerBackgroundColor(), '#4a5aa8'); //[r1]
-            assert.equal(form.children()[0].children()[0].children()[2].children()[0].children()[2].children()[0].headerBackgroundColor(), ''); //[r1-0]
+            assert.equal(form.children()[0].children()[0].headerBackgroundColor(), '#002f71'); //[g0]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].headerBackgroundColor(), ''); //[g0-0]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].headerBackgroundColor(), '#003e96'); //[g1]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].headerBackgroundColor(), '#004EBC'); //[g1-0]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].children()[2].children()[0].headerBackgroundColor(), '#002f71'); //[r1]
+            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].headerBackgroundColor(), ''); //[r1-0]
         });
 
         it('Should reconcile question choices', function () {
@@ -265,8 +396,8 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
 
         it('Should find nested questions', function () {
             var form = formUI.Form(nestedGroupJSON);
-            assert.isTrue(form.children()[0].hasAnyNestedQuestions());
-            assert.isFalse(form.children()[1].hasAnyNestedQuestions());
+            assert.isTrue(form.children()[0].children()[0].hasAnyNestedQuestions());
+            assert.isFalse(form.children()[1].children()[0].hasAnyNestedQuestions());
         });
 
         it('Should not reconcile outdated data', function () {

@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 /* global Backbone, Marionette */
 hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function () {
@@ -66,7 +67,11 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
             });
 
             it('should show sidebar and main regions with query type split screen case search', function () {
-                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, { 'type': 'query' });
+                const responseWithTypeQuery = _.extend(
+                    {},
+                    splitScreenCaseListResponse,
+                    { 'type': 'query'},
+                    new Backbone.Collection(splitScreenCaseListResponse.queryResponse.displays));
                 Controller.showMenu(responseWithTypeQuery);
 
                 assert.isTrue(stubs.regions['sidebar'].show.called);
@@ -74,13 +79,37 @@ hqDefine("cloudcare/js/formplayer/spec/split_screen_case_search_spec", function 
             });
 
             it('should explicitly set sidebarEnabled and triggerEmptyCaseList with query type split screen case search', function () {
-                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, { 'type': 'query' });
+                const responseWithTypeQuery = _.extend(
+                    {},
+                    splitScreenCaseListResponse,
+                    { 'type': 'query'},
+                    new Backbone.Collection(splitScreenCaseListResponse.queryResponse.displays));
                 Controller.showMenu(responseWithTypeQuery);
 
                 assert.isTrue(stubs.regions['main'].show.called);
                 var showMain = stubs.regions['main'].show.getCalls()[0];
                 assert.isTrue(showMain.args[0].options.sidebarEnabled);
                 assert.isTrue(showMain.args[0].options.triggerEmptyCaseList);
+            });
+
+            it('should hide sidebar if there are no search inputs in query response', function () {
+                const responseWithTypeQuery = _.extend(
+                    {},
+                    splitScreenCaseListResponse,
+                    { 'type': 'query'},
+                    new Backbone.Collection([]));
+                Controller.showMenu(responseWithTypeQuery);
+
+                assert.isTrue(stubs.regions['sidebar'].empty.called);
+            });
+
+            it('should hide sidebar if there are no search inputs in entities response', function () {
+                let queryResponse = splitScreenCaseListResponse.queryResponse;
+                queryResponse = _.extend({}, queryResponse, {'displays': {}});
+                const responseWithTypeQuery = _.extend({}, splitScreenCaseListResponse, {'queryResponse': queryResponse});
+                Controller.showMenu(responseWithTypeQuery);
+
+                assert.isTrue(stubs.regions['sidebar'].empty.called);
             });
 
             it('should empty sidebar if in app preview', function () {

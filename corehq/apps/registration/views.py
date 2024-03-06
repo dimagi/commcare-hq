@@ -49,6 +49,7 @@ from corehq.apps.registration.models import (
 )
 from corehq.apps.registration.utils import (
     activate_new_user_via_reg_form,
+    project_logo_emails_context,
     request_new_domain,
     send_domain_registration_email,
     send_mobile_experience_reminder,
@@ -521,7 +522,7 @@ def confirm_domain(request, guid=''):
 
         # Has guid already been confirmed?
         if requested_domain.is_active:
-            assert(req.confirm_time is not None and req.confirm_ip is not None)
+            assert (req.confirm_time is not None and req.confirm_ip is not None)
             messages.success(request, 'Your account %s has already been activated. '
                 'No further validation is required.' % req.new_user_username)
             return HttpResponseRedirect(reverse(view_name, args=view_args))
@@ -570,5 +571,6 @@ def eula_agreement(request):
 @login_required
 @require_POST
 def send_mobile_reminder(request):
-    send_mobile_experience_reminder(request.couch_user.get_email(), request.couch_user.full_name)
+    send_mobile_experience_reminder(request.couch_user.get_email(), request.couch_user.full_name,
+                                    additional_email_context=project_logo_emails_context(None, request.couch_user))
     return HttpResponse()

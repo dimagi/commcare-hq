@@ -23,7 +23,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     DOMPurify,
     toggles
 ) {
-    var caseType = function (name, fhirResourceType, deprecated, moduleCount, geoCaseProp) {
+    var caseType = function (name, fhirResourceType, deprecated, moduleCount, geoCaseProp, isSafeToDelete) {
         var self = {};
         self.name = name || gettext("No Name");
         self.deprecated = deprecated;
@@ -32,6 +32,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.fhirResourceType = ko.observable(fhirResourceType);
         self.groups = ko.observableArray();
         self.geoCaseProp = geoCaseProp;
+        self.canDelete = isSafeToDelete;
 
         self.init = function (groupData, changeSaveButton) {
             for (let group of groupData) {
@@ -42,14 +43,19 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
                 for (let prop of group.properties) {
                     const isGeoCaseProp = (self.geoCaseProp === prop.name && prop.data_type === 'gps');
+                    if (self.canDelete && !prop.is_safe_to_delete) {
+                        self.canDelete = false;
+                    }
+
                     var propObj = propertyListItem(prop.name, prop.label, false, group.name, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath, isGeoCaseProp);
+                        prop.removeFHIRResourcePropertyPath, isGeoCaseProp, prop.is_safe_to_delete, prop.id);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.label.subscribe(changeSaveButton);
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
                     propObj.dataType.subscribe(changeSaveButton);
                     propObj.deprecated.subscribe(changeSaveButton);
+                    propObj.deleted.subscribe(changeSaveButton);
                     propObj.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
                     propObj.allowedValues.on('change', changeSaveButton);
                     groupObj.properties.push(propObj);
@@ -89,8 +95,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     var propertyListItem = function (name, label, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeoCaseProp) {
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeoCaseProp, isSafeToDelete, id) {
         var self = {};
+        self.id = id;
         self.name = name;
         self.label = ko.observable(label);
         self.expanded = ko.observable(true);
@@ -103,6 +110,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
         self.isGeoCaseProp = ko.observable(isGeoCaseProp);
+        self.isSafeToDelete = ko.observable(isSafeToDelete);
+        self.deleted = ko.observable(false);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
         let subTitle;
         if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
@@ -161,6 +170,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return self.dataType() === 'select';
         });
 
+        self.confirmDeleteProperty = function () {
+            const $modal = $("#delete-case-prop-modal").modal('show');
+            $("#delete-case-prop-btn").off("click").on("click", () => {
+                self.deleted(true);
+                $modal.modal('hide');
+            });
+        };
+
         return self;
     };
 
@@ -176,6 +193,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
         self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
+
+        const params = new URLSearchParams(document.location.search);
+        self.showDeprecatedCaseTypes = ko.observable(params.get("load_deprecated_case_types") !== null);
+
+        // Elements with this class have a hidden class to hide them on page load. If we don't do this, then the elements
+        // will flash on the page for a bit while the KO bindings are being applied.
+        $(".deprecate-case-type").removeClass('hidden');
+
         self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function () {
@@ -195,6 +220,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     }
 
                     _.each(group.properties(), function (element, index) {
+                        if (element.deleted() && !element.id) {
+                            return;
+                        }
+
                         const allowedValues = element.allowedValues.val();
                         let pureAllowedValues = {};
                         for (const key in allowedValues) {
@@ -211,6 +240,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'fhir_resource_prop_path': (
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
                             'deprecated': element.deprecated(),
+                            'deleted': element.deleted(),
                             'removeFHIRResourcePropertyPath': element.removeFHIRResourcePropertyPath(),
                             'allowed_values': pureAllowedValues,
                         };
@@ -241,7 +271,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.init = function (callback) {
-            $.getJSON(dataUrl)
+            $.getJSON(dataUrl, {load_deprecated_case_types: self.showDeprecatedCaseTypes()})
                 .done(function (data) {
                     _.each(data.case_types, function (caseTypeData) {
                         var caseTypeObj = caseType(
@@ -249,7 +279,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             caseTypeData.fhir_resource_type,
                             caseTypeData.is_deprecated,
                             caseTypeData.module_count,
-                            data.geo_case_property
+                            data.geo_case_property,
+                            caseTypeData.is_safe_to_delete
                         );
                         caseTypeObj.init(caseTypeData.groups, changeSaveButton);
                         self.caseTypes.push(caseTypeObj);
@@ -286,6 +317,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return (activeCaseType) ? activeCaseType.deprecated : false;
         };
 
+        self.canDeleteActiveCaseType = function () {
+            const activeCaseType = self.getActiveCaseType();
+            return (activeCaseType) ? activeCaseType.canDelete : false;
+        };
+
         self.activeCaseTypeModuleCount = function () {
             const activeCaseType = self.getActiveCaseType();
             return (activeCaseType) ? activeCaseType.appCount : 0;
@@ -306,7 +342,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             }
 
             activeCaseType.deprecated = shouldDeprecate;
-            $("#deprecate-case-type-error").hide();
+            $("#case-type-error").hide();
             $.ajax({
                 url: initialPageData.reverse('deprecate_or_restore_case_type', activeCaseType.name),
                 method: 'POST',
@@ -317,7 +353,21 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     window.location.reload(true);
                 },
                 error: function () {
-                    $("#deprecate-case-type-error").show();
+                    $("#case-type-error").show();
+                },
+            });
+        };
+
+        self.deleteCaseType = function () {
+            $("#case-type-error").hide();
+            $.ajax({
+                url: initialPageData.reverse('delete_case_type', self.getActiveCaseType().name),
+                method: 'POST',
+                success: function () {
+                    window.location.href = initialPageData.reverse('data_dictionary');
+                },
+                error: function () {
+                    $("#case-type-error").show();
                 },
             });
         };
@@ -336,6 +386,19 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.saveButton.setState('saved');
         };
 
+        function isNameValid(nameStr) {
+            // First character must be a letter, and the entire name can only contain letters, numbers, '-', and '_'
+            const pattern = /^[a-zA-Z][a-zA-Z0-9-_]*$/;
+            return pattern.test(nameStr);
+        }
+
+        self.newPropertyNameValid = ko.computed(function () {
+            if (!self.newPropertyName()) {
+                return true;
+            }
+            return isNameValid(self.newPropertyName());
+        });
+
         self.newPropertyNameUnique = ko.computed(function () {
             if (!self.newPropertyName()) {
                 return true;
@@ -344,11 +407,18 @@ hqDefine("data_dictionary/js/data_dictionary", [
             const propertyNameFormatted = self.newPropertyName().toLowerCase().trim();
             const activeCaseTypeData = self.activeCaseTypeData();
             for (const group of activeCaseTypeData) {
-                if (group.properties().some(v => v.name.toLowerCase() === propertyNameFormatted)) {
+                if (group.properties().find(v => v.name.toLowerCase() === propertyNameFormatted)) {
                     return false;
                 }
             }
             return true;
+        });
+
+        self.newGroupNameValid = ko.computed(function () {
+            if (!self.newGroupName()) {
+                return true;
+            }
+            return isNameValid(self.newGroupName());
         });
 
         self.newGroupNameUnique = ko.computed(function () {
@@ -420,21 +490,35 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.removefhirResourceType(false);
         };
 
+        self.toggleShowDeprecatedCaseTypes = function () {
+            self.showDeprecatedCaseTypes(!self.showDeprecatedCaseTypes());
+            const pageUrl = new URL(window.location.href);
+            if (self.showDeprecatedCaseTypes()) {
+                pageUrl.searchParams.append('load_deprecated_case_types', true);
+            } else {
+                pageUrl.searchParams.delete('load_deprecated_case_types');
+            }
+            window.location.href = pageUrl;
+        };
+
         // CREATE workflow
         self.name = ko.observable("").extend({
             rateLimit: { method: "notifyWhenChangesStop", timeout: 400 },
         });
 
         self.nameValid = ko.observable(false);
+        self.nameUnique = ko.observable(false);
         self.nameChecked = ko.observable(false);
         self.name.subscribe((value) => {
             if (!value) {
+                self.nameChecked(false);
                 return;
             }
             let existing = _.find(self.caseTypes(), function (prop) {
                 return prop.name === value;
             });
-            self.nameValid(!existing);
+            self.nameUnique(!existing);
+            self.nameValid(isNameValid(self.name()));
             self.nameChecked(true);
         });
 
@@ -448,6 +532,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             $("#create-case-type-form").trigger("reset");
             self.name("");
             self.nameValid(false);
+            self.nameUnique(false);
             self.nameChecked(false);
             return true;
         };

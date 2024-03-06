@@ -52,6 +52,11 @@ class Alert(models.Model):
         cls.get_active_alerts.clear(cls)
         super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        cls = type(self)
+        cls.get_active_alerts.clear(cls)
+        super().delete(*args, **kwargs)
+
     @classmethod
     @quickcache([], timeout=1 * 60)
     def get_active_alerts(cls):

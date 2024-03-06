@@ -8,7 +8,7 @@
             {% trans "Mobile Worker Filters" %}
         </legend>
         <div class="alert alert-danger" data-bind="visible: hasErrors()">
-            <i class="fa fa-exclamation-triangle"></i>
+            <i class="fa-solid fa-triangle-exclamation"></i>
             {% blocktrans %}
                 <strong>There was an issue retrieving mobile workers from the server.</strong>
                 If this problem continues, please
@@ -101,7 +101,18 @@
         attempting to run disbursement.
     {% endblocktrans %}
 </div>
-<div id="geospatial-map" style="height: 500px"></div>
+<div id="disbursement-clear-message" class="alert alert-info" style="display: none">
+    {% blocktrans %}
+        Previous disbursement was cleared.
+    {% endblocktrans %}
+</div>
+<div id="geospatial-map" style="height: 500px">
+    <div id="layer-toggle-menu" class="btn-group-vertical hidden">
+        <h4 class="text-center">
+            {% trans 'Layers' %}
+        </h4>
+    </div>
+</div>
 
 <!-- For Pagination -->
 <div class="panel-body-datatable">
@@ -115,19 +126,7 @@
   {% endblock reporttable %}
 </div>
 
-<div id="case-buttons" class="col-sm-12 col-md-12 col-lg-12">
-    <div id="missing-gps-cases" style="display: inline;">
-        <a class="btn btn-default" target="_blank" href="{% url 'gps_capture' domain %}"
-                data-bind="visible: casesWithoutGPS().length > 0">
-            <span data-bind="text: casesWithoutGPS().length"></span>
-            &nbsp;{% trans "Cases Missing GPS Data" %}
-        </a>
-        <a class="btn btn-default" target="_blank" href="{% url 'gps_capture' domain %}?data_type=user" data-bind="visible: usersWithoutGPS().length">
-            <span data-bind="text: usersWithoutGPS().length"></span>
-            &nbsp;{% trans "Mobile Workers Missing GPS Data" %}
-        </a>
-    </div>
-
+<div id="case-buttons">
     <div id="user-modals" class="pull-right">
         <button class="btn btn-default" data-toggle="modal" data-target="#selected-user-list" data-bind="enable: selectedUsers().length">
             <span data-bind="text: selectedUsers().length"></span>

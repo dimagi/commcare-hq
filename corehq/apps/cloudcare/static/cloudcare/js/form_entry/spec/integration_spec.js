@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/form_entry/spec/integration_spec", function () {
     describe('Integration', function () {
@@ -6,6 +7,14 @@ hqDefine("cloudcare/js/form_entry/spec/integration_spec", function () {
             formJSON,
             questionJSONMulti,
             questionJSONString;
+
+        before(function () {
+            hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", { WEB_APPS_ANCHORED_SUBMIT: false });
+        });
+
+        after(function () {
+            hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
+        });
 
         beforeEach(function () {
             questionJSONMulti = {

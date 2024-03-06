@@ -1,3 +1,4 @@
+'use strict';
 /* global Backbone, Marionette */
 hqDefine("cloudcare/js/formplayer/router", function () {
     var utils = hqImport("cloudcare/js/formplayer/utils/utils");
@@ -46,9 +47,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             });
         },
         listMenus: function (sessionObject) {
-            var urlObject = utils.CloudcareUrl.fromJson(
-                utils.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
-            );
+            var urlObject = sessionObject ?
+                utils.CloudcareUrl.fromJson(utils.encodedUrlToObject(sessionObject))
+                : utils.currentUrlToObject();
             if (!urlObject.appId) {
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");

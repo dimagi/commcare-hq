@@ -11,7 +11,7 @@ from corehq.motech.repeaters.const import (
     RECORD_SUCCESS_STATE,
 )
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
-from corehq.motech.repeaters.models import RepeatRecord, Repeater
+from corehq.motech.repeaters.models import RepeatRecord, Repeater, SQLRepeatRecord
 from corehq.util.couch import IterDB
 
 
@@ -45,7 +45,7 @@ class Command(BaseCommand):
     def handle(self, domain, repeater_id, *args, **options):
         self.domain = domain
         self.repeater_id = repeater_id
-        repeater = Repeater.objects.get(repeater_id=repeater_id)
+        repeater = Repeater.objects.get(id=repeater_id)
         print("Looking up repeat records for '{}'".format(repeater.friendly_name))
 
         redundant_records = []
@@ -63,11 +63,11 @@ class Command(BaseCommand):
 
         unique_payloads = len(records_by_payload_id)
         redundant_payloads = len(redundant_records)
-        print ("There are {total} total cancelled records, {redundant} with payloads which "
-               "have since succeeded, and {unique} unsent unique payload ids."
-               .format(total=total_records,
-                       redundant=redundant_payloads,
-                       unique=unique_payloads))
+        print("There are {total} total cancelled records, {redundant} with payloads which "
+              "have since succeeded, and {unique} unsent unique payload ids."
+              .format(total=total_records,
+                      redundant=redundant_payloads,
+                      unique=unique_payloads))
         print("Delete {} duplicate records?".format(total_records - unique_payloads))
         if not input("(y/n)") == 'y':
             print("Aborting")
@@ -88,7 +88,7 @@ class Command(BaseCommand):
 
     def resolve_duplicates(self, records_by_payload_id):
         log = []
-        with IterDB(RepeatRecord.get_db()) as iter_db:
+        with RepeatRecordDeleter() as iter_db:
             for payload_id, records in records_by_payload_id.items():
                 log.append((records[0]._id, payload_id, records[0].failure_reason, 'No', ''))
                 if len(records) > 1:
@@ -99,8 +99,33 @@ class Command(BaseCommand):
 
     def delete_already_successful_records(self, redundant_records):
         log = []
-        with IterDB(RepeatRecord.get_db()) as iter_db:
+        with RepeatRecordDeleter() as iter_db:
             for record in redundant_records:
                 iter_db.delete(record)
                 log.append((record._id, record.payload_id, record.failure_reason, 'Yes', 'Already Sent'))
         return log
+
+
+class RepeatRecordDeleter:
+
+    def __enter__(self):
+        instance = IterDB(RepeatRecord.get_db())
+        self.iterdb = instance.__enter__()
+        assert instance is self.iterdb, (instance, self.iterdb)
+        self.ids_to_delete = []
+        return self
+
+    def delete(self, record):
+        self.iterdb.delete(record)
+        self.ids_to_delete.append(record._id)
+        if len(self.ids_to_delete) > 100:
+            self.flush()
+
+    def flush(self):
+        SQLRepeatRecord.objects.filter(couch_id__in=self.ids_to_delete).delete()
+        self.ids_to_delete = []
+
+    def __exit__(self, *exc_info):
+        self.flush()
+        del self.ids_to_delete
+        return self.iterdb.__exit__(*exc_info)

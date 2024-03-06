@@ -1,3 +1,4 @@
+'use strict';
 /* global DOMPurify */
 hqDefine('cloudcare/js/markdown', [
     'jquery',
@@ -105,19 +106,9 @@ hqDefine('cloudcare/js/markdown', [
             defaultLinkOpen = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
                 return self.renderToken(tokens, idx, options);
             },
-            defaultHeadingOpen = md.renderer.rules.heading_open || function (tokens, idx, options, env, self) {
+            defaultTextOpen = md.renderer.rules.text || function (tokens, idx, options, env, self) {
                 return self.renderToken(tokens, idx, options);
             };
-
-        md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
-            let aIndex = tokens[idx].attrIndex('tabindex');
-
-            if (aIndex < 0) {
-                tokens[idx].attrPush(['tabindex', '0']);
-            }
-
-            return defaultHeadingOpen(tokens, idx, options, env, self);
-        };
 
         let renderers = getChainedRenderers();
         md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
@@ -127,6 +118,14 @@ hqDefine('cloudcare/js/markdown', [
 
             // pass token to default renderer.
             return defaultLinkOpen(tokens, idx, options, env, self);
+        };
+
+        md.renderer.rules.text = function (tokens, idx, options, env, self) {
+            if (tokens[idx - 1] && tokens[idx - 1].type === 'link_open') {
+                return '<u>' + tokens[idx].content + '</u>';
+            }
+
+            return defaultTextOpen(tokens, idx, options, env, self);
         };
         return md;
     }

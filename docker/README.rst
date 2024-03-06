@@ -38,7 +38,7 @@ etc.), you should stop them now.
 
 Run ::
 
-    $ scripts/docker up -d postgres couch redis elasticsearch2 zookeeper kafka minio
+    $ scripts/docker up -d postgres couch redis elasticsearch5 zookeeper kafka minio
 
 to build and start those Docker services in the background. (Omit ``-d``
 to run them in the foreground.)

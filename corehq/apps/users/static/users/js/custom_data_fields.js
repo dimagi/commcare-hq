@@ -6,7 +6,7 @@ hqDefine("users/js/custom_data_fields", [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/select2_knockout_bindings.ko',     // selects2 for fields
-    'hqwebapp/js/widgets',      // select2 for user fields profile
+    'hqwebapp/js/bootstrap3/widgets',      // select2 for user fields profile
 ], function (
     ko,
     _,
@@ -65,7 +65,7 @@ hqDefine("users/js/custom_data_fields", [
             }
             _.each(self.slugs, function (slug) {
                 var field = self[slug];
-                if (fields[slug]) {
+                if (Object.prototype.hasOwnProperty.call(fields, slug)) {
                     if (!field.disable()) {
                         field.previousValue(field.value());
                     }

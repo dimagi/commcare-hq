@@ -292,10 +292,7 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
     def test_get_task(self):
         with self._mock_single_task_response() as (task_id, patched):
             task = self.adapter.get_task(task_id)
-            if self.adapter.elastic_major_version == 2:
-                patched.assert_called_once_with(task_id=task_id, detailed=True)
-            else:
-                patched.assert_called_once_with(task_id=task_id)
+            patched.assert_called_once_with(task_id=task_id)
             self.assertIn("running_time_in_nanos", task)
 
     def test_cancel_task_with_invalid_task_id(self):
@@ -379,12 +376,8 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
                     info["tasks"].pop(t_id)
                 else:
                     es5_response['task'] = info['tasks'][t_id]
-        if self.adapter.elastic_major_version == 2:
-            with patch.object(self.adapter._es.tasks, "list", return_value=response) as patched:
-                yield task_id, patched
-        else:
-            with patch.object(self.adapter._es.tasks, "get", return_value=es5_response) as patched:
-                yield task_id, patched
+        with patch.object(self.adapter._es.tasks, "get", return_value=es5_response) as patched:
+            yield task_id, patched
 
     def test_get_task_missing(self):
         node_name = list(self.adapter._es.nodes.info()["nodes"])[0]
@@ -500,14 +493,38 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
             with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
 
-                # purge_ids is not added here as it is required temporarily
-                # And setting it would require turning on inline script updates on test es docker
                 manager.reindex(
                     test_adapter.index_name, SECONDARY_INDEX,
                     wait_for_completion=True,
                     refresh=True,
                     requests_per_second=2,
                 )
+
+                self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
+
+    def test_reindex_with_copy_doc_ids(self):
+        SECONDARY_INDEX = 'secondary_index'
+
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+
+            all_ids = self._index_test_docs_for_reindex()
+
+            # Ensure that primary index does not contain `doc_id` field
+            for doc_id in all_ids:
+                doc = test_adapter.get(doc_id)
+                self.assertIsNone(doc.get('doc_id'))
+
+            with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
+
+                manager.reindex(
+                    test_adapter.index_name, SECONDARY_INDEX,
+                    wait_for_completion=True,
+                    refresh=True,
+                )
+                # After reindex `doc_id` should be present in all the docs
+                for doc_id in all_ids:
+                    result = manager._es.get(index=SECONDARY_INDEX, doc_type=test_adapter.type, id=doc_id)
+                    self.assertEqual(doc_id, result['_source']['doc_id'])
 
                 self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
 

@@ -516,15 +516,14 @@ class TestGetRepeatRecordIDs(TestCase):
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,
-            repeater_id=uuid4().hex
         )
         cls.repeater.save()
         cls.create_repeat_records()
 
     @classmethod
     def tearDownClass(cls):
-        for record in cls.couch_records + cls.sql_records:
-            record.delete()
+        for record in cls.couch_records:
+            record.delete(sync_to_sql=False)
         cls.repeater.delete()
         super().tearDownClass()
 
@@ -543,14 +542,10 @@ class TestGetRepeatRecordIDs(TestCase):
             )
             couch_record.save()
             cls.couch_records.append(couch_record)
-
-            cls.sql_records.append(SQLRepeatRecord.objects.create(
-                domain=DOMAIN,
-                couch_id=couch_record._id,
-                payload_id=cls.instance_id,
-                repeater=cls.repeater,
-                registered_at=now,
-            ))
+        cls.sql_records = list(SQLRepeatRecord.objects.filter(
+            domain=DOMAIN,
+            repeater_id=cls.repeater.repeater_id,
+        ))
 
     def test_no_payload_id_no_repeater_id_sql(self):
         result = _get_repeat_record_ids(payload_id=None, repeater_id=None,

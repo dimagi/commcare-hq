@@ -56,8 +56,10 @@ class DynamicSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.module.search_config = CaseSearch(
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
-            ]
+            ],
+            search_on_clear=True,
         )
+
         self.module.assign_references()
         # wrap to have assign_references called
         self.app = Application.wrap(self.app.to_json())
@@ -78,3 +80,17 @@ class DynamicSearchSuiteTest(SimpleTestCase, SuiteMixin):
         suite = parse_normalize(suite, to_string=False)
         self.assertEqual(True, self.module.is_auto_select())
         self.assertEqual("false", suite.xpath("./remote-request[1]/session/query/@dynamic_search")[0])
+
+    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
+    def test_search_on_clear(self):
+        suite = self.app.create_suite()
+        suite = parse_normalize(suite, to_string=False)
+        self.assertEqual("true", suite.xpath("./remote-request[1]/session/query/@search_on_clear")[0])
+
+    @patch('corehq.apps.app_manager.models.ModuleBase.is_auto_select', return_value=True)
+    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
+    def test_search_on_clear_disable_with_auto_select(self, mock):
+        suite = self.app.create_suite()
+        suite = parse_normalize(suite, to_string=False)
+        self.assertEqual(True, self.module.is_auto_select())
+        self.assertEqual("false", suite.xpath("./remote-request[1]/session/query/@search_on_clear")[0])

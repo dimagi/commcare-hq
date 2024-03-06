@@ -1,0 +1,184 @@
+{% load compress %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<!-- modal for deprecating case type -->
+<script type="text/html" id="deprecate-case-type">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">
+            {% blocktrans %}
+              Deprecate
+              '<span data-bind="text: $root.activeCaseType()"></span>'
+              Case Type
+            {% endblocktrans %}
+          </h4>
+        </div>
+        <div class="modal-body">
+          {% blocktrans %}
+            <p>
+              There are a total of
+              <strong>
+                <span data-bind="text: activeCaseTypeModuleCount()"></span> application module(s)
+              </strong>
+              that are currently using this case type.
+            </p>
+            <p>
+              Deprecating this case type will have the following effects:
+            </p>
+            <ul>
+              <li>This case type will not be available from the reports filtering menu.</li>
+              <li>All case properties/groups for this case type will be deprecated.</li>
+              <li>New exports cannot be created with this case type.</li>
+              <li>Case imports cannot be done for cases with this case type.</li>
+              <li>New automatic rules cannot be created with this case type.</li>
+            </ul>
+            <p>
+              For more information on deprecated case types, see the
+              <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary">following documentation</a>.
+            </p>
+          {% endblocktrans %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal" data-bind="click: $root.deprecateCaseType">{% trans "Confirm" %}</button>
+        </div>
+      </div>
+    </div>
+</script>
+
+<!-- Modal for deprecating geospatial case property -->
+<div id="deprecate-geospatial-prop-modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    {% trans "Deprecate GPS property" %}
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    {% blocktrans %}
+                    This GPS case property is currently being used to store the geolocation for cases.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                    Deprecating this case property may result in unintended behaviour, and so
+                    it is advised to first change the selected custom case property in
+                    <a href="{{ geospatial_settings_url }}">
+                        geospatial settings
+                    </a>
+                    before deprecating this case property.
+                    {% endblocktrans %}
+                </p>
+
+                <p>
+                    {% blocktrans %}
+                    Would you like to proceed with deprecating this case property?
+                    {% endblocktrans %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    {% trans 'Cancel' %}
+                </button>
+                <button id="deprecate-geospatial-prop-btn" type="button" class="btn btn-primary">
+                    {% trans 'Confirm' %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for deleting case property -->
+<div id="delete-case-prop-modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    {% trans 'Delete Case Property' %}
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    {% blocktrans %}
+                        There are currently no cases that store data with this case property, and so it is safe to delete.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                        Would you like to mark this case property as deleted? Once confirmed the case
+                        property will be deleted upon clicking the "Save" button.
+                    {% endblocktrans %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    {% trans 'Cancel' %}
+                </button>
+                <button id="delete-case-prop-btn" type="button" class="btn btn-danger">
+                    <i class="fa fa-trash"></i>
+                    {% trans 'Confirm' %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for deleting case type -->
+<div id="delete-case-type-modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    {% blocktrans %}
+                    Delete
+                    '<span data-bind="text: $root.activeCaseType()"></span>'
+                    Case Type
+                    {% endblocktrans %}
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    {% blocktrans %}
+                    There are no cases that use this case type or store data with any of its case properties.
+                    Therefore, it is safe to delete this case type.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                    Please note however, that all case properties for this case type will also be deleted.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                    Would you like to proceed with deleting this case type?
+                    {% endblocktrans %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    {% trans 'Cancel' %}
+                </button>
+                <button id="delete-case-type-btn" type="button" class="btn btn-danger" data-dismiss="modal" data-bind="click: $root.deleteCaseType">
+                    <i class="fa fa-trash"></i>
+                    {% trans 'Delete' %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

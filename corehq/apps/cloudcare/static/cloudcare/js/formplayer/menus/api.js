@@ -1,3 +1,4 @@
+'use strict';
 /* global Sentry */
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
@@ -172,7 +173,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                 var callStartTime = performance.now();
                 menus.fetch($.extend(true, {}, options)).always(function () {
-                    if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === "dynamicSearch") {
+                    if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === constants.queryInitiatedBy.DYNAMIC_SEARCH) {
                         var callEndTime = performance.now();
                         var callResponseTime = callEndTime - callStartTime;
                         $.ajax(initialPageData.reverse('api_histogram_metrics'), {

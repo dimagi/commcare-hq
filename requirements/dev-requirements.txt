@@ -12,7 +12,7 @@ amqp==5.1.1
     # via kombu
 architect==0.6.0
     # via -r base-requirements.in
-asgiref==3.5.0
+asgiref==3.7.2
     # via django
 asttokens==2.0.5
     # via stack-data
@@ -31,9 +31,11 @@ backcall==0.2.0
 beaker==1.11.0
     # via oic
 beautifulsoup4==4.10.0
-    # via -r test-requirements.in
+    # via -r base-requirements.in
 billiard==3.6.4.0
     # via celery
+bleach[css]==6.1.0
+    # via -r base-requirements.in
 boto3==1.24.96
     # via -r base-requirements.in
 botocore==1.27.96
@@ -95,14 +97,16 @@ coverage==7.1.0
     # via -r test-requirements.in
 crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
     # via -r base-requirements.in
-cryptography==41.0.6
+cryptography==42.0.3
     # via
-    #   -r sso-requirements.in
+    #   -r base-requirements.in
     #   jwcrypto
     #   oic
     #   pyjwt
     #   pyopenssl
 csiphash==0.0.5
+    # via -r base-requirements.in
+css-inline==0.11.0
     # via -r base-requirements.in
 datadog==0.39.0
     # via -r base-requirements.in
@@ -110,7 +114,7 @@ ddsketch==2.0.4
     # via ddtrace
 ddtrace==1.13.4
     # via -r base-requirements.in
-decorator==4.0.11
+decorator==5.1.1
     # via
     #   -r base-requirements.in
     #   datadog
@@ -131,7 +135,7 @@ diff-match-patch==20230430
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.23
+django==3.2.24
     # via
     #   -r base-requirements.in
     #   crispy-bootstrap3to5
@@ -141,7 +145,6 @@ django==3.2.23
     #   django-crispy-forms
     #   django-extensions
     #   django-formtools
-    #   django-logentry-admin
     #   django-oauth-toolkit
     #   django-otp
     #   django-phonenumber-field
@@ -166,7 +169,7 @@ django-bulk-update==2.2.0
     # via -r base-requirements.in
 django-celery-results==2.4.0
     # via -r base-requirements.in
-django-compressor==4.1
+django-compressor==4.4
     # via -r base-requirements.in
 django-countries==7.3.2
     # via -r base-requirements.in
@@ -186,8 +189,6 @@ django-formtools==2.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-logentry-admin==1.0.6
-    # via -r base-requirements.in
 django-nose @ https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
     # via -r test-requirements.in
 django-oauth-toolkit==2.3.0
@@ -200,7 +201,7 @@ django-phonenumber-field==6.4.0
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-prbac==1.0.1
+django-prbac==1.1.0
     # via -r base-requirements.in
 django-recaptcha==3.0.0
     # via -r base-requirements.in
@@ -210,7 +211,7 @@ django-redis-sessions==0.6.2
     # via -r base-requirements.in
 django-statici18n==2.4.0
     # via -r base-requirements.in
-django-tastypie==0.14.4
+django-tastypie==0.14.6
     # via -r base-requirements.in
 django-transfer==0.4
     # via -r base-requirements.in
@@ -229,8 +230,6 @@ docutils==0.18.1
     #   sphinx-rtd-theme
 dropbox==11.36.0
     # via -r base-requirements.in
-elasticsearch2==2.5.1
-    # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
 envier==0.4.0
@@ -247,7 +246,7 @@ executing==2.0.0
     # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==19.12.0
+faker==22.0.0
     # via -r test-requirements.in
 firebase-admin==6.1.0
     # via -r base-requirements.in
@@ -293,7 +292,7 @@ google-auth-httplib2==0.1.0
     # via
     #   -r base-requirements.in
     #   google-api-python-client
-google-auth-oauthlib==0.4.6
+google-auth-oauthlib==1.2.0
     # via -r base-requirements.in
 google-cloud-core==2.3.2
     # via
@@ -316,7 +315,7 @@ greenlet==2.0.2
     #   -r base-requirements.in
     #   django-websocket-redis
     #   gevent
-grpcio==1.54.2
+grpcio==1.54.3
     # via
     #   google-api-core
     #   grpcio-status
@@ -355,7 +354,7 @@ isort==5.10.1
     # via -r dev-requirements.in
 jedi==0.18.1
     # via ipython
-jinja2==3.1.2
+jinja2==3.1.3
     # via
     #   -r base-requirements.in
     #   myst-parser
@@ -364,7 +363,7 @@ jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-jsonfield==2.1.1
+jsonfield==3.1.0
     # via
     #   -r base-requirements.in
     #   django-prbac
@@ -373,7 +372,7 @@ jsonobject==2.0.0
     #   -r base-requirements.in
     #   git-build-branch
     #   jsonobject-couchdbkit
-jsonobject-couchdbkit==1.0.1
+jsonobject-couchdbkit==1.1.0
     # via -r base-requirements.in
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
@@ -381,7 +380,7 @@ jsonschema==4.17.3
     # via
     #   -r base-requirements.in
     #   ddtrace
-jwcrypto==1.4
+jwcrypto==1.5.1
     # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
@@ -462,7 +461,7 @@ pickle5==0.0.11
     # via -r base-requirements.in
 pickleshare==0.7.5
     # via ipython
-pillow==10.0.1
+pillow==10.2.0
     # via
     #   -r base-requirements.in
     #   reportlab
@@ -520,9 +519,9 @@ pycodestyle==2.11.0
     # via flake8
 pycparser==2.20
     # via cffi
-pycryptodome==3.10.1
+pycryptodome==3.19.1
     # via -r base-requirements.in
-pycryptodomex==3.14.1
+pycryptodomex==3.19.1
     # via
     #   oic
     #   pyjwkest
@@ -544,10 +543,8 @@ pyjwt[crypto]==2.7.0
     #   twilio
 pynacl==1.5.0
     # via pygithub
-pyopenssl==23.2.0
-    # via
-    #   -r docs-requirements.in
-    #   -r sso-requirements.in
+pyopenssl==24.0.0
+    # via -r docs-requirements.in
 pyparsing==2.4.7
     # via httplib2
 pyphonetics==0.5.3
@@ -573,8 +570,9 @@ python-termstyle==0.1.10
     # via sniffer
 python3-saml==1.12.0
     # via -r sso-requirements.in
-pytz==2022.1
+pytz==2024.1
     # via
+    #   -r base-requirements.in
     #   babel
     #   celery
     #   django
@@ -595,7 +593,7 @@ quickcache==0.5.4
     # via -r base-requirements.in
 radon==6.0.1
     # via -r test-requirements.in
-rcssmin==1.1.0
+rcssmin==1.1.1
     # via django-compressor
 redis==4.5.4
     # via
@@ -631,9 +629,9 @@ requests-oauthlib==1.3.1
     # via
     #   -r base-requirements.in
     #   google-auth-oauthlib
-requests-toolbelt==0.9.1
+requests-toolbelt==1.0.0
     # via -r base-requirements.in
-rjsmin==1.2.0
+rjsmin==1.2.1
     # via django-compressor
 rsa==4.8
     # via google-auth
@@ -658,6 +656,7 @@ six==1.16.0
     # via
     #   -r base-requirements.in
     #   asttokens
+    #   bleach
     #   click-repl
     #   ddsketch
     #   ddtrace
@@ -671,7 +670,6 @@ six==1.16.0
     #   google-auth
     #   google-auth-httplib2
     #   isodate
-    #   jsonfield
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
@@ -732,7 +730,7 @@ stack-data==0.1.4
     # via ipython
 stone==3.3.1
     # via dropbox
-stripe==4.1.0
+stripe==7.2.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
@@ -742,6 +740,8 @@ testil==1.1
     # via -r test-requirements.in
 text-unidecode==1.3
     # via -r base-requirements.in
+tinycss2==1.2.1
+    # via bleach
 toml==0.10.2
     # via pep517
 tomli==2.0.1
@@ -760,14 +760,16 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==7.12.0
     # via -r base-requirements.in
-typing-extensions==4.1.1
+typing-extensions==4.8.0
     # via
+    #   asgiref
     #   bytecode
     #   cattrs
     #   ddtrace
     #   django-countries
     #   oic
     #   qrcode
+    #   stripe
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
@@ -778,7 +780,6 @@ urllib3==1.26.18
     # via
     #   -r docs-requirements.in
     #   botocore
-    #   elasticsearch2
     #   elasticsearch5
     #   google-auth
     #   py-kissmetrics
@@ -795,6 +796,10 @@ vine==5.0.0
     #   kombu
 wcwidth==0.2.5
     # via prompt-toolkit
+webencodings==0.5.1
+    # via
+    #   bleach
+    #   tinycss2
 werkzeug==3.0.1
     # via -r base-requirements.in
 wheel==0.38.1
@@ -823,7 +828,7 @@ zope-interface==6.1
 # The following packages are considered to be unsafe in a requirements file:
 pip==23.3
     # via pip-tools
-setuptools==67.3.2
+setuptools==69.0.3
     # via
     #   django-websocket-redis
     #   gunicorn

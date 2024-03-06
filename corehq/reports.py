@@ -51,7 +51,6 @@ from corehq.apps.reports.standard.cases.duplicate_cases import (
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
-from corehq.apps.reports.standard.web_user_activity import WebUserActivityReport
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
@@ -89,7 +88,6 @@ def REPORTS(project):
     reports.extend(_get_configurable_reports(project))
 
     monitoring_reports = (
-        WebUserActivityReport,
         monitoring.WorkerActivityReport,
         monitoring.DailyFormStatsReport,
         monitoring.SubmissionsByFormReport,
@@ -108,7 +106,7 @@ def REPORTS(project):
     if toggles.CASE_LIST_EXPLORER.enabled(project.name) or domain_can_access_case_list_explorer:
         inspect_reports.append(CaseListExplorer)
 
-    if toggles.CASE_DEDUPE.enabled(project.name):
+    if domain_has_privilege(project.name, privileges.CASE_DEDUPE):
         inspect_reports.append(DuplicateCasesExplorer)
 
     deployments_reports = (

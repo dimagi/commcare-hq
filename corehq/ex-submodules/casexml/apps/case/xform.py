@@ -226,14 +226,22 @@ def _extract_case_blocks(data, path=None, form_id=Ellipsis):
                 yield from _extract_case_blocks(value, new_path, form_id=form_id)
 
 
-def get_case_updates(xform):
+def get_case_updates(xform, for_case=None):
     if not xform:
         return []
-    updates = sorted(
-        [case_update_from_block(cb) for cb in extract_case_blocks(xform)],
-        key=lambda update: update.id
-    )
-    by_case_id = groupby(updates, lambda update: update.id)
+
+    updates = [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
+
+    if for_case:
+        updates = [update for update in updates if update.id == for_case]
+        by_case_id = [(for_case, updates)]
+    else:
+        updates = sorted(
+            updates,
+            key=lambda update: update.id
+        )
+        by_case_id = groupby(updates, lambda update: update.id)
+
     return list(itertools.chain(
         *[order_updates(updates) for case_id, updates in by_case_id]
     ))

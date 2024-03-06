@@ -1,3 +1,4 @@
+'use strict';
 /*global MapboxGeocoder*/
 hqDefine("cloudcare/js/form_entry/utils", function () {
     var errors = hqImport("cloudcare/js/form_entry/errors"),
@@ -76,7 +77,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {function|undefined} inputOnKeyDown - inputOnKeyDown function (optional)
      * @param {boolean} showGeolocationButton - show geolocation button. Defaults to false. (optional)
      * @param {boolean} geolocateOnLoad - geolocate the user's location on load. Defaults to false. (optional)
-     * @param {boolean} setProximity - set proximity to user's location. Defaults to false. (optional)
+     * @param {boolean} useBoundingBox - use default locations bbox to filter results. Defaults to false. (optional)
      * @param {string} responseDataTypes - set Mapbox's data type response https://docs.mapbox.com/api/search/geocoding/#data-types (optional)
     */
     module.renderMapboxInput = function ({
@@ -86,12 +87,12 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         inputOnKeyDown,
         showGeolocationButton = false,
         geolocateOnLoad = false,
-        setProximity = false,
-        responseDataTypes = 'address'
+        useBoundingBox = false,
+        responseDataTypes = 'address',
     }) {
         showGeolocationButton = showGeolocationButton || toggles.toggleEnabled('GEOCODER_MY_LOCATION_BUTTON');
         geolocateOnLoad = geolocateOnLoad || toggles.toggleEnabled('GEOCODER_AUTOLOAD_USER_LOCATION');
-        setProximity = setProximity || toggles.toggleEnabled('GEOCODER_USER_PROXIMITY');
+        var setProximity = toggles.toggleEnabled('GEOCODER_USER_PROXIMITY');
         var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
             accessToken: initialPageData.get("mapbox_access_token"),
@@ -105,6 +106,9 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             }).catch(error => console.log("Unable to set geocoder proximity: ", error.message));
         } else if (defaultGeocoderLocation.coordinates) {
             geocoder.setProximity(defaultGeocoderLocation.coordinates);
+        }
+        if (setProximity && useBoundingBox && defaultGeocoderLocation.bbox) {
+            geocoder.setBbox(defaultGeocoderLocation.bbox);
         }
         geocoder.on('clear', clearCallBack);
         geocoder.on('result', (item) => itemCallback(item.result));
@@ -221,7 +225,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     module.getBroadcastContainer = (question) => {
         return getRoot(question, function (container) {
             // Return first containing repeat group, or form if there are no ancestor repeats
-            var parent = container.parent;
+            var parent = container.parent.parent;
             return parent && parent.type && parent.type() === formEntryConst.REPEAT_TYPE;
         });
     };

@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.http import HttpRequest
 from django.test import TestCase
+from django.urls import reverse
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
@@ -18,12 +19,15 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.apps.users.models import HqPermissions, UserRole, WebUser
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser, HQApiKey
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import flag_enabled
+from corehq.motech.repeaters.models import DataSourceRepeater
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.const import OAUTH2_CLIENT
 
 
 class ConfigurableReportTestMixin(object):
@@ -435,3 +439,122 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
         can_edit_view = create_view(True)
         self.assertEqual(can_edit_view.page_context['can_edit_report'], True)
+
+
+class TestSubscribeToDataSource(TestCase):
+
+    urlname = "subscribe_to_configurable_data_source"
+    domain = "test-domain"
+    USERNAME = "username"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = Domain.get_or_create_with_name(cls.domain, is_active=True)
+
+        cls.api_user_role = UserRole.create(
+            cls.domain, 'api-user', permissions=HqPermissions(access_api=True, view_reports=True)
+        )
+        cls.user = WebUser.create(cls.domain, cls.USERNAME, "password", None, None,
+                                  role_id=cls.api_user_role.get_id)
+        cls.api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
+        cls.domain_api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user),
+                                                               name='domain-scoped',
+                                                               domain=cls.domain)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete(deleted_by_domain=cls.domain, deleted_by=None)
+        cls.project.delete()
+        super().tearDownClass()
+
+    def _construct_api_auth_header(self, api_key):
+        return f'ApiKey {self.USERNAME}:{api_key.key}'
+
+    def _post_request(self, domain, data_source_id, data, **extras):
+        path = reverse("subscribe_to_configurable_data_source", args=(domain, data_source_id,))
+        return self.client.post(path, data=data, **extras)
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
+    def test_subscribe_successful(self):
+        data_source_id = "data_source_id"
+        client_id = "client_id"
+
+        post_data = {
+            'webhook_url': 'https://hostname.com/webhook',
+            'client_id': client_id,
+            'client_secret': 'client_secret',
+            'token_url': 'https://hostname.com/token',
+            'refresh_url': 'https://hostname.com/refresh',
+        }
+        request = self._post_request(
+            domain=self.domain,
+            data_source_id=data_source_id,
+            data=post_data,
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+
+        self.assertEqual(request.status_code, 201)
+
+        conn_settings = ConnectionSettings.objects.get(client_id=client_id)
+        self.assertEqual(conn_settings.name, "CommCare Analytics on hostname.com")
+        self.assertEqual(conn_settings.auth_type, OAUTH2_CLIENT)
+
+        repeater = DataSourceRepeater.objects.get(
+            name="Data source data_source_id on hostname.com"
+        )
+        self.assertEqual(repeater.connection_settings_id, conn_settings.id)
+        self.assertEqual(repeater.data_source_id, data_source_id)
+
+    @flag_enabled('API_THROTTLE_WHITELIST')
+    def test_subscribe_unsuccessful_without_ff(self):
+        data_source_id = "data_source_id"
+        request = self._post_request(
+            domain=self.domain,
+            data_source_id=data_source_id,
+            data={},
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(request.status_code, 404)
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
+    def test_subscribe_unsuccessful_with_a_missing_param(self):
+        data_source_id = "data_source_id"
+        post_data = {
+            'webhook_url': 'https://hostname.com/webhook',
+            'client_secret': 'client_secret',
+            'token_url': 'https://hostname.com/token',
+            'refresh_url': 'https://hostname.com/refresh',
+        }
+
+        request = self._post_request(
+            domain=self.domain,
+            data_source_id=data_source_id,
+            data=post_data,
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(request.status_code, 422)
+        self.assertEqual(request.content.decode("utf-8"), "Missing parameters: client_id")
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
+    def test_subscribe_unsuccessful_with_missing_params(self):
+        data_source_id = "data_source_id"
+        post_data = {
+            'webhook_url': 'https://hostname.com/webhook',
+            'client_secret': 'client_secret',
+        }
+
+        request = self._post_request(
+            domain=self.domain,
+            data_source_id=data_source_id,
+            data=post_data,
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(request.status_code, 422)
+        self.assertEqual(
+            request.content.decode("utf-8"),
+            "Missing parameters: client_id, token_url",
+        )

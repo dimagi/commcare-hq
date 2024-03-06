@@ -90,6 +90,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
             requiredText: '',
             validationTest: '',
             validationText: '',
+            isGroup: false,
+            groupKey: '',
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -153,6 +155,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
             );
         });
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
+        self.isGroup = options.isGroup;
+        self.groupKey = options.groupKey;
 
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
@@ -199,6 +203,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         'title_label', 'description', 'search_button_display_condition', 'search_label', 'search_filter',
         'additional_relevant', 'data_registry', 'data_registry_workflow', 'additional_registry_cases',
         'custom_related_case_property', 'inline_search', 'instance_name', 'include_all_related_cases',
+        'search_on_clear',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
@@ -352,6 +357,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 hidden: searchProperty.hidden,
                 receiverExpression: searchProperty.receiver_expression,
                 itemsetOptions: searchProperty.itemset,
+                isGroup: searchProperty.is_group,
+                groupKey: searchProperty.group_key,
             }, saveButton);
         });
 
@@ -359,8 +366,26 @@ hqDefine("app_manager/js/details/case_claim", function () {
             wrappedSearchProperties.length > 0 ? wrappedSearchProperties : [searchPropertyModel({}, saveButton)]
         );
 
+        self.search_properties.subscribe(function (newProperties) {
+            let groupKey = '';
+            ko.utils.arrayForEach(newProperties, function (property, index) {
+                if (property.isGroup) {
+                    groupKey = `group_header_${index}`;
+                    if (property.name !== groupKey) {
+                        property.name(groupKey);
+                    }
+                }
+                if (property.groupKey !== groupKey) {
+                    property.groupKey = groupKey;
+                }
+            });
+        });
+
         self.addProperty = function () {
             self.search_properties.push(searchPropertyModel({}, saveButton));
+        };
+        self.addGroupProperty = function () {
+            self.search_properties.push(searchPropertyModel({isGroup: true}, saveButton));
         };
         self.removeProperty = function (property) {
             self.search_properties.remove(property);
@@ -370,7 +395,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return _.map(
                 _.filter(
                     self.search_properties(),
-                    function (p) { return p.name().length > 0; }  // Skip properties where name is blank
+                    function (p) { return p.name().length > 0;}  // Skip properties where name is blank
                 ),
                 function (p) {
                     var ifSupportsValidation = function (val) {
@@ -378,7 +403,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     };
                     return {
                         name: p.name(),
-                        label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
+                        label: (p.label().length || p.isGroup) ? p.label() : p.name(),  // If label isn't set, use name
                         hint: p.hint(),
                         appearance: p.appearanceFinal(),
                         is_multiselect: p.isMultiselect(),
@@ -392,6 +417,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
+                        is_group: p.isGroup,
+                        group_key: p.groupKey,
                     };
                 }
             );
