@@ -169,6 +169,9 @@ class TestAutoDeactivationTask(TestCase):
             email_domain='vaultwax.com',
             identity_provider=cls.idp,
         )
+        idp_patcher = patch('corehq.apps.sso.models.IdentityProvider.get_all_members_of_the_idp')
+        cls.mock_get_all_members_of_the_idp = idp_patcher.start()
+        cls.addClassCleanup(idp_patcher.stop)
 
     def setUp(self):
         super().setUp()
@@ -178,10 +181,9 @@ class TestAutoDeactivationTask(TestCase):
         # web_user_d is required so the total number of IdP user meet the threshold for auto-deactivation
         self.web_user_d = self._create_web_user('d@vaultwax.com')
 
-    @patch('corehq.apps.sso.models.IdentityProvider.get_all_members_of_the_idp')
-    def test_user_is_deactivated_if_not_member_of_idp(self, mock_get_all_members_of_the_idp):
+    def test_user_is_deactivated_if_not_member_of_idp(self):
         self.assertTrue(self.web_user_c.is_active)
-        mock_get_all_members_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
+        self.mock_get_all_members_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
 
         auto_deactivate_removed_sso_users()
 
@@ -189,14 +191,13 @@ class TestAutoDeactivationTask(TestCase):
         web_user = WebUser.get_by_username(self.web_user_c.username)
         self.assertFalse(web_user.is_active)
 
-    @patch('corehq.apps.sso.models.IdentityProvider.get_all_members_of_the_idp')
-    def test_sso_exempt_users_are_not_deactivated(self, mock_get_all_members_of_the_idp):
+    def test_sso_exempt_users_are_not_deactivated(self):
         sso_exempt = self._create_web_user('exempt@vaultwax.com')
         UserExemptFromSingleSignOn.objects.create(
             username=sso_exempt.username,
             email_domain=self.email_domain,
         )
-        mock_get_all_members_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
+        self.mock_get_all_members_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
 
         auto_deactivate_removed_sso_users()
 
@@ -204,10 +205,9 @@ class TestAutoDeactivationTask(TestCase):
         web_user = WebUser.get_by_username(sso_exempt.username)
         self.assertTrue(web_user.is_active)
 
-    @patch('corehq.apps.sso.models.IdentityProvider.get_all_members_of_the_idp')
     @patch('corehq.apps.sso.tasks.send_html_email_async.delay')
-    def test_deactivation_skipped_if_azure_return_empty_sso_user(self, mock_send, mock_get_all_members_of_the_idp):
-        mock_get_all_members_of_the_idp.return_value = []
+    def test_deactivation_skipped_if_azure_return_empty_sso_user(self, mock_send):
+        self.mock_get_all_members_of_the_idp.return_value = []
 
         auto_deactivate_removed_sso_users()
 
@@ -220,11 +220,9 @@ class TestAutoDeactivationTask(TestCase):
         self.assertTrue(web_user_c.is_active)
         mock_send.assert_called_once()
 
-    @patch('corehq.apps.sso.models.IdentityProvider.get_all_members_of_the_idp')
-    def test_deactivation_skip_members_of_the_domains_but_not_have_an_email_domain_controlled_by_the_IdP(self,
-                                                                            mock_get_all_members_of_the_idp):
+    def test_deactivation_skip_members_of_the_domains_but_not_have_an_email_domain_controlled_by_the_IdP(self):
         dimagi_user = self._create_web_user('superuser@dimagi.com')
-        mock_get_all_members_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
+        self.mock_get_all_members_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
 
         auto_deactivate_removed_sso_users()
 
