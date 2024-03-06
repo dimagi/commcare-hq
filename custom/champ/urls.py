@@ -1,4 +1,4 @@
-from django.conf.urls import re_path as url
+from django.urls import re_path as url
 
 from custom.champ.views import PrevisionVsAchievementsView, DistrictFilterPrevView, \
     CBOFilterView, PrevisionVsAchievementsTableView, ServiceUptakeView, UserGroupsFilter, OrganizationsFilter, \

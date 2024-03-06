@@ -7,7 +7,7 @@ from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
-from django.conf.urls import re_path as url
+from django.urls import re_path as url
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q

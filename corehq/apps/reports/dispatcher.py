@@ -227,7 +227,7 @@ class ReportDispatcher(View):
 
     @classmethod
     def url_pattern(cls):
-        from django.conf.urls import re_path as url
+        from django.urls import re_path as url
         return url(cls.pattern(), cls.as_view(), name=cls.name())
 
 

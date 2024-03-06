@@ -3,7 +3,7 @@ import pytz
 import re
 from collections import OrderedDict, defaultdict
 
-from django.conf.urls import re_path as url, include
+from django.urls import re_path as url, include
 from django.contrib import messages
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
