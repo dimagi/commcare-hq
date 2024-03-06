@@ -2548,13 +2548,7 @@ class SMSExportDataSchema(ExportDataSchema):
         return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
 
     def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
-        return super(FormExportDataSchema, cls)._process_apps_for_export(
-            domain,
-            schema,
-            identifier,
-            app_build_ids,
-            task
-        )
+        raise Exception("This method should not be called for SMSExportDataSchema")
 
 
 def _string_path_to_list(path):
