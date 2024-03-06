@@ -114,7 +114,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                                 return;
                             }
 
-                            formplayerUtils.setSyncInterval(params.appId, parsedMenus?.metaData?.attemptRestore);
+                            let attemptRestore = undefined;
+                            if (parsedMenus.metaData) {
+                                attemptRestore = parsedMenus.metaData.attemptRestore;
+                            }
+                            formplayerUtils.setSyncInterval(params.appId, attemptRestore);
                             sessionStorage.setItem("lastUserActivityTime",  Date.now());
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
