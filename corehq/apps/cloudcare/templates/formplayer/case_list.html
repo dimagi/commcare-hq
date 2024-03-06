@@ -39,7 +39,7 @@
       <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
         <% if (useTiles) { %>
           <% if (hasNoItems) { %>
-            {% include 'formplayer/no_items_text.html' %}
+            {% include 'formplayer/case_list/no_items_text.html' %}
           <% } else { %>
             <div id="case-list-search-controls">
               <div>
@@ -89,7 +89,7 @@
               </thead>
 
             <% if (hasNoItems) { %>
-              {% include 'formplayer/no_items_text.html' %}
+              {% include 'formplayer/case_list/no_items_text.html' %}
             <% } %>
             <tbody class="wrapper js-case-container">
             </tbody>
