@@ -12,17 +12,3 @@
 #menu-region .module-menu-container {
   padding-bottom: 6px;
 }
-
-@media print {
-  #menu-region .module-menu-container,
-  #menu-region .module-case-list-container {
-    #module-case-list-container__results-container {
-      grid-template-columns: [tiles] 1fr !important;
-    }
-
-    .list-cell-wrapper-style {
-      border: 1px solid @cc-bg;
-    break-inside: avoid;
-    }
-  }
-}
