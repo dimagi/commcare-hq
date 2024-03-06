@@ -125,6 +125,24 @@
     border-right-width: 5px;
   }
 
+  // todo: determine appropriate nesting
+  #module-case-list-map {
+    height: calc(~"100vh - 65px");
+
+    @media (max-width: @screen-sm-max) {
+      height: 25vh;
+    }
+
+    .marker-pin {
+      text-align: center;
+      /* Horizontally center the text (icon) */
+      line-height: 12px;
+      /* Vertically center the text (icon) */
+      color: @call-to-action-hi;
+      text-shadow: -1px 0 @call-to-action-low, 0 1px @call-to-action-low, 1px 0 @call-to-action-low, 0 -1px @call-to-action-low;
+    }
+  }
+
   .list-cell-wrapper-style {
     margin: 10px 5px 0 5px;
     border-collapse: collapse;
