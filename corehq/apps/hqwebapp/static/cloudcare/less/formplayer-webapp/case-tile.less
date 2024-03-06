@@ -46,3 +46,35 @@
   text-align: center;
   font-size: large;
 }
+
+.case-tile-container {
+  background: transparent !important;
+  > div {
+    background: white;
+    margin-bottom: 20px;
+    display: grid;
+    container-type: inline-size;
+  }
+
+  #persistent-case-tile .persistent-sticky .webapp-markdown-output {
+    img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+
+    h1,h2,h3 {
+      margin-top: 0px
+    }
+  }
+}
+
+@media print {
+  .case-tile-container {
+    > div {
+      margin-bottom: 0px;
+    }
+    > div:not(:empty) {
+      border-bottom: 1px dashed black;
+    }
+  }
+}
