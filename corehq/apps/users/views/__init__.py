@@ -51,7 +51,6 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
 )
 from corehq.apps.app_manager.dbaccessors import get_app_languages
-from corehq.apps.cloudcare.esaccessors import login_as_user_filter
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -764,12 +763,7 @@ def paginate_enterprise_users(request, domain):
     web_user_usernames = [u.username for u in web_users]
     mobile_result = (
         UserES().show_inactive().domains(domains).mobile_users().sort('username.exact')
-        .filter(
-            queries.nested(
-                'user_data_es',
-                login_as_user_filter(web_user_usernames)
-            )
-        )
+        .login_as_user(web_user_usernames)
         .run()
     )
     mobile_users = defaultdict(list)

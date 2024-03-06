@@ -51,6 +51,7 @@ class UserES(HQESQuery):
             web_users,
             user_ids,
             location,
+            login_as_user,
             last_logged_in,
             analytics_enabled,
             is_practice_user,
@@ -220,14 +221,23 @@ def is_active(active=True):
     return filters.term("is_active", active)
 
 
-def query_user_data(key, value):
+def _user_data(key, filter_):
+    # Note: user data does not exist in ES for web users
     return queries.nested(
         'user_data_es',
         filters.AND(
             filters.term(field='user_data_es.key', value=key),
-            queries.match(field='user_data_es.value', search_string=value),
+            filter_
         )
     )
+
+
+def query_user_data(key, value):
+    return _user_data(key, queries.match(field='user_data_es.value', search_string=value))
+
+
+def login_as_user(value):
+    return _user_data('login_as_user', filters.term('user_data_es.value', value))
 
 
 def missing_or_empty_user_data_property(property_name):
@@ -238,8 +248,5 @@ def missing_or_empty_user_data_property(property_name):
         'user_data_es',
         filters.term(field='user_data_es.key', value=property_name),
     ))
-    empty_value = queries.nested('user_data_es', filters.AND(
-        filters.term('user_data_es.key', property_name),
-        filters.term('user_data_es.value', ''),
-    ))
+    empty_value = _user_data(property_name, filters.term('user_data_es.value', ''))
     return filters.OR(missing_property, empty_value)
