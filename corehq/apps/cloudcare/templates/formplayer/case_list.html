@@ -15,7 +15,7 @@
 
     <% if (isMultiSelect) { %>
     <div class="case-list-actions">
-      {% include 'formplayer/multi_select_continue_button.html' %}
+      {% include 'formplayer/case_list/multi_select_continue_button.html' %}
     </div>
     <% } %>
 
@@ -101,7 +101,7 @@
     <% if (actions || isMultiSelect) { %>
       <div class="case-list-actions">
         <% if (isMultiSelect) { %>
-          {% include 'formplayer/multi_select_continue_button.html' %}
+          {% include 'formplayer/case_list/multi_select_continue_button.html' %}
         <% } %>
         <% if (actions) { %>
           <% _.each(actions, function(action, index) { %>
