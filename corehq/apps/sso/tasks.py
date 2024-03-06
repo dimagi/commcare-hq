@@ -120,10 +120,7 @@ def auto_deactivate_removed_sso_users():
         # Fetch a list of users usernames that are members of the idp
         idp_users = idp.get_all_members_of_the_idp()
         # Fetch a list of active WebUser usernames that are members of project spaces associated with the idp
-        domains = idp.owner.get_domains()
-        web_user_in_account = set()
-        for domain in domains:
-            [web_user_in_account.add(user.username) for user in WebUser.by_domain(domain)]
+        web_users_in_account = { user.username for domain in idp.owner.get_domains() for user in WebUser.by_domain(domain) }
 
         # Get criteria for exempting usernames and email domains from the deactivation list
         authenticated_domains = AuthenticatedEmailDomain.objects.filter(identity_provider=idp)
