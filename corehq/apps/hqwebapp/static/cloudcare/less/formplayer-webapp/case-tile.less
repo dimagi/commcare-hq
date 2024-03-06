@@ -58,6 +58,19 @@
   }
 }
 
+// todo should this be a re-usable class? only used for case list right now
+.btn-circle {
+  border-radius: 50%;
+  aspect-ratio: 1;
+}
+
+#scroll-to-bottom {
+  position: fixed;
+  z-index: @zindex-formplayer-scroll-to-bottom;
+  bottom: 45px;
+  left: calc(100vw - 80px);
+}
+
 .case-tile-container {
   background: transparent !important;
   > div {
