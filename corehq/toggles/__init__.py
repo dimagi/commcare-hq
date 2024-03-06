@@ -2168,7 +2168,7 @@ EMBEDDED_TABLEAU = StaticToggle(
 
 DETAILED_TAGGING = StaticToggle(
     'detailed_tagging',
-    'Send additional metrics to datadog and sentry. Currently only used in Formplayer.',
+    'Send additional metrics to datadog and sentry.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
