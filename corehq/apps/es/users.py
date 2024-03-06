@@ -57,7 +57,6 @@ class UserES(HQESQuery):
             role_id,
             is_active,
             username,
-            user_data,
             missing_or_empty_user_data_property,
         ] + super(UserES, self).builtin_filters
 
@@ -221,7 +220,7 @@ def is_active(active=True):
     return filters.term("is_active", active)
 
 
-def user_data(key, value):
+def query_user_data(key, value):
     return queries.nested(
         'user_data_es',
         filters.AND(
