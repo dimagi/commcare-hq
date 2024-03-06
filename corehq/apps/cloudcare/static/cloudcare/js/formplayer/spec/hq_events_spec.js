@@ -1,12 +1,18 @@
 'use strict';
 /* eslint-env mocha */
-hqDefine("cloudcare/js/formplayer/spec/hq_events_spec", function () {
+hqDefine("cloudcare/js/formplayer/spec/hq_events_spec", [
+    "sinon/pkg/sinon",
+    "cloudcare/js/formplayer/app",
+    "cloudcare/js/formplayer/hq_events",
+], function (
+    sinon,
+    FormplayerFrontend,
+    hqEvents
+) {
     describe('HQ Events', function () {
-        let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-
         describe('Receiver', function () {
-            let Receiver = hqImport("cloudcare/js/formplayer/hq_events").Receiver,
-                Actions = hqImport("cloudcare/js/formplayer/hq_events").Actions,
+            let Receiver = hqEvents.Receiver,
+                Actions = hqEvents.Actions,
                 origin = 'myorigin',
                 triggerSpy,
                 requestSpy,

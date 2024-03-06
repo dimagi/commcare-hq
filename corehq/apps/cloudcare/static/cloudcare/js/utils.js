@@ -1,13 +1,27 @@
 'use strict';
-/* global moment, NProgress, Sentry */
 hqDefine('cloudcare/js/utils', [
     'jquery',
+    'underscore',
+    'backbone.marionette',
+    'moment',
+    'DOMPurify/dist/purify.min',
     'hqwebapp/js/initial_page_data',
     "cloudcare/js/formplayer/constants",
+    'nprogress/nprogress',
+    'sentry_browser',
+    "cloudcare/js/formplayer/users/models",
+    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',  // for $.datetimepicker
 ], function (
     $,
+    _,
+    Marionette,
+    moment,
+    DOMPurify,
     initialPageData,
-    constants
+    constants,
+    NProgress,
+    Sentry,
+    UsersModels
 ) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -125,14 +139,65 @@ hqDefine('cloudcare/js/utils', [
         return $container;
     };
 
+    var shouldShowLoading = function () {
+        const answerInProgress = (sessionStorage.answerQuestionInProgress && JSON.parse(sessionStorage.answerQuestionInProgress));
+        const validationInProgress = (sessionStorage.validationInProgress && JSON.parse(sessionStorage.validationInProgress));
+        return !answerInProgress && !validationInProgress;
+    };
+
+    var getRegionContainer = function () {
+        const RegionContainer = Marionette.View.extend({
+            el: "#menu-container",
+
+            regions: {
+                main: "#menu-region",
+                loadingProgress: "#formplayer-progress-container",
+                breadcrumb: "#breadcrumb-region",
+                persistentCaseTile: "#persistent-case-tile",
+                restoreAsBanner: '#restore-as-region',
+                sidebar: '#sidebar-region',
+            },
+        });
+
+        return new RegionContainer();
+    };
+
     var showLoading = function () {
-        NProgress.start();
+        hqRequire([
+            "cloudcare/js/formplayer/app",
+            "hqwebapp/js/toggles",
+            "cloudcare/js/formplayer/layout/views/progress_bar",
+        ], function (FormplayerFrontend, toggles, ProgressBar) {
+            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+                const progressView = ProgressBar({
+                    progressMessage: gettext("Loading..."),
+                });
+                if (!FormplayerFrontend.regions) {
+                    FormplayerFrontend.regions = getRegionContainer();
+                }
+                $('#breadcrumb-region').css('z-index', '0');
+                const loadingElement = FormplayerFrontend.regions.getRegion('loadingProgress');
+                loadingElement.show(progressView);
+                let currentProgress = 10;
+                progressView.progressEl.find('.progress').css("height", "12px");
+                progressView.progressEl.find('.progress-container').css("width", "50%");
+                progressView.progressEl.find('.progress-title h1').css("font-size", "25px");
+                progressView.progressEl.find('#formplayer-progress ').css("background-color", "rgba(255, 255, 255, 0.7)");
+                progressView.setProgress(currentProgress, 100, 200);
+                sessionStorage.progressIncrementInterval = setInterval(function () {
+                    if (currentProgress <= 100) {
+                        progressView.setProgress(currentProgress, 100, 200);
+                        currentProgress += 1;
+                    }
+                }, 250);
+            } else {
+                NProgress.start();
+            }
+        });
     };
 
     var formplayerLoading = function () {
-        var validationInProgress = sessionStorage.validationInProgress === undefined ?
-            undefined : JSON.parse(sessionStorage.validationInProgress);
-        if (!validationInProgress) {
+        if (shouldShowLoading()) {
             showLoading();
         }
     };
@@ -186,7 +251,21 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var hideLoading = function () {
-        NProgress.done();
+        hqRequire(["cloudcare/js/formplayer/app", "hqwebapp/js/toggles"], function (FormplayerFrontend, toggles) {
+            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+                $('#breadcrumb-region').css('z-index', '');
+                clearInterval(sessionStorage.progressIncrementInterval);
+                const progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
+                if (progressView) {
+                    progressView.setProgress(100, 100, 200);
+                    setTimeout(function () {
+                    FormplayerFrontend.regions.getRegion('loadingProgress').empty();
+                    }, 250);
+                }
+            } else {
+                NProgress.done();
+            }
+        });
     };
 
     function getSentryMessage(data) {
@@ -201,43 +280,41 @@ hqDefine('cloudcare/js/utils', [
     }
 
     var reportFormplayerErrorToHQ = function (data) {
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            try {
-                var cloudcareEnv = FormplayerFrontend.getChannel().request('currentUser').environment;
-                if (!data.cloudcareEnv) {
-                    data.cloudcareEnv = cloudcareEnv || 'unknown';
-                }
-
-                const sentryData = _.omit(data, "type", "htmlMessage");
-                Sentry.captureMessage(getSentryMessage(data), {
-                    tags: {
-                        errorType: data.type,
-                    },
-                    extra: sentryData,
-                    level: "error",
-                });
-
-                $.ajax({
-                    type: 'POST',
-                    url: initialPageData.reverse('report_formplayer_error'),
-                    data: JSON.stringify(data),
-                    contentType: "application/json",
-                    dataType: "json",
-                    success: function () {
-                        window.console.info('Successfully reported error: ' + JSON.stringify(data));
-                    },
-                    error: function () {
-                        window.console.error('Failed to report error: ' + JSON.stringify(data));
-                    },
-                });
-            } catch (e) {
-                window.console.error(
-                    "reportFormplayerErrorToHQ failed hard and there is nowhere " +
-                    "else to report this error: " + JSON.stringify(data),
-                    e
-                );
+        try {
+            var cloudcareEnv = UsersModels.getCurrentUser().environment;
+            if (!data.cloudcareEnv) {
+                data.cloudcareEnv = cloudcareEnv || 'unknown';
             }
-        });
+
+            const sentryData = _.omit(data, "type", "htmlMessage");
+            Sentry.captureMessage(getSentryMessage(data), {
+                tags: {
+                    errorType: data.type,
+                },
+                extra: sentryData,
+                level: "error",
+            });
+
+            $.ajax({
+                type: 'POST',
+                url: initialPageData.reverse('report_formplayer_error'),
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                dataType: "json",
+                success: function () {
+                    window.console.info('Successfully reported error: ' + JSON.stringify(data));
+                },
+                error: function () {
+                    window.console.error('Failed to report error: ' + JSON.stringify(data));
+                },
+            });
+        } catch (e) {
+            window.console.error(
+                "reportFormplayerErrorToHQ failed hard and there is nowhere " +
+                "else to report this error: " + JSON.stringify(data),
+                e
+            );
+        }
     };
 
     var dateTimePickerTooltips = {     // use default text, but enable translations
@@ -405,5 +482,6 @@ hqDefine('cloudcare/js/utils', [
         reportFormplayerErrorToHQ: reportFormplayerErrorToHQ,
         smallScreenIsEnabled: smallScreenIsEnabled,
         smallScreenListener: smallScreenListener,
+        getRegionContainer: getRegionContainer,
     };
 });
