@@ -179,7 +179,7 @@ class TestAutoDeactivationTask(TestCase):
         self.web_user_d = self._create_web_user('d@vaultwax.com')
 
     @patch('corehq.apps.sso.models.IdentityProvider.get_all_members_of_the_idp')
-    def test_user_deactivation_logic(self, mock_get_all_members_of_the_idp):
+    def test_user_is_deactivated_if_not_member_of_idp(self, mock_get_all_members_of_the_idp):
         self.assertTrue(self.web_user_c.is_active)
         mock_get_all_members_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
 
