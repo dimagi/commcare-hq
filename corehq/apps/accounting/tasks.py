@@ -69,7 +69,6 @@ from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 from corehq.apps.accounting.utils.subscription import (
     assign_explicit_unpaid_subscription,
 )
-from corehq.apps.users.models import WebUser
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
@@ -833,10 +832,7 @@ def calculate_web_users_in_all_billing_accounts(today=None):
     today = today or datetime.date.today()
     for account in BillingAccount.objects.all():
         record_date = today - relativedelta(days=1)
-        domains = account.get_domains()
-        web_user_in_account = set()
-        for domain in domains:
-            [web_user_in_account.add(id) for id in WebUser.ids_by_domain(domain)]
+        web_user_in_account = account.get_web_users()
         num_users = len(web_user_in_account)
         try:
             BillingAccountWebUserHistory.objects.create(

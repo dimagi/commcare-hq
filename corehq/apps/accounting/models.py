@@ -600,6 +600,25 @@ class BillingAccount(ValidateModelMixin, models.Model):
             use_domain_gateway=True,
         )
 
+    def get_web_users(self, info_type='id'):
+        """
+        Get a set of web user information in the billing account.
+
+        :param info_type: Specify 'id' to get user IDs, or 'username' to get user usernames.
+        :return: A set of user IDs or usernames, based on the info_type parameter.
+        """
+        domains = self.get_domains()
+        web_users = set()
+
+        if info_type == 'id':
+            for domain in domains:
+                web_users.update(WebUser.ids_by_domain(domain))
+        elif info_type == 'username':
+            for domain in domains:
+                web_users.update(user.username for user in WebUser.by_domain(domain))
+
+        return web_users
+
     @staticmethod
     def should_show_sms_billable_report(domain):
         account = BillingAccount.get_account_by_domain(domain)
