@@ -11,7 +11,7 @@ from corehq.util.quickcache import quickcache
 
 
 class IdentityProviderType:
-    AZURE_AD = 'azure_ad'
+    AZURE_AD = 'azure_ad'  # Azure AD was the original name
     ONE_LOGIN = 'one_login'
     OKTA = 'okta'
     CHOICES = (
