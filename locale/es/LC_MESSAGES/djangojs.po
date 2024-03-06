@@ -3983,6 +3983,7 @@ msgid "Please enter your name."
 msgstr "Por favor ingrese su nombre."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
 #: corehq/apps/users/static/users/js/invite_web_user.js
 msgid "Please specify an email."
 msgstr "Por favor especifique un correo electrónico."
@@ -3992,6 +3993,7 @@ msgid "Checking email..."
 msgstr "Revisando correo electrónico..."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
 msgid "Please specify a password."
 msgstr "Por favor especifique una contraseña."
 
@@ -4444,6 +4446,72 @@ msgstr "Se produjo un error al buscar la tarifa de SMS."
 #: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js
 msgid "Please Select a Country Code"
 msgstr "Por favor Seleccione un Código de País"
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+#, fuzzy
+#| msgid "Form"
+msgid "Forms"
+msgstr "Formulario"
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+#, fuzzy
+#| msgid "Case"
+msgid "Cases"
+msgstr "Caso"
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+#, fuzzy
+#| msgid "Included Reports"
+msgid "Reports"
+msgstr "Reportes Incluidos"
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "App Builder"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "Thank you, "
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "Submission has been cancelled."
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+#, fuzzy
+#| msgid "Please specify a project name."
+msgid "Please specify a username."
+msgstr "Por favor especifique un nombre de proyecto."
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+msgid "Username must be at least three characters long."
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+#, fuzzy
+#| msgid "You must have at least one language"
+msgid "Your password must be at least 6 characters long"
+msgstr "Debe tener al menos un idioma"
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+#, fuzzy
+#| msgid "Deleting..."
+msgid "Resetting form..."
+msgstr "Borrando..."
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
+msgid "Benched"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
+msgid "Playing"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
+#, fuzzy
+#| msgid "Search..."
+msgid "Search Team..."
+msgstr "Buscar..."
 
 #: corehq/apps/translations/static/translations/js/translations.js
 msgid "Delete Translation"
