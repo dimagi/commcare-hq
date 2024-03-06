@@ -3,6 +3,7 @@
 
 <script type="text/template" id="case-view-list-template">
   <div class="module-case-list-container">
+
     <button id="scroll-to-bottom"
             class="btn btn-lg btn-circle btn-primary hidden-md hidden-lg"
             type="button"
@@ -22,9 +23,14 @@
     <% if (!sidebarEnabled) { %>
     <div class="module-search-container">
       <div class="input-group input-group-lg">
-        <input type="text" class="form-control" placeholder="Search" id="searchText">
+        <input type="text"
+               class="form-control"
+               placeholder="Search"
+               id="searchText">
         <div class="input-group-btn">
-          <button class="btn btn-default" type="button" id="case-list-search-button">
+          <button class="btn btn-default"
+                  type="button"
+                  id="case-list-search-button">
             <i class="fa fa-search" aria-hidden="true"></i>
           </button>
         </div>
@@ -32,9 +38,11 @@
     </div>
     <% } %>
 
-    <div id="module-case-list-container__results-container" class="row row-no-gutters">
+    <div id="module-case-list-container__results-container"
+         class="row row-no-gutters">
       <% if (showMap) { %>
-        <div id="module-case-list-map" class="sticky sticky-map col-md-5 col-md-push-9<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
+        <div id="module-case-list-map"
+             class="sticky sticky-map col-md-5 col-md-push-9<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
       <% } %>
       <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
         <% if (useTiles) { %>
