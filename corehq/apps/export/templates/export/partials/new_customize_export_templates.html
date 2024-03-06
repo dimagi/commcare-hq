@@ -196,7 +196,7 @@
               </button>
 
               <!-- Deprecated Button -->
-              {% if export_instance.type == 'case' %}
+              {% if show_deprecated_filter %}
                 <button type="button"
                         class="btn btn-default btn-xs"
                         data-bind="click: table.toggleShowDeprecated,
