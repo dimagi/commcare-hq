@@ -3,17 +3,22 @@
 
 <script type="text/template" id="case-view-list-template">
   <div class="module-case-list-container">
-    <button id="scroll-to-bottom" class="btn btn-lg btn-circle btn-primary hidden-md hidden-lg" type="button" aria-label="{% trans 'Scroll to bottom' %}" style="display: none;">
+    <button id="scroll-to-bottom"
+            class="btn btn-lg btn-circle btn-primary hidden-md hidden-lg"
+            type="button"
+            aria-label="{% trans 'Scroll to bottom' %}"
+            style="display: none;">
       <i class="fa fa-lg fa-arrow-down" aria-hidden="true"></i>
     </button>
 
     {% include "formplayer/case_list/menu_header.html" %}
 
     <% if (isMultiSelect) { %>
-      <div class="case-list-actions">
-        {% include 'formplayer/multi_select_continue_button.html' %}
-      </div>
+    <div class="case-list-actions">
+      {% include 'formplayer/multi_select_continue_button.html' %}
+    </div>
     <% } %>
+
     <% if (!sidebarEnabled) { %>
     <div class="module-search-container">
       <div class="input-group input-group-lg">
