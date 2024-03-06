@@ -554,13 +554,13 @@ def weekly_digest():
     in_forty_days = today + datetime.timedelta(days=40)
 
     ending_in_forty_days = [sub for sub in Subscription.visible_objects.filter(
-            date_end__lte=in_forty_days,
-            date_end__gte=today,
-            is_active=True,
-            is_trial=False,
-        ).exclude(
-            account__dimagi_contact='',
-        ) if not sub.is_renewed]
+        date_end__lte=in_forty_days,
+        date_end__gte=today,
+        is_active=True,
+        is_trial=False,
+    ).exclude(
+        account__dimagi_contact='',
+    ) if not sub.is_renewed]
 
     if not ending_in_forty_days:
         log_accounting_info(
