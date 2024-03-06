@@ -1,4 +1,4 @@
-from corehq.apps.es import UserES, filters, queries
+from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 
 

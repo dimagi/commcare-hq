@@ -59,7 +59,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.enterprise.models import EnterprisePermissions
-from corehq.apps.es import UserES, queries
+from corehq.apps.es import UserES
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.locations.permissions import (
     location_safe,

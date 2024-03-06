@@ -5,8 +5,6 @@ from django.db import models
 from django.db.models.functions import Lower
 from django.utils.translation import gettext as _
 
-from corehq.apps.es.users import UserES
-
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # If mobile-worker is demo, this will be set to value 'demo'
 COMMCARE_USER_TYPE_KEY = 'user_type'

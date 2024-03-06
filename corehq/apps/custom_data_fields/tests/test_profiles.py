@@ -1,7 +1,6 @@
 from django.test import TestCase
 
 from corehq.apps.custom_data_fields.models import (
-    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
