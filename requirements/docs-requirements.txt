@@ -14,6 +14,8 @@ architect==0.6.0
     # via -r base-requirements.in
 asgiref==3.7.2
     # via django
+asttokens==2.4.1
+    # via transifex-python
 async-timeout==4.0.2
     # via redis
 attrs==23.1.0
@@ -67,6 +69,7 @@ click==8.1.3
     #   click-didyoumean
     #   click-plugins
     #   click-repl
+    #   transifex-python
 click-didyoumean==0.3.0
     # via celery
 click-plugins==1.1.1
@@ -221,7 +224,9 @@ exceptiongroup==1.1.1
 firebase-admin==6.1.0
     # via -r base-requirements.in
 future==0.18.3
-    # via pyjwkest
+    # via
+    #   pyjwkest
+    #   pyseeyou
 gevent==23.9.1
     # via
     #   -r base-requirements.in
@@ -380,6 +385,8 @@ packaging==23.0
     #   -r base-requirements.in
     #   ddtrace
     #   sphinx
+parsimonious==0.10.0
+    # via pyseeyou
 phonenumberslite==8.12.48
     # via -r base-requirements.in
 pickle5==0.0.11
@@ -458,6 +465,8 @@ pypng==0.20220715.0
     # via qrcode
 pyrsistent==0.17.3
     # via jsonschema
+pyseeyou==1.0.2
+    # via transifex-python
 python-dateutil==2.8.2
     # via
     #   -r base-requirements.in
@@ -497,6 +506,8 @@ redis==4.5.4
     #   django-redis
     #   django-redis-sessions
     #   django-websocket-redis
+regex==2023.12.25
+    # via parsimonious
 reportlab==3.6.13
     # via -r base-requirements.in
 requests==2.28.2
@@ -516,6 +527,7 @@ requests==2.28.2
     #   requests-toolbelt
     #   sphinx
     #   stripe
+    #   transifex-python
     #   twilio
 requests-oauthlib==1.3.1
     # via
@@ -544,6 +556,7 @@ simplejson==3.17.6
 six==1.16.0
     # via
     #   -r base-requirements.in
+    #   asttokens
     #   bleach
     #   click-repl
     #   ddsketch
@@ -616,7 +629,11 @@ text-unidecode==1.3
     # via -r base-requirements.in
 tinycss2==1.2.1
     # via bleach
+toolz==0.12.1
+    # via pyseeyou
 toposort==1.7
+    # via -r base-requirements.in
+transifex-python==3.5.0
     # via -r base-requirements.in
 tropo-webapi-python==0.1.3
     # via -r base-requirements.in
