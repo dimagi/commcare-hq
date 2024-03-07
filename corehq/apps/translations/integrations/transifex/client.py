@@ -5,23 +5,18 @@ import tempfile
 import polib
 import requests
 from memoized import memoized
+from transifex.api import TransifexApi
 
-from corehq.apps.translations.integrations.transifex.const import (
-    API_USER,
-    SOURCE_LANGUAGE_MAPPING,
-)
-from corehq.apps.translations.integrations.transifex.exceptions import (
-    ResourceMissing,
-)
+from corehq.apps.translations.integrations.transifex.const import SOURCE_LANGUAGE_MAPPING
+from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
 
 
 class TransifexApiClient(object):
     def __init__(self, token, organization, project, use_version_postfix=True):
-        self.username = API_USER
-        self.token = token
-        self.organization = organization
-        self.project = project
         self.use_version_postfix = use_version_postfix
+        self.api = TransifexApi(auth=token)
+        self.organization = self.api.Organization.get(slug=organization)
+        self.project = self.api.Project.get(slug=project, organization=self.organization)
 
     @property
     def _auth(self):
