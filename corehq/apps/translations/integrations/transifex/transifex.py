@@ -1,6 +1,8 @@
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
+from transifex.api.exceptions import UploadException
+
 from corehq.apps.app_manager.dbaccessors import get_version_build_id
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.generators import (
@@ -101,22 +103,24 @@ class Transifex(object):
         file_uploads = {}
         for resource_slug, path_to_file in generated_files:
             resource_name = self._resource_name_in_project_lang(resource_slug, app_trans_generator)
-            if self.is_source_file:
-                response = self.client.upload_resource(
-                    path_to_file,
-                    resource_slug,
-                    resource_name,
-                    self.update_resource
-                )
-            else:
-                response = self.client.upload_translation(
-                    path_to_file, resource_slug,
-                    resource_name, self.source_lang
-                )
-            if response.status_code in [200, 201]:
+            try:
+                if self.is_source_file:
+                    self.client.upload_resource(
+                        path_to_file,
+                        resource_slug,
+                        resource_name,
+                        self.update_resource
+                    )
+                else:
+                    self.client.upload_translation(
+                        path_to_file,
+                        resource_slug,
+                        resource_name,
+                        self.source_lang
+                    )
                 file_uploads[resource_name] = _("Successfully Uploaded")
-            else:
-                file_uploads[resource_name] = "{}: {}".format(response.status_code, response.content)
+            except UploadException as e:
+                file_uploads[resource_name] = "Upload Error: {}".format(e)
         return file_uploads
 
     @cached_property

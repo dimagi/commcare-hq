@@ -121,8 +121,7 @@ class ProjectMigrator(object):
                 return self.client.upload_resource(temp_file.name, "Menus_and_forms", "Menus_and_forms",
                                                    update_resource=True)
             else:
-                return self.client.upload_translation(temp_file.name, "Menus_and_forms", "Menus_and_forms",
-                                                      lang_code)
+                return self.client.upload_translation(temp_file.name, "Menus_and_forms", lang_code)
 
     def get_metadata(self):
         now = str(datetime.datetime.now())

@@ -5,6 +5,7 @@ import tempfile
 import polib
 import requests
 from transifex.api import TransifexApi
+from transifex.api.exceptions import UploadException
 
 from corehq.apps.translations.integrations.transifex.const import SOURCE_LANGUAGE_MAPPING
 from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
@@ -20,6 +21,10 @@ class TransifexApiClient(object):
     @property
     def _auth(self):
         return self.username, self.token
+
+    @property
+    def i18n_format(self):
+        return self.api.I18nFormat(id="PO")
 
     @property
     def project_details(self):
@@ -41,6 +46,19 @@ class TransifexApiClient(object):
         else:
             # get all resources
             return all_resources
+
+    @staticmethod
+    def _create_with_form(cls, content, resource_id, language_id=None):
+        # TransifexApi.upload() waits for async upload which we don't need, so create the upload manually
+        data = {"resource": resource_id}
+        if language_id is not None:
+            data["language"] = language_id
+        upload = cls.create_with_form(data=data, files={"content": content})
+
+        # mirror TransifexApi error handling
+        if hasattr(upload, "errors") and len(upload.errors) > 0:
+            raise UploadException(upload.errors[0]["detail"], upload.errors)
+        return upload
 
     def update_resource_slug(self, old_resource_slug, new_resource_slug):
         url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
@@ -65,48 +83,39 @@ class TransifexApiClient(object):
         :param resource_name: resource name, mostly same as resource slug itself
         :param update_resource: update resource
         """
-        content = open(path_to_pofile, 'r', encoding="utf-8").read()
-        if resource_name is None:
-            __, filename = os.path.split(path_to_pofile)
-            resource_name = filename
-        headers = {'content-type': 'application/json'}
-        data = {
-            'name': resource_name, 'slug': resource_slug, 'content': content,
-            'i18n_type': 'PO'
-        }
         if update_resource:
-            url = "https://www.transifex.com/api/2/project/{}/resource/{}/content".format(
-                self.project, resource_slug)
-            return requests.put(
-                url, data=json.dumps(data), auth=self._auth, headers=headers,
-            )
+            resource = self.api.Resource.get(slug=resource_slug, project=self.project)
         else:
-            url = "https://www.transifex.com/api/2/project/{}/resources".format(self.project)
-            return requests.post(
-                url, data=json.dumps(data), auth=self._auth, headers=headers,
+            # must create the new resource first
+            if resource_name is None:
+                __, filename = os.path.split(path_to_pofile)
+                resource_name = filename
+            resource = self.api.Resource(
+                name=resource_name,
+                slug=resource_slug,
+                project=self.project,
+                i18n_format=self.i18n_format
             )
+            resource.save()
 
-    def upload_translation(self, path_to_pofile, resource_slug, resource_name, hq_lang_code):
+        cls = self.api.ResourceStringsAsyncUpload
+        content = open(path_to_pofile, 'r', encoding="utf-8").read()
+        return self._create_with_form(cls, content, resource.id)
+
+    def upload_translation(self, path_to_pofile, resource_slug, hq_lang_code):
         """
         Upload translated files
 
         :param path_to_pofile: path to pofile
         :param resource_slug: resource slug
-        :param resource_name: resource name, mostly same as resource slug itself
         :param hq_lang_code: lang code on hq
         """
-        target_lang_code = self.transifex_lang_code(hq_lang_code)
-        url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}".format(
-            self.project, resource_slug, target_lang_code)
+        language_id = self._lang_code_to_language_id(self.transifex_lang_code(hq_lang_code))
+        resource = self.api.Resource.get(slug=resource_slug, project=self.project)
+
+        cls = self.api.ResourceTranslationsAsyncUpload
         content = open(path_to_pofile, 'r', encoding="utf-8").read()
-        headers = {'content-type': 'application/json'}
-        data = {
-            'name': resource_name, 'slug': resource_slug, 'content': content,
-            'i18n_type': 'PO'
-        }
-        return requests.put(
-            url, data=json.dumps(data), auth=self._auth, headers=headers,
-        )
+        return self._create_with_form(cls, content, resource.id, language_id)
 
     def translation_completed(self, resource_slug, hq_lang_code=None):
         """
