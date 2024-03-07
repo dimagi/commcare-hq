@@ -240,7 +240,7 @@ def _notify_ignored_form_submission(request, form_meta):
                           exponential_backoff=False, send_to_ops=False)
     _assert(False, "Unexpected practice mobile user submission received", {
         'Method': request.method,
-        'URL': request.get_raw_uri(),
+        'URL': request.build_absolute_uri(),
         'GET Params': json.dumps(request.GET),
         'Form Meta': json.dumps(form_meta),
     })
