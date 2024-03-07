@@ -1,27 +1,45 @@
-#case-list-menu-header{
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-  background-color: white;
+.case-list-menu-header {
+  padding-top: 3 * @space-high-density;
+  padding-left: 3 * @space-high-density;
+  padding-right: 2 * @space-high-density;
+  padding-bottom: @space-high-density;
+  background: white;
+
   @media (max-width: @screen-sm-max) {
-    min-height: 70px;
-  }
-  h1 {
-    padding-left: 0px;
+    min-height: 8 * @space-high-density;
   }
 
-  div button {
-    margin-left: 12px;
+  h1 {
+    margin-bottom: 0;
+    padding: 0;
+
+    @media (max-width: @screen-sm-max) {
+      padding-top: @space-high-density / 2;
+    }
+  }
+}
+
+.case-list-header-actions {
+  margin-top: -@space-high-density;
+  @media (max-width: @screen-sm-max) {
+    margin-top: 0;
+  }
+
+  .btn {
+    margin-left: @space-high-density;
   }
 }
 
 #case-list-search-controls {
   background-color: @cc-bg;
-  margin: 0 5px 5px 5px;
+  margin: @space-high-density;
+  margin-top: 0;
   display: flex;
   justify-content: space-between;
-    #case-list-sort-by-btn {
-      background-color: transparent;
-    }
+}
+
+#case-list-sort-by-btn {
+  background-color: transparent;
 }
 
 #select-all-tile-checkbox {
@@ -120,13 +138,49 @@
   }
 }
 
+.list-cell-wrapper-style {
+  background-color: @cc-bg;
+  border-collapse: collapse;
+  border-radius: 11px;
+  container-type: inline-size;
+  margin: @space-high-density;
+  transition: background 0.6s ease-in-out;
+  vertical-align: top;
+
+  a {
+    color: @cc-brand-mid;
+  }
+
+  .module-icon,
+  .webapp-markdown-output img {
+    max-height: 100%;
+    max-width: 100%;
+  }
+
+  &:hover {
+    background-color: darken(@cc-bg, 5);
+  }
+}
+
+.list-grid-style {
+  // You are searching in the wrong place, dear grasshopper.
+  // The styles are GENERATED in html (yikes!!) with the template id of "cell-layout-style-template"
+}
+
 #menu-region .module-menu-container,
 #menu-region .module-case-list-container {
 
-  .white-border {
+  .false-padding-border-right {
     border-right-color: transparent;
     border-right-style: solid;
-    border-right-width: 5px;
+    border-right-width: @space-high-density;
+
+    @media (max-width: @screen-sm-max) {
+      border-left-color: transparent;
+      border-left-style: solid;
+      border-left-width: @space-high-density;
+    }
+
   }
 
   // todo: determine appropriate nesting
@@ -147,28 +201,7 @@
     }
   }
 
-  .list-cell-wrapper-style {
-    margin: 10px 5px 0 5px;
-    border-collapse: collapse;
-    vertical-align: top;
-    background-color: @cc-bg;
-    container-type: inline-size;
 
-    a {
-      color: @cc-brand-mid;
-    }
-
-    .module-icon,
-    .webapp-markdown-output img {
-      max-height: 100%;
-      max-width: 100%;
-    }
-
-    &:hover {
-      background-color: darken(@cc-bg, 5);
-      transition: background 0.6s;
-    }
-  }
 
   .highlighted-case {
     border-style: solid;
