@@ -124,7 +124,8 @@ class Transifex(object):
         if self._resource_slugs:
             return self._resource_slugs
         else:
-            return self.client.get_resource_slugs(self.version)
+            resources = self.client.list_resources_by_version(self.version)
+            return [resource.slug for resource in resources]
 
     def _ensure_resources_belong_to_version(self):
         """

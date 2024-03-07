@@ -4,7 +4,6 @@ import tempfile
 
 import polib
 import requests
-from memoized import memoized
 from transifex.api import TransifexApi
 
 from corehq.apps.translations.integrations.transifex.const import SOURCE_LANGUAGE_MAPPING
@@ -22,52 +21,31 @@ class TransifexApiClient(object):
     def _auth(self):
         return self.username, self.token
 
-    def list_resources(self):
-        url = "https://api.transifex.com/organizations/{}/projects/{}/resources".format(
-            self.organization,
-            self.project
-        )
-        return requests.get(url, auth=self._auth)
+    @property
+    def project_details(self):
+        return self.project.to_dict()
 
-    def get_resource_slugs(self, version):
+    def list_resources_by_version(self, version):
         """
-        :return: list of resource slugs corresponding to version
+        :return: list of resources corresponding to version
         """
-        all_resources = self.list_resources().json()
+        all_resources = self.api.Resource.filter(project=self.project)
         if version and self.use_version_postfix:
-            # get all slugs with version postfix
-            return [r['slug']
-                    for r in all_resources
-                    if r['slug'].endswith("v%s" % version)]
+            # get all resources with version postfix
+            return [r for r in all_resources
+                    if r.slug.endswith("v%s" % version)]
         elif version and not self.use_version_postfix:
-            # get all slugs that don't have version postfix
-            return [r['slug']
-                    for r in all_resources
-                    if not r['slug'].endswith("v%s" % version)]
+            # get all resources that don't have version postfix
+            return [r for r in all_resources
+                    if not r.slug.endswith("v%s" % version)]
         else:
-            # get all slugs
-            return [r['slug'] for r in all_resources]
+            # get all resources
+            return all_resources
 
     def update_resource_slug(self, old_resource_slug, new_resource_slug):
         url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
             self.project, old_resource_slug)
         data = {'slug': new_resource_slug}
-        headers = {'content-type': 'application/json'}
-        return requests.put(
-            url, data=json.dumps(data), auth=self._auth, headers=headers,
-        )
-
-    def lock_resource(self, resource_slug):
-        """
-        lock a resource so that it can't be translated/reviewed anymore.
-
-        :param resource_slug:
-        """
-        url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
-            self.project, resource_slug)
-        data = {
-            'accept_translations': False
-        }
         headers = {'content-type': 'application/json'}
         return requests.put(
             url, data=json.dumps(data), auth=self._auth, headers=headers,
@@ -130,16 +108,6 @@ class TransifexApiClient(object):
             url, data=json.dumps(data), auth=self._auth, headers=headers,
         )
 
-    def project_details(self):
-        url = "https://www.transifex.com/api/2/project/{}/?details".format(self.project)
-        response = requests.get(
-            url, auth=self._auth,
-        )
-        if response.status_code == 404:
-            raise ResourceMissing("Project not found with slug {}".format(self.project))
-        else:
-            return response
-
     def translation_completed(self, resource_slug, hq_lang_code=None):
         """
         check if a resource has been completely translated for
@@ -170,18 +138,16 @@ class TransifexApiClient(object):
         :param lock_resource: lock resource after pulling translation
         :return: list of POEntry objects
         """
-        lang = self.transifex_lang_code(hq_lang_code)
-        url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}/?file".format(
-            self.project, resource_slug, lang
-        )
-        response = requests.get(url, auth=self._auth, stream=True)
-        if response.status_code != 200:
-            raise ResourceMissing
+        language_id = self._lang_code_to_language_id(self.transifex_lang_code(hq_lang_code))
+        language = self.api.Language(id=language_id)
+        resource = self.api.Resource.get(slug=resource_slug, project=self.project)
+        download = self.api.ResourceTranslationsAsyncDownload.download(resource=resource, language=language)
+        response = requests.get(download, stream=True)
         temp_file = tempfile.NamedTemporaryFile()
         with open(temp_file.name, 'w', encoding='utf-8') as f:
-            f.write(response.content.decode(encoding='utf-8'))
+            f.write(response.content.decode(encoding="utf-8"))
         if lock_resource:
-            self.lock_resource(resource_slug)
+            resource.save(accept_translations=False)
         return polib.pofile(temp_file.name)
 
     @staticmethod

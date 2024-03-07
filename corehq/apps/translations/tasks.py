@@ -140,7 +140,7 @@ def backup_project_from_transifex(domain, data, email):
                           data.get('transifex_project_slug'),
                           version,
                           use_version_postfix='yes' in data['use_version_postfix'])
-    project_details = transifex.client.project_details().json()
+    project_details = transifex.client.project_details
     target_lang_codes = transifex.client.get_project_langs()
     with NamedTemporaryFile(mode='w+b', suffix='.zip') as tmp:
         with ZipFile(tmp, 'w') as zipfile:
