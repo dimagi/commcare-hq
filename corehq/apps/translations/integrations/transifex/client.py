@@ -60,19 +60,46 @@ class TransifexApiClient(object):
             raise UploadException(upload.errors[0]["detail"], upload.errors)
         return upload
 
-    def update_resource_slug(self, old_resource_slug, new_resource_slug):
-        url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
-            self.project, old_resource_slug)
-        data = {'slug': new_resource_slug}
-        headers = {'content-type': 'application/json'}
-        return requests.put(
-            url, data=json.dumps(data), auth=self._auth, headers=headers,
+    def move_resource(self, old_resource_slug, new_resource_slug):
+        # get the old resource
+        old_resource = self.api.Resource.get(slug=old_resource_slug, project=self.project)
+
+        # create the new resource
+        new_resource = self.api.Resource(
+            name=old_resource.name,
+            slug=new_resource_slug,
+            project=self.project,
+            i18n_format=self.i18n_format
         )
+        new_resource.save()
+
+        # download source language strings from old resource
+        download = self.api.ResourceStringsAsyncDownload.download(resource=old_resource)
+        response = requests.get(download, stream=True)
+
+        # upload source language strings for new resource
+        cls = self.api.ResourceStringsAsyncUpload
+        self._create_with_form(cls, response.content, new_resource.id)
+
+        language_stats_list = self.api.ResourceLanguageStats.filter(resource=old_resource, project=self.project)
+        for stats in language_stats_list:
+            # download translations for each language
+            language = stats.language
+            if language == self.project.related["source_language"]:
+                continue
+            download = self.api.ResourceTranslationsAsyncDownload.download(
+                resource=old_resource, language=language)
+            response = requests.get(download, stream=True)
+
+            # upload translations for new resource
+            cls = self.api.ResourceTranslationsAsyncUpload
+            self._create_with_form(cls, response.content, new_resource.id, language.id)
+
+        return new_resource
 
     def delete_resource(self, resource_slug):
-        url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
-            self.project, resource_slug)
-        return requests.delete(url, auth=self._auth)
+        resource = self.api.Resource.get(slug=resource_slug, project=self.project)
+        return resource.delete()
 
     def upload_resource(self, path_to_pofile, resource_slug, resource_name, update_resource):
         """

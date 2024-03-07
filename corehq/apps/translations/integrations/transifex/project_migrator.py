@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 
 import polib
 from memoized import memoized
+from transifex.api.jsonapi.exceptions import DoesNotExist
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.translations.integrations.transifex.client import (
@@ -19,7 +20,6 @@ from corehq.apps.translations.integrations.transifex.const import (
 )
 from corehq.apps.translations.integrations.transifex.exceptions import (
     InvalidProjectMigration,
-    ResourceMissing,
 )
 from corehq.apps.translations.models import TransifexProject
 
@@ -28,7 +28,7 @@ class ProjectMigrator(object):
     def __init__(self, domain, project_slug, source_app_id, target_app_id, resource_ids_mapping):
         """
         Migrate a transifex project from one app to another by
-        1. updating slugs of resources to use new module/form ids
+        1. moving source strings and translations from old resource to new
         2. updating context of translations in "Menus_and_forms" sheet to use new module/form ids
         :param resource_ids_mapping: tuple of type, old_id, new_id
         """
@@ -46,11 +46,11 @@ class ProjectMigrator(object):
         ProjectMigrationValidator(self).validate()
 
     def migrate(self):
-        slug_update_responses = self._update_slugs()
+        slug_update_responses = self._move_resources()
         menus_and_forms_sheet_update_responses = self._update_menus_and_forms_sheet()
         return slug_update_responses, menus_and_forms_sheet_update_responses
 
-    def _update_slugs(self):
+    def _move_resources(self):
         responses = {}
         for resource_type, old_id, new_id in self.resource_ids_mapping:
             slug_prefix = self._get_slug_prefix(resource_type)
@@ -58,7 +58,7 @@ class ProjectMigrator(object):
                 continue
             resource_slug = "%s_%s" % (slug_prefix, old_id)
             new_resource_slug = "%s_%s" % (slug_prefix, new_id)
-            responses[old_id] = self.client.update_resource_slug(resource_slug, new_resource_slug)
+            responses[old_id] = self.client.move_resource(resource_slug, new_resource_slug)
         return responses
 
     @memoized
@@ -71,7 +71,7 @@ class ProjectMigrator(object):
         for lang in langs:
             try:
                 translations[lang] = self.client.get_translation("Menus_and_forms", lang, lock_resource=False)
-            except ResourceMissing:
+            except DoesNotExist:
                 # Probably a lang in app not present on Transifex, so skip
                 pass
         self._update_context(translations)

@@ -2,6 +2,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
 from transifex.api.exceptions import UploadException
+from transifex.api.jsonapi.exceptions import DoesNotExist
 
 from corehq.apps.app_manager.dbaccessors import get_version_build_id
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
@@ -179,9 +180,9 @@ class Transifex(object):
     def delete_resources(self):
         delete_status = {}
         for resource_slug in self.resource_slugs:
-            response = self.client.delete_resource(resource_slug)
-            if response.status_code == 204:
+            try:
+                self.client.delete_resource(resource_slug)
                 delete_status[resource_slug] = _("Successfully Removed")
-            else:
-                delete_status[resource_slug] = response.content
+            except DoesNotExist:
+                delete_status[resource_slug] = "Resource {} not found".format(resource_slug)
         return delete_status
