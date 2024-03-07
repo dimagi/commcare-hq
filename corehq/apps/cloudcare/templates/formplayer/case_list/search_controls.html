@@ -1,0 +1,28 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div id="case-list-search-controls">
+  <div>
+    <% if (isMultiSelect) { %>
+      <input type="checkbox" id="select-all-tile-checkbox"/>
+      <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
+    <% } %>
+  </div>
+  <div class="dropdown">
+    <button class="btn" id="case-list-sort-by-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <span> {% trans "Sort By" %} </span><i class="fa fa-sort" aria-hidden="true"></i>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="case-list-sort-by">
+      <%  _.each(sortOptions, function(sortOption) { %>
+        <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- sortOption.index %>" role="menuitem">
+          <a>
+            <%= sortOption.header %>
+            <% if (sortOption.sortOrder) { %>
+              <i class="fa fa-arrow-<%= sortOption.sortOrder === 'V' ? 'down' : 'up' %> pull-right"></i>
+            <% } %>
+          </a>
+        </li>
+      <% }); %>
+    </ul>
+  </div>
+</div>
