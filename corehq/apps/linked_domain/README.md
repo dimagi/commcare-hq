@@ -114,6 +114,8 @@ $ ./manage.py link_app_to_remote \
     --api_key {api_key}
 ```
 
+This command needs to be run against the downstream environment, and the API user/key needs to be from the upstream environment. Ideally, the user is a member of the upstream domain and the API key is scoped to just the domain. You might even create a new user _just_ to use its API key.
+
 # Linked Applications
 
 Linked applications predate linked domains. Now that linked domains exist, when you link an app, the linked domain record is automatically created. A downstream app is tied to an upstream app via the `upstream_app_id` and `upstream_version` attributes.
