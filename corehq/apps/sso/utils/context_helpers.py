@@ -89,3 +89,28 @@ def get_graph_api_connection_issue_email_context(idp, error):
     if idp.owner.dimagi_contact:
         email_context["bcc"].append(idp.owner.dimagi_contact)
     return email_context
+
+
+def get_sso_deactivation_skip_email_context(idp):
+    subject = _("CommCare HQ Alert: Temporarily skipped automatic deactivation of SSO Web Users"
+                " (Remote User Management)")
+    template_context = {
+        "contact_email": settings.ACCOUNTS_EMAIL,
+        "base_url": get_site_domain(),
+    }
+    body_html, body_txt = render_multiple_to_strings(
+        template_context,
+        "sso/email/sso_deactivation_skip_notification.html",
+        "sso/email/sso_deactivation_skip_notification.txt",
+    )
+    email_context = {
+        "subject": subject,
+        "from": _(f"Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"),
+        "to": idp.owner.enterprise_admin_emails,
+        "bcc": [settings.ACCOUNTS_EMAIL],
+        "html": body_html,
+        "plaintext": body_txt,
+    }
+    if idp.owner.dimagi_contact:
+        email_context["bcc"].append(idp.owner.dimagi_contact)
+    return email_context

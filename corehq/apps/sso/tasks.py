@@ -3,8 +3,6 @@ import logging
 
 from celery.schedules import crontab
 
-from django.utils.translation import gettext as _
-
 from corehq.apps.celery import periodic_task
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sso.models import (
@@ -16,9 +14,11 @@ from corehq.apps.sso.models import (
 )
 from corehq.apps.sso.utils.context_helpers import (
     get_idp_cert_expiration_email_context,
+    get_sso_deactivation_skip_email_context,
 )
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.apps.users.models import WebUser
+from dimagi.utils.logging import notify_exception
 
 log = logging.getLogger(__name__)
 
@@ -128,17 +128,29 @@ def auto_deactivate_removed_sso_users():
                                                                      ).values_list('username', flat=True)
 
         if len(idp_users) == 0 and len(usernames_in_account) - len(exempt_usernames) > 3:
-            # Send email
-            subject = _("CommCare HQ Alert: Temporarily skipped automatic deactivation of SSO Web Users"
-                        " (Remote User Management)")
-            recipient = idp.owner.enterprise_admin_emails
-            body = _("we have temporarily skipped automatic deactivation of Web Users because we are receiving "
-                     "an empty list of Users from Azure AD")
-            send_html_email_async.delay(
-                subject,
-                recipient,
-                body,
-            )
+            context = get_sso_deactivation_skip_email_context(idp)
+            if not context["to"]:
+                notify_exception(None, f"no admin email addresses for IdP: {idp}")
+                try:
+                    for send_to in context["to"]:
+                        send_html_email_async.delay(
+                            context["subject"],
+                            send_to,
+                            context["html"],
+                            text_content=context["plaintext"],
+                            email_from=context["from"],
+                            bcc=context["bcc"],
+                        )
+                        log.info(
+                            "Sent sso user deactivation skipped notification"
+                            "email for %(idp_name)s to %(send_to)s." % {
+                                "idp_name": idp.name,
+                                "send_to": send_to,
+                            }
+                        )
+                except Exception as exc:
+                    notify_exception(None, f"Failed to send sso user deactivation skipped notification email for"
+                                     f" IdP {idp}: {exc!s}", exc_info=True)
             return
 
         usernames_to_deactivate = []
