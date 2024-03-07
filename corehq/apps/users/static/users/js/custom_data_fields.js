@@ -65,7 +65,7 @@ hqDefine("users/js/custom_data_fields", [
             }
             _.each(self.slugs, function (slug) {
                 var field = self[slug];
-                if (fields[slug]) {
+                if (Object.prototype.hasOwnProperty.call(fields, slug)) {
                     if (!field.disable()) {
                         field.previousValue(field.value());
                     }

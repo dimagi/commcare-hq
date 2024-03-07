@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 /* globals moment */
 hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {

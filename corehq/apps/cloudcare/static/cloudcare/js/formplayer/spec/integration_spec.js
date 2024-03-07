@@ -1,3 +1,4 @@
+'use strict';
 /* global Backbone */
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/integration_spec", function () {

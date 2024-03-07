@@ -2,11 +2,15 @@ hqDefine("geospatial/js/geo_config", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/bootstrap3/alert_user",
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
+    alertUser
 ) {
+    const ROAD_NETWORK_ALGORITHM = initialPageData.get('road_network_algorithm_slug');
+
     var geoConfigViewModel = function (configData) {
         'use strict';
         var self = {};
@@ -45,6 +49,32 @@ hqDefine("geospatial/js/geo_config", [
         self.isMinMaxGrouping = ko.computed(function () {
             return self.selectedGroupMethod() === minMaxGroupingName;
         });
+
+        self.selectedAlgorithm = ko.observable();
+        self.plaintext_api_token = ko.observable(data.plaintext_api_token);
+
+        self.captureApiToken = ko.computed(function () {
+            return self.selectedAlgorithm() === ROAD_NETWORK_ALGORITHM;
+        });
+
+        self.validateApiToken = function () {
+            const url = "https://api.mapbox.com/directions-matrix/v1/mapbox/driving/-122.42,37.78;-122.45,37.91;-122.48,37.73";
+            const params = {access_token: self.plaintext_api_token()};
+
+            $.ajax({
+                method: 'get',
+                url: url,
+                data: params,
+                success: function () {
+                    alertUser.alert_user(gettext("Token successfully verified!"), "success");
+                },
+            }).fail(function () {
+                alertUser.alert_user(
+                    gettext("Invalid API token. Please verify that the token matches the one on your Mapbox account and has the correct scope configured."),
+                    "danger"
+                );
+            });
+        };
 
         return self;
     };

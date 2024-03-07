@@ -68,6 +68,7 @@ import json
 import traceback
 import uuid
 import warnings
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -95,6 +96,7 @@ from dimagi.ext.couchdbkit import (
     ListProperty,
     StringProperty,
 )
+from dimagi.utils.couch.migration import SubModelSpec, SyncCouchToSQLMixin, SyncSQLToCouchMixin
 from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.parsing import json_format_datetime
 
@@ -417,7 +419,7 @@ class Repeater(RepeaterSuperProxy):
         if fire_synchronously:
             # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
             # to prevent serializing the repeater in the celery task payload
-            RepeatRecord.repeater.fget.get_cache(repeat_record)[()] = self
+            repeat_record.__dict__["repeater"] = self
         repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
@@ -873,7 +875,7 @@ class DataSourceRepeater(Repeater):
 
     def allowed_to_forward(
         self,
-        payload,  # type: DataSourceUpdateLog
+        payload,  # type DataSourceUpdateLog
     ):
         return payload.data_source_id == self.data_source_id
 
@@ -909,6 +911,49 @@ class DataSourceRepeater(Repeater):
         ).exists()
 
 
+def _get_state(self):
+    state = RECORD_PENDING_STATE
+    if self.succeeded and self.cancelled:
+        state = RECORD_EMPTY_STATE
+    elif self.succeeded:
+        state = RECORD_SUCCESS_STATE
+    elif self.cancelled:
+        state = RECORD_CANCELLED_STATE
+    elif self.failure_reason:
+        state = RECORD_FAILURE_STATE
+    return state
+
+
+def set_state(self, value):
+    if value == RECORD_EMPTY_STATE:
+        self.succeeded = True
+        self.cancelled = True
+        self.failure_reason = ""
+    elif value == RECORD_SUCCESS_STATE:
+        self.succeeded = True
+        self.cancelled = False
+        self.failure_reason = ""
+    elif value == RECORD_CANCELLED_STATE:
+        self.succeeded = False
+        self.cancelled = True
+        self.failure_reason = ""
+    elif value == RECORD_FAILURE_STATE:
+        self.succeeded = False
+        self.cancelled = False
+        try:
+            reason = self.failure_reason
+        except AssertionError:
+            pass  # HACK jsonobject/base_properties.pyx:73
+        else:
+            if not reason:
+                self.failure_reason = "Unknown"
+    else:
+        assert value == RECORD_PENDING_STATE
+        self.succeeded = False
+        self.cancelled = False
+        self.failure_reason = ""
+
+
 class RepeatRecordAttempt(DocumentSchema):
     cancelled = BooleanProperty(default=False)
     datetime = DateTimeProperty()
@@ -920,35 +965,42 @@ class RepeatRecordAttempt(DocumentSchema):
 
     @property
     def message(self):
-        return self.success_response if self.succeeded else self.failure_reason
+        return (self.success_response if self.succeeded else self.failure_reason) or ''
 
-    @property
-    def state(self):
-        state = RECORD_PENDING_STATE
-        if self.succeeded and self.cancelled:
-            state = RECORD_EMPTY_STATE
-        elif self.succeeded:
-            state = RECORD_SUCCESS_STATE
-        elif self.cancelled:
-            state = RECORD_CANCELLED_STATE
-        elif self.failure_reason:
-            state = RECORD_FAILURE_STATE
-        return state
+    @message.setter
+    def message(self, value):
+        if self.succeeded:
+            self.success_response = value
+        else:
+            self.failure_reason = value
+
+    state = property(_get_state, set_state)
 
     @property
     def created_at(self):
         # Used by .../case/partials/repeat_records.html
         return self.datetime
 
+    @created_at.setter
+    def created_at(self, value):
+        self.datetime = value
 
-class RepeatRecord(Document):
+
+class RepeaterIdProperty(StringProperty):
+
+    def __set__(self, instance, value):
+        super().__set__(instance, value)
+        instance.__dict__.pop("repeater", None)
+
+
+class RepeatRecord(SyncCouchToSQLMixin, Document):
     """
     An record of a particular instance of something that needs to be forwarded
     with a link to the proper repeater object
     """
 
     domain = StringProperty()
-    repeater_id = StringProperty()
+    repeater_id = RepeaterIdProperty()
     repeater_type = StringProperty()
     payload_id = StringProperty()
 
@@ -963,6 +1015,38 @@ class RepeatRecord(Document):
     failure_reason = StringProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return ["domain", "payload_id", "registered_at", "state"]
+
+    def _migration_sync_to_sql(self, sql_object, save=True):
+        sql_object.repeater_id = uuid.UUID(self.repeater_id)
+        sql_object.next_check = None if self.succeeded or self.cancelled else self.next_check
+        return super()._migration_sync_to_sql(sql_object, save=save)
+
+    @classmethod
+    def _migration_get_submodels(cls):
+        return [SubModelSpec(
+            "attempt_set",
+            SQLRepeatRecordAttempt,
+            ["state", "message", "created_at"],
+            "attempts",
+            RepeatRecordAttempt,
+            ["state", "message", "created_at"],
+        )]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLRepeatRecord
+
+    def save(self, *args, sync_attempts=False, **kw):
+        with enable_attempts_sync_to_sql(self, sync_attempts):
+            return super().save(*args, **kw)
+
+    def _migration_sync_submodels_to_sql(self, sql_object):
+        if self._should_sync_attempts:
+            super()._migration_sync_submodels_to_sql(sql_object)
 
     @property
     def record_id(self):
@@ -990,8 +1074,7 @@ class RepeatRecord(Document):
             )]
         return self
 
-    @property
-    @memoized
+    @cached_property
     def repeater(self):
         try:
             return Repeater.objects.get(id=self.repeater_id)
@@ -1010,23 +1093,20 @@ class RepeatRecord(Document):
         if self.repeater:
             return self.repeater.get_url(self)
 
-    @property
-    def state(self):
-        state = RECORD_PENDING_STATE
-        if self.succeeded and self.cancelled:
-            state = RECORD_EMPTY_STATE
-        elif self.succeeded:
-            state = RECORD_SUCCESS_STATE
-        elif self.cancelled:
-            state = RECORD_CANCELLED_STATE
-        elif self.failure_reason:
-            state = RECORD_FAILURE_STATE
-        return state
+    state = property(_get_state, set_state)
 
     @property
     def exceeded_max_retries(self):
         return (self.state == RECORD_FAILURE_STATE and self.overall_tries
                 >= self.max_possible_tries)
+
+    @property
+    def registered_at(self):
+        return self.registered_on or datetime.fromtimestamp(0)
+
+    @registered_at.setter
+    def registered_at(self, value):
+        self.registered_on = value
 
     @classmethod
     def all(cls, domain=None, due_before=None, limit=None):
@@ -1056,6 +1136,18 @@ class RepeatRecord(Document):
         self.succeeded = attempt.succeeded
         self.cancelled = attempt.cancelled
         self.failure_reason = attempt.failure_reason
+        try:
+            record_id = SQLRepeatRecord.objects.values("id").get(couch_id=self._id)["id"]
+        except SQLRepeatRecord.DoesNotExist:
+            with enable_attempts_sync_to_sql(self, True):
+                self._migration_do_sync()
+        else:
+            SQLRepeatRecordAttempt.objects.create(
+                repeat_record_id=record_id,
+                state=attempt.state,
+                message=attempt.message,
+                created_at=attempt.created_at,
+            )
 
     def get_numbered_attempts(self):
         for i, attempt in enumerate(self.attempts):
@@ -1225,16 +1317,26 @@ class RepeatRecord(Document):
         self.next_check = datetime.utcnow()
 
 
+@contextmanager
+def enable_attempts_sync_to_sql(obj, value):
+    assert not hasattr(obj, "_should_sync_attempts")
+    obj._should_sync_attempts = value
+    try:
+        yield
+    finally:
+        del obj._should_sync_attempts
+
+
 # on_delete=DB_CASCADE denotes ON DELETE CASCADE in the database. The
 # constraints are configured in a migration. Note that Django signals
 # will not fire on records deleted via cascade.
 DB_CASCADE = models.DO_NOTHING
 
 
-class SQLRepeatRecord(models.Model):
+class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     domain = models.CharField(max_length=126)
     couch_id = models.CharField(max_length=36, null=True, blank=True)
-    payload_id = models.CharField(max_length=36)
+    payload_id = models.CharField(max_length=255)
     repeater = models.ForeignKey(Repeater,
                                  on_delete=DB_CASCADE,
                                  db_column="repeater_id_",
@@ -1273,10 +1375,30 @@ class SQLRepeatRecord(models.Model):
         ]
         ordering = ['registered_at']
 
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return RepeatRecord
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "payload_id",
+            "registered_at",
+            "next_check",
+            "state",
+            "failure_reason",
+            "overall_tries",
+        ]
+
+    def _migration_sync_to_couch(self, couch_object, save=True):
+        couch_object.repeater_id = self.repeater.repeater_id
+        return super()._migration_sync_to_couch(couch_object, save=save)
+
     def requeue(self):
         # Changing "success" to "pending" and "cancelled" to "failed"
         # preserves the value of `self.failure_reason`.
-        if self.state == State.Success:
+        if self.state == State.Success or self.state == State.Empty:
             self.state = State.Pending
         elif self.state == State.Cancelled:
             self.state = State.Fail
@@ -1288,12 +1410,18 @@ class SQLRepeatRecord(models.Model):
         ``response`` can be a Requests response instance, or True if the
         payload did not result in an API call.
         """
+        # NOTE a 204 status here could mean either
+        # 1. the request was not sent, in which case response is
+        #    probably RepeaterResponse(204, "No Content")
+        # 2. the request was sent, and the remote end responded
+        #    with 204 (No Content)
+        # Interpreting 204 as Empty (request not sent) is wrong,
+        # although the Couch RepeatRecord did the same.
+        code = getattr(response, "status_code", None)
+        state = State.Empty if code == 204 else State.Success
         self.repeater.reset_next_attempt()
-        self.attempt_set.create(
-            state=State.Success,
-            message=format_response(response) or '',
-        )
-        self.state = State.Success
+        self.attempt_set.create(state=state, message=format_response(response) or '')
+        self.state = state
         self.next_check = None
         self.save()
 
@@ -1387,6 +1515,10 @@ class SQLRepeatRecord(models.Model):
         # prefetched attempts, if available.
         attempts = list(self.attempts)
         return attempts[-1].message if attempts else ''
+
+    @property
+    def overall_tries(self):
+        return self.num_attempts
 
 
 class SQLRepeatRecordAttempt(models.Model):

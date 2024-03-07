@@ -1,3 +1,4 @@
+'use strict';
 /*global MapboxGeocoder*/
 hqDefine("cloudcare/js/form_entry/utils", function () {
     var errors = hqImport("cloudcare/js/form_entry/errors"),
@@ -224,7 +225,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     module.getBroadcastContainer = (question) => {
         return getRoot(question, function (container) {
             // Return first containing repeat group, or form if there are no ancestor repeats
-            var parent = container.parent;
+            var parent = container.parent.parent;
             return parent && parent.type && parent.type() === formEntryConst.REPEAT_TYPE;
         });
     };
