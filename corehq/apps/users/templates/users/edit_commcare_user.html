@@ -85,8 +85,8 @@
         <div class="panel-body">
           <div class="form form-horizontal">
 
-            {% if form_user_update.loadtest_users_enabled %}
-            {% crispy form_user_update.action_form %}
+            {% if request|request_has_privilege:"LOADTEST_USERS" %}
+              {% crispy form_user_update.action_form %}
             {% endif %}
 
             <fieldset>
