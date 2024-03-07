@@ -117,9 +117,7 @@ def auto_deactivate_removed_sso_users():
         enable_user_deactivation=True,
         idp_type=IdentityProviderType.AZURE_AD
     ).all():
-        # Fetch a list of users usernames that are members of the idp
         idp_users = idp.get_all_members_of_the_idp()
-        # Fetch a list of active WebUser usernames that are members of project spaces associated with the idp
         usernames_in_account = idp.owner.get_web_users(info_type='username')
 
         # Get criteria for exempting usernames and email domains from the deactivation list
