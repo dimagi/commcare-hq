@@ -718,9 +718,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
-                if (d.type() === constants.REPEAT_TYPE) {
-                    return true;
-                } else if (d.type() === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
+                if (d.type() === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
                     return d.hasAnyNestedQuestions();
                 }
             });
@@ -794,7 +792,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
-                if (d.type() === constants.QUESTION_TYPE) {
+                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE) {
                     return true;
                 } else if (d.type() === constants.GROUP_TYPE) {
                     return d.hasAnyNestedQuestions();
