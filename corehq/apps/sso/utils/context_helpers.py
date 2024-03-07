@@ -74,8 +74,8 @@ def get_graph_api_connection_issue_email_context(idp, error):
     }
     body_html, body_txt = render_multiple_to_strings(
         template_context,
-        "sso/email/microsoft_graph_api_connection_issue_email_context.html",
-        "sso/email/microsoft_graph_api_connection_issue_email_context.txt",
+        "sso/email/microsoft_graph_api_connection_issue_notification.html",
+        "sso/email/microsoft_graph_api_connection_issue_notification.txt",
     )
     email_context = {
         "subject": subject,
