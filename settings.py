@@ -1133,7 +1133,7 @@ CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
-PERMANENT_DELETION_WINDOW = 30  # days
+PERMANENT_DELETION_WINDOW = 90  # days
 
 # GSheets related work that was dropped, but should be picked up in the near future
 GOOGLE_OATH_CONFIG = {}

@@ -39,12 +39,12 @@ class RepeaterTestCase(TestCase):
 
     def test_record_display_sql(self):
         with make_repeat_record(self.repeater, RECORD_SUCCESS_STATE) as record:
-            record.attempt_set.create(state=RECORD_SUCCESS_STATE)
+            record.attempt_set.create(state=RECORD_SUCCESS_STATE, created_at=self.last_checked)
             self._check_display(record)
 
     def _check_display(self, record):
         display = RepeatRecordDisplay(record, pytz.UTC, date_format=self.date_format)
-        self.assertEqual(display.record_id, record.record_id)
+        self.assertEqual(display.record_id, record.id)
         self.assertEqual(display.last_checked, self.last_checked_str)
         self.assertEqual(display.next_attempt_at, self.next_check_str)
         self.assertEqual(display.url, self.url)
