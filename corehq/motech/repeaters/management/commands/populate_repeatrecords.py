@@ -3,7 +3,6 @@ from django.db.models import Count
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
-from corehq.util.couch_helpers import paginate_view
 
 from ...models import Repeater, SQLRepeatRecordAttempt, enable_attempts_sync_to_sql
 
@@ -151,6 +150,13 @@ class Command(PopulateSQLCommand):
     def get_couch_view_name_and_parameters(cls):
         return 'repeaters/repeat_records_by_payload_id', {}
 
+    @classmethod
+    def get_couch_view_name_and_parameters_for_domains(cls, domains):
+        return 'repeaters/repeat_records_by_payload_id', [{
+            'startkey': [domain],
+            'endkey': [domain, {}],
+        } for domain in domains]
+
     def should_process(self, result):
         if result['doc'] is None:
             self.logfile.write(f"Ignored null document: {result['id']}\n")
@@ -161,12 +167,6 @@ class Command(PopulateSQLCommand):
         def count_domain_docs(domain):
             return count_docs(startkey=[domain], endkey=[domain, {}])
         return sum(count_domain_docs(d) for d in domains)
-
-    def _iter_couch_docs_for_domains(self, domains, chunk_size):
-        def iter_domain_docs(domain):
-            return iter_docs(chunk_size, self.logfile, startkey=[domain], endkey=[domain, {}])
-        for domain in domains:
-            yield from iter_domain_docs(domain)
 
 
 def count_docs(**params):
@@ -183,23 +183,6 @@ def count_docs(**params):
     # repeaters/repeat_records_by_payload_id has no reduce, so cannot be used
     assert result['value'] % 2 == 0, result['value']
     return int(result['value'] / 2)
-
-
-def iter_docs(chunk_size, logfile, **params):
-    from ...models import RepeatRecord
-    # repeaters/repeat_records_by_payload_id's map emits once per document
-    for result in paginate_view(
-        RepeatRecord.get_db(),
-        'repeaters/repeat_records_by_payload_id',
-        chunk_size=chunk_size,
-        include_docs=True,
-        reduce=False,
-        **params,
-    ):
-        if result['doc'] is None:
-            logfile.write(f"Ignored null document: {result['id']}\n")
-            continue
-        yield result['doc']
 
 
 def get_state(doc):

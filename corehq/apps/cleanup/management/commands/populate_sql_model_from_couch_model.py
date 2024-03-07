@@ -16,7 +16,6 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
 from corehq.dbaccessors.couchapps.all_docs import (
     get_doc_count_by_type,
     get_doc_count_by_domain_type
@@ -613,13 +612,15 @@ Run the following commands to run the migration and get up to date:
         return self.sql_class().objects.filter(domain__in=domains).count()
 
     def _iter_couch_docs_for_domains(self, domains, chunk_size):
-        for domain in domains:
+        view_name, domains_params = self.get_couch_view_name_and_parameters_for_domains(domains)
+        assert len(domains) == len(domains_params), (domains, domains_params)
+        view = partial(self.couch_db().view, view_name, reduce=False, include_docs=True)
+        should = self.should_process
+        for domain, params in zip(domains, domains_params):
             print(f"Processing data for domain: {domain}")
-            doc_id_iter = iterate_doc_ids_in_domain_by_type(
-                domain, self.couch_doc_type(), database=self.couch_db()
-            )
-            for doc in iter_docs(self.couch_db(), doc_id_iter, chunk_size):
-                yield doc
+            args_provider = NoSkipArgsProvider(params | {"limit": chunk_size})
+            results = paginate_function(view, args_provider)
+            yield from (r['doc'] for r in results if should(r))
 
     @classmethod
     def _resume_iter_couch_view(cls, chunk_size=1000):
@@ -635,8 +636,7 @@ Run the following commands to run the migration and get up to date:
     def should_process(self, result):
         """Return true if Couch result should be processed
 
-        Can be used to filter out results with null document, for
-        example. Note: this is not used for by-domain iterations.
+        Can be used to filter out results with null document, for example.
         """
         return True
 
@@ -652,6 +652,19 @@ Run the following commands to run the migration and get up to date:
             'startkey': [doc_type],
             'endkey': [doc_type, {}],
         }
+
+    @classmethod
+    def get_couch_view_name_and_parameters_for_domains(cls, domains=None):
+        """Get view name and parameters for all docs iteration
+
+        Override if by_domain_doc_type_date/view does not exist or does
+        not index the relevant documents in the target database.
+        """
+        doc_type = cls.couch_doc_type()
+        return 'by_domain_doc_type_date/view', [{
+            'startkey': [domain, doc_type],
+            'endkey': [domain, doc_type, {}],
+        } for domain in domains]
 
     @classmethod
     def _get_couch_doc_count_for_type(cls):
