@@ -3,19 +3,27 @@
   padding-left: 3 * @space-high-density;
   padding-right: 2 * @space-high-density;
   padding-bottom: @space-high-density;
+  background: white;
 
   @media (max-width: @screen-sm-max) {
-    min-height: 70px;
+    min-height: 8 * @space-high-density;
   }
 
   h1 {
     margin-bottom: 0;
     padding: 0;
+
+    @media (max-width: @screen-sm-max) {
+      padding-top: @space-high-density / 2;
+    }
   }
 }
 
 .case-list-header-actions {
   margin-top: -@space-high-density;
+  @media (max-width: @screen-sm-max) {
+    margin-top: 0;
+  }
 
   .btn {
     margin-left: @space-high-density;
@@ -166,6 +174,13 @@
     border-right-color: transparent;
     border-right-style: solid;
     border-right-width: @space-high-density;
+
+    @media (max-width: @screen-sm-max) {
+      border-left-color: transparent;
+      border-left-style: solid;
+      border-left-width: @space-high-density;
+    }
+
   }
 
   // todo: determine appropriate nesting
