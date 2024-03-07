@@ -1,5 +1,9 @@
 .case-list-menu-header {
-  padding: @pad-2x-high-density;
+  padding-top: 3 * @space-high-density;
+  padding-left: 3 * @space-high-density;
+  padding-right: 2 * @space-high-density;
+  padding-bottom: @space-high-density;
+
   @media (max-width: @screen-sm-max) {
     min-height: 70px;
   }
@@ -9,20 +13,26 @@
     margin-top: 6px;
     padding: 0;
   }
+}
 
-  div button {
-    margin-left: 12px;
+.case-list-header-actions {
+  margin-top: -@space-high-density;
+
+  .btn {
+    margin-left: @space-high-density;
   }
 }
 
 #case-list-search-controls {
   background-color: @cc-bg;
-  margin: 0 5px 5px 5px;
+  margin: @space-high-density;
+  margin-top: 0;
   display: flex;
   justify-content: space-between;
-    #case-list-sort-by-btn {
-      background-color: transparent;
-    }
+}
+
+#case-list-sort-by-btn {
+  background-color: transparent;
 }
 
 #select-all-tile-checkbox {
@@ -122,11 +132,13 @@
 }
 
 .list-cell-wrapper-style {
-  margin: @pad-high-density;
-  border-collapse: collapse;
-  vertical-align: top;
   background-color: @cc-bg;
+  border-collapse: collapse;
+  border-radius: 11px;
   container-type: inline-size;
+  margin: @space-high-density;
+  transition: background 0.6s ease-in-out;
+  vertical-align: top;
 
   a {
     color: @cc-brand-mid;
@@ -140,7 +152,6 @@
 
   &:hover {
     background-color: darken(@cc-bg, 5);
-    transition: background 0.6s;
   }
 }
 
@@ -150,7 +161,7 @@
   .false-padding-border-right {
     border-right-color: transparent;
     border-right-style: solid;
-    border-right-width: 5px;
+    border-right-width: @space-high-density;
   }
 
   // todo: determine appropriate nesting
