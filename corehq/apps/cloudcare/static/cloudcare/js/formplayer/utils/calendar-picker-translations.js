@@ -1,5 +1,15 @@
 'use strict';
-(function ($) {
+hqDefine('cloudcare/js/formplayer/utils/calendar-picker-translations', [
+    'jquery',
+    'calendars/dist/js/jquery.calendars.picker',
+    'calendars/dist/js/jquery.calendars.ethiopian',
+    'calendars/dist/js/jquery.calendars.plus',
+    'calendars/dist/js/jquery.calendars-am',
+    'calendars/dist/js/jquery.calendars.picker-am',
+    'calendars/dist/js/jquery.calendars.ethiopian-am',
+], function (
+    $
+) {
     // English
     $.calendarsPicker.regionalOptions[''] = { // Default regional settings - English/US
         renderer: $.calendarsPicker.regionalOptions[''].renderer, // this.defaultRenderer
@@ -331,4 +341,4 @@
         firstDay: 0,
         isRTL: false,
     };
-})(window.jQuery);
+});

@@ -1,7 +1,15 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/middleware", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-
+hqDefine("cloudcare/js/formplayer/middleware", [
+    'jquery',
+    'underscore',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/users/models',
+], function (
+    $,
+    _,
+    FormplayerFrontend,
+    UsersModels
+) {
     var clearFormMiddleware = function () {
         FormplayerFrontend.trigger("clearForm");
     };
@@ -17,7 +25,7 @@ hqDefine("cloudcare/js/formplayer/middleware", function () {
     };
     var setScrollableMaxHeight = function () {
         var maxHeight,
-            user = FormplayerFrontend.getChannel().request('currentUser'),
+            user = UsersModels.getCurrentUser(),
             restoreAsBannerHeight = 0;
 
         if (user.restoreAs) {
@@ -33,6 +41,9 @@ hqDefine("cloudcare/js/formplayer/middleware", function () {
             'max-height': maxHeight + 'px',
         });
     };
+    var setLastUserActiviyTime = function () {
+        sessionStorage.setItem("lastUserActivityTime",  Date.now());
+    };
 
     var self = {};
 
@@ -42,6 +53,7 @@ hqDefine("cloudcare/js/formplayer/middleware", function () {
         clearVersionInfo,
         setScrollableMaxHeight,
         clearBreadcrumbMiddleware,
+        setLastUserActiviyTime,
     ];
 
     self.apply = function (api) {

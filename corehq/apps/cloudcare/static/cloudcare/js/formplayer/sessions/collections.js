@@ -1,10 +1,13 @@
 'use strict';
-/*global Backbone */
-
-hqDefine("cloudcare/js/formplayer/sessions/collections", function () {
-    var Models = hqImport("cloudcare/js/formplayer/sessions/models"),
-        utils = hqImport("cloudcare/js/formplayer/utils/utils");
-
+hqDefine("cloudcare/js/formplayer/sessions/collections", [
+    'backbone',
+    'cloudcare/js/formplayer/sessions/models',
+    'cloudcare/js/formplayer/utils/utils',
+], function (
+    Backbone,
+    Models,
+    utils
+) {
     var session = Backbone.Collection.extend({
         model: Models,
 
