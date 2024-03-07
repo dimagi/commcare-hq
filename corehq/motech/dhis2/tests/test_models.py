@@ -9,8 +9,11 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from nose.tools import assert_equal
+from testil import tempdir
 
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.dhis2.management.commands.populate_sqldatasetmap import Command
+
 
 from ..const import (
     COMPLETE_DATE_COLUMN,
@@ -235,7 +238,9 @@ class GetInfoForColumnsTests(TestCase):
             }]
         })
         self.dataset_map.save()
-        call_command('populate_sqldatasetmap', log_path=f"sqldatasetmap_{datetime.utcnow().isoformat()}.log")
+        with tempdir() as tmp:
+            call_command('populate_sqldatasetmap', log_path=tmp)
+            Command.discard_resume_state()
         self.sqldataset_map = SQLDataSetMap.objects.get(
             domain=self.domain,
             couch_id=self.dataset_map._id,
