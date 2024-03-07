@@ -454,6 +454,8 @@ class IdentityProvider(models.Model):
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
 
             context = get_graph_api_connection_issue_email_context(self, str(e))
+            if not context["to"]:
+                notify_exception(None, f"no admin email addresses for IdP: {self}")
             try:
                 for send_to in context["to"]:
                     send_html_email_async.delay(
