@@ -71,6 +71,7 @@ def get_graph_api_connection_issue_email_context(idp, error):
     template_context = {
         "error": error,
         "contact_email": settings.ACCOUNTS_EMAIL,
+        "base_url": get_site_domain(),
     }
     body_html, body_txt = render_multiple_to_strings(
         template_context,
