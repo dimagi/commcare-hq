@@ -43,7 +43,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.models_role import UserRole
-from corehq.apps.users.tests.util import patch_user_data_db_layer, patch_user_data_schema
+from corehq.apps.users.tests.util import patch_user_data_db_layer
 from corehq.apps.users.util import normalize_username
 from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import flag_disabled, flag_enabled
@@ -263,8 +263,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     domain = 'user-choice-provider'
 
     @classmethod
-    @patch_user_data_schema
-    @patch_user_data_db_layer
+    @patch_user_data_db_layer()
     def make_mobile_worker(cls, username, domain=None):
         domain = domain or cls.domain
         user = CommCareUser(username=normalize_username(username, domain),

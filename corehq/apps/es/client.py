@@ -11,6 +11,7 @@ from memoized import memoized
 
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.es import const
 from corehq.apps.es.filters import term
 from corehq.util.es.elasticsearch import (
     BulkIndexError,
@@ -400,7 +401,7 @@ class ElasticManageAdapter(BaseAdapter):
 
     def reindex(
             self, source, dest, wait_for_completion=False,
-            refresh=False, batch_size=1000, requests_per_second=None,
+            refresh=False, batch_size=1000, requests_per_second=None, copy_doc_ids=True
     ):
         """
         Starts the reindex process in elastic search cluster
@@ -433,6 +434,17 @@ class ElasticManageAdapter(BaseAdapter):
             },
             "conflicts": "proceed"
         }
+
+        # Should be removed after ES 5-6 migration
+        if copy_doc_ids:
+            reindex_body["script"] = {
+                "lang": "painless",
+                "source": """
+                if (!ctx._source.containsKey('doc_id')) {
+                    ctx._source['doc_id'] = ctx._id;
+                }
+                """
+            }
 
         reindex_kwargs = {
             "wait_for_completion": wait_for_completion,
@@ -1393,11 +1405,11 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
 
     def index_multiplexed(cls):
         key = f"ES_{cls.canonical_name.upper()}_INDEX_MULTIPLEXED"
-        return getattr(settings, key)
+        return getattr(const, key)
 
     def index_swapped(cls):
         key = f"ES_{cls.canonical_name.upper()}_INDEX_SWAPPED"
-        return getattr(settings, key)
+        return getattr(const, key)
 
     doc_adapter = cls(index_runtime_name(index_name), type_)
 

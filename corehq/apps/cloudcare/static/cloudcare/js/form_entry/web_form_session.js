@@ -332,7 +332,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
 
             // We revalidate any errored labels while answering any of the questions
             var erroredLabels = form.erroredLabels();
-
+            sessionStorage.answerQuestionInProgress = true;
             this.serverRequest(
                 _.extend({
                     'action': q.entry.xformAction,
@@ -342,6 +342,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                     'oneQuestionPerScreen': oneQuestionPerScreen,
                 }, q.entry.xformParams()),
                 function (resp) {
+                    sessionStorage.answerQuestionInProgress = false;
                     self.updateXformAction(q);
                     q.formplayerProcessed = true;
                     $.publish('session.reconcile', [resp, q]);
