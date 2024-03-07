@@ -1,4 +1,3 @@
-import json
 import os
 import tempfile
 
@@ -8,7 +7,6 @@ from transifex.api import TransifexApi
 from transifex.api.exceptions import UploadException
 
 from corehq.apps.translations.integrations.transifex.const import SOURCE_LANGUAGE_MAPPING
-from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
 
 
 class TransifexApiClient(object):
@@ -17,10 +15,6 @@ class TransifexApiClient(object):
         self.api = TransifexApi(auth=token)
         self.organization = self.api.Organization.get(slug=organization)
         self.project = self.api.Project.get(slug=project, organization=self.organization)
-
-    @property
-    def _auth(self):
-        return self.username, self.token
 
     @property
     def i18n_format(self):
@@ -222,40 +216,3 @@ class TransifexApiClient(object):
         """
         language_stats_list = self.api.ResourceLanguageStats.filter(project=self.project)
         return [self._language_id_to_lang_code(stats.language.id) for stats in language_stats_list]
-
-    def move_resources(self, hq_lang_code, target_project, version=None, use_version_postfix=True):
-        """
-        ability to move resources from one project to another
-
-        :param hq_lang_code: lang code on hq
-        :param target_project: target project slug on transifex
-        :param version: version if needed on parent resource slugs
-        :param use_version_postfix: to use version postfix in new project
-        :return: responses per resource slug
-        """
-        responses = {}
-        for resource_slug in self.get_resource_slugs(version):
-            lang = self.transifex_lang_code(hq_lang_code)
-            url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}/?file".format(
-                self.project, resource_slug, lang
-            )
-            response = requests.get(url, auth=self._auth, stream=True)
-            if response.status_code != 200:
-                raise ResourceMissing
-            if use_version_postfix:
-                upload_resource_slug = resource_slug
-            else:
-                upload_resource_slug = resource_slug.split("_v")[0]
-            upload_url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}".format(
-                target_project, upload_resource_slug, lang)
-            content = response.content
-            headers = {'content-type': 'application/json'}
-            data = {
-                'name': upload_resource_slug, 'slug': upload_resource_slug, 'content': content,
-                'i18n_type': 'PO'
-            }
-            upload_response = requests.put(
-                upload_url, data=json.dumps(data), auth=self._auth, headers=headers,
-            )
-            responses[resource_slug] = upload_response
-        return responses
