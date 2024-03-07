@@ -7,7 +7,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'cloudcare/js/formplayer/constants',
-    "cloudcare/js/formplayer/users/models",
 ], function (
     $,
     _,

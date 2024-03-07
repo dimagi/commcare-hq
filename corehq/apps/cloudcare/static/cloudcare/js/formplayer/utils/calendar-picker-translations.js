@@ -6,7 +6,6 @@ hqDefine('cloudcare/js/formplayer/utils/calendar-picker-translations', [
     'calendars/dist/js/jquery.calendars.plus',
     'calendars/dist/js/jquery.calendars-am',
     'calendars/dist/js/jquery.calendars.picker-am',
-    'calendars/dist/js/jquery.calendars.ethiopian',
     'calendars/dist/js/jquery.calendars.ethiopian-am',
 ], function (
     $

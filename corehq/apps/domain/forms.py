@@ -268,8 +268,8 @@ class TransferDomainForm(forms.ModelForm):
 
     def clean_to_username(self):
         username = self.cleaned_data['to_username']
-
-        if not WebUser.get_by_username(username):
+        web_user = WebUser.get_by_username(username)
+        if not (web_user and web_user.is_active):
             raise forms.ValidationError(TransferDomainFormErrors.USER_DNE)
 
         return username

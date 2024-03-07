@@ -2753,3 +2753,12 @@ INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Temporary increase of the max number of search results.',
 )
+
+
+SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
+    slug='support_road_network_disbursement_algorithm',
+    label='Add Road Network disbursement algorithm on geospatial settings page',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
+)
