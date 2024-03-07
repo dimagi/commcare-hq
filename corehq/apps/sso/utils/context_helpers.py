@@ -64,3 +64,27 @@ def get_idp_cert_expiration_email_context(idp):
     if idp.owner.dimagi_contact:
         email_context["bcc"].append(idp.owner.dimagi_contact)
     return email_context
+
+
+def get_graph_api_connection_issue_email_context(idp, error):
+    subject = _("CommCare HQ Alert: SSO Remote User Management, Issue Connecting to Microsoft Graph API")
+    template_context = {
+        "error": error,
+        "contact_email": settings.ACCOUNTS_EMAIL,
+    }
+    body_html, body_txt = render_multiple_to_strings(
+        template_context,
+        "sso/email/microsoft_graph_api_connection_issue_email_context.html",
+        "sso/email/microsoft_graph_api_connection_issue_email_context.txt",
+    )
+    email_context = {
+        "subject": subject,
+        "from": _(f"Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"),
+        "to": idp.owner.enterprise_admin_emails,
+        "bcc": [settings.ACCOUNTS_EMAIL],
+        "html": body_html,
+        "plaintext": body_txt,
+    }
+    if idp.owner.dimagi_contact:
+        email_context["bcc"].append(idp.owner.dimagi_contact)
+    return email_context
