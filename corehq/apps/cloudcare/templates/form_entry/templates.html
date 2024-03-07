@@ -6,7 +6,6 @@
         class: elementTile,
         css: {
           'gr-no-children': $data.children().length === 0,
-          'gr-has-no-questions': $data.children().every(function(d) { return d.type() !== 'grouped-element-tile-row' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'panel panel-default': collapsible,
           'repetition': isRepetition,
