@@ -207,13 +207,13 @@
         align-self: <%- model.verticalAlign %>;
       <% } else { %>
         <% if (model.showBorder || model.showShading) { %>
-          border-radius: 8px;
           justify-self: stretch;
           margin: 2px;
           padding: 4px;
           <% if (model.showBorder) { %>
             border: 1px solid #685c53;
           <% } %>
+          border-radius: 8px;
           <% if (model.showShading) { %>
             background-color: white;
             z-index: -1;
