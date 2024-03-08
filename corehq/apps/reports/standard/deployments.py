@@ -751,11 +751,16 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 def _readable_pct_from_total(total_series, index):
                     return '{0:.0f}%'.format(total_series[index - 1]['y'])
 
+                total_days = len(self.data_series)-1
+                intervals = [interval for interval in [3, 7, 30] if interval < total_days]
+                intervals.append(total_days)
+
                 return [
-                    [_readable_pct_from_total(self.percent_series, 3), _('in the last 3 days')],
-                    [_readable_pct_from_total(self.percent_series, 7), _('in the last week')],
-                    [_readable_pct_from_total(self.percent_series, 30), _('in the last 30 days')],
-                    [_readable_pct_from_total(self.percent_series, 60), _('in the last 60 days')],
+                    [
+                        _readable_pct_from_total(self.percent_series, interval),
+                        _('in the last {} days').format(interval)
+                    ]
+                    for interval in intervals
                 ]
 
             @property
