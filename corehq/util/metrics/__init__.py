@@ -328,7 +328,7 @@ def limit_domains(domain_name):
 
 def limit_tags(tags: Dict[str, str], domain: str):
     from corehq import toggles
-    if toggles.DETAILED_TAGGING.enabled(domain):
+    if toggles.HIGH_COUNT_DETAILED_TAGGING.enabled(domain):
         return tags
 
     for key in list(tags.keys()):
