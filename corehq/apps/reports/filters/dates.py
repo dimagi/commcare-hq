@@ -82,17 +82,18 @@ class SingleDateFilter(BaseReportFilter):
     template = "reports/filters/date_selector.html"
     label = gettext_lazy("Date")
     slug = "date"
+    default_date_delta = 0
 
     @property
     def date(self):
-        from_req = self.request.GET.get('date')
+        from_req = self.request.GET.get(self.slug)
         if from_req:
             try:
                 return iso_string_to_date(from_req)
             except ValueError:
                 pass
 
-        return datetime.date.today()
+        return datetime.date.today() + datetime.timedelta(days=self.default_date_delta)
 
     @property
     def filter_context(self):
