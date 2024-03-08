@@ -226,6 +226,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
 
     def tearDown(self):
         delete_all_repeat_records()
+        Command.discard_resume_state()
         super().tearDown()
 
     def test_sync_to_couch(self):
