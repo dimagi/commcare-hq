@@ -20,4 +20,4 @@ MPM_MIN = 'min'
 MODULE_NAME_TAG = "module_name"
 
 # These tags will only be added for domains with FF DETAILED_TAGGING enabled
-GATED_DETAILED_TAGS = (MODULE_NAME_TAG)
+GATED_DETAILED_TAGS = {MODULE_NAME_TAG}
