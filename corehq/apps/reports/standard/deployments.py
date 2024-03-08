@@ -13,6 +13,7 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.reports.filters.dates import SingleDateFilter
+from corehq.util.dates import iso_string_to_date
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -698,6 +699,16 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         return user_query
 
     @property
+    def report_from_date(self):
+        from_date = self.request_params.get(self.FromDateFilter.slug)
+        if from_date:
+            try:
+                return iso_string_to_date(from_date)
+            except ValueError:
+                pass
+        return datetime.today().date() + timedelta(days=self.FromDateFilter.default_date_delta)
+
+    @property
     def template_context(self):
 
         class SeriesData(namedtuple('SeriesData', 'id title chart_color bucket_series help')):
@@ -766,12 +777,13 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             # start with N days of empty data
             # add bucket info to the data series
             # add last bucket
-            days_of_history = 60
+            today = datetime.today().date()
+            # today and report_from_date both are inclusive
+            days_of_history = (today - self.report_from_date).days + 1
             vals = {
                 i: 0 for i in range(days_of_history)
             }
             extra = total = running_total = 0
-            today = datetime.today().date()
             for bucket_val in buckets:
                 bucket_date = date.fromisoformat(bucket_val['key'])
                 delta_days = (today - bucket_date).days
