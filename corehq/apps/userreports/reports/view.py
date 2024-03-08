@@ -489,7 +489,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @classmethod
     def url_pattern(cls):
-        from django.conf.urls import re_path as url
+        from django.urls import re_path as url
         pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
 
@@ -636,7 +636,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
 
     @classmethod
     def url_pattern(cls):
-        from django.conf.urls import re_path as url
+        from django.urls import re_path as url
         pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
 
