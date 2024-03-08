@@ -12,6 +12,7 @@ from django.utils.translation import gettext_lazy
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
+from corehq.apps.reports.filters.dates import SingleDateFilter
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -647,6 +648,13 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
 @location_safe
 class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
+
+    class FromDateFilter(SingleDateFilter):
+        label = gettext_lazy("From Date")
+        default_date_delta = -59
+        help_text = gettext_lazy("Select any date in the past up to 1 year. "
+                                 "Report will show results from selected date till today.")
+
     slug = 'aggregate_user_status'
 
     report_template_path = "reports/async/aggregate_user_status.html"
@@ -655,6 +663,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        FromDateFilter,
     ]
     exportable = False
     emailable = False
