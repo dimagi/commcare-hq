@@ -25,6 +25,7 @@ CASE_SEARCH_SORT_KEY = "commcare_sort"
 CASE_SEARCH_REGISTRY_ID_KEY = 'x_commcare_data_registry'
 CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY = 'x_commcare_custom_related_case_property'
 CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY = 'x_commcare_include_all_related_cases'
+CASE_SEARCH_MODULE_NAME_TAG_KEY = "x_commcare_module_name_tag"
 
 CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_CASE_TYPE_KEY: "case_types",
@@ -34,9 +35,8 @@ CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_SORT_KEY: "commcare_sort",
 }
 
-CASE_SEARCH_MODULE_NAME_TAG = "module_name_tag"
 CASE_SEARCH_TAGS_MAPPING = {
-    CASE_SEARCH_MODULE_NAME_TAG: MODULE_NAME_TAG,
+    CASE_SEARCH_MODULE_NAME_TAG_KEY: MODULE_NAME_TAG,
 }
 
 UNSEARCHABLE_KEYS = (
