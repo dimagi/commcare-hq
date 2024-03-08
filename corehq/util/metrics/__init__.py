@@ -124,7 +124,7 @@ from corehq.apps.celery import periodic_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 
-from .const import ALERT_INFO, COMMON_TAGS, MPM_ALL
+from .const import ALERT_INFO, COMMON_TAGS, MPM_ALL, GATED_DETAILED_TAGS
 from .metrics import (
     DEFAULT_BUCKETS,
     DebugMetrics,
@@ -324,6 +324,17 @@ def limit_domains(domain_name):
     if domain_name and domain_name in _domains_to_tag():
         return domain_name
     return '__other__'
+
+
+def limit_tags(tags: Dict[str, str], domain: str):
+    from corehq import toggles
+    if toggles.HIGH_COUNT_DETAILED_TAGGING.enabled(domain):
+        return tags
+
+    for key in list(tags.keys()):
+        if key in GATED_DETAILED_TAGS:
+            del tags[key]
+    return tags
 
 
 @quickcache([], timeout=24 * 60 * 60)
