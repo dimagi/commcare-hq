@@ -390,10 +390,16 @@ class ExportColumn(DocumentSchema):
             column = SplitUserDefinedExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)
-        column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
+
+        if app_ids_and_versions:
+            column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
+            column_is_deleted = column._is_deleted(app_ids_and_versions)
+        else:
+            column_is_deleted = False
+
         column.selected = (
             auto_select
-            and not column._is_deleted(app_ids_and_versions)
+            and not column_is_deleted
             and (not is_case_update or is_case_id)
             and not is_label_question
             and (is_main_table or is_bulk_export)
@@ -884,7 +890,8 @@ class ExportInstance(BlobMixin, Document):
         saved_export=None,
         auto_select=True,
         export_settings=None,
-        load_deprecated=False
+        load_deprecated=False,
+        fetch_details_from_apps=True,
     ):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
         if saved_export:
@@ -900,20 +907,26 @@ class ExportInstance(BlobMixin, Document):
         if not group_schemas:
             return instance
 
-        latest_app_ids_and_versions = get_latest_app_ids_and_versions(
-            schema.domain,
-            getattr(schema, 'app_id', None),
-        )
+        if fetch_details_from_apps:
+            latest_app_ids_and_versions = get_latest_app_ids_and_versions(
+                schema.domain,
+                getattr(schema, 'app_id', None),
+            )
+        else:
+            latest_app_ids_and_versions = {}
+
         for group_schema in group_schemas:
             table = instance.get_table(group_schema.path) or TableConfiguration(
                 path=group_schema.path,
                 label=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
-            table.is_deleted = is_occurrence_deleted(
-                group_schema.last_occurrences,
-                latest_app_ids_and_versions,
-            ) and not group_schema.inferred
+
+            if fetch_details_from_apps:
+                table.is_deleted = is_occurrence_deleted(
+                    group_schema.last_occurrences,
+                    latest_app_ids_and_versions,
+                ) and not group_schema.inferred
 
             prev_index = 0
             for item in group_schema.items:
@@ -2409,13 +2422,14 @@ class CaseExportDataSchema(ExportDataSchema):
                     last_occurrences={app_id: app_version},
                 ))
 
-        for case_type, identifier in parent_types:
-            group_schema.items.append(CaseIndexItem(
-                path=[PathNode(name='indices'), PathNode(name=case_type)],
-                label='{}.{}'.format(identifier, case_type),
-                last_occurrences={app_id: app_version},
-                tag=PROPERTY_TAG_CASE,
-            ))
+        if parent_types:
+            for case_type, identifier in parent_types:
+                group_schema.items.append(CaseIndexItem(
+                    path=[PathNode(name='indices'), PathNode(name=case_type)],
+                    label='{}.{}'.format(identifier, case_type),
+                    last_occurrences={app_id: app_version},
+                    tag=PROPERTY_TAG_CASE,
+                ))
 
         schema.group_schemas.append(group_schema)
         return schema
