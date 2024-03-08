@@ -501,10 +501,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                         currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", urlObject.appId);
                     let customProperties = {};
                     if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
-                        customProperties = currentApp.attributes.profile.custom_properties;
+                        customProperties = currentApp.attributes.profile.custom_properties || {};
                     }
                     const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
-                    if (!useAggressiveSyncTiming){
+                    if (!useAggressiveSyncTiming) {
                         stopSyncInterval();
                     }
                     if (shouldSync() && FormplayerFrontend.permitIntervalSync) {
