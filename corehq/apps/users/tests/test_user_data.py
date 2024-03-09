@@ -44,56 +44,35 @@ class TestUserData(TestCase):
             'cruise': 'control',
             'this': 'road',
         })
-        # Normally you shouldn't use `user.user_data` directly - I'm demonstrating that it's not updated
-        self.assertEqual(user.user_data, {})
+
+        # This will be persisted on user save
+        with self.assertRaises(SQLUserData.DoesNotExist):
+            SQLUserData.objects.get(user_id=user.user_id, domain=self.domain)
+        user.save()
+        sql_user_data = SQLUserData.objects.get(user_id=user.user_id, domain=self.domain)
+        self.assertEqual(sql_user_data.data['this'], 'road')
 
     def test_web_users(self):
-        # This behavior is bad - data isn't fully scoped to domain
         web_user = self.make_web_user()
-        user_data = web_user.get_user_data(self.domain)
-        self.assertEqual(user_data.to_dict(), {
-            'commcare_project': self.domain,
-            'commcare_profile': '',
-        })
+        user_data1 = web_user.get_user_data(self.domain)
+        user_data1['what_domain_is_it'] = 'domain 1'
 
-        user_data['start'] = 'sometimes'
+        user_data2 = web_user.get_user_data('another_domain')
+        user_data2['what_domain_is_it'] = 'domain 2'
+
+        # Each domain has a separate user_data object
         self.assertEqual(web_user.get_user_data(self.domain).to_dict(), {
             'commcare_project': self.domain,
             'commcare_profile': '',
-            'start': 'sometimes',
+            'what_domain_is_it': 'domain 1',
         })
-        # Only the original domain was modified
-        self.assertEqual(web_user.get_user_data('ANOTHER_DOMAIN').to_dict(), {
-            'commcare_project': 'ANOTHER_DOMAIN',
+        self.assertEqual(web_user.get_user_data('another_domain').to_dict(), {
+            'commcare_project': 'another_domain',
             'commcare_profile': '',
+            'what_domain_is_it': 'domain 2',
         })
 
-    def test_lazy_init_and_save(self):
-        # Mimic user created the old way, with data stored in couch
-        user = CommCareUser.create(self.domain, 'riggan', '***', None, None)
-        self.addCleanup(user.delete, self.domain, deleted_by=None)
-        user['user_data'] = {'favorite_color': 'purple',
-                             'start_date': '2023-01-01T00:00:00.000000Z'}
-        user.save()
-        with self.assertRaises(SQLUserData.DoesNotExist):
-            SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
-
-        # Accessing data for the first time saves it to SQL
-        self.assertEqual(user.get_user_data(self.domain)['favorite_color'], 'purple')
-        sql_data = SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
-        self.assertEqual(sql_data.data['favorite_color'], 'purple')
-        self.assertEqual(sql_data.data['start_date'], '2023-01-01T00:00:00.000000Z')
-
-        # Making a modification works immediately, but isn't persisted until user save
-        user.get_user_data(self.domain)['favorite_color'] = 'blue'
-        self.assertEqual(user.get_user_data(self.domain)['favorite_color'], 'blue')
-        sql_data.refresh_from_db()
-        self.assertEqual(sql_data.data['favorite_color'], 'purple')  # unchanged
-        user.save()
-        sql_data.refresh_from_db()
-        self.assertEqual(sql_data.data['favorite_color'], 'blue')
-
-    def test_get_users_without_user_data(self):
+    def test_migrate_get_users_without_user_data(self):
         users_without_data = [
             self.make_commcare_user(),
             self.make_commcare_user(),
@@ -154,11 +133,11 @@ class TestUserData(TestCase):
 
         for user in users:
             user._user_data_accessors = {}  # wipe cache
-        with patch('corehq.apps.users.user_data.UserData.lazy_init') as lazy_init:
+        with patch('corehq.apps.users.user_data.UserData.for_user') as init_method:
             users = prime_user_data_caches(users, self.domain)
             for user in users:
                 user.get_user_data(self.domain)
-            self.assertEqual(lazy_init.call_count, 0)
+            self.assertEqual(init_method.call_count, 0)
 
     def test_prime_user_data_caches_avoids_multiple_schema_lookups(self):
         users = [

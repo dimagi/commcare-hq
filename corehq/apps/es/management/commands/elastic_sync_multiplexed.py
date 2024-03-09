@@ -224,7 +224,7 @@ class ESSyncUtil:
 
         current_index_name, older_index_name = self._get_current_and_older_index_name(cname)
 
-        if getattr(settings, f'ES_{cname.upper()}_INDEX_SWAPPED'):
+        if getattr(es_consts, f'ES_{cname.upper()}_INDEX_SWAPPED'):
             raise IndexAlreadySwappedException(
                 f"""Checkpoints can only be copied before swapping indexes.
                 Make sure you have set ES_{cname.upper()}_INDEX_SWAPPED to False."""

@@ -1,3 +1,4 @@
+'use strict';
 /* global affix */
 /* eslint-env mocha */
 hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
@@ -6,7 +7,10 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
             formUI = hqImport("cloudcare/js/form_entry/form_ui");
 
         before(function () {
-            hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", { WEB_APPS_ANCHORED_SUBMIT: false });
+            hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", {
+                WEB_APPS_ANCHORED_SUBMIT: false,
+                USE_PROMINENT_PROGRESS_BAR: false,
+            });
         });
 
         after(function () {

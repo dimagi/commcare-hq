@@ -772,14 +772,15 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         if idp_cert_file:
             try:
                 cert = certificates.get_certificate_from_file(idp_cert_file)
-                public_key = certificates.get_public_key(cert)
-                date_expiration = certificates.get_expiration_date(cert)
-            except certificates.crypto.Error:
+            except ValueError:
                 log.exception("Error uploading certificate: bad cert file.")
                 raise forms.ValidationError(
                     _("File type not accepted. Please ensure you have "
                       "uploaded a Base64 x509 certificate.")
                 )
+            else:
+                public_key = certificates.get_public_key(cert)
+                date_expiration = certificates.get_expiration_date(cert)
             if date_expiration <= datetime.datetime.now(tz=date_expiration.tzinfo):
                 raise forms.ValidationError(
                     _("This certificate has already expired!")

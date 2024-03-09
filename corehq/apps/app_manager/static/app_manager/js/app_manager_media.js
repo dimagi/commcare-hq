@@ -46,6 +46,8 @@ hqDefine('app_manager/js/app_manager_media', function () {
             return self.savedPath();
         });
 
+        self.altText = ko.observable(o.ref.alt_text);
+
         self.multimediaObject = ko.computed(function () {
             return self.objectMap()[self.currentPath()];
         });
@@ -152,12 +154,12 @@ hqDefine('app_manager/js/app_manager_media', function () {
     var MenuMediaReference = function (ref) {
         'use strict';
         var self = {};
-
         self.path = ref.path || '';
         self.iconType = ref.icon_class || '';
         self.mediaType = ref.media_class || '';
         self.module = ref.module;
         self.form = ref.form;
+        self.altText = ref.alt_text || '';
 
         return self;
     };

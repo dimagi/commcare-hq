@@ -1,3 +1,4 @@
+'use strict';
 /* global Sentry */
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)

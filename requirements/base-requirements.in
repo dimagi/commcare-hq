@@ -7,6 +7,7 @@ bleach[css]  # USH - used for rich text messaging emails
 boto3
 celery
 CommcareTranslationChecker>=0.9.7
+cryptography>=42.0
 csiphash
 css_inline  # USH - used for rich text messaging emails
 datadog

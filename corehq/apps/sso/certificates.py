@@ -1,8 +1,10 @@
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
-from OpenSSL import crypto
-import uuid
-from dateutil.parser import parse
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import NameOID
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -11,43 +13,59 @@ DEFAULT_EXPIRATION = 3 * 365 * 24 * 60 * 60  # three years in seconds
 
 
 def create_key_pair():
-    k = crypto.PKey()
-    k.generate_key(crypto.TYPE_RSA, 4096)
-    return k
+    return rsa.generate_private_key(public_exponent=65537, key_size=4096)
 
 
 def create_self_signed_cert(key_pair, expiration_in_seconds=DEFAULT_EXPIRATION):
-    cert = crypto.X509()
-    cert.get_subject().C = "US"  # country
-    cert.get_subject().ST = "MA"  # state
-    cert.get_subject().L = "Cambridge"  # location
-    cert.get_subject().O = "Dimagi Inc."  # organization
-    cert.get_subject().OU = "CommCareHQ"  # organizational unit name
-    cert.get_subject().CN = "CommCare"  # common name
-    cert.get_subject().emailAddress = settings.ACCOUNTS_EMAIL
-    cert.set_serial_number(uuid.uuid4().int)
-    cert.gmtime_adj_notBefore(0)
-    cert.gmtime_adj_notAfter(expiration_in_seconds)
-    cert.set_issuer(cert.get_subject())
-    cert.set_pubkey(key_pair)
-    cert.sign(key_pair, "sha256")
+    subject = issuer = x509.Name([
+        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "MA"),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, "Cambridge"),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Dimagi Inc."),
+        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "CommCareHQ"),
+        x509.NameAttribute(NameOID.COMMON_NAME, "CommCare"),
+        x509.NameAttribute(NameOID.EMAIL_ADDRESS, settings.ACCOUNTS_EMAIL),
+    ])
+    now = datetime.now(timezone.utc)
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(issuer)
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now)
+        .not_valid_after(now + timedelta(seconds=expiration_in_seconds))
+        .public_key(key_pair.public_key())
+        .sign(key_pair, hashes.SHA256())
+    )
     return cert
 
 
 def get_expiration_date(cert):
-    return parse(cert.get_notAfter())
+    return cert.not_valid_after_utc
 
 
 def get_public_key(cert):
-    return crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode("utf-8")
+    return cert.public_bytes(serialization.Encoding.PEM).decode("utf-8")
 
 
 def get_private_key(key_pair):
-    return crypto.dump_privatekey(crypto.FILETYPE_PEM, key_pair).decode("utf-8")
+    return key_pair.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode("utf-8")
 
 
 def get_certificate_from_file(file):
-    return crypto.load_certificate(crypto.FILETYPE_PEM, file.read())
+    """Load certificate from file
+
+    :raises: ValueError if the certificate is malformed. This is not
+    documented in the reference[0], although the similarly named
+    `load_pem_x509_certificates` is documented to raise ValueError.
+
+    [0] https://cryptography.io/en/latest/x509/reference/#loading-certificates
+    """
+    return x509.load_pem_x509_certificate(file.read())
 
 
 def get_certificate_response(cert_string, filename):

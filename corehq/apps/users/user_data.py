@@ -26,27 +26,14 @@ class UserData:
         self._profile_id = profile_id or raw_user_data.get(PROFILE_SLUG, None)
 
     @classmethod
-    def lazy_init(cls, couch_user, domain):
-        # To be used during initial rollout - lazily create user_data objs from
-        # existing couch data
-        raw_user_data = couch_user.to_json().get('user_data', {}).copy()
-        raw_user_data.pop(COMMCARE_PROJECT, None)
-        profile_id = raw_user_data.pop(PROFILE_SLUG, None)
-
+    def for_user(cls, couch_user, domain):
         try:
-            sql_data = SQLUserData.objects.get(user_id=couch_user.user_id, domain=domain)
-        except SQLUserData.DoesNotExist:
-            if not (raw_user_data or profile_id):
-                # Don't bother saving anything to the DB
-                return cls({}, couch_user, domain)
-
-            sql_data = SQLUserData.objects.create(
+            sql_data = SQLUserData.objects.get(
                 user_id=couch_user.user_id,
                 domain=domain,
-                data=raw_user_data,
-                django_user=couch_user.get_django_user(),
-                profile_id=profile_id,
             )
+        except SQLUserData.DoesNotExist:
+            return cls({}, couch_user, domain)
 
         return cls(sql_data.data, couch_user, domain, profile_id=sql_data.profile_id)
 

@@ -16,8 +16,10 @@
 /corehq/tests/nose.py @millerdev
 /corehq/tests/noseplugins/ @millerdev
 /corehq/util/ @esoergel
+/corehq/util/couch_helpers.py @millerdev
 /corehq/util/datadog/lockmeter.py @millerdev
 /corehq/util/datadog/tests/test_lockmeter.py @millerdev
+/corehq/util/pagination.py @millerdev
 /corehq/warehouse/ @calellowitz
 /corehq/warnings.py @millerdev
 
@@ -26,6 +28,7 @@
 /corehq/apps/app_manager/ @orangejenny
 /corehq/apps/callcenter/ @snopoke
 /corehq/apps/change_feed/ @dannyroberts
+/corehq/apps/cleanup/management/commands/populate_sql_model_from_couch_model.py @millerdev
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/data_dictionary/ @esoergel @orangejenny @zandre-eng
 /corehq/apps/domain/decorators.py @esoergel
@@ -50,6 +53,7 @@
 /corehq/apps/userreports/ @calellowitz
 /corehq/apps/userreports/reports/builder/ @kaapstorm
 /corehq/apps/users/ @esoergel
+/corehq/ex-submodules/dimagi/utils/couch/migration.py @millerdev
 /corehq/ex-submodules/pillowtop @dannyroberts @calellowitz
 
 /custom/covid/management/commands/ @stephherbers @AddisonDunn

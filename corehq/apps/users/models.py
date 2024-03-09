@@ -1108,7 +1108,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         # To do this in bulk, try UserData's prime_user_data_caches
         from .user_data import UserData
         if domain not in self._user_data_accessors:
-            self._user_data_accessors[domain] = UserData.lazy_init(self, domain)
+            self._user_data_accessors[domain] = UserData.for_user(self, domain)
         return self._user_data_accessors[domain]
 
     def _save_user_data(self):

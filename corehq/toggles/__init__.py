@@ -2744,10 +2744,27 @@ SUPPORT_GEO_JSON_EXPORT = StaticToggle(
     description='The Case Export page now supports the exporting of GeoJSON data.',
 )
 
+USE_PROMINENT_PROGRESS_BAR = StaticToggle(
+    slug='use_prominent_progress_bar',
+    label='Use more prominent progress bar in place of NProgress',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Replaces NProgress bar with more prominent progress bar',
+)
+
 INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
     slug='increased_max_search_results',
     label='Increases the maximum number of Elasticsearch results from 500 to 1500',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='Temporary increase of the max number of search results.',
+)
+
+
+SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
+    slug='support_road_network_disbursement_algorithm',
+    label='Add Road Network disbursement algorithm on geospatial settings page',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
 )

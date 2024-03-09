@@ -3828,6 +3828,7 @@ msgid "Please enter your name."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
 #: corehq/apps/users/static/users/js/invite_web_user.js
 msgid "Please specify an email."
 msgstr ""
@@ -3837,6 +3838,7 @@ msgid "Checking email..."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
 msgid "Please specify a password."
 msgstr ""
 
@@ -4259,6 +4261,58 @@ msgstr ""
 
 #: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js
 msgid "Please Select a Country Code"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "Forms"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "Cases"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "Reports"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "App Builder"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "Thank you, "
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "Submission has been cancelled."
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+msgid "Please specify a username."
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+msgid "Username must be at least three characters long."
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+msgid "Your password must be at least 6 characters long"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+msgid "Resetting form..."
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
+msgid "Benched"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
+msgid "Playing"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
+msgid "Search Team..."
 msgstr ""
 
 #: corehq/apps/translations/static/translations/js/translations.js

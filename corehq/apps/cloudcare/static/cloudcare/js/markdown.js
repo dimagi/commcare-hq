@@ -1,3 +1,4 @@
+'use strict';
 /* global DOMPurify */
 hqDefine('cloudcare/js/markdown', [
     'jquery',

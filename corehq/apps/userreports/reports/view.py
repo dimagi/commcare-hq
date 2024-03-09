@@ -307,11 +307,18 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                     )
                     details = str(e)
                 self.template_name = 'userreports/report_error.html'
+                allow_delete = (
+                    self.report_config_id
+                    and not self.is_static
+                    and can_delete_report(request, self.spec)
+                )
+
                 context = {
                     'report_id': self.report_config_id,
                     'is_static': self.is_static,
                     'error_message': error_message,
                     'details': details,
+                    'allow_delete': allow_delete,
                 }
                 context.update(self.main_context)
                 return self.render_to_response(context)

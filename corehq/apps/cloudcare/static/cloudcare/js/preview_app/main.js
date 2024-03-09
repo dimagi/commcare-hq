@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("cloudcare/js/preview_app/main", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         previewApp = hqImport("cloudcare/js/preview_app/preview_app"),
