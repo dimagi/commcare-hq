@@ -402,7 +402,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
             }
-            this.parentView.notifyFieldChange(e, this, useDynamicSearch, formplayerConstants.queryInitiatedBy.FIELD_CHANGE);
+            this.parentView.notifyFieldChange(e, this, useDynamicSearch, formplayerConstants.requestInitiatedByTagsMapping.FIELD_CHANGE);
         },
 
         toggleBlankSearch: function (e) {
@@ -745,7 +745,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
             });
             if (invalidRequiredFields.length === 0) {
-                self.performSubmit(formplayerConstants.queryInitiatedBy.DYNAMIC_SEARCH);
+                self.performSubmit(formplayerConstants.requestInitiatedByTagsMapping.DYNAMIC_SEARCH);
             }
         },
 

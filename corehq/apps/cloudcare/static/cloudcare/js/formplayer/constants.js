@@ -32,7 +32,7 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
         QUERY: "query",
 
         // values are snake case as recommended for Datadog tags
-        queryInitiatedBy: {
+        requestInitiatedByTagsMapping: {
             DYNAMIC_SEARCH: 'dynamic_search',
             FIELD_CHANGE: "field_change",
         },
