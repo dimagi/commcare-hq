@@ -470,7 +470,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
 
             const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
             if (!useAggressiveSyncTiming) {
-                return
+                return;
             }
 
             const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
@@ -513,14 +513,14 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 }, delayInMilliseconds);
             }
         });
-    };
+    }
 
     function stopSyncInterval() {
         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
             clearInterval(FormplayerFrontend.syncInterval);
             FormplayerFrontend.syncInterval = null;
         });
-    };
+    }
 
     return Utils;
 });
