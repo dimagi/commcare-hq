@@ -330,10 +330,7 @@ def limit_tags(tags: Dict[str, str], domain: str):
     if toggles.HIGH_COUNT_DETAILED_TAGGING.enabled(domain):
         return tags
 
-    for key in list(tags.keys()):
-        if key in GATED_DETAILED_TAGS:
-            del tags[key]
-    return tags
+    return {k: v for k, v in tags.items() if k not in GATED_DETAILED_TAGS}
 
 
 @quickcache([], timeout=24 * 60 * 60)
