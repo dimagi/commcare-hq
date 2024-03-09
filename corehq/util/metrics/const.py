@@ -19,5 +19,5 @@ MPM_MIN = 'min'
 # Datadog tags
 MODULE_NAME_TAG = "module_name"
 
-# These tags will only be added for domains with FF DETAILED_TAGGING enabled
+# These tags will only be added for domains with FF HIGH_COUNT_DETAILED_TAGGING enabled
 GATED_DETAILED_TAGS = {MODULE_NAME_TAG}
