@@ -246,6 +246,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         this.singleApp = options.singleApp;
         this.sortIndex = options.sortIndex;
         this.forceLoginAs = options.forceLoginAs;
+        this.requestInitiatedByTags = options.requestInitiatedByTags;
 
         this.setSelections = function (selections) {
             this.selections = selections;
@@ -288,7 +289,16 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
         };
 
-        this.setQueryData = function ({ inputs, execute, forceManualSearch, initiatedBy}) {
+        this.addRequestInitiatedByTags = function (requestInitiatedByTag) {
+            if (requestInitiatedByTag !== null && requestInitiatedByTag !== undefined) {
+                if (!this.requestInitiatedByTags) {
+                    this.requestInitiatedByTags = [];
+                }
+                this.requestInitiatedByTags.push(String(requestInitiatedByTag));
+            }
+        };
+
+        this.setQueryData = function ({ inputs, execute, forceManualSearch}) {
             var selections = Utils.currentUrlToObject().selections;
             var queryKey = sessionStorage.queryKey;
             this.queryData = this.queryData || {};
@@ -300,9 +310,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 selections: selections,
             }, this.queryData[queryKey]);
 
-            if (initiatedBy !== null && initiatedBy !== undefined) {
-                queryDataEntry.initiatedBy = initiatedBy;
-            }
             Utils.setCurrentQueryInputs(inputs, queryKey);
             this.queryData[queryKey] = queryDataEntry;
 
@@ -384,6 +391,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
             forceLoginAs: self.forceLoginAs,
+            requestInitiatedByTags: self.requestInitiatedByTags,
         };
         return JSON.stringify(dict);
     };
@@ -403,6 +411,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             'singleApp': data.singleApp,
             'sortIndex': data.sortIndex,
             'forceLoginAs': data.forceLoginAs,
+            "requestInitiatedByTags": data.requestInitiatedByTags,
         };
         return new Utils.CloudcareUrl(options);
     };

@@ -200,20 +200,21 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiatedBy) {
+    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiatedByTag) {
         var urlObject = utils.currentUrlToObject();
         var queryObject = _.extend(
             {
                 inputs: queryDict,
                 execute: true,
-                initiatedBy: initiatedBy,
             },
             // force manual search in split screen case search for workflow compatibility
             sidebarEnabled ? { forceManualSearch: true } : {}
         );
         urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
-        API.listMenus();
+        urlObject.addRequestInitiatedByTags(initiatedByTag);
+        let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
+        API.listMenus(encodedUrl);
     });
 
     FormplayerFrontend.on('restore_as:list', function () {

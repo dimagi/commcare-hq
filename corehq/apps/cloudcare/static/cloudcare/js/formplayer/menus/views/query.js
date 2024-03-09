@@ -803,7 +803,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return promise;
         },
 
-        _updateModelsForValidation: function (initiatedBy) {
+        _updateModelsForValidation: function (initiatedByTag) {
             var self = this;
             var promise = $.Deferred();
             self.updateModelsForValidation = promise;
@@ -814,8 +814,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 inputs: self.getAnswers(),
                 execute: false,
                 forceManualSearch: true,
-                initiatedBy: initiatedBy,
             });
+            urlObject.addRequestInitiatedByTags(initiatedByTag);
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
                 // Update models based on response
