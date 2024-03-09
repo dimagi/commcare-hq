@@ -3,6 +3,8 @@
 import corehq.apps.es.migration_operations
 from django.db import migrations
 
+from corehq.apps.es.utils import index_runtime_name
+
 
 class Migration(migrations.Migration):
 
@@ -12,7 +14,7 @@ class Migration(migrations.Migration):
 
     operations = [
         corehq.apps.es.migration_operations.CreateIndex(
-            name='apps-2024-03-09',
+            name=index_runtime_name('apps-2024-03-09'),
             type_='app',
             mapping={
                 '_all': {'enabled': False},
@@ -28,7 +30,7 @@ class Migration(migrations.Migration):
             es_versions=[5],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
-            name='case-search-2024-03-09',
+            name=index_runtime_name('case-search-2024-03-09'),
             type_='case',
             mapping={
                 '_all': {'enabled': False},
@@ -45,7 +47,7 @@ class Migration(migrations.Migration):
             es_versions=[5],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
-            name='cases-2024-03-09',
+            name=index_runtime_name('cases-2024-03-09'),
             type_='case',
             mapping={
                 'date_detection': False,
@@ -60,7 +62,7 @@ class Migration(migrations.Migration):
             es_versions=[5],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
-            name='domains-2024-03-09',
+            name=index_runtime_name('domains-2024-03-09'),
             type_='hqdomain',
             mapping={
                 '_all': {'enabled': False},
@@ -76,7 +78,7 @@ class Migration(migrations.Migration):
             es_versions=[5],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
-            name='forms-2024-03-09',
+            name=index_runtime_name('forms-2024-03-09'),
             type_='xform',
             mapping={
                 'date_detection': False,
@@ -91,7 +93,7 @@ class Migration(migrations.Migration):
             es_versions=[5],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
-            name='groups-2024-03-09',
+            name=index_runtime_name('groups-2024-03-09'),
             type_='group',
             mapping={
                 'date_detection': False,
@@ -106,7 +108,7 @@ class Migration(migrations.Migration):
             es_versions=[5],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
-            name='sms-2024-03-09',
+            name=index_runtime_name('sms-2024-03-09'),
             type_='sms',
             mapping={
                 '_all': {'enabled': False},
@@ -122,7 +124,7 @@ class Migration(migrations.Migration):
             es_versions=[5],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
-            name='users-2024-03-09',
+            name=index_runtime_name('users-2024-03-09'),
             type_='user',
             mapping={
                 '_all': {'analyzer': 'standard'},
