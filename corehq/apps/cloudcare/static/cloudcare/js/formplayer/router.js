@@ -171,6 +171,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         utils.setSelectedValues(selections);
         utils.setUrlToObject(urlObject);
 
+        // Tags should not be included in set URL. Otherwise, it persists across menus we will need to handle clearing it.
         urlObject.addRequestInitiatedByTags(formplayerConstants.requestInitiatedByTagsMapping.PAGINATION);
         let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
         API.listMenus(encodedUrl);
@@ -216,6 +217,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         );
         urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
+
+        // Tags should not be included in set URL. Otherwise, it persists across menus we will need to handle clearing it.
         urlObject.addRequestInitiatedByTags(initiatedByTag);
         let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
         API.listMenus(encodedUrl);
