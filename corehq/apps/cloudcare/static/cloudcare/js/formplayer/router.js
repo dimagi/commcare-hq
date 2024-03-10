@@ -24,7 +24,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         menusCollections = hqImport("cloudcare/js/formplayer/menus/collections"),
         menusController = hqImport("cloudcare/js/formplayer/menus/controller"),
         sessionsController = hqImport("cloudcare/js/formplayer/sessions/controller"),
-        usersController = hqImport("cloudcare/js/formplayer/users/controller");
+        usersController = hqImport("cloudcare/js/formplayer/users/controller"),
+        formplayerConstants = hqImport("cloudcare/js/formplayer/constants");
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
@@ -169,7 +170,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         urlObject.setPage(page);
         utils.setSelectedValues(selections);
         utils.setUrlToObject(urlObject);
-        API.listMenus();
+
+        urlObject.addRequestInitiatedByTags(formplayerConstants.requestInitiatedByTagsMapping.PAGINATION);
+        let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
+        API.listMenus(encodedUrl);
     });
 
     FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage, selections) {

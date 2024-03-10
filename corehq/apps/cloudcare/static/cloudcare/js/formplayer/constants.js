@@ -35,6 +35,8 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
         requestInitiatedByTagsMapping: {
             DYNAMIC_SEARCH: 'dynamic_search',
             FIELD_CHANGE: "field_change",
+            PAGINATION: "pagination",
+            CLICKABLE_ICON: "clickable_icon",
         },
 
         SMALL_SCREEN_WIDTH_PX: 992,

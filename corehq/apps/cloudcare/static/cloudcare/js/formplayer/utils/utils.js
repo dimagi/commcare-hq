@@ -72,7 +72,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             delete urlObject.queryData[queryKey].inputs;
         }
         var encodedUrl = Utils.objectToEncodedUrl(urlObject.toJson());
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
             FormplayerFrontend.navigate(encodedUrl, { replace: replace });
         });
     };
