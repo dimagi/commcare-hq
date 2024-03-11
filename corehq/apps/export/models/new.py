@@ -1733,7 +1733,7 @@ class ExportDataSchema(Document):
         return current_schema
 
     @classmethod
-    def generate_schema_from_builds(
+    def generate_schema(
         cls,
         domain,
         app_id,
@@ -2507,7 +2507,7 @@ class SMSExportDataSchema(ExportDataSchema):
         return SMS_EXPORT
 
     @classmethod
-    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
+    def generate_schema(cls, domain, app_id, identifier, force_rebuild=False,
             only_process_current_builds=False, task=None):
         return cls(domain=domain)
 

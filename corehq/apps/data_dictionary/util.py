@@ -41,7 +41,7 @@ def _get_all_case_properties(domain):
 
     for case_type in get_case_types_from_apps(domain):
         properties = set()
-        schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case_type)
+        schema = CaseExportDataSchema.generate_schema(domain, None, case_type)
 
         # only the first schema contains case properties. The others contain meta info
         group_schema = schema.group_schemas[0]

@@ -456,7 +456,7 @@ def case_property_names(request, domain, case_id):
     # We need to look at the export schema in order to remove any case properties that
     # have been deleted from the app. When the data dictionary is fully public, we can use that
     # so that users may deprecate those properties manually
-    export_schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case.type)
+    export_schema = CaseExportDataSchema.generate_schema(domain, None, case.type)
     property_schema = export_schema.group_schemas[0]
     last_app_ids = get_latest_app_ids_and_versions(domain)
     all_property_names = {

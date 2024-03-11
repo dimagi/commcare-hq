@@ -28,7 +28,7 @@ def get_case_data_sources(app):
 
 
 def get_case_data_source(app, case_type):
-    schema = CaseExportDataSchema.generate_schema_from_builds(
+    schema = CaseExportDataSchema.generate_schema(
         app.domain,
         app._id,
         case_type,
@@ -71,7 +71,7 @@ def get_form_data_sources(app):
 
 def get_form_data_source(app, form):
     xform = XForm(form.source, domain=app.domain)
-    schema = FormExportDataSchema.generate_schema_from_builds(
+    schema = FormExportDataSchema.generate_schema(
         app.domain,
         app._id,
         xform.data_node.tag_xmlns,

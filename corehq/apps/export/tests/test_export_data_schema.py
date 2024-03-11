@@ -624,7 +624,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     def test_basic_application_schema(self):
         app = self.current_app
 
-        schema = FormExportDataSchema.generate_schema_from_builds(
+        schema = FormExportDataSchema.generate_schema(
             app.domain,
             app._id,
             'my_sweet_xmlns'
@@ -641,7 +641,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         with patch(
                 'corehq.apps.export.models.new.FormExportDataSchema._process_app_build',
                 side_effect=Exception('boom')):
-            FormExportDataSchema.generate_schema_from_builds(
+            FormExportDataSchema.generate_schema(
                 self.current_app.domain,
                 self.current_app._id,
                 'my_sweet_xmlns'
@@ -650,7 +650,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     def test_build_from_saved_schema(self):
         app = self.current_app
 
-        schema = FormExportDataSchema.generate_schema_from_builds(
+        schema = FormExportDataSchema.generate_schema(
             app.domain,
             app._id,
             'my_sweet_xmlns'
@@ -668,7 +668,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         second_build.save()
         self.addCleanup(second_build.delete)
 
-        new_schema = FormExportDataSchema.generate_schema_from_builds(
+        new_schema = FormExportDataSchema.generate_schema(
             app.domain,
             app._id,
             'my_sweet_xmlns'
@@ -681,7 +681,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     def test_build_with_inferred_schema(self):
         app = self.current_app
 
-        schema = CaseExportDataSchema.generate_schema_from_builds(
+        schema = CaseExportDataSchema.generate_schema(
             app.domain,
             app._id,
             self.case_type,
@@ -696,7 +696,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     def test_build_with_advanced_app(self):
         app = self.advanced_app
 
-        schema = FormExportDataSchema.generate_schema_from_builds(
+        schema = FormExportDataSchema.generate_schema(
             app.domain,
             app._id,
             "repeat-xmlns",
@@ -756,7 +756,7 @@ class TestAppCasePropertyReferences(TestCase, TestXmlMixin):
         super(TestAppCasePropertyReferences, cls).tearDownClass()
 
     def testCaseReferencesMakeItToCaseSchema(self):
-        schema = CaseExportDataSchema.generate_schema_from_builds(
+        schema = CaseExportDataSchema.generate_schema(
             self.domain,
             self.current_app._id,
             self.case_type,
@@ -792,13 +792,13 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
     def test_rebuild_version_control(self):
         app = self.current_app
 
-        schema = FormExportDataSchema.generate_schema_from_builds(
+        schema = FormExportDataSchema.generate_schema(
             app.domain,
             app._id,
             'my_sweet_xmlns'
         )
 
-        existing_schema = FormExportDataSchema.generate_schema_from_builds(
+        existing_schema = FormExportDataSchema.generate_schema(
             app.domain,
             app._id,
             'my_sweet_xmlns'
@@ -808,7 +808,7 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
         with patch(
                 'corehq.apps.export.models.new.FORM_DATA_SCHEMA_VERSION',
                 FORM_DATA_SCHEMA_VERSION + 1):
-            rebuilt_schema = FormExportDataSchema.generate_schema_from_builds(
+            rebuilt_schema = FormExportDataSchema.generate_schema(
                 app.domain,
                 app._id,
                 'my_sweet_xmlns'
@@ -862,7 +862,7 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
         delete_all_export_data_schemas()
 
     def test_basic_delayed_schema(self):
-        schema = FormExportDataSchema.generate_schema_from_builds(
+        schema = FormExportDataSchema.generate_schema(
             self.domain,
             self.current_app._id,
             self.xmlns,
@@ -873,7 +873,7 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
         group_schema = schema.group_schemas[0]
         self.assertEqual(len(group_schema.items), 2)
 
-        schema = FormExportDataSchema.generate_schema_from_builds(
+        schema = FormExportDataSchema.generate_schema(
             self.domain,
             self.current_app._id,
             self.xmlns,
@@ -933,7 +933,7 @@ class TestCaseDelayedSchema(TestCase, TestXmlMixin):
         delete_all_export_data_schemas()
 
     def test_basic_delayed_schema(self):
-        schema = CaseExportDataSchema.generate_schema_from_builds(
+        schema = CaseExportDataSchema.generate_schema(
             self.domain,
             self.current_app._id,
             self.case_type,
@@ -944,7 +944,7 @@ class TestCaseDelayedSchema(TestCase, TestXmlMixin):
         group_schema = schema.group_schemas[0]
         self.assertEqual(len(group_schema.items), 2)
 
-        schema = CaseExportDataSchema.generate_schema_from_builds(
+        schema = CaseExportDataSchema.generate_schema(
             self.domain,
             self.current_app._id,
             self.case_type,
@@ -991,7 +991,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         delete_all_export_data_schemas()
 
     def test_basic_application_schema(self):
-        schema = CaseExportDataSchema.generate_schema_from_builds(
+        schema = CaseExportDataSchema.generate_schema(
             self.domain,
             self.current_app._id,
             self.case_type,
@@ -1007,7 +1007,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
     def test_build_from_saved_schema(self):
         app = self.current_app
 
-        schema = CaseExportDataSchema.generate_schema_from_builds(
+        schema = CaseExportDataSchema.generate_schema(
             app.domain,
             app._id,
             self.case_type,
@@ -1031,7 +1031,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
             second_build.save()
         self.addCleanup(second_build.delete)
 
-        new_schema = CaseExportDataSchema.generate_schema_from_builds(
+        new_schema = CaseExportDataSchema.generate_schema(
             app.domain,
             app._id,
             self.case_type,
@@ -1047,7 +1047,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
     def test_build_with_inferred_schema(self):
         app = self.current_app
 
-        schema = CaseExportDataSchema.generate_schema_from_builds(
+        schema = CaseExportDataSchema.generate_schema(
             app.domain,
             app._id,
             self.case_type,
@@ -1063,7 +1063,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
             ['question2', 'new-property'],
         )
 
-        schema = CaseExportDataSchema.generate_schema_from_builds(
+        schema = CaseExportDataSchema.generate_schema(
             app.domain,
             app._id,
             self.case_type,
@@ -1076,7 +1076,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
     @patch('corehq.apps.export.models.new.get_case_types_for_domain', return_value=(case_type,))
     def test_build_with_bulk_schema(self, _):
-        schema = CaseExportDataSchema.generate_schema_from_builds(
+        schema = CaseExportDataSchema.generate_schema(
             self.domain,
             self.current_app._id,
             ALL_CASE_TYPE_EXPORT
@@ -1133,7 +1133,7 @@ class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
         delete_all_export_data_schemas()
 
     def test_multiple_app_schema_generation(self):
-        schema = CaseExportDataSchema.generate_schema_from_builds(
+        schema = CaseExportDataSchema.generate_schema(
             self.domain,
             self.current_app._id,
             self.case_type,
@@ -1184,7 +1184,7 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
         Ensures that the child case generates a parent case table and indices
         columns in main table
         """
-        schema = CaseExportDataSchema.generate_schema_from_builds(
+        schema = CaseExportDataSchema.generate_schema(
             self.domain,
             self.current_app._id,
             'child-case',
@@ -1205,7 +1205,7 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
     def test_parent_case_table_generation_for_parent_case(self):
         """Ensures that the parent case doesn't have a parent case table"""
-        schema = CaseExportDataSchema.generate_schema_from_builds(
+        schema = CaseExportDataSchema.generate_schema(
             self.domain,
             self.current_app._id,
             self.case_type,
