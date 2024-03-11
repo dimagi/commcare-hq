@@ -215,7 +215,7 @@ class FetchProductListView(ProductListView):
 class NewProductView(BaseCommTrackManageView):
     urlname = 'commtrack_product_new'
     page_title = gettext_noop("New Product")
-    template_name = 'products/manage/product.html'
+    template_name = 'products/manage/bootstrap3/product.html'
 
     @property
     @memoized
