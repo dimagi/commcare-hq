@@ -3,7 +3,7 @@
 {% load compress %}
 {% load i18n %}
 
-{% requirejs_main 'builds/js/edit-builds' %}
+{% requirejs_main 'builds/js/bootstrap3/edit_builds' %}
 
 {% block page_title %}
 {% trans "Editing CommCare Builds" %}
@@ -24,18 +24,14 @@
       <table id="menu-table" class="table table-striped">
         <thead>
         <tr>
-          <th></th>
           <th>{% trans "Version" %}</th>
           <th>{% trans "Label" %}</th>
           <th>{% trans "Superuser Only" %}</th>
           <th></th>
         </tr>
         </thead>
-        <tbody data-bind="sortable: versions">
+        <tbody data-bind="foreach: versions">
         <tr>
-          <td class="sortable-handle">
-            <i class="fa-solid fa-up-down"></i>
-          </td>
           <td>
             <select class="form-control" data-bind="
                                     options: $root.available_versions,
