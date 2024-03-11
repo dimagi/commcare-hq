@@ -1158,14 +1158,6 @@ ECD_MIGRATED_DOMAINS = StaticToggle(
     'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.'
 )
 
-WEB_USER_ACTIVITY_REPORT = StaticToggle(
-    'web_user_activity_report',
-    'USH: Enable Web User Activity Report',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Activity+Report',
-)
-
 ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
     'ecd_enterprise_domains',
     'Explore Case Data feature preview for Enterprise domains',
@@ -2744,4 +2736,12 @@ SUPPORT_GEO_JSON_EXPORT = StaticToggle(
     tag=TAG_SOLUTIONS_CONDITIONAL,
     namespaces=[NAMESPACE_DOMAIN],
     description='The Case Export page now supports the exporting of GeoJSON data.',
+)
+
+INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
+    slug='increased_max_search_results',
+    label='Increases the maximum number of Elasticsearch results from 500 to 1500',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Temporary increase of the max number of search results.',
 )

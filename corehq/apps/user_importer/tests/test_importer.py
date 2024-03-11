@@ -111,7 +111,8 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 'F#', 'commcare_profile': ''})
+        self.assert_user_data_equals({
+            'commcare_project': 'mydomain', 'key': 'F#', 'commcare_profile': '', 'mode': ''})
 
         # Update user_data
         import_users_and_groups(
@@ -122,7 +123,8 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 'Bb', 'commcare_profile': ''})
+        self.assert_user_data_equals({
+            'commcare_project': 'mydomain', 'key': 'Bb', 'commcare_profile': '', 'mode': ''})
 
         # set user data to blank
         import_users_and_groups(
@@ -133,7 +135,8 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': '', 'commcare_profile': ''})
+        self.assert_user_data_equals({
+            'commcare_project': 'mydomain', 'key': '', 'commcare_profile': '', 'mode': ''})
 
         # Allow falsy but non-blank values
         import_users_and_groups(
@@ -144,7 +147,8 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'key': 0, 'commcare_profile': ''})
+        self.assert_user_data_equals({
+            'commcare_project': 'mydomain', 'key': 0, 'commcare_profile': '', 'mode': ''})
 
     def _test_user_data_profile(self, is_web_upload=False):
         import_users_and_groups(
@@ -162,9 +166,12 @@ class TestUserDataMixin:
             'mode': 'minor',
             PROFILE_SLUG: self.profile.id,
         })
-        user_history = UserHistory.objects.get(user_id=self.user.get_id, changed_by=self.uploading_user.get_id,
-                                               # web users are setup first and then updated
-                                               action=UserModelAction.UPDATE.value if is_web_upload else UserModelAction.CREATE.value)
+        user_history = UserHistory.objects.get(
+            user_id=self.user.get_id,
+            changed_by=self.uploading_user.get_id,
+            # web users are setup first and then updated
+            action=UserModelAction.UPDATE.value if is_web_upload else UserModelAction.CREATE.value
+        )
         change_messages = UserChangeMessage.profile_info(self.profile.id, self.profile.name)
         self.assertDictEqual(user_history.change_messages['profile'], change_messages['profile'])
 
@@ -180,6 +187,7 @@ class TestUserDataMixin:
         self.assert_user_data_equals({
             'commcare_project': 'mydomain',
             'mode': 'minor',
+            'key': '',
             PROFILE_SLUG: self.profile.id,
         })
         # Profile fields shouldn't actually be added to user_data
@@ -197,6 +205,7 @@ class TestUserDataMixin:
         self.assert_user_data_equals({
             'commcare_project': 'mydomain',
             'mode': 'minor',
+            'key': '',
             PROFILE_SLUG: self.profile.id,
         })
 
@@ -215,6 +224,7 @@ class TestUserDataMixin:
         )
         self.assert_user_data_equals({
             'commcare_project': 'mydomain',
+            'key': '',
             'mode': 'minor',
             PROFILE_SLUG: self.profile.id,
         })
@@ -264,6 +274,7 @@ class TestUserDataMixin:
         )
         self.assert_user_data_equals({
             'commcare_project': 'mydomain',
+            'key': '',
             'mode': 'minor',
             PROFILE_SLUG: self.profile.id,
         })
@@ -289,7 +300,13 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'tempo': 'presto', 'commcare_profile': ''})
+        self.assert_user_data_equals({
+            'commcare_project': 'mydomain',
+            'key': '',
+            'mode': '',
+            'tempo': 'presto',
+            'commcare_profile': ''
+        })
 
         # Update data
         import_users_and_groups(
@@ -300,7 +317,13 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({'commcare_project': 'mydomain', 'tempo': 'andante', 'commcare_profile': ''})
+        self.assert_user_data_equals({
+            'commcare_project': 'mydomain',
+            'key': '',
+            'mode': '',
+            'tempo': 'andante',
+            'commcare_profile': ''
+        })
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def _test_user_data_ignore_system_fields(self, is_web_upload=False):
@@ -317,6 +340,7 @@ class TestUserDataMixin:
             'commcare_project': 'mydomain',
             'commcare_profile': '',
             'key': 'F#',
+            'mode': '',
         }
         if not is_web_upload:
             data.update({
@@ -924,7 +948,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         self.assertTrue(self.user.is_active)
 
     def test_password_is_not_string(self):
-        rows = import_users_and_groups(
+        import_users_and_groups(
             self.domain.name,
             [self._get_spec(password=123)],
             [],

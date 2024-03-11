@@ -234,7 +234,6 @@ DEFAULT_APPS = (
     'ws4redis',
     'statici18n',
     'django_user_agents',
-    'logentry_admin',
     'oauth2_provider',
 )
 
@@ -854,7 +853,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 2
+ELASTICSEARCH_MAJOR_VERSION = 5
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
@@ -873,14 +872,14 @@ ES_USERS_INDEX_MULTIPLEXED = False
 
 # Setting the variable to True would mean that the primary index would become secondary and vice-versa
 # This should only be set to True after successfully running and verifying migration command on a particular index. 
-ES_APPS_INDEX_SWAPPED = True
-ES_CASE_SEARCH_INDEX_SWAPPED = True
-ES_CASES_INDEX_SWAPPED = True
-ES_DOMAINS_INDEX_SWAPPED = True
-ES_FORMS_INDEX_SWAPPED = True
-ES_GROUPS_INDEX_SWAPPED = True
-ES_SMS_INDEX_SWAPPED = True
-ES_USERS_INDEX_SWAPPED = True
+ES_APPS_INDEX_SWAPPED = False
+ES_CASE_SEARCH_INDEX_SWAPPED = False
+ES_CASES_INDEX_SWAPPED = False
+ES_DOMAINS_INDEX_SWAPPED = False
+ES_FORMS_INDEX_SWAPPED = False
+ES_GROUPS_INDEX_SWAPPED = False
+ES_SMS_INDEX_SWAPPED = False
+ES_USERS_INDEX_SWAPPED = False
 
 BITLY_OAUTH_TOKEN = None
 

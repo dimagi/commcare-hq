@@ -759,7 +759,7 @@ class ProjectDataTab(UITab):
                         'url': reverse(CaseExportListView.urlname,
                                        args=(self.domain,)),
                         'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-share-form-square',
+                        'icon': 'icon icon-share fa-solid fa-share-square',
                         'subpages': [_f for _f in [
                             {
                                 'title': _(CreateNewCustomCaseExportView.page_title),

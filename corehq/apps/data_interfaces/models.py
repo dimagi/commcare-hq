@@ -42,7 +42,7 @@ from corehq.apps.data_interfaces.deduplication import (
     reset_deduplicate_rule,
 )
 from corehq.apps.data_interfaces.utils import property_references_parent
-from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS, is_copied_case
+from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS, is_copied_case, resave_case
 from corehq.apps.users.util import SYSTEM_USER_ID, cached_owner_id_to_display
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
@@ -1078,18 +1078,20 @@ class CaseDeduplicationMatchTypeChoices:
     )
 
 
-def case_matching_rule_exists_in_es(case, rule):
+def case_matching_rule_criteria_exists_in_es(case, rule):
     """Returns whether or not the current case, according to the properties
-    that the given rule cares about, is present in elasticsearch
+    that the given rule cares about, is present in elasticsearch.
+    Note that this only matches the filter criteria, not the closed status.
     """
     action = CaseDeduplicationActionDefinition.from_rule(rule)
     return _case_exists_in_es(
         case.domain,
         case,
         action.case_properties,
-        action.include_closed,
-        action.match_type,
-        case_filter_criteria=rule.memoized_criteria)
+        match_type=action.match_type,
+        case_filter_criteria=rule.memoized_criteria,
+        include_closed=True
+    )
 
 
 def find_matching_case_ids_in_es(case, rule, limit=0):
@@ -1152,9 +1154,9 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         return result
 
     def _handle_case_duplicate_new(self, case, rule):
-        if not case_matching_rule_exists_in_es(case, rule):
+        if not case_matching_rule_criteria_exists_in_es(case, rule):
             ALLOWED_ES_DELAY = timedelta(hours=1)
-            if datetime.utcnow() - case.modified_on > ALLOWED_ES_DELAY:
+            if datetime.utcnow() - case.server_modified_on > ALLOWED_ES_DELAY:
                 # If old data was found that is not present in ElasticSearch, the data is unreliable.
                 # We've decided skipping this record and recording an error is likely the safest way to handle this
                 # Hopefully, these errors allow us to track down the underlying bug or infrastructure issue
@@ -1165,6 +1167,12 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 # it arrives in ElasticSearch. If this case was modified within the acceptable latency window,
                 # we can skip it now, with the expectation that the CaseDeduplicationProcessor will correctly
                 # handle it when it arrives in ElasticSearch
+
+                # HACK: it was discovered that, because this processor uses results from Kafka, and because
+                # inserts into ElasticSearch are asychronous, we can receive cases here that will not yet be
+                # present in ElasticSearch but will never be processed later. In the short-term, we're avoiding
+                # this by resaving the case, with the intention to use a more stable approach in the future
+                resave_case(rule.domain, case, send_post_save_signal=False)
                 return CaseRuleActionResult(num_updates=0)
 
         try:
