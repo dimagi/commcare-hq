@@ -1,5 +1,5 @@
 "use strict";
-hqDefine('builds/js/edit-builds', [
+hqDefine('builds/js/edit_builds', [
     'jquery',
     'underscore',
     'knockout',
