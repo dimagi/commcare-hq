@@ -653,6 +653,8 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     class FromDateFilter(SingleDateFilter):
         label = gettext_lazy("From Date")
         default_date_delta = -59
+        min_date_delta = -364
+        max_date_delta = -1
         help_text = gettext_lazy("Select any date in the past up to 1 year. "
                                  "Report will show results from selected date till today.")
 
@@ -698,12 +700,23 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         ])
         return user_query
 
-    @property
+    def _sanitize_report_from_date(self, from_date):
+        """resets the date to a valid value if out of range"""
+        today = datetime.today().date()
+        from_date_delta = (from_date - today).days
+        if from_date_delta > self.FromDateFilter.max_date_delta:
+            from_date = today + timedelta(days=self.FromDateFilter.max_date_delta)
+        elif from_date_delta < self.FromDateFilter.min_date_delta:
+            from_date = today + timedelta(days=self.FromDateFilter.min_date_delta)
+        return from_date
+
+    @cached_property
     def report_from_date(self):
         from_date = self.request_params.get(self.FromDateFilter.slug)
         if from_date:
             try:
-                return iso_string_to_date(from_date)
+                from_date = iso_string_to_date(from_date)
+                return self._sanitize_report_from_date(from_date)
             except ValueError:
                 pass
         return datetime.today().date() + timedelta(days=self.FromDateFilter.default_date_delta)
