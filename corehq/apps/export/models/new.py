@@ -1774,7 +1774,7 @@ class ExportDataSchema(Document):
         else:
             current_schema = cls()
 
-        if only_use_data_dictionary:
+        if cls == CaseExportDataSchema and only_use_data_dictionary:
             current_schema = cls._update_schema_from_data_dictionary(
                 domain, current_schema, identifier, task)
         else:
