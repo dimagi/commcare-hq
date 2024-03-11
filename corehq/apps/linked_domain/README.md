@@ -102,13 +102,18 @@ On a downstream domain's HQ environment that has the `release_management` or `li
 [previously mentioned data models](#data_models) **except for keywords**. Keywords are not supported simply due to lack of necessity
 in the context of remote links.
 
-#### Linking Remote Applications
+### Linking Remote Applications
 
 In order to link remote applications, you will need an existing application to reference in _both_ the upstream and downstream environments.
 If needed, please create an application in the upstream and/or downstream environment(s) to reference in the following management command.
 
-Once you have an upstream and downstream application ready to link, you can run `link_app_to_remote` from the downstream domain's
-environment, using the IDs of the applications you intend to link:
+
+Once you have an upstream and downstream application ready to link, you can run `link_app_to_remote` from the _downstream domain's_
+environment, using the IDs of the applications you intend to link.
+
+The API user and key need to be from the upstream environment.
+Ideally, the user is a member of the upstream domain and the API key is scoped to just the domain. You might even create a new user
+_just_ to use its API key.
 ```
 $ ./manage.py link_app_to_remote \
     --downstream_id {downstream_app_id} \
