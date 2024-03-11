@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('case_importer/js/import_history', [
     'jquery',
     'knockout',
