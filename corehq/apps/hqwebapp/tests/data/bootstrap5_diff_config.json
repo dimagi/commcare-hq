@@ -134,6 +134,14 @@
       "compare_all_files": true
     }
   ],
+  "apps/products/templates/products/manage": [
+    {
+      "directories": ["bootstrap3/", "bootstrap5/"],
+      "file_type": "template",
+      "label": "products/manage",
+      "compare_all_files": true
+    }
+  ],
   "apps/analytics/templates/analytics": [
     {
       "directories": ["forms/bootstrap3/", "forms/bootstrap5/"],
