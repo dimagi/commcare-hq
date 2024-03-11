@@ -1,5 +1,5 @@
 from django.utils.translation import gettext as _
-from django.utils.html import escape, format_html
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -162,5 +162,5 @@ def xmlns_to_name_for_case_deletion(domain, form):
             "[Unknown Module]",
             form.name or "[Unknown Form]"
         ]
-        form_name = escape(' > '.join(extracted_name))
+        form_name = ' > '.join(extracted_name)
     return form_name
