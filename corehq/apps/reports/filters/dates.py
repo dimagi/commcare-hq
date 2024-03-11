@@ -82,7 +82,10 @@ class SingleDateFilter(BaseReportFilter):
     template = "reports/filters/date_selector.html"
     label = gettext_lazy("Date")
     slug = "date"
+    # below delta should be in days from today's date
     default_date_delta = 0
+    min_date_delta = None
+    max_date_delta = None
 
     @property
     def date(self):
@@ -96,7 +99,19 @@ class SingleDateFilter(BaseReportFilter):
         return datetime.date.today() + datetime.timedelta(days=self.default_date_delta)
 
     @property
+    def min_date(self):
+        if self.min_date_delta:
+            return datetime.date.today() + datetime.timedelta(days=self.min_date_delta)
+
+    @property
+    def max_date(self):
+        if self.max_date_delta:
+            return datetime.date.today() + datetime.timedelta(days=self.max_date_delta)
+
+    @property
     def filter_context(self):
         return {
             'date': self.date,
+            'min_date': self.min_date,
+            'max_date': self.max_date
         }
