@@ -4,7 +4,7 @@ from datetime import datetime
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 
 from corehq.blobs import NotFound as BlobNotFound, get_blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
@@ -434,14 +434,31 @@ class TestHardDeleteFormsBeforeCutoff(TestCase):
         self.cutoff = datetime(2020, 1, 1, 12, 30)
 
 
-class TempFormCacheTests(SimpleTestCase):
+class TempFormCacheTests(TestCase):
+    def setUp(self):
+        self.domain = 'cached_form_test'
+
     def test_no_db_hit_if_cached(self):
-        cache = TempFormCache()
-        form = XFormInstance(form_id="1234")
-        cache.cache[form.form_id] = form
-        # This should not raise an AssertionError, which means it tried to access the db
-        retrieved_form = cache.get_forms([form.form_id])[0]
-        self.assertEqual(retrieved_form, form)
+        cache_obj = TempFormCache()
+        cache_form = create_form_for_test(self.domain, xmlns="cached_form")
+        cache_obj.cache[cache_form.form_id] = cache_form
+        same_form = XFormInstance.objects.get_form(cache_form.form_id)
+        same_form.xmlns = "not_cached_form"
+        same_form.save()
+        retrieved_form = cache_obj.get_forms([cache_form.form_id])[0]
+        self.assertEqual(retrieved_form.xmlns, "cached_form")
+
+    def test_retrieves_form_if_not_cached(self):
+        cache_obj = TempFormCache()
+        not_cache_form = create_form_for_test(self.domain, xmlns="not_cached_form")
+        retrieved_form = cache_obj.get_forms([not_cache_form.form_id])[0]
+        self.assertEqual(retrieved_form.xmlns, "not_cached_form")
+
+    def test_caches_form_if_not_cached(self):
+        cache_obj = TempFormCache()
+        not_cache_form = create_form_for_test(self.domain, xmlns="not_cached_form")
+        cache_obj.get_forms([not_cache_form.form_id])
+        self.assertEqual(cache_obj.cache[not_cache_form.form_id], not_cache_form)
 
 
 class DeleteAttachmentsFSDBTests(TestCase):
