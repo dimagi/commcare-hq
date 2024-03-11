@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine('builds/js/edit-builds', [
+hqDefine('builds/js/bootstrap3/edit-builds', [
     'jquery',
     'underscore',
     'knockout',
