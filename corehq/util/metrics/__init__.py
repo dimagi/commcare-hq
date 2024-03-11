@@ -120,7 +120,6 @@ from sentry_sdk import add_breadcrumb
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 
-from corehq import toggles
 from corehq.apps.celery import periodic_task
 from corehq.util.timer import TimingContext
 
@@ -319,6 +318,7 @@ def limit_domains(domain_name):
 
     Else return __other__.  This is used to limit the number of tag combinations sent to datadog.
     """
+    from corehq import toggles
     if toggles.DETAILED_TAGGING.enabled(domain_name):
         return domain_name
     return '__other__'
