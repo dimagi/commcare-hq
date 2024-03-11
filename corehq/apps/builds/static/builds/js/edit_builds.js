@@ -1,10 +1,9 @@
-/* globals hqDefine */
-hqDefine('builds/js/edit-builds', [
+"use strict";
+hqDefine('builds/js/edit_builds', [
     'jquery',
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/knockout_bindings.ko',
 ], function ($, _, ko, initialPageData) {
     var doc = initialPageData.get('doc');
 
@@ -37,8 +36,8 @@ hqDefine('builds/js/edit-builds', [
                 version.build.version, version.label
             ));
         });
-        _.each(doc.defaults, function (version_doc) {
-            var version = version_doc.version;
+        _.each(doc.defaults, function (versionDoc) {
+            var version = versionDoc.version;
             if (version[0] === '1') {
                 self.default_one(version);
             } else if (version[0] === '2') {
