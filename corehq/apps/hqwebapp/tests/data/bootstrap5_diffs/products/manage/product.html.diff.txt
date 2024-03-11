@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -15,7 +15,7 @@
+     {% endif %}
+ 
+     <div class="form-actions">
+-      <div class="col-sm-12">
++      <div class="col-md-12">
+         <button type="submit" class="btn btn-primary">
+           {% if product.get_id %}
+             {% trans 'Update Product' %}
