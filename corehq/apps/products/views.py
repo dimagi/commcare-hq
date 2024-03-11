@@ -88,7 +88,7 @@ def unarchive_product(request, domain, prod_id, archive=True):
 class ProductListView(BaseCommTrackManageView):
     # todo mobile workers shares this type of view too---maybe there should be a class for this?
     urlname = 'commtrack_product_list'
-    template_name = 'products/manage/products.html'
+    template_name = 'products/manage/bootstrap3/products.html'
     page_title = gettext_noop("Products")
 
     DEFAULT_LIMIT = 10
