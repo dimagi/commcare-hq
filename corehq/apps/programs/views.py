@@ -74,7 +74,7 @@ class FetchProgramListView(ProgramListView):
 class NewProgramView(BaseCommTrackManageView):
     urlname = 'commtrack_program_new'
     page_title = gettext_noop("New Program")
-    template_name = 'programs/manage/program.html'
+    template_name = 'programs/manage/bootstrap3/program.html'
 
     @property
     @memoized
