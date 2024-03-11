@@ -1,4 +1,4 @@
-/* globals hqDefine */
+"use strict";
 hqDefine('builds/js/edit-builds', [
     'jquery',
     'underscore',
@@ -37,8 +37,8 @@ hqDefine('builds/js/edit-builds', [
                 version.build.version, version.label
             ));
         });
-        _.each(doc.defaults, function (version_doc) {
-            var version = version_doc.version;
+        _.each(doc.defaults, function (versionDoc) {
+            var version = versionDoc.version;
             if (version[0] === '1') {
                 self.default_one(version);
             } else if (version[0] === '2') {
