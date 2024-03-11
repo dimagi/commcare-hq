@@ -103,10 +103,13 @@ from ..hqwebapp.decorators import waf_allow
 
 app_urls = [
     url(r'^languages/$', view_app, name='app_languages'),
-    url(r'^languages/translations/download/$', download_bulk_ui_translations, name='download_bulk_ui_translations'),
+    url(r'^languages/translations/download/$', download_bulk_ui_translations,
+        name='download_bulk_ui_translations'),
     url(r'^languages/translations/upload/$', upload_bulk_ui_translations, name='upload_bulk_ui_translations'),
-    url(r'^languages/bulk_app_translations/download/$', download_bulk_app_translations, name='download_bulk_app_translations'),
-    url(r'^languages/bulk_app_translations/upload/$', upload_bulk_app_translations, name='upload_bulk_app_translations'),
+    url(r'^languages/bulk_app_translations/download/$', download_bulk_app_translations,
+        name='download_bulk_app_translations'),
+    url(r'^languages/bulk_app_translations/upload/$', upload_bulk_app_translations,
+        name='upload_bulk_app_translations'),
     url(r'^multimedia_ajax/$', multimedia_ajax, name='app_multimedia_ajax'),
     url(r'^multimedia_sizes/$', get_multimedia_sizes, name='get_multimedia_sizes'),
     url(r'^multimedia_sizes/(?P<build_profile_id>[\w-]+)/$', get_multimedia_sizes,
@@ -269,7 +272,8 @@ urlpatterns = [
     url(r'^download/(?P<app_id>[\w-]+)/',
         include('corehq.apps.app_manager.download_urls')),
 
-    url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(), name=AppDiffView.urlname),
+    url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(),
+        name=AppDiffView.urlname),
     url(r'existing_case_types', ExistingCaseTypesView.as_view(), name=ExistingCaseTypesView.urlname),
 
     url(r'^', include('custom.ucla.urls')),
