@@ -25,10 +25,19 @@
     margin-top: 0;
   }
 }
+.reg-plan-container {
+  width: 100%;
+  max-width: @reg-form-width*1.25;
+  margin: 0 auto;
+  margin-top: 10vh;
+}
 
 @media (min-width: @screen-md-min) {
   .reg-form-container {
     width: @reg-form-width;
+  }
+  .reg-plan-container {
+    width: @reg-form-width * 1.25;
   }
 }
 
@@ -256,8 +265,10 @@ p.sso-message-block {
 }
 
 .plan-container {
-  background-color: @well-bg;
-  border-radius: 5px;
+  background-color: white;
+  border-radius: 10px;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
   padding-bottom: 35px;
 
   p {
@@ -280,15 +291,35 @@ p.sso-message-block {
 
   ul.check-list {
     margin: 10px 20px 0;
-
+    .fa {
+      font-size: 1.5em;
+      vertical-align: middle;
+      margin-left: -10px;
+      margin-right: 7px;
+    }
     li {
       padding-bottom: 5px;
+      padding-left: 10px;
+      line-height: 1.5em;
 
       &.not-available {
         color: darken(@well-bg, 30);
       }
     }
   }
+}
+
+.plan-body {
+  padding: 0 10px;
+}
+
+.plan-icon {
+  float: left;
+  padding-top: 25px;
+  text-align: center;
+  vertical-align: middle;
+  width: 85px;
+  font-size: 3.25em;
 }
 
 .plan-price {
@@ -303,11 +334,13 @@ p.sso-message-block {
 
 .plan-header {
   margin: 0;
-  text-align: center;
   font-weight: 800;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 
   h2 {
-    margin: 0;
+    margin-bottom: 0;
+    margin-left: 85px;
     padding: 30px 0 25px;
   }
 
@@ -320,22 +353,25 @@ p.sso-message-block {
 }
 
 .plan-container-professional {
-  border: 2px solid @cc-brand-mid;
 
   .plan-header {
     color: white;
-    background-color: @cc-brand-mid;
-    border-bottom: 2px solid @cc-brand-mid;
+    background-color: @commcare-blue;
+    border-bottom: 2px solid @commcare-blue;
 
     small {
       color: white;
     }
   }
 
+  .check-list .fa {
+    color: @commcare-blue;
+  }
+
   a,
   a:link,
   a:visited {
-    color: @cc-brand-mid;
+    color: darken(@commcare-blue, 10);
 
     &.btn-primary {
       color: white;
@@ -343,7 +379,7 @@ p.sso-message-block {
   }
 
   a:hover {
-    color: darken(@cc-brand-mid, 10);
+    color: darken(@commcare-blue, 30);
   }
 
   a.btn-primary {
@@ -351,29 +387,37 @@ p.sso-message-block {
   }
 
   p.lead {
-    color: @cc-brand-mid;
+    color: darken(@commcare-blue, 10);
   }
 }
 
 .plan-container-community {
-  border: 2px solid @cc-dark-cool-accent-mid;
   padding-bottom: 63px;
 
   .plan-header {
-    color: @cc-dark-cool-accent-low;
+    color: white;
+    background-color: @cc-dark-cool-accent-mid;
     border-bottom: 2px solid @cc-dark-cool-accent-mid;
 
     small {
-      color: @cc-dark-cool-accent-low;
+      color: white;
     }
   }
 
+  .plan-icon {
+    padding-top: 22px;
+  }
+
   .check-list {
-    height: 225px;
+    height: 243px;
+
+    .fa {
+      color: @cc-dark-cool-accent-mid;
+    }
   }
 
   p.lead {
-    color: @cc-dark-cool-accent-low;
+    color: @cc-dark-cool-accent-mid;
   }
 
   a,
