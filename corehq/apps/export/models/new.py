@@ -1743,7 +1743,7 @@ class ExportDataSchema(Document):
         identifier,
         force_rebuild=False,
         only_process_current_builds=False,
-        only_use_data_dictionary=False,
+        only_use_data_dictionary=True,
         task=None,
     ):
         """
