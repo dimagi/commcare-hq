@@ -9,9 +9,11 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.tests.utils import create_form_for_test
 from casexml.apps.case.tests.util import delete_all_xforms
 from casexml.apps.case.const import CASE_ATTR_ID
-from casexml.apps.case.xform import extract_case_blocks
+from casexml.apps.case.xform import extract_case_blocks, TempCaseBlockCache
+
 
 CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
 TEST_DOMAIN_NAME = 'test-domain'
@@ -88,6 +90,37 @@ class TestExtractCaseBlocks(SimpleTestCase):
         for i in range(len(blocks)):
             self.assertEqual(blocks[i], blocks_back[i].caseblock)
             self.assertEqual(['data', 'parent', 'repeats', 'group'], blocks_back[i].path)
+
+
+class TempCaseBlockCacheTests(TestCase):
+    def setUp(self):
+        self.domain = 'test_case_block_cache'
+        self.form_id = '1234'
+
+    def test_no_db_hit_if_cached(self):
+        cache_obj = TempCaseBlockCache()
+        blocks = extract_case_blocks({
+            'data': {
+                'some': 'stuff'
+            },
+            'case': {CASE_ATTR_ID: uuid.uuid4().hex}
+        })
+        cache_obj.cache[self.form_id] = blocks
+        block_form = create_form_for_test(self.domain, form_id=self.form_id)
+        retrieved_blocks = cache_obj.get_case_blocks(block_form)
+        self.assertEqual(retrieved_blocks, blocks)
+
+    def test_extracts_case_blocks_if_not_cached(self):
+        cache_obj = TempCaseBlockCache()
+        block_form = create_form_for_test(self.domain, form_id=self.form_id)
+        retrieved_blocks = cache_obj.get_case_blocks(block_form)
+        self.assertEqual(retrieved_blocks, [])  # test form has no case blocks
+
+    def test_caches_case_blocks_if_not_cached(self):
+        cache_obj = TempCaseBlockCache()
+        block_form = create_form_for_test(self.domain, form_id=self.form_id)
+        cache_obj.get_case_blocks(block_form)
+        self.assertEqual(cache_obj.cache[self.form_id], [])  # test form has no case blocks
 
 
 class TestParsingExtractCaseBlock(TestCase, TestFileMixin):
