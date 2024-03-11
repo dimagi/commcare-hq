@@ -176,7 +176,7 @@ def _get_default_tiles(request):
             request,
             title=_('Applications'),
             slug='applications',
-            icon='fcc fcc-applications',
+            icon='fcc fcc-flower',
             paginator_class=AppsPaginator,
             visibility_check=can_view_apps,
             urlname='default_new_app',
