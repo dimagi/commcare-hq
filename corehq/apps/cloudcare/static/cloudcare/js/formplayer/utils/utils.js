@@ -53,12 +53,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     Utils.currentUrlToObject = function () {
         var url = Backbone.history.getFragment();
         try {
-            const cloudcareUrl = Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
-            for (const queryKey in cloudcareUrl.queryData) {
-                // retrieve query inputs from Utils object
-                cloudcareUrl.queryData[queryKey].inputs = Utils.getCurrentQueryInputs(queryKey);
-            }
-            return cloudcareUrl;
+            return Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
         } catch (e) {
             // This means that we're on the homepage
             return new Utils.CloudcareUrl({});
@@ -71,8 +66,9 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             // don't store query inputs in url
             delete urlObject.queryData[queryKey].inputs;
         }
+
         var encodedUrl = Utils.objectToEncodedUrl(urlObject.toJson());
-         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
             FormplayerFrontend.navigate(encodedUrl, { replace: replace });
         });
     };
@@ -398,6 +394,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
 
     Utils.CloudcareUrl.fromJson = function (json) {
         var data = JSON.parse(json);
+        for (const queryKey in data.queryData) {
+            // retrieve query inputs from Utils object
+            data.queryData[queryKey].inputs = Utils.getCurrentQueryInputs(queryKey);
+        }
         var options = {
             'appId': data.appId,
             'copyOf': data.copyOf,
