@@ -249,7 +249,8 @@ def get_api_version(dhis2_version):
         example, the API version for DHIS 2.25 is 25.
 
 
-    .. _DHIS 2 Developer guide: https://docs.dhis2.org/master/en/developer/html/webapi_browsing_the_web_api.html#webapi_api_versions
+    .. _DHIS 2 Developer guide:
+    .. https://docs.dhis2.org/master/en/developer/html/webapi_browsing_the_web_api.html#webapi_api_versions
     """
     try:
         api_version = LooseVersion(dhis2_version).version[1]
@@ -270,7 +271,7 @@ def fetch_metadata(requests):
        one that maps to DHIS2 IDs.
 
     """
-    response = requests.get('/api/metadata', raise_for_status=True)
+    response = requests.get('/api/metadata', raise_for_status=True, params={'assumeTrue': 'false'})
     return response.json()
 
 
